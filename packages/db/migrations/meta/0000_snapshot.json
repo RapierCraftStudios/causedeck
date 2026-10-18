@@ -1,0 +1,68 @@
+{
+  "id": "933969e0-f61b-4043-89e9-341c93781c71",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.schema_info": {
+      "name": "schema_info",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "smallint",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "baseline_version": {
+          "name": "baseline_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "schema_info_single_row_chk": {
+          "name": "schema_info_single_row_chk",
+          "value": "id = 1"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.confirmation_state": {
+      "name": "confirmation_state",
+      "schema": "public",
+      "values": ["proposed", "confirmed", "edited", "rejected"]
+    },
+    "public.source_type": {
+      "name": "source_type",
+      "schema": "public",
+      "values": ["manual", "document", "capture", "adapter", "ai", "import", "system"]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

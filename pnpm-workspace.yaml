@@ -9,21 +9,27 @@ minimumReleaseAge: 4320
 # Install scripts: esbuild (Vitest) and unrs-resolver (ESLint import resolution) may run theirs.
 # Lefthook's postinstall is skipped on purpose; the root `prepare` script installs the hooks.
 # @parcel/watcher (via @tailwindcss/cli) ships prebuilt platform packages, so its script is skipped.
-# protobufjs (via OpenTelemetry exporters) only runs a version-check postinstall; skip it.
+# protobufjs (via OpenTelemetry exporters and Testcontainers) only runs a version-check postinstall;
+# skip it. Testcontainers' optional native SSH bindings (cpu-features, ssh2) are skipped too: the
+# pure-JS fallbacks are enough for the local Docker socket.
 # `allowBuilds` is read by pnpm >= 10.26; the two lists cover older pnpm 10 releases.
 allowBuilds:
   esbuild: true
   unrs-resolver: true
   lefthook: false
   '@parcel/watcher': false
+  cpu-features: false
   protobufjs: false
+  ssh2: false
 onlyBuiltDependencies:
   - esbuild
   - unrs-resolver
 ignoredBuiltDependencies:
-  - lefthook
   - '@parcel/watcher'
+  - cpu-features
+  - lefthook
   - protobufjs
+  - ssh2
 
 catalog:
   '@commitlint/cli': 21.2.3
@@ -42,6 +48,7 @@ catalog:
   '@sentry/node': 11.7.0
   '@t3-oss/env-core': 0.13.11
   '@tailwindcss/cli': 4.3.3
+  '@testcontainers/postgresql': 12.2.1
   '@types/culori': 4.0.1
   '@types/node': 22.20.5
   '@types/react': 19.3.0
@@ -50,6 +57,8 @@ catalog:
   class-variance-authority: 0.7.1
   clsx: 2.1.1
   culori: 4.0.2
+  drizzle-kit: 0.31.11
+  drizzle-orm: 0.45.4
   eslint: 9.39.5
   eslint-import-resolver-typescript: 4.4.5
   eslint-plugin-boundaries: 5.4.0
@@ -62,11 +71,13 @@ catalog:
   pino: 10.4.0
   pino-pretty: 13.2.0
   postcss: 8.5.30
+  postgres: 3.4.9
   prettier: 3.9.10
   prettier-plugin-tailwindcss: 0.8.1
   react: 19.3.1
   tailwind-merge: 3.7.0
   tailwindcss: 4.3.3
+  testcontainers: 12.2.1
   tsx: 4.23.15
   turbo: 2.11.8
   tw-animate-css: 1.4.0

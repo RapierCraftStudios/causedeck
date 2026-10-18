@@ -344,3 +344,8 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 ### D-042 — The court-day change freeze applies to production only
 - **Date:** 2026-10-18 · **Status:** Accepted (founder)
 - **Decision:** The 18:00–23:00 and 07:00–10:30 IST freeze (spike §3.1, D-037) applies to **production** deploys. Shipping a milestone into `staging` during the build phase is not frozen. Revisit when staging hosts real pilot users.
+
+### D-043 — GHAS-only security checks are opt-in; free scanners stay always-on
+- **Date:** 2026-10-18 · **Status:** Accepted (founder)
+- **Decision:** CodeQL and `dependency-review` need GitHub Advanced Security on this private repository. They now run only when the repository variable `ENABLE_GHAS=true` is set. `pnpm audit` (production deps, high/critical) and `gitleaks` (full-history secret scan) remain required and always on.
+- **Revisit if:** the org enables GHAS, or the repo becomes public.

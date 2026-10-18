@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["NODE_ENV", "CI", "GITHUB_ACTIONS"],
+  "globalEnv": ["NODE_ENV", "CI", "GITHUB_ACTIONS", "SKIP_ENV_VALIDATION"],
   "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM"],
   "globalDependencies": ["tsconfig.base.json", ".eslintrc*", "eslint.config.js"],
   "tasks": {

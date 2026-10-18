@@ -155,6 +155,9 @@ describe('@causedeck/ui', () => {
       'STAGE_MAP',
       'PROCEEDING_STAGES',
       'LISTING_STAGES',
+      'ProposalCard',
+      'ProposalCardGroup',
+      'useProposalShortcuts',
     ]) {
       expect(ui, name).toHaveProperty(name);
       expect(patterns[name]).toBe((ui as Record<string, unknown>)[name]);

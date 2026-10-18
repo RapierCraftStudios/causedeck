@@ -434,6 +434,9 @@ importers:
       '@causedeck/validators':
         specifier: workspace:*
         version: link:../../packages/validators
+      better-auth:
+        specifier: 'catalog:'
+        version: 1.7.10(@opentelemetry/api@1.9.1)(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(kysely@0.29.6)(pg@8.23.1)(postgres@3.4.9))(next@16.4.0(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vitest@3.2.7)
       lucide-react:
         specifier: 'catalog:'
         version: 1.57.0(@types/react@19.3.0)(react@19.3.1)

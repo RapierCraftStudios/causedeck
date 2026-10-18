@@ -78,8 +78,9 @@ describe('apps/web static guards', () => {
     expect(config).toMatch(/reactStrictMode:\s*true/);
   });
 
-  it('has no API placeholder route (webhooks live in apps/api)', () => {
-    expect(existsSync(path.join(appDir, 'app/api'))).toBe(false);
+  it('has no API routes besides Better Auth (webhooks live in apps/api)', () => {
+    expect(readdirSync(path.join(appDir, 'app/api'))).toEqual(['auth']);
+    expect(readdirSync(path.join(appDir, 'app/api/auth'))).toEqual(['[...all]']);
   });
 
   it('keeps the proxy on Next.js 16 naming (no deprecated middleware.ts)', () => {

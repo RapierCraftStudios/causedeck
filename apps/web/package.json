@@ -46,6 +46,7 @@
     "@causedeck/storage": "workspace:*",
     "@causedeck/ui": "workspace:*",
     "@causedeck/validators": "workspace:*",
+    "better-auth": "catalog:",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "next-intl": "catalog:",

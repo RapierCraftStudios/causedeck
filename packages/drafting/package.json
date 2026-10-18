@@ -1,0 +1,22 @@
+{
+  "name": "@causedeck/drafting",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Templates, DOCX/PDF export, consistency and citation checkers.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@causedeck/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -5,3 +5,19 @@ evals/gold/
 forge.yaml
 forge.yaml.bak
 .forge/
+!.env.example
+
+# Build, cache and test output
+.next/
+out/
+dist/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+storybook-static/
+*.tsbuildinfo
+
+# OS and editor noise
+.DS_Store
+*.log

@@ -1,0 +1,22 @@
+{
+  "name": "@causedeck/validators",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared zod schemas for API and forms.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@causedeck/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

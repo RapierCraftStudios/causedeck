@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig/node.json",
+  "compilerOptions": {
+    "allowJs": true
+  },
+  "include": ["src", "test", "*.ts"],
+  "exclude": ["eslint/__fixtures__"]
+}

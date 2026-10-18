@@ -1,0 +1,25 @@
+pnpm-lock.yaml
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+storybook-static/
+packages/config/eslint/__fixtures__/
+
+# Research and decision documents are reviewed as written; do not reformat them.
+docs/
+research/
+DECISIONS.md
+ASSUMPTIONS.md
+
+# Local tooling
+.claude/
+.forge/
+.forge-lean/
+
+# Kept byte-for-byte (its document index is maintained by hand).
+README.md

@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/index.ts';
 
-import { openShell, palette, switcherTrigger } from './helpers.ts';
+import { openShell, palette, switcherTrigger, SHELL_WORKSPACE } from './helpers.ts';
 
 /** apps/web/lib/shortcuts/registry.ts `NAV_CHORDS` (settings redirects to its first section). */
 const CHORDS = {
@@ -32,7 +32,7 @@ test.describe('keyboard chords', () => {
       // Start somewhere else so the move is visible.
       await openShell(page, asUser, { path: key === 't' ? 'matters' : 'today' });
       await chord(page, key);
-      await expect(page).toHaveURL(new RegExp(`/w/demo/${destination}$`));
+      await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/${destination}$`));
     });
   }
 
@@ -43,11 +43,11 @@ test.describe('keyboard chords', () => {
     await page.keyboard.press('m');
     // Give a (wrong) navigation the chance to start before asserting it did not.
     await page.waitForTimeout(300);
-    await expect(page).toHaveURL(/\/w\/demo\/today$/);
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/today$`));
 
     // A prompt second key still works.
     await chord(page, 'm');
-    await expect(page).toHaveURL(/\/w\/demo\/matters$/);
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/matters$`));
   });
 
   for (const field of ['input', 'textarea', 'contenteditable'] as const) {
@@ -68,7 +68,7 @@ test.describe('keyboard chords', () => {
       await page.keyboard.press('?');
       await page.keyboard.press('[');
       await page.waitForTimeout(300);
-      await expect(page).toHaveURL(/\/w\/demo\/today$/);
+      await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/today$`));
       await expect(page.getByRole('dialog')).toHaveCount(0);
       if (field === 'contenteditable') await expect(target).toHaveText('gm?[');
       else await expect(target).toHaveValue('gm?[');
@@ -89,7 +89,7 @@ test.describe('keyboard chords', () => {
     await expect(input).toBeFocused();
     await chord(page, 'm');
     await expect(input).toHaveValue('gm');
-    await expect(page).toHaveURL(/\/w\/demo\/today$/);
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/today$`));
   });
 
   test('`?` opens a dialog listing every shortcut, grouped by area', async ({ page, asUser }) => {

@@ -1,14 +1,14 @@
-// Shared setup for the app shell suites (#159). The shell resolves workspaces from the in-memory
-// dev stub (apps/web/lib/workspace-context.ts): the signed-in user is `owner` of `demo` and `clerk`
-// of `clerk-desk`, and never a member of `other-chambers`.
+// Shared setup for the app shell suites (#159). The shell loads memberships from the database
+// (#179): the seeded `chennai-solo` owner (packages/db/src/seed/e2e.ts) is also `clerk` of
+// `bengaluru-chamber`, and owns the soft-deleted `mysuru-archived`, which never shows.
 import type { Locator, Page } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
 
-/** TODO(#18): switch to the seeded `chennai-solo` once memberships come from the database. */
-export const SHELL_WORKSPACE = 'demo';
-/** The stub's second membership, held as `clerk`: the switch target and the permission check. */
-export const CLERK_WORKSPACE = 'clerk-desk';
+/** The signed-in owner's own workspace. */
+export const SHELL_WORKSPACE = 'chennai-solo';
+/** The owner's second membership, held as `clerk`: the switch target and the permission check. */
+export const CLERK_WORKSPACE = 'bengaluru-chamber';
 
 /**
  * Placeholder routes an owner sees with flags off (apps/web/lib/nav.ts `WORKSPACE_ROUTES`, minus
@@ -64,7 +64,7 @@ export interface OpenShellOptions {
   wait?: boolean;
 }
 
-/** Sign in as the stub's user and open `/w/<workspace>/<path>` (default `demo/today`). */
+/** Sign in as the `chennai-solo` owner and open `/w/<workspace>/<path>` (default its Today). */
 export async function openShell(
   page: Page,
   asUser: AsUser,

@@ -5,7 +5,7 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/index.ts';
 
-import { layoutOf, openShell, sidebar, shellRoot } from './helpers.ts';
+import { layoutOf, openShell, sidebar, shellRoot, SHELL_WORKSPACE } from './helpers.ts';
 
 const width = async (page: Page) => (await sidebar(page).boundingBox())?.width ?? 0;
 
@@ -67,7 +67,7 @@ test.describe('sidebar', () => {
 
     // Following a link moves both.
     await nav.locator('a[data-nav-item="courts"]').click();
-    await expect(page).toHaveURL(/\/w\/demo\/courts$/);
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/courts$`));
     await expect(nav.locator('a[aria-current="page"]')).toHaveAttribute('data-nav-item', 'courts');
     await expect(nav.locator('[data-active-indicator]')).toHaveCount(1);
   });

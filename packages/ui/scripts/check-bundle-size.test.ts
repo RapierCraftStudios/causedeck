@@ -28,20 +28,33 @@ describe('bundle check', () => {
       'spinner',
       'kbd',
       'accordion',
+      'alert',
       'alert-dialog',
+      'avatar',
+      'badge',
       'breadcrumb',
+      'card',
+      'chart',
       'collapsible',
       'command',
       'context-menu',
       'dialog',
       'drawer',
       'dropdown-menu',
+      'empty-state',
       'hover-card',
+      'icon-button',
       'menubar',
       'pagination',
       'popover',
+      'progress',
+      'resizable',
+      'scroll-area',
+      'separator',
       'sheet',
       'shortcuts-dialog',
+      'skeleton',
+      'sonner',
       'tabs',
       'tooltip',
     ]) {
@@ -49,11 +62,11 @@ describe('bundle check', () => {
     }
   });
 
-  it('has a budget for every component export', () => {
+  it('budgets every component subpath export', () => {
     const components = Object.keys(pkg.exports).filter((key) =>
       pkg.exports[key]?.startsWith('./src/components/'),
     );
-    expect(components.filter((key) => !(key in BUDGETS))).toEqual([]);
+    expect(Object.keys(BUDGETS).sort()).toEqual(components.sort());
   });
 
   it('keeps @causedeck/ui/button within 6 KB gzip', async () => {

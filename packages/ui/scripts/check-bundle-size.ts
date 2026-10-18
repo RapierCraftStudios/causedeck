@@ -33,6 +33,15 @@ export const BUDGETS: Record<string, number> = {
   './breadcrumb': 6 * KB,
   './collapsible': 6 * KB,
   './pagination': 6 * KB,
+  './alert': 6 * KB,
+  './avatar': 6 * KB,
+  './badge': 6 * KB,
+  './card': 6 * KB,
+  './empty-state': 6 * KB,
+  './icon-button': 6 * KB,
+  './progress': 6 * KB,
+  './separator': 6 * KB,
+  './skeleton': 6 * KB,
   // Roving focus and collection.
   './accordion': 12 * KB,
   './tabs': 12 * KB,
@@ -52,6 +61,12 @@ export const BUDGETS: Record<string, number> = {
   './context-menu': 36 * KB,
   './dropdown-menu': 36 * KB,
   './menubar': 37 * KB,
+  // Library-backed components carry their library: Radix ScrollArea (about 8 KB),
+  // react-resizable-panels (about 22 KB), sonner (about 13 KB) and Recharts (about 77 KB).
+  './scroll-area': 10 * KB,
+  './resizable': 24 * KB,
+  './sonner': 16 * KB,
+  './chart': 96 * KB,
 };
 
 export const EXTERNAL = ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'];

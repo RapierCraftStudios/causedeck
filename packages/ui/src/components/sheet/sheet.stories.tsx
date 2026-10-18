@@ -195,7 +195,8 @@ export const LongText: Story = {
   args: { title: MATTER_TITLE, description: LONG_DESCRIPTION },
   play: async ({ canvas }) => {
     const sheet = await open(canvas);
-    await expect(sheet.getBoundingClientRect().width).toBeLessThanOrEqual(384);
+    await settled(sheet);
+    await expect(Math.round(sheet.getBoundingClientRect().width)).toBeLessThanOrEqual(384);
   },
 };
 

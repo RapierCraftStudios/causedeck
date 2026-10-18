@@ -2,6 +2,8 @@
 // a typed result. Raw errors never reach the client; unknown failures are logged and become INTERNAL.
 import { randomUUID } from 'node:crypto';
 
+import { UnauthenticatedError } from '@causedeck/auth';
+import type { AuthSession } from '@causedeck/auth/session';
 import type { ZodType } from 'zod';
 
 import { logger } from '../src/health.ts';
@@ -27,9 +29,30 @@ export interface ActionFailure {
 
 export type Result<O> = { ok: true; data: O } | { ok: false; error: ActionFailure };
 
-/** Per-call context. #12 adds the session and #19 the workspace transaction. */
+/** Per-call context. #19 adds the workspace transaction. */
 export interface ActionCtx {
   requestId: string;
+  /** The caller's session, or `null` when signed out. `requireSession()` throws instead. */
+  session: AuthSession | null;
+}
+
+export interface SafeActionOptions {
+  /** Resolves the session for `ctx.session`. Defaults to `lib/auth.ts` `getSession` (#153). */
+  getSession?: () => Promise<AuthSession | null>;
+}
+
+async function defaultGetSession(): Promise<AuthSession | null> {
+  // Loaded lazily so this module stays free of the database and Next request APIs until used.
+  const { getSession } = await import('./auth.ts');
+  return getSession();
+}
+
+/** `UnauthenticatedError` from `@causedeck/auth`, also matched by its code across module copies. */
+function isUnauthenticated(error: unknown): boolean {
+  return (
+    error instanceof UnauthenticatedError ||
+    (error instanceof Error && 'code' in error && error.code === 'UNAUTHENTICATED')
+  );
 }
 
 /** Throw from a handler to return a specific, client-safe error code. */
@@ -69,6 +92,7 @@ function toFieldErrors(
 export function safeAction<I, O>(
   schema: ZodType<I>,
   handler: (input: I, ctx: ActionCtx) => Promise<O>,
+  { getSession = defaultGetSession }: SafeActionOptions = {},
 ): (raw: unknown) => Promise<Result<O>> {
   return async (raw) => {
     const parsed = schema.safeParse(raw);
@@ -82,8 +106,9 @@ export function safeAction<I, O>(
         },
       };
     }
-    const ctx: ActionCtx = { requestId: randomUUID() };
+    const requestId = randomUUID();
     try {
+      const ctx: ActionCtx = { requestId, session: await getSession() };
       return { ok: true, data: await handler(parsed.data, ctx) };
     } catch (error) {
       if (error instanceof ActionError) {
@@ -96,7 +121,13 @@ export function safeAction<I, O>(
           },
         };
       }
-      logger.error({ err: error, requestId: ctx.requestId }, 'server action failed');
+      if (isUnauthenticated(error)) {
+        return {
+          ok: false,
+          error: { code: 'UNAUTHENTICATED', message: GENERIC_MESSAGES.UNAUTHENTICATED },
+        };
+      }
+      logger.error({ err: error, requestId }, 'server action failed');
       return { ok: false, error: { code: 'INTERNAL', message: GENERIC_MESSAGES.INTERNAL } };
     }
   };

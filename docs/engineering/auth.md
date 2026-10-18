@@ -6,8 +6,8 @@ magic link, passkeys (WebAuthn) and Google OAuth (off by default). Organizations
 using the five roles in `roles.ts`. Dev and CI never need credentials: they use the console mailer
 and the dev sign-in provider.
 
-The Next.js route (`/api/auth/[...all]`), the signed-out redirects, the `safeAction` mapping and
-the sign-in UI belong to #153. Browser flows (Playwright, virtual authenticator) belong to #16.
+apps/web wires it in (#153); see [apps/web](#appsweb) below. Browser flows (Playwright, virtual
+authenticator) belong to #16.
 2FA enforcement and the settings UI belong to #25, and the SES email transport to #23.
 
 ## Entry points
@@ -21,7 +21,7 @@ the sign-in UI belong to #153. Browser flows (Playwright, virtual authenticator)
 | `@causedeck/auth/mailer` | `Mailer`, `AuthEmail`, `consoleMailer`, `smtpMailer`, `createMailer(env, logger?)` |
 | `@causedeck/auth/dev-provider` | `devSignIn()` plugin and `DEV_SIGN_IN_PATH` |
 
-Wiring in a server (the real route lands in #153):
+Wiring in a server (apps/web does this lazily in `apps/web/lib/auth.ts`):
 
 ```ts
 import { serverEnv } from '@causedeck/config/env';
@@ -39,6 +39,42 @@ export const { getSession, requireSession, requireUser } = createSessionHelpers(
 `requireSession()` throws `UnauthenticatedError` (`code: 'UNAUTHENTICATED'`) when there is no
 valid session. `SessionUser` is `{ id, email, name: string | null, image: string | null, locale:
 'en' | 'ta' | 'kn' }`.
+
+## apps/web
+
+- **`lib/auth.ts`** (server-only) builds `auth` on first use with `createAuth({ db, env:
+  serverEnv(), mailer: createMailer(env, logger), logger })`. Building it at import would make
+  `next build` need runtime secrets. It also exports `getSession`, `requireSession` and
+  `requireUser` over `next/headers`.
+- **`app/api/auth/[...all]/route.ts`** serves every Better Auth endpoint via `toNextJsHandler`.
+- **`proxy.ts`** redirects `/w/**` and `/account` to `/sign-in?next=<path+query>` when no session
+  cookie is present (`getSessionCookie`, which also reads the `__Secure-` name). It never validates
+  the session, and it keeps the CSP nonce and `NEXT_LOCALE` cookie on the redirect. It forwards
+  `x-pathname` for server components.
+- **`app/(app)/layout.tsx`** is the real check: no valid session means `redirect('/sign-in?next=')`.
+  The onboarding and last-workspace redirects arrive with workspaces (#18).
+- **`lib/safe-next.ts`** `safeNextPath(raw, fallback)` keeps only same-origin relative paths. It
+  rejects `//host`, `/\host`, backslashes, whitespace and control characters, and schemes.
+  `signInPathFor(path)` builds `/sign-in?next=`.
+- **`lib/safe-action.ts`** resolves `ctx.session` (`AuthSession | null`) through `getSession`, or
+  through `safeAction(schema, handler, { getSession })` in tests. It maps `UnauthenticatedError`
+  (thrown by the handler or by `requireSession()`) to `{ code: 'UNAUTHENTICATED' }` without
+  logging it.
+- **`/sign-in`** (`app/(public)/sign-in/`). The RSC page reads `next`, `error` and
+  `AUTH_GOOGLE_ENABLED`, and sends a signed-in visitor straight to `next`. The client components:
+  - Google (only when enabled);
+  - passkey (disabled with a reason without WebAuthn, plus conditional UI through
+    `autocomplete="username webauthn"` on the email field);
+  - the magic-link form;
+  - check-email (address, 10-minute expiry, resend after 30 s).
+
+  `?error=EXPIRED_TOKEN|INVALID_TOKEN|ATTEMPTS_EXCEEDED` shows the expired-link copy,
+  `?error=access_denied` shows "Access was not granted.", and any other code shows a generic error.
+  Offline is detected live from `navigator.onLine`. The Better Auth browser client
+  (`lib/auth-client.ts`) is loaded with `import()` on first use, so it stays out of first-load JS.
+  All copy is under `auth.*` in `messages/{en,ta,kn}.json`, together with the magic-link email
+  keys `auth.email.magicLink.*`.
+- **`app/(public)/invite/[token]`** is a placeholder until invitations land (#18).
 
 ## Flows
 
@@ -93,7 +129,7 @@ RP ID.
    `${APP_URL}/api/auth/callback/google`. The real credentials are tracked in #109.
 2. Set `AUTH_GOOGLE_ENABLED=true`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Env validation
    (#4) fails at boot if either credential is missing while the switch is on.
-3. With the switch off, `socialProviders` is empty and the UI (#153) shows no Google button.
+3. With the switch off, `socialProviders` is empty and `/sign-in` renders no Google button.
 
 ## Email
 
@@ -134,5 +170,6 @@ The client IP comes from `x-forwarded-for`, which must be set by our own proxy.
   random, held in httpOnly cookies, and deleted on sign-out.
 - **Dev sign-in** cannot ship: it is excluded from production bundles and answers 404 under
   production at runtime.
-- **Open redirects** on `next`/`callbackURL` are rejected by Better Auth's origin check. The app's
-  `?next=` handling is tested in #153.
+- **Open redirects** on `next`/`callbackURL` are rejected by Better Auth's origin check, and the
+  app only ever passes on a `?next=` that `safeNextPath` accepted (`apps/web/lib/safe-next.ts`,
+  tested in `apps/web/__tests__/safe-next.test.ts`).

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 const appDir = path.join(import.meta.dirname, '..');
 const repoRoot = path.join(appDir, '../..');
-const SKIP = new Set(['node_modules', '.next', '__tests__', '.turbo', 'coverage']);
+const SKIP = new Set(['node_modules', '.next', '.next-e2e', '__tests__', '.turbo', 'coverage']);
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

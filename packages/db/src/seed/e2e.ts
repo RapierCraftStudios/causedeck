@@ -1,0 +1,135 @@
+// The `e2e` seed profile (#16): two fictional workspaces, one user per role in each, with fixed
+// ids and timestamps so two seeds produce byte-identical rows. The Playwright fixtures import these
+// constants to sign in as a role (`asUser`). Every name is invented; emails use the reserved
+// `.test` TLD, so nothing here can reach a real person.
+import { member, organization, user, WORKSPACE_ROLES } from '../schema/auth.ts';
+
+import { registerSeed, type SeedDb } from './index.ts';
+
+export type E2eRole = (typeof WORKSPACE_ROLES)[number];
+
+/** Every row is stamped with this instant (no `now()` defaults). */
+export const E2E_SEED_TIME = new Date('2026-03-01T00:00:00+05:30');
+
+export const E2E_WORKSPACE_SLUGS = ['chennai-solo', 'bengaluru-chamber'] as const;
+export type E2eWorkspaceSlug = (typeof E2E_WORKSPACE_SLUGS)[number];
+
+export interface E2eWorkspace {
+  id: string;
+  slug: E2eWorkspaceSlug;
+  name: string;
+}
+
+export interface E2eUser {
+  id: string;
+  name: string;
+  email: string;
+  role: E2eRole;
+  workspace: E2eWorkspaceSlug;
+}
+
+export const E2E_WORKSPACES: Record<E2eWorkspaceSlug, E2eWorkspace> = {
+  'chennai-solo': {
+    id: '00000000-0000-4000-8000-00000000a001',
+    slug: 'chennai-solo',
+    name: 'Meenakshi Iyer Law Practice',
+  },
+  'bengaluru-chamber': {
+    id: '00000000-0000-4000-8000-00000000a002',
+    slug: 'bengaluru-chamber',
+    name: 'Hebbal Chambers',
+  },
+};
+
+const NAMES: Record<E2eWorkspaceSlug, Record<E2eRole, string>> = {
+  'chennai-solo': {
+    owner: 'Meenakshi Iyer',
+    advocate: 'Karthik Raman',
+    junior: 'Divya Sundaram',
+    clerk: 'Murugan Pillai',
+    viewer: 'Lakshmi Venkat',
+  },
+  'bengaluru-chamber': {
+    owner: 'Ananya Hegde',
+    advocate: 'Rohan Shetty',
+    junior: 'Priya Gowda',
+    clerk: 'Suresh Naik',
+    viewer: 'Kavya Rao',
+  },
+};
+
+/** `00000000-0000-4000-8000-0000000b0<ws><role>`: stable, readable in a SQL dump. */
+function userId(workspaceIndex: number, roleIndex: number): string {
+  return `00000000-0000-4000-8000-0000000b0${String(workspaceIndex + 1)}${String(roleIndex + 1).padStart(2, '0')}`;
+}
+
+function memberId(workspaceIndex: number, roleIndex: number): string {
+  return `00000000-0000-4000-8000-0000000c0${String(workspaceIndex + 1)}${String(roleIndex + 1).padStart(2, '0')}`;
+}
+
+/** `<role>@<workspace>.e2e.test`. */
+export function e2eEmail(workspace: E2eWorkspaceSlug, role: E2eRole): string {
+  return `${role}@${workspace}.e2e.test`;
+}
+
+export const E2E_USERS: readonly E2eUser[] = E2E_WORKSPACE_SLUGS.flatMap((slug, w) =>
+  WORKSPACE_ROLES.map((role, r) => ({
+    id: userId(w, r),
+    name: NAMES[slug][role],
+    email: e2eEmail(slug, role),
+    role,
+    workspace: slug,
+  })),
+);
+
+/** The seeded user holding `role` in `workspace`. */
+export function e2eUser(role: E2eRole, workspace: E2eWorkspaceSlug = 'chennai-solo'): E2eUser {
+  const found = E2E_USERS.find((u) => u.role === role && u.workspace === workspace);
+  if (!found) throw new Error(`no e2e user for ${role} in ${workspace}`);
+  return found;
+}
+
+export async function seedE2e(db: SeedDb): Promise<void> {
+  const at = E2E_SEED_TIME;
+  await db
+    .insert(organization)
+    .values(
+      Object.values(E2E_WORKSPACES).map((w) => ({
+        id: w.id,
+        name: w.name,
+        slug: w.slug,
+        createdAt: at,
+      })),
+    )
+    .onConflictDoNothing();
+  await db
+    .insert(user)
+    .values(
+      E2E_USERS.map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        emailVerified: true,
+        locale: 'en',
+        createdAt: at,
+        updatedAt: at,
+      })),
+    )
+    .onConflictDoNothing();
+  await db
+    .insert(member)
+    .values(
+      E2E_WORKSPACE_SLUGS.flatMap((slug, w) =>
+        WORKSPACE_ROLES.map((role, r) => ({
+          id: memberId(w, r),
+          organizationId: E2E_WORKSPACES[slug].id,
+          userId: userId(w, r),
+          role,
+          createdAt: at,
+        })),
+      ),
+    )
+    .onConflictDoNothing();
+}
+
+registerSeed({ name: 'e2e-workspaces', profiles: ['e2e'], order: 10, run: seedE2e });

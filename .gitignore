@@ -10,6 +10,7 @@ forge.yaml.bak
 
 # Build, cache and test output
 .next/
+.next-e2e/
 out/
 dist/
 .turbo/
@@ -17,6 +18,9 @@ coverage/
 reports/
 playwright-report/
 test-results/
+blob-report/
+.lighthouseci/
+e2e/.auth/
 storybook-static/
 *.tsbuildinfo
 

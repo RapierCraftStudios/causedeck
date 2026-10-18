@@ -18,6 +18,16 @@ export function analyzeBundle(): boolean {
 }
 
 /**
+ * `E2E_BUILD=1 NODE_ENV=development next build`: the e2e harness build (#16). Next.js otherwise
+ * inlines `NODE_ENV` as `'production'`, which strips the dev sign-in provider the fixtures drive.
+ * Never set for deploys; real production builds are unaffected.
+ */
+export function e2eBuild(): boolean {
+  // eslint-disable-next-line no-process-env -- build-time tooling flag, not app configuration.
+  return process.env.E2E_BUILD === '1';
+}
+
+/**
  * `APP_URL` for next.config (Server Actions `allowedOrigins`). Read without validating the whole
  * server env, because `next build` must not need runtime secrets; runtime code uses `serverEnv()`.
  */

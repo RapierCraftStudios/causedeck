@@ -20,10 +20,17 @@ export function countJunitTests(xml) {
   return tests ? Number(tests[1]) : 0;
 }
 
+/**
+ * Workspaces whose `test` script is not a unit suite: `@causedeck/e2e` is Playwright, skipped under
+ * Turborepo (see e2e/playwright.config.ts) and run by the e2e workflow instead.
+ */
+export const NOT_UNIT_TESTED = new Set(['@causedeck/e2e']);
+
 /** Workspaces whose `test` task Turborepo would run, from `turbo run test --dry=json` output. */
 export function testedPackages(dryRun) {
   return dryRun.tasks
     .filter((task) => task.task === 'test' && task.command !== '<NONEXISTENT>')
+    .filter((task) => !NOT_UNIT_TESTED.has(task.package))
     .map((task) => ({ name: task.package, directory: task.directory }));
 }
 

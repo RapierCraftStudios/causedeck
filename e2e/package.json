@@ -2,11 +2,26 @@
   "name": "@causedeck/e2e",
   "version": "0.0.0",
   "private": true,
-  "description": "Playwright suites (product + site) arrive in #16.",
+  "description": "Playwright end-to-end, accessibility and visual suites for apps/web, plus Lighthouse CI.",
   "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node support/playwright.mjs",
+    "test:ui": "node support/playwright.mjs --ui",
+    "test:visual": "node support/playwright.mjs --grep @visual",
+    "test:update-snapshots": "node support/playwright.mjs --grep @visual --update-snapshots",
+    "lhci": "lhci autorun --config=lighthouserc.json"
+  },
   "devDependencies": {
+    "@axe-core/playwright": "catalog:",
     "@causedeck/config": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "@lhci/cli": "catalog:",
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
+    "postgres": "catalog:",
     "typescript": "catalog:"
   }
 }

@@ -24,16 +24,19 @@ Each job is matrix-free, runs on `ubuntu-latest` with `timeout-minutes: 15`, and
 | `test` | Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports` artifact (`coverage/` and `reports/junit.xml` per package) |
 | `build` | `turbo run build` |
 
-## Tiers (D-044)
+## Tiers (D-044, loosened by D-045)
 
-CI runs in two tiers so lane PRs stay fast and the expensive suites run once per milestone.
+CI runs in tiers so lane PRs stay fast, ship PRs carry one heavy gate, and the slow suites only report.
 
 | Tier | When | Jobs |
 | --- | --- | --- |
 | **Fast** (every PR) | Every pull request, including lane PRs into `milestone/*` | `lint` (format, ADR, docs links, affected lint), `typecheck`, `test`, `build` — change-aware via `infra/scripts/ci-affected.sh`; `audit`, `gitleaks`; `storybook` build + interaction/axe tests when `packages/ui` changes (path filter); `actionlint` when `.github/` changes |
-| **Full** | Ship PRs into `staging` or `main`, pushes to `staging`/`main`, the nightly schedule, manual dispatch, or any PR labelled `full-ci` | Everything in Fast, plus `e2e` (2 shards), `lighthouse`, `visual` (Storybook visual regression) |
+| **Ship** | Ship PRs into `staging` or `main`, pushes to `main`, or any PR labelled `full-ci` | Everything in Fast, plus `e2e` (2 shards): the one heavy merge gate |
+| **Report-only** | Nightly schedule, manual dispatch, or a PR labelled `full-ci`; `continue-on-error`, never blocks a merge | `lighthouse` (perf/a11y budgets), `visual` (Storybook visual regression, 4 shards) |
 
 - Pushes to `milestone/**` no longer trigger workflows: every change there arrives through a PR that already ran CI (this removed the duplicate push + PR runs).
+- Pushes to `staging` no longer re-run e2e: the ship PR already ran it.
+- Visual baselines are regenerated on demand (`visual:update` label), not on every ship.
 - To run the full suite on a lane PR, add the `full-ci` label; other label events do not re-run anything.
 - `codeql` and `dependency-review` stay opt-in behind `ENABLE_GHAS` (D-043).
 

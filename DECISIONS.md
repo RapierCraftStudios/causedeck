@@ -344,3 +344,9 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 ### D-042 — The court-day change freeze applies to production only
 - **Date:** 2026-10-18 · **Status:** Accepted (founder)
 - **Decision:** The 18:00–23:00 and 07:00–10:30 IST freeze (spike §3.1, D-037) applies to **production** deploys. Shipping a milestone into `staging` during the build phase is not frozen. Revisit when staging hosts real pilot users.
+
+### D-045 — Sweet-spot CI: one heavy ship gate, slow suites report nightly
+- **Date:** 2026-10-19 · **Status:** Accepted (founder: "sweet spot CI, not luxury"). Supersedes the Full tier of D-044.
+- **Decision:** Lane PRs run the fast tier only. Ship PRs (into `staging`/`main`) add `e2e` (2 shards) as the single heavy gate. `lighthouse` and Storybook `visual` move to nightly + manual + `full-ci` label, with `continue-on-error` (report-only). Pushes to `staging` no longer re-run e2e. The milestone chain stops regenerating visual baselines on each ship.
+- **Why:** Lighthouse and the ~4,500-screenshot visual suite cost about 40–60 runner-minutes per ship and caused most red ship PRs without catching product defects.
+- **Revisit:** Once real pilot users are on staging, make `lighthouse` blocking again on `main` only.

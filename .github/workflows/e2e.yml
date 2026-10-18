@@ -15,7 +15,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
   push:
-    branches: [main, staging]
+    branches: [main]
   schedule:
     # 02:00 IST: the flake hunt (`@smoke` x5, no retries).
     - cron: '30 20 * * *'
@@ -86,7 +86,9 @@ jobs:
 
   lighthouse:
     name: lighthouse
-    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
+    # Report-only (D-045): nightly, manual dispatch, or a PR labelled full-ci. Not a ship gate.
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.update_snapshots) || (contains(github.event.pull_request.labels.*.name, 'full-ci') && github.event.label.name == 'full-ci') || (contains(github.event.pull_request.labels.*.name, 'full-ci') && github.event.action != 'labeled') }}
+    continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

@@ -13,6 +13,7 @@
 // duplicate tables or views. Every added column is nullable or defaulted so the organization plugin,
 // which only writes its own fields, keeps working. Workspace-only tables (`workspace_settings`,
 // `workspace_slug_history`) live in `workspace.ts`.
+import { LOCALES } from '@causedeck/i18n/locales';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -35,7 +36,8 @@ import { citext, id, timestamps, workspaceIndex } from '../columns.ts';
  */
 export const WORKSPACE_ROLES = ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const;
 
-export const LOCALES = ['en', 'ta', 'kn'] as const;
+/** UI locales, owned by `@causedeck/i18n`; re-exported for the `user_locale_chk` check. */
+export { LOCALES };
 
 /** A solo practice or a shared chamber with seats (#18). */
 export const WORKSPACE_KINDS = ['solo', 'chamber'] as const;

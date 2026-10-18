@@ -861,6 +861,9 @@ importers:
       '@causedeck/config':
         specifier: workspace:*
         version: link:../config
+      '@causedeck/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(kysely@0.29.6)(pg@8.23.1)(postgres@3.4.9)

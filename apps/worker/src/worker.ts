@@ -11,6 +11,7 @@ import {
 import type { Database } from '@causedeck/db';
 import type { Logger } from '@causedeck/observability';
 import { PgBoss, type ConstructorOptions, type Job, type JobResult } from 'pg-boss';
+import { GroupGate, fairnessGroupOf } from './fairness';
 
 /** `boss.stop()` waits this long for in-flight jobs before failing them back to the queue. */
 export const SHUTDOWN_TIMEOUT_MS = 30_000;
@@ -96,6 +97,8 @@ export function createWorker(options: CreateWorkerOptions): Worker {
       await boss.start();
       for (const def of registry.definitions) {
         await ensureQueue(boss, def);
+        // Exact per-process fairness cap; pg-boss groupConcurrency alone races across fetch loops.
+        const gate = new GroupGate(def.fairnessConcurrency);
         await boss.work(
           def.name,
           {
@@ -108,7 +111,9 @@ export function createWorker(options: CreateWorkerOptions): Worker {
           async (jobs: Job<unknown>[]) => {
             const results: JobResult[] = [];
             for (const job of jobs) {
-              results.push(toResult(job.id, await runJob(def, job, { db, logger })));
+              const run = () => runJob(def, job, { db, logger });
+              const outcome = await gate.run(fairnessGroupOf(job.data), run);
+              results.push(toResult(job.id, outcome));
             }
             return results;
           },

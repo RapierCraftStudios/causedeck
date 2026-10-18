@@ -49,7 +49,7 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Evidence:** The unauthorised-practice-of-law question is unsettled in India; Rule 37 bars advocates from lending their name to such services; privilege does not attach to AI chats ([04](research/raw/04-regulatory-ethics.md) §4).
 
 ### D-008 — Cross-platform via one TypeScript codebase; desktop = web/PWA first
-- **Date:** 2026-10-17 · **Status:** Proposed (confirm after tech research)
+- **Date:** 2026-10-17 · **Status:** **Superseded by D-036** (Next.js web/PWA-first full-stack monorepo; native mobile deferred)
 - **Decision:** Build on Expo (React Native) for Android, iOS and web. Desktop starts as an installable PWA served from the web build. A Tauri wrapper comes later, only if demand for offline desktop use is proven.
 - **Evidence:** See [06](research/raw/06-tech-stack-and-costs.md) §1. Android has ~94% share in India; consumer PC shipments are only ~7M/yr nationally, so laptops can't be assumed ([05b](research/raw/05b-workflows-deep-dive.md) §3).
 - **Update (2026-10-17, synthesis):** Status → **Accepted for Stage 0 spikes** (T5 perf test on a low-end Android device decides). iOS is TestFlight-only for the pilot.
@@ -88,7 +88,7 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Evidence:** Razorpay charges 2% + GST against Play's 15% ([06](research/raw/06-tech-stack-and-costs.md) §6). Validating WTP early (H7) matters more than billing automation.
 
 ### D-015 — Stage 0 gate before any production code
-- **Date:** 2026-10-17 · **Status:** Accepted
+- **Date:** 2026-10-17 · **Status:** **Superseded by D-041** (founder directs a full build in parallel with validation)
 - **Decision:** Only spikes T1–T5 and the repo scaffold are built before the end-of-week-4 gate. GO, GO-WITH-CHANGES or PIVOT is decided on the H1–H12 thresholds in [07](docs/validation/07-validation-plan.md).
 - **Update (2026-10-17, v0.2):** The gate moves to **end of week 5** so it covers E1 (baseline) → E2 (3-week concierge) → paid continuation. Spikes T6 (cause-list parse) and T7 (share intent) are added. The gate uses the v0.2 hypotheses (H-TIME1, H-ENTRY, H-CONV, H-WTP2 primary).
 - **Evidence:** There is no primary workflow or WTP evidence yet ([01](docs/strategy/01-research-report.md) §7).
@@ -293,3 +293,50 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
   - domain registration;
   - checks on handles (Play Store, social);
   - a gut-check with 10 lawyers in Chennai and Bengaluru.
+
+---
+
+## v1.0 build decisions (founder direction, 2026-10-18) — see [13 Technical spike](docs/engineering/13-technical-architecture-spike.md)
+
+### D-036 — Full-stack TypeScript monorepo, with a Next.js web/PWA product app
+- **Date:** 2026-10-18 · **Status:** Accepted
+- **Decision:**
+  - Monorepo: pnpm + Turborepo.
+  - `apps/web`: Next.js App Router, Node runtime. An installable PWA with a Web Share Target, which covers Android share-sheet capture.
+  - `apps/site`: Next.js static export on Cloudflare Pages.
+  - `apps/api`: Hono, with OpenAPI.
+  - `apps/worker`: pg-boss.
+  - `apps/admin`.
+  - Shared packages as listed in spike §2.
+  - Native mobile (Expo) is deferred, and the PWA is the mobile client.
+- **Supersedes:** D-008.
+
+### D-037 — Bootstrap deployment on an India VPS behind Cloudflare, with a designed scale path
+- **Date:** 2026-10-18 · **Status:** Accepted
+- **Decision:**
+  - **Stage A:**
+    - a single India VPS (DigitalOcean BLR1 or Lightsail ap-south-1) running Docker Compose, Caddy, Postgres + pgvector and MinIO;
+    - a second VPS for staging;
+    - the marketing site and static assets via Cloudflare Pages / CDN.
+  - **App and API DNS-only by default**, so TLS terminates in India and matter data never transits non-India edges (D-009, D-033).
+  - **Stage B:** RDS and S3 in ap-south-1, multiple app nodes.
+  - **Stage C:** ECS or k3s with autoscaled workers.
+  - The day-one rules in spike §3.2 keep the path open.
+
+### D-038 — Auth: Better Auth with Google OAuth, magic link, passkeys, and organisations as workspaces
+- **Date:** 2026-10-18 · **Status:** Accepted
+- **Decision:** Better Auth (Drizzle adapter). Its organization plugin maps to workspaces and roles. Owners get 2FA. Google client credentials are `needs-human`.
+
+### D-039 — Design system: Tailwind v4 + shadcn/ui in `packages/ui`, Storybook, visual regression, `/design` for hero surfaces
+- **Date:** 2026-10-18 · **Status:** Accepted
+- **Decision:** Tokens use OKLCH colour with light and dark themes. Fonts are an editorial serif plus Geist/Inter, with Noto Tamil/Kannada. Signature patterns are listed in spike §7. Quality gates are: Storybook for every component, Playwright visual baselines, axe, and Lighthouse ≥ 95. The marketing site and the hero product surfaces go through the ForgeDock `/design` pipeline.
+
+### D-040 — Credentials and legal inputs are `needs-human`; code never blocks on them
+- **Date:** 2026-10-18 · **Status:** Accepted
+- **Decision:** Every external integration ships with a mock or console provider and a typed env schema, so the build works without secrets. Human items (accounts, keys, counsel deliverables, court fixtures, Registry letters) are separate `needs-human` issues. ⚖-gated features (fees/invoices, limitation, inbound enquiries, client status links, A2 retrieval) are built behind feature flags and ship dark.
+
+### D-041 — Build the full product now, in parallel with validation
+- **Date:** 2026-10-18 · **Status:** Accepted (founder direction)
+- **Decision:** The founder directs that the full product is built, i.e. every PRD requirement tagged M, v1 and v2. The work runs as 10 milestones of ForgeDock-orchestrated issues, decomposed from the technical spike. Stage 0 validation ([07](docs/validation/07-validation-plan.md)) continues in parallel. Its findings come in as new issues or changes to the spike through ADRs.
+- **Supersedes:** D-015.
+- **Unchanged:** the permanent exclusions.

@@ -90,7 +90,7 @@ describe('RootLayout', () => {
 
     for (const latin of [
       'var-geist-latin-wght',
-      'var-newsreader-latin-opsz-wght',
+      'var-newsreader-latin-wght',
       'var-geist-mono-latin-wght',
     ]) {
       expect(en).toContain(latin);

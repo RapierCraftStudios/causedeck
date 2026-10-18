@@ -82,7 +82,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         <main
           id="main"
           tabIndex={-1}
-          className="motion-safe:animate-slide-in flex w-full flex-1 flex-col justify-center gap-8 py-10 outline-none motion-safe:[--motion-transform:translateY(8px)] md:max-w-[420px]"
+          className="motion-safe:animate-rise flex w-full flex-1 flex-col justify-center gap-8 py-10 outline-none motion-safe:[--motion-transform:translateY(8px)] md:max-w-[420px]"
         >
           <div className="flex flex-col gap-2">
             <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>

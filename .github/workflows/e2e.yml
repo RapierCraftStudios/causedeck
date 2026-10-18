@@ -135,6 +135,8 @@ jobs:
         with:
           name: lighthouse
           path: e2e/.lighthouseci
+          # upload-artifact skips dot-directories by default; without this the reports never upload.
+          include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14
 

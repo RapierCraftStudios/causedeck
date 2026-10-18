@@ -42,18 +42,25 @@ The product is a pnpm + Turborepo monorepo, specified by the [technical architec
 ### Prerequisites
 - **Node.js 22 LTS** (`.nvmrc`; `nvm use` picks it up).
 - **pnpm 10** (pinned in `package.json` `packageManager`; `corepack enable` installs it).
+- **Docker** with Compose v2, for the local services (`pnpm run doctor` checks all of these).
 - Git. `pnpm install` installs the Lefthook git hooks through the `prepare` script.
 
 ### Getting started
 ```sh
 pnpm i          # install all workspaces (uses the committed pnpm-lock.yaml)
 pnpm typecheck  # check that everything builds
+pnpm run doctor # check prerequisites and free ports (plain `pnpm doctor` is a pnpm built-in)
+pnpm dev        # start Postgres, MinIO and Mailpit, then the app dev servers
 ```
 
 ### Root scripts
 | Script | What it does |
 |---|---|
-| `pnpm dev` | Starts every workspace that defines a `dev` script (Turborepo, persistent, not cached). Until one exists it prints a message and exits cleanly. |
+| `pnpm dev` | `pnpm stack:up`, then starts every workspace that defines a `dev` script (Turborepo, persistent, not cached). Until one exists it prints a message and exits cleanly. |
+| `pnpm stack:up` | Starts the local Docker stack (Postgres 17 + pgvector, MinIO, Mailpit) from `infra/docker/compose.dev.yml`, waits until every service is healthy, creates the `causedeck-dev` bucket and prints the URLs. See [infra/docker/README.md](infra/docker/README.md). |
+| `pnpm stack:down` | Stops the stack and keeps its data volumes. |
+| `pnpm stack:reset` | Deletes the stack's volumes after typing `yes` (or `--yes`); `pnpm stack:up` then recreates everything. |
+| `pnpm run doctor` | (`run` is required; `pnpm doctor` is pnpm's own built-in.) Checks Node 22, pnpm 10, the Docker daemon and that ports 5432/9000/9001/1025/8025 are free, with a fix for each failure. |
 | `pnpm build` | `turbo run build`: builds the apps. Packages are just-in-time (their `exports` point at `src/*.ts`), so they have no build step. |
 | `pnpm lint` | `turbo run lint`: ESLint 9 flat config with type-checked rules and dependency-boundary rules. |
 | `pnpm typecheck` | `turbo run typecheck`: `tsc --noEmit` in every workspace. |
@@ -66,7 +73,7 @@ pnpm typecheck  # check that everything builds
 Run any task for one workspace with a filter, for example `pnpm --filter @causedeck/core test`.
 
 ### Layout
-Matches spike §2. Every workspace is named `@causedeck/<dir>`. CI workflows and `infra/scripts/` are described in [docs/engineering/ci.md](docs/engineering/ci.md); the rest of `infra/` and real app code arrive in later issues.
+Matches spike §2. Every workspace is named `@causedeck/<dir>`. CI workflows and `infra/scripts/` are described in [docs/engineering/ci.md](docs/engineering/ci.md); the local Docker stack is in [infra/docker/](infra/docker/README.md); the rest of `infra/` and real app code arrive in later issues.
 
 ```
 causedeck/
@@ -94,7 +101,7 @@ causedeck/
 │   ├── observability/# logger, OTel, Sentry wiring
 │   ├── validators/   # shared zod schemas (API + forms)
 │   └── config/       # eslint, tsconfig, prettier (tailwind preset and env schema arrive later)
-├── infra/            # scripts/ (CI helpers); docker, caddy, terraform, runbooks later
+├── infra/            # scripts/ (CI and dev-stack helpers), docker/ (compose.dev.yml); caddy, terraform, runbooks later
 ├── e2e/              # Playwright suites (product + site), visual baselines
 ├── .github/          # CODEOWNERS, PR template, workflows, setup action, Dependabot
 ├── docs/             # research, PRD, ADRs (docs/adr/)

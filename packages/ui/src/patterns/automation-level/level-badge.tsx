@@ -99,8 +99,8 @@ export interface LevelBadgeProps extends Omit<ComponentProps<'span'>, 'children'
 }
 
 const capsule = [
-  'inline-flex h-5 max-w-full shrink-0 items-center gap-1 rounded-full border bg-surface-raised',
-  'px-1.5 font-sans text-xs font-medium whitespace-nowrap text-ink-muted',
+  'inline-flex min-h-5 max-w-full shrink-0 items-center gap-1 rounded-full border bg-surface-raised',
+  'px-1.5 text-start font-sans text-xs font-medium text-ink-muted',
   'forced-colors:border-current',
 ].join(' ');
 
@@ -111,7 +111,7 @@ export function LevelBadge({ level, onLearnMore, labels, className, ...props }: 
   const content = (
     <>
       <LevelLadder level={level} />
-      <span className="min-w-0 truncate">{meta.label}</span>
+      <span className="min-w-0 wrap-break-word">{meta.label}</span>
     </>
   );
   const shared = {

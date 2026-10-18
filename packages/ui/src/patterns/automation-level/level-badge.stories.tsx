@@ -1,8 +1,9 @@
-// check-stories: n/a Loading, Invalid (a level is static metadata; it has no busy or invalid state)
+// check-stories: n/a Invalid (a level is static metadata; it has no invalid state)
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 
 import { PATTERN_INDIC } from '../__fixtures__/trust';
+import { PatternSkeleton } from '../states/loading-skeletons';
 import { LEVELS } from '../types';
 import { LevelBadge } from './level-badge';
 import { LevelLegend } from './level-legend';
@@ -124,4 +125,9 @@ export const Kannada: Story = {
 /** The legend lists every level with its meaning. */
 export const Legend: Story = {
   render: (args) => <LevelLegend className="max-w-sm" onLearnMore={args.onLearnMore} />,
+};
+
+/** The 20 px placeholder while the row it belongs to loads. */
+export const Loading: Story = {
+  render: () => <PatternSkeleton pattern="level-badge" />,
 };

@@ -313,7 +313,7 @@ export function ProposalCard<T>({
           />
         ) : null}
         <div className="flex min-w-0 flex-col gap-3">
-          <h3 id={titleId} className="text-ink font-serif text-lg leading-snug">
+          <h3 id={titleId} className="text-ink font-serif text-lg leading-snug wrap-break-word">
             {proposal.title}
           </h3>
           <p
@@ -322,7 +322,10 @@ export function ProposalCard<T>({
           >
             {proposal.before === undefined ? null : (
               <>
-                <del data-slot="proposal-before" className="text-ink-subtle line-through">
+                <del
+                  data-slot="proposal-before"
+                  className="text-ink-subtle min-w-0 wrap-anywhere line-through"
+                >
                   <span className="sr-only">{text.before}: </span>
                   {renderValue(proposal.before)}
                 </del>
@@ -331,7 +334,7 @@ export function ProposalCard<T>({
             )}
             <ins
               data-slot="proposal-after"
-              className="text-ink bg-accent-soft rounded-xs px-1 font-medium no-underline"
+              className="text-ink bg-accent-soft min-w-0 rounded-xs px-1 font-medium wrap-anywhere no-underline"
             >
               <span className="sr-only">{text.after}: </span>
               {renderValue(proposal.after)}

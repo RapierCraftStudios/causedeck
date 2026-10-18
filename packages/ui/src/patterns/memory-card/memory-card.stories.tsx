@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 
-import { MEMORIES, SOURCES } from '../__fixtures__/trust';
+import { MEMORIES, NOW, SOURCES } from '../__fixtures__/trust';
+import { OfflineBanner } from '../states/offline-banner';
 import { MEMORY_SCOPES } from '../types';
 import { MemoryCard, MemoryCardSkeleton } from './memory-card';
 
@@ -138,5 +139,22 @@ export const PermissionDenied: Story = {
   args: { viewOnly: true },
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByText('View only')).toBeInTheDocument();
+  },
+};
+
+/** Offline: the banner says when memory was saved; Confirm, Edit and Delete are disabled. */
+export const Offline: Story = {
+  args: { offline: true },
+  render: (args) => (
+    <div className="flex flex-col gap-3">
+      <OfflineBanner savedAt={NOW} />
+      <MemoryCard {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getByText(/^You are offline\. Showing saved data/),
+    ).toBeVisible();
+    await expect(button(canvasElement, /^Edit memory/)).toBeDisabled();
   },
 };

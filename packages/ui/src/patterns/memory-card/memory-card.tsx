@@ -102,7 +102,7 @@ export function MemoryCard({
           data-slot="memory-scope"
           title={meta.description}
           className={cn(
-            'border-line bg-surface-sunken text-ink-muted inline-flex h-5.5 shrink-0 items-center',
+            'border-line bg-surface-sunken text-ink-muted inline-flex min-h-5.5 max-w-full items-center',
             'gap-1 rounded-full border px-2 text-xs font-medium forced-colors:border-current',
           )}
         >
@@ -110,9 +110,9 @@ export function MemoryCard({
           <span aria-hidden="true">·</span>
           {scopeLabel ?? meta.label}
         </span>
-        <h3 className="text-ink min-w-0 truncate text-sm font-medium">{title}</h3>
+        <h3 className="text-ink min-w-0 text-sm font-medium wrap-break-word">{title}</h3>
       </header>
-      <p data-slot="memory-value" className="text-ink text-base break-words">
+      <p data-slot="memory-value" className="text-ink text-base wrap-anywhere">
         {value}
       </p>
       {error === undefined ? null : (

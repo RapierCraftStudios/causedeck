@@ -1,0 +1,74 @@
+import { Canvas, Meta } from '@storybook/addon-docs/blocks';
+
+import * as ActivityStories from './activity-item/activity-item.stories';
+import * as LevelStories from './automation-level/level-badge.stories';
+import * as ProposalStories from './proposal-card/proposal-card.stories';
+import * as ChipStories from './provenance-chip/provenance-chip.stories';
+
+<Meta title="Patterns/Trust model" />
+
+# Trust model
+
+Lawyer OS reads orders, cause lists and messages and turns them into facts. A lawyer can only
+rely on those facts if two things are always visible: **where each fact came from** (provenance)
+and **how far Lawyer OS acted on its own** (automation level). The patterns on these pages are how
+that trust model shows up on screen. They take plain props and callbacks and import nothing from
+`core`, `db` or the apps.
+
+## When to show provenance
+
+Show a Provenance Chip next to every fact Lawyer OS extracted, computed or imported: hearing dates,
+deadlines, stages, parties, amounts and memory items. A fact without a source cannot be rendered
+(`source` is required). Leave the chip out only for text the lawyer typed in that same view.
+
+The chip shows the source state at a glance:
+
+| Mark         | State       | Meaning                                                     |
+| ------------ | ----------- | ----------------------------------------------------------- |
+| Filled dot   | `confirmed` | The lawyer confirmed it, or it came from an exact source.   |
+| Hollow dot   | `proposed`  | Lawyer OS read it; it is waiting for the lawyer to confirm. |
+| Pencil       | `edited`    | The lawyer changed the extracted value.                     |
+| Pencil       | `manual`    | Entered by the lawyer (`kind: 'manual'`).                   |
+| Struck label | `rejected`  | The lawyer marked it wrong. It is kept for the audit trail. |
+
+A small amber dot beside the label means confidence is below the threshold, so check the source.
+
+<Canvas of={ChipStories.Default} />
+<Canvas of={ChipStories.Proposed} />
+<Canvas of={ChipStories.LowConfidence} />
+
+Opening the chip (hover or focus on desktop, tap on touch) shows the quoted passage with the matched
+words marked, the page and the confidence. Two actions are offered: `Open source` and `Report wrong`.
+
+<Canvas of={ChipStories.PopoverOpen} />
+
+## Automation levels
+
+Every change carries its level. The ladder glyph fills up to the level. There is **no L5**: Lawyer
+OS never sends, files or pays anything for the lawyer. Anything outward-facing is a draft, and
+`Share` is always done by the lawyer.
+
+| Level | Label                   | What Lawyer OS did                                            |
+| ----- | ----------------------- | ------------------------------------------------------------- |
+| L1    | Suggested               | Pointed something out. Nothing changes unless you act.        |
+| L2    | Needs your confirmation | Prepared a change that applies only after you confirm it.     |
+| L3    | Applied, undo available | Applied it inside your workspace. Undo stays open for 7 days. |
+| L4    | Draft for you to share  | Drafted something outward-facing. Only you can share it.      |
+
+<Canvas of={LevelStories.AllLevels} />
+<Canvas of={LevelStories.Legend} />
+
+## Putting it together
+
+A **Proposal Card** is an L2 change. It shows the before and after values, its source and a
+`Confirm` button. `Confirm all safe` appears only for proposals the caller marked `safe`, never
+automatically.
+
+<Canvas of={ProposalStories.Default} />
+
+An **Activity Item** records an L3 change after the fact, with its source, its level and Undo.
+
+<Canvas of={ActivityStories.Default} />
+
+See [Patterns/States guide](?path=/docs/patterns-states-guide--docs) for loading, error, offline and
+permission states.

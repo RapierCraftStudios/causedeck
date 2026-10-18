@@ -49,10 +49,13 @@ export const PROVENANCE_KIND_ICONS: Record<ProvenanceKind, LucideIcon> = {
   system: Cog,
 };
 
-/** The capsule: 24 px, sunken fill, hairline that turns brass and lifts 1 px on hover or focus. */
+/**
+ * The capsule: 24 px, sunken fill, hairline that turns brass and lifts 1 px on hover or focus. Long
+ * labels (Tamil, Kannada) wrap inside it instead of clipping, so the height is a minimum.
+ */
 export const provenanceChipClasses = [
-  'group/chip relative inline-flex h-6 max-w-full shrink-0 items-center gap-1.5 rounded-full',
-  'border border-line bg-surface-sunken px-2 font-sans text-xs font-medium text-ink-muted',
+  'group/chip relative inline-flex min-h-6 max-w-full shrink-0 items-center gap-1.5 rounded-full',
+  'border border-line bg-surface-sunken px-2 text-start font-sans text-xs font-medium text-ink-muted',
   'transition-[translate,border-color] duration-(--dur-fast) ease-standard',
   'hover:-translate-y-px hover:border-seal focus-visible:-translate-y-px focus-visible:border-seal',
   'data-[state=open]:border-seal',
@@ -192,7 +195,9 @@ export function ProvenanceChip({
     >
       <StateMark source={source} />
       <KindIcon aria-hidden="true" data-slot="provenance-kind-icon" data-icon={source.kind} />
-      <span className={cn('min-w-0 truncate', source.state === 'rejected' && 'line-through')}>
+      <span
+        className={cn('min-w-0 wrap-break-word', source.state === 'rejected' && 'line-through')}
+      >
         {label}
       </span>
       {showsConfidence(source) ? (

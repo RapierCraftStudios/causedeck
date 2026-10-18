@@ -89,7 +89,10 @@ export function HighlightedQuote({
     highlight.end > highlight.start &&
     highlight.end <= quote.length;
   return (
-    <blockquote data-slot="provenance-quote" className="text-md text-ink font-serif italic">
+    <blockquote
+      data-slot="provenance-quote"
+      className="text-md text-ink font-serif wrap-anywhere italic"
+    >
       {valid ? (
         <>
           {quote.slice(0, highlight.start)}
@@ -157,7 +160,11 @@ export function ProvenancePopoverBody({
     >
       <div className="text-ink flex items-center gap-2 font-medium">
         <FileText aria-hidden="true" className="text-ink-muted size-4 shrink-0" />
-        {renderTitle ? renderTitle(title) : <span className="min-w-0 truncate">{title}</span>}
+        {renderTitle ? (
+          renderTitle(title)
+        ) : (
+          <span className="min-w-0 wrap-break-word">{title}</span>
+        )}
       </div>
       {quote ? <HighlightedQuote quote={quote} highlight={anchor?.highlight} /> : null}
       <p data-slot="provenance-meta" className="text-ink-muted text-xs">

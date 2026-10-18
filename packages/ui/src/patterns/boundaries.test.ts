@@ -43,6 +43,22 @@ describe('patterns are domain-agnostic', () => {
     expect(specifiers(`import x from '@causedeck/core';`)).toEqual(['@causedeck/core']);
   });
 
+  it('covers the state screens (#145)', () => {
+    const states = files
+      .map((file) => path.relative(root, file))
+      .filter((f) => f.startsWith('states'));
+    expect(states).toEqual(
+      expect.arrayContaining([
+        path.join('states', 'empty-state.tsx'),
+        path.join('states', 'loading-skeletons.tsx'),
+        path.join('states', 'error-state.tsx'),
+        path.join('states', 'offline-banner.tsx'),
+        path.join('states', 'permission-denied.tsx'),
+        path.join('states', 'not-found.tsx'),
+      ]),
+    );
+  });
+
   it.each(files.map((file) => [path.relative(root, file), file]))(
     '%s imports nothing from core, db or apps',
     (_name, file) => {

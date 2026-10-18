@@ -3,6 +3,7 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 
 import { Toaster } from '../../components/sonner';
 import { ACTIVITIES, NOW, SOURCES } from '../__fixtures__/trust';
+import { OfflineBanner } from '../states/offline-banner';
 import { ActivityEmpty, ActivityItem, ActivityItemSkeleton } from './activity-item';
 
 const meta = {
@@ -184,4 +185,21 @@ export const PermissionDenied: Story = {
 
 export const Empty: Story = {
   render: () => <ActivityEmpty />,
+};
+
+/** Offline: the banner says when the timeline was saved; Undo is disabled with the reason. */
+export const Offline: Story = {
+  args: { offline: true },
+  render: (args) => (
+    <div className="flex flex-col gap-3">
+      <OfflineBanner savedAt={NOW} />
+      <ActivityItem {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getByText(/^You are offline\. Showing saved data from /),
+    ).toBeVisible();
+    await expect(undoOf(canvasElement)).toBeDisabled();
+  },
 };

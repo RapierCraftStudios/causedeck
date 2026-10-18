@@ -111,7 +111,8 @@ export function ActivityItem({
     <div
       data-slot="activity-item"
       data-undone={undone ? '' : undefined}
-      className={cn('relative flex gap-3 py-3 ps-1 font-sans', className)}
+      // Narrow screens: Undo wraps under the body (aligned with it) instead of squeezing the sentence.
+      className={cn('relative flex gap-3 py-3 ps-1 font-sans max-sm:flex-wrap', className)}
       {...props}
     >
       <span
@@ -193,7 +194,7 @@ export function ActivityItem({
         </span>
       ) : onUndo ? (
         <UndoButton
-          className="self-start"
+          className="self-start max-sm:basis-full max-sm:ps-11"
           performedAt={at}
           now={current}
           undone={undone}

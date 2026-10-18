@@ -71,6 +71,17 @@ describe('apps/web static guards', () => {
     }
   });
 
+  it('imports every token file but not the ui fonts.css, which would download each face twice', () => {
+    const globals = readFileSync(path.join(appDir, 'app/globals.css'), 'utf8');
+    const imports = [...globals.matchAll(/@import '([^']+)'/g)].map(([, spec]) => spec ?? '');
+    expect(imports.filter((spec) => /fonts\.css$|tokens(?:\/index)?\.css$/.test(spec))).toEqual([]);
+    const index = readFileSync(path.join(repoRoot, 'packages/ui/tokens/index.css'), 'utf8');
+    const tokenFiles = [...index.matchAll(/@import '\.\/([^']+)'/g)].map(([, file]) => file ?? '');
+    expect(imports.filter((spec) => spec.startsWith('@causedeck/ui/tokens/'))).toEqual(
+      tokenFiles.map((file) => `@causedeck/ui/tokens/${file}`),
+    );
+  });
+
   it("builds standalone output on Next.js's own config", () => {
     const config = readFileSync(path.join(appDir, 'next.config.ts'), 'utf8');
     expect(config).toMatch(/output:\s*'standalone'/);

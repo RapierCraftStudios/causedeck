@@ -1,5 +1,14 @@
 @import 'tailwindcss';
-@import '@causedeck/ui/tokens/index.css';
+/* The token files from @causedeck/ui/tokens/index.css, minus its fonts.css: next/font (app/fonts.ts)
+ * owns the @font-face rules. Family names match case-insensitively, so the ui 'Geist' faces would
+ * join next/font's `geist` family and the browser would download every Latin face twice. */
+@import '@causedeck/ui/tokens/primitives.css';
+@import '@causedeck/ui/tokens/semantic.css';
+@import '@causedeck/ui/tokens/typography.css';
+@import '@causedeck/ui/tokens/spacing-radius-shadow.css';
+@import '@causedeck/ui/tokens/motion.css';
+@import '@causedeck/ui/tokens/z-index.css';
+@import '@causedeck/ui/tokens/base.css';
 @import '@causedeck/config/tailwind/preset.css';
 
 /* Compile utilities used inside @causedeck/ui components and patterns. */

@@ -1,7 +1,10 @@
 // Self-hosted fonts from @causedeck/ui (packages/ui/fonts, SIL OFL 1.1) via next/font/local, so no
 // request ever leaves for Google Fonts. next/font needs file paths relative to this module.
-// The Latin faces are preloaded on every page; the Tamil and Kannada faces are never preloaded and
-// are only wired into the font stacks (globals.css) when the locale is `ta` or `kn`.
+// Only Geist (the interface face) is preloaded. Newsreader and Geist Mono load when a page uses them:
+// next/font preloads every file of a family, and the unused italic plus mono cost the mobile /sign-in
+// Lighthouse budget about 120 KB on the critical path. The size-adjusted fallbacks keep the swap
+// from shifting layout. The Tamil and Kannada faces are only wired into the font stacks
+// (globals.css) when the locale is `ta` or `kn`.
 import localFont from 'next/font/local';
 
 import type { Locale } from '../i18n/routing.ts';
@@ -21,6 +24,7 @@ const newsreader = localFont({
   ],
   weight: '400 600',
   display: 'swap',
+  preload: false,
   variable: '--font-newsreader',
   fallback: ['Georgia', 'serif'],
 });
@@ -29,6 +33,7 @@ const geistMono = localFont({
   src: '../../../packages/ui/fonts/geist-mono-latin-wght.woff2',
   weight: '400 600',
   display: 'swap',
+  preload: false,
   variable: '--font-geist-mono',
   fallback: ['ui-monospace', 'monospace'],
 });

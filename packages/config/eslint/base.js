@@ -44,6 +44,8 @@ export const CLIENT_FILE_GLOBS = [
 export const PROCESS_ENV_ALLOWED_GLOBS = [
   '**/packages/config/src/env/**',
   '**/packages/config/scripts/**',
+  // CI tooling (#3) reads runner variables such as TURBO_FILTER, not app configuration.
+  'infra/scripts/**',
 ];
 
 export const ignores = {

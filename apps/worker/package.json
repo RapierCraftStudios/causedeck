@@ -8,7 +8,7 @@
     "build": "node -e \"console.log('@causedeck/worker: nothing to build yet; app code arrives in a later issue')\"",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",

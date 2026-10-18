@@ -7,12 +7,13 @@ import { useTranslations } from 'next-intl';
 import type { WorkspaceContext } from '../../lib/workspace-context.ts';
 
 import { Breadcrumbs } from './breadcrumbs.tsx';
+import { useCommandPalette } from './use-command-palette.ts';
 import { UserMenu } from './user-menu.tsx';
 import { WorkspaceSwitcher } from './workspace-switcher.tsx';
 
 export interface TopbarProps {
   context: WorkspaceContext;
-  /** Opens search. TODO(#156): wired to the command palette; a no-op until then. */
+  /** Called when the search button opens the command palette. */
   onSearch?: (() => void) | undefined;
 }
 
@@ -22,6 +23,7 @@ export interface TopbarProps {
  */
 export function Topbar({ context, onSearch }: TopbarProps) {
   const t = useTranslations('shell.topbar');
+  const { open, setOpen, Palette } = useCommandPalette();
   return (
     <header className="bg-surface/95 border-line z-sticky sticky top-0 flex h-[52px] shrink-0 items-center gap-2 border-b px-4 md:h-14 md:px-6">
       <div className="flex min-w-0 flex-1 items-center md:hidden">
@@ -38,7 +40,11 @@ export function Topbar({ context, onSearch }: TopbarProps) {
         type="button"
         data-shell-search=""
         aria-label={t('searchHint')}
-        onClick={onSearch}
+        aria-haspopup="dialog"
+        onClick={() => {
+          setOpen(true);
+          onSearch?.();
+        }}
         className="text-ink-muted hover:text-ink border-line-control bg-surface-raised focus-visible:outline-ring flex size-11 shrink-0 items-center justify-center gap-2 rounded-md outline-none focus-visible:outline-2 md:h-9 md:w-64 md:justify-start md:border md:px-2.5"
       >
         <Search aria-hidden="true" className="size-4 shrink-0" />
@@ -46,6 +52,14 @@ export function Topbar({ context, onSearch }: TopbarProps) {
         <Kbd hotkey="mod+k" className="hidden md:inline-flex" />
       </button>
       <UserMenu user={context.user} role={context.role} slug={context.workspace.slug} />
+      {Palette ? (
+        <Palette
+          open={open}
+          onOpenChange={setOpen}
+          slug={context.workspace.slug}
+          role={context.role}
+        />
+      ) : null}
     </header>
   );
 }

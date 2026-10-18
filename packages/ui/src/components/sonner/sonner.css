@@ -1,0 +1,47 @@
+/* Toast motion: slide 8 px and fade over --dur-base (200 ms). Sonner's own stylesheet slides the
+ * full toast height over 400 ms; these rules (scoped to .cd-toaster, one selector more specific
+ * than sonner's) shorten both. Stacking and swipe transforms stay sonner's. --dur-base collapses
+ * to 0.01ms under reduced motion, and the media query below removes the transitions entirely. */
+/* Sonner hard-codes a huge z-index; use the stacking token. */
+.cd-toaster[data-sonner-toaster] {
+  z-index: var(--z-toast);
+}
+
+.cd-toaster [data-sonner-toast],
+.cd-toaster [data-sonner-toast] > * {
+  transition-duration: var(--dur-base);
+}
+
+.cd-toaster [data-sonner-toast]:not([data-mounted='true'])[data-y-position='bottom'] {
+  --y: translateY(8px);
+}
+
+.cd-toaster [data-sonner-toast]:not([data-mounted='true'])[data-y-position='top'] {
+  --y: translateY(-8px);
+}
+
+.cd-toaster [data-sonner-toast][data-removed='true'][data-front='true'][data-swipe-out='false'] {
+  --y: translateY(calc(var(--lift) * -8px));
+}
+
+.cd-toaster
+  [data-sonner-toast][data-removed='true'][data-front='false'][data-swipe-out='false'][data-expanded='false'] {
+  transition-duration: var(--dur-base);
+}
+
+/* Toasts past the visible limit (3) are faded out by sonner; also take them out of the
+ * accessibility tree and the tab order. */
+.cd-toaster [data-sonner-toast][data-visible='false'] {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-toaster [data-sonner-toast],
+  .cd-toaster [data-sonner-toast] > * {
+    transition: none;
+  }
+
+  .cd-toaster [data-sonner-toast]:not([data-mounted='true']) {
+    --y: translateY(0);
+  }
+}

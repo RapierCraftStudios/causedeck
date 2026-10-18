@@ -23,9 +23,33 @@ describe('bundle check', () => {
   });
 
   it('gives every component a subpath export', () => {
-    for (const name of ['button', 'spinner', 'kbd']) {
+    for (const name of [
+      'button',
+      'spinner',
+      'kbd',
+      'alert',
+      'avatar',
+      'badge',
+      'card',
+      'chart',
+      'empty-state',
+      'icon-button',
+      'progress',
+      'resizable',
+      'scroll-area',
+      'separator',
+      'skeleton',
+      'sonner',
+    ]) {
       expect(pkg.exports[`./${name}`]).toBe(`./src/components/${name}/index.ts`);
     }
+  });
+
+  it('budgets every component subpath export', () => {
+    const components = Object.keys(pkg.exports).filter((key) =>
+      pkg.exports[key]?.startsWith('./src/components/'),
+    );
+    expect(Object.keys(BUDGETS).sort()).toEqual(components.sort());
   });
 
   it('keeps @causedeck/ui/button within 6 KB gzip', async () => {

@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case -- issue #7 fixes the tests under tokens/__tests__/. */
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';

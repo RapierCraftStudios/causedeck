@@ -19,7 +19,7 @@ Each job is matrix-free, runs on `ubuntu-latest` with `timeout-minutes: 15`, and
 
 | Job | Runs |
 |---|---|
-| `lint` | `pnpm format:check`, then ESLint (`turbo run lint`) |
+| `lint` | `pnpm format:check`, then the ADR checks (`pnpm adr:lint`, `pnpm adr:test`, `pnpm docs:links`; see [docs/adr](../adr/README.md)), then ESLint (`turbo run lint`), then `docker compose -f infra/docker/compose.dev.yml config -q` (dev stack definition, #5) |
 | `typecheck` | `tsc --noEmit` (`turbo run typecheck`) |
 | `test` | Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports` artifact (`coverage/` and `reports/junit.xml` per package) |
 | `build` | `turbo run build` |
@@ -57,7 +57,7 @@ The resolved filter is exported as `TURBO_FILTER` (and written to `$GITHUB_ENV`)
 
 `infra/scripts/check-test-reports.mjs` asks turbo which workspaces ran `test` (same `TURBO_FILTER`) and fails if any of them has no `reports/junit.xml` or reports zero tests. This catches suites that are skipped silently, for example a broken `include` glob. Do not use `--passWithNoTests`; give a new workspace at least a smoke test. Workspaces without a `test` script (`e2e` until #16) are skipped.
 
-Unit tests for the CI scripts: `pnpm test:ci-scripts` (`node --test infra/scripts/`).
+Unit tests for the CI scripts: `pnpm test:ci-scripts` (`node --test` over `infra/scripts/*.test.mjs` and `*.test.ts`, the latter with Node's type stripping).
 
 ## Security workflow
 

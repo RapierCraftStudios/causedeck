@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case -- issue #7 fixes the tests under tokens/__tests__/. */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 

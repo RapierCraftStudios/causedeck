@@ -1,0 +1,48 @@
+# Architecture decision records
+
+This directory is the numbered log of CauseDeck's architecture decisions. The [technical architecture spike](../engineering/13-technical-architecture-spike.md) is the build contract. It changes only through an ADR here, so later work cites an ADR number instead of editing the spike.
+
+ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §3, §6, §7, §10) and in [DECISIONS.md](../../DECISIONS.md) D-036 to D-041. They add no new decisions.
+
+## Index
+
+| ADR | Title | Status | Date | Supersedes |
+| --- | ----- | ------ | ---- | ---------- |
+| [0001](0001-monorepo-pnpm-turborepo.md) | Monorepo with pnpm workspaces and Turborepo | Accepted | 2026-10-18 | — |
+| [0002](0002-nextjs-app-router-node-runtime-india-residency.md) | Next.js App Router on the Node runtime with India data residency | Accepted | 2026-10-18 | — |
+| [0003](0003-postgres-17-pgvector-drizzle-rls-multitenancy.md) | PostgreSQL 17 with pgvector, Drizzle and RLS multi-tenancy | Accepted | 2026-10-18 | — |
+| [0004](0004-better-auth-and-organization-as-workspace.md) | Better Auth with the organization plugin as workspaces | Accepted | 2026-10-18 | — |
+| [0005](0005-pg-boss-job-queue-no-redis.md) | pg-boss job queue on Postgres, no Redis | Accepted | 2026-10-18 | — |
+| [0006](0006-s3-abstraction-minio-to-s3-and-envelope-encryption.md) | S3-compatible storage from MinIO to S3, with envelope encryption | Accepted | 2026-10-18 | — |
+| [0007](0007-ai-gateway-india-only-mode-no-training-no-tools.md) | AI gateway with India-only mode, no training and no tools | Accepted | 2026-10-18 | — |
+| [0008](0008-design-system-tailwind4-shadcn-oklch-tokens.md) | Design system on Tailwind CSS v4, shadcn/ui and OKLCH tokens | Accepted | 2026-10-18 | — |
+| [0009](0009-offline-pwa-serwist-dexie-indexeddb.md) | Offline PWA with Serwist and Dexie on IndexedDB | Accepted | 2026-10-18 | — |
+| [0010](0010-feature-flags-db-backed-legal-gating-and-no-l5.md) | DB-backed feature flags, legal gating and no L5 actions | Accepted | 2026-10-18 | — |
+
+## Statuses
+
+| Status | Meaning |
+| ------ | ------- |
+| `proposed` | Open for review. Not yet binding. |
+| `accepted` | Binding. Implementation issues cite it. |
+| `superseded` | Replaced by a later ADR. Put that ADR's number in the later ADR's Supersedes column and link it from this ADR's Links section. |
+| `deprecated` | No longer applies, and nothing replaces it. |
+
+## Proposing an ADR
+
+1. Run `pnpm adr:new "Short decision title"`. It copies [the template](0000-template.md) to the next free number with Status `Proposed` and today's date, and adds a row to the index above.
+2. Fill in every section. Considered options is a table with at least two rejected alternatives. Revisit when lists concrete, observable triggers.
+3. Open a pull request. When it is approved, set Status to `Accepted` in both the ADR and the index row. If it replaces an earlier ADR, mark that one `Superseded` and fill in the Supersedes column.
+
+Authoring rules:
+
+- An ADR records one decision. It is concise and factual, about one page.
+- Never edit the decision of an accepted ADR. Write a new ADR that supersedes it.
+- If you find an inconsistency in the spike, do not resolve it silently. Open a new ADR with Status `Proposed` that flags it.
+
+## Checks
+
+- `pnpm adr:lint` checks numbering contiguity, file names, required sections, status and date, and that this index matches every ADR. CI runs it in the `lint` job.
+- `pnpm adr:test` runs the unit tests for the ADR scripts (`docs/adr/scripts`).
+- `pnpm docs:links` checks that relative links and anchors in `docs/adr` and the spike resolve.
+- `pnpm format:check` covers `docs/adr` with Prettier. The other documents in `docs/` are not reformatted.

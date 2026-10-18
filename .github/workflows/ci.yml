@@ -36,8 +36,16 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Prettier
         run: pnpm format:check
+      - name: ADR lint
+        run: pnpm adr:lint
+      - name: ADR script tests
+        run: pnpm adr:test
+      - name: Docs links
+        run: pnpm docs:links
       - name: ESLint
         run: bash infra/scripts/ci-affected.sh lint
+      - name: Validate dev compose file
+        run: docker compose -f infra/docker/compose.dev.yml config -q
 
   typecheck:
     name: typecheck

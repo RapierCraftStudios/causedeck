@@ -1,6 +1,7 @@
 # 13 — Technical Architecture Spike: CauseDeck Full-Stack Monorepo
 
 Version 1.0 · 2026-10-18 · Status: **Accepted for build** (D-036 to D-041) · Owner: engineering
+Architecture decision records: [docs/adr](../adr/README.md)
 Inputs:
 - [PRD v0.3](../product/03-prd.md)
 - [System architecture](../product/10-lawyer-os-system-architecture.md)

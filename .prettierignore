@@ -11,7 +11,10 @@ storybook-static/
 packages/config/eslint/__fixtures__/
 
 # Research and decision documents are reviewed as written; do not reformat them.
-docs/
+# ADRs (docs/adr) are the exception: they are formatted and checked.
+docs/*
+!docs/adr/
+docs/adr/scripts/__fixtures__/
 research/
 DECISIONS.md
 ASSUMPTIONS.md

@@ -18,5 +18,6 @@ export {
   type ConventionViolation,
 } from './conventions.ts';
 export { DatabaseConnectionError } from './redact.ts';
+export { isUuid, withWorkspace, type WorkspaceScope } from './rls.ts';
 export * as schema from './schema/index.ts';
 export { EMBEDDING_DIMENSIONS, embedding } from './vector.ts';

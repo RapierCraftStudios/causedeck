@@ -101,7 +101,14 @@ export function ShortcutsDialog({
           <DialogTitle>{text.title}</DialogTitle>
           <DialogDescription>{text.description}</DialogDescription>
         </DialogHeader>
-        <div className="-mx-1 flex max-h-[60dvh] flex-col gap-4 overflow-y-auto px-1">
+        {/* Focusable, so the list can be scrolled from the keyboard when it overflows. */}
+        <div
+          data-slot="shortcuts-list"
+          tabIndex={0}
+          role="region"
+          aria-label={text.title}
+          className="focus-visible:outline-ring -mx-1 flex max-h-[60dvh] flex-col gap-4 overflow-y-auto px-1 outline-none focus-visible:outline-2"
+        >
           {groupShortcuts(shortcuts).map(([group, items]) => (
             <ShortcutGroup key={group || 'ungrouped'} heading={group} mac={mac} then={text.then}>
               {items}

@@ -48,8 +48,10 @@ jobs:
           git --redact --verbose --exit-code 1 /repo
 
   # Code scanning on a private repository needs GitHub Advanced Security (docs/engineering/ci.md).
+  # Opt-in: set the repository variable ENABLE_GHAS=true once GHAS is enabled (D-043).
   codeql:
     name: codeql
+    if: ${{ vars.ENABLE_GHAS == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # actions: read lets the CodeQL action read this workflow run (private repositories).
@@ -69,9 +71,11 @@ jobs:
         with:
           category: /language:javascript-typescript
 
+  # Dependency review on a private repository needs GitHub Advanced Security. Opt-in via ENABLE_GHAS (D-043).
+  # `audit` (pnpm audit) and `gitleaks` above are the always-on free alternatives.
   dependency-review:
     name: dependency-review
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' && vars.ENABLE_GHAS == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

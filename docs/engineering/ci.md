@@ -66,7 +66,7 @@ Unit tests for the CI scripts: `pnpm test:ci-scripts` (`node --test` over `infra
 - `codeql`: `javascript-typescript`, `build-mode: none`. The only job with `security-events: write`.
 - `dependency-review`: PRs only, `fail-on-severity: high`.
 
-CodeQL result upload and dependency review require GitHub Advanced Security (Code Security) on a private repository. Until it is enabled those two jobs fail; `audit` and `gitleaks` work without it.
+CodeQL result upload and dependency review require GitHub Advanced Security (Code Security) on a private repository. Both jobs are therefore **opt-in**: they run only when the repository variable `ENABLE_GHAS` is `true` (D-043). Until then they are skipped, and `audit` (pnpm audit, high/critical) and `gitleaks` (secret scan of full history) are the always-on free alternatives.
 
 ## Security rules for workflows
 

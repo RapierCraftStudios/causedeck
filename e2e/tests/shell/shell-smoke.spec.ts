@@ -1,4 +1,4 @@
-// Smoke only: the full shell suites (navigation, palette, mobile nav) belong to #159.
+// Smoke only (also on WebKit): the full shell suites sit beside it in this folder (#159).
 import { E2E_WORKSPACE_SLUGS, expect, test, type E2eRole } from '../../fixtures/index.ts';
 
 const ROLES: E2eRole[] = ['owner', 'advocate', 'junior', 'clerk', 'viewer'];

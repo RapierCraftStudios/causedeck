@@ -40,6 +40,17 @@ describe('ShortcutsDialog', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('makes the shortcut list keyboard-scrollable (axe scrollable-region-focusable)', async () => {
+    render(<ShortcutsDialog shortcuts={SHORTCUTS} mac={false} />);
+    await userEvent.keyboard('?');
+    const dialog = screen.getByRole('dialog', { name: DEFAULT_SHORTCUTS_DIALOG_LABELS.title });
+    const list = dialog.querySelector<HTMLElement>('[data-slot="shortcuts-list"]');
+    expect(list).not.toBeNull();
+    expect(list).toHaveAttribute('tabindex', '0');
+    expect(list).toHaveAccessibleName(DEFAULT_SHORTCUTS_DIALOG_LABELS.title);
+    expect(list).toHaveClass('overflow-y-auto');
+  });
+
   it('ignores ? while typing in a field', async () => {
     render(
       <>

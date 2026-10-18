@@ -1,0 +1,54 @@
+/* Spacing (4 px grid), radius and elevation.
+ * Light elevation: soft two-layer shadows tinted by the ink hue. Dark elevation: a lighter
+ * surface step plus a 1 px top-edge highlight and hairline, never heavy blur. */
+:root {
+  --space-0: 0px;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-11: 44px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px; /* controls */
+  --radius-lg: 12px; /* cards */
+  --radius-xl: 16px; /* sheets */
+  --radius-full: 9999px;
+
+  /* Hairline-led, two layers, ink hue 262 at low alpha */
+  --shadow-1: 0 0 0 1px oklch(0.22 0.02 262 / 0.06), 0 1px 2px oklch(0.22 0.02 262 / 0.05);
+  --shadow-2: 0 0 0 1px oklch(0.22 0.02 262 / 0.05), 0 2px 6px -1px oklch(0.22 0.02 262 / 0.08);
+  --shadow-3: 0 0 0 1px oklch(0.22 0.02 262 / 0.06), 0 8px 24px -6px oklch(0.22 0.02 262 / 0.14);
+  --shadow-4: 0 0 0 1px oklch(0.22 0.02 262 / 0.06), 0 24px 48px -12px oklch(0.22 0.02 262 / 0.22);
+
+  /* Minimum touch hit target */
+  --hit: 44px;
+
+  /* A4 print margins for the Brief Sheet */
+  --print-margin: 18mm;
+}
+
+.dark,
+[data-theme='dark'] {
+  --shadow-highlight: inset 0 1px 0 oklch(1 0 0 / 0.04);
+  --shadow-1: var(--shadow-highlight), 0 0 0 1px oklch(1 0 0 / 0.06);
+  --shadow-2: var(--shadow-highlight), 0 0 0 1px oklch(1 0 0 / 0.08), 0 2px 6px oklch(0 0 0 / 0.3);
+  --shadow-3:
+    var(--shadow-highlight), 0 0 0 1px oklch(1 0 0 / 0.08), 0 8px 24px -6px oklch(0 0 0 / 0.5);
+  --shadow-4:
+    var(--shadow-highlight), 0 0 0 1px oklch(1 0 0 / 0.1), 0 24px 48px -12px oklch(0 0 0 / 0.6);
+}

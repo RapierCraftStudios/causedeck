@@ -1,0 +1,102 @@
+/* Self-hosted variable fonts (SIL OFL 1.1, see LICENSES.md). Relative URLs only: no request ever
+ * goes to Google Fonts or another origin. Critical Latin payload (Geist + Newsreader roman) is
+ * about 110 KB. Tamil and Kannada faces cover only their script blocks in unicode-range, so the
+ * browser downloads them only when the page contains Tamil or Kannada text. The rupee sign is in
+ * the Latin range on purpose: an INR amount must not pull in an Indic font. */
+
+/* Latin subset shared by Geist, Geist Mono and Newsreader */
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('./geist-latin-wght.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+20B9, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('./geist-mono-latin-wght.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+20B9, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('./newsreader-latin-opsz-wght.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+20B9, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('./newsreader-latin-opsz-wght-italic.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+20B9, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Indic: loaded only when Tamil or Kannada glyphs appear */
+
+@font-face {
+  font-family: 'Noto Sans Tamil';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('./noto-sans-tamil-wght.woff2') format('woff2');
+  unicode-range: U+0B82-0BFA, U+200C-200D, U+25CC;
+}
+
+@font-face {
+  font-family: 'Noto Sans Kannada';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('./noto-sans-kannada-wght.woff2') format('woff2');
+  unicode-range: U+0C80-0CF3, U+1CD0, U+1CD2-1CD3, U+1CDA, U+1CF2, U+1CF4, U+200C-200D, U+25CC;
+}
+
+/* Metric-matched fallbacks: local system faces scaled to the web fonts' metrics so the swap
+ * does not shift layout. Values come from each font's hhea metrics (ascent, descent, units per
+ * em) divided by size-adjust, where size-adjust matches average glyph width to the local face. */
+
+@font-face {
+  font-family: 'Geist Fallback';
+  src: local('Arial'), local('Helvetica'), local('Liberation Sans');
+  size-adjust: 104.76%;
+  ascent-override: 95.94%;
+  descent-override: 28.16%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Geist Mono Fallback';
+  src: local('Courier New'), local('Liberation Mono');
+  size-adjust: 100%;
+  ascent-override: 100.5%;
+  descent-override: 29.5%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Newsreader Fallback';
+  src: local('Georgia'), local('Times New Roman'), local('Liberation Serif');
+  size-adjust: 92%;
+  ascent-override: 79.89%;
+  descent-override: 28.8%;
+  line-gap-override: 0%;
+}

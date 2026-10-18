@@ -1,0 +1,150 @@
+/* Semantic colour roles. Components use only these, never primitives or literals.
+ * Light is the default (:root); dark is switched by class `dark` on <html> (next-themes
+ * `attribute="class"`), with [data-theme=dark] accepted for the same palette.
+ * Values start from the issue #7 specification; any value tuned for contrast is listed in
+ * TOKENS.md under "Tuned for contrast". Colour never carries meaning alone: pair with text or icon. */
+:root {
+  color-scheme: light;
+
+  /* Surfaces: warm paper, matte, no gradients */
+  --surface: oklch(0.985 0.004 85);
+  --surface-raised: oklch(0.998 0.002 85);
+  --surface-sunken: oklch(0.962 0.006 85);
+  --surface-overlay: oklch(1 0 0);
+
+  /* Ink */
+  --ink: oklch(0.22 0.02 262);
+  --ink-muted: oklch(0.46 0.018 262);
+  --ink-subtle: oklch(0.53 0.014 262);
+
+  /* Lines: hairlines are decorative; line-control bounds form controls (3:1) */
+  --line: oklch(0.915 0.008 85);
+  --line-strong: oklch(0.84 0.01 85);
+  --line-control: oklch(0.6 0.014 262);
+
+  /* The one accent: deep indigo */
+  --accent: oklch(0.46 0.15 266);
+  --accent-ink: oklch(0.99 0 0);
+  --accent-soft: oklch(0.95 0.025 266);
+
+  /* Seal: brass, for provenance and verified marks */
+  --seal: oklch(0.6 0.09 80);
+
+  /* Status */
+  --success: oklch(0.5 0.12 155);
+  --success-soft: oklch(0.95 0.04 155);
+  --warning: oklch(0.52 0.12 70);
+  --warning-soft: oklch(0.96 0.06 85);
+  --danger: oklch(0.52 0.19 25);
+  --danger-soft: oklch(0.955 0.03 25);
+  --info: oklch(0.5 0.1 235);
+  --info-soft: oklch(0.955 0.025 235);
+
+  --ring: oklch(0.55 0.17 266);
+
+  /* Proceeding stages: equal lightness, separated hues; always shown with the stage name */
+  --stage-filed: oklch(0.5 0.1 250);
+  --stage-filed-soft: oklch(0.95 0.03 250);
+  --stage-sr_fr: oklch(0.5 0.1 290);
+  --stage-sr_fr-soft: oklch(0.95 0.03 290);
+  --stage-defects: oklch(0.5 0.13 30);
+  --stage-defects-soft: oklch(0.95 0.03 30);
+  --stage-re_presented: oklch(0.5 0.1 340);
+  --stage-re_presented-soft: oklch(0.95 0.03 340);
+  --stage-numbered: oklch(0.5 0.08 200);
+  --stage-numbered-soft: oklch(0.95 0.03 200);
+  --stage-disposed: oklch(0.5 0.02 262);
+  --stage-disposed-soft: oklch(0.95 0.006 262);
+  --stage-listed: oklch(0.5 0.13 266);
+  --stage-listed-soft: oklch(0.95 0.03 266);
+  --stage-reserved: oklch(0.5 0.1 80);
+  --stage-reserved-soft: oklch(0.95 0.04 80);
+  --stage-part-heard: oklch(0.5 0.1 155);
+  --stage-part-heard-soft: oklch(0.95 0.03 155);
+
+  /* Automation levels: L1 neutral, L2 amber-leaning, L3 indigo, L4 brass */
+  --level-l1: oklch(0.56 0.014 262);
+  --level-l2: oklch(0.6 0.13 60);
+  --level-l3: oklch(0.5 0.15 266);
+  --level-l4: oklch(0.6 0.09 85);
+
+  /* Charts: lightness and hue both vary so every pair stays >= 12 CIEDE2000 apart under
+   protanopia, deuteranopia and tritanopia simulation (tokens/__tests__/contrast.test.ts) */
+  --chart-1: oklch(0.61 0.21 277);
+  --chart-2: oklch(0.65 0.14 70);
+  --chart-3: oklch(0.64 0.08 168);
+  --chart-4: oklch(0.46 0.18 30);
+  --chart-5: oklch(0.35 0.06 227);
+  --chart-6: oklch(0.57 0.11 336);
+  --chart-7: oklch(0.52 0.05 106);
+  --chart-8: oklch(0.14 0.02 271);
+}
+
+.dark,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces: ink-blue night, elevation by lightness step */
+  --surface: oklch(0.165 0.014 262);
+  --surface-raised: oklch(0.205 0.016 262);
+  --surface-sunken: oklch(0.135 0.012 262);
+  --surface-overlay: oklch(0.24 0.018 262);
+
+  --ink: oklch(0.95 0.006 85);
+  --ink-muted: oklch(0.74 0.014 262);
+  --ink-subtle: oklch(0.62 0.014 262);
+
+  --line: oklch(0.3 0.016 262);
+  --line-strong: oklch(0.4 0.02 262);
+  --line-control: oklch(0.54 0.02 262);
+
+  --accent: oklch(0.76 0.12 266);
+  --accent-ink: oklch(0.17 0.03 266);
+  --accent-soft: oklch(0.27 0.05 266);
+
+  --seal: oklch(0.8 0.09 82);
+
+  --success: oklch(0.78 0.13 155);
+  --success-soft: oklch(0.26 0.05 155);
+  --warning: oklch(0.82 0.13 80);
+  --warning-soft: oklch(0.28 0.06 80);
+  --danger: oklch(0.72 0.17 25);
+  --danger-soft: oklch(0.27 0.07 25);
+  --info: oklch(0.78 0.1 235);
+  --info-soft: oklch(0.26 0.045 235);
+
+  --ring: oklch(0.78 0.13 266);
+
+  --stage-filed: oklch(0.8 0.09 250);
+  --stage-filed-soft: oklch(0.27 0.045 250);
+  --stage-sr_fr: oklch(0.8 0.09 290);
+  --stage-sr_fr-soft: oklch(0.27 0.045 290);
+  --stage-defects: oklch(0.8 0.1 30);
+  --stage-defects-soft: oklch(0.27 0.05 30);
+  --stage-re_presented: oklch(0.8 0.09 340);
+  --stage-re_presented-soft: oklch(0.27 0.045 340);
+  --stage-numbered: oklch(0.8 0.08 200);
+  --stage-numbered-soft: oklch(0.27 0.04 200);
+  --stage-disposed: oklch(0.8 0.014 262);
+  --stage-disposed-soft: oklch(0.27 0.012 262);
+  --stage-listed: oklch(0.8 0.1 266);
+  --stage-listed-soft: oklch(0.27 0.05 266);
+  --stage-reserved: oklch(0.8 0.09 80);
+  --stage-reserved-soft: oklch(0.27 0.045 80);
+  --stage-part-heard: oklch(0.8 0.1 155);
+  --stage-part-heard-soft: oklch(0.27 0.045 155);
+
+  --level-l1: oklch(0.68 0.014 262);
+  --level-l2: oklch(0.78 0.13 60);
+  --level-l3: oklch(0.76 0.12 266);
+  --level-l4: oklch(0.8 0.09 85);
+
+  --chart-1: oklch(0.68 0.16 273);
+  --chart-2: oklch(0.77 0.15 78);
+  --chart-3: oklch(0.74 0.11 173);
+  --chart-4: oklch(0.56 0.18 18);
+  --chart-5: oklch(0.52 0.13 245);
+  --chart-6: oklch(0.88 0.1 331);
+  --chart-7: oklch(0.98 0.05 102);
+  --chart-8: oklch(0.56 0.02 256);
+}

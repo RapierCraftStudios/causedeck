@@ -8,24 +8,33 @@ minimumReleaseAge: 4320
 
 # Install scripts: esbuild (Vitest) and unrs-resolver (ESLint import resolution) may run theirs.
 # Lefthook's postinstall is skipped on purpose; the root `prepare` script installs the hooks.
+# @parcel/watcher (via @tailwindcss/cli) ships prebuilt platform packages, so its script is skipped.
 # `allowBuilds` is read by pnpm >= 10.26; the two lists cover older pnpm 10 releases.
 allowBuilds:
   esbuild: true
   unrs-resolver: true
   lefthook: false
+  '@parcel/watcher': false
 onlyBuiltDependencies:
   - esbuild
   - unrs-resolver
 ignoredBuiltDependencies:
   - lefthook
+  - '@parcel/watcher'
 
 catalog:
   '@commitlint/cli': 21.2.3
   '@commitlint/config-conventional': 21.2.3
   '@eslint/js': 9.39.5
+  '@tailwindcss/cli': 4.3.3
+  '@types/culori': 4.0.1
   '@types/node': 22.20.5
   '@types/react': 19.3.0
   '@vitest/coverage-v8': 3.2.7
+  apca-w3: 0.1.9
+  class-variance-authority: 0.7.1
+  clsx: 2.1.1
+  culori: 4.0.2
   eslint: 9.39.5
   eslint-import-resolver-typescript: 4.4.5
   eslint-plugin-boundaries: 5.4.0
@@ -35,10 +44,15 @@ catalog:
   globals: 17.13.0
   lefthook: 2.2.2
   next: 16.4.0
+  postcss: 8.5.30
   prettier: 3.9.10
   prettier-plugin-tailwindcss: 0.8.1
   react: 19.3.1
+  tailwind-merge: 3.7.0
+  tailwindcss: 4.3.3
+  tsx: 4.23.15
   turbo: 2.11.8
+  tw-animate-css: 1.4.0
   typescript: 5.9.3
   typescript-eslint: 8.71.2
   vitest: 3.2.7

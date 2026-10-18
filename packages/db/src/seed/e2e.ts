@@ -125,6 +125,7 @@ export async function seedE2e(db: SeedDb): Promise<void> {
           organizationId: E2E_WORKSPACES[slug].id,
           userId: userId(w, r),
           role,
+          joinedAt: at,
           createdAt: at,
         })),
       ),

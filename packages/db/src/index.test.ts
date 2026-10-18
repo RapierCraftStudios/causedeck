@@ -30,7 +30,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables and the Better Auth tables (#151)', () => {
+  it('creates the platform tables, the Better Auth tables (#151) and the workspace tables (#177)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -50,6 +50,8 @@ describe('@causedeck/db root entry point', () => {
       'two_factor',
       'user',
       'verification',
+      'workspace_settings',
+      'workspace_slug_history',
     ]);
   });
 

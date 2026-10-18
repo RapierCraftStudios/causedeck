@@ -18,6 +18,7 @@
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/observability": "workspace:*",
+    "@causedeck/validators": "workspace:*",
     "drizzle-orm": "catalog:",
     "pg-boss": "catalog:",
     "zod": "catalog:"

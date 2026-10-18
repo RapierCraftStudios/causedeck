@@ -4,16 +4,39 @@
   "private": true,
   "description": "Hono REST API (/v1), webhooks, OpenAPI docs.",
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "build": "node -e \"console.log('@causedeck/api: nothing to build yet; app code arrives in a later issue')\"",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsup",
+    "start": "tsx src/server.ts",
+    "openapi:export": "tsx scripts/export-openapi.ts",
+    "openapi:check": "tsx scripts/export-openapi.ts --check",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "devDependencies": {
+  "dependencies": {
+    "@causedeck/auth": "workspace:*",
     "@causedeck/config": "workspace:*",
+    "@causedeck/core": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "@causedeck/observability": "workspace:*",
+    "@causedeck/validators": "workspace:*",
+    "@hono/node-server": "catalog:",
+    "@hono/zod-openapi": "catalog:",
+    "@scalar/hono-api-reference": "catalog:",
+    "drizzle-orm": "catalog:",
+    "hono": "catalog:",
+    "tsx": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

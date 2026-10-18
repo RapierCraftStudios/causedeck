@@ -6,6 +6,7 @@
 // `user`, `session`, `account`, `verification`, `passkey`, `two_factor` and `rate_limit` are global
 // (see GLOBAL_TABLES). `organization` is the workspace; `member` and `invitation` are tenant tables
 // whose `organizationId` is stored as `workspace_id`, so RLS (#19) applies to them as to any other.
+import { LOCALES } from '@causedeck/i18n/locales';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -28,7 +29,8 @@ import { id, timestamps, workspaceIndex } from '../columns.ts';
  */
 export const WORKSPACE_ROLES = ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const;
 
-export const LOCALES = ['en', 'ta', 'kn'] as const;
+/** UI locales, owned by `@causedeck/i18n`; re-exported for the `user_locale_chk` check. */
+export { LOCALES };
 
 const inList = (values: readonly string[]) =>
   sql.raw(`(${values.map((v) => `'${v}'`).join(', ')})`);

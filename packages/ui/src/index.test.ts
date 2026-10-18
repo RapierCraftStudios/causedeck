@@ -155,6 +155,14 @@ describe('@causedeck/ui', () => {
       'STAGE_MAP',
       'PROCEEDING_STAGES',
       'LISTING_STAGES',
+      'ActivityItem',
+      'UndoButton',
+      'undoWindow',
+      'ObligationRow',
+      'CourtItemChip',
+      'MemoryCard',
+      'MEMORY_SCOPES',
+      'MEMORY_SCOPE_META',
     ]) {
       expect(ui, name).toHaveProperty(name);
       expect(patterns[name]).toBe((ui as Record<string, unknown>)[name]);

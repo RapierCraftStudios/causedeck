@@ -28,11 +28,30 @@ describe('bundle check', () => {
     })
       .filter((entry) => entry.isDirectory() && !entry.name.startsWith('_'))
       .map((entry) => entry.name);
-    expect(components).toEqual(expect.arrayContaining(['button', 'input', 'combobox', 'form']));
+    expect(components).toEqual(
+      expect.arrayContaining([
+        'button',
+        'spinner',
+        'kbd',
+        'alert',
+        'sonner',
+        'chart',
+        'input',
+        'combobox',
+        'form',
+      ]),
+    );
     for (const name of components) {
       expect(pkg.exports[`./${name}`]).toBe(`./src/components/${name}/index.ts`);
       expect(BUDGETS[`./${name}`], `budget for ./${name}`).toBeGreaterThan(0);
     }
+  });
+
+  it('budgets every component subpath export', () => {
+    const components = Object.keys(pkg.exports).filter((key) =>
+      pkg.exports[key]?.startsWith('./src/components/'),
+    );
+    expect(Object.keys(BUDGETS).sort()).toEqual(components.sort());
   });
 
   it('keeps @causedeck/ui/button within 6 KB gzip', async () => {

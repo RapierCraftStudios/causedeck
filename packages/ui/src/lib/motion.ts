@@ -36,7 +36,7 @@ const enter = (duration: number, curve: keyof typeof ease = 'enter'): Transition
   duration: seconds(duration),
   ease: ease[curve],
 });
-const leave = (duration: number = tokens.duration.fast): Transition => ({
+const leave = (duration: number = tokens.duration.exit): Transition => ({
   duration: seconds(duration),
   ease: ease.exit,
 });
@@ -62,6 +62,18 @@ export const scaleIn: MotionPreset = {
     hidden: { opacity: 0, scale: 0.98 },
     visible: { opacity: 1, scale: 1, transition: enter(tokens.duration.base, 'standard') },
     exit: { opacity: 0, scale: 0.98, transition: leave() },
+  },
+};
+
+/** Menus and popovers: fade in while dropping 4 px over 150 ms; close over 100 ms. */
+export const menu: MotionPreset = {
+  initial: 'hidden',
+  animate: 'visible',
+  exit: 'exit',
+  variants: {
+    hidden: { opacity: 0, y: -4 },
+    visible: { opacity: 1, y: 0, transition: enter(tokens.duration.fast) },
+    exit: { opacity: 0, y: -4, transition: leave() },
   },
 };
 
@@ -91,7 +103,7 @@ export const listLayout: MotionPreset = {
   },
 };
 
-export const motionPresets = { fadeUp, scaleIn, sheet, listLayout } as const;
+export const motionPresets = { fadeUp, scaleIn, menu, sheet, listLayout } as const;
 
 export type MotionPresetName = keyof typeof motionPresets;
 

@@ -224,7 +224,14 @@ describe('dark mode', () => {
 });
 
 describe('motion', () => {
-  const DURATIONS = { instant: '80ms', fast: '150ms', base: '200ms', slow: '250ms', page: '320ms' };
+  const DURATIONS = {
+    instant: '80ms',
+    exit: '100ms',
+    fast: '150ms',
+    base: '200ms',
+    slow: '250ms',
+    page: '320ms',
+  };
 
   it('defines the duration and easing tokens', () => {
     for (const [name, value] of Object.entries(DURATIONS)) {

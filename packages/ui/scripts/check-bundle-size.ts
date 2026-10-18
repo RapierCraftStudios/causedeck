@@ -16,11 +16,42 @@ import { build } from 'esbuild';
 
 const packageDir = path.join(import.meta.dirname, '..');
 
-/** gzip budgets in bytes, per subpath export. */
+const KB = 1024;
+
+/**
+ * gzip budgets in bytes, per subpath export. Simple components stay within 6 KB. Overlays and
+ * keyboard-navigable widgets carry Radix behaviour that cannot be trimmed: roving focus and
+ * collections (tabs, accordion), focus trap, dismissable layer and scroll lock (dialog, sheet),
+ * floating-ui positioning (popover, tooltip, menus), plus cmdk and vaul. An app pays each of those
+ * layers once however many components use them, so these budgets sit just above the measured cost
+ * and catch regressions rather than restate the 6 KB target.
+ */
 export const BUDGETS: Record<string, number> = {
-  './button': 6 * 1024,
-  './spinner': 6 * 1024,
-  './kbd': 6 * 1024,
+  './button': 6 * KB,
+  './spinner': 6 * KB,
+  './kbd': 6 * KB,
+  './breadcrumb': 6 * KB,
+  './collapsible': 6 * KB,
+  './pagination': 6 * KB,
+  // Roving focus and collection.
+  './accordion': 12 * KB,
+  './tabs': 12 * KB,
+  // Focus trap, dismissable layer, scroll lock.
+  './alert-dialog': 17 * KB,
+  './sheet': 19 * KB,
+  './dialog': 20 * KB,
+  './shortcuts-dialog': 22 * KB,
+  // Dialog plus cmdk; vaul.
+  './command': 25 * KB,
+  './drawer': 25 * KB,
+  // Floating-ui positioning.
+  './hover-card': 20 * KB,
+  './tooltip': 21 * KB,
+  './popover': 26 * KB,
+  // Menus: positioning, typeahead, submenus.
+  './context-menu': 36 * KB,
+  './dropdown-menu': 36 * KB,
+  './menubar': 37 * KB,
 };
 
 export const EXTERNAL = ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'];

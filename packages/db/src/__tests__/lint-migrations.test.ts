@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -8,6 +7,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 import { MIGRATIONS_FOLDER } from '../migrate.ts';
 import { lintMigrationSql, reviewHeader } from '../migration-lint.ts';
+import { runCli } from './run-cli.ts';
 
 const PACKAGE_DIR = fileURLToPath(new URL('../..', import.meta.url));
 const HEADER =
@@ -72,31 +72,28 @@ describe('lint-migrations CLI', () => {
     rmSync(dir, { recursive: true, force: true });
   });
   const run = (...args: string[]) =>
-    spawnSync('pnpm', ['exec', 'tsx', 'scripts/lint-migrations.ts', ...args], {
-      cwd: PACKAGE_DIR,
-      encoding: 'utf8',
-    });
+    runCli('pnpm', ['exec', 'tsx', 'scripts/lint-migrations.ts', ...args], PACKAGE_DIR);
 
-  it('passes the committed migrations', () => {
-    const result = run();
+  it('passes the committed migrations', async () => {
+    const result = await run();
     expect(result.status, result.stderr).toBe(0);
   });
 
-  it('fails a migration folder with an unapproved DROP TABLE', () => {
+  it('fails a migration folder with an unapproved DROP TABLE', async () => {
     writeFileSync(path.join(dir, '0001_drop.sql'), `${HEADER}DROP TABLE "matter";\n`);
-    const result = run('--dir', dir);
+    const result = await run('--dir', dir);
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('0001_drop.sql:3 destructive statement');
   });
 
-  it('--stamp adds the placeholder header, which then fails until reviewed', () => {
+  it('--stamp adds the placeholder header, which then fails until reviewed', async () => {
     const file = path.join(dir, '0002_new.sql');
     writeFileSync(file, 'CREATE TABLE "a" ("id" int);\n');
-    expect(run('--dir', dir, '--stamp').status).toBe(0);
+    expect((await run('--dir', dir, '--stamp')).status).toBe(0);
     expect(readFileSync(file, 'utf8')).toMatch(
       /^-- Migration 0002_new: .*\n-- Reviewed-by: <unreviewed>\nCREATE TABLE/,
     );
-    expect(run('--dir', dir).stderr).toContain(
+    expect((await run('--dir', dir)).stderr).toContain(
       '0002_new.sql:1 migration has not been reviewed yet',
     );
   });

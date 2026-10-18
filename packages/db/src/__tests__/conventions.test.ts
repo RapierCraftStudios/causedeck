@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { foreignKey, index, pgTable, text, unique, uuid } from 'drizzle-orm/pg-core';
@@ -7,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { id, workspaceId, workspaceIndex } from '../columns.ts';
 import { checkSchemaConventions, GLOBAL_TABLES, tablesOf } from '../conventions.ts';
 import * as schema from '../schema/index.ts';
+import { runCli } from './run-cli.ts';
 
 const PACKAGE_DIR = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -120,17 +120,18 @@ describe('checkSchemaConventions', () => {
 });
 
 describe('db:check CLI', () => {
-  it('passes on the committed schema and migrations', () => {
-    const run = spawnSync('pnpm', ['exec', 'tsx', 'scripts/check-schema-conventions.ts'], {
-      cwd: PACKAGE_DIR,
-      encoding: 'utf8',
-    });
+  it('passes on the committed schema and migrations', async () => {
+    const run = await runCli(
+      'pnpm',
+      ['exec', 'tsx', 'scripts/check-schema-conventions.ts'],
+      PACKAGE_DIR,
+    );
     expect(run.status, run.stderr).toBe(0);
     expect(run.stdout).toContain('table(s) OK');
   });
 
-  it('exits 1 and names each violation for a schema that breaks the conventions', () => {
-    const run = spawnSync(
+  it('exits 1 and names each violation for a schema that breaks the conventions', async () => {
+    const run = await runCli(
       'pnpm',
       [
         'exec',
@@ -139,7 +140,7 @@ describe('db:check CLI', () => {
         '--schema',
         'src/__tests__/fixtures/bad-schema.ts',
       ],
-      { cwd: PACKAGE_DIR, encoding: 'utf8' },
+      PACKAGE_DIR,
     );
     expect(run.status).toBe(1);
     expect(run.stderr).toContain('[workspace-index] matter needs an index');

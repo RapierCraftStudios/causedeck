@@ -10,14 +10,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlaceholderRoute } from '../components/shell/placeholder-page.tsx';
 import { WORKSPACE_ROUTES } from '../lib/nav.ts';
 import { setErrorReporter, type ErrorReporter } from '../lib/report-error.ts';
+import type { WorkspaceContextResult } from '../lib/workspace-context.ts';
 
 import { catalogs, fakeGetTranslations, type TestLocale } from './helpers/intl.ts';
 
 const state = vi.hoisted(
-  (): { locale: TestLocale; dev: boolean; cookies: Record<string, { value: string }> } => ({
+  (): {
+    locale: TestLocale;
+    dev: boolean;
+    cookies: Record<string, { value: string }>;
+    pathname: string;
+    noWorkspaces: boolean;
+  } => ({
     locale: 'en',
     dev: true,
     cookies: {},
+    pathname: '/w/demo/today',
+    noWorkspaces: false,
   }),
 );
 
@@ -37,7 +46,28 @@ vi.mock('next-intl/server', () => ({
 vi.mock('../lib/env.ts', () => ({ isDev: () => state.dev }));
 vi.mock('next/headers', () => ({
   cookies: () => Promise.resolve({ get: (name: string) => state.cookies[name] }),
+  headers: () => Promise.resolve(new Headers({ 'x-pathname': state.pathname })),
 }));
+// The loader reads the session and the database (#179); here it answers from the test fixture:
+// the user owns `demo`, is `clerk` of `clerk-desk`, `old-demo` is a renamed slug of `demo`.
+vi.mock('../lib/workspace-loader.ts', async () => {
+  const { testWorkspaceContext, TEST_MEMBERSHIPS } = await import('./helpers/workspace.ts');
+  const getWorkspaceResult = (slug: string): Promise<WorkspaceContextResult> => {
+    if (state.noWorkspaces) return Promise.resolve({ kind: 'no-workspaces' });
+    if (slug === 'old-demo') return Promise.resolve({ kind: 'redirect', slug: 'demo' });
+    const member = TEST_MEMBERSHIPS.some((m) => m.workspace.slug === slug);
+    return Promise.resolve(
+      member ? { kind: 'ok', context: testWorkspaceContext(slug) } : { kind: 'not-found' },
+    );
+  };
+  return {
+    getWorkspaceResult,
+    getWorkspaceContext: async (slug: string) => {
+      const result = await getWorkspaceResult(slug);
+      return result.kind === 'ok' ? result.context : null;
+    },
+  };
+});
 
 const { default: WorkspaceLayout } = await import('../app/(app)/w/[slug]/layout.tsx');
 const { default: WorkspaceError } = await import('../app/(app)/w/[slug]/error.tsx');
@@ -98,6 +128,8 @@ beforeEach(() => {
   state.locale = 'en';
   state.dev = true;
   state.cookies = {};
+  state.pathname = '/w/demo/today';
+  state.noWorkspaces = false;
   online = true;
   Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
   reporter = vi.fn<ErrorReporter>();
@@ -119,6 +151,20 @@ describe('workspace layout', () => {
       ).rejects.toThrow('NEXT_NOT_FOUND');
     }
     expect(children).not.toHaveBeenCalled();
+  });
+
+  it('redirects an old slug to the same page on the current slug', async () => {
+    state.pathname = '/w/old-demo/matters?stage=filed';
+    await expect(
+      WorkspaceLayout({ children: <p />, params: Promise.resolve({ slug: 'old-demo' }) }),
+    ).rejects.toThrow('NEXT_REDIRECT /w/demo/matters?stage=filed');
+  });
+
+  it('sends a user with no workspace to onboarding', async () => {
+    state.noWorkspaces = true;
+    await expect(
+      WorkspaceLayout({ children: <p />, params: Promise.resolve({ slug: 'demo' }) }),
+    ).rejects.toThrow('NEXT_REDIRECT /onboarding');
   });
 
   it('renders children inside main#main for a member', async () => {

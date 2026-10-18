@@ -67,6 +67,45 @@ function memberId(workspaceIndex: number, roleIndex: number): string {
   return `00000000-0000-4000-8000-0000000c0${String(workspaceIndex + 1)}${String(roleIndex + 1).padStart(2, '0')}`;
 }
 
+/**
+ * Memberships beyond one-user-per-role (#179): the `chennai-solo` owner is also a `clerk` of
+ * `bengaluru-chamber`, so the switcher and the workspace switch run against two real memberships.
+ * `E2E_USERS` is unchanged (global-setup mints one session per entry).
+ */
+export interface E2eExtraMembership {
+  id: string;
+  user: { role: E2eRole; workspace: E2eWorkspaceSlug };
+  workspace: E2eWorkspaceSlug;
+  role: E2eRole;
+}
+
+export const E2E_EXTRA_MEMBERSHIPS: readonly E2eExtraMembership[] = [
+  {
+    id: '00000000-0000-4000-8000-0000000c0901',
+    user: { role: 'owner', workspace: 'chennai-solo' },
+    workspace: 'bengaluru-chamber',
+    role: 'clerk',
+  },
+];
+
+/**
+ * A soft-deleted workspace (`deleted_at` set) the `chennai-solo` owner still owns: it must never
+ * appear in the switcher, and `/w/mysuru-archived/...` must 404 (hard deletion is #31).
+ */
+export const E2E_DELETED_WORKSPACE = {
+  id: '00000000-0000-4000-8000-00000000a009',
+  slug: 'mysuru-archived',
+  name: 'Mysuru Archived Practice',
+  memberId: '00000000-0000-4000-8000-0000000c0902',
+  owner: { role: 'owner', workspace: 'chennai-solo' },
+} as const satisfies {
+  id: string;
+  slug: string;
+  name: string;
+  memberId: string;
+  owner: { role: E2eRole; workspace: E2eWorkspaceSlug };
+};
+
 /** `<role>@<workspace>.e2e.test`. */
 export function e2eEmail(workspace: E2eWorkspaceSlug, role: E2eRole): string {
   return `${role}@${workspace}.e2e.test`;
@@ -130,6 +169,38 @@ export async function seedE2e(db: SeedDb): Promise<void> {
         })),
       ),
     )
+    .onConflictDoNothing();
+  await db
+    .insert(organization)
+    .values({
+      id: E2E_DELETED_WORKSPACE.id,
+      name: E2E_DELETED_WORKSPACE.name,
+      slug: E2E_DELETED_WORKSPACE.slug,
+      createdAt: at,
+      deletedAt: at,
+    })
+    .onConflictDoNothing();
+  const owner = E2E_DELETED_WORKSPACE.owner;
+  await db
+    .insert(member)
+    .values([
+      ...E2E_EXTRA_MEMBERSHIPS.map((m) => ({
+        id: m.id,
+        organizationId: E2E_WORKSPACES[m.workspace].id,
+        userId: e2eUser(m.user.role, m.user.workspace).id,
+        role: m.role,
+        joinedAt: at,
+        createdAt: at,
+      })),
+      {
+        id: E2E_DELETED_WORKSPACE.memberId,
+        organizationId: E2E_DELETED_WORKSPACE.id,
+        userId: e2eUser(owner.role, owner.workspace).id,
+        role: owner.role,
+        joinedAt: at,
+        createdAt: at,
+      },
+    ])
     .onConflictDoNothing();
 }
 

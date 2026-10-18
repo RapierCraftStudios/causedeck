@@ -4,7 +4,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createDb } from '../../client.ts';
 import { runMigrations } from '../../migrate.ts';
 import { createScratchDatabase, testDatabaseUrls } from '../../testing/index.ts';
-import { E2E_USERS, E2E_WORKSPACE_SLUGS, E2E_WORKSPACES } from '../e2e.ts';
+import {
+  E2E_DELETED_WORKSPACE,
+  E2E_EXTRA_MEMBERSHIPS,
+  E2E_USERS,
+  E2E_WORKSPACE_SLUGS,
+  E2E_WORKSPACES,
+  e2eUser,
+} from '../e2e.ts';
 import { registeredSeeds, seed } from '../index.ts';
 
 const cleanups: (() => Promise<void>)[] = [];
@@ -56,5 +63,32 @@ describe('e2e seed profile', () => {
     }
     for (const u of E2E_USERS) expect(u.email).toMatch(/^[a-z]+@[a-z-]+\.e2e\.test$/);
     expect(new Set(E2E_USERS.map((u) => u.id)).size).toBe(E2E_USERS.length);
+  });
+
+  it('puts the chennai-solo owner in two live workspaces and one soft-deleted one (#179)', async () => {
+    const dump = await seedAndDump('e2e_seed_memberships');
+    const owner = e2eUser('owner', 'chennai-solo');
+    const members = (dump.member ?? '')
+      .split('\n')
+      .map((row) => JSON.parse(row) as { workspace_id: string; user_id: string; role: string })
+      .filter((m) => m.user_id === owner.id)
+      .map((m) => [m.workspace_id, m.role])
+      .sort();
+    expect(members).toEqual(
+      [
+        [E2E_WORKSPACES['chennai-solo'].id, 'owner'],
+        [E2E_WORKSPACES['bengaluru-chamber'].id, 'clerk'],
+        [E2E_DELETED_WORKSPACE.id, 'owner'],
+      ].sort(),
+    );
+    expect(E2E_EXTRA_MEMBERSHIPS.map((m) => m.workspace)).toEqual(['bengaluru-chamber']);
+    const deleted = (dump.organization ?? '')
+      .split('\n')
+      .map((row) => JSON.parse(row) as { id: string; slug: string; deleted_at: string | null })
+      .find((w) => w.id === E2E_DELETED_WORKSPACE.id);
+    expect(deleted?.slug).toBe('mysuru-archived');
+    expect(deleted?.deleted_at).not.toBeNull();
+    // E2E_USERS (one storage state each in global-setup) is unchanged: 2 workspaces x 5 roles.
+    expect(E2E_USERS).toHaveLength(10);
   });
 });

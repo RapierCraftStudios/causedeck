@@ -2,11 +2,8 @@
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  getWorkspaceContext,
-  type Role,
-  type WorkspaceContext,
-} from '../../../lib/workspace-context.ts';
+import type { Role } from '../../../lib/workspace-context.ts';
+import { testWorkspaceContext } from '../../../__tests__/helpers/workspace.ts';
 
 import { mockMatchMedia, nextFrame, renderWithIntl, stubResizeObserver } from './helpers.tsx';
 
@@ -157,8 +154,8 @@ describe('sidebar navigation', () => {
 });
 
 describe('sidebar', () => {
-  it('shows the wordmark, the user with role and sync state', async () => {
-    const context = (await getWorkspaceContext('demo')) as WorkspaceContext;
+  it('shows the wordmark, the user with role and sync state', () => {
+    const context = testWorkspaceContext();
     renderWithIntl(
       <SidebarProvider initialState="expanded">
         <Sidebar context={context} />

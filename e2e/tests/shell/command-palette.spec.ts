@@ -2,7 +2,7 @@
 // closes on Esc and returns focus, `>` and `/` prefix modes, selecting navigates, recents.
 import { expect, test } from '../../fixtures/index.ts';
 
-import { openShell, palette } from './helpers.ts';
+import { openShell, palette, SHELL_WORKSPACE } from './helpers.ts';
 
 const MOD = process.platform === 'darwin' ? 'Meta' : 'Control';
 
@@ -78,7 +78,7 @@ test.describe('command palette', () => {
     await expect(palette(page).getByRole('option').first()).toHaveText(/Courts/);
     await page.keyboard.press('Enter');
     await expect(palette(page)).toBeHidden();
-    await expect(page).toHaveURL(/\/w\/demo\/courts$/);
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/courts$`));
 
     await page.keyboard.press(`${MOD}+k`);
     const recent = palette(page).locator('[data-palette-group="recent"]');

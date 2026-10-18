@@ -281,5 +281,36 @@
       "search": "Search this page",
       "help": "Keyboard shortcuts"
     }
+  },
+  "workspace": {
+    "onboarding": {
+      "metaTitle": "Create a workspace",
+      "title": "Create your workspace",
+      "description": "Your matters, court days and people live in a workspace. You can belong to several and switch any time.",
+      "kindLabel": "Who is this workspace for?",
+      "kind": {
+        "solo": "Just me",
+        "chamber": "A chamber"
+      },
+      "kindHint": {
+        "solo": "Your own practice. Invite juniors or clerks later if you need to.",
+        "chamber": "A shared workspace for an advocate's chamber, with seats for each member."
+      },
+      "nameLabel": "Workspace name",
+      "namePlaceholder": {
+        "solo": "e.g. Meenakshi Iyer Law Practice",
+        "chamber": "e.g. Hebbal Chambers"
+      },
+      "submit": "Create workspace",
+      "creating": "Creating workspace",
+      "errors": {
+        "nameRequired": "Enter a name for the workspace.",
+        "nameTooLong": "Use {max} characters or fewer.",
+        "nameInvalid": "Use a name with at least one letter or digit.",
+        "offline": "You are offline. Connect to create a workspace.",
+        "signedOut": "Your session ended. Sign in again to continue.",
+        "generic": "Could not create the workspace. Please try again."
+      }
+    }
   }
 }

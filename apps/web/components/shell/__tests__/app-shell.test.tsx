@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SidebarState } from '../../../lib/sidebar-state.ts';
-import { getWorkspaceContext, type WorkspaceContext } from '../../../lib/workspace-context.ts';
+import { testWorkspaceContext } from '../../../__tests__/helpers/workspace.ts';
 
 import { mockMatchMedia, nextFrame, renderWithIntl, stubResizeObserver } from './helpers.tsx';
 
@@ -15,7 +15,7 @@ vi.mock('next/navigation', () => ({
 const { AppShell } = await import('../app-shell.tsx');
 const { useSidebar } = await import('../sidebar.tsx');
 
-const context = (await getWorkspaceContext('demo')) as WorkspaceContext;
+const context = testWorkspaceContext();
 
 /** Drives the toggle API the way the `[` shortcut (#157) will, without moving focus. */
 function ApiProbe() {

@@ -4,7 +4,8 @@ import { getTranslations } from 'next-intl/server';
 
 import { isDev } from '../../lib/env.ts';
 import { flagsOff, getNavItem, isNavItemEnabled, type WorkspaceRoute } from '../../lib/nav.ts';
-import { can, getWorkspaceContext, type FlagKey } from '../../lib/workspace-context.ts';
+import { can, type FlagKey } from '../../lib/workspace-context.ts';
+import { getWorkspaceContext } from '../../lib/workspace-loader.ts';
 
 import { ShellOfflineBanner } from './offline-banner.tsx';
 import { PermissionDeniedPage } from './permission-denied-page.tsx';

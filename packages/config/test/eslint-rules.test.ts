@@ -27,6 +27,20 @@ describe('type-safety and import rules', () => {
     );
   });
 
+  it('bans logging request bodies and matter content', async () => {
+    const result = await lintFixture('rules', 'packages/observability/logs-body.ts');
+    const restricted = result.messages.filter((m) => m.ruleId === 'no-restricted-syntax');
+
+    expect(restricted.map((m) => m.line)).toEqual([10, 11, 12, 13]);
+    expect(restricted[0]?.message).toContain('Do not log request bodies or matter content');
+  });
+
+  it('allows logging ids and lengths', async () => {
+    const result = await lintFixture('rules', 'packages/observability/logs-ids.ts');
+
+    expect(ruleIds(result)).not.toContain('no-restricted-syntax');
+  });
+
   it('accepts clean code', async () => {
     const result = await lintFixture('rules', 'packages/core/clean.ts');
 

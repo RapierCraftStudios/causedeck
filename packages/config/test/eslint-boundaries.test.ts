@@ -22,6 +22,18 @@ describe('dependency boundaries (spike §2)', () => {
     expect(result.messages).toEqual([]);
   });
 
+  it('keeps observability free of domain packages', async () => {
+    const result = await lintFixture('boundaries', 'packages/observability/imports-db.ts');
+
+    expect(ruleIds(result)).toContain('boundaries/element-types');
+  });
+
+  it('lets observability import config', async () => {
+    const result = await lintFixture('boundaries', 'packages/observability/imports-config.ts');
+
+    expect(result.messages).toEqual([]);
+  });
+
   it('keeps ui free of domain packages', async () => {
     const result = await lintFixture('boundaries', 'packages/ui/imports-db.ts');
 

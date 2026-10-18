@@ -44,6 +44,8 @@ jobs:
         run: pnpm docs:links
       - name: ESLint
         run: bash infra/scripts/ci-affected.sh lint
+      - name: Validate dev compose file
+        run: docker compose -f infra/docker/compose.dev.yml config -q
 
   typecheck:
     name: typecheck

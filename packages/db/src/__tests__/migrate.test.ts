@@ -98,6 +98,72 @@ describe('runMigrations', () => {
     expect(boss).toEqual({ owner: 'causedeck_owner', usage: true, create: false });
   });
 
+  it('creates the Better Auth tables (0002) with uuid ids, workspace FKs and role checks', async () => {
+    const db = await scratch('migrate_auth');
+    await runMigrations({ url: new Secret(db.owner) });
+    const tables = [
+      'user',
+      'session',
+      'account',
+      'verification',
+      'passkey',
+      'two_factor',
+      'rate_limit',
+      'organization',
+      'member',
+      'invitation',
+    ];
+
+    const rows = await query<{ name: string; owner: string; id_type: string; app_select: boolean }>(
+      db.owner,
+      sql`
+      select t.tablename as name, t.tableowner as owner,
+             (select data_type from information_schema.columns c
+               where c.table_name = t.tablename and c.column_name = 'id') as id_type,
+             has_table_privilege('causedeck_app', format('public.%I', t.tablename), 'SELECT') as app_select
+      from pg_tables t where t.schemaname = 'public' and t.tablename in ${tables}
+      order by 1`,
+    );
+    expect(rows).toEqual(
+      [...tables]
+        .sort()
+        .map((name) => ({ name, owner: 'causedeck_owner', id_type: 'uuid', app_select: true })),
+    );
+
+    const fks = await query<{ tbl: string; ref: string }>(
+      db.owner,
+      sql`
+      select conrelid::regclass::text as tbl, confrelid::regclass::text as ref
+      from pg_constraint
+      where contype = 'f' and conrelid::regclass::text in ('member', 'invitation')
+        and conkey = array[(select attnum from pg_attribute
+          where attrelid = conrelid and attname = 'workspace_id')]
+      order by 1`,
+    );
+    expect(fks).toEqual([
+      { tbl: 'invitation', ref: 'organization' },
+      { tbl: 'member', ref: 'organization' },
+    ]);
+
+    const owner = createOwnerDb(new Secret(db.owner));
+    cleanups.push(() => owner.$client.end());
+    const [u] = await owner.execute<{ id: string }>(
+      sql`insert into "user" (name, email) values ('A', 'a@example.com') returning id`,
+    );
+    const [org] = await owner.execute<{ id: string }>(
+      sql`insert into organization (name, slug) values ('Chambers', 'chambers') returning id`,
+    );
+    const addMember = (role: string) =>
+      owner.execute(
+        sql`insert into member (workspace_id, user_id, role) values (${org?.id}, ${u?.id}, ${role})`,
+      );
+    await expect(addMember('admin')).rejects.toThrow();
+    await expect(addMember('advocate')).resolves.toBeDefined();
+    await expect(
+      owner.execute(sql`insert into "user" (name, email) values ('B', 'a@example.com')`),
+    ).rejects.toThrow();
+  });
+
   it('is idempotent: a second run applies nothing', async () => {
     const db = await scratch('migrate_twice');
     await runMigrations({ url: new Secret(db.owner) });

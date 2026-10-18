@@ -12,6 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "better-auth": "catalog:"
+  },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
     "@types/node": "catalog:",

@@ -30,12 +30,31 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates only platform tables: the schema_info baseline and job_effect (#15)', () => {
+  it('creates the platform tables and the Better Auth tables (#151)', () => {
     expect(
       root
         .tablesOf(root.schema)
         .map((t) => getTableName(t))
         .sort(),
-    ).toEqual(['job_effect', 'schema_info']);
+    ).toEqual([
+      'account',
+      'invitation',
+      'job_effect',
+      'member',
+      'organization',
+      'passkey',
+      'rate_limit',
+      'schema_info',
+      'session',
+      'two_factor',
+      'user',
+      'verification',
+    ]);
+  });
+
+  it('surfaces the Better Auth organization as `workspace`', () => {
+    expect(root).toHaveProperty('workspace');
+    expect(root.workspace).toBe(root.schema.organization);
+    expect(getTableName(root.workspace)).toBe('organization');
   });
 });

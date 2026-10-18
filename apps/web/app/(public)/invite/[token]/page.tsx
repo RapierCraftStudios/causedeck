@@ -54,7 +54,10 @@ export default async function InvitePage({ params }: InvitePageProps) {
     preview(session.user.id, token),
   ]);
   const workspace = invitation.workspaceName ?? '';
-  const role = invitation.role ? tShell(`roles.${invitation.role}`) : '';
+  // Typed `t()` keys (#174): the preview's role is a plain string; shell.roles covers every role.
+  const role = invitation.role
+    ? tShell(`roles.${invitation.role}` as Parameters<typeof tShell>[0])
+    : '';
 
   let title: string;
   let body: string;

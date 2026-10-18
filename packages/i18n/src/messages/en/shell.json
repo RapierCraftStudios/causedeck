@@ -1,0 +1,154 @@
+{
+  "shell": {
+    "pages": {
+      "today": {
+        "description": "Your hearings for the day, by court and hall.",
+        "empty": "No hearings today. Forward a cause list to see your court day."
+      },
+      "tomorrow": {
+        "description": "Tomorrow's listings, ready to prepare.",
+        "empty": "Nothing listed for tomorrow yet."
+      },
+      "calendar": {
+        "description": "Upcoming court days at a glance.",
+        "empty": "No court days scheduled."
+      },
+      "inbox": {
+        "description": "Captures that need you, are ready to send or are processing.",
+        "empty": "Your inbox is clear."
+      },
+      "matters": {
+        "description": "Every matter in this workspace.",
+        "empty": "No matters yet. Import or add your first matter."
+      },
+      "briefs": {
+        "description": "Brief sheets for upcoming listings.",
+        "empty": "No briefs yet. A brief appears when a matter is listed."
+      },
+      "obligations": {
+        "description": "Filings, copies and follow-ups that are due.",
+        "empty": "No open obligations."
+      },
+      "drafts": {
+        "description": "Drafts in progress.",
+        "empty": "No drafts yet."
+      },
+      "memory": {
+        "description": "What CauseDeck has noted, for you to review.",
+        "empty": "Nothing to review."
+      },
+      "people": {
+        "description": "Clients, counsel and contacts.",
+        "empty": "No people yet. Add a client or counsel."
+      },
+      "courts": {
+        "description": "Your forums, halls and rosters.",
+        "empty": "Choose your courts to get started."
+      },
+      "activity": {
+        "description": "Everything that happened, with undo.",
+        "empty": "No activity yet."
+      },
+      "billing": {
+        "description": "Fees and payments.",
+        "empty": "No billing records yet."
+      },
+      "invoices": {
+        "description": "Invoices you have issued.",
+        "empty": "No invoices yet."
+      },
+      "limitation": {
+        "description": "Limitation periods to watch.",
+        "empty": "No limitation periods tracked."
+      },
+      "insights": {
+        "description": "How your practice is going.",
+        "empty": "Not enough activity for insights yet."
+      }
+    },
+    "loading": "Loading",
+    "error": {
+      "title": "Something went wrong.",
+      "description": "Something went wrong loading this page.",
+      "retry": "Try again",
+      "copyId": "Copy error ID",
+      "copied": "Error ID copied",
+      "reference": "Error ID: {digest}"
+    },
+    "offline": {
+      "message": "You are offline. Showing saved data from {time}.",
+      "needsConnection": "Needs a connection"
+    },
+    "permissionDenied": {
+      "title": "No access",
+      "message": "You do not have access to this area.",
+      "requestAccess": "Request access",
+      "requestAccessSoon": "Access requests are coming soon."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "message": "We could not find this page in this workspace."
+    },
+    "account": {
+      "title": "Account",
+      "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
+      "empty": "Account settings are coming soon."
+    },
+    "sidebar": {
+      "label": "Sidebar",
+      "primary": "Primary",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "synced": "Synced",
+      "offline": "Offline"
+    },
+    "topbar": {
+      "search": "Search or jump to...",
+      "searchHint": "Open search",
+      "openSwitcher": "Switch workspace"
+    },
+    "switcher": {
+      "label": "Workspaces",
+      "filter": "Find a workspace",
+      "noMatches": "No workspaces match.",
+      "current": "Current workspace",
+      "create": "Create workspace",
+      "join": "Join with invite",
+      "switching": "Switching workspace"
+    },
+    "userMenu": {
+      "label": "Account menu",
+      "account": "Account",
+      "settings": "Workspace settings",
+      "theme": "Theme",
+      "signOut": "Sign out"
+    },
+    "breadcrumbs": {
+      "label": "Breadcrumb",
+      "more": "More pages"
+    },
+    "roles": {
+      "viewer": "Viewer",
+      "clerk": "Clerk",
+      "junior": "Junior",
+      "advocate": "Advocate",
+      "owner": "Owner"
+    },
+    "mobileNav": {
+      "label": "Bottom navigation",
+      "more": "More",
+      "moreTitle": "More destinations"
+    },
+    "capture": {
+      "label": "Capture",
+      "title": "Capture",
+      "voice": "Voice note",
+      "file": "Photo or file",
+      "paste": "Paste text",
+      "soon": "Available with Capture."
+    },
+    "sheet": {
+      "close": "Close"
+    }
+  }
+}

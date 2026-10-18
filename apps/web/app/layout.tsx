@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
-import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages, getTranslations } from 'next-intl/server';
+import { getLocale, getMessages, getTimeZone, getTranslations } from 'next-intl/server';
 import { ThemeProvider } from 'next-themes';
 import type { ReactNode } from 'react';
 
+import { IntlProvider } from '../components/intl-provider.tsx';
 import { LazyToaster } from '../components/lazy-toaster.tsx';
 import { defaultLocale, isLocale } from '../i18n/routing.ts';
+import { isProd } from '../lib/env.ts';
 
 import { fontClassNames } from './fonts.ts';
 
@@ -26,8 +27,9 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const requested = await getLocale();
   const locale = isLocale(requested) ? requested : defaultLocale;
-  const [messages, t, nonce] = await Promise.all([
+  const [messages, timeZone, t, nonce] = await Promise.all([
     getMessages(),
+    getTimeZone(),
     getTranslations('common'),
     headers().then((h) => h.get('x-nonce') ?? undefined),
   ]);
@@ -48,10 +50,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           disableTransitionOnChange
           {...(nonce === undefined ? {} : { nonce })}
         >
-          <NextIntlClientProvider locale={locale} messages={messages}>
+          <IntlProvider
+            locale={locale}
+            messages={messages}
+            timeZone={timeZone}
+            mode={isProd() ? 'production' : 'development'}
+          >
             {children}
             <LazyToaster />
-          </NextIntlClientProvider>
+          </IntlProvider>
         </ThemeProvider>
       </body>
     </html>

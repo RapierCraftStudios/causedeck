@@ -14,14 +14,14 @@ import type { AcceptOutcome, AcceptRejection } from './actions.ts';
 export type AcceptInvitation = (input: { token: string }) => Promise<Result<AcceptOutcome>>;
 
 /** `invite.states.*` key for each typed rejection (the page keeps its own copy: client module). */
-const REJECTION_STATE: Record<AcceptRejection, string> = {
+const REJECTION_STATE = {
   INVALID: 'invalid',
   EXPIRED: 'expired',
   REVOKED: 'revoked',
   USED: 'used',
   EMAIL_MISMATCH: 'emailMismatch',
   ALREADY_MEMBER: 'alreadyMember',
-};
+} as const satisfies Record<AcceptRejection, string>;
 
 type FormError = 'offline' | 'signedOut' | 'generic';
 

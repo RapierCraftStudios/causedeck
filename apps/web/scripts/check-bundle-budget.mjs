@@ -10,6 +10,9 @@
 // Workspace shell (#155): the `/w/[slug]` routes may add at most 40 KB gzip on top of that. The
 // delta is every initial chunk of `/w/[slug]/today` (shell layout, workspace boundaries, page)
 // that the home route does not already load.
+//
+// Active locale only (#174): no ta/kn catalog string may appear in the home route's initial chunks.
+// Messages reach the client through the RSC payload for the active locale, never as bundled JSON.
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -51,6 +54,49 @@ export function shellDelta(homeChunks, routeChunks, sizes, budget = WORKSPACE_SH
   return { files, total, budget, ok: total <= budget };
 }
 
+/** Catalog folder written by `pnpm i18n:types` in @causedeck/i18n. */
+export const GENERATED_MESSAGES = '../../packages/i18n/src/generated/messages';
+
+/** Leaf strings of a catalog. */
+function leaves(node) {
+  if (typeof node === 'string') return [node];
+  if (node === null || typeof node !== 'object') return [];
+  return Object.values(node).flatMap(leaves);
+}
+
+/**
+ * Distinctive strings of the non-English catalogs: ta/kn values of 8+ characters that differ from
+ * en and carry no ICU syntax (so they survive precompilation intact).
+ */
+export function foreignValues(en, others) {
+  const english = new Set(leaves(en));
+  return [
+    ...new Set(
+      others
+        .flatMap(leaves)
+        .filter((value) => value.length >= 8 && !english.has(value) && !/[{}<>#]/.test(value)),
+    ),
+  ];
+}
+
+const escapeUnicode = (value) =>
+  value.replace(
+    /[^\x20-\x7e]/g,
+    (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
+
+/** `[{ file, value }]` for every foreign catalog string found in a chunk (raw or `\u`-escaped). */
+export function localeLeak(chunkSources, values) {
+  const leaks = [];
+  for (const [file, source] of Object.entries(chunkSources)) {
+    for (const value of values) {
+      if (source.includes(value) || source.includes(escapeUnicode(value)))
+        leaks.push({ file, value });
+    }
+  }
+  return leaks;
+}
+
 /** `globalThis.__RSC_MANIFEST["/page"] = {...};` -> the object. */
 export function parseClientReferenceManifest(source) {
   const start = source.indexOf('= {');
@@ -86,7 +132,22 @@ function main() {
   for (const file of shell.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
   console.log(`${kb(shell.total).padStart(10)}  shell delta (budget ${kb(shell.budget)} gzip)`);
 
+  const readCatalog = (locale) =>
+    JSON.parse(readFileSync(path.join(appDir, GENERATED_MESSAGES, `${locale}.json`), 'utf8'));
+  const leaks = localeLeak(
+    Object.fromEntries(
+      homeChunks.map((file) => [file, readFileSync(path.join(nextDir, file), 'utf8')]),
+    ),
+    foreignValues(readCatalog('en'), [readCatalog('ta'), readCatalog('kn')]),
+  );
+  console.log(`\nta/kn catalog strings in the home route's initial JS: ${leaks.length}`);
+
   let failed = false;
+  if (leaks.length > 0) {
+    for (const leak of leaks.slice(0, 10)) console.error(`  ${leak.file}: "${leak.value}"`);
+    console.error('Non-active locale messages are bundled into the en home route.');
+    failed = true;
+  }
   if (!result.ok) {
     console.error('Home route initial JS is over budget.');
     failed = true;

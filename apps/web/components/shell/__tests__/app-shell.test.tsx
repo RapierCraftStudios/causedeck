@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SidebarState } from '../../../lib/sidebar-state.ts';
@@ -81,6 +81,17 @@ describe('app shell landmarks', () => {
     const trigger = document.querySelector<HTMLElement>('[data-switcher-trigger="topbar"]');
     expect(trigger?.closest('.md\\:hidden')).toBeTruthy();
     expect(trigger?.querySelector('[data-current-workspace]')?.textContent).toBe('Demo Chambers');
+  });
+
+  it('replaces the sidebar with the bottom nav on phones and pads main to clear it', () => {
+    renderShell();
+    const bottom = screen.getByRole('navigation', { name: 'Bottom navigation' });
+    expect(bottom.className).toContain('md:hidden');
+    expect(document.getElementById('shell-sidebar')?.className).toMatch(/\bhidden\b.*\bmd:flex\b/);
+    const main = document.querySelector('main');
+    expect(main?.className).toContain('pb-[calc(var(--space-6)+56px+env(safe-area-inset-bottom))]');
+    expect(main?.className).toContain('md:py-8');
+    expect(main?.contains(bottom)).toBe(false);
   });
 
   it('renders the topbar search button and the user menu', () => {
@@ -183,7 +194,9 @@ describe('sidebar toggle', () => {
 
   it('keeps focus on the focused nav item when collapsing via the API', async () => {
     renderShell('expanded');
-    const today = screen.getByRole('link', { name: 'Today' });
+    const today = within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', {
+      name: 'Today',
+    });
     today.focus();
     probe('toggle');
     await act(nextFrame);

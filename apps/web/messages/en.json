@@ -190,6 +190,22 @@
       "junior": "Junior",
       "advocate": "Advocate",
       "owner": "Owner"
+    },
+    "mobileNav": {
+      "label": "Bottom navigation",
+      "more": "More",
+      "moreTitle": "More destinations"
+    },
+    "capture": {
+      "label": "Capture",
+      "title": "Capture",
+      "voice": "Voice note",
+      "file": "Photo or file",
+      "paste": "Paste text",
+      "soon": "Available with Capture."
+    },
+    "sheet": {
+      "close": "Close"
     }
   },
   "palette": {

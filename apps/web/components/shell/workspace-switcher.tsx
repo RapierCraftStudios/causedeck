@@ -77,9 +77,9 @@ export interface WorkspaceSwitcherProps {
 }
 
 /**
- * Menu button opening a 288 px popover of the user's memberships: type to filter, arrows to move,
- * Enter to switch. Switching is a hard switch: client caches are cleared and the app navigates to
- * the other workspace's Today.
+ * Menu button opening a 288 px popover (a bottom sheet in the phone topbar) of the user's
+ * memberships: type to filter, arrows to move, Enter to switch. Switching is a hard switch: client
+ * caches are cleared and the app navigates to the other workspace's Today.
  */
 export function WorkspaceSwitcher({ current, memberships, variant }: WorkspaceSwitcherProps) {
   const t = useTranslations('shell');
@@ -186,103 +186,62 @@ export function WorkspaceSwitcher({ current, memberships, variant }: WorkspaceSw
 
   const switching = switchingTo !== null && switchingTo !== current.slug;
 
+  const panel = (
+    <SwitcherPanel
+      current={current}
+      results={results}
+      active={active}
+      query={query}
+      listId={listId}
+      optionId={optionId}
+      onQueryChange={(value) => {
+        setQuery(value);
+        setActiveIndex(0);
+      }}
+      onKeyDown={onKeyDown}
+      onHover={setActiveIndex}
+      onSelect={select}
+    />
+  );
+
+  let switcher = trigger;
+  if (overlays && variant === 'sidebar') {
+    switcher = (
+      <overlays.Popover open={open} onOpenChange={onOpenChange}>
+        <overlays.PopoverTrigger asChild>{trigger}</overlays.PopoverTrigger>
+        <overlays.PopoverContent
+          align="start"
+          aria-label={t('switcher.label')}
+          className="flex w-72 flex-col gap-1 p-1.5"
+        >
+          {panel}
+        </overlays.PopoverContent>
+      </overlays.Popover>
+    );
+  } else if (overlays) {
+    // Phones: the same list as a bottom sheet.
+    switcher = (
+      <overlays.Sheet open={open} onOpenChange={onOpenChange}>
+        <overlays.SheetTrigger asChild>{trigger}</overlays.SheetTrigger>
+        <overlays.SheetContent
+          side="bottom"
+          data-switcher-sheet=""
+          aria-describedby={undefined}
+          labels={{ close: t('sheet.close') }}
+          className="gap-2 overflow-y-auto"
+        >
+          <overlays.SheetHeader>
+            <overlays.SheetTitle>{t('switcher.label')}</overlays.SheetTitle>
+          </overlays.SheetHeader>
+          <div className="flex flex-col gap-1">{panel}</div>
+        </overlays.SheetContent>
+      </overlays.Sheet>
+    );
+  }
+
   return (
     <>
-      {overlays ? (
-        <overlays.Popover open={open} onOpenChange={onOpenChange}>
-          <overlays.PopoverTrigger asChild>{trigger}</overlays.PopoverTrigger>
-          <overlays.PopoverContent
-            align="start"
-            aria-label={t('switcher.label')}
-            className="flex w-72 flex-col gap-1 p-1.5"
-          >
-            <input
-              type="text"
-              role="combobox"
-              aria-label={t('switcher.filter')}
-              aria-controls={listId}
-              aria-expanded="true"
-              aria-autocomplete="list"
-              aria-activedescendant={results.length > 0 ? optionId(active) : undefined}
-              placeholder={t('switcher.filter')}
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setActiveIndex(0);
-              }}
-              onKeyDown={onKeyDown}
-              className="border-line-control bg-surface focus-visible:outline-ring h-9 rounded-md border px-2.5 text-sm outline-none focus-visible:outline-2"
-            />
-            <ul
-              id={listId}
-              role="listbox"
-              aria-label={t('switcher.label')}
-              className="flex flex-col"
-            >
-              {results.map((membership, index) => {
-                const isCurrent = membership.workspace.slug === current.slug;
-                return (
-                  <li
-                    key={membership.workspace.id}
-                    id={optionId(index)}
-                    role="option"
-                    aria-selected={index === active}
-                    aria-current={isCurrent ? 'true' : undefined}
-                    data-slug={membership.workspace.slug}
-                    onPointerMove={() => {
-                      setActiveIndex(index);
-                    }}
-                    onClick={() => {
-                      select(membership);
-                    }}
-                    className={`flex h-12 cursor-default items-center gap-2.5 rounded-md px-2 ${index === active ? 'bg-accent-soft' : ''}`}
-                  >
-                    <WorkspaceMark workspace={membership.workspace} />
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {membership.workspace.name}
-                    </span>
-                    <Badge data-role={membership.role}>{t(`roles.${membership.role}`)}</Badge>
-                    {isCurrent ? (
-                      <Check
-                        aria-label={t('switcher.current')}
-                        className="text-accent size-4 shrink-0"
-                      />
-                    ) : (
-                      <span className="size-4 shrink-0" />
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            {results.length === 0 ? (
-              <p role="status" className="text-ink-muted px-2 py-3 text-sm">
-                {t('switcher.noMatches')}
-              </p>
-            ) : null}
-            <div className="border-line mt-1 flex flex-col border-t pt-1">
-              {/* TODO(#18): workspace creation and invites. */}
-              <button
-                type="button"
-                disabled
-                className="text-ink-muted flex h-9 items-center gap-2 rounded-md px-2 text-sm disabled:opacity-60"
-              >
-                <Plus aria-hidden="true" className="size-4" />
-                {t('switcher.create')}
-              </button>
-              <button
-                type="button"
-                disabled
-                className="text-ink-muted flex h-9 items-center gap-2 rounded-md px-2 text-sm disabled:opacity-60"
-              >
-                <UserPlus aria-hidden="true" className="size-4" />
-                {t('switcher.join')}
-              </button>
-            </div>
-          </overlays.PopoverContent>
-        </overlays.Popover>
-      ) : (
-        trigger
-      )}
+      {switcher}
       {switching ? (
         <div
           role="status"
@@ -292,6 +251,112 @@ export function WorkspaceSwitcher({ current, memberships, variant }: WorkspaceSw
           <span className="text-ink-muted text-sm">{t('switcher.switching')}</span>
         </div>
       ) : null}
+    </>
+  );
+}
+
+interface SwitcherPanelProps {
+  current: Workspace;
+  results: readonly Membership[];
+  active: number;
+  query: string;
+  listId: string;
+  optionId: (index: number) => string;
+  onQueryChange: (value: string) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
+  onHover: (index: number) => void;
+  onSelect: (membership: Membership) => void;
+}
+
+/** Filter, membership listbox and footer: shared by the sidebar popover and the phone sheet. */
+function SwitcherPanel({
+  current,
+  results,
+  active,
+  query,
+  listId,
+  optionId,
+  onQueryChange,
+  onKeyDown,
+  onHover,
+  onSelect,
+}: SwitcherPanelProps) {
+  const t = useTranslations('shell');
+  return (
+    <>
+      <input
+        type="text"
+        role="combobox"
+        aria-label={t('switcher.filter')}
+        aria-controls={listId}
+        aria-expanded="true"
+        aria-autocomplete="list"
+        aria-activedescendant={results.length > 0 ? optionId(active) : undefined}
+        placeholder={t('switcher.filter')}
+        value={query}
+        onChange={(event) => {
+          onQueryChange(event.target.value);
+        }}
+        onKeyDown={onKeyDown}
+        className="border-line-control bg-surface focus-visible:outline-ring h-9 rounded-md border px-2.5 text-sm outline-none focus-visible:outline-2"
+      />
+      <ul id={listId} role="listbox" aria-label={t('switcher.label')} className="flex flex-col">
+        {results.map((membership, index) => {
+          const isCurrent = membership.workspace.slug === current.slug;
+          return (
+            <li
+              key={membership.workspace.id}
+              id={optionId(index)}
+              role="option"
+              aria-selected={index === active}
+              aria-current={isCurrent ? 'true' : undefined}
+              data-slug={membership.workspace.slug}
+              onPointerMove={() => {
+                onHover(index);
+              }}
+              onClick={() => {
+                onSelect(membership);
+              }}
+              className={`flex h-12 cursor-default items-center gap-2.5 rounded-md px-2 ${index === active ? 'bg-accent-soft' : ''}`}
+            >
+              <WorkspaceMark workspace={membership.workspace} />
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                {membership.workspace.name}
+              </span>
+              <Badge data-role={membership.role}>{t(`roles.${membership.role}`)}</Badge>
+              {isCurrent ? (
+                <Check aria-label={t('switcher.current')} className="text-accent size-4 shrink-0" />
+              ) : (
+                <span className="size-4 shrink-0" />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {results.length === 0 ? (
+        <p role="status" className="text-ink-muted px-2 py-3 text-sm">
+          {t('switcher.noMatches')}
+        </p>
+      ) : null}
+      <div className="border-line mt-1 flex flex-col border-t pt-1">
+        {/* TODO(#18): workspace creation and invites. */}
+        <button
+          type="button"
+          disabled
+          className="text-ink-muted flex h-9 items-center gap-2 rounded-md px-2 text-sm disabled:opacity-60"
+        >
+          <Plus aria-hidden="true" className="size-4" />
+          {t('switcher.create')}
+        </button>
+        <button
+          type="button"
+          disabled
+          className="text-ink-muted flex h-9 items-center gap-2 rounded-md px-2 text-sm disabled:opacity-60"
+        >
+          <UserPlus aria-hidden="true" className="size-4" />
+          {t('switcher.join')}
+        </button>
+      </div>
     </>
   );
 }

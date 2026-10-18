@@ -1,9 +1,10 @@
 'use client';
 
-// Shell code that is not needed for first paint: the Radix overlay primitives (switcher popover,
-// user menu, rail tooltips) and the animated nav indicator. It lives in its own chunk, loaded at
-// idle by use-shell-overlays.ts, so it stays out of the initial route JS (#11: the shell adds at
-// most 40 KB gzip). Until it loads, the shell renders static equivalents.
+// Shell code that is not needed for first paint: the Radix overlay primitives (switcher popover and
+// phone sheet, user menu, rail tooltips, the More and capture sheets) and the animated nav
+// indicator. It lives in its own chunk, loaded at idle by use-shell-overlays.ts, so it stays out of
+// the initial route JS (#11: the shell adds at most 40 KB gzip). Until it loads, the shell renders
+// static equivalents.
 import { listSpring } from '@causedeck/ui/motion';
 import { LazyMotion, MotionConfig, domMax } from 'motion/react';
 import * as m from 'motion/react-m';
@@ -19,6 +20,15 @@ export {
   DropdownMenuTrigger,
 } from '@causedeck/ui/dropdown-menu';
 export { Popover, PopoverContent, PopoverTrigger } from '@causedeck/ui/popover';
+export {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@causedeck/ui/sheet';
 export { Tooltip, TooltipContent, TooltipTrigger } from '@causedeck/ui/tooltip';
 
 /**

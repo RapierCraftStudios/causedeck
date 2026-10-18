@@ -19,6 +19,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: 'light dark',
+  // Lets `env(safe-area-inset-*)` resolve, so the phone bottom bar clears the home indicator.
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

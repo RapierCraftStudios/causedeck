@@ -65,6 +65,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/setup
+      # Schema conventions, the reviewed-SQL migration lint and drizzle-kit snapshot consistency.
+      # Static: no database needed.
+      - name: DB conventions
+        run: pnpm db:check
       - name: Test
         run: >-
           bash infra/scripts/ci-affected.sh test --

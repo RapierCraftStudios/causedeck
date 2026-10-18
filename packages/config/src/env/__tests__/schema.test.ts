@@ -46,7 +46,10 @@ describe('dev-only defaults', () => {
     const env = createEnv({ NODE_ENV: 'development', EMAIL_PROVIDER: 'smtp' });
 
     expect(env.DATABASE_URL.reveal()).toBe(
-      'postgres://causedeck:causedeck@localhost:5432/causedeck',
+      'postgres://causedeck_app:causedeck_app@localhost:5432/causedeck',
+    );
+    expect(env.DATABASE_URL_OWNER?.reveal()).toBe(
+      'postgres://causedeck_owner:causedeck_owner@localhost:5432/causedeck',
     );
     expect(env.STORAGE_PROVIDER === 'minio' && env.S3_ENDPOINT).toBe('http://localhost:9000');
     expect(env.EMAIL_PROVIDER === 'smtp' && env.SMTP_URL.reveal()).toBe('smtp://localhost:1025');

@@ -17,6 +17,27 @@
     "test": {
       "outputs": ["coverage/**", "reports/**"]
     },
+    "db:generate": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL_OWNER"]
+    },
+    "db:migrate": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL_OWNER"]
+    },
+    "db:check": {
+      "inputs": ["src/**", "scripts/**", "migrations/**", "drizzle.config.ts"],
+      "passThroughEnv": ["DATABASE_URL_OWNER"]
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["DATABASE_URL_OWNER"]
+    },
+    "db:seed": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

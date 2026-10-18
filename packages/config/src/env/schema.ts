@@ -105,7 +105,10 @@ export const sharedKeys = {
   },
 } satisfies KeyMetaRecord;
 
-const LOCAL_DATABASE_URL = 'postgres://causedeck:causedeck@localhost:5432/causedeck';
+// The #5 stack's least-privilege roles (infra/docker/postgres/init/02-roles.sql), never the superuser.
+const LOCAL_DATABASE_URL = 'postgres://causedeck_app:causedeck_app@localhost:5432/causedeck';
+const LOCAL_DATABASE_URL_OWNER =
+  'postgres://causedeck_owner:causedeck_owner@localhost:5432/causedeck';
 
 export const serverKeys = {
   DATABASE_URL: {
@@ -122,7 +125,7 @@ export const serverKeys = {
     domain: 'server',
     type: 'secret url',
     description: 'Postgres connection URL for the schema owner role (migrations).',
-    devDefault: LOCAL_DATABASE_URL,
+    devDefault: LOCAL_DATABASE_URL_OWNER,
     requiredWhen: 'running migrations',
     ownerIssue: 6,
     credentialIssue: 116,

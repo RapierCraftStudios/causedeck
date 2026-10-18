@@ -6,7 +6,7 @@ import { expect, test } from '../../fixtures/index.ts';
 
 import { openShell, palette, switcherTrigger, SHELL_WORKSPACE } from './helpers.ts';
 
-/** apps/web/lib/shortcuts/registry.ts `NAV_CHORDS` (settings redirects to its first section). */
+/** apps/web/lib/shortcuts/registry.ts `NAV_CHORDS`. */
 const CHORDS = {
   t: 'today',
   i: 'inbox',
@@ -15,7 +15,7 @@ const CHORDS = {
   b: 'briefs',
   c: 'courts',
   a: 'activity',
-  s: 'settings/profile',
+  s: 'settings',
 } as const;
 
 /** `CHORD_TIMEOUT_MS` in @causedeck/ui/hooks. */

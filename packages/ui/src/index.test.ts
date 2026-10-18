@@ -33,6 +33,30 @@ describe('@causedeck/ui', () => {
     expect(packageName).toBe('@causedeck/ui');
   });
 
+  it('exports the form controls from the root', () => {
+    for (const name of [
+      'Input',
+      'Textarea',
+      'Label',
+      'Field',
+      'useFieldControl',
+      'Select',
+      'SelectTrigger',
+      'Combobox',
+      'Checkbox',
+      'RadioGroup',
+      'Switch',
+      'Slider',
+      'Toggle',
+      'ToggleGroup',
+      'Form',
+      'FormField',
+      'useZodForm',
+    ]) {
+      expect(ui, name).toHaveProperty(name);
+    }
+  });
+
   it.each(Object.entries(DISPLAY_AND_FEEDBACK))(
     'exports %s from the root and a per-component subpath',
     async (name, exports) => {

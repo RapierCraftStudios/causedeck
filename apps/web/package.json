@@ -1,0 +1,38 @@
+{
+  "name": "@causedeck/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Next.js product app (PWA, RSC, server actions).",
+  "type": "module",
+  "scripts": {
+    "build": "node -e \"console.log('@causedeck/web: nothing to build yet; app code arrives in a later issue')\"",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@causedeck/adapters": "workspace:*",
+    "@causedeck/ai": "workspace:*",
+    "@causedeck/auth": "workspace:*",
+    "@causedeck/billing": "workspace:*",
+    "@causedeck/capture": "workspace:*",
+    "@causedeck/config": "workspace:*",
+    "@causedeck/core": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "@causedeck/drafting": "workspace:*",
+    "@causedeck/flags": "workspace:*",
+    "@causedeck/i18n": "workspace:*",
+    "@causedeck/intelligence": "workspace:*",
+    "@causedeck/notifications": "workspace:*",
+    "@causedeck/observability": "workspace:*",
+    "@causedeck/storage": "workspace:*",
+    "@causedeck/ui": "workspace:*",
+    "@causedeck/validators": "workspace:*"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@causedeck/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hono REST API (/v1), webhooks, OpenAPI docs.",
+  "type": "module",
+  "scripts": {
+    "build": "node -e \"console.log('@causedeck/api: nothing to build yet; app code arrives in a later issue')\"",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@causedeck/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

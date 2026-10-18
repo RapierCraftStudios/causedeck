@@ -1,0 +1,4 @@
+{
+  "extends": "@causedeck/config/tsconfig/nextjs.json",
+  "include": ["src", "*.ts"]
+}

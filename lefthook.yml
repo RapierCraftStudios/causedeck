@@ -1,0 +1,17 @@
+# Git hooks (installed by `pnpm install` through the root `prepare` script).
+pre-commit:
+  parallel: true
+  commands:
+    prettier:
+      glob: '*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,md,yml,yaml,css}'
+      run: pnpm exec prettier --check --ignore-unknown {staged_files}
+    eslint:
+      glob: '*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}'
+      exclude:
+        - 'packages/config/eslint/__fixtures__/**'
+      run: pnpm exec eslint --no-warn-ignored --max-warnings 0 {staged_files}
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}

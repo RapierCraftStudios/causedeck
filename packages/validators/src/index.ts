@@ -1,2 +1,4 @@
-/** Shared zod schemas for API and forms. Real code arrives in later issues. */
+/** Shared zod schemas for API and forms. API schemas also live at `@causedeck/validators/api`. */
 export const packageName: string = '@causedeck/validators';
+
+export * from './api/index';

@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ['.github/**']
   push:
-    branches: [main, staging, 'milestone/**']
+    branches: [main, staging]
     paths: ['.github/**']
 
 permissions:

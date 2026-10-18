@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 const appDir = path.join(import.meta.dirname, '..');
 const repoRoot = path.join(appDir, '../..');
-const SKIP = new Set(['node_modules', '.next', '__tests__', '.turbo', 'coverage']);
+const SKIP = new Set(['node_modules', '.next', '.next-e2e', '__tests__', '.turbo', 'coverage']);
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -71,6 +71,17 @@ describe('apps/web static guards', () => {
     }
   });
 
+  it('imports every token file but not the ui fonts.css, which would download each face twice', () => {
+    const globals = readFileSync(path.join(appDir, 'app/globals.css'), 'utf8');
+    const imports = [...globals.matchAll(/@import '([^']+)'/g)].map(([, spec]) => spec ?? '');
+    expect(imports.filter((spec) => /fonts\.css$|tokens(?:\/index)?\.css$/.test(spec))).toEqual([]);
+    const index = readFileSync(path.join(repoRoot, 'packages/ui/tokens/index.css'), 'utf8');
+    const tokenFiles = [...index.matchAll(/@import '\.\/([^']+)'/g)].map(([, file]) => file ?? '');
+    expect(imports.filter((spec) => spec.startsWith('@causedeck/ui/tokens/'))).toEqual(
+      tokenFiles.map((file) => `@causedeck/ui/tokens/${file}`),
+    );
+  });
+
   it("builds standalone output on Next.js's own config", () => {
     const config = readFileSync(path.join(appDir, 'next.config.ts'), 'utf8');
     expect(config).toMatch(/output:\s*'standalone'/);
@@ -78,8 +89,9 @@ describe('apps/web static guards', () => {
     expect(config).toMatch(/reactStrictMode:\s*true/);
   });
 
-  it('has no API placeholder route (webhooks live in apps/api)', () => {
-    expect(existsSync(path.join(appDir, 'app/api'))).toBe(false);
+  it('has no API routes besides Better Auth (webhooks live in apps/api)', () => {
+    expect(readdirSync(path.join(appDir, 'app/api'))).toEqual(['auth']);
+    expect(readdirSync(path.join(appDir, 'app/api/auth'))).toEqual(['[...all]']);
   });
 
   it('keeps the proxy on Next.js 16 naming (no deprecated middleware.ts)', () => {

@@ -1,5 +1,6 @@
 // Every table and enum drizzle-kit migrates. Later issues add their tables here.
 export { confirmationState, sourceType } from '../columns.ts';
+export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
 export {
   account,
   invitation,

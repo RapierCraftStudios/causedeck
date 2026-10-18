@@ -11,6 +11,14 @@ interface BudgetModule {
     budget?: number,
   ) => { total: number; budget: number; ok: boolean };
   parseClientReferenceManifest: (source: string) => { entryJSFiles?: Record<string, string[]> };
+  WORKSPACE_SHELL_BUDGET_BYTES: number;
+  WORKSPACE_ROUTE_MANIFEST: string;
+  shellDelta: (
+    homeChunks: string[],
+    routeChunks: string[],
+    sizes: Record<string, number>,
+    budget?: number,
+  ) => { files: string[]; total: number; budget: number; ok: boolean };
 }
 
 // A runtime URL keeps TypeScript from type-resolving the plain .mjs script.
@@ -58,5 +66,45 @@ describe('bundle budget (spike §10)', () => {
     expect(budget.parseClientReferenceManifest(source).entryJSFiles).toEqual({
       x: ['static/chunks/x.js'],
     });
+  });
+});
+
+describe('workspace shell budget (#155)', () => {
+  it('is 40 KB gzip, measured on /w/[slug]/today', () => {
+    expect(budget.WORKSPACE_SHELL_BUDGET_BYTES).toBe(40 * 1024);
+    expect(budget.WORKSPACE_ROUTE_MANIFEST).toBe(
+      'server/app/(app)/w/[slug]/today/page_client-reference-manifest.js',
+    );
+  });
+
+  it('counts only the workspace chunks the home route does not load, each once', () => {
+    const delta = budget.shellDelta(
+      ['static/chunks/root.js', 'static/chunks/layout.js'],
+      [
+        'static/chunks/root.js',
+        'static/chunks/shell.js',
+        'static/chunks/page.js',
+        'static/chunks/shell.js',
+      ],
+      {
+        'static/chunks/root.js': 90_000,
+        'static/chunks/shell.js': 1000,
+        'static/chunks/page.js': 24,
+      },
+    );
+    expect(delta).toEqual({
+      files: ['static/chunks/page.js', 'static/chunks/shell.js'],
+      total: 1024,
+      budget: 40 * 1024,
+      ok: true,
+    });
+  });
+
+  it('passes at 40 KB and fails one byte over', () => {
+    const at = { 'shell.js': 40 * 1024 };
+    expect(budget.shellDelta([], ['shell.js'], at).ok).toBe(true);
+    expect(budget.shellDelta([], ['shell.js', 'extra.js'], { ...at, 'extra.js': 1 }).ok).toBe(
+      false,
+    );
   });
 });

@@ -29,6 +29,15 @@ describe('check-test-reports', () => {
     assert.deepEqual(packages, [{ name: '@causedeck/ui', directory: 'packages/ui' }]);
   });
 
+  it('skips the Playwright e2e package, which the e2e workflow runs', () => {
+    const packages = testedPackages({
+      tasks: [
+        { task: 'test', package: '@causedeck/e2e', directory: 'e2e', command: 'playwright test' },
+      ],
+    });
+    assert.deepEqual(packages, []);
+  });
+
   const packages = [{ name: '@causedeck/ui', directory: 'packages/ui' }];
 
   it('fails a package that discovered zero tests', () => {

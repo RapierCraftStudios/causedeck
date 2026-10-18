@@ -31,7 +31,17 @@ const storybookProject = (
   theme: 'light' | 'dark',
 ): TestProjectInlineConfiguration => ({
   resolve: { alias },
-  plugins: [storybookTest({ configDir: path.join(dirname, '.storybook') })],
+  plugins: [
+    storybookTest({ configDir: path.join(dirname, '.storybook') }),
+    // storybookTest keys its Vite cacheDir on configDir, which both themes share. Their dep
+    // optimisers then race on one cache and stale prebundles fail every story with "Failed to
+    // fetch dynamically imported module". Give each project its own cache (runs after the plugin).
+    {
+      name: 'causedeck:project-cache-dir',
+      enforce: 'post',
+      config: () => ({ cacheDir: path.join(dirname, 'node_modules/.cache/sb-vitest', name) }),
+    },
+  ],
   test: {
     name,
     browser: chromium(name),
@@ -52,7 +62,9 @@ const unitTest = {
   exclude: ['**/*.browser.test.{ts,tsx}', '**/node_modules/**'],
   environment: 'node',
   setupFiles: ['test/setup.ts'],
-  testTimeout: 30_000,
+  // The first type-aware ESLint run (test/eslint-rules.test.ts) cold-starts in 30-65 s on a
+  // contended 2-vCPU CI runner; @causedeck/config allows the same.
+  testTimeout: 120_000,
 };
 
 export default defineConfig({

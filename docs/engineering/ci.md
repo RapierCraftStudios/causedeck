@@ -24,6 +24,19 @@ Each job is matrix-free, runs on `ubuntu-latest` with `timeout-minutes: 15`, and
 | `test` | Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports` artifact (`coverage/` and `reports/junit.xml` per package) |
 | `build` | `turbo run build` |
 
+## Tiers (D-044)
+
+CI runs in two tiers so lane PRs stay fast and the expensive suites run once per milestone.
+
+| Tier | When | Jobs |
+| --- | --- | --- |
+| **Fast** (every PR) | Every pull request, including lane PRs into `milestone/*` | `lint` (format, ADR, docs links, affected lint), `typecheck`, `test`, `build` — change-aware via `infra/scripts/ci-affected.sh`; `audit`, `gitleaks`; `storybook` build + interaction/axe tests when `packages/ui` changes (path filter); `actionlint` when `.github/` changes |
+| **Full** | Ship PRs into `staging` or `main`, pushes to `staging`/`main`, the nightly schedule, manual dispatch, or any PR labelled `full-ci` | Everything in Fast, plus `e2e` (2 shards), `lighthouse`, `visual` (Storybook visual regression) |
+
+- Pushes to `milestone/**` no longer trigger workflows: every change there arrives through a PR that already ran CI (this removed the duplicate push + PR runs).
+- To run the full suite on a lane PR, add the `full-ci` label; other label events do not re-run anything.
+- `codeql` and `dependency-review` stay opt-in behind `ENABLE_GHAS` (D-043).
+
 ## Required status checks
 
 Configure branch protection (or a ruleset) on `main`, `staging` and `milestone/**` to require exactly these checks:
@@ -66,7 +79,7 @@ Unit tests for the CI scripts: `pnpm test:ci-scripts` (`node --test` over `infra
 - `codeql`: `javascript-typescript`, `build-mode: none`. The only job with `security-events: write`.
 - `dependency-review`: PRs only, `fail-on-severity: high`.
 
-CodeQL result upload and dependency review require GitHub Advanced Security (Code Security) on a private repository. Until it is enabled those two jobs fail; `audit` and `gitleaks` work without it.
+CodeQL result upload and dependency review require GitHub Advanced Security (Code Security) on a private repository. Both jobs are therefore **opt-in**: they run only when the repository variable `ENABLE_GHAS` is `true` (D-043). Until then they are skipped, and `audit` (pnpm audit, high/critical) and `gitleaks` (secret scan of full history) are the always-on free alternatives.
 
 ## Security rules for workflows
 

@@ -38,6 +38,7 @@ describe('@causedeck/db root entry point', () => {
         .sort(),
     ).toEqual([
       'account',
+      'api_idempotency_key',
       'invitation',
       'job_effect',
       'member',

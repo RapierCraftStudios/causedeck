@@ -1,3 +1,5 @@
+import { UnauthenticatedError, type SessionUser } from '@causedeck/auth';
+import type { AuthSession } from '@causedeck/auth/session';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
@@ -5,14 +7,29 @@ import {
   ACTION_ERROR_CODES,
   ActionError,
   safeAction,
+  type ActionCtx,
   type ActionErrorCode,
 } from '../lib/safe-action.ts';
 import { logger } from '../src/health.ts';
+
+// Unit tests have no Next request scope; stand in for `lib/auth.ts` (the default session source).
+const auth = vi.hoisted(() => ({ session: null as AuthSession | null }));
+vi.mock('../lib/auth.ts', () => ({ getSession: () => Promise.resolve(auth.session) }));
+
+const user: SessionUser = {
+  id: '0b0e8f7c-0000-4000-8000-000000000001',
+  email: 'advocate@example.com',
+  name: 'A. Advocate',
+  image: null,
+  locale: 'en',
+};
+const signedIn: AuthSession = { session: { id: 'session-1' }, user };
 
 const schema = z.object({ title: z.string().min(3), court: z.string() });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  auth.session = null;
 });
 
 describe('safeAction', () => {
@@ -103,6 +120,64 @@ describe('safeAction', () => {
     await expect(action({ title: 'bail', court: 'HC' })).resolves.toMatchObject({
       ok: false,
       error: { code: 'INTERNAL' },
+    });
+  });
+
+  describe('sessions (#153)', () => {
+    it('maps UnauthenticatedError to UNAUTHENTICATED with the generic copy and does not log it', async () => {
+      const logged = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+      const result = await safeAction(schema, () => Promise.reject(new UnauthenticatedError()))({
+        title: 'bail',
+        court: 'HC',
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: { code: 'UNAUTHENTICATED', message: 'Please sign in again.' },
+      });
+      expect(logged).not.toHaveBeenCalled();
+    });
+
+    it('maps an UnauthenticatedError thrown while resolving the session', async () => {
+      const action = safeAction(schema, () => Promise.resolve('never'), {
+        getSession: () => Promise.reject(new UnauthenticatedError()),
+      });
+      await expect(action({ title: 'bail', court: 'HC' })).resolves.toMatchObject({
+        ok: false,
+        error: { code: 'UNAUTHENTICATED' },
+      });
+    });
+
+    it('passes the session from lib/auth.ts as ctx.session by default', async () => {
+      auth.session = signedIn;
+      const handler = vi.fn((_input: unknown, ctx: ActionCtx) => Promise.resolve(ctx.session));
+      const result = await safeAction(schema, handler)({ title: 'bail', court: 'HC' });
+      expect(result).toEqual({ ok: true, data: signedIn });
+    });
+
+    it('sets ctx.session to null when signed out', async () => {
+      const handler = vi.fn((_input: unknown, ctx: ActionCtx) => Promise.resolve(ctx.session));
+      await expect(safeAction(schema, handler)({ title: 'bail', court: 'HC' })).resolves.toEqual({
+        ok: true,
+        data: null,
+      });
+    });
+
+    it('uses an injected session source', async () => {
+      const getSession = vi.fn(() => Promise.resolve(signedIn));
+      const handler = (_input: unknown, ctx: ActionCtx) => Promise.resolve(ctx.session?.user.id);
+      const result = await safeAction(schema, handler, { getSession })({
+        title: 'bail',
+        court: 'HC',
+      });
+      expect(result).toEqual({ ok: true, data: user.id });
+      expect(getSession).toHaveBeenCalledOnce();
+    });
+
+    it('does not resolve the session for invalid input', async () => {
+      const getSession = vi.fn(() => Promise.resolve(signedIn));
+      await safeAction(schema, () => Promise.resolve('x'), { getSession })({ title: 'ab' });
+      expect(getSession).not.toHaveBeenCalled();
     });
   });
 });

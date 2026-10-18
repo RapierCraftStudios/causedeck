@@ -1,0 +1,178 @@
+// Database lifecycle for the e2e harness (#16). One template database (`causedeck_e2e_template`) is
+// built per run: migrated, seeded with the `e2e` profile and warmed with per-role sessions. Each
+// Playwright worker then gets its own clone (`CREATE DATABASE … TEMPLATE …`), and `resetWorkerDb`
+// drops and re-clones it before every test, so tests never see each other's writes.
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import postgres from 'postgres';
+
+const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
+
+/* eslint-disable no-process-env -- the harness is configured by its own env vars, read here. */
+/** Database name prefix; set `E2E_DB_PREFIX` when two harness runs share one Postgres. */
+export const DB_PREFIX = process.env.E2E_DB_PREFIX ?? 'causedeck_e2e';
+/** Compose dev stack superuser (infra/docker/compose.dev.yml); only for CREATE/DROP DATABASE. */
+const SUPERUSER_URL =
+  process.env.E2E_DB_SUPERUSER_URL ?? 'postgres://causedeck:causedeck@127.0.0.1:5432/postgres';
+/** Fail a reset slower than this when `E2E_ASSERT_RESET_MS` is set (CI). */
+const RESET_BUDGET_MS = Number(process.env.E2E_ASSERT_RESET_MS ?? 0);
+/* eslint-enable no-process-env */
+
+/** Role names and dev passwords from infra/docker/postgres/init/02-roles.sql. */
+const ROLES = {
+  owner: { user: 'causedeck_owner', password: 'causedeck_owner' },
+  app: { user: 'causedeck_app', password: 'causedeck_app' },
+} as const;
+
+export const TEMPLATE_DB = `${DB_PREFIX}_template`;
+
+export function workerDbName(workerIndex: number): string {
+  return `${DB_PREFIX}_w${String(workerIndex)}`;
+}
+
+/** URL of `database` for `role` (`superuser`, `owner` or `app`). */
+export function databaseUrl(database: string, role: 'superuser' | keyof typeof ROLES): string {
+  const url = new URL(SUPERUSER_URL);
+  url.pathname = `/${database}`;
+  if (role !== 'superuser') {
+    url.username = ROLES[role].user;
+    url.password = ROLES[role].password;
+  }
+  return url.toString();
+}
+
+function assertName(name: string): string {
+  if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new TypeError(`invalid database name: ${name}`);
+  return name;
+}
+
+/** Run statements on the `postgres` maintenance database as the superuser. */
+async function admin(statements: string[], database = 'postgres'): Promise<void> {
+  const sql = postgres(databaseUrl(database, 'superuser'), {
+    max: 1,
+    onnotice: () => undefined,
+    connect_timeout: 5,
+  });
+  try {
+    for (const statement of statements) await sql.unsafe(statement);
+  } finally {
+    await sql.end();
+  }
+}
+
+/** Throws a readable error when the compose Postgres or Mailpit is not reachable. */
+export async function assertStackUp(mailpitUrl: string): Promise<void> {
+  const hint = 'Start the dev stack first: pnpm stack:up';
+  try {
+    await admin(['select 1']);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`e2e: cannot reach Postgres (${reason}). ${hint}`);
+  }
+  const mailpit = await fetch(`${mailpitUrl}/readyz`).catch(() => undefined);
+  if (!mailpit?.ok) throw new Error(`e2e: cannot reach Mailpit at ${mailpitUrl}. ${hint}`);
+}
+
+/**
+ * The init SQL of the compose stack, applied to a fresh database: extensions, plus the schema
+ * ownership and default privileges from 02-roles.sql (the roles themselves already exist).
+ */
+function initStatements(database: string): string[] {
+  const dir = path.join(repoRoot, 'infra/docker/postgres/init');
+  const extensions = readFileSync(path.join(dir, '01-extensions.sql'), 'utf8');
+  const roles = readFileSync(path.join(dir, '02-roles.sql'), 'utf8');
+  return [extensions, roles]
+    .flatMap((file) => file.replace(/--.*$/gm, '').split(';'))
+    .map((s) => s.trim())
+    .filter((s) => s !== '' && !/^create role/i.test(s))
+    .map((s) => s.replace(/^alter database \w+/i, `ALTER DATABASE ${database}`));
+}
+
+async function dropDatabase(name: string): Promise<void> {
+  const db = assertName(name);
+  const exists = postgres(databaseUrl('postgres', 'superuser'), {
+    max: 1,
+    onnotice: () => undefined,
+  });
+  try {
+    const rows = await exists`select 1 from pg_database where datname = ${db}`;
+    if (rows.length === 0) return;
+    await exists.unsafe(`alter database ${db} is_template false allow_connections true`);
+    await exists.unsafe(`drop database ${db} with (force)`);
+  } finally {
+    await exists.end();
+  }
+}
+
+/** Run a packages/db script (`migrate.ts`, `seed.ts`) with tsx; no pnpm needed (CI container). */
+function runDbScript(
+  script: 'migrate.ts' | 'seed.ts',
+  env: Record<string, string>,
+  args: string[],
+) {
+  const dbDir = path.join(repoRoot, 'packages/db');
+  execFileSync(path.join(dbDir, 'node_modules/.bin/tsx'), [`scripts/${script}`, ...args], {
+    cwd: dbDir,
+    stdio: ['ignore', 'pipe', 'inherit'],
+    // eslint-disable-next-line no-process-env -- the child inherits PATH and the CI flags.
+    env: { ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'warn', ...env },
+  });
+}
+
+/** Build the template: fresh database, init SQL, migrations (owner) and the `e2e` seed (app). */
+export async function createTemplateDb(): Promise<void> {
+  await dropDatabase(TEMPLATE_DB);
+  await admin([`create database ${TEMPLATE_DB} template template0 owner ${ROLES.owner.user}`]);
+  await admin(initStatements(TEMPLATE_DB), TEMPLATE_DB);
+  runDbScript('migrate.ts', { DATABASE_URL_OWNER: databaseUrl(TEMPLATE_DB, 'owner') }, []);
+  runDbScript('seed.ts', { DATABASE_URL: databaseUrl(TEMPLATE_DB, 'app') }, ['--profile', 'e2e']);
+}
+
+/** Close every connection to the template and freeze it, so it can be cloned. */
+export async function sealTemplateDb(): Promise<void> {
+  await admin([
+    `alter database ${TEMPLATE_DB} is_template true allow_connections false`,
+    `select pg_terminate_backend(pid) from pg_stat_activity where datname = '${TEMPLATE_DB}' and pid <> pg_backend_pid()`,
+  ]);
+}
+
+/**
+ * Drop the worker's database (closing the web server's connections) and clone it again from the
+ * template. Returns the app-role URL and how long the reset took.
+ */
+export async function resetWorkerDb(workerIndex: number): Promise<{ url: string; ms: number }> {
+  const name = assertName(workerDbName(workerIndex));
+  const started = performance.now();
+  await admin([
+    `drop database if exists ${name} with (force)`,
+    `create database ${name} template ${TEMPLATE_DB} owner ${ROLES.owner.user}`,
+  ]);
+  const ms = Math.round(performance.now() - started);
+  if (RESET_BUDGET_MS > 0 && ms > RESET_BUDGET_MS) {
+    throw new Error(
+      `e2e: database reset took ${String(ms)} ms (budget ${String(RESET_BUDGET_MS)} ms)`,
+    );
+  }
+  return { url: databaseUrl(name, 'app'), ms };
+}
+
+/** First clone for a worker; same as a reset. */
+export const createWorkerDb = resetWorkerDb;
+
+/** Drop every worker clone and, unless `keepTemplate`, the template too. */
+export async function dropE2eDatabases({ keepTemplate }: { keepTemplate: boolean }): Promise<void> {
+  const sql = postgres(databaseUrl('postgres', 'superuser'), { max: 1, onnotice: () => undefined });
+  let names: string[];
+  try {
+    const rows = await sql<{ datname: string }[]>`
+      select datname from pg_database where datname like ${`${DB_PREFIX}\\_w%`}`;
+    names = rows.map((r) => r.datname);
+  } finally {
+    await sql.end();
+  }
+  for (const name of names) await dropDatabase(name);
+  if (!keepTemplate) await dropDatabase(TEMPLATE_DB);
+}

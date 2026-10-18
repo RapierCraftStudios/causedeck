@@ -191,6 +191,14 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 13,
   },
+  API_PORT: {
+    domain: 'server',
+    type: 'port',
+    description: 'Port the API service listens on.',
+    default: '3001',
+    requiredWhen: 'never',
+    ownerIssue: 14,
+  },
   WORKER_PORT: {
     domain: 'server',
     type: 'port',
@@ -274,6 +282,7 @@ export const serverShape = {
     .url()
     .optional()
     .describe(d(serverKeys.OTEL_EXPORTER_OTLP_ENDPOINT)),
+  API_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.API_PORT)),
   WORKER_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.WORKER_PORT)),
   GIT_SHA: z.string().min(1).optional().describe(d(serverKeys.GIT_SHA)),
 };

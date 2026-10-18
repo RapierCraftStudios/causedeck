@@ -43,6 +43,7 @@ function themeGaps(root: Root): string[] {
 }
 
 const HEX = /#[\da-f]{3,8}\b/i;
+const TEST_FILE = /\.test\.tsx?$/;
 const RGB = /\brgba?\(/i;
 
 /** Hex or rgb() literals in CSS, ignoring comments and the sanctioned `@supports not` fallback. */
@@ -140,7 +141,10 @@ describe('colour literals', () => {
     PRESET,
     ...walk(path.join(UI_ROOT, 'src'), /\.css$/),
   ];
-  const codeFiles = walk(path.join(UI_ROOT, 'src'), /\.(ts|tsx)$/);
+  // Tests are not component code: they assert computed colours and cite issue numbers (#131).
+  const codeFiles = walk(path.join(UI_ROOT, 'src'), /\.(ts|tsx)$/).filter(
+    (f) => !TEST_FILE.test(f),
+  );
 
   it('has no hex or rgb() literal in token, font, preset or component CSS', () => {
     expect(cssFiles.flatMap((f) => cssColorLiterals(read(f), path.basename(f)))).toEqual([]);
@@ -163,10 +167,12 @@ describe('colour literals', () => {
     ]);
   });
 
+  // The loading-skeleton shimmer (#145) is the one sanctioned gradient: a transient
+  // --surface-sunken to --line sweep, removed under reduced motion. It is not a background finish.
   it('keeps backgrounds flat: no gradients, grain or textures', () => {
-    const hits = cssFiles.filter((f) =>
-      /gradient\(|url\([^)]*\.(png|jpe?g|svg|webp)/i.test(read(f)),
-    );
+    const hits = cssFiles
+      .filter((f) => path.basename(f) !== 'skeleton.css')
+      .filter((f) => /gradient\(|url\([^)]*\.(png|jpe?g|svg|webp)/i.test(read(f)));
     expect(hits).toEqual([]);
   });
 });
@@ -673,7 +679,7 @@ describe('package boundaries', () => {
 
   it('imports no domain package or app from source, tokens or scripts', () => {
     const files = [
-      ...walk(path.join(UI_ROOT, 'src'), /\.(ts|tsx)$/),
+      ...walk(path.join(UI_ROOT, 'src'), /\.(ts|tsx)$/).filter((f) => !TEST_FILE.test(f)),
       ...walk(TOKENS_DIR, /\.(ts|css|html)$/),
       ...walk(path.join(UI_ROOT, 'scripts'), /\.ts$/),
     ];

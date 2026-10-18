@@ -11,6 +11,7 @@
     "./columns": "./src/columns.ts",
     "./schema": "./src/schema/index.ts",
     "./seed": "./src/seed/index.ts",
+    "./seed/e2e": "./src/seed/e2e.ts",
     "./testing": "./src/testing/index.ts",
     "./testing/global-setup": "./src/testing/global-setup.ts",
     "./vector": "./src/vector.ts"

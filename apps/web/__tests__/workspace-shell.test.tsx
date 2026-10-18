@@ -13,9 +13,17 @@ import { setErrorReporter, type ErrorReporter } from '../lib/report-error.ts';
 
 import { catalogs, fakeGetTranslations, type TestLocale } from './helpers/intl.ts';
 
-const state = vi.hoisted((): { locale: TestLocale; dev: boolean } => ({ locale: 'en', dev: true }));
+const state = vi.hoisted(
+  (): { locale: TestLocale; dev: boolean; cookies: Record<string, { value: string }> } => ({
+    locale: 'en',
+    dev: true,
+    cookies: {},
+  }),
+);
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/w/demo/today',
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   notFound: () => {
     throw new Error('NEXT_NOT_FOUND');
   },
@@ -27,6 +35,9 @@ vi.mock('next-intl/server', () => ({
   getTranslations: (namespace?: string) => fakeGetTranslations(state.locale)(namespace),
 }));
 vi.mock('../lib/env.ts', () => ({ isDev: () => state.dev }));
+vi.mock('next/headers', () => ({
+  cookies: () => Promise.resolve({ get: (name: string) => state.cookies[name] }),
+}));
 
 const { default: WorkspaceLayout } = await import('../app/(app)/w/[slug]/layout.tsx');
 const { default: WorkspaceError } = await import('../app/(app)/w/[slug]/error.tsx');
@@ -86,6 +97,7 @@ let reporter: ReturnType<typeof vi.fn<ErrorReporter>>;
 beforeEach(() => {
   state.locale = 'en';
   state.dev = true;
+  state.cookies = {};
   online = true;
   Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
   reporter = vi.fn<ErrorReporter>();
@@ -110,7 +122,7 @@ describe('workspace layout', () => {
   });
 
   it('renders children inside main#main for a member', async () => {
-    render(
+    withIntl(
       await WorkspaceLayout({
         children: <p>content</p>,
         params: Promise.resolve({ slug: 'demo' }),
@@ -120,6 +132,30 @@ describe('workspace layout', () => {
     expect(main?.tagName).toBe('MAIN');
     expect(main?.dataset.workspaceSlug).toBe('demo');
     expect(main?.textContent).toBe('content');
+    expect(document.querySelectorAll('main')).toHaveLength(1);
+  });
+
+  it('wraps the page in the shell chrome: header and nav[aria-label=Primary]', async () => {
+    withIntl(
+      await WorkspaceLayout({
+        children: <p>content</p>,
+        params: Promise.resolve({ slug: 'demo' }),
+      }),
+    );
+    expect(screen.getByRole('banner').tagName).toBe('HEADER');
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeTruthy();
+    expect(document.querySelector('[data-shell]')?.getAttribute('data-sidebar')).toBe('auto');
+  });
+
+  it('paints the sidebar state from the cookie', async () => {
+    state.cookies = { sidebar: { value: 'collapsed' } };
+    withIntl(
+      await WorkspaceLayout({
+        children: <p>content</p>,
+        params: Promise.resolve({ slug: 'demo' }),
+      }),
+    );
+    expect(document.querySelector('[data-shell]')?.getAttribute('data-sidebar')).toBe('collapsed');
   });
 
   it('placeholder pages refuse a non-member workspace on their own', async () => {

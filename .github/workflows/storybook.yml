@@ -8,6 +8,7 @@ name: Storybook
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - 'packages/ui/**'
       - 'packages/config/tailwind/**'
@@ -16,7 +17,7 @@ on:
       - 'pnpm-workspace.yaml'
       - '.github/workflows/storybook.yml'
   push:
-    branches: [main, staging, 'milestone/**']
+    branches: [main, staging]
     paths:
       - 'packages/ui/**'
       - 'packages/config/tailwind/**'
@@ -36,6 +37,7 @@ concurrency:
 jobs:
   storybook:
     name: storybook
+    if: ${{ (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -64,6 +66,8 @@ jobs:
 
   visual:
     name: visual
+    # Full tier only (docs/engineering/ci.md): ship PRs, staging/main pushes, or the `full-ci` label.
+    if: ${{ (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # Pinned Playwright image (Linux Chromium and fonts): the only place baselines are compared and
@@ -74,6 +78,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The container user does not own the checkout, so git (run by the root `prepare` script's
+      # `lefthook install`) refuses the repository as dubious ownership without this.
+      - name: Trust the workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: ./.github/actions/setup
       - name: Build Storybook
         run: pnpm --filter @causedeck/ui build-storybook

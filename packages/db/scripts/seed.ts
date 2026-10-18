@@ -1,8 +1,10 @@
-// `pnpm db:seed [--profile demo|test]`: run the registered seeders as the app role.
+// `pnpm db:seed [--profile demo|test|e2e]`: run the registered seeders as the app role.
 import { createEnv } from '@causedeck/config/env';
 
 import { createDb } from '../src/client.ts';
 import { seed, SEED_PROFILES, type SeedProfile } from '../src/seed/index.ts';
+// Seeders register on import.
+import '../src/seed/e2e.ts';
 
 const flag = process.argv.indexOf('--profile');
 const requested = flag === -1 ? 'demo' : process.argv[flag + 1];

@@ -10,7 +10,7 @@
     "start": "next start -p 3000",
     "analyze": "ANALYZE=true next build",
     "bundle:budget": "node scripts/check-bundle-budget.mjs",
-    "lint": "eslint .",
+    "lint": "NODE_OPTIONS=--max-old-space-size=4096 eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
@@ -46,7 +46,9 @@
     "@causedeck/storage": "workspace:*",
     "@causedeck/ui": "workspace:*",
     "@causedeck/validators": "workspace:*",
+    "better-auth": "catalog:",
     "lucide-react": "catalog:",
+    "motion": "catalog:",
     "next": "catalog:",
     "next-intl": "catalog:",
     "next-themes": "catalog:",

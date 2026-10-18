@@ -136,6 +136,9 @@
   --animate-fade-in: fade-in var(--dur-base) var(--ease-enter) both;
   --animate-fade-out: fade-out var(--dur-fast) var(--ease-exit) both;
   --animate-slide-in: slide-in var(--dur-slow) var(--ease-emphasized) both;
+  /* Transform-only entrance for above-the-fold content: no opacity ramp, so the content is visible
+   * (and counted for LCP) from the first frame. Use this instead of slide-in on LCP containers. */
+  --animate-rise: rise var(--dur-slow) var(--ease-emphasized) both;
   --animate-scale-in: scale-in var(--dur-base) var(--ease-standard) both;
 
   @keyframes fade-in {
@@ -153,6 +156,12 @@
   @keyframes slide-in {
     from {
       opacity: 0;
+      transform: var(--motion-transform, translateY(4px));
+    }
+  }
+
+  @keyframes rise {
+    from {
       transform: var(--motion-transform, translateY(4px));
     }
   }

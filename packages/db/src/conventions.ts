@@ -20,6 +20,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'passkey',
   'two_factor',
   'rate_limit',
+  'api_idempotency_key',
 ];
 
 export const WORKSPACE_COLUMN = 'workspace_id';

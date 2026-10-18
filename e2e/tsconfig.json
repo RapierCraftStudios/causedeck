@@ -1,4 +1,9 @@
 {
   "extends": "@causedeck/config/tsconfig/node.json",
-  "include": ["**/*.ts"]
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    // `page.evaluate` callbacks run in the browser.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "include": ["*.ts", "fixtures", "support", "tests"]
 }

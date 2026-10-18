@@ -22,6 +22,7 @@ import {
   InvitationError,
   inviteMember,
   memberRole,
+  previewInvitation,
   reissueInvitation,
   removeMember,
   revokeInvitation,
@@ -433,6 +434,106 @@ describe('acceptInvitation', () => {
         );
       }
       await expectCode(acceptInvitation(tx, { userId, token: 'guess-last' }), 'RATE_LIMITED');
+    });
+  });
+});
+
+describe('previewInvitation', () => {
+  it('reports each state with the same checks as accept, without writing', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await setup(tx);
+      const [workspace] = await tx
+        .select({ name: schema.organization.name, slug: schema.organization.slug })
+        .from(schema.organization)
+        .where(eq(schema.organization.id, workspaceId));
+      const email = `${randomUUID()}@example.test`;
+      const now = new Date('2026-10-19T10:00:00Z');
+      const { token, invitation } = await inviteMember(tx, {
+        workspaceId,
+        actorUserId: ownerId,
+        input: { email, role: 'junior' },
+        mailer: recordingMailer(),
+        appUrl: APP_URL,
+        now,
+      });
+      const invitee = await newUser(tx, email.toUpperCase());
+      const stranger = await newUser(tx);
+      const details = { workspaceName: workspace?.name, workspaceSlug: workspace?.slug };
+
+      expect(await previewInvitation(tx, { userId: invitee, token: 'nope' })).toEqual({
+        state: 'INVALID',
+      });
+      expect(await previewInvitation(tx, { userId: invitee, token, now })).toEqual({
+        state: 'VALID',
+        role: 'junior',
+        ...details,
+      });
+      expect(
+        (
+          await previewInvitation(tx, {
+            userId: invitee,
+            token,
+            now: new Date(now.getTime() + INVITATION_TTL_MS),
+          })
+        ).state,
+      ).toBe('EXPIRED');
+      const mismatch = await previewInvitation(tx, { userId: stranger, token, now });
+      expect(mismatch.state).toBe('EMAIL_MISMATCH');
+      expect(JSON.stringify(mismatch)).not.toContain(email);
+
+      // Previewing never writes or spends the accept limit.
+      const before = await invitationRow(tx, invitation.id);
+      for (let i = 0; i < ACCEPT_RATE_LIMIT.max + 2; i++) {
+        await previewInvitation(tx, { userId: invitee, token, now });
+      }
+      expect(await invitationRow(tx, invitation.id)).toEqual(before);
+
+      const accepted = await acceptInvitation(tx, { userId: invitee, token, now });
+      expect(accepted.workspaceSlug).toBe(workspace?.slug);
+      expect((await previewInvitation(tx, { userId: invitee, token, now })).state).toBe('USED');
+    });
+  });
+
+  it('reports revoked, already-member and soft-deleted workspaces', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await setup(tx);
+      const send = (email: string) =>
+        inviteMember(tx, {
+          workspaceId,
+          actorUserId: ownerId,
+          input: { email, role: 'viewer' },
+          mailer: recordingMailer(),
+          appUrl: APP_URL,
+        });
+      const revokedEmail = `${randomUUID()}@example.test`;
+      const revoked = await send(revokedEmail);
+      await revokeInvitation(tx, {
+        workspaceId,
+        actorUserId: ownerId,
+        invitationId: revoked.invitation.id,
+      });
+      const revokedUser = await newUser(tx, revokedEmail);
+      expect(
+        (await previewInvitation(tx, { userId: revokedUser, token: revoked.token })).state,
+      ).toBe('REVOKED');
+
+      const existing = await addMember(tx, workspaceId, 'clerk');
+      const [account] = await tx
+        .select({ email: schema.user.email })
+        .from(schema.user)
+        .where(eq(schema.user.id, existing.userId));
+      const again = await send(account?.email ?? '');
+      expect(
+        (await previewInvitation(tx, { userId: existing.userId, token: again.token })).state,
+      ).toBe('ALREADY_MEMBER');
+
+      await tx
+        .update(schema.organization)
+        .set({ deletedAt: new Date() })
+        .where(eq(schema.organization.id, workspaceId));
+      expect(await previewInvitation(tx, { userId: existing.userId, token: again.token })).toEqual({
+        state: 'INVALID',
+      });
     });
   });
 });

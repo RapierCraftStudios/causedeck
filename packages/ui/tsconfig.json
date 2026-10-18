@@ -1,4 +1,4 @@
 {
   "extends": "@causedeck/config/tsconfig/react-library.json",
-  "include": ["src", "*.ts"]
+  "include": ["src", "tokens", "scripts", "*.ts"]
 }

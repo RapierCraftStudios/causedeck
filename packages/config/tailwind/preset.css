@@ -1,0 +1,210 @@
+/* CauseDeck Tailwind CSS v4 preset (CSS-first). Import after Tailwind and the tokens:
+ *
+ *   @import 'tailwindcss';
+ *   @import '@causedeck/ui/tokens.css';
+ *   @import '@causedeck/config/tailwind/preset.css';
+ *
+ * Utilities point at the token custom properties from @causedeck/ui, so themes switch with
+ * pure CSS. Token names match Tailwind's namespaces (--radius-lg, --shadow-2, --text-sm), so the
+ * mappings use `@theme inline reference`: values are inlined into utilities and no variable is
+ * emitted (re-emitting `--shadow-2: var(--shadow-2)` would be a cycle). This file has no colour
+ * literals; every colour comes from the tokens. */
+
+/* Dark mode follows class `dark` on <html> (next-themes attribute="class"). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Drop Tailwind's default palettes and scales so only CauseDeck tokens exist. */
+@theme {
+  --color-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --radius-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --ease-*: initial;
+  --animate-*: initial;
+}
+
+@theme inline reference {
+  --color-transparent: transparent;
+  --color-current: currentcolor;
+
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-control: var(--line-control);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-seal: var(--seal);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-ring: var(--ring);
+  --color-stage-filed: var(--stage-filed);
+  --color-stage-filed-soft: var(--stage-filed-soft);
+  --color-stage-sr_fr: var(--stage-sr_fr);
+  --color-stage-sr_fr-soft: var(--stage-sr_fr-soft);
+  --color-stage-defects: var(--stage-defects);
+  --color-stage-defects-soft: var(--stage-defects-soft);
+  --color-stage-re_presented: var(--stage-re_presented);
+  --color-stage-re_presented-soft: var(--stage-re_presented-soft);
+  --color-stage-numbered: var(--stage-numbered);
+  --color-stage-numbered-soft: var(--stage-numbered-soft);
+  --color-stage-disposed: var(--stage-disposed);
+  --color-stage-disposed-soft: var(--stage-disposed-soft);
+  --color-stage-listed: var(--stage-listed);
+  --color-stage-listed-soft: var(--stage-listed-soft);
+  --color-stage-reserved: var(--stage-reserved);
+  --color-stage-reserved-soft: var(--stage-reserved-soft);
+  --color-stage-part-heard: var(--stage-part-heard);
+  --color-stage-part-heard-soft: var(--stage-part-heard-soft);
+  --color-level-l1: var(--level-l1);
+  --color-level-l2: var(--level-l2);
+  --color-level-l3: var(--level-l3);
+  --color-level-l4: var(--level-l4);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  --text-xs: var(--text-xs);
+  --text-xs--line-height: var(--text-xs--line-height);
+  --text-sm: var(--text-sm);
+  --text-sm--line-height: var(--text-sm--line-height);
+  --text-base: var(--text-base);
+  --text-base--line-height: var(--text-base--line-height);
+  --text-md: var(--text-md);
+  --text-md--line-height: var(--text-md--line-height);
+  --text-lg: var(--text-lg);
+  --text-lg--line-height: var(--text-lg--line-height);
+  --text-xl: var(--text-xl);
+  --text-xl--line-height: var(--text-xl--line-height);
+  --text-2xl: var(--text-2xl);
+  --text-2xl--line-height: var(--text-2xl--line-height);
+  --text-3xl: var(--text-3xl);
+  --text-3xl--line-height: var(--text-3xl--line-height);
+  --text-display: var(--text-display);
+  --text-display--line-height: var(--text-display--line-height);
+  --text-eyebrow: var(--text-eyebrow);
+  --text-eyebrow--line-height: var(--text-eyebrow--line-height);
+  --text-display--letter-spacing: var(--text-display--letter-spacing);
+
+  --spacing: var(--space-1);
+
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --shadow-3: var(--shadow-3);
+  --shadow-4: var(--shadow-4);
+
+  --ease-standard: var(--ease-standard);
+  --ease-emphasized: var(--ease-emphasized);
+  --ease-enter: var(--ease-enter);
+  --ease-exit: var(--ease-exit);
+  --ease-spring: var(--ease-spring);
+}
+
+/* Animations use the motion tokens, so prefers-reduced-motion shortens them to 0.01ms. */
+@theme inline {
+  --animate-fade-in: fade-in var(--dur-base) var(--ease-enter) both;
+  --animate-fade-out: fade-out var(--dur-fast) var(--ease-exit) both;
+  --animate-slide-in: slide-in var(--dur-slow) var(--ease-emphasized) both;
+  --animate-scale-in: scale-in var(--dur-base) var(--ease-standard) both;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: var(--motion-transform, translateY(4px));
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: var(--motion-transform, scale(0.98));
+    }
+  }
+}
+
+/* Semantic stacking utilities (z-sticky, z-modal, ...); numeric z-index is not allowed. */
+
+@utility z-base {
+  z-index: var(--z-base);
+}
+
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+
+@utility z-dropdown {
+  z-index: var(--z-dropdown);
+}
+
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+
+@utility z-popover {
+  z-index: var(--z-popover);
+}
+
+@utility z-toast {
+  z-index: var(--z-toast);
+}
+
+@utility z-tooltip {
+  z-index: var(--z-tooltip);
+}
+
+@utility z-max {
+  z-index: var(--z-max);
+}
+
+/* Minimum touch target from --hit. */
+@utility hit {
+  min-width: var(--hit);
+  min-height: var(--hit);
+}

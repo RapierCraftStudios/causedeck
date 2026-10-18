@@ -19,7 +19,7 @@ Each job is matrix-free, runs on `ubuntu-latest` with `timeout-minutes: 15`, and
 
 | Job | Runs |
 |---|---|
-| `lint` | `pnpm format:check`, then ESLint (`turbo run lint`), then `docker compose -f infra/docker/compose.dev.yml config -q` (dev stack definition, #5) |
+| `lint` | `pnpm format:check`, then the ADR checks (`pnpm adr:lint`, `pnpm adr:test`, `pnpm docs:links`; see [docs/adr](../adr/README.md)), then ESLint (`turbo run lint`), then `docker compose -f infra/docker/compose.dev.yml config -q` (dev stack definition, #5) |
 | `typecheck` | `tsc --noEmit` (`turbo run typecheck`) |
 | `test` | Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports` artifact (`coverage/` and `reports/junit.xml` per package) |
 | `build` | `turbo run build` |

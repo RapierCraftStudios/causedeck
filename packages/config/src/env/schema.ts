@@ -191,6 +191,13 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 13,
   },
+  GIT_SHA: {
+    domain: 'server',
+    type: 'string',
+    description: 'Build commit SHA; used as the service version and Sentry release.',
+    requiredWhen: 'never',
+    ownerIssue: 13,
+  },
 } satisfies KeyMetaRecord;
 
 export const killSwitchKeys = {
@@ -259,6 +266,7 @@ export const serverShape = {
     .url()
     .optional()
     .describe(d(serverKeys.OTEL_EXPORTER_OTLP_ENDPOINT)),
+  GIT_SHA: z.string().min(1).optional().describe(d(serverKeys.GIT_SHA)),
 };
 
 const baseSchema = z.object({ ...sharedShape, ...serverShape, ...clientShape });

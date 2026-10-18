@@ -3,6 +3,7 @@
 // - Apps may import packages. Packages never import apps.
 // - `ui` is domain-free: it may import only `config` and `validators` (plus external primitives).
 // - `core` is the domain layer and may import the packages listed in CORE_DEPENDENCIES.
+// - `observability` may import only `config`, so logging never depends on domain code.
 // - Other packages may import any package except `core` and `ui`. This is kept permissive on
 //   purpose so later issues are not blocked; tighten per package when its design settles.
 import { createRequire } from 'node:module';
@@ -26,6 +27,9 @@ export const CORE_DEPENDENCIES = [
   'validators',
   'config',
 ];
+
+/** Packages that `observability` may depend on: no domain packages (#13). */
+export const OBSERVABILITY_DEPENDENCIES = ['config'];
 
 /** Packages that `ui` may depend on. */
 export const UI_DEPENDENCIES = ['config', 'validators'];
@@ -66,6 +70,8 @@ export const boundaries = [
             { from: [pkg('ui')], allow: UI_DEPENDENCIES.map(pkg) },
             { from: [pkg('core')], disallow: ['package'] },
             { from: [pkg('core')], allow: CORE_DEPENDENCIES.map(pkg) },
+            { from: [pkg('observability')], disallow: ['package'] },
+            { from: [pkg('observability')], allow: OBSERVABILITY_DEPENDENCIES.map(pkg) },
           ],
         },
       ],

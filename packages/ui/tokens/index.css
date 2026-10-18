@@ -1,0 +1,10 @@
+/* The single stylesheet apps import: `@import '@causedeck/ui/tokens.css';`
+ * Order matters: fonts, raw palette, semantic roles, then scales and the global base. */
+@import '../fonts/fonts.css';
+@import './primitives.css';
+@import './semantic.css';
+@import './typography.css';
+@import './spacing-radius-shadow.css';
+@import './motion.css';
+@import './z-index.css';
+@import './base.css';

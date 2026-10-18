@@ -33,6 +33,30 @@ export const serverEnvImportPath = {
     'Server env must not reach client code. Import `clientEnv` from `@causedeck/config/env/client`.',
 };
 
+/**
+ * Matter content must never reach logs (PRD §9, #13): ban passing request bodies or content fields
+ * to a logger call, whether directly, spread into the log object or as a property value.
+ */
+const LOG_METHODS = '/^(trace|debug|info|warn|error|fatal)$/';
+const LOGGER_NAMES = '/^(logger|log)$/';
+const CONTENT_NAMES = '/^(body|content|text|quote|prompt|memoryValue)$/';
+const loggerCalls = [
+  `CallExpression[callee.property.name=${LOG_METHODS}][callee.object.name=${LOGGER_NAMES}]`,
+  `CallExpression[callee.property.name=${LOG_METHODS}][callee.object.property.name=${LOGGER_NAMES}]`,
+];
+const LOG_CONTENT_MESSAGE =
+  'Do not log request bodies or matter content; log ids and lengths instead (docs/engineering/observability.md).';
+
+export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
+  [
+    `${call} > MemberExpression.arguments[property.name=${CONTENT_NAMES}]`,
+    `${call} > Identifier.arguments[name=${CONTENT_NAMES}]`,
+    `${call} > ObjectExpression.arguments > SpreadElement > MemberExpression.argument[property.name=${CONTENT_NAMES}]`,
+    `${call} > ObjectExpression.arguments > SpreadElement > Identifier.argument[name=${CONTENT_NAMES}]`,
+    `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
+  ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
+);
+
 /** Files treated as client modules (browser bundles). */
 export const CLIENT_FILE_GLOBS = [
   '**/*.client.{ts,tsx}',
@@ -97,6 +121,7 @@ export const base = tseslint.config(
       'no-restricted-imports': ['error', { patterns: deepImportPatterns }],
       // Read configuration through `@causedeck/config/env` (spike §3.2), never `process.env`.
       'no-process-env': 'error',
+      'no-restricted-syntax': ['error', ...loggerContentRestrictions],
       'import-x/no-cycle': 'error',
       'import-x/no-self-import': 'error',
       'import-x/no-duplicates': 'error',

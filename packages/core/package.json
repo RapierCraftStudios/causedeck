@@ -5,15 +5,24 @@
   "description": "Domain services: workspaces, matter graph, obligations, briefs, memory, audit.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./jobs": "./src/jobs/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "devDependencies": {
+  "dependencies": {
     "@causedeck/config": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "@causedeck/observability": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "pg-boss": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@opentelemetry/sdk-trace-base": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",

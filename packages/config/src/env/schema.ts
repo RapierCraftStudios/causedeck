@@ -191,6 +191,14 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 13,
   },
+  WORKER_PORT: {
+    domain: 'server',
+    type: 'port',
+    description: 'Port the worker serves /healthz and /readyz on.',
+    default: '3003',
+    requiredWhen: 'never',
+    ownerIssue: 15,
+  },
   GIT_SHA: {
     domain: 'server',
     type: 'string',
@@ -266,6 +274,7 @@ export const serverShape = {
     .url()
     .optional()
     .describe(d(serverKeys.OTEL_EXPORTER_OTLP_ENDPOINT)),
+  WORKER_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.WORKER_PORT)),
   GIT_SHA: z.string().min(1).optional().describe(d(serverKeys.GIT_SHA)),
 };
 

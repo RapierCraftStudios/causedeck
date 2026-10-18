@@ -71,7 +71,7 @@ describe('runMigrations', () => {
       logger: { info: (m) => logged.push(m) },
     });
     expect(result.applied).toEqual(journalTags());
-    expect(result.latest).toBe('0000_baseline');
+    expect(result.latest).toBe(journalTags().at(-1));
     expect(logged.join('\n')).toContain('0000_baseline');
     expect(logged.join('\n')).not.toContain('causedeck_owner:');
 
@@ -85,6 +85,17 @@ describe('runMigrations', () => {
     expect(row?.ext).toEqual(
       expect.arrayContaining(['vector', 'pgcrypto', 'citext', 'pg_trgm', 'unaccent']),
     );
+
+    // 0001: the pgboss schema belongs to the owner; the app role may use it but not create in it.
+    const [boss] = await query<{ owner: string; usage: boolean; create: boolean }>(
+      db.owner,
+      sql`
+      select pg_get_userbyid(nspowner) as owner,
+             has_schema_privilege('causedeck_app', 'pgboss', 'USAGE') as usage,
+             has_schema_privilege('causedeck_app', 'pgboss', 'CREATE') as create
+      from pg_namespace where nspname = 'pgboss'`,
+    );
+    expect(boss).toEqual({ owner: 'causedeck_owner', usage: true, create: false });
   });
 
   it('is idempotent: a second run applies nothing', async () => {
@@ -96,8 +107,8 @@ describe('runMigrations', () => {
       logger: { info: (m) => logged.push(m) },
     });
     expect(second.applied).toEqual([]);
-    expect(second.latest).toBe('0000_baseline');
-    expect(logged).toEqual(['No pending migrations. Latest: 0000_baseline.']);
+    expect(second.latest).toBe(journalTags().at(-1));
+    expect(logged).toEqual([`No pending migrations. Latest: ${String(journalTags().at(-1))}.`]);
     const [count] = await query<{ n: number }>(
       db.owner,
       sql`select count(*)::int as n from drizzle.__drizzle_migrations`,

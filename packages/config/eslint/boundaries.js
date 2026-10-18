@@ -25,6 +25,7 @@ export const CORE_DEPENDENCIES = [
   'notifications',
   'billing',
   'validators',
+  'observability',
   'config',
 ];
 

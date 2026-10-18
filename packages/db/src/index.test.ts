@@ -18,6 +18,7 @@ describe('@causedeck/db root entry point', () => {
       'GLOBAL_TABLES',
       'EMBEDDING_DIMENSIONS',
       'schema',
+      'withWorkspace',
     ]) {
       expect(root, name).toHaveProperty(name);
     }
@@ -29,7 +30,12 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates no domain table: only the schema_info baseline', () => {
-    expect(root.tablesOf(root.schema).map((t) => getTableName(t))).toEqual(['schema_info']);
+  it('creates only platform tables: the schema_info baseline and job_effect (#15)', () => {
+    expect(
+      root
+        .tablesOf(root.schema)
+        .map((t) => getTableName(t))
+        .sort(),
+    ).toEqual(['job_effect', 'schema_info']);
   });
 });

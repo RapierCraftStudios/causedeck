@@ -22,6 +22,12 @@ describe('dependency boundaries (spike §2)', () => {
     expect(result.messages).toEqual([]);
   });
 
+  it('lets core import observability for job spans and logs (#15)', async () => {
+    const result = await lintFixture('boundaries', 'packages/core/imports-observability.ts');
+
+    expect(result.messages).toEqual([]);
+  });
+
   it('keeps observability free of domain packages', async () => {
     const result = await lintFixture('boundaries', 'packages/observability/imports-db.ts');
 

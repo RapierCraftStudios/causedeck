@@ -65,11 +65,17 @@ jobs:
           retention-days: 14
 
   visual:
-    name: visual
+    name: visual (${{ matrix.shard }}/4)
     # Full tier only (docs/engineering/ci.md): ship PRs, staging/main pushes, or the `full-ci` label.
     if: ${{ (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # ~4,500 screenshots (every story x light/dark x 360/768/1280): sharded 4 ways so a shard takes
+    # ~10-12 min on a 2-vCPU runner instead of one 45-min job (D-044).
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     # Pinned Playwright image (Linux Chromium and fonts): the only place baselines are compared and
     # generated. Keep the tag in step with the `playwright` catalog version.
     container:
@@ -86,12 +92,12 @@ jobs:
       - name: Build Storybook
         run: pnpm --filter @causedeck/ui build-storybook
       - name: Visual regression (every story, light and dark, 360/768/1280)
-        run: pnpm --filter @causedeck/ui test:visual
+        run: pnpm --filter @causedeck/ui test:visual -- --shard=${{ matrix.shard }}/4
       - name: Upload expected, actual and diff images
         if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: visual-diffs
+          name: visual-diffs-${{ matrix.shard }}
           path: |
             packages/ui/visual/test-results
             packages/ui/visual/playwright-report

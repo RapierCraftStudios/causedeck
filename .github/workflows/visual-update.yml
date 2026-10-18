@@ -23,9 +23,14 @@ jobs:
       (github.event.label.name == 'visual:update' &&
       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Sharded like the comparison job; each shard uploads its baselines and `commit` pushes once.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     permissions:
-      contents: write
+      contents: read
     # Same pinned image as the `visual` job in storybook.yml.
     container:
       image: mcr.microsoft.com/playwright:v1.60.0-noble@sha256:9bd26ad900bb5e0f4dee75839e957a89ae89c2b7ab1e76050e559790e946b948
@@ -38,7 +43,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.BRANCH }}
-          persist-credentials: true
+          persist-credentials: false
       # The container user does not own the checkout; trust it before `prepare` (lefthook) runs git.
       - name: Trust the workspace
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -46,7 +51,35 @@ jobs:
       - name: Build Storybook
         run: pnpm --filter @causedeck/ui build-storybook
       - name: Regenerate baselines
-        run: pnpm --filter @causedeck/ui test:visual:update
+        run: pnpm --filter @causedeck/ui test:visual:update -- --shard=${{ matrix.shard }}/4
+      - name: Upload this shard's baselines
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: baselines-${{ matrix.shard }}
+          path: packages/ui/visual/__screenshots__
+          if-no-files-found: error
+          retention-days: 3
+
+  commit:
+    name: commit baselines
+    needs: update
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BRANCH }}
+          persist-credentials: true
+      - name: Download all shards
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: baselines-*
+          path: packages/ui/visual/__screenshots__
+          merge-multiple: true
       - name: Commit baselines
         run: |
           git config user.name 'github-actions[bot]'
@@ -61,7 +94,7 @@ jobs:
 
   finish:
     name: rerun checks
-    needs: update
+    needs: [update, commit]
     if: ${{ always() && needs.update.result != 'skipped' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -73,7 +106,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
       BRANCH: ${{ github.head_ref || github.ref_name }}
       PR: ${{ github.event.pull_request.number }}
-      RESULT: ${{ needs.update.result }}
+      RESULT: ${{ needs.commit.result }}
     steps:
       # Pushes made with GITHUB_TOKEN do not start workflows; dispatch Storybook on the new head.
       - name: Run Storybook checks on the updated branch

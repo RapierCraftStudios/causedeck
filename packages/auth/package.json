@@ -10,6 +10,8 @@
     "./client": "./src/client.ts",
     "./session": "./src/session.ts",
     "./mailer": "./src/mailer.ts",
+    "./messages": "./src/messages.ts",
+    "./rate-limit": "./src/rate-limit.ts",
     "./dev-provider": "./src/dev-provider.ts"
   },
   "scripts": {

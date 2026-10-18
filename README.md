@@ -1,4 +1,6 @@
-# Lawyer OS — Research, Product & MVP Package
+# CauseDeck — Research, Product & MVP Package
+
+*Working title (D-035). Earlier documents call the product "Lawyer OS".*
 
 A low-cost, bootstrapped legal operating system for Gen Z lawyers in India.
 This repository currently has **no product code**. It holds research and decision documents. They are written in Markdown so they can be reviewed in diffs.
@@ -21,6 +23,7 @@ This repository currently has **no product code**. It holds research and decisio
 | 9 | Capture & automation subsystem (ladder, approvals, recovery, audit, offline, privacy, cost) | [docs/product/09-zero-entry-automation-design.md](docs/product/09-zero-entry-automation-design.md) |
 | 10 | System architecture: north star, matter graph, memory, court adapters, SaaS platform | [docs/product/10-lawyer-os-system-architecture.md](docs/product/10-lawyer-os-system-architecture.md) |
 | 11 | Launch markets: Madras HC & Bengaluru | [docs/strategy/11-launch-markets-madras-hc-bengaluru.md](docs/strategy/11-launch-markets-madras-hc-bengaluru.md) |
+| 12 | Naming | [docs/strategy/12-naming.md](docs/strategy/12-naming.md) |
 | — | Decision log | [DECISIONS.md](DECISIONS.md) |
 | — | Assumptions register (kept apart from verified facts) | [ASSUMPTIONS.md](ASSUMPTIONS.md) |
 | — | Raw research notes with citations | [research/raw/](research/raw/) |

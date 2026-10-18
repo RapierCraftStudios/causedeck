@@ -277,3 +277,19 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
   - practice analytics.
 
   **Permanently excluded:** public solicitation and marketing of lawyers, autonomous legal advice, unverified citations, unsupervised filing, unauthorised court scraping, judge analytics.
+
+---
+
+### D-035 — Working title: CauseDeck
+- **Date:** 2026-10-18 · **Status:** Accepted (founder), *working title*
+- **Decision:** The product's working title is **CauseDeck**. It replaces "Lawyer OS" in new material. Repo: `RapierCraft/causedeck` (private). Earlier documents keep "Lawyer OS" as a historical name.
+- **Why:**
+  - It follows the founder's two-short-words house style (UltraNews, AlterLab, ForgeDock).
+  - It is court-native: the cause list is a litigator's daily deck.
+  - It reads as a command deck for the whole practice, i.e. an operating layer, not a diary (consistent with D-024).
+  - In the 2026-10-18 screen, causedeck.com, .app and .in showed no DNS records and no product conflict was found ([12](docs/strategy/12-naming.md)).
+- **Before it becomes final:**
+  - an IP India trademark search (classes 9, 42, 45);
+  - domain registration;
+  - checks on handles (Play Store, social);
+  - a gut-check with 10 lawyers in Chennai and Bengaluru.

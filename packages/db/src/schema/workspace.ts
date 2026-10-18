@@ -1,0 +1,53 @@
+// Workspace-only tables (#177, spike §4.2). The workspace itself, its members and invitations are
+// Better Auth's `organization`, `member` and `invitation` tables, extended in place in `auth.ts`
+// (one source of truth, no duplicate tables or views). This file holds what Better Auth has no
+// table for: per-workspace settings and the slug redirect history.
+import { sql } from 'drizzle-orm';
+import {
+  boolean,
+  check,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
+
+import { citext, id, timestamps, workspaceIndex } from '../columns.ts';
+
+import { inList, LOCALES, organization } from './auth.ts';
+
+export const workspaceSettings = pgTable(
+  'workspace_settings',
+  {
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    indiaOnlyAi: boolean('india_only_ai').notNull().default(true),
+    retention: jsonb('retention').$type<Record<string, unknown>>().notNull().default({}),
+    locale: text('locale').notNull().default('en'),
+    timezone: text('timezone').notNull().default('Asia/Kolkata'),
+    ...timestamps(),
+  },
+  (t) => [
+    // Table-level so the convention checker sees `workspace_id` leading the primary key.
+    primaryKey({ name: 'workspace_settings_pkey', columns: [t.workspaceId] }),
+    check('workspace_settings_locale_chk', sql`locale in ${inList(LOCALES)}`),
+  ],
+);
+
+export const workspaceSlugHistory = pgTable(
+  'workspace_slug_history',
+  {
+    id: id(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    /** A previous slug; unique so it redirects to exactly one workspace and cannot be reused. */
+    slug: citext('slug').notNull().unique('workspace_slug_history_slug_uq'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [workspaceIndex('workspace_slug_history', t.workspaceId)],
+);

@@ -4,6 +4,7 @@
 import { sql } from 'drizzle-orm';
 import {
   check,
+  customType,
   index,
   numeric,
   pgEnum,
@@ -35,6 +36,11 @@ export const confirmationState = pgEnum('confirmation_state', CONFIRMATION_STATE
 /** `id uuid primary key default gen_random_uuid()` (pgcrypto / Postgres 13+). */
 export function id() {
   return uuid('id').primaryKey().defaultRandom();
+}
+
+/** Case-insensitive text (the `citext` extension is installed by the baseline migration). */
+export function citext(name: string) {
+  return customType<{ data: string }>({ dataType: () => 'citext' })(name);
 }
 
 /** `created_at` and `updated_at` (timestamptz, not null, default now; `updated_at` bumps on update). */

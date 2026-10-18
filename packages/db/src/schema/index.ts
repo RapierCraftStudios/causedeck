@@ -14,4 +14,5 @@ export {
   verification,
 } from './auth.ts';
 export { jobEffect } from './job-effect.ts';
+export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';

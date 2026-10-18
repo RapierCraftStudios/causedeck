@@ -1,7 +1,15 @@
 // Workspace and membership queries for the API (#14) and later the web app. Every query is
-// filtered by the calling user's id, so a caller can only ever see their own memberships.
+// filtered by the calling user's id, so a caller can only ever see their own memberships, and
+// skips soft-deleted workspaces and non-active (suspended or removed) memberships (#177).
 import { schema, type Database, type Transaction } from '@causedeck/db';
 import { and, asc, eq, sql } from 'drizzle-orm';
+
+import { activeMember, liveWorkspace } from './members.ts';
+
+export * from './errors.ts';
+export * from './members.ts';
+export * from './service.ts';
+export * from './slug.ts';
 
 export type Queryable = Database | Transaction;
 
@@ -83,7 +91,7 @@ export async function listMemberships(db: Queryable, userId: string): Promise<Me
     })
     .from(schema.member)
     .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
-    .where(eq(schema.member.userId, userId))
+    .where(and(eq(schema.member.userId, userId), activeMember, liveWorkspace))
     .orderBy(asc(schema.member.createdAt), asc(schema.member.id));
 }
 
@@ -108,6 +116,8 @@ export async function listWorkspacesForUser(
     .where(
       and(
         eq(schema.member.userId, userId),
+        activeMember,
+        liveWorkspace,
         after &&
           sql`(${schema.organization.createdAt}, ${schema.organization.id}) > (${after.createdAt}::timestamptz, ${after.id}::uuid)`,
       ),
@@ -131,7 +141,7 @@ export async function listWorkspacesForUser(
   return { data, nextCursor };
 }
 
-/** The user's role in the workspace, or `null` when they are not a member. */
+/** The user's role in the workspace, or `null` when they are not an active member of a live one. */
 export async function memberRole(
   db: Queryable,
   userId: string,
@@ -140,7 +150,15 @@ export async function memberRole(
   const [row] = await db
     .select({ role: schema.member.role })
     .from(schema.member)
-    .where(and(eq(schema.member.userId, userId), eq(schema.member.organizationId, workspaceId)))
+    .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
+    .where(
+      and(
+        eq(schema.member.userId, userId),
+        eq(schema.member.organizationId, workspaceId),
+        activeMember,
+        liveWorkspace,
+      ),
+    )
     .limit(1);
   return row?.role ?? null;
 }

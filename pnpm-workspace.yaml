@@ -14,7 +14,7 @@ minimumReleaseAge: 4320
 # pure-JS fallbacks are enough for the local Docker socket.
 # `allowBuilds` is read by pnpm >= 10.26; the two lists cover older pnpm 10 releases.
 allowBuilds:
-  esbuild: true
+  esbuild: 0.28.2
   unrs-resolver: true
   lefthook: false
   '@parcel/watcher': false
@@ -46,12 +46,22 @@ catalog:
   '@opentelemetry/sdk-trace-node': 2.12.0
   '@opentelemetry/semantic-conventions': 1.43.0
   '@sentry/node': 11.7.0
+  '@storybook/addon-a11y': 9.1.21
+  '@storybook/addon-docs': 9.1.21
+  '@storybook/addon-vitest': 9.1.21
+  '@storybook/nextjs-vite': 9.1.21
   '@t3-oss/env-core': 0.13.11
   '@tailwindcss/cli': 4.3.3
+  '@tailwindcss/vite': 4.3.3
   '@testcontainers/postgresql': 12.2.1
+  '@testing-library/jest-dom': 6.10.0
+  '@testing-library/react': 16.3.3
+  '@testing-library/user-event': 14.6.8
   '@types/culori': 4.0.1
   '@types/node': 22.20.5
   '@types/react': 19.3.0
+  '@types/react-dom': 19.3.0
+  '@vitest/browser': 3.2.7
   '@vitest/coverage-v8': 3.2.7
   apca-w3: 0.1.9
   class-variance-authority: 0.7.1
@@ -59,6 +69,7 @@ catalog:
   culori: 4.0.2
   drizzle-kit: 0.31.11
   drizzle-orm: 0.45.4
+  esbuild: 0.28.2
   eslint: 9.39.5
   eslint-import-resolver-typescript: 4.4.5
   eslint-plugin-boundaries: 5.4.0
@@ -66,16 +77,23 @@ catalog:
   eslint-plugin-react-hooks: 7.1.1
   eslint-plugin-unicorn: 65.0.0
   globals: 17.13.0
+  jsdom: 27.0.1
   lefthook: 2.2.2
+  lucide-react: 1.57.0
+  motion: 14.2.0
   next: 16.4.0
   pg-boss: 12.37.1
   pino: 10.4.0
   pino-pretty: 13.2.0
+  playwright: 1.60.0
   postcss: 8.5.30
   postgres: 3.4.9
   prettier: 3.9.10
   prettier-plugin-tailwindcss: 0.8.1
+  radix-ui: 1.8.1
   react: 19.3.1
+  react-dom: 19.3.1
+  storybook: 9.1.21
   tailwind-merge: 3.7.0
   tailwindcss: 4.3.3
   testcontainers: 12.2.1
@@ -84,5 +102,6 @@ catalog:
   tw-animate-css: 1.4.0
   typescript: 5.9.3
   typescript-eslint: 8.71.2
+  vite: 7.3.7
   vitest: 3.2.7
   zod: 4.6.7

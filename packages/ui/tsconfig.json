@@ -1,4 +1,9 @@
 {
   "extends": "@causedeck/config/tsconfig/react-library.json",
-  "include": ["src", "tokens", "scripts", "*.ts"]
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
+    "types": ["node", "@testing-library/jest-dom/vitest", "@vitest/browser/providers/playwright"]
+  },
+  "include": ["src", "tokens", "scripts", "test", ".storybook/*.ts", ".storybook/*.tsx", "*.ts"]
 }

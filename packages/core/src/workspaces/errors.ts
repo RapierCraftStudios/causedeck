@@ -1,6 +1,7 @@
 // Domain errors for the workspace service (#177). Codes are a subset of the API error codes
 // (`@causedeck/validators/api` API_ERROR_CODES), so the API and server actions map them 1:1.
-export type WorkspaceErrorCode = 'NOT_FOUND' | 'FORBIDDEN' | 'CONFLICT' | 'VALIDATION';
+export type WorkspaceErrorCode =
+  'NOT_FOUND' | 'FORBIDDEN' | 'CONFLICT' | 'VALIDATION' | 'RATE_LIMITED';
 
 export class WorkspaceError extends Error {
   readonly code: WorkspaceErrorCode;
@@ -27,6 +28,41 @@ export function conflict(message: string): WorkspaceError {
 
 export function invalid(message: string): WorkspaceError {
   return new WorkspaceError('VALIDATION', message);
+}
+
+/** Same wording as the auth rate limit, so the limits are indistinguishable. */
+export function rateLimited(
+  message = 'Too many requests. Please try again later.',
+): WorkspaceError {
+  return new WorkspaceError('RATE_LIMITED', message);
+}
+
+/** Why an invitation token cannot be accepted (#178); the accept UI shows a state per reason. */
+export type InvitationErrorReason = 'INVALID' | 'EXPIRED' | 'REVOKED' | 'USED' | 'EMAIL_MISMATCH';
+
+const INVITATION_ERRORS: Record<
+  InvitationErrorReason,
+  { code: WorkspaceErrorCode; message: string }
+> = {
+  INVALID: { code: 'NOT_FOUND', message: 'This invitation link is not valid' },
+  EXPIRED: { code: 'CONFLICT', message: 'This invitation has expired' },
+  REVOKED: { code: 'CONFLICT', message: 'This invitation was revoked' },
+  USED: { code: 'CONFLICT', message: 'This invitation has already been used' },
+  EMAIL_MISMATCH: {
+    code: 'FORBIDDEN',
+    message: 'This invitation was sent to a different email address',
+  },
+};
+
+/** A `WorkspaceError` (same `name`, so action mapping is unchanged) with a typed `reason`. */
+export class InvitationError extends WorkspaceError {
+  readonly reason: InvitationErrorReason;
+
+  constructor(reason: InvitationErrorReason) {
+    const { code, message } = INVITATION_ERRORS[reason];
+    super(code, message);
+    this.reason = reason;
+  }
 }
 
 /** True for a Postgres unique violation, raw or wrapped by Drizzle (`DrizzleQueryError.cause`). */

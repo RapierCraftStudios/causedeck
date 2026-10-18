@@ -4,6 +4,7 @@ import { schema, type Database, type Transaction } from '@causedeck/db';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 
 import { conflict, forbidden, invalid, notFound } from './errors.ts';
+import { offboardMember } from './offboarding.ts';
 
 type Queryable = Database | Transaction;
 type WorkspaceRole = (typeof schema.member.$inferSelect)['role'];
@@ -127,9 +128,14 @@ export interface RemoveMemberRequest {
   workspaceId: string;
   actorUserId: string;
   memberId: string;
+  /** Member id that takes over the removed member's open work (required when any exists). */
+  reassignTo?: string | undefined;
 }
 
-/** Owner-only; marks the membership `removed`. Removing the last active owner is a `CONFLICT`. */
+/**
+ * Owner-only; runs the offboarding service (reassign, revoke workspace sessions, mark `removed`,
+ * audit). Removing the last active owner is a `CONFLICT`.
+ */
 export async function removeMember(db: Queryable, request: RemoveMemberRequest): Promise<void> {
   await db.transaction(async (tx) => {
     await requireOwner(tx, request.workspaceId, request.actorUserId);
@@ -137,7 +143,12 @@ export async function removeMember(db: Queryable, request: RemoveMemberRequest):
     if (target.role === 'owner' && (await activeOwnerCount(tx, request.workspaceId)) <= 1) {
       throw conflict('The last owner cannot be removed; transfer ownership first');
     }
-    await tx.update(member).set({ status: 'removed' }).where(eq(member.id, target.id));
+    await offboardMember(tx, {
+      workspaceId: request.workspaceId,
+      actorUserId: request.actorUserId,
+      target: { memberId: target.id, userId: target.userId },
+      reassignTo: request.reassignTo,
+    });
   });
 }
 

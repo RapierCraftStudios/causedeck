@@ -55,6 +55,10 @@
       "magicLink": {
         "subject": "Your CauseDeck sign-in link",
         "body": "Use this link to sign in to CauseDeck. It expires in {minutes} minutes: {url}"
+      },
+      "invitation": {
+        "subject": "You are invited to a CauseDeck workspace",
+        "body": "Use this link to join the workspace. It expires in {minutes} minutes: {url}"
       }
     }
   },

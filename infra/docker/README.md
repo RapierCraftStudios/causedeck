@@ -67,6 +67,20 @@ mc share download local/causedeck-dev/probe.txt   # prints a presigned GET URL
 python3 -c "import smtplib; smtplib.SMTP('localhost', 1025).sendmail('a@x.test', ['b@x.test'], 'Subject: hi\n\nhello')"
 ```
 
+## API image
+
+`infra/docker/api.Dockerfile` builds the Hono API (`apps/api`, #14). It runs as the non-root `node` user, listens on `API_PORT` (default 3001), has a `HEALTHCHECK` on `/healthz`, and on `SIGTERM` stops accepting connections and drains in-flight requests for up to 10 s before exiting 0.
+
+```sh
+docker build -f infra/docker/api.Dockerfile -t causedeck-api .
+# The server validates the full server env at startup and exits if it is incomplete, so pass an
+# env file (production values come from the secret manager, never from this repo).
+docker run --rm -p 127.0.0.1:3001:3001 --env-file .env.api causedeck-api
+curl -s http://127.0.0.1:3001/healthz
+```
+
+Nothing connects to Postgres until the first request that needs it, so `/healthz` answers even before the database is reachable; `/readyz` reports the `db` check.
+
 ## Troubleshooting
 
 - **`pnpm run doctor` reports a port in use.** Another Postgres, MinIO or mail sink is listening; `lsof -i :5432` shows which process. If it is this stack, `pnpm stack:down` stops it.

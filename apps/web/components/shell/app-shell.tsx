@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { ShortcutsProvider } from '../../lib/shortcuts/provider.tsx';
 import type { SidebarState } from '../../lib/sidebar-state.ts';
 import type { WorkspaceContext } from '../../lib/workspace-context.ts';
 
@@ -26,19 +27,21 @@ export function AppShell({ context, sidebarState, children }: AppShellProps) {
   return (
     <CaptureProvider>
       <SidebarProvider initialState={sidebarState}>
-        <Sidebar context={context} />
-        <div className="bg-surface flex min-w-0 flex-col">
-          <Topbar context={context} />
-          <main
-            id="main"
-            tabIndex={-1}
-            data-workspace-slug={context.workspace.slug}
-            className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(var(--space-6)+56px+env(safe-area-inset-bottom))] outline-none md:px-6 md:py-8"
-          >
-            {children}
-          </main>
-        </div>
-        <MobileNav slug={context.workspace.slug} role={context.role} />
+        <ShortcutsProvider slug={context.workspace.slug} role={context.role}>
+          <Sidebar context={context} />
+          <div className="bg-surface flex min-w-0 flex-col">
+            <Topbar context={context} />
+            <main
+              id="main"
+              tabIndex={-1}
+              data-workspace-slug={context.workspace.slug}
+              className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(var(--space-6)+56px+env(safe-area-inset-bottom))] outline-none md:px-6 md:py-8"
+            >
+              {children}
+            </main>
+          </div>
+          <MobileNav slug={context.workspace.slug} role={context.role} />
+        </ShortcutsProvider>
       </SidebarProvider>
     </CaptureProvider>
   );

@@ -102,11 +102,12 @@ describe('command palette', () => {
     renderShell();
     act(ctrlK);
     await screen.findByRole('dialog');
-    expect(groups()).toEqual(['goTo', 'create', 'settings']);
+    // The shell's shortcuts (#157) add capture, sidebar and help commands.
+    expect(groups()).toEqual(['goTo', 'create', 'settings', 'help']);
     type('/');
     expect(groups()).toEqual(['goTo']);
     type('>');
-    expect(groups()).toEqual(['create', 'settings']);
+    expect(groups()).toEqual(['create', 'settings', 'help']);
     type('zzzz');
     expect(screen.getByText('No matches. Try a matter name, court or action.')).toBeTruthy();
   });

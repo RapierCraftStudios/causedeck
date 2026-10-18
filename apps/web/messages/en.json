@@ -1,0 +1,34 @@
+{
+  "common": {
+    "skipToContent": "Skip to content",
+    "goToToday": "Go to Today",
+    "loading": "Loading"
+  },
+  "home": {
+    "title": "CauseDeck",
+    "tagline": "Your court day, prepared.",
+    "signIn": "Sign in"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "body": "Sign-in is coming soon."
+  },
+  "offline": {
+    "title": "Offline",
+    "body": "You are offline. Saved court days and briefs remain available once synced."
+  },
+  "error": {
+    "title": "Something went wrong.",
+    "description": "Your saved work is safe. Try again, or go back to Today.",
+    "reference": "Reference: {digest}"
+  },
+  "notFound": {
+    "title": "Page not found"
+  }
+}

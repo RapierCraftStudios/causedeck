@@ -106,3 +106,7 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Build
         run: bash infra/scripts/ci-affected.sh build
+      # Spike §10: home route initial JS <= 180 KB gzip. Runs when the build above included web.
+      - name: Web bundle budget
+        if: hashFiles('apps/web/.next/build-manifest.json') != ''
+        run: pnpm --filter @causedeck/web bundle:budget

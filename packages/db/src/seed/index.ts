@@ -2,7 +2,7 @@
 // court-faithful demo data (two fictional workspaces) arrives with the domain milestones.
 import type { Database, Transaction } from '../client.ts';
 
-export const SEED_PROFILES = ['demo', 'test'] as const;
+export const SEED_PROFILES = ['demo', 'test', 'e2e'] as const;
 export type SeedProfile = (typeof SEED_PROFILES)[number];
 
 export type SeedDb = Database | Transaction;

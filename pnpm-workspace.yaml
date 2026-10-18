@@ -33,6 +33,7 @@ ignoredBuiltDependencies:
 
 catalog:
   '@apidevtools/swagger-parser': 13.1.0
+  '@axe-core/playwright': 4.13.0
   '@better-auth/passkey': 1.7.10
   '@commitlint/cli': 21.2.3
   '@commitlint/config-conventional': 21.2.3
@@ -41,6 +42,7 @@ catalog:
   '@hono/node-server': 2.1.5
   '@hono/zod-openapi': 1.6.3
   '@hookform/resolvers': 5.9.1
+  '@lhci/cli': 0.15.1
   '@next/bundle-analyzer': 16.4.0
   '@opentelemetry/api': 1.9.1
   '@opentelemetry/auto-instrumentations-node': 0.81.0

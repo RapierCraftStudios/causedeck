@@ -1,0 +1,218 @@
+# End-to-end suites (#16): Playwright against a freshly built apps/web and the Compose dev stack,
+# plus Lighthouse CI on /sign-in. No secrets: every credential is a local dev default or generated
+# in the job. See e2e/README.md.
+#
+# Playwright runs inside the pinned Playwright image (`docker run --network host`), so browsers and
+# fonts are identical to the ones that generated the visual baselines; the job itself runs on the
+# host because the Compose stack (infra/scripts/dev-up.sh, #5) needs Docker, which a `container:`
+# job does not have. `services: postgres` is deliberately not used: the e2e harness needs the same
+# init SQL, roles and Mailpit as local development.
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main, staging, 'milestone/**']
+  schedule:
+    # 02:00 IST: the flake hunt (`@smoke` x5, no retries).
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: Regenerate the @visual baselines in the pinned image and open a PR with them
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Keep the tag in step with the `@playwright/test` catalog version (same digest as storybook.yml).
+  PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.60.0-noble@sha256:9bd26ad900bb5e0f4dee75839e957a89ae89c2b7ab1e76050e559790e946b948
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+jobs:
+  e2e:
+    name: e2e (${{ matrix.shard }}/2)
+    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Start the Compose stack (Postgres, MinIO, Mailpit)
+        run: bash infra/scripts/dev-up.sh
+      # The image carries the pinned browsers, so nothing is downloaded at test time.
+      - name: Pull the pinned Playwright image
+        run: docker pull "$PLAYWRIGHT_IMAGE"
+      - name: Playwright (shard ${{ matrix.shard }}/2)
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: >-
+          docker run --rm --network host --ipc host
+          -e CI=true -e E2E_ASSERT_RESET_MS=2000
+          -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
+          node support/playwright.mjs --shard="$SHARD/2"
+      - name: Upload the HTML report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: e2e/playwright-report
+          if-no-files-found: ignore
+          retention-days: 14
+      # Traces (first retry), videos and expected/actual/diff images of failed tests.
+      - name: Upload traces and test artifacts
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-test-results-${{ matrix.shard }}
+          path: e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  lighthouse:
+    name: lighthouse
+    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # A real production build (the dev sign-in provider is compiled out). Throwaway values: the
+      # page under test (/sign-in, signed out) never uses them.
+      NODE_ENV: production
+      APP_URL: http://localhost:3100
+      NEXT_PUBLIC_APP_URL: http://localhost:3100
+      API_URL: http://localhost:3101
+      DATABASE_URL: postgres://causedeck_app:causedeck_app@127.0.0.1:5432/causedeck
+      ALLOW_MOCK_PROVIDERS: 'true'
+      EMAIL_PROVIDER: console
+      AI_PROVIDER: mock
+      BILLING_PROVIDER: mock
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_BUCKET: causedeck-dev
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      AUTH_GOOGLE_ENABLED: 'false'
+      SENTRY_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Generate throwaway server secrets
+        run: |
+          echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >>"$GITHUB_ENV"
+          echo "KEK_BASE64=$(openssl rand -base64 32)" >>"$GITHUB_ENV"
+      - name: Build apps/web (production)
+        run: pnpm --filter @causedeck/web build
+      - name: Cache Playwright Chromium
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-chromium-1.60.0
+      - name: Install Chromium for Lighthouse
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0'
+        run: pnpm --filter @causedeck/e2e exec playwright install --with-deps chromium
+      - name: Lighthouse CI (/sign-in, mobile; performance and accessibility >= 0.95)
+        run: |
+          CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
+          export CHROME_PATH
+          pnpm --filter @causedeck/e2e lhci
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse
+          path: e2e/.lighthouseci
+          if-no-files-found: ignore
+          retention-days: 14
+
+  flake:
+    name: nightly flake check
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Start the Compose stack (Postgres, MinIO, Mailpit)
+        run: bash infra/scripts/dev-up.sh
+      - name: Pull the pinned Playwright image
+        run: docker pull "$PLAYWRIGHT_IMAGE"
+      # Every shipped smoke spec five times with no retries: any flake fails the run.
+      - name: Playwright @smoke x5
+        run: >-
+          docker run --rm --network host --ipc host
+          -e CI=true -e E2E_ASSERT_RESET_MS=2000
+          -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
+          node support/playwright.mjs --grep @smoke --repeat-each=5 --retries=0
+          --fail-on-flaky-tests
+      - name: Upload the HTML report and traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-flake-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  update-snapshots:
+    name: update visual baselines
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_snapshots }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BASE: ${{ github.ref_name }}
+      BRANCH: e2e-baselines/${{ github.run_id }}
+      RUN_ID: ${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true
+      - uses: ./.github/actions/setup
+      - name: Start the Compose stack (Postgres, MinIO, Mailpit)
+        run: bash infra/scripts/dev-up.sh
+      - name: Pull the pinned Playwright image
+        run: docker pull "$PLAYWRIGHT_IMAGE"
+      # Baselines are only ever written here, in the pinned image: local OS fonts never leak in.
+      - name: Regenerate @visual baselines
+        run: >-
+          docker run --rm --network host --ipc host
+          -e CI=true
+          -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
+          node support/playwright.mjs --grep @visual --update-snapshots=all
+      - name: Open a pull request with the new baselines
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" e2e/__screenshots__
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all e2e/__screenshots__
+          if git diff --cached --quiet; then
+            echo 'Baselines unchanged.'
+            exit 0
+          fi
+          git switch -c "$BRANCH"
+          git commit -m 'test(e2e): update visual baselines'
+          git push origin "HEAD:refs/heads/$BRANCH"
+          gh pr create --base "$BASE" --head "$BRANCH" \
+            --title 'test(e2e): update visual baselines' \
+            --body "Regenerated by the E2E workflow (run $RUN_ID) in \`$PLAYWRIGHT_IMAGE\`."

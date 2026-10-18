@@ -4,7 +4,7 @@ import bundleAnalyzer from '@next/bundle-analyzer';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
-import { analyzeBundle, buildTimeAppUrl } from './lib/env.ts';
+import { analyzeBundle, buildTimeAppUrl, e2eBuild } from './lib/env.ts';
 
 const repoRoot = path.join(import.meta.dirname, '../..');
 
@@ -41,6 +41,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // The e2e build (#16) gets its own output folder so it never overwrites a production build.
+  ...(e2eBuild() ? { distDir: '.next-e2e' } : {}),
   outputFileTracingRoot: repoRoot,
   turbopack: { root: repoRoot },
   transpilePackages: workspacePackages,
@@ -60,6 +62,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // CSRF: Server Actions only accept requests whose Origin matches the app (spike §3).
     serverActions: { allowedOrigins: appUrl ? [appUrl.host] : [] },
+    // e2e harness only (#16): a compiled build that keeps `NODE_ENV=development`.
+    ...(e2eBuild() ? { allowDevelopmentBuild: true as const } : {}),
   },
   headers: () => Promise.resolve([{ source: '/:path*', headers: securityHeaders }]),
 };

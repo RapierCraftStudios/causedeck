@@ -71,6 +71,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit",
     "test:storybook": "vitest run --project storybook --project storybook-dark --project browser",
+    "test:visual": "playwright test -c visual/playwright.config.ts",
+    "test:visual:update": "playwright test -c visual/playwright.config.ts --update-snapshots=all",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "check:stories": "tsx scripts/check-stories.ts",
@@ -103,6 +105,7 @@
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
+    "@playwright/test": "catalog:",
     "@storybook/addon-a11y": "catalog:",
     "@storybook/addon-docs": "catalog:",
     "@storybook/addon-vitest": "catalog:",

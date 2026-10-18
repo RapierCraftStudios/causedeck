@@ -47,6 +47,7 @@ const unitTest = {
     'tokens/**/*.test.ts',
     'scripts/**/*.test.ts',
     'test/**/*.test.ts',
+    'visual/**/*.test.ts',
   ],
   exclude: ['**/*.browser.test.{ts,tsx}', '**/node_modules/**'],
   environment: 'node',

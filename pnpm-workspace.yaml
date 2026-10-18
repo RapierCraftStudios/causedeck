@@ -47,6 +47,7 @@ catalog:
   '@opentelemetry/sdk-trace-base': 2.12.0
   '@opentelemetry/sdk-trace-node': 2.12.0
   '@opentelemetry/semantic-conventions': 1.43.0
+  '@playwright/test': 1.60.0
   '@sentry/node': 11.7.0
   '@storybook/addon-a11y': 9.1.21
   '@storybook/addon-docs': 9.1.21

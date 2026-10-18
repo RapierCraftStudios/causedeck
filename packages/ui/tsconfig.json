@@ -5,5 +5,14 @@
     "paths": { "@/*": ["./src/*"] },
     "types": ["node", "@testing-library/jest-dom/vitest", "@vitest/browser/providers/playwright"]
   },
-  "include": ["src", "tokens", "scripts", "test", ".storybook/*.ts", ".storybook/*.tsx", "*.ts"]
+  "include": [
+    "src",
+    "tokens",
+    "scripts",
+    "test",
+    "visual",
+    ".storybook/*.ts",
+    ".storybook/*.tsx",
+    "*.ts"
+  ]
 }

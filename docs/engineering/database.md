@@ -69,8 +69,11 @@ for the owner, and a 20 s `idle_timeout`.
   ];
   ```
 
-- **Global tables** (not workspace-scoped: Better Auth, `workspace`, the court layer) are listed in
+- **Global tables** (not workspace-scoped: the Better Auth tables `user`, `session`, `account`,
+  `verification`, `passkey`, `two_factor` and `rate_limit`, later the court layer) are listed in
   `GLOBAL_TABLES` in `packages/db/src/conventions.ts` and are exempt from both checks.
+  `organization` (the workspace, exported as `workspace`), `member` and `invitation` are tenant
+  roots, not global: their organization FK column is `workspace_id`, and RLS for them comes in #19.
 - **Provenance on every fact:** `...provenance()` adds `source_type` (enum `manual | document |
   capture | adapter | ai | import | system`, not null), `source_ref text`, `anchor_id uuid`,
   `confidence numeric(4,3)` and `confirmation_state` (enum `proposed | confirmed | edited |

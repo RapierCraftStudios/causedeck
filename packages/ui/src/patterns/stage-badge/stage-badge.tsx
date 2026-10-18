@@ -19,8 +19,8 @@ export function StageBadge({ stage, label, className, ...props }: StageBadgeProp
       data-slot="stage-badge"
       data-stage={stage}
       className={cn(
-        'inline-flex h-5.5 max-w-full shrink-0 items-center gap-1 rounded-full px-2',
-        'border border-transparent font-sans text-xs font-medium whitespace-nowrap',
+        'inline-flex min-h-5.5 max-w-full shrink-0 items-center gap-1 rounded-full px-2',
+        'border border-transparent font-sans text-xs font-medium',
         'forced-colors:border-current [&_svg]:size-3 [&_svg]:shrink-0',
         meta.classes,
         className,
@@ -28,7 +28,7 @@ export function StageBadge({ stage, label, className, ...props }: StageBadgeProp
       {...props}
     >
       <Icon aria-hidden="true" data-slot="stage-icon" />
-      <span className="min-w-0 truncate">{label ?? meta.label}</span>
+      <span className="min-w-0 wrap-break-word">{label ?? meta.label}</span>
     </span>
   );
 }

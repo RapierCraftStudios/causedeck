@@ -5,7 +5,7 @@ import { packageName as billingName } from '@causedeck/billing';
 import { packageName as captureName } from '@causedeck/capture';
 import { packageName as configName } from '@causedeck/config';
 import { packageName as coreName } from '@causedeck/core';
-import { packageName as dbName } from '@causedeck/db';
+import { isUuid } from '@causedeck/db';
 import { packageName as draftingName } from '@causedeck/drafting';
 import { packageName as flagsName } from '@causedeck/flags';
 import { packageName as i18nName } from '@causedeck/i18n';
@@ -16,6 +16,9 @@ import { packageName as storageName } from '@causedeck/storage';
 import { packageName as uiName } from '@causedeck/ui';
 import { packageName as validatorsName } from '@causedeck/validators';
 import { describe, expect, it } from 'vitest';
+
+// @causedeck/db dropped its `packageName` placeholder in #15; a real export proves the import.
+const dbName = typeof isUuid === 'function' ? '@causedeck/db' : 'missing';
 
 const packages: [string, string][] = [
   ['adapters', adaptersName],

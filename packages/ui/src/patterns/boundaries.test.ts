@@ -10,6 +10,8 @@ const ALLOWED_PACKAGES = new Set([
   'lucide-react',
   'class-variance-authority',
   'clsx',
+  // Layout and path animation for the proposal card (#143).
+  'motion/react',
 ]);
 
 function sourceFiles(dir: string): string[] {
@@ -39,6 +41,22 @@ describe('patterns are domain-agnostic', () => {
       expect.arrayContaining(['lucide-react', 'react', '../../components/drawer', '../types']),
     );
     expect(specifiers(`import x from '@causedeck/core';`)).toEqual(['@causedeck/core']);
+  });
+
+  it('covers the state screens (#145)', () => {
+    const states = files
+      .map((file) => path.relative(root, file))
+      .filter((f) => f.startsWith('states'));
+    expect(states).toEqual(
+      expect.arrayContaining([
+        path.join('states', 'empty-state.tsx'),
+        path.join('states', 'loading-skeletons.tsx'),
+        path.join('states', 'error-state.tsx'),
+        path.join('states', 'offline-banner.tsx'),
+        path.join('states', 'permission-denied.tsx'),
+        path.join('states', 'not-found.tsx'),
+      ]),
+    );
   });
 
   it.each(files.map((file) => [path.relative(root, file), file]))(

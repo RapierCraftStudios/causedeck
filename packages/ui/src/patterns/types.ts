@@ -56,3 +56,14 @@ export const PROCEEDING_STAGES = [
 export const LISTING_STAGES = ['listed', 'reserved', 'part-heard'] as const;
 
 export type Stage = (typeof PROCEEDING_STAGES | typeof LISTING_STAGES)[number];
+
+/** Lawyer memory scopes M1-M7 (`memory_item`, docs/product/10-lawyer-os-system-architecture.md). */
+export const MEMORY_SCOPES = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7'] as const;
+
+export type MemoryScope = (typeof MEMORY_SCOPES)[number];
+
+/** Where an obligation stands against its due date. */
+export type DueState = 'upcoming' | 'due-today' | 'overdue' | 'done';
+
+/** The person (or Lawyer OS itself) an activity or obligation belongs to. */
+export type Person = { name: string; avatarUrl?: string };

@@ -1,0 +1,64 @@
+import { Canvas, Meta } from '@storybook/addon-docs/blocks';
+
+import * as StateStories from './states/states.stories';
+
+<Meta title="Patterns/States guide" />
+
+# Pattern states
+
+Every pattern has the same state matrix: default, hover, focus-visible, pressed, disabled, loading
+skeleton, error, offline (read-only) and permission denied. Each pattern's stories show its own
+states. The screens below cover a whole surface when there is nothing to show inside it. They are
+built on the `EmptyState` and `Skeleton` components.
+
+## Empty
+
+One calm sentence and at most one primary action. Never use an exclamation mark.
+
+- Proposals: `Nothing needs you right now.`
+- Activity: `Nothing has happened yet. Forward an order or cause list to get started.`
+- Obligations: `No open obligations. Well kept.`
+
+<Canvas of={StateStories.WithIcon} />
+
+## Loading
+
+`PatternSkeleton` uses the same layout as the pattern it stands in for, so the page does not shift
+when data arrives. It is announced once as `Loading`. Under `prefers-reduced-motion` the shimmer
+stops.
+
+<Canvas of={StateStories.Loading} />
+
+## Error
+
+Say what happened in one plain sentence, then offer `Try again` and a support link.
+
+<Canvas of={StateStories.Invalid} />
+
+## Offline
+
+Saved data stays readable. The banner reads `You are offline. Showing saved data from <time>.`.
+Actions stay visible but disabled, each with a short note that says why.
+
+<Canvas of={StateStories.Offline} />
+
+## Permission denied
+
+Actions are hidden. Inside a pattern, a `View only` note replaces them. A whole surface shows a lock
+and `You do not have access to this. Ask the workspace owner.`
+
+<Canvas of={StateStories.PermissionDeniedState} />
+
+## Not found
+
+<Canvas of={StateStories.NotFoundState} />
+
+## Motion
+
+These are the transitions the patterns use, all taken from the motion tokens:
+
+- A confirmed card collapses on the list spring while its content fades over 200 ms with `--ease-standard`.
+- The chip popover fades and rises 4 px over 150 ms (`--dur-fast`).
+- The undo toast slides in over 200 ms (`--dur-base`).
+
+Under `prefers-reduced-motion` every one of these is instant.

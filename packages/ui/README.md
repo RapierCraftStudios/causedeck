@@ -15,21 +15,56 @@ so unused components are tree-shaken.
 
 ## Scripts
 
-| Command                                       | What it does                                                                     |
-| --------------------------------------------- | -------------------------------------------------------------------------------- |
-| `pnpm --filter @causedeck/ui storybook`       | Storybook on :6006 (theme, viewport 360/768/1280 and locale en/ta/kn toolbars)   |
-| `pnpm --filter @causedeck/ui build-storybook` | Static Storybook in `storybook-static/` (published by CI as an artifact)         |
-| `pnpm --filter @causedeck/ui test`            | Unit tests (node and jsdom); what turbo and CI `test` run                        |
-| `pnpm --filter @causedeck/ui test:storybook`  | Every story as a browser test (play + axe, light and dark), reduced-motion tests |
-| `pnpm --filter @causedeck/ui check:stories`   | Fails when a component lacks its stories, test or source file                    |
-| `pnpm --filter @causedeck/ui check:bundle`    | Fails when a component adds more than 6 KB gzip, or `sideEffects` changes        |
-| `pnpm --filter @causedeck/ui check:contrast`  | WCAG/APCA contrast of every allowed token pair                                   |
+| Command                                          | What it does                                                                     |
+| ------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `pnpm --filter @causedeck/ui storybook`          | Storybook on :6006 (theme, viewport 360/768/1280 and locale en/ta/kn toolbars)   |
+| `pnpm --filter @causedeck/ui build-storybook`    | Static Storybook in `storybook-static/` (published by CI as an artifact)         |
+| `pnpm --filter @causedeck/ui test`               | Unit tests (node and jsdom); what turbo and CI `test` run                        |
+| `pnpm --filter @causedeck/ui test:storybook`     | Every story as a browser test (play + axe, light and dark), reduced-motion tests |
+| `pnpm --filter @causedeck/ui check:stories`      | Fails when a component lacks its stories, test or source file                    |
+| `pnpm --filter @causedeck/ui check:bundle`       | Fails when a component adds more than 6 KB gzip, or `sideEffects` changes        |
+| `pnpm --filter @causedeck/ui check:contrast`     | WCAG/APCA contrast of every allowed token pair                                   |
+| `pnpm --filter @causedeck/ui test:visual`        | Screenshot every story against `visual/__screenshots__` (see Visual regression)  |
+| `pnpm --filter @causedeck/ui test:visual:update` | Rewrite the baselines; run only inside the pinned Playwright image               |
 
 `test:storybook` needs Playwright Chromium (`pnpm --filter @causedeck/ui exec playwright install
 chromium`, once per machine; CI installs it in `.github/workflows/storybook.yml`).
 
 The bundle check measures what a component adds on top of the shared runtime every consumer
 already pays once: `cn` (clsx and tailwind-merge, about 8 KB gzip). React is external.
+
+## Visual regression
+
+`visual/` is a Playwright harness over the built Storybook. `visual/stories.ts` reads
+`storybook-static/index.json` and screenshots every story (docs pages excluded) in light and dark
+(the `theme` global) at 360, 768 and 1280 px wide, full page, with animations disabled, reduced
+motion and a hidden caret. A screenshot fails when more than 0.2% of its pixels differ
+(`maxDiffPixelRatio: 0.002`). Baselines live in `visual/__screenshots__/<story id>/<theme>-<width>.png`.
+
+Baselines are Linux Chromium renders from the pinned image
+`mcr.microsoft.com/playwright:v1.60.0-noble` (same version as the `playwright` catalog entry). They
+are **never generated on a developer machine**: fonts and anti-aliasing differ by OS. CI runs the
+`visual` job of `.github/workflows/storybook.yml` in that image; on failure it uploads the
+`visual-diffs` artifact with the expected, actual and diff PNG of every failing story (plus the
+HTML report). Download it from the workflow run to see what changed.
+
+To update baselines after an intended visual change:
+
+1. Push the change and open the PR (branch in this repository).
+2. Add the `visual:update` label. `.github/workflows/visual-update.yml` builds Storybook in the
+   pinned image, runs `test:visual:update`, commits `test(ui): update visual baselines` to the
+   branch, re-runs the Storybook workflow on it and removes the label. On a branch without a PR,
+   dispatch the **Visual update** workflow on that branch instead.
+3. Pull the commit and review the changed PNGs in the PR diff like any other change.
+
+To reproduce locally without touching your machine's browsers, run the same image:
+`docker run --rm -v "$PWD:/repo" -w /repo mcr.microsoft.com/playwright:v1.60.0-noble bash -c
+'corepack enable && pnpm install --frozen-lockfile && pnpm --filter @causedeck/ui build-storybook
+&& pnpm --filter @causedeck/ui test:visual'`. Prefer the label for committing baselines.
+
+A story whose output cannot be made deterministic (live data, real time) opts out with
+`tags: ['skip-visual']`; give the reason in a comment. Fix flakiness first (fixed dates, seeded
+data) rather than skipping.
 
 ## Adding a component
 

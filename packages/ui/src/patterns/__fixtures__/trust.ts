@@ -190,3 +190,165 @@ export const PATTERN_INDIC = {
   ta: { filed: 'தாக்கல்', listed: 'பட்டியலிடப்பட்டது', suggested: 'பரிந்துரை' },
   kn: { filed: 'ದಾಖಲಾಗಿದೆ', listed: 'ಪಟ್ಟಿ ಮಾಡಲಾಗಿದೆ', suggested: 'ಸಲಹೆ' },
 } as const;
+
+/** Fixed "now" for stories and tests: 10:00 IST on 18 October 2026. */
+export const NOW = new Date('2026-10-18T10:00:00+05:30');
+
+const daysAgo = (days: number, hours = 0): string =>
+  new Date(NOW.getTime() - (days * 24 + hours) * 60 * 60 * 1000).toISOString();
+
+export const PEOPLE = {
+  lawyer: { name: 'Meenakshi Sundaram' },
+  junior: { name: 'Gowri Shankar' },
+  system: { name: 'Lawyer OS' },
+} as const;
+
+/** Timeline entries for ActivityItem. */
+export const ACTIVITIES = {
+  attached: {
+    id: 'activity-attached',
+    actor: PEOPLE.system,
+    sentence: `Attached order dated 12 Mar to ${ORDERS.madras.caseNumber}`,
+    source: SOURCES.confirmed,
+    level: 'L3',
+    at: daysAgo(1),
+  },
+  hearing: {
+    id: 'activity-hearing',
+    actor: PEOPLE.system,
+    sentence: 'Moved the next hearing to 14 Nov 2026',
+    source: SOURCES.adapter,
+    level: 'L3',
+    at: daysAgo(6, 20),
+  },
+  expired: {
+    id: 'activity-expired',
+    actor: PEOPLE.junior,
+    sentence: `Added office objections to ${ORDERS.karnataka.caseNumber}`,
+    source: SOURCES.proposed,
+    level: 'L2',
+    at: daysAgo(9),
+  },
+  tamil: {
+    id: 'activity-tamil',
+    actor: PEOPLE.system,
+    sentence: 'உத்தரவு W.P. 1234/2026 உடன் இணைக்கப்பட்டது',
+    source: SOURCES.tamil,
+    level: 'L3',
+    at: daysAgo(2),
+  },
+  kannada: {
+    id: 'activity-kannada',
+    actor: PEOPLE.system,
+    sentence: 'ಆದೇಶವನ್ನು W.P. 5678/2026 ಗೆ ಲಗತ್ತಿಸಲಾಗಿದೆ',
+    source: SOURCES.kannada,
+    level: 'L3',
+    at: daysAgo(3),
+  },
+} as const;
+
+/** Work rows for ObligationRow. */
+export const OBLIGATIONS = {
+  overdue: {
+    id: 'obligation-counter',
+    title: 'File counter affidavit',
+    matter: MADRAS_MATTER,
+    due: '2026-10-15',
+    owner: PEOPLE.lawyer,
+    source: SOURCES.confirmed,
+  },
+  today: {
+    id: 'obligation-objections',
+    title: 'Comply with office objections',
+    matter: KARNATAKA_MATTER,
+    due: '2026-10-18',
+    owner: PEOPLE.junior,
+    source: SOURCES.proposed,
+  },
+  upcoming: {
+    id: 'obligation-vakalat',
+    title: 'Carry vakalat copy',
+    matter: MADRAS_MATTER,
+    due: '2026-11-14',
+    owner: PEOPLE.lawyer,
+    source: SOURCES.manual,
+  },
+} as const;
+
+/** Cause-list entries for CourtItemChip. */
+export const COURT_ITEMS = {
+  morning: {
+    itemNo: 12,
+    hall: 'Court Hall 4',
+    stage: 'listed',
+    time: '10:30',
+    source: SOURCES.adapter,
+  },
+  afternoon: {
+    itemNo: 64,
+    hall: 'Court Hall 12',
+    stage: 'part-heard',
+    time: '14:15',
+    source: SOURCES.adapter,
+  },
+  defects: {
+    itemNo: 7,
+    hall: 'Registry',
+    stage: 'defects',
+    time: '09:45',
+    source: SOURCES.proposed,
+  },
+} as const;
+
+/** Lawyer memory items for MemoryCard, one per scope. */
+export const MEMORIES = {
+  M1: {
+    id: 'memory-m1',
+    scope: 'M1',
+    title: 'Courts',
+    value: 'Madras HC Principal Seat',
+    source: SOURCES.manual,
+  },
+  M2: {
+    id: 'memory-m2',
+    scope: 'M2',
+    title: 'First hearings',
+    value: "Always add 'carry vakalat copy'",
+    source: SOURCES.proposed,
+  },
+  M3: {
+    id: 'memory-m3',
+    scope: 'M3',
+    title: 'Next hearing',
+    value: '14 Nov 2026',
+    source: SOURCES.confirmed,
+  },
+  M4: {
+    id: 'memory-m4',
+    scope: 'M4',
+    title: 'Court Hall 12',
+    value: 'Takes fresh admissions after lunch',
+    source: SOURCES.manual,
+  },
+  M5: {
+    id: 'memory-m5',
+    scope: 'M5',
+    title: 'Standard prayer',
+    value: 'Writ of certiorarified mandamus',
+    source: SOURCES.import,
+  },
+  M6: {
+    id: 'memory-m6',
+    scope: 'M6',
+    title: PARTIES.madras.petitioner,
+    value: 'Prefers updates in Tamil',
+    source: SOURCES.proposed,
+  },
+  M7: {
+    id: 'memory-m7',
+    scope: 'M7',
+    title: 'Alias',
+    value: 'Kaveri = M/s Kaveri Textiles',
+    source: SOURCES.edited,
+  },
+} as const;

@@ -282,7 +282,7 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 
 ### D-035 — Working title: CauseDeck
 - **Date:** 2026-10-18 · **Status:** Accepted (founder), *working title*
-- **Decision:** The product's working title is **CauseDeck**. It replaces "Lawyer OS" in new material. Repo: `RapierCraft/causedeck` (private). Earlier documents keep "Lawyer OS" as a historical name.
+- **Decision:** The product's working title is **CauseDeck**. It replaces "Lawyer OS" in new material. Repo: `RapierCraftStudios/causedeck` (private; moved from RapierCraft on 2026-10-18 so the ForgeDock app installation covers it). Earlier documents keep "Lawyer OS" as a historical name.
 - **Why:**
   - It follows the founder's two-short-words house style (UltraNews, AlterLab, ForgeDock).
   - It is court-native: the cause list is a litigator's daily deck.

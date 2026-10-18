@@ -88,6 +88,7 @@ describe('namespaced catalogs (#174)', () => {
         'common',
         'error',
         'home',
+        'invite',
         'nav',
         'notFound',
         'offline',

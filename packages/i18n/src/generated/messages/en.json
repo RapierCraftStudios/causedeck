@@ -259,10 +259,6 @@
       "resend": "Resend",
       "resendIn": "Resend in {seconds}s"
     },
-    "invite": {
-      "title": "You have been invited",
-      "body": "Invitations open here soon. Ask the person who invited you to try again later."
-    },
     "email": {
       "magicLink": {
         "subject": "Your CauseDeck sign-in link",
@@ -303,6 +299,50 @@
         "signedOut": "Your session ended. Sign in again to continue.",
         "generic": "Could not create the workspace. Please try again."
       }
+    }
+  },
+  "invite": {
+    "metaTitle": "Invitation",
+    "valid": {
+      "title": "Join {workspace}",
+      "body": "You have been invited to join {workspace} as {role}.",
+      "roleLabel": "Your role"
+    },
+    "states": {
+      "expired": {
+        "title": "This invitation has expired",
+        "body": "Invitations last 7 days. Ask the person who invited you to send a new one."
+      },
+      "revoked": {
+        "title": "This invitation was withdrawn",
+        "body": "The workspace withdrew this invitation. Ask the person who invited you if you still need access."
+      },
+      "used": {
+        "title": "This invitation has already been used",
+        "body": "Each invitation link works once. If it was you, the workspace is already in your switcher."
+      },
+      "invalid": {
+        "title": "This invitation link is not valid",
+        "body": "Check that you opened the full link from the email, or ask for a new invitation."
+      },
+      "emailMismatch": {
+        "title": "This invitation is for a different email",
+        "body": "You are signed in as {email}, but this invitation was sent to another address. Sign in with the invited email to accept it."
+      },
+      "alreadyMember": {
+        "title": "You are already a member",
+        "body": "You already belong to {workspace}."
+      }
+    },
+    "accept": "Accept invitation",
+    "accepting": "Joining workspace",
+    "differentAccount": "Sign in with a different account",
+    "openWorkspace": "Open {workspace}",
+    "goHome": "Go to CauseDeck",
+    "errors": {
+      "offline": "You are offline. Connect to accept the invitation.",
+      "signedOut": "Your session ended. Sign in again to continue.",
+      "generic": "Could not accept the invitation. Please try again."
     }
   },
   "error": {

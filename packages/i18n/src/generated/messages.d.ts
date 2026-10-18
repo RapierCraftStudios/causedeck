@@ -260,10 +260,6 @@ export type Messages = {
       resend: string;
       resendIn: string;
     };
-    invite: {
-      title: string;
-      body: string;
-    };
     email: {
       magicLink: {
         subject: string;
@@ -304,6 +300,50 @@ export type Messages = {
         signedOut: string;
         generic: string;
       };
+    };
+  };
+  invite: {
+    metaTitle: string;
+    valid: {
+      title: string;
+      body: string;
+      roleLabel: string;
+    };
+    states: {
+      expired: {
+        title: string;
+        body: string;
+      };
+      revoked: {
+        title: string;
+        body: string;
+      };
+      used: {
+        title: string;
+        body: string;
+      };
+      invalid: {
+        title: string;
+        body: string;
+      };
+      emailMismatch: {
+        title: string;
+        body: string;
+      };
+      alreadyMember: {
+        title: string;
+        body: string;
+      };
+    };
+    accept: string;
+    accepting: string;
+    differentAccount: string;
+    openWorkspace: string;
+    goHome: string;
+    errors: {
+      offline: string;
+      signedOut: string;
+      generic: string;
     };
   };
   error: {

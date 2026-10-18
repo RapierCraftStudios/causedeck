@@ -66,7 +66,7 @@ pnpm typecheck  # check that everything builds
 Run any task for one workspace with a filter, for example `pnpm --filter @causedeck/core test`.
 
 ### Layout
-Matches spike §2. Every workspace is named `@causedeck/<dir>`. `infra/`, `.github/workflows/` and real app code arrive in later issues.
+Matches spike §2. Every workspace is named `@causedeck/<dir>`. CI workflows and `infra/scripts/` are described in [docs/engineering/ci.md](docs/engineering/ci.md); the rest of `infra/` and real app code arrive in later issues.
 
 ```
 causedeck/
@@ -94,9 +94,9 @@ causedeck/
 │   ├── observability/# logger, OTel, Sentry wiring
 │   ├── validators/   # shared zod schemas (API + forms)
 │   └── config/       # eslint, tsconfig, prettier (tailwind preset and env schema arrive later)
-├── infra/            # (later) docker, caddy, terraform, scripts, runbooks
+├── infra/            # scripts/ (CI helpers); docker, caddy, terraform, runbooks later
 ├── e2e/              # Playwright suites (product + site), visual baselines
-├── .github/          # CODEOWNERS, PR template (workflows arrive with CI)
+├── .github/          # CODEOWNERS, PR template, workflows, setup action, Dependabot
 ├── docs/             # research, PRD, ADRs (docs/adr/)
 └── turbo.json, pnpm-workspace.yaml, package.json
 ```

@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["NODE_ENV", "CI"],
+  "globalEnv": ["NODE_ENV", "CI", "GITHUB_ACTIONS"],
+  "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM"],
   "globalDependencies": ["tsconfig.base.json", ".eslintrc*", "eslint.config.js"],
   "tasks": {
     "build": {
@@ -14,7 +15,7 @@
       "dependsOn": ["^typecheck"]
     },
     "test": {
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**", "reports/**"]
     },
     "dev": {
       "cache": false,

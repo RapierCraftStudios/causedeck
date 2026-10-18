@@ -145,7 +145,45 @@ export const PROPOSALS: Proposal<string>[] = [
     source: SOURCES.proposed,
     level: 'L2',
   },
+  {
+    id: 'proposal-counter-affidavit',
+    title: 'Respondents file counter affidavit',
+    before: 'No deadline',
+    after: 'By 9 Dec 2026',
+    source: { ...SOURCES.confirmed, state: 'proposed', confidence: 0.94 },
+    level: 'L2',
+    safe: true,
+  },
 ];
+
+/** Long titles and values for wrapping checks. */
+export const LONG_PROPOSAL: Proposal<string> = {
+  id: 'proposal-long',
+  title: `Next hearing in ${MADRAS_MATTER} before the Hon'ble Division Bench (Court Hall 12)`,
+  before: 'Thursday 7 November 2026, after the regular cause list, item 37',
+  after: 'Saturday 14 November 2026, special sitting, item 4 in the supplementary list',
+  source: SOURCES.longLabel,
+  level: 'L2',
+};
+
+/** Tamil and Kannada proposals (Madras and Karnataka High Courts). */
+export const INDIC_PROPOSALS = {
+  tamil: {
+    id: 'proposal-tamil',
+    title: 'அடுத்த விசாரணை',
+    before: '7.11.2026',
+    after: '14.11.2026',
+    source: SOURCES.tamil,
+    level: 'L2',
+  },
+  kannada: {
+    id: 'proposal-kannada',
+    title: 'ಕಚೇರಿ ಆಕ್ಷೇಪಣೆಗಳ ಪಾಲನೆ',
+    after: '17.04.2026 ರೊಳಗೆ',
+    source: SOURCES.kannada,
+    level: 'L2',
+  },
+} satisfies Record<string, Proposal<string>>;
 
 /** Tamil and Kannada copy for pattern stories. */
 export const PATTERN_INDIC = {

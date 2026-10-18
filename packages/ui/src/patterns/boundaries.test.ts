@@ -10,6 +10,8 @@ const ALLOWED_PACKAGES = new Set([
   'lucide-react',
   'class-variance-authority',
   'clsx',
+  // Layout and path animation for the proposal card (#143).
+  'motion/react',
 ]);
 
 function sourceFiles(dir: string): string[] {

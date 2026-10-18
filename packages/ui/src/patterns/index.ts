@@ -35,3 +35,30 @@ export {
 } from './automation-level/level-legend';
 export { StageBadge, type StageBadgeProps } from './stage-badge/stage-badge';
 export { STAGE_MAP, STAGE_ORDER, type StageMeta } from './stage-badge/stage-map';
+export {
+  CHECK_TRANSITION,
+  COLLAPSE_TRANSITION,
+  CONFIRM_CHECK_MS,
+  DEFAULT_PROPOSAL_CARD_LABELS,
+  EASE_STANDARD,
+  INSTANT_TRANSITION,
+  ProposalCard,
+  ProposalCardSkeleton,
+  type ProposalCardLabels,
+  type ProposalCardProps,
+} from './proposal-card/proposal-card';
+export {
+  DEFAULT_PROPOSAL_GROUP_LABELS,
+  ProposalCardGroup,
+  type ProposalCardGroupLabels,
+  type ProposalCardGroupProps,
+} from './proposal-card/proposal-card-group';
+export {
+  PROPOSAL_SHORTCUTS,
+  proposalShortcut,
+  runProposalAction,
+  useProposalShortcuts,
+  type ProposalAction,
+  type ProposalShortcut,
+  type UseProposalShortcutsOptions,
+} from './proposal-card/use-proposal-shortcuts';

@@ -16,42 +16,73 @@ import { build } from 'esbuild';
 
 const packageDir = path.join(import.meta.dirname, '..');
 
-/** gzip budgets in bytes, per subpath export. */
+const KB = 1024;
+
+/**
+ * gzip budgets in bytes, per subpath export. Simple components stay within 6 KB. Overlays and
+ * keyboard-navigable widgets carry Radix behaviour that cannot be trimmed: roving focus and
+ * collections (tabs, accordion), focus trap, dismissable layer and scroll lock (dialog, sheet),
+ * floating-ui positioning (popover, tooltip, menus), plus cmdk and vaul. An app pays each of those
+ * layers once however many components use them, so these budgets sit just above the measured cost
+ * and catch regressions rather than restate the 6 KB target.
+ */
 export const BUDGETS: Record<string, number> = {
-  './button': 6 * 1024,
-  './spinner': 6 * 1024,
-  './kbd': 6 * 1024,
-  './alert': 6 * 1024,
-  './avatar': 6 * 1024,
-  './badge': 6 * 1024,
-  './card': 6 * 1024,
-  './empty-state': 6 * 1024,
-  './icon-button': 6 * 1024,
-  './progress': 6 * 1024,
-  './separator': 6 * 1024,
-  './skeleton': 6 * 1024,
+  './button': 6 * KB,
+  './spinner': 6 * KB,
+  './kbd': 6 * KB,
+  './breadcrumb': 6 * KB,
+  './collapsible': 6 * KB,
+  './pagination': 6 * KB,
+  './alert': 6 * KB,
+  './avatar': 6 * KB,
+  './badge': 6 * KB,
+  './card': 6 * KB,
+  './empty-state': 6 * KB,
+  './icon-button': 6 * KB,
+  './progress': 6 * KB,
+  './separator': 6 * KB,
+  './skeleton': 6 * KB,
+  // Roving focus and collection.
+  './accordion': 12 * KB,
+  './tabs': 12 * KB,
+  // Focus trap, dismissable layer, scroll lock.
+  './alert-dialog': 17 * KB,
+  './sheet': 19 * KB,
+  './dialog': 20 * KB,
+  './shortcuts-dialog': 22 * KB,
+  // Dialog plus cmdk; vaul.
+  './command': 25 * KB,
+  './drawer': 25 * KB,
+  // Floating-ui positioning.
+  './hover-card': 20 * KB,
+  './tooltip': 21 * KB,
+  './popover': 26 * KB,
+  // Menus: positioning, typeahead, submenus.
+  './context-menu': 36 * KB,
+  './dropdown-menu': 36 * KB,
+  './menubar': 37 * KB,
   // Library-backed components carry their library: Radix ScrollArea (about 8 KB),
   // react-resizable-panels (about 22 KB), sonner (about 13 KB) and Recharts (about 77 KB).
-  './scroll-area': 10 * 1024,
-  './resizable': 24 * 1024,
-  './sonner': 16 * 1024,
-  './chart': 96 * 1024,
-  './input': 6 * 1024,
-  './textarea': 6 * 1024,
-  './label': 6 * 1024,
-  './field': 6 * 1024,
-  './toggle': 6 * 1024,
-  './switch': 6 * 1024,
+  './scroll-area': 10 * KB,
+  './resizable': 24 * KB,
+  './sonner': 16 * KB,
+  './chart': 96 * KB,
+  './input': 6 * KB,
+  './textarea': 6 * KB,
+  './label': 6 * KB,
+  './field': 6 * KB,
+  './toggle': 6 * KB,
+  './switch': 6 * KB,
   // Radix primitives with roving focus, collections or measured layout.
-  './checkbox': 10 * 1024,
-  './toggle-group': 12 * 1024,
-  './radio-group': 14 * 1024,
-  './slider': 14 * 1024,
+  './checkbox': 10 * KB,
+  './toggle-group': 12 * KB,
+  './radio-group': 14 * KB,
+  './slider': 14 * KB,
   // react-hook-form and the zod resolver (zod itself ships with the app's schemas).
-  './form': 22 * 1024,
+  './form': 22 * KB,
   // Floating layers: Radix Popper (floating-ui), focus and dismissable layers, portal.
-  './combobox': 34 * 1024,
-  './select': 40 * 1024,
+  './combobox': 34 * KB,
+  './select': 40 * KB,
 };
 
 export const EXTERNAL = ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'];

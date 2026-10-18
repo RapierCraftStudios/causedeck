@@ -6,6 +6,7 @@ import {
   getMotionPreset,
   listLayout,
   listSpring,
+  menu,
   motionPresets,
   reducedMotionPreset,
   scaleIn,
@@ -32,7 +33,19 @@ describe('motion presets', () => {
       },
     });
     expect(fadeUp.variants['exit']).toMatchObject({
-      transition: { duration: motion.duration.fast / 1000, ease: [...motion.easingPoints.exit] },
+      transition: { duration: motion.duration.exit / 1000, ease: [...motion.easingPoints.exit] },
+    });
+  });
+
+  it('opens menus over 150 ms --ease-enter with a 4 px move and closes them over 100 ms', () => {
+    expect(motion.duration.exit).toBe(100);
+    expect(menu.variants['hidden']).toEqual({ opacity: 0, y: -4 });
+    expect(menu.variants['visible']).toMatchObject({
+      transition: { duration: 0.15, ease: [...motion.easingPoints.enter] },
+    });
+    expect(menu.variants['exit']).toMatchObject({
+      opacity: 0,
+      transition: { duration: 0.1, ease: [...motion.easingPoints.exit] },
     });
   });
 

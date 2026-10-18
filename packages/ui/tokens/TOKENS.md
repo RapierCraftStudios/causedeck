@@ -387,6 +387,7 @@ Under `prefers-reduced-motion: reduce` every duration becomes `0.01ms` and
 | Token               | Value                                                                                                                                              |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--dur-instant`     | `80ms`                                                                                                                                             |
+| `--dur-exit`        | `100ms`                                                                                                                                            |
 | `--dur-fast`        | `150ms`                                                                                                                                            |
 | `--dur-base`        | `200ms`                                                                                                                                            |
 | `--dur-slow`        | `250ms`                                                                                                                                            |

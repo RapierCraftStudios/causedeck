@@ -62,7 +62,7 @@ already pays once: `cn` (clsx and tailwind-merge, about 8 KB gzip). React is ext
 
 ## Motion
 
-`src/lib/motion.ts` provides `fadeUp`, `scaleIn`, `sheet` and `listLayout`. They are built from
+`src/lib/motion.ts` provides `fadeUp`, `scaleIn`, `menu`, `sheet` and `listLayout`. They are built from
 the token durations and easings; the list spring is `{ stiffness: 420, damping: 34 }`. Always
 pass `useReducedMotion()`:
 
@@ -75,6 +75,24 @@ Under `prefers-reduced-motion: reduce` every preset collapses: no transform or o
 and state changes are instant. CSS transitions use the duration tokens, which `tokens/motion.css`
 shortens to 0.01 ms. `src/lib/reduced-motion.browser.test.tsx` checks this by emulating the media
 query.
+
+## Overlays
+
+Floating layers (popover, tooltip, hover-card, menus, dialog, sheet, drawer, command) are the only
+components with shadows. They share the recipes in `src/lib/overlay.ts`: `bg-surface-overlay`, a
+`--line` hairline and a shadow token (in dark the shadow tokens add the 1 px top highlight), and a
+stacking token (`z-popover`, `z-modal`, `z-tooltip`, `z-overlay` for the scrim).
+
+- Menus and popovers fade and move 4 px over 150 ms `--ease-enter` and close over 100 ms
+  (`--dur-exit`) `--ease-exit`. Dialogs scale from 0.98 over 200 ms; sheets and drawers slide over
+  250 ms `--ease-emphasized`; accordion and collapsible animate height over 200 ms.
+- Under 768 px `DialogContent` (`layout="auto"`) becomes a bottom sheet, `DropdownMenuContent`
+  becomes a bottom sheet list on touch, and `CommandDialog` fills the screen. Tabs scroll
+  sideways with an edge fade when they overflow.
+- `ShortcutsDialog` is the `?` shortcuts list for the app shell (#11): pass the shortcut registry;
+  set `enableHotkey={false}` and control `open` if the shell binds `?` itself.
+- Put `CommandEmpty` and `CommandLoading` beside `CommandList`, not inside it: a listbox may only
+  contain options.
 
 ## Accessibility checklist
 
@@ -101,8 +119,30 @@ Current defaults:
 | `Button`                             | `loading` | `Loading`       | Appended to the accessible name while `loading`   |
 | `Spinner`                            | `loading` | `Loading`       | Accessible name of the `status` role              |
 | `Kbd`, `useHotkey`, `formatHotkeyLabel` | `then` | `then`          | Joins chord steps (`G then T`)                    |
+| `Dialog` (`DialogContent`)           | `close`   | `Close`         | Accessible name of the icon close button          |
+| `Sheet` (`SheetContent`)             | `close`   | `Close`         | Accessible name of the icon close button          |
+| `Command`                            | `label`   | `Command palette` | Accessible name of the palette (and its dialog title) |
+| `CommandInput`                       | `placeholder` | `Type a command or search` | Search placeholder                    |
+| `CommandEmpty`                       | `empty`   | `No results found.` | Shown when nothing matches                    |
+| `CommandLoading`                     | `loading` | `Loading`       | Accessible name of the progress indicator         |
+| `CommandDialog`                      | `description` | `Search for a matter or an action, then press Enter.` | Screen-reader description |
+| `CommandDialog`                      | `close`   | `Close`         | Accessible name of the close button               |
+| `ShortcutsDialog`                    | `title`   | `Keyboard shortcuts` | Dialog title                                 |
+| `ShortcutsDialog`                    | `description` | `Shortcuts work anywhere except while you are typing in a field.` | Dialog description |
+| `ShortcutsDialog`                    | `close`   | `Close`         | Accessible name of the close button               |
+| `ShortcutsDialog`                    | `then`    | `then`          | Joins chord steps in the key hints                |
+| `Breadcrumb`                         | `nav`     | `Breadcrumb`    | Accessible name of the nav landmark               |
+| `Breadcrumb`, `BreadcrumbEllipsis`   | `more`    | `More pages`    | Screen-reader text for collapsed levels           |
+| `Pagination`                         | `nav`     | `Pagination`    | Accessible name of the nav landmark               |
+| `PaginationPrevious`                 | `previous` | `Previous`     | Visible link text                                 |
+| `PaginationNext`                     | `next`    | `Next`          | Visible link text                                 |
+| `PaginationPrevious`                 | `goToPrevious` | `Go to previous page` | Accessible name of the previous link     |
+| `PaginationNext`                     | `goToNext` | `Go to next page` | Accessible name of the next link             |
+| `PaginationEllipsis`                 | `more`    | `More pages`    | Screen-reader text for skipped pages              |
 
-Key symbols (⌘, ⇧, Ctrl, Esc) are not translated.
+Key symbols (⌘, ⇧, Ctrl, Esc) are not translated. Tabs, accordion, collapsible, popover,
+tooltip, hover-card, the menus, alert-dialog and drawer render no built-in strings: all their copy
+comes from children.
 
 ## Hooks
 

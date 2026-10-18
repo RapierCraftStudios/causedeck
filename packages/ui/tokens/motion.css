@@ -3,6 +3,7 @@
  * Under prefers-reduced-motion every duration becomes 0.01ms and transforms are disabled. */
 :root {
   --dur-instant: 80ms;
+  --dur-exit: 100ms; /* menus and popovers closing */
   --dur-fast: 150ms;
   --dur-base: 200ms;
   --dur-slow: 250ms;
@@ -38,6 +39,7 @@
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-instant: 0.01ms;
+    --dur-exit: 0.01ms;
     --dur-fast: 0.01ms;
     --dur-base: 0.01ms;
     --dur-slow: 0.01ms;

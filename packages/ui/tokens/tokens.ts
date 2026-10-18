@@ -72,6 +72,8 @@ export const color = Object.fromEntries(COLOR_TOKENS.map((name) => [name, cssVar
 export const motion = {
   duration: {
     instant: 80,
+    /** Menus and popovers closing. */
+    exit: 100,
     fast: 150,
     base: 200,
     slow: 250,

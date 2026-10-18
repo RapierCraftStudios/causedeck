@@ -139,8 +139,29 @@ Current defaults:
 | `PaginationPrevious`                 | `goToPrevious` | `Go to previous page` | Accessible name of the previous link     |
 | `PaginationNext`                     | `goToNext` | `Go to next page` | Accessible name of the next link             |
 | `PaginationEllipsis`                 | `more`    | `More pages`    | Screen-reader text for skipped pages              |
+| `DataTable`                          | `loading` | `Loading`       | Announced while skeleton rows show                |
+| `DataTable`                          | `empty`   | `Nothing here yet.` | Default empty state when no `empty` slot is given |
+| `DataTable`                          | `errorTitle` | `Could not load this list.` | Error alert title                                 |
+| `DataTable`                          | `errorDescription` | `Check your connection, then try again.` | Error alert text                                  |
+| `DataTable`                          | `retry`   | `Try again`     | Error alert retry button                          |
+| `DataTable`                          | `offline` | `You are offline. Showing saved data.` | Offline banner                                    |
+| `DataTable`                          | `denied`  | `You do not have access to this. Ask the workspace owner.` | Permission-denied message                         |
+| `DataTable`                          | `selectAll` | `Select all rows` | Header checkbox name                              |
+| `DataTable`                          | `selectRow` | `Select row`    | Row checkbox name (`: <getRowLabel>` appended)    |
+| `DataTable`                          | `columns` | `Columns`       | Column visibility menu button and heading         |
+| `DataTable`                          | `density` | `Row density`   | Accessible name of the density toggle             |
+| `DataTable`                          | `comfortable` | `Comfortable`   | Density option (44 px rows)                       |
+| `DataTable`                          | `compact` | `Compact`       | Density option (32 px rows)                       |
+| `Calendar`, `DatePicker`             | `previousMonth` | `Previous month` | Previous-month button name                        |
+| `Calendar`, `DatePicker`             | `nextMonth` | `Next month`    | Next-month button name                            |
+| `Calendar`, `DatePicker`             | `holiday` | `Court holiday` | Appended to a holiday's day name                  |
+| `DatePicker`                         | `placeholder` | `dd/mm/yyyy`    | Input placeholder (the typed format)              |
+| `DatePicker`                         | `openCalendar` | `Choose date`   | Calendar button name                              |
+| `DatePicker`                         | `calendar` | `Calendar`      | Accessible name of the calendar popover           |
+| `DatePicker`                         | `invalid` | `Enter a date as dd/mm/yyyy, for example 12/03/2026.` | Shown when typed text is not a date               |
 
-Key symbols (⌘, ⇧, Ctrl, Esc) are not translated. Tabs, accordion, collapsible, popover,
+Key symbols (⌘, ⇧, Ctrl, Esc) are not translated. Calendar month and weekday names come from
+the `locale` prop (en-IN by default). Tabs, accordion, collapsible, popover,
 tooltip, hover-card, the menus, alert-dialog and drawer render no built-in strings: all their copy
 comes from children.
 

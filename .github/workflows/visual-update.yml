@@ -1,0 +1,82 @@
+# Regenerate the Storybook visual baselines (#134) in the pinned Playwright image and commit them to
+# the branch. Add the `visual:update` label to a PR (same-repo branches only), or dispatch it on a
+# branch. Baselines are never generated on developer machines: fonts and rendering differ by OS.
+name: Visual update
+
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-update-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: update baselines
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.label.name == 'visual:update' &&
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    # Same pinned image as the `visual` job in storybook.yml.
+    container:
+      image: mcr.microsoft.com/playwright:v1.60.0-noble@sha256:9bd26ad900bb5e0f4dee75839e957a89ae89c2b7ab1e76050e559790e946b948
+    env:
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+    steps:
+      # The image has no git; checkout needs it for a pushable working copy.
+      - name: Install git
+        run: apt-get update && apt-get install -y --no-install-recommends git
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BRANCH }}
+          persist-credentials: true
+      - uses: ./.github/actions/setup
+      - name: Build Storybook
+        run: pnpm --filter @causedeck/ui build-storybook
+      - name: Regenerate baselines
+        run: pnpm --filter @causedeck/ui test:visual:update
+      - name: Commit baselines
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all packages/ui/visual/__screenshots__
+          if git diff --cached --quiet; then
+            echo 'Baselines unchanged.'
+            exit 0
+          fi
+          git commit -m 'test(ui): update visual baselines'
+          git push origin "HEAD:refs/heads/$BRANCH"
+
+  finish:
+    name: rerun checks
+    needs: update
+    if: ${{ always() && needs.update.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      PR: ${{ github.event.pull_request.number }}
+      RESULT: ${{ needs.update.result }}
+    steps:
+      # Pushes made with GITHUB_TOKEN do not start workflows; dispatch Storybook on the new head.
+      - name: Run Storybook checks on the updated branch
+        if: ${{ env.RESULT == 'success' }}
+        run: gh workflow run storybook.yml --ref "$BRANCH"
+      - name: Remove the label
+        if: ${{ env.PR != '' }}
+        run: gh pr edit "$PR" --remove-label visual:update

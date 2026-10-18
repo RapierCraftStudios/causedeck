@@ -1,0 +1,9 @@
+/* Touch widths: Radix positions menus with an inline transform on a wrapper, which would trap the
+ * fixed bottom sheet list inside it. Release the wrapper so the sheet docks to the viewport. */
+[data-radix-popper-content-wrapper]:has(
+  > [data-slot='dropdown-menu-content'][data-layout='sheet']
+) {
+  transform: none !important;
+  inset: auto 0 0 0 !important;
+  min-width: 0 !important;
+}

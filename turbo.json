@@ -1,0 +1,46 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": ["NODE_ENV", "CI", "GITHUB_ACTIONS", "SKIP_ENV_VALIDATION"],
+  "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM"],
+  "globalDependencies": ["tsconfig.base.json", ".eslintrc*", "eslint.config.js"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "test": {
+      "outputs": ["coverage/**", "reports/**"]
+    },
+    "db:generate": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL_OWNER"]
+    },
+    "db:migrate": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL_OWNER"]
+    },
+    "db:check": {
+      "inputs": ["src/**", "scripts/**", "migrations/**", "drizzle.config.ts"],
+      "passThroughEnv": ["DATABASE_URL_OWNER"]
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["DATABASE_URL_OWNER"]
+    },
+    "db:seed": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

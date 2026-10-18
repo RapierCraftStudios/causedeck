@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CauseDeck tokens and type reference</title>
+    <link rel="stylesheet" href="./index.css" />
+    <style>
+      /* Page layout only. Every colour, size and duration comes from the tokens. */
+      .page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: var(--space-8) var(--space-4) var(--space-24);
+      }
+      header.top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-4);
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: var(--space-6);
+        border-bottom: 1px solid var(--line);
+      }
+      section {
+        margin-top: var(--space-12);
+      }
+      h1 {
+        font-size: var(--text-3xl);
+        line-height: var(--text-3xl--line-height);
+        margin: 0;
+      }
+      h2 {
+        font-size: var(--text-2xl);
+        line-height: var(--text-2xl--line-height);
+        margin: var(--space-1) 0 var(--space-6);
+      }
+      h3 {
+        font-size: var(--text-xl);
+        line-height: var(--text-xl--line-height);
+        margin: var(--space-8) 0 var(--space-4);
+      }
+      .muted {
+        color: var(--ink-muted);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: var(--space-3);
+      }
+      .swatch {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--surface-raised);
+        overflow: hidden;
+        font-size: var(--text-xs);
+        line-height: var(--text-xs--line-height);
+      }
+      .swatch .chip {
+        height: 56px;
+        border-bottom: 1px solid var(--line);
+      }
+      .swatch .meta {
+        padding: var(--space-2) var(--space-3);
+      }
+      .swatch code {
+        font-family: var(--font-mono);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1-5);
+        padding: var(--space-0-5) var(--space-2);
+        border-radius: var(--radius-full);
+        font-size: var(--text-sm);
+        line-height: var(--text-sm--line-height);
+        font-weight: var(--weight-medium);
+      }
+      .pill .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: var(--radius-full);
+        background: currentcolor;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+      .card {
+        background: var(--surface-raised);
+        border-radius: var(--radius-lg);
+        padding: var(--space-5);
+      }
+      .bar {
+        height: 24px;
+        border-radius: var(--radius-xs);
+      }
+      table.ref {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      table.ref th,
+      table.ref td {
+        text-align: left;
+        padding: var(--space-2) var(--space-3);
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      table.ref th {
+        font-weight: var(--weight-medium);
+        color: var(--ink-muted);
+      }
+      table.ref tbody tr:nth-child(even) {
+        background: var(--surface-sunken);
+      }
+      .space-bar {
+        height: 12px;
+        background: var(--accent-soft);
+        border-left: 2px solid var(--accent);
+      }
+      .radius-box {
+        width: 72px;
+        height: 72px;
+        background: var(--surface-raised);
+        border: 1px solid var(--line-strong);
+      }
+      .elev {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--space-6);
+      }
+      .elev .card {
+        min-height: 96px;
+      }
+      .motion-demo {
+        width: 24px;
+        height: 24px;
+        border-radius: var(--radius-sm);
+        background: var(--accent);
+        transition-property: transform, opacity;
+      }
+      .motion-row:hover .motion-demo {
+        transform: var(--motion-transform, translateX(160px));
+      }
+      .specimen p {
+        margin: 0 0 var(--space-4);
+      }
+      .field {
+        display: grid;
+        gap: var(--space-1-5);
+        max-width: 320px;
+      }
+      .field input {
+        font: inherit;
+        color: var(--ink);
+        background: var(--surface-raised);
+        border: 1px solid var(--line-control);
+        border-radius: var(--radius-md);
+        padding: var(--space-2) var(--space-3);
+        min-height: 36px;
+      }
+      .field input::placeholder {
+        color: var(--ink-subtle);
+      }
+      .button {
+        font: inherit;
+        font-weight: var(--weight-medium);
+        color: var(--accent-ink);
+        background: var(--accent);
+        border: 0;
+        border-radius: var(--radius-md);
+        padding: var(--space-2) var(--space-4);
+        min-height: 36px;
+        cursor: pointer;
+        transition: background-color var(--dur-fast) var(--ease-standard);
+      }
+      .button.secondary {
+        color: var(--ink);
+        background: var(--surface-raised);
+        box-shadow: var(--shadow-1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="top">
+        <div>
+          <p class="eyebrow">CauseDeck design foundation</p>
+          <h1>Tokens and type reference</h1>
+          <p class="muted">
+            Every value on this page comes from <code class="id">@causedeck/ui/tokens.css</code>.
+            Colour is never the only signal: each status carries its name.
+          </p>
+        </div>
+        <button type="button" class="button secondary" id="theme-toggle" aria-pressed="false">
+          Switch to dark
+        </button>
+      </header>
+
+      <section aria-labelledby="colour">
+        <p class="eyebrow">Colour</p>
+        <h2 id="colour">Semantic roles</h2>
+        <div class="grid">
+          <div class="swatch">
+            <div class="chip" style="background: var(--surface)"></div>
+            <div class="meta"><code>--surface</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--surface-raised)"></div>
+            <div class="meta"><code>--surface-raised</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--surface-sunken)"></div>
+            <div class="meta"><code>--surface-sunken</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--surface-overlay)"></div>
+            <div class="meta"><code>--surface-overlay</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--ink)"></div>
+            <div class="meta"><code>--ink</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--ink-muted)"></div>
+            <div class="meta"><code>--ink-muted</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--ink-subtle)"></div>
+            <div class="meta"><code>--ink-subtle</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--line)"></div>
+            <div class="meta"><code>--line</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--line-strong)"></div>
+            <div class="meta"><code>--line-strong</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--line-control)"></div>
+            <div class="meta"><code>--line-control</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--accent)"></div>
+            <div class="meta"><code>--accent</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--accent-ink)"></div>
+            <div class="meta"><code>--accent-ink</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--accent-soft)"></div>
+            <div class="meta"><code>--accent-soft</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--seal)"></div>
+            <div class="meta"><code>--seal</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--success)"></div>
+            <div class="meta"><code>--success</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--success-soft)"></div>
+            <div class="meta"><code>--success-soft</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--warning)"></div>
+            <div class="meta"><code>--warning</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--warning-soft)"></div>
+            <div class="meta"><code>--warning-soft</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--danger)"></div>
+            <div class="meta"><code>--danger</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--danger-soft)"></div>
+            <div class="meta"><code>--danger-soft</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--info)"></div>
+            <div class="meta"><code>--info</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--info-soft)"></div>
+            <div class="meta"><code>--info-soft</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--ring)"></div>
+            <div class="meta"><code>--ring</code></div>
+          </div>
+        </div>
+
+        <h3>Proceeding stages</h3>
+        <div class="row">
+          <span class="pill" style="color: var(--stage-filed); background: var(--stage-filed-soft)"
+            ><span class="dot" aria-hidden="true"></span>Filed</span
+          >
+          <span class="pill" style="color: var(--stage-sr_fr); background: var(--stage-sr_fr-soft)"
+            ><span class="dot" aria-hidden="true"></span>SR / FR</span
+          >
+          <span
+            class="pill"
+            style="color: var(--stage-defects); background: var(--stage-defects-soft)"
+            ><span class="dot" aria-hidden="true"></span>Defects</span
+          >
+          <span
+            class="pill"
+            style="color: var(--stage-re_presented); background: var(--stage-re_presented-soft)"
+            ><span class="dot" aria-hidden="true"></span>Re-presented</span
+          >
+          <span
+            class="pill"
+            style="color: var(--stage-numbered); background: var(--stage-numbered-soft)"
+            ><span class="dot" aria-hidden="true"></span>Numbered</span
+          >
+          <span
+            class="pill"
+            style="color: var(--stage-disposed); background: var(--stage-disposed-soft)"
+            ><span class="dot" aria-hidden="true"></span>Disposed</span
+          >
+          <span
+            class="pill"
+            style="color: var(--stage-listed); background: var(--stage-listed-soft)"
+            ><span class="dot" aria-hidden="true"></span>Listed</span
+          >
+          <span
+            class="pill"
+            style="color: var(--stage-reserved); background: var(--stage-reserved-soft)"
+            ><span class="dot" aria-hidden="true"></span>Reserved</span
+          >
+          <span
+            class="pill"
+            style="color: var(--stage-part-heard); background: var(--stage-part-heard-soft)"
+            ><span class="dot" aria-hidden="true"></span>Part-heard</span
+          >
+        </div>
+
+        <h3>Automation levels</h3>
+        <div class="row">
+          <span class="pill" style="box-shadow: inset 0 0 0 1px var(--level-l1); color: var(--ink)"
+            ><span class="dot" style="color: var(--level-l1)" aria-hidden="true"></span>L1
+            Suggest</span
+          >
+          <span class="pill" style="box-shadow: inset 0 0 0 1px var(--level-l2); color: var(--ink)"
+            ><span class="dot" style="color: var(--level-l2)" aria-hidden="true"></span>L2
+            Draft</span
+          >
+          <span class="pill" style="box-shadow: inset 0 0 0 1px var(--level-l3); color: var(--ink)"
+            ><span class="dot" style="color: var(--level-l3)" aria-hidden="true"></span>L3 Act with
+            review</span
+          >
+          <span class="pill" style="box-shadow: inset 0 0 0 1px var(--level-l4); color: var(--ink)"
+            ><span class="dot" style="color: var(--level-l4)" aria-hidden="true"></span>L4
+            Verified</span
+          >
+        </div>
+
+        <h3>Chart palette</h3>
+        <div class="card" style="box-shadow: var(--shadow-1)">
+          <div class="grid">
+            <div>
+              <div class="bar" style="background: var(--chart-1)"></div>
+              <code class="id">--chart-1</code>
+            </div>
+            <div>
+              <div class="bar" style="background: var(--chart-2)"></div>
+              <code class="id">--chart-2</code>
+            </div>
+            <div>
+              <div class="bar" style="background: var(--chart-3)"></div>
+              <code class="id">--chart-3</code>
+            </div>
+            <div>
+              <div class="bar" style="background: var(--chart-4)"></div>
+              <code class="id">--chart-4</code>
+            </div>
+            <div>
+              <div class="bar" style="background: var(--chart-5)"></div>
+              <code class="id">--chart-5</code>
+            </div>
+            <div>
+              <div class="bar" style="background: var(--chart-6)"></div>
+              <code class="id">--chart-6</code>
+            </div>
+            <div>
+              <div class="bar" style="background: var(--chart-7)"></div>
+              <code class="id">--chart-7</code>
+            </div>
+            <div>
+              <div class="bar" style="background: var(--chart-8)"></div>
+              <code class="id">--chart-8</code>
+            </div>
+          </div>
+        </div>
+
+        <h3>Status in context</h3>
+        <div class="row">
+          <span class="pill" style="color: var(--success); background: var(--success-soft)"
+            ><span class="dot" aria-hidden="true"></span>Filed on time</span
+          >
+          <span class="pill" style="color: var(--warning); background: var(--warning-soft)"
+            ><span class="dot" aria-hidden="true"></span>Needs you</span
+          >
+          <span class="pill" style="color: var(--danger); background: var(--danger-soft)"
+            ><span class="dot" aria-hidden="true"></span>Defects returned</span
+          >
+          <span class="pill" style="color: var(--info); background: var(--info-soft)"
+            ><span class="dot" aria-hidden="true"></span>Listed tomorrow</span
+          >
+          <span class="pill" style="color: var(--seal); box-shadow: inset 0 0 0 1px var(--seal)"
+            ><span class="dot" aria-hidden="true"></span>Verified from cause list</span
+          >
+        </div>
+      </section>
+
+      <section aria-labelledby="type">
+        <p class="eyebrow">Typography</p>
+        <h2 id="type">Type scale</h2>
+        <table class="ref">
+          <thead>
+            <tr>
+              <th scope="col">Token</th>
+              <th scope="col">Size / line</th>
+              <th scope="col">Sample</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="id">--text-xs</code></td>
+              <td>12 / 16</td>
+              <td
+                style="
+                  font-family: var(--font-sans);
+                  font-size: var(--text-xs);
+                  line-height: var(--text-xs--line-height);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--text-sm</code></td>
+              <td>13 / 20</td>
+              <td
+                style="
+                  font-family: var(--font-sans);
+                  font-size: var(--text-sm);
+                  line-height: var(--text-sm--line-height);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--text-base</code></td>
+              <td>14 / 22, app default</td>
+              <td
+                style="
+                  font-family: var(--font-sans);
+                  font-size: var(--text-base);
+                  line-height: var(--text-base--line-height);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--text-md</code></td>
+              <td>16 / 26, brief prose</td>
+              <td
+                style="
+                  font-family: var(--font-serif);
+                  font-size: var(--text-md);
+                  line-height: var(--text-md--line-height);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--text-lg</code></td>
+              <td>18 / 28</td>
+              <td
+                style="
+                  font-family: var(--font-sans);
+                  font-size: var(--text-lg);
+                  line-height: var(--text-lg--line-height);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--text-xl</code></td>
+              <td>22 / 30</td>
+              <td
+                style="
+                  font-family: var(--font-serif);
+                  font-size: var(--text-xl);
+                  line-height: var(--text-xl--line-height);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--text-2xl</code></td>
+              <td>28 / 34</td>
+              <td
+                style="
+                  font-family: var(--font-serif);
+                  font-size: var(--text-2xl);
+                  line-height: var(--text-2xl--line-height);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--text-3xl</code></td>
+              <td>36 / 42</td>
+              <td
+                style="
+                  font-family: var(--font-serif);
+                  font-size: var(--text-3xl);
+                  line-height: var(--text-3xl--line-height);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--text-display</code></td>
+              <td>56 / 60, tracking -0.02em</td>
+              <td
+                style="
+                  font-family: var(--font-serif);
+                  font-size: var(--text-display);
+                  line-height: var(--text-display--line-height);
+                  letter-spacing: var(--text-display--letter-spacing);
+                "
+              >
+                Next date
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Specimen</h3>
+        <div class="elev specimen">
+          <article class="card" lang="en" style="box-shadow: var(--shadow-1)">
+            <p class="eyebrow">English</p>
+            <h4 class="heading" style="font-size: var(--text-xl); margin: 0 0 var(--space-3)">
+              Writ Petition 4127 of 2026
+            </h4>
+            <p class="prose">
+              The petitioner seeks a direction to the respondents to consider the representation
+              dated 3 February 2026. The matter is listed before the Division Bench; the next date
+              is <time datetime="2026-03-12">12 March 2026</time>.
+            </p>
+            <p>
+              Court fee paid <span class="inr" data-inr>₹ 1,25,000.00</span>, diary number
+              <code class="id">D-0010472/2026</code>.
+            </p>
+          </article>
+          <article class="card" lang="ta" style="box-shadow: var(--shadow-1)">
+            <p class="eyebrow">தமிழ்</p>
+            <h4 class="heading" style="font-size: var(--text-xl); margin: 0 0 var(--space-3)">
+              ரிட் மனு எண் 4127 / 2026
+            </h4>
+            <p>
+              மனுதாரர் ஸ்ரீ லக்ஷ்மி நாராயணன் தாக்கல் செய்த மனுவை நீதிமன்றம் பரிசீலித்தது. இந்த
+              வழக்கின் அடுத்த விசாரணை தேதி
+              <time datetime="2026-03-12">12 மார்ச் 2026</time>. தமிழ் உரையில் புள்ளி, கூட்டெழுத்து
+              மற்றும் உயிர்மெய் எழுத்துகள் சரியாகத் தோன்ற வேண்டும்.
+            </p>
+          </article>
+          <article class="card" lang="kn" style="box-shadow: var(--shadow-1)">
+            <p class="eyebrow">ಕನ್ನಡ</p>
+            <h4 class="heading" style="font-size: var(--text-xl); margin: 0 0 var(--space-3)">
+              ರಿಟ್ ಅರ್ಜಿ ಸಂಖ್ಯೆ 4127 / 2026
+            </h4>
+            <p>
+              ಅರ್ಜಿದಾರರ ಪರ ವಕೀಲರು ಸಲ್ಲಿಸಿದ ದಾಖಲೆಗಳನ್ನು ನ್ಯಾಯಾಲಯವು ಪರಿಶೀಲಿಸಿತು. ಈ ಪ್ರಕರಣದ ಮುಂದಿನ
+              ವಿಚಾರಣೆಯ ದಿನಾಂಕ <time datetime="2026-03-12">12 ಮಾರ್ಚ್ 2026</time>. ಕನ್ನಡ ಒತ್ತಕ್ಷರಗಳು
+              ಮತ್ತು ಸ್ವರಚಿಹ್ನೆಗಳು ಸ್ಪಷ್ಟವಾಗಿ ಕಾಣಬೇಕು.
+            </p>
+          </article>
+        </div>
+
+        <h3>Numerals</h3>
+        <table class="ref">
+          <thead>
+            <tr>
+              <th scope="col">Matter</th>
+              <th scope="col">Next date</th>
+              <th scope="col">Stage</th>
+              <th scope="col">Fee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="id">WP 4127/2026</code></td>
+              <td><time datetime="2026-03-12">12-03-2026</time></td>
+              <td>Listed</td>
+              <td class="inr">₹ 1,25,000.00</td>
+            </tr>
+            <tr>
+              <td><code class="id">OS 1180/2025</code></td>
+              <td><time datetime="2026-04-01">01-04-2026</time></td>
+              <td>Part-heard</td>
+              <td class="inr">₹ 11,111.10</td>
+            </tr>
+            <tr>
+              <td><code class="id">CRL.A 0907/2024</code></td>
+              <td><time datetime="2026-03-20">20-03-2026</time></td>
+              <td>Reserved</td>
+              <td class="inr">₹ 8,90,400.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Controls</h3>
+        <div class="row" style="align-items: end; gap: var(--space-4)">
+          <label class="field">
+            <span class="label">Case number</span>
+            <input type="text" placeholder="WP 4127/2026" />
+          </label>
+          <button type="button" class="button">Add to diary</button>
+          <button type="button" class="button secondary">Not now</button>
+        </div>
+      </section>
+
+      <section aria-labelledby="space">
+        <p class="eyebrow">Layout</p>
+        <h2 id="space">Spacing, radius and elevation</h2>
+        <table class="ref">
+          <tbody>
+            <tr>
+              <td><code class="id">--space-1</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-1)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-2</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-2)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-3</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-3)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-4</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-4)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-5</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-5)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-6</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-6)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-8</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-8)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-10</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-10)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-12</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-12)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-16</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-16)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-20</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-20)"></div>
+              </td>
+            </tr>
+            <tr>
+              <td><code class="id">--space-24</code></td>
+              <td style="width: 100%">
+                <div class="space-bar" style="width: var(--space-24)"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Radius</h3>
+        <div class="row" style="gap: var(--space-6)">
+          <div>
+            <div class="radius-box" style="border-radius: var(--radius-xs)"></div>
+            <code class="id">--radius-xs</code>
+          </div>
+          <div>
+            <div class="radius-box" style="border-radius: var(--radius-sm)"></div>
+            <code class="id">--radius-sm</code>
+          </div>
+          <div>
+            <div class="radius-box" style="border-radius: var(--radius-md)"></div>
+            <code class="id">--radius-md</code>
+          </div>
+          <div>
+            <div class="radius-box" style="border-radius: var(--radius-lg)"></div>
+            <code class="id">--radius-lg</code>
+          </div>
+          <div>
+            <div class="radius-box" style="border-radius: var(--radius-xl)"></div>
+            <code class="id">--radius-xl</code>
+          </div>
+          <div>
+            <div class="radius-box" style="border-radius: var(--radius-full)"></div>
+            <code class="id">--radius-full</code>
+          </div>
+        </div>
+
+        <h3>Elevation</h3>
+        <div class="elev">
+          <div class="card" style="box-shadow: var(--shadow-1)">
+            <code class="id">--shadow-1</code>
+          </div>
+          <div class="card" style="box-shadow: var(--shadow-2)">
+            <code class="id">--shadow-2</code>
+          </div>
+          <div class="card" style="box-shadow: var(--shadow-3)">
+            <code class="id">--shadow-3</code>
+          </div>
+          <div class="card" style="box-shadow: var(--shadow-4)">
+            <code class="id">--shadow-4</code>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="motion">
+        <p class="eyebrow">Motion</p>
+        <h2 id="motion">Durations and easings</h2>
+        <p class="muted">Hover a row to preview. With reduced motion turned on, nothing moves.</p>
+        <table class="ref">
+          <tbody>
+            <tr class="motion-row">
+              <td><code class="id">--dur-instant</code></td>
+              <td class="num">80ms</td>
+              <td style="width: 60%">
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-instant);
+                    transition-timing-function: var(--ease-standard);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--dur-fast</code></td>
+              <td class="num">150ms</td>
+              <td style="width: 60%">
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-fast);
+                    transition-timing-function: var(--ease-standard);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--dur-base</code></td>
+              <td class="num">200ms</td>
+              <td style="width: 60%">
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-base);
+                    transition-timing-function: var(--ease-standard);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--dur-slow</code></td>
+              <td class="num">250ms</td>
+              <td style="width: 60%">
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-slow);
+                    transition-timing-function: var(--ease-standard);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--dur-page</code></td>
+              <td class="num">320ms</td>
+              <td style="width: 60%">
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-page);
+                    transition-timing-function: var(--ease-standard);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--ease-standard</code></td>
+              <td>var(--dur-page)</td>
+              <td>
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-page);
+                    transition-timing-function: var(--ease-standard);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--ease-emphasized</code></td>
+              <td>var(--dur-page)</td>
+              <td>
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-page);
+                    transition-timing-function: var(--ease-emphasized);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--ease-enter</code></td>
+              <td>var(--dur-page)</td>
+              <td>
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-page);
+                    transition-timing-function: var(--ease-enter);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--ease-exit</code></td>
+              <td>var(--dur-page)</td>
+              <td>
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-page);
+                    transition-timing-function: var(--ease-exit);
+                  "
+                ></div>
+              </td>
+            </tr>
+            <tr class="motion-row">
+              <td><code class="id">--ease-spring</code></td>
+              <td>var(--dur-page)</td>
+              <td>
+                <div
+                  class="motion-demo"
+                  style="
+                    transition-duration: var(--dur-page);
+                    transition-timing-function: var(--ease-spring);
+                  "
+                ></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Stacking</h3>
+        <table class="ref">
+          <tbody>
+            <tr>
+              <td><code class="id">--z-base</code></td>
+              <td class="num">0</td>
+            </tr>
+            <tr>
+              <td><code class="id">--z-sticky</code></td>
+              <td class="num">10</td>
+            </tr>
+            <tr>
+              <td><code class="id">--z-dropdown</code></td>
+              <td class="num">20</td>
+            </tr>
+            <tr>
+              <td><code class="id">--z-overlay</code></td>
+              <td class="num">30</td>
+            </tr>
+            <tr>
+              <td><code class="id">--z-modal</code></td>
+              <td class="num">40</td>
+            </tr>
+            <tr>
+              <td><code class="id">--z-popover</code></td>
+              <td class="num">50</td>
+            </tr>
+            <tr>
+              <td><code class="id">--z-toast</code></td>
+              <td class="num">60</td>
+            </tr>
+            <tr>
+              <td><code class="id">--z-tooltip</code></td>
+              <td class="num">70</td>
+            </tr>
+            <tr>
+              <td><code class="id">--z-max</code></td>
+              <td class="num">9999</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <script>
+      // Toggles class `dark` on <html>, the same switch next-themes uses with attribute="class".
+      const toggle = document.getElementById('theme-toggle');
+      const root = document.documentElement;
+      const sync = () => {
+        const dark = root.classList.contains('dark');
+        toggle.textContent = dark ? 'Switch to light' : 'Switch to dark';
+        toggle.setAttribute('aria-pressed', String(dark));
+      };
+      if (new URLSearchParams(location.search).get('theme') === 'dark') root.classList.add('dark');
+      sync();
+      toggle.addEventListener('click', () => {
+        root.classList.toggle('dark');
+        sync();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+export {
+  DEFAULT_PAGINATION_LABELS,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  type PaginationEllipsisProps,
+  type PaginationLabels,
+  type PaginationLinkProps,
+  type PaginationProps,
+  type PaginationStepProps,
+} from './pagination';

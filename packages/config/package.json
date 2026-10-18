@@ -1,0 +1,53 @@
+{
+  "name": "@causedeck/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env/index.ts",
+    "./env/client": "./src/env/client.ts",
+    "./tsconfig/*.json": "./tsconfig/*.json",
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/boundaries": "./eslint/boundaries.js",
+    "./eslint/next": "./eslint/next.js",
+    "./eslint/node": "./eslint/node.js",
+    "./eslint/react": "./eslint/react.js",
+    "./prettier": "./prettier/index.js",
+    "./tailwind/preset.css": "./tailwind/preset.css"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "env:example": "node --experimental-strip-types scripts/gen-env-example.ts",
+    "env:example:check": "node --experimental-strip-types scripts/gen-env-example.ts --check"
+  },
+  "dependencies": {
+    "@eslint/js": "catalog:",
+    "@t3-oss/env-core": "catalog:",
+    "eslint-import-resolver-node": "0.3.9",
+    "eslint-import-resolver-typescript": "catalog:",
+    "eslint-plugin-boundaries": "catalog:",
+    "eslint-plugin-import-x": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "eslint-plugin-unicorn": "catalog:",
+    "globals": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:",
+    "typescript-eslint": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "pino": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}

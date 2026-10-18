@@ -1,0 +1,43 @@
+{
+  "name": "@causedeck/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Drizzle schema, migrations, RLS policies, seeds, test utils.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./rls": "./src/rls.ts",
+    "./columns": "./src/columns.ts",
+    "./schema": "./src/schema/index.ts",
+    "./seed": "./src/seed/index.ts",
+    "./testing": "./src/testing/index.ts",
+    "./testing/global-setup": "./src/testing/global-setup.ts",
+    "./vector": "./src/vector.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate && tsx scripts/lint-migrations.ts --stamp",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:check": "tsx scripts/check-schema-conventions.ts && tsx scripts/lint-migrations.ts && drizzle-kit check",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@causedeck/config": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "postgres": "catalog:"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "catalog:",
+    "@types/node": "catalog:",
+    "drizzle-kit": "catalog:",
+    "eslint": "catalog:",
+    "testcontainers": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

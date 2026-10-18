@@ -1,0 +1,36 @@
+/* Skeleton shimmer: a --surface-sunken to --line ramp sweeping every 1.4 s, linear. The period is
+ * derived from the motion tokens (7 x --dur-base). Under reduced motion the block is static. */
+@keyframes cd-skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.cd-skeleton {
+  background-color: var(--surface-sunken);
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-sunken) 0%,
+    var(--line) 50%,
+    var(--surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: cd-skeleton-shimmer calc(var(--dur-base) * 7) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .cd-skeleton {
+    border: 1px solid GrayText;
+  }
+}

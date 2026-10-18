@@ -1,0 +1,22 @@
+{
+  "name": "@causedeck/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Message catalogs (en/ta/kn) and formatters.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@causedeck/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

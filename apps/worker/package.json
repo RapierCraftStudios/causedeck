@@ -1,0 +1,33 @@
+{
+  "name": "@causedeck/worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "pg-boss background workers.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc --noEmit",
+    "start": "tsx src/main.ts",
+    "jobs:dlq": "tsx src/cli/dlq.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@causedeck/config": "workspace:*",
+    "@causedeck/core": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "@causedeck/observability": "workspace:*",
+    "pg-boss": "catalog:",
+    "tsx": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@opentelemetry/sdk-trace-base": "catalog:",
+    "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

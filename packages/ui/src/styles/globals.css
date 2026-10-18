@@ -1,0 +1,8 @@
+/* Tailwind entry for Storybook and the shadcn CLI (components.json `tailwind.css`).
+ * Utilities come only from the CauseDeck tokens via the shared preset. */
+@import 'tailwindcss';
+@import '../../tokens/index.css';
+@import '@causedeck/config/tailwind/preset.css';
+@import 'tw-animate-css';
+
+@source '../';

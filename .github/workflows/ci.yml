@@ -1,0 +1,108 @@
+# Required status checks: the job names below (`lint`, `typecheck`, `test`, `build`).
+# See docs/engineering/ci.md before renaming any of them.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, staging, 'milestone/**']
+  merge_group:
+
+permissions:
+  contents: read
+
+# Superseded PR runs are cancelled; runs on pushed branches always finish.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Optional remote cache: both are empty when unset (forks, fresh clones), and turbo then uses .turbo.
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  # Base branch for change-aware filtering (pull_request and merge_group only).
+  CI_BASE_REF: ${{ github.base_ref || github.event.merge_group.base_ref }}
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Prettier
+        run: pnpm format:check
+      - name: ADR lint
+        run: pnpm adr:lint
+      - name: ADR script tests
+        run: pnpm adr:test
+      - name: Docs links
+        run: pnpm docs:links
+      - name: ESLint
+        run: bash infra/scripts/ci-affected.sh lint
+      - name: Validate dev compose file
+        run: docker compose -f infra/docker/compose.dev.yml config -q
+
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Typecheck
+        run: bash infra/scripts/ci-affected.sh typecheck
+
+  # ubuntu-latest ships Docker, which Testcontainers integration tests (#6) use; no `services:` here.
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      # Schema conventions, the reviewed-SQL migration lint and drizzle-kit snapshot consistency.
+      # Static: no database needed.
+      - name: DB conventions
+        run: pnpm db:check
+      - name: Test
+        run: >-
+          bash infra/scripts/ci-affected.sh test --
+          --coverage --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
+      - name: Fail on packages with zero tests
+        run: node infra/scripts/check-test-reports.mjs
+      - name: Upload coverage and JUnit reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-reports
+          path: |
+            apps/*/coverage/
+            apps/*/reports/junit.xml
+            packages/*/coverage/
+            packages/*/reports/junit.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Build
+        run: bash infra/scripts/ci-affected.sh build

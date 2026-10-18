@@ -1,0 +1,11 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+import { MotionTokens } from './token-tables';
+
+<Meta title="Tokens/Motion" />
+
+# Motion
+
+Durations, easings and the list spring from `tokens/tokens.ts` (`motion`), plus the stacking scale (`zIndex`). `src/lib/motion.ts` builds its presets from these; under `prefers-reduced-motion` they collapse to instant changes.
+
+<MotionTokens />

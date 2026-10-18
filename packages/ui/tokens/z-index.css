@@ -1,0 +1,13 @@
+/* Semantic stacking scale. Components use these names; numeric z-index values are not allowed
+ * outside this file (enforced by tokens/__tests__/tokens.test.ts). */
+:root {
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-popover: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+  --z-max: 9999;
+}

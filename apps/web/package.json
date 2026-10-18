@@ -47,6 +47,7 @@
     "@causedeck/ui": "workspace:*",
     "@causedeck/validators": "workspace:*",
     "lucide-react": "catalog:",
+    "motion": "catalog:",
     "next": "catalog:",
     "next-intl": "catalog:",
     "next-themes": "catalog:",

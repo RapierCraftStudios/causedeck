@@ -150,6 +150,46 @@
       "title": "Account",
       "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
       "empty": "Account settings are coming soon."
+    },
+    "sidebar": {
+      "label": "Sidebar",
+      "primary": "Primary",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "synced": "Synced",
+      "offline": "Offline"
+    },
+    "topbar": {
+      "search": "Search or jump to...",
+      "searchHint": "Open search",
+      "openSwitcher": "Switch workspace"
+    },
+    "switcher": {
+      "label": "Workspaces",
+      "filter": "Find a workspace",
+      "noMatches": "No workspaces match.",
+      "current": "Current workspace",
+      "create": "Create workspace",
+      "join": "Join with invite",
+      "switching": "Switching workspace"
+    },
+    "userMenu": {
+      "label": "Account menu",
+      "account": "Account",
+      "settings": "Workspace settings",
+      "theme": "Theme",
+      "signOut": "Sign out"
+    },
+    "breadcrumbs": {
+      "label": "Breadcrumb",
+      "more": "More pages"
+    },
+    "roles": {
+      "viewer": "Viewer",
+      "clerk": "Clerk",
+      "junior": "Junior",
+      "advocate": "Advocate",
+      "owner": "Owner"
     }
   }
 }

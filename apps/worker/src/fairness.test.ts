@@ -45,13 +45,20 @@ describe('GroupGate', () => {
       await tick(5);
       active -= 1;
     };
-    await Promise.all([gate.run('a', job), gate.run('b', job), gate.run(undefined, job), gate.run(undefined, job)]);
+    await Promise.all([
+      gate.run('a', job),
+      gate.run('b', job),
+      gate.run(undefined, job),
+      gate.run(undefined, job),
+    ]);
     expect(max).toBe(4);
   });
 
   it('releases the slot when the job throws', async () => {
     const gate = new GroupGate(1);
-    await expect(gate.run('g', async () => Promise.reject(new Error('boom')))).rejects.toThrow('boom');
+    await expect(gate.run('g', async () => Promise.reject(new Error('boom')))).rejects.toThrow(
+      'boom',
+    );
     expect(gate.active('g')).toBe(0);
     await expect(gate.run('g', () => Promise.resolve('ok'))).resolves.toBe('ok');
   });

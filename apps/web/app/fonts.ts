@@ -73,7 +73,14 @@ const INDIC: Partial<Record<Locale, string>> = {
 
 /** Class names for `<html>`: Latin variables always, the Indic one only for `ta` / `kn`. */
 export function fontClassNames(locale: Locale): string {
-  return ['cd-fonts', geist.variable, newsreader.variable, newsreaderItalic.variable, geistMono.variable, INDIC[locale]]
+  return [
+    'cd-fonts',
+    geist.variable,
+    newsreader.variable,
+    newsreaderItalic.variable,
+    geistMono.variable,
+    INDIC[locale],
+  ]
     .filter(Boolean)
     .join(' ');
 }

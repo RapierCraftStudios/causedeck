@@ -17,7 +17,8 @@ export class GroupGate {
   readonly #waiters = new Map<string, Array<() => void>>();
 
   constructor(limit: number) {
-    if (!Number.isInteger(limit) || limit < 1) throw new RangeError('group limit must be a positive integer');
+    if (!Number.isInteger(limit) || limit < 1)
+      throw new RangeError('group limit must be a positive integer');
     this.#limit = limit;
   }
 

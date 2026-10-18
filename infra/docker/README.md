@@ -25,7 +25,19 @@ Images are pinned to version tags, never `latest`. MinIO no longer publishes the
 
 ## Local-only credentials
 
-These are documented dev defaults. **Never use them in staging or production.** The same values are in the root `.env.example`.
+These are documented dev defaults. **Never use them in staging or production.**
+
+The root `.env.example` is generated from the env schema (`pnpm env:example`, see [docs/engineering/env.md](../../docs/engineering/env.md)), so do not edit it. To point the apps at this stack's roles and bucket, put these in a git-ignored `.env.local`:
+
+```sh
+DATABASE_URL=postgres://causedeck_app:causedeck_app@127.0.0.1:5432/causedeck
+DATABASE_URL_OWNER=postgres://causedeck_owner:causedeck_owner@127.0.0.1:5432/causedeck
+S3_ENDPOINT=http://127.0.0.1:9000
+S3_BUCKET=causedeck-dev
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin
+SMTP_URL=smtp://127.0.0.1:1025
+```
 
 | What | User | Password | Notes |
 |---|---|---|---|

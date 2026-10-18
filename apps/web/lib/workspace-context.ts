@@ -23,7 +23,15 @@ export interface Membership {
   role: Role;
 }
 
+/** The signed-in user. TODO(#12): from the Better Auth session. */
+export interface ShellUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface WorkspaceContext {
+  user: ShellUser;
   workspace: Workspace;
   role: Role;
   /** Every workspace the user belongs to (for the switcher). Never other users' workspaces. */
@@ -45,6 +53,11 @@ export function can(role: Role, permission: Permission): boolean {
 
 /** Dev stub data. The dev user belongs to two workspaces; `other-chambers` is not theirs. */
 export const DEV_USER_ID = 'dev-user';
+
+const DEV_USERS: readonly ShellUser[] = [
+  { id: DEV_USER_ID, name: 'Asha Rao', email: 'asha@example.test' },
+  { id: 'someone-else', name: 'Someone Else', email: 'someone@example.test' },
+];
 
 export const DEV_WORKSPACES: readonly Workspace[] = [
   { id: 'ws-1', slug: 'demo', name: 'Demo Chambers' },
@@ -78,5 +91,11 @@ export function getWorkspaceContext(
   });
   const current = memberships.find((m) => m.workspace.slug === slug);
   if (!current) return Promise.resolve(null);
-  return Promise.resolve({ workspace: current.workspace, role: current.role, memberships });
+  const user = DEV_USERS.find((u) => u.id === userId) ?? { id: userId, name: userId, email: '' };
+  return Promise.resolve({
+    user,
+    workspace: current.workspace,
+    role: current.role,
+    memberships,
+  });
 }

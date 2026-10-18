@@ -1,0 +1,297 @@
+'use client';
+
+import { initials } from '@causedeck/ui/avatar';
+import { Badge } from '@causedeck/ui/badge';
+import { Check, ChevronsUpDown, Plus, UserPlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useId, useState, type KeyboardEvent } from 'react';
+
+import type { Membership, Workspace } from '../../lib/workspace-context.ts';
+
+import { railHidden } from './sidebar-collapse.tsx';
+import { loadShellOverlays, useShellOverlays } from './use-shell-overlays.ts';
+
+const cacheClearers = new Set<() => void>();
+
+/**
+ * Register a client cache to drop on a workspace switch (hard isolation: nothing from the previous
+ * workspace survives). Returns the unregister function.
+ */
+export function registerClientCache(clear: () => void): () => void {
+  cacheClearers.add(clear);
+  return () => {
+    cacheClearers.delete(clear);
+  };
+}
+
+/** Clear every registered client cache. */
+export function clearClientCaches(): void {
+  for (const clear of cacheClearers) clear();
+}
+
+const normalise = (value: string) => value.normalize('NFKC').toLocaleLowerCase();
+
+/** Memberships whose name or slug contains `query` (case- and width-insensitive). */
+export function filterMemberships(memberships: readonly Membership[], query: string): Membership[] {
+  const needle = normalise(query.trim());
+  if (needle === '') return [...memberships];
+  return memberships.filter(
+    ({ workspace }) =>
+      normalise(workspace.name).includes(needle) || normalise(workspace.slug).includes(needle),
+  );
+}
+
+/** Initials-avatar tones from the token palette; a workspace always gets the same one. */
+const TONES = [
+  'bg-accent-soft text-accent',
+  'bg-info-soft text-info',
+  'bg-success-soft text-success',
+  'bg-warning-soft text-warning',
+  'bg-stage-listed-soft text-stage-listed',
+  'bg-stage-reserved-soft text-stage-reserved',
+] as const;
+
+export function workspaceTone(slug: string): string {
+  let hash = 0;
+  for (const char of slug) hash = (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0;
+  return TONES[hash % TONES.length] ?? TONES[0];
+}
+
+function WorkspaceMark({ workspace }: { workspace: Workspace }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex size-8 shrink-0 items-center justify-center rounded-[8px] text-xs font-semibold ${workspaceTone(workspace.slug)}`}
+    >
+      {initials(workspace.name)}
+    </span>
+  );
+}
+
+export interface WorkspaceSwitcherProps {
+  current: Workspace;
+  memberships: readonly Membership[];
+  /** `sidebar`: mark and name (name hidden in the rail). `topbar`: name with a chevron (phones). */
+  variant: 'sidebar' | 'topbar';
+}
+
+/**
+ * Menu button opening a 288 px popover of the user's memberships: type to filter, arrows to move,
+ * Enter to switch. Switching is a hard switch: client caches are cleared and the app navigates to
+ * the other workspace's Today.
+ */
+export function WorkspaceSwitcher({ current, memberships, variant }: WorkspaceSwitcherProps) {
+  const t = useTranslations('shell');
+  const router = useRouter();
+  const overlays = useShellOverlays();
+  const listId = useId();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [switchingTo, setSwitchingTo] = useState<string | null>(null);
+
+  const results = filterMemberships(memberships, query);
+  const active = Math.min(activeIndex, Math.max(results.length - 1, 0));
+  const optionId = (index: number) => `${listId}-option-${String(index)}`;
+
+  const onOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) {
+      setQuery('');
+      setActiveIndex(
+        Math.max(
+          0,
+          memberships.findIndex((m) => m.workspace.slug === current.slug),
+        ),
+      );
+    }
+  };
+
+  const select = (membership: Membership) => {
+    setOpen(false);
+    if (membership.workspace.slug === current.slug) return;
+    setSwitchingTo(membership.workspace.slug);
+    clearClientCaches();
+    router.push(`/w/${encodeURIComponent(membership.workspace.slug)}/today`);
+    router.refresh();
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    const last = results.length - 1;
+    const moves: Record<string, number> = {
+      ArrowDown: active >= last ? 0 : active + 1,
+      ArrowUp: active <= 0 ? last : active - 1,
+      Home: 0,
+      End: last,
+    };
+    const move = moves[event.key];
+    if (move !== undefined && results.length > 0) {
+      event.preventDefault();
+      setActiveIndex(move);
+      return;
+    }
+    if (event.key === 'Enter') {
+      const chosen = results[active];
+      if (chosen === undefined) return;
+      event.preventDefault();
+      select(chosen);
+    }
+  };
+
+  /** Clicked before the overlay chunk arrived: open as soon as it does. */
+  const openEarly = () => {
+    onOpenChange(true);
+    void loadShellOverlays();
+  };
+
+  const trigger =
+    variant === 'sidebar' ? (
+      <button
+        type="button"
+        aria-label={`${t('topbar.openSwitcher')}: ${current.name}`}
+        data-switcher-trigger="sidebar"
+        data-focus-key="switcher-sidebar"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={overlays ? undefined : openEarly}
+        className="hover:bg-accent-soft/60 focus-visible:outline-ring flex h-11 w-full min-w-0 items-center gap-2 rounded-md px-1.5 text-left outline-none group-data-[sidebar=collapsed]/shell:justify-center focus-visible:outline-2 group-data-[sidebar=auto]/shell:max-xl:justify-center"
+      >
+        <WorkspaceMark workspace={current} />
+        <span className={`min-w-0 flex-1 truncate text-sm font-medium ${railHidden}`}>
+          {current.name}
+        </span>
+        <ChevronsUpDown
+          aria-hidden="true"
+          className={`text-ink-subtle size-4 shrink-0 ${railHidden}`}
+        />
+      </button>
+    ) : (
+      <button
+        type="button"
+        aria-label={`${t('topbar.openSwitcher')}: ${current.name}`}
+        data-switcher-trigger="topbar"
+        data-focus-key="switcher-topbar"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={overlays ? undefined : openEarly}
+        className="focus-visible:outline-ring flex h-11 min-w-0 items-center gap-1 rounded-md px-1 text-left outline-none focus-visible:outline-2"
+      >
+        <span data-current-workspace="" className="truncate font-serif text-lg font-medium">
+          {current.name}
+        </span>
+        <ChevronsUpDown aria-hidden="true" className="text-ink-subtle size-4 shrink-0" />
+      </button>
+    );
+
+  const switching = switchingTo !== null && switchingTo !== current.slug;
+
+  return (
+    <>
+      {overlays ? (
+        <overlays.Popover open={open} onOpenChange={onOpenChange}>
+          <overlays.PopoverTrigger asChild>{trigger}</overlays.PopoverTrigger>
+          <overlays.PopoverContent
+            align="start"
+            aria-label={t('switcher.label')}
+            className="flex w-72 flex-col gap-1 p-1.5"
+          >
+            <input
+              type="text"
+              role="combobox"
+              aria-label={t('switcher.filter')}
+              aria-controls={listId}
+              aria-expanded="true"
+              aria-autocomplete="list"
+              aria-activedescendant={results.length > 0 ? optionId(active) : undefined}
+              placeholder={t('switcher.filter')}
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setActiveIndex(0);
+              }}
+              onKeyDown={onKeyDown}
+              className="border-line-control bg-surface focus-visible:outline-ring h-9 rounded-md border px-2.5 text-sm outline-none focus-visible:outline-2"
+            />
+            <ul
+              id={listId}
+              role="listbox"
+              aria-label={t('switcher.label')}
+              className="flex flex-col"
+            >
+              {results.map((membership, index) => {
+                const isCurrent = membership.workspace.slug === current.slug;
+                return (
+                  <li
+                    key={membership.workspace.id}
+                    id={optionId(index)}
+                    role="option"
+                    aria-selected={index === active}
+                    aria-current={isCurrent ? 'true' : undefined}
+                    data-slug={membership.workspace.slug}
+                    onPointerMove={() => {
+                      setActiveIndex(index);
+                    }}
+                    onClick={() => {
+                      select(membership);
+                    }}
+                    className={`flex h-12 cursor-default items-center gap-2.5 rounded-md px-2 ${index === active ? 'bg-accent-soft' : ''}`}
+                  >
+                    <WorkspaceMark workspace={membership.workspace} />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {membership.workspace.name}
+                    </span>
+                    <Badge data-role={membership.role}>{t(`roles.${membership.role}`)}</Badge>
+                    {isCurrent ? (
+                      <Check
+                        aria-label={t('switcher.current')}
+                        className="text-accent size-4 shrink-0"
+                      />
+                    ) : (
+                      <span className="size-4 shrink-0" />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            {results.length === 0 ? (
+              <p role="status" className="text-ink-muted px-2 py-3 text-sm">
+                {t('switcher.noMatches')}
+              </p>
+            ) : null}
+            <div className="border-line mt-1 flex flex-col border-t pt-1">
+              {/* TODO(#18): workspace creation and invites. */}
+              <button
+                type="button"
+                disabled
+                className="text-ink-muted flex h-9 items-center gap-2 rounded-md px-2 text-sm disabled:opacity-60"
+              >
+                <Plus aria-hidden="true" className="size-4" />
+                {t('switcher.create')}
+              </button>
+              <button
+                type="button"
+                disabled
+                className="text-ink-muted flex h-9 items-center gap-2 rounded-md px-2 text-sm disabled:opacity-60"
+              >
+                <UserPlus aria-hidden="true" className="size-4" />
+                {t('switcher.join')}
+              </button>
+            </div>
+          </overlays.PopoverContent>
+        </overlays.Popover>
+      ) : (
+        trigger
+      )}
+      {switching ? (
+        <div
+          role="status"
+          data-switching=""
+          className="bg-surface/70 animate-fade-in z-overlay fixed inset-0 flex items-center justify-center duration-150 motion-reduce:animate-none"
+        >
+          <span className="text-ink-muted text-sm">{t('switcher.switching')}</span>
+        </div>
+      ) : null}
+    </>
+  );
+}

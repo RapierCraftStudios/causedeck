@@ -1,0 +1,154 @@
+// Pattern story and test data. Courts are real; parties, orders and numbers are fictional.
+import type { Anchor, ProvenanceSource, Proposal } from '../types';
+
+export const MADRAS_MATTER = 'M/s Kaveri Textiles v. State of Tamil Nadu';
+export const KARNATAKA_MATTER = 'Malnad Coffee Growers v. Karnataka Forest Department';
+
+export const PARTIES = {
+  madras: { petitioner: 'M/s Kaveri Textiles', respondent: 'State of Tamil Nadu' },
+  karnataka: {
+    petitioner: 'Malnad Coffee Growers',
+    respondent: 'Karnataka Forest Department',
+  },
+} as const;
+
+export const ORDERS = {
+  madras: {
+    court: 'High Court of Judicature at Madras',
+    caseNumber: 'W.P. No. 1234 of 2026',
+    title: 'Order dated 12 March 2026',
+    date: '2026-03-12',
+  },
+  karnataka: {
+    court: 'High Court of Karnataka at Bengaluru',
+    caseNumber: 'W.P. No. 5678 of 2026 (GM-RES)',
+    title: 'Order dated 3 April 2026',
+    date: '2026-04-03',
+  },
+} as const;
+
+const MADRAS_QUOTE =
+  'List the matter on 14.11.2026. The respondents shall file their counter affidavit within four weeks.';
+const KARNATAKA_QUOTE =
+  'Office objections to be complied within two weeks, failing which the petition stands dismissed.';
+const TAMIL_QUOTE = 'வழக்கை 14.11.2026 அன்று பட்டியலிடவும்.';
+const KANNADA_QUOTE = 'ಕಚೇರಿ ಆಕ್ಷೇಪಣೆಗಳನ್ನು ಎರಡು ವಾರಗಳಲ್ಲಿ ಪಾಲಿಸಬೇಕು.';
+
+const span = (quote: string, match: string): { start: number; end: number } => {
+  const start = quote.indexOf(match);
+  return { start, end: start + match.length };
+};
+
+export const ANCHORS = {
+  madras: {
+    id: 'anchor-madras-1',
+    documentTitle: ORDERS.madras.title,
+    quote: MADRAS_QUOTE,
+    highlight: span(MADRAS_QUOTE, '14.11.2026'),
+    page: 2,
+    pageCount: 5,
+  },
+  karnataka: {
+    id: 'anchor-karnataka-1',
+    documentTitle: ORDERS.karnataka.title,
+    quote: KARNATAKA_QUOTE,
+    highlight: span(KARNATAKA_QUOTE, 'within two weeks'),
+    page: 1,
+    pageCount: 3,
+  },
+  tamil: {
+    id: 'anchor-tamil-1',
+    documentTitle: 'உத்தரவு, 12 மார்ச் 2026',
+    quote: TAMIL_QUOTE,
+    highlight: span(TAMIL_QUOTE, '14.11.2026'),
+    page: 2,
+    pageCount: 5,
+  },
+  kannada: {
+    id: 'anchor-kannada-1',
+    documentTitle: 'ಆದೇಶ, 3 ಏಪ್ರಿಲ್ 2026',
+    quote: KANNADA_QUOTE,
+    highlight: span(KANNADA_QUOTE, 'ಎರಡು ವಾರಗಳಲ್ಲಿ'),
+    page: 1,
+    pageCount: 3,
+  },
+} satisfies Record<string, Anchor>;
+
+/** One source per kind and state the chip has to render. */
+export const SOURCES = {
+  confirmed: {
+    kind: 'document',
+    label: 'Order, p.2',
+    quote: MADRAS_QUOTE,
+    page: 2,
+    anchorId: ANCHORS.madras.id,
+    confidence: 0.97,
+    state: 'confirmed',
+  },
+  proposed: {
+    kind: 'ai',
+    label: 'Order, p.1',
+    quote: KARNATAKA_QUOTE,
+    page: 1,
+    anchorId: ANCHORS.karnataka.id,
+    confidence: 0.91,
+    state: 'proposed',
+  },
+  lowConfidence: {
+    kind: 'capture',
+    label: 'Diary photo',
+    confidence: 0.62,
+    state: 'confirmed',
+  },
+  edited: { kind: 'document', label: 'Order, p.2', page: 2, confidence: 0.97, state: 'edited' },
+  manual: { kind: 'manual', label: 'Entered by you', state: 'confirmed' },
+  adapter: { kind: 'adapter', label: 'Cause list', confidence: 0.99, state: 'confirmed' },
+  import: { kind: 'import', label: 'Imported list', state: 'confirmed' },
+  system: { kind: 'system', label: 'Computed date', state: 'confirmed' },
+  rejected: { kind: 'ai', label: 'Order, p.3', confidence: 0.4, state: 'rejected' },
+  longLabel: {
+    kind: 'document',
+    label: `Order dated 12 March 2026 in ${MADRAS_MATTER}, p.2`,
+    confidence: 0.97,
+    state: 'confirmed',
+  },
+  tamil: {
+    kind: 'document',
+    label: 'உத்தரவு, ப.2',
+    anchorId: ANCHORS.tamil.id,
+    confidence: 0.93,
+    state: 'confirmed',
+  },
+  kannada: {
+    kind: 'document',
+    label: 'ಆದೇಶ, ಪು.1',
+    anchorId: ANCHORS.kannada.id,
+    confidence: 0.88,
+    state: 'proposed',
+  },
+} satisfies Record<string, ProvenanceSource>;
+
+export const PROPOSALS: Proposal<string>[] = [
+  {
+    id: 'proposal-next-hearing',
+    title: 'Next hearing',
+    before: '7 Nov 2026',
+    after: '14 Nov 2026',
+    source: SOURCES.confirmed,
+    level: 'L2',
+    safe: true,
+  },
+  {
+    id: 'proposal-objections',
+    title: 'Comply with office objections',
+    after: 'By 17 Apr 2026',
+    source: SOURCES.proposed,
+    level: 'L2',
+  },
+];
+
+/** Tamil and Kannada copy for pattern stories. */
+export const PATTERN_INDIC = {
+  ta: { filed: 'தாக்கல்', listed: 'பட்டியலிடப்பட்டது', suggested: 'பரிந்துரை' },
+  kn: { filed: 'ದಾಖಲಾಗಿದೆ', listed: 'ಪಟ್ಟಿ ಮಾಡಲಾಗಿದೆ', suggested: 'ಸಲಹೆ' },
+} as const;

@@ -61,6 +61,7 @@
     "./tooltip": "./src/components/tooltip/index.ts",
     "./hooks": "./src/hooks/index.ts",
     "./motion": "./src/lib/motion.ts",
+    "./patterns": "./src/patterns/index.ts",
     "./tokens.css": "./tokens/index.css",
     "./tokens/*": "./tokens/*",
     "./fonts.css": "./fonts/fonts.css",

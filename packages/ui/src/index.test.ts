@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { findStoryProblems } from '../scripts/check-stories';
+import { findPatternStoryProblems, findStoryProblems } from '../scripts/check-stories';
 import * as ui from './index';
 import { packageName } from './index';
 
@@ -139,5 +139,29 @@ describe('@causedeck/ui', () => {
 
   it('ships stories, tests and the shared state stories for every component', () => {
     expect(findStoryProblems(path.join(import.meta.dirname, 'components'))).toEqual([]);
+  });
+
+  it('exports the trust patterns from the root and the ./patterns subpath', async () => {
+    expect(pkg.exports['./patterns']).toBe('./src/patterns/index.ts');
+    const patterns = (await import('./patterns')) as Record<string, unknown>;
+    for (const name of [
+      'ProvenanceChip',
+      'ProvenancePopoverBody',
+      'LevelBadge',
+      'LevelLegend',
+      'LEVEL_META',
+      'LEVELS',
+      'StageBadge',
+      'STAGE_MAP',
+      'PROCEEDING_STAGES',
+      'LISTING_STAGES',
+    ]) {
+      expect(ui, name).toHaveProperty(name);
+      expect(patterns[name]).toBe((ui as Record<string, unknown>)[name]);
+    }
+  });
+
+  it('ships stories and tests for every pattern', () => {
+    expect(findPatternStoryProblems(path.join(import.meta.dirname, 'patterns'))).toEqual([]);
   });
 });

@@ -4,7 +4,13 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { findStoryProblems, notApplicable, REQUIRED_STORIES, storyExports } from './check-stories';
+import {
+  findPatternStoryProblems,
+  findStoryProblems,
+  notApplicable,
+  REQUIRED_STORIES,
+  storyExports,
+} from './check-stories';
 
 const allStories = REQUIRED_STORIES.map((name) => `export const ${name}: Story = {};`).join('\n');
 
@@ -74,5 +80,56 @@ describe('check:stories', () => {
     expect(notApplicable('// check-stories: n/a Hover, Active (why)')).toEqual(
       new Set(['Hover', 'Active']),
     );
+  });
+});
+
+describe('check:stories for patterns', () => {
+  it('fails when a pattern folder has no stories', () => {
+    const dir = components({
+      'stage-badge/stage-badge.tsx': '',
+      'stage-badge/stage-badge.test.tsx': '',
+    });
+    expect(findPatternStoryProblems(dir)).toEqual(['patterns/stage-badge: missing stories']);
+  });
+
+  it('fails when a pattern folder has no tests', () => {
+    const dir = components({
+      'stage-badge/stage-badge.tsx': '',
+      'stage-badge/stage-badge.stories.tsx': allStories,
+    });
+    expect(findPatternStoryProblems(dir)).toEqual(['patterns/stage-badge: missing tests']);
+  });
+
+  it('fails when a pattern stories file lacks shared states', () => {
+    const dir = components({
+      'provenance-chip/provenance-chip.tsx': '',
+      'provenance-chip/provenance-chip.test.tsx': '',
+      'provenance-chip/provenance-chip.stories.tsx': 'export const Default: Story = {};',
+    });
+    const [problem] = findPatternStoryProblems(dir);
+    expect(problem).toContain(
+      'patterns/provenance-chip: provenance-chip.stories.tsx lacks stories Hover, FocusVisible',
+    );
+  });
+
+  it('accepts free-form file names, n/a declarations and ignores __fixtures__', () => {
+    const dir = components({
+      'automation-level/level-badge.tsx': '',
+      'automation-level/level-legend.tsx': '',
+      'automation-level/level-badge.test.tsx': '',
+      'automation-level/level-badge.stories.tsx': `// check-stories: n/a Invalid (static)\n${allStories
+        .split('\n')
+        .filter((line) => !line.includes('Invalid'))
+        .join('\n')}`,
+      '__fixtures__/trust.ts': '',
+      'types.ts': '',
+    });
+    expect(findPatternStoryProblems(dir)).toEqual([]);
+  });
+
+  it('passes for the real patterns', () => {
+    expect(
+      findPatternStoryProblems(path.join(import.meta.dirname, '..', 'src', 'patterns')),
+    ).toEqual([]);
   });
 });

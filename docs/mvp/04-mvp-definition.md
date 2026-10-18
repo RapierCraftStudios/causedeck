@@ -1,149 +1,256 @@
-# 04 — MVP Definition: Scope, Exclusions, Build-vs-Buy, Costs, Roadmap
+# 04 — MVP Definition: The First Vertical Slice of Lawyer OS
 
-Version 0.1 · 2026-10-17 · Status: Proposed. Gated by Stage 0 validation ([07](../validation/07-validation-plan.md)) · Requirement IDs refer to the [PRD](../product/03-prd.md).
+Version 0.3 · 2026-10-17 · Status: Proposed, gated by Stage 0 ([07](../validation/07-validation-plan.md)).
+References:
+- Requirement IDs: [PRD v0.3](../product/03-prd.md)
+- Architecture: [10](../product/10-lawyer-os-system-architecture.md)
+- Capture and automation rules: [09](../product/09-zero-entry-automation-design.md)
+- Courts: [11](../strategy/11-launch-markets-madras-hc-bengaluru.md)
+
+> **This MVP is a vertical slice of Lawyer OS, not a data-entry product** (D-024).
+> - It contains a thin but complete version of every OS layer: SaaS platform, court layer, matter graph, lawyer memory, document intelligence, and the prepare → execute → follow-up → continuity loop.
+> - It covers two launch courts: the **Madras HC Principal Seat** and the **Karnataka HC Principal Bench (Bengaluru)**.
+> - Everything left out is left out because of **sequencing**. The long-term vision is unchanged (D-034).
 
 ---
 
-## 1. MVP in one sentence
-**"Never miss a date, record any hearing in 60 seconds."** This is an Android-first (plus web) matter diary for young litigators in one court ecosystem. It has a reliable next date with provenance, a *Tomorrow* brief, voice-note and order-PDF digests, shareable client updates, basic explicit memory, three safe drafting templates, and a citation checker.
+## 1. The slice in one sentence
+**For an independent advocate or a young chamber at the Madras High Court or in Bengaluru's courts, Lawyer OS:**
+- turns the court's own lists and orders, plus the lawyer's voice and documents, into a living map of every matter;
+- prepares each appearance;
+- runs the court day;
+- keeps every obligation that a hearing creates;
+- learns how this lawyer practises.
 
-## 2. Design constraints
-- **Team:** 1–2 builders (TypeScript full-stack) plus a part-time founder doing research and sales. Build time is ~12 weeks after Stage 0.
-- **Budget:** infra and AI under **₹15,000 a month** through the pilot; one-off legal and security spend under ~₹4–5 lakh (estimate).
-- **Risk:** nothing ships that touches Rule 36, consumer advice, or unverified citations.
-- **Distribution:** one city and one court ecosystem (default: Delhi district courts + Delhi HC; A-14).
+The lawyer stays the one who judges, advises, argues, files and sends.
 
-## 3. MVP scope (IN)
+## 2. Slice definition by layer
 
-| # | Capability | PRD refs | Why it's in |
+| OS layer | Full vision ([10 §1.4](../product/10-lawyer-os-system-architecture.md#14-long-term-module-map-mvp-slice-highlighted)) | **MVP slice** | Key reqs |
 |---|---|---|---|
-| 1 | Sign-in (Google / email magic link), onboarding: role, home courts, reminder time | FR-P*, UJ-1 | Activation in under 7 minutes |
-| 2 | Matters: quick-add, full edit, timeline, court master list (launch city), custom forums | FR-M1–M3, M5 | Core object |
-| 3 | **Canonical next date with provenance** + conflict banner + "needs attention" list | FR-H1, H5, H6 | The wedge (T2); trust |
-| 4 | **Tomorrow / Today** views + evening push + morning summary + "no update after hearing" nudge | FR-H2, H3 | Daily habit loop |
-| 5 | **Voice note → structured hearing update** (EN/HI/Hinglish), offline capture | FR-V1–V4 | Hearing recorded in 60 s; strongest differentiator in the AI matrix |
-| 6 | **Order PDF digest** with page/quote anchors (share sheet in; text layer first, OCR fallback) | FR-D1–D3 | Second core AI job; cheap |
-| 7 | Compliance deadlines from directions (user-confirmed) | FR-H7 | Falls out of 5 and 6 |
-| 8 | **Client update draft → user shares via WhatsApp** (never auto-sent) | FR-CL1, CL2 | Daily pain for independents; compliant |
-| 9 | **Explicit memory v0**: profile, preferences, matter facts; confirm-before-save; memory screen; matter-scoped retrieval | FR-ME1–ME6 | Seeds the moat (T4) |
-| 10 | **3 system templates** (adjournment application; vakalatnama particulars sheet; legal notice skeleton) + user DOCX templates with {{fields}}; DOCX export; no model-generated authorities | FR-T1–T3, T5, T6 | Drafting is daily, and templates are safe |
-| 11 | **Citation checker** (Indian Kanoon API resolve; ✔/✖/?) + draft consistency check | FR-T4, T8 | Directly addresses the 2026 SC misconduct risk; cheap |
-| 12 | Fee log (agreed / received / outstanding per matter) | FR-CL3 | Cheap; validates billing interest before v1 invoices |
-| 13 | **eCourts lookup, user-driven, in-app**: an in-app browser opens the official page, the *user* solves the captcha, and the app reads the result page on the device with consent, then parses the next date and orders list | FR-C1–C3 | Magic without server-side scraping (D-003). **Ships only if spike T1 + counsel ⚖ clear it**; otherwise manual + PDF only |
-| 14 | Offline-first sync; app lock; encrypted local DB; export everything; delete account; AI audit log | FR-P2–P4, P8 | Trust and confidentiality basics |
-| 15 | Subscription: founding-member annual plan via a **Razorpay payment link** (manual entitlement) during the pilot → Razorpay subscriptions / UPI Autopay at public beta | FR-P5 | Validate payment early without building billing |
+| SaaS platform | Multi-tenant, SSO, BYOK, dedicated tenants, API | Solo and Chamber workspaces; roles incl. restricted clerk; RLS + per-workspace keys; Mumbai/Hyderabad hosting; subscriptions; OTA updates; support; 7-day offline cache | PL-1–PL-8 |
+| Court layer | Adapters for all forums; official feeds | **A1:** Madras HC (Principal Seat), Karnataka HC (Bengaluru). **A0:** Chennai and Bengaluru district courts, tribunals, commissions (generic parse + confirm). Access-mode registry | CL-1–CL-7; CL-8 (late) |
+| Matter graph | Full litigation graph incl. fees and engagements | Matter → proceedings (main, misc./IAs, connected, appeal links; SR/FR stage) → listings → hearings/appearances → orders → obligations → tasks; documents; people & roles; provenance | MG-1–MG-6 |
+| Lawyer memory | M1–M7 incl. precedent bank, style | M1 profile, M2 preferences, M3 matter memory, M4 private court notes, M6 relationship (existing clients), M7 recognition; confirm-before-save; monthly review | ME-1–ME4 |
+| Document intelligence | OCR, extraction, translation, chat, bundles | Text-first + OCR (EN/TA/KN); classification; anchored order extraction; matter-scoped context retrieval | DI-1–DI-4 |
+| Prepare | Briefs, research integration, argument notes | **Preparation brief per listing** + matter timeline + research link-outs | PR-1–PR-4 |
+| Execute | Court-day ops, live tracking, dispatch | **Court-day view** (complex → hall → item), list diffs, **voice hearing capture**, chamber delegation, reminders | EX-1–EX-5 |
+| Follow-up | Obligations, limitation, filings, comms, fees | **Obligation and deadline queue**, defects/returns/SR tracking, certified copies, drafted next steps, **client/senior/briefing-counsel update drafts (EN/TA/KN)**, stale-matter detection | FU-1–FU-5 |
+| Continuity | Handover, delegation, analytics | **Handover note**, "what changed", member offboarding, junior's personal workspace | CO-1–CO-4 |
+| Drafting | Studio, Word add-in, style | 2 templates per launch court (mention/adjournment memo; client covering letter), consistency check, **citation checker** | DR-1–DR-4 |
+| Trust | Full governance | L1–L4 automation only (no L5); activity feed with Undo; AI audit; outward-action log | TR-1–TR-4 |
 
-## 4. Explicit exclusions (OUT) and why
+## 3. Inputs (low-entry, lawyer-owned first; D-029)
 
-| Excluded | Why | Earliest |
+| Input | How | MVP |
 |---|---|---|
-| Legal research corpus, case search, AI research Q&A | Incumbent moat; costly; hallucination liability (D-001). Link out to Indian Kanoon instead | Not planned |
-| Any marketing, lead-gen, directory, profile pages, social content tools | Rule 36 / BCI 2025 (D-006) | Never (profile page only after ⚖, v2+) |
-| Client-facing portal or automated client messaging | Rule 36 optics; UPL; support load | v2 ⚖ |
-| Invoices with GST/RCM, client-expense ledger | Needs CA review; low pain evidence so far | v1 |
-| Limitation calculator | Rule table needs legal review; error-prone doctrine | v1 ⚖ |
-| Chamber / team accounts, assignment, senior dashboard | Adds permissions complexity; validate the solo habit first | v2 |
-| Live item-position alerts; cause-list PDF ingestion | Feasibility per court unknown; needs spike | v1 |
-| Chat over matter documents; translation | Nice-to-have; adds cost | v1 |
-| WhatsApp Business API reminders | Template approval, BSP cost and policy overhead; push is enough to start | v1 |
-| Hindi UI (content is EN/HI from day 1) | Delhi pilot users are comfortable with an English UI [assumption A-15] | v1 |
-| iOS public release (TestFlight for pilot only) | ~6% share; review overhead | Public beta, if demanded |
-| Native desktop app | Web/PWA covers laptop drafting (A-16) | Later |
-| Bulk court-data scraping, server-side captcha solving, reseller APIs | Legal and terms risk; cost unknown (D-003) | After ⚖ + pricing |
-| Phone OTP login | DLT registration and SMS cost; SIM-swap risk | v1 if demanded |
-| Outcome prediction, judge analytics | Reliability; profiling; optics | Never |
+| **Cause lists** | Madras HC Registry email push via AIMS (forwarded or sent to a private intake address); Karnataka HC list HTML/PDF shared by the lawyer; any shared PDF | ● |
+| **Orders & judgments** | Shared PDFs (JUDIS daily orders, KHC orders, district orders) | ● |
+| **Voice notes** | In-app, after hearings (EN/TA/KN/mixed) | ● |
+| **Own documents** | Pleadings, drafts, annexures; bulk web import (≤ 200 files) | ● |
+| **Calendar** | `.ics` import; private ICS export feed | ● |
+| **Diary / notebook photos** | Camera → OCR → proposals | ● |
+| **Email** | Forward-in address for registry, e-filing and briefing-counsel mail (sender allow-list) | ◐ late |
+| **WhatsApp exports** | "Export chat" files of **internal** chamber or clerk groups only; preview + per-message exclusion | ◐ late |
+| Client WhatsApp chats | Excluded by default; explicit per-item choice under counsel-approved guidance | ○ |
+| **Manual correction** | Everywhere | ● |
 
-## 5. Build vs. buy
+## 4. Outputs that change the lawyer's day
 
-| Component | Decision | Choice (primary / fallback) | Rationale |
+| Output | What it contains | When |
+|---|---|---|
+| **Court-day operating view** | Complex → hall → list → item, stage, bench; clashes; who appears (chamber); carry lists; deep links to official status pages | 8 pm (eve), 7 am diff, live through the day |
+| **Preparation brief** (per listing) | Stage; last order (2–3 lines, page link); open obligations and status; documents to carry; matter synopsis (M3); last-hearing note; private court notes (M4); "readiness" check | With the court-day view; kept current for likely-reached matters (Karnataka 1-day notice) |
+| **Matter timeline** | Across proceedings: filings, SR/FR → numbered, listings, hearings, orders, obligations, communications | On demand |
+| **Action & deadline queue** | Obligations by due date and owner, each with source line and a drafted next step | Daily, plus reminders |
+| **Document context** | Anchored passages from the matter's documents, surfaced inside briefs and obligations | On demand |
+| **Update drafts** | Client (in the client's language), senior, briefing counsel; the lawyer edits and sends | After hearings and orders |
+| **Handover note** | Synopsis, stage, last orders, open obligations, upcoming listings, key documents, open questions | One tap |
+| **Memory that compounds** | Proposals the lawyer confirms; a monthly "what I've learned" review; fewer corrections over time | Continuous |
+
+## 5. What is automated, confirmed, or human
+The full matrix is in [10 §4](../product/10-lawyer-os-system-architecture.md#4-automation-confirmation-and-human-judgement). In summary:
+- **Automated (L1/L3, reversible, internal):**
+  - list parsing and matching to known proceedings;
+  - hall, item, stage and bench fills;
+  - order attachment and extraction;
+  - transcription;
+  - undated tasks;
+  - brief assembly;
+  - stale-matter detection;
+  - clash detection.
+- **Confirmed (L2/L4):**
+  - new proceedings and matters;
+  - next dates;
+  - obligations with dates;
+  - matter-memory updates;
+  - delegation;
+  - every outward draft (client, senior, counsel);
+  - every export.
+- **Human only:**
+  - legal judgement and strategy;
+  - advice;
+  - advocacy;
+  - choosing and verifying authorities;
+  - accepting engagements and making commitments;
+  - filing and signing;
+  - sending any communication.
+- **No L5 code path exists.**
+
+## 6. Excluded from the MVP (sequencing only; all remain on the roadmap; D-034)
+
+| Deferred | Why later | Target |
+|---|---|---|
+| Licensed research integration, argument notes | Needs content partnerships; D-001 | v2 |
+| Drafting studio, template library, style learning, Word add-in | The slice proves the loop first | v1–v2 |
+| Fees, invoices (GST/RCM), client-money ledger | CA and ⚖ review | v1 |
+| Limitation engine | Counsel-reviewed rule tables | v1 ⚖ |
+| Live display-board tracking | Permission + stage-legend learning | v1 ⚖ |
+| A2 device retrieval (Karnataka HC public list), A3 feeds | Written authorisation pending | v1+ ⚖ |
+| Madurai Bench, Dharwad/Kalaburagi, other states | Separate adapters | v2 |
+| NCLT Bengaluru A1 | After HC adapters stabilise | MVP-late / v1 |
+| Tamil and Kannada **UI** (content is already EN/TA/KN) | Localisation effort | v1 |
+| Calendar OAuth; opt-in WhatsApp bot | Privacy and verification overhead | v1 ⚖ |
+| Client status links; intake and conflict check | ⚖ | v2 |
+| Native desktop; SSO; BYOK; dedicated tenant | Platform maturity | v1–v2 |
+| Practice analytics | Needs data volume | v2 |
+
+**Permanently out (not sequencing):**
+- public solicitation or marketing;
+- autonomous advice;
+- unverified citations;
+- unsupervised filing;
+- unauthorised scraping;
+- judge analytics.
+
+## 7. Pricing & packaging (SaaS; D-031; test in E2 and E3)
+
+| Plan | Who | Includes | Test price (ex-GST) |
 |---|---|---|---|
-| Mobile + web client | **Build** | Expo (React Native) + react-native-web; PWA for desktop | One TypeScript codebase; largest ecosystem (raw/06 §1) |
-| Local DB + sync | **Buy (exit to self-host)** | PowerSync Cloud (Free → Pro $49) / PowerSync Open Edition self-hosted | Relational, offline, SQLite on all platforms; escape hatch (V1) |
-| Primary DB | **Buy (managed)** | Supabase Postgres in Mumbai (*confirm region*) / AWS RDS Mumbai | RLS, pgvector, auth, storage in one bill; plain Postgres for portability |
-| Auth | **Buy** | Supabase Auth (Google, email magic link, passkeys later) | Commodity |
-| Object storage | **Buy** | Supabase Storage (same region) / S3 ap-south-1 | Residency; one vendor during the MVP |
-| Background jobs | **Build (thin)** | pg-boss on Postgres + a small Node worker (Mumbai VM or Supabase Edge Functions) | No extra vendor |
-| LLM | **Buy via gateway** | Claude on Bedrock India profile (Haiku 4.5 for extraction, Sonnet 5 for drafting) / Sarvam-hosted open models / first-party Haiku 5.5 if the user opts out of India-only mode | Only documented in-India, ZDR route to frontier models (raw/06 §4) |
-| Speech-to-text | **Buy** | Sarvam STT (₹0.49/min) / Whisper-class fallback | Indic + Hinglish |
-| OCR | **Buy** | Sarvam Document AI (₹0.50/page) / vision LLM / Google Document AI | Hindi scans; Textract lacks Hindi |
-| Citation resolution | **Buy** | Indian Kanoon API (₹0.02–0.50 per request; attribution required; A-17) / official eSCR and HC links | Cheapest real index |
-| Court master data | **Build** | Curated JSON for the launch city | Small, high-value |
-| eCourts lookup | **Build (device-side, user-driven)** | In-app browser + on-device parser ⚖ | Avoids server automation |
-| Templates / DOCX | **Build on OSS** | docx / docxtemplater | Cheap, controllable |
-| Memory | **Build** | Postgres tables + pgvector, RLS, matter_id filter | Confidentiality; no third-party memory SaaS (D-005) |
-| Payments | **Buy** | Razorpay payment links → Subscriptions + UPI Autopay / Cashfree | 2% fee; UPI-native |
-| Push notifications | **Buy** | Expo Notifications (FCM/APNs) | Free |
-| Analytics | **Buy (privacy-safe)** | Self-hosted PostHog or Umami on a small Mumbai VM; no content events | Privacy |
-| Error tracking | **Buy** | Sentry (free/dev tier) with PII scrubbing | — |
-| Support | **Buy** | WhatsApp Business app (free) + simple help centre (static site) | Matches user habit |
-| Legal docs (ToS, DPA, privacy) | **Buy (counsel)** | Indian tech-law counsel ⚖ | Non-negotiable |
+| **Junior** | Students, juniors' personal practice | ≤ 15 active matters; court-day view; briefs; capture (fair use); memory M1–M3 | Free |
+| **Advocate** | Independent advocates | Unlimited matters; both A1 adapters + A0; full capture and document intelligence; briefs; queue; drafts; handover; memory | **₹499 / ₹799 / ₹1,199 per month**; annual ≈ 2 months free; founding pre-order ₹7,999/yr |
+| **Chamber** | 3–15 seats | Shared workspace; delegation; chamber court-day view; roles incl. **clerk seat ₹199**; shared memory (opt-in); assisted onboarding; priority support | **₹499 / ₹649 / ₹899 per seat per month** (min 3) |
 
-## 6. Expected operating costs
+**Economics** (estimates):
+- **Variable cost:** ≈ ₹175 per active seat per month on the India-resident AI route; deterministic-first parsing keeps list processing ≈ ₹0.50 per list.
+- **Free workspace:** ≤ ₹10 per month (capped).
+- **Margins:**
+  - ₹799 Advocate: net ≈ ₹658, about 73% margin.
+  - ₹649 seat: net ≈ ₹535, about 67% margin.
+  - Clerk seats are near break-even. They are justified because they drive chamber adoption.
+- **Billing:** Razorpay subscriptions with UPI Autopay; 18% GST invoices with GSTIN capture.
 
-All figures are **estimates** built from the verified unit prices in [raw/06](../../research/raw/06-tech-stack-and-costs.md). FX is ₹90/USD. GST is excluded unless stated. Re-run them with pilot telemetry.
+## 8. Distribution (merit-led and compliant)
+1. **Court-by-court density.**
+   - Each A1 adapter makes the next advocate at that court productive on day one.
+   - Demos run in bar-association libraries and chambers (with permission).
+   - Chennai: **AIMS-onboarding help sessions** ("get your court's cause list by email, then let Lawyer OS prepare you").
+2. **Chamber → junior loop.** Chamber seats put juniors on the OS. Their free personal workspace travels with them into independent practice, where it converts to the Advocate plan.
+3. **Artefacts that travel inside the profession.** Handover notes and court-day views are shared *within* workspaces. Optional, off-by-default "Prepared with Lawyer OS" footers appear on internal exports only, never on client-facing or court documents.
+4. **Alumni and education channels.** Law-school alumni networks (NLSIU, TNNLU, Chennai and Bengaluru colleges); CLE-style talks on safe AI use after the 2026 SC citation rulings (education, not solicitation).
+5. **Referral credit.** Software credit for referring another workspace. Never tied to legal fees (D-006, L3 risk).
+6. **Never:** marketing advocates' services, directories, lead-gen, or influencer promotion of lawyers.
 
-### 6.1 AI unit costs per action (India-resident route: Bedrock India, +10% regional premium assumed)
-| Action | Model | Tokens (in / out) | Est. cost |
+## 9. The marketable demo
+**Format:** 7 minutes, live on a phone plus a laptop. It uses a **synthetic but court-faithful** dataset: real nomenclature and list and order layouts, with fictional parties. There is a Chennai version and a Bengaluru version.
+
+| Min | Beat | Shows |
+|---|---|---|
+| 0:00 | "Here is tonight's Madras HC cause list as it arrived from the Registry email." Forward it | Court layer (A1), sanctioned input |
+| 0:45 | The court-day view appears, grouped by hall and item, with a clash flagged across two halls | Execute |
+| 1:30 | Open a WP listed "for admission" with two WMPs and a connected matter. **Brief:** last interim order (tap to the page), counter not yet filed (due Friday), carry list, the lawyer's own note on this hall | Matter graph + Prepare + Memory (M3/M4) |
+| 2:45 | "Court is done." Voice note in Tamil-English: "Notice ordered, counter in four weeks, list after that." Proposals appear; one tap confirms the date and obligations | Execute + Follow-up |
+| 3:45 | Share the order PDF. Directions are extracted with anchors; one direction the voice note missed is flagged | Document intelligence, conflict handling |
+| 4:30 | **Ready to send:** client update in Tamil and a note to briefing counsel, both drafted. The lawyer edits and sends from their own WhatsApp | Follow-up (L4) |
+| 5:15 | Action queue: a defect cure on an SR matter due tomorrow, a certified copy pending | Kept obligations |
+| 5:45 | **Handover note** for a matter going to a junior; "what changed" for a matter untouched for 5 weeks | Continuity |
+| 6:15 | Memory proposal: "You always carry the vakalat copy for first listings. Save?" Then the activity feed with Undo, and India hosting and roles | Memory, trust, SaaS |
+| 6:45 | Close: "Every layer you saw gets deeper: research integration, drafting studio, limitation, billing, more courts" | Expandable OS |
+
+**Success criterion for the demo (H-DEMO):** ≥ 40% of viewers request a pilot.
+
+## 10. The two-week concierge pilot
+Full protocol: [07 E2](../validation/07-validation-plan.md#e2--two-week-concierge-pilot-of-the-whole-os-loop-weeks-23-optional-extension-to-week-5).
+
+**Cohort:** 2 cities × (5 independents + 2 chambers).
+
+**Day 0:** consent and onboarding. AIMS registration and case tagging (Madras). Lists and orders shared (Bengaluru). We build the matter graph and send a confirm grid.
+
+**Days 1–12, every OS engine runs by hand with AI assistance:**
+- evening court-day view and briefs;
+- morning diffs;
+- voice → outcome cards;
+- order → obligations;
+- daily queue and update drafts;
+- memory proposals on Day 5 and Day 10;
+- handover drill on Day 11.
+
+**Days 13–14:** Practice Report (preparedness, obligations, load, continuity), then a paid-continuation offer.
+
+## 11. Proof-of-value metrics (D-030)
+- **North star: the Prepared & Kept rate.**
+- **Supporting metrics:**
+  - brief completeness;
+  - brief opened before the hearing;
+  - self-rated preparedness;
+  - missed-obligation rate;
+  - capture completeness;
+  - cognitive-load score;
+  - time-to-context;
+  - handover success;
+  - correction rate by tenure;
+  - L3 undo rate;
+  - paid continuation;
+  - chamber seat expansion.
+- **Secondary:** typed-field share and minutes saved.
+- Targets are in [PRD §10](../product/03-prd.md#10-success-metrics).
+
+## 12. Build vs buy (SaaS)
+
+| Component | Decision | Choice |
+|---|---|---|
+| Clients | Build | Expo (Android/iOS) + web/PWA; share intent; offline SQLite cache |
+| Sync | Buy (exit to self-host) | PowerSync |
+| DB, auth, storage | Buy | Postgres in Mumbai (Supabase or AWS RDS); DR in Hyderabad; KMS per-workspace keys |
+| **Court adapters** | **Build** (core IP) | Config + parsers + fixtures + health monitors; server-side deploy |
+| **Matter graph & memory** | **Build** (core IP) | Postgres + pgvector; RLS; provenance tables |
+| Document intelligence / speech | Buy via gateway | Bedrock India (Claude), Sarvam (Tamil/Kannada OCR and STT); deterministic parsers first |
+| Citation resolution | Buy | Indian Kanoon API + official neutral-citation links |
+| Email intake | Buy / self-host | India-region inbound mail (verify provider region) |
+| Billing | Buy | Razorpay subscriptions + GST invoicing |
+| Support & status | Buy | WhatsApp Business app, status page, help centre |
+| Legal | Buy | Counsel: ToS, DPA, access-mode memo, client-content guidance, public wording ⚖ |
+
+## 13. Operating costs (estimates; FX ₹90/USD; ex-GST)
+
+| Line | Pilot (≤ 30 seats) | Beta (≈ 300 paid seats + 1,000 free) | Growth (≈ 3,000 paid seats + 10,000 free) |
 |---|---|---|---|
-| Voice note structuring (1 min audio) | Sarvam STT + Haiku 4.5 | 1.5k / 0.5k | ₹0.49 + ₹0.40 ≈ **₹0.90** |
-| Order digest (8 pages, text layer) | Haiku 4.5 | 8k / 0.8k | ≈ **₹1.20** |
-| Order digest (8-page scan) | Sarvam OCR + Haiku 4.5 | — | ₹4.00 + ₹1.20 ≈ **₹5.20** |
-| Client update | Haiku 4.5 | 2k / 0.3k | ≈ **₹0.35** |
-| Template draft | Sonnet 5 | 6k / 1.5k | ≈ **₹2.70** |
-| Citation check (per citation) | IK API search + doc | — | ≈ **₹0.70** |
-| Memory extraction (batched, −50%) | Haiku 4.5 | 1k / 0.2k | ≈ **₹0.10** |
+| Fixed (DB + DR, sync, VMs, mail, storage, KMS, monitoring, store accounts) | ≈ ₹10,000 | ≈ ₹25,000 | ≈ ₹1–1.5 lakh |
+| Variable (₹175 per paid seat; ₹10 per free) | ≈ ₹7,500 (pilot heavy use ≈ ₹250/seat) | ≈ ₹62,500 | ≈ ₹6.25 lakh |
+| Adapter maintenance (engineering time, not cash) | — | ~20% of one engineer | ~1 engineer |
+| **Total cash / month** | **≈ ₹17,500** | **≈ ₹0.9 lakh** | **≈ ₹7.3–7.8 lakh** |
+| Revenue at a blended ₹600 net per seat | — | ≈ ₹1.8 lakh | ≈ ₹18 lakh |
 
-*If Haiku 5.5-class pricing ($0.10/$0.50) becomes available in-region, the Haiku-routed lines fall by about 90%.*
+**One-off costs:**
+- counsel: ₹2.5–4 lakh (adds the access-mode memo, client-content guidance and public wording);
+- pentest including multi-tenant isolation: ₹1.5–2.5 lakh;
+- ISO 27001 gap assessment (v1): ₹1–2 lakh.
 
-### 6.2 Per-user monthly variable cost
-| Profile | Usage assumption | India-resident route | With Haiku 5.5-class |
+## 14. Roadmap (OS-first)
+
+| Stage | Window | Goal | Gate |
 |---|---|---|---|
-| **Pro user** | 25 voice notes, 15 order digests (30% scanned), 8 drafts, 15 updates, 20 citation checks, memory | **≈ ₹100** | ≈ ₹55 |
-| **Free user** | Capped at 10 AI actions | **≈ ₹8** (+ ~₹2 infra share) | ≈ ₹4 |
-| Pilot user (unrestricted) | Heavy usage | ≈ ₹150 | ≈ ₹80 |
+| **0: Validate the loop** | Weeks 0–5 | E1 baseline audit → E2 two-week concierge OS pilot (both cities) → paid continuation; E3 demo + MaxDiff; E5 adapter spikes; letters to the Registries ⚖ | H-PREP, H-OBLIG, H-VALUE + (H-WTP-S or H-WTP-C) + H-ADAPT (≥ 1 court) |
+| **1: Build the slice** | Weeks 6–19 | Milestones M1–M5 ([08](../engineering/08-repo-structure-and-backlog.md)) | All MVP Musts; adapter accuracy; isolation tests; pentest; counsel sign-off |
+| **2: Paid launch, two cities** | Months 5–8 | Pilot workspaces migrate; open self-serve (Advocate) + assisted chambers | Prepared & Kept ≥ target; paid continuation ≥ 40%; seat expansion ≥ 1.3× |
+| **3: v1 — Deepen the OS** | Months 8–14 | Drafting studio v1, limitation (⚖), fees/invoices (⚖), live tracking (⚖), A2 retrieval (if authorised), NCLT A1, roster import, Tamil/Kannada UI, SSO, ISO gap | Gross margin ≥ 65%; L3 undo ≤ 3%; correction rate falling by tenure |
+| **4: v2 — Expand the OS** | Months 14–24 | Madurai, Dharwad, Kalaburagi; licensed research integration; client status links and intake (⚖); practice analytics; dedicated tenant / BYOK; next states via adapter process | Adapter add-time ≤ 4 weeks per court |
 
-**Implication.** At **₹299/month** (≈ ₹247 net of 18% GST and ~2.4% gateway fees), contribution after ₹100 of variable AI cost is about ₹147 per Pro user, roughly 60% before fixed costs. At ₹399 it is about 70%, and at ₹499 about 76%. The PRD target of ₹60 per Pro user is a **6-month goal** that depends on model routing and price moves. The launch budget is ₹100. → **Price-test range: ₹299–499/month, ₹2,999–3,999/year.**
-
-### 6.3 Fixed monthly costs
-| Line | Pilot (≤ 100 users) | Beta (~1,000 free + 100 Pro) | Growth (~10,000 free + 1,000 Pro) |
-|---|---|---|---|
-| Supabase (Pro + compute) | ₹2,250 ($25) | ₹3,600 ($40) | ₹10,000–20,000 |
-| PowerSync | ₹0 (Free) | ₹4,400 ($49) | ₹8,000–60,000 (self-host to cut) |
-| Worker VM + analytics VM (Mumbai) | ₹1,500 | ₹2,500 | ₹8,000 |
-| Storage / egress | ₹200 | ₹1,000 | ₹8,000 |
-| Apple dev ($99/yr) + domain + email + Sentry | ₹1,200 | ₹2,000 | ₹6,000 |
-| **Fixed subtotal** | **≈ ₹5,000** | **≈ ₹13,500** | **≈ ₹40,000–1,00,000** |
-| Variable (from 6.2) | 30 pilot × ₹150 = ₹4,500 | 1,000×₹10 + 100×₹100 = ₹20,000 | 10,000×₹10 + 1,000×₹100 = ₹2,00,000 |
-| **Total / month** | **≈ ₹10,000** | **≈ ₹33,500** | **≈ ₹2.4–3.0 lakh** |
-| Revenue at ₹399 Pro (net ≈ ₹329) | ₹0 (pilot free) / founding members | ₹32,900 | ₹3.29 lakh |
-
-**Read-out.**
-- Free users dominate cost at scale. Free-tier AI caps and Haiku-class routing are existential, not optional.
-- Break-even on infra needs roughly a **10% free→Pro mix at ≥ ₹399**, or AI unit costs falling (Haiku 5.5-class in-region).
-- Founders' salaries are excluded; this is a bootstrap model.
-
-### 6.4 One-off costs (estimates; get quotes)
-| Item | Estimate |
+## 15. What would change this slice (not the identity)
+| Signal | Response |
 |---|---|
-| Indian tech/professional-ethics counsel: ToS, DPA, privacy policy, Rule 36 checklist, eCourts lookup opinion | ₹1.5–3 lakh |
-| External pentest (mobile + API) before paid launch | ₹1–2 lakh |
-| CA review of fee log and future invoices | ₹15–30k |
-| Google Play ($25) + Apple ($99/yr) | ~₹11k |
-| Pilot incentives (interview honoraria, 20 × ₹500–1,000) | ₹10–20k |
-
-## 7. Staged roadmap
-
-| Stage | Window | Goal | Key outputs | Gate to proceed (kill or pivot if not met) |
-|---|---|---|---|---|
-| **0 — Validate** | Weeks 0–4 | Prove pain, habit and willingness to pay | 20 interviews; landing page + pricing fake door; clickable prototype tests (8); 200-order gold set; counsel engaged; spikes T1–T3 | H1 ≥ 40% name dates/hearings a top-3 pain; H5 ≥ 6/8 complete core tasks; H6 ≥ 3% pricing-page CTA → waitlist with ≥ 30% picking a paid plan; extraction prototype ≥ 95% next-date accuracy |
-| **1 — MVP build** | Weeks 5–16 | Ship scope §3 to a closed pilot | M1–M4 (see [08](../engineering/08-repo-structure-and-backlog.md)) | All MVP Musts done; gold set ≥ 98%; pentest high and critical fixed; counsel sign-off |
-| **2 — Pilot → public beta** | Months 5–7 | Habit and first revenue in one city | 30-user pilot (3 weeks) → open Android beta + web; founding-member plan; student ambassador programme (⚖ terms) | Week-4 retention ≥ 45% of activated; Sean Ellis ≥ 40%; ≥ 50 paying users |
-| **3 — v1** | Months 8–12 | Depth for independents; second city | Hindi UI; invoices (GST/RCM, CA-reviewed); certified-copy + limitation tracker (⚖); conflict check; chat-with-matter; cause-list ingestion; item-position spike → feature; WhatsApp self-reminders | 300+ paying; gross margin ≥ 65%; second-city activation ≥ 35% |
-| **4 — v2: Chamber + compliant client tools** | Months 12–18 | Expand to seniors and chambers | Chamber plan (assignment, senior dashboard, shared playbooks); advocate-authored client status links (⚖); inbound enquiry log + conflict check (⚖); iOS GA; Tauri desktop if demanded; 1–2 regional languages | Chamber ARPU ≥ 3× Pro; zero Rule-36 complaints |
-| **5 — Platform** | 18+ months | Durable business | Licensed court-data partnership or official API; e-filing hand-off helpers; more states; style learning; firm-level memory; **compliant CRM** = relationship management for existing clients and professional network only | Decided on evidence at that point |
-
-## 8. What would make us change this MVP
-- **H1 fails** (dates aren't a top pain): pivot the wedge to drafting and memory (templates, consistency checks, own-document chat) for independents. The diary becomes secondary.
-- **WTP fails** (< ₹199): go chamber-first (seniors pay) or partner with a bar association or law school for institutional licences.
-- **The eCourts lookup is legally blocked:** stay with manual entry, PDF and voice. That is still differentiated through the voice and digest pipeline.
-- **The AI accuracy gate fails:** ship the diary with AI as "suggestions only" and invest in the gold set and evals.
+| H-PREP passes but H-OBLIG fails | Lead with preparation briefs; rework obligation capture |
+| H-OBLIG passes but H-PREP fails | Lead with the obligation queue; slim the briefs |
+| One city's adapter fails T6 | Launch the other city first |
+| Chambers convert, solos don't | Chamber-first go-to-market; Advocate plan priced as an upgrade path |
+| SaaS trust objections (H-SAAS fails) | Bring forward dedicated tenant / BYOK; publish a security whitepaper earlier |

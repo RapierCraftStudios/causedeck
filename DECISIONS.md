@@ -13,7 +13,7 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Revisit if:** Interviews show research is the top-paid pain for the segment *and* a licensed data partnership becomes available cheaply.
 
 ### D-002 — Wedge = the litigator's daily hearing diary, not AI chat
-- **Date:** 2026-10-17 · **Status:** Accepted (pending validation H1–H3)
+- **Date:** 2026-10-17 · **Status:** **Superseded in framing by D-016** (2026-10-17). The diary stays as the data substrate; the wedge and the pitch are now zero-entry convenience.
 - **Decision:** The MVP is a mobile-first matter and hearing diary built around three moments: "what's on tomorrow", "what happened today" and "what do I owe whom". AI is embedded inside those moments, not offered as a standalone chatbot.
 - **Evidence:** Next-date volatility (adjournments take a large share of court time; DAKSH; "tareekh pe tareekh"). The official eCourts app is rated 2.4★ on iOS, with complaints about lost cases and offline access being removed. The long tail of diary apps has no AI. Free ChatGPT is the real AI competitor ([03](research/raw/03-global-comparators.md) §3). A diary is used daily; research is episodic.
 - **Alternatives:** Lead with an AI drafting assistant (crowded: Jhana, Draft Bot Pro, CaseMine AMICUS, Prism DocGen), an AI research tool (incumbent moats) or a CRM (regulatory risk).
@@ -61,7 +61,7 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Evidence:** CERT-In requires 180-day logs kept within Indian jurisdiction. DPDP Rule 15 permits transfers unless restricted, but possible localisation for Significant Data Fiduciaries and the confidentiality optics favour India hosting ([04](research/raw/04-regulatory-ethics.md) §3).
 
 ### D-010 — Pricing hypothesis: freemium + low INR subscription, UPI-first
-- **Date:** 2026-10-17 · **Status:** Proposed (validate via landing-page and pricing tests)
+- **Date:** 2026-10-17 · **Status:** **Price arms superseded by D-021**; freemium + UPI-first still stands
 - **Decision:** Free tier for students and juniors (limited matters, limited AI). "Pro" plan to be tested at ₹199 / ₹299 / ₹499 per month, with annual discounts. A chamber plan comes later.
 - **Update (2026-10-17, synthesis):** The unit-cost model ([MVP §6](docs/mvp/04-mvp-definition.md#6-expected-operating-costs)) gives ≈ ₹100 of variable cost per Pro user on the India-resident AI route. ₹199 leaves too thin a margin, so the test arms are now **₹299 / ₹399 / ₹499** per month (annual ₹2,999–3,999). Founding-member pre-order is ₹1,999/yr. Collection via web checkout (UPI Autopay / Razorpay) to avoid the 15% app-store fee where store policy allows.
 - **Evidence:** Juniors earn under ₹10k/month (79% of those with under 2 years' practice, per the Vidhi survey cited in a PIL). Anchors: Indian Kanoon Premium ₹5,000/yr, CaseMine ₹12,999/yr, diary apps about ₹400/month ([05](research/raw/05-indian-lawyer-workflows-market.md) §2, [01](research/raw/01-indian-research-platforms.md) §10).
@@ -73,12 +73,12 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Revisit if:** Spike T1 parse success < 90%, or counsel advises against it. Fallback: manual entry, PDF and voice only.
 
 ### D-012 — Launch in one court ecosystem (default: Delhi district courts + Delhi HC)
-- **Date:** 2026-10-17 · **Status:** Proposed
+- **Date:** 2026-10-17 · **Status:** **Superseded by D-025** (Madras HC + Bengaluru)
 - **Decision:** Stage 0 interviews and the pilot focus on one metro's district courts and High Court. Delhi is the default because of density, Hindi and English, eCourts coverage and the HC display board. Swap to Bengaluru or Mumbai if the founders' network is stronger there.
 - **Evidence:** Local variation in cause-list formats, forums and language; chamber word-of-mouth is local [inference]. A-14.
 
 ### D-013 — Voice note + order digest are the two MVP AI jobs; drafting is template-bound
-- **Date:** 2026-10-17 · **Status:** Accepted (pending H3/H4)
+- **Date:** 2026-10-17 · **Status:** **Superseded by D-020** (the MVP AI work is now the full capture→extract pipeline across channels; drafting is reduced to updates plus one template)
 - **Decision:** The MVP's AI budget goes to (1) post-hearing voice → structured update and (2) order PDF → anchored digest. Drafting is limited to template narrative blocks, with no authorities. The citation checker and consistency check run deterministic-first.
 - **Evidence:** AI opportunity matrix scores ([05](docs/strategy/05-competitor-and-ai-matrices.md) §B). Cost per action ≈ ₹0.9–5 ([04](docs/mvp/04-mvp-definition.md) §6.1).
 
@@ -90,5 +90,190 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 ### D-015 — Stage 0 gate before any production code
 - **Date:** 2026-10-17 · **Status:** Accepted
 - **Decision:** Only spikes T1–T5 and the repo scaffold are built before the end-of-week-4 gate. GO, GO-WITH-CHANGES or PIVOT is decided on the H1–H12 thresholds in [07](docs/validation/07-validation-plan.md).
+- **Update (2026-10-17, v0.2):** The gate moves to **end of week 5** so it covers E1 (baseline) → E2 (3-week concierge) → paid continuation. Spikes T6 (cause-list parse) and T7 (share intent) are added. The gate uses the v0.2 hypotheses (H-TIME1, H-ENTRY, H-CONV, H-WTP2 primary).
 - **Evidence:** There is no primary workflow or WTP evidence yet ([01](docs/strategy/01-research-report.md) §7).
 
+
+---
+
+## v0.2 decisions — Zero-entry / quality-of-life reframing (founder direction, 2026-10-17)
+
+### D-016 — The willingness-to-pay driver is quality of life and convenience (zero-entry)
+- **Date:** 2026-10-17 · **Status:** **Superseded in framing by D-024 and D-030.** Convenience and low-entry capture remain a design principle of the capture subsystem ([09](docs/product/09-zero-entry-automation-design.md)). They are not the product's identity or the primary proof of value.
+- **Decision:** We position and price Lawyer OS as the tool that **removes non-courtroom admin**: capture what already arrives (voice, WhatsApp forwards, PDFs, cause lists, emails, existing documents), and automatically produce matters, dates, tasks, people, fees, drafts, client updates, daily briefs and follow-ups. Data, AI and memory are the machinery, not the pitch. The lawyer stays the decision-maker and the advocate in court.
+- **Evidence:**
+  - free "good-enough" data (eCourts, Indian Kanoon) and AI (ChatGPT) already exist [R];
+  - the munshi role is unaffordable for juniors (₹15–30k/month, vendor claim) [R];
+  - we have no primary time-use evidence yet, which is why E1/E2 come first.
+- **Supersedes:** the framing in D-002. D-001 and D-003–D-009 stand unchanged.
+- **Revisit if:** H-CONV fails (convenience is not the #1 value in MaxDiff), or H-TIME1 < 20 min saved per court day.
+- **Design:** [09](docs/product/09-zero-entry-automation-design.md).
+
+### D-017 — Automation ladder and approval boundaries (L0–L5; L5 prohibited)
+- **Date:** 2026-10-17 · **Status:** Accepted · **⚖** (boundary list for counsel review)
+- **Decision:** Every automated action has a level:
+  - L1 capture;
+  - L2 propose (date-critical, financial and identity data);
+  - L3 auto-apply internal reversible changes with undo (attachments, list fills, undated tasks);
+  - L4 prepare outward actions that the lawyer sends, signs or exports.
+  - **L5 (autonomous outward or legal action) has no code path:** no auto-sending to clients or third parties, no filing, advice, engagement acceptance, commitments, payments or generated authorities.
+  - A corroborated auto-confirm of dates is reserved for a v1 experiment (D-022).
+- **Evidence:** BCI Rules 17/24/36/37 [V]; SC 2026 misconduct rulings on AI citations [R]; risk A1 (wrong date).
+- **Spec:** [09 §4](docs/product/09-zero-entry-automation-design.md#4-the-automation-ladder--approval-boundaries).
+
+### D-018 — Capture channel priorities
+- **Date:** 2026-10-17 · **Status:** Accepted · **⚖** (WhatsApp bot, client-forward consent)
+- **Decision:**
+  - **MVP:** Android share sheet (from WhatsApp, Gmail, Files, browser, UPI apps), in-app voice, camera, shared cause-list PDFs, bootstrap import (≤ 200 files), ICS calendar out.
+  - **MVP-late:** email forward-in address; ⚖-gated device-side fetch of public cause lists.
+  - **v1:** opt-in WhatsApp bot number (Meta processing disclosed), calendar read.
+  - **Never:** SMS, notification or contact-book reading, or silent background capture.
+- **Evidence:**
+  - the share sheet needs no third-party processor and is user-initiated [I];
+  - WhatsApp Cloud API routes content via Meta infrastructure, likely outside India [I: verify];
+  - Gmail restricted scopes require a security assessment [I: verify];
+  - Play restricts SMS permissions [I: verify].
+- **Revisit if:** H-TAPS fails because share-sheet friction is too high. Then accelerate the WhatsApp bot after counsel review.
+
+### D-019 — Cause-list auto-matching moves into the MVP, deterministic and on the device
+- **Date:** 2026-10-17 · **Status:** Accepted (pending spike T6) · **⚖** (device fetch only)
+- **Decision:** Shared cause-list PDFs are parsed and matched **on the device** by exact identifiers (case no., CNR), then fuzzy party/advocate matching. Item, courtroom and bench fill at L3; new listings are proposed at L2. Unmatched rows are discarded and never stored. One-tap device-side fetch of *public* lists ships only after counsel review of each court's terms.
+- **Evidence:** cause lists are the daily information source [R]; this step has the biggest re-entry and missed-listing risk [I]; deterministic parsing keeps cost at ~₹0.50/list ([09 §9](docs/product/09-zero-entry-automation-design.md#9-cost-implications-of-zero-entry)).
+
+### D-020 — The smallest loop: "Forward it, forget it" (hearing-day loop)
+- **Date:** 2026-10-17 · **Status:** **Superseded by D-024 / D-034.** The MVP is the full prepare → execute → follow-up → continuity loop, as a vertical slice.
+- **Decision:** Both the concierge pilot and the MVP centre on one loop:
+
+  > cause list → auto-matched 8 pm brief → voice note or order after the hearing → one-tap next date + auto tasks + drafted client/senior updates → follow-up queue.
+
+  Everything else (templates, fees, email, research link-outs) is secondary and is added only after the loop shows ≥ 45 min saved per court day. The loop is run **by hand first** (E2) before any code.
+- **Supersedes:** D-013.
+
+### D-021 — Price arms revised to ₹399 / ₹699 / ₹999 per month, framed against time saved
+- **Date:** 2026-10-17 · **Status:** **Superseded by D-031** (SaaS packaging: Junior / Advocate / Chamber)
+- **Decision:** Full zero-entry costs ≈ ₹173 per Pro user per month on the India-resident route ([04 §7](docs/mvp/04-mvp-definition.md#7-expected-operating-costs)). The value anchor is hours saved and munshi cost, not diary apps. So we test ₹399 / ₹699 / ₹999 a month (annual ≈ 2 months free), with a founding-member pre-order at ₹3,999/yr. The free tier is capped at 40 automated captures a month; manual use stays unlimited.
+- **Supersedes:** the price arms in D-010.
+- **Revisit if:** fewer than 25% of activated S2 pay ≥ ₹699 in E2. Then fall back to ₹399 or a chamber-paid model.
+
+### D-022 — Corroborated auto-confirm of next dates is a v1 opt-in experiment, off by default
+- **Date:** 2026-10-17 · **Status:** Accepted
+- **Decision:** In the MVP, next dates always need one confirmation. In v1, users may opt in to auto-confirm when two independent sources agree (e.g. order text plus the following cause list). This ships only if the pilot shows zero cases where both sources were wrong, with a badge, undo and notification.
+- **Evidence:** risk A1 (score 15); the zero-entry goal pulls towards fewer taps.
+
+### D-023 — Time saved is a first-class, user-visible product metric
+- **Date:** 2026-10-17 · **Status:** **Amended by D-030.** Time saved stays visible to users, but the North Star is now the Prepared & Kept rate.
+- **Decision:** The product computes a calibrated "time back" estimate per capture type and shows a weekly summary. The North Star becomes Weekly Hours Given Back, paired with Weekly Zero-Entry Hearings as the trust counter-metric ([PRD §10](docs/product/03-prd.md#10-success-metrics)).
+- **Evidence:** convenience is the WTP driver (D-016), so the user must *see* the value; the calibration comes from the E1/E2 time logs.
+
+---
+
+## v0.3 decisions — Lawyer OS as an intelligent operating layer, vertical-slice MVP, Madras HC + Bengaluru, SaaS (founder corrections, 2026-10-17)
+
+> **Context.** Founder-reported findings F1–F4 ([raw/07](research/raw/07-founder-reported-findings-2026-10-17.md)) led to a chamber "court-day autopilot" draft. The founder rejected it, so it was never adopted. The founder then directed three things: (1) keep Lawyer OS as a genuine, expandable OS; (2) launch in Madras HC and Bengaluru; (3) deliver it as a multi-tenant SaaS.
+
+### D-024 — Lawyer OS is an intelligent operating layer; the MVP is its smallest marketable vertical slice
+- **Date:** 2026-10-17 · **Status:** Accepted (founder direction)
+- **Decision:** The product is an operating layer for Indian litigation practice: court layer, matter graph, lawyer memory, document intelligence, and prepare / execute / follow-up / continuity engines ([10](docs/product/10-lawyer-os-system-architecture.md)). The MVP must contain a thin but coherent version of **every** layer for two launch courts. It is **not** a data-entry tool, a chamber-admin utility, or an extraction demo.
+- **Supersedes:** the framing in D-016 and D-020, and the unadopted chamber-autopilot draft.
+- **Revisit if:** the Stage 0 concierge pilot shows lawyers value only one engine in isolation. Even then, the slice would be re-cut, not the identity.
+
+### D-025 — Launch markets: Madras High Court (Chennai) and the Bengaluru court ecosystem
+- **Date:** 2026-10-17 · **Status:** Accepted (founder direction) · **Specifics:** [11](docs/strategy/11-launch-markets-madras-hc-bengaluru.md)
+- **Decision:**
+  - **A1 adapters:** Madras HC Principal Seat (Chennai) and Karnataka HC Principal Bench (Bengaluru).
+  - **A0 support (forum model + generic parsing):** Chennai and Bengaluru city civil, sessions, magistrate, family and commercial courts, plus tribunals (e.g. NCLT, DRT, consumer commissions).
+  - **Later:** the Madurai Bench and the Karnataka HC Dharwad and Kalaburagi benches.
+- **Supersedes:** D-012 (Delhi).
+
+### D-026 — The matter graph is the core data model
+- **Date:** 2026-10-17 · **Status:** Accepted
+- **Decision:** The core model is Matter → Proceedings (main, IAs, connected matters, appeals; SR/unnumbered stage) → Listings → Hearings/Appearances → Orders → Obligations → Tasks. Documents, people and role edges sit around it. Provenance applies to every node, with one canonical next date per proceeding and obligations that are never silently closed ([10 §2](docs/product/10-lawyer-os-system-architecture.md#2-the-matter-graph)).
+- **Why:** Indian litigation structure (connected matters, IAs, appearance roles, appeals chains) makes flat "case records" inadequate for preparation and continuity.
+
+### D-027 — Lawyer memory model M1–M7, with no bench profiling
+- **Date:** 2026-10-17 · **Status:** Accepted · **⚖** (court notes)
+- **Decision:** Memory layers are:
+  - M1 practice profile;
+  - M2 working preferences;
+  - M3 matter memory;
+  - M4 private court and forum notes;
+  - M5 playbooks;
+  - M6 relationship memory (existing clients only);
+  - M7 recognition memory.
+
+  D-005 rules apply. Judge analytics and AI-generated profiles of individual judges are prohibited. M4 holds only the lawyer's own practical notes, private by default and never aggregated across workspaces.
+- **Extends:** D-005.
+
+### D-028 — Extensible court-adapter strategy with maturity levels and an access-mode registry
+- **Date:** 2026-10-17 · **Status:** Accepted · **⚖** (access modes)
+- **Decision:**
+  - Each forum gets a versioned adapter: config plus small parsers, golden fixtures and health monitors, deployed server-side without app releases.
+  - Maturity levels: A0 known forum, A1 document-assisted (user-supplied lists and orders), A2 device-retrieved public documents (only after counsel review), A3 official or licensed feed.
+  - Every adapter records its permitted access mode. There is no server-side scraping without authorisation.
+- **Evidence:** F3 (court-specific parsing) [FR]; no official eCourts API [R]; portal terms unknown [R].
+- **Extends:** D-003, D-011, D-019.
+
+### D-029 — Input policy: lawyer-owned first; email and WhatsApp exports only where privacy allows
+- **Date:** 2026-10-17 · **Status:** Accepted · **⚖**
+- **Decision:**
+  - **MVP inputs:** the lawyer's voice notes; order and judgment PDFs; cause-list PDFs; the lawyer's own documents (pleadings, drafts); calendar (ICS import and export); diary photos; manual correction.
+  - **Opt-in and privacy-gated:**
+    - email forward-in for registry and e-filing mail;
+    - **WhatsApp "Export chat" files from internal chats** (chamber or clerk groups), parsed for listings, tasks and documents, with a pre-import preview and per-message exclusion.
+  - Client chats are **excluded by default**. They need an explicit per-chat choice, a sensitive-matter check and counsel-approved guidance.
+  - Never: SMS, notification or contact-book reading.
+- **Evidence:** F2 (confidentiality reluctance) [FR]; BCI Rules 17/24 [V]; DPDP [R].
+- **Amends:** D-018.
+
+### D-030 — Proof of value = better preparation, fewer missed obligations, lower cognitive load, continuity
+- **Date:** 2026-10-17 · **Status:** Accepted
+- **Decision:** The North Star is the **Prepared & Kept rate**: the share of appearances with a current brief before the hearing **and** all resulting obligations captured and kept. Supporting metrics are preparation completeness, missed-obligation rate, cognitive load (short NASA-TLX-style self-rating), continuity (time to get up to speed or hand over a matter), and trust (correction rate). Minutes of entry saved are secondary.
+- **Evidence:** F1 (solos report < 30 min/day saved) [FR].
+- **Amends:** D-023.
+
+### D-031 — SaaS packaging: Junior (free), Advocate, Chamber (per seat)
+- **Date:** 2026-10-17 · **Status:** Proposed (validate in E2 and E3)
+- **Decision:**
+  - **Junior:** free, ≤ 15 active matters, fair-use AI.
+  - **Advocate:** test ₹499 / ₹799 / ₹1,199 per month.
+  - **Chamber:** test ₹499 / ₹649 / ₹899 per seat per month, plus a ₹199 clerk seat, minimum 3 seats.
+  - Annual ≈ 2 months free. Prices ex-GST; we charge 18% GST.
+  - The junior's free workspace travels with them, which creates the conversion loop to the Advocate plan.
+- **Evidence:** ≈ ₹175 variable cost per active seat ([09 §9](docs/product/09-zero-entry-automation-design.md#9-cost-implications-of-zero-entry)); F4 (chamber aggregation) [FR].
+- **Supersedes:** D-021.
+
+### D-032 — Delivery model: hosted multi-tenant SaaS only; the "Lawyer as a Service" naming rule
+- **Date:** 2026-10-17 · **Status:** Accepted (founder direction) · **⚖** (public wording)
+- **Decision:**
+  - Lawyer OS is a cloud service we operate: hosting, updates, adapters, security, support. There are no on-premises or self-hosted customer deployments in the MVP or v1. A dedicated hosted tenant may come later.
+  - "Lawyer as a Service" means **the lawyer's operating system delivered as a service**, never legal services, advice, representation, or any offering to the public.
+  - Public materials say "cloud software for advocates" and avoid the bare phrase.
+- **Spec:** [10 §6](docs/product/10-lawyer-os-system-architecture.md#6-saas-platform-lawyer-os-as-a-hosted-multi-tenant-service).
+
+### D-033 — Tenant isolation and India-region hosting
+- **Date:** 2026-10-17 · **Status:** Accepted
+- **Decision:**
+  - The workspace is the tenant. Postgres RLS on every row; sync rules derived from the same policy.
+  - Per-workspace envelope keys in India-region KMS, so a deleted workspace can be crypto-erased.
+  - Workspace-filtered retrieval; no cross-tenant AI caches.
+  - Primary hosting in Mumbai with disaster recovery in Hyderabad; backups and logs stay in India.
+  - Clerk role restricted from strategy notes and matter memory.
+  - Automated cross-tenant tests in CI.
+- **Extends:** D-009.
+
+### D-034 — Sequencing exclusions are deferrals, not abandonment
+- **Date:** 2026-10-17 · **Status:** Accepted
+- **Decision:** The MVP defers the following, which stay on the OS roadmap ([04 §5](docs/mvp/04-mvp-definition.md)):
+  - licensed research integration;
+  - full drafting studio and Word add-in;
+  - fees and billing;
+  - limitation engine;
+  - live display-board tracking;
+  - device-retrieved and official court feeds;
+  - Madurai, Dharwad and Kalaburagi benches and other states;
+  - native desktop;
+  - client status links;
+  - intake and conflict check;
+  - practice analytics.
+
+  **Permanently excluded:** public solicitation and marketing of lawyers, autonomous legal advice, unverified citations, unsupervised filing, unauthorised court scraping, judge analytics.

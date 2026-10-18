@@ -1,88 +1,119 @@
 # 02 — Product Thesis & Target-User Segmentation
 
-Version 0.1 · 2026-10-17 · Status: hypothesis. The evidence is in the [research report](01-research-report.md); the open beliefs are in [ASSUMPTIONS.md](../../ASSUMPTIONS.md).
+Version 0.3 · 2026-10-17 · Status: hypothesis (founder-directed reframing: D-024, D-025, D-030 to D-032).
+Architecture: [10](../product/10-lawyer-os-system-architecture.md) · Launch markets: [11](11-launch-markets-madras-hc-bengaluru.md) · Evidence: [research report](01-research-report.md) · Beliefs: [ASSUMPTIONS.md](../../ASSUMPTIONS.md)
+
+> **Version history.**
+> - **v0.1:** a safe-AI hearing diary.
+> - **v0.2:** zero-entry convenience.
+> - **v0.3 (this version):** Lawyer OS is an **intelligent operating layer for how advocates practise in Indian courts**, delivered as a secure India-hosted SaaS. The MVP is the **smallest marketable vertical slice** of that OS, launched for the **Madras High Court and the Bengaluru court ecosystem**.
+>
+> **The MVP is a vertical slice of Lawyer OS, not a data-entry product.** Low-entry capture is how information gets in; it is not what the lawyer buys.
 
 ---
 
 ## 1. One-line thesis
 
-> **A pocket chamber for the young Indian litigator:** a mobile-first matter and hearing diary that remembers how *you* practise. Every order, hearing and voice note becomes a reliable next date, a to-do list and a client update, with AI that never invents law. It costs less than a monthly phone plan.
+> **Lawyer OS is the operating layer of an Indian litigation practice.** It knows every matter as a living graph of proceedings, listings, orders and obligations. It remembers how *this* lawyer practises. It prepares them for every appearance, runs their court day, and makes sure nothing that a hearing creates is ever dropped. The lawyer remains the only one who judges, advises, argues, files and commits.
 
-## 2. Thesis in five claims (each falsifiable)
+## 2. The problem behind the product
+An Indian litigator's practice is a high-stakes information system that runs on paper diaries, WhatsApp threads, PDFs and memory:
+- **Fragmented, unreliable court data.**
+  - Cause lists vary by court and list type.
+  - Item numbers and halls shift.
+  - Rosters change benches.
+  - Orders arrive late and are not always legible or in the same language.
+  - There is no official API, and the eCourts app is rated 2.4★ `[V]`.
+- **Complex matter structure.**
+  - Main petitions carry IAs or miscellaneous petitions and connected matters.
+  - Appeals chains run across forums.
+  - SR or unnumbered stages come before numbering.
+  - Appearance capacities vary: AoR, arguing counsel, "for" a senior, proxy.
+- **Obligations are created everywhere:**
+  - "counter in four weeks";
+  - "cure defects";
+  - "apply for certified copy";
+  - "serve private notice";
+  - "list after vacation".
+
+  They are tracked in someone's head.
+- **Preparation is ad hoc.** The night before, the lawyer reconstructs where each matter stands from scattered sources. A junior or clerk who leaves takes the context with them.
+- **The professional stakes are rising.** The SC treats unverified AI citations as misconduct `[R]`. Clients expect WhatsApp-speed updates.
+
+**The cost is not just minutes.** It shows up as **underprepared appearances, missed obligations, cognitive overload and lost continuity**. Founder-reported early findings say solo admin savings alone are < 30 min/day `[FR]`, which is why the value proposition is preparation, reliability and continuity rather than typing saved.
+
+## 3. Thesis claims (falsifiable)
 
 | # | Claim | Evidence today | Falsified if… |
 |---|---|---|---|
-| T1 | **Daily-workflow software for juniors and solos is unserved.** Research is crowded and expensive. Practice management is either enterprise-priced (Provakil, MyKase, demo-gated) or a no-AI hobby diary app. | Competitor matrix ([05](05-competitor-and-ai-matrices.md) A3); eCourts app at 2.4★ with complaints about lost cases and offline mode removed | Interviews show juniors happily use an existing tool (eCourts app, Provakil, a diary app) and wouldn't switch |
-| T2 | **The "next date" is the atomic unit of litigation practice.** Make it reliable and the rest (prep, client updates, tasks, fees) hangs off it. | Adjournment frequency (DAKSH: 54% of civil sitting time in its sample); 66.6 lakh district cases delayed due to lawyer unavailability (NJDG via press) | Fewer than 40% name dates or hearing tracking as a top-3 weekly pain (H1) |
-| T3 | **Narrow AI over the lawyer's own material is both cheaper and safer than research AI.** Order digests, voice notes, templates and memory need small models and no corpus, and verification is part of the design. | Model price tables (Haiku-class ≈ $0.10–1 per M input tokens); SC 2026 "misconduct" rulings on fake citations; Stanford 17–34% hallucination in legal RAG | Users only value AI if it does open-ended research; extraction accuracy is below 98% even with confirmation |
-| T4 | **Explicit, matter-scoped memory is the long-term moat.** The more matters, templates and preferences the product holds, the harder it is to leave, and the user owns and can export all of it. | Harvey Memory (Aug 2026) shows the pattern at the top end; nobody offers it at the low end in India | Users don't engage with memory features, or see them as a privacy risk |
-| T5 | **Distribution can be compliant and cheap.** We sell *software to lawyers*, through students, clinics, moots and peer word of mouth, and never help lawyers market themselves to the public. | ~2.3–2.5 lakh AIBE candidates a year (an entry funnel); Rule 36 constrains lawyers, not the sale of software to them | CAC through these channels is above ~₹600 per paying user |
+| T1 | **Preparation and obligation-keeping, not data access, is the unmet need.** Research data (Indian Kanoon, SCC, Manupatra) and generic AI are available; a system that prepares the lawyer and keeps every obligation is not. | Crowded research market `[V/R]`; enterprise-only or diary-only practice tools `[V/R]`; F1 `[FR]` | In E3, lawyers rank "research/AI access" above "walk in prepared / never miss an obligation" as the reason to pay |
+| T2 | **A matter graph plus lawyer memory produces visibly better briefs over time.** Each captured hearing, order and correction improves matching, synopses and follow-ups. | Harvey Memory pattern `[V]`; no low-end Indian equivalent `[I]` | Brief acceptance and correction rates do not improve between week 1 and week 4 of the pilot |
+| T3 | **Court-specific adapters are a moat and a distribution unit.** Once a court's lists and orders are understood well, every advocate in that court gets value on day one. | F3: parsing is court-specific `[FR]`; local formats `[R]` | Adapter precision < 99% after 30+ fixtures, or users don't value automatic listings |
+| T4 | **Safe boundaries make an "OS" acceptable to lawyers.** Automation is internal and reversible; dates, money and anything outward are confirmed; judgement stays human. | BCI Rules 17/24/36/37 `[V]`; SC 2026 rulings `[R]` | Pilot users disable automations or report anxiety (> 30%) |
+| T5 | **Chambers multiply value and pay. Juniors spread the product.** Chamber seats fund the business; free junior workspaces travel with juniors into independent practice. | F4 `[FR]`; chamber structure `[R]` | Chamber conversion < solo conversion, or juniors don't keep personal workspaces |
+| T6 | **A hosted, India-region SaaS is trusted more than WhatsApp-and-Drive sprawl**, if isolation, privacy and support are visible. | DPDP 2027 timeline `[R]`; Vidhi on foreign cloud and consent `[R]` | > 25% of interviewed chambers refuse cloud hosting of matter data |
 
-## 3. Why now
-1. **Courts have made AI risk concrete.** The Supreme Court's 2026 orders call reliance on unverified AI citations misconduct and have asked the BCI to frame norms. Lawyers need a *safe* AI path, and generic ChatGPT is not one.
-2. **The cost curve has collapsed.** Small frontier models cost ~$0.10–1 per million input tokens. Claude became available in-country on Bedrock in India on 29 Sep 2026, with zero data retention by default, so India-resident AI is affordable for the first time at a ₹300 price point.
-3. **eCourts Phase III (₹7,210 cr) has digitised the pipes.** Orders and cause lists are online, but the official UX lags behind and its ratings are falling.
-4. **DPDP Rules start to bite in May 2027.** A product built privacy-first now becomes a selling point against WhatsApp-and-Drive practice.
-5. **A Gen Z cohort is entering the Bar** (~1.6–1.8 lakh AIBE passes a year). They are phone-native, used to UPI, and already use ChatGPT.
+## 4. Why now
+1. **Capable, India-resident AI is affordable.** Claude runs in-country on Bedrock India with zero data retention since 29 Sep 2026 `[V]`. Indic STT and OCR are cheap (Sarvam) `[V]`.
+2. **The courts are digital but fragmented.** eCourts Phase III (₹7,210 cr) puts lists and orders online `[V]`, but nobody turns them into a lawyer's operating picture.
+3. **AI misconduct risk means lawyers need a *safe* AI layer**, not a chatbot.
+4. **DPDP duties arrive in 2027.** Chambers will need a defensible system of record.
+5. **Gen Z advocates** are phone-native and expect software to prepare things for them.
 
-## 4. Segmentation
+## 5. Segmentation (v0.3)
 
-### 4.1 Segment map
+| Segment | Who | Value of the OS | Role |
+|---|---|---|---|
+| **S2 Young independent advocate** (2–10 yrs) | Own practice at Madras HC or Karnataka HC, often also city civil courts, tribunals or commissions; handles clients alone | Prepared appearances, nothing dropped, continuity without a clerk | **Primary payer (Advocate plan)** |
+| **S4 Young chamber** (head 30–45 + 2–8 juniors and a clerk) | Litigation chamber with a shared docket | Chamber-wide court-day view, delegation, handover, collective memory | **Primary payer (Chamber plan)** |
+| **S1 Junior** (0–3 yrs) | Works in a chamber; has a few own matters | Their own free workspace; chamber seat paid by the senior | **Primary user + distribution carrier** |
+| S3 Law student / intern | Chennai and Bengaluru law schools; interns in chambers | Learning, internship matters | Funnel |
+| S5/S6 Firm associates / in-house | Firm or company tools | — | Not targeted |
 
-| Segment | Who | Size signal | Core jobs | Pay ability | Fit | Role |
+**Launch focus:** litigators whose primary forum is the **Madras HC Principal Seat** or the **Karnataka HC Principal Bench (Bengaluru)**, plus their subordinate and tribunal work in Chennai and Bengaluru. Details: [11](11-launch-markets-madras-hc-bengaluru.md).
+
+### Personas (to validate)
+- **Karthik, 29, independent, Madras HC (S2).**
+  - Writs and civil revisions on the Appellate Side, plus City Civil Court suits.
+  - About 80 proceedings: main W.P.s with W.M.P.s, a few connected batches, and some unnumbered SRs awaiting defect cure.
+  - Reads the cause list at night, tracks returns on a notepad, and updates clients in Tamil and English on WhatsApp.
+  - *Wants:* "Tell me tonight exactly where every matter stands and what I must do, and don't let a return or a counter deadline slip."
+- **Divya, 34, heads a 5-person chamber, Karnataka HC + City Civil Court, Bengaluru (S4).**
+  - Matters spread across HC halls, Mayo Hall and commercial courts.
+  - Juniors appear "for" her.
+  - *Wants:* "One picture of tomorrow for the whole chamber. Briefs my juniors can actually use. When someone leaves, their matters don't go dark."
+- **Arjun, 24, junior in Divya's chamber (S1).**
+  - Maintains the chamber's list and has 6 own matters.
+  - *Wants:* "Less copying, better briefs, and my own matters in one place that I keep when I go independent."
+
+## 6. Positioning
+
+| | **Lawyer OS** | eCourts / HC apps | Diary + WhatsApp + clerk | Provakil / MyKase | SCC / Manupatra / CaseMine / Prism | ChatGPT / generic AI |
 |---|---|---|---|---|---|---|
-| **S1 Junior in a chamber** (0–3 yrs) | Works under a senior; runs the senior's diary, cause lists, filings and drafts; often also has a few own matters | Most of the ~1.6–1.8 lakh annual AIBE passers start here [inference] | Track many matters across courts; prep briefs for the senior; record what happened; draft routine applications | Low: <₹10k/month for 79% of those with under 2 years (Vidhi, via PIL) | ★★★ usage | **Primary user**. Free or low tier. Habit + virality inside chambers |
-| **S2 Young independent litigator** (2–7 yrs) | Own practice, solo or 2–3 peers; district court + HC; drafting and client handling themselves | Unknown share of ~10–13 lakh practising [weak inference] | Everything S1 does plus client updates, fee tracking, intake, conflicts | Medium: pays for Indian Kanoon, CaseMine, LiveLaw at ₹1k–13k/yr | ★★★ | **Primary payer** (Pro) |
-| **S3 Law student / intern / AIBE candidate** | Final-year students, interns in chambers, recent graduates | ~2,000 law colleges; ~2.3–2.5 lakh AIBE candidates a year | Learn the diary practice, track internship matters, moot prep | Very low | ★★ | **Acquisition funnel** (free, education framing) |
-| **S4 Senior with a small chamber** (10+ yrs, 2–6 juniors) | Decides chamber tools; often less tech-savvy | Unknown | Visibility of all matters, juniors' updates, client communication | High | ★★ (via juniors) | **Expansion payer** (Chamber plan, v2) |
-| **S5 Young associate at a law firm** | Corporate and litigation associates at mid and large firms | — | Firm tools (Harvey, Legora, Lucio, MyKase) | Firm pays | ★ | Not targeted (firm procurement, enterprise security reviews) |
-| **S6 Young in-house counsel** | Company legal teams | — | CLM, matter management (SpotDraft, Legistify) | Company pays | ★ | Not targeted |
+| What it is | **Practice operating layer** | Court data lookup | Manual system | Firm matter tracking | Research | General assistant |
+| Understands Madras HC / Karnataka HC listings & stages | ● adapter-level | ◐ raw data | ◐ in people's heads | ◐ generic tracking | ○ | ○ |
+| Matter graph (IAs, connected, appeals, obligations) | ● | ○ | ○ | ◐ | ○ | ○ |
+| Prepares each appearance | ● brief | ○ | ◐ manual | ○ | ○ | ◐ if you paste everything |
+| Keeps obligations | ● queue with provenance | ○ | ◐ | ◐ | ○ | ○ |
+| Remembers *your* practice | ● scoped memory | ○ | ◐ | ○ | ○ | ◐ generic, unscoped |
+| Safe by design (no auto-send, no fake citations, India-hosted) | ● | n/a | n/a | ? | ◐ | ✖ |
+| Price for an advocate / chamber | ₹499–1,199/month; ₹499–899 per seat (test) | Free | Free / clerk salary | Demo-gated | ₹5k–50k/yr | Free / ~₹2k |
 
-### 4.2 Beachhead
-**S1 + S2 litigators in one metro court ecosystem: district courts + High Court.** Delhi is the default proposal, with Bengaluru or Mumbai as alternatives depending on the founders' network (A-14).
-- Why a litigator rather than a transactional lawyer: the next-date problem is unique to litigation, transactional tooling is crowded (SpotDraft, Spellbook), and litigators are the bulk of the Bar.
-- Why one ecosystem: cause-list formats, court naming, languages and the network effects inside chambers are all local. A dense launch gives word of mouth.
+**Positioning statement.** For litigators at the Madras High Court and in Bengaluru's courts, Lawyer OS is the operating layer of your practice. It understands your court's lists and orders, keeps a living map of every matter, prepares you for each appearance, and makes sure every obligation a hearing creates is owned and kept. It also learns how you work. Unlike court apps, it understands your practice, not just case numbers. Unlike research tools and chatbots, it never gives advice or invents law, and nothing leaves without your approval.
 
-### 4.3 Personas (built from research patterns, to be validated in interviews)
+**Category language:** "Lawyer OS: cloud software for advocates." Avoid "Lawyer as a Service" in public copy (D-032).
 
-**Ananya, 24: junior in a Delhi HC chamber (S1)**
-- Enrolled 2025 and earns ₹15k/month. Tracks about 60 of her senior's matters plus 4 of her own.
-- Copies the next day's list into a notes app every night. Messages the senior's clerk on WhatsApp for item numbers.
-- Has missed a listing once when an advance list changed. Uses ChatGPT for first drafts but is now scared of fake citations.
-- *Wants*: "Tell me tonight what's listed tomorrow, where, at what item number, and what I need to carry."
+## 7. Business model (SaaS; validate)
+- **Junior:** free. Up to 15 active matters, fair-use AI.
+- **Advocate:** test ₹499 / ₹799 / ₹1,199 per month.
+- **Chamber:** test ₹499 / ₹649 / ₹899 per seat per month; clerk seat ₹199; minimum 3 seats.
+- **Annual:** about 2 months free. Prices exclude 18% GST.
+- **Unit cost:** about ₹175 variable per active seat per month. Gross margin target ≥ 70%.
+- **No** ads, no data sales, no lead-gen and no referral-fee revenue.
 
-**Rohit, 28: independent at Saket district court + Delhi HC (S2)**
-- 5 years' practice and 70 live matters, mostly civil, consumer and bail.
-- Keeps a paper diary and a WhatsApp group with his munshi. Clients call him constantly for updates.
-- Pays ₹5k/yr for Indian Kanoon and drafts in MS Word from old files. Fees come by UPI and cash, and he loses track of what is outstanding.
-- *Wants*: "Never miss a date, send clients updates in 10 seconds, find my old draft for this kind of application."
-
-**Meera, 22: final-year student interning in a chamber (S3)**
-- Wants to look sharp to her senior and practise maintaining a matter file. Will tell her whole batch if the tool is good.
-
-**Mr. Saxena, 52: senior with 4 juniors (S4)**
-- Wants one screen showing every listed matter, who is attending, and what happened. Pays if it saves him from embarrassment in court.
-
-## 5. Positioning
-
-| | Lawyer OS | eCourts app | Paper / WhatsApp | Provakil / MyKase | CaseMine / SCC / Prism | ChatGPT |
-|---|---|---|---|---|---|---|
-| Built for | Junior & solo litigators | Everyone | — | Firms / enterprise | Research | Everyone |
-| Daily diary & next dates | ●  | ◐ unstable | ● manual | ● | ○ | ○ |
-| Remembers *your* practice | ● | ○ | ◐ in your head | ◐ | ○ | ◐ generic |
-| AI you can trust in court | ● verification-first | ○ | ○ | ? | ● (premium) | ✖ hallucination risk |
-| Price for a junior | Free / ₹199–499 | Free | Free | Demo-gated | ₹5k–50k/yr | Free / ₹1,999 |
-
-**Positioning statement.** For young Indian litigators who juggle dozens of matters across courts, Lawyer OS is the practice diary that turns orders and hearings into reliable next dates, tasks and client updates, and learns how you work. Unlike the eCourts app or a paper diary, it remembers your practice. Unlike research databases and ChatGPT, its AI works only on your own material and never invents a citation.
-
-## 6. Business-model sketch (to validate)
-- **Free** (students, S1): up to ~30 active matters, manual + PDF digest (capped), basic reminders, 10 AI actions a month.
-- **Pro** (S2): unlimited matters, voice notes, templates and drafts, memory, citation checker, exports, priority sync. Price-test ₹199 / ₹299 / ₹499 per month, with ~2 months free on annual.
-- **Chamber** (S4, v2): per-seat pricing with a senior dashboard and assignment.
-- No ads, no selling of data, no lead-gen revenue. This is both a trust promise and a Rule 36 guardrail.
-
-## 7. What this thesis explicitly is *not*
-- Not a research database or citator (D-001).
-- Not a lawyer marketplace, directory or lead-gen tool (D-006).
-- Not a consumer legal-advice app (D-007).
-- Not an enterprise CLM or legal-ops suite.
+## 8. What this thesis is not
+- **Not a data-entry or admin utility.** Capture is plumbing.
+- **Not a research database.** Research integration comes later and will be licensed or linked (D-001).
+- **Not an autonomous agent.** No L5 actions (D-017).
+- **Not a marketing, lead-gen or directory product** (D-006).
+- **Not a legal-services provider.** "As a service" refers to the software (D-032).

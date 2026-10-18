@@ -1,6 +1,6 @@
 # 06 — Risk Register
 
-Version 0.1 · 2026-10-17 · Owner: founder(s) · Review cadence: every two weeks until launch, then monthly. Evidence: [research/raw/04](../../research/raw/04-regulatory-ethics.md), [02](../../research/raw/02-indian-practice-management-and-legaltech.md), [03](../../research/raw/03-global-comparators.md), [06](../../research/raw/06-tech-stack-and-costs.md).
+Version 0.3 · 2026-10-17 (v0.3 additions in §8) · Owner: founder(s) · Review cadence: every two weeks until launch, then monthly. Evidence: [research/raw/04](../../research/raw/04-regulatory-ethics.md), [02](../../research/raw/02-indian-practice-management-and-legaltech.md), [03](../../research/raw/03-global-comparators.md), [06](../../research/raw/06-tech-stack-and-costs.md).
 
 **Scoring.** Likelihood (L) and Impact (I) are each rated 1–5. Score = L × I. A score of 15 or more is **High**, 8–14 is **Medium**, and 7 or less is **Low**.
 ⚖ = needs qualified Indian legal (or tax) review before launch. *Verified* marks a risk grounded in a sourced rule or event; *Inferred* marks our own assessment.
@@ -104,3 +104,26 @@ Version 0.1 · 2026-10-17 · Owner: founder(s) · Review cadence: every two week
 7. GST/RCM invoice templates (CA review).
 8. Any future inbound-enquiry, profile-page or client-portal feature.
 9. Any BCI AI norms issued after the July 2026 SC direction.
+
+
+---
+
+## 8. v0.3 additions: OS slice, launch courts, SaaS (2026-10-17)
+
+| ID | Risk | Basis | L | I | Score | Mitigation | Owner |
+|---|---|---|---|---|---|---|---|
+| C1 | **Court-adapter brittleness**: Madras HC or Karnataka HC list or order formats change; host names move (Madras HC services span 4 hostnames) | *Verified*: Madras HC multi-host structure (raw/08 §1); *Founder-reported* F3 | 4 | 4 | **16 High** | Server-side, versioned adapters; golden fixtures; parse-yield monitors; status page; assisted-parse fallback; config-driven base URLs | Tech lead |
+| C2 | **Access-mode non-compliance**: using court data beyond what policies allow. Madras HC policies conflict (free reproduction vs permission by mail); framing is forbidden; every search is captcha-gated ⚖ | *Verified* (raw/08 §10) | 3 | 4 | **12 Med** | Access-mode registry enforced in code; letters to the Registries; deep links only, no framing; ingest only lawyer-supplied or court-pushed content | Founder + counsel |
+| C3 | Dependency on the **Madras HC AIMS email push** (pilot service, may change) | *Verified* Notification 230/2026 | 3 | 3 | **9 Med** | Treat as one channel among several (uploads, forwards); monitor notifications | Tech lead |
+| C4 | **Roster/portfolio changes** (e.g. Madras HC sitting arrangements wef 05.10.2026) silently change benches and halls | *Verified* publication cadence | 3 | 3 | **9 Med** | Effective-dated roster import (v1); conflict flags on hall/bench changes | Tech lead |
+| C5 | **Vernacular orders** (Tamil-first subordinate orders in TN; Kannada in Karnataka) degrade extraction | *Reported* TN Official Language Act amendment (raw/08 §13); Karnataka (raw/09) | 4 | 3 | **12 Med** | Tamil and Kannada OCR/STT evaluation (E6); anchored extraction with confirmation; English-first for HC in MVP | Tech lead |
+| C6 | **Matter-model mismatch**: IAs, connected batches, SR stage and appeals mis-grouped, which corrupts briefs | *Inferred* | 3 | 4 | **12 Med** | Explicit proceeding links; merge/split UX; confirm grid at onboarding; fixtures from real dockets | Product |
+| SA1 | **Cross-tenant data leak** in a multi-tenant SaaS (incl. a junior who is both a chamber member and a solo user) | *Inferred* | 2 | 5 | **10 Med** | Workspace-scoped RLS; per-workspace keys; explicit workspace switching; cross-tenant CI tests; pentest | Tech lead |
+| SA2 | **Clerk over-access** to privileged strategy or memory | *Inferred*; BCI Rules 17/24 | 3 | 4 | **12 Med** | Restricted clerk role by default; per-matter restrictions; audit | Product |
+| SA3 | **Court-day outages** (evening and morning windows) destroy trust | *Inferred* | 2 | 5 | **10 Med** | Change freezes in court-day windows; offline cache; Hyderabad DR; status page | Tech lead |
+| SA4 | **"Lawyer as a Service" wording** read as an offer of legal services to the public, creating Rule 36 / UPL exposure for associated advocates ⚖ | *Inferred*; Rule 36 / 37 *verified* | 2 | 4 | **8 Med** | Naming rule (D-032): "cloud software for advocates"; counsel review of all public copy | Founder |
+| SA5 | **Support access** to tenant content breaches confidentiality | *Inferred* | 2 | 5 | **10 Med** | Consented, time-boxed, audited support sessions only; default no content access | Founder |
+| M1 | **Memory drifts into judge profiling** via lawyer court notes | *Inferred* | 2 | 4 | **8 Med** | M4 private, lawyer-authored only; no AI bench summaries; no cross-workspace aggregation (D-027) ⚖ | Product |
+| G7 | **Two-city launch dilutes a tiny team** | *Inferred* | 3 | 4 | **12 Med** | Shared adapter framework; stagger if needed (E5 decides which city goes first); city-specific demo | Founder |
+
+**Updated top risks (≥ 15):** G1 (WTP, 20) · C1 (adapter brittleness, 16) · V3 (court-data fragility, 16) · L1 (Rule 36, 15) · L4 (AI citations, 15) · A1 (wrong date, 15) · G2 (habit, 15) · G6 (runway, 15).

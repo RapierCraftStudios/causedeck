@@ -25,3 +25,19 @@ Status values: **Open** (untested) · **Supported** (evidence so far is for it) 
 | A-16 | Desktop need is satisfied by a web app / PWA for the first 12 months | Litigators are mobile-heavy in court; drafting happens on laptops (inference) | Need native desktop sooner | Usage telemetry; interview | Open |
 | A-17 | Indian Kanoon API terms allow commercial citation-verification lookups with attribution | API terms require attribution; commercial-reuse scope unclear | Need another verification source | Email to IK; counsel review | Open |
 | A-18 | A 1–2 person team can ship the MVP in ~12–14 weeks | Scope in the MVP doc (inference) | Runway | Milestone tracking | Open |
+
+## v0.3 assumptions (Lawyer OS slice; Madras HC + Bengaluru; SaaS), added 2026-10-17
+
+| ID | Assumption | Why we believe it (evidence strength) | Risk if wrong | Test | Status |
+|---|---|---|---|---|---|
+| A-19 | Preparation, kept obligations and continuity are stronger reasons to pay than minutes saved | F1: solos save < 30 min/day [founder-reported]; free research and AI already exist | Value proposition misfires | E3 MaxDiff (H-VALUE); E2 paid continuation | Open |
+| A-20 | The Madras HC AIMS cause-list email push (Notification 230/2026) will reach advocates reliably enough to feed the court-day view | Verified notification; the service is new | Need more lawyer uploads | T6-MHC; E2 Chennai cohort | Open |
+| A-21 | Madras HC and Karnataka HC lists and orders can be parsed at ≥ 99.5% match precision from authorised inputs | Founder F3 (court-specific); formats unverified (captcha-gated) | Adapter can't be A1 | E5 spikes | Open |
+| A-22 | Lawyers will tag cases on AIMS (Madras) / provide lists (Bengaluru) as a one-time setup | Low effort; court-endorsed (Madras) | Onboarding friction | E2 Day 0 completion | Open |
+| A-23 | Chambers accept an India-hosted multi-tenant SaaS for matter data, given visible controls | DPDP climate; Vidhi blog (weak) | Need dedicated tenant / BYOK earlier | E7 (H-SAAS) | Open |
+| A-24 | Juniors keep a personal free workspace and carry it into independent practice | Chamber structure; career path (inference) | Weaker distribution loop | Pilot referral and retention tracking (H-SPREAD) | Open |
+| A-25 | English-first HC documents plus Tamil/Kannada content (updates, transcripts) are enough for the MVP; Tamil/Kannada UI can wait for v1 | HC judgments are in English (Madras verified); subordinate orders vernacular | Need vernacular UI earlier | E6 interviews; usage | Open |
+| A-26 | A synthetic, court-faithful demo dataset is persuasive without real client data | Inference | Demo lacks credibility | E3 (H-DEMO) | Open |
+| A-27 | Chambers will pay per seat at ≥ ₹649 with a restricted ₹199 clerk seat | F4 (chamber aggregation) [founder-reported] | Chamber economics fail | E2 (H-WTP-C) | Open |
+
+> **Status notes (v0.3):** A-01, A-14 (Delhi) and A-15 (Hindi) are **superseded** by the launch-market change (D-025). A-03 and A-12 pricing and cost are superseded by D-031 (≈ ₹175 per seat). A-06/A-07 now apply to Tamil and Kannada as well (A-25, H-LANG).

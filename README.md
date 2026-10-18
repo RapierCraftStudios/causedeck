@@ -3,7 +3,7 @@
 A low-cost, bootstrapped legal operating system for Gen Z lawyers in India.
 This repository currently has **no product code**. It holds research and decision documents. They are written in Markdown so they can be reviewed in diffs.
 
-> Status (2026-10-17): Research → PRD → MVP package v0.1. Nothing here is legal advice. Items marked **⚖ Needs Indian legal review** must be checked by a qualified Indian advocate before we act on them.
+> Status (2026-10-17): package **v0.3**. Lawyer OS is an intelligent operating layer for Indian litigation practice, delivered as an India-hosted SaaS. The MVP is a vertical slice for the Madras HC and Bengaluru. Nothing here is legal advice. Items marked **⚖ Needs Indian legal review** must be checked by a qualified Indian advocate before we act on them.
 
 ## How to read this repo
 
@@ -18,6 +18,9 @@ This repository currently has **no product code**. It holds research and decisio
 | 6 | Risk register | [docs/risk/06-risk-register.md](docs/risk/06-risk-register.md) |
 | 7 | Validation plan | [docs/validation/07-validation-plan.md](docs/validation/07-validation-plan.md) |
 | 8 | Repo structure & implementation backlog | [docs/engineering/08-repo-structure-and-backlog.md](docs/engineering/08-repo-structure-and-backlog.md) |
+| 9 | Capture & automation subsystem (ladder, approvals, recovery, audit, offline, privacy, cost) | [docs/product/09-zero-entry-automation-design.md](docs/product/09-zero-entry-automation-design.md) |
+| 10 | System architecture: north star, matter graph, memory, court adapters, SaaS platform | [docs/product/10-lawyer-os-system-architecture.md](docs/product/10-lawyer-os-system-architecture.md) |
+| 11 | Launch markets: Madras HC & Bengaluru | [docs/strategy/11-launch-markets-madras-hc-bengaluru.md](docs/strategy/11-launch-markets-madras-hc-bengaluru.md) |
 | — | Decision log | [DECISIONS.md](DECISIONS.md) |
 | — | Assumptions register (kept apart from verified facts) | [ASSUMPTIONS.md](ASSUMPTIONS.md) |
 | — | Raw research notes with citations | [research/raw/](research/raw/) |
@@ -26,4 +29,5 @@ This repository currently has **no product code**. It holds research and decisio
 - `[VERIFIED]`: taken from a primary or official source, with the URL cited.
 - `[REPORTED]`: taken from press, secondary sources, reviews or forums.
 - `[INFERENCE]`: our own reasoning. Treat it as a hypothesis.
+- `[FOUNDER-REPORTED]` / `[FR]`: findings supplied by the founder. The underlying data is not yet in the repo ([research/raw/07](research/raw/07-founder-reported-findings-2026-10-17.md)).
 - All web sources were accessed on **2026-10-17** unless a note says otherwise.

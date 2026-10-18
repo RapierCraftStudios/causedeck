@@ -200,3 +200,35 @@ Version 0.1 · 2026-10-17 · All sources accessed 2026-10-17 unless stated. The 
 - Read the eCourts terms and robots.txt.
 - Read the NJDG HC page.
 - Recheck all `[R]` prices before using them in a pitch.
+
+
+---
+
+## 8. Addendum (v0.3, 2026-10-17): launch-market research and founder-reported findings
+- **Founder-reported findings F1–F4** ([raw/07](../../research/raw/07-founder-reported-findings-2026-10-17.md)):
+  - solo admin savings are under 30 min/day;
+  - lawyers are reluctant to forward client messages;
+  - cause-list parsing is court-specific;
+  - chamber aggregation is promising.
+
+  These are tagged `[FR]` until their data is added to the repo.
+- **Madras HC** ([raw/08](../../research/raw/08-madras-hc-tamil-nadu-court-ecosystem.md)):
+  - Cause-list searches (including by advocate and enrolment number) are captcha-gated `[V]`.
+  - The **Registry's email push to AIMS-registered advocates** is described in Notification 230/2026 of 6 Oct 2026 `[V]`.
+  - An official list of about 130 case types exists, including the "(MD)" suffix `[V]`.
+  - Neutral citations began in 2023 `[V]`. Their format, `YYYY/MHC/n`, is reported but not confirmed.
+  - Sitting Arrangements take effect from 05.10.2026 `[V]`.
+  - The site's hyperlinking page allows linking but forbids framing. Its copyright page conflicts with its terms of use `[V]`.
+  - Subordinate courts in Tamil Nadu work in Tamil first `[R]`.
+  - The junior stipend is ₹20k in Chennai (*Farida Begam*, 2024) `[R]`.
+- **Karnataka HC and Bengaluru** ([raw/09](../../research/raw/09-bengaluru-karnataka-court-ecosystem.md)):
+  - The daily and advance cause list is a public HTML page with no captcha, and the dated search covers advocate name and Bar Registration Number `[V]`.
+  - A display board shows stage letters with no legend `[V]`.
+  - Case status and judgment searches are behind a captcha `[V]`.
+  - Neutral citation format is `YYYY:KHC[-D]:n[-DB]` `[R]`.
+  - The advance list for final hearings was discontinued in 2021 (DAKSH), so lawyers get about 1 day's notice `[R]`.
+  - District cause lists need a double captcha `[V]`.
+  - NCLT publishes one PDF per date, with counsel names `[V]`.
+  - The Kannada Act (13 of 2023) applies to trial courts; whether it is in force is unclear `[V/R]`.
+  - Karnataka State Bar Council had 92,500 enrolled as of 2018 `[V]`.
+- Synthesis is in [11](11-launch-markets-madras-hc-bengaluru.md).

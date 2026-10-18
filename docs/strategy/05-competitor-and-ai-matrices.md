@@ -31,7 +31,7 @@ Legend: ● strong / present, ◐ partial / claimed, ○ absent / not found, ? u
 | *Global ref:* **Clio** (+ vLex / Vincent) | SMB firms (US/CA/UK/AU) | ● Vincent | ● | ○ (US-centric court rules) | ● | ● Clio Work agents | ● | ● trust accounting | ● | ● | ○ |
 | *Global ref:* **Harvey / Legora** | Big Law, in-house (incl. Indian tier-1 firms) | ● (via SCC / Manupatra partnerships) | ◐ | ○ | ○ | ● agents | ● Harvey Memory (Aug 2026) | ○ | ○ | ◐ | ◐ |
 | *Global ref:* **MyCase / PracticePanther** | US SMB | ○ | ○ | ○ | ● | ◐ 8am IQ (Pro+) / ○ | ◐ | ● | ● | ● | ○ |
-| **Lawyer OS (proposed MVP)** | Gen Z litigators, solo / junior | ○ link-out only (D-001) | ◐ citation *verification* only | ◐ user-initiated CNR lookup + manual (D-003) | ● core wedge | ◐ template-bound drafts, no free citations | ● explicit, matter-scoped (D-005) | ◐ fee log → simple invoice (v1) | ◐ share-to-WhatsApp updates (user-sent) | ● Android-first | ◐ Hindi + English voice notes |
+| **Lawyer OS (v0.3 MVP slice)** | Independent advocates + young chambers, Madras HC & Bengaluru | ○ link-out only (D-001; licensed integration later) | ◐ citation *verification* only | ● court adapters for Madras HC + Karnataka HC (A1) from lawyer-supplied lists and court push emails; A0 elsewhere (D-028) | ● matter graph + obligations queue + court-day view | ◐ 2 templates/court + client drafts; no generated authorities | ● scoped lawyer memory M1–M7 (D-027) | ○ (v1) | ● update drafts EN/TA/KN (lawyer sends) | ● Android + iOS + web (SaaS) | ● English, Tamil, Kannada content |
 
 ### A2. Pricing & business signals
 
@@ -114,3 +114,19 @@ Priority = sum of the five scores (max 25). [INFERENCE throughout. Validate the 
 - **Upsell lever.** Western practice-management vendors gate AI to higher tiers (MyCase Pro+, Clio higher tiers). Indian research vendors use credit caps (CaseMine 250/500, Manupatra 5 summaries).
 - **Enterprise land-grab.** Harvey, Legora and Lucio target tier-1 Indian firms through content partnerships.
 - **Our opening:** AI that is *cheap because it is narrow*. It works on the lawyer's own orders, notes and templates, not on a research corpus. Small models handle most tasks, and verification is part of the design.
+
+
+---
+
+## C. Positioning update (v0.3, 2026-10-17)
+
+**Category:** Lawyer OS is an **operating layer for litigation practice**: court layer, matter graph, lawyer memory, prepare / execute / follow-up / continuity. It is delivered as an India-hosted SaaS ([10](../product/10-lawyer-os-system-architecture.md)). It is not a research database, a diary app or a data-entry tool.
+
+| Competitor class | Where they win | Where Lawyer OS is different | Our stance |
+|---|---|---|---|
+| Research platforms (SCC Online, Manupatra, CaseMine, Indian Kanoon/Prism, Lexis) | The law: corpus, citators, AI research | We operate the *practice*: preparation, obligations, continuity. We link to research and verify citations | Complement; possible licensed integration later (D-001, D-034) |
+| Practice/case-ops tools (Provakil, MyKase, Legistify, Legodesk) | Firm and enterprise matter tracking; broad court coverage claims | Court-adapter depth for our launch courts; a matter graph that includes obligations; lawyer memory; self-serve pricing for independents and young chambers; mobile-first | Compete for independents and chambers in Chennai and Bengaluru |
+| Court apps (eCourts, HC sites, AIMS push) | Authoritative raw data | We turn official data the lawyer receives into an operating picture. We never replace or scrape the source | Build on authorised channels (e.g. Madras HC AIMS push), deep-link out |
+| Diary / WhatsApp / clerk | Familiar, free | Preparation and kept obligations at a compounding level that a diary can't reach; handover continuity | Replace the system, keep the people (clerks get a restricted role) |
+| Generic AI (ChatGPT etc.) | Fluent drafting and Q&A | Matter-scoped, India-hosted, anchored, no fabricated authorities, approval boundaries | Safer and practice-aware |
+| Global legal AI (Harvey, Legora, Lucio, Clio) | Big firms / Western SMBs | Built around Indian courts, stages and languages, priced in INR for independents and chambers | Not competing for tier-1 firms |

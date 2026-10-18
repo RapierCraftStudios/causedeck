@@ -1,171 +1,218 @@
 # 07 — Validation Plan
 
-Version 0.1 · 2026-10-17 · Stage 0 runs over weeks 0–4. Results go into [ASSUMPTIONS.md](../../ASSUMPTIONS.md) (status updates) and [DECISIONS.md](../../DECISIONS.md) (gate decisions).
+Version 0.3 · 2026-10-17 · Stage 0 runs over weeks 0–5 · Results feed [ASSUMPTIONS.md](../../ASSUMPTIONS.md) and [DECISIONS.md](../../DECISIONS.md).
+
+> **v0.3 change (D-024, D-025, D-030).** We now validate **Lawyer OS as a whole loop** (prepare → execute → follow-up → continuity → memory) in two markets: **Madras HC (Chennai)** and **Bengaluru**. The proof of value is better preparation, fewer missed obligations, lower cognitive load and continuity. Minutes of data entry saved are now a secondary measure.
+> **Founder-reported inputs** ([raw/07](../../research/raw/07-founder-reported-findings-2026-10-17.md)):
+> - solo time savings are under 30 min/day;
+> - lawyers are reluctant to forward client messages;
+> - cause-list parsing is court-specific;
+> - chamber aggregation is promising.
+>
+> These shape the design and are re-tested here.
 
 **Principles**
-- Each hypothesis has a metric, a threshold and a kill or pivot action, all set *before* we look at the data.
-- We learn from behaviour (sign-ups, payments, task completion) more than from opinions.
-- Every outreach to lawyers is about *our software*. We never offer to promote their services. Honoraria are flat thank-you payments, never tied to referrals.
-- Interviews involve no client-confidential material. We ask participants to anonymise examples or use public orders.
+- Each hypothesis has a metric, a threshold and a kill/pivot action, all set *before* data is seen.
+- **Inputs are lawyer-owned only.** We use no client-originated content unless the lawyer explicitly chooses it per item, under counsel-approved guidance.
+- **Court data comes only through authorised paths:**
+  - lawyer-supplied lists and orders;
+  - court-sent push emails the lawyer forwards (e.g. Madras HC AIMS push, Notification 230/2026);
+  - deep links.
+
+  No captcha circumvention and no scraping.
+- Outreach is about *our software*. Honoraria are flat.
 
 ---
 
-## 1. Falsifiable hypotheses
+## 1. Hypotheses
 
-| ID | Hypothesis | Method | Metric & threshold (pass) | If it fails |
+### 1.1 Proof-of-value hypotheses (primary)
+| ID | Hypothesis | Experiment | Pass threshold | If it fails |
 |---|---|---|---|---|
-| **H1** | Tracking dates and hearings across courts is a top-3 weekly pain for S1/S2 litigators | 20 interviews (problem ranking card sort) | ≥ 40% rank it top-3 **and** ≥ 30% report a missed or nearly missed listing in the last 6 months | Pivot the wedge to drafting and memory (MVP §8) |
-| **H2** | Juniors currently spend ≥ 30 min/day on diary, cause-list and update admin | Interviews + 5-day diary study (n=8) | Median ≥ 30 min/day | Reframe the value proposition around reliability, not time saved |
-| **H3** | Litigators will record a hearing outcome in-app within 2 hours of the hearing if it takes ≤ 60 s | Prototype + 2-week concierge pilot (WhatsApp voice note to us → we return a structured update; n=10) | ≥ 60% of hearings logged within 2 h in week 2 | Drop voice-first; emphasise PDF digest and manual entry |
-| **H4** | AI can extract the next date and directions from real orders accurately enough to be trusted with confirmation | Gold set of 200 orders across 5 courts (incl. 40 Hindi or scanned) | Next date ≥ 98%; directions recall ≥ 90%; zero hallucinated dates (date not present in source) | Ship AI as suggestion-only; invest in OCR and prompts |
-| **H5** | The core flows are learnable without help | Clickable prototype test (n=8): add 5 matters, read Tomorrow, record hearing, share update | ≥ 6/8 finish all tasks unaided in < 10 min; SUS ≥ 70 | Redesign onboarding before the build |
-| **H6** | There is willingness to pay ₹299–499/month among S2 | Landing page with pricing fake door (3 price arms) + interview WTP (Van Westendorp) | Visitor → waitlist ≥ 8%; ≥ 30% of the waitlist pick a paid tier; Van Westendorp acceptable range includes ≥ ₹299 | Test ₹149–199, chamber-paid, or institutional model |
-| **H7** | Some will pay *before* the product exists | Founding-member pre-order (₹1,999/yr, refundable) via Razorpay link to the warm waitlist | ≥ 15 pre-orders from ≥ 150 qualified waitlist contacts | Treat WTP as unproven; delay billing; reconsider the segment |
-| **H8** | Explicit memory is valued and not seen as creepy | Prototype task: review "what Lawyer OS remembers" + 5-point desirability + concern probe | ≥ 60% rate memory ≥ 4/5; < 20% voice a strong privacy objection after explanation | Make memory opt-in and minimal; drop it from positioning |
-| **H9** | Seniors would pay for chamber visibility | 6 senior interviews + concept test | ≥ 3/6 say they'd pay ≥ ₹999/month for a chamber of 3–5 | Keep the chamber plan in v2 but deprioritise |
-| **H10** | Lawyers accept AI processing of matter documents when it is India-hosted with no training | Interview block D + opt-in rate in the pilot | ≥ 70% opt in to AI features in the pilot | Offer local-only and no-AI modes; position diary-first |
-| **H11** | Law students and interns are an efficient channel | Ambassador test in 3 colleges (⚖ terms) | ≥ 150 sign-ups in 4 weeks; ≥ 20% of those are practising advocates reached via the students | Shift to bar-association and court-complex channels |
-| **H12** | Device-side, user-driven eCourts lookup works reliably | Spike T1 on 3 court types × 30 lookups | ≥ 90% successful parse after the user solves the captcha; median ≤ 45 s total | Ship manual + PDF only |
+| **H-PREP** | The OS raises preparation: briefs exist and are used, and lawyers feel more prepared | E2 vs E1 | Brief completeness ≥ 90%; briefs opened before ≥ 80% of listings; self-rated preparedness +1.0 (1–5 scale) vs baseline | Re-cut the brief (content/format) or reposition around obligations |
+| **H-OBLIG** | The OS cuts missed or late obligations | E1 obligation audit vs E2 | Missed-obligation rate falls ≥ 50% vs the audited baseline; capture completeness ≥ 95% of directions in confirmed orders | Investigate where obligations arise outside orders; adjust capture |
+| **H-LOAD** | The OS lowers cognitive load | Weekly 3-item load rating (mental demand, worry about forgetting, prep effort) | −30% vs baseline (median) | Reduce notification and confirmation burden; simplify views |
+| **H-CONT** | Continuity: a matter can be understood or handed over fast | Time-to-context test (5 standard questions about a matter the participant hasn't touched for 3+ weeks, or a colleague's matter); handover reports | ≤ 3 min median (vs baseline); ≥ 90% "had what I needed" on delegated appearances | Strengthen timeline and handover note content |
+| **H-COMP** | The OS gets more useful with use (memory + graph) | E2 week 1 vs week 2 (and the 4-week extension) | Corrections per item −40%; unedited brief acceptance ↑ | Revisit memory proposals and matching |
+| **H-TRUST** | Lawyers accept the approval boundaries | E2 exit + E4 | ≥ 70% keep L3 automation on; < 20% report anxiety; 0 boundary breaches | Default to L2; slower ramp |
+| **H-ADAPT** | Launch-court adapters are accurate on lawyer-supplied inputs | E5 | Madras HC and Karnataka HC list-row match precision ≥ 99.5%, recall ≥ 95%; order next-date ≥ 98% (≥ 30 fixtures each) | Restrict to stable list types; assisted-parse fallback |
+| **H-LANG** | Tamil/Kannada/English mixed voice notes and subordinate-court orders are usable | E6 | Date and next-step capture ≥ 95% after confirmation; OCR legible-field rate ≥ 90% on Tamil/Kannada orders | English-first for HC; vernacular as v1 |
 
-## 2. Interview programme
+### 1.2 Willingness to pay and adoption
+| ID | Hypothesis | Experiment | Pass threshold | If it fails |
+|---|---|---|---|---|
+| **H-VALUE** | "Walk in prepared / never miss an obligation / never lose the thread" beats "research", "AI drafting" and "less typing" as the reason to pay | E3 MaxDiff (n ≥ 60 across both cities) | An OS value (prep, obligations or continuity) ranks #1; "less data entry" ranks below it | Re-centre messaging on the winning value; keep architecture |
+| **H-WTP-S** | Independent advocates pay ≥ ₹799/month after a pilot | E2 paid continuation (randomised ₹499 / ₹799 / ₹1,199) | ≥ 40% of solo pilot participants pay; ≥ 25% at ₹799+ | Anchor at ₹499; lean on chamber plan |
+| **H-WTP-C** | Chambers pay per seat (≥ ₹649) | E2 chamber continuation (₹499 / ₹649 / ₹899 per seat) | ≥ 2 of 4 pilot chambers pay for ≥ 3 seats | Flat chamber price test; senior-only seat |
+| **H-SAAS** | Chambers accept India-hosted multi-tenant SaaS for matter data | E7 security one-pager review + E6 interviews | ≥ 75% accept with the stated controls; top objections listed | Offer stronger controls earlier (BYOK, dedicated tenant) |
+| **H-DEMO** | The marketable demo creates pilot demand | E3 demo sessions (n ≥ 30) | ≥ 40% request a pilot; ≥ 20% book onboarding within 7 days | Rework the demo narrative |
+| **H-SPREAD** | Juniors carry the product (free workspace → independent practice; peer referral) | Pilot referral tracking + interviews | ≥ 1 organic referral per pilot chamber in 4 weeks | Add explicit, compliant referral credits (software only) |
 
-**Sample (n = 20 litigators + 6 seniors + 4 students):**
-- Litigators: 8 S1 juniors in chambers, 8 S2 independents with 2–7 years' practice, 4 mixed or tribunal.
-- Courts: launch city district courts and High Court, plus 4 interviews in a second city as a contrast.
-- At least 8 women and at least 6 first-generation lawyers.
-- Recruit through law-school alumni networks, moot and clinic networks, and personal referrals. Do not recruit through bar-association mass messages until counsel confirms the outreach wording.
-- Incentive: ₹500–1,000 honorarium or a free year. 45 minutes, recorded only with consent, no client-identifying information.
+### 1.3 Retained from earlier versions (secondary)
+- **H-TIME** (minutes saved): measured and reported, but not a gate.
+- **H-PRIV** (client-content forwarding): now *tested as a choice*, not assumed. We measure how often lawyers opt in to internal-chat or email imports.
 
-### Script (S1/S2, 45 min)
+---
 
-**A. Context (5 min)**
-1. Walk me through your practice: courts, matter types, how many live matters, whether you work under a senior.
-2. What does a typical court day look like, from the evening before to the evening after?
+## 2. Top experiments
 
-**B. Dates, lists, hearings (12 min)**
+### E1 — Baseline practice audit (week 1)
+**Participants**
+- **Chennai (Madras HC):** 5 independents + 2 chambers (3–6 members each).
+- **Bengaluru (Karnataka HC + city courts):** 5 independents + 2 chambers.
+- Total ≈ 30 lawyers.
 
-3. How do you find out what's listed tomorrow? Show me, using your phone or diary as you actually do it.
-4. Where do you write the next date after a hearing? Show me the last 3 entries.
-5. Tell me about the last time a date or listing surprised you. What happened? What did it cost?
-6. How do you know when your item is about to be called? What do you do while waiting?
-7. Who else (clerk, senior, colleagues, WhatsApp groups) is involved in tracking dates? How?
-8. Have you used the eCourts app or website? What works and what doesn't? Any other app?
+**Measures (no client confidences recorded)**
+1. **Obligation audit.** With the lawyer, review orders from the last 60 days for 10 of their matters. Count each direction or obligation, whether it was met on time, met late, or missed, and how it was tracked. The lawyer can redact; we record only counts and categories.
+2. **Preparation self-rating.** A one-tap 1–5 rating after each hearing for 5 court days, plus a "what was missing?" pick-list.
+3. **Cognitive load.** The 3-item weekly rating.
+4. **Time-to-context test.** Pick a matter untouched for 3+ weeks, or a colleague's matter. Time how long it takes to answer 5 questions: stage, last order, next date, open obligations, key document location.
+5. **Chamber coordination log.** Calls and messages asking "what happened / what's listed" per day; handover issues.
+6. *(Secondary)* Admin minutes per category (9 pm 3-minute log).
 
-**C. Orders, drafting, research (8 min)**
+**Incentive:** ₹1,000 per individual, or ₹3,000 per chamber (flat).
 
-9. When an order comes out, how do you get it, and what do you do with it?
-10. How did you draft your last application? Where did the starting text come from?
-11. Which research tools do you use, and who pays for them? Have you used ChatGPT or similar for legal work? What happened?
-12. Have you heard of the recent Supreme Court orders on AI-generated fake citations? Did they change anything for you?
+### E2 — Two-week concierge pilot of the whole OS loop (weeks 2–3, optional extension to week 5)
+**Aim:** run *every* OS engine by hand with AI assistance on lawyer-owned inputs, then ask for payment.
 
-**D. Clients, fees, confidentiality, AI comfort (10 min)**
+**Setup (Day 0, 45–60 min per workspace)**
+- Confirm consent (⚖ counsel-reviewed). Mark sensitive matters for exclusion.
+- **Madras HC participants:**
+  - Register on **AIMS** with their enrolment number and tag their cases, so the Registry's cause-list email push reaches them (Notification 230/2026).
+  - Forward those emails to the pilot intake; also share recent cause lists and orders.
+- **Bengaluru participants:** share recent Karnataka HC lists and orders (lawyer-supplied), plus City Civil, Mayo Hall and tribunal orders, per the channels in [11](../strategy/11-launch-markets-madras-hc-bengaluru.md).
+- We build each **matter graph** (proceedings, IAs and connected matters, listings, orders, obligations) in an India-hosted working store, and send a **confirm grid**. The lawyer approves, merges or splits.
 
-13. How do clients get updates from you? How much time does that take each week?
-14. How do you record fees received? How do you know who owes you?
-15. Where do client documents live (phone, WhatsApp, Drive, laptop, paper)? Have you ever worried about that?
-16. Would you let an app read your orders and voice notes with AI if the data stays in India and is never used for training? What would make you say no?
+**Daily service (Days 1–12)**
+| Time | What participants receive or do | OS engine exercised |
+|---|---|---|
+| ~8 pm (eve of court days) | **Court-day view** (by complex → hall → item, stage, clashes; chamber delegation suggestions) + **per-listing preparation brief** (stage, last order with page link, open obligations, carry list, synopsis, last-hearing note, their court notes) | Prepare, Execute |
+| 7 am | Changes from supplementary lists | Execute |
+| After each hearing | Lawyer or junior sends a **voice note** (EN/TA/KN/mixed) → within 30 min a **structured outcome card**: next date, stage, directions → obligations, tasks. Lawyer replies ✓ or corrects | Execute, Follow-up |
+| On order arrival | Lawyer shares the order PDF → anchored digest; directions → proposed obligations; conflict flags vs the voice note | Document intelligence, Follow-up |
+| Daily ~6 pm | **Action & deadline queue**: overdue / this week, owners, drafted next steps; **client / senior / briefing-counsel update drafts** in the client's language (lawyer sends) | Follow-up |
+| Day 5 and Day 10 | **Memory proposals** ("We noticed you always… Save?") and a **"what changed" digest** for matters not touched | Memory, Continuity |
+| Day 11 | **Handover drill**: generate handover notes for 3 matters; a colleague or the lawyer answers the 5 questions | Continuity |
 
-**E. Ranking & WTP (8 min)**
+**Boundaries (identical to the product):**
+- we never contact clients, courts or registries;
+- no advice;
+- no generated citations;
+- nothing filed;
+- the lawyer sends everything outward.
 
-17. Card sort: rank these 10 problems by how much they hurt weekly: dates and listings, item waiting, recording outcomes, client updates, drafting from old files, finding old documents, research cost, fee tracking, limitation and deadlines, coordinating with senior or clerk.
-18. Van Westendorp: at what monthly price would a tool that solves your top 2 be (a) too cheap to trust, (b) a bargain, (c) getting expensive, (d) too expensive?
-19. What do you pay for today (apps, research, phone plan)?
-20. If this existed tomorrow, what would stop you from switching?
+**Channel and privacy**
+- A dedicated team phone using the WhatsApp Business *app* (end-to-end to that device) [I: verify], with backups off.
+- Processing goes only through India-region tools under no-training terms.
+- Founders sign an NDA.
+- Data is deleted within 14 days after the pilot ends (or migrated into the product with written consent).
 
-**F. Close (2 min)**
+**Measurement (Days 1–12):** the same instruments as E1, plus:
+- brief completeness and open-before-hearing;
+- capture completeness of obligations;
+- corrections per item;
+- L3 undo-equivalents (lawyer reversals);
+- ops minutes per workspace (the automation-cost proxy).
 
-21. May we invite you to test a prototype? Who else should we talk to? Ask for a peer, never for a client.
+**Day 13–14 readout + paid continuation**
+- Each workspace gets its **Practice Report**:
+  - preparedness: before vs after;
+  - obligations: missed before vs after, and catches made;
+  - load score;
+  - time-to-context;
+  - (secondary) minutes.
+- Randomised continuation offer, paid in real money by Razorpay link and refundable if the app doesn't ship within 4 months:
+  - **Advocate:** ₹499 / ₹799 / ₹1,199 per month.
+  - **Chamber:** ₹499 / ₹649 / ₹899 per seat per month.
+- Then a Van Westendorp survey and an exit interview covering trust, boundaries, the SaaS comfort level, and "what would make this indispensable?".
 
-### Senior script additions (S4)
-- How do you know what your juniors did in court today?
-- What has gone wrong because of a missed update?
-- Who decides tools in the chamber, and who pays?
-- Would you want juniors' matters in one view? What must stay private?
+### E3 — Marketable demo + value test (weeks 1–5, parallel)
+- **Demo:** the 7-minute script in [04 §9](../mvp/04-mvp-definition.md#9-the-marketable-demo). It is a clickable Expo/Figma prototype on a **synthetic but court-faithful** dataset, using real nomenclature and realistic list and order layouts with fictional parties. Each city gets its own version.
+- **Sessions:** n ≥ 30 lawyers across bar-association libraries (with permission), chambers, and alumni events in Chennai and Bengaluru.
+- After the demo, run three things:
+  - **MaxDiff** across 8 values:
+    1. walk into every hearing prepared;
+    2. never miss an obligation;
+    3. pick up any matter instantly;
+    4. one view of the court day;
+    5. client updates drafted in Tamil/Kannada/English;
+    6. AI case-law research;
+    7. case-law database;
+    8. less data entry.
+  - **Pilot ask:** "Start a 2-week pilot."
+  - **Price** (Van Westendorp).
+- **Landing page:** an OS-led headline ("Walk into every hearing prepared") vs a research-led one vs an entry-led one, × price arms. Founding-workspace pre-order: ₹7,999/yr Advocate, refundable.
 
-### Synthesis
-- Tag every pain mention with frequency, severity and current workaround.
-- Fill a **pain × segment** heat map and record the H1/H2/H6/H9 metrics.
-- Write a 2-page Stage 0 readout that updates the ASSUMPTIONS statuses.
+---
 
-## 3. Landing-page tests
+## 3. Supporting experiments
 
-**Page:** a single page in English with a Hindi toggle. Headline variants (A/B/C):
-- A: "Never miss a date. Record any hearing in 60 seconds."
-- B: "Your munshi-lite: the case diary that remembers your practice."
-- C: "AI for litigators that never invents a citation."
+### E4 — Prototype usability (weeks 4–5, n = 8 per city)
+Tasks:
+1. Set up from shared lists and orders.
+2. Read tomorrow's view and open a brief.
+3. Capture a hearing by voice.
+4. Confirm obligations from an order.
+5. Send a Tamil or Kannada client update.
+6. Generate a handover note.
+7. Undo a wrong auto-attachment.
+8. Review memory.
 
-**Sections:**
-- the Tomorrow screenshot;
-- a voice-note demo GIF;
-- the privacy promise (India-hosted, no training);
-- pricing with three arms randomised per visitor: ₹299 / ₹399 / ₹499 per month, each with an annual option;
-- CTA "Join the founding batch".
-- The form asks: role, courts, years of practice, current tool.
+Measures: success rate, SUS (target ≥ 70), and trust ratings.
 
-**Channels.** We market software to lawyers, not lawyers to the public:
-- law-school alumni groups;
-- moot and clinic communities;
-- LinkedIn posts by the founders;
-- one targeted LinkedIn ad set (₹10–15k) aimed at advocates aged 22–32;
-- Telegram or WhatsApp communities only where admins approve.
-
-**Metrics:**
-- visitor → waitlist conversion by headline and price arm;
-- paid-tier selection share;
-- cost per qualified waitlist sign-up (target ≤ ₹150).
-
-**Guardrails:**
-- no claims about outcomes for clients;
-- no "best lawyer" language;
-- no user testimonials about winning cases;
-- privacy policy live before the page launches.
-
-## 4. Prototype tests
-
-**Prototype.** A clickable Figma build, or an Expo prototype with stubbed AI, covering:
-- onboarding;
-- add matters through CNR paste, order photo or quick add;
-- the Tomorrow view;
-- recording a hearing by voice, using a pre-recorded clip to keep things realistic;
-- the confirm-date step;
-- sharing a client update;
-- the Memory screen;
-- drafting an adjournment application and running the citation check.
-
-**Tasks** (n = 8, in person at the court complex where possible, about 30 min each):
-1. Sign up and add these 5 matters. Data card provided: 2 CNRs, 1 order PDF, 2 manual.
-2. Tell me what you have tomorrow and what to carry.
-3. You just finished a hearing. Record what happened.
-4. Your client is asking for an update. Send it.
-5. Find what the app remembers about you and change one thing.
-6. Draft an adjournment application for matter 3 and get it ready to file.
-
-**Measure:**
-- task success, time on task and errors;
-- SUS score;
-- trust ratings for AI-extracted dates (1–5);
-- think-aloud quotes.
-
-**Pass:** H5 thresholds, plus average trust in the confirmed date of at least 4/5.
-
-## 5. Concierge / Wizard-of-Oz pilot (H3, H10)
-- Run for 2 weeks with 10 litigators.
-- After each hearing they send a WhatsApp voice note, or a photo of the order, to our test number. They anonymise names where possible.
-- Within 30 minutes we return a structured update, with the AI pipeline run by us and checked by a human.
-- Measure the logging rate, latency tolerance, edits requested, and willingness to continue paying ₹299/month.
-- **Confidentiality:** a consent form, data deleted at the end of the pilot, processing in India-hosted tools only, and no clients' sensitive matters (POCSO, matrimonial) accepted.
-
-## 6. Technical spikes (in parallel with interviews)
-
+### E5 — Court-adapter spikes (weeks 0–5)
 | Spike | Question | Done when |
 |---|---|---|
-| T1 | Device-side user-driven eCourts lookup and parse (district, HC, SC) | 30 lookups per court type; parse success ≥ 90%; legal memo requested ⚖ |
-| T2 | Order digest accuracy with Haiku-class on the Bedrock India profile vs a Sarvam-hosted model | Gold-set report: accuracy, latency, ₹ per digest |
-| T3 | Sarvam STT on 30 Hinglish courtroom-corridor voice notes (noisy) | WER and date-capture accuracy measured |
-| T4 | Public display-board feeds for live item position (Delhi HC + one district complex) | Feasibility note + terms check ⚖ |
-| T5 | Expo + PowerSync performance on a ₹10k Android phone with 500 matters | Cold start < 2.5 s; Tomorrow < 300 ms |
+| T6-MHC | Madras HC list formats from authorised channels (AIMS push email; lawyer-downloaded lists): categories, item numbers, halls, advocate names; order headers; neutral citation separator | ≥ 30 fixtures; precision/recall report; stage-heading map |
+| T6-KHC | Karnataka HC list formats (lawyer-supplied; see [11](../strategy/11-launch-markets-madras-hc-bengaluru.md)); orders; neutral citation | ≥ 30 fixtures; report |
+| T6-A0 | Generic parse quality on Chennai/Bengaluru subordinate and tribunal orders | 40 orders; anchored-field accuracy |
+| T8 | Roster / sitting-arrangement PDFs → effective-dated bench map (Madras HC wef 05.10.2026; Karnataka equivalent) | Parse + change-detection demo |
+| ⚖ L1 | **Letters to the Madras HC Registrar (IT-cum-Statistics) and the Karnataka HC Registry** seeking permission and/or a data feed; counsel memo on the access-mode registry | Letters sent; memo received |
 
-## 7. Stage 0 decision meeting (end of week 4)
-- **Inputs:** interview readout, landing-page and pre-order data, prototype results, gold-set and spike reports, counsel's initial view.
-- **Outcomes:** GO (build the MVP as specified), GO-WITH-CHANGES (adjust scope or segment), or PIVOT (wedge or segment change per [MVP §8](../mvp/04-mvp-definition.md#8-what-would-make-us-change-this-mvp)).
-- Record the outcome as a new entry in DECISIONS.md.
+### E6 — Interviews + language spikes (weeks 0–2)
+- **Interviews:** 12 per city (independents, chamber heads, juniors, clerks).
+- The v0.2 script, adding:
+  - **preparation** ("Walk me through preparing for tomorrow. What's always missing?");
+  - **obligations** ("Show me the last order with directions. How did you track each one?");
+  - **continuity** ("When a junior left, what was lost?");
+  - **appearance realities** (AoR vs arguing counsel vs "for" appearances; how clerks and juniors split work);
+  - **language** (Tamil/Kannada orders, client languages);
+  - **SaaS comfort** ("What would you need to know before putting matter data in a cloud service?").
+- **Language spikes:**
+  - T2/T3 Tamil and Kannada STT on 30 noisy notes each;
+  - OCR on 30 subordinate-court orders each (Sarvam vs a vision LLM).
+
+### E7 — SaaS trust review (week 3)
+- **Artefact:** a one-page security & privacy brief covering:
+  - India hosting;
+  - workspace isolation;
+  - roles (incl. restricted clerk);
+  - no training;
+  - support-access consent;
+  - export/delete;
+  - DPA;
+  - "software, not legal services".
+- **Review:** with 10 chamber heads. Record acceptance and objections (H-SAAS).
+
+---
+
+## 4. Metric definitions (pilot and product)
+| Metric | Definition | Pilot source | Product source |
+|---|---|---|---|
+| Brief completeness | Listings with stage + last order + open obligations + carry list ÷ listings | Our briefs | Instrumented |
+| Brief opened before hearing | Opened or confirmed before listing time ÷ listings | Read receipts / reply | Instrumented |
+| Preparedness | Post-hearing 1–5 self-rating | WhatsApp one-tap | In-app one-tap |
+| Missed-obligation rate | Obligations past due without deliberate reschedule ÷ obligations due | E1 audit / E2 queue | Queue state |
+| Capture completeness | Directions in confirmed orders present as obligations | Audit | Order ↔ queue reconciliation |
+| Cognitive load | 3-item weekly rating (1–7 each) | Survey | In-app monthly pulse |
+| Time-to-context | Minutes to answer 5 standard questions | Timed test | Periodic in-app test (opt-in) |
+| Handover success | Delegated appearances rated "had what I needed" | Survey | One-tap after delegated hearing |
+| Corrections per item | Corrections ÷ items delivered | Chat log | Instrumented |
+| Paid continuation | Paid ÷ offered | Razorpay | Plan conversion |
+
+## 5. Stage 0 decision (end of week 5)
+- **GO:** H-PREP, H-OBLIG, H-VALUE and either H-WTP-S or H-WTP-C pass, H-ADAPT passes for at least one launch court, and there is no ⚖ blocker.
+- **GO-WITH-CHANGES:** value passes but WTP is weak (re-price or re-package), or only one court adapter passes (launch that city first).
+- **PIVOT THE SLICE (not the identity):** H-PREP and H-OBLIG both fail. Re-cut which engine leads, per D-024.
+
+Record the outcome in DECISIONS.md.

@@ -1,6 +1,6 @@
 # 08 — Proposed Repository Structure & First Implementation Backlog
 
-Version 0.1 · 2026-10-17 · Status: Proposed. **No code is written until the Stage 0 gate** ([07 §7](../validation/07-validation-plan.md#7-stage-0-decision-meeting-end-of-week-4)), except spikes T1–T5.
+Version 0.3 · 2026-10-17 · Status: Proposed. **§7 (v0.3 slice backlog) supersedes §2–§4 where they conflict.** The data model is now [10 §2](../product/10-lawyer-os-system-architecture.md#2-the-matter-graph). **No code is written until the Stage 0 gate** ([07 §7](../validation/07-validation-plan.md#7-stage-0-decision-meeting-end-of-week-4)), except spikes T1–T5.
 
 ---
 
@@ -33,7 +33,8 @@ lawyer-os/
 │   ├── ai-tasks/                 # typed AI functions + prompts + JSON schemas: digestOrder, structureVoiceNote,
 │   │                             #   draftClientUpdate, fillTemplate, proposeMemory, extractCitations
 │   ├── citations/                # citation regexes (SCC/AIR/SCR/INSC/HC neutral), resolver (Indian Kanoon API)
-│   ├── courts/                   # court/forum master data (launch city) + eCourts page parsers (device-side)
+│   ├── courts/                   # court-adapter framework + adapters (config, parsers, fixtures):
+│   │                             #   in.tn.madras-hc.principal, in.ka.karnataka-hc.bengaluru, A0 generic, access-mode registry
 │   ├── templates/                # DOCX templates + docxtemplater fill + court format presets
 │   ├── ui/                       # design system (tokens, components), Devanagari-safe typography
 │   └── config/                   # eslint, tsconfig, prettier presets
@@ -258,3 +259,110 @@ Format: **ID — Story** (size S/M/L) · *Acceptance criteria* (Given/When/Then 
 | 0006 | Court data | Device-side, user-driven lookup only; no server-side automation (⚖) |
 | 0007 | Memory architecture | Typed rows + pgvector; matter-scoped retrieval in SQL; no memory SaaS |
 | 0008 | Payments | Razorpay links → subscriptions; Play alternative billing evaluation |
+
+
+---
+
+## 7. v0.3 backlog: Lawyer OS vertical slice (Madras HC + Bengaluru, SaaS)
+
+The repo layout in §1 stands, with these additions:
+- `packages/graph` (matter-graph domain and provenance)
+- `packages/memory`
+- `packages/adapters/*` (one package per court adapter with `fixtures/`)
+- `apps/admin` (internal adapter-health and support-session console)
+- `infra/tenancy-tests`
+
+### 7.1 Milestones (Stage 1, weeks 6–19, 2 builders + founder)
+| Milestone | Weeks | Theme | Exit demo |
+|---|---|---|---|
+| **M0** | Stage 0 | Spikes (T1–T8), fixtures, ADRs, Registry letters ⚖ | Adapter accuracy reports for both HCs; Tamil/Kannada STT/OCR reports |
+| **M1** | 6–8 | **SaaS & graph foundation** | Workspaces, roles (incl. clerk), RLS + per-workspace keys, cross-tenant CI tests; matter graph with provenance; offline cache |
+| **M2** | 9–11 | **Court layer + capture** | Madras HC and Karnataka HC A1 adapters parse fixtures; A0 generic; inbox (share, voice, camera, `.ics`); onboarding confirm grid builds a graph from lists and orders |
+| **M3** | 12–14 | **Prepare + execute** | Court-day view; list diffs; preparation briefs; matter timeline; voice hearing capture → proposals; chamber delegation |
+| **M4** | 15–17 | **Follow-up + continuity + memory** | Obligation queue; defects/SR/FR and certified copies; update drafts EN/TA/KN; handover notes; memory M1–M4, M6, M7 with review; citation checker; 2 templates per court |
+| **M5** | 18–19 | **Hardening & launch** | Subscriptions + GST invoices; support sessions; status page with adapter health; pentest fixes; counsel sign-off; pilot migration |
+
+### 7.2 Epics & acceptance criteria (slice-critical)
+- **E-SaaS-1: Tenancy & isolation** (L) [PL-1, D-033]
+  - Every tenant table has `workspace_id`, and RLS is enabled on all of them.
+  - PowerSync rules are generated from the same policy.
+  - Per-workspace KMS data keys (India region) are used for documents and memory.
+  - **CI cross-tenant suite**: SQL, REST, sync, storage signed URLs and vector search. It covers a user who is in two workspaces at once (junior with their own practice plus a chamber seat). Any leak fails the build.
+- **E-SaaS-2: Roles** (M) [CO-2]
+  - Roles: Owner, Advocate, Junior, Clerk, Viewer.
+  - Clerk is denied strategy notes and matter memory by default; tests cover this.
+  - Per-matter restrictions are supported.
+- **E-SaaS-3: Billing & entitlements** (M) [PL-3]
+  - Razorpay subscriptions with UPI Autopay.
+  - Plans: Junior, Advocate, Chamber, with a clerk-seat SKU.
+  - GST invoices with GSTIN capture; proration on seat changes; dunning with a 7-day grace period.
+  - Entitlement checks are enforced server-side.
+- **E-SaaS-4: Ops** (M) [PL-5, PL-6]
+  - Feature flags and OTA updates.
+  - **Change freezes during court-day windows** (6–11 pm and 7–10:30 am IST), enforced in the deploy pipeline.
+  - Status page with per-adapter health.
+  - Consented, time-boxed support sessions, with an audit trail.
+- **E-Graph-1: Matter graph** (L) [MG-1–MG-6]
+  - Proceeding links: main ↔ misc/IA, connected, appeal ↔ lower court.
+  - Proceeding states: SR/FR → defects → re-presented → numbered.
+  - One canonical next date per proceeding, with conflict cards.
+  - Obligations close only with a reason.
+  - Merge and split preserve provenance.
+  - Property tests cover these graph invariants.
+- **E-Court-1: Adapter framework** (L) [CL-2, CL-6]
+  - Versioned adapter configs and parsers, deployed server-side; clients pick up a new version within one sync.
+  - Golden fixtures run in CI.
+  - Parse-yield monitors alert on any day with zero matches or missing headings.
+  - Access-mode registry enforced, e.g. an adapter whose mode is `user_supplied` has no code path that fetches.
+- **E-Court-2: Madras HC A1** (L) [CL-3]
+  - ≥ 30 list fixtures (from AIMS push emails and lawyer-downloaded lists) and ≥ 50 orders.
+  - Row-match precision ≥ 99.5% and recall ≥ 95%.
+  - All ~130 case types, including the "(MD)" suffix, map correctly.
+  - Neutral citation regex `\d{4}[:/]MHC[:/]\d+`.
+  - SR/returns states.
+  - Deep links open in a new window, never a frame.
+- **E-Court-3: Karnataka HC A1** (L) [CL-4]
+  - ≥ 30 list fixtures (HTML and PDF) and ≥ 50 orders, at the same accuracy targets.
+  - Stage headings handled as an open enum with a normalisation map.
+  - List no. and Sl. No. handled.
+  - Matching on Bar Registration No. and advocate name.
+  - Citation forms `KHC`, `KHC-D` and `-DB`.
+  - FR numbers and scrutiny objections.
+- **E-Court-4: A0 generic** (M) [CL-5]
+  - Anchored LLM parse of headers and operative parts of Chennai and Bengaluru district and tribunal orders.
+  - Every field requires confirmation.
+  - Tamil and Kannada OCR paths.
+- **E-Prep-1: Preparation brief** (L) [PR-1–PR-3]
+  - Brief completeness ≥ 90% on pilot data.
+  - < 5 s per listing.
+  - Format follows M2.
+  - "Prepared ✓" mark.
+  - Every fact links back to its source.
+- **E-Exec-1: Court-day view + voice capture** (L) [EX-1–EX-5]
+  - Grouped complex → hall → list → item, with clashes.
+  - Voice in EN/TA/KN or mixed produces proposals in p95 < 20 s.
+  - Next date and obligations confirmed on one screen.
+  - Owners see delegated outcomes live.
+- **E-Follow-1: Obligation queue** (L) [FU-1–FU-5]
+  - Every direction in a confirmed order either exists as an obligation or is marked N/A with a reason (reconciliation report).
+  - Drafted next steps.
+  - Update drafts in the client's language.
+  - No sending code path exists.
+- **E-Cont-1: Handover & what-changed** (M) [CO-1, CO-3, CO-4]
+  - Time-to-context test ≤ 3 min on pilot matters.
+  - Offboarding reassigns matters and revokes access.
+- **E-Mem-1: Memory** (L) [ME-1–ME-4]
+  - Confirm-before-save; scope enforced in SQL.
+  - Monthly review.
+  - Correction-rate-by-tenure metric instrumented.
+  - No judge-profiling fields; enforced by a schema lint.
+- **E-Trust-1: Audit & undo** (M) [TR-1–TR-4]
+  - Activity feed with 7-day undo; outward-action log with diffs.
+  - AI audit export.
+  - A static check proves no L5 action types exist.
+
+### 7.3 Definition of done (adds to §5)
+- The tenancy suite passes.
+- Adapter fixtures pass.
+- The access-mode registry entry is present and counsel-noted for any new court resource.
+- No deploys during court-day windows.

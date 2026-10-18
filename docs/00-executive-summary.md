@@ -1,62 +1,125 @@
 # 00 — Executive Summary
 
-2026-10-17 · Research → PRD → MVP package v0.1 · Read time about 5 minutes.
+2026-10-17 · Package v0.3 · Read time about 6 minutes.
 
-## Recommendation
-Build **Lawyer OS** as a **mobile-first matter and hearing diary for young litigators**. It should turn every hearing, order and voice note into a confirmed next date, tasks and a client update, and it should explicitly remember how each lawyer practises. Its AI works only on the lawyer's own material and **never generates a citation**.
+> **v0.3 supersedes v0.1 and v0.2.**
+> - v0.1 framed the product as a safe-AI hearing diary (Delhi).
+> - v0.2 reframed it around zero-entry convenience.
+> - A chamber "court-day autopilot" draft was rejected by the founder and never adopted.
+>
+> The decision trail is in [DECISIONS.md](../DECISIONS.md), D-001 to D-034.
 
-- **Who:** start with junior and independent litigators (0–7 years) in one court ecosystem, by default Delhi's district courts and High Court.
-- **Price:** a free tier for students and juniors, and a Pro plan to be tested at **₹299–499/month**.
-- **What we won't do:** compete on legal-research content, or build anything that helps lawyers market themselves to the public.
+## The corrected product thesis
+**Lawyer OS is an intelligent operating layer for how advocates practise in Indian courts.** It is delivered as a secure, multi-tenant, India-hosted SaaS. Its parts are:
+- a **court layer** that understands each court's lists, stages, nomenclature and orders;
+- a **matter graph** of proceedings, listings, hearings, orders and obligations, with provenance on every fact;
+- a scoped, inspectable **lawyer memory** that learns how this lawyer practises;
+- **document intelligence**;
+- the **prepare → execute → follow-up → continuity** loop that runs the practice.
 
-## Why this, why now
-1. **The gap is real (desk evidence).**
-   - AI research is crowded and sold at a premium: CaseMine AI Pro ₹29,999/yr, Manupatra Starter ₹14,250 with 5 AI summaries a month, SCC AI Pro a reported +₹48,500, and Indian Kanoon Prism ₹5,000/yr.
-   - Daily practice tools are either enterprise and demo-gated (Provakil, MyKase) or AI-less diary apps.
-   - The official eCourts app is rated 2.4★ on iOS, with complaints about lost cases and offline access being removed.
-2. **The next date is the atomic unit of litigation.**
-   - NJDG shows 5.16 crore cases pending in district courts (14 Oct 2026).
-   - Adjournments dominate court time.
-3. **Courts have made unsafe AI costly.** The Supreme Court (*Gummadi Usha Rani*, Feb 2026; *Pooja Ramesh Singh v. J&K Bank*, Jul 2026) treats unverified AI citations as misconduct. That makes "verification-first, never invents law" a selling point.
-4. **The economics now work.**
-   - Claude is available in-country on Bedrock India with zero data retention by default (since 29 Sep 2026).
-   - Sarvam provides Indic speech-to-text at ₹0.49/min and OCR at ₹0.50/page.
-   - Our estimated variable cost is about **₹100 per Pro user per month**, against a ₹299–499 price.
-5. **The audience is there.** About 2.3–2.5 lakh AIBE candidates a year, Android ~94% of mobile traffic, and UPI everywhere.
-6. **The constraints are clear.**
-   - Rule 36, the Madras HC aggregator order and BCI's 2025 crackdown on lawyer advertising rule out marketing tools. "CRM" must mean managing existing clients only.
-   - DPDP duties start in May 2027 and CERT-In applies now. Both favour an India-hosted, privacy-first design.
+The lawyer remains the only one who judges, advises, argues, files and sends.
 
-## The MVP (12 weeks of build after a 4-week validation gate)
-Includes:
-- Diary with a confirmed next date and its source, plus a Tomorrow/Today view and reminders.
-- Voice note → structured hearing update.
-- Order PDF digest anchored to page and quote.
-- Client update the lawyer shares themselves on WhatsApp.
-- Explicit memory: confirm-before-save, editable, scoped to each matter.
-- Three safe drafting templates, a citation checker and a consistency check.
-- Fee log.
-- eCourts lookup driven by the user on the device, *only if counsel clears it*.
-- Offline use, app lock and full export.
+**What lawyers pay for** is walking into every hearing prepared, never missing an obligation a hearing creates, carrying less in their head, and never losing the thread of a matter. "Less typing" is how information gets in. It is not the value.
 
-Excludes: research, marketing, client portals, invoices, limitation calculation, chamber accounts, native desktop, and bulk scraping.
+**"As a service"** means the operating system is delivered as cloud software. Legal services are never offered (D-032).
+
+## The MVP: the first vertical slice of the OS (not a data-entry product)
+- **Markets:**
+  - Madras High Court, Principal Seat (Chennai).
+  - Karnataka High Court, Principal Bench, plus the Bengaluru court ecosystem.
+- **Court layer.** A1 adapters for both High Courts. A0 support (generic parsing plus confirmation) for Chennai and Bengaluru district courts, tribunals and commissions. Court data comes only through authorised paths:
+  - the **Madras HC Registry's cause-list email push to AIMS-registered advocates** (Notification 230/2026);
+  - **lawyer-shared Karnataka HC lists**, from a page that is public and captcha-free (A2 retrieval only after written authorisation);
+  - lawyer-shared orders;
+  - deep links. Never framing, never captcha circumvention.
+- **Inputs (lawyer-owned first):** cause lists, orders, voice notes (English, Tamil, Kannada, or mixed), own documents, calendar `.ics`, diary photos, manual correction. Email forward-in and *internal* WhatsApp chat exports come later and are opt-in. Client chats are excluded by default.
+- **Outputs:**
+  - court-day operating view;
+  - a preparation brief for each listing;
+  - matter timeline;
+  - action and deadline queue (including defect cures, SR/FR stages and certified copies);
+  - document context;
+  - client, senior and briefing-counsel update drafts in English, Tamil or Kannada (the lawyer sends them);
+  - handover notes;
+  - memory that compounds.
+- **Boundaries:**
+  - Internal, reversible steps are automated.
+  - Dates, obligations, memory, delegation and every outward draft need one confirmation.
+  - Advice, advocacy, authorities, filing, commitments and sending stay human.
+  - **No autonomous action exists in code.**
+- **SaaS:**
+  - Solo and Chamber workspaces with roles; the clerk role is restricted from strategy notes.
+  - Database row-level isolation plus per-workspace encryption keys.
+  - Hosted in Mumbai with disaster recovery in Hyderabad; India-only AI inference by default.
+  - Over-the-air updates; court adapters update server-side without an app release.
+  - Court-day support windows; a 7-day offline cache.
+- **Pricing (to test):**
+  - Junior: free.
+  - Advocate: ₹499 / ₹799 / ₹1,199 per month.
+  - Chamber: ₹499 / ₹649 / ₹899 per seat per month, plus a ₹199 clerk seat.
+  - Estimated variable cost is about ₹175 per seat per month, so gross margin is about 67–73% at mid-price.
+- **Deferred for sequencing only:**
+  - research integration;
+  - drafting studio;
+  - fees and invoices;
+  - limitation engine;
+  - live display-board tracking;
+  - the Madurai, Dharwad and Kalaburagi benches;
+  - Tamil and Kannada UI;
+  - native desktop;
+  - client status links;
+  - analytics.
+
+  All stay on the roadmap.
+- **Permanently out:** public solicitation or marketing of lawyers, autonomous advice, unverified citations, unsupervised filing, unauthorised scraping, judge analytics.
+
+## Proof of value
+- **North star: the Prepared & Kept rate.** This is the share of appearances that had a current brief beforehand *and* where every resulting obligation was captured and kept.
+- **Supporting metrics:** brief completeness and use, self-rated preparedness, missed-obligation rate, cognitive-load score, time-to-context and handover success, correction rate by tenure (compounding memory), and paid continuation.
+- Minutes saved are secondary. This is consistent with the founder-reported finding that solos save under 30 minutes a day.
+
+## Demo and pilot
+- **Marketable demo (7 minutes):**
+  1. Registry email.
+  2. Court-day view.
+  3. A writ petition (WP) brief, with its miscellaneous petitions (WMPs) and connected matter.
+  4. A Tamil-English voice note becomes the next date and obligations.
+  5. Order PDF, with a conflict caught.
+  6. Tamil client draft.
+  7. Defect-cure queue.
+  8. Handover note.
+  9. Memory proposal, undo, and the India-hosting controls.
+- **Concierge pilot (2 weeks):** runs the whole OS loop by hand for 5 independent advocates and 2 chambers in each city, then asks for real payment ([07 E2](validation/07-validation-plan.md)).
 
 ## Main uncertainties
-1. **Willingness to pay.** Juniors earn under ₹10k/month, and we found no evidence that any diary app converts to paid. This is the top risk (score 20).
-2. **Real workflows.** We have no primary data on how juniors track lists, clerks and fees; Reddit and LinkedIn were unreachable. Every workflow claim is a hypothesis until we run 20 interviews.
-3. **Court-data access.** There is no public eCourts API, the portal's terms are unknown, and reseller prices are unpublished. The product must stand on its own without automated court data.
-4. **Legal points needing counsel** ⚖:
-   - the current BCI Rule 36 text and website Schedule;
-   - the status of the Sulekha/JustDial appeals in the SC;
-   - the eCourts lookup approach;
-   - the DPA and privilege terms;
-   - the ambassador programme.
-5. **AI extraction accuracy** on real, often scanned or Hindi, orders. The target is ≥98% on next dates, with the user confirming.
+1. **Cause-list formats are unconfirmed for both High Courts.** Madras HC searches are behind a captcha, and the Karnataka HC PDFs could not be opened. Fixtures from lawyer-supplied lists (spike T6) decide whether each adapter reaches A1.
+2. **Access rights.** The Madras HC copyright page and its terms of use conflict on reproduction, and both courts are silent on automation. We need written authorisation for A2 and a counsel memo ⚖.
+3. **Willingness to pay** for an OS (Advocate plan versus per-seat Chamber plan). It is untested.
+4. **Tamil and Kannada** voice notes and vernacular subordinate-court orders: accuracy is unmeasured.
+5. **Competition in Bengaluru.** Nyayanidhi calls itself a "litigation OS". We have not yet analysed it.
+6. **Founder-reported findings F1–F4** need their underlying data added to the repo.
 
-## Next three concrete actions
-1. **Run Stage 0 interviews and the concierge pilot (weeks 0–4).** Do 20 litigator, 6 senior and 4 student interviews using the [script](validation/07-validation-plan.md#2-interview-programme), plus a 2-week WhatsApp concierge pilot with 10 lawyers. This tests H1–H3, H8–H10.
-2. **Launch the pricing fake-door and founding-member pre-order.** Use three price arms (₹299/₹399/₹499) and a ₹1,999/yr refundable pre-order to the waitlist. This tests H6–H7. Engage Indian tech and professional-ethics counsel the same week with the ⚖ list in the [risk register](risk/06-risk-register.md#items-needing-qualified-indian-legal--tax-review--list).
-3. **Build the 200-order gold set and run spikes T1–T3.** That covers on-device eCourts lookup, order-digest accuracy and cost on Bedrock India, and Hinglish speech-to-text. Then hold the GO / PIVOT decision on the [Stage 0 gate](validation/07-validation-plan.md#7-stage-0-decision-meeting-end-of-week-4).
+## Next three actions
+1. **Collect court fixtures and write to the Registries (this week).**
+   - Get 30+ lawyer-supplied cause lists and 50+ orders per High Court. In Chennai, run AIMS-registration sessions so the email push flows.
+   - Write to the Madras HC Registrar (IT-cum-Statistics) and the Karnataka HC Registrar (Computers)/NIC about permitted use and data feeds.
+   - Brief counsel on the access-mode registry and the "software, not legal services" wording.
+2. **Run E1 then E2 in both cities.** A 1-week baseline practice audit (obligations, preparedness, load, time-to-context), then the 2-week concierge OS pilot with a paid-continuation offer.
+3. **Build the 7-minute demo** on a synthetic, court-faithful dataset, and run it with 30+ lawyers alongside the MaxDiff value test. Then hold the Stage 0 GO / GO-WITH-CHANGES / re-cut decision at week 5.
 
 ## Document map
-[Research report](strategy/01-research-report.md) · [Thesis & segments](strategy/02-product-thesis-and-segmentation.md) · [PRD](product/03-prd.md) · [MVP](mvp/04-mvp-definition.md) · [Matrices](strategy/05-competitor-and-ai-matrices.md) · [Risks](risk/06-risk-register.md) · [Validation](validation/07-validation-plan.md) · [Repo & backlog](engineering/08-repo-structure-and-backlog.md) · [Decisions](../DECISIONS.md) · [Assumptions](../ASSUMPTIONS.md)
+| Document | Version |
+|---|---|
+| [Research report](strategy/01-research-report.md) | v0.1, plus addendum |
+| [Thesis](strategy/02-product-thesis-and-segmentation.md) | v0.3 |
+| [PRD](product/03-prd.md) | v0.3 |
+| [MVP](mvp/04-mvp-definition.md) | v0.3 |
+| [Competitors](strategy/05-competitor-and-ai-matrices.md) | §C positioning |
+| [Risks](risk/06-risk-register.md) | §8 |
+| [Validation](validation/07-validation-plan.md) | v0.3 |
+| [Repo & backlog](engineering/08-repo-structure-and-backlog.md) | §7 |
+| [Capture subsystem](product/09-zero-entry-automation-design.md) | — |
+| [System architecture](product/10-lawyer-os-system-architecture.md) | — |
+| [Launch markets](strategy/11-launch-markets-madras-hc-bengaluru.md) | — |
+| [Decisions](../DECISIONS.md) | — |
+| [Assumptions](../ASSUMPTIONS.md) | — |

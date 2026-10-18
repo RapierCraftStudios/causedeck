@@ -269,6 +269,10 @@ export type Messages = {
         subject: string;
         body: string;
       };
+      invitation: {
+        subject: string;
+        body: string;
+      };
     };
   };
   workspace: {

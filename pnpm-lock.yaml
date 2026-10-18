@@ -818,6 +818,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@causedeck/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@causedeck/config':
         specifier: workspace:*
         version: link:../config

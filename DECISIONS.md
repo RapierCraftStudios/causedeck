@@ -340,3 +340,7 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Decision:** The founder directs that the full product is built, i.e. every PRD requirement tagged M, v1 and v2. The work runs as 10 milestones of ForgeDock-orchestrated issues, decomposed from the technical spike. Stage 0 validation ([07](docs/validation/07-validation-plan.md)) continues in parallel. Its findings come in as new issues or changes to the spike through ADRs.
 - **Supersedes:** D-015.
 - **Unchanged:** the permanent exclusions.
+
+### D-042 — The court-day change freeze applies to production only
+- **Date:** 2026-10-18 · **Status:** Accepted (founder)
+- **Decision:** The 18:00–23:00 and 07:00–10:30 IST freeze (spike §3.1, D-037) applies to **production** deploys. Shipping a milestone into `staging` during the build phase is not frozen. Revisit when staging hosts real pilot users.

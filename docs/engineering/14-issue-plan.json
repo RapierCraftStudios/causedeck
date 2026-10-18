@@ -1,0 +1,1669 @@
+[
+ {
+  "key": "F01",
+  "title": "feat(repo): scaffold pnpm + Turborepo monorepo with shared TS/ESLint/Prettier config",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F02",
+  "title": "feat(ci): GitHub Actions CI with turbo caching for lint, typecheck, test and build",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "F01"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F03",
+  "title": "feat(config): typed env schema package with mock-safe defaults and secret validation",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "F01"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F04",
+  "title": "feat(dev): Docker Compose dev stack (Postgres+pgvector, MinIO, Mailpit) and pnpm dev",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "F01"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F05",
+  "title": "feat(db): Drizzle setup, migration tooling, provenance column conventions, Testcontainers",
+  "component": "db",
+  "priority": "P1",
+  "depends": [
+   "F03",
+   "F04"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F06",
+  "title": "feat(ui): design tokens (OKLCH light/dark), type system and Indic fonts, Tailwind v4 preset",
+  "component": "ui",
+  "priority": "P1",
+  "depends": [
+   "F01"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F07",
+  "title": "feat(ui): shadcn/ui component library in packages/ui with Storybook and visual regression",
+  "component": "ui",
+  "priority": "P1",
+  "depends": [
+   "F06"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F08",
+  "title": "feat(ui): signature patterns (Provenance Chip, Proposal Card, Stage Badge, state screens)",
+  "component": "ui",
+  "priority": "P1",
+  "depends": [
+   "F07"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F09",
+  "title": "feat(web): Next.js App Router scaffold with themes, i18n wiring, fonts, error boundaries",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "F03",
+   "F07"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F10",
+  "title": "feat(web): app shell with sidebar, workspace switcher, command palette and mobile nav",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "F08",
+   "F09"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F11",
+  "title": "feat(auth): Better Auth with Google OAuth, magic link, passkeys and sign-in UI",
+  "component": "auth",
+  "priority": "P1",
+  "depends": [
+   "F05",
+   "F09"
+  ],
+  "labels": [
+   "backend",
+   "frontend"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F12",
+  "title": "feat(observability): pino logging, OpenTelemetry, Sentry wiring and health endpoints",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "F03"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F13",
+  "title": "feat(api): Hono API service with OpenAPI, auth middleware, versioning and error model",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "F05",
+   "F11",
+   "F12"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F14",
+  "title": "feat(worker): pg-boss worker scaffold with job registry, idempotency and dead-letter",
+  "component": "worker",
+  "priority": "P1",
+  "depends": [
+   "F05",
+   "F12"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F15",
+  "title": "feat(e2e): Playwright harness with auth fixtures, seeded DB, axe and visual baselines",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "F02",
+   "F11"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "F16",
+  "title": "docs(adr): ADRs 0001-0010 recording the technical spike decisions",
+  "component": "docs",
+  "priority": "P2",
+  "depends": [
+   "F01"
+  ],
+  "labels": [
+   "docs"
+  ],
+  "milestone": "Foundation"
+ },
+ {
+  "key": "P01",
+  "title": "feat(core): workspaces and membership (create, invite, accept, roles, switch) with UI",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "F10",
+   "F11"
+  ],
+  "labels": [
+   "backend",
+   "frontend"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P02",
+  "title": "feat(db): row-level security, withWorkspace helper and cross-tenant CI test suite",
+  "component": "db",
+  "priority": "P1",
+  "depends": [
+   "F05",
+   "P01"
+  ],
+  "labels": [
+   "backend",
+   "security"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P03",
+  "title": "feat(core): permission policy can() with clerk and per-matter restrictions",
+  "component": "auth",
+  "priority": "P1",
+  "depends": [
+   "P02"
+  ],
+  "labels": [
+   "backend",
+   "security"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P04",
+  "title": "feat(storage): S3 abstraction, presigned URLs, per-workspace envelope encryption",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "F05",
+   "P02"
+  ],
+  "labels": [
+   "backend",
+   "security"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P05",
+  "title": "feat(flags): feature flags, kill-switches and access-mode registry enforcement",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "P02"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P06",
+  "title": "feat(notifications): in-app center, React Email via SES/console, web push, preferences",
+  "component": "worker",
+  "priority": "P2",
+  "depends": [
+   "F14",
+   "P01"
+  ],
+  "labels": [
+   "backend",
+   "frontend"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P07",
+  "title": "feat(i18n): en/ta/kn catalogs, locale switcher, Indic rendering, date and INR formatters",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "F09"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P08",
+  "title": "feat(web): workspace and account settings (members, roles, privacy, passkeys, 2FA)",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "P01",
+   "P03",
+   "P06"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P09",
+  "title": "feat(core): audit log, security events and user-visible activity export",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "P02"
+  ],
+  "labels": [
+   "backend",
+   "security"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P10",
+  "title": "feat(admin): staff admin console (adapter health, flags, consented support sessions)",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "P05",
+   "P09"
+  ],
+  "labels": [
+   "frontend",
+   "backend"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P11",
+  "title": "feat(billing): plans, seat entitlements, Razorpay subscriptions, UPI Autopay, webhooks",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "F13",
+   "P01"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P12",
+  "title": "feat(billing): GST-compliant SaaS invoices and billing management UI",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "P11"
+  ],
+  "labels": [
+   "frontend",
+   "backend"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P13",
+  "title": "feat(core): usage metering and per-workspace AI budgets",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "P02"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "P14",
+  "title": "feat(core): workspace data export (ZIP) and deletion with crypto-erase (DPDP)",
+  "component": "worker",
+  "priority": "P2",
+  "depends": [
+   "P04",
+   "P09"
+  ],
+  "labels": [
+   "backend",
+   "security"
+  ],
+  "milestone": "Platform & Tenancy"
+ },
+ {
+  "key": "C01",
+  "title": "feat(db): matter-graph schema with provenance and invariants",
+  "component": "db",
+  "priority": "P1",
+  "depends": [
+   "P02"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C02",
+  "title": "feat(core): matter-graph services (merge/split, proceeding state machine, next date)",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "C01"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C03",
+  "title": "feat(court): forum catalogue for Madras HC, Karnataka HC, Chennai and Bengaluru forums",
+  "component": "court-adapters",
+  "priority": "P1",
+  "depends": [
+   "C01"
+  ],
+  "labels": [
+   "backend",
+   "court-adapters"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C04",
+  "title": "feat(adapters): court-adapter framework (versioned config, fixtures, health monitors)",
+  "component": "court-adapters",
+  "priority": "P1",
+  "depends": [
+   "C03",
+   "P05"
+  ],
+  "labels": [
+   "backend",
+   "court-adapters"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C05",
+  "title": "feat(adapters): Madras HC A1 adapter (cause lists, case types, SR/returns, orders)",
+  "component": "court-adapters",
+  "priority": "P1",
+  "depends": [
+   "C04"
+  ],
+  "labels": [
+   "backend",
+   "court-adapters"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C06",
+  "title": "feat(adapters): Karnataka HC A1 adapter (cause lists, stages, FR/objections, orders)",
+  "component": "court-adapters",
+  "priority": "P1",
+  "depends": [
+   "C04"
+  ],
+  "labels": [
+   "backend",
+   "court-adapters"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C07",
+  "title": "feat(adapters): NCLT Bengaluru adapter for table-format cause-list PDFs",
+  "component": "court-adapters",
+  "priority": "P3",
+  "depends": [
+   "C04"
+  ],
+  "labels": [
+   "backend",
+   "court-adapters"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C08",
+  "title": "feat(court): effective-dated bench rosters, roster PDF import and bench-change alerts",
+  "component": "court-adapters",
+  "priority": "P2",
+  "depends": [
+   "C02",
+   "C03"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C09",
+  "title": "feat(web): matters list and matter workspace UI (overview, proceedings, people, docs)",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "C02",
+   "F10"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C10",
+  "title": "feat(web): matter graph view and cross-proceeding timeline UI",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "C09"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "C11",
+  "title": "feat(web): courts area with forums, halls, adapter status and official deep links",
+  "component": "web",
+  "priority": "P3",
+  "depends": [
+   "C04",
+   "F10"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Court Layer & Matter Graph"
+ },
+ {
+  "key": "I01",
+  "title": "feat(capture): capture inbox model and upload pipeline (allow-list, dedupe, scan hook)",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "P04",
+   "C01"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I02",
+  "title": "feat(ai): AI gateway with Bedrock India, Sarvam and mock providers, budgets, audit",
+  "component": "ai",
+  "priority": "P1",
+  "depends": [
+   "P13",
+   "F14"
+  ],
+  "labels": [
+   "backend",
+   "ai"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I03",
+  "title": "feat(intelligence): document pipeline (text layer, OCR, classification, page render)",
+  "component": "ai",
+  "priority": "P1",
+  "depends": [
+   "I01",
+   "I02"
+  ],
+  "labels": [
+   "backend",
+   "ai"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I04",
+  "title": "feat(intelligence): anchored order extraction with date-presence validation",
+  "component": "ai",
+  "priority": "P1",
+  "depends": [
+   "I03",
+   "C02"
+  ],
+  "labels": [
+   "backend",
+   "ai"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I05",
+  "title": "feat(core): automation engine L1-L4 with proposals, undo cascades and no-L5 check",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "C02",
+   "P09"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I06",
+  "title": "feat(web): capture inbox UI (Needs you, Ready to send, Processing) with proposal cards",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "I05",
+   "F08"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I07",
+  "title": "feat(web): activity feed with 7-day undo and end-of-day digest",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "I05",
+   "P06"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I08",
+  "title": "feat(pwa): installable PWA, Web Share Target capture and offline outbox",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "I01",
+   "F09"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I09",
+  "title": "feat(capture): offline voice recorder, Indic STT and structuring into hearing proposals",
+  "component": "ai",
+  "priority": "P1",
+  "depends": [
+   "I02",
+   "I05",
+   "I08"
+  ],
+  "labels": [
+   "frontend",
+   "ai"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I10",
+  "title": "feat(capture): camera and diary-photo capture to OCR-backed proposals",
+  "component": "ai",
+  "priority": "P2",
+  "depends": [
+   "I03",
+   "I05"
+  ],
+  "labels": [
+   "frontend",
+   "ai"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I11",
+  "title": "feat(capture): ICS calendar import and private ICS export feed",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "C02",
+   "I05"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I12",
+  "title": "feat(capture): email forward-in intake parsing registry and AIMS cause-list emails",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "I01",
+   "C05",
+   "I05"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I13",
+  "title": "feat(capture): WhatsApp chat-export importer for internal chats with exclusions",
+  "component": "api",
+  "priority": "P3",
+  "depends": [
+   "I01",
+   "I05"
+  ],
+  "labels": [
+   "backend",
+   "frontend"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I14",
+  "title": "feat(adapters): A0 generic adapter with LLM-assisted anchored parsing and confirmation",
+  "component": "court-adapters",
+  "priority": "P2",
+  "depends": [
+   "C04",
+   "I04"
+  ],
+  "labels": [
+   "backend",
+   "ai"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "I15",
+  "title": "feat(capture): bootstrap import of lists, orders and diary photos into a confirm grid",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "I04",
+   "C05",
+   "C06",
+   "I06"
+  ],
+  "labels": [
+   "frontend",
+   "backend"
+  ],
+  "milestone": "Capture & Document Intelligence"
+ },
+ {
+  "key": "E01",
+  "title": "feat(core): court-day service (complex/hall/list/item, clashes, list diffs)",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "C02",
+   "C05",
+   "C06"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "E02",
+  "title": "feat(web): Court-Day Board for today and tomorrow (hero surface)",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "E01",
+   "F08"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "E03",
+  "title": "feat(core): preparation brief assembly with anchored context and readiness score",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "E01",
+   "I04"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "E04",
+  "title": "feat(web): Brief Sheet UI with provenance chips and A4 print/PDF output",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "E03",
+   "E02"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "E05",
+  "title": "feat(web): one-screen hearing outcome confirmation (next date, obligations, tasks)",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "I09",
+   "E01"
+  ],
+  "labels": [
+   "frontend",
+   "backend"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "E06",
+  "title": "feat(core): chamber delegation of appearances with live outcomes for owners",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "E01",
+   "P03"
+  ],
+  "labels": [
+   "frontend",
+   "backend"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "E07",
+  "title": "feat(notifications): court-day reminders (8 pm brief, 7 am diff, missing outcome)",
+  "component": "worker",
+  "priority": "P2",
+  "depends": [
+   "E01",
+   "P06"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "E08",
+  "title": "feat(pwa): 7-day offline cache for court-day view and briefs with sync safety",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "E02",
+   "E04",
+   "I08"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "E09",
+  "title": "feat(web): week and month calendar view of listings and deadlines",
+  "component": "web",
+  "priority": "P3",
+  "depends": [
+   "E01",
+   "F08"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Prepare & Execute"
+ },
+ {
+  "key": "M01",
+  "title": "feat(core): obligation service with reconciliation, defects, SR/FR and certified copies",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "C02",
+   "I04"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Follow-up, Continuity & Memory"
+ },
+ {
+  "key": "M02",
+  "title": "feat(web): Obligation Queue UI with grouping, swipe actions and drafted next steps",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "M01",
+   "F08"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Follow-up, Continuity & Memory"
+ },
+ {
+  "key": "M03",
+  "title": "feat(core): outward update drafts in EN/TA/KN with edit diff and share-by-lawyer log",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "M01",
+   "I02",
+   "P07"
+  ],
+  "labels": [
+   "backend",
+   "frontend"
+  ],
+  "milestone": "Follow-up, Continuity & Memory"
+ },
+ {
+  "key": "M04",
+  "title": "feat(core): stale-matter detection and needs-attention surfaces",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "M01",
+   "E01"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Follow-up, Continuity & Memory"
+ },
+ {
+  "key": "M05",
+  "title": "feat(web): handover notes and what-changed-since-last-viewed",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "M01",
+   "C10"
+  ],
+  "labels": [
+   "frontend",
+   "backend"
+  ],
+  "milestone": "Follow-up, Continuity & Memory"
+ },
+ {
+  "key": "M06",
+  "title": "feat(core): lawyer memory engine M1-M7 with confirm-before-save and scope enforcement",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "I05",
+   "C02"
+  ],
+  "labels": [
+   "backend",
+   "ai"
+  ],
+  "milestone": "Follow-up, Continuity & Memory"
+ },
+ {
+  "key": "M07",
+  "title": "feat(web): memory screen, memory cards and monthly memory review",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "M06",
+   "F08"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Follow-up, Continuity & Memory"
+ },
+ {
+  "key": "M08",
+  "title": "feat(core): wire memory into briefs, drafts and recognition-based matching",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "M06",
+   "E03",
+   "M03"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Follow-up, Continuity & Memory"
+ },
+ {
+  "key": "D01",
+  "title": "feat(drafting): template engine with court format presets and DOCX/PDF export",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "C02"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Drafting, Citations & Research"
+ },
+ {
+  "key": "D02",
+  "title": "feat(drafting): system templates for Madras HC and Karnataka HC routine documents",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "D01"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Drafting, Citations & Research"
+ },
+ {
+  "key": "D03",
+  "title": "feat(drafting): citation checker with neutral-citation patterns and Indian Kanoon resolver",
+  "component": "api",
+  "priority": "P1",
+  "depends": [
+   "D01",
+   "I02"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Drafting, Citations & Research"
+ },
+ {
+  "key": "D04",
+  "title": "feat(drafting): consistency checker for names, case numbers, dates and annexures",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "D01"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Drafting, Citations & Research"
+ },
+ {
+  "key": "D05",
+  "title": "feat(web): drafting studio with facts panel, citation status, versions and export",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "D01",
+   "D03",
+   "D04",
+   "F08"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Drafting, Citations & Research"
+ },
+ {
+  "key": "D06",
+  "title": "feat(web): research link-outs with pre-filled queries and matter research notes",
+  "component": "web",
+  "priority": "P3",
+  "depends": [
+   "C09"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Drafting, Citations & Research"
+ },
+ {
+  "key": "D07",
+  "title": "feat(drafting): playbooks, precedent bank and user-approved style learning (M5)",
+  "component": "ai",
+  "priority": "P3",
+  "depends": [
+   "M06",
+   "D01"
+  ],
+  "labels": [
+   "backend",
+   "ai"
+  ],
+  "milestone": "Drafting, Citations & Research"
+ },
+ {
+  "key": "B01",
+  "title": "feat(core): client contacts for existing clients with language preference",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "C02"
+  ],
+  "labels": [
+   "backend",
+   "frontend"
+  ],
+  "milestone": "Business & Practice"
+ },
+ {
+  "key": "B02",
+  "title": "feat(billing): fees, GST/RCM invoices and client-expense ledger (legal-gated flag)",
+  "component": "web",
+  "priority": "P3",
+  "depends": [
+   "B01",
+   "P05"
+  ],
+  "labels": [
+   "backend",
+   "frontend",
+   "legal-gated"
+  ],
+  "milestone": "Business & Practice"
+ },
+ {
+  "key": "B03",
+  "title": "feat(core): limitation tracker driven by counsel rule tables (legal-gated flag)",
+  "component": "api",
+  "priority": "P3",
+  "depends": [
+   "M01",
+   "P05"
+  ],
+  "labels": [
+   "backend",
+   "legal-gated"
+  ],
+  "milestone": "Business & Practice"
+ },
+ {
+  "key": "B04",
+  "title": "feat(web): practice insights dashboard (Prepared & Kept, obligations, preparedness)",
+  "component": "web",
+  "priority": "P2",
+  "depends": [
+   "E03",
+   "M01",
+   "B05"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Business & Practice"
+ },
+ {
+  "key": "B05",
+  "title": "feat(core): proof-of-value instrumentation (preparedness tap, load pulse, context test)",
+  "component": "api",
+  "priority": "P2",
+  "depends": [
+   "E05"
+  ],
+  "labels": [
+   "backend",
+   "frontend"
+  ],
+  "milestone": "Business & Practice"
+ },
+ {
+  "key": "B06",
+  "title": "feat(core): inbound enquiry log with conflict check, no auto-reply (legal-gated flag)",
+  "component": "web",
+  "priority": "P3",
+  "depends": [
+   "B01",
+   "P05"
+  ],
+  "labels": [
+   "backend",
+   "frontend",
+   "legal-gated"
+  ],
+  "milestone": "Business & Practice"
+ },
+ {
+  "key": "B07",
+  "title": "feat(web): advocate-authored expiring client status links (legal-gated flag)",
+  "component": "web",
+  "priority": "P3",
+  "depends": [
+   "M03",
+   "P05"
+  ],
+  "labels": [
+   "frontend",
+   "legal-gated"
+  ],
+  "milestone": "Business & Practice"
+ },
+ {
+  "key": "L01",
+  "title": "feat(site): marketing site scaffold (static export, MDX, SEO) for Cloudflare Pages",
+  "component": "site",
+  "priority": "P2",
+  "depends": [
+   "F07"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Site, Onboarding & Launch"
+ },
+ {
+  "key": "L02",
+  "title": "feat(site): landing page via ForgeDock /design pipeline",
+  "component": "site",
+  "priority": "P2",
+  "depends": [
+   "L01"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Site, Onboarding & Launch"
+ },
+ {
+  "key": "L03",
+  "title": "feat(site): pricing, security/privacy, about and changelog pages with Rule-36-safe copy",
+  "component": "site",
+  "priority": "P2",
+  "depends": [
+   "L02"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Site, Onboarding & Launch"
+ },
+ {
+  "key": "L04",
+  "title": "feat(web): solo and chamber onboarding wizards ending in the first court-day view",
+  "component": "web",
+  "priority": "P1",
+  "depends": [
+   "I15",
+   "E02",
+   "P01"
+  ],
+  "labels": [
+   "frontend",
+   "design"
+  ],
+  "milestone": "Site, Onboarding & Launch"
+ },
+ {
+  "key": "L05",
+  "title": "feat(db): synthetic court-faithful demo seed (Chennai solo, Bengaluru chamber), demo mode",
+  "component": "db",
+  "priority": "P1",
+  "depends": [
+   "C05",
+   "C06",
+   "M01",
+   "E03"
+  ],
+  "labels": [
+   "backend"
+  ],
+  "milestone": "Site, Onboarding & Launch"
+ },
+ {
+  "key": "L06",
+  "title": "feat(web): in-app help center, contextual tips and keyboard shortcut sheet",
+  "component": "web",
+  "priority": "P3",
+  "depends": [
+   "F10"
+  ],
+  "labels": [
+   "frontend"
+  ],
+  "milestone": "Site, Onboarding & Launch"
+ },
+ {
+  "key": "L07",
+  "title": "feat(site): legal pages scaffold (ToS, Privacy, DPA, sub-processors, AI disclosure)",
+  "component": "site",
+  "priority": "P2",
+  "depends": [
+   "L01"
+  ],
+  "labels": [
+   "frontend",
+   "docs"
+  ],
+  "milestone": "Site, Onboarding & Launch"
+ },
+ {
+  "key": "L08",
+  "title": "feat(infra): public status page with adapter health feed",
+  "component": "infra",
+  "priority": "P3",
+  "depends": [
+   "P10"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Site, Onboarding & Launch"
+ },
+ {
+  "key": "X01",
+  "title": "feat(infra): production Dockerfiles (multi-stage, non-root) and compose.prod",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "F13",
+   "F14",
+   "F09"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X02",
+  "title": "feat(infra): Caddy config with TLS, HTTP/3, CSP and security headers, rate limits",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "X01"
+  ],
+  "labels": [
+   "infra",
+   "security"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X03",
+  "title": "feat(infra): Terraform for Cloudflare (DNS, Pages, CDN, WAF) and India VPS",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "X01"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X04",
+  "title": "feat(ci): staging/prod deploy pipelines with health-gated rollout and court-day freeze",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "X01",
+   "X02",
+   "F02"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X05",
+  "title": "feat(infra): WAL-G Postgres backups, MinIO replication and automated restore drills",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [
+   "X01"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X06",
+  "title": "feat(infra): monitoring, alerting and 180-day India log retention",
+  "component": "infra",
+  "priority": "P2",
+  "depends": [
+   "F12",
+   "X01"
+  ],
+  "labels": [
+   "infra"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X07",
+  "title": "docs(runbooks): CERT-In 6h incident, DPDP breach, key rotation, restore and on-call",
+  "component": "docs",
+  "priority": "P2",
+  "depends": [
+   "X05",
+   "X06"
+  ],
+  "labels": [
+   "docs",
+   "security"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X08",
+  "title": "feat(security): dependency, secret and SAST scanning, ZAP baseline, CSP reporting",
+  "component": "infra",
+  "priority": "P2",
+  "depends": [
+   "X02",
+   "F02"
+  ],
+  "labels": [
+   "infra",
+   "security"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X09",
+  "title": "feat(perf): k6 load tests on seeded data, perf budgets and Lighthouse CI",
+  "component": "infra",
+  "priority": "P2",
+  "depends": [
+   "X04",
+   "L05"
+  ],
+  "labels": [
+   "infra",
+   "performance"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "X10",
+  "title": "docs(infra): Stage B/C scale-out runbook and IaC modules (RDS, S3, multi-node LB)",
+  "component": "infra",
+  "priority": "P3",
+  "depends": [
+   "X03",
+   "X05"
+  ],
+  "labels": [
+   "docs",
+   "infra"
+  ],
+  "milestone": "Production Infra & Scale"
+ },
+ {
+  "key": "H01",
+  "title": "chore(human): register domain and set up Cloudflare account and API token",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H02",
+  "title": "chore(human): provision India VPS for prod and staging with SSH deploy keys",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H03",
+  "title": "chore(human): create Google OAuth client credentials",
+  "component": "auth",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H04",
+  "title": "chore(human): Amazon SES (ap-south-1) domain verification and inbound email route",
+  "component": "infra",
+  "priority": "P2",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H05",
+  "title": "chore(human): Razorpay account, plans, API keys and webhook secret",
+  "component": "api",
+  "priority": "P2",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H06",
+  "title": "chore(human): AWS Bedrock India model access and IAM credentials",
+  "component": "ai",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H07",
+  "title": "chore(human): Sarvam API key for Indic STT and OCR",
+  "component": "ai",
+  "priority": "P2",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H08",
+  "title": "chore(human): Indian Kanoon API token and commercial-use confirmation",
+  "component": "ai",
+  "priority": "P2",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H09",
+  "title": "chore(human): Sentry project and DSN",
+  "component": "infra",
+  "priority": "P3",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H10",
+  "title": "chore(human): GitHub environments and secrets for staging and prod",
+  "component": "infra",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H11",
+  "title": "chore(human): counsel deliverables (ToS, Privacy, DPA, AI disclosure, public wording)",
+  "component": "docs",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "needs-human",
+   "legal-gated"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H12",
+  "title": "chore(human): counsel access-mode memo and letters to Madras HC and Karnataka HC Registries",
+  "component": "court-adapters",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "needs-human",
+   "legal-gated"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H13",
+  "title": "chore(human): collect lawyer-supplied court fixtures (30+ lists, 50+ orders per HC)",
+  "component": "court-adapters",
+  "priority": "P1",
+  "depends": [],
+  "labels": [
+   "needs-human"
+  ],
+  "milestone": null
+ },
+ {
+  "key": "H14",
+  "title": "chore(human): counsel limitation rule tables and GST/RCM review to unlock gated flags",
+  "component": "docs",
+  "priority": "P2",
+  "depends": [],
+  "labels": [
+   "needs-human",
+   "legal-gated"
+  ],
+  "milestone": null
+ }
+]

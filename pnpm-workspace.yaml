@@ -31,6 +31,20 @@ ignoredBuiltDependencies:
   - protobufjs
   - ssh2
 
+# Security overrides for transitive advisories (`pnpm audit:prod`). handlebars (via
+# eslint-plugin-boundaries) takes the 4.7.10 patch. tinypool (vitest 3, pulled into the web graph as
+# better-auth's optional `vitest` peer) takes the 2.1.2 patch; 2.x only drops Node 18 (.nvmrc is 22).
+overrides:
+  handlebars@<4.7.10: 4.7.10
+  vitest>tinypool: ^2.1.2
+
+# No patched braces release exists for GHSA-vfj7-8cjw-p6xm (stack-exhaustion DoS on deeply nested
+# patterns). Its only production path is next-intl > @parcel/watcher > micromatch, which only gets
+# patterns from our own config, never from user input. Drop this once braces ships a fix.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm
+
 catalog:
   '@apidevtools/swagger-parser': 13.1.0
   '@axe-core/playwright': 4.13.0

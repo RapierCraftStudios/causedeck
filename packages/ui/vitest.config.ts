@@ -52,7 +52,9 @@ const unitTest = {
   exclude: ['**/*.browser.test.{ts,tsx}', '**/node_modules/**'],
   environment: 'node',
   setupFiles: ['test/setup.ts'],
-  testTimeout: 30_000,
+  // The first type-aware ESLint run (test/eslint-rules.test.ts) cold-starts in about 30 s on CI
+  // runners; @causedeck/config allows 60 s for the same reason.
+  testTimeout: 60_000,
 };
 
 export default defineConfig({

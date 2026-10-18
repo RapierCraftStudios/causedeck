@@ -57,6 +57,7 @@ vi.mock('../lib/workspace-loader.ts', () => ({
 vi.mock('next-intl/server', () => ({
   getLocale: () => Promise.resolve(state.locale),
   getMessages: () => Promise.resolve(catalogs[state.locale as TestLocale]),
+  getTimeZone: () => Promise.resolve('Asia/Kolkata'),
   getTranslations: (namespace?: string) =>
     fakeGetTranslations(state.locale as TestLocale)(namespace),
 }));

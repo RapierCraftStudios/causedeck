@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import en from '../messages/en.json';
+import en from '@causedeck/i18n/messages/en.json';
 import {
   getNavItem,
   NAV_GROUPS,

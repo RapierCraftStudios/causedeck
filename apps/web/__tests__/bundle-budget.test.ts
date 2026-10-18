@@ -19,6 +19,12 @@ interface BudgetModule {
     sizes: Record<string, number>,
     budget?: number,
   ) => { files: string[]; total: number; budget: number; ok: boolean };
+  GENERATED_MESSAGES: string;
+  foreignValues: (en: unknown, others: unknown[]) => string[];
+  localeLeak: (
+    chunkSources: Record<string, string>,
+    values: string[],
+  ) => { file: string; value: string }[];
 }
 
 // A runtime URL keeps TypeScript from type-resolving the plain .mjs script.
@@ -106,5 +112,37 @@ describe('workspace shell budget (#155)', () => {
     expect(budget.shellDelta([], ['shell.js', 'extra.js'], { ...at, 'extra.js': 1 }).ok).toBe(
       false,
     );
+  });
+});
+
+describe('active-locale messages only (#174)', () => {
+  const en = { a: { title: 'Something went wrong', short: 'Hi', ref: 'Reference: {digest}' } };
+  const ta = { a: { title: 'ஏதோ தவறு நடந்தது.', short: 'வணக்கம்', ref: 'குறிப்பு: {digest}' } };
+
+  it('reads the generated catalogs of @causedeck/i18n', () => {
+    expect(budget.GENERATED_MESSAGES).toBe('../../packages/i18n/src/generated/messages');
+  });
+
+  it('picks distinctive ta/kn strings: 8+ characters, not English, no ICU syntax', () => {
+    expect(budget.foreignValues(en, [ta, { b: 'Something went wrong' }])).toEqual([
+      'ஏதோ தவறு நடந்தது.',
+    ]);
+  });
+
+  it('finds a foreign catalog string in a chunk, raw or \\u-escaped', () => {
+    const value = 'ஏதோ தவறு நடந்தது.';
+    const escaped = value.replace(
+      /[^\x20-\x7e]/g,
+      (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`,
+    );
+    expect(
+      budget.localeLeak(
+        { 'raw.js': `x="${value}"`, 'escaped.js': `x="${escaped}"`, 'clean.js': 'x="en"' },
+        [value],
+      ),
+    ).toEqual([
+      { file: 'raw.js', value },
+      { file: 'escaped.js', value },
+    ]);
   });
 });

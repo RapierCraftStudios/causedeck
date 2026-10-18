@@ -4,71 +4,16 @@
     "goToToday": "Go to Today",
     "loading": "Loading"
   },
-  "home": {
-    "title": "CauseDeck",
-    "tagline": "Your court day, prepared.",
-    "signIn": "Sign in"
-  },
   "theme": {
     "label": "Theme",
     "light": "Light",
     "dark": "Dark",
     "system": "System"
   },
-  "auth": {
-    "signIn": {
-      "metaTitle": "Sign in",
-      "wordmark": "CauseDeck",
-      "title": "Sign in to CauseDeck",
-      "tagline": "Your court day, prepared.",
-      "pullLine": "Every hearing, every deadline, ready before you reach court.",
-      "google": "Continue with Google",
-      "passkey": "Use a passkey",
-      "passkeyUnsupported": "Passkeys are not supported on this browser.",
-      "or": "or",
-      "emailLabel": "Email",
-      "emailPlaceholder": "name@example.com",
-      "submit": "Email me a sign-in link",
-      "sending": "Sending...",
-      "terms": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
-      "hosted": "India-hosted. Your matter data never leaves India.",
-      "errors": {
-        "sendFailed": "We could not send the link. Try again in a moment.",
-        "generic": "We could not sign you in. Try again in a moment.",
-        "expired": "This link has expired. Request a new one.",
-        "offline": "You are offline. Connect to sign in.",
-        "accessDenied": "Access was not granted."
-      }
-    },
-    "checkEmail": {
-      "title": "Check your email",
-      "body": "We sent a sign-in link to {email}. It expires in {minutes} minutes.",
-      "differentEmail": "Use a different email",
-      "resend": "Resend",
-      "resendIn": "Resend in {seconds}s"
-    },
-    "invite": {
-      "title": "You have been invited",
-      "body": "Invitations open here soon. Ask the person who invited you to try again later."
-    },
-    "email": {
-      "magicLink": {
-        "subject": "Your CauseDeck sign-in link",
-        "body": "Use this link to sign in to CauseDeck. It expires in {minutes} minutes: {url}"
-      }
-    }
-  },
-  "offline": {
-    "title": "Offline",
-    "body": "You are offline. Saved court days and briefs remain available once synced."
-  },
-  "error": {
-    "title": "Something went wrong.",
-    "description": "Your saved work is safe. Try again, or go back to Today.",
-    "reference": "Reference: {digest}"
-  },
-  "notFound": {
-    "title": "Page not found"
+  "home": {
+    "title": "CauseDeck",
+    "tagline": "Your court day, prepared.",
+    "signIn": "Sign in"
   },
   "nav": {
     "today": "Today",
@@ -93,6 +38,41 @@
       "followup": "Follow-up",
       "practice": "Practice",
       "settings": "Settings"
+    }
+  },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Search or jump to...",
+    "description": "Search for a matter, a page or an action, then press Enter.",
+    "close": "Close",
+    "empty": "No matches. Try a matter name, court or action.",
+    "recent": "Recent",
+    "hints": "↑↓ to move, ↵ to open, esc to close",
+    "groups": {
+      "goTo": "Go to",
+      "create": "Create",
+      "matters": "Matters",
+      "settings": "Settings",
+      "help": "Help"
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "Shortcuts work anywhere except while you are typing in a field.",
+    "close": "Close",
+    "then": "then",
+    "goTo": "Go to {destination}",
+    "groups": {
+      "navigation": "Navigation",
+      "actions": "Actions",
+      "help": "Help"
+    },
+    "actions": {
+      "capture": "Capture",
+      "palette": "Open command palette",
+      "sidebar": "Toggle sidebar",
+      "search": "Search this page",
+      "help": "Keyboard shortcuts"
     }
   },
   "shell": {
@@ -247,39 +227,47 @@
       "close": "Close"
     }
   },
-  "palette": {
-    "title": "Command palette",
-    "placeholder": "Search or jump to...",
-    "description": "Search for a matter, a page or an action, then press Enter.",
-    "close": "Close",
-    "empty": "No matches. Try a matter name, court or action.",
-    "recent": "Recent",
-    "hints": "↑↓ to move, ↵ to open, esc to close",
-    "groups": {
-      "goTo": "Go to",
-      "create": "Create",
-      "matters": "Matters",
-      "settings": "Settings",
-      "help": "Help"
-    }
-  },
-  "shortcuts": {
-    "title": "Keyboard shortcuts",
-    "description": "Shortcuts work anywhere except while you are typing in a field.",
-    "close": "Close",
-    "then": "then",
-    "goTo": "Go to {destination}",
-    "groups": {
-      "navigation": "Navigation",
-      "actions": "Actions",
-      "help": "Help"
+  "auth": {
+    "signIn": {
+      "metaTitle": "Sign in",
+      "wordmark": "CauseDeck",
+      "title": "Sign in to CauseDeck",
+      "tagline": "Your court day, prepared.",
+      "pullLine": "Every hearing, every deadline, ready before you reach court.",
+      "google": "Continue with Google",
+      "passkey": "Use a passkey",
+      "passkeyUnsupported": "Passkeys are not supported on this browser.",
+      "or": "or",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "submit": "Email me a sign-in link",
+      "sending": "Sending...",
+      "terms": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
+      "hosted": "India-hosted. Your matter data never leaves India.",
+      "errors": {
+        "sendFailed": "We could not send the link. Try again in a moment.",
+        "generic": "We could not sign you in. Try again in a moment.",
+        "expired": "This link has expired. Request a new one.",
+        "offline": "You are offline. Connect to sign in.",
+        "accessDenied": "Access was not granted."
+      }
     },
-    "actions": {
-      "capture": "Capture",
-      "palette": "Open command palette",
-      "sidebar": "Toggle sidebar",
-      "search": "Search this page",
-      "help": "Keyboard shortcuts"
+    "checkEmail": {
+      "title": "Check your email",
+      "body": "We sent a sign-in link to {email}. It expires in {minutes} minutes.",
+      "differentEmail": "Use a different email",
+      "resend": "Resend",
+      "resendIn": "Resend in {seconds}s"
+    },
+    "invite": {
+      "title": "You have been invited",
+      "body": "Invitations open here soon. Ask the person who invited you to try again later."
+    },
+    "email": {
+      "magicLink": {
+        "subject": "Your CauseDeck sign-in link",
+        "body": "Use this link to sign in to CauseDeck. It expires in {minutes} minutes: {url}"
+      }
     }
   },
   "workspace": {
@@ -312,5 +300,17 @@
         "generic": "Could not create the workspace. Please try again."
       }
     }
+  },
+  "error": {
+    "title": "Something went wrong.",
+    "description": "Your saved work is safe. Try again, or go back to Today.",
+    "reference": "Reference: {digest}"
+  },
+  "notFound": {
+    "title": "Page not found"
+  },
+  "offline": {
+    "title": "Offline",
+    "body": "You are offline. Saved court days and briefs remain available once synced."
   }
 }

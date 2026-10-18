@@ -191,5 +191,21 @@
       "advocate": "Advocate",
       "owner": "Owner"
     }
+  },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Search or jump to...",
+    "description": "Search for a matter, a page or an action, then press Enter.",
+    "close": "Close",
+    "empty": "No matches. Try a matter name, court or action.",
+    "recent": "Recent",
+    "hints": "↑↓ to move, ↵ to open, esc to close",
+    "groups": {
+      "goTo": "Go to",
+      "create": "Create",
+      "matters": "Matters",
+      "settings": "Settings",
+      "help": "Help"
+    }
   }
 }

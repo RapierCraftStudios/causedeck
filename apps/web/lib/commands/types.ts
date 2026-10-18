@@ -26,7 +26,7 @@ export interface Command {
   group: CommandGroupId;
   /** Extra search terms. */
   keywords?: readonly string[];
-  /** Hotkey shown on the row, e.g. `g t`. */
+  /** Hotkey shown on the row, in `useHotkey` syntax: `c`, `mod+k`, `g then t`. */
   shortcut?: string;
   icon?: LucideIcon;
   perform: (ctx: CommandContext) => void | Promise<void>;

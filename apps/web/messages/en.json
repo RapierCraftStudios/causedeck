@@ -223,5 +223,24 @@
       "settings": "Settings",
       "help": "Help"
     }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "Shortcuts work anywhere except while you are typing in a field.",
+    "close": "Close",
+    "then": "then",
+    "goTo": "Go to {destination}",
+    "groups": {
+      "navigation": "Navigation",
+      "actions": "Actions",
+      "help": "Help"
+    },
+    "actions": {
+      "capture": "Capture",
+      "palette": "Open command palette",
+      "sidebar": "Toggle sidebar",
+      "search": "Search this page",
+      "help": "Keyboard shortcuts"
+    }
   }
 }

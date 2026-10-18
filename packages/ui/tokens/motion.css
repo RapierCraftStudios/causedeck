@@ -1,0 +1,61 @@
+/* Motion: quick and calm. UI feedback 80-150 ms, content and panels 200-250 ms, page-level
+ * 320 ms max. Animate only opacity and transform (and background-color for hover).
+ * Under prefers-reduced-motion every duration becomes 0.01ms and transforms are disabled. */
+:root {
+  --dur-instant: 80ms;
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 250ms;
+  --dur-page: 320ms;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  /* Sampled from the `motion` spring { stiffness: 420, damping: 34, mass: 1 } over 320 ms
+   (damping ratio 0.83, settles in about 235 ms); pair with --dur-page. See tokens.ts. */
+  --ease-spring: linear(
+    0,
+    0.045 5%,
+    0.149 10%,
+    0.28 15%,
+    0.415 20%,
+    0.541 25%,
+    0.677 31%,
+    0.785 38%,
+    0.879 45%,
+    0.954 55%,
+    0.993 66%,
+    1.008 78%,
+    1.009 91%,
+    1
+  );
+
+  /* Components read this instead of hard-coding movement, so reduced motion can switch it off */
+  --motion-transform: initial;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0.01ms;
+    --dur-fast: 0.01ms;
+    --dur-base: 0.01ms;
+    --dur-slow: 0.01ms;
+    --dur-page: 0.01ms;
+    --motion-transform: none;
+  }
+
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  [data-motion],
+  [data-state] {
+    transform: none !important;
+  }
+}

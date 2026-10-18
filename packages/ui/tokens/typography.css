@@ -1,0 +1,150 @@
+/* Type system: the editorial serif carries meaning (matter titles, brief prose, headings), the
+ * sans carries interface. Scale is px at a 1.2 ratio, fluid via clamp() between 360 and 1280 px
+ * viewports, in rem so text scales to 200% with the browser setting. */
+:root {
+  --font-sans:
+    'Geist', 'Geist Fallback', 'Noto Sans Tamil', 'Noto Sans Kannada', ui-sans-serif, system-ui,
+    sans-serif;
+  --font-serif:
+    'Newsreader', 'Newsreader Fallback', 'Noto Serif Tamil', 'Noto Serif Kannada', Georgia, serif;
+  --font-mono:
+    'Geist Mono', 'Geist Mono Fallback', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /* Size / line-height pairs. Small steps are fixed for UI density; larger steps grow fluidly. */
+  --text-xs: 0.75rem; /* 12 */
+  --text-xs--line-height: 1rem; /* 16 */
+  --text-sm: 0.8125rem; /* 13 */
+  --text-sm--line-height: 1.25rem; /* 20 */
+  --text-base: 0.875rem; /* 14, app default */
+  --text-base--line-height: 1.375rem; /* 22 */
+  --text-md: 1rem; /* 16, brief prose */
+  --text-md--line-height: 1.625rem; /* 26 */
+  --text-lg: clamp(1.0625rem, 1.0381rem + 0.1087vw, 1.125rem); /* 17-18 */
+  --text-lg--line-height: 1.75rem; /* 28 */
+  --text-xl: clamp(1.25rem, 1.2011rem + 0.2174vw, 1.375rem); /* 20-22, serif */
+  --text-xl--line-height: 1.875rem; /* 30 */
+  --text-2xl: clamp(1.5rem, 1.4022rem + 0.4348vw, 1.75rem); /* 24-28, serif */
+  --text-2xl--line-height: 2.125rem; /* 34 */
+  --text-3xl: clamp(1.875rem, 1.7283rem + 0.6522vw, 2.25rem); /* 30-36, serif */
+  --text-3xl--line-height: 2.625rem; /* 42 */
+  --text-display: clamp(2.5rem, 2.1087rem + 1.7391vw, 3.5rem); /* 40-56, serif */
+  --text-display--line-height: 1.07; /* 60 at 56 */
+  --text-display--letter-spacing: -0.02em;
+
+  /* Eyebrow labels: small caps style, uppercase, subtle */
+  --text-eyebrow: 0.6875rem; /* 11 */
+  --text-eyebrow--line-height: 1rem; /* 16 */
+  --tracking-eyebrow: 0.06em;
+  --tracking-label: -0.005em;
+  --tracking-display: -0.02em;
+  --tracking-normal: 0em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Indic scripts get extra line-height for stacked conjuncts and vowel signs */
+  --leading-indic-delta: 0.15;
+  --leading-body: 1.5714; /* 22 / 14 */
+  --leading-prose: 1.625; /* 26 / 16 */
+
+  --measure-prose: 68ch;
+
+  --font-features-sans: 'cv11', 'ss01';
+  --font-features-serif: 'kern', 'liga';
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: 100%;
+  font-feature-settings: var(--font-features-sans);
+  line-height: var(--leading-body);
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+h1,
+h2,
+h3,
+h4,
+.heading {
+  font-family: var(--font-serif);
+  font-weight: var(--weight-medium);
+  font-optical-sizing: auto;
+  font-feature-settings: var(--font-features-serif);
+  text-wrap: balance;
+}
+
+label,
+.label {
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--text-eyebrow);
+  line-height: var(--text-eyebrow--line-height);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-subtle);
+}
+
+.prose {
+  max-width: var(--measure-prose);
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  line-height: var(--text-md--line-height);
+  font-optical-sizing: auto;
+  text-wrap: pretty;
+}
+
+.display {
+  font-family: var(--font-serif);
+  font-size: var(--text-display);
+  line-height: var(--text-display--line-height);
+  letter-spacing: var(--text-display--letter-spacing);
+  font-weight: var(--weight-medium);
+}
+
+/* Tamil and Kannada: line-height +0.15, never negative tracking, never uppercase, 400-500 only.
+ * Body 22/14 (1.57) becomes 1.72 and prose 26/16 (1.625) becomes 1.775, both >= 1.7. */
+:lang(ta),
+:lang(kn) {
+  --leading-body: calc(1.5714 + var(--leading-indic-delta));
+  --leading-prose: calc(1.625 + var(--leading-indic-delta));
+
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-normal);
+  text-transform: none;
+}
+
+:lang(ta) :is(h1, h2, h3, h4, .heading, .display, .eyebrow, label, .label, b, strong, th),
+:lang(kn) :is(h1, h2, h3, h4, .heading, .display, .eyebrow, label, .label, b, strong, th),
+:is(h1, h2, h3, h4, .heading, .display, .eyebrow, label, .label, b, strong, th):lang(ta),
+:is(h1, h2, h3, h4, .heading, .display, .eyebrow, label, .label, b, strong, th):lang(kn) {
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-normal);
+  text-transform: none;
+  line-height: calc(1.25 + var(--leading-indic-delta));
+}
+
+:lang(ta) .prose,
+:lang(kn) .prose,
+.prose:lang(ta),
+.prose:lang(kn) {
+  line-height: var(--leading-prose);
+}
+
+:lang(ta) p,
+:lang(kn) p,
+p:lang(ta),
+p:lang(kn) {
+  line-height: var(--leading-body);
+}

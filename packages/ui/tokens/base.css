@@ -1,0 +1,110 @@
+/* Global base: canvas, focus, selection, scrollbars, numerals, forced colours and print.
+ * Flat and matte: no grain, texture or gradient backgrounds in either theme. */
+html {
+  background-color: var(--surface);
+  color: var(--ink);
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+body {
+  margin: 0;
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
+/* Focus is always visible for keyboard users: 2 px ring in --ring, offset 2 px. Never remove it. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Pointer focus stays quiet; keyboard focus still gets the ring above. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+::selection {
+  background-color: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* Tabular numerals by default for figures, tables, dates and INR amounts. */
+.num,
+table,
+time,
+[data-inr],
+.inr {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mono identifiers (case numbers, CNR, diary numbers): tabular and slashed zero. */
+.id,
+code.id,
+[data-mono-id] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+/* Touch targets: at least --hit square on coarse pointers. */
+@media (pointer: coarse) {
+  button,
+  [role='button'],
+  input[type='checkbox'],
+  input[type='radio'],
+  select,
+  summary {
+    min-width: var(--hit);
+    min-height: var(--hit);
+  }
+}
+
+/* Windows High Contrast and other forced-colour modes: defer to system colours. */
+@media (forced-colors: active) {
+  :root {
+    --ring: Highlight;
+    --accent: LinkText;
+    --line-control: CanvasText;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+/* Print: A4, ink on white, no shadows or tinted surfaces (Brief Sheet and other print views).
+ * @page cannot read custom properties in every engine, so its margin repeats --print-margin. */
+@page {
+  size: A4;
+  margin: 18mm;
+}
+
+@media print {
+  :root,
+  .dark,
+  [data-theme='dark'] {
+    color-scheme: light;
+    --print-ink: oklch(0 0 0);
+    --print-paper: oklch(1 0 0);
+    --surface: var(--print-paper);
+    --surface-raised: var(--print-paper);
+    --surface-sunken: var(--print-paper);
+    --surface-overlay: var(--print-paper);
+    --ink: var(--print-ink);
+    --ink-muted: oklch(0.3 0 0);
+    --ink-subtle: oklch(0.4 0 0);
+    --line: oklch(0.8 0 0);
+    --line-strong: oklch(0.6 0 0);
+    --accent: var(--print-ink);
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-3: none;
+    --shadow-4: none;
+  }
+
+  html,
+  body {
+    background: var(--print-paper);
+    color: var(--print-ink);
+  }
+}

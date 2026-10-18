@@ -2,7 +2,9 @@
 // ids and timestamps so two seeds produce byte-identical rows. The Playwright fixtures import these
 // constants to sign in as a role (`asUser`). Every name is invented; emails use the reserved
 // `.test` TLD, so nothing here can reach a real person.
-import { member, organization, user, WORKSPACE_ROLES } from '../schema/auth.ts';
+import { createHash } from 'node:crypto';
+
+import { invitation, member, organization, user, WORKSPACE_ROLES } from '../schema/auth.ts';
 
 import { registerSeed, type SeedDb } from './index.ts';
 
@@ -128,6 +130,89 @@ export function e2eUser(role: E2eRole, workspace: E2eWorkspaceSlug = 'chennai-so
   return found;
 }
 
+export type E2eInvitationState = 'valid' | 'expired' | 'revoked' | 'used';
+
+export interface E2eInvitation {
+  id: string;
+  /** Plaintext token for `/invite/<token>`; only its SHA-256 is seeded, as in production. */
+  token: string;
+  state: E2eInvitationState;
+  workspace: E2eWorkspaceSlug;
+  email: string;
+  role: E2eRole;
+}
+
+/** Far enough ahead that a `valid` invitation never expires during a run. */
+const E2E_INVITE_FAR_FUTURE = new Date('2099-01-01T00:00:00+05:30');
+
+/**
+ * Invitations to `chennai-solo` (#180) for the `bengaluru-chamber` viewer, who is not a member
+ * there, one per state the `/invite/<token>` page shows. The tokens are fixed, test-only strings.
+ */
+export const E2E_INVITATIONS: Record<E2eInvitationState, E2eInvitation> = {
+  valid: {
+    id: '00000000-0000-4000-8000-0000000d0001',
+    token: 'e2e-invite-valid-0000000000000000000000000',
+    state: 'valid',
+    workspace: 'chennai-solo',
+    email: e2eEmail('bengaluru-chamber', 'viewer'),
+    role: 'junior',
+  },
+  expired: {
+    id: '00000000-0000-4000-8000-0000000d0002',
+    token: 'e2e-invite-expired-00000000000000000000000',
+    state: 'expired',
+    workspace: 'chennai-solo',
+    email: e2eEmail('bengaluru-chamber', 'viewer'),
+    role: 'junior',
+  },
+  revoked: {
+    id: '00000000-0000-4000-8000-0000000d0003',
+    token: 'e2e-invite-revoked-00000000000000000000000',
+    state: 'revoked',
+    workspace: 'chennai-solo',
+    email: e2eEmail('bengaluru-chamber', 'viewer'),
+    role: 'junior',
+  },
+  used: {
+    id: '00000000-0000-4000-8000-0000000d0004',
+    token: 'e2e-invite-used-000000000000000000000000000',
+    state: 'used',
+    workspace: 'chennai-solo',
+    email: e2eEmail('bengaluru-chamber', 'viewer'),
+    role: 'junior',
+  },
+};
+
+/** SHA-256 hex, identical to `hashInvitationToken` in `@causedeck/core/workspaces`. */
+export function e2eInvitationTokenHash(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+function invitationRow(seeded: E2eInvitation, at: Date) {
+  const base = {
+    id: seeded.id,
+    organizationId: E2E_WORKSPACES[seeded.workspace].id,
+    email: seeded.email,
+    role: seeded.role,
+    inviterId: e2eUser('owner', seeded.workspace).id,
+    tokenHash: e2eInvitationTokenHash(seeded.token),
+    status: 'pending',
+    expiresAt: E2E_INVITE_FAR_FUTURE,
+    createdAt: at,
+  };
+  switch (seeded.state) {
+    case 'valid':
+      return base;
+    case 'expired':
+      return { ...base, expiresAt: at };
+    case 'revoked':
+      return { ...base, status: 'canceled', revokedAt: at };
+    case 'used':
+      return { ...base, status: 'accepted', acceptedAt: at };
+  }
+}
+
 export async function seedE2e(db: SeedDb): Promise<void> {
   const at = E2E_SEED_TIME;
   await db
@@ -201,6 +286,10 @@ export async function seedE2e(db: SeedDb): Promise<void> {
         createdAt: at,
       },
     ])
+    .onConflictDoNothing();
+  await db
+    .insert(invitation)
+    .values(Object.values(E2E_INVITATIONS).map((seeded) => invitationRow(seeded, at)))
     .onConflictDoNothing();
 }
 

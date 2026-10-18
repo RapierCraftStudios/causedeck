@@ -166,7 +166,10 @@ export const Expired: Story = {
 export const Undone: Story = {
   args: { undone: true },
   play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getByText('Undone')).toBeInTheDocument();
+    // The row's label, not a toast left over from an earlier story.
+    await expect(
+      within(canvasElement).getByText('Undone', { selector: '[data-slot="activity-undone"]' }),
+    ).toBeInTheDocument();
   },
 };
 

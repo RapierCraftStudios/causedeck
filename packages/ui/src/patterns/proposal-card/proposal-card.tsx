@@ -200,6 +200,8 @@ export function ProposalCard<T>({
   const [resolved, setResolved] = useState(false);
   const [failures, setFailures] = useState(0);
   const attempt = useRef(0);
+  // Set as soon as the current attempt fails, before React renders the restore.
+  const failed = useRef(false);
   const callbacks = useRef({ onCollapse, onConfirmed, proposal });
 
   useEffect(() => {
@@ -211,6 +213,8 @@ export function ProposalCard<T>({
     if (phase !== 'checking') return undefined;
     const timer = setTimeout(
       () => {
+        // A stalled event loop can fire this after the failure queued its restore.
+        if (failed.current) return;
         setPhase('collapsed');
         callbacks.current.onCollapse?.(callbacks.current.proposal);
       },
@@ -236,6 +240,7 @@ export function ProposalCard<T>({
   const confirm = () => {
     if (phase !== 'idle') return;
     const current = ++attempt.current;
+    failed.current = false;
     // Keep focus on the card while its buttons give way to the check (Confirm all leaves it be).
     if (innerRef.current?.contains(document.activeElement)) innerRef.current.focus();
     setResolved(false);
@@ -248,6 +253,7 @@ export function ProposalCard<T>({
         },
         () => {
           if (current !== attempt.current) return;
+          failed.current = true;
           setPhase('idle');
           setFailures((count) => count + 1);
           onConfirmFailed?.(proposal);

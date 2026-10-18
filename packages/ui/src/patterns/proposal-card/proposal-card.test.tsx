@@ -182,6 +182,37 @@ describe('ProposalCard motion', () => {
     expect(onConfirmed).not.toHaveBeenCalled();
   });
 
+  it('stays restored when the check timer fires before the failure has rendered', async () => {
+    reducedMotion(false);
+    vi.useFakeTimers();
+    let reject: (reason: Error) => void = () => undefined;
+    render(
+      <ProposalCard
+        proposal={hearing}
+        onConfirm={() =>
+          new Promise<void>((_, rej) => {
+            reject = rej;
+          })
+        }
+      />,
+    );
+    const card = cardOf('Next hearing');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(card).toHaveAttribute('data-phase', 'checking');
+    // A stalled event loop: the failure queues its restore, then the timer fires, then React renders.
+    const ticks = async (): Promise<void> => {
+      for (let tick = 0; tick < 5; tick += 1) await Promise.resolve();
+    };
+    await act(async () => {
+      await ticks(); // onConfirm has been called
+      reject(new Error('network'));
+      await ticks(); // the failure has queued its restore
+      vi.advanceTimersByTime(CONFIRM_CHECK_MS);
+    });
+    expect(card).toHaveAttribute('data-phase', 'idle');
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not confirm this change');
+  });
+
   it('is instant under prefers-reduced-motion', async () => {
     reducedMotion(true);
     vi.useFakeTimers();

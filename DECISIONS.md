@@ -349,3 +349,8 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Date:** 2026-10-18 · **Status:** Accepted (founder)
 - **Decision:** CodeQL and `dependency-review` need GitHub Advanced Security on this private repository. They now run only when the repository variable `ENABLE_GHAS=true` is set. `pnpm audit` (production deps, high/critical) and `gitleaks` (full-history secret scan) remain required and always on.
 - **Revisit if:** the org enables GHAS, or the repo becomes public.
+
+### D-044 — Tiered CI: fast checks on every PR, full suite on ship PRs
+- **Date:** 2026-10-19 · **Status:** Accepted (founder: "the CI is too extensive")
+- **Decision:** Lane PRs run the fast tier: change-aware lint/format, typecheck, unit tests and build, plus `audit`, `gitleaks` and the path-filtered Storybook build. The full tier adds `e2e`, `lighthouse` and visual regression. It runs on ship PRs into `staging`/`main`, on pushes to `staging`/`main`, nightly, on manual dispatch, and on any PR labelled `full-ci`. Push triggers on `milestone/**` were removed, so a change no longer runs CI twice (push + PR). Details: `docs/engineering/ci.md` § Tiers.
+- **Why:** The full suite on every lane PR cost about 20–30 min per PR and duplicated runner usage. The quality gate still holds because every change passes the full suite before reaching `staging`.

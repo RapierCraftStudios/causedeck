@@ -1,0 +1,60 @@
+# Storybook for packages/ui (#129): build it, run every story as a test (play-function interactions
+# plus axe in light and dark, via @storybook/addon-vitest) with the reduced-motion browser tests,
+# enforce the story and bundle checks, and publish the static Storybook as an artifact.
+name: Storybook
+
+on:
+  pull_request:
+    paths:
+      - 'packages/ui/**'
+      - 'packages/config/tailwind/**'
+      - 'packages/config/eslint/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/storybook.yml'
+  push:
+    branches: [main, staging, 'milestone/**']
+    paths:
+      - 'packages/ui/**'
+      - 'packages/config/tailwind/**'
+      - 'packages/config/eslint/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/storybook.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storybook-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  storybook:
+    name: storybook
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Install Chromium for Vitest browser mode
+        run: pnpm --filter @causedeck/ui exec playwright install --with-deps chromium
+      - name: Check every component has its stories
+        run: pnpm --filter @causedeck/ui check:stories
+      - name: Bundle size budget
+        run: pnpm --filter @causedeck/ui check:bundle
+      - name: Build Storybook
+        run: pnpm --filter @causedeck/ui build-storybook
+      - name: Interaction, axe (light and dark) and reduced-motion tests
+        run: pnpm --filter @causedeck/ui test:storybook
+      - name: Upload Storybook
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: storybook-static
+          path: packages/ui/storybook-static
+          if-no-files-found: error
+          retention-days: 14

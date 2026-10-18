@@ -1,0 +1,17 @@
+/* Spinner rotation. Its period is derived from the motion tokens; under reduced motion it stops
+ * (a static arc), so nothing transforms. */
+@keyframes cd-spinner-rotate {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.cd-spinner {
+  animation: cd-spinner-rotate calc(var(--dur-page) * 2.5) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-spinner {
+    animation: none;
+  }
+}

@@ -12,6 +12,19 @@
     "./button": "./src/components/button/index.ts",
     "./spinner": "./src/components/spinner/index.ts",
     "./kbd": "./src/components/kbd/index.ts",
+    "./checkbox": "./src/components/checkbox/index.ts",
+    "./combobox": "./src/components/combobox/index.ts",
+    "./field": "./src/components/field/index.ts",
+    "./form": "./src/components/form/index.ts",
+    "./input": "./src/components/input/index.ts",
+    "./label": "./src/components/label/index.ts",
+    "./radio-group": "./src/components/radio-group/index.ts",
+    "./select": "./src/components/select/index.ts",
+    "./slider": "./src/components/slider/index.ts",
+    "./switch": "./src/components/switch/index.ts",
+    "./textarea": "./src/components/textarea/index.ts",
+    "./toggle": "./src/components/toggle/index.ts",
+    "./toggle-group": "./src/components/toggle-group/index.ts",
     "./hooks": "./src/hooks/index.ts",
     "./motion": "./src/lib/motion.ts",
     "./tokens.css": "./tokens/index.css",
@@ -32,14 +45,17 @@
     "gen:tokens": "tsx scripts/gen-token-docs.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "lucide-react": "catalog:",
     "motion": "catalog:",
     "radix-ui": "catalog:",
+    "react-hook-form": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
-    "tw-animate-css": "catalog:"
+    "tw-animate-css": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",

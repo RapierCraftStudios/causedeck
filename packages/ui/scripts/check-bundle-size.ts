@@ -21,6 +21,22 @@ export const BUDGETS: Record<string, number> = {
   './button': 6 * 1024,
   './spinner': 6 * 1024,
   './kbd': 6 * 1024,
+  './input': 6 * 1024,
+  './textarea': 6 * 1024,
+  './label': 6 * 1024,
+  './field': 6 * 1024,
+  './toggle': 6 * 1024,
+  './switch': 6 * 1024,
+  // Radix primitives with roving focus, collections or measured layout.
+  './checkbox': 10 * 1024,
+  './toggle-group': 12 * 1024,
+  './radio-group': 14 * 1024,
+  './slider': 14 * 1024,
+  // react-hook-form and the zod resolver (zod itself ships with the app's schemas).
+  './form': 22 * 1024,
+  // Floating layers: Radix Popper (floating-ui), focus and dismissable layers, portal.
+  './combobox': 34 * 1024,
+  './select': 40 * 1024,
 };
 
 export const EXTERNAL = ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'];

@@ -13,8 +13,21 @@ export {
 } from '../tokens/tokens';
 
 export * from './components/button';
+export * from './components/checkbox';
+export * from './components/combobox';
+export * from './components/field';
+export * from './components/form';
+export * from './components/input';
 export * from './components/kbd';
+export * from './components/label';
+export * from './components/radio-group';
+export * from './components/select';
+export * from './components/slider';
 export * from './components/spinner';
+export * from './components/switch';
+export * from './components/textarea';
+export * from './components/toggle';
+export * from './components/toggle-group';
 export * from './hooks';
 export {
   fadeUp,

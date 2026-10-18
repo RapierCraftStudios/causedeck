@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -23,8 +23,15 @@ describe('bundle check', () => {
   });
 
   it('gives every component a subpath export', () => {
-    for (const name of ['button', 'spinner', 'kbd']) {
+    const components = readdirSync(path.join(import.meta.dirname, '..', 'src', 'components'), {
+      withFileTypes: true,
+    })
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith('_'))
+      .map((entry) => entry.name);
+    expect(components).toEqual(expect.arrayContaining(['button', 'input', 'combobox', 'form']));
+    for (const name of components) {
       expect(pkg.exports[`./${name}`]).toBe(`./src/components/${name}/index.ts`);
+      expect(BUDGETS[`./${name}`], `budget for ./${name}`).toBeGreaterThan(0);
     }
   });
 

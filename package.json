@@ -14,6 +14,8 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "env:example": "pnpm --filter @causedeck/config env:example",
+    "env:example:check": "pnpm --filter @causedeck/config env:example:check",
     "audit:prod": "pnpm audit --prod --audit-level high",
     "prepare": "lefthook install"
   },

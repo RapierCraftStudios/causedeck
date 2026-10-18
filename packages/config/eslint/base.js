@@ -26,6 +26,26 @@ export const appImportPattern = {
   message: 'Packages must not import apps (spike §2 dependency rules).',
 };
 
+/** Server env holds secrets; client modules use `@causedeck/config/env/client` instead. */
+export const serverEnvImportPath = {
+  name: '@causedeck/config/env',
+  message:
+    'Server env must not reach client code. Import `clientEnv` from `@causedeck/config/env/client`.',
+};
+
+/** Files treated as client modules (browser bundles). */
+export const CLIENT_FILE_GLOBS = [
+  '**/*.client.{ts,tsx}',
+  '**/components/**/*.{ts,tsx}',
+  '**/packages/ui/**/*.{ts,tsx}',
+];
+
+/** The only places allowed to read `process.env`; everything else goes through the env schema. */
+export const PROCESS_ENV_ALLOWED_GLOBS = [
+  '**/packages/config/src/env/**',
+  '**/packages/config/scripts/**',
+];
+
 export const ignores = {
   ignores: [
     '**/node_modules/**',
@@ -73,6 +93,8 @@ export const base = tseslint.config(
       '@typescript-eslint/no-unsafe-unary-minus': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-restricted-imports': ['error', { patterns: deepImportPatterns }],
+      // Read configuration through `@causedeck/config/env` (spike §3.2), never `process.env`.
+      'no-process-env': 'error',
       'import-x/no-cycle': 'error',
       'import-x/no-self-import': 'error',
       'import-x/no-duplicates': 'error',
@@ -88,7 +110,11 @@ export const base = tseslint.config(
       'unicorn/throw-new-error': 'error',
       'unicorn/prefer-type-error': 'error',
       'unicorn/no-useless-spread': 'error',
-      'unicorn/filename-case': ['error', { cases: { kebabCase: true, pascalCase: true } }],
+      'unicorn/filename-case': [
+        'error',
+        // `__tests__`-style directories are a test-runner convention, not a naming violation.
+        { cases: { kebabCase: true, pascalCase: true }, ignore: [/^__[a-z]+__$/] },
+      ],
     },
   },
   boundaries,
@@ -97,6 +123,29 @@ export const base = tseslint.config(
     rules: {
       'no-restricted-imports': ['error', { patterns: [...deepImportPatterns, appImportPattern] }],
     },
+  },
+  {
+    files: CLIENT_FILE_GLOBS,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: [serverEnvImportPath], patterns: deepImportPatterns },
+      ],
+    },
+  },
+  {
+    // Client modules inside packages keep the package-only app import ban.
+    files: CLIENT_FILE_GLOBS.map((glob) => ['**/packages/*/**', glob]),
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: [serverEnvImportPath], patterns: [...deepImportPatterns, appImportPattern] },
+      ],
+    },
+  },
+  {
+    files: PROCESS_ENV_ALLOWED_GLOBS,
+    rules: { 'no-process-env': 'off' },
   },
   {
     // Plain JS config files and root-level TS config files are not part of any tsconfig project.

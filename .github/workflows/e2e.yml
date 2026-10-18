@@ -10,9 +10,12 @@
 name: E2E
 
 on:
+  # Full tier (docs/engineering/ci.md): runs on ship PRs into staging/main, pushes to staging/main,
+  # nightly, manual dispatch, or a PR labelled `full-ci`. Lane PRs into milestone/* skip it.
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   push:
-    branches: [main, staging, 'milestone/**']
+    branches: [main, staging]
   schedule:
     # 02:00 IST: the flake hunt (`@smoke` x5, no retries).
     - cron: '30 20 * * *'
@@ -38,7 +41,7 @@ env:
 jobs:
   e2e:
     name: e2e (${{ matrix.shard }}/2)
-    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots }}
+    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -83,7 +86,7 @@ jobs:
 
   lighthouse:
     name: lighthouse
-    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots }}
+    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

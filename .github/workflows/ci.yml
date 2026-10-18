@@ -5,7 +5,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, staging, 'milestone/**']
+    branches: [main, staging]
   merge_group:
 
 permissions:

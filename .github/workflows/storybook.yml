@@ -8,6 +8,7 @@ name: Storybook
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - 'packages/ui/**'
       - 'packages/config/tailwind/**'
@@ -16,7 +17,7 @@ on:
       - 'pnpm-workspace.yaml'
       - '.github/workflows/storybook.yml'
   push:
-    branches: [main, staging, 'milestone/**']
+    branches: [main, staging]
     paths:
       - 'packages/ui/**'
       - 'packages/config/tailwind/**'
@@ -36,6 +37,7 @@ concurrency:
 jobs:
   storybook:
     name: storybook
+    if: ${{ (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -64,6 +66,8 @@ jobs:
 
   visual:
     name: visual
+    # Full tier only (docs/engineering/ci.md): ship PRs, staging/main pushes, or the `full-ci` label.
+    if: ${{ (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # Pinned Playwright image (Linux Chromium and fonts): the only place baselines are compared and

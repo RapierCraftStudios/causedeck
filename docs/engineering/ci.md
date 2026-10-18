@@ -24,6 +24,19 @@ Each job is matrix-free, runs on `ubuntu-latest` with `timeout-minutes: 15`, and
 | `test` | Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports` artifact (`coverage/` and `reports/junit.xml` per package) |
 | `build` | `turbo run build` |
 
+## Tiers (D-044)
+
+CI runs in two tiers so lane PRs stay fast and the expensive suites run once per milestone.
+
+| Tier | When | Jobs |
+| --- | --- | --- |
+| **Fast** (every PR) | Every pull request, including lane PRs into `milestone/*` | `lint` (format, ADR, docs links, affected lint), `typecheck`, `test`, `build` — change-aware via `infra/scripts/ci-affected.sh`; `audit`, `gitleaks`; `storybook` build + interaction/axe tests when `packages/ui` changes (path filter); `actionlint` when `.github/` changes |
+| **Full** | Ship PRs into `staging` or `main`, pushes to `staging`/`main`, the nightly schedule, manual dispatch, or any PR labelled `full-ci` | Everything in Fast, plus `e2e` (2 shards), `lighthouse`, `visual` (Storybook visual regression) |
+
+- Pushes to `milestone/**` no longer trigger workflows: every change there arrives through a PR that already ran CI (this removed the duplicate push + PR runs).
+- To run the full suite on a lane PR, add the `full-ci` label; other label events do not re-run anything.
+- `codeql` and `dependency-review` stay opt-in behind `ENABLE_GHAS` (D-043).
+
 ## Required status checks
 
 Configure branch protection (or a ruleset) on `main`, `staging` and `milestone/**` to require exactly these checks:

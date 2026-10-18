@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 
 import { NOW, OBLIGATIONS } from '../__fixtures__/trust';
+import { OfflineBanner } from '../states/offline-banner';
 import { ObligationEmpty, ObligationRow, ObligationRowSkeleton } from './obligation-row';
 
 const meta = {
@@ -157,4 +158,21 @@ export const PermissionDenied: Story = {
 
 export const Empty: Story = {
   render: () => <ObligationEmpty />,
+};
+
+/** Offline: the banner says when the list was saved; row actions are disabled with the reason. */
+export const Offline: Story = {
+  args: { offline: true },
+  render: (args) => (
+    <div className="flex flex-col gap-3">
+      <OfflineBanner savedAt={NOW} />
+      <ObligationRow {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getByText(/^You are offline\. Showing saved data/),
+    ).toBeVisible();
+    await expect(moreOf(canvasElement)).toBeDisabled();
+  },
 };

@@ -94,7 +94,7 @@ export function CourtItemChip({
         ·
       </span>
       {comma}
-      <span data-slot="court-item-hall" className="min-w-0 truncate">
+      <span data-slot="court-item-hall" className="min-w-0 wrap-break-word">
         {hall}
       </span>
       {comma}
@@ -116,14 +116,14 @@ export function CourtItemChip({
       )}
     </>
   );
-  const row = 'inline-flex min-w-0 items-center gap-2';
+  const row = 'inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-start';
 
   return (
     <div
       data-slot="court-item-chip"
       data-stage={stage}
       className={cn(
-        'border-line bg-surface-raised text-ink-muted inline-flex max-w-full items-center gap-2',
+        'border-line bg-surface-raised text-ink-muted inline-flex max-w-full flex-wrap items-center gap-2',
         'rounded-full border py-1 ps-3 pe-1.5 font-sans text-sm forced-colors:border-current',
         className,
       )}

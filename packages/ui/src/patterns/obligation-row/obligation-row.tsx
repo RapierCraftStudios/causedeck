@@ -226,11 +226,13 @@ export function ObligationRow({
         onPointerCancel={cancelSwipe}
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className={cn('text-ink truncate text-sm font-medium', done && 'line-through')}>
+          <span
+            className={cn('text-ink text-sm font-medium wrap-break-word', done && 'line-through')}
+          >
             {title}
           </span>
           {matter === undefined ? null : (
-            <span className="text-ink-muted truncate text-xs">{matter}</span>
+            <span className="text-ink-muted text-xs wrap-break-word">{matter}</span>
           )}
           <span
             data-slot="obligation-due"

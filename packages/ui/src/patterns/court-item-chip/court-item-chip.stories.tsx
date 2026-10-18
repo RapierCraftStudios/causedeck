@@ -1,8 +1,11 @@
-// check-stories: n/a Disabled, Invalid (a listing has no disabled or invalid state; it comes from the cause list)
+// check-stories: n/a Disabled (a listing has no disabled state; selecting it only navigates, also offline)
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 
-import { COURT_ITEMS, PATTERN_INDIC } from '../__fixtures__/trust';
+import { COURT_ITEMS, NOW, PATTERN_INDIC } from '../__fixtures__/trust';
+import { ErrorState } from '../states/error-state';
+import { OfflineBanner } from '../states/offline-banner';
+import { PermissionDenied as PermissionDeniedScreen } from '../states/permission-denied';
 import { LISTING_STAGES } from '../types';
 import { CourtItemChip, CourtItemChipSkeleton } from './court-item-chip';
 
@@ -116,4 +119,44 @@ export const Stages: Story = {
       ))}
     </div>
   ),
+};
+
+/** The cause list failed to load: what happened, Try again and support, in place of the chips. */
+export const Invalid: Story = {
+  render: () => (
+    <ErrorState
+      title="Could not load today's cause list."
+      description="The court website did not respond. Your saved list is still available."
+      onRetry={fn()}
+      supportHref="mailto:support@lawyer-os.in"
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getByRole('button', { name: 'Try again' })).toBeVisible();
+  },
+};
+
+/** Offline: the saved cause list stays readable under the banner. */
+export const Offline: Story = {
+  render: (args) => (
+    <div className="flex flex-col items-start gap-3">
+      <OfflineBanner savedAt={NOW} />
+      <CourtItemChip {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getByText(/^You are offline\. Showing saved data/),
+    ).toBeVisible();
+  },
+};
+
+/** No access to this matter's cause list. */
+export const PermissionDenied: Story = {
+  render: () => <PermissionDeniedScreen />,
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getByText('You do not have access to this. Ask the workspace owner.'),
+    ).toBeVisible();
+  },
 };

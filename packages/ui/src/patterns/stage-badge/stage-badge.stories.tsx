@@ -1,8 +1,9 @@
-// check-stories: n/a Hover, FocusVisible, Active, Disabled, Loading, Invalid (static, non-interactive label)
+// check-stories: n/a Hover, FocusVisible, Active, Disabled, Invalid (static, non-interactive label)
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect } from 'storybook/test';
 
 import { PATTERN_INDIC } from '../__fixtures__/trust';
+import { PatternSkeleton } from '../states/loading-skeletons';
 import { LISTING_STAGES, PROCEEDING_STAGES } from '../types';
 import { StageBadge } from './stage-badge';
 import { STAGE_ORDER } from './stage-map';
@@ -89,4 +90,9 @@ export const Kannada: Story = {
       <StageBadge stage="listed" label={PATTERN_INDIC.kn.listed} />
     </div>
   ),
+};
+
+/** The 22 px placeholder while the matter loads. */
+export const Loading: Story = {
+  render: () => <PatternSkeleton pattern="stage-badge" />,
 };

@@ -28,6 +28,19 @@ const DISPLAY_AND_FEEDBACK = {
   chart: ['ChartContainer', 'ChartTooltip', 'ChartTooltipContent', 'ChartLegend'],
 } as const;
 
+/** Data and date components from #133: folder name and its main named exports. */
+const DATA_AND_DATES = {
+  table: ['Table', 'TableHeader', 'TableBody', 'TableRow', 'TableHead', 'TableCell'],
+  'data-table': ['DataTable', 'createDataTableColumnHelper', 'DEFAULT_DATA_TABLE_LABELS'],
+  calendar: ['Calendar', 'DEFAULT_CALENDAR_LABELS', 'IST_TIME_ZONE'],
+  'date-picker': [
+    'DatePicker',
+    'parseDateInput',
+    'formatDisplayDate',
+    'DEFAULT_DATE_PICKER_LABELS',
+  ],
+} as const;
+
 describe('@causedeck/ui', () => {
   it('exports its package name', () => {
     expect(packageName).toBe('@causedeck/ui');
@@ -102,6 +115,27 @@ describe('@causedeck/ui', () => {
       }
     },
   );
+
+  it.each(Object.entries(DATA_AND_DATES))(
+    'exports %s from the root and a per-component subpath',
+    async (name, exports) => {
+      expect(pkg.exports[`./${name}`]).toBe(`./src/components/${name}/index.ts`);
+      const subpath = (await import(`./components/${name}/index.ts`)) as Record<string, unknown>;
+      for (const exported of exports) {
+        expect(ui).toHaveProperty(exported);
+        expect(subpath[exported]).toBe((ui as Record<string, unknown>)[exported]);
+      }
+    },
+  );
+
+  it('ships the data-state copy from #8 as English label defaults', () => {
+    expect(ui.DEFAULT_DATA_TABLE_LABELS).toMatchObject({
+      offline: 'You are offline. Showing saved data.',
+      denied: 'You do not have access to this. Ask the workspace owner.',
+      retry: 'Try again',
+    });
+    expect(ui.DEFAULT_DATE_PICKER_LABELS.placeholder).toBe('dd/mm/yyyy');
+  });
 
   it('ships stories, tests and the shared state stories for every component', () => {
     expect(findStoryProblems(path.join(import.meta.dirname, 'components'))).toEqual([]);

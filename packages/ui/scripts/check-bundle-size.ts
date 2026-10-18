@@ -42,6 +42,7 @@ export const BUDGETS: Record<string, number> = {
   './progress': 6 * KB,
   './separator': 6 * KB,
   './skeleton': 6 * KB,
+  './table': 6 * KB,
   // Roving focus and collection.
   './accordion': 12 * KB,
   './tabs': 12 * KB,
@@ -67,6 +68,13 @@ export const BUDGETS: Record<string, number> = {
   './resizable': 24 * KB,
   './sonner': 16 * KB,
   './chart': 96 * KB,
+  // react-day-picker with date-fns and @date-fns/tz (about 23 KB); the date picker adds the
+  // popover layer, date-fns parse and format and the en-IN locale on top.
+  './calendar': 25 * KB,
+  './date-picker': 58 * KB,
+  // TanStack Table and Virtual plus what the data table composes: the column menu (the dropdown
+  // menu alone is about 36 KB), checkbox, toggle group, skeleton and alert.
+  './data-table': 70 * KB,
   './input': 6 * KB,
   './textarea': 6 * KB,
   './label': 6 * KB,

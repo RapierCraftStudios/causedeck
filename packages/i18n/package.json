@@ -5,7 +5,8 @@
   "description": "Message catalogs (en/ta/kn) and formatters.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./locales": "./src/locales.ts"
   },
   "scripts": {
     "lint": "eslint .",

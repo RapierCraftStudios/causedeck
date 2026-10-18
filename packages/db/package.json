@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@causedeck/config": "workspace:*",
+    "@causedeck/i18n": "workspace:*",
     "drizzle-orm": "catalog:",
     "postgres": "catalog:"
   },

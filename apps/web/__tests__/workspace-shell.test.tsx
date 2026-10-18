@@ -1,0 +1,323 @@
+// @vitest-environment jsdom
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import type { ReactElement } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { PlaceholderRoute } from '../components/shell/placeholder-page.tsx';
+import { WORKSPACE_ROUTES } from '../lib/nav.ts';
+import { setErrorReporter, type ErrorReporter } from '../lib/report-error.ts';
+
+import { catalogs, fakeGetTranslations, type TestLocale } from './helpers/intl.ts';
+
+const state = vi.hoisted((): { locale: TestLocale; dev: boolean } => ({ locale: 'en', dev: true }));
+
+vi.mock('next/navigation', () => ({
+  notFound: () => {
+    throw new Error('NEXT_NOT_FOUND');
+  },
+  redirect: (url: string) => {
+    throw new Error(`NEXT_REDIRECT ${url}`);
+  },
+}));
+vi.mock('next-intl/server', () => ({
+  getTranslations: (namespace?: string) => fakeGetTranslations(state.locale)(namespace),
+}));
+vi.mock('../lib/env.ts', () => ({ isDev: () => state.dev }));
+
+const { default: WorkspaceLayout } = await import('../app/(app)/w/[slug]/layout.tsx');
+const { default: WorkspaceError } = await import('../app/(app)/w/[slug]/error.tsx');
+const { default: WorkspaceLoading } = await import('../app/(app)/w/[slug]/loading.tsx');
+const { default: WorkspaceNotFound } = await import('../app/(app)/w/[slug]/not-found.tsx');
+const { default: SettingsPage } = await import('../app/(app)/w/[slug]/settings/page.tsx');
+const { default: AccountPage } = await import('../app/(app)/account/page.tsx');
+const { placeholderPage } = await import('../components/shell/placeholder-page.tsx');
+
+type PageComponent = ReturnType<typeof placeholderPage>;
+
+const PAGES: Record<PlaceholderRoute, PageComponent> = {
+  today: (await import('../app/(app)/w/[slug]/today/page.tsx')).default,
+  tomorrow: (await import('../app/(app)/w/[slug]/tomorrow/page.tsx')).default,
+  calendar: (await import('../app/(app)/w/[slug]/calendar/page.tsx')).default,
+  inbox: (await import('../app/(app)/w/[slug]/inbox/page.tsx')).default,
+  matters: (await import('../app/(app)/w/[slug]/matters/page.tsx')).default,
+  briefs: (await import('../app/(app)/w/[slug]/briefs/page.tsx')).default,
+  obligations: (await import('../app/(app)/w/[slug]/obligations/page.tsx')).default,
+  drafts: (await import('../app/(app)/w/[slug]/drafts/page.tsx')).default,
+  memory: (await import('../app/(app)/w/[slug]/memory/page.tsx')).default,
+  people: (await import('../app/(app)/w/[slug]/people/page.tsx')).default,
+  courts: (await import('../app/(app)/w/[slug]/courts/page.tsx')).default,
+  activity: (await import('../app/(app)/w/[slug]/activity/page.tsx')).default,
+  billing: (await import('../app/(app)/w/[slug]/billing/page.tsx')).default,
+  invoices: (await import('../app/(app)/w/[slug]/invoices/page.tsx')).default,
+  limitation: (await import('../app/(app)/w/[slug]/limitation/page.tsx')).default,
+  insights: (await import('../app/(app)/w/[slug]/insights/page.tsx')).default,
+};
+
+type PlaceholderId = PlaceholderRoute;
+const PLACEHOLDER_ROUTES = WORKSPACE_ROUTES.filter(
+  (route): route is PlaceholderId => route !== 'settings',
+);
+const FLAGGED = new Set(['invoices', 'limitation']);
+
+/** Flagged pages rebuilt with the flag on, so every route can be rendered. */
+function pageFor(route: PlaceholderId): PageComponent {
+  return FLAGGED.has(route) ? placeholderPage(route, { isEnabled: () => true }) : PAGES[route];
+}
+
+const props = (slug: string, query: Record<string, string> = {}) => ({
+  params: Promise.resolve({ slug }),
+  searchParams: Promise.resolve(query),
+});
+
+const withIntl = (ui: ReactElement, locale: TestLocale = 'en') =>
+  render(
+    <NextIntlClientProvider locale={locale} messages={catalogs[locale]} timeZone="Asia/Kolkata">
+      {ui}
+    </NextIntlClientProvider>,
+  );
+
+let online = true;
+let reporter: ReturnType<typeof vi.fn<ErrorReporter>>;
+
+beforeEach(() => {
+  state.locale = 'en';
+  state.dev = true;
+  online = true;
+  Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
+  reporter = vi.fn<ErrorReporter>();
+  setErrorReporter(reporter);
+});
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+describe('workspace layout', () => {
+  it('calls notFound and never renders children for a non-member workspace', async () => {
+    const children = vi.fn(() => <p>secret matter</p>);
+    const Child = children;
+    for (const slug of ['other-chambers', 'unknown']) {
+      await expect(
+        WorkspaceLayout({ children: <Child />, params: Promise.resolve({ slug }) }),
+      ).rejects.toThrow('NEXT_NOT_FOUND');
+    }
+    expect(children).not.toHaveBeenCalled();
+  });
+
+  it('renders children inside main#main for a member', async () => {
+    render(
+      await WorkspaceLayout({
+        children: <p>content</p>,
+        params: Promise.resolve({ slug: 'demo' }),
+      }),
+    );
+    const main = document.getElementById('main');
+    expect(main?.tagName).toBe('MAIN');
+    expect(main?.dataset.workspaceSlug).toBe('demo');
+    expect(main?.textContent).toBe('content');
+  });
+
+  it('placeholder pages refuse a non-member workspace on their own', async () => {
+    await expect(PAGES.today(props('other-chambers'))).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+});
+
+describe('placeholder pages', () => {
+  it('exist for every workspace route except settings', () => {
+    const dir = path.join(import.meta.dirname, '../app/(app)/w/[slug]');
+    for (const route of WORKSPACE_ROUTES) {
+      expect(existsSync(path.join(dir, route, 'page.tsx')), route).toBe(true);
+    }
+    expect(Object.keys(PAGES).sort()).toEqual([...PLACEHOLDER_ROUTES].sort());
+  });
+
+  it.each(PLACEHOLDER_ROUTES)('%s renders its title and designed empty state', async (route) => {
+    withIntl(await pageFor(route)(props('demo')));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(catalogs.en.nav[route]);
+    const empty = document.querySelector('[data-pattern-state="empty"]');
+    expect(empty?.textContent).toContain(catalogs.en.shell.pages[route].empty);
+    expect(screen.getByText(catalogs.en.shell.pages[route].description)).toBeTruthy();
+  });
+
+  it('uses the #11 design-spec empty copy verbatim', async () => {
+    const spec: Partial<Record<PlaceholderId, string>> = {
+      today: 'No hearings today. Forward a cause list to see your court day.',
+      inbox: 'Your inbox is clear.',
+      matters: 'No matters yet. Import or add your first matter.',
+      obligations: 'No open obligations.',
+      courts: 'Choose your courts to get started.',
+    };
+    for (const [route, copy] of Object.entries(spec)) {
+      withIntl(await pageFor(route as PlaceholderId)(props('demo')));
+      expect(document.querySelector('[data-pattern-state="empty"]')?.textContent).toBe(copy);
+      cleanup();
+    }
+  });
+
+  it.each(PLACEHOLDER_ROUTES)(
+    '%s shows the loading skeleton under ?__state=loading in dev',
+    async (route) => {
+      withIntl(await pageFor(route)(props('demo', { __state: 'loading' })));
+      expect(screen.getByRole('status').textContent).toContain(catalogs.en.shell.loading);
+      expect(document.querySelector('[data-slot="route-skeleton"]')).not.toBeNull();
+      expect(document.querySelector('[data-pattern-state="empty"]')).toBeNull();
+    },
+  );
+
+  it.each(PLACEHOLDER_ROUTES)(
+    '%s throws to the error boundary under ?__state=error in dev',
+    async (route) => {
+      await expect(pageFor(route)(props('demo', { __state: 'error' }))).rejects.toThrow();
+    },
+  );
+
+  it('ignores the __state toggle outside development', async () => {
+    state.dev = false;
+    withIntl(await PAGES.today(props('demo', { __state: 'loading' })));
+    expect(document.querySelector('[data-slot="route-skeleton"]')).toBeNull();
+    expect(document.querySelector('[data-pattern-state="empty"]')).not.toBeNull();
+    cleanup();
+    await expect(PAGES.today(props('demo', { __state: 'error' }))).resolves.toBeTruthy();
+  });
+
+  it.each(['billing', 'invoices', 'limitation', 'insights'] as const)(
+    '%s renders permission-denied when the stub role lacks permission',
+    async (route) => {
+      withIntl(await pageFor(route)(props('clerk-desk')));
+      const denied = document.querySelector('[data-pattern-state="permission-denied"]');
+      expect(denied?.textContent).toContain('You do not have access to this area.');
+      expect(screen.getByRole('button', { name: 'Request access' })).toBeTruthy();
+      expect(document.querySelector('[data-pattern-state="empty"]')).toBeNull();
+    },
+  );
+
+  it('keeps flagged pages behind notFound while the flag is off (the default)', async () => {
+    await expect(PAGES.invoices(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(PAGES.limitation(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
+  it('shows the offline banner only while navigator.onLine is false', async () => {
+    online = false;
+    withIntl(await PAGES.today(props('demo')));
+    const banner = () => document.querySelector('[data-pattern-state="offline"]');
+    expect(banner()?.textContent).toContain('You are offline.');
+
+    online = true;
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(banner()).toBeNull();
+
+    online = false;
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    expect(banner()).not.toBeNull();
+  });
+
+  it('renders no offline banner when online', async () => {
+    withIntl(await PAGES.inbox(props('demo')));
+    expect(document.querySelector('[data-pattern-state="offline"]')).toBeNull();
+  });
+});
+
+describe('workspace boundaries', () => {
+  function leakyError(): Error & { digest?: string } {
+    const error: Error & { digest?: string } = new Error('SELECT secret FROM matters');
+    error.digest = 'd1g35t';
+    return error;
+  }
+
+  it('error.tsx shows the designed copy and digest, never the message, and retries', () => {
+    const reset = vi.fn();
+    const error = leakyError();
+    withIntl(<WorkspaceError error={error} reset={reset} />);
+
+    expect(document.querySelector('[data-pattern-state="error"]')?.textContent).toContain(
+      'Something went wrong loading this page.',
+    );
+    expect(document.body.textContent).toContain('d1g35t');
+    expect(document.body.textContent).not.toContain('SELECT');
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(reset).toHaveBeenCalledOnce();
+    expect(reporter).toHaveBeenCalledWith(error, { boundary: 'route', digest: 'd1g35t' });
+  });
+
+  it('error.tsx copies the error ID', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    withIntl(<WorkspaceError error={leakyError()} reset={() => undefined} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copy error ID' }));
+      await Promise.resolve();
+    });
+    expect(writeText).toHaveBeenCalledWith('d1g35t');
+    expect(screen.getByRole('button', { name: 'Error ID copied' })).toBeTruthy();
+  });
+
+  it('loading.tsx renders the route skeleton', () => {
+    withIntl(<WorkspaceLoading />);
+    expect(screen.getByRole('status').textContent).toContain('Loading');
+  });
+
+  it('not-found.tsx renders the not-found state without workspace data', () => {
+    withIntl(<WorkspaceNotFound />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Page not found');
+    expect(document.querySelector('[data-pattern-state="not-found"]')).not.toBeNull();
+  });
+});
+
+describe('settings and account', () => {
+  it('settings redirects to settings/profile', async () => {
+    await expect(SettingsPage({ params: Promise.resolve({ slug: 'demo' }) })).rejects.toThrow(
+      'NEXT_REDIRECT /w/demo/settings/profile',
+    );
+  });
+
+  it('account renders its placeholder', async () => {
+    render(await AccountPage());
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Account');
+    expect(document.getElementById('main')).not.toBeNull();
+  });
+});
+
+describe('localised strings', () => {
+  /** Every en string under nav and shell that differs from its ta stub. */
+  function enOnly(en: unknown, ta: unknown): string[] {
+    if (typeof en === 'string') return en !== ta ? [en] : [];
+    if (typeof en !== 'object' || en === null) return [];
+    return Object.entries(en).flatMap(([key, child]) =>
+      enOnly(child, (ta as Record<string, unknown>)[key]),
+    );
+  }
+  const leaks = [
+    ...enOnly(catalogs.en.nav, catalogs.ta.nav),
+    ...enOnly(catalogs.en.shell, catalogs.ta.shell),
+  ].filter((text) => text.length > 3);
+
+  it.each(PLACEHOLDER_ROUTES)('%s renders only ta strings under the ta catalog', async (route) => {
+    state.locale = 'ta';
+    online = false;
+    withIntl(await pageFor(route)(props('demo')), 'ta');
+    const text = document.body.textContent;
+    expect(text).toContain(catalogs.ta.shell.pages[route].empty);
+    for (const leak of leaks) expect(text).not.toContain(leak);
+  });
+
+  it('permission-denied and error screens render ta strings', async () => {
+    state.locale = 'ta';
+    withIntl(await pageFor('billing')(props('clerk-desk')), 'ta');
+    withIntl(<WorkspaceError error={new Error('x')} reset={() => undefined} />, 'ta');
+    const text = document.body.textContent;
+    expect(text).toContain(catalogs.ta.shell.permissionDenied.message);
+    expect(text).toContain(catalogs.ta.shell.error.description);
+    for (const leak of leaks) expect(text).not.toContain(leak);
+  });
+});

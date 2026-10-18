@@ -25,6 +25,8 @@ on:
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - '.github/workflows/storybook.yml'
+  schedule:
+    - cron: '0 21 * * *' # nightly 02:30 IST: visual regression report
   workflow_dispatch:
 
 permissions:
@@ -67,7 +69,9 @@ jobs:
   visual:
     name: visual (${{ matrix.shard }}/4)
     # Full tier only (docs/engineering/ci.md): ship PRs, staging/main pushes, or the `full-ci` label.
-    if: ${{ (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
+    # Report-only (D-045): nightly, manual dispatch, or a PR labelled full-ci. Not a ship gate.
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'full-ci') && (github.event.action != 'labeled' || github.event.label.name == 'full-ci')) }}
+    continue-on-error: true
     runs-on: ubuntu-latest
     # ~4,500 screenshots (every story x light/dark x 360/768/1280): sharded 4 ways so a shard takes
     # ~10-12 min on a 2-vCPU runner instead of one 45-min job (D-044).

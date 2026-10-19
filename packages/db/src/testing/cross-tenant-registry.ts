@@ -43,6 +43,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   blob: DB_TABLES_TEST,
   saas_invoice: DB_TABLES_TEST,
   saas_invoice_line: DB_TABLES_TEST,
+  matter_restriction: DB_TABLES_TEST,
 };
 
 /**
@@ -155,6 +156,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'inserts under withWorkspace; ws_isolation rejects a row for another workspace',
   },
+  restrictMatter: denies,
+  assertMatterReadable: denies,
   enqueueNotificationDelivery: {
     test: CORE_SERVICES_TEST,
     kind: 'caller-checked',

@@ -73,6 +73,12 @@ async function aInvitations(f: Fixture) {
   );
 }
 
+async function aRestrictions(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.matterRestriction).orderBy(schema.matterRestriction.id),
+  );
+}
+
 async function aWorkspace(f: Fixture) {
   const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
@@ -677,6 +683,35 @@ const CASES: Record<string, Case> = {
     const mine = targets.filter((t) => t.workspaceId === f.a.id || t.workspaceId === f.b.id);
     expect(mine).toHaveLength(2);
     for (const t of mine) expect(Object.keys(t).sort()).toEqual(['digestDate', 'workspaceId']);
+  },
+  restrictMatter: async (f) => {
+    const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
+    const before = await aRestrictions(f);
+    const input = { matterId: aMatter, allowedUserIds: [f.ub] };
+    // ub claiming workspace A, from no scope and from B's scope; and ub's own B scope cannot reach it.
+    await expectDenied(core.restrictMatter(f.tx, { userId: f.ub, workspaceId: f.a.id }, input));
+    await expectDenied(
+      f.asB((s) => core.restrictMatter(s, { userId: f.ub, workspaceId: f.a.id }, input)),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.restrictMatter(s, { userId: f.ua, workspaceId: f.a.id, role: 'owner' }, input),
+      ),
+    );
+    expect(await aRestrictions(f)).toEqual(before);
+  },
+  assertMatterReadable: async (f) => {
+    const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
+    await expectDenied(
+      core.assertMatterReadable(f.tx, { userId: f.ub, workspaceId: f.a.id }, aMatter),
+    );
+    await expectDenied(
+      f.asB((s) => core.assertMatterReadable(s, { userId: f.ub, workspaceId: f.a.id }, aMatter)),
+    );
+    // In B's own workspace, A's restriction row does not exist: the matter reads as unrestricted.
+    expect(
+      await core.assertMatterReadable(f.tx, { userId: f.ub, workspaceId: f.b.id }, aMatter),
+    ).toBeNull();
   },
   enqueueNotificationDelivery: async (f) => {
     // enqueueNotificationDelivery sends the payload as given; the handler is scoped to it.

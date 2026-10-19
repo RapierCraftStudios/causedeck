@@ -44,8 +44,18 @@ SMTP_URL=smtp://127.0.0.1:1025
 | Postgres superuser | `causedeck` | `causedeck` | Database `causedeck`; for admin work in `psql` only |
 | Postgres owner role | `causedeck_owner` | `causedeck_owner` | Owns the database and schema `public`; runs migrations (`DATABASE_URL_OWNER`) |
 | Postgres app role | `causedeck_app` | `causedeck_app` | What the apps use (`DATABASE_URL`): not an owner, `NOBYPASSRLS`, cannot `CREATE` in `public`; gets `SELECT/INSERT/UPDATE/DELETE` on tables the owner creates |
+| Postgres clerk role | `causedeck_clerk` | none (`NOLOGIN`) | The app role switches to it for clerk members (`withWorkspace({ dbRole: 'clerk' })`); no grant on base tables behind clerk views. Migration `0018_matter_restriction` fails until it exists |
 | MinIO root | `minioadmin` | `minioadmin` | S3 access and secret key, and the console login |
 | Mailpit | none | none | No authentication |
+
+A `pgdata` volume created before the clerk role (#233) does not get it, because the init scripts
+only run on an empty volume. Add it once, then migrate:
+
+```sh
+docker compose -f infra/docker/compose.dev.yml exec -T postgres psql -U causedeck -d causedeck -c \
+  "CREATE ROLE causedeck_clerk NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT" \
+  -c "GRANT USAGE ON SCHEMA public TO causedeck_clerk" -c "GRANT causedeck_clerk TO causedeck_app"
+```
 
 ## Checking the stack
 

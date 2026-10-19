@@ -14,6 +14,7 @@
     "./rate-limit": "./src/rate-limit.ts",
     "./dev-provider": "./src/dev-provider.ts",
     "./policy": "./src/policy/index.ts",
+    "./policy/visibility": "./src/policy/visibility.ts",
     "./react": "./src/react/use-can.ts"
   },
   "scripts": {

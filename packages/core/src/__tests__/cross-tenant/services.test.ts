@@ -575,6 +575,28 @@ const CASES: Record<string, Case> = {
   listPendingInvitations: async (f) => {
     expect(await f.asB((s) => core.listPendingInvitations(s, f.a.id))).toEqual([]);
   },
+  getWorkspaceProfile: async (f) => {
+    expect(await f.asB((s) => core.getWorkspaceProfile(s, f.a.id))).toBeNull();
+  },
+  updateWorkspaceProfile: async (f) => {
+    const before = await core.getWorkspaceProfile(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.updateWorkspaceProfile(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          input: {
+            name: 'Cross-tenant probe',
+            kind: 'chamber',
+            timezone: 'Asia/Kolkata',
+            locale: 'en',
+            practiceCity: 'Probe City',
+          },
+        }),
+      ),
+    );
+    expect(await core.getWorkspaceProfile(f.tx, f.a.id)).toEqual(before);
+  },
   acceptInvitation: async (f) => {
     const error: unknown = await core
       .acceptInvitation(f.tx, { userId: f.ub, token: f.aInvitation.token })

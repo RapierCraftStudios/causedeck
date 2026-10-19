@@ -13,8 +13,8 @@ export const CLERK_WORKSPACE = 'bengaluru-chamber';
 /**
  * Placeholder routes an owner sees with flags off (apps/web/lib/nav.ts `WORKSPACE_ROUTES`, minus
  * the flag-gated `invoices` and `limitation`, and `billing` and `activity`, real pages since #256
- * and #232 with their own specs in tests/billing and tests/activity). `settings` is an index page
- * until #25.
+ * and #232 with their own specs in tests/billing and tests/activity). `settings` redirects to its
+ * profile section since #284 (tests/settings).
  */
 export const PLACEHOLDER_ROUTES = [
   'today',
@@ -29,7 +29,6 @@ export const PLACEHOLDER_ROUTES = [
   'people',
   'courts',
   'insights',
-  'settings',
 ] as const;
 
 export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];

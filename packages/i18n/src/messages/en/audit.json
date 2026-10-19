@@ -46,6 +46,9 @@
       "retentionPurged": "{actor} purged audit events past the retention window",
       "exported": "{actor} exported the audit log",
       "settingsViewed": "{actor} opened the workspace settings",
+      "profileUpdated": "{actor} updated the workspace profile",
+      "slugRenamed": "{actor} changed the web address from {from} to {to}",
+      "slugRenamedNoSlugs": "{actor} changed the web address",
       "generic": "{actor} recorded {action}"
     },
     "selected": "Selected: {event}",

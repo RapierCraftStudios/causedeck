@@ -895,6 +895,113 @@
       }
     }
   },
+  "settings": {
+    "title": "Settings",
+    "navLabel": "Settings sections",
+    "offline": "Settings can be changed when you are back online.",
+    "nav": {
+      "profile": "Profile",
+      "members": "Members",
+      "roles": "Roles",
+      "notifications": "Notifications",
+      "integrations": "Integrations",
+      "privacy": "Privacy",
+      "export": "Export",
+      "danger": "Danger zone",
+      "usage": "Usage",
+      "audit": "Audit log",
+      "more": "More"
+    },
+    "placeholder": {
+      "title": "This section is on its way.",
+      "hint": "It will appear here in a coming update. Nothing needs to be set up yet.",
+      "roles": "What each role can see and do in this workspace.",
+      "integrations": "The private email intake address and calendar feed for this workspace.",
+      "privacy": "Where your data is processed and how long it is kept.",
+      "export": "Download a copy of everything in this workspace.",
+      "danger": "Transfer ownership or delete this workspace."
+    },
+    "unsaved": {
+      "title": "Leave without saving?",
+      "description": "Your changes on this page have not been saved.",
+      "stay": "Stay on this page",
+      "leave": "Leave without saving"
+    },
+    "profile": {
+      "metaTitle": "Workspace profile",
+      "title": "Profile",
+      "description": "How this workspace is named and set up.",
+      "section": "Workspace",
+      "sectionHint": "Shown to everyone in this workspace.",
+      "readOnly": "Only owners and advocates can change the workspace profile.",
+      "name": "Workspace name",
+      "nameHint": "Your chamber or practice name.",
+      "kind": "Kind",
+      "kindHint": "A solo practice or a chamber with several members.",
+      "kinds": {
+        "solo": "Solo practice",
+        "chamber": "Chamber"
+      },
+      "timezone": "Time zone",
+      "timezoneHint": "Used for hearing dates, reminders and digests.",
+      "locale": "Default language",
+      "localeHint": "The language new members and emails start in.",
+      "practiceCity": "Practice city",
+      "practiceCityHint": "The city where you mostly appear.",
+      "practiceCityPlaceholder": "For example, Chennai",
+      "slug": "Web address",
+      "slugHint": "The part of the link after /w/.",
+      "ownerOnly": "Only workspace owners can change this.",
+      "rename": "Rename",
+      "renameTitle": "Rename the web address",
+      "renameBody": "The old address keeps working for 90 days and then becomes free for others.",
+      "newSlug": "New web address",
+      "newSlugHint": "Lowercase letters, digits and single hyphens, 3 to 48 characters.",
+      "renameConfirm": "Rename",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "saved": "Saved",
+      "loading": "Loading the workspace profile",
+      "toast": {
+        "saved": "Workspace profile saved.",
+        "renamed": "Web address changed to {slug}."
+      },
+      "error": {
+        "title": "Could not load the workspace profile.",
+        "retry": "Try again"
+      },
+      "errors": {
+        "name": "Enter a workspace name of up to 120 characters.",
+        "kind": "Choose solo practice or chamber.",
+        "timezone": "Choose a time zone from the list.",
+        "locale": "Choose a language from the list.",
+        "practiceCity": "Keep the practice city to 80 characters.",
+        "slug": "Use 3 to 48 lowercase letters, digits and single hyphens. Some words are reserved.",
+        "slugTaken": "This web address is taken. Try another.",
+        "forbidden": "You do not have permission to make this change.",
+        "invalid": "Some values are not valid. Check the form and try again.",
+        "rateLimited": "Too many changes in a short time. Try again in a minute.",
+        "offline": "You are offline. Settings can be changed when you are back online.",
+        "generic": "Could not save the profile. Your changes were undone. Try again."
+      }
+    },
+    "danger": {
+      "title": "Danger zone",
+      "description": "These actions affect everyone in the workspace.",
+      "unavailable": "Available once the export and deletion service is ready.",
+      "transfer": {
+        "label": "Transfer ownership",
+        "description": "Make another member the owner of this workspace.",
+        "action": "Transfer ownership"
+      },
+      "delete": {
+        "label": "Delete workspace",
+        "description": "Permanently delete this workspace and all its data after an export.",
+        "action": "Delete workspace"
+      }
+    }
+  },
   "audit": {
     "metaTitle": "Activity",
     "title": "Activity",
@@ -942,6 +1049,9 @@
       "retentionPurged": "{actor} purged audit events past the retention window",
       "exported": "{actor} exported the audit log",
       "settingsViewed": "{actor} opened the workspace settings",
+      "profileUpdated": "{actor} updated the workspace profile",
+      "slugRenamed": "{actor} changed the web address from {from} to {to}",
+      "slugRenamedNoSlugs": "{actor} changed the web address",
       "generic": "{actor} recorded {action}"
     },
     "selected": "Selected: {event}",

@@ -101,6 +101,8 @@ the matrix, before the resource checks below.
 ## Settings and resource rules
 
 - `advocatesCanInvite` (default true): when false, advocates are denied `member.invite`.
+- `advocatesCanReadAudit` (default true): when false, advocates are denied `audit.read`
+  (workspace_settings.advocates_can_read_audit).
 - Restricted matters: only users in `restricted.allowUserIds` may act on them, plus owners
   while `ownersSeeRestrictedMatters` is true (the default).
 - Juniors act on a matter only when it is assigned to them, shared with them (allow list) or
@@ -114,3 +116,11 @@ the matrix, before the resource checks below.
 - `NOT_ASSIGNED`: a junior acting on a matter not assigned to, shared with or owned by them.
 - `FEATURE_OFF`: the action’s domain is switched off for the workspace.
 - `SUSPENDED`: the member is suspended.
+
+## Enforcement
+
+Every server action and `/v1` route authorizes: a server action goes through
+`workspaceAction` / `guard` (apps/web/lib) or calls `assertCan`; a `/v1` route lists
+`authorize(action)` in its `middleware`. The ESLint rule `causedeck/require-authorization`
+(packages/config/eslint) fails any that does not, unless it is annotated
+`// authz: public <reason>`, which reviewers check like any other exception.

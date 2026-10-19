@@ -32,6 +32,8 @@ const create = safeAction(
   { getSession: requireSession },
 );
 
+// authz: public — any signed-in user may create a workspace (`requireSession` above); there is
+// no workspace to authorize against yet.
 export async function createWorkspaceAction(raw: unknown): Promise<Result<{ slug: string }>> {
   return create(raw);
 }

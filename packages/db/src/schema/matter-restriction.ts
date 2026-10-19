@@ -1,6 +1,6 @@
 // Per-matter restrictions (#233, part of #20; spike §4.1, architecture §6.3). A restricted matter
 // is readable only by the users in `allowed_user_ids` plus owners (unless the workspace turns
-// `ownersSeeRestrictedMatters` off); `@causedeck/auth` `can()` and `matterVisibilityPredicate()`
+// `ownersSeeRestrictedMatters` off); `@causedeck/auth` `can()` and `matterVisibilityPredicate()` (`@causedeck/auth/policy/visibility`)
 // enforce it, `@causedeck/core` `restrictMatter()` writes it. A tenant table under FORCE RLS via
 // `tenantTable()`, one row per (workspace, matter).
 //

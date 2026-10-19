@@ -66,7 +66,9 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # A change to db, core or auth affects every package, and turbo then runs all of their
+    # Testcontainers suites at once on the 4-vCPU runner: 9 to 14 minutes by now, over the old 15 limit.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -81,6 +83,8 @@ jobs:
       - name: i18n catalogs
         run: pnpm i18n:check
       - name: Test
+        env:
+          CI_TURBO_CONCURRENCY: 3
         run: >-
           bash infra/scripts/ci-affected.sh test --
           --coverage --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml

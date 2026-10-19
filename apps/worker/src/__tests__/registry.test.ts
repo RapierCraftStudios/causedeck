@@ -119,10 +119,15 @@ describe('enqueue', () => {
       'system.ping',
       'system.retention.sweep',
       'system.billing.reconcile',
+      'system.billing.dunning-tick',
       'billing.process-event',
       'notification.deliver',
       'system.notification.digest',
       'notification.digest',
+      'system.usage.rollup',
+      'system.audit.verify',
+      'audit.verify',
+      'system.audit.retention',
     ]);
   });
 });
@@ -174,15 +179,32 @@ describe('per-queue concurrency, singletonKey and fairness', () => {
     expect(state.max).toBe(1);
   });
 
-  it('caps concurrent jobs per fairnessKey (default the workspace)', async () => {
+  it('caps concurrent jobs per explicit fairnessKey at the definition cap', async () => {
     const { def, state, jobs } = trackingJob({ concurrency: 6, fairnessConcurrency: 3, ms: 500 });
     await startTestWorker([def]);
-    const workspaceId = randomUUID();
+    // An explicit fairnessKey group is not a workspace group, so the plan default (#221) does not
+    // apply and the definition's cap of 3 holds.
     for (let i = 0; i < 9; i += 1) {
-      await jobs.enqueue(producer, def.name, { workspaceId, key: String(i) });
+      await jobs.enqueue(producer, def.name, {
+        workspaceId: randomUUID(),
+        fairnessKey: 'shared-group',
+        key: String(i),
+      });
     }
 
     await waitFor(() => state.done === 9, { timeoutMs: 60_000 });
     expect(state.max).toBe(3);
+  });
+
+  it('caps a workspace group at its plan default (a workspace without a plan runs as Junior: 1)', async () => {
+    const { def, state, jobs } = trackingJob({ concurrency: 6, fairnessConcurrency: 3, ms: 300 });
+    await startTestWorker([def]);
+    const workspaceId = randomUUID();
+    for (let i = 0; i < 4; i += 1) {
+      await jobs.enqueue(producer, def.name, { workspaceId, key: String(i) });
+    }
+
+    await waitFor(() => state.done === 4, { timeoutMs: 60_000 });
+    expect(state.max).toBe(1);
   });
 });

@@ -691,6 +691,144 @@ export type Messages = {
         body: string;
       };
     };
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    comingSoon: string;
+    permissionDenied: string;
+    error: {
+      title: string;
+      retry: string;
+    };
+    plan: {
+      title: string;
+      perMonth: string;
+      perYear: string;
+      seatBreakdown: string;
+      renewal: string;
+      noRenewal: string;
+      endsOn: string;
+      gstNote: string;
+      change: string;
+    };
+    status: {
+      active: string;
+      pending: string;
+      pastDue: string;
+      grace: string;
+      paused: string;
+      cancelsOn: string;
+      cancelled: string;
+    };
+    seats: {
+      title: string;
+      members: string;
+      clerks: string;
+      membersLabel: string;
+      clerksLabel: string;
+      hint: string;
+    };
+    paymentMethod: {
+      title: string;
+      active: string;
+      pending: string;
+      failed: string;
+      activeHint: string;
+      pendingHint: string;
+      failedHint: string;
+      update: string;
+    };
+    banner: {
+      graceTitle: string;
+      grace: string;
+      paymentFailed: string;
+      cancels: string;
+    };
+    invoices: {
+      title: string;
+      caption: string;
+      columns: {
+        number: string;
+        date: string;
+        amount: string;
+        status: string;
+        pdf: string;
+      };
+      status: {
+        issued: string;
+        paid: string;
+        void: string;
+      };
+      download: string;
+      preparing: string;
+      empty: string;
+    };
+    junior: {
+      title: string;
+      body: string;
+      advocate: string;
+      advocateBody: string;
+      chamber: string;
+      chamberBody: string;
+      from: string;
+      upgrade: string;
+    };
+  };
+  usage: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    link: string;
+    linkHint: string;
+    billingLink: string;
+    permissionDenied: string;
+    empty: {
+      title: string;
+      description: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    meters: {
+      ai: string;
+      ocr: string;
+      stt: string;
+      matters: string;
+    };
+    value: string;
+    percentUsed: string;
+    valueText: string;
+    unlimited: string;
+    aiResets: string;
+    resets: string;
+    level: {
+      warning: string;
+      exceeded: string;
+    };
+    aiWarning: string;
+    aiExceeded: string;
+    limitWarning: string;
+    limitExceeded: string;
+    breakdown: {
+      title: string;
+      caption: string;
+      resource: string;
+      used: string;
+      limit: string;
+      noLimit: string;
+      rows: {
+        aiSpend: string;
+        tokensIn: string;
+        tokensOut: string;
+        ocr: string;
+        stt: string;
+        storage: string;
+        matters: string;
+      };
+    };
   };
   error: {
     title: string;

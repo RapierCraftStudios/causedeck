@@ -49,6 +49,15 @@ describe('roles (Better Auth access control)', () => {
     expect(roles.viewer.authorize({ matter: ['update'] }).success).toBe(false);
     expect(roles.viewer.authorize({ member: ['create'] }).success).toBe(false);
   });
+
+  it('grants audit read to owners and advocates only (#229)', () => {
+    for (const role of ['owner', 'advocate'] as const) {
+      expect(roles[role].authorize({ audit: ['read'] }).success, role).toBe(true);
+    }
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(roles[role].authorize({ audit: ['read'] }).success, role).toBe(false);
+    }
+  });
 });
 
 describe('roles as Better Auth organization roles', () => {

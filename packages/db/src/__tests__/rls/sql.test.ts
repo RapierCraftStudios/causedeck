@@ -245,5 +245,7 @@ describe('db:check-rls CLI', () => {
     for (const statement of tenantPolicy('rls_fixture')) await scratch.execute(sql.raw(statement));
     const fixed = await run('--url', db.owner);
     expect(fixed.status, fixed.stderr).toBe(0);
-  });
+    // Three `pnpm exec tsx` spawns plus a migration: 24 s on a free host, over the 60 s default
+    // when turbo runs every package's tests at once on the CI runner.
+  }, 240_000);
 });

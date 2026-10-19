@@ -26,7 +26,7 @@ The pieces:
 | ----------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `causedeck_owner` | migrations (`DATABASE_URL_OWNER`), `db:check-rls`, the test harness | Owns every table and function. Runs DDL. Has no `BYPASSRLS`, so FORCE RLS binds it too; it reads across tenants only through the narrow `owner_definer_*` policies that back the SECURITY DEFINER functions                             |
 | `causedeck_app`   | every app and the worker (`DATABASE_URL`)                           | DML on `public` tables and `EXECUTE` on the `app_*` functions. Not the owner, `NOSUPERUSER`, `NOBYPASSRLS`, `NOINHERIT`: it cannot `ALTER` a table, disable or un-force RLS, drop a policy or `SET ROLE` to the owner (`owner.test.ts`) |
-| `causedeck_clerk` | clerk members, via `withWorkspace(db, { workspaceId, userId, dbRole: 'clerk' })` | No login: the app role switches to it with `SET LOCAL ROLE` (#233). The same privileges as `causedeck_app` (copied by `0019_matter_restriction`), minus every base table behind a clerk view (`app_clerk_view`). `NOBYPASSRLS`, `NOINHERIT`; scopes nested in a clerk scope stay clerk |
+| `causedeck_clerk` | clerk members, via `withWorkspace(db, { workspaceId, userId, dbRole: 'clerk' })` | No login: the app role switches to it with `SET LOCAL ROLE` (#233). The same privileges as `causedeck_app` (copied by `0021_matter_restriction`), minus every base table behind a clerk view (`app_clerk_view`). `NOBYPASSRLS`, `NOINHERIT`; scopes nested in a clerk scope stay clerk |
 
 Migrations that `GRANT` something to `causedeck_app` explicitly (an `app_*` function, a table
 privilege) must grant `causedeck_clerk` the same, unless the clerk must not have it. Default
@@ -88,7 +88,9 @@ that returns only what the caller needs: slugs, ids, booleans or a count. The fu
 | `app_purge_job_effects(timestamptz)`                                                                                                                                   | `system.retention.sweep`                                                        |
 | `app_billing_reconcile_targets()` returns `(workspace_id, subscription_id)`                                                                                            | `system.billing.reconcile`, which then reads each row inside `withWorkspace`    |
 | `app_audit_append(...)` returns `(id, hash)`: appends to the pinned workspace's chain (any other workspace id is `42501`) or, with a null workspace, the account chain | the audit writer `record()` (#227)                                              |
-| `app_purge_audit(timestamptz)`, `app_purge_ai_calls(timestamptz)` (cutoff at least 180 days old)                                                                       | the audit retention job (#230)                                                  |
+| `app_purge_audit(timestamptz)`, `app_purge_ai_calls(timestamptz)` (cutoff at least 180 days old)                                                                       | `system.audit.retention`                                                        |
+| `app_audit_chain_targets()` returns `(workspace_id)` (every workspace with an audit chain)      | `system.audit.verify`, which enqueues `audit.verify` to verify each one inside `withWorkspace` |
+| `app_audit_verify_account_chain(timestamptz, timestamptz)` returns `(checked, id, reason)`         | `system.audit.verify`, for the account chain                                    |
 | `app_workspace_keys_for_rewrap(text)` (workspace ids whose live key is under another KEK) | `rewrapAll` / `pendingRewrap` in `@causedeck/storage`, which re-wrap each key inside `withWorkspace` ([storage.md](storage.md)) |
 
 `createWorkspace` needs no bypass: it picks the new workspace's id itself and writes the
@@ -155,7 +157,7 @@ Clerks see listings, tasks and documents but not strategy notes or matter memory
 §6.3). `can()` decides that in the services; the database backs it with column-scoped views (#233):
 
 1. In the migration that creates (or later restricts) a tenant table with strategy columns, call
-   the owner-only helper from `0019_matter_restriction`:
+   the owner-only helper from `0021_matter_restriction`:
 
    ```sql
    SELECT app_clerk_view('matter', 'matter_clerk_view', ARRAY['strategy_notes', 'theory_of_case']);--> statement-breakpoint

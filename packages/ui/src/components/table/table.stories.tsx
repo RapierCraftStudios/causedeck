@@ -68,6 +68,9 @@ function Matters({
   );
 }
 
+/** Comfortable rows: 40 px with a fine pointer (mouse, trackpad), 44 px on touch. */
+const comfortablePx = () => (window.matchMedia('(pointer: fine)').matches ? 40 : 44);
+
 const meta = {
   title: 'Components/Table',
   component: Matters,
@@ -83,7 +86,7 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     const table = canvas.getByRole('table', { name: 'Matters' });
     const row = canvas.getAllByRole('row')[1];
-    await expect(row?.getBoundingClientRect().height).toBe(44);
+    await expect(row?.getBoundingClientRect().height).toBe(comfortablePx());
     await expect(getComputedStyle(table).fontVariantNumeric).toContain('tabular-nums');
   },
 };

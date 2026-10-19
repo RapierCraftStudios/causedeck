@@ -40,6 +40,8 @@ Each action is either **security** or **informational**:
 | `member.role_changed`       | security      | role change (#228)                                |
 | `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22)   |
 | `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220) |
+| `billing.subscription_changed` | security  | owner billing actions (`changeSubscription`, #257) |
+| `billing.gstin_updated`     | security      | `setSubscriptionGstin` (#257)                     |
 | `workspace.settings_viewed` | informational | reserved                                          |
 | `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)    |
 

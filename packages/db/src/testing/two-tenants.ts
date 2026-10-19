@@ -24,7 +24,7 @@ import {
   usageReservation,
 } from '../schema/usage.ts';
 import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
-import { workspaceKey } from '../schema/storage.ts';
+import { blob, workspaceKey } from '../schema/storage.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -273,6 +273,25 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(workspaceKey)
       .values({ workspaceId, wrappedDek: randomBytes(60), kekId: 'kek-test' });
     return { workspaceId };
+  },
+  blob: async (tx, { workspaceId, ownerId }) => {
+    // A finalized upload row; the object itself never exists in a SQL-only suite.
+    const id = randomUUID();
+    const year = new Date().getUTCFullYear();
+    await tx.insert(blob).values({
+      id,
+      workspaceId,
+      key: `ws/${workspaceId}/document/${String(year)}/${id}`,
+      kind: 'document',
+      filename: 'seed.pdf',
+      size: 8,
+      sha256: createHash('sha256').update(id).digest('hex'),
+      mime: 'application/pdf',
+      scanStatus: 'pending',
+      createdBy: ownerId,
+      finalizedAt: new Date(),
+    });
+    return { id };
   },
   saas_invoice: async (tx, { workspaceId }) => ({
     invoiceId: await seedDraftInvoice(tx, workspaceId),

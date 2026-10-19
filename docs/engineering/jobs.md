@@ -96,6 +96,9 @@ no workspace and `job_effect` is under FORCE RLS, so it calls the owner-defined
 `app_purge_job_effects(cutoff)` (SECURITY DEFINER, `0006_rls_baseline`) rather than
 `withoutWorkspace`, which only reaches global tables. Other cross-tenant maintenance follows the
 same pattern ([tenancy.md](tenancy.md)).
+`system.billing.reconcile` lists its targets the same way, through
+`app_billing_reconcile_targets()` (ids only, `0007_billing_reconcile`), then reads each
+subscription inside `withWorkspace` ([billing.md](billing.md#daily-reconcile)).
 
 ## Concurrency and fairness
 
@@ -112,7 +115,8 @@ same pattern ([tenancy.md](tenancy.md)).
 A definition may declare `schedule: { cron, payload }`. `registerSchedules` registers it with
 `boss.schedule(..., { tz: 'Asia/Kolkata' })`. pg-boss keeps schedules in its own table and sends
 each occurrence once, so every replica registers on boot without double-sending. Current
-schedules: `system.retention.sweep` daily at 03:30 IST.
+schedules: `system.retention.sweep` daily at 03:30 IST and `system.billing.reconcile` daily at
+04:00 IST.
 
 ## The `pgboss` schema and roles
 

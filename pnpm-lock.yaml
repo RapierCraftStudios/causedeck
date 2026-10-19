@@ -828,6 +828,9 @@ importers:
       '@causedeck/auth':
         specifier: workspace:*
         version: link:../auth
+      '@causedeck/billing':
+        specifier: workspace:*
+        version: link:../billing
       '@causedeck/config':
         specifier: workspace:*
         version: link:../config

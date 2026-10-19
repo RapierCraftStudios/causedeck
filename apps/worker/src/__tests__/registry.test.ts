@@ -118,6 +118,7 @@ describe('enqueue', () => {
     expect(registry.definitions.map((d) => d.name)).toEqual([
       'system.ping',
       'system.retention.sweep',
+      'system.billing.reconcile',
     ]);
   });
 });

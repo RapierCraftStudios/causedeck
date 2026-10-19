@@ -1,7 +1,7 @@
 // Audit tables (#26 part 1, #226; spike §4.2, §5; PRD TR-3, TR-4). Both are append-only: the app
 // role has SELECT and INSERT only, and a trigger rejects UPDATE, DELETE and TRUNCATE for every role
 // outside the retention purge functions (`app_purge_audit`, `app_purge_ai_calls`, migration
-// 0007_audit). Neither table has foreign keys: audit rows outlive the users and workspaces they
+// 0008_audit). Neither table has foreign keys: audit rows outlive the users and workspaces they
 // name (until retention purges them), and an ON DELETE action would be a blocked mutation.
 //
 // `audit_event` rows are written only through `app_audit_append()`, which chains each workspace's

@@ -18,17 +18,17 @@ pnpm db:check-rls  # live catalog: RLS on every tenant table, no cross-workspace
 
 ## Entry points
 
-| Import | What |
-|---|---|
-| `@causedeck/db` | `db`, `createDb`, `withWorkspace`, `withUser`, `tenantTable`, `tenantPolicy`, column helpers, `checkSchemaConventions`, `schema`, `EMBEDDING_DIMENSIONS` |
-| `@causedeck/db/rls` | `withWorkspace(db, { workspaceId, userId? }, fn)` (throws `TENANCY_VIOLATION` when nested in another workspace), `withUser(db, { userId }, fn)` (pre-workspace flows) and `@internal withoutWorkspace` (global tables only, lint-restricted). Settings are `set_config(..., true)`; see [tenancy.md](tenancy.md) |
-| `@causedeck/db/client` | `db` (app role, connects on first use), `createDb({ url, role })`, `closeDb()`, `Database`, `Transaction` |
-| `@causedeck/db/columns` | `id()`, `timestamps()`, `workspaceId()`, `workspaceIndex()`, `provenance()`, `provenanceCheck()` and the two enums |
-| `@causedeck/db/schema` | every migrated table and enum, including `job_effect` (job idempotency, see [jobs.md](jobs.md)) |
-| `@causedeck/db/vector` | `EMBEDDING_DIMENSIONS` (1024 until an ADR picks the embedding model), `embedding()` |
-| `@causedeck/db/testing` | `withTestDb()`, `inWorkspace()` (tenant fixtures under RLS), `truncateAll()`, `testAppDb()`, `createScratchDatabase()` |
-| `@causedeck/db/testing/global-setup` | Vitest `globalSetup` that starts the test container |
-| `@causedeck/db/seed` | `registerSeed()`, `seed(db, { profile })` |
+| Import                               | What                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@causedeck/db`                      | `db`, `createDb`, `withWorkspace`, `withUser`, `tenantTable`, `tenantPolicy`, column helpers, `checkSchemaConventions`, `schema`, `EMBEDDING_DIMENSIONS`                                                                                                                                                         |
+| `@causedeck/db/rls`                  | `withWorkspace(db, { workspaceId, userId? }, fn)` (throws `TENANCY_VIOLATION` when nested in another workspace), `withUser(db, { userId }, fn)` (pre-workspace flows) and `@internal withoutWorkspace` (global tables only, lint-restricted). Settings are `set_config(..., true)`; see [tenancy.md](tenancy.md) |
+| `@causedeck/db/client`               | `db` (app role, connects on first use), `createDb({ url, role })`, `closeDb()`, `Database`, `Transaction`                                                                                                                                                                                                        |
+| `@causedeck/db/columns`              | `id()`, `timestamps()`, `workspaceId()`, `workspaceIndex()`, `provenance()`, `provenanceCheck()` and the two enums                                                                                                                                                                                               |
+| `@causedeck/db/schema`               | every migrated table and enum, including `job_effect` (job idempotency, see [jobs.md](jobs.md))                                                                                                                                                                                                                  |
+| `@causedeck/db/vector`               | `EMBEDDING_DIMENSIONS` (1024 until an ADR picks the embedding model), `embedding()`                                                                                                                                                                                                                              |
+| `@causedeck/db/testing`              | `withTestDb()`, `inWorkspace()` (tenant fixtures under RLS), `truncateAll()`, `testAppDb()`, `createScratchDatabase()`                                                                                                                                                                                           |
+| `@causedeck/db/testing/global-setup` | Vitest `globalSetup` that starts the test container                                                                                                                                                                                                                                                              |
+| `@causedeck/db/seed`                 | `registerSeed()`, `seed(db, { profile })`                                                                                                                                                                                                                                                                        |
 
 The owner-role client (`src/owner.ts`) and the migrator (`src/migrate.ts`) are deliberately not
 exported: application code never holds schema-owner credentials.
@@ -38,10 +38,10 @@ exported: application code never holds schema-owner credentials.
 Defined once in `infra/docker/postgres/init/02-roles.sql` and replayed verbatim by the test
 harness, so local, CI and tests match.
 
-| Role | Env key | Can |
-|---|---|---|
-| `causedeck_owner` | `DATABASE_URL_OWNER` | Owns the database and schema `public`; runs migrations, drizzle-kit and Studio |
-| `causedeck_app` | `DATABASE_URL` | `SELECT/INSERT/UPDATE/DELETE` on tables the owner creates (default privileges). Not superuser, `NOBYPASSRLS`, cannot `CREATE`, `ALTER`, `DROP` or `TRUNCATE` |
+| Role              | Env key              | Can                                                                                                                                                          |
+| ----------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `causedeck_owner` | `DATABASE_URL_OWNER` | Owns the database and schema `public`; runs migrations, drizzle-kit and Studio                                                                               |
+| `causedeck_app`   | `DATABASE_URL`       | `SELECT/INSERT/UPDATE/DELETE` on tables the owner creates (default privileges). Not superuser, `NOBYPASSRLS`, cannot `CREATE`, `ALTER`, `DROP` or `TRUNCATE` |
 
 Both URLs are `Secret`s from `@causedeck/config/env`. Outside production they default to the #5
 stack's roles (`causedeck_app` / `causedeck_owner` on `localhost:5432`), never the superuser.
@@ -66,7 +66,10 @@ for the owner, and a 20 s `idle_timeout`.
   ```ts
   (t) => [
     workspaceIndex('hearing', t.workspaceId),
-    foreignKey({ columns: [t.workspaceId, t.matterId], foreignColumns: [matter.workspaceId, matter.id] }),
+    foreignKey({
+      columns: [t.workspaceId, t.matterId],
+      foreignColumns: [matter.workspaceId, matter.id],
+    }),
   ];
   ```
 
@@ -78,9 +81,9 @@ for the owner, and a 20 s `idle_timeout`.
   no row-level security; every other table with `workspace_id` does ([tenancy.md](tenancy.md)).
   New tenant tables use `tenantTable()` and get `tenantPolicy()` in the migration that creates them.
 - **Provenance on every fact:** `...provenance()` adds `source_type` (enum `manual | document |
-  capture | adapter | ai | import | system`, not null), `source_ref text`, `anchor_id uuid`,
+capture | adapter | ai | import | system`, not null), `source_ref text`, `anchor_id uuid`,
   `confidence numeric(4,3)` and `confirmation_state` (enum `proposed | confirmed | edited |
-  rejected`, default `proposed`). Pair it with `provenanceCheck('<table>')`, which enforces
+rejected`, default `proposed`). Pair it with `provenanceCheck('<table>')`, which enforces
   `source_type = 'manual' or anchor_id is not null or source_ref is not null`.
 - **Vectors:** `embedding()` columns use `EMBEDDING_DIMENSIONS`; never hard-code a width.
 
@@ -91,14 +94,14 @@ still a tenant table under FORCE RLS and still needs the index.
 
 ## Audit tables
 
-`packages/db/src/schema/audit.ts`, migration `0007_audit` (#226, #26 part 1). Both tables are
+`packages/db/src/schema/audit.ts`, migration `0008_audit` (#226, #26 part 1). Both tables are
 append-only and have no foreign keys: audit rows outlive the users and workspaces they name until
 retention removes them.
 
-| Table | Columns |
-|---|---|
-| `audit_event` | `id` (uuid v7), `workspace_id` (null for account-level events), `actor_user_id`, `actor_kind` (`user`, `staff`, `system`, `api`), `action`, `target_kind`, `target_id`, `outcome` (`success`, `denied`, `error`), `ip inet`, `user_agent_hash`, `request_id`, `metadata jsonb` (ids only, never content), `prev_hash bytea`, `hash bytea`, `created_at` |
-| `ai_call` | `id` (uuid v7), `workspace_id`, `user_id`, `purpose`, `provider`, `model`, `model_version`, `region`, `input_tokens`, `output_tokens`, `cost_paise`, `sources jsonb` (ids and anchors only), `confidence numeric(4,3)`, `automation_level smallint` (CHECK `between 1 and 4`: no L5 record can be stored), `auto_applied`, `user_action`, `undone_at`, `created_at` |
+| Table         | Columns                                                                                                                                                                                                                                                                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `audit_event` | `id` (uuid v7), `workspace_id` (null for account-level events), `actor_user_id`, `actor_kind` (`user`, `staff`, `system`, `api`), `action`, `target_kind`, `target_id`, `outcome` (`success`, `denied`, `error`), `ip inet`, `user_agent_hash`, `request_id`, `metadata jsonb` (ids only, never content), `prev_hash bytea`, `hash bytea`, `created_at`             |
+| `ai_call`     | `id` (uuid v7), `workspace_id`, `user_id`, `purpose`, `provider`, `model`, `model_version`, `region`, `input_tokens`, `output_tokens`, `cost_paise`, `sources jsonb` (ids and anchors only), `confidence numeric(4,3)`, `automation_level smallint` (CHECK `between 1 and 4`: no L5 record can be stored), `auto_applied`, `user_action`, `undone_at`, `created_at` |
 
 - **Ids:** `app_uuid_v7()` (Postgres 17 has no `uuidv7()`): a millisecond timestamp followed by
   random bits, so ids sort by creation time.
@@ -112,8 +115,8 @@ retention removes them.
   scheduled job that calls them is #230. After a purge the oldest surviving event points at a
   `prev_hash` that no longer exists; chain verification starts from the oldest surviving row.
 - **Writing `audit_event`:** only through `app_audit_append(workspace_id, actor_user_id,
-  actor_kind, action, target_kind?, target_id?, outcome?, ip?, user_agent_hash?, request_id?,
-  metadata?)`, which returns `(id, hash)`. A non-null workspace must be the pinned workspace
+actor_kind, action, target_kind?, target_id?, outcome?, ip?, user_agent_hash?, request_id?,
+metadata?)`, which returns `(id, hash)`. A non-null workspace must be the pinned workspace
   (`42501` otherwise); null appends to the account chain. Under
   `pg_advisory_xact_lock(hashtextextended('audit_event:' || coalesce(workspace_id::text, 'account'), 0))`
   it reads the chain's latest `hash` as `prev_hash`, sets `created_at = clock_timestamp()` and stores

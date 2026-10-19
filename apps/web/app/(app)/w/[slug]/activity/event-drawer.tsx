@@ -57,27 +57,31 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 export function EventDrawer({ row, outcome, isOwner, side, onClose, verify }: EventDrawerProps) {
   const t = useTranslations('audit.drawer');
-  const [chain, setChain] = useState<ChainStatus | 'checking'>('checking');
-  const opener = useRef<HTMLElement | null>(null);
-  const { event } = row;
-
-  if (opener.current === null && typeof document !== 'undefined') {
+  // The check's result is tagged with the event it belongs to, so a different event reads as
+  // `checking` without resetting state in an effect.
+  const [checked, setChecked] = useState<{ id: string; status: ChainStatus } | null>(null);
+  // The row that opened the sheet, captured once when it mounts, to return focus to on close.
+  const [opener] = useState<HTMLElement | null>(() => {
+    if (typeof document === 'undefined') return null;
     const active = document.activeElement;
-    opener.current = active instanceof HTMLElement && active !== document.body ? active : null;
-  }
+    return active instanceof HTMLElement && active !== document.body ? active : null;
+  });
+  const { event } = row;
+  const chain: ChainStatus | 'checking' = checked?.id === event.id ? checked.status : 'checking';
 
   // `verify` is a new closure every render; the event id is what the check depends on.
   const verifyRef = useRef(verify);
-  verifyRef.current = verify;
+  useEffect(() => {
+    verifyRef.current = verify;
+  });
   useEffect(() => {
     let live = true;
-    setChain('checking');
     verifyRef.current().then(
       (result) => {
-        if (live) setChain(result.ok ? result.data : 'unverified');
+        if (live) setChecked({ id: event.id, status: result.ok ? result.data : 'unverified' });
       },
       () => {
-        if (live) setChain('unverified');
+        if (live) setChecked({ id: event.id, status: 'unverified' });
       },
     );
     return () => {
@@ -103,10 +107,9 @@ export function EventDrawer({ row, outcome, isOwner, side, onClose, verify }: Ev
         className="overflow-y-auto motion-reduce:animate-none md:max-w-md"
         labels={{ close: t('close') }}
         onCloseAutoFocus={(e) => {
-          const target = opener.current;
-          if (target?.isConnected) {
+          if (opener?.isConnected) {
             e.preventDefault();
-            target.focus();
+            opener.focus();
           }
         }}
       >

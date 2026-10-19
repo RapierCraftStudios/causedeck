@@ -54,8 +54,11 @@ const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
+const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
+/** Keyset position newer than any row: the next page then starts at the newest event. */
+const FAR_FUTURE = '9999-12-31T23:59:59.999999Z';
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 
 /** Every exported server action and the module it comes from. */
@@ -78,6 +81,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  loadMoreAuditAction: activity,
+  verifyAuditEventAction: activity,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -87,6 +92,7 @@ let t: TwoTenants;
 let aMember: { memberId: string; userId: string };
 let aInvitation: { invitationId: string; token: string };
 let aNotificationId: string;
+let aAuditEvent: { id: string; createdAt: string };
 
 function signInAs(userId: string): void {
   state.session = {
@@ -119,6 +125,10 @@ function snapshotA() {
       .select({ id: schema.notification.id, readAt: schema.notification.readAt })
       .from(schema.notification)
       .orderBy(schema.notification.id),
+    auditEvents: await tx
+      .select({ id: schema.auditEvent.id })
+      .from(schema.auditEvent)
+      .orderBy(schema.auditEvent.id),
     notificationPrefs: await tx.select().from(schema.notificationPref),
     notificationSettings: await tx.select().from(schema.notificationSetting),
   }));
@@ -138,6 +148,14 @@ beforeAll(async () => {
   const n = t.a.rows.notification;
   if (!n?.notificationId) throw new Error('seed rows');
   aNotificationId = n.notificationId;
+  const ae = t.a.rows.audit_event;
+  if (!ae?.auditEventId) throw new Error('seed rows');
+  // A's real audit event as A's owner's feed shows it (`createdAt` ISO 8601 UTC, microseconds).
+  const { queryAudit } = await import('@causedeck/core/audit');
+  const feed = await queryAudit({ db: testAppDb(), workspaceId: t.a.id, userId: t.ua }, {});
+  const event = feed.events.find((item) => item.id === ae.auditEventId);
+  if (!event) throw new Error('seed rows');
+  aAuditEvent = { id: ae.auditEventId, createdAt: event.createdAt };
 });
 
 beforeEach(() => {
@@ -174,6 +192,18 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    // A page position past every row, so a leak would return A's real audit event.
+    loadMoreAuditAction: {
+      workspaceId,
+      cursor: Buffer.from(JSON.stringify({ t: FAR_FUTURE, i: aAuditEvent.id }), 'utf8').toString(
+        'base64url',
+      ),
+    },
+    verifyAuditEventAction: {
+      workspaceId,
+      eventId: aAuditEvent.id,
+      createdAt: aAuditEvent.createdAt,
+    },
   };
 }
 
@@ -202,9 +232,26 @@ describe('cross-tenant server actions', () => {
   it('every workspace action with A’s workspace id is FORBIDDEN for ub, and A is unchanged', async () => {
     const before = await snapshotA();
     for (const [name, input] of Object.entries(inputs(t.a.id))) {
-      expect(code(await action(name)(input)), name).toBe('FORBIDDEN');
+      const result = await action(name)(input);
+      expect(code(result), name).toBe('FORBIDDEN');
+      expect(result, name).not.toHaveProperty('data');
     }
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('the audit actions answer A’s owner with A’s event, so the denial for ub is meaningful', async () => {
+    signInAs(t.ua);
+    const all = inputs(t.a.id);
+    const page = (await action('loadMoreAuditAction')(all.loadMoreAuditAction)) as {
+      ok: boolean;
+      data: { events: { id: string }[] };
+    };
+    expect(page.ok).toBe(true);
+    expect(page.data.events.map((event) => event.id)).toContain(aAuditEvent.id);
+    expect(await action('verifyAuditEventAction')(all.verifyAuditEventAction)).toEqual({
+      ok: true,
+      data: 'verified',
+    });
   });
 
   it('under B’s own workspace, A’s member and invitation ids are not found', async () => {

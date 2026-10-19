@@ -2,7 +2,9 @@
 // policy; a denial is a 403 `FORBIDDEN` problem, and a read of a resource the caller may not see
 // is a 404 `NOT_FOUND`, so its existence does not leak. Neither names the action or the reason.
 import { ForbiddenError as PolicyForbiddenError } from '@causedeck/auth/policy';
+import { schema, withUser, withWorkspace } from '@causedeck/db';
 import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { and, eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { defineRoute, type AppRouter } from '../lib/openapi.ts';
@@ -46,6 +48,30 @@ function withAuthorizedRoutes(v1: AppRouter): void {
     }),
     (c) => c.json({ ok: true }, 200),
   );
+  v1.openapi(
+    defineRoute({
+      method: 'get',
+      path: '/authz/audited',
+      middleware: [
+        requireWorkspace(testAppDb()),
+        authorize('member.role', { logger: quiet, db: testAppDb() }),
+      ],
+      responses: { 200: { description: 'Owners only, denials audited' } },
+    }),
+    (c) => c.json({ ok: true }, 200),
+  );
+}
+
+function deniedRows(userId: string, workspaceId: string | null) {
+  const where = and(
+    eq(schema.auditEvent.actorUserId, userId),
+    eq(schema.auditEvent.action, 'access.denied'),
+  );
+  return workspaceId === null
+    ? withUser(testAppDb(), { userId }, (s) => s.select().from(schema.auditEvent).where(where))
+    : withWorkspace(testAppDb(), { workspaceId, userId }, (s) =>
+        s.select().from(schema.auditEvent).where(where),
+      );
 }
 
 describe('authorize middleware', () => {
@@ -101,6 +127,43 @@ describe('authorize middleware', () => {
       headers: { 'x-workspace-id': workspace.id },
     });
     expect(response.status).toBe(200);
+  });
+});
+
+describe('access.denied audit (#228)', () => {
+  it('records a non-member account-level and a member denial in the workspace chain', async () => {
+    const owner = await signIn();
+    const advocate = await signIn();
+    const outsider = await signIn();
+    const workspace = await createWorkspace(owner.id);
+    await addMember(workspace.id, advocate.id, 'advocate');
+    const app = makeApp({ routes: withAuthorizedRoutes });
+    const headers = { 'x-workspace-id': workspace.id, 'user-agent': 'authz-test' };
+
+    const stranger = await call(app, '/v1/authz/audited', { cookie: outsider.cookie, headers });
+    expect(stranger.status).toBe(403);
+    expect(await problemOf(stranger)).toMatchObject({ code: 'FORBIDDEN' });
+    const [account] = await deniedRows(outsider.id, null);
+    expect(account).toMatchObject({
+      workspaceId: null,
+      outcome: 'denied',
+      targetKind: 'workspace',
+      targetId: workspace.id,
+      metadata: { member: false },
+    });
+
+    const denied = await call(app, '/v1/authz/audited', { cookie: advocate.cookie, headers });
+    expect(denied.status).toBe(403);
+    const rows = await deniedRows(advocate.id, workspace.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      workspaceId: workspace.id,
+      metadata: { member: true, deniedAction: 'member.role', reason: 'ROLE_DENIED' },
+    });
+
+    const ok = await call(app, '/v1/authz/audited', { cookie: owner.cookie, headers });
+    expect(ok.status).toBe(200);
+    expect(await deniedRows(owner.id, workspace.id)).toHaveLength(0);
   });
 });
 

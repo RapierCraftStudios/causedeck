@@ -4,6 +4,7 @@
 // - `ui` is domain-free: it may import only `config` and `validators` (plus external primitives).
 // - `core` is the domain layer and may import the packages listed in CORE_DEPENDENCIES.
 // - `observability` may import only `config`, so logging never depends on domain code.
+// - `db` is a leaf under the domain packages: it may import only DB_DEPENDENCIES (#297).
 // - Other packages may import any package except `core` and `ui`. This is kept permissive on
 //   purpose so later issues are not blocked; tighten per package when its design settles.
 import { createRequire } from 'node:module';
@@ -31,6 +32,12 @@ export const CORE_DEPENDENCIES = [
 
 /** Packages that `observability` may depend on: no domain packages (#13). */
 export const OBSERVABILITY_DEPENDENCIES = ['config'];
+
+/**
+ * Packages that `db` may depend on (#297): no domain packages. `validators` is the zod-only leaf
+ * that holds the GSTIN pattern and the plan catalogue the billing tables and seed need.
+ */
+export const DB_DEPENDENCIES = ['config', 'i18n', 'validators'];
 
 /** Packages that `ui` may depend on. */
 export const UI_DEPENDENCIES = ['config', 'validators'];
@@ -73,6 +80,8 @@ export const boundaries = [
             { from: [pkg('core')], allow: CORE_DEPENDENCIES.map(pkg) },
             { from: [pkg('observability')], disallow: ['package'] },
             { from: [pkg('observability')], allow: OBSERVABILITY_DEPENDENCIES.map(pkg) },
+            { from: [pkg('db')], disallow: ['package'] },
+            { from: [pkg('db')], allow: DB_DEPENDENCIES.map(pkg) },
           ],
         },
       ],

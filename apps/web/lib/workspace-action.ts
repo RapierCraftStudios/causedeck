@@ -16,7 +16,7 @@ import type { Transaction } from '@causedeck/db';
 import { z, type ZodType } from 'zod';
 
 import type { AppSession } from './auth.ts';
-import { guard } from './guard.ts';
+import { defaultRecordDenied, guard, type AccessDenial } from './guard.ts';
 import {
   ActionError,
   safeAction,
@@ -48,6 +48,8 @@ export interface WorkspaceActionOptions<I = unknown> {
   requireSession?: () => Promise<AppSession>;
   /** Defaults to `@causedeck/core/workspaces` `memberRole` on the app `db`. */
   memberRole?: (userId: string, workspaceId: string) => Promise<WorkspaceRole | null>;
+  /** Defaults to `@causedeck/core/audit` `recordAccessDenied` on the app `db` (#228). */
+  recordDenied?: (denial: AccessDenial) => Promise<void>;
   /** Defaults to `@causedeck/db` `withWorkspace` on the app `db`. */
   runInWorkspace?: <T>(
     scope: { workspaceId: string; userId: string },
@@ -112,6 +114,7 @@ export function workspaceAction<I extends { workspaceId: string }, O>(
     resource,
     requireSession = defaultRequireSession,
     memberRole = defaultMemberRole,
+    recordDenied = defaultRecordDenied,
     runInWorkspace = defaultRunInWorkspace,
   }: WorkspaceActionOptions<I> = {},
 ): (raw: unknown) => Promise<Result<O>> {
@@ -126,14 +129,25 @@ export function workspaceAction<I extends { workspaceId: string }, O>(
       const { workspaceId } = scope.data;
       const { role, actor } = await guard(
         { workspaceId, action, resource: resource?.(input), session },
-        { memberRole },
+        { memberRole, recordDenied },
       );
       try {
         return await runInWorkspace({ workspaceId, userId }, (tx) =>
           handler(input, { ...ctx, session, userId, workspaceId, role, actor, tx }),
         );
       } catch (error) {
-        throw toActionError(error);
+        const mapped = toActionError(error);
+        // A domain denial: the workspace transaction rolled back, so it is recorded on its own.
+        if (mapped instanceof ActionError && mapped.code === 'FORBIDDEN') {
+          await recordDenied({
+            workspaceId,
+            member: true,
+            actorUserId: userId,
+            action,
+            reason: 'FORBIDDEN',
+          });
+        }
+        throw mapped;
       }
     },
     { getSession: requireSession },

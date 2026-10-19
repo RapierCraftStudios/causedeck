@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from 'react';
 
 import { Skeleton, SkeletonGroup } from '../../components/skeleton';
 import { cn } from '../../lib/cn';
-import { ProvenanceChipSkeleton } from '../provenance-chip/provenance-chip';
+import { ProvenanceChipSkeleton } from '../provenance-chip/provenance-chip-skeleton';
 
 // Placeholders that mirror each pattern's layout: the same paddings, gaps, breakpoints and line
 // boxes (`h-lh` inside the pattern's text size), so the block size does not change when the data

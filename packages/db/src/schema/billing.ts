@@ -1,15 +1,15 @@
 // Billing tables (#28 part 1, #200; spike §4.2). `plan` is global (GLOBAL_TABLES): the catalogue
-// rows come from `@causedeck/billing/plans` via the `plans` seeder. `subscription`, `entitlement`,
+// rows come from `@causedeck/validators/plans` via the `plans` seeder. `subscription`, `entitlement`,
 // `usage_counter` and `billing_event` are tenant tables in the `0004_workspaces` style: NOT NULL
 // `workspace_id` referencing the workspace, led index. RLS policies arrive with #19 and the
 // cross-tenant registration with #207.
-import { GSTIN_PATTERN_SOURCE } from '@causedeck/billing/gstin';
+import { GSTIN_PATTERN_SOURCE } from '@causedeck/validators/gstin';
 import {
   PLAN_INTERVALS,
   PLAN_KINDS,
   SUBSCRIPTION_STATUSES,
   TERMINAL_SUBSCRIPTION_STATUSES,
-} from '@causedeck/billing/plans';
+} from '@causedeck/validators/plans';
 import { sql } from 'drizzle-orm';
 import {
   bigint,

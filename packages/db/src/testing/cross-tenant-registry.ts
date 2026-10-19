@@ -194,6 +194,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
   },
+  reconcileAiCalls: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
   setBudgetOverride: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -347,6 +352,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   budgetReadSql: 'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
   reservationInsertSql:
     'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
+  // usage: ai_call reconciliation (#225)
+  reconcileAiCallsSql: 'pure (SQL builder; reconcileAiCalls runs it inside withWorkspace)',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;

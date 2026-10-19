@@ -3,6 +3,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { UnauthenticatedError } from '@causedeck/auth';
+import { conceals, isForbiddenError } from '@causedeck/auth/policy';
 import type { AuthSession } from '@causedeck/auth/session';
 import type { ZodType } from 'zod';
 
@@ -120,6 +121,12 @@ export function safeAction<I, O>(
             ...(error.fieldErrors ? { fieldErrors: error.fieldErrors } : {}),
           },
         };
+      }
+      // A policy denial (`assertCan`, #234): FORBIDDEN, or NOT_FOUND for a read of a resource the
+      // caller may not see. The action and reason stay server-side.
+      if (isForbiddenError(error)) {
+        const code = conceals(error) ? 'NOT_FOUND' : 'FORBIDDEN';
+        return { ok: false, error: { code, message: GENERIC_MESSAGES[code] } };
       }
       if (isUnauthenticated(error)) {
         return {

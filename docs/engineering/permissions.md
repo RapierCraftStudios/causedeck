@@ -12,6 +12,7 @@ the matrix, before the resource checks below.
 | Action | owner | advocate | junior | clerk | viewer |
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `workspace.manage` | ✓     | ✓        | —      | —     | —      |
+| `workspace.rename` | ✓     | —        | —      | —     | —      |
 | `workspace.delete` | ✓     | —        | —      | —     | —      |
 
 ## member
@@ -20,6 +21,7 @@ the matrix, before the resource checks below.
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `member.invite` | ✓     | ✓        | —      | —     | —      |
 | `member.remove` | ✓     | —        | —      | —     | —      |
+| `member.role` | ✓     | —        | —      | —     | —      |
 
 ## billing
 

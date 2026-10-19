@@ -234,6 +234,10 @@ const CASES: Record<string, Case> = {
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ub)));
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ua)));
   },
+  requireCan: async (f) => {
+    await expectDenied(f.asB((s) => core.requireCan(s, f.a.id, f.ub, 'matter.read')));
+    await expectDenied(f.asB((s) => core.requireCan(s, f.a.id, f.ua, 'workspace.delete')));
+  },
   listMembers: async (f) => {
     expect(await f.asB((s) => core.listMembers(s, f.a.id))).toEqual([]);
   },

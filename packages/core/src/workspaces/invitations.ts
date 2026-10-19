@@ -5,6 +5,7 @@ import { createHash, randomBytes } from 'node:crypto';
 
 import type { Mailer } from '@causedeck/auth/mailer';
 import { AUTH_EMAIL_KEYS, type AuthLocale } from '@causedeck/auth/messages';
+import { invitableRoles, isRole } from '@causedeck/auth/policy';
 import { consumeRateLimit } from '@causedeck/auth/rate-limit';
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { InviteInput } from '@causedeck/validators/workspace';
@@ -29,12 +30,6 @@ const { invitation, member, organization, user } = schema;
 export const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const INVITE_RATE_LIMIT = { max: 20, windowSeconds: 60 * 60 } as const;
 export const ACCEPT_RATE_LIMIT = { max: 20, windowSeconds: 60 * 60 } as const;
-
-/** Roles each inviter role may grant. Advocates invite below themselves until `can()` (#20). */
-const INVITABLE_ROLES: Partial<Record<string, readonly WorkspaceRole[]>> = {
-  owner: ['advocate', 'junior', 'clerk', 'viewer'],
-  advocate: ['junior', 'clerk', 'viewer'],
-};
 
 /** 32 random bytes, base64url: the only copy of the token is the one in the email. */
 export function generateInvitationToken(): string {
@@ -78,7 +73,13 @@ async function requireInviter(
         eq(member.status, 'active'),
       ),
     );
-  if (!actor || !(INVITABLE_ROLES[actor.role] ?? []).includes(role)) {
+  // The policy decides (#234): `member.invite`, granting only roles ranked below the inviter's.
+  if (
+    !actor ||
+    !isRole(actor.role) ||
+    !isRole(role) ||
+    !invitableRoles(actor.role).includes(role)
+  ) {
     throw forbidden('You cannot invite members with this role');
   }
 }

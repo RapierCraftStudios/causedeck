@@ -107,6 +107,11 @@
       "requestAccess": "Request access",
       "requestAccessSoon": "Access requests are coming soon."
     },
+    "permission": {
+      "ownersOnly": "Only owners can do this",
+      "ownersAndAdvocates": "Only owners and advocates can do this",
+      "roleTooLow": "Your role cannot do this"
+    },
     "notFound": {
       "title": "Page not found",
       "message": "We could not find this page in this workspace."

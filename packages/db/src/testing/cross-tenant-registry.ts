@@ -76,6 +76,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listWorkspacesForUser: empty,
   memberRole: empty,
   requireOwner: denies,
+  requireCan: denies,
   listMembers: empty,
   changeRole: denies,
   removeMember: denies,

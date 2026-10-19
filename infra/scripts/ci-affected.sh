@@ -43,6 +43,11 @@ cmd=(pnpm turbo run "$task")
 if [[ -n $filter ]]; then
   cmd+=("--filter=${filter}")
 fi
+# CI_TURBO_CONCURRENCY caps how many packages run at once (turbo's default is 10, too many Testcontainers
+# and vitest worker pools for a 4-vCPU runner: workers starve and vitest reports RPC timeouts).
+if [[ -n ${CI_TURBO_CONCURRENCY:-} ]]; then
+  cmd+=("--concurrency=${CI_TURBO_CONCURRENCY}")
+fi
 if [[ $# -gt 0 ]]; then
   cmd+=(-- "$@")
 fi

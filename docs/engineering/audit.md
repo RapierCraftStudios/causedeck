@@ -38,8 +38,8 @@ Each action is either **security** or **informational**:
 | security      | fail-closed: `record()` throws, so the action fails and its transaction rolls back | yes       |
 | informational | fail-open: logged (`service: audit`, action, workspace and error code only) and dropped. The write ran on its own savepoint, so the caller's transaction stays usable | no        |
 
-| Action                      | Kind          | Emitted by                                                        |
-| --------------------------- | ------------- | ----------------------------------------------------------------- |
+| Action | Kind | Emitted by |
+| --- | --- | --- |
 | `member.removed`            | security      | `offboardMember` through the `AuditSink`                          |
 | `member.role_changed`       | security      | `changeRole`, `transferOwnership` (both roles)                    |
 | `flag.changed`              | security      | `flagChangeAuditSink` for `setFlagAuditSink` (#22)                |
@@ -56,6 +56,9 @@ Each action is either **security** or **informational**:
 | `support.session_ended`     | security      | `recordSupportSessionEnded` (#27)                                 |
 | `access.denied`             | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize` |
 | `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)               |
+| `billing.subscription_changed` | security | owner billing actions (`changeSubscription`, #257) |
+| `billing.gstin_updated`     | security      | `setSubscriptionGstin` (#257)                       |
+| `billing.invoice_downloaded` | security    | `openSaasInvoicePdf`, before the first byte (#258)  |
 | `workspace.settings_viewed` | informational | reserved                                                          |
 | `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)                    |
 

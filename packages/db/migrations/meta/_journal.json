@@ -148,6 +148,27 @@
       "when": 1792411768884,
       "tag": "0020_audit_read_setting",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792418423287,
+      "tag": "0021_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792420317050,
+      "tag": "0022_matter_restriction",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792422425388,
+      "tag": "0023_invoice_payment_blob",
+      "breakpoints": true
     }
   ]
 }

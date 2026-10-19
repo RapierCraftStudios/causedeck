@@ -1,6 +1,8 @@
 // `billing.process-event` (#204) on the Testcontainers database, as causedeck_app in a rolled-back
 // transaction: the mock provider raises the events, `recordBillingEvent` stores them as the webhook
-// route does, and the job applies each one exactly once under the workspace scope.
+// route does, and the job applies each one exactly once under the workspace scope. A captured
+// `subscription.charged` also issues one SaaS invoice and enqueues its render (#255); the pg-boss
+// producer is replaced by a recorder.
 import { randomUUID } from 'node:crypto';
 
 import {
@@ -15,6 +17,17 @@ import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import type { Logger } from '@causedeck/observability';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
+
+const sent = vi.hoisted(() => [] as { name: string; data: object; options: unknown }[]);
+vi.mock('../producer.ts', () => ({
+  getProducer: () =>
+    Promise.resolve({
+      send: (name: string, data: object, options: unknown) => {
+        sent.push({ name, data, options });
+        return Promise.resolve('job-id');
+      },
+    }),
+}));
 
 import { recordBillingEvent, resolveBillingWorkspace } from '../../billing/webhook-events.ts';
 import { RetryableError } from '../errors.ts';
@@ -304,6 +317,148 @@ describe('webhook event persistence', () => {
       ).rejects.toThrow('queue down');
       expect(await eventOf(tx, workspaceId, 'evt_enqueue_fails')).toBeUndefined();
       expect(await recordBillingEvent(tx, input)).toEqual({ inserted: true });
+    });
+  });
+});
+
+describe('billing.process-event: invoice on payment (#255)', () => {
+  const invoicesOf = (tx: Transaction, workspaceId: string) =>
+    inWorkspace(tx, workspaceId, (s) =>
+      s.select().from(schema.saasInvoice).where(eq(schema.saasInvoice.workspaceId, workspaceId)),
+    );
+  const rendersFor = (workspaceId: string) =>
+    sent.filter(
+      (job) =>
+        job.name === 'billing.invoice-render' &&
+        (job.data as { workspaceId: string }).workspaceId === workspaceId,
+    );
+
+  it('issues one invoice for a captured charge and enqueues one render', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const provider = createMockBillingProvider();
+      const { workspaceId, providerSubscriptionId } = await seedWorkspace(tx, provider);
+      const apply = async (providerEventId: string) =>
+        runBillingProcessEvent(ctx(tx), { workspaceId, providerEventId });
+
+      await apply(
+        await store(tx, workspaceId, await provider.authorizeMandate(providerSubscriptionId)),
+      );
+      expect(await invoicesOf(tx, workspaceId)).toEqual([]);
+
+      const charged = await provider.simulate(providerSubscriptionId, 'subscription.charged');
+      const providerEventId = await store(tx, workspaceId, charged);
+      expect(await apply(providerEventId)).toBe('applied');
+      const invoices = await invoicesOf(tx, workspaceId);
+      expect(invoices).toHaveLength(1);
+      expect(invoices[0]).toMatchObject({
+        status: 'issued',
+        providerPaymentId: charged.payload.payment?.entity.id,
+        pdfBlobId: null,
+      });
+      const invoiceId = invoices[0]?.id ?? '';
+      expect(rendersFor(workspaceId)).toEqual([
+        {
+          name: 'billing.invoice-render',
+          data: { workspaceId, invoiceId },
+          options: { singletonKey: invoiceId, group: { id: workspaceId } },
+        },
+      ]);
+
+      // A retried job and a redelivery of the same payment under a new event id issue nothing.
+      expect(await apply(providerEventId)).toBe('already_processed');
+      await apply(await store(tx, workspaceId, charged));
+      expect(await invoicesOf(tx, workspaceId)).toHaveLength(1);
+      expect(rendersFor(workspaceId)).toHaveLength(1);
+
+      // The next cycle's charge is a new payment and a new invoice.
+      await apply(
+        await store(
+          tx,
+          workspaceId,
+          await provider.simulate(providerSubscriptionId, 'subscription.charged'),
+        ),
+      );
+      expect(await invoicesOf(tx, workspaceId)).toHaveLength(2);
+    });
+  });
+
+  it('issues nothing for a failed payment, an illegal transition or an unknown subscription', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const provider = createMockBillingProvider();
+      const { workspaceId, providerSubscriptionId } = await seedWorkspace(tx, provider);
+      const apply = async (body: RazorpayWebhookEvent) =>
+        runBillingProcessEvent(ctx(tx), {
+          workspaceId,
+          providerEventId: await store(tx, workspaceId, body),
+        });
+
+      await apply(await provider.authorizeMandate(providerSubscriptionId));
+      expect(await apply(await provider.simulate(providerSubscriptionId, 'payment.failed'))).toBe(
+        'applied',
+      );
+
+      // A charge the state machine rejects: the stored subscription is already cancelled.
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.subscription)
+          .set({ status: 'cancelled' })
+          .where(eq(schema.subscription.workspaceId, workspaceId)),
+      );
+      expect(
+        await apply(await provider.simulate(providerSubscriptionId, 'subscription.charged')),
+      ).toBe('illegal_transition');
+
+      // A charge for a provider subscription this workspace does not have.
+      const customer = await provider.createCustomer({ email: 'other@example.in' });
+      const other = await provider.createSubscription({
+        customerId: customer.id,
+        planId: 'chamber-seat-1',
+        quantity: 3,
+      });
+      await provider.authorizeMandate(other.id);
+      expect(await apply(await provider.simulate(other.id, 'subscription.charged'))).toBe(
+        'unknown_subscription',
+      );
+
+      expect(await invoicesOf(tx, workspaceId)).toEqual([]);
+      expect(rendersFor(workspaceId)).toEqual([]);
+    });
+  });
+
+  it('rolls the event back when the invoice cannot be issued, so the job retries', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const provider = createMockBillingProvider();
+      const { workspaceId, providerSubscriptionId } = await seedWorkspace(tx, provider);
+      await runBillingProcessEvent(ctx(tx), {
+        workspaceId,
+        providerEventId: await store(
+          tx,
+          workspaceId,
+          await provider.authorizeMandate(providerSubscriptionId),
+        ),
+      });
+      const before = await subscriptionOf(tx, workspaceId);
+      const charged = await provider.simulate(providerSubscriptionId, 'subscription.charged');
+      const providerEventId = await store(tx, workspaceId, charged);
+      const refuse = () => {
+        throw new Error('supplier not configured');
+      };
+
+      await expect(
+        runBillingProcessEvent(ctx(tx), { workspaceId, providerEventId }, { supplier: refuse }),
+      ).rejects.toThrow('supplier not configured');
+      expect((await eventOf(tx, workspaceId, providerEventId))?.processedAt).toBeNull();
+      expect(await subscriptionOf(tx, workspaceId)).toEqual(before);
+      expect(await invoicesOf(tx, workspaceId)).toEqual([]);
+
+      // The retry, once the supplier is configured, applies the charge and issues the invoice.
+      expect(await runBillingProcessEvent(ctx(tx), { workspaceId, providerEventId })).toBe(
+        'applied',
+      );
+      expect(await invoicesOf(tx, workspaceId)).toHaveLength(1);
     });
   });
 });

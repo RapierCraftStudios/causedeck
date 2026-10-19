@@ -7,6 +7,9 @@
 // `trialing` is the provider's `created` (mandate not yet approved), `past_due`/`paused` or an open
 // dunning episode is a failed payment, and `grace_until` on a `past_due` row is the grace period
 // (`@causedeck/billing/state-machine`).
+//
+// `manage` (#257) carries what the owner billing actions need: the current counts, the GSTIN, the
+// cancel/pause flags and the plans the owner can move to.
 import { getPlan, PLAN_CATALOGUE, type Plan } from '@causedeck/billing/plans';
 import { formatDate, formatInr, IST_TIME_ZONE, type Locale } from '@causedeck/i18n';
 
@@ -19,6 +22,8 @@ export interface BillingSubscriptionInput {
   graceUntil: Date | null;
   cancelAtPeriodEnd: boolean;
   dunningStartedAt: Date | null;
+  /** The workspace's GSTIN for future invoices (#257). */
+  gstin?: string | null;
 }
 
 export interface BillingInvoiceInput {
@@ -86,6 +91,34 @@ export interface UpgradeOption {
   minSeats: number;
 }
 
+/** A plan the owner can move to (#257): active, paid, the same interval as the current plan. */
+export interface PlanOption {
+  id: string;
+  name: string;
+  kind: Plan['kind'];
+  /** Per seat when `perSeat`, otherwise the flat price of one charge; ex-GST. */
+  price: string;
+  perSeat: boolean;
+  minSeats: number;
+  clerkSeats: boolean;
+}
+
+/** What the owner billing actions need (#257); shown only with `billing.manage`. */
+export interface ManageView {
+  planId: string;
+  seats: number;
+  clerkSeats: number;
+  seatsUsed: { nonClerk: number; clerk: number };
+  minSeats: number;
+  clerkSeatsAvailable: boolean;
+  gstin: string | null;
+  cancelAtPeriodEnd: boolean;
+  paused: boolean;
+  /** The current period's end (`dd MMM yyyy`), when the cancel copy names it. */
+  periodEnd: string | null;
+  planOptions: PlanOption[];
+}
+
 export type BillingView =
   | { kind: 'junior'; upgrades: UpgradeOption[]; invoices: InvoiceView[] }
   | {
@@ -97,6 +130,7 @@ export type BillingView =
       paymentMethod: PaymentMethodState | null;
       banner: BillingBanner | null;
       invoices: InvoiceView[];
+      manage: ManageView;
     };
 
 const DAY_MS = 86_400_000;
@@ -199,6 +233,26 @@ function upgrades(plans: readonly Plan[]): UpgradeOption[] {
   });
 }
 
+function planOptions(current: Plan | undefined, plans: readonly Plan[]): PlanOption[] {
+  return plans
+    .filter(
+      (p) =>
+        p.active &&
+        p.kind !== 'junior' &&
+        p.pricePaise > 0 &&
+        (current === undefined || p.interval === current.interval),
+    )
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      kind: p.kind,
+      price: formatInr(p.pricePaise),
+      perSeat: p.perSeat,
+      minSeats: p.minSeats,
+      clerkSeats: p.clerkSeatPricePaise !== null,
+    }));
+}
+
 export function toBillingView(input: BillingViewInput): BillingView {
   const { subscription: sub, slug, now, locale } = input;
   const plans = input.plans ?? PLAN_CATALOGUE;
@@ -235,5 +289,18 @@ export function toBillingView(input: BillingViewInput): BillingView {
     paymentMethod: paymentMethodState(sub),
     banner: banner(sub, now, date),
     invoices,
+    manage: {
+      planId: sub.planId,
+      seats: sub.seats,
+      clerkSeats: sub.clerkSeats,
+      seatsUsed: input.seatsUsed,
+      minSeats: plan?.minSeats ?? 1,
+      clerkSeatsAvailable: (plan?.clerkSeatPricePaise ?? null) !== null,
+      gstin: sub.gstin ?? null,
+      cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+      paused: sub.status === 'paused',
+      periodEnd: sub.currentPeriodEnd ? date(sub.currentPeriodEnd) : null,
+      planOptions: planOptions(plan, plans),
+    },
   };
 }

@@ -300,9 +300,11 @@ describe('POST /v1/webhooks/razorpay', () => {
       if (!job) throw new Error('no job');
       expect(job.name).toBe('billing.process-event');
       const ctx = { db: testAppDb(), log: quiet as never };
-      expect(await runBillingProcessEvent(ctx, job.data, { now })).toBe('applied');
+      // The charge issues an invoice (#255); its render job is recorded, not sent.
+      const deps = { now, enqueueRender: () => Promise.resolve(null) };
+      expect(await runBillingProcessEvent(ctx, job.data, deps)).toBe('applied');
       // The job runs once per event: a retry is a no-op.
-      expect(await runBillingProcessEvent(ctx, job.data, { now })).toBe('already_processed');
+      expect(await runBillingProcessEvent(ctx, job.data, deps)).toBe('already_processed');
       const row = await subscriptionOf(workspace.id);
       expect(row?.status).toBe(status);
       expect(row?.graceUntil !== null).toBe(grace);

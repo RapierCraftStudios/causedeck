@@ -15,6 +15,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
@@ -23,7 +24,7 @@ import {
   usageReservation,
 } from '../schema/usage.ts';
 import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
-import { workspaceKey } from '../schema/storage.ts';
+import { blob, workspaceKey } from '../schema/storage.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -251,12 +252,46 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
     return { key };
   },
+  matter_restriction: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(matterRestriction)
+        .values({
+          workspaceId,
+          matterId: randomUUID(),
+          allowedUserIds: [ownerId],
+          createdBy: ownerId,
+        })
+        .returning({ id: matterRestriction.id, matterId: matterRestriction.matterId }),
+      'matter_restriction',
+    );
+    return { id: row.id, matterId: row.matterId };
+  },
   workspace_key: async (tx, { workspaceId }) => {
     // Opaque bytes standing in for a wrapped DEK; the table never sees a plaintext key.
     await tx
       .insert(workspaceKey)
       .values({ workspaceId, wrappedDek: randomBytes(60), kekId: 'kek-test' });
     return { workspaceId };
+  },
+  blob: async (tx, { workspaceId, ownerId }) => {
+    // A finalized upload row; the object itself never exists in a SQL-only suite.
+    const id = randomUUID();
+    const year = new Date().getUTCFullYear();
+    await tx.insert(blob).values({
+      id,
+      workspaceId,
+      key: `ws/${workspaceId}/document/${String(year)}/${id}`,
+      kind: 'document',
+      filename: 'seed.pdf',
+      size: 8,
+      sha256: createHash('sha256').update(id).digest('hex'),
+      mime: 'application/pdf',
+      scanStatus: 'pending',
+      createdBy: ownerId,
+      finalizedAt: new Date(),
+    });
+    return { id };
   },
   saas_invoice: async (tx, { workspaceId }) => ({
     invoiceId: await seedDraftInvoice(tx, workspaceId),

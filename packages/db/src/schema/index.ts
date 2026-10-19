@@ -23,6 +23,7 @@ export {
   workspaceFeatureFlag,
 } from './flags.ts';
 export { jobEffect } from './job-effect.ts';
+export { matterRestriction } from './matter-restriction.ts';
 export {
   emailSuppression,
   notification,
@@ -40,7 +41,7 @@ export {
   type SaasInvoiceParty,
   type SaasInvoiceStatus,
 } from './saas-invoice.ts';
-export { workspaceKey } from './storage.ts';
+export { BLOB_SCAN_STATUSES, blob, workspaceKey, type BlobScanStatus } from './storage.ts';
 export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from './usage.ts';
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';

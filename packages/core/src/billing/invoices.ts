@@ -8,6 +8,10 @@
 // the series is gapless. Lines are inserted while the invoice is a draft (the 0017 trigger rejects
 // lines on an issued invoice), then the invoice is marked issued.
 //
+// `createInvoiceStore` also implements `OnPaymentStore` (#255): `findByPaymentId` is the lookup that
+// makes `invoiceOnPayment` idempotent per provider payment (backed by `saas_invoice_payment_uq`).
+// `loadSaasInvoiceForRender` reads an issued invoice with its lines for the render job.
+//
 // `listSaasInvoices` (#256) lists the workspace's issued, paid and void invoices for the billing
 // page, newest first. Drafts are never listed; they have no number yet. It runs on the caller's
 // queryable: `saas_invoice` is workspace-isolated (RLS), so callers pass their workspace-scoped
@@ -15,12 +19,12 @@
 import { supplierFromEnv, type SupplierConfig } from '@causedeck/billing/config/supplier';
 import {
   issueInvoice,
-  type InvoiceStore,
   type IssueInvoiceInput,
   type SaasInvoice,
 } from '@causedeck/billing/invoice/generate';
+import type { OnPaymentStore } from '@causedeck/billing/invoice/on-payment';
 import { isUuid, schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 
 type Queryable = Database | Transaction;
 
@@ -35,9 +39,22 @@ export interface InvoiceContext {
   supplier?: () => SupplierConfig;
 }
 
-/** The `InvoiceStore` over a workspace-scoped transaction. */
-export function createInvoiceStore(tx: Transaction, workspaceId: string): InvoiceStore {
+/** The `InvoiceStore` (and `OnPaymentStore`) over a workspace-scoped transaction. */
+export function createInvoiceStore(tx: Transaction, workspaceId: string): OnPaymentStore {
   return {
+    async findByPaymentId(providerPaymentId) {
+      const [row] = await tx
+        .select({ id: saasInvoice.id })
+        .from(saasInvoice)
+        .where(
+          and(
+            eq(saasInvoice.workspaceId, workspaceId),
+            eq(saasInvoice.providerPaymentId, providerPaymentId),
+          ),
+        );
+      return row ?? null;
+    },
+
     async loadRecipient(subscriptionId) {
       if (!isUuid(subscriptionId)) return null;
       const [row] = await tx
@@ -100,6 +117,71 @@ export async function issueSaasInvoice(
       input,
     ),
   );
+}
+
+/** An issued (or later) invoice with its lines, as the PDF template takes it. */
+export interface RenderableSaasInvoice {
+  invoice: SaasInvoice;
+  status: string;
+  pdfBlobId: string | null;
+}
+
+/**
+ * The invoice `invoiceId` of the workspace with its lines, for rendering; null when it does not
+ * exist in this workspace or is still a draft (no number yet).
+ */
+export async function loadSaasInvoiceForRender(
+  db: Queryable,
+  workspaceId: string,
+  invoiceId: string,
+): Promise<RenderableSaasInvoice | null> {
+  if (!isUuid(invoiceId)) return null;
+  const [row] = await db
+    .select()
+    .from(saasInvoice)
+    .where(and(eq(saasInvoice.id, invoiceId), eq(saasInvoice.workspaceId, workspaceId)));
+  if (!row || row.status === 'draft' || row.number === null || row.issueDate === null) return null;
+  const lines = await db
+    .select({
+      description: saasInvoiceLine.description,
+      quantity: saasInvoiceLine.quantity,
+      unitPricePaise: saasInvoiceLine.unitPricePaise,
+      amountPaise: saasInvoiceLine.amountPaise,
+    })
+    .from(saasInvoiceLine)
+    .where(
+      and(eq(saasInvoiceLine.invoiceId, invoiceId), eq(saasInvoiceLine.workspaceId, workspaceId)),
+    )
+    // Lines have no position column; they are inserted once, in order, and never updated (0017
+    // trigger), so their physical order is the insertion order.
+    .orderBy(sql`ctid`);
+  return {
+    status: row.status,
+    pdfBlobId: row.pdfBlobId,
+    invoice: {
+      id: row.id,
+      subscriptionId: row.subscriptionId ?? '',
+      number: row.number,
+      series: row.series,
+      fy: row.fy,
+      status: 'issued',
+      issueDate: row.issueDate,
+      periodStart: row.periodStart ?? row.issueDate,
+      periodEnd: row.periodEnd ?? row.issueDate,
+      supplier: row.supplier,
+      recipient: row.recipient,
+      placeOfSupplyStateCode: row.placeOfSupplyStateCode,
+      sac: row.sac,
+      taxablePaise: row.taxablePaise,
+      cgstPaise: row.cgstPaise,
+      sgstPaise: row.sgstPaise,
+      igstPaise: row.igstPaise,
+      totalPaise: row.totalPaise,
+      currency: 'INR',
+      lines,
+      providerPaymentId: row.providerPaymentId,
+    },
+  };
 }
 
 /** Statuses shown on the billing page. */

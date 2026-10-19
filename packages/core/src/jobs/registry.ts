@@ -6,6 +6,8 @@ import type { z } from 'zod';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
+import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
+import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
@@ -122,6 +124,8 @@ export const registry = createRegistry([
   billingReconcile,
   billingDunningTick,
   billingProcessEvent,
+  billingInvoiceRender,
+  billingInvoiceNotice,
   notificationDeliver,
   notificationDigestSchedule,
   notificationDigest,
@@ -138,6 +142,8 @@ export type JobMap = RegistryMap<
     typeof billingReconcile,
     typeof billingDunningTick,
     typeof billingProcessEvent,
+    typeof billingInvoiceRender,
+    typeof billingInvoiceNotice,
     typeof notificationDeliver,
     typeof notificationDigestSchedule,
     typeof notificationDigest,

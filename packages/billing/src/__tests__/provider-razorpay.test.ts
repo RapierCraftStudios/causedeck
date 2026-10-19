@@ -342,3 +342,31 @@ describe('Razorpay adapter: secret hygiene', () => {
     for (const spy of spies) expect(spy).not.toHaveBeenCalled();
   });
 });
+
+describe('Razorpay adapter: plan change and cancellation withdrawal (#257)', () => {
+  it.each(['now', 'cycle_end'] as const)(
+    'updates the plan with schedule_change_at %s',
+    async (at) => {
+      const client = fakeClient();
+      await provider(client).updateSubscriptionPlan('sub_FIXTURE0000001', {
+        planId: 'plan_CHAMBER2',
+        quantity: 4,
+        at,
+      });
+      expect(client.subscriptions.update).toHaveBeenCalledWith('sub_FIXTURE0000001', {
+        plan_id: 'plan_CHAMBER2',
+        quantity: 4,
+        schedule_change_at: at,
+      });
+    },
+  );
+
+  it('rejects withdrawing a cancellation as unsupported without calling Razorpay', async () => {
+    const client = fakeClient();
+    const result = provider(client).withdrawCancellation('sub_FIXTURE0000001');
+    await expect(result).rejects.toBeInstanceOf(BillingProviderError);
+    await expect(result).rejects.toMatchObject({ code: 'unsupported' });
+    expect(client.subscriptions.update).not.toHaveBeenCalled();
+    expect(client.subscriptions.cancel).not.toHaveBeenCalled();
+  });
+});

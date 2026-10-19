@@ -83,7 +83,7 @@ describe('row-level security catalog', () => {
         and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'workspace_id')
         and not (c.relname = any(${sql.raw(`array[${GLOBAL_TABLES.map((t) => `'${t}'`).join(', ')}]`)}))
       order by 1`);
-    // Baseline tables plus the tenant tables created after 0006 (#226, #194, #218, #22, #216, #252).
+    // Baseline tables plus the tenant tables created after 0006 (#226, #194, #218, #22, #216, #252, #233, #217).
     expect(rows.map((r) => r.name)).toEqual(
       [
         ...BASELINE_TENANT_TABLES,
@@ -97,6 +97,8 @@ describe('row-level security catalog', () => {
         'workspace_key',
         'saas_invoice',
         'saas_invoice_line',
+        'matter_restriction',
+        'blob',
       ].sort(),
     );
     for (const row of rows)
@@ -244,5 +246,7 @@ describe('db:check-rls CLI', () => {
     for (const statement of tenantPolicy('rls_fixture')) await scratch.execute(sql.raw(statement));
     const fixed = await run('--url', db.owner);
     expect(fixed.status, fixed.stderr).toBe(0);
-  });
+    // Three `pnpm exec tsx` spawns plus a migration: 24 s on a free host, over the 60 s default
+    // when turbo runs every package's tests at once on the CI runner.
+  }, 240_000);
 });

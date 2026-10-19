@@ -123,7 +123,7 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
 
 type PlaceholderId = PlaceholderRoute;
 /** Routes whose page is no longer a placeholder; each has its own page test. */
-const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>(['billing']);
+const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>(['billing', 'activity']);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
 );

@@ -1,4 +1,7 @@
-/** S3 abstraction, server-side keys and signed URLs (#215), envelope encryption (#216). */
+/**
+ * S3 abstraction, server-side keys and signed URLs (#215), envelope encryption (#216), uploads and
+ * download URLs (#217), server-written encrypted objects (#255).
+ */
 export const packageName: string = '@causedeck/storage';
 
 export * from './health.ts';
@@ -50,3 +53,39 @@ export {
   type EnsuredKey,
   type RewrapResult,
 } from './workspace-crypto.ts';
+export {
+  noopStorageAuditSink,
+  setStorageAuditSink,
+  storageAuditSink,
+  type StorageAuditEvent,
+  type StorageAuditSink,
+} from './audit.ts';
+export { attachmentDisposition, createDownloadUrl, type DownloadUrl } from './download.ts';
+export {
+  ALLOWED_TYPES,
+  findAllowedType,
+  hasDeniedExtension,
+  isCompatible,
+  isDeniedMime,
+  normalizeMime,
+  sniffMime,
+  type AllowedType,
+} from './mime.ts';
+export {
+  createUploadIntent,
+  finalizeUpload,
+  isUploadError,
+  UploadError,
+  type FinalizedUpload,
+  type StorageAction,
+  type StorageCtx,
+  type UploadErrorCode,
+  type UploadIntent,
+  type UploadIntentInput,
+} from './upload.ts';
+export {
+  storeSystemBlob,
+  type StoredSystemBlob,
+  type SystemBlobCtx,
+  type SystemBlobInput,
+} from './system-blob.ts';

@@ -13,13 +13,17 @@
 // never inserts a notification. Push (#197) goes through `PushSender` from
 // `@causedeck/notifications/push`: absent VAPID keys disable it (recorded as skipped), the payload
 // is content-free unless the member turned on `Show details on lock screen`, a member with no
-// active subscription is skipped, and 404/410 subscriptions are revoked by the sender. Logs carry
-// ids, status and error codes only, never the address, title or body.
+// active subscription is skipped, 404/410 subscriptions are revoked by the sender, and a member
+// with `Do not push during court hours` on gets no push inside 10:30-17:00 workspace time (skipped
+// as `quiet_hours`; the in-app row stays). Logs carry ids, status and error codes only, never the
+// address, title or body.
 import { serverEnv } from '@causedeck/config/env';
 import { schema } from '@causedeck/db';
 import {
   getPreferences,
   isCategoryKey,
+  isQuietTime,
+  localMinutes,
   NotificationError,
   type NotificationContext,
 } from '@causedeck/notifications';
@@ -43,7 +47,32 @@ import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
 import { once } from '../idempotency.ts';
 
-const { notification, notificationSetting, user } = schema;
+const { notification, notificationSetting, user, workspaceSettings } = schema;
+
+/** The time zone of a workspace with no (or an invalid) `workspace_settings.timezone`. */
+export const DEFAULT_WORKSPACE_TIMEZONE = 'Asia/Kolkata';
+
+/** `timeZone` when `Intl` knows it, else the default. */
+export function validZone(timeZone: string): string {
+  try {
+    new Intl.DateTimeFormat('en-GB', { timeZone });
+    return timeZone;
+  } catch {
+    return DEFAULT_WORKSPACE_TIMEZONE;
+  }
+}
+
+/** The workspace's time zone (`workspace_settings.timezone`), used for digests and quiet hours. */
+export async function workspaceTimezone(
+  ctx: Pick<JobContext, 'db'>,
+  workspaceId: string,
+): Promise<string> {
+  const [row] = await ctx.db
+    .select({ timezone: workspaceSettings.timezone })
+    .from(workspaceSettings)
+    .where(eq(workspaceSettings.workspaceId, workspaceId));
+  return validZone(row?.timezone ?? DEFAULT_WORKSPACE_TIMEZONE);
+}
 
 export const DELIVERY_CHANNELS = ['email', 'push'] as const;
 export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
@@ -210,7 +239,10 @@ export async function runNotificationDeliver(
     const push = deps.push;
     if (push === undefined) return skip('push_disabled');
     const [setting] = await ctx.db
-      .select({ lockScreenDetails: notificationSetting.lockScreenDetails })
+      .select({
+        lockScreenDetails: notificationSetting.lockScreenDetails,
+        courtHoursQuiet: notificationSetting.courtHoursQuiet,
+      })
       .from(notificationSetting)
       .where(
         and(
@@ -218,6 +250,11 @@ export async function runNotificationDeliver(
           eq(notificationSetting.userId, row.userId),
         ),
       );
+    if (setting?.courtHoursQuiet === true) {
+      const timeZone = await workspaceTimezone(ctx, workspaceId);
+      const now = deps.now?.() ?? new Date();
+      if (isQuietTime(localMinutes(now, timeZone), setting)) return skip('quiet_hours');
+    }
     const message = {
       notificationId,
       userId: row.userId,

@@ -111,6 +111,22 @@ const CASES: Record<string, Case> = {
     );
     expect(settings.filter((r) => r.userId === f.ub)).toEqual([]);
   },
+  setCourtHoursQuiet: async (f) => {
+    await expectDenied(notifications.setCourtHoursQuiet(f.inA, { userId: f.ub, enabled: true }));
+    await expectDenied(notifications.setCourtHoursQuiet(f.inB, { userId: f.ua, enabled: true }));
+    const settings = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.notificationSetting),
+    );
+    expect(settings.filter((r) => r.userId === f.ub)).toEqual([]);
+  },
+  getDigest: async (f) => {
+    await expectDenied(notifications.getDigest(f.inA, { userId: f.ub }));
+    await expectDenied(notifications.getDigest(f.inB, { userId: f.ua }));
+  },
+  setDigest: async (f) => {
+    await expectDenied(notifications.setDigest(f.inA, { userId: f.ub, digest: 'daily' }));
+    await expectDenied(notifications.setDigest(f.inB, { userId: f.ua, digest: 'off' }));
+  },
 };
 
 const registered = Object.entries(NOTIFICATION_SERVICE_TESTS)

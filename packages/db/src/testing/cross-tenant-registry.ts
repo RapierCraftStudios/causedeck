@@ -228,6 +228,9 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   setPreference: notificationDenies,
   getNotificationSetting: notificationDenies,
   setLockScreenDetails: notificationDenies,
+  setCourtHoursQuiet: notificationDenies,
+  getDigest: notificationDenies,
+  setDigest: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */

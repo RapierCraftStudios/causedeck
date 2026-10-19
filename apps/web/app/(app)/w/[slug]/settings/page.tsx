@@ -1,4 +1,6 @@
 import { pushConfig } from '@causedeck/notifications/push';
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import { PushPermissionCard } from '../../../../../components/notifications/push-permission-card.tsx';
 import {
@@ -11,15 +13,27 @@ import { serverEnv } from '../../../../../lib/env.ts';
 const SettingsIndex = placeholderPage('settings');
 
 /**
- * The index plus the push permission card (#197), which moves to the notification panel footer
- * with #198. The card renders nothing when push is disabled (no VAPID keys) or unsupported.
+ * The index, a link to the notification preferences (#199) and the push permission card (#197),
+ * which moves to the notification panel footer with #198. The card renders nothing when push is
+ * disabled (no VAPID keys) or unsupported.
  */
 export default async function SettingsPage(props: WorkspacePageProps) {
   const index = await SettingsIndex(props);
+  const [{ slug }, t] = await Promise.all([
+    props.params,
+    getTranslations('notifications.preferences'),
+  ]);
   const vapidPublicKey = pushConfig(serverEnv())?.publicKey ?? null;
   return (
     <div className="flex flex-col gap-6">
       {index}
+      <Link
+        href={`/w/${encodeURIComponent(slug)}/settings/notifications`}
+        className="border-line hover:bg-surface-sunken focus-visible:outline-ring flex flex-col gap-0.5 rounded-lg border p-4 outline-offset-2 focus-visible:outline-2"
+      >
+        <span className="text-sm font-medium">{t('link')}</span>
+        <span className="text-ink-muted text-xs">{t('linkHint')}</span>
+      </Link>
       <PushPermissionCard vapidPublicKey={vapidPublicKey} />
     </div>
   );

@@ -11,12 +11,17 @@ import { describe, expect, it } from 'vitest';
 
 import * as notifications from '../index.ts';
 import {
+  getDigest,
+  getNotificationSetting,
   getPreferences,
   listForUser,
   markAllRead,
   markRead,
   NotificationError,
   notify,
+  setCourtHoursQuiet,
+  setDigest,
+  setLockScreenDetails,
   setPreference,
   unreadCount,
   type DeliveryJob,
@@ -378,6 +383,115 @@ describe('in-app list, read state and preferences', () => {
       );
       expect(stored).toHaveLength(1);
       expect(stored[0]).toMatchObject({ channel: 'email', enabled: false, digest: 'daily' });
+    });
+  });
+});
+
+describe('preferences page: digest selector and court hours (#199)', () => {
+  const emailPref = async (f: Fixture, category: string) =>
+    (await getPreferences(f.ctx, { userId: f.userId })).find(
+      (p) => p.category === category && p.channel === 'email',
+    );
+
+  it('defaults to instant and applies daily to every unlocked email channel in one call', async () => {
+    await run(async (f) => {
+      expect(await getDigest(f.ctx, { userId: f.userId })).toBe('instant');
+      await setPreference(f.ctx, {
+        userId: f.userId,
+        category: 'billing.notice',
+        channel: 'email',
+        enabled: false,
+      });
+      expect(await setDigest(f.ctx, { userId: f.userId, digest: 'daily' })).toBe('daily');
+      expect(await getDigest(f.ctx, { userId: f.userId })).toBe('daily');
+
+      const prefs = await getPreferences(f.ctx, { userId: f.userId });
+      for (const p of prefs.filter((x) => x.channel === 'email')) {
+        if (p.category === 'security.alert') {
+          expect(p).toMatchObject({ enabled: true, digest: 'instant', locked: true });
+        } else if (p.category === 'digest.daily') {
+          expect(p).toMatchObject({ enabled: true, digest: 'instant' });
+        } else {
+          expect(p.digest, p.category).toBe('daily');
+        }
+      }
+      // On/off is kept: billing stays off, the hearing reminder default stays on.
+      expect(await emailPref(f, 'billing.notice')).toMatchObject({ enabled: false });
+      expect(await emailPref(f, 'reminder.hearing')).toMatchObject({ enabled: true });
+      // In-app and push are untouched, and no row is written for a locked channel.
+      const rows = await inWorkspace(f.tx, f.workspaceId, (s) =>
+        s
+          .select()
+          .from(schema.notificationPref)
+          .where(eq(schema.notificationPref.userId, f.userId)),
+      );
+      expect(rows.every((r) => r.channel === 'email')).toBe(true);
+      expect(rows.some((r) => r.category === 'security.alert')).toBe(false);
+
+      // Daily email now waits for the digest: notify enqueues no email for the hearing reminder.
+      await notify(f.ctx, { userId: f.userId, category: 'reminder.hearing', title: 'Hearing' });
+      expect(f.jobs.map((j) => j.channel)).toEqual(['push']);
+    });
+  });
+
+  it('turns the digest email off for instant and off, and off stops non-mandatory email', async () => {
+    await run(async (f) => {
+      await setDigest(f.ctx, { userId: f.userId, digest: 'daily' });
+      await setDigest(f.ctx, { userId: f.userId, digest: 'instant' });
+      expect(await getDigest(f.ctx, { userId: f.userId })).toBe('instant');
+      expect(await emailPref(f, 'digest.daily')).toMatchObject({ enabled: false });
+      expect(await emailPref(f, 'reminder.hearing')).toMatchObject({ digest: 'instant' });
+
+      await setDigest(f.ctx, { userId: f.userId, digest: 'off' });
+      expect(await getDigest(f.ctx, { userId: f.userId })).toBe('off');
+      expect(await emailPref(f, 'digest.daily')).toMatchObject({ enabled: false });
+      await notify(f.ctx, { userId: f.userId, category: 'workspace.invite', title: 'Invite' });
+      expect(f.jobs).toEqual([]);
+      await notify(f.ctx, { userId: f.userId, category: 'security.alert', title: 'New sign-in' });
+      expect(f.jobs.map((j) => j.channel).sort()).toEqual(['email', 'push']);
+    });
+  });
+
+  it('reads instant when categories were set to different digest modes', async () => {
+    await run(async (f) => {
+      await setPreference(f.ctx, {
+        userId: f.userId,
+        category: 'billing.notice',
+        channel: 'email',
+        digest: 'daily',
+      });
+      expect(await getDigest(f.ctx, { userId: f.userId })).toBe('instant');
+    });
+  });
+
+  it('rejects an unknown digest and a non-member', async () => {
+    await run(async (f) => {
+      const bad = await errorOf(
+        setDigest(f.ctx, { userId: f.userId, digest: 'weekly' as unknown as 'daily' }),
+      );
+      expect(bad.code).toBe('VALIDATION');
+      const outsider = await f.addMember('suspended');
+      expect((await errorOf(setDigest(f.ctx, { userId: outsider, digest: 'off' }))).code).toBe(
+        'FORBIDDEN',
+      );
+    });
+  });
+
+  it('persists `Do not push during court hours` without touching lock-screen details', async () => {
+    await run(async (f) => {
+      await setLockScreenDetails(f.ctx, { userId: f.userId, enabled: true });
+      expect(await setCourtHoursQuiet(f.ctx, { userId: f.userId, enabled: true })).toEqual({
+        courtHoursQuiet: true,
+        lockScreenDetails: true,
+      });
+      expect(await getNotificationSetting(f.ctx, { userId: f.userId })).toEqual({
+        courtHoursQuiet: true,
+        lockScreenDetails: true,
+      });
+      await setCourtHoursQuiet(f.ctx, { userId: f.userId, enabled: false });
+      expect((await getNotificationSetting(f.ctx, { userId: f.userId })).courtHoursQuiet).toBe(
+        false,
+      );
     });
   });
 });

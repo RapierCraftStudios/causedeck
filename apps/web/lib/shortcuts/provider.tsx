@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { openNotifications } from '../../components/notifications/use-notifications.ts';
 import { useCapture } from '../../components/shell/capture-fab.tsx';
 import { useSidebar } from '../../components/shell/sidebar-collapse.tsx';
 import { registerCommands } from '../commands/registry.ts';
@@ -86,7 +87,7 @@ export interface ShortcutsProviderProps {
 
 /**
  * The shell's keyboard shortcuts: `g` chords to destinations, `c` capture, `[` sidebar, `/` page
- * search and `?` help, through one document listener. `mod+k` is listed here but bound by the
+ * search, `Shift+N` notifications and `?` help, through one document listener. `mod+k` is listed here but bound by the
  * palette itself (use-command-palette.ts). Also adds the capture, sidebar and help actions to the
  * command palette with their key hints. Needs `<CaptureProvider>` and `<SidebarProvider>` above.
  */
@@ -122,6 +123,9 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
         field?.focus();
         return field !== null;
       }
+      case 'notifications':
+        openNotifications();
+        return true;
       case 'help':
         void loadShortcutsDialog();
         setHelpOpen((open) => !open);
@@ -165,6 +169,15 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
           labelKey: 'shortcuts.actions.capture',
           shortcut: actionKeys('capture'),
           perform: perform('capture'),
+        },
+      ]),
+      registerCommands('goTo', [
+        {
+          id: 'notifications.open',
+          labelKey: 'notifications.shortcut',
+          keywords: ['notifications', 'bell', 'unread'],
+          shortcut: actionKeys('notifications'),
+          perform: perform('notifications'),
         },
       ]),
       registerCommands('settings', [

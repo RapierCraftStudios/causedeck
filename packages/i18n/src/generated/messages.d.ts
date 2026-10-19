@@ -524,6 +524,28 @@ export type Messages = {
       generic: string;
     };
   };
+  notifications: {
+    title: string;
+    bell: {
+      label: string;
+      labelUnread: string;
+    };
+    markAllRead: string;
+    groups: {
+      today: string;
+      earlier: string;
+    };
+    empty: string;
+    error: string;
+    retry: string;
+    offline: string;
+    loading: string;
+    unread: string;
+    unreadCount: string;
+    announce: string;
+    close: string;
+    shortcut: string;
+  };
   billing: {
     mandate: {
       additionalAuth: {

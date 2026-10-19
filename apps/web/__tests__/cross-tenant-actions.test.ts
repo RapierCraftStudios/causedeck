@@ -52,6 +52,7 @@ const members = await import('../app/(app)/w/[slug]/settings/members/actions.ts'
 const invite = await import('../app/(public)/invite/[token]/actions.ts');
 const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
+const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
@@ -69,6 +70,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   acceptInvitationAction: invite,
   createWorkspaceAction: onboarding,
   setLocaleAction: account,
+  listNotificationsAction: notifications,
+  markNotificationReadAction: notifications,
+  markAllNotificationsReadAction: notifications,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -77,6 +81,7 @@ const action = (name: string): Action => ACTIONS[name]?.[name] as Action;
 let t: TwoTenants;
 let aMember: { memberId: string; userId: string };
 let aInvitation: { invitationId: string; token: string };
+let aNotificationId: string;
 
 function signInAs(userId: string): void {
   state.session = {
@@ -105,6 +110,10 @@ function snapshotA() {
     workspace: await tx
       .select({ slug: schema.organization.slug, deletedAt: schema.organization.deletedAt })
       .from(schema.organization),
+    notifications: await tx
+      .select({ id: schema.notification.id, readAt: schema.notification.readAt })
+      .from(schema.notification)
+      .orderBy(schema.notification.id),
   }));
 }
 
@@ -119,6 +128,9 @@ beforeAll(async () => {
   if (!m?.memberId || !m.userId || !inv?.invitationId || !inv.token) throw new Error('seed rows');
   aMember = { memberId: m.memberId, userId: m.userId };
   aInvitation = { invitationId: inv.invitationId, token: inv.token };
+  const n = t.a.rows.notification;
+  if (!n?.notificationId) throw new Error('seed rows');
+  aNotificationId = n.notificationId;
 });
 
 beforeEach(() => {
@@ -143,6 +155,9 @@ function inputs(workspaceId: string): Record<string, unknown> {
       newOwnerUserId: t.ua,
       confirmation: workspaceId === t.b.id ? t.b.slug : t.a.slug,
     },
+    listNotificationsAction: { workspaceId },
+    markNotificationReadAction: { workspaceId, notificationId: aNotificationId },
+    markAllNotificationsReadAction: { workspaceId },
   };
 }
 
@@ -193,6 +208,27 @@ describe('cross-tenant server actions', () => {
     expect(await action('openWorkAction')(all.openWorkAction)).toEqual({
       ok: true,
       data: { count: 0 },
+    });
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('notifications under B’s own workspace never show or mark A’s notification', async () => {
+    const before = await snapshotA();
+    expect(before.notifications.map((row) => row.id)).toContain(aNotificationId);
+    const all = inputs(t.b.id);
+    expect(code(await action('markNotificationReadAction')(all.markNotificationReadAction))).toBe(
+      'NOT_FOUND',
+    );
+    const list = (await action('listNotificationsAction')(all.listNotificationsAction)) as {
+      ok: boolean;
+      data: { items: { id: string }[]; unread: number };
+    };
+    expect(list.ok).toBe(true);
+    expect(list.data.items.map((item) => item.id)).not.toContain(aNotificationId);
+    expect(
+      await action('markAllNotificationsReadAction')(all.markAllNotificationsReadAction),
+    ).toMatchObject({
+      ok: true,
     });
     expect(await snapshotA()).toEqual(before);
   });

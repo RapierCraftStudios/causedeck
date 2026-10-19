@@ -23,15 +23,17 @@
     "@better-auth/passkey": "catalog:",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/notifications": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
-    "nodemailer": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@aws-sdk/client-sesv2": "catalog:",
     "@types/node": "catalog:",
     "esbuild": "catalog:",
     "eslint": "catalog:",
+    "nodemailer": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

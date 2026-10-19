@@ -16,6 +16,20 @@ describe('provider switches', () => {
     expect(error.message.split('\n')[0]).toBe('Invalid environment variables:');
   });
 
+  it('EMAIL_PROVIDER=ses rejects a SES_REGION outside India (#195)', () => {
+    const ses = {
+      NODE_ENV: 'test',
+      EMAIL_PROVIDER: 'ses',
+      SES_ACCESS_KEY_ID: 'id',
+      SES_SECRET_ACCESS_KEY: 'secret',
+    };
+    const error = envError({ ...ses, SES_REGION: 'us-east-1' });
+    expect((error as EnvValidationError).keys).toEqual(['SES_REGION']);
+    expect(error.message).toContain('SES_REGION: must be an India region');
+    expect(createEnv({ ...ses, SES_REGION: 'ap-south-1' }).EMAIL_PROVIDER).toBe('ses');
+    expect(createEnv({ ...ses, SES_REGION: 'ap-south-2' }).EMAIL_PROVIDER).toBe('ses');
+  });
+
   it('never prints supplied values in the error', () => {
     const error = envError({
       NODE_ENV: 'test',

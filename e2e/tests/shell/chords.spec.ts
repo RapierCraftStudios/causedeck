@@ -32,7 +32,9 @@ test.describe('keyboard chords', () => {
       // Start somewhere else so the move is visible.
       await openShell(page, asUser, { path: key === 't' ? 'matters' : 'today' });
       await chord(page, key);
-      await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/${destination}$`));
+      // Settings lands on its first section, the workspace profile (#284).
+      const landing = destination === 'settings' ? 'settings/profile' : destination;
+      await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/${landing}$`));
     });
   }
 

@@ -1,19 +1,21 @@
 // `/w/[slug]/settings/notifications` (#199): the signed-in member's notification preferences in this
 // workspace: channel per category, the digest, court-hours quiet and lock-screen details. Read on
 // the workspace-scoped transaction (`withWorkspace`) for the caller only; changes go through the
-// server actions next to this page. The settings shell and its navigation arrive in #25.
+// server actions next to this page. It renders inside the settings shell (#284), whose banner covers
+// the offline state; the push permission card (#197) moved here from the old settings index.
 //
 // States: loading (skeleton rows while the preferences stream in) and error (`Could not load
 // notification preferences.` with `Try again`). `?__state=loading|error` previews them in
 // development, like the members page.
 import type { Digest } from '@causedeck/notifications/categories';
+import { pushConfig } from '@causedeck/notifications/push';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
-import { ShellOfflineBanner } from '../../../../../../components/shell/offline-banner.tsx';
-import { isDev } from '../../../../../../lib/env.ts';
+import { PushPermissionCard } from '../../../../../../components/notifications/push-permission-card.tsx';
+import { isDev, serverEnv } from '../../../../../../lib/env.ts';
 import type { WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
@@ -104,10 +106,11 @@ export default async function NotificationPreferencesPage({
   if (!context) notFound();
   const t = await getTranslations('notifications.preferences');
   const state = devState(query);
+  // Renders nothing when push is disabled (no VAPID keys) or unsupported.
+  const vapidPublicKey = pushConfig(serverEnv())?.publicKey ?? null;
 
   return (
     <div data-route="notification-preferences" className="flex flex-col gap-6">
-      <ShellOfflineBanner />
       <header className="flex flex-col gap-1">
         <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
         <p className="text-ink-muted text-sm">
@@ -121,6 +124,7 @@ export default async function NotificationPreferencesPage({
           <PreferencesSection context={context} failOnPurpose={state === 'error'} />
         </Suspense>
       )}
+      <PushPermissionCard vapidPublicKey={vapidPublicKey} />
     </div>
   );
 }

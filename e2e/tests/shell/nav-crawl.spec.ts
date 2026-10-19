@@ -1,6 +1,7 @@
 // Nav crawl (#183): every link the shell navigation offers (sidebar or bottom nav and More sheet,
 // the user menu, the `g s` chord and the palette's Settings command) opens a real page, never the
-// not-found page. Settings used to point at a `settings/profile` section that does not exist yet.
+// not-found page. Settings redirects to its profile section (#284), and every settings sub-nav entry
+// opens a real section page.
 import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/index.ts';
@@ -56,7 +57,6 @@ test.describe('shell nav crawl', () => {
     await page.keyboard.press('Escape');
 
     expect([...hrefs]).toContain(`/w/${SHELL_WORKSPACE}/settings`);
-    expect([...hrefs].filter((href) => href.includes('/settings/'))).toEqual([]);
     expect(hrefs.size).toBeGreaterThan(4);
 
     for (const href of hrefs) {
@@ -66,14 +66,29 @@ test.describe('shell nav crawl', () => {
     }
   });
 
-  test('/settings is the settings index, not a 404', async ({ page, asUser }) => {
+  test('/settings redirects to the workspace profile, not a 404', async ({ page, asUser }) => {
     await openShell(page, asUser, { path: 'settings' });
-    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/settings$`));
-    await expect(page.locator('[data-route="settings"]')).toBeVisible();
-    await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('Settings');
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/settings/profile$`));
+    await expect(page.locator('[data-route="settings-profile"]')).toBeVisible();
+    await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('Profile');
   });
 
-  test('the palette Settings command opens the settings index', async ({ page, asUser }) => {
+  test('every settings sub-nav entry opens a real section', async ({ page, asUser }) => {
+    test.setTimeout(120_000);
+    await openShell(page, asUser, { path: 'settings/profile' });
+    const hrefs = await hrefsIn(page.locator('[data-slot="settings-nav"]'));
+    expect(hrefs).toHaveLength(10);
+    for (const href of hrefs) {
+      const response = await page.goto(href);
+      expect(response?.status() ?? 0, href).toBeLessThan(400);
+      await expect(page.locator('main').getByRole('heading', { level: 1 }), href).toBeVisible();
+      await expect(page.locator('main').getByRole('heading', { level: 1 }), href).not.toHaveText(
+        'Page not found',
+      );
+    }
+  });
+
+  test('the palette Settings command opens the settings profile', async ({ page, asUser }) => {
     await openShell(page, asUser);
     await page.keyboard.press(`${MOD}+k`);
     await expect(palette(page)).toBeVisible();
@@ -83,9 +98,9 @@ test.describe('shell nav crawl', () => {
       .getByRole('option')
       .first()
       .click();
-    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/settings$`));
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/settings/profile$`));
     await shellReady(page);
-    await expectRealPage(page, `/w/${SHELL_WORKSPACE}/settings`);
+    await expectRealPage(page, `/w/${SHELL_WORKSPACE}/settings/profile`);
   });
 
   test('empty-state actions lead to real pages', async ({ page, asUser }) => {

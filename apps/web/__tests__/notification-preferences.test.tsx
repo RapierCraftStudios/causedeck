@@ -48,7 +48,20 @@ vi.mock('next-intl/server', () => ({
 vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),
 }));
-vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
+vi.mock('../lib/env.ts', () => ({
+  isDev: () => page.dev,
+  serverEnv: () => ({ VAPID_PUBLIC_KEY: 'test-vapid-public', VAPID_PRIVATE_KEY: 'test-private' }),
+}));
+vi.mock('@causedeck/notifications/push', () => ({
+  pushConfig: (env: { VAPID_PUBLIC_KEY?: string }) =>
+    env.VAPID_PUBLIC_KEY ? { publicKey: env.VAPID_PUBLIC_KEY } : null,
+}));
+// The push card (#197) moved here from the old settings index (#284).
+vi.mock('../components/notifications/push-permission-card.tsx', () => ({
+  PushPermissionCard: ({ vapidPublicKey }: { vapidPublicKey: string | null }) => (
+    <div data-slot="push-card" data-key={vapidPublicKey ?? ''} />
+  ),
+}));
 vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('../components/shell/offline-banner.tsx', () => ({ ShellOfflineBanner: () => null }));
 vi.mock('@causedeck/db', () => ({ db: { fake: 'db' }, withWorkspace }));
@@ -182,9 +195,9 @@ async function renderPage(search: Record<string, string> = {}) {
     params: Promise.resolve({ slug: WORKSPACE.slug }),
     searchParams: Promise.resolve(search),
   })) as ReactElement<{
-    children: [ReactElement, ReactElement, ReactElement<{ children?: unknown }>];
+    children: [ReactElement, ReactElement<{ children?: unknown }>, ReactElement];
   }>;
-  const [, header, body] = tree.props.children;
+  const [header, body, push] = tree.props.children;
   const section = (body.props as { children?: ReactElement }).children;
   let content: ReactNode = body;
   if (section && typeof section.type === 'function') {
@@ -195,6 +208,7 @@ async function renderPage(search: Record<string, string> = {}) {
     <div>
       {header}
       {content}
+      {push}
     </div>,
   );
 }
@@ -224,6 +238,13 @@ describe('notification preferences page (server)', () => {
     expect(
       screen.getByRole('switch', { name: en.courtHours.label }).getAttribute('aria-checked'),
     ).toBe('true');
+  });
+
+  it('hosts the push permission card with the VAPID public key (#284)', async () => {
+    await renderPage();
+    expect(document.querySelector('[data-slot="push-card"]')?.getAttribute('data-key')).toBe(
+      'test-vapid-public',
+    );
   });
 
   it('shows the error state with Try again when loading fails', async () => {

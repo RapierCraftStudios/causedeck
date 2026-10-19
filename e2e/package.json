@@ -21,6 +21,7 @@
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "lighthouse": "catalog:",
     "postgres": "catalog:",
     "typescript": "catalog:"
   }

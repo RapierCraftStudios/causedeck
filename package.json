@@ -30,6 +30,8 @@
     "adr:new": "node docs/adr/scripts/new-adr.mjs",
     "adr:test": "node --test \"docs/adr/scripts/*.test.mjs\"",
     "docs:links": "node docs/adr/scripts/check-links.mjs",
+    "docs:permissions": "pnpm --filter @causedeck/auth docs:permissions",
+    "docs:permissions:check": "pnpm --filter @causedeck/auth docs:permissions:check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "env:example": "pnpm --filter @causedeck/config env:example",

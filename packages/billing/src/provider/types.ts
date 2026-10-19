@@ -64,6 +64,8 @@ export interface BillingSubscription {
   /** Hosted authorisation link for the UPI Autopay mandate. */
   shortUrl: string | null;
   mandate: BillingMandate | null;
+  /** Quantity scheduled to take effect at the next cycle (`null` when nothing is scheduled). */
+  pendingQuantity: number | null;
 }
 
 export interface MandateLink {
@@ -94,6 +96,11 @@ export interface CancelOptions {
   atCycleEnd: boolean;
 }
 
+export interface UpdateQuantityOptions {
+  /** `now` applies the quantity immediately; `cycle_end` from the next billing cycle. */
+  at: 'now' | 'cycle_end';
+}
+
 export interface BillingProvider {
   readonly name: BillingProviderName;
   createCustomer(input: CreateCustomerInput): Promise<BillingCustomer>;
@@ -101,9 +108,11 @@ export interface BillingProvider {
   updateSubscriptionQuantity(
     subscriptionId: string,
     quantity: number,
+    options?: UpdateQuantityOptions,
   ): Promise<BillingSubscription>;
   cancelSubscription(subscriptionId: string, options: CancelOptions): Promise<BillingSubscription>;
   pause(subscriptionId: string): Promise<BillingSubscription>;
+  resume(subscriptionId: string): Promise<BillingSubscription>;
   fetchSubscription(subscriptionId: string): Promise<BillingSubscription>;
   createMandateLink(subscriptionId: string): Promise<MandateLink>;
 }

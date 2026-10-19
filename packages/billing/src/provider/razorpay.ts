@@ -64,9 +64,13 @@ export interface RazorpayClientLike {
   };
   subscriptions: {
     create(params: RazorpaySubscriptionCreateParams): Promise<RazorpaySubscriptionResponse>;
-    update(id: string, params: { quantity: number }): Promise<RazorpaySubscriptionResponse>;
+    update(
+      id: string,
+      params: { quantity: number; schedule_change_at?: 'now' | 'cycle_end' },
+    ): Promise<RazorpaySubscriptionResponse>;
     cancel(id: string, cancelAtCycleEnd: boolean): Promise<RazorpaySubscriptionResponse>;
     pause(id: string, params: { pause_at: 'now' }): Promise<RazorpaySubscriptionResponse>;
+    resume(id: string, params: { resume_at: 'now' }): Promise<RazorpaySubscriptionResponse>;
     fetch(id: string): Promise<RazorpaySubscriptionResponse>;
   };
 }
@@ -123,9 +127,14 @@ export function createRazorpayProvider(options: RazorpayProviderOptions): Billin
       );
     },
 
-    updateSubscriptionQuantity(subscriptionId, quantity) {
+    updateSubscriptionQuantity(subscriptionId, quantity, updateOptions) {
       return call(async () =>
-        toSubscription(await client.subscriptions.update(subscriptionId, { quantity })),
+        toSubscription(
+          await client.subscriptions.update(subscriptionId, {
+            quantity,
+            ...(updateOptions?.at === 'cycle_end' ? { schedule_change_at: 'cycle_end' } : {}),
+          }),
+        ),
       );
     },
 
@@ -138,6 +147,12 @@ export function createRazorpayProvider(options: RazorpayProviderOptions): Billin
     pause(subscriptionId) {
       return call(async () =>
         toSubscription(await client.subscriptions.pause(subscriptionId, { pause_at: 'now' })),
+      );
+    },
+
+    resume(subscriptionId) {
+      return call(async () =>
+        toSubscription(await client.subscriptions.resume(subscriptionId, { resume_at: 'now' })),
       );
     },
 
@@ -181,6 +196,8 @@ export function toSubscription(raw: RazorpaySubscriptionResponse): BillingSubscr
       !['cancelled', 'completed', 'expired'].includes(status),
     shortUrl,
     mandate: shortUrl === null ? null : { method: 'upi', state: MANDATE_BY_STATUS[status] },
+    // A scheduled change is not part of the subscription response.
+    pendingQuantity: null,
   };
 }
 

@@ -27,8 +27,9 @@ function fakeClient(overrides: Partial<RazorpayClientLike['subscriptions']> = {}
     customers: { create: vi.fn(() => Promise.resolve(customerFixture)) },
     subscriptions: {
       create: vi.fn(() => Promise.resolve(createdFixture)),
-      update: vi.fn((_id: string, params: { quantity: number }) =>
-        sub({ quantity: params.quantity }),
+      update: vi.fn(
+        (_id: string, params: { quantity: number; schedule_change_at?: 'now' | 'cycle_end' }) =>
+          sub({ quantity: params.quantity }),
       ),
       cancel: vi.fn((_id: string, atCycleEnd: boolean) =>
         atCycleEnd
@@ -36,6 +37,7 @@ function fakeClient(overrides: Partial<RazorpayClientLike['subscriptions']> = {}
           : sub({ status: 'cancelled', charge_at: null }),
       ),
       pause: vi.fn(() => sub({ status: 'paused', charge_at: null })),
+      resume: vi.fn(() => sub({ status: 'active' })),
       fetch: vi.fn(() => sub()),
       ...overrides,
     },
@@ -101,6 +103,7 @@ describe('Razorpay adapter: request mapping', () => {
       cancelAtCycleEnd: false,
       shortUrl: 'https://rzp.io/i/FIXTURE01',
       mandate: { method: 'upi', state: 'created' },
+      pendingQuantity: null,
     });
   });
 
@@ -140,6 +143,50 @@ describe('Razorpay adapter: request mapping', () => {
       quantity: 5,
     });
     expect(result.quantity).toBe(5);
+  });
+
+  it('schedules a quantity change for cycle end', async () => {
+    const client = fakeClient();
+    await provider(client).updateSubscriptionQuantity('sub_FIXTURE0000001', 2, { at: 'cycle_end' });
+    expect(client.subscriptions.update).toHaveBeenCalledWith('sub_FIXTURE0000001', {
+      quantity: 2,
+      schedule_change_at: 'cycle_end',
+    });
+  });
+
+  it('keeps the immediate call shape for { at: now }', async () => {
+    const client = fakeClient();
+    await provider(client).updateSubscriptionQuantity('sub_FIXTURE0000001', 4, { at: 'now' });
+    expect(client.subscriptions.update).toHaveBeenCalledWith('sub_FIXTURE0000001', {
+      quantity: 4,
+    });
+  });
+
+  it('resumes now', async () => {
+    const client = fakeClient();
+    const result = await provider(client).resume('sub_FIXTURE0000001');
+    expect(client.subscriptions.resume).toHaveBeenCalledWith('sub_FIXTURE0000001', {
+      resume_at: 'now',
+    });
+    expect(result).toMatchObject({ status: 'active', pendingQuantity: null });
+  });
+
+  it('maps resume SDK errors to BillingProviderError', async () => {
+    const client = fakeClient({
+      resume: vi.fn(() =>
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- the SDK rejects with a plain object.
+        Promise.reject({
+          statusCode: 400,
+          error: { code: 'BAD_REQUEST_ERROR', description: 'Subscription is not paused' },
+        }),
+      ),
+    });
+    const error: unknown = await provider(client)
+      .resume('sub_FIXTURE0000001')
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(BillingProviderError);
+    expect(error).toMatchObject({ code: 'provider', providerCode: 'BAD_REQUEST_ERROR' });
+    expect(JSON.stringify(error)).not.toContain(KEY_SECRET);
   });
 
   it('cancels at cycle end or immediately', async () => {
@@ -277,6 +324,7 @@ describe('Razorpay adapter: secret hygiene', () => {
     await p.updateSubscriptionQuantity('s', 2);
     await p.cancelSubscription('s', { atCycleEnd: true });
     await p.pause('s');
+    await p.resume('s');
     await p.fetchSubscription('s');
     for (const spy of spies) expect(spy).not.toHaveBeenCalled();
   });

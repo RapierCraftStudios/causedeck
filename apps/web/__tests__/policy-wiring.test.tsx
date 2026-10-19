@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { Can, deniedHintKey } from '../components/can.tsx';
 import type { AppSession } from '../lib/auth.ts';
-import { guard, guardResponse } from '../lib/guard.ts';
+import { guard, guardResponse, type AccessDenial } from '../lib/guard.ts';
 import { safeAction } from '../lib/safe-action.ts';
 import * as workspaceContext from '../lib/workspace-context.ts';
 import { workspaceAction } from '../lib/workspace-action.ts';
@@ -273,7 +273,7 @@ describe('guard and workspaceAction', () => {
   });
 
   it('workspaceAction records a domain FORBIDDEN once, after the workspace transaction', async () => {
-    const recordDenied = vi.fn(() => Promise.resolve());
+    const recordDenied = vi.fn<(denial: AccessDenial) => Promise<void>>(() => Promise.resolve());
     const order: string[] = [];
     const run = workspaceAction(
       z.object({ workspaceId: z.uuid() }),

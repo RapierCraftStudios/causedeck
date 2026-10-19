@@ -122,7 +122,11 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
 };
 
 type PlaceholderId = PlaceholderRoute;
-const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES;
+/** Routes whose page is no longer a placeholder; each has its own page test. */
+const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>(['billing']);
+const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
+  (route) => !REAL_PAGES.has(route),
+);
 const FLAGGED = new Set(['invoices', 'limitation']);
 
 /** Flagged pages rebuilt with the flag on, so every route can be rendered. */
@@ -257,7 +261,7 @@ describe('placeholder pages', () => {
     for (const route of WORKSPACE_ROUTES) {
       expect(existsSync(path.join(dir, route, 'page.tsx')), route).toBe(true);
     }
-    expect(Object.keys(PAGES).sort()).toEqual([...PLACEHOLDER_ROUTES].sort());
+    expect(Object.keys(PAGES).sort()).toEqual([...WORKSPACE_ROUTES].sort());
   });
 
   it.each(PLACEHOLDER_ROUTES)('%s renders its title and designed empty state', async (route) => {
@@ -333,7 +337,7 @@ describe('placeholder pages', () => {
     await expect(PAGES.today(props('demo', { __state: 'error' }))).resolves.toBeTruthy();
   });
 
-  it.each(['billing', 'invoices', 'limitation', 'insights'] as const)(
+  it.each(['invoices', 'limitation', 'insights'] as const)(
     '%s renders permission-denied when the stub role lacks permission',
     async (route) => {
       withIntl(await pageFor(route)(props('clerk-desk')));
@@ -343,6 +347,13 @@ describe('placeholder pages', () => {
       expect(document.querySelector('[data-pattern-state="empty"]')).toBeNull();
     },
   );
+
+  it('billing (#256) tells roles without billing.read that only owners manage billing', async () => {
+    withIntl(await PAGES.billing(props('clerk-desk')));
+    const denied = document.querySelector('[data-pattern-state="permission-denied"]');
+    expect(denied?.textContent).toContain('Only workspace owners can manage billing.');
+    expect(document.querySelector('[data-pattern-state="empty"]')).toBeNull();
+  });
 
   it('keeps flagged pages behind notFound while the flag is off (the default)', async () => {
     await expect(PAGES.invoices(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
@@ -481,7 +492,7 @@ describe('localised strings', () => {
 
   it('permission-denied and error screens render ta strings', async () => {
     state.locale = 'ta';
-    withIntl(await pageFor('billing')(props('clerk-desk')), 'ta');
+    withIntl(await pageFor('insights')(props('clerk-desk')), 'ta');
     withIntl(<WorkspaceError error={new Error('x')} reset={() => undefined} />, 'ta');
     const text = document.body.textContent;
     expect(text).toContain(catalogs.ta.shell.permissionDenied.message);

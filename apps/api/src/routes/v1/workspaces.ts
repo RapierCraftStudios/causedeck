@@ -11,6 +11,7 @@ import {
   type AppRouter,
 } from '../../lib/openapi.ts';
 
+// authz: public — authenticated (`defineRoute`); returns only the caller's own memberships.
 export const listWorkspacesRoute = defineRoute({
   method: 'get',
   path: '/workspaces',

@@ -132,7 +132,7 @@ server-side as `ws/<workspaceId>/<kind>/<yyyy>/<blobId>`.
 | Intent and finalize | `packages/storage/src/upload.ts` |
 | Download URLs | `packages/storage/src/download.ts` |
 | Audit seam (`StorageAuditSink`, writer in #26) | `packages/storage/src/audit.ts` |
-| `blob` table | `packages/db/src/schema/storage.ts`, `packages/db/migrations/0019_blob.sql` |
+| `blob` table | `packages/db/src/schema/storage.ts`, `packages/db/migrations/0020_blob.sql` |
 | Route Handler | `apps/web/app/api/uploads/route.ts` |
 | Tests | `packages/storage/src/__tests__/{upload,download,cross-tenant-presign}.test.ts` |
 

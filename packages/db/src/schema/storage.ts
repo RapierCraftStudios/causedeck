@@ -7,7 +7,9 @@
 // `blob` (#217) is the bookkeeping row for one uploaded object: `createUploadIntent` inserts it with
 // `scan_status` null (an open intent), and `finalizeUpload` fills in the sniffed MIME and sha256 and
 // sets `scan_status = 'pending'` for the ClamAV worker. `enc_header` holds the envelope header once
-// blob bodies are encrypted (follow-up); it is null for plaintext objects.
+// blob bodies are encrypted (follow-up); it is null for plaintext objects. `storeSystemBlob` (#255)
+// writes server-generated objects (invoice PDFs) encrypted under the workspace DEK, already
+// finalized with `scan_status = 'skipped'`, `enc_header` set and `created_by` null (no user).
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -77,9 +79,8 @@ export const blob = tenantTable(
     mime: text('mime').notNull(),
     encHeader: bytea('enc_header'),
     scanStatus: text('scan_status').$type<BlobScanStatus>(),
-    createdBy: uuid('created_by')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
+    /** The uploading user; null for objects the platform writes itself (#255). */
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     finalizedAt: timestamp('finalized_at', { withTimezone: true }),
   },

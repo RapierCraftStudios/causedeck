@@ -162,6 +162,13 @@
       "when": 1792420317050,
       "tag": "0022_matter_restriction",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792422425388,
+      "tag": "0023_invoice_payment_blob",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,12 @@
 // processed and logged, never retried (a retry cannot make it legal). The route enqueues inside
 // the transaction that stores the event, so a job that runs before that commit cannot see its row
 // yet: it throws `RetryableError` and pg-boss retries it with backoff.
+//
+// Invoice on payment (#255): an accepted `subscription.charged` with a captured payment issues the
+// SaaS invoice (`invoiceOnPayment`) in the same transaction, so the invoice and `processed_at`
+// commit together and one payment never gets two invoices (also `saas_invoice_payment_uq`). An
+// invoice failure (e.g. the supplier is not configured in production) rolls the event back and the
+// job is retried. After commit, `billing.invoice-render` is enqueued for the new invoice.
 import {
   applyProviderEvent,
   fromSubscriptionRow,
@@ -14,6 +20,8 @@ import {
   toSubscriptionStatus,
   type SubscriptionState,
 } from '@causedeck/billing';
+import { supplierFromEnv, type SupplierConfig } from '@causedeck/billing/config/supplier';
+import { invoiceOnPayment } from '@causedeck/billing/invoice/on-payment';
 import { SUBSCRIPTION_STATUSES, type SubscriptionStatus } from '@causedeck/billing/plans';
 import type { RazorpayWebhookEvent } from '@causedeck/billing/provider';
 import { schema, withWorkspace } from '@causedeck/db';
@@ -21,9 +29,14 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { invalidateEntitlements } from '../../billing/entitlements.ts';
+import { createInvoiceStore } from '../../billing/invoices.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
+import {
+  enqueueInvoiceRender,
+  type BillingInvoiceRenderPayload,
+} from './billing-invoice-render.ts';
 
 const { billingEvent, subscription } = schema;
 
@@ -59,13 +72,27 @@ export function dunningAfter(
   return { dunningStartedAt: current.dunningStartedAt, dunningAttempts: current.dunningAttempts };
 }
 
+export interface BillingProcessEventDeps {
+  now?: () => Date;
+  /** Supplier for invoices; defaults to `supplierFromEnv()` (refuses in production when unset). */
+  supplier?: () => SupplierConfig;
+  /** Defaults to sending `billing.invoice-render`. */
+  enqueueRender?: (job: BillingInvoiceRenderPayload) => Promise<unknown>;
+}
+
 /** Apply the stored event once. Exported for tests; logs carry ids only, never the payload. */
 export async function runBillingProcessEvent(
   ctx: Pick<JobContext, 'db' | 'log'>,
   { workspaceId, providerEventId }: BillingProcessEventPayload,
-  { now = () => new Date() }: { now?: () => Date } = {},
+  {
+    now = () => new Date(),
+    supplier = () => supplierFromEnv(),
+    enqueueRender = enqueueInvoiceRender,
+  }: BillingProcessEventDeps = {},
 ): Promise<BillingProcessEventOutcome> {
   const fields = { workspaceId, providerEventId };
+  // Set inside the transaction; read after it commits.
+  let issuedInvoiceId = null as string | null;
   const outcome = await withWorkspace(ctx.db, { workspaceId }, async (tx) => {
     const [event] = await tx
       .select()
@@ -137,11 +164,28 @@ export async function runBillingProcessEvent(
         })
         .where(eq(subscription.id, row.id));
     }
+    const invoice = await invoiceOnPayment(
+      { store: createInvoiceStore(tx, workspaceId), supplier, now: () => at },
+      {
+        event: body,
+        subscriptionId: row.id,
+        planId: next.planId,
+        seats: next.seats,
+        clerkSeats: next.clerkSeats,
+        periodStart: next.currentPeriodStart ?? at,
+        periodEnd: next.currentPeriodEnd ?? next.currentPeriodStart ?? at,
+      },
+    );
+    if (invoice?.created) issuedInvoiceId = invoice.invoiceId;
     await markProcessed();
     return next === before ? 'unchanged' : 'applied';
   });
 
   if (outcome === 'applied') invalidateEntitlements(workspaceId);
+  if (issuedInvoiceId !== null) {
+    ctx.log.info({ ...fields, invoiceId: issuedInvoiceId }, 'billing invoice issued');
+    await enqueueRender({ workspaceId, invoiceId: issuedInvoiceId });
+  }
   if (outcome === 'unknown_subscription') {
     ctx.log.warn({ ...fields, outcome }, 'billing event not applied');
   } else {

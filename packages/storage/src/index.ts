@@ -1,6 +1,6 @@
 /**
  * S3 abstraction, server-side keys and signed URLs (#215), envelope encryption (#216), uploads and
- * download URLs (#217).
+ * download URLs (#217), server-written encrypted objects (#255).
  */
 export const packageName: string = '@causedeck/storage';
 
@@ -83,3 +83,9 @@ export {
   type UploadIntent,
   type UploadIntentInput,
 } from './upload.ts';
+export {
+  storeSystemBlob,
+  type StoredSystemBlob,
+  type SystemBlobCtx,
+  type SystemBlobInput,
+} from './system-blob.ts';

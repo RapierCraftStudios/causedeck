@@ -25,6 +25,7 @@
     "@causedeck/db": "workspace:*",
     "@causedeck/notifications": "workspace:*",
     "@causedeck/observability": "workspace:*",
+    "@causedeck/storage": "workspace:*",
     "@causedeck/validators": "workspace:*",
     "drizzle-orm": "catalog:",
     "pg-boss": "catalog:",

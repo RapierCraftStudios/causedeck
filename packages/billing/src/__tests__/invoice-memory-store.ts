@@ -1,6 +1,7 @@
 // An in-memory `InvoiceStore` for the pure issuance tests (the database adapter is tested in
 // `@causedeck/core`).
-import type { InvoiceRecipientRecord, InvoiceStore, SaasInvoiceDraft } from '../invoice/generate';
+import type { InvoiceRecipientRecord, SaasInvoiceDraft } from '../invoice/generate';
+import type { OnPaymentStore } from '../invoice/on-payment';
 
 export interface MemoryInvoice extends SaasInvoiceDraft {
   id: string;
@@ -9,7 +10,7 @@ export interface MemoryInvoice extends SaasInvoiceDraft {
   issueDate: string | null;
 }
 
-export interface MemoryInvoiceStore extends InvoiceStore {
+export interface MemoryInvoiceStore extends OnPaymentStore {
   recipients: Map<string, InvoiceRecipientRecord>;
   counters: Map<string, number>;
   invoices: MemoryInvoice[];
@@ -26,6 +27,11 @@ export function createMemoryInvoiceStore(): MemoryInvoiceStore {
       store.calls.push('loadRecipient');
       const record = store.recipients.get(subscriptionId);
       return Promise.resolve(record ? { ...record } : null);
+    },
+    findByPaymentId(providerPaymentId) {
+      store.calls.push('findByPaymentId');
+      const invoice = store.invoices.find((i) => i.providerPaymentId === providerPaymentId);
+      return Promise.resolve(invoice ? { id: invoice.id } : null);
     },
     allocate(series, fy) {
       store.calls.push('allocate');

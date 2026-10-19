@@ -45,6 +45,8 @@ export interface IssueInvoiceInput {
   periodStart: string | Date;
   periodEnd: string | Date;
   lines: readonly SaasInvoiceLineInput[];
+  /** The provider payment this invoice bills (#255); one invoice per payment. */
+  providerPaymentId?: string | null;
 }
 
 export interface SaasInvoice {
@@ -68,6 +70,8 @@ export interface SaasInvoice {
   totalPaise: number;
   currency: 'INR';
   lines: SaasInvoiceLine[];
+  /** Set when the invoice was issued for a provider payment (#255). */
+  providerPaymentId?: string | null;
 }
 
 /** A draft as handed to `InvoiceStore.insertDraft`: everything but the id, number and issue date. */
@@ -212,6 +216,7 @@ export async function issueInvoice(
     totalPaise: gst.total,
     currency: 'INR',
     lines,
+    ...(input.providerPaymentId ? { providerPaymentId: input.providerPaymentId } : {}),
   };
   const id = await ctx.store.insertDraft(draft);
   await ctx.store.markIssued(id, number, issueDate);

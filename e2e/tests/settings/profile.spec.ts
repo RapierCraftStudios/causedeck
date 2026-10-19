@@ -5,7 +5,12 @@
 // States: loading and error (dev previews), offline (read-only) and permission-denied. `@a11y`
 // tests run axe on the page they end on, dialogs open included. Every test starts from the reset
 // e2e seed, so renames never leak between tests.
-import type { Page } from '@playwright/test';
+// Lighthouse: the repo's LHCI job (lighthouserc.json) audits signed-out /sign-in on a production
+// build with no seeded data, so the signed-in profile page is audited here instead, with the same
+// mobile defaults and accessibility >= 0.95 threshold. Lighthouse drives its own Chromium over
+// CDP and carries the owner's session as a Cookie header.
+import { chromium, type Page } from '@playwright/test';
+import lighthouse from 'lighthouse';
 
 import { E2E_WORKSPACES, expect, test, type E2eRole } from '../../fixtures/index.ts';
 import type { AsUser } from '../../fixtures/auth.ts';
@@ -167,5 +172,30 @@ test.describe('workspace profile', () => {
     await page.goto(`/w/${SHELL_WORKSPACE}/settings/profile?__state=error`);
     await expect(page.getByText('Could not load the workspace profile.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  });
+
+  test('Lighthouse accessibility is at least 95', async ({ page, asUser }, testInfo) => {
+    test.setTimeout(180_000);
+    await openProfile(page, asUser);
+    const url = page.url();
+    const cookie = (await page.context().cookies(url))
+      .map(({ name, value }) => `${name}=${value}`)
+      .join('; ');
+    const port = 9300 + testInfo.workerIndex;
+    const browser = await chromium.launch({ args: [`--remote-debugging-port=${String(port)}`] });
+    try {
+      const result = await lighthouse(url, {
+        port,
+        onlyCategories: ['accessibility'],
+        extraHeaders: { Cookie: cookie },
+        output: 'json',
+        logLevel: 'error',
+      });
+      expect(result?.lhr.finalDisplayedUrl).toBe(url);
+      const score = result?.lhr.categories['accessibility']?.score ?? 0;
+      expect(score, 'Lighthouse accessibility score').toBeGreaterThanOrEqual(0.95);
+    } finally {
+      await browser.close();
+    }
   });
 });

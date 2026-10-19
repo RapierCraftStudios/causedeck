@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
+import { getNavItem } from '../../lib/nav.ts';
 import type { Role, ShellUser } from '../../lib/workspace-context.ts';
 import { THEMES, persistThemeCookie, type ThemeChoice } from '../theme-toggle.tsx';
 
@@ -75,7 +76,7 @@ export function UserMenu({ user, role, slug }: UserMenuProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={`/w/${encodeURIComponent(slug)}/settings/profile`}>
+          <Link href={getNavItem('settings').href(slug)}>
             <Settings aria-hidden="true" />
             {t('shell.userMenu.settings')}
           </Link>

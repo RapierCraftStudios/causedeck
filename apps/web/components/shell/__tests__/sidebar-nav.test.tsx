@@ -83,7 +83,7 @@ describe('sidebar navigation', () => {
     renderNav();
     expect(screen.getByRole('link', { name: 'Today' }).getAttribute('href')).toBe('/w/demo/today');
     expect(screen.getByRole('link', { name: 'Settings' }).getAttribute('href')).toBe(
-      '/w/demo/settings/profile',
+      '/w/demo/settings',
     );
   });
 

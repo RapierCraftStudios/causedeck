@@ -81,67 +81,89 @@ export type Messages = {
       today: {
         description: string;
         empty: string;
+        hint: string;
       };
       tomorrow: {
         description: string;
         empty: string;
+        hint: string;
       };
       calendar: {
         description: string;
         empty: string;
+        hint: string;
       };
       inbox: {
         description: string;
         empty: string;
+        hint: string;
       };
       matters: {
         description: string;
         empty: string;
+        hint: string;
       };
       briefs: {
         description: string;
         empty: string;
+        hint: string;
       };
       obligations: {
         description: string;
         empty: string;
+        hint: string;
       };
       drafts: {
         description: string;
         empty: string;
+        hint: string;
       };
       memory: {
         description: string;
         empty: string;
+        hint: string;
       };
       people: {
         description: string;
         empty: string;
+        hint: string;
       };
       courts: {
         description: string;
         empty: string;
+        hint: string;
       };
       activity: {
         description: string;
         empty: string;
+        hint: string;
       };
       billing: {
         description: string;
         empty: string;
+        hint: string;
       };
       invoices: {
         description: string;
         empty: string;
+        hint: string;
       };
       limitation: {
         description: string;
         empty: string;
+        hint: string;
       };
       insights: {
         description: string;
         empty: string;
+        hint: string;
       };
+      settings: {
+        description: string;
+        empty: string;
+        hint: string;
+      };
+      goTo: string;
     };
     loading: string;
     error: {
@@ -170,6 +192,8 @@ export type Messages = {
       title: string;
       description: string;
       empty: string;
+      hint: string;
+      action: string;
     };
     sidebar: {
       label: string;

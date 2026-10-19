@@ -32,6 +32,11 @@ describe('Card', () => {
     expect(card).toHaveAttribute('data-slot', 'card');
     expect(card).toHaveClass('rounded-lg', 'border', 'border-line', 'bg-surface-raised');
     expect(card?.className).not.toMatch(/\bshadow-/);
+    // Compact record cards: 16 px padding and 12 px gaps.
+    expect(card).toHaveClass('py-4', 'gap-3');
+    for (const slot of ['card-header', 'card-content', 'card-footer']) {
+      expect(container.querySelector(`[data-slot="${slot}"]`)).toHaveClass('px-4');
+    }
     expect(screen.getByText(MATTER_TITLE)).toHaveClass('font-serif', 'text-lg');
     expect(screen.getByText('Next hearing 14 Nov 2026')).toHaveClass('text-xs', 'text-ink-subtle');
     expect(screen.getByRole('button', { name: 'More' }).parentElement).toHaveAttribute(

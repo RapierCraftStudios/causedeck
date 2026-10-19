@@ -66,27 +66,23 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('metaTitle') };
 }
 
-/** Members and pending invitations, read on the workspace-scoped transaction (`withWorkspace`). */
+/** Members and pending invitations, read on one workspace-scoped transaction (`loadMembersPage`). */
 async function loadMembers(
   context: WorkspaceContext,
 ): Promise<{ members: MemberRow[]; invitations: InvitationRow[] }> {
-  const [{ db, withWorkspace }, { listMembers, listPendingInvitations }] = await Promise.all([
-    import('@causedeck/db'),
-    import('@causedeck/core/workspaces'),
-  ]);
-  const workspaceId = context.workspace.id;
-  return withWorkspace(db, { workspaceId, userId: context.user.id }, async (tx) => {
-    const members = await listMembers(tx, workspaceId);
-    const invitations = await listPendingInvitations(tx, workspaceId);
-    return {
-      members: members.flatMap(({ memberId, userId, name, email, role, joinedAt, lastActiveAt }) =>
-        isRole(role) ? [{ memberId, userId, name, email, role, joinedAt, lastActiveAt }] : [],
-      ),
-      invitations: invitations.flatMap(({ id, email, role, invitedAt, expiresAt }) =>
-        isRole(role) ? [{ id, email, role, invitedAt, expiresAt }] : [],
-      ),
-    };
+  const { loadMembersPage } = await import('@causedeck/core/runtime');
+  const { members, invitations } = await loadMembersPage({
+    workspaceId: context.workspace.id,
+    userId: context.user.id,
   });
+  return {
+    members: members.flatMap(({ memberId, userId, name, email, role, joinedAt, lastActiveAt }) =>
+      isRole(role) ? [{ memberId, userId, name, email, role, joinedAt, lastActiveAt }] : [],
+    ),
+    invitations: invitations.flatMap(({ id, email, role, invitedAt, expiresAt }) =>
+      isRole(role) ? [{ id, email, role, invitedAt, expiresAt }] : [],
+    ),
+  };
 }
 
 async function MembersSection({

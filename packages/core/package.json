@@ -9,6 +9,7 @@
     "./audit": "./src/audit/index.ts",
     "./billing": "./src/billing/index.ts",
     "./jobs": "./src/jobs/index.ts",
+    "./runtime": "./src/runtime/index.ts",
     "./usage": "./src/usage/index.ts",
     "./workspaces": "./src/workspaces/index.ts"
   },
@@ -23,6 +24,7 @@
     "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/flags": "workspace:*",
     "@causedeck/notifications": "workspace:*",
     "@causedeck/observability": "workspace:*",
     "@causedeck/storage": "workspace:*",

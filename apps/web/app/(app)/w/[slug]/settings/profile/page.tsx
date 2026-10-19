@@ -1,6 +1,6 @@
 // `/w/[slug]/settings/profile` (#284): the workspace profile (name, kind, time zone, default locale,
 // practice city and the slug) inside the settings shell. Read on the workspace-scoped transaction
-// (`withWorkspace`); saved through `updateWorkspaceProfileAction`. Clerks and up (`settings.read`)
+// (`inWorkspace`); saved through `updateWorkspaceProfileAction`. Clerks and up (`settings.read`)
 // can open it; advocates and owners (`workspace.manage`) can edit it; only owners
 // (`workspace.rename`) can rename the slug. Viewers get the permission-denied page.
 //
@@ -42,12 +42,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 async function loadProfile(context: WorkspaceContext): Promise<ProfileView | null> {
-  const [{ db, withWorkspace }, { getWorkspaceProfile, toProfileView }] = await Promise.all([
-    import('@causedeck/db'),
+  const [{ inWorkspace }, { getWorkspaceProfile, toProfileView }] = await Promise.all([
+    import('@causedeck/core/runtime'),
     import('@causedeck/core/workspaces'),
   ]);
   const workspaceId = context.workspace.id;
-  const profile = await withWorkspace(db, { workspaceId, userId: context.user.id }, (tx) =>
+  const profile = await inWorkspace({ workspaceId, userId: context.user.id }, (tx) =>
     getWorkspaceProfile(tx, workspaceId),
   );
   return profile === null ? null : toProfileView(profile);

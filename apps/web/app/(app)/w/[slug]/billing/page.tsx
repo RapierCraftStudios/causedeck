@@ -52,22 +52,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Subscription, seats in use and invoices, in one workspace-scoped transaction. */
 async function loadBilling(context: WorkspaceContext): Promise<BillingView> {
-  const [{ db, withWorkspace }, { listSaasInvoices, loadSubscription }, { countBillableSeats }] =
-    await Promise.all([
-      import('@causedeck/db'),
-      import('@causedeck/core/billing'),
-      import('@causedeck/core/workspaces'),
-    ]);
+  const { loadBillingPage } = await import('@causedeck/core/runtime');
   const [{ isLocale, DEFAULT_LOCALE }, requested] = await Promise.all([
     import('@causedeck/i18n'),
     getLocale(),
   ]);
-  const workspaceId = context.workspace.id;
-  const loaded = await withWorkspace(db, { workspaceId, userId: context.user.id }, async (tx) => ({
-    subscription: await loadSubscription(tx, workspaceId),
-    seats: await countBillableSeats(tx, workspaceId),
-    invoices: await listSaasInvoices(tx, workspaceId),
-  }));
+  const loaded = await loadBillingPage({
+    workspaceId: context.workspace.id,
+    userId: context.user.id,
+  });
   return toBillingView({
     slug: context.workspace.slug,
     subscription: loaded.subscription,

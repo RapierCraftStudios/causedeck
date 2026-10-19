@@ -1,6 +1,6 @@
 // `system.export.expire` (#301): hourly, deletes workspace exports 24 h after they became ready.
 // It has no workspace, so it lists due exports (ids only) through the owner-defined
-// `app_export_due_jobs` function (0024_lifecycle); each export is then expired inside its own
+// `app_export_due_jobs` function (0025_lifecycle); each export is then expired inside its own
 // workspace's `withWorkspace` scope: the row becomes `expired` (download token cleared), the
 // encrypted object is deleted and its `blob` row removed. Idempotent: an export already expired,
 // or an object already gone, is skipped. Logs carry ids and counts only.

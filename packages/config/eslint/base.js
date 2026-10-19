@@ -6,6 +6,7 @@ import unicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+import { causedeck } from './authorization.js';
 import { APP_NAMES, boundaries } from './boundaries.js';
 
 /** Deep imports into another workspace's sources bypass its public `exports`. */
@@ -207,6 +208,13 @@ export const base = tseslint.config(
     files: ['**/*.{js,mjs,cjs}', 'vitest.workspace.ts'],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    // Core domains import one another only through `index.ts` along the declared map (#293,
+    // docs/engineering/core-domains.md).
+    files: ['**/packages/core/src/**/*.{ts,tsx,js,mjs}'],
+    plugins: { causedeck },
+    rules: { 'causedeck/core-domain-boundaries': 'error' },
   },
 );
 

@@ -123,6 +123,7 @@ catalog:
   intl-messageformat: 11.2.15
   jsdom: 27.0.1
   lefthook: 2.2.2
+  lighthouse: 12.6.1
   lucide-react: 1.57.0
   motion: 14.2.0
   next: 16.4.0

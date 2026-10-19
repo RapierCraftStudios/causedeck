@@ -8,7 +8,7 @@
 import { withWorkspace } from '@causedeck/db';
 import { sql, type SQL } from 'drizzle-orm';
 
-import { auditPage, positionOf, toView } from '../../audit/query.ts';
+import { queryAudit } from '../../audit/index.ts';
 
 import { registerExporter, type ExportCtx, type Exporter } from './registry.ts';
 
@@ -120,21 +120,28 @@ async function* members(ctx: ExportCtx): AsyncGenerator<Record<string, unknown>>
   }
 }
 
+/** Audit events per page (the feed's maximum). */
+const AUDIT_PAGE_SIZE = 200;
+
 /**
- * The workspace audit log through the audit read path (`auditPage` / `toView`, the same view the
- * audit export streams), oldest first, owners' view (IP included, truncated for display).
+ * The workspace audit log through the audit read path (`queryAudit`, the view the activity feed
+ * and audit export serve), newest first, as owners see it (IP included, truncated for display).
+ * The requester is an owner, so `audit.read` always holds.
  */
 async function* auditEvents(ctx: ExportCtx): AsyncGenerator<Record<string, unknown>> {
-  const range = ctx.scope === 'user' ? { actorUserId: ctx.userId } : {};
-  let position: ReturnType<typeof positionOf> | undefined;
+  let cursor: string | undefined;
   for (;;) {
-    const rows = await withWorkspace(ctx.db, { workspaceId: ctx.workspaceId }, (tx) =>
-      auditPage(tx, ctx.workspaceId, range, 'asc', PAGE_SIZE, position),
+    const page = await queryAudit(
+      { db: ctx.db, workspaceId: ctx.workspaceId, userId: ctx.userId },
+      {
+        limit: AUDIT_PAGE_SIZE,
+        ...(ctx.scope === 'user' ? { actorUserId: ctx.userId } : {}),
+        ...(cursor === undefined ? {} : { cursor }),
+      },
     );
-    for (const row of rows) yield { ...toView(row, true) };
-    const last = rows.at(-1);
-    if (last === undefined || rows.length < PAGE_SIZE) return;
-    position = positionOf(last);
+    for (const event of page.events) yield { ...event };
+    if (page.nextCursor === null) return;
+    cursor = page.nextCursor;
   }
 }
 

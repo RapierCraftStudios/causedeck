@@ -10,9 +10,9 @@ import { withTestDb } from '@causedeck/db/testing';
 import { and, eq, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
-import type { WorkspaceError } from '../../workspaces/errors.ts';
+import type { WorkspaceError } from '../../workspaces/index.ts';
 import { AUDIT_EXPORT_COLUMNS, exportAudit, record } from '../index.ts';
-import { addMember, failure, newWorkspace } from './fixtures.ts';
+import { addMember, failure, newWorkspace } from '../../__tests__/fixtures.ts';
 
 // A full collection before each heap sample, so the bound measures what the export retains rather
 // than garbage the collector has not reached yet.

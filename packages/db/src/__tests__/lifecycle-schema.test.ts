@@ -1,4 +1,4 @@
-// Lifecycle tables (#301, 0024_lifecycle): export_job and deletion_job are tenant tables under
+// Lifecycle tables (#301, 0025_lifecycle): export_job and deletion_job are tenant tables under
 // FORCE row-level security; their check constraints hold; one export in flight per requester;
 // deletion_tombstone is global, write-once for the app role; app_export_due_jobs returns ids only.
 import { randomUUID } from 'node:crypto';

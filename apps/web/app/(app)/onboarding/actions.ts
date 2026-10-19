@@ -18,12 +18,9 @@ const create = safeAction(
   CreateWorkspaceInput,
   async (input, ctx) => {
     const session = ctx.session as AppSession;
-    const [{ db }, { createWorkspace }] = await Promise.all([
-      import('@causedeck/db'),
-      import('@causedeck/core/workspaces'),
-    ]);
+    const { createWorkspaceFor } = await import('@causedeck/core/runtime');
     try {
-      const workspace = await createWorkspace(db, { userId: session.user.id, input });
+      const workspace = await createWorkspaceFor({ userId: session.user.id, input });
       return { slug: workspace.slug };
     } catch (error) {
       throw toActionError(error);

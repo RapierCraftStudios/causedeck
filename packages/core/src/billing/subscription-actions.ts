@@ -20,8 +20,8 @@ import type { SeatCounts, SubscriptionSnapshot } from '@causedeck/billing/state-
 import { schema, type Transaction } from '@causedeck/db';
 import { and, eq, notInArray } from 'drizzle-orm';
 
-import { record } from '../audit/writer.ts';
-import { invalid, notFound } from '../workspaces/errors.ts';
+import { record } from '../audit/index.ts';
+import { invalid, notFound } from '../shared/errors.ts';
 import { invalidateEntitlements } from './entitlements.ts';
 
 const { subscription } = schema;

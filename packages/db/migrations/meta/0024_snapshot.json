@@ -1,5 +1,5 @@
 {
-  "id": "86265432-37ef-4e53-b03c-adb3df29b902",
+  "id": "784dcb41-2270-4640-9d3d-5ebce3f76a0f",
   "prevId": "4c721a8f-adac-46e7-85f3-e157f8ebc64d",
   "version": "7",
   "dialect": "postgresql",
@@ -997,176 +997,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.deletion_job": {
-      "name": "deletion_job",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "requested_by": {
-          "name": "requested_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending_cooloff'"
-        },
-        "cooloff_until": {
-          "name": "cooloff_until",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "erase_after": {
-          "name": "erase_after",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "steps": {
-          "name": "steps",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "receipt_hash": {
-          "name": "receipt_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "deletion_job_workspace_id_idx": {
-          "name": "deletion_job_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "deletion_job_workspace_id_organization_id_fk": {
-          "name": "deletion_job_workspace_id_organization_id_fk",
-          "tableFrom": "deletion_job",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "deletion_job_kind_chk": {
-          "name": "deletion_job_kind_chk",
-          "value": "kind in ('workspace', 'account', 'memory')"
-        },
-        "deletion_job_status_chk": {
-          "name": "deletion_job_status_chk",
-          "value": "status in ('pending_cooloff', 'scheduled', 'running', 'erased', 'cancelled', 'failed')"
-        },
-        "deletion_job_workspace_chk": {
-          "name": "deletion_job_workspace_chk",
-          "value": "kind = 'account' or workspace_id is not null"
-        },
-        "deletion_job_account_user_chk": {
-          "name": "deletion_job_account_user_chk",
-          "value": "kind <> 'account' or user_id is not null"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.deletion_tombstone": {
-      "name": "deletion_tombstone",
-      "schema": "",
-      "columns": {
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "receipt_hash": {
-          "name": "receipt_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.email_suppression": {
       "name": "email_suppression",
       "schema": "",
@@ -1268,225 +1098,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.export_job": {
-      "name": "export_job",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "requested_by": {
-          "name": "requested_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "scope": {
-          "name": "scope",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'queued'"
-        },
-        "progress": {
-          "name": "progress",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "steps": {
-          "name": "steps",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "blob_id": {
-          "name": "blob_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "size_bytes": {
-          "name": "size_bytes",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sha256": {
-          "name": "sha256",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "download_token_hash": {
-          "name": "download_token_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "error_code": {
-          "name": "error_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "export_job_workspace_id_idx": {
-          "name": "export_job_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "export_job_workspace_created_idx": {
-          "name": "export_job_workspace_created_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "export_job_ready_expires_idx": {
-          "name": "export_job_ready_expires_idx",
-          "columns": [
-            {
-              "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "status = 'ready'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "export_job_active_uq": {
-          "name": "export_job_active_uq",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "requested_by",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "status in ('queued', 'running')",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "export_job_requested_by_user_id_fk": {
-          "name": "export_job_requested_by_user_id_fk",
-          "tableFrom": "export_job",
-          "tableTo": "user",
-          "columnsFrom": ["requested_by"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "export_job_workspace_id_fk": {
-          "name": "export_job_workspace_id_fk",
-          "tableFrom": "export_job",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "export_job_scope_chk": {
-          "name": "export_job_scope_chk",
-          "value": "scope in ('workspace', 'user')"
-        },
-        "export_job_status_chk": {
-          "name": "export_job_status_chk",
-          "value": "status in ('queued', 'running', 'ready', 'failed', 'expired')"
-        },
-        "export_job_progress_chk": {
-          "name": "export_job_progress_chk",
-          "value": "progress between 0 and 100"
-        },
-        "export_job_ready_chk": {
-          "name": "export_job_ready_chk",
-          "value": "status <> 'ready' or (blob_id is not null and sha256 is not null and expires_at is not null)"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.feature_flag": {
@@ -4532,6 +4143,12 @@
           "notNull": true,
           "default": true
         },
+        "practice_city": {
+          "name": "practice_city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -4571,6 +4188,10 @@
         "workspace_settings_locale_chk": {
           "name": "workspace_settings_locale_chk",
           "value": "locale in ('en', 'ta', 'kn')"
+        },
+        "workspace_settings_practice_city_chk": {
+          "name": "workspace_settings_practice_city_chk",
+          "value": "char_length(practice_city) <= 80"
         }
       },
       "isRLSEnabled": false

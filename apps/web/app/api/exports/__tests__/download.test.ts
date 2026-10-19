@@ -27,10 +27,6 @@ const state: State = vi.hoisted(() => ({
   read: vi.fn(),
 }));
 
-vi.mock('@causedeck/db', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  db: { marker: 'db' },
-}));
 vi.mock('../../../../lib/auth.ts', () => ({ getSession: () => Promise.resolve(state.session) }));
 vi.mock('../../../../lib/env.ts', () => ({
   serverEnv: () => ({
@@ -43,15 +39,13 @@ vi.mock('@causedeck/storage', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   EnvKeyProvider: { fromEnv: () => ({ marker: 'keys' }) },
 }));
-vi.mock('@causedeck/core/workspaces', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  memberRole: () => Promise.resolve(state.role),
+vi.mock('@causedeck/core/runtime', () => ({
+  memberRoleFor: () => Promise.resolve(state.role),
+  recordAccessDeniedFor: () => Promise.resolve(),
+  issueExportDownloadFor: state.issue,
+  openExportDownloadFor: state.open,
 }));
-vi.mock('@causedeck/core/lifecycle', () => ({
-  issueExportDownload: state.issue,
-  openExportDownload: state.open,
-  readExportToken: state.read,
-}));
+vi.mock('@causedeck/core/lifecycle', () => ({ readExportToken: state.read }));
 
 const route = await import('../[id]/download/route.ts');
 

@@ -14,7 +14,7 @@ import {
 } from '@causedeck/storage';
 import { z } from 'zod';
 
-import { runExportBuild, type ExportBuildOutcome } from '../../lifecycle/export/run.ts';
+import { runExportBuild, type ExportBuildOutcome } from '../../lifecycle/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { getProducer } from '../producer.ts';

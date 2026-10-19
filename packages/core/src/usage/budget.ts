@@ -21,7 +21,7 @@
 import { schema, withWorkspace } from '@causedeck/db';
 import { and, eq, lte, sql, type SQL } from 'drizzle-orm';
 
-import { getWorkspaceEntitlements } from '../billing/entitlements.ts';
+import { getWorkspaceEntitlements } from '../billing/index.ts';
 import { AI_BUDGET_KEY } from './limits.ts';
 import { increment, type IncrementResult, type UsageContext } from './meter.ts';
 import { periodStart } from './period.ts';

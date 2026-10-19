@@ -5,8 +5,8 @@ import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { describe, expect, it } from 'vitest';
 
-import { newWorkspace } from '../../audit/__tests__/fixtures.ts';
-import { invalidateEntitlements } from '../../billing/entitlements.ts';
+import { newWorkspace } from '../../__tests__/fixtures.ts';
+import { invalidateEntitlements } from '../../billing/index.ts';
 import { assertWithinFairUse, FairUseError } from '../fair-use.ts';
 import { increment } from '../meter.ts';
 

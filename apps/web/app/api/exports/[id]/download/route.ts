@@ -1,6 +1,6 @@
 // `/api/exports/[id]/download` (#301): download a workspace data export.
 // - `POST` (same-origin, `{ workspaceId }`): session, then workspace membership (`guard`), then
-//   core `issueExportDownload` (owner, requester of this export, ready, not expired) records
+//   core `issueExportDownload` through `issueExportDownloadFor` (owner, requester of this export, ready, not expired) records
 //   `export.download_link_issued` and returns a signed link valid until the export expires (24 h
 //   after it was ready). A new link revokes the previous one.
 // - `GET ?token=`: the token is HMAC-signed over the export, workspace, requester, expiry and a
@@ -9,13 +9,9 @@
 //   streams as an attachment, never buffered, cached or sniffed.
 // 401 signed out, 403 cross-origin, not a member or not an owner, 404 not the requester, wrong,
 // revoked or expired token, 400 bad input. Export contents never reach a log.
-import {
-  openExportDownload,
-  issueExportDownload,
-  readExportToken,
-} from '@causedeck/core/lifecycle';
+import { readExportToken } from '@causedeck/core/lifecycle';
+import { issueExportDownloadFor, openExportDownloadFor } from '@causedeck/core/runtime';
 import { WorkspaceError } from '@causedeck/core/workspaces';
-import { db } from '@causedeck/db';
 import { attachmentDisposition, EnvKeyProvider, type KeyProvider } from '@causedeck/storage';
 import { z } from 'zod';
 
@@ -107,8 +103,8 @@ export async function POST(request: Request, { params }: RouteContext): Promise<
   if ('response' in access) return access.response;
 
   try {
-    const link = await issueExportDownload(
-      { db, workspaceId, userId: access.userId, ...requestFields(request) },
+    const link = await issueExportDownloadFor(
+      { workspaceId, userId: access.userId, ...requestFields(request) },
       id,
       { secret: secret() },
     );
@@ -155,10 +151,10 @@ export async function GET(request: Request, { params }: RouteContext): Promise<R
   const access = await member(payload.w, session);
   if ('response' in access) return access.response;
 
-  let download: Awaited<ReturnType<typeof openExportDownload>>;
+  let download: Awaited<ReturnType<typeof openExportDownloadFor>>;
   try {
-    download = await openExportDownload(
-      { db, workspaceId: payload.w, userId: access.userId, ...requestFields(request) },
+    download = await openExportDownloadFor(
+      { workspaceId: payload.w, userId: access.userId, ...requestFields(request) },
       id,
       token,
       { store: objectStore(), keys: keyProvider(), secret: secret() },

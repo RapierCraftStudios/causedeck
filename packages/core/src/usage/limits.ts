@@ -6,8 +6,8 @@
 import { schema, withWorkspace, type Transaction } from '@causedeck/db';
 import { and, desc, eq, gt } from 'drizzle-orm';
 
-import { record } from '../audit/writer.ts';
-import { getWorkspaceEntitlements } from '../billing/entitlements.ts';
+import { record } from '../audit/index.ts';
+import { getWorkspaceEntitlements } from '../billing/index.ts';
 import type { UsageKey } from './keys.ts';
 import type { UsageContext } from './meter.ts';
 

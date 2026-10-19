@@ -1,12 +1,11 @@
 // `GET /w/[slug]/billing/invoices/[id]/pdf` (#258, #29 part 7): download one SaaS invoice PDF.
 // The slug must be a workspace the signed-in user belongs to (otherwise 404, signed out included,
 // so nothing about a workspace leaks), and `invoices.read` (owners) is checked through `guard`.
-// `openSaasInvoicePdf` finds the invoice in that workspace only (another workspace's invoice, a
+// `openInvoicePdf` (`openSaasInvoicePdf` on the app db) finds the invoice in that workspace only (another workspace's invoice, a
 // draft or an unrendered PDF is 404), records `billing.invoice_downloaded` and decrypts the stored
 // object under the workspace DEK; the plaintext streams as an attachment, never cached or sniffed.
 // The route serves stored bytes and never renders (no `@react-pdf/renderer` here).
-import { openSaasInvoicePdf } from '@causedeck/core/billing';
-import { db } from '@causedeck/db';
+import { openInvoicePdf } from '@causedeck/core/runtime';
 import { attachmentDisposition, EnvKeyProvider, type KeyProvider } from '@causedeck/storage';
 
 import { serverEnv } from '../../../../../../../../lib/env.ts';
@@ -50,9 +49,8 @@ export async function GET(request: Request, { params }: RouteContext): Promise<R
   const requestId = request.headers.get('x-request-id') ?? undefined;
   const userAgent = request.headers.get('user-agent') ?? undefined;
   const ip = clientIp(request);
-  const pdf = await openSaasInvoicePdf(
+  const pdf = await openInvoicePdf(
     {
-      db,
       store: objectStore(),
       keys: keyProvider(),
       workspaceId,

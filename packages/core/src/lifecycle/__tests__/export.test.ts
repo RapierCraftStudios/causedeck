@@ -1,7 +1,7 @@
 // Workspace export (#301): the ZIP has README.txt, JSON Lines for every registered table, CSV for
 // the core human-readable tables, decrypted original files and manifest.json; the integrity test
 // recomputes every listed sha256 and size; the job reports monotonic progress, is idempotent,
-// fails cleanly, and `system.export.expire` deletes it 24 h after it is ready. Commits to the
+// and fails cleanly (expiry: jobs/definitions/export-expire.test.ts). Commits to the
 // shared test database through its own pool (see fixtures.ts).
 import { schema, withWorkspace, type Database } from '@causedeck/db';
 import type { TwoTenants } from '@causedeck/db/testing/two-tenants';
@@ -14,7 +14,6 @@ import {
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { runExportExpire } from '../../jobs/definitions/export-expire.ts';
 import { CSV_TABLES, registeredExporters } from '../export/registry.ts';
 import { EXPORT_TTL_MS, runExportBuild } from '../export/run.ts';
 import {
@@ -246,42 +245,5 @@ describe('export job lifecycle', () => {
         .set({ role: 'advocate' })
         .where(eq(schema.member.userId, seeded.uboth)),
     );
-  });
-
-  it('expires a ready export after 24 h: status expired, object and blob row deleted', async () => {
-    const ws = seeded.b.id;
-    const [ready] = await withWorkspace(db, { workspaceId: ws }, (tx) =>
-      tx.select().from(schema.exportJob).where(eq(schema.exportJob.status, 'ready')).limit(1),
-    );
-    if (!ready?.expiresAt || !ready.blobId) throw new Error('no ready export in B');
-    const { expiresAt, blobId } = ready;
-    const { log } = captureLog();
-    // Nothing is due yet: every export here became ready moments ago.
-    const early = await runExportExpire({ db, log }, { store, now: () => new Date() });
-    expect(early.expired).toBe(0);
-
-    const report = await runExportExpire(
-      { db, log },
-      { store, now: () => new Date(expiresAt.getTime() + 1000) },
-    );
-    expect(report.expired).toBeGreaterThanOrEqual(1);
-    const [after] = await withWorkspace(db, { workspaceId: ws }, (tx) =>
-      tx.select().from(schema.exportJob).where(eq(schema.exportJob.id, ready.id)),
-    );
-    expect(after?.status).toBe('expired');
-    const blobs = await withWorkspace(db, { workspaceId: ws }, (tx) =>
-      tx.select().from(schema.blob).where(eq(schema.blob.id, blobId)),
-    );
-    expect(blobs).toEqual([]);
-    expect(await store.list(ws, { kind: 'export' })).toEqual([]);
-    // Idempotent.
-    expect(
-      (
-        await runExportExpire(
-          { db, log },
-          { store, now: () => new Date(expiresAt.getTime() + 1000) },
-        )
-      ).expired,
-    ).toBe(0);
   });
 });

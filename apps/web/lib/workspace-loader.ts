@@ -34,15 +34,14 @@ function isRole(value: string): value is Role {
 
 /** Loaded lazily so importing this module never opens a connection or reads request headers. */
 async function defaultDeps(): Promise<WorkspaceLoaderDeps> {
-  const [{ getSession }, { db }, core] = await Promise.all([
+  const [{ getSession }, runtime] = await Promise.all([
     import('./auth.ts'),
-    import('@causedeck/db'),
-    import('@causedeck/core/workspaces'),
+    import('@causedeck/core/runtime'),
   ]);
   return {
     getSession,
-    resolveSlug: (slug, userId) => core.resolveSlug(db, slug, userId),
-    listMemberships: (userId) => core.listMemberships(db, userId),
+    resolveSlug: (slug, userId) => runtime.resolveSlugFor(slug, userId),
+    listMemberships: (userId) => runtime.listMembershipsFor(userId),
   };
 }
 

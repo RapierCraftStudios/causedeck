@@ -55,18 +55,14 @@ type Loaded =
   | { kind: 'denied' };
 
 async function loadFeed(context: WorkspaceContext, filters: AuditFilterValues): Promise<Loaded> {
-  const [{ db, withWorkspace }, { queryAudit }, { listMembers }] = await Promise.all([
-    import('@causedeck/db'),
-    import('@causedeck/core/audit'),
-    import('@causedeck/core/workspaces'),
-  ]);
+  const { listMembersIn, queryAuditFeed } = await import('@causedeck/core/runtime');
   const workspaceId = context.workspace.id;
   const userId = context.user.id;
   const bounds = filterBounds(filters);
   let page: AuditFeedPage;
   try {
-    page = await queryAudit(
-      { db, workspaceId, userId },
+    page = await queryAuditFeed(
+      { workspaceId, userId },
       {
         ...(bounds.from === undefined ? {} : { from: new Date(bounds.from) }),
         ...(bounds.to === undefined ? {} : { to: new Date(bounds.to) }),
@@ -80,9 +76,7 @@ async function loadFeed(context: WorkspaceContext, filters: AuditFilterValues): 
     }
     throw error;
   }
-  const members = await withWorkspace(db, { workspaceId, userId }, (tx) =>
-    listMembers(tx, workspaceId),
-  );
+  const members = await listMembersIn({ workspaceId, userId });
   return {
     kind: 'feed',
     page,

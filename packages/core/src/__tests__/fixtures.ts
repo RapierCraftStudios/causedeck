@@ -1,10 +1,10 @@
-// Shared fixtures for the audit tests (#227).
+// Shared fixtures for the core tests (#227; moved out of audit/__tests__ for #293).
 import { randomUUID } from 'node:crypto';
 
 import { schema, withWorkspace, type Transaction } from '@causedeck/db';
 import { eq } from 'drizzle-orm';
 
-import { createWorkspace } from '../../workspaces/index.ts';
+import { createWorkspace } from '../workspaces/index.ts';
 
 export async function newUser(tx: Transaction): Promise<string> {
   const [row] = await tx

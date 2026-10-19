@@ -237,6 +237,9 @@ catalogs:
     lefthook:
       specifier: 2.2.2
       version: 2.2.2
+    lighthouse:
+      specifier: 12.6.1
+      version: 12.6.1
     lucide-react:
       specifier: 1.57.0
       version: 1.57.0
@@ -693,6 +696,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)
+      lighthouse:
+        specifier: 'catalog:'
+        version: 12.6.1
       postgres:
         specifier: 'catalog:'
         version: 3.4.9
@@ -921,6 +927,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
+      '@causedeck/flags':
+        specifier: workspace:*
+        version: link:../flags
       '@causedeck/notifications':
         specifier: workspace:*
         version: link:../notifications

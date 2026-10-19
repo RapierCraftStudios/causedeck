@@ -58,6 +58,10 @@ export {
   type BillingProcessEventOutcome,
   type BillingProcessEventPayload,
 } from './definitions/billing-process-event.ts';
+export {
+  invoicePdfFilename,
+  runBillingInvoiceRender,
+} from './definitions/billing-invoice-render.ts';
 export { billingReconcile, runBillingReconcile } from './definitions/billing-reconcile.ts';
 export {
   appLink,

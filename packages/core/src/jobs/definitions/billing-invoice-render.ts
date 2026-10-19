@@ -23,7 +23,7 @@ import {
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { loadSaasInvoiceForRender } from '../../billing/invoices.ts';
+import { loadSaasInvoiceForRender } from '../../billing/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';

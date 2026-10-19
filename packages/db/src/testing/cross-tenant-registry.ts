@@ -3,7 +3,8 @@
 // workspace A through it. The registry tests (`packages/db/src/__tests__/cross-tenant/registry.test.ts`
 // for tables, introspected from the live catalog, and `packages/core/src/__tests__/cross-tenant/
 // registry.test.ts` and `packages/notifications/src/__tests__/cross-tenant/registry.test.ts` for
-// package exports) fail `pnpm test:tenancy` when something is added without an entry here. Data and pure helpers
+// package exports, including the `@causedeck/core/runtime` app seam, #298) fail `pnpm test:tenancy`
+// when something is added without an entry here. Data and pure helpers
 // only: `@causedeck/db` must not import `@causedeck/core`. See docs/engineering/tenancy.md.
 
 /** Paths are relative to the repository root. */
@@ -12,9 +13,12 @@ const CORE_SERVICES_TEST = 'packages/core/src/__tests__/cross-tenant/services.te
 const WEB_ACTIONS_TEST = 'apps/web/__tests__/cross-tenant-actions.test.ts';
 const BILLING_PROCESS_EVENT_TEST =
   'packages/core/src/jobs/definitions/billing-process-event.test.ts';
+const BILLING_INVOICE_RENDER_TEST =
+  'packages/core/src/jobs/definitions/billing-invoice-render.test.ts';
 const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
 const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
 const LIFECYCLE_TEST = 'packages/core/src/lifecycle/__tests__/cross-tenant.test.ts';
+const CORE_RUNTIME_TEST = 'packages/core/src/__tests__/cross-tenant/runtime.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -96,6 +100,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   reissueInvitation: denies,
   revokeInvitation: denies,
   listPendingInvitations: empty,
+  // workspace profile (#284)
+  getWorkspaceProfile: empty,
+  updateWorkspaceProfile: denies,
   acceptInvitation: denies,
   previewInvitation: selfScoped,
   generateUniqueSlug: selfScoped,
@@ -124,6 +131,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
     note: 'reads and updates only the payload workspace inside withWorkspace',
+  },
+  runBillingInvoiceRender: {
+    test: BILLING_INVOICE_RENDER_TEST,
+    kind: 'self-scoped',
+    note: 'loads the payload invoice inside withWorkspace; another workspace’s invoice is never rendered',
   },
   runBillingReconcile: {
     test: BILLING_RECONCILE_TEST,
@@ -316,6 +328,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   flagChangeAuditSink:
     'flag audit sink implementation; writes through recordFlagChanged in the caller transaction',
   hashEmail: 'pure',
+  // workspace profile (#284)
+  PROFILE_FIELDS: 'constant',
+  toProfileView: 'pure (drops the id)',
   // audit: registry, guards and the default sink (#227)
   recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
   AUDIT_ACTIONS: 'constant (audit action registry)',
@@ -356,6 +371,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   billingProcessEvent: 'job definition (handler is runBillingProcessEvent)',
   billingProcessEventSchema: 'zod schema',
   billingReconcile: 'job definition (handler is runBillingReconcile)',
+  // jobs: invoice render helpers exported for the billing PDF test (#258, #293)
+  invoicePdfFilename: 'pure (file name)',
   // jobs: usage rollup (#222)
   usageRollup: 'job definition (handler is runUsageRollup)',
   USAGE_SUMMARY_RETENTION_MONTHS: 'constant',
@@ -467,6 +484,84 @@ export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   localMinutes: 'pure',
 };
 
+const runtimeDenies = { test: CORE_RUNTIME_TEST, kind: 'denies' } as const;
+const runtimeEmpty = { test: CORE_RUNTIME_TEST, kind: 'rls-empty' } as const;
+const runtimeSelfScoped = { test: CORE_RUNTIME_TEST, kind: 'self-scoped' } as const;
+/** Scope-taking loaders: the web caller (workspace loader / `workspaceAction`) checks membership. */
+const runtimeScopeChecked = {
+  test: CORE_RUNTIME_TEST,
+  kind: 'caller-checked',
+  note: 'reads in the given scope (RLS pins it); callers pass a scope loadWorkspaceContext or workspaceAction checked',
+} as const;
+
+/**
+ * Exported `@causedeck/core/runtime` services (#298), the app's database seam → their cross-tenant
+ * test. Each binds the app-role `db` and delegates to a core or package service registered above.
+ */
+export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  inWorkspace: runtimeScopeChecked,
+  memberRoleFor: runtimeEmpty,
+  resolveSlugFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: 'resolveSlug on the app db; the web workspace loader checks membership',
+  },
+  listMembershipsFor: runtimeEmpty,
+  createWorkspaceFor: runtimeSelfScoped,
+  previewInvitationFor: runtimeSelfScoped,
+  acceptInvitationFor: runtimeDenies,
+  loadMembersPage: runtimeScopeChecked,
+  listMembersIn: runtimeScopeChecked,
+  loadBillingPage: runtimeScopeChecked,
+  loadUsagePage: runtimeScopeChecked,
+  openInvoicePdf: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'rls-empty',
+    note: 'finds the invoice in ctx.workspaceId only; the route guard checks membership and invoices.read',
+  },
+  authorizeAuditReadFor: runtimeDenies,
+  queryAuditFeed: runtimeDenies,
+  verifyAuditRange: runtimeDenies,
+  exportAuditFor: runtimeDenies,
+  recordAccessDeniedFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: "recordAccessDenied on the app db; guard sets member from memberRoleFor, a non-member's denial never lands in that workspace chain",
+  },
+  requestExportFor: runtimeDenies,
+  issueExportDownloadFor: runtimeDenies,
+  openExportDownloadFor: runtimeDenies,
+  loadNotificationPreferences: runtimeDenies,
+  subscribePush: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: 'push subscriptions belong to the user, not a workspace; stored for the given user only',
+  },
+  unsubscribePush: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: "revokes only the given user's subscription; another user's endpoint is untouched",
+  },
+  consumeRequestLimit: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: 'global rate-limit counter keyed by the caller (no tenant rows); one key never moves another',
+  },
+  startAppFlagListener: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: 'LISTEN flag_changed on the app pool: only drops the process flag cache, reads no tenant rows',
+  },
+};
+
+/** Every other runtime export of `@causedeck/core/runtime`, with why it needs no test. */
+export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  db: 'the lazy app-role handle (Better Auth adapter); tenant reads go through the services above',
+  isUuid: 'pure',
+  uploadContext:
+    'pure (binds the app db into a StorageCtx; the uploads route checks membership and authorize gates each storage call)',
+};
+
 /** The storage presign cross-tenant test (#21). */
 export const STORAGE_PRESIGN_TEST = 'packages/storage/src/__tests__/cross-tenant-presign.test.ts';
 
@@ -510,6 +605,7 @@ export function registeredTestFiles(): string[] {
       ...Object.values(TABLE_TESTS),
       ...Object.values(SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(NOTIFICATION_SERVICE_TESTS).map((entry) => entry.test),
+      ...Object.values(RUNTIME_SERVICE_TESTS).map((entry) => entry.test),
       STORAGE_PRESIGN_TEST,
     ]),
   ].sort();

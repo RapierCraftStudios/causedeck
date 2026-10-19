@@ -67,6 +67,16 @@ export const AUDIT_ACTIONS = {
     description: 'A download link for a workspace data export was issued to its requester',
   },
   'export.downloaded': { security: true, description: 'A workspace data export was downloaded' },
+  // Metadata names the changed fields only, never their values (#284).
+  'workspace.profile_updated': {
+    security: false,
+    description: "The workspace's name, kind, time zone, default locale or practice city changed",
+  },
+  // Fail-closed: a slug rename that cannot be audited does not happen (#284).
+  'workspace.slug_renamed': {
+    security: true,
+    description: 'An owner renamed the workspace slug; the old slug redirects for 90 days',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

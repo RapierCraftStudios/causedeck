@@ -2,7 +2,7 @@
 //
 // - `requestExport`: owners only. One export in flight per requester and workspace (a second
 //   request returns the running one). Records `export.requested` (fail-closed) in the same
-//   transaction, then enqueues `export.build` with ids only.
+//   transaction, then enqueues `export.build` with ids only (through the caller's `enqueue`).
 // - `getExportJob` / `listExportJobs`: the requester's own exports in the current workspace; row-
 //   level security keeps every other workspace's rows out.
 // - `issueExportDownload`: a download link for a ready export, for its requester only. The token
@@ -25,10 +25,8 @@ import {
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { record } from '../../audit/writer.ts';
-import { enqueueExportBuild } from '../../jobs/definitions/export-build.ts';
-import { notFound } from '../../workspaces/errors.ts';
-import { requireOwner } from '../../workspaces/members.ts';
+import { record } from '../../audit/index.ts';
+import { notFound, requireOwner } from '../../workspaces/index.ts';
 
 const { blob, exportJob } = schema;
 
@@ -98,15 +96,18 @@ const auditCtx = (ctx: ExportRequestCtx, db: Queryable) => ({
 });
 
 export interface RequestExportDeps {
-  /** Enqueue `export.build`; defaults to the job producer. */
-  enqueue?: (job: { workspaceId: string; jobId: string }) => Promise<unknown>;
+  /**
+   * Enqueue `export.build` (ids only). The job lives in the `jobs` domain, which depends on this
+   * one, so the caller passes it in: `requestExportFor` in `@causedeck/core/runtime`.
+   */
+  enqueue: (job: { workspaceId: string; jobId: string }) => Promise<unknown>;
 }
 
 /** Request an export of the current workspace (`workspace`) or of the requester's own records. */
 export async function requestExport(
   ctx: ExportRequestCtx,
   { scope }: { scope: ExportScope },
-  deps: RequestExportDeps = {},
+  deps: RequestExportDeps,
 ): Promise<ExportJob> {
   // Callers outside TypeScript (server actions parse input) could still pass anything.
   if (!(['workspace', 'user'] as string[]).includes(scope)) {
@@ -144,8 +145,7 @@ export async function requestExport(
     return { job: row, created: true };
   });
   if (created) {
-    const enqueue = deps.enqueue ?? enqueueExportBuild;
-    await enqueue({ workspaceId: ctx.workspaceId, jobId: job.id });
+    await deps.enqueue({ workspaceId: ctx.workspaceId, jobId: job.id });
   }
   return toJob(job);
 }

@@ -20,8 +20,8 @@ let listening: Promise<unknown> | undefined;
 function startListener(): void {
   // Node runtime only: the workspace layout and pages that call this never run on the edge.
   if (listening !== undefined) return;
-  listening = Promise.all([import('@causedeck/db'), import('@causedeck/flags')])
-    .then(([{ db }, { startFlagListener }]) => startFlagListener(db))
+  listening = import('@causedeck/core/runtime')
+    .then(({ startAppFlagListener }) => startAppFlagListener())
     .catch((error: unknown) => {
       listening = undefined;
       console.warn('flags: LISTEN flag_changed failed; relying on the cache TTL', error);

@@ -12,7 +12,7 @@ pnpm --filter @causedeck/storage exec vitest run src/__tests__/stream.test.ts
 pnpm --filter @causedeck/web exec vitest run app/api/exports
 ```
 
-## Tables (`0024_lifecycle`)
+## Tables (`0025_lifecycle`)
 
 | Table                | Scope                                                      | Notes                                                                                                                                                                           |
 | -------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

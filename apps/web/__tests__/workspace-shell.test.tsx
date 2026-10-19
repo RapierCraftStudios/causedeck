@@ -118,12 +118,18 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
   invoices: (await import('../app/(app)/w/[slug]/invoices/page.tsx')).default,
   limitation: (await import('../app/(app)/w/[slug]/limitation/page.tsx')).default,
   insights: (await import('../app/(app)/w/[slug]/insights/page.tsx')).default,
-  settings: (await import('../app/(app)/w/[slug]/settings/page.tsx')).default,
+  // A redirect to the first settings section since #284, not a placeholder.
+  settings: (await import('../app/(app)/w/[slug]/settings/page.tsx'))
+    .default as unknown as PageComponent,
 };
 
 type PlaceholderId = PlaceholderRoute;
 /** Routes whose page is no longer a placeholder; each has its own page test. */
-const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>(['billing', 'activity']);
+const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
+  'billing',
+  'activity',
+  'settings',
+]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
 );
@@ -441,18 +447,23 @@ describe('workspace boundaries', () => {
 });
 
 describe('settings and account', () => {
-  it('settings is an index page, not a redirect to a missing section', async () => {
-    withIntl(await PAGES.settings(props('demo')));
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Settings');
-    expect(document.querySelector('[data-route="settings"]')).not.toBeNull();
+  it('settings redirects to the workspace profile, the first settings section (#284)', async () => {
+    await expect(PAGES.settings(props('demo'))).rejects.toThrow(
+      'NEXT_REDIRECT /w/demo/settings/profile',
+    );
   });
 
-  it('settings renders for a clerk, who holds settings.read (viewers do not)', async () => {
+  it('settings lands a clerk, who holds settings.read (viewers do not), on the profile too', async () => {
     const { can } = await import('../lib/workspace-context.ts');
     expect(can('viewer', 'settings.read')).toBe(false);
     expect(can('clerk', 'settings.read')).toBe(true);
-    withIntl(await PAGES.settings(props('clerk-desk')));
-    expect(document.querySelector('[data-route="settings"]')).not.toBeNull();
+    await expect(PAGES.settings(props('clerk-desk'))).rejects.toThrow(
+      'NEXT_REDIRECT /w/clerk-desk/settings/profile',
+    );
+  });
+
+  it('settings refuses a non-member workspace', async () => {
+    await expect(PAGES.settings(props('other-chambers'))).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('account renders its placeholder', async () => {

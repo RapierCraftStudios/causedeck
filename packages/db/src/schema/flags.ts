@@ -3,7 +3,7 @@
 // access modes: both are global tables (GLOBAL_TABLES). Per-workspace overrides live in the tenant
 // table `workspace_feature_flag` (FORCE RLS via `tenantTable()`), not in a nullable `workspace_id`
 // on `feature_flag`, so they get the standard `ws_isolation` policy and the cross-tenant suite.
-// Writes to either flag table fire `pg_notify('flag_changed', key)` (migration 0011_flags).
+// Writes to either flag table fire `pg_notify('flag_changed', key)` (migration 0012_flags).
 import { sql } from 'drizzle-orm';
 import {
   boolean,

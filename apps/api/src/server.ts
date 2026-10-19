@@ -6,7 +6,9 @@ import { pathToFileURL } from 'node:url';
 
 import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth } from '@causedeck/auth/server';
+import { webhookSecretFor } from '@causedeck/billing/webhook';
 import { serverEnv } from '@causedeck/config/env';
+import { closeProducer } from '@causedeck/core/jobs';
 import { closeDb, db } from '@causedeck/db';
 import { startFlagListener } from '@causedeck/flags';
 import {
@@ -124,6 +126,7 @@ async function main(): Promise<void> {
     logger,
     allowedOrigins: [env.APP_URL],
     readyChecks: readyChecksFromEnv(env),
+    billing: { webhookSecret: webhookSecretFor(env) },
   });
   const { server, port } = await startServer({ app, port: env.API_PORT });
   // Staff flag changes drop this process's flag cache at once; the 15 s TTL covers a failure (#22).
@@ -135,6 +138,7 @@ async function main(): Promise<void> {
     logger,
     cleanup: async () => {
       await flagListener?.unlisten();
+      await closeProducer();
       await closeDb();
       await telemetry.shutdown();
     },

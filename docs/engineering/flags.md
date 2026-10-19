@@ -38,7 +38,7 @@ Using an unknown key fails at compile time, because `FlagKey` is a literal union
 
 Each server process caches every workspace's flag rows in an LRU with a 15 s TTL (`packages/flags/src/cache.ts`).
 
-- Writes to `feature_flag` or `workspace_feature_flag` fire `pg_notify('flag_changed', key)` through a trigger (migration `0011_flags`).
+- Writes to `feature_flag` or `workspace_feature_flag` fire `pg_notify('flag_changed', key)` through a trigger (migration `0012_flags`).
 - `startFlagListener(db)` runs `LISTEN flag_changed` and empties the cache when a notification arrives, so a change reaches every process in well under 2 s.
 - If a notification is lost, the TTL still bounds staleness to 15 s.
 - The web app and the API start the listener once per process.

@@ -1,5 +1,5 @@
 // In-process flag cache (#22): a small LRU of each scope's flag rows with a 15 s TTL, emptied by
-// `pg_notify('flag_changed')` (the 0011_flags trigger) through `LISTEN` in every server process, so
+// `pg_notify('flag_changed')` (the 0012_flags trigger) through `LISTEN` in every server process, so
 // a change is visible across processes in well under a second and at worst after the TTL.
 import type { Database } from '@causedeck/db';
 

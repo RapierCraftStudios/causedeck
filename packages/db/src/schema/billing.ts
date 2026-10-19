@@ -131,7 +131,11 @@ export const usageCounter = pgTable(
   ],
 );
 
-/** Provider webhook events, one row per provider event id, for idempotent processing (#204). */
+/**
+ * Provider webhook events, one row per provider event id, for idempotent processing (#204).
+ * `payload` is the minimised webhook event (`minimiseWebhookEvent`, no contact data) that the
+ * `billing.process-event` job applies.
+ */
 export const billingEvent = pgTable(
   'billing_event',
   {
@@ -139,6 +143,7 @@ export const billingEvent = pgTable(
     workspaceId: workspaceRef(),
     type: text('type').notNull(),
     payloadHash: text('payload_hash').notNull(),
+    payload: jsonb('payload'),
     receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
     processedAt: timestamp('processed_at', { withTimezone: true }),
   },

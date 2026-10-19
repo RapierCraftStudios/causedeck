@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@causedeck/auth": "workspace:*",
+    "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/core": "workspace:*",
     "@causedeck/db": "workspace:*",

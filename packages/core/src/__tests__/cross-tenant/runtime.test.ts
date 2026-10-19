@@ -7,8 +7,8 @@
 // runtime service without a case here fails.
 import { randomUUID } from 'node:crypto';
 
-import { schema } from '@causedeck/db';
-import { closeTestDb, inWorkspace as inTestWorkspace, testAppDb } from '@causedeck/db/testing';
+import { schema, withWorkspace } from '@causedeck/db';
+import { closeTestDb, testAppDb } from '@causedeck/db/testing';
 import { RUNTIME_SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -44,14 +44,14 @@ const asB = () => ({ workspaceId: t.b.id, userId: t.ub });
 const forged = () => ({ workspaceId: t.a.id, userId: t.ub });
 
 async function aMemberIds(): Promise<string[]> {
-  const rows = await inTestWorkspace(testAppDb(), t.a.id, (s) =>
+  const rows = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (s) =>
     s.select({ id: schema.member.id }).from(schema.member),
   );
   return rows.map((r) => r.id).sort();
 }
 
 async function aAuditIds(): Promise<string[]> {
-  const rows = await inTestWorkspace(testAppDb(), t.a.id, (s) =>
+  const rows = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (s) =>
     s.select({ id: schema.auditEvent.id }).from(schema.auditEvent),
   );
   return rows.map((r) => r.id).sort();

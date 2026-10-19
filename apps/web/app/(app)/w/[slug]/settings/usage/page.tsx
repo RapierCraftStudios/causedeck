@@ -47,17 +47,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Every counter for this IST month, the AI budget and the plan's caps, in one transaction. */
 async function loadUsage(context: WorkspaceContext, emptyOnPurpose: boolean): Promise<UsageView> {
-  const [{ loadUsagePage }, { nextPeriodStart, SOFT_LIMIT_BPS }] = await Promise.all([
-    import('@causedeck/core/runtime'),
-    import('@causedeck/core/usage'),
-  ]);
-  const [{ isLocale, DEFAULT_LOCALE }, requested] = await Promise.all([
-    import('@causedeck/i18n'),
-    getLocale(),
-  ]);
+  const { loadUsagePage } = await import('@causedeck/core/runtime');
   const workspaceId = context.workspace.id;
   const now = new Date();
   const loaded = await loadUsagePage({ workspaceId, userId: context.user.id }, now);
+  // After the read: `loadUsagePage` has already loaded `@causedeck/core/usage` for it.
+  const [{ nextPeriodStart, SOFT_LIMIT_BPS }, { isLocale, DEFAULT_LOCALE }, requested] =
+    await Promise.all([import('@causedeck/core/usage'), import('@causedeck/i18n'), getLocale()]);
   return toUsageView({
     counters: emptyOnPurpose ? {} : loaded.counters,
     limits: {

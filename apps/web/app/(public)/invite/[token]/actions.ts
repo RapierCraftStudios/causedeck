@@ -47,11 +47,8 @@ const accept = safeAction(
   AcceptInviteInput,
   async ({ token }, ctx): Promise<AcceptOutcome> => {
     const session = ctx.session as AppSession;
-    const [{ acceptInvitationFor }, { installBillingEntitlements }] = await Promise.all([
-      import('@causedeck/core/runtime'),
-      import('@causedeck/core/billing'),
-    ]);
-    installBillingEntitlements();
+    // `acceptInvitationFor` installs the billing seat gate before accepting.
+    const { acceptInvitationFor } = await import('@causedeck/core/runtime');
     try {
       const accepted = await acceptInvitationFor({ userId: session.user.id, token });
       return { status: 'accepted', slug: accepted.workspaceSlug };

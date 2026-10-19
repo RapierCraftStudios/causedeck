@@ -14,11 +14,26 @@ export interface AuditActionSpec {
   description: string;
 }
 
-/** Every audit action. Later parts (#228, #229, #27) add their actions here. */
+/** Every audit action. #229 (export) and #27 (support sessions) wire the call sites for theirs. */
 export const AUDIT_ACTIONS = {
   'member.removed': { security: true, description: 'A member was removed from the workspace' },
   'member.role_changed': { security: true, description: "A member's role was changed" },
   'flag.changed': { security: true, description: 'A feature flag was changed' },
+  'auth.sign_in': { security: true, description: 'A user signed in' },
+  'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
+  'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },
+  'auth.passkey_added': { security: true, description: 'A passkey was registered' },
+  'auth.passkey_removed': { security: true, description: 'A passkey was removed' },
+  'auth.two_factor_enabled': { security: true, description: 'Two-factor authentication was enabled' },
+  'auth.two_factor_disabled': {
+    security: true,
+    description: 'Two-factor authentication was disabled',
+  },
+  'auth.session_revoked': { security: true, description: 'A session was revoked' },
+  'audit.exported': { security: true, description: 'The audit log was exported' },
+  'support.session_started': { security: true, description: 'A support session started' },
+  'support.session_ended': { security: true, description: 'A support session ended' },
+  'access.denied': { security: true, description: 'An action was denied' },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

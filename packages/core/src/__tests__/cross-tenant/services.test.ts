@@ -201,6 +201,86 @@ const CASES: Record<string, Case> = {
     );
     expect(await auditIds(f, f.a.id)).toEqual(before);
   },
+  recordRoleChanged: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordRoleChanged(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          targetUserId: f.ua,
+          memberId: f.aMember.memberId,
+          fromRole: 'viewer',
+          toRole: 'owner',
+        }),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordAccessDenied: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    // The write into A's chain fails from B's scope and is swallowed, never landing in A.
+    await f.asB((s) =>
+      core.recordAccessDenied(s as unknown as Database, {
+        workspaceId: f.a.id,
+        member: true,
+        actorUserId: f.ub,
+      }),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordFlagChanged: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordFlagChanged(s, {
+          actorUserId: f.ub,
+          key: 'xt.flag',
+          workspaceId: f.a.id,
+          oldValue: false,
+          newValue: true,
+          legalAck: false,
+        }),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordExportRun: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordExportRun(
+          { db: s, workspaceId: f.a.id, actor: { userId: f.ub, kind: 'user' } },
+          { format: 'csv', from: '2026-01-01', to: '2026-01-31' },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordSupportSessionStarted: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordSupportSessionStarted(
+          { db: s },
+          { supportSessionId: randomUUID(), staffUserId: f.ub, workspaceId: f.a.id },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordSupportSessionEnded: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordSupportSessionEnded(
+          { db: s },
+          { supportSessionId: randomUUID(), staffUserId: f.ub, workspaceId: f.a.id },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
   verifyChain: async (f) => {
     await expectTenancyViolation(f.asB((s) => core.verifyChain(s, f.a.id)));
     // B's own chain holds only B's seed event, never A's.

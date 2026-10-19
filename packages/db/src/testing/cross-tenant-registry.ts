@@ -140,6 +140,36 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'pins the event workspace; app_audit_append rejects any workspace but the pinned one',
   },
+  recordRoleChanged: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordAccessDenied: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordFlagChanged: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordExportRun: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordSupportSessionStarted: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordSupportSessionEnded: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
   verifyChain: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -212,6 +242,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   AiCallContractError: 'error class',
   hashUserAgent: 'pure',
   truncateIpForDisplay: 'pure',
+  // audit: security event emitters (#228)
+  createSecurityEventRecorder: 'factory; its events are account-level record() writes (no workspace data)',
+  flagChangeAuditSink: 'flag audit sink implementation; writes through recordFlagChanged in the caller transaction',
+  hashEmail: 'pure',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',

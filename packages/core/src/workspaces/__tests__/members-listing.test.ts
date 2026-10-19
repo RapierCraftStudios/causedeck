@@ -72,6 +72,16 @@ describe('listPendingInvitations', () => {
       const workspaceId = await newWorkspace(tx, ownerId);
       const first = await invite(tx, workspaceId, ownerId, 'first@example.test');
       const second = await invite(tx, workspaceId, ownerId, 'second@example.test');
+      // Rows written in one transaction share `now()`; spread them so the order is deterministic.
+      for (const [issued, at] of [
+        [first, '2026-10-01T10:00:00Z'],
+        [second, '2026-10-02T10:00:00Z'],
+      ] as const) {
+        await tx
+          .update(schema.invitation)
+          .set({ createdAt: new Date(at) })
+          .where(eq(schema.invitation.id, issued.invitation.id));
+      }
       const revoked = await invite(tx, workspaceId, ownerId, 'revoked@example.test');
       await revokeInvitation(tx, {
         workspaceId,

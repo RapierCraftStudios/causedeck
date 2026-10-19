@@ -1,0 +1,178 @@
+{
+  "shell": {
+    "pages": {
+      "today": {
+        "description": "Your hearings for the day, by court and hall.",
+        "empty": "No hearings today. Forward a cause list to see your court day.",
+        "hint": "When a cause list is forwarded, your hearings appear here by court and hall."
+      },
+      "tomorrow": {
+        "description": "Tomorrow's listings, ready to prepare.",
+        "empty": "Nothing listed for tomorrow yet.",
+        "hint": "Listings for the next court day appear here once cause lists arrive."
+      },
+      "calendar": {
+        "description": "Upcoming court days at a glance.",
+        "empty": "No court days scheduled.",
+        "hint": "Hearings and deadlines from your matters fill in this calendar."
+      },
+      "inbox": {
+        "description": "Captures that need you, are ready to send or are processing.",
+        "empty": "Your inbox is clear.",
+        "hint": "Forwarded emails, voice notes and files that need a decision land here."
+      },
+      "matters": {
+        "description": "Every matter in this workspace.",
+        "empty": "No matters yet. Import or add your first matter.",
+        "hint": "Matters are created from your cause lists, or added by hand."
+      },
+      "briefs": {
+        "description": "Brief sheets for upcoming listings.",
+        "empty": "No briefs yet. A brief appears when a matter is listed.",
+        "hint": "Each listed matter gets a one-page brief for the hearing."
+      },
+      "obligations": {
+        "description": "Filings, copies and follow-ups that are due.",
+        "empty": "No open obligations.",
+        "hint": "Filings, copies and follow-ups from your hearings are tracked here."
+      },
+      "drafts": {
+        "description": "Drafts in progress.",
+        "empty": "No drafts yet.",
+        "hint": "Drafts you start from a matter are kept here until they are filed."
+      },
+      "memory": {
+        "description": "What CauseDeck has noted, for you to review.",
+        "empty": "Nothing to review.",
+        "hint": "Notes CauseDeck learns from your work wait here for your review."
+      },
+      "people": {
+        "description": "Clients, counsel and contacts.",
+        "empty": "No people yet. Add a client or counsel.",
+        "hint": "Clients and counsel are linked to the matters they appear in."
+      },
+      "courts": {
+        "description": "Your forums, halls and rosters.",
+        "empty": "Choose your courts to get started.",
+        "hint": "Your forums decide which cause lists CauseDeck reads for you."
+      },
+      "activity": {
+        "description": "Everything that happened, with undo.",
+        "empty": "No activity yet.",
+        "hint": "Every change in this workspace is listed here, with undo."
+      },
+      "billing": {
+        "description": "Fees and payments.",
+        "empty": "No billing records yet.",
+        "hint": "Fees and payments are tracked against each matter."
+      },
+      "invoices": {
+        "description": "Invoices you have issued.",
+        "empty": "No invoices yet.",
+        "hint": "Invoices you raise for a matter are listed here."
+      },
+      "limitation": {
+        "description": "Limitation periods to watch.",
+        "empty": "No limitation periods tracked.",
+        "hint": "Limitation periods are computed from the dates in your matters."
+      },
+      "insights": {
+        "description": "How your practice is going.",
+        "empty": "Not enough activity for insights yet.",
+        "hint": "Trends across your matters and court days appear here."
+      },
+      "settings": {
+        "description": "Workspace profile, members, roles and privacy.",
+        "empty": "Settings are coming soon.",
+        "hint": "Workspace profile, members, roles and privacy settings are on the way."
+      },
+      "goTo": "Go to {destination}"
+    },
+    "loading": "Loading",
+    "error": {
+      "title": "Something went wrong.",
+      "description": "Something went wrong loading this page.",
+      "retry": "Try again",
+      "copyId": "Copy error ID",
+      "copied": "Error ID copied",
+      "reference": "Error ID: {digest}"
+    },
+    "offline": {
+      "message": "You are offline. Showing saved data from {time}.",
+      "needsConnection": "Needs a connection"
+    },
+    "permissionDenied": {
+      "title": "No access",
+      "message": "You do not have access to this area.",
+      "requestAccess": "Request access",
+      "requestAccessSoon": "Access requests are coming soon."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "message": "We could not find this page in this workspace."
+    },
+    "account": {
+      "title": "Account",
+      "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
+      "empty": "Account settings are coming soon.",
+      "hint": "Passkeys, two-factor sign-in and sessions will be managed here.",
+      "action": "Back to your workspace"
+    },
+    "sidebar": {
+      "label": "Sidebar",
+      "primary": "Primary",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "synced": "Synced",
+      "offline": "Offline"
+    },
+    "topbar": {
+      "search": "Search or jump to...",
+      "searchHint": "Open search",
+      "openSwitcher": "Switch workspace"
+    },
+    "switcher": {
+      "label": "Workspaces",
+      "filter": "Find a workspace",
+      "noMatches": "No workspaces match.",
+      "current": "Current workspace",
+      "create": "Create workspace",
+      "join": "Join with invite",
+      "switching": "Switching workspace"
+    },
+    "userMenu": {
+      "label": "Account menu",
+      "account": "Account",
+      "settings": "Workspace settings",
+      "theme": "Theme",
+      "signOut": "Sign out"
+    },
+    "breadcrumbs": {
+      "label": "Breadcrumb",
+      "more": "More pages"
+    },
+    "roles": {
+      "viewer": "Viewer",
+      "clerk": "Clerk",
+      "junior": "Junior",
+      "advocate": "Advocate",
+      "owner": "Owner"
+    },
+    "mobileNav": {
+      "label": "Bottom navigation",
+      "more": "More",
+      "moreTitle": "More destinations"
+    },
+    "capture": {
+      "label": "Capture",
+      "title": "Capture",
+      "voice": "Voice note",
+      "file": "Photo or file",
+      "paste": "Paste text",
+      "soon": "Available with Capture."
+    },
+    "sheet": {
+      "close": "Close"
+    }
+  }
+}

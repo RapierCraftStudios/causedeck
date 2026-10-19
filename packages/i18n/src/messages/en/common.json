@@ -1,0 +1,22 @@
+{
+  "common": {
+    "skipToContent": "Skip to content",
+    "goToToday": "Go to Today",
+    "loading": "Loading"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "home": {
+    "title": "CauseDeck",
+    "tagline": "Your court day, prepared.",
+    "signIn": "Sign in"
+  },
+  "locale": {
+    "label": "Language",
+    "updated": "Language updated"
+  }
+}

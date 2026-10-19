@@ -134,7 +134,7 @@ Tests:
 | #19 RLS | `withWorkspace(db, { workspaceId, userId }, fn)` sets `app.workspace_id` and `app.user_id` for one transaction. Handlers and page loads use `ctx.tx` / that transaction only | The settings are informational until #19 turns RLS on. No caller changes then |
 | #20 `can()` | `INVITABLE_ROLES` in `invitations.ts`, owner-only checks in `members.ts`, the local `can()` in `apps/web/lib/workspace-context.ts` and `INVITABLE` in `role-select.tsx` | Replace them with the central policy (including the per-workspace "advocates may invite" setting) |
 | #23 email | `Mailer` (`@causedeck/auth/mailer`) with template `workspace.invitation` | Console/Mailpit transports. #23 adds the SES transport and the real template. The invite dialog's optional note is collected but not yet sent, because the template has no field for it |
-| #25 settings | The settings shell and its navigation (the Settings nav item opens `settings/profile`) | The members page is reachable by URL until #25 adds the settings navigation |
+| #25 settings | The settings shell and its section navigation (the Settings nav item opens the `settings` index placeholder) | The members page is reachable by URL until #25 links it from the settings sections |
 | #26 audit | `AuditSink` / `setAuditSink` in `offboarding.ts` (`member.removed` events) | No-op sink by default |
 | #28 billing | `countBillableSeats`, and `Entitlements` / `setEntitlements` (`assertCanAddSeat` is called before every invite and accept) | Permissive default |
 | tasks, obligations | `registerReassignProvider({ countOpen, reassign })` in `offboarding.ts` | No providers yet, so removal never needs a reassignment |

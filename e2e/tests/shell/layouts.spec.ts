@@ -102,6 +102,8 @@ test.describe('layouts', () => {
 
   test('no placeholder page scrolls sideways at 360 px', async ({ page, asUser }) => {
     test.skip(layoutOf(page) !== 'phone', 'phone layout only');
+    // One full page load per placeholder route.
+    test.setTimeout(90_000);
     await openShell(page, asUser);
     for (const route of PLACEHOLDER_ROUTES) {
       await page.goto(`/w/${SHELL_WORKSPACE}/${route}`);

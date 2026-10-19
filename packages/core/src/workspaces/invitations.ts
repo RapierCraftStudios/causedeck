@@ -10,7 +10,15 @@ import { schema, type Database, type Transaction } from '@causedeck/db';
 import { InviteInput } from '@causedeck/validators/workspace';
 import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 
-import { conflict, forbidden, invalid, InvitationError, notFound, rateLimited } from './errors.ts';
+import {
+  conflict,
+  forbidden,
+  invalid,
+  InvitationError,
+  notFound,
+  rateLimited,
+  type InvitationErrorReason,
+} from './errors.ts';
 import { entitlements } from './members.ts';
 
 type Queryable = Database | Transaction;
@@ -298,6 +306,18 @@ export async function listPendingInvitations(
     .orderBy(asc(invitation.createdAt), asc(invitation.id));
 }
 
+/** The invitation row and its workspace slug, as `acceptInvitation` and `previewInvitation` read it. */
+const invitationColumns = {
+  id: invitation.id,
+  workspaceId: invitation.organizationId,
+  workspaceSlug: organization.slug,
+  email: invitation.email,
+  role: invitation.role,
+  expiresAt: invitation.expiresAt,
+  acceptedAt: invitation.acceptedAt,
+  revokedAt: invitation.revokedAt,
+};
+
 export interface AcceptInvitationRequest {
   userId: string;
   token: string;
@@ -307,6 +327,8 @@ export interface AcceptInvitationRequest {
 export interface AcceptedInvitation {
   memberId: string;
   workspaceId: string;
+  /** The workspace's current slug, so the caller can land the new member on it. */
+  workspaceSlug: string;
   role: WorkspaceRole;
 }
 
@@ -324,13 +346,7 @@ export async function acceptInvitation(
   return db.transaction(async (tx) => {
     const [found] = await tx
       .select({
-        id: invitation.id,
-        workspaceId: invitation.organizationId,
-        email: invitation.email,
-        role: invitation.role,
-        expiresAt: invitation.expiresAt,
-        acceptedAt: invitation.acceptedAt,
-        revokedAt: invitation.revokedAt,
+        ...invitationColumns,
       })
       .from(invitation)
       .innerJoin(organization, eq(organization.id, invitation.organizationId))
@@ -379,6 +395,71 @@ export async function acceptInvitation(
       .update(invitation)
       .set({ acceptedAt: now, status: 'accepted' })
       .where(eq(invitation.id, found.id));
-    return { memberId: joined.id, workspaceId: found.workspaceId, role: found.role };
+    return {
+      memberId: joined.id,
+      workspaceId: found.workspaceId,
+      workspaceSlug: found.workspaceSlug,
+      role: found.role,
+    };
   });
+}
+
+/** What the `/invite/<token>` page shows: accept, or why the invitation cannot be accepted. */
+export type InvitationPreviewState = 'VALID' | InvitationErrorReason | 'ALREADY_MEMBER';
+
+export interface InvitationPreview {
+  state: InvitationPreviewState;
+  /** Set for every state except `INVALID`; the invited email is never returned. */
+  workspaceName?: string;
+  workspaceSlug?: string;
+  role?: WorkspaceRole;
+}
+
+export interface PreviewInvitationRequest {
+  userId: string;
+  token: string;
+  now?: Date | undefined;
+}
+
+/**
+ * Read-only look at an invitation for the signed-in `userId`: the same checks, in the same order,
+ * as `acceptInvitation`, without locking, writing or consuming the accept rate limit.
+ */
+export async function previewInvitation(
+  db: Queryable,
+  request: PreviewInvitationRequest,
+): Promise<InvitationPreview> {
+  const now = request.now ?? new Date();
+  const [found] = await db
+    .select({ ...invitationColumns, workspaceName: organization.name })
+    .from(invitation)
+    .innerJoin(organization, eq(organization.id, invitation.organizationId))
+    .where(
+      and(
+        eq(invitation.tokenHash, hashInvitationToken(request.token)),
+        isNull(organization.deletedAt),
+      ),
+    );
+  if (!found) return { state: 'INVALID' };
+  const details = {
+    workspaceName: found.workspaceName,
+    workspaceSlug: found.workspaceSlug,
+    role: found.role,
+  };
+  if (found.revokedAt !== null) return { state: 'REVOKED', ...details };
+  if (found.acceptedAt !== null) return { state: 'USED', ...details };
+  if (found.expiresAt.getTime() <= now.getTime()) return { state: 'EXPIRED', ...details };
+
+  const [account] = await db
+    .select({ email: user.email })
+    .from(user)
+    .where(eq(user.id, request.userId));
+  if (!account || account.email.trim().toLowerCase() !== found.email.trim().toLowerCase()) {
+    return { state: 'EMAIL_MISMATCH', ...details };
+  }
+  const [existing] = await db
+    .select({ status: member.status })
+    .from(member)
+    .where(and(eq(member.organizationId, found.workspaceId), eq(member.userId, request.userId)));
+  return { state: existing?.status === 'active' ? 'ALREADY_MEMBER' : 'VALID', ...details };
 }

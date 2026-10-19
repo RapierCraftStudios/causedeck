@@ -52,6 +52,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TABLE_FINE_POINTER_QUERY,
   type TableDensity,
 } from '../table/table';
 import { ToggleGroup, ToggleGroupItem } from '../toggle-group/toggle-group';
@@ -133,8 +134,14 @@ export const DEFAULT_DATA_TABLE_LABELS: DataTableLabels = {
 /** Below this width the table becomes a card list when `mobileRender` is given. */
 export const DATA_TABLE_MOBILE_QUERY = '(max-width: 767px)';
 
-/** Row heights in px per density, for virtualisation (match `TABLE_ROW_HEIGHT`). */
+/** Row heights in px per density on touch, for virtualisation (match `TABLE_ROW_HEIGHT`). */
 export const DATA_TABLE_ROW_PX: Record<TableDensity, number> = { comfortable: 44, compact: 32 };
+
+/** Row heights in px per density with a fine pointer (`TABLE_FINE_POINTER_QUERY`). */
+export const DATA_TABLE_ROW_PX_FINE: Record<TableDensity, number> = {
+  comfortable: 40,
+  compact: 32,
+};
 
 export interface DataTableProps<TData extends RowData> {
   /** Accessible name of the table. */
@@ -311,7 +318,8 @@ export function DataTable<TData extends RowData>({
   const scrollRef = useRef<HTMLDivElement>(null);
   const focusIndex = Math.min(activeIndex, Math.max(rows.length - 1, 0));
 
-  const rowPx = DATA_TABLE_ROW_PX[density];
+  const finePointer = useMediaQuery(TABLE_FINE_POINTER_QUERY);
+  const rowPx = (finePointer ? DATA_TABLE_ROW_PX_FINE : DATA_TABLE_ROW_PX)[density];
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,

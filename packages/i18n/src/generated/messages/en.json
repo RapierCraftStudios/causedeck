@@ -4,75 +4,20 @@
     "goToToday": "Go to Today",
     "loading": "Loading"
   },
-  "home": {
-    "title": "CauseDeck",
-    "tagline": "Your court day, prepared.",
-    "signIn": "Sign in"
-  },
   "theme": {
     "label": "Theme",
     "light": "Light",
     "dark": "Dark",
     "system": "System"
   },
-  "auth": {
-    "signIn": {
-      "metaTitle": "Sign in",
-      "wordmark": "CauseDeck",
-      "title": "Sign in to CauseDeck",
-      "tagline": "Your court day, prepared.",
-      "pullLine": "Every hearing, every deadline, ready before you reach court.",
-      "google": "Continue with Google",
-      "passkey": "Use a passkey",
-      "passkeyUnsupported": "Passkeys are not supported on this browser.",
-      "or": "or",
-      "emailLabel": "Email",
-      "emailPlaceholder": "name@example.com",
-      "submit": "Email me a sign-in link",
-      "sending": "Sending...",
-      "terms": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
-      "hosted": "India-hosted. Your matter data never leaves India.",
-      "errors": {
-        "sendFailed": "We could not send the link. Try again in a moment.",
-        "generic": "We could not sign you in. Try again in a moment.",
-        "expired": "This link has expired. Request a new one.",
-        "offline": "You are offline. Connect to sign in.",
-        "accessDenied": "Access was not granted."
-      }
-    },
-    "checkEmail": {
-      "title": "Check your email",
-      "body": "We sent a sign-in link to {email}. It expires in {minutes} minutes.",
-      "differentEmail": "Use a different email",
-      "resend": "Resend",
-      "resendIn": "Resend in {seconds}s"
-    },
-    "invite": {
-      "title": "You have been invited",
-      "body": "Invitations open here soon. Ask the person who invited you to try again later."
-    },
-    "email": {
-      "magicLink": {
-        "subject": "Your CauseDeck sign-in link",
-        "body": "Use this link to sign in to CauseDeck. It expires in {minutes} minutes: {url}"
-      },
-      "invitation": {
-        "subject": "You are invited to a CauseDeck workspace",
-        "body": "Use this link to join the workspace. It expires in {minutes} minutes: {url}"
-      }
-    }
+  "home": {
+    "title": "CauseDeck",
+    "tagline": "Your court day, prepared.",
+    "signIn": "Sign in"
   },
-  "offline": {
-    "title": "Offline",
-    "body": "You are offline. Saved court days and briefs remain available once synced."
-  },
-  "error": {
-    "title": "Something went wrong.",
-    "description": "Your saved work is safe. Try again, or go back to Today.",
-    "reference": "Reference: {digest}"
-  },
-  "notFound": {
-    "title": "Page not found"
+  "locale": {
+    "label": "Language",
+    "updated": "Language updated"
   },
   "nav": {
     "today": "Today",
@@ -99,72 +44,129 @@
       "settings": "Settings"
     }
   },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Search or jump to...",
+    "description": "Search for a matter, a page or an action, then press Enter.",
+    "close": "Close",
+    "empty": "No matches. Try a matter name, court or action.",
+    "recent": "Recent",
+    "hints": "↑↓ to move, ↵ to open, esc to close",
+    "groups": {
+      "goTo": "Go to",
+      "create": "Create",
+      "matters": "Matters",
+      "settings": "Settings",
+      "help": "Help"
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "Shortcuts work anywhere except while you are typing in a field.",
+    "close": "Close",
+    "then": "then",
+    "goTo": "Go to {destination}",
+    "groups": {
+      "navigation": "Navigation",
+      "actions": "Actions",
+      "help": "Help"
+    },
+    "actions": {
+      "capture": "Capture",
+      "palette": "Open command palette",
+      "sidebar": "Toggle sidebar",
+      "search": "Search this page",
+      "help": "Keyboard shortcuts"
+    }
+  },
   "shell": {
     "pages": {
       "today": {
         "description": "Your hearings for the day, by court and hall.",
-        "empty": "No hearings today. Forward a cause list to see your court day."
+        "empty": "No hearings today. Forward a cause list to see your court day.",
+        "hint": "When a cause list is forwarded, your hearings appear here by court and hall."
       },
       "tomorrow": {
         "description": "Tomorrow's listings, ready to prepare.",
-        "empty": "Nothing listed for tomorrow yet."
+        "empty": "Nothing listed for tomorrow yet.",
+        "hint": "Listings for the next court day appear here once cause lists arrive."
       },
       "calendar": {
         "description": "Upcoming court days at a glance.",
-        "empty": "No court days scheduled."
+        "empty": "No court days scheduled.",
+        "hint": "Hearings and deadlines from your matters fill in this calendar."
       },
       "inbox": {
         "description": "Captures that need you, are ready to send or are processing.",
-        "empty": "Your inbox is clear."
+        "empty": "Your inbox is clear.",
+        "hint": "Forwarded emails, voice notes and files that need a decision land here."
       },
       "matters": {
         "description": "Every matter in this workspace.",
-        "empty": "No matters yet. Import or add your first matter."
+        "empty": "No matters yet. Import or add your first matter.",
+        "hint": "Matters are created from your cause lists, or added by hand."
       },
       "briefs": {
         "description": "Brief sheets for upcoming listings.",
-        "empty": "No briefs yet. A brief appears when a matter is listed."
+        "empty": "No briefs yet. A brief appears when a matter is listed.",
+        "hint": "Each listed matter gets a one-page brief for the hearing."
       },
       "obligations": {
         "description": "Filings, copies and follow-ups that are due.",
-        "empty": "No open obligations."
+        "empty": "No open obligations.",
+        "hint": "Filings, copies and follow-ups from your hearings are tracked here."
       },
       "drafts": {
         "description": "Drafts in progress.",
-        "empty": "No drafts yet."
+        "empty": "No drafts yet.",
+        "hint": "Drafts you start from a matter are kept here until they are filed."
       },
       "memory": {
         "description": "What CauseDeck has noted, for you to review.",
-        "empty": "Nothing to review."
+        "empty": "Nothing to review.",
+        "hint": "Notes CauseDeck learns from your work wait here for your review."
       },
       "people": {
         "description": "Clients, counsel and contacts.",
-        "empty": "No people yet. Add a client or counsel."
+        "empty": "No people yet. Add a client or counsel.",
+        "hint": "Clients and counsel are linked to the matters they appear in."
       },
       "courts": {
         "description": "Your forums, halls and rosters.",
-        "empty": "Choose your courts to get started."
+        "empty": "Choose your courts to get started.",
+        "hint": "Your forums decide which cause lists CauseDeck reads for you."
       },
       "activity": {
         "description": "Everything that happened, with undo.",
-        "empty": "No activity yet."
+        "empty": "No activity yet.",
+        "hint": "Every change in this workspace is listed here, with undo."
       },
       "billing": {
         "description": "Fees and payments.",
-        "empty": "No billing records yet."
+        "empty": "No billing records yet.",
+        "hint": "Fees and payments are tracked against each matter."
       },
       "invoices": {
         "description": "Invoices you have issued.",
-        "empty": "No invoices yet."
+        "empty": "No invoices yet.",
+        "hint": "Invoices you raise for a matter are listed here."
       },
       "limitation": {
         "description": "Limitation periods to watch.",
-        "empty": "No limitation periods tracked."
+        "empty": "No limitation periods tracked.",
+        "hint": "Limitation periods are computed from the dates in your matters."
       },
       "insights": {
         "description": "How your practice is going.",
-        "empty": "Not enough activity for insights yet."
-      }
+        "empty": "Not enough activity for insights yet.",
+        "hint": "Trends across your matters and court days appear here."
+      },
+      "settings": {
+        "description": "Workspace profile, members, roles and privacy.",
+        "empty": "Settings are coming soon.",
+        "hint": "Workspace profile, members, roles and privacy settings are on the way."
+      },
+      "goTo": "Go to {destination}"
     },
     "loading": "Loading",
     "error": {
@@ -192,7 +194,9 @@
     "account": {
       "title": "Account",
       "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
-      "empty": "Account settings are coming soon."
+      "empty": "Account settings are coming soon.",
+      "hint": "Passkeys, two-factor sign-in and sessions will be managed here.",
+      "action": "Back to your workspace"
     },
     "sidebar": {
       "label": "Sidebar",
@@ -251,39 +255,47 @@
       "close": "Close"
     }
   },
-  "palette": {
-    "title": "Command palette",
-    "placeholder": "Search or jump to...",
-    "description": "Search for a matter, a page or an action, then press Enter.",
-    "close": "Close",
-    "empty": "No matches. Try a matter name, court or action.",
-    "recent": "Recent",
-    "hints": "↑↓ to move, ↵ to open, esc to close",
-    "groups": {
-      "goTo": "Go to",
-      "create": "Create",
-      "matters": "Matters",
-      "settings": "Settings",
-      "help": "Help"
-    }
-  },
-  "shortcuts": {
-    "title": "Keyboard shortcuts",
-    "description": "Shortcuts work anywhere except while you are typing in a field.",
-    "close": "Close",
-    "then": "then",
-    "goTo": "Go to {destination}",
-    "groups": {
-      "navigation": "Navigation",
-      "actions": "Actions",
-      "help": "Help"
+  "auth": {
+    "signIn": {
+      "metaTitle": "Sign in",
+      "wordmark": "CauseDeck",
+      "title": "Sign in to CauseDeck",
+      "tagline": "Your court day, prepared.",
+      "pullLine": "Every hearing, every deadline, ready before you reach court.",
+      "google": "Continue with Google",
+      "passkey": "Use a passkey",
+      "passkeyUnsupported": "Passkeys are not supported on this browser.",
+      "or": "or",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "submit": "Email me a sign-in link",
+      "sending": "Sending...",
+      "terms": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
+      "hosted": "India-hosted. Your matter data never leaves India.",
+      "errors": {
+        "sendFailed": "We could not send the link. Try again in a moment.",
+        "generic": "We could not sign you in. Try again in a moment.",
+        "expired": "This link has expired. Request a new one.",
+        "offline": "You are offline. Connect to sign in.",
+        "accessDenied": "Access was not granted."
+      }
     },
-    "actions": {
-      "capture": "Capture",
-      "palette": "Open command palette",
-      "sidebar": "Toggle sidebar",
-      "search": "Search this page",
-      "help": "Keyboard shortcuts"
+    "checkEmail": {
+      "title": "Check your email",
+      "body": "We sent a sign-in link to {email}. It expires in {minutes} minutes.",
+      "differentEmail": "Use a different email",
+      "resend": "Resend",
+      "resendIn": "Resend in {seconds}s"
+    },
+    "email": {
+      "magicLink": {
+        "subject": "Your CauseDeck sign-in link",
+        "body": "Use this link to sign in to CauseDeck. It expires in {minutes} minutes: {url}"
+      },
+      "invitation": {
+        "subject": "You are invited to a CauseDeck workspace",
+        "body": "Use this link to join the workspace. It expires in {minutes} minutes: {url}"
+      }
     }
   },
   "workspace": {
@@ -315,6 +327,50 @@
         "signedOut": "Your session ended. Sign in again to continue.",
         "generic": "Could not create the workspace. Please try again."
       }
+    }
+  },
+  "invite": {
+    "metaTitle": "Invitation",
+    "valid": {
+      "title": "Join {workspace}",
+      "body": "You have been invited to join {workspace} as {role}.",
+      "roleLabel": "Your role"
+    },
+    "states": {
+      "expired": {
+        "title": "This invitation has expired",
+        "body": "Invitations last 7 days. Ask the person who invited you to send a new one."
+      },
+      "revoked": {
+        "title": "This invitation was withdrawn",
+        "body": "The workspace withdrew this invitation. Ask the person who invited you if you still need access."
+      },
+      "used": {
+        "title": "This invitation has already been used",
+        "body": "Each invitation link works once. If it was you, the workspace is already in your switcher."
+      },
+      "invalid": {
+        "title": "This invitation link is not valid",
+        "body": "Check that you opened the full link from the email, or ask for a new invitation."
+      },
+      "emailMismatch": {
+        "title": "This invitation is for a different email",
+        "body": "You are signed in as {email}, but this invitation was sent to another address. Sign in with the invited email to accept it."
+      },
+      "alreadyMember": {
+        "title": "You are already a member",
+        "body": "You already belong to {workspace}."
+      }
+    },
+    "accept": "Accept invitation",
+    "accepting": "Joining workspace",
+    "differentAccount": "Sign in with a different account",
+    "openWorkspace": "Open {workspace}",
+    "goHome": "Go to CauseDeck",
+    "errors": {
+      "offline": "You are offline. Connect to accept the invitation.",
+      "signedOut": "Your session ended. Sign in again to continue.",
+      "generic": "Could not accept the invitation. Please try again."
     }
   },
   "members": {
@@ -458,5 +514,17 @@
       "offline": "You are offline. Connect to make changes.",
       "generic": "Something went wrong. Please try again."
     }
+  },
+  "error": {
+    "title": "Something went wrong.",
+    "description": "Your saved work is safe. Try again, or go back to Today.",
+    "reference": "Reference: {digest}"
+  },
+  "notFound": {
+    "title": "Page not found"
+  },
+  "offline": {
+    "title": "Offline",
+    "body": "You are offline. Saved court days and briefs remain available once synced."
   }
 }

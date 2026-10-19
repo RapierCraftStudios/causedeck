@@ -83,7 +83,8 @@ function PaletteBody({
   const [search, setSearch] = useState('');
   const [recent] = useState(() => readRecent(slug));
 
-  const labelOf = (command: Command) => t(command.labelKey);
+  // Registry keys are plain strings (commands register at runtime); the catalog has them all.
+  const labelOf = (command: Command) => t(command.labelKey as Parameters<typeof t>[0]);
   const heading = (group: CommandGroupId) => t(`palette.groups.${group}`);
 
   const sections: Section[] = [];

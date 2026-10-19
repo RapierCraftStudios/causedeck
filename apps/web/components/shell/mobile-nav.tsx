@@ -14,6 +14,7 @@ import {
   type WorkspaceRoute,
 } from '../../lib/nav.ts';
 import type { FlagKey, Role } from '../../lib/workspace-context.ts';
+import { LocaleSwitcher } from '../locale-switcher.tsx';
 
 import { CaptureFab } from './capture-fab.tsx';
 import { isNavItemActive } from './sidebar-nav.tsx';
@@ -42,7 +43,7 @@ export interface MobileNavProps {
 /**
  * Phones only (below 768 px, where the sidebar is hidden): a bottom bar 56 px tall plus the
  * safe-area inset, with Today, Inbox, the raised capture button, Matters, Obligations and More.
- * More opens a bottom sheet with the remaining destinations.
+ * More opens a bottom sheet with the remaining destinations and the language switcher.
  */
 export function MobileNav({ slug, role, isEnabled = flagsOff }: MobileNavProps) {
   const t = useTranslations();
@@ -163,6 +164,7 @@ export function MobileNav({ slug, role, isEnabled = flagsOff }: MobileNavProps) 
                       </div>
                     );
                   })}
+                  <LocaleSwitcher variant="list" />
                 </div>
               </overlays.SheetContent>
             </overlays.Sheet>

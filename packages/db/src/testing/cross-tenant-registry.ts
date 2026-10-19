@@ -22,7 +22,15 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   entitlement: DB_TABLES_TEST,
   usage_counter: DB_TABLES_TEST,
   billing_event: DB_TABLES_TEST,
+  audit_event: DB_TABLES_TEST,
+  ai_call: DB_TABLES_TEST,
 };
+
+/**
+ * Append-only tenant tables (#226): the app role has no UPDATE or DELETE, so the cross-tenant suite
+ * expects a permission error (42501) where it would otherwise expect zero rows.
+ */
+export const APPEND_ONLY_TABLES: readonly string[] = ['audit_event', 'ai_call'];
 
 /**
  * How a service is proven safe when user B passes workspace A's ids:

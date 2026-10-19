@@ -4,7 +4,12 @@ import { foreignKey, index, pgTable, text, unique, uuid } from 'drizzle-orm/pg-c
 import { describe, expect, it } from 'vitest';
 
 import { id, workspaceId, workspaceIndex } from '../columns.ts';
-import { checkSchemaConventions, GLOBAL_TABLES, tablesOf } from '../conventions.ts';
+import {
+  checkSchemaConventions,
+  GLOBAL_TABLES,
+  NULLABLE_WORKSPACE_TABLES,
+  tablesOf,
+} from '../conventions.ts';
 import * as schema from '../schema/index.ts';
 import { runCli } from './run-cli.ts';
 
@@ -58,6 +63,26 @@ describe('checkSchemaConventions', () => {
       (t) => [index('nullable_ws_idx').on(t.workspaceId)],
     );
     expect(rules([nullable])).toEqual(['nullable_ws:workspace-not-null']);
+  });
+
+  it('allows a nullable workspace_id only on listed tables, which still need the index', () => {
+    const nullable = pgTable(
+      'nullable_ws',
+      { id: id(), workspaceId: uuid('workspace_id') },
+      (t) => [index('nullable_ws_idx').on(t.workspaceId)],
+    );
+    const unindexed = pgTable('nullable_unindexed', {
+      id: id(),
+      workspaceId: uuid('workspace_id'),
+    });
+    const check = (tables: Parameters<typeof checkSchemaConventions>[0]) =>
+      checkSchemaConventions(tables, {
+        globalTables: globals,
+        nullableWorkspaceTables: ['nullable_ws', 'nullable_unindexed'],
+      }).map((v) => `${v.table}:${v.rule}`);
+    expect(check([nullable])).toEqual([]);
+    expect(check([unindexed])).toEqual(['nullable_unindexed:workspace-index']);
+    expect(NULLABLE_WORKSPACE_TABLES).toEqual(['audit_event']);
   });
 
   it('fails a single-column FK from a tenant table to another tenant table', () => {

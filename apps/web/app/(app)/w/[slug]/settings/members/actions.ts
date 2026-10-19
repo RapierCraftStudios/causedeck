@@ -40,7 +40,9 @@ export type InviteFailure = 'forbidden' | 'rateLimited' | 'invalid' | 'conflict'
 
 export type InviteOutcome =
   | { email: string; status: 'sent'; /** Dev/console mailer only. */ link?: string }
-  | { email: string; status: InviteFailure };
+  | { email: string; status: InviteFailure }
+  /** The plan has no seat left for the role (#203); `seats` is the plan's seat count. */
+  | { email: string; status: 'seatLimit'; seats: number };
 
 export interface OpenWork {
   /** Open tasks and obligations the member holds; removal needs a reassignment when above 0. */
@@ -67,6 +69,13 @@ function inviteFailure(error: unknown): InviteFailure {
   return 'failed';
 }
 
+/** The billing seat gate's `ENTITLEMENT_EXCEEDED`, matched by shape like `inviteFailure`. */
+function seatLimit(error: unknown): number | null {
+  if (!(error instanceof Error) || error.name !== 'EntitlementError') return null;
+  const { code, limit } = error as Error & { code?: unknown; limit?: unknown };
+  return code === 'ENTITLEMENT_EXCEEDED' && typeof limit === 'number' ? limit : null;
+}
+
 async function mailSettings() {
   const [{ createMailer }, { toAuthLocale }, { getLocale }, env, { logger }] = await Promise.all([
     import('@causedeck/auth/mailer'),
@@ -87,12 +96,22 @@ async function mailSettings() {
 
 const core = () => import('@causedeck/core/workspaces');
 
+/** The workspaces service with the billing seat gate (#203) installed. */
+async function gatedCore() {
+  const [workspaces, { installBillingEntitlements }] = await Promise.all([
+    core(),
+    import('@causedeck/core/billing'),
+  ]);
+  installBillingEntitlements();
+  return workspaces;
+}
+
 function refresh(): void {
   revalidatePath('/w/[slug]/settings/members', 'page');
 }
 
 const invite = workspaceAction(InviteMembers, async (input, ctx) => {
-  const [{ inviteMember }, mail] = await Promise.all([core(), mailSettings()]);
+  const [{ inviteMember }, mail] = await Promise.all([gatedCore(), mailSettings()]);
   const results: InviteOutcome[] = [];
   for (const email of new Set(input.emails)) {
     try {
@@ -114,7 +133,12 @@ const invite = workspaceAction(InviteMembers, async (input, ctx) => {
           : { email, status: 'sent' },
       );
     } catch (error) {
-      results.push({ email, status: inviteFailure(error) });
+      const seats = seatLimit(error);
+      results.push(
+        seats === null
+          ? { email, status: inviteFailure(error) }
+          : { email, status: 'seatLimit', seats },
+      );
     }
   }
   refresh();

@@ -21,6 +21,7 @@ const REJECTION_STATE = {
   USED: 'used',
   EMAIL_MISMATCH: 'emailMismatch',
   ALREADY_MEMBER: 'alreadyMember',
+  SEAT_LIMIT: 'seatLimit',
 } as const satisfies Record<AcceptRejection, string>;
 
 type FormError = 'offline' | 'signedOut' | 'generic';

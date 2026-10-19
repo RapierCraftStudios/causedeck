@@ -5,9 +5,12 @@
 // committed data (the api and web suites, whose users come from Better Auth).
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
+import { sql } from 'drizzle-orm';
+
 import type { Database, Transaction } from '../client.ts';
 import { registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
+import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { jobEffect } from '../schema/job-effect.ts';
@@ -124,6 +127,27 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(billingEvent)
       .values({ providerEventId, workspaceId, type: 'xt.seed', payloadHash: randomUUID() });
     return { providerEventId };
+  },
+  audit_event: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx.execute<{ id: string }>(
+      sql`select id from app_audit_append(${workspaceId}::uuid, ${ownerId}::uuid, 'user', 'xt.seed')`,
+    );
+    return { auditEventId: first([...rows], 'audit_event').id };
+  },
+  ai_call: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(aiCall)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        purpose: 'xt.seed',
+        provider: 'mock',
+        model: 'mock-1',
+        region: 'ap-south-1',
+        automationLevel: 1,
+      })
+      .returning({ id: aiCall.id });
+    return { aiCallId: first(rows, 'ai_call').id };
   },
   notification: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

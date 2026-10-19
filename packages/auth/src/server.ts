@@ -105,7 +105,9 @@ export function signInMethod(path: string | undefined): SignInMethod {
   if (path === PASSKEY_SIGN_IN_PATH) return 'passkey';
   if (path?.startsWith('/callback/')) return 'google';
   if (path !== undefined && TWO_FACTOR_VERIFY_PATHS.has(path)) return 'two_factor';
-  if (path === DEV_SIGN_IN_PATH) return 'dev';
+  // Literal `process.env.NODE_ENV` so production bundles drop the dev path string with the dev provider.
+  // eslint-disable-next-line no-process-env -- must stay a literal for bundler dead-code elimination.
+  if (process.env.NODE_ENV !== 'production' && path === DEV_SIGN_IN_PATH) return 'dev';
   return 'unknown';
 }
 

@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./billing": "./src/billing/index.ts",
     "./jobs": "./src/jobs/index.ts",
     "./workspaces": "./src/workspaces/index.ts"
   },
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "@causedeck/auth": "workspace:*",
+    "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/observability": "workspace:*",

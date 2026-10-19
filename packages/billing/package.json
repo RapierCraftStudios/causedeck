@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./entitlements": "./src/entitlements.ts",
     "./gstin": "./src/gstin.ts",
     "./plans": "./src/plans.ts",
     "./proration": "./src/proration.ts",

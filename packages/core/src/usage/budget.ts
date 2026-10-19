@@ -23,6 +23,7 @@ const { budgetOverride, usageCounter, usageReservation } = schema;
 
 export const RESERVATION_TTL_MS = 5 * 60_000;
 
+// Matches `USAGE_KEY_PATTERN_SOURCE` (packages/db/src/schema/usage.ts), as keys.ts does.
 const PURPOSE_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*$/;
 const PURPOSE_MAX_LENGTH = 64;
 

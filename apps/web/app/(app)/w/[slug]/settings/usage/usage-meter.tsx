@@ -1,5 +1,3 @@
-'use client';
-
 // One usage meter (#223): label, a thin progress bar (4 px track in `--line`, fill `--accent`,
 // `--warning` from 80% and `--danger` at 100%, filling over `--dur-slow`, instant under reduced
 // motion), the value in tabular numerals (`₹112.00 of ₹175.00`) with the percent used, and the plain

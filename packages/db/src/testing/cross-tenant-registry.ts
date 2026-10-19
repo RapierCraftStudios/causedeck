@@ -25,6 +25,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   audit_event: DB_TABLES_TEST,
   ai_call: DB_TABLES_TEST,
   workspace_key: DB_TABLES_TEST,
+  usage_reservation: DB_TABLES_TEST,
+  usage_event: DB_TABLES_TEST,
+  budget_override: DB_TABLES_TEST,
+  usage_period_summary: DB_TABLES_TEST,
 };
 
 /**

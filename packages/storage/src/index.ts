@@ -1,5 +1,15 @@
-/** S3 abstraction, envelope encryption, presign. Envelope encryption: #216; the rest: #215, #217. */
+/**
+ * S3 abstraction, server-side keys and signed URLs (#21 part 1, #215) and per-workspace envelope
+ * encryption (#216). Uploads, downloads and the blob table arrive in #217.
+ */
 export const packageName: string = '@causedeck/storage';
+
+export * from './health.ts';
+export * from './keys.ts';
+export * from './limits.ts';
+export * from './memory-provider.ts';
+export * from './provider.ts';
+export * from './s3-provider.ts';
 
 export { KEY_BYTES } from './crypto/aead.ts';
 export { generateDek, unwrapDek, wrapDek } from './crypto/dek.ts';

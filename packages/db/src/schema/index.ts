@@ -17,5 +17,6 @@ export {
 } from './auth.ts';
 export { jobEffect } from './job-effect.ts';
 export { workspaceKey } from './storage.ts';
+export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from './usage.ts';
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';

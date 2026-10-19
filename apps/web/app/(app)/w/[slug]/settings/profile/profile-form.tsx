@@ -8,14 +8,6 @@
 // guarded on tab close, link clicks and Back (`UnsavedChangesGuard`).
 import { LOCALE_LABELS } from '@causedeck/i18n/locales';
 import { Button } from '@causedeck/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@causedeck/ui/dialog';
 import { Field } from '@causedeck/ui/field';
 import { Input } from '@causedeck/ui/input';
 import {
@@ -34,6 +26,7 @@ import {
   WORKSPACE_LOCALE_VALUES,
 } from '@causedeck/validators/workspace';
 import { Check } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useState, type SyntheticEvent } from 'react';
@@ -48,6 +41,12 @@ import { UnsavedChangesGuard } from '../../../../../../components/settings/unsav
 import type { Result } from '../../../../../../lib/safe-action.ts';
 
 import type { ProfileView } from './actions.ts';
+
+// Loaded the first time an owner opens it, not with the page.
+const RenameSlugDialog = dynamic(
+  () => import('./rename-slug-dialog.tsx').then((m) => m.RenameSlugDialog),
+  { ssr: false },
+);
 
 /** Time zones offered; the workspace's current zone is added when it is not one of them. */
 export const TIME_ZONES = [
@@ -128,6 +127,8 @@ export function ProfileForm({ workspaceId, profile, canEdit, canRename, save }: 
   const [errors, setErrors] = useState<Partial<Record<FieldName, string | undefined>>>({});
   const [status, setStatus] = useState<Status>('idle');
   const [renameOpen, setRenameOpen] = useState(false);
+  // Stays mounted after the first open so closing still animates.
+  const [renameMounted, setRenameMounted] = useState(false);
   const [slugDraft, setSlugDraft] = useState(profile.slug);
 
   const readOnly = !canEdit || !online;
@@ -367,6 +368,7 @@ export function ProfileForm({ workspaceId, profile, canEdit, canRename, save }: 
                 onClick={() => {
                   setSlugDraft(saved.slug);
                   setErrors((current) => ({ ...current, slug: undefined }));
+                  setRenameMounted(true);
                   setRenameOpen(true);
                 }}
               >
@@ -396,54 +398,22 @@ export function ProfileForm({ workspaceId, profile, canEdit, canRename, save }: 
 
       <UnsavedChangesGuard dirty={dirty} />
 
-      {canRename ? (
-        <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-          <DialogContent data-slot="rename-slug-dialog">
-            <DialogHeader>
-              <DialogTitle>{t('renameTitle')}</DialogTitle>
-              <DialogDescription>{t('renameBody')}</DialogDescription>
-            </DialogHeader>
-            {/* A separate form: the dialog portals out of the profile form. */}
-            <form
-              noValidate
-              id={`${id}-rename`}
-              onSubmit={(event) => {
-                void onRename(event);
-              }}
-            >
-              <Field label={t('newSlug')} error={errors.slug} hint={t('newSlugHint')}>
-                <Input
-                  name="slug"
-                  value={slugDraft}
-                  autoComplete="off"
-                  spellCheck={false}
-                  onChange={(event) => {
-                    setSlugDraft(event.target.value.toLowerCase());
-                    setErrors((current) => ({ ...current, slug: undefined }));
-                  }}
-                />
-              </Field>
-            </form>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setRenameOpen(false);
-                }}
-              >
-                {t('cancel')}
-              </Button>
-              <Button
-                type="submit"
-                form={`${id}-rename`}
-                disabled={busy || slugDraft.trim() === saved.slug}
-              >
-                {t('renameConfirm')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {canRename && renameMounted ? (
+        <RenameSlugDialog
+          open={renameOpen}
+          onOpenChange={setRenameOpen}
+          formId={`${id}-rename`}
+          value={slugDraft}
+          onValueChange={(value) => {
+            setSlugDraft(value.toLowerCase());
+            setErrors((current) => ({ ...current, slug: undefined }));
+          }}
+          error={errors.slug}
+          disabled={busy || slugDraft.trim() === saved.slug}
+          onSubmit={(event) => {
+            void onRename(event);
+          }}
+        />
       ) : null}
     </form>
   );

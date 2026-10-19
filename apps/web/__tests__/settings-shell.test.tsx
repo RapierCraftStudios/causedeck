@@ -3,6 +3,8 @@
 // audit, hidden by `can()` per role; direct URLs to a hidden section show the permission-denied
 // page; the profile form validates with zod, saves optimistically with rollback and toasts, keeps
 // the slug rename owner-only, turns read-only offline, and guards unsaved changes.
+import { readFileSync } from 'node:fs';
+
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
@@ -492,5 +494,27 @@ describe('UnsavedChangesGuard', () => {
     guarded(true);
     fireEvent.click(screen.getByRole('link', { name: 'Skip' }));
     expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+});
+
+describe('settings dialogs stay out of the page bundle', () => {
+  // Route JS budget (P7): the rename and unsaved-changes dialogs load with `next/dynamic`.
+  const source = (file: string) => readFileSync(new URL(file, import.meta.url), 'utf8');
+
+  it.each([
+    [
+      '../app/(app)/w/[slug]/settings/profile/profile-form.tsx',
+      '@causedeck/ui/dialog',
+      './rename-slug-dialog.tsx',
+    ],
+    [
+      '../components/settings/unsaved-changes-guard.tsx',
+      '@causedeck/ui/alert-dialog',
+      './unsaved-changes-dialog.tsx',
+    ],
+  ])('%s imports its dialog lazily', (file, primitive, lazyModule) => {
+    const text = source(file);
+    expect(text).not.toContain(`from '${primitive}'`);
+    expect(text).toContain(`import('${lazyModule}')`);
   });
 });

@@ -6,19 +6,15 @@
 // - the browser Back button is held the same way: a duplicate history entry absorbs the first
 //   `popstate`, and Leave then goes back for real.
 // Navigation the form starts itself (after a save) is not guarded because it is no longer dirty.
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@causedeck/ui/alert-dialog';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+
+// Loaded the first time a navigation is held, not with the page.
+const UnsavedChangesDialog = dynamic(
+  () => import('./unsaved-changes-dialog.tsx').then((m) => m.UnsavedChangesDialog),
+  { ssr: false },
+);
 
 type Pending = { kind: 'link'; href: string } | { kind: 'back' };
 
@@ -43,9 +39,10 @@ export interface UnsavedChangesGuardProps {
 }
 
 export function UnsavedChangesGuard({ dirty }: UnsavedChangesGuardProps) {
-  const t = useTranslations('settings.unsaved');
   const router = useRouter();
   const [pending, setPending] = useState<Pending | null>(null);
+  // Stays mounted after the first prompt so closing still animates.
+  const [prompted, setPrompted] = useState(false);
   const dirtyRef = useRef(dirty);
   const trapped = useRef(false);
 
@@ -63,12 +60,14 @@ export function UnsavedChangesGuard({ dirty }: UnsavedChangesGuardProps) {
       if (href === null) return;
       event.preventDefault();
       event.stopPropagation();
+      setPrompted(true);
       setPending({ kind: 'link', href });
     };
     const onPopState = () => {
       if (!dirtyRef.current || !trapped.current) return;
       // The duplicate entry was popped: stay on this page and ask.
       trapped.current = false;
+      setPrompted(true);
       setPending({ kind: 'back' });
     };
     if (!trapped.current) {
@@ -101,25 +100,7 @@ export function UnsavedChangesGuard({ dirty }: UnsavedChangesGuardProps) {
     else if (target?.kind === 'back') window.history.back();
   };
 
-  return (
-    <AlertDialog
-      open={pending !== null}
-      onOpenChange={(open) => {
-        if (!open) stay();
-      }}
-    >
-      <AlertDialogContent data-slot="unsaved-changes-dialog">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t('title')}</AlertDialogTitle>
-          <AlertDialogDescription>{t('description')}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={stay}>{t('stay')}</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={leave}>
-            {t('leave')}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+  return prompted ? (
+    <UnsavedChangesDialog open={pending !== null} onStay={stay} onLeave={leave} />
+  ) : null;
 }

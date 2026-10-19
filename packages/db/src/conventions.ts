@@ -17,7 +17,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * flag rows) and `access_mode_registry` (court-adapter access modes) are global by design (#22); the
  * per-workspace overrides are the tenant table `workspace_feature_flag`. `invoice_counter` is the
  * supplier-wide gapless SaaS invoice series (#252): no workspace, no RLS, allocated under a row lock
- * by #253.
+ * by #253. `staff_user` is the platform staff registry (#308): written only by the operator CLI as the
+ * owner role (the app role may only read it).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -35,6 +36,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'feature_flag',
   'access_mode_registry',
   'invoice_counter',
+  'staff_user',
 ];
 
 /**

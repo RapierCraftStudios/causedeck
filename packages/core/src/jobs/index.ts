@@ -93,6 +93,7 @@ export {
   type NotificationDigestPayload,
 } from './definitions/notification-digest.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
+export { supportSessionExpire } from './definitions/support-session-expire.ts';
 export { systemPing } from './definitions/system-ping.ts';
 export {
   runUsageRollup,

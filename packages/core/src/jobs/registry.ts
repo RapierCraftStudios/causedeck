@@ -16,6 +16,7 @@ import {
   notificationDigestSchedule,
 } from './definitions/notification-digest.ts';
 import { retentionSweep } from './definitions/retention-sweep.ts';
+import { supportSessionExpire } from './definitions/support-session-expire.ts';
 import { systemPing } from './definitions/system-ping.ts';
 import { usageRollup } from './definitions/usage-rollup.ts';
 import type { AnyJobDefinition, JobPayloadBase } from './define.ts';
@@ -133,6 +134,7 @@ export const registry = createRegistry([
   systemAuditVerify,
   auditVerify,
   auditRetention,
+  supportSessionExpire,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -151,6 +153,7 @@ export type JobMap = RegistryMap<
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
+    typeof supportSessionExpire,
   ]
 >;
 export type JobName = keyof JobMap;

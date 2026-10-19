@@ -24,6 +24,7 @@ import {
   usageReservation,
 } from '../schema/usage.ts';
 import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
+import { supportSession } from '../schema/staff.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
@@ -266,6 +267,17 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       'matter_restriction',
     );
     return { id: row.id, matterId: row.matterId };
+  },
+  support_session: async (tx, { workspaceId, ownerId }) => {
+    // A pending request; the requester's staff_user row is not needed at the SQL level.
+    const row = first(
+      await tx
+        .insert(supportSession)
+        .values({ workspaceId, requestedByStaff: ownerId, reason: 'Seed support request' })
+        .returning({ id: supportSession.id }),
+      'support_session',
+    );
+    return { id: row.id };
   },
   workspace_key: async (tx, { workspaceId }) => {
     // Opaque bytes standing in for a wrapped DEK; the table never sees a plaintext key.

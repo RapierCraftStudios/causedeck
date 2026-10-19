@@ -35,6 +35,11 @@ export const AUDIT_ACTIONS = {
   'auth.session_revoked': { security: true, description: 'A session was revoked' },
   'support.session_started': { security: true, description: 'A support session started' },
   'support.session_ended': { security: true, description: 'A support session ended' },
+  // Fail-closed: a support read whose audit event cannot be written is not served (#308).
+  'support.view': {
+    security: true,
+    description: 'Staff read workspace content in a support session',
+  },
   'access.denied': { security: true, description: 'An action was denied' },
   'usage.budget_override_set': {
     security: true,

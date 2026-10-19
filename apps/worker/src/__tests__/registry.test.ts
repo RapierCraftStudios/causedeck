@@ -130,6 +130,7 @@ describe('enqueue', () => {
       'system.audit.verify',
       'audit.verify',
       'system.audit.retention',
+      'system.support.session-expire',
     ]);
   });
 });

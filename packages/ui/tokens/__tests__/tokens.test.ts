@@ -482,6 +482,38 @@ describe('typography', () => {
     expect(themes.light.get('--tracking-normal')).toBe('0em');
   });
 
+  it('gives Tamil and Kannada text >= 1.7 in every body size step (Tailwind text-* utilities)', () => {
+    const rem = (value: string): number => Number(/^([\d.]+)rem$/.exec(value)?.[1] ?? Number.NaN);
+    for (const lang of [':lang(ta)', ':lang(kn)']) {
+      for (const step of ['xs', 'sm', 'base', 'md', 'lg', 'eyebrow']) {
+        const override = declared(typography, lang, `--text-${step}--line-height`);
+        expect(override, `${lang} --text-${step}--line-height`).toBeDefined();
+        // The fluid lg step is checked at its largest size, the worst case.
+        const size = (themes.light.get(`--text-${step}`) ?? '').replace(
+          /^clamp\(.*,\s*([\d.]+rem)\)$/,
+          '$1',
+        );
+        expect(rem(override ?? '') / rem(size), `${lang} ${step}`).toBeGreaterThanOrEqual(1.7);
+      }
+    }
+  });
+
+  it('size-adjusts the Tamil and Kannada faces, leaving the Latin faces (and digits) alone', () => {
+    const faces = postcss.parse(read(FONTS_DIR, 'fonts.css'));
+    const sizeAdjust = new Map<string, string | undefined>();
+    faces.walkAtRules('font-face', (at) => {
+      const decls = new Map<string, string>();
+      at.walkDecls((d) => void decls.set(d.prop, d.value));
+      sizeAdjust.set(
+        (decls.get('font-family') ?? '').replaceAll("'", ''),
+        decls.get('size-adjust'),
+      );
+    });
+    expect(sizeAdjust.get('Noto Sans Tamil')).toBe('96%');
+    expect(sizeAdjust.get('Noto Sans Kannada')).toBe('96%');
+    expect(sizeAdjust.get('Geist')).toBeUndefined();
+  });
+
   it('limits Indic headings and emphasis to weight 500', () => {
     let found = false;
     typography.walkRules((rule) => {

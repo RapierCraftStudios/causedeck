@@ -194,7 +194,10 @@ function BarLink({ item, slug, label, isActive }: BarLinkProps) {
       className={`${SLOT} ${slotTone(isActive)}`}
     >
       <Icon aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.5} />
-      <span className="max-w-full truncate px-0.5">{label}</span>
+      {/* Tamil labels run wider than the 60 px slot at 360 px: one step smaller, no padding (#176). */}
+      <span className="max-w-full truncate px-0.5 [&:lang(ta)]:px-0 [&:lang(ta)]:text-[10px]">
+        {label}
+      </span>
     </Link>
   );
 }

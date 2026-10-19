@@ -45,7 +45,7 @@ export function Topbar({ context, onSearch }: TopbarProps) {
           setOpen(true);
           onSearch?.();
         }}
-        className="text-ink-muted hover:text-ink border-line-control bg-surface-raised focus-visible:outline-ring flex size-11 shrink-0 items-center justify-center gap-2 rounded-md outline-none focus-visible:outline-2 md:h-9 md:w-64 md:justify-start md:border md:px-2.5"
+        className="text-ink-muted hover:text-ink border-line-control bg-surface-raised focus-visible:outline-ring flex size-11 shrink-0 items-center justify-center gap-2 rounded-md outline-none focus-visible:outline-2 md:h-9 md:w-64 md:justify-start md:border md:px-2.5 md:[&:is(:lang(ta),:lang(kn))]:w-auto md:[&:is(:lang(ta),:lang(kn))]:min-w-64"
       >
         <Search aria-hidden="true" className="size-4 shrink-0" />
         <span className="hidden flex-1 truncate text-left text-sm md:inline">{t('search')}</span>

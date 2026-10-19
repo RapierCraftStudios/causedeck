@@ -73,12 +73,13 @@ describe('audit cross-tenant', () => {
       const before = await eventIds(tx, a.workspaceId);
       const ctx = { db: tx, workspaceId: a.workspaceId, userId: b.ownerId };
 
+      // One at a time: they share the test transaction.
       for (const attempt of [
-        authorizeAuditRead(ctx),
-        queryAudit(ctx),
-        exportAudit(ctx, { ...range(), format: 'jsonl' }),
+        () => authorizeAuditRead(ctx),
+        () => queryAudit(ctx),
+        () => exportAudit(ctx, { ...range(), format: 'jsonl' }),
       ]) {
-        const error = await failure(attempt);
+        const error = await failure(attempt());
         expect(error).toBeInstanceOf(WorkspaceError);
         expect((error as WorkspaceError).code).toBe('NOT_FOUND');
       }

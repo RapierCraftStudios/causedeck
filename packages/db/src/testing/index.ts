@@ -79,9 +79,13 @@ export async function truncateAll(): Promise<void> {
       sql`select quote_ident(tablename) as name from pg_tables where schemaname = 'public' and tablename <> 'schema_info'`,
     );
     if (rows.length > 0) {
-      await owner.execute(
-        sql.raw(`truncate table ${rows.map((r) => r.name).join(', ')} restart identity cascade`),
-      );
+      // The append-only audit tables (#226) reject TRUNCATE outside the retention path.
+      await owner.transaction(async (tx) => {
+        await tx.execute(sql`select set_config('app.audit_retention', 'on', true)`);
+        await tx.execute(
+          sql.raw(`truncate table ${rows.map((r) => r.name).join(', ')} restart identity cascade`),
+        );
+      });
     }
   } finally {
     await owner.$client.end();

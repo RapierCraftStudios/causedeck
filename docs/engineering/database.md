@@ -85,7 +85,51 @@ for the owner, and a 20 s `idle_timeout`.
 - **Vectors:** `embedding()` columns use `EMBEDDING_DIMENSIONS`; never hard-code a width.
 
 `pnpm db:check` fails when a table with `workspace_id` has a nullable column, no index led by it,
-or a tenant-to-tenant FK without `workspace_id`.
+or a tenant-to-tenant FK without `workspace_id`. The one exemption from the nullable rule is
+`NULLABLE_WORKSPACE_TABLES` (`audit_event`, whose account-level events have no workspace); it is
+still a tenant table under FORCE RLS and still needs the index.
+
+## Audit tables
+
+`packages/db/src/schema/audit.ts`, migration `0007_audit` (#226, #26 part 1). Both tables are
+append-only and have no foreign keys: audit rows outlive the users and workspaces they name until
+retention removes them.
+
+| Table | Columns |
+|---|---|
+| `audit_event` | `id` (uuid v7), `workspace_id` (null for account-level events), `actor_user_id`, `actor_kind` (`user`, `staff`, `system`, `api`), `action`, `target_kind`, `target_id`, `outcome` (`success`, `denied`, `error`), `ip inet`, `user_agent_hash`, `request_id`, `metadata jsonb` (ids only, never content), `prev_hash bytea`, `hash bytea`, `created_at` |
+| `ai_call` | `id` (uuid v7), `workspace_id`, `user_id`, `purpose`, `provider`, `model`, `model_version`, `region`, `input_tokens`, `output_tokens`, `cost_paise`, `sources jsonb` (ids and anchors only), `confidence numeric(4,3)`, `automation_level smallint` (CHECK `between 1 and 4`: no L5 record can be stored), `auto_applied`, `user_action`, `undone_at`, `created_at` |
+
+- **Ids:** `app_uuid_v7()` (Postgres 17 has no `uuidv7()`): a millisecond timestamp followed by
+  random bits, so ids sort by creation time.
+- **Append-only:** the app role has `SELECT` and `INSERT` only (`UPDATE`, `DELETE` and `TRUNCATE`
+  are revoked; the default privileges would otherwise grant the first two). The trigger function
+  `app_audit_immutable()` rejects `UPDATE`, `DELETE` and `TRUNCATE` with `42501` for every role, the
+  owner included, unless the transaction-local setting `app.audit_retention` is `on`.
+- **Retention path:** `app_purge_audit(cutoff)` and `app_purge_ai_calls(cutoff)` (SECURITY DEFINER,
+  executable by the app role) refuse a cutoff later than `now() - 180 days` (CERT-In), set
+  `app.audit_retention` for the duration of their `DELETE`, reset it and return the row count. The
+  scheduled job that calls them is #230. After a purge the oldest surviving event points at a
+  `prev_hash` that no longer exists; chain verification starts from the oldest surviving row.
+- **Writing `audit_event`:** only through `app_audit_append(workspace_id, actor_user_id,
+  actor_kind, action, target_kind?, target_id?, outcome?, ip?, user_agent_hash?, request_id?,
+  metadata?)`, which returns `(id, hash)`. A non-null workspace must be the pinned workspace
+  (`42501` otherwise); null appends to the account chain. Under
+  `pg_advisory_xact_lock(hashtextextended('audit_event:' || coalesce(workspace_id::text, 'account'), 0))`
+  it reads the chain's latest `hash` as `prev_hash`, sets `created_at = clock_timestamp()` and stores
+  `hash = sha256(coalesce(prev_hash, '') || convert_to(app_audit_canonical(event)::text, 'UTF8'))`.
+  `app_audit_canonical(audit_event)` is the jsonb (sorted keys) of every column except `prev_hash`
+  and `hash`, with `ip` as `host(ip)` and `created_at` as UTC ISO-8601 with microseconds. The unique
+  constraint `(workspace_id, prev_hash) NULLS NOT DISTINCT` makes a fork unstorable. Call it in a
+  READ COMMITTED transaction (the default): a REPEATABLE READ snapshot would miss a concurrent
+  append and fail on that constraint. The TypeScript `record()` writer and `verifyChain` are #227.
+- **Writing `ai_call` (AI gateway contract, #44):** insert one row per model call inside the
+  workspace transaction, with `purpose`, `provider`, `model`, `model_version`, `region` (the
+  provider region, India for India-only workspaces), token counts, `cost_paise`, `sources` as
+  `[{ id, anchor }]` (never text), `confidence` (0-1), `automation_level` (1-4) and `auto_applied`.
+  Rows cannot be updated, so the user's later decision (`user_action`, `undone_at`) is recorded by a
+  new row or by an owner-defined function added with that feature, not by `UPDATE`. The typed
+  writer is #227.
 
 ## Writing a migration (reviewed SQL)
 
@@ -140,8 +184,9 @@ it('stores a hearing', async () => {
 - `withTestDb(fn)` runs `fn` as the app role inside a transaction that is always rolled back, so
   test files run in parallel without seeing each other's writes. Wrap expected failures in
   `tx.transaction()` (a savepoint) so the outer transaction stays usable.
-- `truncateAll()` empties every `public` table except `schema_info` (as the owner), for suites that
-  must commit.
+- `truncateAll()` empties every `public` table except `schema_info` (as the owner, with
+  `app.audit_retention` set so the append-only audit tables can be emptied), for suites that must
+  commit.
 - `createScratchDatabase(urls, name)` clones a fresh, unmigrated database with the same roles and
   extensions (used by the migration tests).
 

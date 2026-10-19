@@ -81,6 +81,8 @@ that returns only what the caller needs: slugs, ids, booleans or a count. The fu
 | `app_resolve_slug(text)` returns `(workspace_id, redirected)` | `resolveSlug`, which then reads the row inside `withWorkspace` |
 | `app_invitation_workspace(text)` (token hash in, workspace id out) | `acceptInvitation`, `previewInvitation`, which then work inside `withWorkspace` |
 | `app_purge_job_effects(timestamptz)` | `system.retention.sweep` |
+| `app_audit_append(...)` returns `(id, hash)`: appends to the pinned workspace's chain (any other workspace id is `42501`) or, with a null workspace, the account chain | the audit writer `record()` (#227) |
+| `app_purge_audit(timestamptz)`, `app_purge_ai_calls(timestamptz)` (cutoff at least 180 days old) | the audit retention job (#230) |
 
 `createWorkspace` needs no bypass: it picks the new workspace's id itself and writes the
 organization, owner membership and settings inside `withWorkspace(newId)`.
@@ -93,6 +95,9 @@ organization, owner membership and settings inside `withWorkspace(newId)`.
 | `member` | `member_self` FOR SELECT: `user_id = app.user_id`, only while no workspace is pinned (so a user scope never widens a workspace scope) |
 | `organization` (the tenant root, no `workspace_id`) | `ws_isolation` FOR ALL on `id = app.workspace_id`; `member_read` FOR SELECT while no workspace is pinned, for workspaces the user is a member of |
 | owner-only | `owner_definer_read` (SELECT) on `organization`, `invitation`, `workspace_slug_history`, `job_effect`; `owner_definer_release` (DELETE expired redirects) on `workspace_slug_history`; `owner_definer_purge` (DELETE) on `job_effect` |
+| `audit_event`, `ai_call` (#226, `0007_audit`) | `ws_isolation` as above. Append-only: the app role has SELECT and INSERT only, and a trigger rejects UPDATE, DELETE and TRUNCATE outside the retention functions ([database.md](database.md#audit-tables)) |
+| `audit_event` | `account_self` FOR SELECT: account-level events (`workspace_id` null) whose `actor_user_id = app.user_id`, only while no workspace is pinned; `owner_definer_read` (SELECT), `owner_definer_append` (INSERT) and `owner_definer_purge` (DELETE) back `app_audit_append` and `app_purge_audit` |
+| `ai_call` | `owner_definer_read` (SELECT) and `owner_definer_purge` (DELETE) back `app_purge_ai_calls` |
 
 WITH CHECK rejects an `INSERT` or `UPDATE` that writes another workspace's id, so a row cannot be
 moved between workspaces (`with-check.test.ts`). Foreign-key checks and `ON DELETE CASCADE` run
@@ -103,7 +108,10 @@ outside RLS, so deleting a workspace still cascades to its rows.
 `GLOBAL_TABLES` in `packages/db/src/conventions.ts` lists the tables without RLS: `schema_info`,
 Better Auth's identity tables (`user`, `session`, `account`, `verification`, `passkey`,
 `two_factor`, `rate_limit`), the billing `plan` catalogue and `api_idempotency_key`. The last has a nullable `workspace_id` but is
-keyed by user, so it stays global. The court layer will join this list. Adding a table here is a
+keyed by user, so it stays global. `audit_event` also has a nullable `workspace_id`, but it is a tenant table: account-level events
+(null workspace) are invisible to every workspace scope and are listed in
+`NULLABLE_WORKSPACE_TABLES` (`packages/db/src/conventions.ts`) only to exempt them from the
+NOT NULL convention. The court layer will join this list. Adding a table here is a
 security decision: say why in the PR.
 
 ## Adding a tenant table
@@ -156,6 +164,11 @@ blocker**: treat it as a suspected cross-tenant leak (see Incidents), never skip
 `seedTwoTenants(db)` creates workspaces A and B, `ua` (owner of A), `ub` (owner of B) and `uboth`
 (an advocate in both), and one row per tenant table in each, written through `TENANT_SEEDERS`
 inside the workspace's own scope. It works inside `withTestDb` and on committed data.
+
+For the append-only tables in `APPEND_ONLY_TABLES` (`audit_event`, `ai_call`) the app role has no
+UPDATE or DELETE, so the suite expects `42501` from those statements instead of zero rows. The
+`audit_event` seeder writes through `app_audit_append`, so the insert-for-B check also proves the
+chain function refuses another workspace's id.
 
 The registry (`cross-tenant-registry.ts`) is enforced by two tests, so an addition without a
 cross-tenant test fails `pnpm test:tenancy`:

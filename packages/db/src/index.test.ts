@@ -34,7 +34,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177) and the billing tables (#200)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200) and the audit tables (#226)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -42,7 +42,9 @@ describe('@causedeck/db root entry point', () => {
         .sort(),
     ).toEqual([
       'account',
+      'ai_call',
       'api_idempotency_key',
+      'audit_event',
       'billing_event',
       'entitlement',
       'invitation',

@@ -896,6 +896,113 @@ export type Messages = {
       };
     };
   };
+  settings: {
+    title: string;
+    navLabel: string;
+    offline: string;
+    nav: {
+      profile: string;
+      members: string;
+      roles: string;
+      notifications: string;
+      integrations: string;
+      privacy: string;
+      export: string;
+      danger: string;
+      usage: string;
+      audit: string;
+      more: string;
+    };
+    placeholder: {
+      title: string;
+      hint: string;
+      roles: string;
+      integrations: string;
+      privacy: string;
+      export: string;
+      danger: string;
+    };
+    unsaved: {
+      title: string;
+      description: string;
+      stay: string;
+      leave: string;
+    };
+    profile: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      section: string;
+      sectionHint: string;
+      readOnly: string;
+      name: string;
+      nameHint: string;
+      kind: string;
+      kindHint: string;
+      kinds: {
+        solo: string;
+        chamber: string;
+      };
+      timezone: string;
+      timezoneHint: string;
+      locale: string;
+      localeHint: string;
+      practiceCity: string;
+      practiceCityHint: string;
+      practiceCityPlaceholder: string;
+      slug: string;
+      slugHint: string;
+      ownerOnly: string;
+      rename: string;
+      renameTitle: string;
+      renameBody: string;
+      newSlug: string;
+      newSlugHint: string;
+      renameConfirm: string;
+      cancel: string;
+      save: string;
+      saving: string;
+      saved: string;
+      loading: string;
+      toast: {
+        saved: string;
+        renamed: string;
+      };
+      error: {
+        title: string;
+        retry: string;
+      };
+      errors: {
+        name: string;
+        kind: string;
+        timezone: string;
+        locale: string;
+        practiceCity: string;
+        slug: string;
+        slugTaken: string;
+        forbidden: string;
+        invalid: string;
+        rateLimited: string;
+        offline: string;
+        generic: string;
+      };
+    };
+    danger: {
+      title: string;
+      description: string;
+      unavailable: string;
+      transfer: {
+        label: string;
+        description: string;
+        action: string;
+      };
+      delete: {
+        label: string;
+        description: string;
+        action: string;
+      };
+    };
+  };
   audit: {
     metaTitle: string;
     title: string;
@@ -943,6 +1050,9 @@ export type Messages = {
       retentionPurged: string;
       exported: string;
       settingsViewed: string;
+      profileUpdated: string;
+      slugRenamed: string;
+      slugRenamedNoSlugs: string;
       generic: string;
     };
     selected: string;

@@ -65,7 +65,8 @@ test.describe('web push subscription', () => {
     db,
   }) => {
     await stubPush(page);
-    await asUser('owner', { path: 'settings' });
+    // The card moved from the settings index to the notification preferences (#284).
+    await asUser('owner', { path: 'settings/notifications' });
     await expect(
       card(page).getByText('Get a nudge before your hearings. You can change this any time.'),
     ).toBeVisible();
@@ -105,11 +106,11 @@ test.describe('web push subscription', () => {
 
   test('Not now hides the card without prompting', async ({ page, asUser }) => {
     await stubPush(page);
-    await asUser('owner', { path: 'settings' });
+    await asUser('owner', { path: 'settings/notifications' });
     await card(page).getByRole('button', { name: 'Not now' }).click();
     await expect(card(page)).toHaveCount(0);
     await page.reload();
-    await expect(page.locator('[data-route="settings"]')).toBeVisible();
+    await expect(page.locator('[data-route="notification-preferences"]')).toBeVisible();
     await expect(card(page)).toHaveCount(0);
     expect(
       await page.evaluate(() => (window as unknown as Record<string, number>).__permissionPrompts),
@@ -118,8 +119,8 @@ test.describe('web push subscription', () => {
 
   test('the card is hidden when the browser has no Web Push', async ({ page, asUser }) => {
     await stubPush(page, { supported: false });
-    await asUser('owner', { path: 'settings' });
-    await expect(page.locator('[data-route="settings"]')).toBeVisible();
+    await asUser('owner', { path: 'settings/notifications' });
+    await expect(page.locator('[data-route="notification-preferences"]')).toBeVisible();
     await expect(card(page)).toHaveCount(0);
   });
 

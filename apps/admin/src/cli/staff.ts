@@ -2,7 +2,7 @@
 //   pnpm --filter @causedeck/admin staff:add <email> --role support|ops|admin [--by <email>]
 //   pnpm --filter @causedeck/admin staff:disable <email>
 // It connects as the owner role (DATABASE_URL_OWNER), because the app role may only read
-// `staff_user` (migration 0024): no app, API or UI path can create or change a staff account. The
+// `staff_user` (migration 0025): no app, API or UI path can create or change a staff account. The
 // user must already exist (signed up through the product). Disabling a staff member ends every
 // pending or granted support session of theirs at once, auditing each granted one.
 import { pathToFileURL } from 'node:url';

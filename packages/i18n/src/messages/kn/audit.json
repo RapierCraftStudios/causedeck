@@ -46,6 +46,9 @@
       "retentionPurged": "{actor} ಉಳಿಸಿಕೊಳ್ಳುವ ಅವಧಿ ಮೀರಿದ ಲೆಕ್ಕಪರಿಶೋಧನಾ ಘಟನೆಗಳನ್ನು ಅಳಿಸಿದರು",
       "exported": "{actor} ಲೆಕ್ಕಪರಿಶೋಧನಾ ದಾಖಲೆಯನ್ನು ರಫ್ತು ಮಾಡಿದರು",
       "settingsViewed": "{actor} ಕಾರ್ಯಕ್ಷೇತ್ರದ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆದರು",
+      "profileUpdated": "{actor} ಕಾರ್ಯಕ್ಷೇತ್ರದ ಪ್ರೊಫೈಲ್ ಅಪ್‌ಡೇಟ್ ಮಾಡಿದರು",
+      "slugRenamed": "{actor} ವೆಬ್ ವಿಳಾಸವನ್ನು {from} ನಿಂದ {to} ಗೆ ಬದಲಾಯಿಸಿದರು",
+      "slugRenamedNoSlugs": "{actor} ವೆಬ್ ವಿಳಾಸವನ್ನು ಬದಲಾಯಿಸಿದರು",
       "generic": "{actor} {action} ಅನ್ನು ದಾಖಲಿಸಿದರು"
     },
     "selected": "ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ: {event}",

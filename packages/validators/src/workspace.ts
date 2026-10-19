@@ -40,6 +40,41 @@ export const CreateWorkspaceInput = z.object({
   kind: z.enum(WORKSPACE_KIND_VALUES).default('solo'),
 });
 
+/** UI locales a workspace may default to; mirrors `@causedeck/i18n/locales` `LOCALES`. */
+export const WORKSPACE_LOCALE_VALUES = ['en', 'ta', 'kn'] as const;
+
+export const WORKSPACE_NAME_MAX_LENGTH = 120;
+export const PRACTICE_CITY_MAX_LENGTH = 80;
+
+/** True for an IANA time zone the runtime knows (`Asia/Kolkata`, `UTC`, ...). */
+export function isTimeZone(value: string): boolean {
+  if (value.length === 0 || value.length > 64) return false;
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The workspace profile (#284): name, kind, time zone, default locale and practice city, plus an
+ * optional new slug (owner-only rename). An empty practice city clears it.
+ */
+export const UpdateWorkspaceProfileInput = z.object({
+  name: z.string().trim().min(1, 'A workspace name is required').max(WORKSPACE_NAME_MAX_LENGTH),
+  kind: z.enum(WORKSPACE_KIND_VALUES),
+  timezone: z.string().trim().refine(isTimeZone, 'Choose a valid time zone'),
+  locale: z.enum(WORKSPACE_LOCALE_VALUES),
+  practiceCity: z
+    .string()
+    .trim()
+    .max(PRACTICE_CITY_MAX_LENGTH)
+    .nullable()
+    .transform((value) => (value === null || value === '' ? null : value)),
+  slug: Slug.optional(),
+});
+
 export const InviteInput = z.object({
   email: z.email().transform((value) => value.toLowerCase()),
   role: z.enum(INVITE_ROLE_VALUES),
@@ -57,5 +92,7 @@ export const ChangeRoleInput = z.object({
 export type Slug = z.infer<typeof Slug>;
 export type CreateWorkspaceInput = z.input<typeof CreateWorkspaceInput>;
 export type InviteInput = z.infer<typeof InviteInput>;
+export type UpdateWorkspaceProfileInput = z.input<typeof UpdateWorkspaceProfileInput>;
+export type WorkspaceProfileFields = z.output<typeof UpdateWorkspaceProfileInput>;
 export type AcceptInviteInput = z.infer<typeof AcceptInviteInput>;
 export type ChangeRoleInput = z.infer<typeof ChangeRoleInput>;

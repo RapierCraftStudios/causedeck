@@ -92,6 +92,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   reissueInvitation: denies,
   revokeInvitation: denies,
   listPendingInvitations: empty,
+  // workspace profile (#284)
+  getWorkspaceProfile: empty,
+  updateWorkspaceProfile: denies,
   acceptInvitation: denies,
   previewInvitation: selfScoped,
   generateUniqueSlug: selfScoped,
@@ -333,6 +336,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   flagChangeAuditSink:
     'flag audit sink implementation; writes through recordFlagChanged in the caller transaction',
   hashEmail: 'pure',
+  // workspace profile (#284)
+  PROFILE_FIELDS: 'constant',
+  toProfileView: 'pure (drops the id)',
   // audit: registry, guards and the default sink (#227)
   recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
   AUDIT_ACTIONS: 'constant (audit action registry)',

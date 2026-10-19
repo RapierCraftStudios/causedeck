@@ -1,7 +1,7 @@
 // Platform staff and consented support sessions (#308, part of #27; spike §4.2, §6; PRD PL-6).
 //
 // `staff_user` is global (GLOBAL_TABLES): one row per platform staff member. The app and clerk
-// roles may only read it (migration 0024 revokes INSERT, UPDATE and DELETE), so staff accounts are
+// roles may only read it (migration 0025 revokes INSERT, UPDATE and DELETE), so staff accounts are
 // created and disabled only by the operator CLI (`pnpm --filter @causedeck/admin staff:add`), which
 // connects as the owner role. A disabled row (`disabled_at` set) is not staff.
 //

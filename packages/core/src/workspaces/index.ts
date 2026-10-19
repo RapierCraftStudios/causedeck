@@ -13,6 +13,7 @@ export * from './errors.ts';
 export * from './invitations.ts';
 export * from './members.ts';
 export * from './offboarding.ts';
+export * from './profile.ts';
 export * from './service.ts';
 export * from './slug.ts';
 

@@ -30,12 +30,15 @@ export const workspaceSettings = pgTable(
     timezone: text('timezone').notNull().default('Asia/Kolkata'),
     // Advocates may read and export the audit log unless an owner turns this off (#229).
     advocatesCanReadAudit: boolean('advocates_can_read_audit').notNull().default(true),
+    /** The city the practice is based in, shown on the workspace profile (#284). */
+    practiceCity: text('practice_city'),
     ...timestamps(),
   },
   (t) => [
     // Table-level so the convention checker sees `workspace_id` leading the primary key.
     primaryKey({ name: 'workspace_settings_pkey', columns: [t.workspaceId] }),
     check('workspace_settings_locale_chk', sql`locale in ${inList(LOCALES)}`),
+    check('workspace_settings_practice_city_chk', sql`char_length(practice_city) <= 80`),
   ],
 );
 

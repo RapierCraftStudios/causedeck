@@ -98,6 +98,7 @@ describe('namespaced catalogs (#174)', () => {
         'notifications',
         'offline',
         'palette',
+        'settings',
         'shell',
         'shortcuts',
         'theme',

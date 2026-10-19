@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
-import { schema, type Database, type Transaction } from '@causedeck/db';
+import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
@@ -78,6 +78,20 @@ async function aWorkspace(f: Fixture) {
     s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
   );
   return row;
+}
+
+/** A's usage counters and ledger. */
+async function aUsage(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => ({
+    counters: await s
+      .select({ key: schema.usageCounter.key, value: schema.usageCounter.value })
+      .from(schema.usageCounter)
+      .orderBy(schema.usageCounter.key),
+    events: await s
+      .select({ id: schema.usageEvent.id, amount: schema.usageEvent.amount })
+      .from(schema.usageEvent)
+      .orderBy(schema.usageEvent.id),
+  }));
 }
 
 async function sessionFor(tx: Transaction, userId: string, workspaceId: string): Promise<string> {
@@ -567,6 +581,40 @@ const CASES: Record<string, Case> = {
       );
       expect(rows).toHaveLength(1);
     }
+  },
+  increment: async (f) => {
+    // From inside B's scope, metering against A is a tenancy violation and writes nothing of A's.
+    await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ai.spend_paise', 5, {
+      idempotencyKey: 'xt-usage-key',
+    });
+    const before = await aUsage(f);
+    const error: unknown = await f
+      .asB((s) =>
+        core.increment({ db: s, workspaceId: f.a.id }, 'ai.spend_paise', 1, {
+          idempotencyKey: 'xt-usage-other',
+        }),
+      )
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(error).toBeInstanceOf(TenancyError);
+    expect(await aUsage(f)).toEqual(before);
+    // B reusing A's idempotency key is B's own claim: applied for B, A unchanged.
+    const asB = await core.increment({ db: f.tx, workspaceId: f.b.id }, 'ai.spend_paise', 2, {
+      idempotencyKey: 'xt-usage-key',
+    });
+    expect(asB).toEqual({ applied: true, value: 2 });
+    expect(await aUsage(f)).toEqual(before);
+  },
+  getUsage: async (f) => {
+    await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ocr.pages', 9, {
+      idempotencyKey: 'xt-usage-read',
+    });
+    expect(await f.asB((s) => core.getUsage({ db: s, workspaceId: f.b.id }, 'ocr.pages'))).toBe(0);
+    await expect(
+      f.asB((s) => core.getUsage({ db: s, workspaceId: f.a.id }, 'ocr.pages')),
+    ).rejects.toBeInstanceOf(TenancyError);
   },
 };
 

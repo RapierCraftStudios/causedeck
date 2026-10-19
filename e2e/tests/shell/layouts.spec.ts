@@ -105,7 +105,7 @@ test.describe('layouts', () => {
     // One full page load per placeholder route.
     test.setTimeout(90_000);
     await openShell(page, asUser);
-    for (const route of [...PLACEHOLDER_ROUTES, 'billing']) {
+    for (const route of [...PLACEHOLDER_ROUTES, 'billing', 'activity']) {
       await page.goto(`/w/${SHELL_WORKSPACE}/${route}`);
       await expect(page.locator(`[data-route="${route}"]`)).toBeVisible();
       const overflow = await page.evaluate(() => {

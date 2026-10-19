@@ -46,6 +46,9 @@
       "retentionPurged": "{actor} தக்கவைப்புக் காலம் கடந்த தணிக்கை நிகழ்வுகளை நீக்கினார்",
       "exported": "{actor} தணிக்கைப் பதிவை ஏற்றுமதி செய்தார்",
       "settingsViewed": "{actor} பணியிட அமைப்புகளைத் திறந்தார்",
+      "profileUpdated": "{actor} பணியிடச் சுயவிவரத்தைப் புதுப்பித்தார்",
+      "slugRenamed": "{actor} இணைய முகவரியை {from} இலிருந்து {to} ஆக மாற்றினார்",
+      "slugRenamedNoSlugs": "{actor} இணைய முகவரியை மாற்றினார்",
       "generic": "{actor} {action} ஐப் பதிவு செய்தார்"
     },
     "selected": "தேர்ந்தெடுக்கப்பட்டது: {event}",

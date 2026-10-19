@@ -30,6 +30,20 @@ export interface WorkspaceProfile {
   practiceCity: string | null;
 }
 
+/** The profile without its id, as the settings form shows it. */
+export type WorkspaceProfileView = Omit<WorkspaceProfile, 'id'>;
+
+export function toProfileView(profile: WorkspaceProfile): WorkspaceProfileView {
+  return {
+    name: profile.name,
+    slug: profile.slug,
+    kind: profile.kind,
+    timezone: profile.timezone,
+    locale: profile.locale,
+    practiceCity: profile.practiceCity,
+  };
+}
+
 /** Profile fields an update can change, in display order (audit metadata uses these names). */
 export const PROFILE_FIELDS = ['name', 'kind', 'timezone', 'locale', 'practiceCity'] as const;
 

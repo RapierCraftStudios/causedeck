@@ -54,6 +54,8 @@ const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
+const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
+const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
@@ -78,6 +80,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  updateWorkspaceProfileAction: profile,
+  loadMoreAuditAction: activity,
+  verifyAuditEventAction: activity,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -113,8 +118,14 @@ function snapshotA() {
       .orderBy(schema.invitation.id),
     // Under A's scope the only visible workspace is A.
     workspace: await tx
-      .select({ slug: schema.organization.slug, deletedAt: schema.organization.deletedAt })
+      .select({
+        slug: schema.organization.slug,
+        name: schema.organization.name,
+        kind: schema.organization.kind,
+        deletedAt: schema.organization.deletedAt,
+      })
       .from(schema.organization),
+    workspaceSettings: await tx.select().from(schema.workspaceSettings),
     notifications: await tx
       .select({ id: schema.notification.id, readAt: schema.notification.readAt })
       .from(schema.notification)
@@ -174,6 +185,21 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    updateWorkspaceProfileAction: {
+      workspaceId,
+      name: 'Cross-tenant probe',
+      kind: 'chamber',
+      timezone: 'UTC',
+      locale: 'kn',
+      practiceCity: 'Probe City',
+      slug: `xt-probe-${workspaceId.slice(0, 8)}`,
+    },
+    loadMoreAuditAction: { workspaceId, cursor: 'probe' },
+    verifyAuditEventAction: {
+      workspaceId,
+      eventId: '00000000-0000-4000-8000-0000000000aa',
+      createdAt: '2026-01-01T00:00:00.000000Z',
+    },
   };
 }
 
@@ -269,6 +295,18 @@ describe('cross-tenant server actions', () => {
       rows.filter((row) => row.userId === t.ub && row.workspaceId === t.b.id);
     expect(mine(inB.prefs).length).toBeGreaterThan(0);
     expect(mine(inB.settings)).toHaveLength(1);
+  });
+
+  it('updateWorkspaceProfileAction under B’s own workspace changes only B', async () => {
+    const before = await snapshotA();
+    // B's slug stays: later tests confirm transfers with it.
+    const input = { ...(inputs(t.b.id).updateWorkspaceProfileAction as Record<string, string>) };
+    delete input.slug;
+    expect(await action('updateWorkspaceProfileAction')(input)).toMatchObject({
+      ok: true,
+      data: { name: 'Cross-tenant probe', slug: t.b.slug, practiceCity: 'Probe City' },
+    });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

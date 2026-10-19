@@ -189,6 +189,17 @@ function useRows(events: readonly AuditFeedEvent[], members: readonly AuditMembe
       case 'audit.exported':
         sentence = t('sentence.exported', { actor: actorName });
         break;
+      case 'workspace.profile_updated':
+        sentence = t('sentence.profileUpdated', { actor: actorName });
+        break;
+      case 'workspace.slug_renamed': {
+        const { from, to } = event.metadata;
+        sentence =
+          typeof from === 'string' && typeof to === 'string'
+            ? t('sentence.slugRenamed', { actor: actorName, from, to })
+            : t('sentence.slugRenamedNoSlugs', { actor: actorName });
+        break;
+      }
       case 'workspace.settings_viewed':
         sentence = t('sentence.settingsViewed', { actor: actorName });
         break;

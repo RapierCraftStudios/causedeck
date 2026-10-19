@@ -69,11 +69,15 @@ export async function previewInvitationFor(request: PreviewInvitationRequest) {
   return previewInvitation(db, request);
 }
 
-/** Accept an invitation as the signed-in user (whose email must match). */
+/** Accept an invitation as the signed-in user (whose email must match), seats counted on the plan. */
 export async function acceptInvitationFor(
   request: AcceptInvitationRequest,
 ): Promise<AcceptedInvitation> {
-  const { acceptInvitation } = await import('../workspaces/index.ts');
+  const [{ acceptInvitation }, { installBillingEntitlements }] = await Promise.all([
+    import('../workspaces/index.ts'),
+    import('../billing/index.ts'),
+  ]);
+  installBillingEntitlements();
   return acceptInvitation(db, request);
 }
 

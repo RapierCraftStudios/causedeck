@@ -1,6 +1,8 @@
 // The cross-tenant registry for core services (#19, #209): every runtime export of
 // `@causedeck/core` is either registered with a cross-tenant test (SERVICE_TESTS) or listed as not
 // a service with a reason (NOT_A_SERVICE). A new export without either fails `pnpm test:tenancy`.
+// The `@causedeck/core/runtime` seam (#298) has its own maps (RUNTIME_SERVICE_TESTS and
+// RUNTIME_NOT_A_SERVICE).
 // Once `@causedeck/storage` exports presign (#21), its cross-tenant test must be a real one.
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 import {
   NOT_A_SERVICE,
   registeredTestFiles,
+  RUNTIME_NOT_A_SERVICE,
+  RUNTIME_SERVICE_TESTS,
   SERVICE_TESTS,
   STORAGE_PRESIGN_PLACEHOLDER,
   STORAGE_PRESIGN_TEST,
@@ -35,6 +39,21 @@ describe('cross-tenant registry: core services', () => {
     expect(staleEntries(SERVICE_TESTS, names)).toEqual([]);
     expect(staleEntries(NOT_A_SERVICE, names)).toEqual([]);
     expect(Object.keys(SERVICE_TESTS).filter((name) => name in NOT_A_SERVICE)).toEqual([]);
+  });
+
+  it('registers every runtime export of @causedeck/core/runtime (#298)', async () => {
+    const mod: Record<string, unknown> = await import('@causedeck/core/runtime');
+    const names = Object.keys(mod).sort();
+    expect(names).toContain('inWorkspace');
+    expect(
+      unregisteredServices(names, RUNTIME_SERVICE_TESTS, RUNTIME_NOT_A_SERVICE),
+      'runtime exports without a cross-tenant entry: add them to RUNTIME_SERVICE_TESTS or RUNTIME_NOT_A_SERVICE',
+    ).toEqual([]);
+    expect(staleEntries(RUNTIME_SERVICE_TESTS, names)).toEqual([]);
+    expect(staleEntries(RUNTIME_NOT_A_SERVICE, names)).toEqual([]);
+    expect(
+      Object.keys(RUNTIME_SERVICE_TESTS).filter((name) => name in RUNTIME_NOT_A_SERVICE),
+    ).toEqual([]);
   });
 
   it('points only at test files that exist', () => {

@@ -172,7 +172,10 @@ describe('usage view model', () => {
   });
 
   it('has no percent or level for an unlimited resource', () => {
-    const result = view({ 'ai.spend_paise': 999_999 }, { limits: { ...LIMITS, aiBudgetPaise: null } });
+    const result = view(
+      { 'ai.spend_paise': 999_999 },
+      { limits: { ...LIMITS, aiBudgetPaise: null } },
+    );
     expect(meter(result, 'ai')).toMatchObject({ limit: null, percent: null, level: 'ok' });
     expect(result.breakdown.find((row) => row.id === 'aiSpend')?.limit).toBeNull();
   });

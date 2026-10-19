@@ -59,7 +59,8 @@ export interface MeterView {
   resetDate: string | null;
 }
 
-export type BreakdownId = 'aiSpend' | 'tokensIn' | 'tokensOut' | 'ocr' | 'stt' | 'storage' | 'matters';
+export type BreakdownId =
+  'aiSpend' | 'tokensIn' | 'tokensOut' | 'ocr' | 'stt' | 'storage' | 'matters';
 
 export interface BreakdownRow {
   id: BreakdownId;
@@ -194,6 +195,6 @@ export function toUsageView(input: UsageViewInput): UsageView {
     },
   ];
 
-  const empty = Object.values(counters).every((value) => (value ?? 0) <= 0);
+  const empty = Object.values(counters).every((value) => value <= 0);
   return { empty, meters, breakdown };
 }

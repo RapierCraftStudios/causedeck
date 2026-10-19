@@ -37,7 +37,10 @@ function LevelNote({ meter }: { meter: MeterView }) {
         : t('limitExceeded');
   return (
     <div data-slot="usage-meter-level" data-level={meter.level} className="flex gap-2 text-sm">
-      <Icon aria-hidden="true" className={`mt-0.5 size-4 shrink-0 ${LEVEL_TEXT_CLASS[meter.level]}`} />
+      <Icon
+        aria-hidden="true"
+        className={`mt-0.5 size-4 shrink-0 ${LEVEL_TEXT_CLASS[meter.level]}`}
+      />
       <p>
         <span className="font-medium">{t(`level.${meter.level}`)}. </span>
         {body}

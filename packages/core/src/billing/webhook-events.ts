@@ -2,7 +2,7 @@
 // SQL, so the two database steps of a delivery live here:
 //
 // * `resolveBillingWorkspace` maps a provider subscription id to the workspace that stored it,
-//   through the owner-defined `app_billing_workspace_for_provider_subscription` (0008): the
+//   through the owner-defined `app_billing_workspace_for_provider_subscription` (0011): the
 //   webhook has no workspace and `subscription` is under FORCE row-level security. Payload
 //   metadata (notes, account id) is never consulted.
 // * `recordBillingEvent` stores the event once per provider event id inside the workspace scope,

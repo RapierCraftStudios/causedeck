@@ -1,5 +1,5 @@
 // Schema conventions from spike §4.2, checked over the Drizzle table objects (no database needed):
-//   1. `workspace_id` is NOT NULL and leads at least one index.
+//   1. `workspace_id` is NOT NULL (outside NULLABLE_WORKSPACE_TABLES) and leads at least one index.
 //   2. No cross-workspace foreign keys: a FK from a tenant table to another tenant table must be
 //      composite and pair `workspace_id` with `workspace_id`.
 // Tables in GLOBAL_TABLES (not workspace-scoped) are exempt.
@@ -12,7 +12,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * a `workspace_id` column is a tenant table under FORCE RLS (`db:check-rls`,
  * docs/engineering/tenancy.md). `organization` (the workspace) is the tenant root with its own
  * policies; `member` and `invitation` are tenant tables. `api_idempotency_key` has a nullable
- * `workspace_id` but is keyed by user, so it stays global.
+ * `workspace_id` but is keyed by user, so it stays global. `push_subscription` (per user) and
+ * `email_suppression` (per address) have no workspace (#194).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -25,7 +26,17 @@ export const GLOBAL_TABLES: readonly string[] = [
   'rate_limit',
   'api_idempotency_key',
   'plan',
+  'push_subscription',
+  'email_suppression',
 ];
+
+/**
+ * Tenant tables whose `workspace_id` may be null. `audit_event` holds account-level events (sign-in,
+ * passkey, 2FA) that belong to no workspace; they are written only through `app_audit_append()` and
+ * read through the `account_self` policy. The table is still under FORCE RLS with `ws_isolation`, and
+ * still needs an index led by `workspace_id`. Adding a table here is a security decision.
+ */
+export const NULLABLE_WORKSPACE_TABLES: readonly string[] = ['audit_event'];
 
 export const WORKSPACE_COLUMN = 'workspace_id';
 
@@ -37,6 +48,7 @@ export interface ConventionViolation {
 
 export interface CheckOptions {
   globalTables?: readonly string[];
+  nullableWorkspaceTables?: readonly string[];
 }
 
 function toSnakeCase(name: string): string {
@@ -62,9 +74,13 @@ export function tablesOf(exports: Record<string, unknown>): PgTable[] {
 
 export function checkSchemaConventions(
   tables: readonly PgTable[],
-  { globalTables = GLOBAL_TABLES }: CheckOptions = {},
+  {
+    globalTables = GLOBAL_TABLES,
+    nullableWorkspaceTables = NULLABLE_WORKSPACE_TABLES,
+  }: CheckOptions = {},
 ): ConventionViolation[] {
   const globals = new Set(globalTables);
+  const nullable = new Set(nullableWorkspaceTables);
   const violations: ConventionViolation[] = [];
 
   for (const table of tables) {
@@ -73,7 +89,7 @@ export function checkSchemaConventions(
     if (!isTenant(table, globals)) continue;
 
     const workspace = config.columns.find((c) => columnName(c) === WORKSPACE_COLUMN);
-    if (workspace && !workspace.notNull) {
+    if (workspace && !workspace.notNull && !nullable.has(name)) {
       violations.push({
         table: name,
         rule: 'workspace-not-null',

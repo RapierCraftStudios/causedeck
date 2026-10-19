@@ -151,7 +151,7 @@ subscription and payment events. The handler only verifies, stores and queues:
    the replay window (72 h old to 5 min ahead) is a 400.
 3. The workspace comes only from the stored provider subscription id, through the SECURITY
    DEFINER function `app_billing_workspace_for_provider_subscription(provider, id)`
-   (`0008_billing_webhook`, ids only). Notes and other payload metadata are never used. An unknown
+   (`0011_billing_webhook`, ids only). Notes and other payload metadata are never used. An unknown
    subscription gets a 200 and is ignored (logged as `billing webhook for an unknown subscription
    ignored`).
 4. The minimised event (`minimiseWebhookEvent`: no email, contact, description or notes) is stored

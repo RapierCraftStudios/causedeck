@@ -94,10 +94,10 @@ test.describe('usage page', () => {
 
   test('is linked from settings and billing', async ({ page, asUser }) => {
     await asUser('owner', { path: 'settings' });
-    await page.getByRole('link', { name: /^Usage/ }).click();
+    await page.locator('main a[href$="/settings/usage"]').click();
     await expect(heading(page)).toBeVisible();
     await page.goto('/w/chennai-solo/billing');
-    await page.getByRole('link', { name: 'View usage' }).click();
+    await page.locator('main').getByRole('link', { name: 'View usage' }).click();
     await expect(heading(page)).toBeVisible();
   });
 

@@ -2,8 +2,10 @@
 
 // The plan card (#256), the hero of the billing page: plan name in serif xl, the price of one charge
 // in serif 3xl with `/ month` muted, a calm status badge, the renewal date and the GST note. The
-// Junior variant offers the Advocate and Chamber plans instead. `Change plan` and the upgrade
-// buttons arrive with the billing actions (#257) and are disabled until then.
+// Junior variant offers the Advocate and Chamber plans instead. With `billing.manage` (`manage`)
+// the card hosts `Change plan` and `Cancel plan` / `Resume plan` (#257); without it the card is
+// read-only. The Junior upgrade buttons stay disabled: Junior has no subscription to change, and
+// starting one needs the UPI Autopay mandate flow.
 import { Badge, type BadgeTone } from '@causedeck/ui/badge';
 import { Button } from '@causedeck/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@causedeck/ui/card';
@@ -18,7 +20,15 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import type { PaidPlanView, PlanStatus, Renewal, UpgradeOption } from './billing-view.ts';
+import type {
+  ManageView,
+  PaidPlanView,
+  PlanStatus,
+  Renewal,
+  UpgradeOption,
+} from './billing-view.ts';
+import { CancelDialog } from './cancel-dialog.tsx';
+import { ChangePlanDialog } from './change-plan-dialog.tsx';
 
 const STATUS_STYLE: Record<PlanStatus['key'], { tone: BadgeTone; icon: LucideIcon }> = {
   active: { tone: 'success', icon: CircleCheck },
@@ -45,10 +55,12 @@ export interface PlanCardProps {
   plan: PaidPlanView;
   status: PlanStatus;
   renewal: Renewal;
+  /** Present only with `billing.manage`: the owner's change and cancel controls. */
+  manage?: { workspaceId: string; slug: string; view: ManageView } | undefined;
   className?: string;
 }
 
-export function PlanCard({ plan, status, renewal, className }: PlanCardProps) {
+export function PlanCard({ plan, status, renewal, manage, className }: PlanCardProps) {
   const t = useTranslations('billing');
   return (
     <Card data-slot="billing-plan" className={className}>
@@ -86,11 +98,16 @@ export function PlanCard({ plan, status, renewal, className }: PlanCardProps) {
         </p>
         <p className="text-ink-muted text-sm">{t('plan.gstNote')}</p>
       </CardContent>
-      <CardFooter>
-        <Button variant="secondary" disabled title={t('comingSoon')}>
-          {t('plan.change')}
-        </Button>
-      </CardFooter>
+      {manage ? (
+        <CardFooter className="flex flex-wrap items-start gap-2">
+          <ChangePlanDialog
+            workspaceId={manage.workspaceId}
+            slug={manage.slug}
+            manage={manage.view}
+          />
+          <CancelDialog workspaceId={manage.workspaceId} slug={manage.slug} manage={manage.view} />
+        </CardFooter>
+      ) : null}
     </Card>
   );
 }

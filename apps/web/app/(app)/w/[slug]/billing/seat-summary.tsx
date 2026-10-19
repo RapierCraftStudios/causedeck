@@ -1,12 +1,13 @@
 'use client';
 
 // Read-only seat display (#256): seats in use against purchased seats, with clerk seats apart (they
-// are billed separately). Changing seats arrives with the billing actions (#257).
+// are billed separately). With `billing.manage` it hosts the seat stepper (#257).
 import { Card, CardContent, CardHeader, CardTitle } from '@causedeck/ui/card';
 import { Progress } from '@causedeck/ui/progress';
 import { useTranslations } from 'next-intl';
 
-import type { SeatsView } from './billing-view.ts';
+import type { ManageView, SeatsView } from './billing-view.ts';
+import { SeatManager } from './seat-manager.tsx';
 
 function SeatRow({
   label,
@@ -34,7 +35,14 @@ function SeatRow({
   );
 }
 
-export function SeatSummary({ seats, className }: { seats: SeatsView; className?: string }) {
+export interface SeatSummaryProps {
+  seats: SeatsView;
+  /** Present only with `billing.manage`: the seat stepper. */
+  manage?: { workspaceId: string; slug: string; view: ManageView } | undefined;
+  className?: string;
+}
+
+export function SeatSummary({ seats, manage, className }: SeatSummaryProps) {
   const t = useTranslations('billing.seats');
   return (
     <Card data-slot="billing-seats" className={className}>
@@ -63,6 +71,9 @@ export function SeatSummary({ seats, className }: { seats: SeatsView; className?
             <p className="text-ink-muted text-xs">{t('hint')}</p>
           </>
         )}
+        {manage ? (
+          <SeatManager workspaceId={manage.workspaceId} slug={manage.slug} manage={manage.view} />
+        ) : null}
       </CardContent>
     </Card>
   );

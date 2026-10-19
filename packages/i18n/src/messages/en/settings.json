@@ -88,6 +88,72 @@
       "chamberBody": "For chambers, priced per seat (at least {minSeats} seats).",
       "from": "From {price}",
       "upgrade": "Upgrade to {plan}"
+    },
+    "quote": {
+      "base": "New price per period",
+      "gst": "GST at 18%",
+      "total": "Total per period (incl. GST)",
+      "proration": "Prorated charge for this period",
+      "prorationGst": "GST at 18% on the prorated charge",
+      "prorationTotal": "Due now (incl. GST)",
+      "effectiveNow": "Takes effect now ({date}).",
+      "effectivePeriodEnd": "Takes effect on {date}, at the end of this billing period."
+    },
+    "seatManager": {
+      "seats": "Seats",
+      "clerkSeats": "Clerk seats",
+      "increaseSeats": "Add a seat",
+      "decreaseSeats": "Remove a seat",
+      "increaseClerkSeats": "Add a clerk seat",
+      "decreaseClerkSeats": "Remove a clerk seat",
+      "announceSeats": "{count, plural, one {# seat} other {# seats}}",
+      "announceClerkSeats": "{count, plural, one {# clerk seat} other {# clerk seats}}",
+      "minHint": "At least {min} seats: {used} are in use.",
+      "review": "Review change",
+      "confirm": "Confirm change",
+      "back": "Back",
+      "done": "Seats updated."
+    },
+    "changePlan": {
+      "title": "Change plan",
+      "chooseBody": "Choose a plan. Moving to a more expensive plan takes effect now; a cheaper plan from the end of this period.",
+      "confirmTitle": "Move to {plan}?",
+      "confirmBody": "Check the amounts before you confirm.",
+      "perSeat": "{price} per seat",
+      "flat": "{price}",
+      "back": "Back",
+      "confirm": "Confirm change",
+      "close": "Close"
+    },
+    "gstin": {
+      "title": "GSTIN",
+      "label": "GSTIN",
+      "hint": "15 characters, for example 27AAPFU0939F1ZV. Leave empty to remove it.",
+      "clientInvalid": "This does not look like a valid GSTIN yet.",
+      "note": "Applies to future invoices only; issued invoices are not changed.",
+      "save": "Save GSTIN",
+      "saved": "GSTIN saved.",
+      "cleared": "GSTIN removed."
+    },
+    "cancel": {
+      "open": "Cancel plan",
+      "title": "Cancel at the end of this period?",
+      "body": "Your plan stays active until {date}.",
+      "bodyNoDate": "Your plan stays active until the end of this billing period.",
+      "readOnlyNote": "After your plan ends, your data remains accessible read-only and can be exported.",
+      "keep": "Keep plan",
+      "confirm": "Cancel at period end",
+      "resume": "Resume plan"
+    },
+    "errors": {
+      "invalidGstinFormat": "Enter a 15-character GSTIN: a 2-digit state code, a 10-character PAN, the entity number, Z and a check character.",
+      "invalidGstinChecksum": "The last character of this GSTIN does not match the rest. Check it for typos.",
+      "invalid": "This change is not possible on your plan.",
+      "notAllowed": "This change is not possible while the subscription is in its current state.",
+      "unsupported": "Your payment provider cannot undo a scheduled cancellation. Subscribe again after the plan ends.",
+      "forbidden": "Only workspace owners can manage billing.",
+      "offline": "You are offline. Billing changes are unavailable until you reconnect.",
+      "generic": "Something went wrong. Try again."
     }
   }
 }

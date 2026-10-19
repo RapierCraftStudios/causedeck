@@ -71,11 +71,23 @@ vi.mock('@causedeck/core/billing', () => ({
 vi.mock('@causedeck/core/workspaces', () => ({
   countBillableSeats: () => Promise.resolve(page.seats),
 }));
+// The owner billing actions (#257) are server actions; the page only hands them to the dialogs.
+const billingActions = vi.hoisted(() => ({
+  quoteChange: vi.fn(),
+  changeSeats: vi.fn(),
+  changePlan: vi.fn(),
+  cancelAtPeriodEnd: vi.fn(),
+  resumeSubscription: vi.fn(),
+  saveGstin: vi.fn(),
+}));
+vi.mock('../app/(app)/w/[slug]/billing/actions.ts', () => billingActions);
 
 const { toBillingView, daysLeft } = await import('../app/(app)/w/[slug]/billing/billing-view.ts');
 const { default: BillingPage } = await import('../app/(app)/w/[slug]/billing/page.tsx');
 const { default: BillingErrorBoundary } = await import('../app/(app)/w/[slug]/billing/error.tsx');
 const { default: BillingLoading } = await import('../app/(app)/w/[slug]/billing/loading.tsx');
+const { PlanCard } = await import('../app/(app)/w/[slug]/billing/plan-card.tsx');
+const { SeatSummary } = await import('../app/(app)/w/[slug]/billing/seat-summary.tsx');
 
 const en = catalogs.en.billing;
 
@@ -216,6 +228,41 @@ describe('billing view model', () => {
     expect(view(chamber, [issuedInvoice]).invoices[0]?.pdfHref).toBeNull();
   });
 
+  it('carries what the owner billing actions need (#257)', () => {
+    const { manage } = paid({ ...chamber, gstin: '27AAPFU0939F1ZV', cancelAtPeriodEnd: true });
+    expect(manage).toMatchObject({
+      planId: 'chamber-seat-1',
+      seats: 10,
+      clerkSeats: 4,
+      seatsUsed: { nonClerk: 5, clerk: 1 },
+      minSeats: 3,
+      clerkSeatsAvailable: true,
+      gstin: '27AAPFU0939F1ZV',
+      cancelAtPeriodEnd: true,
+      paused: false,
+      periodEnd: '12 Apr 2026',
+    });
+    expect(manage.planOptions.map((p) => p.id)).toEqual([
+      'advocate-monthly-1',
+      'advocate-monthly-2',
+      'advocate-monthly-3',
+      'chamber-seat-1',
+      'chamber-seat-2',
+      'chamber-seat-3',
+    ]);
+    expect(manage.planOptions[4]).toEqual({
+      id: 'chamber-seat-2',
+      name: expect.any(String) as string,
+      kind: 'chamber',
+      price: '₹649.00',
+      perSeat: true,
+      minSeats: 3,
+      clerkSeats: true,
+    });
+    expect(paid(chamber).manage.gstin).toBeNull();
+    expect(paid({ ...chamber, status: 'paused' }).manage.paused).toBe(true);
+  });
+
   it('counts grace days on IST calendar days and never below zero', () => {
     expect(daysLeft(new Date('2026-03-12T18:00:00Z'), NOW)).toBe(0);
     expect(daysLeft(new Date('2026-03-12T18:31:00Z'), NOW)).toBe(1);
@@ -326,9 +373,22 @@ describe('billing page (server)', () => {
     const issuedRow = within(table).getByText('CD/26-27/000002').closest('tr') as HTMLElement;
     expect(within(issuedRow).getByText(en.invoices.preparing)).toBeTruthy();
     expect(within(issuedRow).queryByRole('link')).toBeNull();
+    // The owner holds billing.manage (#257): change plan, cancel, seat stepper and GSTIN.
     expect(screen.getByRole('button', { name: en.plan.change }).hasAttribute('disabled')).toBe(
-      true,
+      false,
     );
+    expect(screen.getByRole('button', { name: en.cancel.open })).toBeTruthy();
+    expect(screen.getByRole('button', { name: en.seatManager.increaseSeats })).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: en.gstin.label })).toBeTruthy();
+    expect(screen.getByText(en.gstin.note)).toBeTruthy();
+  });
+
+  it('offers Resume and the read-only, export copy when the plan is set to cancel', async () => {
+    page.subscription = subscriptionRow({ cancelAtPeriodEnd: true });
+    await renderPage();
+    expect(screen.getByRole('button', { name: en.cancel.resume })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: en.cancel.open })).toBeNull();
+    expect(screen.getByText(en.cancel.readOnlyNote)).toBeTruthy();
   });
 
   it.each(['advocate', 'junior', 'clerk', 'viewer'] as const)(
@@ -435,6 +495,20 @@ describe('billing page (server)', () => {
     for (const leak of [en.paymentMethod.active, en.plan.gstNote, en.seats.title]) {
       expect(text).not.toContain(leak);
     }
+  });
+});
+
+describe('read-only billing cards (no billing.manage)', () => {
+  it('renders plan and seats without any action control', () => {
+    const result = paid(chamber);
+    withIntl(
+      <div>
+        <PlanCard plan={result.plan} status={result.status} renewal={result.renewal} />
+        <SeatSummary seats={result.seats} />
+      </div>,
+    );
+    expect(screen.getByText('5 of 10 seats')).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });
 

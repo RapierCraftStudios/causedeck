@@ -4,4 +4,5 @@ export * from './matrix';
 export * from './can';
 export * from './assert';
 export * from './log';
+export * from './visibility';
 export { renderPermissionsDoc } from './docs';

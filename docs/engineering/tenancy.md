@@ -26,6 +26,11 @@ The pieces:
 | ----------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `causedeck_owner` | migrations (`DATABASE_URL_OWNER`), `db:check-rls`, the test harness | Owns every table and function. Runs DDL. Has no `BYPASSRLS`, so FORCE RLS binds it too; it reads across tenants only through the narrow `owner_definer_*` policies that back the SECURITY DEFINER functions                             |
 | `causedeck_app`   | every app and the worker (`DATABASE_URL`)                           | DML on `public` tables and `EXECUTE` on the `app_*` functions. Not the owner, `NOSUPERUSER`, `NOBYPASSRLS`, `NOINHERIT`: it cannot `ALTER` a table, disable or un-force RLS, drop a policy or `SET ROLE` to the owner (`owner.test.ts`) |
+| `causedeck_clerk` | clerk members, via `withWorkspace(db, { workspaceId, userId, dbRole: 'clerk' })` | No login: the app role switches to it with `SET LOCAL ROLE` (#233). The same privileges as `causedeck_app` (copied by `0016_matter_restriction`), minus every base table behind a clerk view (`app_clerk_view`). `NOBYPASSRLS`, `NOINHERIT`; scopes nested in a clerk scope stay clerk |
+
+Migrations that `GRANT` something to `causedeck_app` explicitly (an `app_*` function, a table
+privilege) must grant `causedeck_clerk` the same, unless the clerk must not have it. Default
+privileges already cover new tables and sequences for both roles.
 
 `0006_rls_baseline` also revokes the `PUBLIC` defaults: no table privileges for `PUBLIC`, and
 functions the owner creates are not executable by `PUBLIC` (each `app_*` function is granted to
@@ -142,6 +147,36 @@ security decision: say why in the PR.
    creates a tenant table without its `tenantPolicy()` statements.
 5. Write tenant rows in tests through `inWorkspace(tx, workspaceId, fn)` from
    `@causedeck/db/testing`. An owner connection does not help: FORCE RLS binds the owner too.
+
+## Clerk column-scoped views
+
+Clerks see listings, tasks and documents but not strategy notes or matter memory (architecture
+§6.3). `can()` decides that in the services; the database backs it with column-scoped views (#233):
+
+1. In the migration that creates (or later restricts) a tenant table with strategy columns, call
+   the owner-only helper from `0016_matter_restriction`:
+
+   ```sql
+   SELECT app_clerk_view('matter', 'matter_clerk_view', ARRAY['strategy_notes', 'theory_of_case']);--> statement-breakpoint
+   ```
+
+   It creates `matter_clerk_view` (`security_barrier`) with every column of `matter` except those
+   listed, revokes all `causedeck_clerk` privileges on `matter`, and grants only `SELECT` on the view
+   to `causedeck_app` and `causedeck_clerk`. It refuses a base table without FORCE RLS or with a
+   policy for `causedeck_owner`: the view runs with its owner's rights, so either would let it see
+   other workspaces. Re-run it (after `DROP VIEW`) when the base table gains columns.
+2. Code acting for a clerk member opens `withWorkspace(db, { workspaceId, userId, dbRole: 'clerk' })`
+   and reads `matter_clerk_view`. Reading `matter` there fails with `42501`; row-level security still
+   applies through the view (`packages/db/src/__tests__/rls/clerk-view.test.ts`).
+
+## Matter restrictions
+
+`matter_restriction` (#233) holds one row per restricted (workspace, matter) with the
+`allowed_user_ids` who may read it besides owners (`ownersSeeRestrictedMatters`, default on).
+`matter_id` has no foreign key until the matter table exists (Court Graph milestone), whose
+migration adds it. Services use `restrictMatter()` / `assertMatterReadable()` from
+`@causedeck/core` (unreadable matters are `NOT_FOUND`) and list queries filter with
+`matterVisibilityPredicate(actor, matterIdColumn)` from `@causedeck/auth/policy`.
 
 ## Incidents
 

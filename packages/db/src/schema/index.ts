@@ -23,6 +23,7 @@ export {
   workspaceFeatureFlag,
 } from './flags.ts';
 export { jobEffect } from './job-effect.ts';
+export { matterRestriction } from './matter-restriction.ts';
 export {
   emailSuppression,
   notification,

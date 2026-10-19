@@ -15,6 +15,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
@@ -231,6 +232,21 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(workspaceFeatureFlag)
       .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
     return { key };
+  },
+  matter_restriction: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(matterRestriction)
+        .values({
+          workspaceId,
+          matterId: randomUUID(),
+          allowedUserIds: [ownerId],
+          createdBy: ownerId,
+        })
+        .returning({ id: matterRestriction.id, matterId: matterRestriction.matterId }),
+      'matter_restriction',
+    );
+    return { id: row.id, matterId: row.matterId };
   },
 };
 

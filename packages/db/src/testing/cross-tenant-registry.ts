@@ -38,6 +38,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   budget_override: DB_TABLES_TEST,
   usage_period_summary: DB_TABLES_TEST,
   workspace_feature_flag: DB_TABLES_TEST,
+  matter_restriction: DB_TABLES_TEST,
 };
 
 /**
@@ -125,6 +126,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'system job: lists workspace ids and timezones only through a definer function',
   },
+  restrictMatter: denies,
+  assertMatterReadable: denies,
   enqueueNotificationDelivery: {
     test: CORE_SERVICES_TEST,
     kind: 'caller-checked',

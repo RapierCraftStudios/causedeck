@@ -13,6 +13,7 @@ import {
 } from './definitions/notification-digest.ts';
 import { retentionSweep } from './definitions/retention-sweep.ts';
 import { systemPing } from './definitions/system-ping.ts';
+import { usageRollup } from './definitions/usage-rollup.ts';
 import type { AnyJobDefinition, JobPayloadBase } from './define.ts';
 import { getProducer, type JobSender } from './producer.ts';
 
@@ -122,6 +123,7 @@ export const registry = createRegistry([
   notificationDeliver,
   notificationDigestSchedule,
   notificationDigest,
+  usageRollup,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -134,6 +136,7 @@ export type JobMap = RegistryMap<
     typeof notificationDeliver,
     typeof notificationDigestSchedule,
     typeof notificationDigest,
+    typeof usageRollup,
   ]
 >;
 export type JobName = keyof JobMap;

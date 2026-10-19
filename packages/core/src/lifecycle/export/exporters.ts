@@ -29,7 +29,7 @@ interface TableSpec {
 
 const ident = (name: string) => sql.identifier(name);
 
-/** Stream one table's rows as JSON objects (`to_jsonb`), keyset-paged on `spec.keys`. */
+/** Stream one table's rows as JSON objects (`row_to_json`), keyset-paged on `spec.keys`. */
 async function* pageTable(
   ctx: ExportCtx,
   spec: TableSpec,
@@ -39,10 +39,7 @@ async function* pageTable(
     spec.keys.map((k) => sql`t.${ident(k)}`),
     sql`, `,
   );
-  const exclude = sql`array[${sql.join(
-    (spec.exclude ?? []).map((c) => sql`${c}`),
-    sql`, `,
-  )}]::text[]`;
+  const exclude = spec.exclude ?? [];
   const userFilter: SQL =
     ctx.scope === 'user' && spec.userColumn !== undefined
       ? sql`and t.${ident(spec.userColumn)} = ${ctx.userId}::uuid`
@@ -58,14 +55,19 @@ async function* pageTable(
           )})`;
     const rows = await withWorkspace(ctx.db, { workspaceId: ctx.workspaceId }, (tx) =>
       tx.execute<{ row: Record<string, unknown>; k: unknown[] }>(sql`
-        select to_jsonb(t) - ${exclude} as row,
+        select row_to_json(t) as row,
                jsonb_build_array(${keys}) as k
         from ${ident(spec.table)} t
         where t.${ident(spec.workspaceColumn)} = ${ctx.workspaceId}::uuid ${userFilter} ${cursor}
         order by ${keys}
         limit ${PAGE_SIZE}`),
     );
-    for (const { row } of rows) yield row;
+    for (const { row } of rows) {
+      // `row_to_json` keeps the table's column order (jsonb would sort the keys).
+      yield exclude.length === 0
+        ? row
+        : Object.fromEntries(Object.entries(row).filter(([column]) => !exclude.includes(column)));
+    }
     const last = rows.at(-1);
     if (last === undefined || rows.length < PAGE_SIZE) return;
     after = last.k;
@@ -101,7 +103,7 @@ async function* members(ctx: ExportCtx): AsyncGenerator<Record<string, unknown>>
     const cursor: SQL = after === null ? sql`` : sql`and m.id > ${after}::uuid`;
     const rows = await withWorkspace(ctx.db, { workspaceId: ctx.workspaceId }, (tx) =>
       tx.execute<{ row: Record<string, unknown>; id: string }>(sql`
-        select jsonb_build_object(
+        select json_build_object(
                  'id', m.id, 'user_id', m.user_id, 'name', u.name, 'email', u.email,
                  'role', m.role, 'status', m.status, 'joined_at', m.joined_at,
                  'created_at', m.created_at) as row,

@@ -31,6 +31,10 @@ export function testKeys(): EnvKeyProvider {
 export async function seedWorkspaces(db: Database, store: MemoryObjectStore): Promise<TwoTenants> {
   const seeded = await db.transaction((tx) => seedTwoTenants(tx));
   for (const ws of [seeded.a, seeded.b]) {
+    // The seeder's workspace_key holds random bytes; a real DEK is created on first use instead.
+    await withWorkspace(db, { workspaceId: ws.id }, (tx) =>
+      tx.delete(schema.workspaceKey).where(eq(schema.workspaceKey.workspaceId, ws.id)),
+    );
     const rows = await withWorkspace(db, { workspaceId: ws.id }, (tx) =>
       tx.select({ key: schema.blob.key, id: schema.blob.id }).from(schema.blob),
     );

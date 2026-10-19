@@ -119,10 +119,14 @@ describe('enqueue', () => {
       'system.ping',
       'system.retention.sweep',
       'system.billing.reconcile',
+      'system.billing.dunning-tick',
       'billing.process-event',
       'notification.deliver',
       'system.notification.digest',
       'notification.digest',
+      'system.audit.verify',
+      'audit.verify',
+      'system.audit.retention',
     ]);
   });
 });

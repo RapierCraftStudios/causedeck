@@ -112,8 +112,9 @@ retention removes them.
 - **Retention path:** `app_purge_audit(cutoff)` and `app_purge_ai_calls(cutoff)` (SECURITY DEFINER,
   executable by the app role) refuse a cutoff later than `now() - 180 days` (CERT-In), set
   `app.audit_retention` for the duration of their `DELETE`, reset it and return the row count. The
-  scheduled job that calls them is #230. After a purge the oldest surviving event points at a
-  `prev_hash` that no longer exists; chain verification starts from the oldest surviving row.
+  scheduled job that calls them is `system.audit.retention`. After a purge the oldest surviving event points at a
+  `prev_hash` that no longer exists; chain verification starts from the oldest surviving row. `system.audit.verify` reads every chain
+  through `app_audit_chain_targets()` and `app_audit_verify_account_chain()` (`0018_audit_jobs`).
 - **Writing `audit_event`:** only through `app_audit_append(workspace_id, actor_user_id,
 actor_kind, action, target_kind?, target_id?, outcome?, ip?, user_agent_hash?, request_id?,
 metadata?)`, which returns `(id, hash)`. A non-null workspace must be the pinned workspace

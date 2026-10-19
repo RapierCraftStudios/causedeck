@@ -3,6 +3,8 @@
 import type { SendOptions } from 'pg-boss';
 import type { z } from 'zod';
 
+import { auditRetention } from './definitions/audit-retention.ts';
+import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
@@ -122,6 +124,9 @@ export const registry = createRegistry([
   notificationDeliver,
   notificationDigestSchedule,
   notificationDigest,
+  systemAuditVerify,
+  auditVerify,
+  auditRetention,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -134,6 +139,9 @@ export type JobMap = RegistryMap<
     typeof notificationDeliver,
     typeof notificationDigestSchedule,
     typeof notificationDigest,
+    typeof systemAuditVerify,
+    typeof auditVerify,
+    typeof auditRetention,
   ]
 >;
 export type JobName = keyof JobMap;

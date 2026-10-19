@@ -121,9 +121,9 @@ and setting `processed_at` in the same transaction ([billing.md](billing.md#webh
 A definition may declare `schedule: { cron, payload }`. `registerSchedules` registers it with
 `boss.schedule(..., { tz: 'Asia/Kolkata' })`. pg-boss keeps schedules in its own table and sends
 each occurrence once, so every replica registers on boot without double-sending. Current
-schedules: `system.retention.sweep` daily at 03:30 IST, `system.billing.reconcile` daily at
-04:00 IST, `system.billing.dunning-tick` daily at 04:30 IST and `system.notification.digest` every
-half hour.
+schedules: `system.audit.verify` daily at 02:00 IST, `system.audit.retention` daily at 03:00 IST,
+`system.retention.sweep` daily at 03:30 IST, `system.billing.reconcile` daily at 04:00 IST,
+`system.billing.dunning-tick` daily at 04:30 IST and `system.notification.digest` every half hour.
 
 ## Notification jobs
 
@@ -162,6 +162,26 @@ The digest has two jobs (`definitions/notification-digest.ts`):
 
 Both jobs read `EMAIL_PROVIDER` (via `createEmailTransport`) and `APP_URL`. Tests replace the
 transports with `setNotificationJobDeps`.
+
+## Audit jobs
+
+`definitions/audit-verify.ts` and `definitions/audit-retention.ts` (#230) keep the audit chains
+checked and trimmed ([audit.md](audit.md#verification-and-retention)).
+
+- `system.audit.verify` (daily 02:00 IST, stately singleton) verifies the account chain through
+  `app_audit_verify_account_chain` and enqueues one `audit.verify` per workspace listed by
+  `app_audit_chain_targets()` (ids only, `0018_audit_jobs`).
+- `audit.verify` (payload `{ workspaceId }`, singleton per workspace) runs `verifyChain` from the
+  epoch inside the workspace transaction, so a chain trimmed by retention starts at its oldest
+  surviving row. A mismatch logs `fatal` `audit.chain_mismatch` with `severity: 'critical'`,
+  `workspaceId` (null for the account chain), `eventId`, `reason` and `checked`, and the job
+  completes: a retry would only repeat the alert.
+- `system.audit.retention` (daily 03:00 IST, stately singleton, payload
+  `{ retentionDays?: number }`, at least 180 and default 400) deletes audit events and `ai_call`
+  rows older than the window only through `app_purge_audit` and `app_purge_ai_calls`, and records
+  `audit.retention_purged` on the account chain in the same transaction. A window below 180 days
+  fails the payload schema, and the handler's `assertRetentionDays` throws `PermanentError`
+  (`AUDIT_RETENTION_TOO_SHORT`).
 
 ## The `pgboss` schema and roles
 

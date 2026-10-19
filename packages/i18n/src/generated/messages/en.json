@@ -574,7 +574,27 @@
         "preview": "An update from your CauseDeck workspace",
         "cta": "Open in CauseDeck"
       }
-    }
+    },
+    "title": "Notifications",
+    "bell": {
+      "label": "Notifications",
+      "labelUnread": "Notifications, {count} unread"
+    },
+    "markAllRead": "Mark all read",
+    "groups": {
+      "today": "Today",
+      "earlier": "Earlier"
+    },
+    "empty": "You are all caught up.",
+    "error": "Could not load notifications.",
+    "retry": "Try again",
+    "offline": "Showing saved notifications",
+    "loading": "Loading notifications",
+    "unread": "Unread",
+    "unreadCount": "{count} unread",
+    "announce": "{count, plural, one {# new notification} other {# new notifications}}",
+    "close": "Close",
+    "shortcut": "Open notifications"
   },
   "billing": {
     "mandate": {

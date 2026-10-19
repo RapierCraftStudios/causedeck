@@ -40,6 +40,12 @@ const FIXTURES: { [K in TemplateName]: TemplateProps[K] } = {
     href: `${APP}/w/iyer/settings/billing`,
     preferencesUrl: PREFS,
   },
+  notice: {
+    title: 'Hearing tomorrow: W.P. 1234/2026',
+    body: 'Listed before Court 4.',
+    href: `${APP}/w/iyer/matters/1`,
+    preferencesUrl: PREFS,
+  },
 };
 
 const LOCALES = ['en', 'ta', 'kn'] as const;

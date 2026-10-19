@@ -56,6 +56,7 @@ describe('@causedeck/db root entry point', () => {
       'member',
       'notification',
       'notification_pref',
+      'notification_setting',
       'organization',
       'passkey',
       'plan',

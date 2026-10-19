@@ -120,6 +120,33 @@ async function runProbe(f: Fixture, workspaceId: string) {
 
 type Case = (f: Fixture) => Promise<void>;
 
+/** A recording email transport for the notification jobs. */
+function recordingDeps() {
+  const sent: { to: string; subject: string }[] = [];
+  const deps: core.NotificationJobDeps = {
+    appUrl: APP_URL,
+    // 13:00Z is 18:30 in Asia/Kolkata.
+    now: () => new Date('2026-10-19T13:00:00Z'),
+    email: {
+      provider: 'console',
+      send: (message) => {
+        sent.push({ to: message.to, subject: message.subject });
+        return Promise.resolve({});
+      },
+    },
+  };
+  return { sent, deps };
+}
+
+async function emailOf(f: Fixture, userId: string): Promise<string> {
+  const [row] = await f.tx
+    .select({ email: schema.user.email })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId));
+  if (!row) throw new Error('user missing');
+  return row.email;
+}
+
 const CASES: Record<string, Case> = {
   listMemberships: async (f) => {
     const mine = await core.listMemberships(f.tx, f.ub);
@@ -429,6 +456,95 @@ const CASES: Record<string, Case> = {
     expect(seen[0]).toEqual([f.a.id]);
     expect(seen[0]).not.toContain(f.b.id);
   },
+  runNotificationDeliver: async (f) => {
+    // A delivery job for B naming A's notification finds nothing, sends nothing, changes nothing.
+    const { sent, deps } = recordingDeps();
+    core.setNotificationJobDeps(deps);
+    const notificationId = f.a.rows.notification?.notificationId ?? '';
+    const before = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.notification).where(eq(schema.notification.id, notificationId)),
+    );
+    const outcome = await core.runJob(
+      core.notificationDeliver,
+      {
+        id: randomUUID(),
+        data: { workspaceId: f.b.id, notificationId, channel: 'email' },
+        retryCount: 0,
+      },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+    expect(sent).toEqual([]);
+    const after = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.notification).where(eq(schema.notification.id, notificationId)),
+    );
+    expect(after).toEqual(before);
+  },
+  runNotificationDigest: async (f) => {
+    // ua asked for daily email of system notices in A and has one pending; B's digest never
+    // includes or emails it.
+    const { sent, deps } = recordingDeps();
+    core.setNotificationJobDeps(deps);
+    await inWorkspace(f.tx, f.a.id, async (s) => {
+      await s
+        .insert(schema.notificationPref)
+        .values({
+          workspaceId: f.a.id,
+          userId: f.ua,
+          category: 'system.notice',
+          channel: 'email',
+          enabled: true,
+          digest: 'daily',
+        })
+        .onConflictDoUpdate({
+          target: [
+            schema.notificationPref.workspaceId,
+            schema.notificationPref.userId,
+            schema.notificationPref.category,
+            schema.notificationPref.channel,
+          ],
+          set: { enabled: true, digest: 'daily' },
+        });
+      await s.insert(schema.notification).values({
+        workspaceId: f.a.id,
+        userId: f.ua,
+        category: 'system.notice',
+        title: 'A only',
+        createdAt: new Date('2026-10-19T10:00:00Z'),
+      });
+    });
+    const outcome = await core.runJob(
+      core.notificationDigest,
+      { id: randomUUID(), data: { workspaceId: f.b.id, digestDate: '2026-10-19' }, retryCount: 0 },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+    expect(sent.map((m) => m.to)).not.toContain(await emailOf(f, f.ua));
+    expect(sent).toEqual([]);
+  },
+  runNotificationDigestSchedule: async (f) => {
+    // The scheduler lists every workspace, but hands on ids and dates only.
+    const targets: core.DigestTarget[] = [];
+    await core.runNotificationDigestSchedule(
+      { db: f.tx, log: logger },
+      {
+        now: () => new Date('2026-10-19T13:00:00Z'),
+        enqueue: (t) => {
+          targets.push(t);
+          return Promise.resolve();
+        },
+      },
+    );
+    const mine = targets.filter((t) => t.workspaceId === f.a.id || t.workspaceId === f.b.id);
+    expect(mine).toHaveLength(2);
+    for (const t of mine) expect(Object.keys(t).sort()).toEqual(['digestDate', 'workspaceId']);
+  },
+  enqueueNotificationDelivery: async (f) => {
+    // enqueueNotificationDelivery sends the payload as given; the handler is scoped to it.
+    const { seen } = await runProbe(f, f.a.id);
+    expect(seen[0]).toEqual([f.a.id]);
+    expect(seen[0]).not.toContain(f.b.id);
+  },
   retentionSweep: async (f) => {
     const outcome = await core.runJob(
       core.retentionSweep,
@@ -459,6 +575,7 @@ const registered = Object.entries(SERVICE_TESTS)
   .map(([name]) => name);
 
 afterEach(() => {
+  core.setNotificationJobDeps(null);
   core.setAuditSink(null);
   core.setEntitlements(null);
   core.clearReassignProviders();

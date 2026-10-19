@@ -876,6 +876,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
+      '@causedeck/notifications':
+        specifier: workspace:*
+        version: link:../notifications
       '@causedeck/observability':
         specifier: workspace:*
         version: link:../observability

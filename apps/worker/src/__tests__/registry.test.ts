@@ -120,6 +120,9 @@ describe('enqueue', () => {
       'system.retention.sweep',
       'system.billing.reconcile',
       'billing.process-event',
+      'notification.deliver',
+      'system.notification.digest',
+      'notification.digest',
     ]);
   });
 });

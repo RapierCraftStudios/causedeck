@@ -10,6 +10,9 @@
 const DB_TABLES_TEST = 'packages/db/src/__tests__/cross-tenant/tables.test.ts';
 const CORE_SERVICES_TEST = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const WEB_ACTIONS_TEST = 'apps/web/__tests__/cross-tenant-actions.test.ts';
+const BILLING_PROCESS_EVENT_TEST =
+  'packages/core/src/jobs/definitions/billing-process-event.test.ts';
+const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -29,6 +32,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   ai_call: DB_TABLES_TEST,
   notification: DB_TABLES_TEST,
   notification_pref: DB_TABLES_TEST,
+  notification_setting: DB_TABLES_TEST,
   usage_reservation: DB_TABLES_TEST,
   usage_event: DB_TABLES_TEST,
   budget_override: DB_TABLES_TEST,
@@ -104,6 +108,28 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'sends the payload as given; runJob scopes the handler to the payload workspace',
   },
   retentionSweep: selfScoped,
+  runBillingProcessEvent: {
+    test: BILLING_PROCESS_EVENT_TEST,
+    kind: 'self-scoped',
+    note: 'reads and updates only the payload workspace inside withWorkspace',
+  },
+  runBillingReconcile: {
+    test: BILLING_RECONCILE_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists ids through a definer function, reads each row in its own workspace',
+  },
+  runNotificationDeliver: selfScoped,
+  runNotificationDigest: selfScoped,
+  runNotificationDigestSchedule: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids and timezones only through a definer function',
+  },
+  enqueueNotificationDelivery: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'notify() enqueues for its own checked workspace; the deliver job runs scoped to it',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -164,6 +190,26 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   createProducer: 'pg-boss producer',
   getProducer: 'pg-boss producer',
   closeProducer: 'pg-boss producer',
+  // jobs: billing definitions (#204, #206)
+  billingProcessEvent: 'job definition (handler is runBillingProcessEvent)',
+  billingProcessEventSchema: 'zod schema',
+  billingReconcile: 'job definition (handler is runBillingReconcile)',
+  // jobs: notification definitions, schemas, helpers and constants (#196)
+  notificationDeliver: 'job definition (handler is runNotificationDeliver)',
+  notificationDeliverSchema: 'zod schema',
+  notificationDigest: 'job definition (handler is runNotificationDigest)',
+  notificationDigestSchedule: 'job definition (handler is runNotificationDigestSchedule)',
+  notificationDigestSchema: 'zod schema',
+  DELIVERY_CHANNELS: 'constant',
+  DIGEST_LOCAL_TIME: 'constant',
+  DIGEST_ITEM_LIMIT: 'constant',
+  DEFAULT_DIGEST_TIMEZONE: 'constant',
+  appLink: 'pure (URL)',
+  deliveryKey: 'pure (job key)',
+  digestDueAt: 'pure (time zone math)',
+  digestInstant: 'pure (time zone math)',
+  notificationJobDeps: 'transport wiring (no database access)',
+  setNotificationJobDeps: 'setter',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;
@@ -193,6 +239,9 @@ export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   isLockedChannel: 'pure',
   NotificationError: 'error class',
   LIST_LIMIT_MAX: 'constant',
+  COURT_HOURS: 'constant',
+  isQuietTime: 'pure',
+  localMinutes: 'pure',
 };
 
 /** The storage presign cross-tenant test (#21). */

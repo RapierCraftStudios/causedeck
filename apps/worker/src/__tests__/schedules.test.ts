@@ -1,5 +1,11 @@
 // Cron schedules: Asia/Kolkata, registered and sent once across two worker replicas (#15).
-import { billingReconcile, defineJob, registry, retentionSweep } from '@causedeck/core/jobs';
+import {
+  billingReconcile,
+  defineJob,
+  notificationDigestSchedule,
+  registry,
+  retentionSweep,
+} from '@causedeck/core/jobs';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -15,10 +21,15 @@ afterAll(async () => {
 
 describe('registerSchedules', () => {
   it('registers the daily system schedules in Asia/Kolkata', async () => {
-    const worker = await startTestWorker([retentionSweep, billingReconcile]);
+    const worker = await startTestWorker([
+      retentionSweep,
+      billingReconcile,
+      notificationDigestSchedule,
+    ]);
     expect(await registerSchedules(worker.boss, registry)).toEqual([
       'system.retention.sweep',
       'system.billing.reconcile',
+      'system.notification.digest',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -42,6 +53,17 @@ describe('registerSchedules', () => {
     });
     expect(nextReconcile?.toISOString()).toBe('2026-10-18T22:30:00.000Z');
     await worker.boss.unschedule('system.billing.reconcile');
+
+    // The digest scheduler runs every half hour in Asia/Kolkata, so it fires at 18:30 IST (13:00 UTC).
+    const digest = await worker.boss.getSchedule('system.notification.digest');
+    expect(digest).toMatchObject({ cron: '0,30 * * * *', timezone: 'Asia/Kolkata' });
+    const [nextDigest] = worker.boss.previewSchedule(digest?.cron ?? '', {
+      tz: SCHEDULE_TIMEZONE,
+      from: new Date('2026-10-18T12:50:00Z'),
+      count: 1,
+    });
+    expect(nextDigest?.toISOString()).toBe('2026-10-18T13:00:00.000Z');
+    await worker.boss.unschedule('system.notification.digest');
   });
 
   it('is registered once and sends each occurrence once with two worker replicas', async () => {

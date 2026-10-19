@@ -21,6 +21,7 @@
     "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/notifications": "workspace:*",
     "@causedeck/observability": "workspace:*",
     "@causedeck/validators": "workspace:*",
     "drizzle-orm": "catalog:",

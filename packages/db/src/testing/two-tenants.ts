@@ -15,7 +15,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
-import { notification, notificationPref } from '../schema/notifications.ts';
+import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
   usageEvent,
@@ -172,6 +172,12 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       enabled: false,
     });
     return { userId: ownerId, category: 'system.notice', channel: 'email' };
+  },
+  notification_setting: async (tx, { workspaceId, ownerId }) => {
+    await tx
+      .insert(notificationSetting)
+      .values({ workspaceId, userId: ownerId, courtHoursQuiet: true });
+    return { userId: ownerId };
   },
   usage_reservation: async (tx, { workspaceId }) => {
     const rows = await tx

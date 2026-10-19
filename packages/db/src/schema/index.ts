@@ -29,6 +29,7 @@ export {
   notificationChannel,
   notificationDigest,
   notificationPref,
+  notificationSetting,
   pushSubscription,
 } from './notifications.ts';
 export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from './usage.ts';

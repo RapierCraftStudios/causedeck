@@ -118,8 +118,46 @@ and setting `processed_at` in the same transaction ([billing.md](billing.md#webh
 A definition may declare `schedule: { cron, payload }`. `registerSchedules` registers it with
 `boss.schedule(..., { tz: 'Asia/Kolkata' })`. pg-boss keeps schedules in its own table and sends
 each occurrence once, so every replica registers on boot without double-sending. Current
-schedules: `system.retention.sweep` daily at 03:30 IST and `system.billing.reconcile` daily at
-04:00 IST.
+schedules: `system.retention.sweep` daily at 03:30 IST, `system.billing.reconcile` daily at
+04:00 IST and `system.notification.digest` every half hour.
+
+## Notification jobs
+
+`notification.deliver` (`definitions/notification-deliver.ts`, #196) sends one email or push for
+one in-app notification. Its payload is `{ workspaceId, notificationId, channel }`. `notify()` in
+`@causedeck/notifications` enqueues it after commit; pass `enqueueNotificationDelivery` as
+`NotifyContext.enqueueDelivery`.
+
+- The singleton key and the `once()` key are both `<notificationId>:<channel>`, so a duplicate or
+  redelivered job never sends twice. Retries: 5 retries with exponential backoff from 30 s.
+- The job re-checks membership and the channel preference. A suppression-listed address
+  (`email_suppression`) is skipped and the transport is never called.
+- A permanent send failure (`isPermanentEmailError`: SES `MessageRejected`, unverified sender,
+  suspended account, other 4xx, SMTP 5xx) is recorded as `failed` and the job completes: it is
+  never retried or re-sent. Any other failure throws `RetryableError`. That rolls back the
+  `once()` claim, and pg-boss retries.
+- The outcome is written to `notification.data.delivery.<channel>` as
+  `{ status: 'sent'|'failed'|'skipped', reason?, code?, at }` on the existing row. The job never
+  inserts notifications.
+- Push is recorded as `skipped` (`push_disabled`) until #197 provides a `PushSender`.
+
+The digest has two jobs (`definitions/notification-digest.ts`):
+
+- `system.notification.digest` runs at `0,30 * * * *` in `Asia/Kolkata`. It lists live workspaces
+  and their timezone through the owner-defined `app_notification_digest_targets()`
+  (`0013_notification_digest`). It enqueues `notification.digest { workspaceId, digestDate }` for
+  each workspace whose local time is in the 18:30 slot.
+- `notification.digest` emails each active member the notifications from the previous 24 hours
+  (18:30 to 18:30 local) in categories whose email channel is set to `daily`. It sends nothing in
+  these cases: nothing to report, the `digest.daily` email turned off, a suppressed address, or the
+  member's quiet hours. Quiet hours come from `notification_setting.court_hours_quiet`, which makes
+  10:30-17:00 local quiet. Each member gets at most one send per day (`once()`), each in its own
+  savepoint.
+- The timezone is the workspace's (`workspace_settings.timezone`, default `Asia/Kolkata`); users
+  have no timezone of their own.
+
+Both jobs read `EMAIL_PROVIDER` (via `createEmailTransport`) and `APP_URL`. Tests replace the
+transports with `setNotificationJobDeps`.
 
 ## The `pgboss` schema and roles
 

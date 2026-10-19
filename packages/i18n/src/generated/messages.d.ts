@@ -570,6 +570,11 @@ export type Messages = {
         preview: string;
         cta: string;
       };
+      notice: {
+        subject: string;
+        preview: string;
+        cta: string;
+      };
     };
   };
   billing: {

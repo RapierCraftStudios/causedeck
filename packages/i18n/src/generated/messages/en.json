@@ -585,7 +585,27 @@
         "blocked": "Notifications are blocked for this site. Allow them in your browser settings to turn them on.",
         "error": "Could not turn on push notifications. Try again."
       }
-    }
+    },
+    "title": "Notifications",
+    "bell": {
+      "label": "Notifications",
+      "labelUnread": "Notifications, {count} unread"
+    },
+    "markAllRead": "Mark all read",
+    "groups": {
+      "today": "Today",
+      "earlier": "Earlier"
+    },
+    "empty": "You are all caught up.",
+    "error": "Could not load notifications.",
+    "retry": "Try again",
+    "offline": "Showing saved notifications",
+    "loading": "Loading notifications",
+    "unread": "Unread",
+    "unreadCount": "{count} unread",
+    "announce": "{count, plural, one {# new notification} other {# new notifications}}",
+    "close": "Close",
+    "shortcut": "Open notifications"
   },
   "billing": {
     "mandate": {

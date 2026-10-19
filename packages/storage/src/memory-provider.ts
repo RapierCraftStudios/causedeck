@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { ObjectKey } from './keys.ts';
 import {
+  checkDownloadOptions,
   checkedKey,
   checkUpload,
   expiry,
@@ -30,6 +31,7 @@ interface Grant {
   expiresAt: Date;
   contentType?: string;
   contentLength?: number;
+  contentDisposition?: string;
 }
 
 interface Entry {
@@ -43,6 +45,8 @@ export interface MemoryObjectStore extends ObjectStore {
   upload(url: string, init: { body: Uint8Array; contentType: string }): Promise<void>;
   /** Perform a signed GET. */
   download(url: string): Promise<Uint8Array>;
+  /** Perform a signed GET and return the response headers too, as the storage edge serves them. */
+  fetchSigned(url: string): Promise<{ body: Uint8Array; headers: Record<string, string> }>;
 }
 
 /** Run `fn` and surface any throw as a rejected promise, like a real network provider. */
@@ -140,11 +144,16 @@ export function createMemoryObjectStore(options: MemoryObjectStoreOptions = {}):
           expiresAt,
         };
       }),
-    presignGet: (key) =>
+    presignGet: (key, getOptions = {}) =>
       settle(() => {
         checkedKey(key);
-        const expiresAt = expiry(now());
-        return { url: sign({ method: 'GET', key, expiresAt }), expiresAt };
+        const expiresAt = expiry(now(), checkDownloadOptions(getOptions));
+        const grant: Grant = { method: 'GET', key, expiresAt };
+        if (getOptions.contentType !== undefined) grant.contentType = getOptions.contentType;
+        if (getOptions.contentDisposition !== undefined) {
+          grant.contentDisposition = getOptions.contentDisposition;
+        }
+        return { url: sign(grant), expiresAt };
       }),
     ping: () =>
       settle(() => {
@@ -167,6 +176,21 @@ export function createMemoryObjectStore(options: MemoryObjectStoreOptions = {}):
         const entry = objects.get(grant.key);
         if (!entry) throw new ObjectNotFoundError(grant.key);
         return entry.body.slice();
+      }),
+    fetchSigned: (url) =>
+      settle(() => {
+        const grant = redeem(url, 'GET');
+        const entry = objects.get(grant.key);
+        if (!entry) throw new ObjectNotFoundError(grant.key);
+        const headers: Record<string, string> = {
+          'content-type': grant.contentType ?? entry.contentType,
+          'content-length': String(entry.body.byteLength),
+          'x-content-type-options': 'nosniff',
+        };
+        if (grant.contentDisposition !== undefined) {
+          headers['content-disposition'] = grant.contentDisposition;
+        }
+        return { body: entry.body.slice(), headers };
       }),
   };
 }

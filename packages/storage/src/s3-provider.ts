@@ -15,6 +15,7 @@ import { INDIA_AWS_REGIONS, OVERRIDE_ACK, type Secret } from '@causedeck/config/
 
 import { isObjectKey, type ObjectKey } from './keys.ts';
 import {
+  checkDownloadOptions,
   checkedKey,
   checkUpload,
   expiry,
@@ -226,16 +227,22 @@ export function createS3ObjectStore(options: S3ObjectStoreOptions): ObjectStore 
       };
     },
 
-    async presignGet(key: ObjectKey) {
+    async presignGet(key: ObjectKey, options = {}) {
       checkedKey(key);
+      const ttl = checkDownloadOptions(options);
       const signingDate = now();
+      const command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        ...(options.contentDisposition === undefined
+          ? {}
+          : { ResponseContentDisposition: options.contentDisposition }),
+        ...(options.contentType === undefined ? {} : { ResponseContentType: options.contentType }),
+      });
       const url = await call('presignGet', () =>
-        getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
-          expiresIn: SIGNED_URL_TTL_SECONDS,
-          signingDate,
-        }),
+        getSignedUrl(client, command, { expiresIn: ttl, signingDate }),
       );
-      return { url, expiresAt: expiry(signingDate) };
+      return { url, expiresAt: expiry(signingDate, ttl) };
     },
 
     async ping() {

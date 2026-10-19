@@ -5,6 +5,8 @@ Postgres, with a key that belongs to one workspace (spike §1, §6; architecture
 #216). Destroying that key makes all of the workspace's data unreadable (crypto-erase), and the
 master key can rotate without rewriting any object. S3 server-side encryption (SSE-S3 or SSE-KMS at
 Stage B) is defence in depth on top of this. Cloudflare R2 is never used for tenant documents.
+Exception for now: uploaded blobs go browser-to-S3 through presigned URLs and are stored as uploaded
+(see [Uploads and downloads](#uploads-and-downloads) below); encrypting their bodies is a follow-up.
 
 | What | Where |
 |---|---|
@@ -115,3 +117,69 @@ method throws `NOT_IMPLEMENTED`. At Stage B it implements `KeyProvider` with KMS
 (encryption context = workspace id) and a kek id such as `kms-<key id>`. To migrate, deploy a
 provider that holds both the KMS key (current) and `kek-1`, then run `rewrapAll` to the KMS kek id.
 After that, `KEK_BASE64` can be retired. The object format stays the same.
+
+## Uploads and downloads
+
+Workspace-scoped upload and download services (#217, #21 part 3) on top of the `ObjectStore`.
+Callers pass a `StorageCtx` (`db`, `store`, the checked `workspaceId` and `userId`, an `authorize`
+seam that the web route wires to `assertCan`). Every query runs in `withWorkspace`, so a blob of
+another workspace is simply not found. The services take blob ids, never object keys; keys are built
+server-side as `ws/<workspaceId>/<kind>/<yyyy>/<blobId>`.
+
+| What | Where |
+|---|---|
+| Allow-list, deny-list, sniffing | `packages/storage/src/mime.ts` |
+| Intent and finalize | `packages/storage/src/upload.ts` |
+| Download URLs | `packages/storage/src/download.ts` |
+| Audit seam (`StorageAuditSink`, writer in #26) | `packages/storage/src/audit.ts` |
+| `blob` table | `packages/db/src/schema/storage.ts`, `packages/db/migrations/0017_blob.sql` |
+| Route Handler | `apps/web/app/api/uploads/route.ts` |
+| Tests | `packages/storage/src/__tests__/{upload,download,cross-tenant-presign}.test.ts` |
+
+1. **Intent** (`createUploadIntent`, `document.write`). The kind, the file extension and the declared
+   MIME must match one allow-list entry, and the size must be within the kind's cap (`limits.ts`).
+   It inserts a `blob` row with `scan_status` null (an open intent) and returns a presigned PUT
+   (5 minutes) bound to the key, `Content-Type` and `Content-Length`.
+2. **Finalize** (`finalizeUpload`, `document.write`). It reads the stored bytes back, checks the
+   size, sniffs the type from the magic bytes (`file-type`; text is checked for UTF-8, NUL bytes and
+   leading markup), and requires the sniffed type to be one the intent's entry accepts. It then sets
+   the sniffed `mime`, `sha256`, `finalized_at` and `scan_status = 'pending'`. A rejected upload is
+   deleted (object and row). Finalize is idempotent; an object not yet uploaded leaves the intent.
+3. **Download** (`createDownloadUrl`, `document.read`). Only a finalized blob that is not `infected`
+   (open intents and infected files read as `NOT_FOUND`). The presigned GET lives 60 seconds and
+   carries `response-content-disposition: attachment; filename=...; filename*=UTF-8''...` and
+   `response-content-type` set to the sniffed type. Each URL issued is audited
+   (`document.download_url_issued`).
+
+**Allow-list.** PDF, DOCX, `.ics`, `.txt` (kind `document`); PNG, JPEG, HEIC (`image`); m4a, mp3,
+wav, ogg/opus, webm (`audio`); `.zip` (`zip`). A `.pdf` holding HTML, a `.zip` holding an executable,
+a `.docx` that is a plain zip and the reverse are all rejected at finalize.
+
+**Deny-list.** Executables, scripts and markup are never allowed, at intent (extension, including
+any inner part of a double extension, and declared MIME) and at finalize (sniffed MIME): PE, ELF,
+Mach-O, MSI, JAR/APK, shell and other scripts, JavaScript, HTML/XHTML, SVG, XML, Flash and wasm.
+
+**`scan_status`.** null (open intent) → `pending` at finalize → `clean`, `infected` or `skipped`,
+set by the ClamAV worker (later; optional at Stage A, required at Stage B). The check constraint
+`blob_scan_status_chk` allows only these values.
+
+**PDFs.** No code path in `@causedeck/storage` parses, renders or executes PDF content: finalize
+only reads magic bytes and hashes. PDF previews are rendered to images in a worker (#45), and
+uploaded PDF JavaScript never runs. A test asserts the package has no PDF, renderer, `vm` or
+`child_process` dependency.
+
+**`nosniff`.** Downloads must carry `X-Content-Type-Options: nosniff`. An S3 presign cannot set
+that header (only `response-content-*`, cache-control and expires overrides exist), so the storage
+edge in front of MinIO/S3 adds it (Caddy, #98; CloudFront response headers policy at Stage B). Until
+then the forced `attachment` disposition and sniffed allow-listed type are what keep a browser from
+rendering a download inline. The memory provider serves `nosniff` itself.
+
+**Route.** `POST /api/uploads` with `{action: 'intent' | 'finalize' | 'download', workspaceId,
+...}`: 403 cross-origin, 401 signed out, 404 not a member (indistinguishable from another
+workspace's blob), 429 over `UPLOAD_RATE_LIMIT` (120 per user per 10 minutes), 400 invalid input or
+file, 413 over the size cap, 403 not permitted by role.
+
+**Follow-up: encrypted blob bodies.** Blob bodies are stored as uploaded today, because a browser
+cannot decrypt an envelope-encrypted object fetched through a presigned GET. Encrypting them needs
+a server-streamed decrypting download; `blob.enc_header` is already there (nullable) for it.
+

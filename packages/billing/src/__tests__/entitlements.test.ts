@@ -72,6 +72,7 @@ describe('deriveEntitlements', () => {
       clerk_seats: 0,
       ai_budget_paise: 1_000,
       capture_minutes: 300,
+      ocr_pages: 200,
       features: { write: true },
     });
   });
@@ -83,6 +84,8 @@ describe('deriveEntitlements', () => {
         'seats',
         'clerk_seats',
         'ai_budget_paise',
+        'capture_minutes',
+        'ocr_pages',
         'features.write',
       ]),
     );
@@ -97,6 +100,7 @@ describe('deriveEntitlements', () => {
     const e = derive(snapshot({ seats: 5, clerkSeats: 2 }));
     expect(e).toMatchObject({ planId: 'chamber-seat-1', seats: 5, clerk_seats: 2 });
     expect(e.max_active_matters).toBeNull();
+    expect(e).toMatchObject({ capture_minutes: null, ocr_pages: null });
     expect(derive(snapshot({ seats: 1, clerkSeats: 0 })).seats).toBe(3);
   });
 
@@ -124,6 +128,7 @@ describe('deriveEntitlements', () => {
       planId: 'junior',
       max_active_matters: 15,
       seats: 1,
+      ocr_pages: 200,
       features: { write: false },
     });
     expect(derive(snapshot({ state: 'downgraded' }))).toEqual(beyond);

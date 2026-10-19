@@ -12,6 +12,9 @@ export { atLeast, isRole, ROLE_RANK, ROLES, type Role } from './role-rank';
 export const statement = {
   ...defaultStatements,
   matter: ['create', 'read', 'update', 'delete'],
+  // The audit log (#229): owners always; advocates unless the workspace setting turns it off
+  // (`can()` applies `advocatesCanReadAudit`); juniors, clerks and viewers never.
+  audit: ['read'],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -25,6 +28,7 @@ export const roles = {
     team: ['create', 'update', 'delete'],
     ac: ['create', 'read', 'update', 'delete'],
     matter: ['create', 'read', 'update', 'delete'],
+    audit: ['read'],
   }),
   advocate: ac.newRole({
     organization: ['update'],
@@ -33,6 +37,7 @@ export const roles = {
     team: ['create', 'update', 'delete'],
     ac: ['read'],
     matter: ['create', 'read', 'update', 'delete'],
+    audit: ['read'],
   }),
   junior: ac.newRole({
     ac: ['read'],

@@ -145,6 +145,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'reads only the given workspace chain inside withWorkspace; RLS hides other workspaces',
   },
+  // audit read and export (#229): the audit.read gate denies non-members and A's id from B's scope
+  authorizeAuditRead: denies,
+  queryAudit: denies,
+  exportAudit: denies,
   recordAiCall: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -239,6 +243,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // audit: registry, guards and the default sink (#227)
   recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
   AUDIT_ACTIONS: 'constant (audit action registry)',
+  AUDIT_EXPORT_COLUMNS: 'constant (audit export column order)',
   AUDIT_BANNED_METADATA_KEYS: 'constant',
   isAuditAction: 'pure',
   isSecurityAction: 'pure',

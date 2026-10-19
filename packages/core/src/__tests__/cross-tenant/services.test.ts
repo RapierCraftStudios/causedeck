@@ -240,6 +240,42 @@ const CASES: Record<string, Case> = {
     const own = await f.asB((s) => core.verifyChain(s, f.b.id));
     expect(own).toEqual({ ok: true, checked: (await auditIds(f, f.b.id)).length });
   },
+  authorizeAuditRead: async (f) => {
+    await expectTenancyViolation(
+      f.asB((s) => core.authorizeAuditRead({ db: s, workspaceId: f.a.id, userId: f.ub })),
+    );
+    // ub is not a member of A: denied even outside B's scope.
+    await expectDenied(core.authorizeAuditRead({ db: f.tx, workspaceId: f.a.id, userId: f.ub }));
+  },
+  queryAudit: async (f) => {
+    await expectTenancyViolation(
+      f.asB((s) => core.queryAudit({ db: s, workspaceId: f.a.id, userId: f.ub })),
+    );
+    await expectDenied(core.queryAudit({ db: f.tx, workspaceId: f.a.id, userId: f.ub }));
+    // B's feed holds only B's events.
+    const own = await core.queryAudit({ db: f.tx, workspaceId: f.b.id, userId: f.ub });
+    expect(own.events.map((e) => e.id).sort()).toEqual(await auditIds(f, f.b.id));
+  },
+  exportAudit: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    const range = { from: new Date(0), to: new Date(Date.now() + 86_400_000) };
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.exportAudit(
+          { db: s, workspaceId: f.a.id, userId: f.ub },
+          { ...range, format: 'jsonl' },
+        ),
+      ),
+    );
+    await expectDenied(
+      core.exportAudit(
+        { db: f.tx, workspaceId: f.a.id, userId: f.ub },
+        { ...range, format: 'csv' },
+      ),
+    );
+    // No export event (or anything else) was written to A.
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
   recordAiCall: async (f) => {
     const count = () =>
       inWorkspace(f.tx, f.a.id, (s) => s.select({ id: schema.aiCall.id }).from(schema.aiCall));

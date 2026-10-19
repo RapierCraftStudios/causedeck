@@ -7,7 +7,7 @@ import type { Database } from '@causedeck/db';
 import { testAppDb } from '@causedeck/db/testing';
 
 import type { AuthEmail, AuthLogger, Mailer } from '../mailer';
-import { createAuth, type AuthEnv } from '../server';
+import { createAuth, type AuthEnv, type SecurityEventRecorder } from '../server';
 
 export const APP_URL = 'http://localhost:3000';
 export const TEST_SECRET = 'test-only-better-auth-secret-0123456789abcdef';
@@ -56,12 +56,20 @@ export function makeAuth(
     logger?: AuthLogger;
     /** Defaults to the shared app-role client. */
     db?: Database;
+    /** Defaults to the no-op recorder. */
+    securityEvents?: SecurityEventRecorder;
   } = {},
 ) {
   const mailer = options.mailer ?? recordingMailer();
   const logger = options.logger ?? capturingLogger();
   const db = options.db ?? testAppDb();
-  const auth = createAuth({ db, env: testEnv(options.env), mailer, logger });
+  const auth = createAuth({
+    db,
+    env: testEnv(options.env),
+    mailer,
+    logger,
+    ...(options.securityEvents ? { securityEvents: options.securityEvents } : {}),
+  });
   return { auth, mailer, logger };
 }
 

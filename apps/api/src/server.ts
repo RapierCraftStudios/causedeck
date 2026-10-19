@@ -8,6 +8,7 @@ import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth } from '@causedeck/auth/server';
 import { webhookSecretFor } from '@causedeck/billing/webhook';
 import { serverEnv } from '@causedeck/config/env';
+import { createSecurityEventRecorder } from '@causedeck/core/audit';
 import { closeProducer } from '@causedeck/core/jobs';
 import { closeDb, db } from '@causedeck/db';
 import { startFlagListener } from '@causedeck/flags';
@@ -118,7 +119,13 @@ async function main(): Promise<void> {
   const env = serverEnv();
   const telemetry = initTelemetry({ service: 'api' });
   const logger = createLogger({ service: 'api' });
-  const auth = createAuth({ db, env, mailer: createMailer(env, logger), logger });
+  const auth = createAuth({
+    db,
+    env,
+    mailer: createMailer(env, logger),
+    logger,
+    securityEvents: createSecurityEventRecorder(db),
+  });
 
   const app = createApp({
     db,

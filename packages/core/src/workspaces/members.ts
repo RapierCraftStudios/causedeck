@@ -5,6 +5,7 @@ import { can, isRole, type Action } from '@causedeck/auth/policy';
 import { schema, type Database, type Transaction } from '@causedeck/db';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 
+import { recordRoleChanged } from '../audit/security-events.ts';
 import { conflict, forbidden, invalid, notFound } from './errors.ts';
 import { offboardMember } from './offboarding.ts';
 
@@ -138,6 +139,14 @@ export async function changeRole(db: Queryable, request: ChangeRoleRequest): Pro
       throw conflict('The last owner cannot be demoted; transfer ownership first');
     }
     await tx.update(member).set({ role: request.role }).where(eq(member.id, target.id));
+    await recordRoleChanged(tx, {
+      workspaceId: request.workspaceId,
+      actorUserId: request.actorUserId,
+      targetUserId: target.userId,
+      memberId: target.id,
+      fromRole: target.role,
+      toRole: request.role,
+    });
   });
 }
 
@@ -233,12 +242,30 @@ export async function transferOwnership(
     }
     const target = await transferTarget(tx, request);
     await tx.update(member).set({ role: 'owner' }).where(eq(member.id, target.memberId));
-    await tx
+    const [previous] = await tx
       .update(member)
       .set({ role: 'advocate' })
       .where(
         and(eq(member.organizationId, request.workspaceId), eq(member.userId, request.actorUserId)),
-      );
+      )
+      .returning({ id: member.id });
+    const change = { workspaceId: request.workspaceId, actorUserId: request.actorUserId };
+    await recordRoleChanged(tx, {
+      ...change,
+      targetUserId: target.userId,
+      memberId: target.memberId,
+      fromRole: target.role,
+      toRole: 'owner',
+    });
+    if (previous) {
+      await recordRoleChanged(tx, {
+        ...change,
+        targetUserId: request.actorUserId,
+        memberId: previous.id,
+        fromRole: 'owner',
+        toRole: 'advocate',
+      });
+    }
   });
 }
 

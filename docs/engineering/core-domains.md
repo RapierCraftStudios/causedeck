@@ -22,6 +22,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
+| `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains |
 | `shared` | none | helpers no domain owns |
 
 `packages/core/src/index.ts` re-exports only domain entry points (`./<domain>/index.ts`). It does
@@ -63,6 +64,10 @@ graph LR
   jobs --> audit
   jobs --> billing
   jobs --> usage
+  runtime --> audit
+  runtime --> billing
+  runtime --> usage
+  runtime --> workspaces
 ```
 
 | Domain | May import |
@@ -74,6 +79,7 @@ graph LR
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
 | `jobs` | `audit`, `billing`, `usage` |
+| `runtime` | `audit`, `billing`, `usage`, `workspaces` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,
 fair-use caps and job fairness read billing entitlements.

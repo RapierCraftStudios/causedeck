@@ -56,17 +56,10 @@ interface Loaded {
 }
 
 async function loadPreferences(context: WorkspaceContext): Promise<Loaded> {
-  const [{ db, withWorkspace }, { getDigest, getNotificationSetting, getPreferences }] =
-    await Promise.all([import('@causedeck/db'), import('@causedeck/notifications')]);
-  const workspaceId = context.workspace.id;
-  const userId = context.user.id;
-  return withWorkspace(db, { workspaceId, userId }, async (tx) => {
-    const ctx = { db: tx, workspaceId };
-    return {
-      preferences: await getPreferences(ctx, { userId }),
-      digest: await getDigest(ctx, { userId }),
-      settings: await getNotificationSetting(ctx, { userId }),
-    };
+  const { loadNotificationPreferences } = await import('@causedeck/core/runtime');
+  return loadNotificationPreferences({
+    workspaceId: context.workspace.id,
+    userId: context.user.id,
   });
 }
 

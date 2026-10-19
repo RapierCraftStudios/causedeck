@@ -6,9 +6,7 @@
 // the per-user rate limit, 400 invalid input or file, 413 over the size cap, 403 not permitted.
 import { isRole } from '@causedeck/auth';
 import { ForbiddenError, assertCan } from '@causedeck/auth/policy';
-import { consumeRateLimit } from '@causedeck/auth/rate-limit';
-import { memberRole } from '@causedeck/core/workspaces';
-import { db } from '@causedeck/db';
+import { consumeRequestLimit, memberRoleFor, uploadContext } from '@causedeck/core/runtime';
 import {
   createDownloadUrl,
   createUploadIntent,
@@ -73,21 +71,20 @@ export async function POST(request: Request): Promise<Response> {
   const { workspaceId } = input;
 
   // Not a member reads exactly like another workspace's blob: nothing to see here.
-  const role = await memberRole(db, userId, workspaceId);
+  const role = await memberRoleFor(userId, workspaceId);
   if (role === null || !isRole(role)) return json(404, { error: 'not_found' });
-  if (!(await consumeRateLimit(db, `uploads:${userId}`, UPLOAD_RATE_LIMIT))) {
+  if (!(await consumeRequestLimit(`uploads:${userId}`, UPLOAD_RATE_LIMIT))) {
     return json(429, { error: 'rate_limited' });
   }
 
-  const ctx: StorageCtx = {
-    db,
+  const ctx: StorageCtx = uploadContext({
     store: objectStore(),
     workspaceId,
     userId,
     authorize: (action) => {
       assertCan({ userId, workspaceId, role }, action);
     },
-  };
+  });
   try {
     switch (input.action) {
       case 'intent': {

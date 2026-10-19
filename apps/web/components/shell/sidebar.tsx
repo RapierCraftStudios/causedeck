@@ -52,6 +52,28 @@ export interface SidebarProps {
   context: WorkspaceContext;
 }
 
+/** Decorative mark: navy file in light mode, light-ink copy in dark mode (an <img> cannot inherit currentColor). */
+function BrandMark() {
+  return (
+    <>
+      <img
+        src="/brand/causedeck-mark.svg"
+        alt=""
+        width={24}
+        height={24}
+        className="size-6 shrink-0 dark:hidden"
+      />
+      <img
+        src="/brand/causedeck-mark-dark.svg"
+        alt=""
+        width={24}
+        height={24}
+        className="hidden size-6 shrink-0 dark:block"
+      />
+    </>
+  );
+}
+
 /** The paper-toned column: wordmark, switcher, primary navigation, collapse toggle and user. */
 export function Sidebar({ context }: SidebarProps) {
   const t = useTranslations('shell');
@@ -63,7 +85,7 @@ export function Sidebar({ context }: SidebarProps) {
       className="bg-surface-sunken border-line sticky top-0 hidden h-dvh min-w-0 flex-col overflow-hidden border-r md:flex"
     >
       <div className="flex h-14 shrink-0 items-center gap-2 px-5 group-data-[sidebar=collapsed]/shell:justify-center group-data-[sidebar=collapsed]/shell:px-0 group-data-[sidebar=auto]/shell:max-xl:justify-center group-data-[sidebar=auto]/shell:max-xl:px-0">
-        <span aria-hidden="true" className="bg-seal size-2 shrink-0 rounded-full" />
+        <BrandMark />
         <span className={`font-serif text-lg font-medium ${railRemoved}`}>CauseDeck</span>
       </div>
       <div className="shrink-0 px-3 pb-2">

@@ -17,6 +17,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   jobs: Object.freeze(['audit', 'billing', 'usage']),
+  runtime: Object.freeze(['audit', 'billing', 'usage', 'workspaces']),
 });
 
 /** Every top-level folder of packages/core/src/ (`shared` included). */

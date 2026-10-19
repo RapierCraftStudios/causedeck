@@ -38,9 +38,9 @@ export interface AccessDenial {
 export interface GuardDeps {
   /** Defaults to `lib/auth.ts` `requireSession`. */
   requireSession?: () => Promise<AppSession>;
-  /** Defaults to `@causedeck/core/workspaces` `memberRole` on the app `db`. */
+  /** Defaults to `@causedeck/core/runtime` `memberRoleFor` (the app db). */
   memberRole?: (userId: string, workspaceId: string) => Promise<string | null>;
-  /** Defaults to `@causedeck/core/audit` `recordAccessDenied` on the app `db`. */
+  /** Defaults to `@causedeck/core/runtime` `recordAccessDeniedFor` (the app db). */
   recordDenied?: (denial: AccessDenial) => Promise<void>;
 }
 
@@ -58,21 +58,15 @@ async function defaultRequireSession(): Promise<AppSession> {
 }
 
 async function defaultMemberRole(userId: string, workspaceId: string): Promise<string | null> {
-  const [{ db }, { memberRole }] = await Promise.all([
-    import('@causedeck/db'),
-    import('@causedeck/core/workspaces'),
-  ]);
-  return memberRole(db, userId, workspaceId);
+  const { memberRoleFor } = await import('@causedeck/core/runtime');
+  return memberRoleFor(userId, workspaceId);
 }
 
 /** Writes in its own transaction and never throws, so the original denial still surfaces. */
 export async function defaultRecordDenied(denial: AccessDenial): Promise<void> {
   try {
-    const [{ db }, { recordAccessDenied }] = await Promise.all([
-      import('@causedeck/db'),
-      import('@causedeck/core/audit'),
-    ]);
-    await recordAccessDenied(db, denial);
+    const { recordAccessDeniedFor } = await import('@causedeck/core/runtime');
+    await recordAccessDeniedFor(denial);
   } catch {
     // recordAccessDenied logs its own write failures; a failed import must not mask the denial.
   }

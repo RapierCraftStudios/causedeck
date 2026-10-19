@@ -3,9 +3,8 @@
 // workspace turned it off) and returns a signed link valid for 60 s; `GET ?token=` re-checks the
 // permission, records `audit.exported` and streams the file page by page (never buffered).
 // 401 signed out or bad token, 403 cross-origin or forbidden, 404 not a member, 400 bad input.
-import { exportAudit, authorizeAuditRead } from '@causedeck/core/audit';
+import { authorizeAuditReadFor, exportAuditFor } from '@causedeck/core/runtime';
 import { WorkspaceError } from '@causedeck/core/workspaces';
-import { db } from '@causedeck/db';
 import { z } from 'zod';
 
 import {
@@ -76,7 +75,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   try {
     // The advocate setting lives in core; `guard` alone only checks the role matrix.
-    await authorizeAuditRead({ db, workspaceId: body.workspaceId, userId });
+    await authorizeAuditReadFor({ workspaceId: body.workspaceId, userId });
   } catch (error) {
     const response = coreResponse(error);
     if (response) return response;
@@ -126,9 +125,8 @@ export async function GET(request: Request): Promise<Response> {
   const ip = clientIp(request);
   let stream: ReadableStream<Uint8Array>;
   try {
-    stream = await exportAudit(
+    stream = await exportAuditFor(
       {
-        db,
         workspaceId: payload.w,
         userId: payload.u,
         ...(requestId === undefined ? {} : { requestId }),

@@ -17,6 +17,7 @@ Dev and CI need no credentials: `BILLING_PROVIDER` defaults to `mock`.
 | `@causedeck/billing/service` | `createBillingService` (start, change seats, cancel, resume). Never touches the database |
 | `@causedeck/billing/provider` | `createBillingProvider(env)`, the mock and Razorpay providers. Server-only |
 | `@causedeck/billing/reconcile` | `reconcileSubscriptions` for the daily reconcile. Server-only |
+| `@causedeck/billing/webhook` | Razorpay signature verify/sign, replay window, `minimiseWebhookEvent`, `webhookSecretFor`, `MOCK_WEBHOOK_SECRET`. Server-only |
 
 ## State machine
 
@@ -137,6 +138,48 @@ it in their UPI app every time.
 - In production, `BILLING_PROVIDER=mock` fails boot unless `ALLOW_MOCK_PROVIDERS=true` (meant for
   staging demos only). Tests: `packages/billing/src/__tests__/provider-select.test.ts`,
   `packages/config/src/env/__tests__/schema.test.ts`.
+
+## Webhooks
+
+`POST /v1/webhooks/razorpay` (`apps/api/src/routes/webhooks/razorpay.ts`, #204) is public: Razorpay
+authenticates by signing the raw body. Register this URL in the Razorpay Dashboard for the
+subscription and payment events. The handler only verifies, stores and queues:
+
+1. The raw body is read before parsing. A missing or wrong `X-Razorpay-Signature` (hex
+   HMAC-SHA256 with `RAZORPAY_WEBHOOK_SECRET`, compared with `crypto.timingSafeEqual`) is a 400.
+2. A missing `x-razorpay-event-id`, a body that is not a Razorpay event, or a `created_at` outside
+   the replay window (72 h old to 5 min ahead) is a 400.
+3. The workspace comes only from the stored provider subscription id, through the SECURITY
+   DEFINER function `app_billing_workspace_for_provider_subscription(provider, id)`
+   (`0011_billing_webhook`, ids only). Notes and other payload metadata are never used. An unknown
+   subscription gets a 200 and is ignored (logged as `billing webhook for an unknown subscription
+   ignored`).
+4. The minimised event (`minimiseWebhookEvent`: no email, contact, description or notes) is stored
+   in `billing_event.payload`, once per event id. A replay is a 200 `{ received: true, duplicate:
+   true }` with no side effects. A new event enqueues `billing.process-event`
+   (`{ workspaceId, providerEventId }`) in the same transaction, so a failed enqueue rolls the row
+   back and Razorpay's retry is processed.
+
+`billing.process-event` (`packages/core/src/jobs/definitions/billing-process-event.ts`) locks the
+`billing_event` row, skips it if `processed_at` is set, applies the event to the subscription with
+`applyProviderEvent`, sets `processed_at` and invalidates the entitlement cache. An event the state
+machine rejects is marked processed and logged (`billing event rejected by the state machine`),
+never retried. The entitlement cache is per process: the worker clears its own, and the API's
+expires with the cache ttl.
+
+Dev and CI run the mock provider: `webhookSecretFor(env)` returns `MOCK_WEBHOOK_SECRET` when
+`BILLING_PROVIDER=mock`, and `signMockDelivery(delivery)` from `@causedeck/billing/provider` gives
+the exact raw body and signature for a mock delivery. Tests:
+`packages/billing/src/__tests__/webhook-signature.test.ts`,
+`packages/core/src/jobs/definitions/billing-process-event.test.ts`,
+`apps/api/src/__tests__/razorpay-webhook.test.ts`.
+
+### Read API
+
+- `GET /v1/billing/plans` (signed in): the active catalogue (`id`, `name`, `kind`, `interval`,
+  `pricePaise`, `perSeat`, `clerkSeatPricePaise`, `minSeats`).
+- `GET /v1/billing/subscription` (signed in, member of the `x-workspace-id` workspace): the current
+  subscription or `null`. Provider ids, GSTIN and the billing email are never returned.
 
 ## Webhook secret rotation
 

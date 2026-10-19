@@ -327,6 +327,12 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
   if (env.DATA_REGION !== undefined && env.DATA_REGION !== 'in' && !regionAck) {
     add('DATA_REGION', `must be "in" unless AWS_REGION_OVERRIDE_ACK=${OVERRIDE_ACK}`);
   }
+  if (env.S3_REGION !== undefined && !isIndiaRegion(env.S3_REGION) && !regionAck) {
+    add(
+      'S3_REGION',
+      `must be an India region (${INDIA_AWS_REGIONS.join(', ')}) unless AWS_REGION_OVERRIDE_ACK=${OVERRIDE_ACK}`,
+    );
+  }
   if (
     parsed.AI_INDIA_ONLY !== false &&
     env.AI_PROVIDER === 'bedrock' &&

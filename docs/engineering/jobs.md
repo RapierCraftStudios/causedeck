@@ -99,6 +99,9 @@ same pattern ([tenancy.md](tenancy.md)).
 `system.billing.reconcile` lists its targets the same way, through
 `app_billing_reconcile_targets()` (ids only, `0007_billing_reconcile`), then reads each
 subscription inside `withWorkspace` ([billing.md](billing.md#daily-reconcile)).
+`billing.process-event` (workspace job, payload `{ workspaceId, providerEventId }`, singleton per
+event id) applies one stored Razorpay webhook event exactly once by locking its `billing_event` row
+and setting `processed_at` in the same transaction ([billing.md](billing.md#webhooks)).
 
 ## Concurrency and fairness
 

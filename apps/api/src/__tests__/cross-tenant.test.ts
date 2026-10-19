@@ -6,7 +6,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { createRoute, z } from '@hono/zod-openapi';
-import { registeredTenantTables, type Transaction } from '@causedeck/db';
+import { registeredTenantTables, schema, withWorkspace, type Transaction } from '@causedeck/db';
 import { closeTestDb, testAppDb } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { sql } from 'drizzle-orm';
@@ -23,6 +23,10 @@ afterAll(closeTestDb);
 const ROUTES: Record<string, string> = {
   'GET /v1/me': 'memberships list only the caller’s workspaces',
   'GET /v1/workspaces': 'never lists another user’s workspace',
+  'GET /v1/billing/plans': 'global catalogue only, no tenant data',
+  'GET /v1/billing/subscription': 'B gets 403 for A’s id and only its own subscription',
+  'POST /v1/webhooks/razorpay':
+    'signature-gated; workspace from the stored provider id only (razorpay-webhook.test.ts)',
 };
 
 const PROBE_PATHS = new Set(['/v1/xt-probe', '/v1/workspaces/:workspaceId/xt-probe']);
@@ -100,6 +104,43 @@ describe('cross-tenant REST routes', () => {
     expect(response.status).toBe(200);
     const { data } = (await response.json()) as { data: { id: string }[] };
     expect(data.map((w) => w.id)).toEqual([t.b.id]);
+  });
+
+  it('GET /v1/billing/subscription: B gets 403 for A and only its own subscription', async () => {
+    const app = makeApp();
+    const denied = await call(app, '/v1/billing/subscription', {
+      cookie: ub.cookie,
+      headers: { 'x-workspace-id': t.a.id },
+    });
+    expect(denied.status).toBe(403);
+    const own = await call(app, '/v1/billing/subscription', {
+      cookie: ub.cookie,
+      headers: { 'x-workspace-id': t.b.id },
+    });
+    expect(own.status).toBe(200);
+    const { subscription } = (await own.json()) as { subscription: { id: string } | null };
+    expect(subscription).not.toBeNull();
+    const [aSubscription] = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+      tx.select({ id: schema.subscription.id }).from(schema.subscription),
+    );
+    expect(subscription?.id).not.toBe(aSubscription?.id);
+  });
+
+  it('GET /v1/billing/plans returns the catalogue only', async () => {
+    const response = await call(makeApp(), '/v1/billing/plans', { cookie: ub.cookie });
+    expect(response.status).toBe(200);
+    const body = JSON.stringify(await response.json());
+    expect(body).not.toContain(t.a.id);
+    expect(body).not.toContain(t.b.id);
+  });
+
+  it('POST /v1/webhooks/razorpay rejects an unsigned call without touching any workspace', async () => {
+    const response = await call(makeApp(), '/v1/webhooks/razorpay', {
+      method: 'POST',
+      rawBody: JSON.stringify({ event: 'subscription.cancelled', payload: {}, created_at: 0 }),
+      headers: { 'x-razorpay-event-id': `evt_${randomUUID()}` },
+    });
+    expect(response.status).toBe(400);
   });
 
   it('a workspace route with A’s id is 403 for B, by header and by path, like an unknown id', async () => {

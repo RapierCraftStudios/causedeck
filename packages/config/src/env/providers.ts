@@ -121,28 +121,38 @@ export const providerKeys = {
     requiredWhen: 'STORAGE_PROVIDER=minio',
     ownerIssue: 21,
   },
+  S3_REGION: {
+    domain: 'storage',
+    type: 'string',
+    description:
+      'Storage region. Must be an India region (ap-south-1, ap-south-2) unless AWS_REGION_OVERRIDE_ACK is set.',
+    default: 'ap-south-1',
+    requiredWhen: 'never (defaults to ap-south-1)',
+    ownerIssue: 21,
+  },
   S3_BUCKET: {
     domain: 'storage',
     type: 'string',
     description: 'Bucket for tenant documents.',
-    devDefault: 'causedeck',
+    devDefault: 'causedeck-dev',
     requiredWhen: 'always (dev default outside production)',
     ownerIssue: 21,
   },
   S3_ACCESS_KEY: {
     domain: 'storage',
-    type: 'string',
+    type: 'secret',
     description: 'S3 access key.',
-    devDefault: 'causedeck',
+    devDefault: 'minioadmin',
     requiredWhen: 'always (dev default outside production)',
     ownerIssue: 21,
     credentialIssue: 116,
+    secret: true,
   },
   S3_SECRET_KEY: {
     domain: 'storage',
     type: 'secret',
     description: 'S3 secret key.',
-    devDefault: 'causedeck-dev-secret',
+    devDefault: 'minioadmin',
     requiredWhen: 'always (dev default outside production)',
     ownerIssue: 21,
     credentialIssue: 116,
@@ -259,8 +269,9 @@ export const aiProvider = z.discriminatedUnion('AI_PROVIDER', [
 ]);
 
 const s3Credentials = {
+  S3_REGION: required.describe(d('S3_REGION')),
   S3_BUCKET: required.describe(d('S3_BUCKET')),
-  S3_ACCESS_KEY: required.describe(d('S3_ACCESS_KEY')),
+  S3_ACCESS_KEY: secret(required).describe(d('S3_ACCESS_KEY')),
   S3_SECRET_KEY: secret(required).describe(d('S3_SECRET_KEY')),
 };
 

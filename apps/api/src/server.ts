@@ -6,9 +6,17 @@ import { pathToFileURL } from 'node:url';
 
 import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth } from '@causedeck/auth/server';
+import { webhookSecretFor } from '@causedeck/billing/webhook';
 import { serverEnv } from '@causedeck/config/env';
+import { closeProducer } from '@causedeck/core/jobs';
 import { closeDb, db } from '@causedeck/db';
-import { createLogger, initTelemetry, type Logger } from '@causedeck/observability';
+import {
+  createLogger,
+  initTelemetry,
+  type HealthCheck,
+  type Logger,
+} from '@causedeck/observability';
+import { createObjectStoreFromEnv, storageReadyCheck, type StorageEnv } from '@causedeck/storage';
 import { serve } from '@hono/node-server';
 import type { Hono } from 'hono';
 
@@ -100,17 +108,30 @@ export function handleShutdownSignals(server: Server, options: ShutdownOptions):
   };
 }
 
+/** Readiness checks beyond `db`: `storage` heads the configured bucket (#21). */
+export function readyChecksFromEnv(env: StorageEnv): Record<string, HealthCheck> {
+  return { storage: storageReadyCheck(createObjectStoreFromEnv(env)) };
+}
+
 async function main(): Promise<void> {
   const env = serverEnv();
   const telemetry = initTelemetry({ service: 'api' });
   const logger = createLogger({ service: 'api' });
   const auth = createAuth({ db, env, mailer: createMailer(env, logger), logger });
 
-  const app = createApp({ db, auth, logger, allowedOrigins: [env.APP_URL] });
+  const app = createApp({
+    db,
+    auth,
+    logger,
+    allowedOrigins: [env.APP_URL],
+    readyChecks: readyChecksFromEnv(env),
+    billing: { webhookSecret: webhookSecretFor(env) },
+  });
   const { server, port } = await startServer({ app, port: env.API_PORT });
   handleShutdownSignals(server, {
     logger,
     cleanup: async () => {
+      await closeProducer();
       await closeDb();
       await telemetry.shutdown();
     },

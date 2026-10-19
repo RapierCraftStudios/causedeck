@@ -2,12 +2,12 @@
 // India is rejected when the transport is built, mirroring the env guardrail on SES_REGION (both
 // yield only to the explicit AWS_REGION_OVERRIDE_ACK acknowledgement).
 import { SendEmailCommand, SESv2Client } from '@aws-sdk/client-sesv2';
-import type { Secret } from '@causedeck/config/env';
+import { INDIA_AWS_REGIONS, type Secret } from '@causedeck/config/env';
 
 import type { EmailTransport } from './transport.ts';
 
-/** AWS regions in India (Mumbai, Hyderabad); same list as `INDIA_AWS_REGIONS` in config. */
-export const SES_INDIA_REGIONS = ['ap-south-1', 'ap-south-2'] as const;
+/** AWS regions in India (Mumbai, Hyderabad), shared with the env guardrails. */
+export const SES_INDIA_REGIONS = INDIA_AWS_REGIONS;
 
 export const SES_DEFAULT_REGION = 'ap-south-1';
 

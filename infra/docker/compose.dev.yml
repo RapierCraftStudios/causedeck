@@ -42,7 +42,8 @@ services:
       timeout: 5s
       retries: 30
 
-  # One-shot: creates the dev bucket with versioning. Idempotent; dev-up.sh runs it after --wait.
+  # One-shot: creates the dev bucket with versioning and no anonymous (public) access. Idempotent;
+  # dev-up.sh runs it after --wait.
   minio-init:
     image: pgsty/mc:RELEASE.2026-10-18T00-00-00Z
     depends_on:
@@ -55,7 +56,8 @@ services:
       - >-
         mc alias set local http://minio:9000 minioadmin minioadmin &&
         mc mb --ignore-existing local/causedeck-dev &&
-        mc version enable local/causedeck-dev
+        mc version enable local/causedeck-dev &&
+        mc anonymous set none local/causedeck-dev
     profiles: [init]
 
   mailpit:

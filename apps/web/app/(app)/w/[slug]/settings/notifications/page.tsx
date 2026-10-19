@@ -55,7 +55,10 @@ interface Loaded {
 
 async function loadPreferences(context: WorkspaceContext): Promise<Loaded> {
   const { loadNotificationPreferences } = await import('@causedeck/core/runtime');
-  return loadNotificationPreferences({ workspaceId: context.workspace.id, userId: context.user.id });
+  return loadNotificationPreferences({
+    workspaceId: context.workspace.id,
+    userId: context.user.id,
+  });
 }
 
 async function PreferencesSection({

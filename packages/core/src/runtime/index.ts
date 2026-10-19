@@ -34,7 +34,10 @@ export function isUuid(value: string): boolean {
 }
 
 /** Run `fn` in one transaction scoped to the workspace and acting user (`withWorkspace`). */
-export function inWorkspace<T>(scope: RuntimeScope, fn: (tx: Transaction) => Promise<T>): Promise<T> {
+export function inWorkspace<T>(
+  scope: RuntimeScope,
+  fn: (tx: Transaction) => Promise<T>,
+): Promise<T> {
   return withWorkspace(db, scope, fn);
 }
 
@@ -182,9 +185,8 @@ export async function recordAccessDeniedFor(event: AccessDeniedEvent): Promise<v
 
 /** The user's notification preferences, digest and settings, in one workspace-scoped transaction. */
 export async function loadNotificationPreferences(scope: RuntimeScope) {
-  const { getDigest, getNotificationSetting, getPreferences } = await import(
-    '@causedeck/notifications'
-  );
+  const { getDigest, getNotificationSetting, getPreferences } =
+    await import('@causedeck/notifications');
   const { workspaceId, userId } = scope;
   return inWorkspace(scope, async (tx) => {
     const ctx = { db: tx, workspaceId };

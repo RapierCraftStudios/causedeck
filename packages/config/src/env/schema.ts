@@ -222,6 +222,45 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 13,
   },
+  BILLING_SUPPLIER_LEGAL_NAME: {
+    domain: 'server',
+    type: 'string',
+    description:
+      'Legal name of the supplier on SaaS GST invoices. Outside production a TEST supplier is used when unset.',
+    requiredWhen: 'never (issuing an invoice in production refuses while unset)',
+    ownerIssue: 253,
+  },
+  BILLING_SUPPLIER_ADDRESS: {
+    domain: 'server',
+    type: 'string',
+    description: 'Registered address of the supplier on SaaS GST invoices.',
+    requiredWhen: 'never',
+    ownerIssue: 253,
+  },
+  BILLING_SUPPLIER_GSTIN: {
+    domain: 'server',
+    type: 'GSTIN',
+    description:
+      'GSTIN of the supplier on SaaS GST invoices; its state code decides CGST+SGST or IGST.',
+    requiredWhen: 'never (issuing an invoice in production refuses while unset)',
+    ownerIssue: 253,
+  },
+  BILLING_INVOICE_SERIES: {
+    domain: 'server',
+    type: 'string (1-3 capitals)',
+    description: 'SaaS invoice number series, as in CD/26-27/000001.',
+    default: 'CD',
+    requiredWhen: 'never (defaults to CD)',
+    ownerIssue: 253,
+  },
+  BILLING_SAC: {
+    domain: 'server',
+    type: 'string (99xxxx)',
+    description: 'SAC printed on SaaS GST invoices (needs CA confirmation).',
+    default: '998314',
+    requiredWhen: 'never (defaults to 998314)',
+    ownerIssue: 253,
+  },
 } satisfies KeyMetaRecord;
 
 export const killSwitchKeys = {
@@ -298,6 +337,21 @@ export const serverShape = {
   API_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.API_PORT)),
   WORKER_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.WORKER_PORT)),
   GIT_SHA: z.string().min(1).optional().describe(d(serverKeys.GIT_SHA)),
+  // Checked when an invoice is issued (`@causedeck/billing/config/supplier`), not at boot.
+  BILLING_SUPPLIER_LEGAL_NAME: z
+    .string()
+    .optional()
+    .describe(d(serverKeys.BILLING_SUPPLIER_LEGAL_NAME)),
+  BILLING_SUPPLIER_ADDRESS: z.string().optional().describe(d(serverKeys.BILLING_SUPPLIER_ADDRESS)),
+  BILLING_SUPPLIER_GSTIN: z.string().optional().describe(d(serverKeys.BILLING_SUPPLIER_GSTIN)),
+  BILLING_INVOICE_SERIES: z
+    .string()
+    .regex(/^[A-Z]{1,3}$/, 'must be 1-3 capital letters')
+    .describe(d(serverKeys.BILLING_INVOICE_SERIES)),
+  BILLING_SAC: z
+    .string()
+    .regex(/^99[0-9]{4}$/, 'must be a six-digit SAC starting 99')
+    .describe(d(serverKeys.BILLING_SAC)),
 };
 
 const baseSchema = z.object({ ...sharedShape, ...serverShape, ...clientShape });

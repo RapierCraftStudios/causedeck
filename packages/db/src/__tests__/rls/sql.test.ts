@@ -83,7 +83,7 @@ describe('row-level security catalog', () => {
         and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'workspace_id')
         and not (c.relname = any(${sql.raw(`array[${GLOBAL_TABLES.map((t) => `'${t}'`).join(', ')}]`)}))
       order by 1`);
-    // Baseline tables plus the tenant tables created after 0006 (#226, #194, #218, #22, #216).
+    // Baseline tables plus the tenant tables created after 0006 (#226, #194, #218, #22, #216, #252).
     expect(rows.map((r) => r.name)).toEqual(
       [
         ...BASELINE_TENANT_TABLES,
@@ -95,6 +95,8 @@ describe('row-level security catalog', () => {
         ...USAGE_TABLES,
         'workspace_feature_flag',
         'workspace_key',
+        'saas_invoice',
+        'saas_invoice_line',
       ].sort(),
     );
     for (const row of rows)

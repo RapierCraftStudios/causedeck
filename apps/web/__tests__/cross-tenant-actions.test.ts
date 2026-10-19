@@ -54,6 +54,7 @@ const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
+const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
@@ -78,6 +79,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  loadMoreAuditAction: activity,
+  verifyAuditEventAction: activity,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -174,6 +177,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    loadMoreAuditAction: { workspaceId, cursor: 'xt-cursor' },
+    verifyAuditEventAction: {
+      workspaceId,
+      eventId: t.a.rows.audit_event?.auditEventId,
+      createdAt: '2026-10-01T00:00:00.000000Z',
+    },
   };
 }
 

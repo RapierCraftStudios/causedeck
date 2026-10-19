@@ -775,6 +775,120 @@ export type Messages = {
       upgrade: string;
     };
   };
+  audit: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    tabs: {
+      label: string;
+      security: string;
+    };
+    tableLabel: string;
+    loading: string;
+    empty: string;
+    error: {
+      title: string;
+      retry: string;
+    };
+    offline: string;
+    denied: string;
+    loadMore: string;
+    loadMoreFailed: string;
+    columns: {
+      when: string;
+      who: string;
+      what: string;
+      target: string;
+      outcome: string;
+      ip: string;
+    };
+    outcome: {
+      success: string;
+      denied: string;
+      error: string;
+    };
+    actor: {
+      system: string;
+      staff: string;
+      api: string;
+      unknown: string;
+    };
+    sentence: {
+      memberRemoved: string;
+      memberRoleChanged: string;
+      memberRoleChangedNoRole: string;
+      flagChanged: string;
+      budgetOverride: string;
+      retentionPurged: string;
+      exported: string;
+      settingsViewed: string;
+      generic: string;
+    };
+    selected: string;
+    filters: {
+      label: string;
+      date: string;
+      dateAll: string;
+      dateRange: string;
+      dateFrom: string;
+      dateHint: string;
+      actor: string;
+      actorAll: string;
+      action: string;
+      actionAll: string;
+      apply: string;
+      clear: string;
+      groups: {
+        member: string;
+        flag: string;
+        usage: string;
+        audit: string;
+        workspace: string;
+      };
+    };
+    export: {
+      button: string;
+      title: string;
+      description: string;
+      format: string;
+      csv: string;
+      jsonl: string;
+      bom: string;
+      from: string;
+      to: string;
+      rangeInvalid: string;
+      confirm: string;
+      cancel: string;
+      started: string;
+      failed: string;
+      denied: string;
+      offline: string;
+    };
+    drawer: {
+      title: string;
+      who: string;
+      when: string;
+      target: string;
+      outcome: string;
+      ip: string;
+      requestId: string;
+      eventId: string;
+      metadata: string;
+      noMetadata: string;
+      copyId: string;
+      copied: string;
+      chain: string;
+      chainVerified: string;
+      chainUnverified: string;
+      chainChecking: string;
+      close: string;
+    };
+    shortcuts: string;
+    settingsLink: {
+      title: string;
+      hint: string;
+    };
+  };
   error: {
     title: string;
     description: string;

@@ -21,7 +21,7 @@ import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
 import { toBillingView, type BillingView } from './billing-view.ts';
-import { BillingError, BillingPermissionDenied } from './error.tsx';
+import { BillingError, BillingPermissionDenied } from './billing-error.tsx';
 import { InvoiceTable } from './invoice-table.tsx';
 import { BillingSkeleton } from './loading.tsx';
 import { BillingBanner, PaymentMethodCard } from './payment-method-card.tsx';

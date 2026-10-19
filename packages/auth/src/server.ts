@@ -159,6 +159,60 @@ function assertKnownRoles(value: unknown): void {
   }
 }
 
+/** The `hooks.after` view of a request that `securityEventHook` reads. */
+export interface SecurityHookContext extends RequestLike {
+  path: string;
+  body?: unknown;
+  context: { returned?: unknown; session?: { user: { id: string } } | null };
+}
+
+/**
+ * Security events from endpoint results (#228): magic link requested, passkey added/removed and
+ * failed sign-ins. Success paths are fail-closed (a recorder error fails the request); a failed
+ * sign-in is logged instead, so the original auth error still reaches the client.
+ */
+export function securityEventHook(securityEvents: SecurityEventRecorder, logger: AuthLogger) {
+  return async (ctx: SecurityHookContext): Promise<void> => {
+    const returned = ctx.context.returned;
+    const body = ctx.body as Record<string, unknown> | undefined;
+    const userId = ctx.context.session?.user.id ?? null;
+    const info = requestInfo(ctx);
+    if (failed(returned)) {
+      if (
+        ctx.path === MAGIC_LINK_VERIFY_PATH ||
+        ctx.path === PASSKEY_SIGN_IN_PATH ||
+        TWO_FACTOR_VERIFY_PATHS.has(ctx.path)
+      ) {
+        await securityEvents
+          .signInFailed({ ...info, userId, method: signInMethod(ctx.path) })
+          .catch((error: unknown) => {
+            logger.error(
+              { err: error instanceof Error ? { name: error.name } : {} },
+              'failed sign-in not recorded',
+            );
+          });
+      }
+      return;
+    }
+    if (ctx.path === MAGIC_LINK_PATH && typeof body?.email === 'string') {
+      await securityEvents.magicLinkRequested({ ...info, email: body.email });
+    } else if (ctx.path === '/passkey/verify-registration') {
+      const passkey = returned as { id?: unknown } | null | undefined;
+      await securityEvents.passkeyAdded({
+        ...info,
+        userId,
+        ...(typeof passkey?.id === 'string' ? { passkeyId: passkey.id } : {}),
+      });
+    } else if (ctx.path === '/passkey/delete-passkey') {
+      await securityEvents.passkeyRemoved({
+        ...info,
+        userId,
+        ...(typeof body?.id === 'string' ? { passkeyId: body.id } : {}),
+      });
+    }
+  };
+}
+
 export function createAuth({
   db,
   env,
@@ -281,47 +335,8 @@ export function createAuth({
           if (!allowed) throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
         }
       }),
-      // Security events (#228). Success paths are fail-closed: a recorder error fails the request.
-      // A failed sign-in is logged instead, so the original auth error still reaches the client.
-      after: createAuthMiddleware(async (ctx) => {
-        const returned = ctx.context.returned;
-        const body = ctx.body as Record<string, unknown> | undefined;
-        const userId = ctx.context.session?.user.id ?? null;
-        const info = requestInfo(ctx);
-        if (failed(returned)) {
-          if (
-            ctx.path === MAGIC_LINK_VERIFY_PATH ||
-            ctx.path === PASSKEY_SIGN_IN_PATH ||
-            TWO_FACTOR_VERIFY_PATHS.has(ctx.path)
-          ) {
-            await securityEvents
-              .signInFailed({ ...info, userId, method: signInMethod(ctx.path) })
-              .catch((error: unknown) => {
-                logger.error(
-                  { err: error instanceof Error ? { name: error.name } : {} },
-                  'failed sign-in not recorded',
-                );
-              });
-          }
-          return;
-        }
-        if (ctx.path === MAGIC_LINK_PATH && typeof body?.email === 'string') {
-          await securityEvents.magicLinkRequested({ ...info, email: body.email });
-        } else if (ctx.path === '/passkey/verify-registration') {
-          const passkey = returned as { id?: unknown } | null | undefined;
-          await securityEvents.passkeyAdded({
-            ...info,
-            userId,
-            ...(typeof passkey?.id === 'string' ? { passkeyId: passkey.id } : {}),
-          });
-        } else if (ctx.path === '/passkey/delete-passkey') {
-          await securityEvents.passkeyRemoved({
-            ...info,
-            userId,
-            ...(typeof body?.id === 'string' ? { passkeyId: body.id } : {}),
-          });
-        }
-      }),
+      // Security events (#228); session, 2FA and revocation events come from `databaseHooks`.
+      after: createAuthMiddleware((ctx) => securityEventHook(securityEvents, logger)(ctx)),
     },
     databaseHooks: {
       session: {

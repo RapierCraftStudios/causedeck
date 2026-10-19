@@ -89,5 +89,60 @@
       "from": "From {price}",
       "upgrade": "Upgrade to {plan}"
     }
+  },
+  "usage": {
+    "metaTitle": "Usage",
+    "title": "Usage",
+    "description": "This month's usage for {workspace}. Monthly meters reset at the start of each month (IST).",
+    "loading": "Loading usage",
+    "link": "Usage",
+    "linkHint": "AI processing, OCR pages, transcription and matters this month",
+    "billingLink": "View usage",
+    "permissionDenied": "Only workspace owners can see usage.",
+    "empty": {
+      "title": "No usage yet this month.",
+      "description": "The meters fill as you use AI processing, OCR and transcription."
+    },
+    "error": {
+      "title": "Could not load usage.",
+      "retry": "Try again"
+    },
+    "meters": {
+      "ai": "AI processing",
+      "ocr": "OCR pages",
+      "stt": "Transcription",
+      "matters": "Active matters"
+    },
+    "value": "{used} of {limit}",
+    "percentUsed": "{percent}% used",
+    "valueText": "{percent}% used, {used} of {limit}",
+    "unlimited": "No limit on your plan",
+    "aiResets": "AI processing budget resets on {date}",
+    "resets": "Resets on {date}",
+    "level": {
+      "warning": "Nearing the limit",
+      "exceeded": "Limit reached"
+    },
+    "aiWarning": "You have used {percent}% of this month's AI processing budget. Existing work is not affected.",
+    "aiExceeded": "You have used this month's AI processing budget. New AI processing resumes on {date}. Existing work is not affected.",
+    "limitWarning": "You have used {percent}% of this limit.",
+    "limitExceeded": "You have reached this limit. Existing work is not affected.",
+    "breakdown": {
+      "title": "This month in detail",
+      "caption": "Usage by resource this month",
+      "resource": "Resource",
+      "used": "Used",
+      "limit": "Limit",
+      "noLimit": "No limit",
+      "rows": {
+        "aiSpend": "AI processing spend",
+        "tokensIn": "AI tokens read",
+        "tokensOut": "AI tokens written",
+        "ocr": "OCR pages",
+        "stt": "Transcription",
+        "storage": "Storage",
+        "matters": "Active matters"
+      }
+    }
   }
 }

@@ -8,7 +8,10 @@
     ".": "./src/index.ts",
     "./gstin": "./src/gstin.ts",
     "./plans": "./src/plans.ts",
-    "./provider": "./src/provider/index.ts"
+    "./proration": "./src/proration.ts",
+    "./provider": "./src/provider/index.ts",
+    "./service": "./src/service.ts",
+    "./state-machine": "./src/state-machine.ts"
   },
   "scripts": {
     "lint": "eslint .",

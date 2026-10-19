@@ -68,6 +68,8 @@ interface SubscriptionRecord {
   interval: PlanInterval;
   cancelAtCycleEnd: boolean;
   mandate: MandateState;
+  /** Quantity scheduled for the next cycle by `updateSubscriptionQuantity(…, { at: 'cycle_end' })`. */
+  pendingQuantity: number | null;
 }
 
 /** Event name → statuses it may fire from. */
@@ -126,6 +128,12 @@ export function createMockBillingProvider(
 
   /** Start a new billing period at `from` and schedule the next charge at its end. */
   function startPeriod(rec: SubscriptionRecord, from: number): void {
+    if (rec.pendingQuantity !== null) {
+      rec.entity.quantity = rec.pendingQuantity;
+      rec.pendingQuantity = null;
+      rec.entity.has_scheduled_changes = false;
+      rec.entity.change_scheduled_at = null;
+    }
     const end = addInterval(from, rec.interval);
     rec.entity.current_start = from;
     rec.entity.current_end = end;
@@ -191,6 +199,7 @@ export function createMockBillingProvider(
       cancelAtCycleEnd: rec.cancelAtCycleEnd,
       shortUrl: e.short_url,
       mandate: { method: 'upi', state: rec.mandate },
+      pendingQuantity: rec.pendingQuantity,
     };
   }
 
@@ -227,6 +236,7 @@ export function createMockBillingProvider(
           interval: getPlan(input.planId)?.interval ?? 'month',
           cancelAtCycleEnd: false,
           mandate: 'created',
+          pendingQuantity: null,
           entity: {
             id,
             entity: 'subscription',
@@ -261,12 +271,22 @@ export function createMockBillingProvider(
       });
     },
 
-    updateSubscriptionQuantity(subscriptionId, quantity) {
+    updateSubscriptionQuantity(subscriptionId, quantity, updateOptions) {
       return attempt(() => {
         const rec = record(subscriptionId);
         assertStatus(rec, ['created', 'authenticated', 'active', 'pending'], 'update');
         assertQuantity(quantity);
-        rec.entity.quantity = quantity;
+        if (updateOptions?.at === 'cycle_end') {
+          rec.pendingQuantity = quantity;
+          rec.entity.has_scheduled_changes = true;
+          rec.entity.change_scheduled_at = rec.entity.current_end;
+        } else {
+          // An immediate change supersedes a scheduled one.
+          rec.entity.quantity = quantity;
+          rec.pendingQuantity = null;
+          rec.entity.has_scheduled_changes = false;
+          rec.entity.change_scheduled_at = null;
+        }
         return view(rec);
       });
     },
@@ -293,6 +313,17 @@ export function createMockBillingProvider(
         rec.entity.status = 'paused';
         rec.entity.charge_at = null;
         rec.mandate = 'paused';
+        return view(rec);
+      });
+    },
+
+    resume(subscriptionId) {
+      return attempt(() => {
+        const rec = record(subscriptionId);
+        assertStatus(rec, ['paused'], 'resume');
+        rec.entity.status = 'active';
+        rec.entity.charge_at = rec.entity.current_end;
+        rec.mandate = 'active';
         return view(rec);
       });
     },

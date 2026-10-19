@@ -183,6 +183,46 @@ describe('subscription operations', () => {
     expect((await provider.updateSubscriptionQuantity(id, 5)).quantity).toBe(5);
   });
 
+  it('has no scheduled quantity by default', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    expect((await provider.fetchSubscription(id)).pendingQuantity).toBeNull();
+    expect((await provider.updateSubscriptionQuantity(id, 4, { at: 'now' })).pendingQuantity).toBe(
+      null,
+    );
+  });
+
+  it('applies a cycle-end quantity on the next charge', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    await provider.updateSubscriptionQuantity(id, 5);
+    const scheduled = await provider.updateSubscriptionQuantity(id, 3, { at: 'cycle_end' });
+    expect(scheduled).toMatchObject({ quantity: 5, pendingQuantity: 3 });
+
+    const charged = await provider.simulate(id, 'subscription.charged');
+    expect(charged.payload.subscription?.entity).toMatchObject({
+      quantity: 3,
+      has_scheduled_changes: false,
+      change_scheduled_at: null,
+    });
+    // chamber-seat-1 is 49_900 paise per seat.
+    expect(charged.payload.payment?.entity.amount).toBe(3 * 49_900);
+    expect(await provider.fetchSubscription(id)).toMatchObject({
+      quantity: 3,
+      pendingQuantity: null,
+    });
+  });
+
+  it('resumes a paused subscription only', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    await expect(provider.resume(id)).rejects.toMatchObject({ code: 'invalid_state' });
+    const paused = await provider.pause(id);
+    const resumed = await provider.resume(id);
+    expect(resumed).toMatchObject({ status: 'active', mandate: { state: 'active' } });
+    expect(resumed.chargeAt).toEqual(paused.currentEnd);
+  });
+
   it('pauses an active subscription and its mandate', async () => {
     const provider = createMockBillingProvider();
     const id = await active(provider);

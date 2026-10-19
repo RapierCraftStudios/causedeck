@@ -13,7 +13,8 @@ export const WS_ISOLATION_PREDICATE = `workspace_id = ${CURRENT_WORKSPACE_SQL}`;
 
 /**
  * Tenant tables that existed before RLS (#15, #151, #177, #200); 0006_rls_baseline applies their
- * policies. Tables created later register through `tenantTable()`.
+ * policies. Tables created later register through `tenantTable()` and get their policies in the
+ * migration that creates them (e.g. the usage tables, #218, in 0007_usage).
  */
 export const BASELINE_TENANT_TABLES: readonly string[] = [
   'member',

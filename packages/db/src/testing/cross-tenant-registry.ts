@@ -22,6 +22,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   entitlement: DB_TABLES_TEST,
   usage_counter: DB_TABLES_TEST,
   billing_event: DB_TABLES_TEST,
+  usage_reservation: DB_TABLES_TEST,
+  usage_event: DB_TABLES_TEST,
+  budget_override: DB_TABLES_TEST,
+  usage_period_summary: DB_TABLES_TEST,
 };
 
 /**

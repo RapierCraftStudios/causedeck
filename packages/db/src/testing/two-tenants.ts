@@ -11,6 +11,12 @@ import { withWorkspace } from '../rls.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import {
+  budgetOverride,
+  usageEvent,
+  usagePeriodSummary,
+  usageReservation,
+} from '../schema/usage.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -123,6 +129,52 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(billingEvent)
       .values({ providerEventId, workspaceId, type: 'xt.seed', payloadHash: randomUUID() });
     return { providerEventId };
+  },
+  usage_reservation: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(usageReservation)
+      .values({
+        workspaceId,
+        amountPaise: 100,
+        purpose: 'xt.seed',
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      })
+      .returning({ id: usageReservation.id });
+    return { reservationId: first(rows, 'usage_reservation').id };
+  },
+  usage_event: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(usageEvent)
+      .values({
+        workspaceId,
+        key: 'xt.seed',
+        amount: 1,
+        idempotencyKey: randomUUID(),
+        metadata: { seed_id: randomUUID() },
+      })
+      .returning({ id: usageEvent.id });
+    return { usageEventId: first(rows, 'usage_event').id };
+  },
+  budget_override: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(budgetOverride)
+      .values({
+        workspaceId,
+        key: 'xt.seed',
+        limitValue: 1000,
+        setBy: ownerId,
+        reason: 'cross-tenant seed',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      })
+      .returning({ id: budgetOverride.id });
+    return { budgetOverrideId: first(rows, 'budget_override').id };
+  },
+  usage_period_summary: async (tx, { workspaceId }) => {
+    const key = `xt.seed_${randomUUID().replaceAll('-', '')}`;
+    await tx
+      .insert(usagePeriodSummary)
+      .values({ workspaceId, key, periodStart: new Date(), value: 1 });
+    return { key };
   },
 };
 

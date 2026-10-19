@@ -113,7 +113,7 @@ describe('exportAudit', () => {
       expect(event).toEqual({
         actorUserId: ownerId,
         ip: '198.51.100.9',
-        metadata: { format: 'jsonl', from: FROM.toISOString(), to: '2100-01-01T00:00:00.000Z', filtered: false },
+        metadata: { format: 'jsonl', from: FROM.toISOString(), to: '2100-01-01T00:00:00.000Z' },
       });
       await stream.cancel();
 

@@ -136,7 +136,6 @@ export async function exportAudit(
         format,
         from: from.toISOString(),
         to: to.toISOString(),
-        filtered: options.actorUserId !== undefined || options.actionGroup !== undefined,
       },
     },
   );

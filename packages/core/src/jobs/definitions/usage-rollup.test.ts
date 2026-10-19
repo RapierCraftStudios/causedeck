@@ -10,7 +10,7 @@ import type { Logger } from '@causedeck/observability';
 import { and, eq, sql } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
-import { periodStart } from '../../usage/period.ts';
+import { periodStart } from '../../usage/index.ts';
 import { registry } from '../registry.ts';
 import { runUsageRollup, USAGE_SUMMARY_RETENTION_MONTHS, usageRollup } from './usage-rollup.ts';
 

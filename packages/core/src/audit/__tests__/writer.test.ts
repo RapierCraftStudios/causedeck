@@ -10,7 +10,7 @@ import { eq, sql } from 'drizzle-orm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { record, type AuditContext } from '../index.ts';
-import { failure, newUser, sqlState } from './fixtures.ts';
+import { failure, newUser, sqlState } from '../../__tests__/fixtures.ts';
 
 const logged = vi.hoisted(() => ({ error: [] as unknown[][] }));
 

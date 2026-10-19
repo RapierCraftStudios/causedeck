@@ -3,8 +3,9 @@
 // owner-only today), and a workspace always keeps at least one active owner.
 import { can, isRole, type Action } from '@causedeck/auth/policy';
 import { schema, type Database, type Transaction } from '@causedeck/db';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
+import { activeMember, liveWorkspace } from '../shared/membership.ts';
 import { conflict, forbidden, invalid, notFound } from './errors.ts';
 import { offboardMember } from './offboarding.ts';
 
@@ -16,11 +17,7 @@ const { member, organization, session, user } = schema;
 const ROLE_VALUES = ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const;
 type SeatRole = (typeof ROLE_VALUES)[number];
 
-/** The workspace is not soft-deleted. */
-export const liveWorkspace = isNull(organization.deletedAt);
-
-/** The membership is active (not suspended or removed). */
-export const activeMember = eq(member.status, 'active');
+export { activeMember, liveWorkspace } from '../shared/membership.ts';
 
 interface WorkspaceRow {
   id: string;

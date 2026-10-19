@@ -29,7 +29,7 @@ vi.mock('../producer.ts', () => ({
     }),
 }));
 
-import { recordBillingEvent, resolveBillingWorkspace } from '../../billing/webhook-events.ts';
+import { recordBillingEvent, resolveBillingWorkspace } from '../../billing/index.ts';
 import { RetryableError } from '../errors.ts';
 import { registry } from '../registry.ts';
 import { billingProcessEvent, runBillingProcessEvent } from './billing-process-event.ts';

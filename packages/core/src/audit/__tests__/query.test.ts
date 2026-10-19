@@ -5,9 +5,9 @@ import { withTestDb } from '@causedeck/db/testing';
 import type { Transaction } from '@causedeck/db';
 import { describe, expect, it } from 'vitest';
 
-import { WorkspaceError } from '../../workspaces/errors.ts';
+import { WorkspaceError } from '../../workspaces/index.ts';
 import { authorizeAuditRead, queryAudit, record } from '../index.ts';
-import { addMember, failure, newUser, newWorkspace, setAdvocatesCanReadAudit } from './fixtures.ts';
+import { addMember, failure, newUser, newWorkspace, setAdvocatesCanReadAudit } from '../../__tests__/fixtures.ts';
 
 async function seed(tx: Transaction) {
   const { ownerId, workspaceId } = await newWorkspace(tx);

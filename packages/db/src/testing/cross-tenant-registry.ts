@@ -12,6 +12,8 @@ const CORE_SERVICES_TEST = 'packages/core/src/__tests__/cross-tenant/services.te
 const WEB_ACTIONS_TEST = 'apps/web/__tests__/cross-tenant-actions.test.ts';
 const BILLING_PROCESS_EVENT_TEST =
   'packages/core/src/jobs/definitions/billing-process-event.test.ts';
+const BILLING_INVOICE_RENDER_TEST =
+  'packages/core/src/jobs/definitions/billing-invoice-render.test.ts';
 const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
 const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
@@ -119,6 +121,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
     note: 'reads and updates only the payload workspace inside withWorkspace',
+  },
+  runBillingInvoiceRender: {
+    test: BILLING_INVOICE_RENDER_TEST,
+    kind: 'self-scoped',
+    note: 'loads the payload invoice inside withWorkspace; another workspace’s invoice is never rendered',
   },
   runBillingReconcile: {
     test: BILLING_RECONCILE_TEST,
@@ -304,6 +311,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   billingProcessEvent: 'job definition (handler is runBillingProcessEvent)',
   billingProcessEventSchema: 'zod schema',
   billingReconcile: 'job definition (handler is runBillingReconcile)',
+  // jobs: invoice render helpers exported for the billing PDF test (#258, #293)
+  invoicePdfFilename: 'pure (file name)',
   // jobs: usage rollup (#222)
   usageRollup: 'job definition (handler is runUsageRollup)',
   USAGE_SUMMARY_RETENTION_MONTHS: 'constant',

@@ -188,6 +188,11 @@ export type Messages = {
       requestAccess: string;
       requestAccessSoon: string;
     };
+    permission: {
+      ownersOnly: string;
+      ownersAndAdvocates: string;
+      roleTooLow: string;
+    };
     notFound: {
       title: string;
       message: string;

@@ -1,6 +1,6 @@
 // Renders `docs/engineering/permissions.md` from the matrix (#231). Pure; the file is written by
 // `packages/auth/scripts/gen-permissions-doc.ts` (`pnpm docs:permissions`).
-import { atLeast, ROLES } from '../roles';
+import { atLeast, ROLES } from '../role-rank';
 import { ACTIONS, type ActionDomain } from './actions';
 import { DENY_REASONS } from './can';
 import { MATRIX } from './matrix';

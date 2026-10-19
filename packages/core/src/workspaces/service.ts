@@ -13,7 +13,7 @@ import { CreateWorkspaceInput } from '@causedeck/validators/workspace';
 import { eq } from 'drizzle-orm';
 
 import { invalid, isUniqueViolation } from './errors.ts';
-import { requireOwner } from './members.ts';
+import { requireCan } from './members.ts';
 import { generateUniqueSlug } from './slug.ts';
 
 type Queryable = Database | Transaction;
@@ -70,7 +70,7 @@ export async function softDeleteWorkspace(
   request: SoftDeleteRequest,
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    await requireOwner(tx, request.workspaceId, request.actorUserId);
+    await requireCan(tx, request.workspaceId, request.actorUserId, 'workspace.delete');
     await tx
       .update(organization)
       .set({ deletedAt: new Date() })

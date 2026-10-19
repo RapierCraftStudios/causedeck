@@ -1,6 +1,7 @@
 // `onError` / `notFound`: every failure leaves as problem+json. Unknown errors are logged with the
 // request id and become a generic `INTERNAL`; their message and stack never reach the client.
 import { UnauthenticatedError as SessionUnauthenticatedError } from '@causedeck/auth';
+import { conceals, isForbiddenError } from '@causedeck/auth/policy';
 import { InvalidCursorError } from '@causedeck/core/workspaces';
 import { isFlagOffError } from '@causedeck/flags/server';
 import type { Logger } from '@causedeck/observability';
@@ -10,6 +11,7 @@ import { HTTPException } from 'hono/http-exception';
 
 import {
   ApiError,
+  ForbiddenError,
   InternalError,
   NotFoundError,
   problemResponse,
@@ -28,6 +30,9 @@ function requestIdOf(c: Context<AppEnv>): string {
 export function toApiError(error: unknown): ApiError | null {
   if (error instanceof ApiError) return error;
   if (error instanceof SessionUnauthenticatedError) return new UnauthenticatedError();
+  // A policy denial (`authorize` / `assertCan`, #234): 403, or 404 for a read of a resource the
+  // caller may not see, so its existence does not leak. Action and reason stay in the log line.
+  if (isForbiddenError(error)) return conceals(error) ? new NotFoundError() : new ForbiddenError();
   // A disabled feature (`requireFlag` in a handler) is indistinguishable from a missing route (#22).
   if (isFlagOffError(error)) return new NotFoundError();
   if (error instanceof InvalidCursorError) {

@@ -861,6 +861,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@causedeck/billing':
+        specifier: workspace:*
+        version: link:../billing
       '@causedeck/config':
         specifier: workspace:*
         version: link:../config

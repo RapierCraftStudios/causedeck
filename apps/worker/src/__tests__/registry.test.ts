@@ -121,6 +121,8 @@ describe('enqueue', () => {
       'system.billing.reconcile',
       'system.billing.dunning-tick',
       'billing.process-event',
+      'billing.invoice-render',
+      'billing.invoice-notice',
       'notification.deliver',
       'system.notification.digest',
       'notification.digest',

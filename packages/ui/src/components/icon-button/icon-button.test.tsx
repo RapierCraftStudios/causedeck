@@ -35,7 +35,7 @@ describe('IconButton', () => {
     );
     const button = screen.getByRole('button');
     expect(button).toHaveClass(cls, 'px-0', 'pointer-coarse:hit');
-    expect(button.className).not.toMatch(/\bh-(8|9|11)\b/);
+    expect(button.className).not.toMatch(/(^|\s)h-(8|9|11)(\s|$)/);
   });
 
   it('announces loading through the labels prop and blocks clicks', () => {

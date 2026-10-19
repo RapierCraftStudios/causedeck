@@ -47,7 +47,22 @@ function EditorialPane({ wordmark, pullLine }: { wordmark: string; pullLine: str
   const rows = [3, 7, 12, 14, 18, 21, 26, 31];
   return (
     <aside className="bg-surface-sunken relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
-      <span className="font-serif text-lg font-medium">{wordmark}</span>
+      <span>
+        <img
+          src="/brand/causedeck-logo.svg"
+          alt={wordmark}
+          width={160}
+          height={105}
+          className="h-auto w-40 dark:hidden"
+        />
+        <img
+          src="/brand/causedeck-logo-dark.svg"
+          alt={wordmark}
+          width={160}
+          height={105}
+          className="hidden h-auto w-40 dark:block"
+        />
+      </span>
       <ol aria-hidden="true" className="text-ink-subtle flex flex-col font-serif select-none">
         {rows.map((n) => (
           <li key={n} className="border-line flex items-baseline gap-6 border-b py-3">
@@ -78,7 +93,23 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       <EditorialPane wordmark={t('wordmark')} pullLine={t('pullLine')} />
       <div className="flex min-h-dvh flex-col p-6 md:items-center">
         <header className="w-full lg:hidden">
-          <span className="font-serif text-lg font-medium">{t('wordmark')}</span>
+          <span className="flex items-center gap-2">
+            <img
+              src="/brand/causedeck-mark.svg"
+              alt=""
+              width={24}
+              height={24}
+              className="size-6 dark:hidden"
+            />
+            <img
+              src="/brand/causedeck-mark-dark.svg"
+              alt=""
+              width={24}
+              height={24}
+              className="hidden size-6 dark:block"
+            />
+            <span className="font-serif text-lg font-medium">{t('wordmark')}</span>
+          </span>
         </header>
         <main
           id="main"

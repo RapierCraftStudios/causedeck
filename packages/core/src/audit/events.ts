@@ -23,6 +23,10 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A staff member set a workspace AI budget override',
   },
+  'audit.retention_purged': {
+    security: true,
+    description: 'Audit events older than the retention window were purged',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

@@ -83,7 +83,9 @@ that returns only what the caller needs: slugs, ids, booleans or a count. The fu
 | `app_purge_job_effects(timestamptz)`                                                                                                                                   | `system.retention.sweep`                                                        |
 | `app_billing_reconcile_targets()` returns `(workspace_id, subscription_id)`                                                                                            | `system.billing.reconcile`, which then reads each row inside `withWorkspace`    |
 | `app_audit_append(...)` returns `(id, hash)`: appends to the pinned workspace's chain (any other workspace id is `42501`) or, with a null workspace, the account chain | the audit writer `record()` (#227)                                              |
-| `app_purge_audit(timestamptz)`, `app_purge_ai_calls(timestamptz)` (cutoff at least 180 days old)                                                                       | the audit retention job (#230)                                                  |
+| `app_purge_audit(timestamptz)`, `app_purge_ai_calls(timestamptz)` (cutoff at least 180 days old)                                                                       | `system.audit.retention`                                                        |
+| `app_audit_chain_targets()` returns `(workspace_id)` (every workspace with an audit chain)      | `system.audit.verify`, which enqueues `audit.verify` to verify each one inside `withWorkspace` |
+| `app_audit_verify_account_chain(timestamptz, timestamptz)` returns `(checked, id, reason)`         | `system.audit.verify`, for the account chain                                    |
 | `app_workspace_keys_for_rewrap(text)` (workspace ids whose live key is under another KEK) | `rewrapAll` / `pendingRewrap` in `@causedeck/storage`, which re-wrap each key inside `withWorkspace` ([storage.md](storage.md)) |
 
 `createWorkspace` needs no bypass: it picks the new workspace's id itself and writes the

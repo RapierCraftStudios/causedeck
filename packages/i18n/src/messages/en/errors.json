@@ -1,0 +1,14 @@
+{
+  "error": {
+    "title": "Something went wrong.",
+    "description": "Your saved work is safe. Try again, or go back to Today.",
+    "reference": "Reference: {digest}"
+  },
+  "notFound": {
+    "title": "Page not found"
+  },
+  "offline": {
+    "title": "Offline",
+    "body": "You are offline. Saved court days and briefs remain available once synced."
+  }
+}

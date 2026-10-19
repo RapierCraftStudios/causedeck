@@ -7,8 +7,8 @@ import { getTableName, is, SQL } from 'drizzle-orm';
 import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /**
- * Tables that are not workspace-scoped: the baseline, Better Auth's identity tables and, later, the
- * court layer. `organization` (the workspace), `member` and `invitation` are tenant roots, not
+ * Tables that are not workspace-scoped: the baseline, Better Auth's identity tables, the billing
+ * plan catalogue and, later, the court layer. `organization` (the workspace), `member` and `invitation` are tenant roots, not
  * global; RLS for them comes in #19.
  */
 export const GLOBAL_TABLES: readonly string[] = [
@@ -21,6 +21,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'two_factor',
   'rate_limit',
   'api_idempotency_key',
+  'plan',
 ];
 
 export const WORKSPACE_COLUMN = 'workspace_id';

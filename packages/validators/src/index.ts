@@ -2,3 +2,4 @@
 export const packageName: string = '@causedeck/validators';
 
 export * from './api/index';
+export * from './workspace';

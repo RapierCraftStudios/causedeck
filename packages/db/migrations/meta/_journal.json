@@ -29,6 +29,20 @@
       "when": 1792335375689,
       "tag": "0003_api_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792357093933,
+      "tag": "0004_workspaces",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792370940198,
+      "tag": "0005_billing",
+      "breakpoints": true
     }
   ]
 }

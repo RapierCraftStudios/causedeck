@@ -5,10 +5,13 @@ import { createTransport } from 'nodemailer';
 
 import type { AuthLocale } from './messages';
 
-/** A magic-link email. Subject and body are i18n keys, resolved by the transport. */
+/**
+ * A magic-link or workspace invitation (#178) email. Subject and body are i18n keys, resolved by
+ * the transport.
+ */
 export interface AuthEmail {
   to: string;
-  template: 'auth.magicLink';
+  template: 'auth.magicLink' | 'workspace.invitation';
   subjectKey: string;
   bodyKey: string;
   url: string;

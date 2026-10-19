@@ -6,6 +6,13 @@
 // `user`, `session`, `account`, `verification`, `passkey`, `two_factor` and `rate_limit` are global
 // (see GLOBAL_TABLES). `organization` is the workspace; `member` and `invitation` are tenant tables
 // whose `organizationId` is stored as `workspace_id`, so RLS (#19) applies to them as to any other.
+//
+// Single source of truth (#177): the workspace is Better Auth's `organization`, and membership and
+// invitations are its `member` and `invitation`. The workspace domain columns (kind, plan, soft
+// delete, member status, invitation token hash, ...) extend those tables here instead of living in
+// duplicate tables or views. Every added column is nullable or defaulted so the organization plugin,
+// which only writes its own fields, keeps working. Workspace-only tables (`workspace_settings`,
+// `workspace_slug_history`) live in `workspace.ts`.
 import { LOCALES } from '@causedeck/i18n/locales';
 import { sql } from 'drizzle-orm';
 import {
@@ -21,7 +28,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { id, timestamps, workspaceIndex } from '../columns.ts';
+import { citext, id, timestamps, workspaceIndex } from '../columns.ts';
 
 /**
  * Workspace membership roles, mirrored from `ROLES` in `@causedeck/auth` (which depends on this
@@ -32,7 +39,13 @@ export const WORKSPACE_ROLES = ['owner', 'advocate', 'junior', 'clerk', 'viewer'
 /** UI locales, owned by `@causedeck/i18n`; re-exported for the `user_locale_chk` check. */
 export { LOCALES };
 
-const inList = (values: readonly string[]) =>
+/** A solo practice or a shared chamber with seats (#18). */
+export const WORKSPACE_KINDS = ['solo', 'chamber'] as const;
+
+/** Membership lifecycle; only `active` members see the workspace or count as seats. */
+export const MEMBER_STATUSES = ['active', 'suspended', 'removed'] as const;
+
+export const inList = (values: readonly string[]) =>
   sql.raw(`(${values.map((v) => `'${v}'`).join(', ')})`);
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -52,14 +65,24 @@ export const user = pgTable(
   () => [check('user_locale_chk', sql`locale in ${inList(LOCALES)}`)],
 );
 
-export const organization = pgTable('organization', {
-  id: id(),
-  name: text('name').notNull(),
-  slug: text('slug').notNull().unique('organization_slug_uq'),
-  logo: text('logo'),
-  metadata: text('metadata'),
-  createdAt: createdAt(),
-});
+export const organization = pgTable(
+  'organization',
+  {
+    id: id(),
+    name: text('name').notNull(),
+    slug: citext('slug').notNull().unique('organization_slug_uq'),
+    logo: text('logo'),
+    metadata: text('metadata'),
+    kind: text('kind').notNull().default('solo'),
+    planId: text('plan_id'),
+    /** Null for workspaces created by Better Auth directly or whose creator was deleted. */
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
+    /** Soft delete: hidden from membership queries and slug resolution. Hard delete is #31. */
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  () => [check('organization_kind_chk', sql`kind in ${inList(WORKSPACE_KINDS)}`)],
+);
 
 export const session = pgTable(
   'session',
@@ -177,6 +200,8 @@ export const member = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     role: text('role').notNull(),
+    status: text('status').notNull().default('active'),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: createdAt(),
   },
   (t) => [
@@ -184,6 +209,7 @@ export const member = pgTable(
     uniqueIndex('member_workspace_user_uq').on(t.organizationId, t.userId),
     index('member_user_id_idx').on(t.userId),
     check('member_role_chk', sql`role in ${inList(WORKSPACE_ROLES)}`),
+    check('member_status_chk', sql`status in ${inList(MEMBER_STATUSES)}`),
   ],
 );
 
@@ -201,11 +227,16 @@ export const invitation = pgTable(
     inviterId: uuid('inviter_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    /** SHA-256 of the invite token (#178); the plaintext is never stored. */
+    tokenHash: text('token_hash'),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
     workspaceIndex('invitation', t.organizationId),
     index('invitation_email_idx').on(t.email),
+    uniqueIndex('invitation_token_hash_uq').on(t.tokenHash),
     check('invitation_role_chk', sql`role in ${inList(WORKSPACE_ROLES)}`),
   ],
 );

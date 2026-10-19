@@ -8,16 +8,25 @@ import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PlaceholderRoute } from '../components/shell/placeholder-page.tsx';
-import { WORKSPACE_ROUTES } from '../lib/nav.ts';
+import { getNavItem, WORKSPACE_ROUTES } from '../lib/nav.ts';
 import { setErrorReporter, type ErrorReporter } from '../lib/report-error.ts';
+import type { WorkspaceContextResult } from '../lib/workspace-context.ts';
 
 import { catalogs, fakeGetTranslations, type TestLocale } from './helpers/intl.ts';
 
 const state = vi.hoisted(
-  (): { locale: TestLocale; dev: boolean; cookies: Record<string, { value: string }> } => ({
+  (): {
+    locale: TestLocale;
+    dev: boolean;
+    cookies: Record<string, { value: string }>;
+    pathname: string;
+    noWorkspaces: boolean;
+  } => ({
     locale: 'en',
     dev: true,
     cookies: {},
+    pathname: '/w/demo/today',
+    noWorkspaces: false,
   }),
 );
 
@@ -37,15 +46,36 @@ vi.mock('next-intl/server', () => ({
 vi.mock('../lib/env.ts', () => ({ isDev: () => state.dev }));
 vi.mock('next/headers', () => ({
   cookies: () => Promise.resolve({ get: (name: string) => state.cookies[name] }),
+  headers: () => Promise.resolve(new Headers({ 'x-pathname': state.pathname })),
 }));
+// The loader reads the session and the database (#179); here it answers from the test fixture:
+// the user owns `demo`, is `clerk` of `clerk-desk`, `old-demo` is a renamed slug of `demo`.
+vi.mock('../lib/workspace-loader.ts', async () => {
+  const { testWorkspaceContext, TEST_MEMBERSHIPS } = await import('./helpers/workspace.ts');
+  const getWorkspaceResult = (slug: string): Promise<WorkspaceContextResult> => {
+    if (state.noWorkspaces) return Promise.resolve({ kind: 'no-workspaces' });
+    if (slug === 'old-demo') return Promise.resolve({ kind: 'redirect', slug: 'demo' });
+    const member = TEST_MEMBERSHIPS.some((m) => m.workspace.slug === slug);
+    return Promise.resolve(
+      member ? { kind: 'ok', context: testWorkspaceContext(slug) } : { kind: 'not-found' },
+    );
+  };
+  return {
+    getWorkspaceResult,
+    getWorkspaceContext: async (slug: string) => {
+      const result = await getWorkspaceResult(slug);
+      return result.kind === 'ok' ? result.context : null;
+    },
+  };
+});
 
 const { default: WorkspaceLayout } = await import('../app/(app)/w/[slug]/layout.tsx');
 const { default: WorkspaceError } = await import('../app/(app)/w/[slug]/error.tsx');
 const { default: WorkspaceLoading } = await import('../app/(app)/w/[slug]/loading.tsx');
 const { default: WorkspaceNotFound } = await import('../app/(app)/w/[slug]/not-found.tsx');
-const { default: SettingsPage } = await import('../app/(app)/w/[slug]/settings/page.tsx');
 const { default: AccountPage } = await import('../app/(app)/account/page.tsx');
-const { placeholderPage } = await import('../components/shell/placeholder-page.tsx');
+const { EMPTY_ACTION_TARGET, placeholderPage } =
+  await import('../components/shell/placeholder-page.tsx');
 
 type PageComponent = ReturnType<typeof placeholderPage>;
 
@@ -66,12 +96,11 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
   invoices: (await import('../app/(app)/w/[slug]/invoices/page.tsx')).default,
   limitation: (await import('../app/(app)/w/[slug]/limitation/page.tsx')).default,
   insights: (await import('../app/(app)/w/[slug]/insights/page.tsx')).default,
+  settings: (await import('../app/(app)/w/[slug]/settings/page.tsx')).default,
 };
 
 type PlaceholderId = PlaceholderRoute;
-const PLACEHOLDER_ROUTES = WORKSPACE_ROUTES.filter(
-  (route): route is PlaceholderId => route !== 'settings',
-);
+const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES;
 const FLAGGED = new Set(['invoices', 'limitation']);
 
 /** Flagged pages rebuilt with the flag on, so every route can be rendered. */
@@ -98,6 +127,8 @@ beforeEach(() => {
   state.locale = 'en';
   state.dev = true;
   state.cookies = {};
+  state.pathname = '/w/demo/today';
+  state.noWorkspaces = false;
   online = true;
   Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
   reporter = vi.fn<ErrorReporter>();
@@ -119,6 +150,20 @@ describe('workspace layout', () => {
       ).rejects.toThrow('NEXT_NOT_FOUND');
     }
     expect(children).not.toHaveBeenCalled();
+  });
+
+  it('redirects an old slug to the same page on the current slug', async () => {
+    state.pathname = '/w/old-demo/matters?stage=filed';
+    await expect(
+      WorkspaceLayout({ children: <p />, params: Promise.resolve({ slug: 'old-demo' }) }),
+    ).rejects.toThrow('NEXT_REDIRECT /w/demo/matters?stage=filed');
+  });
+
+  it('sends a user with no workspace to onboarding', async () => {
+    state.noWorkspaces = true;
+    await expect(
+      WorkspaceLayout({ children: <p />, params: Promise.resolve({ slug: 'demo' }) }),
+    ).rejects.toThrow('NEXT_REDIRECT /onboarding');
   });
 
   it('renders children inside main#main for a member', async () => {
@@ -164,7 +209,7 @@ describe('workspace layout', () => {
 });
 
 describe('placeholder pages', () => {
-  it('exist for every workspace route except settings', () => {
+  it('exist for every workspace route, settings included', () => {
     const dir = path.join(import.meta.dirname, '../app/(app)/w/[slug]');
     for (const route of WORKSPACE_ROUTES) {
       expect(existsSync(path.join(dir, route, 'page.tsx')), route).toBe(true);
@@ -180,6 +225,30 @@ describe('placeholder pages', () => {
     expect(screen.getByText(catalogs.en.shell.pages[route].description)).toBeTruthy();
   });
 
+  it.each(PLACEHOLDER_ROUTES)(
+    '%s empty state has an icon, a one-line hint and a primary action to a real page',
+    async (route) => {
+      withIntl(await pageFor(route)(props('demo')));
+      const empty = document.querySelector('[data-pattern-state="empty"]');
+      expect(empty?.querySelector('[data-slot="empty-state-icon"] svg')).not.toBeNull();
+      expect(empty?.querySelector('[data-slot="empty-state-description"]')?.textContent).toBe(
+        catalogs.en.shell.pages[route].hint,
+      );
+      const action = empty?.querySelector('[data-slot="empty-state-actions"] a');
+      const target = EMPTY_ACTION_TARGET[route];
+      expect(action?.getAttribute('href')).toBe(
+        target === 'account' ? '/account' : `/w/demo/${target}`,
+      );
+      expect(action?.textContent).toMatch(/^Go to /);
+      // The target is a page every role can open: no permission, no flag.
+      if (target !== 'account') {
+        const item = getNavItem(target);
+        expect(item.requires).toBeUndefined();
+        expect(item.flag).toBeUndefined();
+      }
+    },
+  );
+
   it('uses the #11 design-spec empty copy verbatim', async () => {
     const spec: Partial<Record<PlaceholderId, string>> = {
       today: 'No hearings today. Forward a cause list to see your court day.',
@@ -190,7 +259,7 @@ describe('placeholder pages', () => {
     };
     for (const [route, copy] of Object.entries(spec)) {
       withIntl(await pageFor(route as PlaceholderId)(props('demo')));
-      expect(document.querySelector('[data-pattern-state="empty"]')?.textContent).toBe(copy);
+      expect(document.querySelector('[data-slot="empty-state-title"]')?.textContent).toBe(copy);
       cleanup();
     }
   });
@@ -311,16 +380,29 @@ describe('workspace boundaries', () => {
 });
 
 describe('settings and account', () => {
-  it('settings redirects to settings/profile', async () => {
-    await expect(SettingsPage({ params: Promise.resolve({ slug: 'demo' }) })).rejects.toThrow(
-      'NEXT_REDIRECT /w/demo/settings/profile',
-    );
+  it('settings is an index page, not a redirect to a missing section', async () => {
+    withIntl(await PAGES.settings(props('demo')));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Settings');
+    expect(document.querySelector('[data-route="settings"]')).not.toBeNull();
+  });
+
+  it('settings renders for a clerk, who holds settings.read (viewers do not)', async () => {
+    const { can } = await import('../lib/workspace-context.ts');
+    expect(can('viewer', 'settings.read')).toBe(false);
+    expect(can('clerk', 'settings.read')).toBe(true);
+    withIntl(await PAGES.settings(props('clerk-desk')));
+    expect(document.querySelector('[data-route="settings"]')).not.toBeNull();
   });
 
   it('account renders its placeholder', async () => {
     render(await AccountPage());
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Account');
     expect(document.getElementById('main')).not.toBeNull();
+    const empty = document.querySelector('[data-pattern-state="empty"]');
+    expect(empty?.querySelector('[data-slot="empty-state-description"]')?.textContent).toBe(
+      catalogs.en.shell.account.hint,
+    );
+    expect(empty?.querySelector('a[data-empty-action]')?.getAttribute('href')).toBe('/');
   });
 });
 

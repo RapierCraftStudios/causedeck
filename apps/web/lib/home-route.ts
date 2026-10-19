@@ -1,20 +1,34 @@
-// Where `/` sends a visitor. Sessions arrive with #12; until then nobody is signed in.
+// Where `/` sends a visitor (#179): signed in, to the last workspace they opened (`cd_last_ws`) or
+// their first, or to onboarding when they belong to none; signed out, the placeholder home.
+import { cookies } from 'next/headers';
+
+import { LAST_WORKSPACE_COOKIE, pickLandingSlug } from './workspace-context.ts';
+
 export interface HomeSession {
+  /** `null` when the signed-in user belongs to no workspace yet. */
   lastWorkspaceSlug: string | null;
 }
 
-/** The current session. Always `null` until Better Auth lands (#12). */
-export function getHomeSession(): Promise<HomeSession | null> {
-  return Promise.resolve(null);
+/** The signed-in user's landing workspace, or `null` when signed out. */
+export async function getHomeSession(): Promise<HomeSession | null> {
+  // Loaded lazily so this module stays free of the database until a request needs it.
+  const { loadMemberships } = await import('./workspace-loader.ts');
+  const loaded = await loadMemberships();
+  if (!loaded) return null;
+  const last = (await cookies()).get(LAST_WORKSPACE_COOKIE)?.value;
+  return { lastWorkspaceSlug: pickLandingSlug(loaded.memberships, last) };
 }
 
 /**
- * Signed in with a workspace: that workspace's Today. Otherwise `null`, and `/` renders the
- * placeholder home (which links to `/sign-in`).
- * TODO(#12): send anonymous visitors to `/sign-in` once sign-in exists.
+ * Signed in with a workspace: that workspace's Today. Signed in without one: onboarding. Signed
+ * out: `null`, and `/` renders the placeholder home (which links to `/sign-in`).
  */
-export function homeDestination(session: HomeSession | null): `/w/${string}/today` | null {
-  if (session?.lastWorkspaceSlug)
+export function homeDestination(
+  session: HomeSession | null,
+): `/w/${string}/today` | '/onboarding' | null {
+  if (!session) return null;
+  if (session.lastWorkspaceSlug) {
     return `/w/${encodeURIComponent(session.lastWorkspaceSlug)}/today`;
-  return null;
+  }
+  return '/onboarding';
 }

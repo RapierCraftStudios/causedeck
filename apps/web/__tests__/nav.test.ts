@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import en from '../messages/en.json';
+import en from '@causedeck/i18n/messages/en.json';
 import {
   getNavItem,
   NAV_GROUPS,
@@ -43,7 +43,7 @@ describe('navigation manifest', () => {
   it('builds workspace-scoped hrefs with an encoded slug', () => {
     expect(getNavItem('today').href('demo')).toBe('/w/demo/today');
     expect(getNavItem('matters').href('a b/c')).toBe('/w/a%20b%2Fc/matters');
-    expect(getNavItem('settings').href('demo')).toBe('/w/demo/settings/profile');
+    expect(getNavItem('settings').href('demo')).toBe('/w/demo/settings');
   });
 
   it('gives every item a known group and a label key present in en.json', () => {

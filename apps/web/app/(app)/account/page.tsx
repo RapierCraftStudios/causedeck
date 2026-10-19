@@ -1,6 +1,8 @@
+import { buttonVariants } from '@causedeck/ui/button';
 import { EmptyState } from '@causedeck/ui/empty-state';
 import { UserRound } from 'lucide-react';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 export const metadata: Metadata = { title: 'Account' };
@@ -18,7 +20,22 @@ export default async function AccountPage() {
         <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
         <p className="text-ink-muted text-sm">{t('description')}</p>
       </header>
-      <EmptyState data-pattern-state="empty" icon={<UserRound />} title={t('empty')} />
+      <EmptyState
+        data-pattern-state="empty"
+        icon={<UserRound />}
+        title={t('empty')}
+        description={t('hint')}
+        action={
+          // `/` sends a signed-in user to their last workspace.
+          <Link
+            href="/"
+            data-empty-action="home"
+            className={buttonVariants({ variant: 'primary' })}
+          >
+            {t('action')}
+          </Link>
+        }
+      />
     </main>
   );
 }

@@ -6,7 +6,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { registerCommands, resetCommands } from '../../../lib/commands/registry.ts';
-import { getWorkspaceContext, type WorkspaceContext } from '../../../lib/workspace-context.ts';
+import { testWorkspaceContext } from '../../../__tests__/helpers/workspace.ts';
 
 import { mockMatchMedia, renderWithIntl, stubResizeObserver } from './helpers.tsx';
 
@@ -22,7 +22,7 @@ const { loadShellOverlays } = await import('../use-shell-overlays.ts');
 
 const shellDir = path.join(import.meta.dirname, '..');
 
-const context = (await getWorkspaceContext('demo')) as WorkspaceContext;
+const context = testWorkspaceContext();
 
 const renderShell = () =>
   renderWithIntl(

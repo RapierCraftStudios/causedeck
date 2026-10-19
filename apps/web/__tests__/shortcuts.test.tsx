@@ -17,7 +17,8 @@ import {
   visibleShortcuts,
   type ShortcutDefinition,
 } from '../lib/shortcuts/registry.ts';
-import { getWorkspaceContext, type WorkspaceContext } from '../lib/workspace-context.ts';
+import type { WorkspaceContext } from '../lib/workspace-context.ts';
+import { testWorkspaceContext } from './helpers/workspace.ts';
 
 const push = vi.fn();
 vi.mock('next/navigation', () => ({
@@ -30,7 +31,7 @@ const { loadCommandPalette } = await import('../components/shell/use-command-pal
 const { loadShellOverlays } = await import('../components/shell/use-shell-overlays.ts');
 const { loadShortcutsDialog } = await import('../lib/shortcuts/provider.tsx');
 
-const owner = (await getWorkspaceContext('demo')) as WorkspaceContext;
+const owner = testWorkspaceContext();
 
 interface Key {
   key: string;

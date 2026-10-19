@@ -16,6 +16,8 @@ export interface ShortcutsHelpDialogProps {
 /** Every shortcut the user can use, grouped by area (Navigation, Actions, Help). */
 export function ShortcutsHelpDialog({ open, onOpenChange, shortcuts }: ShortcutsHelpDialogProps) {
   const t = useTranslations();
+  // Registry keys are plain strings (shortcuts register at runtime); the catalog has them all.
+  const label = (key: string) => t(key as Parameters<typeof t>[0]);
   const rows: Shortcut[] = SHORTCUT_GROUPS.flatMap((group) =>
     shortcuts
       .filter((shortcut) => shortcut.group === group)
@@ -23,8 +25,8 @@ export function ShortcutsHelpDialog({ open, onOpenChange, shortcuts }: Shortcuts
         keys: shortcut.keys,
         description:
           shortcut.navId === undefined
-            ? t(shortcut.labelKey)
-            : t('shortcuts.goTo', { destination: t(shortcut.labelKey) }),
+            ? label(shortcut.labelKey)
+            : t('shortcuts.goTo', { destination: label(shortcut.labelKey) }),
         group: t(`shortcuts.groups.${group}`),
       })),
   );

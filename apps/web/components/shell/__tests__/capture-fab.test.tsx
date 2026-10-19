@@ -44,6 +44,17 @@ describe('capture button', () => {
     expect(button.className).toMatch(/\bmin-h-11\b/);
   });
 
+  it('keeps the label clear of the circle in the 56 px slot (#183)', () => {
+    renderWithIntl(<CaptureFab />);
+    const button = trigger();
+    // 56 px slot (h-14). Circle: 52 px from -16 px, so it ends at 36 px. Label: 12 px line above a
+    // 2 px bottom padding, so it starts at 42 px. jsdom has no layout, so check the classes.
+    expect(button.className).toMatch(/\bh-14\b/);
+    expect(button.className).toMatch(/\bpb-0\.5\b/);
+    expect(button.querySelector('[data-capture-circle]')?.className).toMatch(/(^|\s)-top-4\b/);
+    expect(button.querySelector('[data-capture-label]')?.className).toMatch(/\bleading-3\b/);
+  });
+
   it('opens a bottom sheet with Voice note, Photo or file and Paste text as stubs', () => {
     renderWithIntl(<CaptureFab />);
     const button = trigger();

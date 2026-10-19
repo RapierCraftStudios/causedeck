@@ -1,6 +1,7 @@
-// The workspace the shell is rendering, and who the user is in it. An in-memory dev stub until
-// workspaces and membership land (#18); roles, permissions and flag keys are local unions until
-// `@causedeck/auth` (#20) and `@causedeck/flags` (#22) export the real ones.
+// The workspace the shell is rendering, and who the user is in it. Pure types and helpers: client
+// modules (nav, commands, shortcuts) import `can()` from here, so the database loader lives in the
+// server-only `lib/workspace-loader.ts` (#179). Roles, permissions and flag keys are local unions
+// until `@causedeck/auth` (#20) and `@causedeck/flags` (#22) export the real ones.
 
 /** Workspace roles, least to most privileged. TODO(#20): re-export from `@causedeck/auth`. */
 export type Role = 'viewer' | 'clerk' | 'junior' | 'advocate' | 'owner';
@@ -23,7 +24,7 @@ export interface Membership {
   role: Role;
 }
 
-/** The signed-in user. TODO(#12): from the Better Auth session. */
+/** The signed-in user, from the Better Auth session. */
 export interface ShellUser {
   id: string;
   name: string;
@@ -51,51 +52,39 @@ export function can(role: Role, permission: Permission): boolean {
   return ROLE_PERMISSIONS[role].includes(permission);
 }
 
-/** Dev stub data. The dev user belongs to two workspaces; `other-chambers` is not theirs. */
-export const DEV_USER_ID = 'dev-user';
+/** Last workspace the user opened (`/w/<slug>/...`); set by `proxy.ts`, read by `/` and `/w`. */
+export const LAST_WORKSPACE_COOKIE = 'cd_last_ws';
 
-const DEV_USERS: readonly ShellUser[] = [
-  { id: DEV_USER_ID, name: 'Asha Rao', email: 'asha@example.test' },
-  { id: 'someone-else', name: 'Someone Else', email: 'someone@example.test' },
-];
-
-export const DEV_WORKSPACES: readonly Workspace[] = [
-  { id: 'ws-1', slug: 'demo', name: 'Demo Chambers' },
-  { id: 'ws-2', slug: 'clerk-desk', name: 'Clerk Desk' },
-  { id: 'ws-3', slug: 'other-chambers', name: 'Other Chambers' },
-];
-
-const DEV_MEMBERSHIPS: readonly { userId: string; workspaceId: string; role: Role }[] = [
-  { userId: DEV_USER_ID, workspaceId: 'ws-1', role: 'owner' },
-  { userId: DEV_USER_ID, workspaceId: 'ws-2', role: 'clerk' },
-  { userId: 'someone-else', workspaceId: 'ws-3', role: 'owner' },
-];
-
-export interface WorkspaceContextOptions {
-  /** TODO(#12/#18): comes from the session, never from the URL. */
-  userId?: string | undefined;
+/**
+ * Where to land a signed-in user: the last workspace when it is still one of their memberships,
+ * otherwise their first, or `null` when they have none (onboarding).
+ */
+export function pickLandingSlug(
+  memberships: readonly Membership[],
+  lastSlug: string | null | undefined,
+): string | null {
+  if (lastSlug) {
+    const last = memberships.find((m) => m.workspace.slug === lastSlug.toLowerCase());
+    if (last) return last.workspace.slug;
+  }
+  return memberships[0]?.workspace.slug ?? null;
 }
 
 /**
- * The context for `slug`, or `null` when the workspace does not exist or the user is not a member.
- * Callers render `notFound()` on `null` so nothing about the workspace leaks.
- * TODO(#18): replace with a membership-checked loader; authorisation comes from the session.
+ * An old-slug request `/w/<old>/rest?query` moved to the new slug; `/w/<new>/today` when the path
+ * is unknown or bare.
  */
-export function getWorkspaceContext(
-  slug: string,
-  { userId = DEV_USER_ID }: WorkspaceContextOptions = {},
-): Promise<WorkspaceContext | null> {
-  const memberships = DEV_MEMBERSHIPS.filter((m) => m.userId === userId).flatMap((m) => {
-    const workspace = DEV_WORKSPACES.find((w) => w.id === m.workspaceId);
-    return workspace ? [{ workspace, role: m.role }] : [];
-  });
-  const current = memberships.find((m) => m.workspace.slug === slug);
-  if (!current) return Promise.resolve(null);
-  const user = DEV_USERS.find((u) => u.id === userId) ?? { id: userId, name: userId, email: '' };
-  return Promise.resolve({
-    user,
-    workspace: current.workspace,
-    role: current.role,
-    memberships,
-  });
+export function movedPath(pathWithSearch: string | null, slug: string): string {
+  const rest = pathWithSearch?.match(/^\/w\/[^/?#]+(\/[^?#]+(?:\?[^#]*)?)$/)?.[1];
+  return `/w/${encodeURIComponent(slug)}${rest ?? '/today'}`;
 }
+
+/**
+ * `loadWorkspaceContext` (lib/workspace-loader.ts): a context, an old-slug redirect, a signed-in
+ * user with no workspace yet (onboarding), or a 404.
+ */
+export type WorkspaceContextResult =
+  | { kind: 'ok'; context: WorkspaceContext }
+  | { kind: 'redirect'; slug: string }
+  | { kind: 'no-workspaces' }
+  | { kind: 'not-found' };

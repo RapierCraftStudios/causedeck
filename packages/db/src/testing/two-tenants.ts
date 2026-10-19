@@ -22,6 +22,7 @@ import {
   usagePeriodSummary,
   usageReservation,
 } from '../schema/usage.ts';
+import { workspaceKey } from '../schema/storage.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -231,6 +232,13 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(workspaceFeatureFlag)
       .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
     return { key };
+  },
+  workspace_key: async (tx, { workspaceId }) => {
+    // Opaque bytes standing in for a wrapped DEK; the table never sees a plaintext key.
+    await tx
+      .insert(workspaceKey)
+      .values({ workspaceId, wrappedDek: randomBytes(60), kekId: 'kek-test' });
+    return { workspaceId };
   },
 };
 

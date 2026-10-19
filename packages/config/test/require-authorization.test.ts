@@ -2,14 +2,13 @@ import path from 'node:path';
 
 import { ESLint, RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { next } from '../eslint/next.js';
 import { node } from '../eslint/node.js';
 import { requireAuthorization } from '../eslint/rules/require-authorization.js';
 import { fixturesDir } from './eslint-helpers';
 
-RuleTester.afterAll = afterAll;
 RuleTester.describe = describe;
 RuleTester.it = it;
 RuleTester.itOnly = it.only;
@@ -140,7 +139,9 @@ ruleTester.run('causedeck/require-authorization: /v1 routes', requireAuthorizati
   ],
   invalid: [
     {
-      ...route(`export const thingsRoute = defineRoute({ method: 'get', path: '/things', responses: {} });`),
+      ...route(
+        `export const thingsRoute = defineRoute({ method: 'get', path: '/things', responses: {} });`,
+      ),
       errors: [{ messageId: 'missingRoute' }],
     },
     {
@@ -183,6 +184,7 @@ describe('causedeck/require-authorization wiring', () => {
 
   it('is an error for /v1 routes in the Node config, and off elsewhere', async () => {
     expect(await severity(node, 'src/routes/v1/things.ts')).toBe(2);
+    expect(await severity(node, 'apps/api/src/routes/v1/x.ts')).toBe(2);
     expect(await severity(node, 'src/jobs/thing.ts')).toBeUndefined();
   });
 });

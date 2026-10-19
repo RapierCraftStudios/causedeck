@@ -1202,6 +1202,12 @@ importers:
       '@causedeck/config':
         specifier: workspace:*
         version: link:../config
+      '@causedeck/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.4(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(kysely@0.29.6)(pg@8.23.1)(postgres@3.4.9)
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1209,6 +1215,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)
+      pino:
+        specifier: 'catalog:'
+        version: 10.4.0
       testcontainers:
         specifier: 'catalog:'
         version: 12.2.1

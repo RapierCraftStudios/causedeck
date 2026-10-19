@@ -226,6 +226,8 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   unreadCount: notificationDenies,
   getPreferences: notificationDenies,
   setPreference: notificationDenies,
+  getNotificationSetting: notificationDenies,
+  setLockScreenDetails: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */
@@ -239,6 +241,7 @@ export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   isLockedChannel: 'pure',
   NotificationError: 'error class',
   LIST_LIMIT_MAX: 'constant',
+  DEFAULT_NOTIFICATION_SETTINGS: 'constant',
   COURT_HOURS: 'constant',
   isQuietTime: 'pure',
   localMinutes: 'pure',

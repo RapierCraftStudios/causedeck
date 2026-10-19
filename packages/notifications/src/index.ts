@@ -16,17 +16,21 @@ export {
 export { NotificationError, type NotificationErrorCode } from './errors.ts';
 export { COURT_HOURS, isQuietTime, localMinutes, type QuietSetting } from './quiet-hours.ts';
 export {
+  DEFAULT_NOTIFICATION_SETTINGS,
+  getNotificationSetting,
   getPreferences,
   LIST_LIMIT_MAX,
   listForUser,
   markAllRead,
   markRead,
   notify,
+  setLockScreenDetails,
   setPreference,
   unreadCount,
   type DeliveryJob,
   type NotificationContext,
   type NotificationItem,
+  type NotificationSettings,
   type NotifyContext,
   type NotifyInput,
   type ResolvedPreference,

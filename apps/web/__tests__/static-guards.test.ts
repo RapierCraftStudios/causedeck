@@ -89,9 +89,15 @@ describe('apps/web static guards', () => {
     expect(config).toMatch(/reactStrictMode:\s*true/);
   });
 
-  it('has no API routes besides Better Auth (webhooks live in apps/api)', () => {
-    expect(readdirSync(path.join(appDir, 'app/api'))).toEqual(['auth']);
+  it('has no API routes besides Better Auth and Web Push (webhooks live in apps/api)', () => {
+    expect(readdirSync(path.join(appDir, 'app/api'))).toEqual(['auth', 'push']);
     expect(readdirSync(path.join(appDir, 'app/api/auth'))).toEqual(['[...all]']);
+    // The browser's own push subscription endpoints (#197); tests sit beside them.
+    expect(readdirSync(path.join(appDir, 'app/api/push')).sort()).toEqual([
+      '__tests__',
+      'subscribe',
+      'unsubscribe',
+    ]);
   });
 
   it('keeps the proxy on Next.js 16 naming (no deprecated middleware.ts)', () => {

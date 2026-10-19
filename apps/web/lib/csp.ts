@@ -16,6 +16,8 @@ export function buildCsp(nonce: string, { dev = false }: { dev?: boolean } = {})
     "img-src 'self' data: blob:",
     "font-src 'self'",
     "connect-src 'self'",
+    // The push service worker (#197): `strict-dynamic` would otherwise ignore `'self'` for workers.
+    "worker-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
     "base-uri 'self'",

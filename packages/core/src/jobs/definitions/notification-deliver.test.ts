@@ -9,6 +9,14 @@ import { schema, type Database, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { notify, type DeliveryJob } from '@causedeck/notifications';
 import { recordSuppression, type EmailMessage } from '@causedeck/notifications/email';
+import {
+  createPushSender,
+  generateVapidKeys,
+  GENERIC_PUSH_TITLES,
+  saveSubscription,
+  type WebPushClient,
+} from '@causedeck/notifications/push';
+import { Secret } from '@causedeck/config/env';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -319,6 +327,44 @@ describe('notification.deliver: email', () => {
   });
 });
 
+const vapid = generateVapidKeys();
+
+/** A push sender over a stubbed `web-push` client answering `status` for every endpoint. */
+function pusher(deps: NotificationJobDeps) {
+  const pushes: { endpoint: string; payload: string }[] = [];
+  const state = { status: 201 };
+  const client: WebPushClient = {
+    sendNotification: (sub, payload) => {
+      pushes.push({ endpoint: sub.endpoint, payload });
+      if (state.status >= 400) {
+        return Promise.reject(Object.assign(new Error('push'), { statusCode: state.status }));
+      }
+      return Promise.resolve({});
+    },
+  };
+  const env = {
+    APP_URL,
+    VAPID_PUBLIC_KEY: vapid.publicKey,
+    VAPID_PRIVATE_KEY: new Secret(vapid.privateKey),
+  };
+  return { pushes, state, deps: { ...deps, push: createPushSender({ env, client }) } };
+}
+
+async function subscribe(f: Fixture, name: string) {
+  await saveSubscription(f.tx, f.userId, {
+    endpoint: `https://push.example.test/${name}`,
+    keys: { p256dh: `p-${name}`, auth: `a-${name}` },
+  });
+}
+
+async function setDetails(f: Fixture, on: boolean) {
+  await f.inWs((s) =>
+    s
+      .insert(schema.notificationSetting)
+      .values({ workspaceId: f.workspaceId, userId: f.userId, lockScreenDetails: on }),
+  );
+}
+
 describe('notification.deliver: push', () => {
   it('records push as skipped while no push sender is configured (#197)', async () => {
     await run(async (f) => {
@@ -330,6 +376,86 @@ describe('notification.deliver: push', () => {
         status: 'skipped',
         reason: 'push_disabled',
       });
+    });
+  });
+
+  it('pushes a content-free payload once, even when the job is redelivered', async () => {
+    await run(async (f) => {
+      const { pushes, deps } = pusher(transport().deps);
+      await subscribe(f, 'phone');
+      const notificationId = await f.addNotification();
+      await f.inWs((s) =>
+        s
+          .update(schema.notification)
+          .set({ title: 'Hearing tomorrow: Sharma v. State', body: 'Party: Ravi Sharma' })
+          .where(eq(schema.notification.id, notificationId)),
+      );
+      const payload = { workspaceId: f.workspaceId, notificationId, channel: 'push' } as const;
+      expect(await deliver(f, payload, deps)).toBe('sent');
+      expect(await deliver(f, payload, deps)).toBe('already_delivered');
+      expect(pushes).toHaveLength(1);
+      expect(JSON.parse(pushes[0]?.payload ?? '{}')).toEqual({
+        title: GENERIC_PUSH_TITLES['reminder.hearing'],
+        href: `${APP_URL}/w/x/m/1`,
+        tag: `n:${notificationId}`,
+      });
+      expect(pushes[0]?.payload).not.toContain('Sharma');
+      expect((await deliveryOf(f, notificationId))?.push).toMatchObject({ status: 'sent' });
+    });
+  });
+
+  it('includes title and body when the member turned on `Show details on lock screen`', async () => {
+    await run(async (f) => {
+      const { pushes, deps } = pusher(transport().deps);
+      await subscribe(f, 'phone');
+      await setDetails(f, true);
+      const notificationId = await f.addNotification();
+      const payload = { workspaceId: f.workspaceId, notificationId, channel: 'push' } as const;
+      expect(await deliver(f, payload, deps)).toBe('sent');
+      expect(JSON.parse(pushes[0]?.payload ?? '{}')).toMatchObject({ title: 'Hearing tomorrow' });
+    });
+  });
+
+  it('skips a member with no active subscription', async () => {
+    await run(async (f) => {
+      const { pushes, deps } = pusher(transport().deps);
+      const notificationId = await f.addNotification();
+      const payload = { workspaceId: f.workspaceId, notificationId, channel: 'push' } as const;
+      expect(await deliver(f, payload, deps)).toBe('skipped');
+      expect(pushes).toEqual([]);
+      expect((await deliveryOf(f, notificationId))?.push).toMatchObject({
+        status: 'skipped',
+        reason: 'no_subscription',
+      });
+    });
+  });
+
+  it('revokes a 410 subscription, and retries a transient push failure', async () => {
+    await run(async (f) => {
+      const { pushes, state, deps } = pusher(transport().deps);
+      await subscribe(f, 'phone');
+      const notificationId = await f.addNotification();
+      const payload = { workspaceId: f.workspaceId, notificationId, channel: 'push' } as const;
+
+      state.status = 503;
+      expect(await deliverJob(f, payload, deps)).toEqual({
+        status: 'failed',
+        error: { name: 'RetryableError', code: 'NOTIFICATION_DELIVERY_RETRY' },
+      });
+      expect(await claims(f, deliveryKey(payload))).toHaveLength(0);
+
+      state.status = 410;
+      expect(await deliverJob(f, payload, deps)).toEqual({ status: 'completed' });
+      expect((await deliveryOf(f, notificationId))?.push).toMatchObject({
+        status: 'skipped',
+        reason: 'no_subscription',
+      });
+      const [sub] = await f.tx
+        .select({ revokedAt: schema.pushSubscription.revokedAt })
+        .from(schema.pushSubscription)
+        .where(eq(schema.pushSubscription.userId, f.userId));
+      expect(sub?.revokedAt).not.toBeNull();
+      expect(pushes).toHaveLength(2);
     });
   });
 });

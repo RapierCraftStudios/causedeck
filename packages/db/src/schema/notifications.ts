@@ -92,13 +92,16 @@ export const notificationPref = tenantTable(
 /**
  * A member's delivery settings in one workspace (#196). `court_hours_quiet` is the `Do not push
  * during court hours` toggle (10:30-17:00 local): scheduled sends such as the daily digest skip a
- * quiet window. No row means no quiet hours.
+ * quiet window. `lock_screen_details` is the `Show details on lock screen` toggle (#197): off, a push
+ * carries only a generic title and link; on, the notification's title and body. No row means no
+ * quiet hours and no details.
  */
 export const notificationSetting = tenantTable(
   'notification_setting',
   {
     userId: userRef(),
     courtHoursQuiet: boolean('court_hours_quiet').notNull().default(false),
+    lockScreenDetails: boolean('lock_screen_details').notNull().default(false),
     ...timestamps(),
   },
   (t) => [

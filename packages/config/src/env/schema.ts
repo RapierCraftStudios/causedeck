@@ -184,6 +184,14 @@ export const serverKeys = {
     credentialIssue: 116,
     secret: true,
   },
+  VAPID_SUBJECT: {
+    domain: 'server',
+    type: 'mailto: or https url',
+    description:
+      'Web push VAPID subject (contact for push services). Defaults to mailto:push@<APP_URL host>.',
+    requiredWhen: 'never',
+    ownerIssue: 197,
+  },
   OTEL_EXPORTER_OTLP_ENDPOINT: {
     domain: 'server',
     type: 'url',
@@ -278,6 +286,11 @@ export const serverShape = {
   ).describe(d(serverKeys.KEK_BASE64)),
   VAPID_PUBLIC_KEY: z.string().min(1).optional().describe(d(serverKeys.VAPID_PUBLIC_KEY)),
   VAPID_PRIVATE_KEY: secret(z.string().min(1)).optional().describe(d(serverKeys.VAPID_PRIVATE_KEY)),
+  VAPID_SUBJECT: z
+    .string()
+    .regex(/^(mailto:\S+@\S+|https:\/\/\S+)$/, 'must be a mailto: address or an https URL')
+    .optional()
+    .describe(d(serverKeys.VAPID_SUBJECT)),
   OTEL_EXPORTER_OTLP_ENDPOINT: z
     .url()
     .optional()

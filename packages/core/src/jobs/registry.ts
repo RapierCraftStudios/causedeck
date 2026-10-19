@@ -3,6 +3,7 @@
 import type { SendOptions } from 'pg-boss';
 import type { z } from 'zod';
 
+import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
@@ -116,6 +117,7 @@ export const registry = createRegistry([
   systemPing,
   retentionSweep,
   billingReconcile,
+  billingDunningTick,
   billingProcessEvent,
   notificationDeliver,
   notificationDigestSchedule,
@@ -127,6 +129,7 @@ export type JobMap = RegistryMap<
     typeof systemPing,
     typeof retentionSweep,
     typeof billingReconcile,
+    typeof billingDunningTick,
     typeof billingProcessEvent,
     typeof notificationDeliver,
     typeof notificationDigestSchedule,

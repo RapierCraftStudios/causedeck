@@ -81,16 +81,40 @@ The `subscription.status` column stores the state as:
 
 ## Dunning
 
-The policy, implemented in `packages/billing/src/dunning.ts` and the `billing-dunning-tick` job by
-#205 (still to land):
+The policy is pure, in `packages/billing/src/dunning.ts` (`planDunning`); the daily
+`system.billing.dunning-tick` job (`packages/core/src/jobs/definitions/billing-dunning-tick.ts`,
+04:30 IST) carries it out.
 
-1. A failed charge (`payment.failed` / `subscription.pending`) moves the subscription to
-   `past_due`. Razorpay retries the charge; the dunning schedule retries on day 1, 3, 5 and 7.
-2. Each stage sends an in-app and email `billing.notice` (#23).
-3. When the provider halts the subscription (`subscription.halted`) it enters `grace`:
-   `GRACE_PERIOD_DAYS = 7` days of full access (`grace_until`).
-4. After grace (`grace_expired`) the workspace is `downgraded` to read-only Junior limits. No data
-   is ever deleted; a new subscription restores access.
+| Day (from the first failure) | What happens | Notice stage |
+|---|---|---|
+| 0 | `payment.failed` / `subscription.pending` moves the subscription to `past_due` | `payment_failed` |
+| 1, 3, 5, 7 (`DUNNING_RETRY_DAYS`) | Payment retry through the provider (`retryPayment`) | `retry_1` … `retry_4` |
+| 8 (`DUNNING_HALT_DAY`), still unpaid | `halted` → `grace`, `grace_until` = now + `GRACE_PERIOD_DAYS` (7); full access | `grace_started` |
+| `grace_until` | `grace_expired` → `downgraded` (stored status `expired`): read-only Junior limits | `downgraded` |
+
+- **Episode.** `billing.process-event` sets `subscription.dunning_started_at` (and
+  `dunning_attempts = 0`) when a subscription enters `past_due` or `grace`, keeps both while it
+  stays there, and clears them when it leaves (a `subscription.charged` back to `active`, a
+  cancellation). The tick records each retry in `dunning_attempts` (0..4). A late tick makes one
+  retry, the latest one due, never several.
+- **Provider halt.** If Razorpay halts the subscription first (`subscription.halted`), grace
+  starts from that halt and the tick only watches `grace_until`.
+- **Retries.** The mock's `retryPayment` raises `subscription.charged` or `payment.failed`
+  (`setRetryOutcome`; failed by default). Razorpay has no merchant API to retry a subscription
+  charge: it retries a `pending` subscription itself. So the Razorpay adapter makes no write call
+  and returns `provider_scheduled`. Either way, the subscription changes only when the webhook
+  arrives.
+- **Notices.** Each stage sends a `billing.notice` (#23; in-app and email by default) to every active
+  owner (the only role with `billing.manage`), linking to `/w/<slug>/settings/billing`. The
+  `dedupeKey` is `billing.dunning:<subscription id>:<dunning_started_at ms>:<stage>`, so a rerun
+  sends nothing twice and a new episode notifies again. The copy carries no amounts.
+- **Targets.** The tick has no workspace, so it lists `past_due` subscription ids (which includes
+  grace) through the SECURITY DEFINER `app_billing_dunning_targets()` (`0015_billing_dunning`).
+  Then it works on each one inside `withWorkspace` with the row locked. If one workspace fails
+  (for example, a provider error), the attempt is not counted and the tick moves on.
+- **No deletion.** Dunning only updates the subscription row and inserts notifications. A
+  downgraded workspace keeps all its data, read-only; a new subscription restores access.
+  Entitlements are invalidated after each change.
 
 ## Test prices
 

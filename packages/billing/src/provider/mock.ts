@@ -18,6 +18,7 @@ import {
   type CreateSubscriptionInput,
   type MandateLink,
   type MandateState,
+  type PaymentRetryOutcome,
   type ProviderSubscriptionStatus,
   type RazorpayPaymentEntity,
   type RazorpaySubscriptionEntity,
@@ -70,6 +71,11 @@ export interface MockBillingProvider extends BillingProvider {
   setMandateState(subscriptionId: string, state: MandateState): Promise<BillingSubscription>;
   /** Raise a provider event, apply it and return the webhook body Razorpay would send. */
   simulate(subscriptionId: string, event: SimulatedEvent): Promise<RazorpayWebhookEvent>;
+  /** Whether the next `retryPayment` calls for this subscription succeed (default `failed`). */
+  setRetryOutcome(
+    subscriptionId: string,
+    outcome: Exclude<PaymentRetryOutcome, 'provider_scheduled'>,
+  ): void;
   /** Every webhook raised so far, oldest first. */
   deliveries(): readonly MockWebhookDelivery[];
 }
@@ -88,6 +94,8 @@ interface SubscriptionRecord {
   mandate: MandateState;
   /** Quantity scheduled for the next cycle by `updateSubscriptionQuantity(…, { at: 'cycle_end' })`. */
   pendingQuantity: number | null;
+  /** What `retryPayment` does: charge, or fail again. */
+  retryOutcome: 'charged' | 'failed';
 }
 
 /** Event name → statuses it may fire from. */
@@ -255,6 +263,7 @@ export function createMockBillingProvider(
           cancelAtCycleEnd: false,
           mandate: 'created',
           pendingQuantity: null,
+          retryOutcome: 'failed',
           entity: {
             id,
             entity: 'subscription',
@@ -423,6 +432,27 @@ export function createMockBillingProvider(
           }
         }
       });
+    },
+
+    retryPayment(subscriptionId) {
+      return attempt(() => {
+        const rec = record(subscriptionId);
+        assertStatus(rec, ['pending', 'halted'], 'retry the payment of');
+        if (rec.retryOutcome === 'charged') {
+          rec.entity.status = 'active';
+          rec.mandate = 'active';
+          startPeriod(rec, rec.entity.current_end ?? seconds());
+          emit(rec, 'subscription.charged', payment(rec, 'captured'));
+          return { subscription: view(rec), outcome: 'charged' as const };
+        }
+        rec.entity.auth_attempts += 1;
+        emit(rec, 'payment.failed', payment(rec, 'failed'));
+        return { subscription: view(rec), outcome: 'failed' as const };
+      });
+    },
+
+    setRetryOutcome(subscriptionId, outcome) {
+      record(subscriptionId).retryOutcome = outcome;
     },
 
     deliveries() {

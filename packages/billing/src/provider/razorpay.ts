@@ -172,6 +172,16 @@ export function createRazorpayProvider(options: RazorpayProviderOptions): Billin
         return { subscriptionId, url: subscription.shortUrl, status: subscription.mandate.state };
       });
     },
+
+    retryPayment(subscriptionId) {
+      // Razorpay has no merchant API to retry a subscription charge: it retries a `pending`
+      // subscription itself and reports the result by webhook. So this makes no write call and
+      // never claims a charge; it only reads the current state.
+      return call(async () => ({
+        subscription: toSubscription(await client.subscriptions.fetch(subscriptionId)),
+        outcome: 'provider_scheduled' as const,
+      }));
+    },
   };
 }
 

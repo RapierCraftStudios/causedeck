@@ -12,6 +12,7 @@ import {
   fromSubscriptionRow,
   IllegalTransitionError,
   toSubscriptionStatus,
+  type SubscriptionState,
 } from '@causedeck/billing';
 import { SUBSCRIPTION_STATUSES, type SubscriptionStatus } from '@causedeck/billing/plans';
 import type { RazorpayWebhookEvent } from '@causedeck/billing/provider';
@@ -38,6 +39,25 @@ export type BillingProcessEventOutcome =
 
 const isStatus = (status: string): status is SubscriptionStatus =>
   (SUBSCRIPTION_STATUSES as readonly string[]).includes(status);
+
+const inDunning = (state: SubscriptionState) => state === 'past_due' || state === 'grace';
+
+/**
+ * The dunning columns after a move (#205): entering past_due/grace starts an episode, leaving them
+ * ends it, and moving within them keeps it.
+ */
+export function dunningAfter(
+  from: SubscriptionState,
+  to: SubscriptionState,
+  current: { dunningStartedAt: Date | null; dunningAttempts: number },
+  at: Date,
+): { dunningStartedAt: Date | null; dunningAttempts: number } {
+  if (!inDunning(to)) return { dunningStartedAt: null, dunningAttempts: 0 };
+  if (!inDunning(from) || current.dunningStartedAt === null) {
+    return { dunningStartedAt: at, dunningAttempts: 0 };
+  }
+  return { dunningStartedAt: current.dunningStartedAt, dunningAttempts: current.dunningAttempts };
+}
 
 /** Apply the stored event once. Exported for tests; logs carry ids only, never the payload. */
 export async function runBillingProcessEvent(
@@ -113,6 +133,7 @@ export async function runBillingProcessEvent(
           currentPeriodEnd: next.currentPeriodEnd,
           graceUntil: next.graceUntil,
           cancelAtPeriodEnd: next.cancelAtPeriodEnd,
+          ...dunningAfter(before.state, next.state, row, at),
         })
         .where(eq(subscription.id, row.id));
     }

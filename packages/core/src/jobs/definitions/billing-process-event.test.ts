@@ -182,6 +182,61 @@ describe('billing.process-event', () => {
     });
   });
 
+  it('starts a dunning episode on the first failure, keeps it, and clears it on a charge (#205)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const provider = createMockBillingProvider();
+      const { workspaceId, providerSubscriptionId } = await seedWorkspace(tx, provider);
+      const apply = async (body: RazorpayWebhookEvent, at: string) =>
+        runBillingProcessEvent(
+          ctx(tx),
+          { workspaceId, providerEventId: await store(tx, workspaceId, body) },
+          { now: () => new Date(at) },
+        );
+
+      await apply(await provider.authorizeMandate(providerSubscriptionId), '2026-01-01T00:00:00Z');
+      let row = await subscriptionOf(tx, workspaceId);
+      expect(row?.dunningStartedAt).toBeNull();
+      expect(row?.dunningAttempts).toBe(0);
+
+      const firstFailure = '2026-02-01T00:00:00Z';
+      await apply(await provider.simulate(providerSubscriptionId, 'payment.failed'), firstFailure);
+      row = await subscriptionOf(tx, workspaceId);
+      expect(row?.status).toBe('past_due');
+      expect(row?.dunningStartedAt).toEqual(new Date(firstFailure));
+      expect(row?.dunningAttempts).toBe(0);
+
+      // Retries already made in the episode survive a later failure and the halt.
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.subscription)
+          .set({ dunningAttempts: 2 })
+          .where(eq(schema.subscription.workspaceId, workspaceId)),
+      );
+      await apply(
+        await provider.simulate(providerSubscriptionId, 'payment.failed'),
+        '2026-02-03T00:00:00Z',
+      );
+      await apply(
+        await provider.simulate(providerSubscriptionId, 'subscription.halted'),
+        '2026-02-09T00:00:00Z',
+      );
+      row = await subscriptionOf(tx, workspaceId);
+      expect(row?.graceUntil).not.toBeNull();
+      expect(row?.dunningStartedAt).toEqual(new Date(firstFailure));
+      expect(row?.dunningAttempts).toBe(2);
+
+      await apply(
+        await provider.simulate(providerSubscriptionId, 'subscription.charged'),
+        '2026-02-10T00:00:00Z',
+      );
+      row = await subscriptionOf(tx, workspaceId);
+      expect(row?.status).toBe('active');
+      expect(row?.dunningStartedAt).toBeNull();
+      expect(row?.dunningAttempts).toBe(0);
+    });
+  });
+
   it('retries while the stored event is not visible yet', async () => {
     await withTestDb(async (tx) => {
       const run = runBillingProcessEvent(ctx(tx), {

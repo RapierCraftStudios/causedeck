@@ -1,8 +1,9 @@
 // Workspace scope (#14, spike §4.1): the workspace comes from the `:workspaceId` path param or the
 // `x-workspace-id` header, membership is verified on every request, and handlers run their queries
 // through `c.var.withWorkspace(fn)`, which pins the workspace (and user) GUCs for one transaction
-// via `withWorkspace` from `@causedeck/db`. Authorization beyond membership goes through `can()`
-// (#20) once it lands.
+// via `withWorkspace` from `@causedeck/db`. Authorization beyond membership is `authorize(action)`
+// (middleware/authorize.ts, #234), which reads the role set here.
+import { isRole } from '@causedeck/auth/policy';
 import { memberRole } from '@causedeck/core/workspaces';
 import { isUuid, withWorkspace, type Database } from '@causedeck/db';
 import type { MiddlewareHandler } from 'hono';
@@ -29,9 +30,12 @@ export function requireWorkspace(db: Database): MiddlewareHandler<AppEnv> {
     }
     // Same answer for "does not exist" and "not a member", so ids cannot be probed.
     const role = await memberRole(db, principal.user.id, workspaceId);
-    if (role === null) throw new ForbiddenError('You are not a member of this workspace.');
+    if (role === null || !isRole(role)) {
+      throw new ForbiddenError('You are not a member of this workspace.');
+    }
 
     c.set('workspaceId', workspaceId);
+    c.set('role', role);
     c.set('withWorkspace', (fn) =>
       withWorkspace(db, { workspaceId, userId: principal.user.id }, fn),
     );

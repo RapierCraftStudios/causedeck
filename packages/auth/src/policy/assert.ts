@@ -18,6 +18,34 @@ export class ForbiddenError extends Error {
   }
 }
 
+/** `ForbiddenError`, also matched by name and code across module copies. */
+export function isForbiddenError(error: unknown): error is ForbiddenError {
+  return (
+    error instanceof ForbiddenError ||
+    (error instanceof Error &&
+      error.name === 'ForbiddenError' &&
+      'code' in error &&
+      error.code === 'FORBIDDEN' &&
+      'reason' in error &&
+      'action' in error)
+  );
+}
+
+/** Resource-level reasons: the resource exists but is not the actor's to see. */
+const CONCEALED_REASONS: ReadonlySet<DenyReason> = new Set<DenyReason>([
+  'CROSS_WORKSPACE',
+  'RESTRICTED_MATTER',
+  'NOT_ASSIGNED',
+]);
+
+/**
+ * True when a denial must look like `NOT_FOUND` rather than `FORBIDDEN`: a read of a resource the
+ * actor may not see, so its existence does not leak.
+ */
+export function conceals(error: Pick<ForbiddenError, 'action' | 'reason'>): boolean {
+  return error.action.endsWith('.read') && CONCEALED_REASONS.has(error.reason);
+}
+
 export interface AssertOptions {
   settings?: PolicySettings;
   /** Receives the denial log line; defaults to the console. */

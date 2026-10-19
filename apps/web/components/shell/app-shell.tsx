@@ -1,3 +1,4 @@
+import { PolicyProvider } from '@causedeck/auth/react';
 import type { FlagSnapshot } from '@causedeck/flags/keys';
 import { FlagsProvider } from '@causedeck/flags/react';
 import type { ReactNode } from 'react';
@@ -30,26 +31,30 @@ export interface AppShellProps {
  */
 export function AppShell({ context, sidebarState, flags, children }: AppShellProps) {
   return (
-    <FlagsProvider flags={flags}>
-      <CaptureProvider>
-        <SidebarProvider initialState={sidebarState}>
-          <ShortcutsProvider slug={context.workspace.slug} role={context.role}>
-            <Sidebar context={context} />
-            <div className="bg-surface flex min-w-0 flex-col">
-              <Topbar context={context} />
-              <main
-                id="main"
-                tabIndex={-1}
-                data-workspace-slug={context.workspace.slug}
-                className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(var(--space-6)+56px+env(safe-area-inset-bottom))] outline-none md:px-6 md:py-8"
-              >
-                {children}
-              </main>
-            </div>
-            <MobileNav slug={context.workspace.slug} role={context.role} />
-          </ShortcutsProvider>
-        </SidebarProvider>
-      </CaptureProvider>
-    </FlagsProvider>
+    <PolicyProvider
+      actor={{ userId: context.user.id, workspaceId: context.workspace.id, role: context.role }}
+    >
+      <FlagsProvider flags={flags}>
+        <CaptureProvider>
+          <SidebarProvider initialState={sidebarState}>
+            <ShortcutsProvider slug={context.workspace.slug} role={context.role}>
+              <Sidebar context={context} />
+              <div className="bg-surface flex min-w-0 flex-col">
+                <Topbar context={context} />
+                <main
+                  id="main"
+                  tabIndex={-1}
+                  data-workspace-slug={context.workspace.slug}
+                  className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(var(--space-6)+56px+env(safe-area-inset-bottom))] outline-none md:px-6 md:py-8"
+                >
+                  {children}
+                </main>
+              </div>
+              <MobileNav slug={context.workspace.slug} role={context.role} />
+            </ShortcutsProvider>
+          </SidebarProvider>
+        </CaptureProvider>
+      </FlagsProvider>
+    </PolicyProvider>
   );
 }

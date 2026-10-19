@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { defaultSnapshot } from '@causedeck/flags/keys';
 import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -44,7 +45,7 @@ const probeCollapsed = () =>
 
 const renderShell = (sidebarState: SidebarState = 'auto') =>
   renderWithIntl(
-    <AppShell context={context} sidebarState={sidebarState}>
+    <AppShell context={context} sidebarState={sidebarState} flags={defaultSnapshot()}>
       <ApiProbe />
       <p>content</p>
     </AppShell>,

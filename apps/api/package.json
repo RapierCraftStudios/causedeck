@@ -24,6 +24,7 @@
     "@causedeck/config": "workspace:*",
     "@causedeck/core": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/flags": "workspace:*",
     "@causedeck/observability": "workspace:*",
     "@causedeck/storage": "workspace:*",
     "@causedeck/validators": "workspace:*",

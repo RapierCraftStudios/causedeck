@@ -13,7 +13,9 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * docs/engineering/tenancy.md). `organization` (the workspace) is the tenant root with its own
  * policies; `member` and `invitation` are tenant tables. `api_idempotency_key` has a nullable
  * `workspace_id` but is keyed by user, so it stays global. `push_subscription` (per user) and
- * `email_suppression` (per address) have no workspace (#194).
+ * `email_suppression` (per address) have no workspace (#194). `feature_flag` (staff-managed global
+ * flag rows) and `access_mode_registry` (court-adapter access modes) are global by design (#22); the
+ * per-workspace overrides are the tenant table `workspace_feature_flag`.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -28,6 +30,8 @@ export const GLOBAL_TABLES: readonly string[] = [
   'plan',
   'push_subscription',
   'email_suppression',
+  'feature_flag',
+  'access_mode_registry',
 ];
 
 /**

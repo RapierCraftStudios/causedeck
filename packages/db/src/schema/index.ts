@@ -15,6 +15,13 @@ export {
   user,
   verification,
 } from './auth.ts';
+export {
+  ACCESS_MODE_NAMES,
+  accessMode,
+  accessModeRegistry,
+  featureFlag,
+  workspaceFeatureFlag,
+} from './flags.ts';
 export { jobEffect } from './job-effect.ts';
 export {
   emailSuppression,

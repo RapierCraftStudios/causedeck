@@ -1,5 +1,6 @@
 'use client';
 
+import { useIsEnabled } from '@causedeck/flags/react';
 import { useIsMac } from '@causedeck/ui/hooks';
 import { useRouter } from 'next/navigation';
 import {
@@ -91,13 +92,16 @@ export interface ShortcutsProviderProps {
  * command palette with their key hints. Needs `<CaptureProvider>` and `<SidebarProvider>` above.
  */
 export function ShortcutsProvider({ slug, role, isEnabled, children }: ShortcutsProviderProps) {
+  // Flag-gated chords follow the server-evaluated snapshot unless a caller overrides it.
+  const fromFlags = useIsEnabled();
+  const enabled = isEnabled ?? fromFlags;
   const router = useRouter();
   const sidebar = useSidebar();
   const capture = useCapture();
   const mac = useIsMac();
   const [helpOpen, setHelpOpen] = useState(false);
   const { Dialog } = useShortcutsDialog();
-  const shortcuts = useMemo(() => visibleShortcuts({ role, isEnabled }), [role, isEnabled]);
+  const shortcuts = useMemo(() => visibleShortcuts({ role, isEnabled: enabled }), [role, enabled]);
 
   const openHelp = () => {
     void loadShortcutsDialog();

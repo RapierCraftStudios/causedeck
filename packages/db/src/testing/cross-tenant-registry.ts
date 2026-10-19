@@ -33,6 +33,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   usage_event: DB_TABLES_TEST,
   budget_override: DB_TABLES_TEST,
   usage_period_summary: DB_TABLES_TEST,
+  workspace_feature_flag: DB_TABLES_TEST,
 };
 
 /**

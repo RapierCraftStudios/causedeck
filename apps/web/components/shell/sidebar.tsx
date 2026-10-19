@@ -1,5 +1,6 @@
 'use client';
 
+import { useIsEnabled } from '@causedeck/flags/react';
 import { Avatar } from '@causedeck/ui/avatar';
 import { useTranslations } from 'next-intl';
 import { useSyncExternalStore } from 'react';
@@ -54,6 +55,7 @@ export interface SidebarProps {
 /** The paper-toned column: wordmark, switcher, primary navigation, collapse toggle and user. */
 export function Sidebar({ context }: SidebarProps) {
   const t = useTranslations('shell');
+  const isEnabled = useIsEnabled();
   return (
     <aside
       id={SIDEBAR_ID}
@@ -75,7 +77,7 @@ export function Sidebar({ context }: SidebarProps) {
         data-sidebar-scroll=""
         className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-2"
       >
-        <SidebarNav slug={context.workspace.slug} role={context.role} />
+        <SidebarNav slug={context.workspace.slug} role={context.role} isEnabled={isEnabled} />
       </div>
       <div className="border-line flex shrink-0 flex-col gap-2 border-t px-3 py-3">
         <SidebarCollapse />

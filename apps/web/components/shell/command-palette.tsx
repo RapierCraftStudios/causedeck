@@ -13,6 +13,7 @@ import {
   CommandList,
   CommandShortcut,
 } from '@causedeck/ui/command';
+import { useIsEnabled } from '@causedeck/flags/react';
 import { Kbd } from '@causedeck/ui/kbd';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -74,11 +75,14 @@ function PaletteBody({
   close,
 }: Pick<CommandPaletteProps, 'slug' | 'role' | 'isEnabled'> & { close: () => void }) {
   const t = useTranslations();
+  // Flag-gated commands follow the server-evaluated snapshot unless a caller overrides it.
+  const fromFlags = useIsEnabled();
+  const enabled = isEnabled ?? fromFlags;
   const router = useRouter();
   const registered = useSyncExternalStore(subscribeCommands, commandsSnapshot, commandsSnapshot);
   const commands = useMemo(
-    () => getCommands({ role, isEnabled }, registered),
-    [registered, role, isEnabled],
+    () => getCommands({ role, isEnabled: enabled }, registered),
+    [registered, role, enabled],
   );
   const [search, setSearch] = useState('');
   const [recent] = useState(() => readRecent(slug));

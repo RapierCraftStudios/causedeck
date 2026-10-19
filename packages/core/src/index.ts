@@ -2,4 +2,5 @@
 export const packageName: string = '@causedeck/core';
 
 export * from './jobs/index.ts';
+export * from './usage/index.ts';
 export * from './workspaces/index.ts';

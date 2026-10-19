@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./billing": "./src/billing/index.ts",
     "./jobs": "./src/jobs/index.ts",
+    "./usage": "./src/usage/index.ts",
     "./workspaces": "./src/workspaces/index.ts"
   },
   "scripts": {

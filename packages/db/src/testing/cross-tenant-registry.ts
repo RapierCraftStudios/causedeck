@@ -130,6 +130,16 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'caller-checked',
     note: 'notify() enqueues for its own checked workspace; the deliver job runs scoped to it',
   },
+  increment: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  getUsage: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -210,6 +220,16 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   digestInstant: 'pure (time zone math)',
   notificationJobDeps: 'transport wiring (no database access)',
   setNotificationJobDeps: 'setter',
+  // usage: keys and periods (#219)
+  USAGE_KEYS: 'constant',
+  USAGE_KEY_KINDS: 'constant',
+  USAGE_TIME_ZONE: 'constant',
+  IST_OFFSET_MINUTES: 'constant',
+  isUsageKey: 'pure',
+  usagePeriod: 'pure',
+  periodStart: 'pure',
+  nextPeriodStart: 'pure',
+  incrementSql: 'pure (SQL builder; increment runs it inside withWorkspace)',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;

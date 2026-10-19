@@ -67,11 +67,15 @@ async function defaultMemberRole(userId: string, workspaceId: string): Promise<s
 
 /** Writes in its own transaction and never throws, so the original denial still surfaces. */
 export async function defaultRecordDenied(denial: AccessDenial): Promise<void> {
-  const [{ db }, { recordAccessDenied }] = await Promise.all([
-    import('@causedeck/db'),
-    import('@causedeck/core/audit'),
-  ]);
-  await recordAccessDenied(db, denial);
+  try {
+    const [{ db }, { recordAccessDenied }] = await Promise.all([
+      import('@causedeck/db'),
+      import('@causedeck/core/audit'),
+    ]);
+    await recordAccessDenied(db, denial);
+  } catch {
+    // recordAccessDenied logs its own write failures; a failed import must not mask the denial.
+  }
 }
 
 /**

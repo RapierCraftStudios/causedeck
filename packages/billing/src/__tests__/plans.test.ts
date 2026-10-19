@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  AI_BUDGET_PAISE_PER_SEAT,
   checkPlanConfig,
   CLERK_SEAT_PRICE_PAISE,
   exceedsUpiMandateCap,
   getPlan,
+  JUNIOR_AI_BUDGET_PAISE,
   MANDATE_ADDITIONAL_AUTH_MESSAGE_KEY,
   mandateChargeNotice,
   MIN_CHAMBER_SEATS,
@@ -25,7 +27,11 @@ const fixed = (over: Partial<Plan>): Plan => ({
   active: true,
   limits: {
     maxActiveMatters: null,
-    fairUse: { captureMinutesPerMonth: null, aiBudgetPaisePerMonth: null },
+    fairUse: {
+      captureMinutesPerMonth: null,
+      aiBudgetPaisePerMonth: null,
+      aiBudgetPaisePerSeatPerMonth: null,
+    },
   },
   ...over,
 });
@@ -165,6 +171,34 @@ describe('plan catalogue', () => {
     expect(junior?.limits.maxActiveMatters).toBe(15);
     expect(junior?.limits.fairUse.captureMinutesPerMonth).not.toBeNull();
     expect(junior?.limits.fairUse.aiBudgetPaisePerMonth).not.toBeNull();
+  });
+
+  it('budgets AI at Rs 10 a month for Junior and Rs 175 per seat on paid plans (#220)', () => {
+    expect(JUNIOR_AI_BUDGET_PAISE).toBe(1_000);
+    expect(AI_BUDGET_PAISE_PER_SEAT).toBe(17_500);
+    expect(getPlan('junior')?.limits.fairUse).toMatchObject({
+      aiBudgetPaisePerMonth: 1_000,
+      aiBudgetPaisePerSeatPerMonth: null,
+    });
+    for (const plan of PLAN_CATALOGUE.filter((p) => p.kind !== 'junior')) {
+      expect(plan.limits.fairUse.aiBudgetPaisePerSeatPerMonth, plan.id).toBe(17_500);
+    }
+  });
+
+  it('flags a non-integer AI budget as invalid', () => {
+    const plan = fixed({
+      limits: {
+        maxActiveMatters: null,
+        fairUse: {
+          captureMinutesPerMonth: null,
+          aiBudgetPaisePerMonth: 10.5,
+          aiBudgetPaisePerSeatPerMonth: null,
+        },
+      },
+    });
+    expect(checkPlanConfig([plan])).toEqual([
+      expect.objectContaining({ planId: 'test', code: 'invalid' }),
+    ]);
   });
 
   it('prices each annual advocate plan at 10 months of its monthly tier', () => {

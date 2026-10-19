@@ -239,7 +239,8 @@ export const requireAuthorization = {
       }
       if (node.type === 'ArrayExpression') {
         return node.elements.some(
-          (element) => element !== null && element.type !== 'SpreadElement' && containsAuthorize(element),
+          (element) =>
+            element !== null && element.type !== 'SpreadElement' && containsAuthorize(element),
         );
       }
       return false;

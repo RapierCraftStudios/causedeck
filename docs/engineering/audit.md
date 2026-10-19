@@ -38,13 +38,15 @@ Each action is either **security** or **informational**:
 | security      | fail-closed: `record()` throws, so the action fails and its transaction rolls back | yes       |
 | informational | fail-open: logged (`service: audit`, action, workspace and error code only) and dropped. The write ran on its own savepoint, so the caller's transaction stays usable | no        |
 
-| Action                      | Kind          | Emitted by                                      |
-| --------------------------- | ------------- | ----------------------------------------------- |
-| `member.removed`            | security      | `offboardMember` through the `AuditSink`        |
-| `member.role_changed`       | security      | role change (#228)                              |
-| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22) |
-| `audit.exported`            | security      | `exportAudit`, before the first byte (#229)     |
-| `workspace.settings_viewed` | informational | reserved                                        |
+| Action                      | Kind          | Emitted by                                          |
+| --------------------------- | ------------- | --------------------------------------------------- |
+| `member.removed`            | security      | `offboardMember` through the `AuditSink`            |
+| `member.role_changed`       | security      | role change (#228)                                  |
+| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22)     |
+| `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220) |
+| `audit.exported`            | security      | `exportAudit`, before the first byte (#229)         |
+| `workspace.settings_viewed` | informational | reserved                                            |
+| `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)      |
 
 #228 adds the sign-in, magic link, passkey, 2FA, session, export, support session and access-denied
 actions.
@@ -194,7 +196,31 @@ and checks each `prev_hash` against the previous event's hash. It returns
 - A whole chain must start with a `null` `prev_hash`. A range starting at `from` takes its first
   `prev_hash` as given.
 
-Account chains are verified by the nightly job (#230).
+Account chains are verified by the nightly job through `app_audit_verify_account_chain` (see
+below).
+
+## Verification and retention
+
+Two jobs keep the chains checked and trimmed (#230, [jobs.md](jobs.md#audit-jobs)):
+
+- **Nightly verification.** `system.audit.verify` runs at 02:00 IST. It verifies the account chain
+  through the owner-defined `app_audit_verify_account_chain(from, to)` (`0019_audit_jobs`; the
+  app role can read account events only as their actor). It then enqueues `audit.verify` for every
+  workspace listed by `app_audit_chain_targets()`, deleted workspaces included. Each run starts
+  `from` the epoch, so a chain whose oldest events were purged is verified from its oldest
+  surviving row; every surviving row's hash is still checked.
+- **Mismatch alert.** A broken chain logs at `fatal` with message and `event`
+  `audit.chain_mismatch`, `severity: 'critical'`, `workspaceId` (null for the account chain),
+  `eventId` (the first broken event), `reason` (`hash` or `link`) and `checked`. Metadata and row
+  content are never logged. The job does not fail, so it does not retry and re-alert.
+- **Retention.** `system.audit.retention` runs at 03:00 IST. CERT-In requires logs to be kept in
+  India for at least 180 days, so the window (`retentionDays`) is at least 180 and defaults to 400.
+  The payload schema, the handler and the purge functions each refuse less. Audit events and
+  `ai_call` rows older than the window are deleted only through `app_purge_audit` and
+  `app_purge_ai_calls`.
+- **Summary row.** In the same transaction the job records `audit.retention_purged` (security,
+  fail-closed) on the account chain, with actor kind `system` and metadata `retentionDays`,
+  `cutoff` (ISO, UTC), `auditDeleted` and `aiCallsDeleted`. A failed summary rolls the purge back.
 
 ## Performance budget
 

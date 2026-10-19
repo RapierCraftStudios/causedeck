@@ -43,13 +43,25 @@ export const UPI_AUTOPAY_MANDATE_CAP_PAISE = 1_500_000;
 /** Prices are ex-GST; #29 applies GST at this rate (basis points) on the invoice. */
 export const GST_RATE_BPS = 1_800;
 
+/** The free plan's monthly AI budget (#30, #220; PRD NFR Cost: <= Rs 10 per free workspace). */
+export const JUNIOR_AI_BUDGET_PAISE = 1_000;
+
+/**
+ * A paid plan's monthly AI budget per seat (#30, #220; PRD NFR Cost: <= Rs 175 per active seat),
+ * pooled at the workspace level across `entitlements.seats`.
+ */
+export const AI_BUDGET_PAISE_PER_SEAT = 17_500;
+
 /** Usage limits a plan grants. `null` means unlimited. Entitlements (#203) derive from these. */
 export interface PlanLimits {
   maxActiveMatters: number | null;
-  /** Fair-use caps. Placeholder values until usage metering (#30) calibrates them. */
+  /** Fair-use caps. Capture minutes are a placeholder until #221 calibrates them. */
   fairUse: {
     captureMinutesPerMonth: number | null;
+    /** A flat monthly AI budget for the workspace; used when there is no per-seat budget. */
     aiBudgetPaisePerMonth: number | null;
+    /** A monthly AI budget per seat, pooled across the workspace's seats; wins when set. */
+    aiBudgetPaisePerSeatPerMonth: number | null;
   };
 }
 
@@ -68,9 +80,14 @@ export interface Plan {
   limits: PlanLimits;
 }
 
-const UNLIMITED: PlanLimits = {
+/** Paid plans: unlimited matters and capture, AI budget pooled per seat. */
+const PAID: PlanLimits = {
   maxActiveMatters: null,
-  fairUse: { captureMinutesPerMonth: null, aiBudgetPaisePerMonth: null },
+  fairUse: {
+    captureMinutesPerMonth: null,
+    aiBudgetPaisePerMonth: null,
+    aiBudgetPaisePerSeatPerMonth: AI_BUDGET_PAISE_PER_SEAT,
+  },
 };
 
 const ADVOCATE_TIERS = [49_900, 79_900, 119_900] as const;
@@ -94,7 +111,11 @@ export const PLAN_CATALOGUE: readonly Readonly<Plan>[] = Object.freeze([
     active: true,
     limits: {
       maxActiveMatters: 15,
-      fairUse: { captureMinutesPerMonth: 300, aiBudgetPaisePerMonth: 5_000 },
+      fairUse: {
+        captureMinutesPerMonth: 300,
+        aiBudgetPaisePerMonth: JUNIOR_AI_BUDGET_PAISE,
+        aiBudgetPaisePerSeatPerMonth: null,
+      },
     },
   }),
   ...ADVOCATE_TIERS.map((pricePaise, i) =>
@@ -108,7 +129,7 @@ export const PLAN_CATALOGUE: readonly Readonly<Plan>[] = Object.freeze([
       clerkSeatPricePaise: null,
       minSeats: 1,
       active: true,
-      limits: UNLIMITED,
+      limits: PAID,
     }),
   ),
   ...ADVOCATE_TIERS.map((monthly, i) =>
@@ -122,7 +143,7 @@ export const PLAN_CATALOGUE: readonly Readonly<Plan>[] = Object.freeze([
       clerkSeatPricePaise: null,
       minSeats: 1,
       active: true,
-      limits: UNLIMITED,
+      limits: PAID,
     }),
   ),
   ...CHAMBER_SEAT_BANDS.map((pricePaise, i) =>
@@ -136,7 +157,7 @@ export const PLAN_CATALOGUE: readonly Readonly<Plan>[] = Object.freeze([
       clerkSeatPricePaise: CLERK_SEAT_PRICE_PAISE,
       minSeats: MIN_CHAMBER_SEATS,
       active: true,
-      limits: UNLIMITED,
+      limits: PAID,
     }),
   ),
 ]);
@@ -208,6 +229,11 @@ export function checkPlanConfig(catalogue: readonly Plan[] = PLAN_CATALOGUE): Pl
     seen.add(plan.id);
     if (!isPaise(plan.pricePaise) || !isPaise(plan.clerkSeatPricePaise)) {
       invalid(`${plan.id}: prices must be non-negative integer paise`);
+      continue;
+    }
+    const { aiBudgetPaisePerMonth, aiBudgetPaisePerSeatPerMonth } = plan.limits.fairUse;
+    if (!isPaise(aiBudgetPaisePerMonth) || !isPaise(aiBudgetPaisePerSeatPerMonth)) {
+      invalid(`${plan.id}: AI budgets must be non-negative integer paise`);
       continue;
     }
     if (!Number.isSafeInteger(plan.minSeats) || plan.minSeats < 1) {

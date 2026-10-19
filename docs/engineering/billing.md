@@ -135,6 +135,41 @@ naming test fails if 0017 creates any other table.
   trigger rejects inserting or updating lines of a non-draft invoice. Deletes are not blocked, so
   deleting a workspace still cascades.
 
+### GST and issuing (#253)
+
+- **Tax** (`packages/billing/src/gst/calc.ts`, `calcGst`): integer paise only. The 18% is computed
+  once, rounded half up to the paisa: `tax = floor((taxable × 1800 + 5000) / 10000)`. Intra-state
+  (supplier state = place of supply) splits it `cgst = floor(tax / 2)`, `sgst = tax − cgst`, so SGST
+  carries the odd paisa and CGST + SGST always equals the rounded 18%. Inter-state charges it all as
+  IGST. `total = taxable + cgst + sgst + igst`. A 10,000-amount fuzz test pins this. **Needs CA
+  review.**
+- **State codes** (`gst/state-codes.ts`): the GSTN state/UT codes. The place of supply is the
+  recipient's GSTIN state, or the supplier's state when the recipient has no GSTIN (no billing
+  address is captured yet). GSTIN validation is `gstin.ts`, reused.
+- **SAC** (`gst/sac.ts`): `998314` by default, configurable with `BILLING_SAC`. **Needs CA
+  confirmation.**
+- **Numbering** (`invoice/numbering.ts`): `CD/26-27/000001` (15 of the 16 characters GST allows),
+  series from `BILLING_INVOICE_SERIES` (1-3 capitals). The financial year runs 1 April to 31 March
+  in India time, so numbering restarts at 000001 at 00:00 IST on 1 April. `issueSaasInvoice`
+  (`packages/core/src/billing/invoices.ts`) allocates the number with `SELECT ... FOR UPDATE` on the
+  `invoice_counter` row in the same transaction that writes the invoice: concurrent issuances queue
+  on the lock and a rollback returns the number, so the series is gapless.
+- **Issuing** (`invoice/generate.ts`, `issueInvoice`): validate lines and period, resolve the
+  supplier, snapshot the recipient (workspace name and the subscription's GSTIN at that moment), compute
+  GST, allocate the number, insert the draft and its lines, mark it issued.
+- **Supplier** (`config/supplier.ts`, server-only): `BILLING_SUPPLIER_LEGAL_NAME`,
+  `BILLING_SUPPLIER_ADDRESS` and `BILLING_SUPPLIER_GSTIN` (its state code is the supplier state). The
+  keys are optional so production boots without them, but in production issuing refuses with
+  `SupplierNotConfiguredError` (`SUPPLIER_NOT_CONFIGURED`, naming the missing keys) before anything
+  is numbered or written. Outside production an unset supplier is the TEST supplier
+  (`TEST SUPPLIER - NOT A VALID TAX INVOICE`, GSTIN `27AAAAA0000A1Z2`). The real legal entity data is
+  a needs-human step.
+- **PDF** (#254): `renderInvoicePdf` (`@causedeck/billing/invoice/render-pdf`) renders an issued
+  invoice to a one-page A4 PDF with `@react-pdf/renderer`, using the layout in
+  `invoice/template.tsx`. Both are server-only subpath exports and never in the barrel. The
+  field-by-field GST mapping, numbering, rounding and the `needs CA review` items are in
+  [gst-invoicing.md](gst-invoicing.md).
+
 ## Test prices
 
 Placeholder prices to validate pricing, kept as data in `packages/billing/src/plans.ts` (seeded by

@@ -1,5 +1,5 @@
 {
-  "id": "e7679cfe-1024-430f-9989-2fd04297fade",
+  "id": "a7e69170-b403-4c26-8943-b3d1532a0450",
   "prevId": "2b816191-afd1-42f4-b743-8b26a6c94379",
   "version": "7",
   "dialect": "postgresql",
@@ -3862,13 +3862,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'Asia/Kolkata'"
-        },
-        "advocates_can_read_audit": {
-          "name": "advocates_can_read_audit",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
         },
         "created_at": {
           "name": "created_at",

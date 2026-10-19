@@ -56,6 +56,14 @@ export function renderPermissionsDoc(): string {
     '',
     ...DENY_REASONS.map((reason) => `- \`${reason}\`: ${REASON_NOTES[reason]}.`),
     '',
+    '## Enforcement',
+    '',
+    'Every server action and `/v1` route authorizes: a server action goes through',
+    '`workspaceAction` / `guard` (apps/web/lib) or calls `assertCan`; a `/v1` route lists',
+    '`authorize(action)` in its `middleware`. The ESLint rule `causedeck/require-authorization`',
+    '(packages/config/eslint) fails any that does not, unless it is annotated',
+    '`// authz: public <reason>`, which reviewers check like any other exception.',
+    '',
   );
   return lines.join('\n');
 }

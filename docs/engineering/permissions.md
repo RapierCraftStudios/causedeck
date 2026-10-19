@@ -116,3 +116,11 @@ the matrix, before the resource checks below.
 - `NOT_ASSIGNED`: a junior acting on a matter not assigned to, shared with or owned by them.
 - `FEATURE_OFF`: the action’s domain is switched off for the workspace.
 - `SUSPENDED`: the member is suspended.
+
+## Enforcement
+
+Every server action and `/v1` route authorizes: a server action goes through
+`workspaceAction` / `guard` (apps/web/lib) or calls `assertCan`; a `/v1` route lists
+`authorize(action)` in its `middleware`. The ESLint rule `causedeck/require-authorization`
+(packages/config/eslint) fails any that does not, unless it is annotated
+`// authz: public <reason>`, which reviewers check like any other exception.

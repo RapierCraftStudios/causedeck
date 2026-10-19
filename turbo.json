@@ -17,6 +17,9 @@
     "test": {
       "outputs": ["coverage/**", "reports/**"]
     },
+    "test:tenancy": {
+      "cache": false
+    },
     "db:generate": {
       "cache": false,
       "passThroughEnv": ["DATABASE_URL_OWNER"]

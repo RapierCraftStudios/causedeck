@@ -14,7 +14,10 @@ The pieces:
 | `tenantPolicy(table)` and the tenant-table registry | `packages/db/src/rls-policies.ts` |
 | `tenantTable(name, cols, extras)` | `packages/db/src/schema-helpers/tenant-table.ts` |
 | `pnpm db:check-rls` | `packages/db/scripts/check-rls.ts` over `packages/db/src/check-rls.ts` |
-| Policy tests | `packages/db/src/__tests__/rls/{sql,no-guc,with-check,pooling,owner}.test.ts` |
+| Policy tests | `packages/db/src/__tests__/rls/{sql,no-guc,with-check,pooling,owner,vector}.test.ts` |
+| Two-tenant fixture (`seedTwoTenants`, `TENANT_SEEDERS`) | `packages/db/src/testing/two-tenants.ts` (`@causedeck/db/testing/two-tenants`) |
+| Cross-tenant registry | `packages/db/src/testing/cross-tenant-registry.ts` (`@causedeck/db/testing/cross-tenant-registry`) |
+| Cross-tenant suite, `pnpm test:tenancy`, CI job `tenancy` | see [Cross-tenant suite](#cross-tenant-suite) |
 | Lint: `withoutWorkspace` only in `packages/db`, `apps/admin`, migrations | `packages/config/eslint/base.js` |
 
 ## The role model
@@ -133,7 +136,39 @@ at `docs/runbooks/`, #103). It covers containment, the CERT-In 6-hour report and
 affected workspaces. Preserve the request and job logs (they carry `workspaceId` and never matter
 content) before any fix is deployed.
 
-## Next
+## Cross-tenant suite
 
-#19 part 2 (#209) adds the cross-tenant test suite over every route, action and job, the tenant
-table registry it reads, and the required `tenancy` CI job.
+`pnpm test:tenancy` (#209) proves that workspace B cannot reach workspace A through any layer. It
+runs in the required CI job `tenancy`, together with `pnpm db:check-rls` on a freshly migrated
+database, on every pull request and always in full. **Any failure of this suite is a release
+blocker**: treat it as a suspected cross-tenant leak (see Incidents), never skip or quarantine it.
+
+| Layer | Test |
+|---|---|
+| SQL, every tenant table: A cannot select, update, delete or insert B's rows | `packages/db/src/__tests__/cross-tenant/tables.test.ts` |
+| pgvector similarity search on a `memory_embedding`-shaped table | `packages/db/src/__tests__/rls/vector.test.ts` |
+| Every exported `@causedeck/core` service, `ub` against A's ids | `packages/core/src/__tests__/cross-tenant/services.test.ts` |
+| A user in both workspaces (`uboth`): one workspace per transaction | `packages/core/src/__tests__/cross-tenant/two-workspace-user.test.ts` |
+| REST routes (`/v1`), including `requireWorkspace` | `apps/api/src/__tests__/cross-tenant.test.ts` |
+| Server actions and the workspace loader | `apps/web/__tests__/cross-tenant-actions.test.ts` (run by `apps/web/vitest.tenancy.config.ts`; the default web config excludes it) |
+| Storage presign | `packages/storage/src/__tests__/cross-tenant-presign.test.ts` (placeholder until #21) |
+
+`seedTwoTenants(db)` creates workspaces A and B, `ua` (owner of A), `ub` (owner of B) and `uboth`
+(an advocate in both), and one row per tenant table in each, written through `TENANT_SEEDERS`
+inside the workspace's own scope. It works inside `withTestDb` and on committed data.
+
+The registry (`cross-tenant-registry.ts`) is enforced by two tests, so an addition without a
+cross-tenant test fails `pnpm test:tenancy`:
+
+- `packages/db/src/__tests__/cross-tenant/registry.test.ts` introspects the live catalog (tables
+  with `workspace_id` outside `GLOBAL_TABLES`) plus `registeredTenantTables()`. Each one needs a
+  `TABLE_TESTS` entry and a `TENANT_SEEDERS` entry.
+- `packages/core/src/__tests__/cross-tenant/registry.test.ts` lists the runtime exports of
+  `@causedeck/core`. Each one is either in `SERVICE_TESTS` with its kind (`denies`, `rls-empty`,
+  `self-scoped`, `caller-checked`) or in `NOT_A_SERVICE` with a reason. `services.test.ts` has one case per
+  `SERVICE_TESTS` entry that points at it. The same test fails once `@causedeck/storage` exports
+  presign (#21) while the presign test is still the placeholder.
+
+Adding a tenant table: add a seeder to `TENANT_SEEDERS` and a `TABLE_TESTS` entry; the table test
+then covers it. Adding a core service: add a `SERVICE_TESTS` entry and its case in
+`services.test.ts`, which must show that B gets `NOT_FOUND` / `FORBIDDEN` or nothing of A's.

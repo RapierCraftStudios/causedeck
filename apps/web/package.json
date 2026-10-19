@@ -12,7 +12,8 @@
     "bundle:budget": "node scripts/check-bundle-budget.mjs",
     "lint": "NODE_OPTIONS=--max-old-space-size=4096 eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:tenancy": "vitest run --config vitest.tenancy.config.ts"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "catalog:",

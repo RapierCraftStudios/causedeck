@@ -16,6 +16,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:tenancy": "turbo run test:tenancy",
     "db:generate": "turbo run db:generate --filter=@causedeck/db",
     "db:migrate": "turbo run db:migrate --filter=@causedeck/db",
     "db:check": "turbo run db:check --filter=@causedeck/db",

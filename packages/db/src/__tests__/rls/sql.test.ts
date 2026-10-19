@@ -75,7 +75,10 @@ describe('row-level security catalog', () => {
         and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'workspace_id')
         and not (c.relname = any(${sql.raw(`array[${GLOBAL_TABLES.map((t) => `'${t}'`).join(', ')}]`)}))
       order by 1`);
-    expect(rows.map((r) => r.name)).toEqual([...BASELINE_TENANT_TABLES].sort());
+    // Baseline tables plus those created later through tenantTable() (#194).
+    expect(rows.map((r) => r.name)).toEqual(
+      [...BASELINE_TENANT_TABLES, 'notification', 'notification_pref'].sort(),
+    );
     for (const row of rows)
       expect(row, row.name).toMatchObject({ enabled: true, forced: true, policy: true });
     expect(await checkRls(owner)).toEqual([]);

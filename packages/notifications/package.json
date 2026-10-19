@@ -5,12 +5,20 @@
   "description": "Email, web push, in-app notifications, digests.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./categories": "./src/categories.ts",
+    "./service": "./src/service.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:tenancy": "vitest run src/__tests__/cross-tenant"
+  },
+  "dependencies": {
+    "@causedeck/db": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",

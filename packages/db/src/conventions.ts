@@ -12,7 +12,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * a `workspace_id` column is a tenant table under FORCE RLS (`db:check-rls`,
  * docs/engineering/tenancy.md). `organization` (the workspace) is the tenant root with its own
  * policies; `member` and `invitation` are tenant tables. `api_idempotency_key` has a nullable
- * `workspace_id` but is keyed by user, so it stays global.
+ * `workspace_id` but is keyed by user, so it stays global. `push_subscription` (per user) and
+ * `email_suppression` (per address) have no workspace (#194).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -25,6 +26,8 @@ export const GLOBAL_TABLES: readonly string[] = [
   'rate_limit',
   'api_idempotency_key',
   'plan',
+  'push_subscription',
+  'email_suppression',
 ];
 
 export const WORKSPACE_COLUMN = 'workspace_id';

@@ -1006,6 +1006,16 @@ importers:
         version: 3.2.7(@types/node@22.20.5)(@vitest/browser@3.2.7)(jiti@2.7.0)(jsdom@27.0.1)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
 
   packages/notifications:
+    dependencies:
+      '@causedeck/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.4(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(kysely@0.29.6)(pg@8.23.1)(postgres@3.4.9)
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       '@causedeck/config':
         specifier: workspace:*

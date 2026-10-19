@@ -2,6 +2,8 @@
 // Push permission card (#197): never prompts on load, hidden when push is disabled or unsupported,
 // `Turn on` asks for permission, subscribes with the VAPID key and stores the subscription, and
 // `Not now` hides it for good. The real browser flow is e2e/tests/notifications/push.spec.ts.
+import { generateKeyPairSync } from 'node:crypto';
+
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,8 +15,17 @@ import {
   vapidKeyBytes,
 } from '../push-permission-card.tsx';
 
-const KEY =
-  'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+/** A P-256 public key generated per run (#271): the uncompressed point, URL-safe base64. */
+const KEY = (() => {
+  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+    format: 'jwk',
+  });
+  return Buffer.concat([
+    Buffer.from([4]),
+    Buffer.from(jwk.x ?? '', 'base64url'),
+    Buffer.from(jwk.y ?? '', 'base64url'),
+  ]).toString('base64url');
+})();
 const SUB_JSON = { endpoint: 'https://push.example.test/abc', keys: { p256dh: 'p', auth: 'a' } };
 
 const browser = {

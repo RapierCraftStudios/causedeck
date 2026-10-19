@@ -32,9 +32,9 @@
     "db:check-rls": "tsx scripts/check-rls.ts"
   },
   "dependencies": {
-    "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/i18n": "workspace:*",
+    "@causedeck/validators": "workspace:*",
     "drizzle-orm": "catalog:",
     "postgres": "catalog:"
   },

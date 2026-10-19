@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { Can, deniedHintKey } from '../components/can.tsx';
 import type { AppSession } from '../lib/auth.ts';
-import { guard, guardResponse } from '../lib/guard.ts';
+import { guard, guardResponse, type AccessDenial } from '../lib/guard.ts';
 import { safeAction } from '../lib/safe-action.ts';
 import * as workspaceContext from '../lib/workspace-context.ts';
 import { workspaceAction } from '../lib/workspace-action.ts';
@@ -240,5 +240,76 @@ describe('guard and workspaceAction', () => {
       error: { code: 'FORBIDDEN', message: 'You do not have access to this.' },
     });
     expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('records access.denied for a non-member and a policy denial (#228)', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const recordDenied = vi.fn(() => Promise.resolve());
+    await expect(
+      guard({ workspaceId: WS, session }, { memberRole: memberRole(null), recordDenied }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      guard(
+        { workspaceId: WS, action: 'member.role', session },
+        { memberRole: memberRole('advocate'), recordDenied },
+      ),
+    ).rejects.toSatisfy(policy.isForbiddenError);
+    await guard(
+      { workspaceId: WS, action: 'member.role', session },
+      { memberRole: memberRole('owner'), recordDenied },
+    );
+    expect(recordDenied.mock.calls).toEqual([
+      [{ workspaceId: WS, member: false, actorUserId: USER, action: undefined }],
+      [
+        {
+          workspaceId: WS,
+          member: true,
+          actorUserId: USER,
+          action: 'member.role',
+          reason: expect.any(String) as string,
+        },
+      ],
+    ]);
+  });
+
+  it('workspaceAction records a domain FORBIDDEN once, after the workspace transaction', async () => {
+    const recordDenied = vi.fn<(denial: AccessDenial) => Promise<void>>(() => Promise.resolve());
+    const order: string[] = [];
+    const run = workspaceAction(
+      z.object({ workspaceId: z.uuid() }),
+      () => {
+        throw Object.assign(new Error('Only owners can do that'), {
+          name: 'WorkspaceError',
+          code: 'FORBIDDEN',
+        });
+      },
+      {
+        requireSession: () => Promise.resolve(session),
+        memberRole: memberRole('advocate'),
+        recordDenied: (denial) => {
+          order.push('recorded');
+          return recordDenied(denial);
+        },
+        runInWorkspace: async (_scope, fn) => {
+          try {
+            return await fn({} as never);
+          } finally {
+            order.push('rolled back');
+          }
+        },
+      },
+    );
+    expect(await run({ workspaceId: WS })).toEqual({
+      ok: false,
+      error: { code: 'FORBIDDEN', message: 'Only owners can do that' },
+    });
+    expect(order).toEqual(['rolled back', 'recorded']);
+    expect(recordDenied).toHaveBeenCalledWith({
+      workspaceId: WS,
+      member: true,
+      actorUserId: USER,
+      action: undefined,
+      reason: 'FORBIDDEN',
+    });
   });
 });

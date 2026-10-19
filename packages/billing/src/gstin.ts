@@ -3,10 +3,11 @@
 // mod-36 scheme). Captured on `subscription.gstin` for GST invoices (#29). The database checks the
 // format only; the check digit is verified here.
 //
-// This module imports no other workspace (`@causedeck/db` uses `GSTIN_PATTERN_SOURCE`).
+// The format string lives in the leaf `@causedeck/validators/gstin` (#297), which `@causedeck/db`
+// uses for the constraint; it is re-exported here unchanged.
+import { GSTIN_PATTERN_SOURCE } from '@causedeck/validators/gstin';
 
-/** The format, as a regex source string shared with the `subscription_gstin_chk` constraint. */
-export const GSTIN_PATTERN_SOURCE = '^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$';
+export { GSTIN_PATTERN_SOURCE };
 export const GSTIN_PATTERN = new RegExp(GSTIN_PATTERN_SOURCE);
 
 const CHARSET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';

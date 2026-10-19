@@ -91,6 +91,7 @@ describe('row-level security catalog', () => {
         'ai_call',
         'notification',
         'notification_pref',
+        'notification_setting',
         ...USAGE_TABLES,
         'workspace_feature_flag',
       ].sort(),

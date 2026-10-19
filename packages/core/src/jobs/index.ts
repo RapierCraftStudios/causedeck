@@ -41,6 +41,7 @@ export {
   contentFieldViolations,
   createRegistry,
   enqueue,
+  enqueueNotificationDelivery,
   registry,
   type EnqueueOptions,
   type JobMap,
@@ -58,5 +59,38 @@ export {
   type BillingProcessEventPayload,
 } from './definitions/billing-process-event.ts';
 export { billingReconcile, runBillingReconcile } from './definitions/billing-reconcile.ts';
+export {
+  appLink,
+  DELIVERY_CHANNELS,
+  deliveryKey,
+  notificationDeliver,
+  notificationDeliverSchema,
+  notificationJobDeps,
+  runNotificationDeliver,
+  setNotificationJobDeps,
+  type DeliverOutcome,
+  type DeliveryChannel,
+  type DeliveryRecord,
+  type DeliveryStatus,
+  type NotificationDeliverPayload,
+  type NotificationJobDeps,
+  type PushSender,
+} from './definitions/notification-deliver.ts';
+export {
+  DEFAULT_DIGEST_TIMEZONE,
+  DIGEST_ITEM_LIMIT,
+  DIGEST_LOCAL_TIME,
+  digestDueAt,
+  digestInstant,
+  notificationDigest,
+  notificationDigestSchedule,
+  notificationDigestSchema,
+  runNotificationDigest,
+  runNotificationDigestSchedule,
+  type DigestReport,
+  type DigestScheduleDeps,
+  type DigestTarget,
+  type NotificationDigestPayload,
+} from './definitions/notification-digest.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { systemPing } from './definitions/system-ping.ts';

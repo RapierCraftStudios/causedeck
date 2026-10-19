@@ -568,6 +568,11 @@
         "subject": "Billing: {title}",
         "preview": "A billing update for your workspace",
         "cta": "View billing"
+      },
+      "notice": {
+        "subject": "{title}",
+        "preview": "An update from your CauseDeck workspace",
+        "cta": "Open in CauseDeck"
       }
     }
   },

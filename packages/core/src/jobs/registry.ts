@@ -5,6 +5,11 @@ import type { z } from 'zod';
 
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { notificationDeliver } from './definitions/notification-deliver.ts';
+import {
+  notificationDigest,
+  notificationDigestSchedule,
+} from './definitions/notification-digest.ts';
 import { retentionSweep } from './definitions/retention-sweep.ts';
 import { systemPing } from './definitions/system-ping.ts';
 import type { AnyJobDefinition, JobPayloadBase } from './define.ts';
@@ -112,6 +117,9 @@ export const registry = createRegistry([
   retentionSweep,
   billingReconcile,
   billingProcessEvent,
+  notificationDeliver,
+  notificationDigestSchedule,
+  notificationDigest,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -120,6 +128,9 @@ export type JobMap = RegistryMap<
     typeof retentionSweep,
     typeof billingReconcile,
     typeof billingProcessEvent,
+    typeof notificationDeliver,
+    typeof notificationDigestSchedule,
+    typeof notificationDigest,
   ]
 >;
 export type JobName = keyof JobMap;
@@ -139,4 +150,15 @@ export async function enqueue<N extends JobName>(
   // Validate before connecting, so a bad payload fails fast even without a database.
   registry.get(name)?.schema.parse(payload);
   return registry.enqueue(sender ?? (await getProducer()), name, payload, options);
+}
+
+/**
+ * `NotifyContext.enqueueDelivery` for `notify()` (`@causedeck/notifications`): one
+ * `notification.deliver` job per notification and channel.
+ */
+export function enqueueNotificationDelivery(
+  job: PayloadOf<'notification.deliver'>,
+  options: ProducerEnqueueOptions = {},
+): Promise<string | null> {
+  return enqueue('notification.deliver', job, options);
 }

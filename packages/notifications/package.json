@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./categories": "./src/categories.ts",
     "./service": "./src/service.ts",
-    "./email": "./src/email/index.ts"
+    "./email": "./src/email/index.ts",
+    "./quiet-hours": "./src/quiet-hours.ts"
   },
   "scripts": {
     "lint": "eslint .",

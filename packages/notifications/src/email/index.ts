@@ -1,5 +1,6 @@
 // Email: transports selected by EMAIL_PROVIDER, React Email templates and the suppression list.
 export { consoleTransport } from './console-transport.ts';
+export { emailErrorCode, isPermanentEmailError } from './errors.ts';
 export { getTranslator, toEmailLocale, type EmailLocale, type Translate } from './messages.ts';
 export {
   isMandatoryTemplate,

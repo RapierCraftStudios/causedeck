@@ -14,6 +14,7 @@ export {
   type Digest,
 } from './categories.ts';
 export { NotificationError, type NotificationErrorCode } from './errors.ts';
+export { COURT_HOURS, isQuietTime, localMinutes, type QuietSetting } from './quiet-hours.ts';
 export {
   getPreferences,
   LIST_LIMIT_MAX,

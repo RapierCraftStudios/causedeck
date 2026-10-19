@@ -89,6 +89,28 @@ export const notificationPref = tenantTable(
   ],
 );
 
+/**
+ * A member's delivery settings in one workspace (#196). `court_hours_quiet` is the `Do not push
+ * during court hours` toggle (10:30-17:00 local): scheduled sends such as the daily digest skip a
+ * quiet window. No row means no quiet hours.
+ */
+export const notificationSetting = tenantTable(
+  'notification_setting',
+  {
+    userId: userRef(),
+    courtHoursQuiet: boolean('court_hours_quiet').notNull().default(false),
+    ...timestamps(),
+  },
+  (t) => [
+    foreignKey({
+      name: 'notification_setting_workspace_id_fk',
+      columns: [t.workspaceId],
+      foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    primaryKey({ name: 'notification_setting_pkey', columns: [t.workspaceId, t.userId] }),
+  ],
+);
+
 /** A browser's Web Push subscription; per user, global, revoked on 404/410 (#197). */
 export const pushSubscription = pgTable(
   'push_subscription',

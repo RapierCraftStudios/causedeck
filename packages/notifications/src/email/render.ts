@@ -22,6 +22,7 @@ import {
   type InvitationProps,
 } from './templates/invitation.tsx';
 import { MagicLinkEmail, magicLinkSubject, type MagicLinkProps } from './templates/magic-link.tsx';
+import { NoticeEmail, noticeSubject, type NoticeProps } from './templates/notice.tsx';
 import {
   SecurityAlertEmail,
   securityAlertSubject,
@@ -34,6 +35,7 @@ export interface TemplateProps {
   'security-alert': SecurityAlertProps;
   'daily-digest': DailyDigestProps;
   'billing-notice': BillingNoticeProps;
+  notice: NoticeProps;
 }
 
 export type TemplateName = keyof TemplateProps;
@@ -67,6 +69,7 @@ export const TEMPLATES: { [K in TemplateName]: TemplateDefinition<TemplateProps[
     subject: billingNoticeSubject,
     component: BillingNoticeEmail,
   },
+  notice: { category: 'system.notice', subject: noticeSubject, component: NoticeEmail },
 };
 
 export const TEMPLATE_NAMES = Object.keys(TEMPLATES) as TemplateName[];

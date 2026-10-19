@@ -1,5 +1,5 @@
 {
-  "allowUntranslated": ["notifications.email.layout.brand"],
+  "allowUntranslated": ["notifications.email.layout.brand", "notifications.email.notice.subject"],
   "ta": {
     "auth.checkEmail.body": "draft",
     "auth.checkEmail.differentEmail": "draft",
@@ -228,6 +228,9 @@
     "notifications.email.magicLink.ignore": "draft",
     "notifications.email.magicLink.preview": "draft",
     "notifications.email.magicLink.subject": "draft",
+    "notifications.email.notice.cta": "draft",
+    "notifications.email.notice.preview": "draft",
+    "notifications.email.notice.subject": "draft",
     "notifications.email.securityAlert.cta": "draft",
     "notifications.email.securityAlert.help": "draft",
     "notifications.email.securityAlert.intro": "draft",
@@ -622,6 +625,9 @@
     "notifications.email.magicLink.ignore": "draft",
     "notifications.email.magicLink.preview": "draft",
     "notifications.email.magicLink.subject": "draft",
+    "notifications.email.notice.cta": "draft",
+    "notifications.email.notice.preview": "draft",
+    "notifications.email.notice.subject": "draft",
     "notifications.email.securityAlert.cta": "draft",
     "notifications.email.securityAlert.help": "draft",
     "notifications.email.securityAlert.intro": "draft",

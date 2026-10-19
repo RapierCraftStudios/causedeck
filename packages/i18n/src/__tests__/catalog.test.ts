@@ -84,6 +84,7 @@ describe('namespaced catalogs (#174)', () => {
   it('keeps the top-level keys app call sites use', () => {
     expect(Object.keys(en).sort()).toEqual(
       [
+        'audit',
         'auth',
         'billing',
         'common',

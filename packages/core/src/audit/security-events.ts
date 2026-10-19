@@ -20,7 +20,9 @@ export function hashEmail(email: string): string {
   return createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
 }
 
-function requestFields(event: SecurityEventInput): Pick<AuditContext, 'ip' | 'userAgent' | 'requestId'> {
+function requestFields(
+  event: SecurityEventInput,
+): Pick<AuditContext, 'ip' | 'userAgent' | 'requestId'> {
   return {
     ...(event.ip === undefined ? {} : { ip: event.ip }),
     ...(event.userAgent === undefined ? {} : { userAgent: event.userAgent }),
@@ -150,11 +152,7 @@ export async function recordAccessDenied(db: Database, event: AccessDeniedEvent)
     );
   } catch (error) {
     logger().error(
-      {
-        err: { name: error instanceof Error ? error.name : 'unknown' },
-        action: 'access.denied',
-        workspaceId: event.workspaceId,
-      },
+      { err: { name: error instanceof Error ? error.name : 'unknown' }, action: 'access.denied' },
       'access denial not recorded',
     );
   }

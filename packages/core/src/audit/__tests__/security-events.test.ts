@@ -406,6 +406,47 @@ describe('domain events', () => {
     });
   });
 
+  it('access.denied: survives the rolled-back transaction of the denied action', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const viewer = await addMember(tx, workspaceId, 'viewer');
+      const ownerMember = await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .select({ id: schema.member.id })
+          .from(schema.member)
+          .where(eq(schema.member.userId, ownerId)),
+      );
+      // The denied domain call runs in its own (caller) transaction, which rolls back.
+      const denied = await tx
+        .transaction((caller) =>
+          inWorkspace(caller, workspaceId, (s) =>
+            core.changeRole(s, {
+              workspaceId,
+              actorUserId: viewer.userId,
+              memberId: ownerMember[0]?.id ?? '',
+              role: 'viewer',
+            }),
+          ),
+        )
+        .then(
+          () => null,
+          (error: unknown) => error,
+        );
+      expect(denied).toMatchObject({ code: 'FORBIDDEN' });
+      await recordAccessDenied(tx as unknown as Database, {
+        workspaceId,
+        member: true,
+        actorUserId: viewer.userId,
+        reason: 'FORBIDDEN',
+      });
+      expect(only(await workspaceRows(tx, workspaceId, 'access.denied'))).toMatchObject({
+        outcome: 'denied',
+        actorUserId: viewer.userId,
+      });
+      expect(await workspaceRows(tx, workspaceId, 'member.role_changed')).toHaveLength(0);
+    });
+  });
+
   it('access.denied: a failed write is swallowed so the original denial still surfaces', async () => {
     const broken = {
       transaction: () => Promise.reject(new Error('db down')),

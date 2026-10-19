@@ -6,6 +6,7 @@ import {
   InviteInput,
   RESERVED_SLUGS,
   Slug,
+  UpdateWorkspaceProfileInput,
 } from './workspace';
 
 describe('Slug', () => {
@@ -52,5 +53,54 @@ describe('ChangeRoleInput', () => {
     expect(ChangeRoleInput.parse({ memberId, role: 'owner' })).toEqual({ memberId, role: 'owner' });
     expect(ChangeRoleInput.safeParse({ memberId, role: 'partner' }).success).toBe(false);
     expect(ChangeRoleInput.safeParse({ memberId: 'x', role: 'junior' }).success).toBe(false);
+  });
+});
+
+describe('UpdateWorkspaceProfileInput', () => {
+  const valid = {
+    name: ' Iyer Chambers ',
+    kind: 'chamber',
+    timezone: 'Asia/Kolkata',
+    locale: 'ta',
+    practiceCity: ' Chennai ',
+  };
+
+  it('trims the name and city and keeps the other fields', () => {
+    expect(UpdateWorkspaceProfileInput.parse(valid)).toEqual({
+      name: 'Iyer Chambers',
+      kind: 'chamber',
+      timezone: 'Asia/Kolkata',
+      locale: 'ta',
+      practiceCity: 'Chennai',
+    });
+  });
+
+  it('turns an empty practice city into null', () => {
+    expect(UpdateWorkspaceProfileInput.parse({ ...valid, practiceCity: '  ' }).practiceCity).toBe(
+      null,
+    );
+    expect(UpdateWorkspaceProfileInput.parse({ ...valid, practiceCity: null }).practiceCity).toBe(
+      null,
+    );
+  });
+
+  it.each([
+    { name: '  ' },
+    { name: 'x'.repeat(121) },
+    { kind: 'firm' },
+    { timezone: 'Mars/Olympus' },
+    { timezone: '' },
+    { locale: 'fr' },
+    { practiceCity: 'x'.repeat(81) },
+    { slug: 'Not A Slug' },
+    { slug: 'settings' },
+  ])('rejects %j', (patch) => {
+    expect(UpdateWorkspaceProfileInput.safeParse({ ...valid, ...patch }).success).toBe(false);
+  });
+
+  it('accepts an optional valid slug', () => {
+    expect(UpdateWorkspaceProfileInput.parse({ ...valid, slug: 'iyer-chambers' }).slug).toBe(
+      'iyer-chambers',
+    );
   });
 });

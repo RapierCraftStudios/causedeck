@@ -1,15 +1,19 @@
 // The AI budget service (#220, #30 part 3), called by the AI gateway around every model call:
 //
 //   const r = await reserve(ctx, { estimatePaise, purpose });
-//   try { const out = await call(); await commit(ctx, r, actualPaise); }
-//   catch (e) { await release(ctx, r); throw e; }
+//   try {
+//     const out = await call();
+//     const { id } = await recordAiCall(db, workspaceId, aiCallInput(out)); // audit/ai-call.ts
+//     await commit(ctx, r, actualPaise, { aiCallId: id });
+//   } catch (e) { await release(ctx, r); throw e; }
 //
 // `reserve` holds `estimatePaise` of the workspace's monthly budget (`getAiBudget`, limits.ts) in
 // `usage_reservation`, or throws `BUDGET_EXCEEDED` when `spent + reserved + estimate` exceeds the
 // hard limit: the budget plus the courtesy grace (`ctx.thresholds`, thresholds.ts; default 0). The
 // check is serialised per workspace by a transaction-scoped advisory lock, so concurrent reservations
 // cannot oversubscribe the budget. `commit` swaps the reservation for the actual spend
-// (`increment('ai.spend_paise')`, idempotent per reservation); `release` drops it. Reservations
+// (`increment('ai.spend_paise')`, idempotent per reservation), with the `ai_call` id in the ledger
+// metadata so `reconcileAiCalls` (reconcile.ts) can match the two; `release` drops it. Reservations
 // expire after `RESERVATION_TTL_MS`: expired ones never count and are reaped by the next `reserve`
 // (or `reapExpiredReservations`). After a recorded spend, `commit` runs the 80% soft-limit check
 // (`checkAiBudgetThresholds`) when the context has `enqueueDelivery`; its failure never fails the
@@ -180,12 +184,14 @@ export async function reserve(ctx: UsageContext, input: ReserveInput): Promise<R
 /**
  * Replace the reservation with the call's actual spend. The spend is recorded even when the
  * reservation already expired; a repeated commit of the same reservation is not counted again.
- * With `ctx.enqueueDelivery`, a recorded spend then runs the soft-limit notice check.
+ * With `ctx.enqueueDelivery`, a recorded spend then runs the soft-limit notice check. Pass the
+ * call's `ai_call` id as `aiCallId` so the ledger row records it as `ai_call_id`.
  */
 export async function commit(
   ctx: UsageContext,
   reservation: Reservation,
   actualPaise: number,
+  { aiCallId }: { aiCallId?: string } = {},
 ): Promise<IncrementResult> {
   assertOwn(ctx, reservation);
   assertPaise('actualPaise', actualPaise);
@@ -198,7 +204,10 @@ export async function commit(
       );
     return increment({ ...ctx, db: tx }, AI_BUDGET_KEY, actualPaise, {
       idempotencyKey: `reservation:${reservation.id}`,
-      metadata: { reservation_id: reservation.id },
+      metadata:
+        aiCallId === undefined
+          ? { reservation_id: reservation.id }
+          : { reservation_id: reservation.id, ai_call_id: aiCallId },
     });
   });
   if (enqueueDelivery !== undefined && result.applied) {

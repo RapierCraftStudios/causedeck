@@ -7,7 +7,8 @@ are in [database.md](database.md#audit-tables) (#226, migration `0008_audit`). L
 this page.
 
 ```sh
-pnpm --filter @causedeck/core exec vitest run src/audit          # writer, chain, redaction, ai_call
+pnpm --filter @causedeck/core exec vitest run src/audit          # writer, chain, redaction, ai_call, query, export
+pnpm --filter @causedeck/web exec vitest run app/api/audit        # export route and download token
 AUDIT_BENCH=1 pnpm --filter @causedeck/core exec vitest run src/audit/__tests__/writer.bench.test.ts
 ```
 
@@ -21,6 +22,9 @@ AUDIT_BENCH=1 pnpm --filter @causedeck/core exec vitest run src/audit/__tests__/
 | `packages/core/src/audit/chain.ts`    | `verifyChain(db, workspaceId, range)`                                                                             |
 | `packages/core/src/audit/sink.ts`     | `recordAuditSink`, the default `AuditSink` behind `offboardMember` (`member.removed`)                             |
 | `packages/core/src/audit/ai-call.ts`  | `ai_call` writer contract for the AI gateway (#44): `AiCallInput`, `recordAiCall`                                 |
+| `packages/core/src/audit/query.ts`    | `authorizeAuditRead`, `queryAudit` (activity feed, #229)                                                          |
+| `packages/core/src/audit/export.ts`   | `exportAudit`, `AUDIT_EXPORT_COLUMNS` (CSV / JSON Lines stream, #229)                                             |
+| `apps/web/app/api/audit/export/route.ts` | Signed-link download of the export (#229); token helper in `apps/web/lib/audit-export-token.ts`                |
 
 Everything is exported from `@causedeck/core` and `@causedeck/core/audit`.
 
@@ -34,14 +38,15 @@ Each action is either **security** or **informational**:
 | security      | fail-closed: `record()` throws, so the action fails and its transaction rolls back | yes       |
 | informational | fail-open: logged (`service: audit`, action, workspace and error code only) and dropped. The write ran on its own savepoint, so the caller's transaction stays usable | no        |
 
-| Action                      | Kind          | Emitted by                                        |
-| --------------------------- | ------------- | ------------------------------------------------- |
-| `member.removed`            | security      | `offboardMember` through the `AuditSink`          |
-| `member.role_changed`       | security      | role change (#228)                                |
-| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22)   |
+| Action                      | Kind          | Emitted by                                          |
+| --------------------------- | ------------- | --------------------------------------------------- |
+| `member.removed`            | security      | `offboardMember` through the `AuditSink`            |
+| `member.role_changed`       | security      | role change (#228)                                  |
+| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22)     |
 | `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220) |
-| `workspace.settings_viewed` | informational | reserved                                          |
-| `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)    |
+| `audit.exported`            | security      | `exportAudit`, before the first byte (#229)         |
+| `workspace.settings_viewed` | informational | reserved                                            |
+| `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)      |
 
 #228 adds the sign-in, magic link, passkey, 2FA, session, export, support session and access-denied
 actions.
@@ -63,7 +68,91 @@ Not recorded:
 - The raw user agent. Only its hash is stored.
 - The IP of informational events. Security events store `ctx.ip` in `ip inet`. For display, call
   `truncateIpForDisplay`, which gives the `/24` for IPv4 and the `/48` for IPv6. The Activity tab
-  shows it (#232). Exports leave the IP out unless the exporter is an owner (#229).
+  shows it (#232). The feed and exports leave the IP out unless the reader is an owner (see
+  [Export](#export)).
+
+## Reading: the audit.read permission
+
+The feed and the export are gated by `audit.read`, checked by `authorizeAuditRead(ctx)` with the
+central policy (`can()` in `@causedeck/auth/policy`) and the workspace setting
+`workspace_settings.advocates_can_read_audit` (default true):
+
+| Role                     | `audit.read`                                         |
+| ------------------------ | ---------------------------------------------------- |
+| owner                    | always                                               |
+| advocate                 | unless an owner sets `advocates_can_read_audit` false |
+| junior, clerk, viewer    | never (`FORBIDDEN`)                                  |
+| not an active member     | `NOT_FOUND` (also a missing or soft-deleted workspace) |
+
+The check takes no row locks. Staff get no content through it; events hold no content anyway.
+
+## Query
+
+`queryAudit({ db, workspaceId, userId }, filters)` returns `{ events, nextCursor }`, newest first
+(`created_at desc, id desc`). Filters:
+
+- `from` (inclusive) and `to` (exclusive) on `created_at`.
+- `actorUserId`.
+- `actionGroup`: an action or its prefix before a dot (`member` matches `member.removed` and
+  `member.role_changed`).
+- `limit`: 1 to 200, default 50.
+- `cursor`: the previous page's `nextCursor`, an opaque base64url keyset position
+  (`created_at` to the microsecond and `id`). A malformed cursor is `VALIDATION`.
+
+Each event has `id`, `createdAt`, `actorUserId`, `actorKind`, `action`, `targetKind`, `targetId`,
+`outcome`, `requestId`, `userAgentHash`, `metadata` and `hash` (hex). Owners also get `ip`, truncated
+by `truncateIpForDisplay`; for anyone else the key is absent. The raw user agent is never returned.
+
+## Export
+
+`exportAudit(ctx, { from, to, format: 'csv' | 'jsonl', bom?, actorUserId?, actionGroup? })` resolves
+to a `ReadableStream<Uint8Array>` of `from` (inclusive) to `to` (exclusive), oldest first. Before it
+resolves it checks `audit.read` and records `audit.exported` (metadata `{ format, from, to }`, no
+filter values). That event is security, so if it cannot be written the export fails before any
+byte. The stream then fetches one keyset page of 1,000 rows per pull, each in its own
+`withWorkspace`, so at most one page is held in memory whatever the range (the test exports 100,000
+rows with under 64 MB of heap growth).
+
+Columns, in order (`AUDIT_EXPORT_COLUMNS`):
+
+| Column            | Value                                             |
+| ----------------- | ------------------------------------------------- |
+| `id`              | event uuid                                        |
+| `created_at`      | ISO 8601 UTC, microseconds                        |
+| `actor_user_id`   | uuid or empty                                     |
+| `actor_kind`      | `user`, `staff`, `system`, `api`                  |
+| `action`          | registered action                                 |
+| `target_kind`     | or empty                                          |
+| `target_id`       | or empty                                          |
+| `outcome`         | `success`, `denied`, `error`                      |
+| `request_id`      | or empty                                          |
+| `user_agent_hash` | sha256 hex of the user agent, or empty            |
+| `metadata`        | compact JSON                                      |
+| `hash`            | chain hash, hex                                   |
+| `ip`              | owners only: truncated (`/24`, `/48`), or empty   |
+
+- **CSV**: a header row of the column names, RFC 4180 quoting (fields with `,`, `"`, CR or LF are
+  quoted, inner quotes doubled), CRLF line ends. `bom: true` prefixes a UTF-8 BOM (EF BB BF) for
+  Excel. A cell starting with `=`, `+`, `-`, `@`, tab or CR gets a leading `'`, so a spreadsheet does
+  not run it as a formula.
+- **JSON Lines**: one JSON object per row with the same keys, `\n`-terminated, never a BOM.
+
+### Download route
+
+`apps/web/app/api/audit/export/route.ts` serves the export in two steps:
+
+1. `POST /api/audit/export` with `{ workspaceId, from, to, format, bom? }`: same-origin only (403),
+   signed in (401), a member (`guard`, 403), and `authorizeAuditRead` (403 forbidden, 404 not a
+   member); a bad body is 400. It returns `{ url, expiresAt }` (`Cache-Control: no-store`).
+2. `GET /api/audit/export?token=…`: the token must verify, be unexpired and belong to the signed-in
+   user (else 401 `invalid_token`). `exportAudit` re-checks the permission (403 or 404) and the
+   stream is returned unbuffered with `Content-Disposition: attachment;
+   filename="audit-<from>-<to>.<csv|jsonl>"`, `Cache-Control: no-store` and
+   `X-Content-Type-Options: nosniff`.
+
+The token is `base64url(payload) "." base64url(HMAC-SHA256)`, keyed by
+`HMAC-SHA256(BETTER_AUTH_SECRET, 'causedeck:audit-export:v1')`. The payload holds the workspace,
+user, range, format, BOM flag and expiry, and it is valid for 60 s (`EXPORT_TOKEN_TTL_MS`).
 
 ## record()
 

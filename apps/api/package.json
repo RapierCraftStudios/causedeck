@@ -24,6 +24,7 @@
     "@causedeck/core": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/observability": "workspace:*",
+    "@causedeck/storage": "workspace:*",
     "@causedeck/validators": "workspace:*",
     "@hono/node-server": "catalog:",
     "@hono/zod-openapi": "catalog:",

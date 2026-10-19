@@ -22,7 +22,22 @@ export {
   type ConventionViolation,
 } from './conventions.ts';
 export { DatabaseConnectionError } from './redact.ts';
-export { isUuid, withWorkspace, type WorkspaceScope } from './rls.ts';
+export {
+  currentScope,
+  isUuid,
+  TENANCY_VIOLATION,
+  TenancyError,
+  withoutWorkspace,
+  withUser,
+  withWorkspace,
+  type GlobalScope,
+  type Queryable,
+  type TenancyScope,
+  type UserScope,
+  type WorkspaceScope,
+} from './rls.ts';
+export { registeredTenantTables, tenantPolicy, WS_ISOLATION_POLICY } from './rls-policies.ts';
+export { tenantTable } from './schema-helpers/tenant-table.ts';
 export * as schema from './schema/index.ts';
 
 /** Better Auth's organization is the workspace (ADR 0004); domain code uses this name. */

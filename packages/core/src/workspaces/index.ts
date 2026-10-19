@@ -1,8 +1,11 @@
 // Workspace and membership queries for the API (#14) and later the web app. Every query is
 // filtered by the calling user's id, so a caller can only ever see their own memberships, and
-// skips soft-deleted workspaces and non-active (suspended or removed) memberships (#177).
-import { schema, type Database, type Transaction } from '@causedeck/db';
-import { and, asc, eq, sql } from 'drizzle-orm';
+// skips soft-deleted workspaces and non-active (suspended or removed) memberships (#177). They run
+// before a workspace is selected, so outside a tenancy scope they open the user-only scope
+// (`withUser`, #19): row-level security then exposes only the user's own memberships.
+import { currentScope, schema, withUser, type Database, type Transaction } from '@causedeck/db';
+import { and, asc, eq, is, sql } from 'drizzle-orm';
+import { PgTransaction } from 'drizzle-orm/pg-core';
 
 import { activeMember, liveWorkspace } from './members.ts';
 
@@ -14,6 +17,16 @@ export * from './service.ts';
 export * from './slug.ts';
 
 export type Queryable = Database | Transaction;
+
+/**
+ * `fn` on the caller's scoped transaction, or in a new user-only scope. The root client inside a
+ * workspace scope would query on another connection with no scope, so `withUser` rejects it.
+ */
+function asUser<T>(db: Queryable, userId: string, fn: (tx: Queryable) => Promise<T>): Promise<T> {
+  return currentScope() !== undefined && is(db, PgTransaction)
+    ? fn(db)
+    : withUser(db, { userId }, fn);
+}
 
 export type WorkspaceRole = (typeof schema.member.$inferSelect)['role'];
 
@@ -84,17 +97,19 @@ export function decodeWorkspaceCursor(value: string): WorkspaceCursor {
 
 /** Every workspace the user belongs to, with their role, oldest membership first. */
 export async function listMemberships(db: Queryable, userId: string): Promise<MembershipSummary[]> {
-  return db
-    .select({
-      workspaceId: schema.organization.id,
-      name: schema.organization.name,
-      slug: schema.organization.slug,
-      role: schema.member.role,
-    })
-    .from(schema.member)
-    .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
-    .where(and(eq(schema.member.userId, userId), activeMember, liveWorkspace))
-    .orderBy(asc(schema.member.createdAt), asc(schema.member.id));
+  return asUser(db, userId, (tx) =>
+    tx
+      .select({
+        workspaceId: schema.organization.id,
+        name: schema.organization.name,
+        slug: schema.organization.slug,
+        role: schema.member.role,
+      })
+      .from(schema.member)
+      .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
+      .where(and(eq(schema.member.userId, userId), activeMember, liveWorkspace))
+      .orderBy(asc(schema.member.createdAt), asc(schema.member.id)),
+  );
 }
 
 /** One page of the user's workspaces, ordered by workspace creation. */
@@ -104,28 +119,30 @@ export async function listWorkspacesForUser(
   { limit, cursor }: PageRequest,
 ): Promise<Page<WorkspaceSummary>> {
   const after = cursor === undefined ? undefined : decodeWorkspaceCursor(cursor);
-  const rows = await db
-    .select({
-      id: schema.organization.id,
-      name: schema.organization.name,
-      slug: schema.organization.slug,
-      role: schema.member.role,
-      createdAt: schema.organization.createdAt,
-      createdAtText: sql<string>`${schema.organization.createdAt}::text`,
-    })
-    .from(schema.member)
-    .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
-    .where(
-      and(
-        eq(schema.member.userId, userId),
-        activeMember,
-        liveWorkspace,
-        after &&
-          sql`(${schema.organization.createdAt}, ${schema.organization.id}) > (${after.createdAt}::timestamptz, ${after.id}::uuid)`,
-      ),
-    )
-    .orderBy(asc(schema.organization.createdAt), asc(schema.organization.id))
-    .limit(limit + 1);
+  const rows = await asUser(db, userId, (tx) =>
+    tx
+      .select({
+        id: schema.organization.id,
+        name: schema.organization.name,
+        slug: schema.organization.slug,
+        role: schema.member.role,
+        createdAt: schema.organization.createdAt,
+        createdAtText: sql<string>`${schema.organization.createdAt}::text`,
+      })
+      .from(schema.member)
+      .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
+      .where(
+        and(
+          eq(schema.member.userId, userId),
+          activeMember,
+          liveWorkspace,
+          after &&
+            sql`(${schema.organization.createdAt}, ${schema.organization.id}) > (${after.createdAt}::timestamptz, ${after.id}::uuid)`,
+        ),
+      )
+      .orderBy(asc(schema.organization.createdAt), asc(schema.organization.id))
+      .limit(limit + 1),
+  );
 
   const page = rows.slice(0, limit);
   const last = page.at(-1);
@@ -149,18 +166,20 @@ export async function memberRole(
   userId: string,
   workspaceId: string,
 ): Promise<WorkspaceRole | null> {
-  const [row] = await db
-    .select({ role: schema.member.role })
-    .from(schema.member)
-    .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
-    .where(
-      and(
-        eq(schema.member.userId, userId),
-        eq(schema.member.organizationId, workspaceId),
-        activeMember,
-        liveWorkspace,
-      ),
-    )
-    .limit(1);
+  const [row] = await asUser(db, userId, (tx) =>
+    tx
+      .select({ role: schema.member.role })
+      .from(schema.member)
+      .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
+      .where(
+        and(
+          eq(schema.member.userId, userId),
+          eq(schema.member.organizationId, workspaceId),
+          activeMember,
+          liveWorkspace,
+        ),
+      )
+      .limit(1),
+  );
   return row?.role ?? null;
 }

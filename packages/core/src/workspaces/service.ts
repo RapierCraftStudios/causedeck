@@ -1,6 +1,14 @@
 // Workspace lifecycle (#177, #18): create (atomic with the owner membership and settings) and soft
 // delete. Hard deletion with crypto-erase is #31.
-import { schema, type Database, type Transaction, type Workspace } from '@causedeck/db';
+import { randomUUID } from 'node:crypto';
+
+import {
+  schema,
+  withWorkspace,
+  type Database,
+  type Transaction,
+  type Workspace,
+} from '@causedeck/db';
 import { CreateWorkspaceInput } from '@causedeck/validators/workspace';
 import { eq } from 'drizzle-orm';
 
@@ -19,7 +27,8 @@ export interface CreateWorkspaceRequest {
 
 /**
  * Create a workspace named `input.name` with a generated unique slug. The creator becomes its
- * `owner`, and the organization, membership and settings rows commit together or not at all.
+ * `owner`, and the organization, membership and settings rows commit together or not at all. The
+ * id is chosen here so the inserts run inside the new workspace's scope (row-level security, #19).
  */
 export async function createWorkspace(
   db: Queryable,
@@ -32,11 +41,12 @@ export async function createWorkspace(
   // A concurrent create can take the slug between generation and insert: retry once.
   for (let attempt = 1; ; attempt++) {
     const slug = await generateUniqueSlug(db, name);
+    const id = randomUUID();
     try {
-      return await db.transaction(async (tx) => {
+      return await withWorkspace(db, { workspaceId: id, userId }, async (tx) => {
         const [workspace] = await tx
           .insert(organization)
-          .values({ name, slug, kind, createdBy: userId })
+          .values({ id, name, slug, kind, createdBy: userId })
           .returning();
         if (!workspace) throw new Error('workspace insert returned no row');
         await tx.insert(member).values({ organizationId: workspace.id, userId, role: 'owner' });

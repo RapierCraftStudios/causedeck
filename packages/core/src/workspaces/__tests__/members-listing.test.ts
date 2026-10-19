@@ -4,22 +4,34 @@ import { randomUUID } from 'node:crypto';
 
 import type { Mailer } from '@causedeck/auth/mailer';
 import { schema, type Transaction } from '@causedeck/db';
-import { withTestDb } from '@causedeck/db/testing';
+import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import * as core from '../index.ts';
 import {
   clearReassignProviders,
-  countOpenWork,
   createWorkspace,
-  inviteMember,
-  listMembers,
-  listPendingInvitations,
   registerReassignProvider,
-  revokeInvitation,
-  softDeleteWorkspace,
   type WorkspaceRole,
 } from '../index.ts';
+
+// Workspace-scoped operations run inside the workspace's scope, as the members page and actions
+// call them (`withWorkspace`); FORCE row-level security (#19) hides everything else.
+function scoped<R extends { workspaceId: string }, T>(
+  fn: (db: Transaction, request: R) => Promise<T>,
+): (tx: Transaction, request: R) => Promise<T> {
+  return (tx, request) => inWorkspace(tx, request.workspaceId, (s) => fn(s, request));
+}
+const inviteMember = scoped(core.inviteMember);
+const revokeInvitation = scoped(core.revokeInvitation);
+const softDeleteWorkspace = scoped(core.softDeleteWorkspace);
+const listMembers = (tx: Transaction, workspaceId: string) =>
+  inWorkspace(tx, workspaceId, (s) => core.listMembers(s, workspaceId));
+const listPendingInvitations = (tx: Transaction, workspaceId: string) =>
+  inWorkspace(tx, workspaceId, (s) => core.listPendingInvitations(s, workspaceId));
+const countOpenWork = (tx: Transaction, workspaceId: string, userId: string) =>
+  inWorkspace(tx, workspaceId, (s) => core.countOpenWork(s, workspaceId, userId));
 
 const mailer: Mailer = { send: () => Promise.resolve() };
 const APP_URL = 'http://localhost:3000';
@@ -35,10 +47,12 @@ async function newUser(tx: Transaction): Promise<string> {
 
 async function addMember(tx: Transaction, workspaceId: string, role: WorkspaceRole) {
   const userId = await newUser(tx);
-  const [row] = await tx
-    .insert(schema.member)
-    .values({ organizationId: workspaceId, userId, role })
-    .returning({ id: schema.member.id });
+  const [row] = await inWorkspace(tx, workspaceId, (s) =>
+    s
+      .insert(schema.member)
+      .values({ organizationId: workspaceId, userId, role })
+      .returning({ id: schema.member.id }),
+  );
   if (!row) throw new Error('member insert failed');
   return { userId, memberId: row.id };
 }
@@ -77,10 +91,12 @@ describe('listPendingInvitations', () => {
         [first, '2026-10-01T10:00:00Z'],
         [second, '2026-10-02T10:00:00Z'],
       ] as const) {
-        await tx
-          .update(schema.invitation)
-          .set({ createdAt: new Date(at) })
-          .where(eq(schema.invitation.id, issued.invitation.id));
+        await inWorkspace(tx, workspaceId, (s) =>
+          s
+            .update(schema.invitation)
+            .set({ createdAt: new Date(at) })
+            .where(eq(schema.invitation.id, issued.invitation.id)),
+        );
       }
       const revoked = await invite(tx, workspaceId, ownerId, 'revoked@example.test');
       await revokeInvitation(tx, {
@@ -89,15 +105,19 @@ describe('listPendingInvitations', () => {
         invitationId: revoked.invitation.id,
       });
       const expired = await invite(tx, workspaceId, ownerId, 'expired@example.test');
-      await tx
-        .update(schema.invitation)
-        .set({ expiresAt: new Date(Date.now() - 1000) })
-        .where(eq(schema.invitation.id, expired.invitation.id));
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.invitation)
+          .set({ expiresAt: new Date(Date.now() - 1000) })
+          .where(eq(schema.invitation.id, expired.invitation.id)),
+      );
       const accepted = await invite(tx, workspaceId, ownerId, 'accepted@example.test');
-      await tx
-        .update(schema.invitation)
-        .set({ acceptedAt: new Date() })
-        .where(eq(schema.invitation.id, accepted.invitation.id));
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.invitation)
+          .set({ acceptedAt: new Date() })
+          .where(eq(schema.invitation.id, accepted.invitation.id)),
+      );
 
       const pending = await listPendingInvitations(tx, workspaceId);
       expect(pending.map((p) => p.id)).toEqual([first.invitation.id, second.invitation.id]);

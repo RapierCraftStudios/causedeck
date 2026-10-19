@@ -10,7 +10,7 @@ import { organization } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import * as schema from '../schema/index.ts';
 import { seedPlans } from '../seed/plans.ts';
-import { closeTestDb, withTestDb } from '../testing/index.ts';
+import { closeTestDb, inWorkspace, withTestDb } from '../testing/index.ts';
 import type { Transaction } from '../client.ts';
 
 afterAll(closeTestDb);
@@ -30,9 +30,12 @@ async function violation(tx: Transaction, fn: (sp: Transaction) => Promise<unkno
   }
 }
 
+/** A workspace, written inside its own scope (FORCE row-level security, #19). */
 async function newWorkspace(tx: Transaction): Promise<string> {
   const id = randomUUID();
-  await tx.insert(organization).values({ id, name: 'Test Chambers', slug: `ws-${id}` });
+  await inWorkspace(tx, id, (s) =>
+    s.insert(organization).values({ id, name: 'Test Chambers', slug: `ws-${id}` }),
+  );
   return id;
 }
 
@@ -66,57 +69,69 @@ describe('billing schema (#200)', () => {
   });
 
   it('stores a valid GSTIN and null, and rejects a malformed one', async () => {
-    await withTestDb(async (tx) => {
-      await seedPlans(tx);
-      const workspaceId = await newWorkspace(tx);
-      const base = { workspaceId, planId: 'chamber-seat-1', status: 'cancelled', seats: 3 };
-      await tx.insert(subscription).values({ ...base, gstin: '27AAPFU0939F1ZV' });
-      await tx.insert(subscription).values({ ...base, gstin: null });
-      for (const gstin of ['27aapfu0939f1zv', '27AAPFU0939F1Z', '27AAPFU0939F1YV']) {
-        expect(
-          await violation(tx, (sp) => sp.insert(subscription).values({ ...base, gstin })),
-          gstin,
-        ).toBe('subscription_gstin_chk');
-      }
-      const stored = await tx
-        .select({ gstin: subscription.gstin })
-        .from(subscription)
-        .where(sql`${subscription.workspaceId} = ${workspaceId}`);
-      expect(stored.map((r) => r.gstin).sort()).toEqual(['27AAPFU0939F1ZV', null]);
+    await withTestDb(async (outer) => {
+      await seedPlans(outer);
+      const workspaceId = await newWorkspace(outer);
+      await inWorkspace(outer, workspaceId, async (tx) => {
+        const base = { workspaceId, planId: 'chamber-seat-1', status: 'cancelled', seats: 3 };
+        await tx.insert(subscription).values({ ...base, gstin: '27AAPFU0939F1ZV' });
+        await tx.insert(subscription).values({ ...base, gstin: null });
+        for (const gstin of ['27aapfu0939f1zv', '27AAPFU0939F1Z', '27AAPFU0939F1YV']) {
+          expect(
+            await violation(tx, (sp) => sp.insert(subscription).values({ ...base, gstin })),
+            gstin,
+          ).toBe('subscription_gstin_chk');
+        }
+        const stored = await tx
+          .select({ gstin: subscription.gstin })
+          .from(subscription)
+          .where(sql`${subscription.workspaceId} = ${workspaceId}`);
+        expect(stored.map((r) => r.gstin).sort()).toEqual(['27AAPFU0939F1ZV', null]);
+      });
     });
   });
 
   it('allows one current subscription per workspace, plus any number of ended ones', async () => {
-    await withTestDb(async (tx) => {
-      await seedPlans(tx);
-      const workspaceId = await newWorkspace(tx);
+    await withTestDb(async (outer) => {
+      await seedPlans(outer);
+      const workspaceId = await newWorkspace(outer);
       const row = { workspaceId, planId: 'advocate-monthly-1', seats: 1 };
-      await tx.insert(subscription).values({ ...row, status: 'active' });
-      expect(
-        await violation(tx, (sp) => sp.insert(subscription).values({ ...row, status: 'past_due' })),
-      ).toBe('subscription_workspace_current_uq');
-      await tx.insert(subscription).values({ ...row, status: 'cancelled' });
-      await tx.insert(subscription).values({ ...row, status: 'expired' });
+      await inWorkspace(outer, workspaceId, async (tx) => {
+        await tx.insert(subscription).values({ ...row, status: 'active' });
+        expect(
+          await violation(tx, (sp) =>
+            sp.insert(subscription).values({ ...row, status: 'past_due' }),
+          ),
+        ).toBe('subscription_workspace_current_uq');
+        await tx.insert(subscription).values({ ...row, status: 'cancelled' });
+        await tx.insert(subscription).values({ ...row, status: 'expired' });
+      });
       // Another workspace is unaffected.
-      const other = await newWorkspace(tx);
-      await tx.insert(subscription).values({ ...row, workspaceId: other, status: 'trialing' });
+      const other = await newWorkspace(outer);
+      await inWorkspace(outer, other, (tx) =>
+        tx.insert(subscription).values({ ...row, workspaceId: other, status: 'trialing' }),
+      );
     });
   });
 
   it('rejects unknown statuses, plans and seat counts', async () => {
-    await withTestDb(async (tx) => {
-      await seedPlans(tx);
-      const workspaceId = await newWorkspace(tx);
-      const row = { workspaceId, planId: 'junior', status: 'active', seats: 1 };
-      expect(
-        await violation(tx, (sp) => sp.insert(subscription).values({ ...row, status: 'created' })),
-      ).toBe('subscription_status_chk');
-      expect(
-        await violation(tx, (sp) => sp.insert(subscription).values({ ...row, seats: 0 })),
-      ).toBe('subscription_seats_chk');
-      expect(
-        await violation(tx, (sp) => sp.insert(subscription).values({ ...row, planId: 'nope' })),
-      ).toBe('subscription_plan_id_plan_id_fk');
+    await withTestDb(async (outer) => {
+      await seedPlans(outer);
+      const workspaceId = await newWorkspace(outer);
+      await inWorkspace(outer, workspaceId, async (tx) => {
+        const row = { workspaceId, planId: 'junior', status: 'active', seats: 1 };
+        expect(
+          await violation(tx, (sp) =>
+            sp.insert(subscription).values({ ...row, status: 'created' }),
+          ),
+        ).toBe('subscription_status_chk');
+        expect(
+          await violation(tx, (sp) => sp.insert(subscription).values({ ...row, seats: 0 })),
+        ).toBe('subscription_seats_chk');
+        expect(
+          await violation(tx, (sp) => sp.insert(subscription).values({ ...row, planId: 'nope' })),
+        ).toBe('subscription_plan_id_plan_id_fk');
+      });
     });
   });
 
@@ -136,37 +151,43 @@ describe('billing schema (#200)', () => {
   });
 
   it('records each provider event id once', async () => {
-    await withTestDb(async (tx) => {
-      const workspaceId = await newWorkspace(tx);
-      const event = {
-        providerEventId: 'evt_test_1',
-        workspaceId,
-        type: 'subscription.charged',
-        payloadHash: 'abc',
-      };
-      await tx.insert(billingEvent).values(event);
-      expect(await violation(tx, (sp) => sp.insert(billingEvent).values(event))).toBe(
-        'billing_event_pkey',
-      );
+    await withTestDb(async (outer) => {
+      const workspaceId = await newWorkspace(outer);
+      await inWorkspace(outer, workspaceId, async (tx) => {
+        const event = {
+          providerEventId: 'evt_test_1',
+          workspaceId,
+          type: 'subscription.charged',
+          payloadHash: 'abc',
+        };
+        await tx.insert(billingEvent).values(event);
+        expect(await violation(tx, (sp) => sp.insert(billingEvent).values(event))).toBe(
+          'billing_event_pkey',
+        );
+      });
     });
   });
 
   it('keys entitlements and usage counters by workspace', async () => {
-    await withTestDb(async (tx) => {
-      const workspaceId = await newWorkspace(tx);
-      await tx.insert(entitlement).values({ workspaceId, key: 'max_active_matters', value: 15 });
-      expect(
-        await violation(tx, (sp) =>
-          sp.insert(entitlement).values({ workspaceId, key: 'max_active_matters', value: 20 }),
-        ),
-      ).toBe('entitlement_pkey');
-      const periodStart = new Date('2026-10-01T00:00:00+05:30');
-      await tx.insert(usageCounter).values({ workspaceId, key: 'ai_paise', periodStart, value: 7 });
-      expect(
-        await violation(tx, (sp) =>
-          sp.insert(usageCounter).values({ workspaceId, key: 'ai_paise', periodStart }),
-        ),
-      ).toBe('usage_counter_pkey');
+    await withTestDb(async (outer) => {
+      const workspaceId = await newWorkspace(outer);
+      await inWorkspace(outer, workspaceId, async (tx) => {
+        await tx.insert(entitlement).values({ workspaceId, key: 'max_active_matters', value: 15 });
+        expect(
+          await violation(tx, (sp) =>
+            sp.insert(entitlement).values({ workspaceId, key: 'max_active_matters', value: 20 }),
+          ),
+        ).toBe('entitlement_pkey');
+        const periodStart = new Date('2026-10-01T00:00:00+05:30');
+        await tx
+          .insert(usageCounter)
+          .values({ workspaceId, key: 'ai_paise', periodStart, value: 7 });
+        expect(
+          await violation(tx, (sp) =>
+            sp.insert(usageCounter).values({ workspaceId, key: 'ai_paise', periodStart }),
+          ),
+        ).toBe('usage_counter_pkey');
+      });
     });
   });
 });

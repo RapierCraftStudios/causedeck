@@ -15,7 +15,8 @@
     "openapi:check": "tsx scripts/export-openapi.ts --check",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:tenancy": "vitest run src/__tests__/cross-tenant.test.ts"
   },
   "dependencies": {
     "@causedeck/auth": "workspace:*",

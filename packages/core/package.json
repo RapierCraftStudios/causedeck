@@ -12,7 +12,8 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {
     "@causedeck/auth": "workspace:*",

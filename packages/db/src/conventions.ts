@@ -8,8 +8,11 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /**
  * Tables that are not workspace-scoped: the baseline, Better Auth's identity tables, the billing
- * plan catalogue and, later, the court layer. `organization` (the workspace), `member` and `invitation` are tenant roots, not
- * global; RLS for them comes in #19.
+ * plan catalogue and, later, the court layer. They carry no row-level security; everything else with
+ * a `workspace_id` column is a tenant table under FORCE RLS (`db:check-rls`,
+ * docs/engineering/tenancy.md). `organization` (the workspace) is the tenant root with its own
+ * policies; `member` and `invitation` are tenant tables. `api_idempotency_key` has a nullable
+ * `workspace_id` but is keyed by user, so it stays global.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',

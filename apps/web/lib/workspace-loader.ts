@@ -15,7 +15,8 @@ import type {
 /** Everything the loader reads, injectable for unit tests. Defaults hit the real session and DB. */
 export interface WorkspaceLoaderDeps {
   getSession: () => Promise<AppSession | null>;
-  resolveSlug: (slug: string) => Promise<ResolvedSlug | null>;
+  /** `userId` is the signed-in user, pinned as the acting user while the workspace row is read. */
+  resolveSlug: (slug: string, userId: string) => Promise<ResolvedSlug | null>;
   listMemberships: (userId: string) => Promise<MembershipSummary[]>;
 }
 
@@ -40,7 +41,7 @@ async function defaultDeps(): Promise<WorkspaceLoaderDeps> {
   ]);
   return {
     getSession,
-    resolveSlug: (slug) => core.resolveSlug(db, slug),
+    resolveSlug: (slug, userId) => core.resolveSlug(db, slug, userId),
     listMemberships: (userId) => core.listMemberships(db, userId),
   };
 }
@@ -84,7 +85,7 @@ export async function loadWorkspaceContext(
   const loaded = await loadMemberships(resolved);
   if (!loaded) return { kind: 'not-found' };
   if (loaded.memberships.length === 0) return { kind: 'no-workspaces' };
-  const target = await resolved.resolveSlug(slug);
+  const target = await resolved.resolveSlug(slug, loaded.session.user.id);
   if (!target) return { kind: 'not-found' };
   const current = loaded.memberships.find((m) => m.workspace.id === target.workspace.id);
   if (!current) return { kind: 'not-found' };

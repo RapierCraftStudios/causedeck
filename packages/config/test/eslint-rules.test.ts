@@ -41,6 +41,21 @@ describe('type-safety and import rules', () => {
     expect(ruleIds(result)).not.toContain('no-restricted-syntax');
   });
 
+  it('bans importing withoutWorkspace outside packages/db, apps/admin and migrations', async () => {
+    const banned = await lintFixture('rules', 'apps/web/imports-without-workspace.ts');
+    const restricted = banned.messages.filter(
+      (m) => m.ruleId === '@typescript-eslint/no-restricted-imports',
+    );
+    expect(restricted.map((m) => m.line)).toEqual([1]);
+    expect(restricted[0]?.message).toContain('`withoutWorkspace` is for packages/db');
+
+    const allowed = await lintFixture('rules', 'packages/db/imports-without-workspace.ts');
+    expect(ruleIds(allowed)).not.toContain('@typescript-eslint/no-restricted-imports');
+
+    const scoped = await lintFixture('rules', 'packages/core/imports-with-workspace.ts');
+    expect(ruleIds(scoped)).not.toContain('@typescript-eslint/no-restricted-imports');
+  });
+
   it('accepts clean code', async () => {
     const result = await lintFixture('rules', 'packages/core/clean.ts');
 

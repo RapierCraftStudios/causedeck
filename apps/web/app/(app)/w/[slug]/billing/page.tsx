@@ -11,6 +11,7 @@
 // (upgrade cards for Advocate and Chamber). `?__state=loading|error` previews the first two in
 // development, like the members page.
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
@@ -127,7 +128,7 @@ export default async function BillingPage({ params, searchParams }: BillingPageP
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
   if (!can(context.role, 'billing.read')) return <BillingPermissionDenied />;
-  const t = await getTranslations('billing');
+  const [t, tUsage] = await Promise.all([getTranslations('billing'), getTranslations('usage')]);
   const state = devState(query);
 
   return (
@@ -138,6 +139,12 @@ export default async function BillingPage({ params, searchParams }: BillingPageP
         <p className="text-ink-muted text-sm">
           {t('description', { workspace: context.workspace.name })}
         </p>
+        <Link
+          href={`/w/${encodeURIComponent(slug)}/settings/usage`}
+          className="text-accent focus-visible:outline-ring w-fit text-sm underline-offset-4 outline-offset-2 hover:underline focus-visible:outline-2"
+        >
+          {tUsage('billingLink')}
+        </Link>
       </header>
       {state === 'loading' ? (
         <BillingSkeleton />

@@ -24,7 +24,7 @@ import {
 import { getAiBudget, setBudgetOverride } from '../limits.ts';
 import { getUsage, increment } from '../meter.ts';
 
-const { auditEvent, usageReservation } = schema;
+const { auditEvent, usageEvent, usageReservation } = schema;
 
 const NOW = new Date('2026-03-10T06:30:00.000Z');
 const MINUTE = 60_000;
@@ -93,6 +93,28 @@ describe('budget: reservation protocol', () => {
       expect(await getUsage(ctx, 'ai.spend_paise')).toBe(250);
       // The 350 held beyond the actual spend is free again.
       await reserve(ctx, { estimatePaise: 750, purpose: 'brief.draft' });
+    });
+  });
+
+  it('commit records the ai_call id in the ledger metadata when given one', async () => {
+    await withTestDb(async (tx) => {
+      const { ctx, workspaceId } = await junior(tx);
+      const linked = await reserve(ctx, { estimatePaise: 100, purpose: 'brief.draft' });
+      const plain = await reserve(ctx, { estimatePaise: 100, purpose: 'brief.draft' });
+      const aiCallId = randomUUID();
+      await commit(ctx, linked, 60, { aiCallId });
+      await commit(ctx, plain, 40);
+      const rows = await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .select({ amount: usageEvent.amount, metadata: usageEvent.metadata })
+          .from(usageEvent)
+          .where(eq(usageEvent.workspaceId, workspaceId))
+          .orderBy(usageEvent.amount),
+      );
+      expect(rows).toEqual([
+        { amount: 40, metadata: { reservation_id: plain.id } },
+        { amount: 60, metadata: { reservation_id: linked.id, ai_call_id: aiCallId } },
+      ]);
     });
   });
 

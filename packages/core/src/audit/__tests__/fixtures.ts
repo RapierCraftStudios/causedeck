@@ -1,7 +1,8 @@
 // Shared fixtures for the audit tests (#227).
 import { randomUUID } from 'node:crypto';
 
-import { schema, type Transaction } from '@causedeck/db';
+import { schema, withWorkspace, type Transaction } from '@causedeck/db';
+import { eq } from 'drizzle-orm';
 
 import { createWorkspace } from '../../workspaces/index.ts';
 
@@ -38,5 +39,32 @@ export async function failure(promise: Promise<unknown>): Promise<unknown> {
       throw new Error('expected a rejection');
     },
     (e: unknown) => e,
+  );
+}
+
+/** Add a new user to the workspace with `role`; returns the user id. */
+export async function addMember(
+  tx: Transaction,
+  workspaceId: string,
+  role: 'owner' | 'advocate' | 'junior' | 'clerk' | 'viewer',
+): Promise<string> {
+  const userId = await newUser(tx);
+  await withWorkspace(tx, { workspaceId }, (s) =>
+    s.insert(schema.member).values({ organizationId: workspaceId, userId, role }),
+  );
+  return userId;
+}
+
+/** Set the workspace's `advocates_can_read_audit` switch. */
+export async function setAdvocatesCanReadAudit(
+  tx: Transaction,
+  workspaceId: string,
+  value: boolean,
+): Promise<void> {
+  await withWorkspace(tx, { workspaceId }, (s) =>
+    s
+      .update(schema.workspaceSettings)
+      .set({ advocatesCanReadAudit: value })
+      .where(eq(schema.workspaceSettings.workspaceId, workspaceId)),
   );
 }

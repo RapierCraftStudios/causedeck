@@ -82,6 +82,56 @@ describe('s3-provider signed PUT URL', () => {
   });
 });
 
+describe('s3-provider signed download URL (#217)', () => {
+  const newKey = (workspaceId = crypto.randomUUID()) =>
+    objectKey({ workspaceId, kind: 'document', id: crypto.randomUUID() });
+
+  it('serves a 60 s GET as an attachment with the forced type', async () => {
+    clock = undefined;
+    const key = newKey();
+    await store().put({
+      key,
+      body: new Uint8Array(Buffer.from('%PDF-1.7\n')),
+      contentType: 'text/html',
+    });
+    const signed = await store().presignGet(key, {
+      expiresInSeconds: 60,
+      contentDisposition: `attachment; filename="brief.pdf"; filename*=UTF-8''brief.pdf`,
+      contentType: 'application/pdf',
+    });
+    expect(new URL(signed.url).searchParams.get('X-Amz-Expires')).toBe('60');
+    const response = await fetch(signed.url);
+    await response.arrayBuffer();
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toMatch(
+      /^attachment; filename="brief.pdf"/,
+    );
+    expect(response.headers.get('content-type')).toBe('application/pdf');
+  });
+
+  it("rejects a URL signed for one workspace's key and pointed at another's", async () => {
+    clock = undefined;
+    const keyA = newKey();
+    const keyB = newKey();
+    await store().put({
+      key: keyA,
+      body: new Uint8Array([1, 2, 3]),
+      contentType: 'application/pdf',
+    });
+    await store().put({
+      key: keyB,
+      body: new Uint8Array([4, 5, 6]),
+      contentType: 'application/pdf',
+    });
+    const signedB = await store().presignGet(keyB, { expiresInSeconds: 60 });
+    const forged = signedB.url.replace(keyB, keyA);
+    expect(forged).not.toBe(signedB.url);
+    const response = await fetch(forged);
+    await response.arrayBuffer();
+    expect(response.status).toBe(403);
+  });
+});
+
 describe('s3-provider credentials', () => {
   it('never puts the access or secret key in errors', async () => {
     const accessKey = 'AKIALEAKCHECK0001';

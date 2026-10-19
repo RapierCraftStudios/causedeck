@@ -1,16 +1,23 @@
 // The AI budget service (#220, #30 part 3), called by the AI gateway around every model call:
 //
 //   const r = await reserve(ctx, { estimatePaise, purpose });
-//   try { const out = await call(); await commit(ctx, r, actualPaise); }
-//   catch (e) { await release(ctx, r); throw e; }
+//   try {
+//     const out = await call();
+//     const { id } = await recordAiCall(db, workspaceId, aiCallInput(out)); // audit/ai-call.ts
+//     await commit(ctx, r, actualPaise, { aiCallId: id });
+//   } catch (e) { await release(ctx, r); throw e; }
 //
 // `reserve` holds `estimatePaise` of the workspace's monthly budget (`getAiBudget`, limits.ts) in
-// `usage_reservation`, or throws `BUDGET_EXCEEDED` when `spent + reserved + estimate > budget`. The
+// `usage_reservation`, or throws `BUDGET_EXCEEDED` when `spent + reserved + estimate` exceeds the
+// hard limit: the budget plus the courtesy grace (`ctx.thresholds`, thresholds.ts; default 0). The
 // check is serialised per workspace by a transaction-scoped advisory lock, so concurrent reservations
 // cannot oversubscribe the budget. `commit` swaps the reservation for the actual spend
-// (`increment('ai.spend_paise')`, idempotent per reservation); `release` drops it. Reservations
+// (`increment('ai.spend_paise')`, idempotent per reservation), with the `ai_call` id in the ledger
+// metadata so `reconcileAiCalls` (reconcile.ts) can match the two; `release` drops it. Reservations
 // expire after `RESERVATION_TTL_MS`: expired ones never count and are reaped by the next `reserve`
-// (or `reapExpiredReservations`).
+// (or `reapExpiredReservations`). After a recorded spend, `commit` runs the 80% soft-limit check
+// (`checkAiBudgetThresholds`) when the context has `enqueueDelivery`; its failure never fails the
+// commit. Only `reserve` consults the budget: nothing else is gated by it.
 import { schema, withWorkspace } from '@causedeck/db';
 import { and, eq, lte, sql, type SQL } from 'drizzle-orm';
 
@@ -18,6 +25,7 @@ import { getWorkspaceEntitlements } from '../billing/entitlements.ts';
 import { AI_BUDGET_KEY } from './limits.ts';
 import { increment, type IncrementResult, type UsageContext } from './meter.ts';
 import { periodStart } from './period.ts';
+import { checkAiBudgetThresholds, hardLimitPaise, resolveThresholds } from './thresholds.ts';
 
 const { budgetOverride, usageCounter, usageReservation } = schema;
 
@@ -48,21 +56,26 @@ export class BudgetError extends Error {
   readonly spentPaise: number;
   readonly reservedPaise: number;
   readonly estimatePaise: number;
+  /** The limit `reserve` enforced: the budget plus the courtesy grace. */
+  readonly limitPaise: number;
 
   constructor(v: {
     budgetPaise: number;
     spentPaise: number;
     reservedPaise: number;
     estimatePaise: number;
+    limitPaise?: number;
   }) {
+    const limitPaise = v.limitPaise ?? v.budgetPaise;
     super(
-      `AI budget exceeded: ${String(v.spentPaise)} spent + ${String(v.reservedPaise)} reserved + ${String(v.estimatePaise)} estimated > ${String(v.budgetPaise)} paise`,
+      `AI budget exceeded: ${String(v.spentPaise)} spent + ${String(v.reservedPaise)} reserved + ${String(v.estimatePaise)} estimated > ${String(limitPaise)} paise`,
     );
     this.name = 'BudgetError';
     this.budgetPaise = v.budgetPaise;
     this.spentPaise = v.spentPaise;
     this.reservedPaise = v.reservedPaise;
     this.estimatePaise = v.estimatePaise;
+    this.limitPaise = limitPaise;
   }
 }
 
@@ -131,6 +144,7 @@ export async function reserve(ctx: UsageContext, input: ReserveInput): Promise<R
   ) {
     throw new TypeError('budget: purpose must be a dotted lowercase identifier');
   }
+  const { courtesyGraceBps } = resolveThresholds(ctx);
   const now = nowOf(ctx);
   const { workspaceId } = ctx;
   return withWorkspace(ctx.db, { workspaceId }, async (tx) => {
@@ -146,8 +160,17 @@ export async function reserve(ctx: UsageContext, input: ReserveInput): Promise<R
       row?.override === null || row?.override === undefined
         ? (await getWorkspaceEntitlements(tx, workspaceId, now)).ai_budget_paise
         : Number(row.override);
-    if (budgetPaise !== null && spentPaise + reservedPaise + estimatePaise > budgetPaise) {
-      throw new BudgetError({ budgetPaise, spentPaise, reservedPaise, estimatePaise });
+    if (budgetPaise !== null) {
+      const limitPaise = hardLimitPaise(budgetPaise, courtesyGraceBps);
+      if (spentPaise + reservedPaise + estimatePaise > limitPaise) {
+        throw new BudgetError({
+          budgetPaise,
+          spentPaise,
+          reservedPaise,
+          estimatePaise,
+          limitPaise,
+        });
+      }
     }
     const expiresAt = new Date(now.getTime() + RESERVATION_TTL_MS);
     const [inserted] = await tx.execute<{ id: string }>(
@@ -161,16 +184,19 @@ export async function reserve(ctx: UsageContext, input: ReserveInput): Promise<R
 /**
  * Replace the reservation with the call's actual spend. The spend is recorded even when the
  * reservation already expired; a repeated commit of the same reservation is not counted again.
+ * With `ctx.enqueueDelivery`, a recorded spend then runs the soft-limit notice check. Pass the
+ * call's `ai_call` id as `aiCallId` so the ledger row records it as `ai_call_id`.
  */
 export async function commit(
   ctx: UsageContext,
   reservation: Reservation,
   actualPaise: number,
+  { aiCallId }: { aiCallId?: string } = {},
 ): Promise<IncrementResult> {
   assertOwn(ctx, reservation);
   assertPaise('actualPaise', actualPaise);
-  const { workspaceId } = ctx;
-  return withWorkspace(ctx.db, { workspaceId }, async (tx) => {
+  const { workspaceId, enqueueDelivery } = ctx;
+  const result = await withWorkspace(ctx.db, { workspaceId }, async (tx) => {
     await tx
       .delete(usageReservation)
       .where(
@@ -178,9 +204,17 @@ export async function commit(
       );
     return increment({ ...ctx, db: tx }, AI_BUDGET_KEY, actualPaise, {
       idempotencyKey: `reservation:${reservation.id}`,
-      metadata: { reservation_id: reservation.id },
+      metadata:
+        aiCallId === undefined
+          ? { reservation_id: reservation.id }
+          : { reservation_id: reservation.id, ai_call_id: aiCallId },
     });
   });
+  if (enqueueDelivery !== undefined && result.applied) {
+    // After the spend committed; a failed notice never fails or changes the commit.
+    await checkAiBudgetThresholds({ ...ctx, enqueueDelivery }).catch(() => undefined);
+  }
+  return result;
 }
 
 /** Drop the reservation without spending; idempotent. */

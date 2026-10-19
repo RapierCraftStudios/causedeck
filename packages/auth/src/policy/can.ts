@@ -28,6 +28,8 @@ export interface Actor {
 export interface PolicySettings {
   /** Default true. */
   advocatesCanInvite?: boolean;
+  /** Default true: advocates may read and export the audit log (`audit.read`). */
+  advocatesCanReadAudit?: boolean;
   /** Default true: owners see restricted matters they are not listed on. */
   ownersSeeRestrictedMatters?: boolean;
   /** Domains switched off for the workspace (feature flags, plan). */
@@ -66,6 +68,13 @@ export function can(
     action === 'member.invite' &&
     actor.role === 'advocate' &&
     settings.advocatesCanInvite === false
+  ) {
+    return deny('ROLE_DENIED');
+  }
+  if (
+    action === 'audit.read' &&
+    actor.role === 'advocate' &&
+    settings.advocatesCanReadAudit === false
   ) {
     return deny('ROLE_DENIED');
   }

@@ -34,12 +34,13 @@ Each action is either **security** or **informational**:
 | security      | fail-closed: `record()` throws, so the action fails and its transaction rolls back | yes       |
 | informational | fail-open: logged (`service: audit`, action, workspace and error code only) and dropped. The write ran on its own savepoint, so the caller's transaction stays usable | no        |
 
-| Action                      | Kind          | Emitted by                                      |
-| --------------------------- | ------------- | ----------------------------------------------- |
-| `member.removed`            | security      | `offboardMember` through the `AuditSink`        |
-| `member.role_changed`       | security      | role change (#228)                              |
-| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22) |
-| `workspace.settings_viewed` | informational | reserved                                        |
+| Action                      | Kind          | Emitted by                                        |
+| --------------------------- | ------------- | ------------------------------------------------- |
+| `member.removed`            | security      | `offboardMember` through the `AuditSink`          |
+| `member.role_changed`       | security      | role change (#228)                                |
+| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22)   |
+| `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220) |
+| `workspace.settings_viewed` | informational | reserved                                          |
 
 #228 adds the sign-in, magic link, passkey, 2FA, session, export, support session and access-denied
 actions.

@@ -10,6 +10,9 @@
 //
 // Seats: per-seat (chamber) plans grant the purchased `seats` (at least `minSeats`) and
 // `clerk_seats`; other plans grant `minSeats` seats and no clerk seat.
+//
+// AI budget (#30, #220): a plan with a per-seat AI budget pools it across the granted `seats`
+// (clerk seats do not count); otherwise the plan's flat monthly budget (Junior: Rs 10) applies.
 import { getPlan, PLAN_CATALOGUE, type Plan } from './plans';
 import {
   fromSubscriptionRow,
@@ -77,6 +80,13 @@ export interface DeriveEntitlementsInput {
   catalogue?: readonly Plan[];
 }
 
+function aiBudget(plan: Plan, seats: number): number | null {
+  const { aiBudgetPaisePerMonth, aiBudgetPaisePerSeatPerMonth } = plan.limits.fairUse;
+  return aiBudgetPaisePerSeatPerMonth === null
+    ? aiBudgetPaisePerMonth
+    : aiBudgetPaisePerSeatPerMonth * seats;
+}
+
 function fromPlan(
   plan: Plan,
   source: EntitlementSource,
@@ -90,7 +100,7 @@ function fromPlan(
     max_active_matters: plan.limits.maxActiveMatters,
     seats: seats.seats,
     clerk_seats: seats.clerkSeats,
-    ai_budget_paise: plan.limits.fairUse.aiBudgetPaisePerMonth,
+    ai_budget_paise: aiBudget(plan, seats.seats),
     capture_minutes: plan.limits.fairUse.captureMinutesPerMonth,
     features: Object.freeze({ write: !readOnly }),
   });

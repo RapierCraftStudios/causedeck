@@ -51,8 +51,8 @@ are platform jobs that may run without a workspace.
   `transcript` (`BANNED_PAYLOAD_FIELDS`), at any depth.
 - **`workspaceId` is required** (a uuid) unless the job is `system.*`. `runJob` runs the handler
   inside `withWorkspace(db, { workspaceId }, ...)`, so `ctx.db` is a transaction with
-  `app.workspace_id` set (`SET LOCAL` semantics). Once #19 lands, RLS uses that setting to stop a
-  handler from reading another workspace's rows. Until then the cross-tenant job test is skipped.
+  `app.workspace_id` set (`SET LOCAL` semantics). Row-level security (#19) uses that setting to
+  stop a handler from reading another workspace's rows (`runjob.test.ts` proves it).
 - **`fairnessKey`** is optional and defaults to `workspaceId`. It becomes the pg-boss `group`.
 
 ## Runtime contract
@@ -91,8 +91,11 @@ Jobs can be delivered more than once (crash after the effect, expiry, a manual r
 side effect in `once(ctx, key, fn)`. It inserts `(workspace_id, job_name, idempotency_key)` into
 `job_effect` in the job's own transaction. The unique index turns a duplicate into a no-op, and a
 failed effect rolls the claim back so a retry can apply it. `once()` needs a workspace-scoped job.
-`system.retention.sweep` deletes `job_effect` rows older than 30 days. Once #19 forces RLS on
-`job_effect`, that sweep must use `withoutWorkspace`.
+`system.retention.sweep` deletes `job_effect` rows older than 30 days in every workspace. It has
+no workspace and `job_effect` is under FORCE RLS, so it calls the owner-defined
+`app_purge_job_effects(cutoff)` (SECURITY DEFINER, `0006_rls_baseline`) rather than
+`withoutWorkspace`, which only reaches global tables. Other cross-tenant maintenance follows the
+same pattern ([tenancy.md](tenancy.md)).
 
 ## Concurrency and fairness
 

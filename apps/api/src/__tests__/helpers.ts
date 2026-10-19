@@ -5,7 +5,7 @@ import { randomInt, randomUUID } from 'node:crypto';
 import type { Mailer } from '@causedeck/auth/mailer';
 import { createAuth, type AuthEnv } from '@causedeck/auth/server';
 import { Secret } from '@causedeck/config/env';
-import { schema } from '@causedeck/db';
+import { schema, withWorkspace } from '@causedeck/db';
 import { testAppDb } from '@causedeck/db/testing';
 import { createLogger } from '@causedeck/observability';
 import { Writable } from 'node:stream';
@@ -115,13 +115,16 @@ export async function createWorkspace(
   role: (typeof schema.member.$inferInsert)['role'] = 'owner',
   name = `Chambers ${randomUUID().slice(0, 8)}`,
 ): Promise<{ id: string; name: string; slug: string }> {
-  const db = testAppDb();
+  // Written inside the new workspace's scope, as createWorkspace does (FORCE RLS, #19).
+  const id = randomUUID();
   const slug = `ws-${randomUUID()}`;
-  const [workspace] = await db.insert(schema.organization).values({ name, slug }).returning({
-    id: schema.organization.id,
-    name: schema.organization.name,
-    slug: schema.organization.slug,
-  });
+  const [workspace] = await withWorkspace(testAppDb(), { workspaceId: id }, (tx) =>
+    tx.insert(schema.organization).values({ id, name, slug }).returning({
+      id: schema.organization.id,
+      name: schema.organization.name,
+      slug: schema.organization.slug,
+    }),
+  );
   if (!workspace) throw new Error('workspace insert failed');
   await addMember(workspace.id, userId, role);
   return workspace;
@@ -132,7 +135,9 @@ export async function addMember(
   userId: string,
   role: (typeof schema.member.$inferInsert)['role'] = 'advocate',
 ): Promise<void> {
-  await testAppDb().insert(schema.member).values({ organizationId: workspaceId, userId, role });
+  await withWorkspace(testAppDb(), { workspaceId }, (tx) =>
+    tx.insert(schema.member).values({ organizationId: workspaceId, userId, role }),
+  );
 }
 
 export interface CallOptions {

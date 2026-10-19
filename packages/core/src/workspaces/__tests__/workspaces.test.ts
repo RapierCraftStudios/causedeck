@@ -2,31 +2,42 @@
 // rolled-back transaction; the service's own transactions become savepoints inside it.
 import { randomUUID } from 'node:crypto';
 
-import { schema, type Transaction } from '@causedeck/db';
-import { withTestDb } from '@causedeck/db/testing';
+import { schema, withUser, type Transaction } from '@causedeck/db';
+import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { RESERVED_SLUGS } from '@causedeck/validators/workspace';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import * as core from '../index.ts';
 import {
-  changeRole,
-  countBillableSeats,
   createWorkspace,
   entitlements,
-  listMembers,
   listMemberships,
   listWorkspacesForUser,
   memberRole,
-  prepareOwnershipTransfer,
-  removeMember,
-  renameSlug,
   resolveSlug,
   setEntitlements,
-  softDeleteWorkspace,
-  transferOwnership,
   WorkspaceError,
   type WorkspaceRole,
 } from '../index.ts';
+
+// Workspace-scoped operations run inside the workspace's scope, as the app calls them (members
+// actions get `ctx.tx` from `withWorkspace`); FORCE row-level security (#19) hides everything else.
+function scoped<R extends { workspaceId: string }, T>(
+  fn: (db: Transaction, request: R) => Promise<T>,
+): (tx: Transaction, request: R) => Promise<T> {
+  return (tx, request) => inWorkspace(tx, request.workspaceId, (s) => fn(s, request));
+}
+const changeRole = scoped(core.changeRole);
+const removeMember = scoped(core.removeMember);
+const prepareOwnershipTransfer = scoped(core.prepareOwnershipTransfer);
+const transferOwnership = scoped(core.transferOwnership);
+const renameSlug = scoped(core.renameSlug);
+const softDeleteWorkspace = scoped(core.softDeleteWorkspace);
+const listMembers = (tx: Transaction, workspaceId: string) =>
+  inWorkspace(tx, workspaceId, (s) => core.listMembers(s, workspaceId));
+const countBillableSeats = (tx: Transaction, workspaceId: string) =>
+  inWorkspace(tx, workspaceId, (s) => core.countBillableSeats(s, workspaceId));
 
 async function newUser(tx: Transaction, name = 'Advocate'): Promise<string> {
   const [row] = await tx
@@ -44,19 +55,23 @@ async function addMember(
   status: 'active' | 'suspended' | 'removed' = 'active',
 ): Promise<{ userId: string; memberId: string }> {
   const userId = await newUser(tx, role);
-  const [row] = await tx
-    .insert(schema.member)
-    .values({ organizationId: workspaceId, userId, role, status })
-    .returning({ id: schema.member.id });
+  const [row] = await inWorkspace(tx, workspaceId, (s) =>
+    s
+      .insert(schema.member)
+      .values({ organizationId: workspaceId, userId, role, status })
+      .returning({ id: schema.member.id }),
+  );
   if (!row) throw new Error('member insert failed');
   return { userId, memberId: row.id };
 }
 
 async function memberIdOf(tx: Transaction, workspaceId: string, userId: string): Promise<string> {
-  const [row] = await tx
-    .select({ id: schema.member.id })
-    .from(schema.member)
-    .where(and(eq(schema.member.organizationId, workspaceId), eq(schema.member.userId, userId)));
+  const [row] = await inWorkspace(tx, workspaceId, (s) =>
+    s
+      .select({ id: schema.member.id })
+      .from(schema.member)
+      .where(and(eq(schema.member.organizationId, workspaceId), eq(schema.member.userId, userId))),
+  );
   if (!row) throw new Error('member not found');
   return row.id;
 }
@@ -102,10 +117,12 @@ describe('createWorkspace', () => {
       expect(workspace.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
       expect(workspace.slug.startsWith('iyer-associates-chennai-')).toBe(true);
       expect(await memberRole(tx, userId, workspace.id)).toBe('owner');
-      const [settings] = await tx
-        .select()
-        .from(schema.workspaceSettings)
-        .where(eq(schema.workspaceSettings.workspaceId, workspace.id));
+      const [settings] = await inWorkspace(tx, workspace.id, (s) =>
+        s
+          .select()
+          .from(schema.workspaceSettings)
+          .where(eq(schema.workspaceSettings.workspaceId, workspace.id)),
+      );
       expect(settings).toMatchObject({ indiaOnlyAi: true, timezone: 'Asia/Kolkata', locale: 'en' });
     });
   });
@@ -157,12 +174,15 @@ describe('createWorkspace', () => {
       await expect(createWorkspace(failingDb, { userId, input: { name } })).rejects.toThrow(
         'settings failed',
       );
-      expect(
-        await tx.select().from(schema.organization).where(eq(schema.organization.name, name)),
-      ).toEqual([]);
-      expect(await tx.select().from(schema.member).where(eq(schema.member.userId, userId))).toEqual(
-        [],
-      );
+      // As the creator: a surviving membership would make its workspace visible too (#19).
+      const left = await withUser(tx, { userId }, async (s) => ({
+        workspaces: await s
+          .select()
+          .from(schema.organization)
+          .where(eq(schema.organization.name, name)),
+        members: await s.select().from(schema.member).where(eq(schema.member.userId, userId)),
+      }));
+      expect(left).toEqual({ workspaces: [], members: [] });
     });
   });
 });
@@ -372,10 +392,12 @@ describe('slug rename and redirect', () => {
       // Slugs are case-insensitive (citext).
       expect((await resolveSlug(tx, oldSlug.toUpperCase()))?.workspace.id).toBe(workspace.id);
 
-      const [history] = await tx
-        .select()
-        .from(schema.workspaceSlugHistory)
-        .where(eq(schema.workspaceSlugHistory.slug, oldSlug));
+      const [history] = await inWorkspace(tx, workspace.id, (s) =>
+        s
+          .select()
+          .from(schema.workspaceSlugHistory)
+          .where(eq(schema.workspaceSlugHistory.slug, oldSlug)),
+      );
       expect(history).toBeDefined();
       const days = history
         ? (history.expiresAt.getTime() - history.createdAt.getTime()) / 86_400_000
@@ -388,10 +410,12 @@ describe('slug rename and redirect', () => {
       );
 
       // After the window the redirect is gone and the slug is free again.
-      await tx
-        .update(schema.workspaceSlugHistory)
-        .set({ expiresAt: new Date(Date.now() - 1000) })
-        .where(eq(schema.workspaceSlugHistory.slug, oldSlug));
+      await inWorkspace(tx, workspace.id, (s) =>
+        s
+          .update(schema.workspaceSlugHistory)
+          .set({ expiresAt: new Date(Date.now() - 1000) })
+          .where(eq(schema.workspaceSlugHistory.slug, oldSlug)),
+      );
       expect(await resolveSlug(tx, oldSlug)).toBeNull();
       await renameSlug(tx, { workspaceId: other.id, actorUserId: ownerId, newSlug: oldSlug });
       expect((await resolveSlug(tx, oldSlug))?.workspace.id).toBe(other.id);
@@ -447,10 +471,16 @@ describe('soft delete and member status', () => {
       const a = await createWorkspace(tx, { userId: ownerId, input: { name: uniqueName() } });
       const b = await createWorkspace(tx, { userId: ownerId, input: { name: uniqueName() } });
       const userId = await newUser(tx);
-      await tx.insert(schema.member).values([
-        { organizationId: a.id, userId, role: 'junior', status: 'suspended' },
-        { organizationId: b.id, userId, role: 'junior', status: 'removed' },
-      ]);
+      await inWorkspace(tx, a.id, (s) =>
+        s
+          .insert(schema.member)
+          .values({ organizationId: a.id, userId, role: 'junior', status: 'suspended' }),
+      );
+      await inWorkspace(tx, b.id, (s) =>
+        s
+          .insert(schema.member)
+          .values({ organizationId: b.id, userId, role: 'junior', status: 'removed' }),
+      );
 
       expect(await listMemberships(tx, userId)).toEqual([]);
       expect((await listWorkspacesForUser(tx, userId, { limit: 10 })).data).toEqual([]);

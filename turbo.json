@@ -38,6 +38,10 @@
       "cache": false,
       "passThroughEnv": ["DATABASE_URL"]
     },
+    "db:check-rls": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL", "DATABASE_URL_OWNER"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

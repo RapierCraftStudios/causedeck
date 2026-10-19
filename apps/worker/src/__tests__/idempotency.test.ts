@@ -2,8 +2,8 @@
 import { randomUUID } from 'node:crypto';
 
 import { defineJob, once, runJob, systemPing } from '@causedeck/core/jobs';
-import { schema } from '@causedeck/db';
-import { testAppDb, withTestDb } from '@causedeck/db/testing';
+import { schema, withWorkspace } from '@causedeck/db';
+import { inWorkspace, testAppDb, withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -14,11 +14,11 @@ afterEach(async () => {
   await stopTestWorkers();
 });
 
+/** `job_effect` is a tenant table under FORCE RLS (#19): read it inside the workspace's scope. */
 async function effectsFor(workspaceId: string) {
-  return testAppDb()
-    .select()
-    .from(schema.jobEffect)
-    .where(eq(schema.jobEffect.workspaceId, workspaceId));
+  return withWorkspace(testAppDb(), { workspaceId }, (tx) =>
+    tx.select().from(schema.jobEffect).where(eq(schema.jobEffect.workspaceId, workspaceId)),
+  );
 }
 
 function countingJob() {
@@ -107,12 +107,14 @@ describe('job_effect', () => {
   it('rejects a duplicate (workspace, job, key) with a unique violation', async () => {
     await withTestDb(async (tx) => {
       const row = { jobName: 'test.dup', idempotencyKey: 'k', workspaceId: randomUUID() };
-      await tx.insert(schema.jobEffect).values(row);
-      await expect(
-        tx.transaction(async (sp) => {
-          await sp.insert(schema.jobEffect).values(row);
-        }),
-      ).rejects.toMatchObject({ cause: { code: '23505' } });
+      await inWorkspace(tx, row.workspaceId, async (scoped) => {
+        await scoped.insert(schema.jobEffect).values(row);
+        await expect(
+          scoped.transaction(async (sp) => {
+            await sp.insert(schema.jobEffect).values(row);
+          }),
+        ).rejects.toMatchObject({ cause: { code: '23505' } });
+      });
     });
   });
 });

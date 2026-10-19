@@ -3,7 +3,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { schema, type Transaction } from '@causedeck/db';
-import { withTestDb } from '@causedeck/db/testing';
+import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,12 +14,16 @@ import {
   memberRole,
   noopAuditSink,
   registerReassignProvider,
-  removeMember,
   setAuditSink,
   WorkspaceError,
   type AuditEvent,
   type WorkspaceRole,
 } from '../index.ts';
+import * as core from '../index.ts';
+
+// removeMember runs inside the workspace's scope, as the members actions call it (`withWorkspace`).
+const removeMember = (tx: Transaction, request: Parameters<typeof core.removeMember>[1]) =>
+  inWorkspace(tx, request.workspaceId, (s) => core.removeMember(s, request));
 
 async function newUser(tx: Transaction): Promise<string> {
   const [row] = await tx
@@ -37,10 +41,12 @@ async function addMember(
   userId?: string,
 ): Promise<{ userId: string; memberId: string }> {
   const id = userId ?? (await newUser(tx));
-  const [row] = await tx
-    .insert(schema.member)
-    .values({ organizationId: workspaceId, userId: id, role })
-    .returning({ id: schema.member.id });
+  const [row] = await inWorkspace(tx, workspaceId, (s) =>
+    s
+      .insert(schema.member)
+      .values({ organizationId: workspaceId, userId: id, role })
+      .returning({ id: schema.member.id }),
+  );
   if (!row) throw new Error('member insert failed');
   return { userId: id, memberId: row.id };
 }
@@ -79,11 +85,17 @@ async function sessionExists(tx: Transaction, id: string): Promise<boolean> {
   return rows.length === 1;
 }
 
-async function memberStatus(tx: Transaction, memberId: string): Promise<string | undefined> {
-  const [row] = await tx
-    .select({ status: schema.member.status })
-    .from(schema.member)
-    .where(and(eq(schema.member.id, memberId)));
+async function memberStatus(
+  tx: Transaction,
+  workspaceId: string,
+  memberId: string,
+): Promise<string | undefined> {
+  const [row] = await inWorkspace(tx, workspaceId, (s) =>
+    s
+      .select({ status: schema.member.status })
+      .from(schema.member)
+      .where(and(eq(schema.member.id, memberId))),
+  );
   return row?.status;
 }
 
@@ -117,7 +129,7 @@ describe('removeMember offboarding', () => {
       const junior = await addMember(tx, workspaceId, 'junior');
 
       await removeMember(tx, { workspaceId, actorUserId: ownerId, memberId: junior.memberId });
-      expect(await memberStatus(tx, junior.memberId)).toBe('removed');
+      expect(await memberStatus(tx, workspaceId, junior.memberId)).toBe('removed');
       expect(await memberRole(tx, junior.userId, workspaceId)).toBeNull();
     });
   });
@@ -133,12 +145,12 @@ describe('removeMember offboarding', () => {
       const request = { workspaceId, actorUserId: ownerId, memberId: junior.memberId };
 
       await expectCode(removeMember(tx, request), 'VALIDATION');
-      expect(await memberStatus(tx, junior.memberId)).toBe('active');
+      expect(await memberStatus(tx, workspaceId, junior.memberId)).toBe('active');
       expect(provider.reassign).not.toHaveBeenCalled();
 
       await expectCode(removeMember(tx, { ...request, reassignTo: junior.memberId }), 'VALIDATION');
       await expectCode(removeMember(tx, { ...request, reassignTo: randomUUID() }), 'NOT_FOUND');
-      expect(await memberStatus(tx, junior.memberId)).toBe('active');
+      expect(await memberStatus(tx, workspaceId, junior.memberId)).toBe('active');
 
       await removeMember(tx, { ...request, reassignTo: advocate.memberId });
       expect(provider.reassign).toHaveBeenCalledWith(
@@ -147,7 +159,7 @@ describe('removeMember offboarding', () => {
         junior.userId,
         advocate.userId,
       );
-      expect(await memberStatus(tx, junior.memberId)).toBe('removed');
+      expect(await memberStatus(tx, workspaceId, junior.memberId)).toBe('removed');
     });
   });
 
@@ -224,10 +236,12 @@ describe('removeMember offboarding', () => {
     await withTestDb(async (tx) => {
       const ownerId = await newUser(tx);
       const workspaceId = await newWorkspace(tx, ownerId);
-      const [owner] = await tx
-        .select({ id: schema.member.id })
-        .from(schema.member)
-        .where(eq(schema.member.organizationId, workspaceId));
+      const [owner] = await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .select({ id: schema.member.id })
+          .from(schema.member)
+          .where(eq(schema.member.organizationId, workspaceId)),
+      );
       await expectCode(
         removeMember(tx, { workspaceId, actorUserId: ownerId, memberId: owner?.id ?? '' }),
         'CONFLICT',

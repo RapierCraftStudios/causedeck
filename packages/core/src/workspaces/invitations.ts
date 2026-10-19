@@ -6,7 +6,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { Mailer } from '@causedeck/auth/mailer';
 import { AUTH_EMAIL_KEYS, type AuthLocale } from '@causedeck/auth/messages';
 import { consumeRateLimit } from '@causedeck/auth/rate-limit';
-import { schema, type Database, type Transaction } from '@causedeck/db';
+import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { InviteInput } from '@causedeck/validators/workspace';
 import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 
@@ -306,6 +306,18 @@ export async function listPendingInvitations(
     .orderBy(asc(invitation.createdAt), asc(invitation.id));
 }
 
+/**
+ * The workspace of the invitation `token` belongs to, or `null`. Looked up by token hash through a
+ * SECURITY DEFINER function (0006_rls_baseline), because the invitee has no workspace scope yet;
+ * the invitation itself is then read inside that workspace's scope.
+ */
+async function invitationWorkspace(db: Queryable, token: string): Promise<string | null> {
+  const [row] = await db.execute<{ workspace_id: string | null }>(
+    sql`select app_invitation_workspace(${hashInvitationToken(token)})::text as workspace_id`,
+  );
+  return row?.workspace_id ?? null;
+}
+
 /** The invitation row and its workspace slug, as `acceptInvitation` and `previewInvitation` read it. */
 const invitationColumns = {
   id: invitation.id,
@@ -343,7 +355,9 @@ export async function acceptInvitation(
   const now = request.now ?? new Date();
   await withinLimit(db, `invite-accept:${request.userId}`, ACCEPT_RATE_LIMIT, now);
 
-  return db.transaction(async (tx) => {
+  const workspaceId = await invitationWorkspace(db, request.token);
+  if (workspaceId === null) throw new InvitationError('INVALID');
+  return withWorkspace(db, { workspaceId, userId: request.userId }, async (tx) => {
     const [found] = await tx
       .select({
         ...invitationColumns,
@@ -430,6 +444,18 @@ export async function previewInvitation(
   request: PreviewInvitationRequest,
 ): Promise<InvitationPreview> {
   const now = request.now ?? new Date();
+  const workspaceId = await invitationWorkspace(db, request.token);
+  if (workspaceId === null) return { state: 'INVALID' };
+  return withWorkspace(db, { workspaceId, userId: request.userId }, (tx) =>
+    previewInScope(tx, request, now),
+  );
+}
+
+async function previewInScope(
+  db: Transaction,
+  request: PreviewInvitationRequest,
+  now: Date,
+): Promise<InvitationPreview> {
   const [found] = await db
     .select({ ...invitationColumns, workspaceName: organization.name })
     .from(invitation)

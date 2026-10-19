@@ -2,6 +2,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { defineJob, PermanentError, runJob, type JobContext } from '@causedeck/core/jobs';
+import { withWorkspace } from '@causedeck/db';
 import { testAppDb } from '@causedeck/db/testing';
 import { initTelemetry, type Telemetry } from '@causedeck/observability';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
@@ -79,13 +80,18 @@ describe('workspace scoping', () => {
     expect(seen).toBeNull();
   });
 
-  // Needs the RLS policies from #19: re-enable there. Until then the GUC test above proves the
-  // handler runs inside the payload's workspace.
-  it.skip('a handler cannot read another workspace’s rows (cross-tenant job test, #19)', async () => {
+  it('a handler cannot read another workspace’s rows (cross-tenant job test, #19)', async () => {
     const [a, b] = [randomUUID(), randomUUID()];
-    await testAppDb().execute(
-      sql`insert into job_effect (job_name, idempotency_key, workspace_id) values ('test.x', 'k', ${b})`,
+    // Written inside B's scope (FORCE RLS rejects tenant rows with no workspace pinned).
+    await withWorkspace(testAppDb(), { workspaceId: b }, (tx) =>
+      tx.execute(
+        sql`insert into job_effect (job_name, idempotency_key, workspace_id) values ('test.x', 'k', ${b})`,
+      ),
     );
+    const inB = await withWorkspace(testAppDb(), { workspaceId: b }, (tx) =>
+      tx.execute(sql`select 1 from job_effect where workspace_id = ${b}`),
+    );
+    expect(inB).toHaveLength(1);
     let visible = -1;
     const def = defineJob({
       name: uniqueName('xtenant'),

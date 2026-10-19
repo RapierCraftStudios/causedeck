@@ -1,14 +1,23 @@
 // Workspace slugs (#177): generated from the name, unique across live, soft-deleted and recently
 // renamed workspaces, never a reserved route word. A slug changes only by an owner rename, and the
 // old slug redirects to the workspace for SLUG_REDIRECT_DAYS (`workspace_slug_history`).
-import { schema, type Database, type Transaction, type Workspace } from '@causedeck/db';
+// Uniqueness and resolution must see every workspace, which row-level security (#19) hides, so
+// they go through SECURITY DEFINER functions (0006_rls_baseline) that return only slugs, ids and
+// booleans; the unique indexes stay the backstop against races.
+import {
+  schema,
+  withWorkspace,
+  type Database,
+  type Transaction,
+  type Workspace,
+} from '@causedeck/db';
 import {
   isReservedSlug,
   Slug,
   SLUG_MAX_LENGTH,
   SLUG_MIN_LENGTH,
 } from '@causedeck/validators/workspace';
-import { and, eq, gt, inArray, lte, or, sql } from 'drizzle-orm';
+import { and, eq, sql, type SQL } from 'drizzle-orm';
 
 import { conflict, invalid, isUniqueViolation } from './errors.ts';
 import { liveWorkspace, requireOwner } from './members.ts';
@@ -41,22 +50,19 @@ function withSuffix(base: string, n: number): string {
   return `${base.slice(0, SLUG_MAX_LENGTH - suffix.length).replace(/-+$/, '')}${suffix}`;
 }
 
+function textArray(values: readonly string[]): SQL {
+  return sql`array[${sql.join(
+    values.map((v) => sql`${v}`),
+    sql`, `,
+  )}]::text[]`;
+}
+
 /** Slugs held by a workspace (any, including soft-deleted) or by an unexpired redirect. */
 async function takenSlugs(db: Queryable, candidates: string[]): Promise<Set<string>> {
-  const current = await db
-    .select({ slug: organization.slug })
-    .from(organization)
-    .where(inArray(organization.slug, candidates));
-  const redirects = await db
-    .select({ slug: workspaceSlugHistory.slug })
-    .from(workspaceSlugHistory)
-    .where(
-      and(
-        inArray(workspaceSlugHistory.slug, candidates),
-        gt(workspaceSlugHistory.expiresAt, sql`now()`),
-      ),
-    );
-  return new Set([...current, ...redirects].map((r) => r.slug.toLowerCase()));
+  const rows = await db.execute<{ slug: string }>(
+    sql`select t.slug from app_slug_taken(${textArray(candidates)}) as t(slug)`,
+  );
+  return new Set(rows.map((r) => r.slug.toLowerCase()));
 }
 
 /** The first free slug among `base`, `base-2`, `base-3`, ... */
@@ -91,32 +97,20 @@ export async function renameSlug(db: Queryable, request: RenameSlugRequest): Pro
       const oldSlug = workspace.slug;
       if (oldSlug.toLowerCase() === newSlug) return oldSlug;
 
-      const [holder] = await tx
-        .select({ id: organization.id })
-        .from(organization)
-        .where(eq(organization.slug, newSlug));
-      if (holder) throw conflict('This slug is taken');
-      const [redirect] = await tx
-        .select({ workspaceId: workspaceSlugHistory.workspaceId })
-        .from(workspaceSlugHistory)
-        .where(
-          and(
-            eq(workspaceSlugHistory.slug, newSlug),
-            gt(workspaceSlugHistory.expiresAt, sql`now()`),
-          ),
-        );
-      if (redirect && redirect.workspaceId !== workspace.id) throw conflict('This slug is taken');
+      // Expired redirects (of any workspace) no longer hold either slug: drop them first.
+      await tx.execute(sql`select app_release_expired_slugs(${textArray([newSlug, oldSlug])})`);
+      const [free] = await tx.execute<{ ok: boolean }>(
+        sql`select app_slug_available(${newSlug}, ${workspace.id}::uuid) as ok`,
+      );
+      if (free?.ok !== true) throw conflict('This slug is taken');
 
-      // The new slug is free: drop its own old redirect (renaming back) or an expired one.
+      // The new slug is free: drop its own old redirect (renaming back).
       await tx
         .delete(workspaceSlugHistory)
         .where(
           and(
             eq(workspaceSlugHistory.slug, newSlug),
-            or(
-              eq(workspaceSlugHistory.workspaceId, workspace.id),
-              lte(workspaceSlugHistory.expiresAt, sql`now()`),
-            ),
+            eq(workspaceSlugHistory.workspaceId, workspace.id),
           ),
         );
       const expiresAt = sql`now() + make_interval(days => ${SLUG_REDIRECT_DAYS})`;
@@ -144,25 +138,28 @@ export interface ResolvedSlug {
 
 /**
  * The live workspace a slug points at, directly or through an unexpired redirect. `null` (a 404)
- * for unknown, expired or soft-deleted.
+ * for unknown, expired or soft-deleted. The workspace row is read in its own scope (with `userId`
+ * as the acting user); membership is the caller's check.
  */
-export async function resolveSlug(db: Queryable, slug: string): Promise<ResolvedSlug | null> {
-  const [current] = await db
-    .select()
-    .from(organization)
-    .where(and(eq(organization.slug, slug), liveWorkspace));
-  if (current) return { workspace: current, redirectFrom: null };
-
-  const [redirected] = await db
-    .select({ workspace: organization })
-    .from(workspaceSlugHistory)
-    .innerJoin(organization, eq(organization.id, workspaceSlugHistory.workspaceId))
-    .where(
-      and(
-        eq(workspaceSlugHistory.slug, slug),
-        gt(workspaceSlugHistory.expiresAt, sql`now()`),
-        liveWorkspace,
-      ),
-    );
-  return redirected ? { workspace: redirected.workspace, redirectFrom: slug } : null;
+export async function resolveSlug(
+  db: Queryable,
+  slug: string,
+  userId?: string,
+): Promise<ResolvedSlug | null> {
+  const [hit] = await db.execute<{ workspace_id: string; redirected: boolean }>(
+    sql`select r.workspace_id::text as workspace_id, r.redirected from app_resolve_slug(${slug}) as r`,
+  );
+  if (!hit) return null;
+  const workspaceId = hit.workspace_id;
+  const [workspace] = await withWorkspace(
+    db,
+    userId === undefined ? { workspaceId } : { workspaceId, userId },
+    (tx) =>
+      tx
+        .select()
+        .from(organization)
+        .where(and(eq(organization.id, workspaceId), liveWorkspace)),
+  );
+  if (!workspace) return null;
+  return { workspace, redirectFrom: hit.redirected ? slug : null };
 }

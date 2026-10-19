@@ -19,6 +19,7 @@ import {
   type AuditEvent,
   type WorkspaceRole,
 } from '../index.ts';
+import { record } from '../../audit/index.ts';
 import * as core from '../index.ts';
 
 // removeMember runs inside the workspace's scope, as the members actions call it (`withWorkspace`).
@@ -217,19 +218,62 @@ describe('removeMember offboarding', () => {
     });
   });
 
-  it('defaults to a no-op sink and setAuditSink(null) restores it', async () => {
+  it('defaults to the record() sink, and setAuditSink(null) restores it', async () => {
     const write = vi.fn(() => Promise.resolve());
     setAuditSink({ write });
     setAuditSink(null);
     await withTestDb(async (tx) => {
       const ownerId = await newUser(tx);
       const workspaceId = await newWorkspace(tx, ownerId);
-      const viewer = await addMember(tx, workspaceId, 'viewer');
-      await removeMember(tx, { workspaceId, actorUserId: ownerId, memberId: viewer.memberId });
+      const junior = await addMember(tx, workspaceId, 'junior');
+      const advocate = await addMember(tx, workspaceId, 'advocate');
+      await removeMember(tx, {
+        workspaceId,
+        actorUserId: ownerId,
+        memberId: junior.memberId,
+        reassignTo: advocate.memberId,
+      });
+      const rows = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'member.removed')),
+      );
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        workspaceId,
+        actorUserId: ownerId,
+        actorKind: 'user',
+        targetKind: 'user',
+        targetId: junior.userId,
+        outcome: 'success',
+        metadata: { reassignedTo: advocate.userId },
+      });
     });
     expect(write).not.toHaveBeenCalled();
     await expect(noopAuditSink.write({} as Transaction, {} as AuditEvent)).resolves.toBeUndefined();
     expect(auditSink).toBeDefined();
+  });
+
+  it('fails the removal when the member.removed audit write fails (fail-closed)', async () => {
+    await withTestDb(async (tx) => {
+      const ownerId = await newUser(tx);
+      const workspaceId = await newWorkspace(tx, ownerId);
+      const viewer = await addMember(tx, workspaceId, 'viewer');
+      // An actor kind the database enum rejects makes app_audit_append fail.
+      setAuditSink({
+        write: (s, event) =>
+          record(
+            {
+              db: s,
+              workspaceId: event.workspaceId,
+              actor: { userId: null, kind: 'robot' as never },
+            },
+            { action: event.action, target: { kind: 'user', id: event.targetUserId } },
+          ),
+      });
+      await expect(
+        removeMember(tx, { workspaceId, actorUserId: ownerId, memberId: viewer.memberId }),
+      ).rejects.toThrow();
+      expect(await memberStatus(tx, workspaceId, viewer.memberId)).toBe('active');
+    });
   });
 
   it('still refuses to remove the last owner', async () => {

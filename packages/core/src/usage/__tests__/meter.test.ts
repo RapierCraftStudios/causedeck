@@ -1,8 +1,8 @@
 // The usage meter (#219): ledger plus counter, idempotency, validation, IST periods and overhead.
 import { randomUUID } from 'node:crypto';
 
-import { schema, type Transaction } from '@causedeck/db';
-import { inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { schema, withWorkspace, type Transaction } from '@causedeck/db';
+import { inWorkspace, testAppDb, withTestDb } from '@causedeck/db/testing';
 import { seedTwoTenants } from '@causedeck/db/testing/two-tenants';
 import { and, eq, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -130,9 +130,9 @@ describe('usage meter: increment and getUsage', () => {
   });
 
   it('keeps increment overhead p95 under 5 ms on seeded data', async () => {
-    // The budget is the meter's own cost: the statement's execution time in Postgres (EXPLAIN
-    // ANALYZE, which runs it for real), on a ledger seeded with 2,000 rows. Wall-clock time on a
-    // shared test host is dominated by client round trips and load, so it is reported, not gated.
+    // The meter's own cost, always gated: the statement's execution time in Postgres (EXPLAIN
+    // ANALYZE, which runs it for real) on a ledger seeded with 2,000 rows. Wall-clock time is gated
+    // by the USAGE_PERF_GATE test below.
     await withTestDb(async (tx) => {
       const workspaceId = await workspace(tx);
       const ctx = { db: tx, workspaceId };
@@ -162,16 +162,46 @@ describe('usage meter: increment and getUsage', () => {
       for (let i = 0; i < 200; i++) server.push(await run(i));
       expect(p95(server), `increment execution p95 ${p95(server).toFixed(2)} ms`).toBeLessThan(5);
       expect(await getUsage(ctx, 'ai.spend_paise')).toBe(220);
-
-      const wall: number[] = [];
-      for (let i = 0; i < 50; i++) {
-        const started = performance.now();
-        await increment(ctx, 'ai.spend_paise', 1, { idempotencyKey: `wall-${String(i)}` });
-        wall.push(performance.now() - started);
-      }
-      console.info(
-        `usage increment p95: execution ${p95(server).toFixed(2)} ms, wall ${p95(wall).toFixed(2)} ms`,
-      );
     });
   });
+
+  // Wall-clock p95 (#30: `increment` p95 < 5 ms) depends on the host as much as on the meter: on a
+  // loaded shared machine an empty `withWorkspace` transaction alone exceeds 5 ms. Set
+  // USAGE_PERF_GATE=1 on a quiet runner (or against a deployed database) to enforce it.
+  // eslint-disable-next-line no-process-env -- a test-runner switch, not app configuration.
+  it.runIf(process.env.USAGE_PERF_GATE === '1')(
+    'keeps increment wall-clock p95 under 5 ms on seeded data (USAGE_PERF_GATE=1)',
+    async () => {
+      const db = testAppDb();
+      const { a, b } = await db.transaction((tx) => seedTwoTenants(tx));
+      try {
+        const ctx = { db, workspaceId: a.id };
+        await withWorkspace(db, { workspaceId: a.id }, (s) =>
+          s.execute(sql`
+            insert into usage_event (workspace_id, key, amount, idempotency_key)
+            select ${a.id}::uuid, 'ai.spend_paise', 1, 'seed-' || g
+            from generate_series(1, 2000) as g`),
+        );
+        for (let i = 0; i < 20; i++) {
+          await increment(ctx, 'ai.spend_paise', 1, { idempotencyKey: `warm-${String(i)}` });
+        }
+        const wall: number[] = [];
+        for (let i = 0; i < 200; i++) {
+          const started = performance.now();
+          await increment(ctx, 'ai.spend_paise', 1, { idempotencyKey: `timed-${String(i)}` });
+          wall.push(performance.now() - started);
+        }
+        const p95 = [...wall].sort((x, y) => x - y)[Math.ceil(wall.length * 0.95) - 1] ?? Infinity;
+        expect(p95, `increment wall-clock p95 ${p95.toFixed(2)} ms`).toBeLessThan(5);
+        expect(await getUsage(ctx, 'ai.spend_paise')).toBe(220);
+      } finally {
+        // Usage rows cascade from the workspace.
+        for (const id of [a.id, b.id]) {
+          await withWorkspace(db, { workspaceId: id }, (s) =>
+            s.delete(schema.organization).where(eq(schema.organization.id, id)),
+          );
+        }
+      }
+    },
+  );
 });

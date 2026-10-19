@@ -1,11 +1,5 @@
 // Cron schedules: Asia/Kolkata, registered and sent once across two worker replicas (#15).
-import {
-  billingReconcile,
-  defineJob,
-  notificationDigestSchedule,
-  registry,
-  retentionSweep,
-} from '@causedeck/core/jobs';
+import { defineJob, registry } from '@causedeck/core/jobs';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -21,15 +15,16 @@ afterAll(async () => {
 
 describe('registerSchedules', () => {
   it('registers the daily system schedules in Asia/Kolkata', async () => {
-    const worker = await startTestWorker([
-      retentionSweep,
-      billingReconcile,
-      notificationDigestSchedule,
-    ]);
+    const scheduled = registry.definitions.filter((def) => def.schedule !== undefined);
+    const worker = await startTestWorker(scheduled);
     expect(await registerSchedules(worker.boss, registry)).toEqual([
       'system.retention.sweep',
       'system.billing.reconcile',
+      'system.billing.dunning-tick',
       'system.notification.digest',
+      'system.usage.rollup',
+      'system.audit.verify',
+      'system.audit.retention',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -64,6 +59,29 @@ describe('registerSchedules', () => {
     });
     expect(nextDigest?.toISOString()).toBe('2026-10-18T13:00:00.000Z');
     await worker.boss.unschedule('system.notification.digest');
+
+    // The rest, each with its next firing from 2026-10-18T00:00Z (IST is UTC+05:30).
+    const others = [
+      // Dunning tick: daily 04:30 IST.
+      ['system.billing.dunning-tick', '30 4 * * *', '2026-10-18T23:00:00.000Z'],
+      // Usage rollup: hourly at :15 IST, which is :45 UTC.
+      ['system.usage.rollup', '15 * * * *', '2026-10-18T00:45:00.000Z'],
+      // Audit chain verification: daily 02:00 IST.
+      ['system.audit.verify', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
+      // Audit retention: daily 03:00 IST.
+      ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
+    ] as const;
+    for (const [name, cron, firstRun] of others) {
+      const row = await worker.boss.getSchedule(name);
+      expect(row, name).toMatchObject({ cron, timezone: 'Asia/Kolkata' });
+      const [first] = worker.boss.previewSchedule(row?.cron ?? '', {
+        tz: SCHEDULE_TIMEZONE,
+        from: new Date('2026-10-18T00:00:00Z'),
+        count: 1,
+      });
+      expect(first?.toISOString(), name).toBe(firstRun);
+      await worker.boss.unschedule(name);
+    }
   });
 
   it('is registered once and sends each occurrence once with two worker replicas', async () => {

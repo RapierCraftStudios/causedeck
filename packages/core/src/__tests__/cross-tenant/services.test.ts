@@ -134,6 +134,39 @@ async function runProbe(f: Fixture, workspaceId: string) {
 
 type Case = (f: Fixture) => Promise<void>;
 
+// The seeded reservation expires 5 minutes after the real clock, so the usage clock is the real one.
+const USAGE_NOW = new Date();
+const aCtx = (f: Fixture) => ({ db: f.tx, workspaceId: f.a.id, now: () => USAGE_NOW });
+const bCtx = (f: Fixture) => ({ db: f.tx, workspaceId: f.b.id, now: () => USAGE_NOW });
+
+/** A's reservations, budget overrides, audit trail and usage counters. */
+async function aBudgetState(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => ({
+    reservations: await s
+      .select({ id: schema.usageReservation.id, amount: schema.usageReservation.amountPaise })
+      .from(schema.usageReservation)
+      .orderBy(schema.usageReservation.id),
+    overrides: await s
+      .select({ id: schema.budgetOverride.id, limit: schema.budgetOverride.limitValue })
+      .from(schema.budgetOverride)
+      .orderBy(schema.budgetOverride.id),
+    audit: await s.select({ id: schema.auditEvent.id }).from(schema.auditEvent),
+    usage: await s
+      .select({ key: schema.usageCounter.key, value: schema.usageCounter.value })
+      .from(schema.usageCounter),
+  }));
+}
+
+/** Gives A a 100_000 paise override so A can reserve without plan seeding. */
+async function budgetA(f: Fixture) {
+  await core.setBudgetOverride(aCtx(f), {
+    limitPaise: 100_000,
+    reason: 'xt fixture',
+    expiresAt: new Date(USAGE_NOW.getTime() + 86_400_000),
+    staffUserId: f.ua,
+  });
+}
+
 /** Rejects with TENANCY_VIOLATION: B's scope cannot be switched to A's workspace. */
 async function expectTenancyViolation(promise: Promise<unknown>): Promise<void> {
   const error: unknown = await promise.then(
@@ -671,6 +704,100 @@ const CASES: Record<string, Case> = {
     await expect(
       f.asB((s) => core.getUsage({ db: s, workspaceId: f.a.id }, 'ocr.pages')),
     ).rejects.toBeInstanceOf(TenancyError);
+  },
+  reserve: async (f) => {
+    await budgetA(f);
+    await core.reserve(aCtx(f), { estimatePaise: 100, purpose: 'xt.probe' });
+    const before = await aBudgetState(f);
+    await expect(
+      f.asB((s) =>
+        core.reserve(
+          { db: s, workspaceId: f.a.id, now: () => USAGE_NOW },
+          { estimatePaise: 1, purpose: 'xt.probe' },
+        ),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aBudgetState(f)).toEqual(before);
+    // B reserving for itself holds B's own budget and never counts A's reservation.
+    await core.setBudgetOverride(bCtx(f), {
+      limitPaise: 1_000,
+      reason: 'xt fixture',
+      expiresAt: new Date(USAGE_NOW.getTime() + 86_400_000),
+      staffUserId: f.ub,
+    });
+    // B holds its own seeded 100; 900 more fits exactly, so A's 200 reserved paise are not counted.
+    const own = await core.reserve(bCtx(f), { estimatePaise: 900, purpose: 'xt.probe' });
+    expect(own.workspaceId).toBe(f.b.id);
+    expect((await aBudgetState(f)).reservations).toEqual(before.reservations);
+  },
+  commit: async (f) => {
+    await budgetA(f);
+    const held = await core.reserve(aCtx(f), { estimatePaise: 100, purpose: 'xt.probe' });
+    const before = await aBudgetState(f);
+    // B's own context with A's reservation is refused; A's context inside B's scope is a violation.
+    await expect(core.commit(bCtx(f), held, 50)).rejects.toBeInstanceOf(TypeError);
+    await expect(
+      f.asB((s) => core.commit({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW }, held, 50)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  release: async (f) => {
+    await budgetA(f);
+    const held = await core.reserve(aCtx(f), { estimatePaise: 100, purpose: 'xt.probe' });
+    const before = await aBudgetState(f);
+    await expect(core.release(bCtx(f), held)).rejects.toBeInstanceOf(TypeError);
+    await expect(
+      f.asB((s) => core.release({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW }, held)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  reapExpiredReservations: async (f) => {
+    await budgetA(f);
+    const old = new Date(USAGE_NOW.getTime() - 3_600_000);
+    await core.reserve({ ...aCtx(f), now: () => old }, { estimatePaise: 100, purpose: 'xt.probe' });
+    const before = await aBudgetState(f);
+    expect(before.reservations.length).toBeGreaterThan(1);
+    await expect(
+      f.asB((s) =>
+        core.reapExpiredReservations({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW }),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    // B reaping its own workspace deletes none of A's expired rows.
+    expect(await core.reapExpiredReservations(bCtx(f))).toBe(0);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  getAiBudget: async (f) => {
+    await budgetA(f);
+    const asB = await f.asB((s) =>
+      core.getAiBudget({ db: s, workspaceId: f.b.id, now: () => USAGE_NOW }),
+    );
+    expect(asB).not.toEqual({ budgetPaise: 100_000, source: 'override' });
+    await expect(
+      f.asB((s) => core.getAiBudget({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW })),
+    ).rejects.toBeInstanceOf(TenancyError);
+  },
+  setBudgetOverride: async (f) => {
+    const before = await aBudgetState(f);
+    await expect(
+      f.asB((s) =>
+        core.setBudgetOverride(
+          { db: s, workspaceId: f.a.id, now: () => USAGE_NOW },
+          {
+            limitPaise: 1,
+            reason: 'xt attack',
+            expiresAt: new Date(USAGE_NOW.getTime() + 86_400_000),
+            staffUserId: f.ub,
+          },
+        ),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  activeOverride: async (f) => {
+    await budgetA(f);
+    // The query filters by workspace and RLS hides A's rows from B's scope, so B sees none.
+    expect(await f.asB((s) => core.activeOverride(s, f.a.id, USAGE_NOW))).toBeUndefined();
+    expect(await f.asB((s) => core.activeOverride(s, f.b.id, USAGE_NOW))).toBeUndefined();
   },
 };
 

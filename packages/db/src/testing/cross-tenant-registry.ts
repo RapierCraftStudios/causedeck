@@ -165,6 +165,41 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
   },
+  reserve: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId under an advisory lock; nested in another workspace scope it throws TenancyError',
+  },
+  commit: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'rejects another workspace reservation (TypeError); scoped to ctx.workspaceId, other scope throws TenancyError',
+  },
+  release: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'rejects another workspace reservation (TypeError); deletes only ctx.workspaceId rows, other scope throws TenancyError',
+  },
+  reapExpiredReservations: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reaps only the context workspace (not a system-wide reaper); other scope throws TenancyError',
+  },
+  getAiBudget: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  setBudgetOverride: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'staff-only by caller contract; writes only ctx.workspaceId (override and audit row), other scope throws TenancyError',
+  },
+  activeOverride: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'takes the caller transaction; filters by workspace id and RLS hides other workspaces rows',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -269,6 +304,14 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   periodStart: 'pure',
   nextPeriodStart: 'pure',
   incrementSql: 'pure (SQL builder; increment runs it inside withWorkspace)',
+  // usage: AI budget (#220)
+  AI_BUDGET_KEY: 'constant',
+  RESERVATION_TTL_MS: 'constant',
+  BudgetError: 'error class',
+  budgetLockSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
+  budgetReadSql: 'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
+  reservationInsertSql:
+    'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;

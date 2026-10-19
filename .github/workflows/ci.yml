@@ -83,6 +83,8 @@ jobs:
       - name: i18n catalogs
         run: pnpm i18n:check
       - name: Test
+        env:
+          CI_TURBO_CONCURRENCY: 3
         run: >-
           bash infra/scripts/ci-affected.sh test --
           --coverage --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml

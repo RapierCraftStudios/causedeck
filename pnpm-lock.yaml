@@ -909,6 +909,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
+      '@causedeck/flags':
+        specifier: workspace:*
+        version: link:../flags
       '@causedeck/notifications':
         specifier: workspace:*
         version: link:../notifications

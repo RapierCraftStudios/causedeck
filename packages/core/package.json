@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@causedeck/auth": "workspace:*",
+    "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/observability": "workspace:*",

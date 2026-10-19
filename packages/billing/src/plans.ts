@@ -150,6 +150,34 @@ export function exceedsUpiMandateCap(amountPaise: number): boolean {
   return amountPaise > UPI_AUTOPAY_MANDATE_CAP_PAISE;
 }
 
+/**
+ * The i18n key (`settings.json`, `.title` and `.body`, ICU arg `{amount}`) of the copy the mandate
+ * flow shows when one charge needs additional authentication. The billing UI (#29) renders it.
+ */
+export const MANDATE_ADDITIONAL_AUTH_MESSAGE_KEY = 'billing.mandate.additionalAuth';
+
+export interface MandateChargeNotice {
+  /** One cycle's charge, integer paise, ex-GST. */
+  chargePaise: number;
+  /** The charge is above the UPI Autopay cap: show the additional-authentication copy. */
+  requiresAdditionalAuth: boolean;
+}
+
+/**
+ * The single-cycle charge for `plan` at these seat counts, and whether it needs the
+ * additional-authentication copy in the mandate flow. Per-seat plans charge each paid seat plus
+ * each clerk seat; fixed-price plans charge the plan price.
+ */
+export function mandateChargeNotice(
+  plan: Pick<Plan, 'pricePaise' | 'perSeat' | 'clerkSeatPricePaise'>,
+  counts: { seats: number; clerkSeats: number },
+): MandateChargeNotice {
+  const chargePaise = plan.perSeat
+    ? plan.pricePaise * counts.seats + (plan.clerkSeatPricePaise ?? 0) * counts.clerkSeats
+    : plan.pricePaise;
+  return { chargePaise, requiresAdditionalAuth: exceedsUpiMandateCap(chargePaise) };
+}
+
 export type PlanConfigFindingCode =
   'invalid' | 'upi-mandate-cap-exceeded' | 'upi-mandate-cap-seats';
 

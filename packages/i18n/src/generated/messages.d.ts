@@ -516,6 +516,14 @@ export type Messages = {
       generic: string;
     };
   };
+  billing: {
+    mandate: {
+      additionalAuth: {
+        title: string;
+        body: string;
+      };
+    };
+  };
   error: {
     title: string;
     description: string;

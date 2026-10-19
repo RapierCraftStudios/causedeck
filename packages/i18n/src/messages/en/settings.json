@@ -1,1 +1,10 @@
-{}
+{
+  "billing": {
+    "mandate": {
+      "additionalAuth": {
+        "title": "Your bank will ask you to approve this charge",
+        "body": "UPI Autopay pays up to {amount} per charge on its own. This charge is larger, so you'll approve it in your UPI app each time it's due."
+      }
+    }
+  }
+}

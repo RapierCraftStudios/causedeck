@@ -515,6 +515,14 @@
       "generic": "Something went wrong. Please try again."
     }
   },
+  "billing": {
+    "mandate": {
+      "additionalAuth": {
+        "title": "Your bank will ask you to approve this charge",
+        "body": "UPI Autopay pays up to {amount} per charge on its own. This charge is larger, so you'll approve it in your UPI app each time it's due."
+      }
+    }
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",

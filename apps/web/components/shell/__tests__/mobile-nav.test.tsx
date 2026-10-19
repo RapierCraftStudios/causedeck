@@ -98,6 +98,19 @@ describe('mobile bottom navigation', () => {
     }
   });
 
+  it('offers the language switcher in the More sheet, each option in its own script (#175)', () => {
+    renderWithIntl(<MobileNav slug="demo" role="owner" />);
+    const sheet = openMore();
+    const group = within(sheet).getByRole('group', { name: 'Language' });
+    const radios = within(group).getAllByRole<HTMLInputElement>('radio');
+    expect(radios.map((radio) => radio.closest('label')?.textContent)).toEqual([
+      'English',
+      'தமிழ்',
+      'ಕನ್ನಡ',
+    ]);
+    expect(radios.map((radio) => radio.checked)).toEqual([true, false, false]);
+  });
+
   it('hides destinations the role cannot see and shows flagged ones when enabled', () => {
     renderWithIntl(<MobileNav slug="demo" role="viewer" isEnabled={() => true} />);
     const ids = moreIds(openMore());

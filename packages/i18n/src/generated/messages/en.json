@@ -15,6 +15,10 @@
     "tagline": "Your court day, prepared.",
     "signIn": "Sign in"
   },
+  "locale": {
+    "label": "Language",
+    "updated": "Language updated"
+  },
   "nav": {
     "today": "Today",
     "tomorrow": "Tomorrow",

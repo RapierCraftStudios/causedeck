@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
+import { LocaleSwitcher } from '../../../components/locale-switcher.tsx';
 import { getSession } from '../../../lib/auth.ts';
 import { serverEnv } from '../../../lib/env.ts';
 import { safeNextPath } from '../../../lib/safe-next.ts';
@@ -103,6 +104,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             <ShieldCheck aria-hidden="true" className="size-3.5 shrink-0" />
             {t('hosted')}
           </p>
+          <LocaleSwitcher variant="compact" />
         </footer>
       </div>
     </div>

@@ -338,19 +338,19 @@ describe('audit feed (client)', () => {
     }
   });
 
-  it('moves with J and K, announces the row, and opens the drawer with Enter', async () => {
+  it('moves focus with J and K, announces the row, and opens the drawer with Enter', async () => {
     const actions = view();
     const rows = screen.getAllByRole('row').slice(1);
-    expect(nth(rows, 0).getAttribute('aria-selected')).toBe('true');
+    expect(nth(rows, 0).getAttribute('tabindex')).toBe('0');
     fireEvent.keyDown(document.body, { key: 'j' });
     await waitFor(() => {
-      expect(nth(rows, 1).getAttribute('aria-selected')).toBe('true');
+      expect(document.activeElement).toBe(rows[1]);
     });
-    expect(document.activeElement).toBe(rows[1]);
+    expect(nth(rows, 1).getAttribute('tabindex')).toBe('0');
     expect(screen.getByText('Selected: Meera Nair exported the audit log')).toBeTruthy();
     fireEvent.keyDown(document.body, { key: 'k' });
     await waitFor(() => {
-      expect(nth(rows, 0).getAttribute('aria-selected')).toBe('true');
+      expect(document.activeElement).toBe(rows[0]);
     });
     fireEvent.keyDown(nth(rows, 0), { key: 'Enter' });
     const drawer = await screen.findByRole('dialog', { name: en.drawer.title });

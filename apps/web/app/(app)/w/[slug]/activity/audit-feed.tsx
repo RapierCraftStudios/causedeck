@@ -2,8 +2,10 @@
 // The Activity page's security and audit tab (#232, #26 part 6): workspace audit events as cards
 // below 768 px and a table above, newest first. Each row reads as a sentence (`Asha Rao changed
 // Meera's role to Clerk`), then who and when; the outcome is an icon plus text and denied rows
-// carry the warning tint. Owners also see the (truncated) IP. `J`/`K` move the active row, `Enter`
-// opens the event drawer (lazy), `E` opens the export dialog (lazy). More events load by cursor.
+// carry the warning tint. Owners also see the (truncated) IP. The table is the ui `DataTable` (row
+// activation, roving focus, cards via `mobileRender` as `ActivityItem`s with the outcome trailing).
+// `J`/`K` move the focused row, `Enter` opens the event drawer (lazy), `E` opens the export dialog
+// (lazy). More events load by cursor.
 //
 // States: loading (`AuditSkeleton`), empty, error (`AuditError`, Try again), permission-denied
 // (`AuditDenied`) and offline (the page already shown stays, read-only: filters, export and load
@@ -13,8 +15,13 @@ import { Badge, type BadgeTone } from '@causedeck/ui/badge';
 import { Button } from '@causedeck/ui/button';
 import { EmptyState } from '@causedeck/ui/empty-state';
 import { useHotkey, useMediaQuery, useReducedMotion } from '@causedeck/ui/hooks';
+import { ActivityItem } from '@causedeck/ui/patterns';
 import { Skeleton, SkeletonGroup } from '@causedeck/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@causedeck/ui/table';
+import {
+  createDataTableColumnHelper,
+  DATA_TABLE_MOBILE_QUERY,
+  DataTable,
+} from '@causedeck/ui/data-table';
 import {
   CircleAlert,
   CircleCheck,
@@ -27,8 +34,8 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useFormatter, useTranslations } from 'next-intl';
-import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import type { Result } from '../../../../../lib/safe-action.ts';
 
@@ -289,26 +296,22 @@ export function AuditFeed({
   actions,
 }: AuditFeedProps) {
   const t = useTranslations('audit');
+  const tDrawer = useTranslations('audit.drawer');
+  const locale = useLocale();
   const online = useOnline();
-  const narrow = useMediaQuery('(max-width: 767px)');
+  const narrow = useMediaQuery(DATA_TABLE_MOBILE_QUERY);
   const reducedMotion = useReducedMotion();
   const [events, setEvents] = useState(initialPage.events);
   const [cursor, setCursor] = useState(initialPage.nextCursor);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreFailed, setLoadMoreFailed] = useState(false);
-  const [active, setActive] = useState(() =>
-    Math.max(
-      0,
-      initialPage.events.findIndex((e) => e.id === initialEventId),
-    ),
-  );
+  const [active, setActive] = useState(0);
   const [openId, setOpenId] = useState<string | null>(
     initialPage.events.some((e) => e.id === initialEventId) ? (initialEventId ?? null) : null,
   );
   const [exportOpen, setExportOpen] = useState(false);
   const [announcement, setAnnouncement] = useState('');
-  const rowRefs = useRef<(HTMLElement | null)[]>([]);
-  const moved = useRef(false);
+  const container = useRef<HTMLDivElement>(null);
 
   // A new server page (filters changed) replaces what was loaded.
   useEffect(() => {
@@ -320,21 +323,14 @@ export function AuditFeed({
 
   const rows = useRows(events, members);
   const openRow = rows.find((row) => row.event.id === openId) ?? null;
-  const keysEnabled = openId === null && !exportOpen && rows.length > 0;
+  // J/K drive the table's roving focus; cards (phones) have no row focus.
+  const keysEnabled = openId === null && !exportOpen && rows.length > 0 && !narrow;
 
+  /** Focus a table row; the table's `onActiveRowChange` then records and announces it. */
   const move = (delta: number) => {
     const next = Math.min(rows.length - 1, Math.max(0, active + delta));
-    moved.current = true;
-    setActive(next);
-    const row = rows[next];
-    if (row) setAnnouncement(t('selected', { event: row.sentence }));
+    container.current?.querySelector<HTMLElement>(`[data-row-index="${String(next)}"]`)?.focus();
   };
-
-  useEffect(() => {
-    if (!moved.current) return;
-    moved.current = false;
-    rowRefs.current[active]?.focus();
-  }, [active]);
 
   useHotkey(
     'j',
@@ -351,18 +347,8 @@ export function AuditFeed({
     { enabled: keysEnabled },
   );
 
-  const open = (index: number) => {
-    const row = rows[index];
-    if (!row) return;
-    setActive(index);
+  const open = (row: AuditRow) => {
     setOpenId(row.event.id);
-  };
-
-  const onRowKeyDown = (event: KeyboardEvent<HTMLElement>, index: number) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      open(index);
-    }
   };
 
   const loadMore = async () => {
@@ -384,112 +370,53 @@ export function AuditFeed({
   };
 
   const rowMotion = reducedMotion ? undefined : 'animate-fade-in [--dur-base:150ms]';
-
-  const list =
-    rows.length === 0 ? (
-      <EmptyState
-        data-pattern-state="empty"
-        icon={<History aria-hidden="true" />}
-        title={t('empty')}
-        className="py-12"
-      />
-    ) : narrow ? (
-      <ul aria-label={t('tableLabel')} data-layout="cards" className="flex flex-col gap-2">
-        {rows.map((row, index) => (
-          <li key={row.event.id}>
-            <button
-              type="button"
-              ref={(node) => {
-                rowRefs.current[index] = node;
-              }}
-              data-slot="audit-card"
-              data-outcome={row.event.outcome}
-              aria-current={index === active ? 'true' : undefined}
-              onClick={() => {
-                open(index);
-              }}
-              className={cn(
-                'border-line flex w-full items-start gap-3 rounded-lg border p-3 text-start',
-                'hover:bg-surface-sunken focus-visible:outline-ring outline-offset-2 focus-visible:outline-2',
-                row.event.outcome === 'denied' && 'bg-warning-soft',
-                rowMotion,
-              )}
-            >
-              <span className="bg-surface-sunken text-ink-muted flex size-8 shrink-0 items-center justify-center rounded-md">
-                <row.icon aria-hidden="true" className="size-4" />
+  const col = createDataTableColumnHelper<AuditRow>();
+  const columns = col.columns([
+    col.accessor((row) => row.event.createdAt, {
+      id: 'when',
+      header: t('columns.when'),
+      enableSorting: false,
+      cell: ({ row }) => (
+        <time dateTime={row.original.event.createdAt} className="text-ink-muted tabular-nums">
+          {row.original.when}
+        </time>
+      ),
+    }),
+    col.accessor('actorName', { header: t('columns.who'), enableSorting: false }),
+    col.accessor('sentence', {
+      header: t('columns.what'),
+      enableSorting: false,
+      cell: ({ row }) => <span className="font-medium">{row.original.sentence}</span>,
+    }),
+    col.accessor((row) => row.targetName ?? '—', {
+      id: 'target',
+      header: t('columns.target'),
+      enableSorting: false,
+    }),
+    col.accessor((row) => row.event.outcome, {
+      id: 'outcome',
+      header: t('columns.outcome'),
+      enableSorting: false,
+      cell: ({ row }) => <OutcomeBadge outcome={row.original.event.outcome} />,
+    }),
+    ...(isOwner
+      ? [
+          col.accessor((row) => row.event.ip ?? '—', {
+            id: 'ip',
+            header: t('columns.ip'),
+            enableSorting: false,
+            cell: ({ row }) => (
+              <span className="text-ink-muted font-mono text-xs">
+                {row.original.event.ip ?? '—'}
               </span>
-              <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-sm font-medium">{row.sentence}</span>
-                <span className="text-ink-muted text-xs tabular-nums">
-                  <time dateTime={row.event.createdAt}>{row.when}</time>
-                </span>
-              </span>
-              <OutcomeBadge outcome={row.event.outcome} />
-            </button>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <Table aria-label={t('tableLabel')} data-layout="table">
-        <TableHeader>
-          <TableRow>
-            <TableHead scope="col">{t('columns.when')}</TableHead>
-            <TableHead scope="col">{t('columns.who')}</TableHead>
-            <TableHead scope="col">{t('columns.what')}</TableHead>
-            <TableHead scope="col">{t('columns.target')}</TableHead>
-            <TableHead scope="col">{t('columns.outcome')}</TableHead>
-            {isOwner ? <TableHead scope="col">{t('columns.ip')}</TableHead> : null}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row, index) => (
-            <TableRow
-              key={row.event.id}
-              ref={(node) => {
-                rowRefs.current[index] = node;
-              }}
-              data-slot="audit-row"
-              data-outcome={row.event.outcome}
-              selected={index === active}
-              aria-selected={index === active}
-              tabIndex={index === active ? 0 : -1}
-              onClick={() => {
-                open(index);
-              }}
-              onFocus={() => {
-                if (index !== active) setActive(index);
-              }}
-              onKeyDown={(event) => {
-                onRowKeyDown(event, index);
-              }}
-              className={cn(
-                'focus-visible:outline-ring cursor-pointer -outline-offset-2 focus-visible:outline-2',
-                row.event.outcome === 'denied' && 'bg-warning-soft',
-                rowMotion,
-              )}
-            >
-              <TableCell className="text-ink-muted whitespace-nowrap tabular-nums">
-                <time dateTime={row.event.createdAt}>{row.when}</time>
-              </TableCell>
-              <TableCell>{row.actorName}</TableCell>
-              <TableCell className="font-medium">{row.sentence}</TableCell>
-              <TableCell className="text-ink-muted">{row.targetName ?? '—'}</TableCell>
-              <TableCell>
-                <OutcomeBadge outcome={row.event.outcome} />
-              </TableCell>
-              {isOwner ? (
-                <TableCell className="text-ink-muted font-mono text-xs">
-                  {row.event.ip ?? '—'}
-                </TableCell>
-              ) : null}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    );
+            ),
+          }),
+        ]
+      : []),
+  ]);
 
   return (
-    <div data-slot="audit-feed" className="flex flex-col gap-4">
+    <div ref={container} data-slot="audit-feed" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <AuditFilters filters={filters} members={members} disabled={!online} />
         <div className="ms-auto">
@@ -508,7 +435,55 @@ export function AuditFeed({
         </p>
       )}
       <p className="text-ink-muted sr-only text-xs md:not-sr-only">{t('shortcuts')}</p>
-      {list}
+      <DataTable
+        label={t('tableLabel')}
+        columns={columns}
+        data={rows}
+        getRowId={(row) => row.event.id}
+        getRowClassName={(row) =>
+          cn(row.event.outcome === 'denied' && 'bg-warning-soft', rowMotion) || undefined
+        }
+        onRowActivate={open}
+        onActiveRowChange={(row, index) => {
+          setActive(index);
+          setAnnouncement(t('selected', { event: row.sentence }));
+        }}
+        empty={
+          <EmptyState
+            data-pattern-state="empty"
+            icon={<History aria-hidden="true" />}
+            title={t('empty')}
+            className="py-12"
+          />
+        }
+        labels={{ loading: t('loading') }}
+        mobileRender={(row) => (
+          <ActivityItem
+            data-outcome={row.event.outcome}
+            actor={{ name: row.actorName }}
+            sentence={row.sentence}
+            at={row.event.createdAt}
+            icon={row.icon}
+            locale={`${locale}-IN`}
+            className="py-0"
+            trailing={
+              <>
+                <OutcomeBadge outcome={row.event.outcome} />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    open(row);
+                  }}
+                >
+                  {tDrawer('title')}
+                </Button>
+              </>
+            }
+          />
+        )}
+      />
       {cursor ? (
         <div className="flex flex-col items-center gap-2">
           {loadMoreFailed ? (

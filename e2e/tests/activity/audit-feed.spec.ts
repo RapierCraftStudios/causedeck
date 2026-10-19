@@ -32,7 +32,7 @@ async function openActivity(page: Page, asUser: AsUser, role: E2eRole = 'owner',
 /** The event rows for this viewport: cards on phones, table rows from 768 px. */
 function eventRows(page: Page): Locator {
   return layoutOf(page) === 'phone'
-    ? page.locator('[data-slot="audit-card"]')
+    ? page.locator('[data-slot="data-table-card"]')
     : page.getByRole('table', { name: 'Security events' }).locator('tbody tr');
 }
 
@@ -129,16 +129,16 @@ test.describe('activity security and audit tab', () => {
     {
       tag: '@a11y',
     },
-    async ({ page, asUser, db }) => {
+    async ({ page, asUser, db, a11y }) => {
       test.skip(layoutOf(page) === 'phone', 'keyboard row navigation is for the table layouts');
       await seedAudit(db.name, 'chennai-solo');
       await openActivity(page, asUser);
       const rows = eventRows(page);
-      await expect(rows.nth(0)).toHaveAttribute('aria-selected', 'true');
+      await expect(rows.nth(0)).toHaveAttribute('tabindex', '0');
 
       await page.keyboard.press('j');
       await page.keyboard.press('j');
-      await expect(rows.nth(2)).toHaveAttribute('aria-selected', 'true');
+      await expect(rows.nth(2)).toHaveAttribute('tabindex', '0');
       await expect(rows.nth(2)).toBeFocused();
       await page.keyboard.press('k');
       await page.keyboard.press('j');
@@ -148,6 +148,8 @@ test.describe('activity security and audit tab', () => {
       await expect(drawer).toBeVisible();
       await expect(drawer).toContainText(ROLE_CHANGED);
       await expect(drawer.locator('pre')).toContainText('"role": "clerk"');
+      // axe with the drawer open (the @a11y after-each checks the page once it closes).
+      await a11y.expectNoViolations(page);
       await expect(drawer.getByText('Verified', { exact: true })).toBeVisible();
 
       await page.keyboard.press('Escape');
@@ -156,10 +158,30 @@ test.describe('activity security and audit tab', () => {
     },
   );
 
+  test(
+    'on phones a card opens the drawer as a bottom sheet',
+    { tag: '@a11y' },
+    async ({ page, asUser, db, a11y }) => {
+      test.skip(layoutOf(page) !== 'phone', 'cards are the phone layout');
+      await seedAudit(db.name, 'chennai-solo');
+      await openActivity(page, asUser);
+      const card = eventRows(page).nth(1);
+      await expect(card).toHaveClass(/bg-warning-soft/);
+      await card.getByRole('button', { name: 'Event details' }).click();
+      const drawer = page.getByRole('dialog', { name: 'Event details' });
+      await expect(drawer).toHaveAttribute('data-side', 'bottom');
+      await expect(drawer).toContainText(EXPORT_DENIED);
+      await a11y.expectNoViolations(page);
+      await page.keyboard.press('Escape');
+      await expect(card.getByRole('button', { name: 'Event details' })).toBeFocused();
+    },
+  );
+
   test('E opens the export dialog and the download is a CSV attachment', async ({
     page,
     asUser,
     db,
+    a11y,
   }) => {
     await seedAudit(db.name, 'chennai-solo');
     await openActivity(page, asUser);
@@ -168,6 +190,7 @@ test.describe('activity security and audit tab', () => {
     const dialog = page.getByRole('dialog', { name: 'Export the audit log' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('combobox', { name: 'Format' })).toContainText('CSV');
+    await a11y.expectNoViolations(page);
 
     const download = page.waitForEvent('download');
     await dialog.getByRole('button', { name: 'Download' }).click();

@@ -775,6 +775,61 @@ export type Messages = {
       upgrade: string;
     };
   };
+  usage: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    link: string;
+    linkHint: string;
+    billingLink: string;
+    permissionDenied: string;
+    empty: {
+      title: string;
+      description: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    meters: {
+      ai: string;
+      ocr: string;
+      stt: string;
+      matters: string;
+    };
+    value: string;
+    percentUsed: string;
+    valueText: string;
+    unlimited: string;
+    aiResets: string;
+    resets: string;
+    level: {
+      warning: string;
+      exceeded: string;
+    };
+    aiWarning: string;
+    aiExceeded: string;
+    limitWarning: string;
+    limitExceeded: string;
+    breakdown: {
+      title: string;
+      caption: string;
+      resource: string;
+      used: string;
+      limit: string;
+      noLimit: string;
+      rows: {
+        aiSpend: string;
+        tokensIn: string;
+        tokensOut: string;
+        ocr: string;
+        stt: string;
+        storage: string;
+        matters: string;
+      };
+    };
+  };
   error: {
     title: string;
     description: string;

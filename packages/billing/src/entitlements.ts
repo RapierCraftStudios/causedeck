@@ -11,6 +11,9 @@
 // Seats: per-seat (chamber) plans grant the purchased `seats` (at least `minSeats`) and
 // `clerk_seats`; other plans grant `minSeats` seats and no clerk seat.
 //
+// Fair use (#221): Junior's monthly `capture_minutes` (STT) and `ocr_pages` caps; paid plans have
+// none. `assertWithinFairUse` (`@causedeck/core/usage`) enforces them.
+//
 // AI budget (#30, #220): a plan with a per-seat AI budget pools it across the granted `seats`
 // (clerk seats do not count); otherwise the plan's flat monthly budget (Junior: Rs 10) applies.
 import { getPlan, PLAN_CATALOGUE, type Plan } from './plans';
@@ -27,6 +30,7 @@ export const LIMIT_KEYS = [
   'clerk_seats',
   'ai_budget_paise',
   'capture_minutes',
+  'ocr_pages',
 ] as const;
 export type LimitKey = (typeof LIMIT_KEYS)[number];
 
@@ -52,7 +56,9 @@ export interface WorkspaceEntitlements {
   clerk_seats: number;
   /** Monthly AI budget (#30). */
   ai_budget_paise: number | null;
+  /** Monthly fair-use caps (#221): STT minutes and OCR pages. */
   capture_minutes: number | null;
+  ocr_pages: number | null;
   features: Record<FeatureKey, boolean>;
 }
 
@@ -102,6 +108,7 @@ function fromPlan(
     clerk_seats: seats.clerkSeats,
     ai_budget_paise: aiBudget(plan, seats.seats),
     capture_minutes: plan.limits.fairUse.captureMinutesPerMonth,
+    ocr_pages: plan.limits.fairUse.ocrPagesPerMonth,
     features: Object.freeze({ write: !readOnly }),
   });
 }

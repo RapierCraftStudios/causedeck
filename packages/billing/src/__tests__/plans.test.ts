@@ -29,6 +29,7 @@ const fixed = (over: Partial<Plan>): Plan => ({
     maxActiveMatters: null,
     fairUse: {
       captureMinutesPerMonth: null,
+      ocrPagesPerMonth: null,
       aiBudgetPaisePerMonth: null,
       aiBudgetPaisePerSeatPerMonth: null,
     },
@@ -170,6 +171,7 @@ describe('plan catalogue', () => {
     expect(junior?.pricePaise).toBe(0);
     expect(junior?.limits.maxActiveMatters).toBe(15);
     expect(junior?.limits.fairUse.captureMinutesPerMonth).not.toBeNull();
+    expect(junior?.limits.fairUse.ocrPagesPerMonth).toBe(200);
     expect(junior?.limits.fairUse.aiBudgetPaisePerMonth).not.toBeNull();
   });
 
@@ -185,12 +187,20 @@ describe('plan catalogue', () => {
     }
   });
 
+  it('caps OCR pages and capture minutes on Junior only (#221)', () => {
+    for (const plan of PLAN_CATALOGUE.filter((p) => p.kind !== 'junior')) {
+      expect(plan.limits.fairUse.ocrPagesPerMonth, plan.id).toBeNull();
+      expect(plan.limits.fairUse.captureMinutesPerMonth, plan.id).toBeNull();
+    }
+  });
+
   it('flags a non-integer AI budget as invalid', () => {
     const plan = fixed({
       limits: {
         maxActiveMatters: null,
         fairUse: {
           captureMinutesPerMonth: null,
+          ocrPagesPerMonth: null,
           aiBudgetPaisePerMonth: 10.5,
           aiBudgetPaisePerSeatPerMonth: null,
         },

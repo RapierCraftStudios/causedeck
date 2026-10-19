@@ -13,7 +13,8 @@
     "./reconcile": "./src/reconcile.ts",
     "./provider": "./src/provider/index.ts",
     "./service": "./src/service.ts",
-    "./state-machine": "./src/state-machine.ts"
+    "./state-machine": "./src/state-machine.ts",
+    "./webhook": "./src/webhook.ts"
   },
   "scripts": {
     "lint": "eslint .",

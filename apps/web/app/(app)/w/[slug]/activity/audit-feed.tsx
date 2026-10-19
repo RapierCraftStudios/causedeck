@@ -35,7 +35,7 @@ import {
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 
 import type { Result } from '../../../../../lib/safe-action.ts';
 
@@ -324,13 +324,16 @@ export function AuditFeed({
   const [announcement, setAnnouncement] = useState('');
   const container = useRef<HTMLDivElement>(null);
 
-  // A new server page (filters changed) replaces what was loaded.
-  useEffect(() => {
+  // A new server page (filters changed) replaces what was loaded: adjusted during render, keyed on
+  // the page object, instead of in an effect.
+  const [seenPage, setSeenPage] = useState(initialPage);
+  if (seenPage !== initialPage) {
+    setSeenPage(initialPage);
     setEvents(initialPage.events);
     setCursor(initialPage.nextCursor);
     setActive(0);
     setLoadMoreFailed(false);
-  }, [initialPage]);
+  }
 
   const rows = useRows(events, members);
   const openRow = rows.find((row) => row.event.id === openId) ?? null;

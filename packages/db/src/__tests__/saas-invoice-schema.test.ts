@@ -286,4 +286,23 @@ describe('saas invoice schema (#252)', () => {
       ).toBe('invoice_counter_last_number_chk');
     });
   });
+
+  it('allows one invoice per provider payment in a workspace (0023, #255)', async () => {
+    await withTestDb(async (tx) => {
+      const ws = await newWorkspace(tx);
+      const other = await newWorkspace(tx);
+      const withPayment =
+        (workspaceId: string, providerPaymentId: string | null) => (sp: Transaction) =>
+          inWorkspace(sp, workspaceId, (s) =>
+            s.insert(saasInvoice).values({ ...DRAFT, workspaceId, providerPaymentId }),
+          );
+      expect(await violation(tx, withPayment(ws, 'pay_1'))).toBeUndefined();
+      expect(await violation(tx, withPayment(ws, 'pay_1'))).toBe('saas_invoice_payment_uq');
+      // Another workspace, another payment, and invoices without a payment are unaffected.
+      expect(await violation(tx, withPayment(other, 'pay_1'))).toBeUndefined();
+      expect(await violation(tx, withPayment(ws, 'pay_2'))).toBeUndefined();
+      expect(await violation(tx, withPayment(ws, null))).toBeUndefined();
+      expect(await violation(tx, withPayment(ws, null))).toBeUndefined();
+    });
+  });
 });

@@ -915,6 +915,9 @@ importers:
       '@causedeck/observability':
         specifier: workspace:*
         version: link:../observability
+      '@causedeck/storage':
+        specifier: workspace:*
+        version: link:../storage
       '@causedeck/validators':
         specifier: workspace:*
         version: link:../validators

@@ -73,6 +73,10 @@ export const saasInvoice = tenantTable(
   (t) => [
     foreignKey({ columns: [t.workspaceId], foreignColumns: [organization.id] }).onDelete('cascade'),
     uniqueIndex('saas_invoice_number_uq').on(t.number),
+    // One invoice per provider payment (#255): the backstop for `invoiceOnPayment`'s lookup.
+    uniqueIndex('saas_invoice_payment_uq')
+      .on(t.workspaceId, t.providerPaymentId)
+      .where(sql`provider_payment_id is not null`),
     // The target of the composite line FK (db:check-rls cross-workspace-fk).
     unique('saas_invoice_id_workspace_uq').on(t.id, t.workspaceId),
     check('saas_invoice_status_chk', sql`status in ${inList(SAAS_INVOICE_STATUSES)}`),

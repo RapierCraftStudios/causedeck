@@ -16,6 +16,7 @@
     "./invoice/amount-in-words": "./src/invoice/amount-in-words.ts",
     "./invoice/generate": "./src/invoice/generate.ts",
     "./invoice/numbering": "./src/invoice/numbering.ts",
+    "./invoice/on-payment": "./src/invoice/on-payment.ts",
     "./invoice/render-pdf": "./src/invoice/render-pdf.tsx",
     "./invoice/template": "./src/invoice/template.tsx",
     "./plans": "./src/plans.ts",

@@ -96,8 +96,9 @@ configured.
 
 - A4, one page, built-in Helvetica. Amounts print as `Rs.` because Helvetica has no rupee glyph.
 - `@causedeck/billing/invoice/render-pdf` and `/invoice/template` are server-only subpath exports.
-  They are never in the package barrel, which apps/web loads in client code. The web route that
-  imports them (#258) must list `@react-pdf/renderer` in `serverExternalPackages`.
+  They are never in the package barrel, which apps/web loads in client code. Only the render job
+  imports them; the download route (below) serves the stored bytes and never renders. A web module
+  that ever imports them must list `@react-pdf/renderer` in `serverExternalPackages`.
 
 ## Issuing on payment
 
@@ -127,6 +128,24 @@ configured.
 A refund is not handled automatically: no credit note is issued and the invoice is not changed.
 Until credit notes exist, a wrong invoice is corrected by void and reissue (see Numbering).
 `needs CA review`: whether a refund of a paid invoice needs a credit note.
+
+## Download
+
+#258: `GET /w/[slug]/billing/invoices/[id]/pdf`
+(`apps/web/app/(app)/w/[slug]/billing/invoices/[id]/pdf/route.ts`), linked from the billing page's
+invoices table once `pdf_blob_id` is set.
+
+- Only a member of the slug's workspace with `invoices.read` (owners) gets the file. An unknown
+  slug, a non-member and a signed-out request get 404; other roles get the policy's 403 or 404.
+- `openSaasInvoicePdf` (`@causedeck/core/billing`) loads the invoice and its finalized blob by id
+  and workspace in one `withWorkspace` transaction. Another workspace's invoice, a draft, an
+  invoice whose PDF is not rendered yet and a malformed id are all 404, and nothing is audited.
+- The object is decrypted on the server under the workspace DEK (a presigned URL would serve
+  ciphertext) and streamed with `Content-Type: application/pdf`,
+  `Content-Disposition: attachment` (the stored file name), `Cache-Control: private, no-store` and
+  `X-Content-Type-Options: nosniff`.
+- Each download records `billing.invoice_downloaded` (security, fail-closed, metadata `{ number }`)
+  before the first byte; a download that cannot be audited is refused.
 
 ## Out of scope
 

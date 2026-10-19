@@ -47,6 +47,7 @@ Each action is either **security** or **informational**:
 | `audit.exported`            | security      | `exportAudit`, before the first byte (#229)         |
 | `billing.subscription_changed` | security | owner billing actions (`changeSubscription`, #257) |
 | `billing.gstin_updated`     | security      | `setSubscriptionGstin` (#257)                       |
+| `billing.invoice_downloaded` | security    | `openSaasInvoicePdf`, before the first byte (#258)  |
 | `workspace.settings_viewed` | informational | reserved                                            |
 | `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)      |
 

@@ -35,6 +35,11 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "An owner saved or cleared the workspace's GSTIN",
   },
+  // Fail-closed: an invoice PDF whose download cannot be audited is not served (#258).
+  'billing.invoice_downloaded': {
+    security: true,
+    description: 'An owner downloaded a SaaS invoice PDF',
+  },
   // Fail-closed: an export whose own audit event cannot be written is refused (#229).
   'audit.exported': { security: true, description: 'The audit log was exported' },
   'workspace.settings_viewed': {

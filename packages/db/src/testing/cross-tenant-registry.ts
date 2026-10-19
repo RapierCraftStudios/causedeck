@@ -44,6 +44,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   saas_invoice: DB_TABLES_TEST,
   saas_invoice_line: DB_TABLES_TEST,
   matter_restriction: DB_TABLES_TEST,
+  export_job: DB_TABLES_TEST,
+  deletion_job: DB_TABLES_TEST,
 };
 
 /**

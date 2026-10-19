@@ -169,6 +169,13 @@
       "when": 1792422425388,
       "tag": "0023_invoice_payment_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792438317604,
+      "tag": "0024_lifecycle",
+      "breakpoints": true
     }
   ]
 }

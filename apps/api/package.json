@@ -23,6 +23,7 @@
     "@causedeck/config": "workspace:*",
     "@causedeck/core": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/flags": "workspace:*",
     "@causedeck/observability": "workspace:*",
     "@causedeck/validators": "workspace:*",
     "@hono/node-server": "catalog:",

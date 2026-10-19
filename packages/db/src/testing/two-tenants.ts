@@ -10,6 +10,7 @@ import { registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
+import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
@@ -123,6 +124,13 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(billingEvent)
       .values({ providerEventId, workspaceId, type: 'xt.seed', payloadHash: randomUUID() });
     return { providerEventId };
+  },
+  workspace_feature_flag: async (tx, { workspaceId, ownerId }) => {
+    const key = `xt.seed.${randomUUID()}`;
+    await tx
+      .insert(workspaceFeatureFlag)
+      .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
+    return { key };
   },
 };
 

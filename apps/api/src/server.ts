@@ -8,6 +8,7 @@ import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth } from '@causedeck/auth/server';
 import { serverEnv } from '@causedeck/config/env';
 import { closeDb, db } from '@causedeck/db';
+import { startFlagListener } from '@causedeck/flags';
 import { createLogger, initTelemetry, type Logger } from '@causedeck/observability';
 import { serve } from '@hono/node-server';
 import type { Hono } from 'hono';
@@ -108,9 +109,15 @@ async function main(): Promise<void> {
 
   const app = createApp({ db, auth, logger, allowedOrigins: [env.APP_URL] });
   const { server, port } = await startServer({ app, port: env.API_PORT });
+  // Staff flag changes drop this process's flag cache at once; the 15 s TTL covers a failure (#22).
+  const flagListener = await startFlagListener(db).catch((err: unknown) => {
+    logger.warn({ err }, 'LISTEN flag_changed failed; flag changes apply after the cache TTL');
+    return undefined;
+  });
   handleShutdownSignals(server, {
     logger,
     cleanup: async () => {
+      await flagListener?.unlisten();
       await closeDb();
       await telemetry.shutdown();
     },

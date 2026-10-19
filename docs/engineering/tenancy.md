@@ -89,7 +89,7 @@ organization, owner membership and settings inside `withWorkspace(newId)`.
 
 | Table | Policies |
 |---|---|
-| `member`, `invitation`, `workspace_settings`, `workspace_slug_history`, `job_effect`, and the billing tables `subscription`, `entitlement`, `usage_counter`, `billing_event` (#200) | `ws_isolation` FOR ALL, USING and WITH CHECK `workspace_id = app.workspace_id` |
+| `member`, `invitation`, `workspace_settings`, `workspace_slug_history`, `job_effect`, and the billing tables `subscription`, `entitlement`, `usage_counter`, `billing_event` (#200), and `workspace_feature_flag` (#22, built with `tenantTable()`) | `ws_isolation` FOR ALL, USING and WITH CHECK `workspace_id = app.workspace_id` |
 | `member` | `member_self` FOR SELECT: `user_id = app.user_id`, only while no workspace is pinned (so a user scope never widens a workspace scope) |
 | `organization` (the tenant root, no `workspace_id`) | `ws_isolation` FOR ALL on `id = app.workspace_id`; `member_read` FOR SELECT while no workspace is pinned, for workspaces the user is a member of |
 | owner-only | `owner_definer_read` (SELECT) on `organization`, `invitation`, `workspace_slug_history`, `job_effect`; `owner_definer_release` (DELETE expired redirects) on `workspace_slug_history`; `owner_definer_purge` (DELETE) on `job_effect` |
@@ -103,7 +103,10 @@ outside RLS, so deleting a workspace still cascades to its rows.
 `GLOBAL_TABLES` in `packages/db/src/conventions.ts` lists the tables without RLS: `schema_info`,
 Better Auth's identity tables (`user`, `session`, `account`, `verification`, `passkey`,
 `two_factor`, `rate_limit`), the billing `plan` catalogue and `api_idempotency_key`. The last has a nullable `workspace_id` but is
-keyed by user, so it stays global. The court layer will join this list. Adding a table here is a
+keyed by user, so it stays global. The feature-flag tables `feature_flag` (staff-managed global
+flag rows) and `access_mode_registry` (court-adapter access modes) are global too (#22); per-workspace
+flag overrides are the tenant table `workspace_feature_flag` ([flags.md](flags.md)). The court layer
+will join this list. Adding a table here is a
 security decision: say why in the PR.
 
 ## Adding a tenant table

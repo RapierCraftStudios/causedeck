@@ -6,18 +6,35 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./locales": "./src/locales.ts"
+    "./locales": "./src/locales.ts",
+    "./catalog": "./src/catalog.ts",
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts",
+    "./messages/*": "./src/generated/messages/*"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "i18n:check": "tsx scripts/check-catalogs.ts",
+    "i18n:types": "tsx scripts/gen-types.ts",
+    "i18n:extract": "tsx scripts/extract.ts"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
+    "@formatjs/icu-messageformat-parser": "3.5.21",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
     "eslint": "catalog:",
+    "next": "catalog:",
+    "next-intl": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "next-intl": "catalog:"
   }
 }

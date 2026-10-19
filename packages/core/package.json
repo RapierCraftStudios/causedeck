@@ -15,6 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@causedeck/auth": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/observability": "workspace:*",

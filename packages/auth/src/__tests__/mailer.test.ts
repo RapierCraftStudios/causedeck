@@ -38,6 +38,26 @@ describe('consoleMailer', () => {
     expect(line).toContain(AUTH_EMAIL_KEYS.magicLink.subject);
     expect(line).toContain(AUTH_EMAIL_KEYS.magicLink.body);
   });
+
+  it('logs a workspace invitation (#178) with its template, i18n keys and link', async () => {
+    const logger = capturingLogger();
+    const invitation: AuthEmail = {
+      to: 'junior@example.in',
+      template: 'workspace.invitation',
+      subjectKey: AUTH_EMAIL_KEYS.invitation.subject,
+      bodyKey: AUTH_EMAIL_KEYS.invitation.body,
+      url: 'http://localhost:3000/invite/abc',
+      locale: 'en',
+      expiresInMinutes: 7 * 24 * 60,
+    };
+    await consoleMailer(logger).send(invitation);
+    expect(logger.lines).toHaveLength(1);
+    const line = logger.lines[0] ?? '';
+    expect(line.split('\n')).toContain(invitation.url);
+    expect(line).toContain('workspace.invitation');
+    expect(line).toContain(AUTH_EMAIL_KEYS.invitation.subject);
+    expect(line).toContain(AUTH_EMAIL_KEYS.invitation.body);
+  });
 });
 
 describe('createMailer', () => {

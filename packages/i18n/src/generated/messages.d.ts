@@ -362,6 +362,10 @@ export type Messages = {
         title: string;
         body: string;
       };
+      seatLimit: {
+        title: string;
+        body: string;
+      };
     };
     accept: string;
     accepting: string;
@@ -462,6 +466,10 @@ export type Messages = {
         invalid: string;
         conflict: string;
         failed: string;
+      };
+      seatLimit: {
+        message: string;
+        managePlan: string;
       };
     };
     changeRole: {

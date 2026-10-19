@@ -3,7 +3,8 @@
 // radio-cards with a one-line description, add an optional note, then `Send invitation`. Each sent
 // address gets a toast; in dev (console or Mailpit mailer) it carries a `Copy link` action with the
 // invite link, which the server returns only outside production. Addresses that fail stay as chips
-// with a line saying why, so the rest can be retried.
+// with a line saying why, so the rest can be retried. When the plan has no seat left (#203), a calm
+// inline Alert says how many seats the plan includes and offers `Manage plan`.
 import { Alert } from '@causedeck/ui/alert';
 import { Button } from '@causedeck/ui/button';
 import {
@@ -19,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from '@causedeck/ui/radio-group';
 import { toast } from '@causedeck/ui/sonner';
 import { Textarea } from '@causedeck/ui/textarea';
 import { X } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   useId,
@@ -60,7 +62,7 @@ export type InviteMembers = (input: {
 }) => Promise<Result<{ results: InviteOutcome[] }>>;
 
 export interface InviteDialogProps {
-  workspace: { id: string; name: string };
+  workspace: { id: string; slug: string; name: string };
   /** Roles the caller may grant, most privileged first. */
   roles: readonly Exclude<Role, 'owner'>[];
   invite: InviteMembers;
@@ -85,6 +87,8 @@ export function InviteDialog({ workspace, roles, invite, onOpenChange }: InviteD
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [failures, setFailures] = useState<{ email: string; status: InviteFailure }[]>([]);
+  /** The plan's seat count when an address hit the seat limit. */
+  const [seatLimit, setSeatLimit] = useState<number | null>(null);
   const [pending, setPending] = useState(false);
 
   function addChips(text: string) {
@@ -123,6 +127,7 @@ export function InviteDialog({ workspace, roles, invite, onOpenChange }: InviteD
     setChips(emails);
     setDraft('');
     setFailures([]);
+    setSeatLimit(null);
     if (emails.length === 0) {
       setError(t('invite.errors.emailsRequired'));
       return;
@@ -155,7 +160,13 @@ export function InviteDialog({ workspace, roles, invite, onOpenChange }: InviteD
         return;
       }
       const failed: { email: string; status: InviteFailure }[] = [];
+      const seatLimited: string[] = [];
       for (const outcome of result.data.results) {
+        if (outcome.status === 'seatLimit') {
+          seatLimited.push(outcome.email);
+          setSeatLimit(outcome.seats);
+          continue;
+        }
         if (outcome.status !== 'sent') {
           failed.push({ email: outcome.email, status: outcome.status });
           continue;
@@ -175,11 +186,11 @@ export function InviteDialog({ workspace, roles, invite, onOpenChange }: InviteD
             : undefined,
         );
       }
-      if (failed.length === 0) {
+      if (failed.length === 0 && seatLimited.length === 0) {
         onOpenChange(false);
         return;
       }
-      setChips(failed.map((f) => f.email));
+      setChips([...seatLimited, ...failed.map((f) => f.email)]);
       setFailures(failed);
     } catch {
       setPending(false);
@@ -299,6 +310,20 @@ export function InviteDialog({ workspace, roles, invite, onOpenChange }: InviteD
             />
           </Field>
           {error ? <Alert tone="danger">{error}</Alert> : null}
+          {seatLimit === null ? null : (
+            <Alert
+              data-slot="seat-limit"
+              action={
+                <Button asChild variant="secondary" size="sm">
+                  <Link href={`/w/${encodeURIComponent(workspace.slug)}/billing`}>
+                    {t('invite.seatLimit.managePlan')}
+                  </Link>
+                </Button>
+              }
+            >
+              {t('invite.seatLimit.message', { seats: seatLimit })}
+            </Alert>
+          )}
           {failures.length > 0 ? (
             <Alert tone="danger">
               <ul className="space-y-1" data-slot="invite-failures">

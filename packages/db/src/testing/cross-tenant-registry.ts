@@ -13,6 +13,7 @@ const WEB_ACTIONS_TEST = 'apps/web/__tests__/cross-tenant-actions.test.ts';
 const BILLING_PROCESS_EVENT_TEST =
   'packages/core/src/jobs/definitions/billing-process-event.test.ts';
 const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
+const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -40,6 +41,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   workspace_feature_flag: DB_TABLES_TEST,
   workspace_key: DB_TABLES_TEST,
   blob: DB_TABLES_TEST,
+  saas_invoice: DB_TABLES_TEST,
+  saas_invoice_line: DB_TABLES_TEST,
 };
 
 /**
@@ -74,6 +77,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listWorkspacesForUser: empty,
   memberRole: empty,
   requireOwner: denies,
+  requireCan: denies,
   listMembers: empty,
   changeRole: denies,
   removeMember: denies,
@@ -120,6 +124,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'system job: lists ids through a definer function, reads each row in its own workspace',
   },
+  runUsageRollup: {
+    test: USAGE_ROLLUP_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids through a definer function, writes each workspace inside withWorkspace',
+  },
   runNotificationDeliver: selfScoped,
   runNotificationDigest: selfScoped,
   runNotificationDigestSchedule: {
@@ -127,10 +136,35 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'system job: lists workspace ids and timezones only through a definer function',
   },
+  record: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'pins the event workspace; app_audit_append rejects any workspace but the pinned one',
+  },
+  verifyChain: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads only the given workspace chain inside withWorkspace; RLS hides other workspaces',
+  },
+  recordAiCall: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'inserts under withWorkspace; ws_isolation rejects a row for another workspace',
+  },
   enqueueNotificationDelivery: {
     test: CORE_SERVICES_TEST,
     kind: 'caller-checked',
     note: 'notify() enqueues for its own checked workspace; the deliver job runs scoped to it',
+  },
+  increment: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  getUsage: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
   },
 };
 
@@ -166,8 +200,19 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   clearReassignProviders: 'setter',
   noopAuditSink: 'audit sink implementation (no queries)',
   consoleAuditSink: 'audit sink implementation (logs only)',
-  auditSink: 'delegating audit sink; writes inside the caller transaction',
+  auditSink: 'delegating audit sink; the default writes through record() in the caller transaction',
   setAuditSink: 'setter',
+  // audit: registry, guards and the default sink (#227)
+  recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
+  AUDIT_ACTIONS: 'constant (audit action registry)',
+  AUDIT_BANNED_METADATA_KEYS: 'constant',
+  isAuditAction: 'pure',
+  isSecurityAction: 'pure',
+  assertRedacted: 'pure metadata guard',
+  AuditRedactionError: 'error class',
+  AiCallContractError: 'error class',
+  hashUserAgent: 'pure',
+  truncateIpForDisplay: 'pure',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',
@@ -196,6 +241,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   billingProcessEvent: 'job definition (handler is runBillingProcessEvent)',
   billingProcessEventSchema: 'zod schema',
   billingReconcile: 'job definition (handler is runBillingReconcile)',
+  // jobs: usage rollup (#222)
+  usageRollup: 'job definition (handler is runUsageRollup)',
+  USAGE_SUMMARY_RETENTION_MONTHS: 'constant',
   // jobs: notification definitions, schemas, helpers and constants (#196)
   notificationDeliver: 'job definition (handler is runNotificationDeliver)',
   notificationDeliverSchema: 'zod schema',
@@ -212,6 +260,16 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   digestInstant: 'pure (time zone math)',
   notificationJobDeps: 'transport wiring (no database access)',
   setNotificationJobDeps: 'setter',
+  // usage: keys and periods (#219)
+  USAGE_KEYS: 'constant',
+  USAGE_KEY_KINDS: 'constant',
+  USAGE_TIME_ZONE: 'constant',
+  IST_OFFSET_MINUTES: 'constant',
+  isUsageKey: 'pure',
+  usagePeriod: 'pure',
+  periodStart: 'pure',
+  nextPeriodStart: 'pure',
+  incrementSql: 'pure (SQL builder; increment runs it inside withWorkspace)',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;

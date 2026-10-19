@@ -1,5 +1,5 @@
 {
-  "id": "66956f59-8279-4439-a884-72a1c45acf97",
+  "id": "ff77e48f-53ac-40ea-99ae-a6bd34dac1ab",
   "prevId": "3c561f98-b08e-45de-85e2-1f56e460666e",
   "version": "7",
   "dialect": "postgresql",
@@ -713,158 +713,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.blob": {
-      "name": "blob",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "filename": {
-          "name": "filename",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "size": {
-          "name": "size",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sha256": {
-          "name": "sha256",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mime": {
-          "name": "mime",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "enc_header": {
-          "name": "enc_header",
-          "type": "bytea",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "scan_status": {
-          "name": "scan_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "finalized_at": {
-          "name": "finalized_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "blob_workspace_id_idx": {
-          "name": "blob_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "blob_key_uq": {
-          "name": "blob_key_uq",
-          "columns": [
-            {
-              "expression": "key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "blob_created_by_user_id_fk": {
-          "name": "blob_created_by_user_id_fk",
-          "tableFrom": "blob",
-          "tableTo": "user",
-          "columnsFrom": ["created_by"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "blob_workspace_id_fk": {
-          "name": "blob_workspace_id_fk",
-          "tableFrom": "blob",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "blob_scan_status_chk": {
-          "name": "blob_scan_status_chk",
-          "value": "\"blob\".\"scan_status\" is null or \"blob\".\"scan_status\" in ('pending', 'clean', 'infected', 'skipped')"
-        },
-        "blob_finalized_chk": {
-          "name": "blob_finalized_chk",
-          "value": "(\"blob\".\"finalized_at\" is null) = (\"blob\".\"scan_status\" is null) and (\"blob\".\"finalized_at\" is null or \"blob\".\"sha256\" is not null)"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.budget_override": {
       "name": "budget_override",
       "schema": "",
@@ -1323,6 +1171,48 @@
         "invitation_role_chk": {
           "name": "invitation_role_chk",
           "value": "role in ('owner', 'advocate', 'junior', 'clerk', 'viewer')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.invoice_counter": {
+      "name": "invoice_counter",
+      "schema": "",
+      "columns": {
+        "series": {
+          "name": "series",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fy": {
+          "name": "fy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_number": {
+          "name": "last_number",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "invoice_counter_pkey": {
+          "name": "invoice_counter_pkey",
+          "columns": ["series", "fy"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "invoice_counter_last_number_chk": {
+          "name": "invoice_counter_last_number_chk",
+          "value": "last_number >= 0"
         }
       },
       "isRLSEnabled": false
@@ -2410,6 +2300,360 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.saas_invoice": {
+      "name": "saas_invoice",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "number": {
+          "name": "number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "series": {
+          "name": "series",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fy": {
+          "name": "fy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "issue_date": {
+          "name": "issue_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "period_end": {
+          "name": "period_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supplier": {
+          "name": "supplier",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recipient": {
+          "name": "recipient",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "place_of_supply_state_code": {
+          "name": "place_of_supply_state_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sac": {
+          "name": "sac",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'998314'"
+        },
+        "taxable_paise": {
+          "name": "taxable_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "cgst_paise": {
+          "name": "cgst_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "sgst_paise": {
+          "name": "sgst_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "igst_paise": {
+          "name": "igst_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "total_paise": {
+          "name": "total_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'INR'"
+        },
+        "provider_payment_id": {
+          "name": "provider_payment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pdf_blob_id": {
+          "name": "pdf_blob_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "saas_invoice_workspace_id_idx": {
+          "name": "saas_invoice_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "saas_invoice_number_uq": {
+          "name": "saas_invoice_number_uq",
+          "columns": [
+            {
+              "expression": "number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "saas_invoice_workspace_id_organization_id_fk": {
+          "name": "saas_invoice_workspace_id_organization_id_fk",
+          "tableFrom": "saas_invoice",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "saas_invoice_id_workspace_uq": {
+          "name": "saas_invoice_id_workspace_uq",
+          "nullsNotDistinct": false,
+          "columns": ["id", "workspace_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "saas_invoice_status_chk": {
+          "name": "saas_invoice_status_chk",
+          "value": "status in ('draft', 'issued', 'paid', 'void')"
+        },
+        "saas_invoice_number_issued_chk": {
+          "name": "saas_invoice_number_issued_chk",
+          "value": "status = 'draft' or (number is not null and issue_date is not null)"
+        },
+        "saas_invoice_place_of_supply_chk": {
+          "name": "saas_invoice_place_of_supply_chk",
+          "value": "place_of_supply_state_code ~ '^[0-9]{2}$'"
+        },
+        "saas_invoice_amounts_chk": {
+          "name": "saas_invoice_amounts_chk",
+          "value": "taxable_paise >= 0 and cgst_paise >= 0 and sgst_paise >= 0 and igst_paise >= 0 and total_paise >= 0"
+        },
+        "saas_invoice_currency_chk": {
+          "name": "saas_invoice_currency_chk",
+          "value": "currency = 'INR'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.saas_invoice_line": {
+      "name": "saas_invoice_line",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price_paise": {
+          "name": "unit_price_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_paise": {
+          "name": "amount_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "saas_invoice_line_workspace_id_idx": {
+          "name": "saas_invoice_line_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "saas_invoice_line_workspace_invoice_idx": {
+          "name": "saas_invoice_line_workspace_invoice_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "invoice_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "saas_invoice_line_workspace_id_organization_id_fk": {
+          "name": "saas_invoice_line_workspace_id_organization_id_fk",
+          "tableFrom": "saas_invoice_line",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "saas_invoice_line_invoice_fk": {
+          "name": "saas_invoice_line_invoice_fk",
+          "tableFrom": "saas_invoice_line",
+          "tableTo": "saas_invoice",
+          "columnsFrom": ["invoice_id", "workspace_id"],
+          "columnsTo": ["id", "workspace_id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "saas_invoice_line_description_chk": {
+          "name": "saas_invoice_line_description_chk",
+          "value": "length(btrim(description)) > 0"
+        },
+        "saas_invoice_line_quantity_chk": {
+          "name": "saas_invoice_line_quantity_chk",
+          "value": "quantity > 0"
+        },
+        "saas_invoice_line_amounts_chk": {
+          "name": "saas_invoice_line_amounts_chk",
+          "value": "unit_price_paise >= 0 and amount_paise >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.schema_info": {

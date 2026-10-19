@@ -59,7 +59,9 @@ describe('role rules', () => {
       'billing.read',
       'invoices.read',
       'workspace.delete',
+      'workspace.rename',
       'member.remove',
+      'member.role',
       'export.run',
     ]);
     for (const action of ALL_ACTIONS) {

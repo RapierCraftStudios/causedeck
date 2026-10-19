@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
-import { schema, type Database, type Transaction } from '@causedeck/db';
+import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
@@ -80,6 +80,20 @@ async function aWorkspace(f: Fixture) {
   return row;
 }
 
+/** A's usage counters and ledger. */
+async function aUsage(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => ({
+    counters: await s
+      .select({ key: schema.usageCounter.key, value: schema.usageCounter.value })
+      .from(schema.usageCounter)
+      .orderBy(schema.usageCounter.key),
+    events: await s
+      .select({ id: schema.usageEvent.id, amount: schema.usageEvent.amount })
+      .from(schema.usageEvent)
+      .orderBy(schema.usageEvent.id),
+  }));
+}
+
 async function sessionFor(tx: Transaction, userId: string, workspaceId: string): Promise<string> {
   const [row] = await tx
     .insert(schema.session)
@@ -120,6 +134,33 @@ async function runProbe(f: Fixture, workspaceId: string) {
 
 type Case = (f: Fixture) => Promise<void>;
 
+/** Rejects with TENANCY_VIOLATION: B's scope cannot be switched to A's workspace. */
+async function expectTenancyViolation(promise: Promise<unknown>): Promise<void> {
+  const error: unknown = await promise.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect((error as { code?: string } | undefined)?.code).toBe('TENANCY_VIOLATION');
+}
+
+async function auditIds(f: Fixture, workspaceId: string): Promise<string[]> {
+  const rows = await inWorkspace(f.tx, workspaceId, (s) =>
+    s.select({ id: schema.auditEvent.id }).from(schema.auditEvent),
+  );
+  return rows.map((r) => r.id).sort();
+}
+
+const aiCallInput: core.AiCallInput = {
+  purpose: 'xt.probe',
+  provider: 'mock',
+  model: 'mock-1',
+  region: 'ap-south-1',
+  inputTokens: 1,
+  outputTokens: 1,
+  costPaise: 0,
+  automationLevel: 1,
+};
+
 /** A recording email transport for the notification jobs. */
 function recordingDeps() {
   const sent: { to: string; subject: string }[] = [];
@@ -148,6 +189,31 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
 }
 
 const CASES: Record<string, Case> = {
+  record: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.record(
+          { db: s, workspaceId: f.a.id, actor: { userId: f.ub, kind: 'user' } },
+          { action: 'workspace.settings_viewed' },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  verifyChain: async (f) => {
+    await expectTenancyViolation(f.asB((s) => core.verifyChain(s, f.a.id)));
+    // B's own chain holds only B's seed event, never A's.
+    const own = await f.asB((s) => core.verifyChain(s, f.b.id));
+    expect(own).toEqual({ ok: true, checked: (await auditIds(f, f.b.id)).length });
+  },
+  recordAiCall: async (f) => {
+    const count = () =>
+      inWorkspace(f.tx, f.a.id, (s) => s.select({ id: schema.aiCall.id }).from(schema.aiCall));
+    const before = await count();
+    await expectTenancyViolation(f.asB((s) => core.recordAiCall(s, f.a.id, aiCallInput)));
+    expect(await count()).toEqual(before);
+  },
   listMemberships: async (f) => {
     const mine = await core.listMemberships(f.tx, f.ub);
     expect(mine.map((m) => m.workspaceId)).toEqual([f.b.id]);
@@ -167,6 +233,10 @@ const CASES: Record<string, Case> = {
   requireOwner: async (f) => {
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ub)));
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ua)));
+  },
+  requireCan: async (f) => {
+    await expectDenied(f.asB((s) => core.requireCan(s, f.a.id, f.ub, 'matter.read')));
+    await expectDenied(f.asB((s) => core.requireCan(s, f.a.id, f.ua, 'workspace.delete')));
   },
   listMembers: async (f) => {
     expect(await f.asB((s) => core.listMembers(s, f.a.id))).toEqual([]);
@@ -567,6 +637,40 @@ const CASES: Record<string, Case> = {
       );
       expect(rows).toHaveLength(1);
     }
+  },
+  increment: async (f) => {
+    // From inside B's scope, metering against A is a tenancy violation and writes nothing of A's.
+    await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ai.spend_paise', 5, {
+      idempotencyKey: 'xt-usage-key',
+    });
+    const before = await aUsage(f);
+    const error: unknown = await f
+      .asB((s) =>
+        core.increment({ db: s, workspaceId: f.a.id }, 'ai.spend_paise', 1, {
+          idempotencyKey: 'xt-usage-other',
+        }),
+      )
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(error).toBeInstanceOf(TenancyError);
+    expect(await aUsage(f)).toEqual(before);
+    // B reusing A's idempotency key is B's own claim: applied for B, A unchanged.
+    const asB = await core.increment({ db: f.tx, workspaceId: f.b.id }, 'ai.spend_paise', 2, {
+      idempotencyKey: 'xt-usage-key',
+    });
+    expect(asB).toEqual({ applied: true, value: 2 });
+    expect(await aUsage(f)).toEqual(before);
+  },
+  getUsage: async (f) => {
+    await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ocr.pages', 9, {
+      idempotencyKey: 'xt-usage-read',
+    });
+    expect(await f.asB((s) => core.getUsage({ db: s, workspaceId: f.b.id }, 'ocr.pages'))).toBe(0);
+    await expect(
+      f.asB((s) => core.getUsage({ db: s, workspaceId: f.a.id }, 'ocr.pages')),
+    ).rejects.toBeInstanceOf(TenancyError);
   },
 };
 

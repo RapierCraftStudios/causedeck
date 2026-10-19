@@ -32,6 +32,14 @@ export {
   notificationSetting,
   pushSubscription,
 } from './notifications.ts';
+export {
+  invoiceCounter,
+  SAAS_INVOICE_STATUSES,
+  saasInvoice,
+  saasInvoiceLine,
+  type SaasInvoiceParty,
+  type SaasInvoiceStatus,
+} from './saas-invoice.ts';
 export { BLOB_SCAN_STATUSES, blob, workspaceKey, type BlobScanStatus } from './storage.ts';
 export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from './usage.ts';
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';

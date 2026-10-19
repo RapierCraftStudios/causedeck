@@ -6,6 +6,7 @@
 // advocates manage the invitations they could have sent, everyone else sees the list read-only.
 // Offline the page is read-only and `Invite member` says it needs a connection. The dialogs load on
 // first use.
+import { invitableRoles } from '@causedeck/auth/policy';
 import { Alert } from '@causedeck/ui/alert';
 import { Avatar } from '@causedeck/ui/avatar';
 import { Badge } from '@causedeck/ui/badge';
@@ -38,14 +39,13 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { useRef, useState, type KeyboardEvent } from 'react';
 
 import type { Result } from '../../../../../../lib/safe-action.ts';
-import type { Role } from '../../../../../../lib/workspace-context.ts';
+import { can, type Role } from '../../../../../../lib/workspace-context.ts';
 
 import type { InviteMembers } from './invite-dialog.tsx';
 import type { RemoveMemberActions } from './remove-member-dialog.tsx';
 import {
   ChangeRoleDialog,
   errorKeyFor,
-  INVITABLE,
   ROLE_ORDER,
   RolePill,
   useOnline,
@@ -221,8 +221,10 @@ export function MembersView({
   const [focusIndex, setFocusIndex] = useState(0);
   const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
 
-  const isOwner = viewer.role === 'owner';
-  const invitable = INVITABLE[viewer.role].filter(
+  // The central policy decides (#234); the server actions and domain service check it again.
+  const isOwner = can(viewer.role, 'member.role');
+  const canManageMembers = isOwner && can(viewer.role, 'member.remove');
+  const invitable = invitableRoles(viewer.role).filter(
     (role): role is Exclude<Role, 'owner'> => role !== 'owner',
   );
   const canInvite = invitable.length > 0;
@@ -250,7 +252,7 @@ export function MembersView({
   }
 
   function hasMenu(row: Row): boolean {
-    return row.kind === 'member' ? isOwner : canManageInvitation(row.invitation);
+    return row.kind === 'member' ? canManageMembers : canManageInvitation(row.invitation);
   }
 
   async function invitationAction<T extends object>(

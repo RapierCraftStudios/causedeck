@@ -1,9 +1,11 @@
 // Member offboarding (#178, #18): reassign open work, revoke the member's sessions scoped to the
 // workspace, mark the membership `removed` and record an audit event. Authorization (owner-only,
-// last-owner guard) stays in `removeMember`, which calls this inside its transaction.
+// last-owner guard) stays in `removeMember`, which calls this inside its transaction. The audit
+// event goes through the installed `AuditSink`, by default `record()` (packages/core/src/audit).
 import { schema, type Database, type Transaction } from '@causedeck/db';
 import { and, eq } from 'drizzle-orm';
 
+import { recordAuditSink } from '../audit/sink.ts';
 import { invalid, notFound } from './errors.ts';
 
 type Queryable = Database | Transaction;
@@ -46,7 +48,10 @@ export interface AuditEvent {
   at: Date;
 }
 
-/** Audit event stub; the real writer (audit log table) arrives in #26. */
+/**
+ * Where offboarding sends its audit event. The default writes an `audit_event` row through
+ * `record()` in the caller's transaction (security action: a failed write fails the removal).
+ */
 export interface AuditSink {
   write(tx: Queryable, event: AuditEvent): Promise<void>;
 }
@@ -62,16 +67,16 @@ export const consoleAuditSink: AuditSink = {
   },
 };
 
-let activeAuditSink: AuditSink = noopAuditSink;
+let activeAuditSink: AuditSink = recordAuditSink;
 
 /** The installed sink; delegates so callers can hold a stable reference. */
 export const auditSink: AuditSink = {
   write: (tx, event) => activeAuditSink.write(tx, event),
 };
 
-/** Install an audit sink (#26, tests); `null` restores the no-op default. */
+/** Install an audit sink (tests); `null` restores the default `record()`-backed sink. */
 export function setAuditSink(sink: AuditSink | null): void {
-  activeAuditSink = sink ?? noopAuditSink;
+  activeAuditSink = sink ?? recordAuditSink;
 }
 
 export interface OffboardMemberRequest {

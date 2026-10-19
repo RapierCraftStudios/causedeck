@@ -40,6 +40,8 @@ vi.mock('@causedeck/core/workspaces', async (importOriginal) => ({
 vi.mock('@causedeck/core/audit', () => ({
   authorizeAuditRead: state.authorize,
   exportAudit: state.exportAudit,
+  // Imported by core/workspaces offboarding via the audit index (#293); the export route never writes.
+  recordAuditSink: { write: vi.fn() },
 }));
 
 const route = await import('../export/route.ts');

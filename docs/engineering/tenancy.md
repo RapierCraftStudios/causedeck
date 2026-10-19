@@ -112,7 +112,9 @@ Better Auth's identity tables (`user`, `session`, `account`, `verification`, `pa
 keyed by user, so it stays global. `audit_event` also has a nullable `workspace_id`, but it is a tenant table: account-level events
 (null workspace) are invisible to every workspace scope and are listed in
 `NULLABLE_WORKSPACE_TABLES` (`packages/db/src/conventions.ts`) only to exempt them from the
-NOT NULL convention. The court layer will join this list. Adding a table here is a
+NOT NULL convention. `push_subscription` (a browser's Web Push endpoint, per user and
+owner-checked by the push service) and `email_suppression` (per address) have no workspace (#194).
+The court layer will join this list. Adding a table here is a
 security decision: say why in the PR.
 
 ## Adding a tenant table
@@ -159,6 +161,7 @@ blocker**: treat it as a suspected cross-tenant leak (see Incidents), never skip
 | SQL, every tenant table: A cannot select, update, delete or insert B's rows | `packages/db/src/__tests__/cross-tenant/tables.test.ts`                                                                            |
 | pgvector similarity search on a `memory_embedding`-shaped table             | `packages/db/src/__tests__/rls/vector.test.ts`                                                                                     |
 | Every exported `@causedeck/core` service, `ub` against A's ids              | `packages/core/src/__tests__/cross-tenant/services.test.ts`                                                                        |
+| Every exported `@causedeck/notifications` service, `ub` against A's ids     | `packages/notifications/src/__tests__/cross-tenant/services.test.ts`                                                               |
 | A user in both workspaces (`uboth`): one workspace per transaction          | `packages/core/src/__tests__/cross-tenant/two-workspace-user.test.ts`                                                              |
 | REST routes (`/v1`), including `requireWorkspace`                           | `apps/api/src/__tests__/cross-tenant.test.ts`                                                                                      |
 | Server actions and the workspace loader                                     | `apps/web/__tests__/cross-tenant-actions.test.ts` (run by `apps/web/vitest.tenancy.config.ts`; the default web config excludes it) |
@@ -184,6 +187,10 @@ cross-tenant test fails `pnpm test:tenancy`:
   `self-scoped`, `caller-checked`) or in `NOT_A_SERVICE` with a reason. `services.test.ts` has one case per
   `SERVICE_TESTS` entry that points at it. The same test fails once `@causedeck/storage` exports
   presign (#21) while the presign test is still the placeholder.
+- `packages/notifications/src/__tests__/cross-tenant/registry.test.ts` does the same for
+  `@causedeck/notifications` against `NOTIFICATION_SERVICE_TESTS` and `NOTIFICATION_NOT_A_SERVICE`
+  (#194); its services check membership of the context workspace and must return `FORBIDDEN` or
+  `NOT_FOUND` to B.
 
 Adding a tenant table: add a seeder to `TENANT_SEEDERS` and a `TABLE_TESTS` entry; the table test
 then covers it. Adding a core service: add a `SERVICE_TESTS` entry and its case in

@@ -14,6 +14,7 @@ import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { notification, notificationPref } from '../schema/notifications.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -147,6 +148,23 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: aiCall.id });
     return { aiCallId: first(rows, 'ai_call').id };
+  },
+  notification: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(notification)
+      .values({ workspaceId, userId: ownerId, category: 'system.notice', title: 'Seed notice' })
+      .returning({ id: notification.id });
+    return { notificationId: first(rows, 'notification').id, userId: ownerId };
+  },
+  notification_pref: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(notificationPref).values({
+      workspaceId,
+      userId: ownerId,
+      category: 'system.notice',
+      channel: 'email',
+      enabled: false,
+    });
+    return { userId: ownerId, category: 'system.notice', channel: 'email' };
   },
 };
 

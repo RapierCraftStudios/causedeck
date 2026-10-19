@@ -128,6 +128,21 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'system job: lists workspace ids and timezones only through a definer function',
   },
+  record: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'pins the event workspace; app_audit_append rejects any workspace but the pinned one',
+  },
+  verifyChain: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads only the given workspace chain inside withWorkspace; RLS hides other workspaces',
+  },
+  recordAiCall: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'inserts under withWorkspace; ws_isolation rejects a row for another workspace',
+  },
   enqueueNotificationDelivery: {
     test: CORE_SERVICES_TEST,
     kind: 'caller-checked',
@@ -177,8 +192,19 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   clearReassignProviders: 'setter',
   noopAuditSink: 'audit sink implementation (no queries)',
   consoleAuditSink: 'audit sink implementation (logs only)',
-  auditSink: 'delegating audit sink; writes inside the caller transaction',
+  auditSink: 'delegating audit sink; the default writes through record() in the caller transaction',
   setAuditSink: 'setter',
+  // audit: registry, guards and the default sink (#227)
+  recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
+  AUDIT_ACTIONS: 'constant (audit action registry)',
+  AUDIT_BANNED_METADATA_KEYS: 'constant',
+  isAuditAction: 'pure',
+  isSecurityAction: 'pure',
+  assertRedacted: 'pure metadata guard',
+  AuditRedactionError: 'error class',
+  AiCallContractError: 'error class',
+  hashUserAgent: 'pure',
+  truncateIpForDisplay: 'pure',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',

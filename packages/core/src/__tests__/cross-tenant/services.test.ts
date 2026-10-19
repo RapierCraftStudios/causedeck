@@ -134,6 +134,33 @@ async function runProbe(f: Fixture, workspaceId: string) {
 
 type Case = (f: Fixture) => Promise<void>;
 
+/** Rejects with TENANCY_VIOLATION: B's scope cannot be switched to A's workspace. */
+async function expectTenancyViolation(promise: Promise<unknown>): Promise<void> {
+  const error: unknown = await promise.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect((error as { code?: string } | undefined)?.code).toBe('TENANCY_VIOLATION');
+}
+
+async function auditIds(f: Fixture, workspaceId: string): Promise<string[]> {
+  const rows = await inWorkspace(f.tx, workspaceId, (s) =>
+    s.select({ id: schema.auditEvent.id }).from(schema.auditEvent),
+  );
+  return rows.map((r) => r.id).sort();
+}
+
+const aiCallInput: core.AiCallInput = {
+  purpose: 'xt.probe',
+  provider: 'mock',
+  model: 'mock-1',
+  region: 'ap-south-1',
+  inputTokens: 1,
+  outputTokens: 1,
+  costPaise: 0,
+  automationLevel: 1,
+};
+
 /** A recording email transport for the notification jobs. */
 function recordingDeps() {
   const sent: { to: string; subject: string }[] = [];
@@ -162,6 +189,31 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
 }
 
 const CASES: Record<string, Case> = {
+  record: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.record(
+          { db: s, workspaceId: f.a.id, actor: { userId: f.ub, kind: 'user' } },
+          { action: 'workspace.settings_viewed' },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  verifyChain: async (f) => {
+    await expectTenancyViolation(f.asB((s) => core.verifyChain(s, f.a.id)));
+    // B's own chain holds only B's seed event, never A's.
+    const own = await f.asB((s) => core.verifyChain(s, f.b.id));
+    expect(own).toEqual({ ok: true, checked: (await auditIds(f, f.b.id)).length });
+  },
+  recordAiCall: async (f) => {
+    const count = () =>
+      inWorkspace(f.tx, f.a.id, (s) => s.select({ id: schema.aiCall.id }).from(schema.aiCall));
+    const before = await count();
+    await expectTenancyViolation(f.asB((s) => core.recordAiCall(s, f.a.id, aiCallInput)));
+    expect(await count()).toEqual(before);
+  },
   listMemberships: async (f) => {
     const mine = await core.listMemberships(f.tx, f.ub);
     expect(mine.map((m) => m.workspaceId)).toEqual([f.b.id]);

@@ -14,11 +14,13 @@ export interface AuditActionSpec {
   description: string;
 }
 
-/** Every audit action. Later parts (#228, #229, #27) add their actions here. */
+/** Every audit action. Later parts (#228, #27) add their actions here. */
 export const AUDIT_ACTIONS = {
   'member.removed': { security: true, description: 'A member was removed from the workspace' },
   'member.role_changed': { security: true, description: "A member's role was changed" },
   'flag.changed': { security: true, description: 'A feature flag was changed' },
+  // Fail-closed: an export whose own audit event cannot be written is refused (#229).
+  'audit.exported': { security: true, description: 'The audit log was exported' },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

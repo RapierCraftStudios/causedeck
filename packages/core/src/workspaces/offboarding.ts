@@ -124,9 +124,24 @@ async function reassignTarget(
  * Offboard an active member inside the caller's transaction. With open work and no `reassignTo`
  * this is a `VALIDATION` error and nothing changes. Only sessions whose active workspace is this
  * one are deleted; the member's other sessions survive and lose access here through `status`.
+ * A target that is not an active member visible in the caller's scope is `NOT_FOUND` before
+ * anything is written: `session` is a global table, so it must never be touched for a member of
+ * another workspace (#209).
  */
 export async function offboardMember(tx: Queryable, request: OffboardMemberRequest): Promise<void> {
   const { workspaceId, target } = request;
+  const [visible] = await tx
+    .select({ id: member.id })
+    .from(member)
+    .where(
+      and(
+        eq(member.id, target.memberId),
+        eq(member.organizationId, workspaceId),
+        eq(member.userId, target.userId),
+        eq(member.status, 'active'),
+      ),
+    );
+  if (!visible) throw notFound('Member not found');
   const toUserId = await reassignTarget(tx, request);
 
   const open = await countOpenWork(tx, workspaceId, target.userId);

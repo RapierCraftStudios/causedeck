@@ -1,0 +1,233 @@
+// Cross-tenant server actions (#19, #209), against the real test database (run by
+// `vitest.tenancy.config.ts`, which starts it; the default web config excludes this file). User `ub`
+// owns workspace B and calls every server action with workspace A's ids: workspace actions answer
+// FORBIDDEN for A's workspace and NOT_FOUND (or nothing) for A's member and invitation ids under B,
+// and A's rows never change. The workspace loader shows A's slug to `ub` as not-found, which covers
+// `resolveSlug` (caller-checked in the registry). Every exported action is listed in ACTIONS.
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { schema, withWorkspace } from '@causedeck/db';
+import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { AppSession } from '../lib/auth.ts';
+
+const state = vi.hoisted(() => ({ session: null as AppSession | null }));
+const updateUser = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+
+vi.mock('@causedeck/db', async (original) => {
+  const actual = await original<Record<string, unknown>>();
+  const { testAppDb: appDb } = await import('@causedeck/db/testing');
+  return { ...actual, db: appDb() };
+});
+vi.mock('../lib/auth.ts', () => ({
+  getSession: () => Promise.resolve(state.session),
+  requireSession: () =>
+    state.session
+      ? Promise.resolve(state.session)
+      : Promise.reject(Object.assign(new Error('signed out'), { code: 'UNAUTHENTICATED' })),
+  getAuth: () => ({ $context: Promise.resolve({ internalAdapter: { updateUser } }) }),
+}));
+vi.mock('../lib/env.ts', () => ({
+  isProd: () => false,
+  serverEnv: () => ({ APP_URL: 'http://localhost:3000', EMAIL_PROVIDER: 'console' }),
+}));
+vi.mock('../src/health.ts', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}));
+vi.mock('@causedeck/auth/mailer', () => ({
+  createMailer: () => ({ send: () => Promise.resolve() }),
+}));
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('next/headers', () => ({ cookies: () => Promise.resolve({ set: vi.fn() }) }));
+vi.mock('next-intl/server', () => ({
+  getLocale: () => Promise.resolve('en'),
+  getTranslations: () => Promise.resolve((key: string) => key),
+}));
+
+const members = await import('../app/(app)/w/[slug]/settings/members/actions.ts');
+const invite = await import('../app/(public)/invite/[token]/actions.ts');
+const onboarding = await import('../app/(app)/onboarding/actions.ts');
+const account = await import('../app/(app)/account/actions.ts');
+const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
+
+const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
+
+/** Every exported server action and the module it comes from. */
+const ACTIONS: Record<string, Record<string, unknown>> = {
+  inviteMembersAction: members,
+  changeRoleAction: members,
+  openWorkAction: members,
+  removeMemberAction: members,
+  resendInvitationAction: members,
+  revokeInvitationAction: members,
+  prepareTransferAction: members,
+  confirmTransferAction: members,
+  acceptInvitationAction: invite,
+  createWorkspaceAction: onboarding,
+  setLocaleAction: account,
+};
+
+type Action = (raw: unknown) => Promise<unknown>;
+const action = (name: string): Action => ACTIONS[name]?.[name] as Action;
+
+let t: TwoTenants;
+let aMember: { memberId: string; userId: string };
+let aInvitation: { invitationId: string; token: string };
+
+function signInAs(userId: string): void {
+  state.session = {
+    session: {},
+    user: { id: userId, name: 'Advocate', email: `${userId}@example.test` },
+  } as unknown as AppSession;
+}
+
+/** A's members and invitations as A itself sees them. */
+function snapshotA() {
+  return withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => ({
+    members: await tx
+      .select({ id: schema.member.id, role: schema.member.role, status: schema.member.status })
+      .from(schema.member)
+      .orderBy(schema.member.id),
+    invitations: await tx
+      .select({
+        id: schema.invitation.id,
+        tokenHash: schema.invitation.tokenHash,
+        revokedAt: schema.invitation.revokedAt,
+        acceptedAt: schema.invitation.acceptedAt,
+      })
+      .from(schema.invitation)
+      .orderBy(schema.invitation.id),
+    // Under A's scope the only visible workspace is A.
+    workspace: await tx
+      .select({ slug: schema.organization.slug, deletedAt: schema.organization.deletedAt })
+      .from(schema.organization),
+  }));
+}
+
+function code(result: unknown): string | undefined {
+  return (result as { error?: { code?: string } }).error?.code;
+}
+
+beforeAll(async () => {
+  t = await seedTwoTenants(testAppDb());
+  const m = t.a.rows.member;
+  const inv = t.a.rows.invitation;
+  if (!m?.memberId || !m.userId || !inv?.invitationId || !inv.token) throw new Error('seed rows');
+  aMember = { memberId: m.memberId, userId: m.userId };
+  aInvitation = { invitationId: inv.invitationId, token: inv.token };
+});
+
+beforeEach(() => {
+  signInAs(t.ub);
+});
+
+afterAll(closeTestDb);
+
+/** Inputs naming workspace `workspaceId` with A's target ids. */
+function inputs(workspaceId: string): Record<string, unknown> {
+  return {
+    inviteMembersAction: { workspaceId, emails: ['xt-probe@example.test'], role: 'junior' },
+    changeRoleAction: { workspaceId, memberId: aMember.memberId, role: 'owner' },
+    openWorkAction: { workspaceId, memberId: aMember.memberId },
+    removeMemberAction: { workspaceId, memberId: aMember.memberId },
+    resendInvitationAction: { workspaceId, invitationId: aInvitation.invitationId },
+    revokeInvitationAction: { workspaceId, invitationId: aInvitation.invitationId },
+    prepareTransferAction: { workspaceId, newOwnerUserId: t.ua },
+    // The confirmation is the named workspace's slug, so the target lookup is what refuses.
+    confirmTransferAction: {
+      workspaceId,
+      newOwnerUserId: t.ua,
+      confirmation: workspaceId === t.b.id ? t.b.slug : t.a.slug,
+    },
+  };
+}
+
+describe('cross-tenant server actions', () => {
+  it('lists every exported server action', () => {
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir)) {
+        const full = path.join(dir, entry);
+        if (statSync(full).isDirectory()) walk(full);
+        else if (/\.tsx?$/.test(entry) && /^'use server'/m.test(readFileSync(full, 'utf8'))) {
+          files.push(full);
+        }
+      }
+    };
+    walk(APP_DIR);
+    const exported = files
+      .flatMap((file) =>
+        [...readFileSync(file, 'utf8').matchAll(/export async function (\w+)/g)].map((m) => m[1]),
+      )
+      .sort();
+    expect(exported).toEqual(Object.keys(ACTIONS).sort());
+    for (const name of Object.keys(ACTIONS)) expect(typeof action(name), name).toBe('function');
+  });
+
+  it('every workspace action with A’s workspace id is FORBIDDEN for ub, and A is unchanged', async () => {
+    const before = await snapshotA();
+    for (const [name, input] of Object.entries(inputs(t.a.id))) {
+      expect(code(await action(name)(input)), name).toBe('FORBIDDEN');
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('under B’s own workspace, A’s member and invitation ids are not found', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    for (const name of [
+      'changeRoleAction',
+      'removeMemberAction',
+      'resendInvitationAction',
+      'revokeInvitationAction',
+      'prepareTransferAction',
+      'confirmTransferAction',
+    ]) {
+      expect(code(await action(name)(all[name])), name).toBe('NOT_FOUND');
+    }
+    // Open work for a member outside B is simply none.
+    expect(await action('openWorkAction')(all.openWorkAction)).toEqual({
+      ok: true,
+      data: { count: 0 },
+    });
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('acceptInvitationAction with A’s token does not let ub into A', async () => {
+    const before = await snapshotA();
+    const result = await action('acceptInvitationAction')({ token: aInvitation.token });
+    expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'EMAIL_MISMATCH' } });
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('createWorkspaceAction and setLocaleAction touch only the caller’s own data', async () => {
+    const before = await snapshotA();
+    const created = (await action('createWorkspaceAction')({ name: t.a.name })) as {
+      ok: boolean;
+      data: { slug: string };
+    };
+    expect(created.ok).toBe(true);
+    expect(created.data.slug).not.toBe(t.a.slug);
+    expect(await snapshotA()).toEqual(before);
+
+    updateUser.mockClear();
+    await action('setLocaleAction')({ locale: 'ta' });
+    expect(updateUser).toHaveBeenCalledTimes(1);
+    expect(updateUser).toHaveBeenCalledWith(t.ub, { locale: 'ta' });
+  });
+
+  it('the workspace loader (resolveSlug) shows A’s slugs to ub as not found', async () => {
+    const history = t.a.rows.workspace_slug_history?.slug ?? '';
+    for (const slug of [t.a.slug, history]) {
+      expect(await loadWorkspaceContext(slug)).toEqual({ kind: 'not-found' });
+    }
+    // uboth, a member of A, gets A.
+    signInAs(t.uboth);
+    const result = await loadWorkspaceContext(t.a.slug);
+    expect(result.kind).toBe('ok');
+  });
+});

@@ -1,7 +1,7 @@
 'use server';
 // Activity page server actions (#232, #26 part 6). Both go through `workspaceAction` (zod input,
 // session, membership); the `audit.read` gate (owners; advocates unless the workspace turned it
-// off) is checked again by core: `queryAudit` authorizes itself and the chain check calls
+// off) is checked again by core: `queryAuditFeed` authorizes itself and `verifyAuditRange` calls
 // `authorizeAuditRead` first. A denial comes back as `FORBIDDEN`.
 import { z } from 'zod';
 
@@ -10,13 +10,7 @@ import { WorkspaceScoped, workspaceAction } from '../../../../../lib/workspace-a
 
 import type { AuditFeedPage } from './audit-feed.tsx';
 
-async function deps() {
-  const [{ db }, audit] = await Promise.all([
-    import('@causedeck/db'),
-    import('@causedeck/core/audit'),
-  ]);
-  return { db, ...audit };
-}
+const runtime = () => import('@causedeck/core/runtime');
 
 const LoadMore = WorkspaceScoped.extend({
   cursor: z.string().min(1).max(512),
@@ -38,9 +32,9 @@ const VerifyEvent = WorkspaceScoped.extend({
 export type ChainStatus = 'verified' | 'unverified';
 
 const loadMore = workspaceAction(LoadMore, async (input, ctx) => {
-  const { db, queryAudit } = await deps();
-  const page = await queryAudit(
-    { db, workspaceId: ctx.workspaceId, userId: ctx.userId },
+  const { queryAuditFeed } = await runtime();
+  const page = await queryAuditFeed(
+    { workspaceId: ctx.workspaceId, userId: ctx.userId },
     {
       cursor: input.cursor,
       ...(input.from === undefined ? {} : { from: new Date(input.from) }),
@@ -58,11 +52,14 @@ const loadMore = workspaceAction(LoadMore, async (input, ctx) => {
  * nightly `audit.verify` job walks the full chain.
  */
 const verifyEvent = workspaceAction(VerifyEvent, async (input, ctx) => {
-  const { db, authorizeAuditRead, verifyChain } = await deps();
-  await authorizeAuditRead({ db, workspaceId: ctx.workspaceId, userId: ctx.userId });
+  const { verifyAuditRange } = await runtime();
   const from = new Date(input.createdAt);
   const to = new Date(from.getTime() + 1);
-  const result = await verifyChain(db, ctx.workspaceId, { from, to });
+  const result = await verifyAuditRange(
+    { workspaceId: ctx.workspaceId, userId: ctx.userId },
+    from,
+    to,
+  );
   return (result.ok && result.checked > 0 ? 'verified' : 'unverified') satisfies ChainStatus;
 });
 

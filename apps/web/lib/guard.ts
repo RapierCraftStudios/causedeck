@@ -28,7 +28,7 @@ export interface GuardRequest {
 export interface GuardDeps {
   /** Defaults to `lib/auth.ts` `requireSession`. */
   requireSession?: () => Promise<AppSession>;
-  /** Defaults to `@causedeck/core/workspaces` `memberRole` on the app `db`. */
+  /** Defaults to `@causedeck/core/runtime` `memberRoleFor` (the app db). */
   memberRole?: (userId: string, workspaceId: string) => Promise<string | null>;
 }
 
@@ -46,11 +46,8 @@ async function defaultRequireSession(): Promise<AppSession> {
 }
 
 async function defaultMemberRole(userId: string, workspaceId: string): Promise<string | null> {
-  const [{ db }, { memberRole }] = await Promise.all([
-    import('@causedeck/db'),
-    import('@causedeck/core/workspaces'),
-  ]);
-  return memberRole(db, userId, workspaceId);
+  const { memberRoleFor } = await import('@causedeck/core/runtime');
+  return memberRoleFor(userId, workspaceId);
 }
 
 /**

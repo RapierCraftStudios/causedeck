@@ -112,6 +112,25 @@ describe('apps/web static guards', () => {
     ]);
   });
 
+  it('takes database values from @causedeck/core/runtime, never @causedeck/db (#298)', () => {
+    const runtime = code.filter(
+      (file) => /^(?:app|lib|src)\//.test(file.rel) && !/\.test\.tsx?$/.test(file.rel),
+    );
+    expect(runtime.map((file) => file.rel)).toContain('lib/workspace-action.ts');
+    const offenders = runtime.flatMap((file) =>
+      file.text
+        .split('\n')
+        .map((line, index) => ({ line, at: `${file.rel}:${String(index + 1)}` }))
+        .filter(
+          ({ line }) =>
+            /import\(\s*'@causedeck\/db'\s*\)/.test(line) ||
+            (/from '@causedeck\/db'/.test(line) && !/^\s*import type /.test(line)),
+        )
+        .map(({ at }) => at),
+    );
+    expect(offenders).toEqual([]);
+  });
+
   it('keeps the proxy on Next.js 16 naming (no deprecated middleware.ts)', () => {
     expect(existsSync(path.join(appDir, 'proxy.ts'))).toBe(true);
     expect(existsSync(path.join(appDir, 'middleware.ts'))).toBe(false);

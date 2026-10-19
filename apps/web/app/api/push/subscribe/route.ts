@@ -1,9 +1,9 @@
 // `POST /api/push/subscribe` (#197): store the signed-in user's browser push subscription
 // (`PushSubscription.toJSON()`). 401 signed out, 403 cross-origin, 503 when push is disabled (no
 // VAPID keys), 400 for a malformed subscription. Subscriptions belong to the user, not a workspace.
-import { db } from '@causedeck/db';
+import { subscribePush } from '@causedeck/core/runtime';
 import { NotificationError } from '@causedeck/notifications';
-import { pushConfig, saveSubscription } from '@causedeck/notifications/push';
+import { pushConfig } from '@causedeck/notifications/push';
 
 import { getSession } from '../../../../lib/auth.ts';
 import { serverEnv } from '../../../../lib/env.ts';
@@ -32,7 +32,7 @@ export async function POST(request: Request): Promise<Response> {
     return json(400, { error: 'invalid_subscription' });
   }
   try {
-    await saveSubscription(db, session.user.id, body, request.headers.get('user-agent'));
+    await subscribePush(session.user.id, body, request.headers.get('user-agent'));
   } catch (error) {
     if (error instanceof NotificationError && error.code === 'VALIDATION') {
       return json(400, { error: 'invalid_subscription' });

@@ -1,7 +1,7 @@
 // `POST /api/push/unsubscribe` (#197): revoke the signed-in user's subscription for `{ endpoint }`.
 // Only the caller's own subscription is touched; an unknown endpoint is not an error (idempotent).
-import { db } from '@causedeck/db';
-import { pushUnsubscribeInput, revokeSubscription } from '@causedeck/notifications/push';
+import { unsubscribePush } from '@causedeck/core/runtime';
+import { pushUnsubscribeInput } from '@causedeck/notifications/push';
 
 import { getSession } from '../../../../lib/auth.ts';
 import { serverEnv } from '../../../../lib/env.ts';
@@ -24,6 +24,6 @@ export async function POST(request: Request): Promise<Response> {
 
   const parsed = pushUnsubscribeInput.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return json(400, { error: 'invalid_request' });
-  const revoked = await revokeSubscription(db, session.user.id, parsed.data.endpoint);
+  const revoked = await unsubscribePush(session.user.id, parsed.data.endpoint);
   return json(200, { ok: true, revoked });
 }

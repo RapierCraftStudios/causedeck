@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./categories": "./src/categories.ts",
-    "./service": "./src/service.ts"
+    "./service": "./src/service.ts",
+    "./email": "./src/email/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -16,13 +17,21 @@
     "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "catalog:",
+    "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/i18n": "workspace:*",
+    "@react-email/components": "catalog:",
     "drizzle-orm": "catalog:",
+    "intl-messageformat": "catalog:",
+    "nodemailer": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@causedeck/config": "workspace:*",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

@@ -1,1 +1,50 @@
-{}
+{
+  "notifications": {
+    "email": {
+      "layout": {
+        "brand": "CauseDeck",
+        "footer": "You received this email because of your CauseDeck account.",
+        "preferences": "Manage notification preferences or unsubscribe",
+        "mandatory": "This is a required account email and cannot be turned off."
+      },
+      "magicLink": {
+        "subject": "Your CauseDeck sign-in link",
+        "preview": "Sign in to CauseDeck",
+        "heading": "Sign in to CauseDeck",
+        "body": "Use the button below to sign in. The link expires in {minutes} minutes and works once.",
+        "cta": "Sign in",
+        "fallback": "If the button does not work, open this link:",
+        "ignore": "If you did not ask to sign in, you can ignore this email."
+      },
+      "invitation": {
+        "subject": "You are invited to a CauseDeck workspace",
+        "preview": "Join a CauseDeck workspace",
+        "heading": "You are invited to a workspace",
+        "body": "A colleague invited you to join their CauseDeck workspace. The invitation expires in {days, plural, one {# day} other {# days}}.",
+        "cta": "Accept invitation",
+        "fallback": "If the button does not work, open this link:",
+        "ignore": "If you were not expecting this invitation, you can ignore this email."
+      },
+      "securityAlert": {
+        "subject": "Security alert: {title}",
+        "preview": "Security activity on your CauseDeck account",
+        "intro": "We noticed security activity on your CauseDeck account.",
+        "cta": "Review activity",
+        "help": "If this was not you, sign out of other sessions and contact your workspace owner."
+      },
+      "dailyDigest": {
+        "subject": "Your CauseDeck daily digest",
+        "preview": "Your updates from today",
+        "heading": "Today in your workspace",
+        "summary": "{count, plural, one {# update} other {# updates}} since your last digest.",
+        "empty": "Nothing new since your last digest.",
+        "cta": "Open CauseDeck"
+      },
+      "billingNotice": {
+        "subject": "Billing: {title}",
+        "preview": "A billing update for your workspace",
+        "cta": "View billing"
+      }
+    }
+  }
+}

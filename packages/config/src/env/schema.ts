@@ -341,6 +341,18 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
   ) {
     add('BEDROCK_REGION', 'must be an India region while AI_INDIA_ONLY=true');
   }
+  if (
+    env.EMAIL_PROVIDER === 'ses' &&
+    env.SES_REGION !== undefined &&
+    env.SES_REGION !== '' &&
+    !isIndiaRegion(env.SES_REGION) &&
+    !regionAck
+  ) {
+    add(
+      'SES_REGION',
+      `must be an India region (${INDIA_AWS_REGIONS.join(', ')}) unless AWS_REGION_OVERRIDE_ACK=${OVERRIDE_ACK}`,
+    );
+  }
 
   if (!isProd) return issues;
 

@@ -1,4 +1,4 @@
-// Clerk column-scoped views (#233): `app_clerk_view()` (migration 0016) exposes a tenant table to the
+// Clerk column-scoped views (#233): `app_clerk_view()` (migration 0018) exposes a tenant table to the
 // `causedeck_clerk` role through a view without its strategy columns. Inside
 // `withWorkspace({ dbRole: 'clerk' })` the base table is not readable (no grant) while the view is,
 // still under the base table's row-level security. The fixture table lives in a scratch database

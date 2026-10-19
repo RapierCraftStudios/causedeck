@@ -4,7 +4,7 @@
 --   causedeck_app:   what the apps connect as (DATABASE_URL). Not an owner, cannot bypass RLS and
 --                    cannot create objects in `public`.
 --   causedeck_clerk: no login; `withWorkspace({ dbRole: 'clerk' })` switches the app role to it
---                    (SET LOCAL ROLE) for clerk members (#233). Migration 0016 gives it the app role's
+--                    (SET LOCAL ROLE) for clerk members (#233). Migration 0018 gives it the app role's
 --                    privileges minus the base tables behind clerk views (`app_clerk_view`).
 CREATE ROLE causedeck_owner LOGIN PASSWORD 'causedeck_owner';
 CREATE ROLE causedeck_app LOGIN PASSWORD 'causedeck_app'

@@ -116,6 +116,25 @@ The policy is pure, in `packages/billing/src/dunning.ts` (`planDunning`); the da
   downgraded workspace keeps all its data, read-only; a new subscription restores access.
   Entitlements are invalidated after each change.
 
+## SaaS invoices
+
+The GST tax invoices CauseDeck issues to workspaces (#29) live in
+`packages/db/src/schema/saas-invoice.ts`, created by `0017_saas_invoices`. They are prefixed `saas_`
+so they never collide with the client-fee `invoice` tables, which are legal-gated and separate. A
+naming test fails if 0017 creates any other table.
+
+- `saas_invoice` and `saas_invoice_line` are tenant tables under FORCE RLS. A line references its
+  invoice through the composite `(invoice_id, workspace_id)` foreign key, so it cannot point into
+  another workspace. `subscription_id` has no foreign key: an issued invoice outlives its
+  subscription.
+- `invoice_counter(series, fy, last_number)` is global (`GLOBAL_TABLES`): one gapless series per
+  supplier series and financial year. Numbers are allocated under a row lock (#253).
+- **Issued invoices are immutable: void and reissue only.** The `saas_invoice_immutable` trigger
+  rejects (SQLSTATE 42501) any update of a non-draft invoice that changes a column other than
+  `status` and `pdf_blob_id`, or moves it back to `draft`. The `saas_invoice_line_immutable`
+  trigger rejects inserting or updating lines of a non-draft invoice. Deletes are not blocked, so
+  deleting a workspace still cascades.
+
 ## Test prices
 
 Placeholder prices to validate pricing, kept as data in `packages/billing/src/plans.ts` (seeded by

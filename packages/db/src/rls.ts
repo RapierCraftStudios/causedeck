@@ -11,7 +11,7 @@
 // inside a workspace throws `TENANCY_VIOLATION` instead of silently switching tenants.
 // A workspace scope opened with `dbRole: 'clerk'` (#233) also switches to the no-login
 // `causedeck_clerk` role (`SET LOCAL ROLE`), which has no grant on the base tables behind clerk
-// column-scoped views (`app_clerk_view`, migration 0016); scopes nested inside it stay clerk.
+// column-scoped views (`app_clerk_view`, migration 0018); scopes nested inside it stay clerk.
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { is, sql } from 'drizzle-orm';

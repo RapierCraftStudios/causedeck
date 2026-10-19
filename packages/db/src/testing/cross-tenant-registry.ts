@@ -169,10 +169,60 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
   },
+  reserve: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId under an advisory lock; nested in another workspace scope it throws TenancyError',
+  },
+  commit: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'rejects another workspace reservation (TypeError); scoped to ctx.workspaceId, other scope throws TenancyError',
+  },
+  release: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'rejects another workspace reservation (TypeError); deletes only ctx.workspaceId rows, other scope throws TenancyError',
+  },
+  reapExpiredReservations: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reaps only the context workspace (not a system-wide reaper); other scope throws TenancyError',
+  },
+  getAiBudget: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
   reconcileAiCalls: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  setBudgetOverride: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'staff-only by caller contract; writes only ctx.workspaceId (override and audit row), other scope throws TenancyError',
+  },
+  activeOverride: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'takes the caller transaction; filters by workspace id and RLS hides other workspaces rows',
+  },
+  assertWithinFairUse: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads entitlements and usage for ctx.workspaceId inside withWorkspace; other scope throws TenancyError',
+  },
+  checkAiBudgetThresholds: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads spend and owners of ctx.workspaceId only and notifies that workspace owners; other scope throws TenancyError',
+  },
+  getWorkspaceFairnessConcurrency: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id (worker fairness gate); other scope throws TenancyError',
   },
 };
 
@@ -279,6 +329,29 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   periodStart: 'pure',
   nextPeriodStart: 'pure',
   incrementSql: 'pure (SQL builder; increment runs it inside withWorkspace)',
+  // usage: thresholds, fair-use caps and plan fairness (#221)
+  DEFAULT_USAGE_THRESHOLDS: 'constant',
+  SOFT_LIMIT_BPS: 'constant',
+  HARD_LIMIT_BPS: 'constant',
+  USAGE_WARNING_EVENT: 'constant',
+  FAIR_USE_KEYS: 'constant',
+  FAIR_USE_CAPS: 'constant (cap table)',
+  FAIRNESS_CONCURRENCY_BY_PLAN: 'constant (per-plan concurrency table)',
+  FairUseError: 'error class',
+  resolveThresholds: 'pure (validates ctx.thresholds)',
+  hardLimitPaise: 'pure (arithmetic)',
+  usageLevel: 'pure (arithmetic)',
+  fairnessConcurrencyForPlan: 'pure (table lookup by plan id)',
+  usageWarningDedupeKey: 'pure (string builder)',
+  usageWarningCopy: 'pure (static notice copy, no data)',
+  // usage: AI budget (#220)
+  AI_BUDGET_KEY: 'constant',
+  RESERVATION_TTL_MS: 'constant',
+  BudgetError: 'error class',
+  budgetLockSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
+  budgetReadSql: 'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
+  reservationInsertSql:
+    'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
   // usage: ai_call reconciliation (#225)
   reconcileAiCallsSql: 'pure (SQL builder; reconcileAiCalls runs it inside withWorkspace)',
 };

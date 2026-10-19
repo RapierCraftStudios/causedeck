@@ -1,0 +1,93 @@
+{
+  "billing": {
+    "mandate": {
+      "additionalAuth": {
+        "title": "Your bank will ask you to approve this charge",
+        "body": "UPI Autopay pays up to {amount} per charge on its own. This charge is larger, so you'll approve it in your UPI app each time it's due."
+      }
+    },
+    "metaTitle": "Billing",
+    "title": "Billing",
+    "description": "Your plan, seats, payment method and invoices for {workspace}.",
+    "loading": "Loading billing",
+    "comingSoon": "Available soon",
+    "permissionDenied": "Only workspace owners can manage billing.",
+    "error": {
+      "title": "Could not load billing.",
+      "retry": "Try again"
+    },
+    "plan": {
+      "title": "Plan",
+      "perMonth": "/ month",
+      "perYear": "/ year",
+      "seatBreakdown": "{seats, plural, one {# seat} other {# seats}} at {seatPrice} + {clerkSeats, plural, one {# clerk seat} other {# clerk seats}} at {clerkPrice}",
+      "renewal": "Renews on {date}",
+      "noRenewal": "No renewal scheduled",
+      "endsOn": "Ends on {date}",
+      "gstNote": "GST at 18% is added to this price.",
+      "change": "Change plan"
+    },
+    "status": {
+      "active": "Active",
+      "pending": "Awaiting payment setup",
+      "pastDue": "Past due",
+      "grace": "Past due: grace until {date}",
+      "paused": "Paused",
+      "cancelsOn": "Cancels on {date}",
+      "cancelled": "Cancelled"
+    },
+    "seats": {
+      "title": "Seats",
+      "members": "{used} of {total} seats",
+      "clerks": "{used} of {total} clerk seats",
+      "membersLabel": "Seats used",
+      "clerksLabel": "Clerk seats used",
+      "hint": "Clerk seats are billed separately from advocate seats."
+    },
+    "paymentMethod": {
+      "title": "Payment method",
+      "active": "UPI Autopay active",
+      "pending": "UPI Autopay pending",
+      "failed": "UPI Autopay failed",
+      "activeHint": "Each renewal is paid automatically from your UPI account.",
+      "pendingHint": "Approve the UPI Autopay mandate in your UPI app to start payments.",
+      "failedHint": "Your last payment did not go through.",
+      "update": "Update payment method"
+    },
+    "banner": {
+      "graceTitle": "Payment failed",
+      "grace": "Access continues until {date} ({days, plural, =0 {last day} one {# day left} other {# days left}}). Update your payment method to keep your plan.",
+      "paymentFailed": "Your last payment failed. Update your payment method to keep your plan.",
+      "cancels": "Your plan ends on {date}. Your data stays accessible read-only and can be exported."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "caption": "Tax invoices for your CauseDeck subscription",
+      "columns": {
+        "number": "Number",
+        "date": "Date",
+        "amount": "Amount",
+        "status": "Status",
+        "pdf": "PDF"
+      },
+      "status": {
+        "issued": "Issued",
+        "paid": "Paid",
+        "void": "Void"
+      },
+      "download": "Download invoice {number} (PDF)",
+      "preparing": "Preparing",
+      "empty": "No invoices yet. Your first invoice appears after your first payment."
+    },
+    "junior": {
+      "title": "You are on the free Junior plan",
+      "body": "Upgrade when you need unlimited matters or a chamber for your team.",
+      "advocate": "Advocate",
+      "advocateBody": "For an advocate practising on their own.",
+      "chamber": "Chamber",
+      "chamberBody": "For chambers, priced per seat (at least {minSeats} seats).",
+      "from": "From {price}",
+      "upgrade": "Upgrade to {plan}"
+    }
+  }
+}

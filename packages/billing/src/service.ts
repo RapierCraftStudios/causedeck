@@ -6,8 +6,15 @@
 // Seats: an increase is applied now and the prorated difference is returned as `charge` (collected
 // by invoicing, #29); a decrease is scheduled at the provider for the next cycle and recorded as
 // `pendingSeats`, applied on the next `charged`. The provider quantity is the paid-seat count.
-import { getPlan, PLAN_CATALOGUE, type Plan } from './plans';
-import { prorateSeatIncrease, type ProrationResult } from './proration';
+//
+// Plan changes (#257) take effect now, between plans of the same interval: the database has no
+// column for a scheduled plan and provider events carry the provider's plan id, so a plan change
+// at period end could never be recorded. Moving to a dearer plan charges the prorated difference
+// of one cycle's charge for the rest of the period; a cheaper plan is never refunded (as with seat
+// decreases). `quoteChange` is the pure summary the owner confirms before either change.
+import { gstOn } from './gst/calc';
+import { getPlan, mandateChargeNotice, PLAN_CATALOGUE, type Plan } from './plans';
+import { prorateSeatIncrease, roundHalfUpDiv, type ProrationResult } from './proration';
 import type { BillingProvider, BillingSubscription } from './provider/types';
 import {
   transition,
@@ -57,14 +64,131 @@ export interface StartSubscriptionResult extends BillingOperationResult {
   mandateUrl: string;
 }
 
+export interface ChangePlanInput extends SeatCounts {
+  planId: string;
+}
+
 export interface BillingService {
   startSubscription(input: StartSubscriptionInput): Promise<StartSubscriptionResult>;
   changeSeats(snapshot: SubscriptionSnapshot, seats: SeatCounts): Promise<BillingOperationResult>;
+  /** Move to another plan of the same interval, now (#257). */
+  changePlan(
+    snapshot: SubscriptionSnapshot,
+    input: ChangePlanInput,
+  ): Promise<BillingOperationResult>;
   cancel(
     snapshot: SubscriptionSnapshot,
     options: { atPeriodEnd: boolean },
   ): Promise<BillingOperationResult>;
   resume(snapshot: SubscriptionSnapshot): Promise<BillingOperationResult>;
+  /** Keep a subscription that was set to cancel at period end (#257). */
+  withdrawCancellation(snapshot: SubscriptionSnapshot): Promise<BillingOperationResult>;
+}
+
+/** One cycle's charge for `plan` at these seat counts, integer paise, ex-GST. */
+export function cycleChargePaise(
+  plan: Pick<Plan, 'pricePaise' | 'perSeat' | 'clerkSeatPricePaise'>,
+  counts: SeatCounts,
+): number {
+  return mandateChargeNotice(plan, counts).chargePaise;
+}
+
+/** The prorated difference for moving from one cycle charge to a dearer one at `at`. */
+export function proratePlanChange(input: {
+  fromChargePaise: number;
+  toChargePaise: number;
+  periodStart: Date;
+  periodEnd: Date;
+  at: Date;
+}): ProrationResult {
+  const start = input.periodStart.getTime();
+  const end = input.periodEnd.getTime();
+  if (!(end > start)) throw new RangeError('periodEnd must be after periodStart');
+  const periodSeconds = Math.floor((end - start) / 1000);
+  const remainingSeconds = Math.min(
+    Math.max(Math.floor((end - input.at.getTime()) / 1000), 0),
+    periodSeconds,
+  );
+  const difference = Math.max(0, input.toChargePaise - input.fromChargePaise);
+  const amountPaise = Number(
+    roundHalfUpDiv(
+      BigInt(difference) * BigInt(remainingSeconds),
+      BigInt(Math.max(periodSeconds, 1)),
+    ),
+  );
+  // One amount for the whole plan change, so no per-seat lines.
+  return { amountPaise, lines: [], remainingSeconds, periodSeconds };
+}
+
+export interface QuoteChangeInput {
+  current: { plan: Plan; counts: SeatCounts };
+  target: { plan: Plan; counts: SeatCounts };
+  periodStart: Date | null;
+  periodEnd: Date | null;
+  at: Date;
+}
+
+/** What the owner confirms before a plan or seat change. Integer paise; GST at 18% (`gstOn`). */
+export interface ChangeQuote {
+  /** One cycle's charge after the change, ex-GST, its GST and the GST-inclusive total. */
+  basePaise: number;
+  gstPaise: number;
+  totalPaise: number;
+  /** Charged now for the rest of the current period (0 when nothing is due now). */
+  prorationPaise: number;
+  prorationGstPaise: number;
+  prorationTotalPaise: number;
+  /** `now` for a plan change or seat increase; `period_end` for a pure seat decrease. */
+  effective: 'now' | 'period_end';
+  /** When the change takes effect: `at`, or the end of the current period. */
+  effectiveDate: Date;
+}
+
+/** The pre-confirmation summary for changing plan and/or seats (pure). */
+export function quoteChange(input: QuoteChangeInput): ChangeQuote {
+  const { current, target, periodStart, periodEnd, at } = input;
+  const basePaise = cycleChargePaise(target.plan, target.counts);
+  const planChanged = current.plan.id !== target.plan.id;
+  const increased =
+    target.counts.seats > current.counts.seats ||
+    target.counts.clerkSeats > current.counts.clerkSeats;
+  const effective = planChanged || increased ? 'now' : 'period_end';
+  let prorationPaise = 0;
+  if (periodStart && periodEnd && at >= periodStart && at <= periodEnd) {
+    if (planChanged) {
+      prorationPaise = proratePlanChange({
+        fromChargePaise: cycleChargePaise(current.plan, current.counts),
+        toChargePaise: basePaise,
+        periodStart,
+        periodEnd,
+        at,
+      }).amountPaise;
+    } else if (increased) {
+      prorationPaise = prorateSeatIncrease({
+        plan: target.plan,
+        from: current.counts,
+        to: {
+          seats: Math.max(current.counts.seats, target.counts.seats),
+          clerkSeats: Math.max(current.counts.clerkSeats, target.counts.clerkSeats),
+        },
+        periodStart,
+        periodEnd,
+        at,
+      }).amountPaise;
+    }
+  }
+  const gstPaise = gstOn(basePaise);
+  const prorationGstPaise = gstOn(prorationPaise);
+  return {
+    basePaise,
+    gstPaise,
+    totalPaise: basePaise + gstPaise,
+    prorationPaise,
+    prorationGstPaise,
+    prorationTotalPaise: prorationPaise + prorationGstPaise,
+    effective,
+    effectiveDate: effective === 'now' || periodEnd === null ? at : periodEnd,
+  };
 }
 
 export function createBillingService(options: BillingServiceOptions): BillingService {
@@ -186,6 +310,47 @@ export function createBillingService(options: BillingServiceOptions): BillingSer
       return { subscription, charge, provider: result };
     },
 
+    async changePlan(snapshot, input) {
+      const target = paidPlan(input.planId);
+      const counts = { seats: input.seats, clerkSeats: input.clerkSeats };
+      assertSeats(target, counts);
+      if (target.id === snapshot.planId) throw invalid(`already on ${target.id}`);
+      const current = getPlan(snapshot.planId, catalogue);
+      if (current && current.interval !== target.interval) {
+        throw invalid('switch between monthly and annual billing at renewal');
+      }
+      const id = providerId(snapshot);
+      const at = now();
+      // Validate the whole change before touching the provider.
+      const subscription = apply(
+        snapshot,
+        [
+          { type: 'plan_changed', planId: target.id },
+          { type: 'seats_changed', effective: 'now', ...counts },
+        ],
+        at,
+      );
+      const result = await provider.updateSubscriptionPlan(id, {
+        planId: providerPlanId(target),
+        quantity: counts.seats,
+        at: 'now',
+      });
+      const charge =
+        current && snapshot.currentPeriodStart && snapshot.currentPeriodEnd
+          ? proratePlanChange({
+              fromChargePaise: cycleChargePaise(current, {
+                seats: snapshot.seats,
+                clerkSeats: snapshot.clerkSeats,
+              }),
+              toChargePaise: cycleChargePaise(target, counts),
+              periodStart: snapshot.currentPeriodStart,
+              periodEnd: snapshot.currentPeriodEnd,
+              at,
+            })
+          : null;
+      return { subscription, charge, provider: result };
+    },
+
     async cancel(snapshot, cancelOptions) {
       const id = providerId(snapshot);
       const subscription = transition(
@@ -204,6 +369,14 @@ export function createBillingService(options: BillingServiceOptions): BillingSer
       // Only a paused subscription resumes; Razorpay cannot withdraw a scheduled cancellation.
       const subscription = transition(snapshot, { type: 'resumed' }, now());
       const result = await provider.resume(id);
+      return { subscription, charge: null, provider: result };
+    },
+
+    async withdrawCancellation(snapshot) {
+      const id = providerId(snapshot);
+      if (!snapshot.cancelAtPeriodEnd) throw invalid('the subscription is not set to cancel');
+      const subscription = transition(snapshot, { type: 'cancel_withdrawn' }, now());
+      const result = await provider.withdrawCancellation(id);
       return { subscription, charge: null, provider: result };
     },
   };

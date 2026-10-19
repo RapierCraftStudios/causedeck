@@ -8,6 +8,10 @@
 // and, after the transaction commits, asks `enqueueDelivery` for one `notification.deliver` job per
 // enabled instant email/push channel. The job itself is defined by `@causedeck/core` (#196), which
 // depends on this package, so the producer is injected rather than imported.
+//
+// The digest is stored per category and channel; the preferences page's single selector
+// (`setDigest`) writes one mode to every unlocked email channel and turns the `digest.daily` email
+// on only for `daily`.
 import { schema, withWorkspace, type Queryable, type Transaction } from '@causedeck/db';
 import { and, count, desc, eq, inArray, isNull, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -109,7 +113,9 @@ const notifySchema = z.strictObject({
 
 const userSchema = z.strictObject({ userId: uuid });
 
-const lockScreenSchema = z.strictObject({ userId: uuid, enabled: z.boolean() });
+const toggleSchema = z.strictObject({ userId: uuid, enabled: z.boolean() });
+
+const digestSchema = z.strictObject({ userId: uuid, digest: z.enum(DIGESTS) });
 
 const listSchema = z.strictObject({
   userId: uuid,
@@ -437,7 +443,7 @@ export async function setLockScreenDetails(
   ctx: NotificationContext,
   input: { userId: string; enabled: boolean },
 ): Promise<NotificationSettings> {
-  const { userId, enabled } = parse(lockScreenSchema, input);
+  const { userId, enabled } = parse(toggleSchema, input);
   return asMember(ctx, userId, async (tx) => {
     const [row] = await tx
       .insert(notificationSetting)
@@ -452,5 +458,90 @@ export async function setLockScreenDetails(
       });
     if (!row) throw new Error('notification_setting upsert returned no row');
     return row;
+  });
+}
+
+/** Turn `Do not push during court hours` on or off for the member in the context workspace. */
+export async function setCourtHoursQuiet(
+  ctx: NotificationContext,
+  input: { userId: string; enabled: boolean },
+): Promise<NotificationSettings> {
+  const { userId, enabled } = parse(toggleSchema, input);
+  return asMember(ctx, userId, async (tx) => {
+    const [row] = await tx
+      .insert(notificationSetting)
+      .values({ workspaceId: ctx.workspaceId, userId, courtHoursQuiet: enabled })
+      .onConflictDoUpdate({
+        target: [notificationSetting.workspaceId, notificationSetting.userId],
+        set: { courtHoursQuiet: enabled, updatedAt: new Date() },
+      })
+      .returning({
+        courtHoursQuiet: notificationSetting.courtHoursQuiet,
+        lockScreenDetails: notificationSetting.lockScreenDetails,
+      });
+    if (!row) throw new Error('notification_setting upsert returned no row');
+    return row;
+  });
+}
+
+/** Categories the digest selector drives: email, not locked, not the digest email itself. */
+const DIGEST_CATEGORIES = CATEGORY_KEYS.filter(
+  (key) => key !== 'digest.daily' && !isLockedChannel(key, 'email'),
+);
+
+/**
+ * The member's digest choice: the email `digest` the selector-driven categories share, or
+ * `instant` when they differ (set one by one with `setPreference`).
+ */
+export async function getDigest(
+  ctx: NotificationContext,
+  input: { userId: string },
+): Promise<Digest> {
+  const { userId } = parse(userSchema, input);
+  return asMember(ctx, userId, async (tx) => {
+    const rows = await prefRows(tx, ctx.workspaceId, userId);
+    const modes = new Set(DIGEST_CATEGORIES.map((key) => resolve(key, 'email', rows).digest));
+    const [only] = modes;
+    return modes.size === 1 && only !== undefined ? only : 'instant';
+  });
+}
+
+/**
+ * Apply the digest selector (`Instant / Daily at 6:30 pm / Off`) in one transaction: every
+ * unlocked email channel except `digest.daily` gets `digest` (on/off kept), and the `digest.daily`
+ * email is on only for `daily`. Locked channels, in-app and push rows are never written.
+ */
+export async function setDigest(
+  ctx: NotificationContext,
+  input: { userId: string; digest: Digest },
+): Promise<Digest> {
+  const { userId, digest } = parse(digestSchema, input);
+  return asMember(ctx, userId, async (tx) => {
+    const rows = await prefRows(tx, ctx.workspaceId, userId);
+    const values = [
+      ...DIGEST_CATEGORIES.map((key) => ({
+        category: key,
+        enabled: resolve(key, 'email', rows).enabled,
+        digest,
+      })),
+      { category: 'digest.daily', enabled: digest === 'daily', digest: 'instant' as const },
+    ].map((v) => ({ ...v, workspaceId: ctx.workspaceId, userId, channel: 'email' as const }));
+    await tx
+      .insert(notificationPref)
+      .values(values)
+      .onConflictDoUpdate({
+        target: [
+          notificationPref.workspaceId,
+          notificationPref.userId,
+          notificationPref.category,
+          notificationPref.channel,
+        ],
+        set: {
+          enabled: sql`excluded.enabled`,
+          digest: sql`excluded.digest`,
+          updatedAt: new Date(),
+        },
+      });
+    return digest;
   });
 }

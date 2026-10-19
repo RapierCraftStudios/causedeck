@@ -53,6 +53,7 @@ const invite = await import('../app/(public)/invite/[token]/actions.ts');
 const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
+const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
@@ -73,6 +74,10 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   listNotificationsAction: notifications,
   markNotificationReadAction: notifications,
   markAllNotificationsReadAction: notifications,
+  setNotificationPreferenceAction: preferences,
+  setNotificationDigestAction: preferences,
+  setCourtHoursQuietAction: preferences,
+  setLockScreenDetailsAction: preferences,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -114,6 +119,8 @@ function snapshotA() {
       .select({ id: schema.notification.id, readAt: schema.notification.readAt })
       .from(schema.notification)
       .orderBy(schema.notification.id),
+    notificationPrefs: await tx.select().from(schema.notificationPref),
+    notificationSettings: await tx.select().from(schema.notificationSetting),
   }));
 }
 
@@ -158,6 +165,15 @@ function inputs(workspaceId: string): Record<string, unknown> {
     listNotificationsAction: { workspaceId },
     markNotificationReadAction: { workspaceId, notificationId: aNotificationId },
     markAllNotificationsReadAction: { workspaceId },
+    setNotificationPreferenceAction: {
+      workspaceId,
+      category: 'reminder.hearing',
+      channel: 'email',
+      enabled: false,
+    },
+    setNotificationDigestAction: { workspaceId, digest: 'off' },
+    setCourtHoursQuietAction: { workspaceId, enabled: true },
+    setLockScreenDetailsAction: { workspaceId, enabled: true },
   };
 }
 
@@ -231,6 +247,28 @@ describe('cross-tenant server actions', () => {
       ok: true,
     });
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('notification preferences under B’s own workspace change only ub’s rows in B', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    for (const name of [
+      'setNotificationPreferenceAction',
+      'setNotificationDigestAction',
+      'setCourtHoursQuietAction',
+      'setLockScreenDetailsAction',
+    ]) {
+      expect(await action(name)(all[name]), name).toMatchObject({ ok: true });
+    }
+    expect(await snapshotA()).toEqual(before);
+    const inB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, async (tx) => ({
+      prefs: await tx.select().from(schema.notificationPref),
+      settings: await tx.select().from(schema.notificationSetting),
+    }));
+    const mine = (rows: { userId: string; workspaceId: string }[]) =>
+      rows.filter((row) => row.userId === t.ub && row.workspaceId === t.b.id);
+    expect(mine(inB.prefs).length).toBeGreaterThan(0);
+    expect(mine(inB.settings)).toHaveLength(1);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

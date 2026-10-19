@@ -33,13 +33,20 @@ import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { once } from '../idempotency.ts';
 import { getProducer } from '../producer.ts';
-import { appLink, notificationJobDeps, type NotificationJobDeps } from './notification-deliver.ts';
+import {
+  appLink,
+  DEFAULT_WORKSPACE_TIMEZONE,
+  notificationJobDeps,
+  validZone,
+  workspaceTimezone,
+  type NotificationJobDeps,
+} from './notification-deliver.ts';
 
-const { member, notification, notificationSetting, organization, user, workspaceSettings } = schema;
+const { member, notification, notificationSetting, organization, user } = schema;
 
 /** Local time the digest goes out. */
 export const DIGEST_LOCAL_TIME = '18:30';
-export const DEFAULT_DIGEST_TIMEZONE = 'Asia/Kolkata';
+export const DEFAULT_DIGEST_TIMEZONE = DEFAULT_WORKSPACE_TIMEZONE;
 /** Items listed in one digest email; older ones are summarised by the count. */
 export const DIGEST_ITEM_LIMIT = 50;
 
@@ -47,15 +54,6 @@ const [DIGEST_HOUR, DIGEST_MINUTE] = DIGEST_LOCAL_TIME.split(':').map(Number) as
 const DIGEST_MINUTES = DIGEST_HOUR * 60 + DIGEST_MINUTE;
 /** The scheduler fires every 30 minutes, so the slot is [18:30, 19:00). */
 const SLOT_MINUTES = 30;
-
-function validZone(timeZone: string): string {
-  try {
-    new Intl.DateTimeFormat('en-GB', { timeZone });
-    return timeZone;
-  } catch {
-    return DEFAULT_DIGEST_TIMEZONE;
-  }
-}
 
 /** Local calendar date `YYYY-MM-DD` of `date` in `timeZone`. */
 function localDate(date: Date, timeZone: string): string {
@@ -179,14 +177,6 @@ export interface DigestReport {
 type MemberOutcome = keyof DigestReport;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-async function workspaceTimezone(ctx: Pick<JobContext, 'db'>, workspaceId: string) {
-  const [row] = await ctx.db
-    .select({ timezone: workspaceSettings.timezone })
-    .from(workspaceSettings)
-    .where(eq(workspaceSettings.workspaceId, workspaceId));
-  return validZone(row?.timezone ?? DEFAULT_DIGEST_TIMEZONE);
-}
 
 /** Send the day's digest to every active member of the workspace. Exported for tests. */
 export async function runNotificationDigest(

@@ -607,6 +607,77 @@ export type Messages = {
     announce: string;
     close: string;
     shortcut: string;
+    preferences: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      link: string;
+      linkHint: string;
+      matrixCaption: string;
+      categoryHeader: string;
+      channels: {
+        inApp: string;
+        email: string;
+        push: string;
+      };
+      switchLabel: string;
+      categories: {
+        workspaceInvite: {
+          label: string;
+          description: string;
+        };
+        memberJoined: {
+          label: string;
+          description: string;
+        };
+        securityAlert: {
+          label: string;
+          description: string;
+        };
+        billingNotice: {
+          label: string;
+          description: string;
+        };
+        reminderHearing: {
+          label: string;
+          description: string;
+        };
+        proposalNew: {
+          label: string;
+          description: string;
+        };
+        digestDaily: {
+          label: string;
+          description: string;
+        };
+        systemNotice: {
+          label: string;
+          description: string;
+        };
+      };
+      mandatory: string;
+      lockedLabel: string;
+      digest: {
+        label: string;
+        hint: string;
+        instant: string;
+        daily: string;
+        off: string;
+      };
+      courtHours: {
+        label: string;
+        hint: string;
+      };
+      lockScreen: {
+        label: string;
+        hint: string;
+      };
+      saved: string;
+      error: string;
+      loadError: string;
+      retry: string;
+      loading: string;
+    };
   };
   billing: {
     mandate: {

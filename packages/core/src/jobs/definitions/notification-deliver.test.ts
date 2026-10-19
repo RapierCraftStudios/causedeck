@@ -416,6 +416,55 @@ describe('notification.deliver: push', () => {
     });
   });
 
+  it('skips push inside court hours when `Do not push during court hours` is on', async () => {
+    await run(async (f) => {
+      const { pushes, deps } = pusher(transport().deps);
+      await subscribe(f, 'phone');
+      await f.inWs((s) =>
+        s
+          .insert(schema.notificationSetting)
+          .values({ workspaceId: f.workspaceId, userId: f.userId, courtHoursQuiet: true }),
+      );
+      // No workspace_settings row: the workspace is on Asia/Kolkata (UTC+5:30).
+      const inCourt = { ...deps, now: () => new Date('2026-10-19T06:30:00Z') }; // 12:00 IST
+      const quietId = await f.addNotification();
+      const quiet = {
+        workspaceId: f.workspaceId,
+        notificationId: quietId,
+        channel: 'push',
+      } as const;
+      expect(await deliver(f, quiet, inCourt)).toBe('skipped');
+      expect(pushes).toHaveLength(0);
+      expect((await deliveryOf(f, quietId))?.push).toMatchObject({
+        status: 'skipped',
+        reason: 'quiet_hours',
+      });
+      expect(await f.rows()).toHaveLength(1);
+
+      const evening = { ...deps, now: () => new Date('2026-10-19T12:30:00Z') }; // 18:00 IST
+      const laterId = await f.addNotification();
+      const later = {
+        workspaceId: f.workspaceId,
+        notificationId: laterId,
+        channel: 'push',
+      } as const;
+      expect(await deliver(f, later, evening)).toBe('sent');
+      expect(pushes).toHaveLength(1);
+    });
+  });
+
+  it('pushes inside court hours when the member left the setting off', async () => {
+    await run(async (f) => {
+      const { pushes, deps } = pusher(transport().deps);
+      await subscribe(f, 'phone');
+      const inCourt = { ...deps, now: () => new Date('2026-10-19T06:30:00Z') };
+      const notificationId = await f.addNotification();
+      const payload = { workspaceId: f.workspaceId, notificationId, channel: 'push' } as const;
+      expect(await deliver(f, payload, inCourt)).toBe('sent');
+      expect(pushes).toHaveLength(1);
+    });
+  });
+
   it('skips a member with no active subscription', async () => {
     await run(async (f) => {
       const { pushes, deps } = pusher(transport().deps);

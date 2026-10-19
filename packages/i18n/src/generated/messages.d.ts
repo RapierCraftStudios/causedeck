@@ -774,6 +774,127 @@ export type Messages = {
       from: string;
       upgrade: string;
     };
+    quote: {
+      base: string;
+      gst: string;
+      total: string;
+      proration: string;
+      prorationGst: string;
+      prorationTotal: string;
+      effectiveNow: string;
+      effectivePeriodEnd: string;
+    };
+    seatManager: {
+      seats: string;
+      clerkSeats: string;
+      increaseSeats: string;
+      decreaseSeats: string;
+      increaseClerkSeats: string;
+      decreaseClerkSeats: string;
+      announceSeats: string;
+      announceClerkSeats: string;
+      minHint: string;
+      review: string;
+      confirm: string;
+      back: string;
+      done: string;
+    };
+    changePlan: {
+      title: string;
+      chooseBody: string;
+      confirmTitle: string;
+      confirmBody: string;
+      perSeat: string;
+      flat: string;
+      back: string;
+      confirm: string;
+      close: string;
+    };
+    gstin: {
+      title: string;
+      label: string;
+      hint: string;
+      clientInvalid: string;
+      note: string;
+      save: string;
+      saved: string;
+      cleared: string;
+    };
+    cancel: {
+      open: string;
+      title: string;
+      body: string;
+      bodyNoDate: string;
+      readOnlyNote: string;
+      keep: string;
+      confirm: string;
+      resume: string;
+    };
+    errors: {
+      invalidGstinFormat: string;
+      invalidGstinChecksum: string;
+      invalid: string;
+      notAllowed: string;
+      unsupported: string;
+      forbidden: string;
+      offline: string;
+      generic: string;
+    };
+  };
+  usage: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    link: string;
+    linkHint: string;
+    billingLink: string;
+    permissionDenied: string;
+    empty: {
+      title: string;
+      description: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    meters: {
+      ai: string;
+      ocr: string;
+      stt: string;
+      matters: string;
+    };
+    value: string;
+    percentUsed: string;
+    valueText: string;
+    unlimited: string;
+    aiResets: string;
+    resets: string;
+    level: {
+      warning: string;
+      exceeded: string;
+    };
+    aiWarning: string;
+    aiExceeded: string;
+    limitWarning: string;
+    limitExceeded: string;
+    breakdown: {
+      title: string;
+      caption: string;
+      resource: string;
+      used: string;
+      limit: string;
+      noLimit: string;
+      rows: {
+        aiSpend: string;
+        tokensIn: string;
+        tokensOut: string;
+        ocr: string;
+        stt: string;
+        storage: string;
+        matters: string;
+      };
+    };
   };
   audit: {
     metaTitle: string;

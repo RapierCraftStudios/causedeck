@@ -5,7 +5,8 @@
 //
 // Beyond `BillingProvider` it can drive the UPI Autopay mandate (`authorizeMandate`,
 // `setMandateState`) and raise provider events (`simulate`), returning the same webhook body
-// Razorpay would send (see `src/__fixtures__/razorpay/`).
+// Razorpay would send (see `src/__fixtures__/razorpay/`). `adoptSubscription` registers a
+// subscription that exists only in the database (the e2e seed), so a long-lived mock can act on it.
 import { getPlan, type PlanInterval } from '../plans';
 import { MOCK_WEBHOOK_SECRET, signRazorpayWebhook } from '../webhook';
 import {
@@ -24,6 +25,7 @@ import {
   type RazorpaySubscriptionEntity,
   type RazorpayWebhookEvent,
   type SimulatedEvent,
+  type UpdatePlanInput,
 } from './types';
 
 /** Default clock: a fixed instant, so snapshots never depend on the wall clock. */
@@ -35,10 +37,6 @@ export const MOCK_ACCOUNT_ID = 'acc_mock_0001';
 export const MOCK_MANDATE_BASE_URL = 'https://mock.razorpay.local/mandate/';
 
 const DEFAULT_TOTAL_COUNT = 120;
-
-export interface MockBillingProviderOptions {
-  now?: () => Date;
-}
 
 /** One webhook delivery: Razorpay sends the event id in the `x-razorpay-event-id` header. */
 export interface MockWebhookDelivery {
@@ -63,8 +61,29 @@ export function signMockDelivery(delivery: MockWebhookDelivery): SignedMockDeliv
   };
 }
 
+/** A subscription known to the caller (a database row) but not yet to this mock instance. */
+export interface AdoptSubscriptionInput {
+  id: string;
+  customerId: string | null;
+  planId: string;
+  quantity: number;
+  status: ProviderSubscriptionStatus;
+  currentStart: Date | null;
+  currentEnd: Date | null;
+  cancelAtCycleEnd: boolean;
+}
+
+export interface MockBillingProviderOptions {
+  now?: () => Date;
+}
+
 export interface MockBillingProvider extends BillingProvider {
   readonly name: 'mock';
+  /**
+   * Register `input` unless the id is already known (then a no-op). Returns the subscription as
+   * this mock now sees it.
+   */
+  adoptSubscription(input: AdoptSubscriptionInput): Promise<BillingSubscription>;
   /** The customer completes the UPI Autopay authorisation: first charge, subscription active. */
   authorizeMandate(subscriptionId: string): Promise<RazorpayWebhookEvent>;
   /** Force a mandate state (for example `failed` or `cancelled` from the payer's UPI app). */
@@ -94,6 +113,8 @@ interface SubscriptionRecord {
   mandate: MandateState;
   /** Quantity scheduled for the next cycle by `updateSubscriptionQuantity(…, { at: 'cycle_end' })`. */
   pendingQuantity: number | null;
+  /** Plan scheduled for the next cycle by `updateSubscriptionPlan(…, { at: 'cycle_end' })`. */
+  pendingPlanId: string | null;
   /** What `retryPayment` does: charge, or fail again. */
   retryOutcome: 'charged' | 'failed';
 }
@@ -157,6 +178,13 @@ export function createMockBillingProvider(
     if (rec.pendingQuantity !== null) {
       rec.entity.quantity = rec.pendingQuantity;
       rec.pendingQuantity = null;
+      rec.entity.has_scheduled_changes = false;
+      rec.entity.change_scheduled_at = null;
+    }
+    if (rec.pendingPlanId !== null) {
+      rec.entity.plan_id = rec.pendingPlanId;
+      rec.interval = getPlan(rec.pendingPlanId)?.interval ?? rec.interval;
+      rec.pendingPlanId = null;
       rec.entity.has_scheduled_changes = false;
       rec.entity.change_scheduled_at = null;
     }
@@ -263,6 +291,7 @@ export function createMockBillingProvider(
           cancelAtCycleEnd: false,
           mandate: 'created',
           pendingQuantity: null,
+          pendingPlanId: null,
           retryOutcome: 'failed',
           entity: {
             id,
@@ -318,6 +347,32 @@ export function createMockBillingProvider(
       });
     },
 
+    updateSubscriptionPlan(subscriptionId, input: UpdatePlanInput) {
+      return attempt(() => {
+        const rec = record(subscriptionId);
+        assertStatus(rec, ['created', 'authenticated', 'active', 'pending'], 'change the plan of');
+        assertQuantity(input.quantity);
+        if (input.planId.length === 0) {
+          throw new BillingProviderError('invalid_input', 'planId must not be empty');
+        }
+        if (input.at === 'cycle_end') {
+          rec.pendingPlanId = input.planId;
+          rec.pendingQuantity = input.quantity;
+          rec.entity.has_scheduled_changes = true;
+          rec.entity.change_scheduled_at = rec.entity.current_end;
+        } else {
+          rec.entity.plan_id = input.planId;
+          rec.interval = getPlan(input.planId)?.interval ?? rec.interval;
+          rec.entity.quantity = input.quantity;
+          rec.pendingPlanId = null;
+          rec.pendingQuantity = null;
+          rec.entity.has_scheduled_changes = false;
+          rec.entity.change_scheduled_at = null;
+        }
+        return view(rec);
+      });
+    },
+
     cancelSubscription(subscriptionId, cancelOptions: CancelOptions) {
       return attempt(() => {
         const rec = record(subscriptionId);
@@ -329,6 +384,70 @@ export function createMockBillingProvider(
         }
         assertStatus(rec, EVENT_FROM['subscription.cancelled'], 'cancel');
         cancelNow(rec);
+        return view(rec);
+      });
+    },
+
+    withdrawCancellation(subscriptionId) {
+      return attempt(() => {
+        const rec = record(subscriptionId);
+        assertStatus(rec, ['active', 'pending'], 'withdraw the cancellation of');
+        if (!rec.cancelAtCycleEnd) {
+          throw new BillingProviderError(
+            'invalid_state',
+            `Subscription ${subscriptionId} has no scheduled cancellation`,
+          );
+        }
+        rec.cancelAtCycleEnd = false;
+        rec.entity.end_at = null;
+        return view(rec);
+      });
+    },
+
+    adoptSubscription(input) {
+      return attempt(() => {
+        const known = subscriptions.get(input.id);
+        if (known) return view(known);
+        assertQuantity(input.quantity);
+        const unix = (date: Date | null) =>
+          date === null ? null : Math.floor(date.getTime() / 1000);
+        const rec: SubscriptionRecord = {
+          interval: getPlan(input.planId)?.interval ?? 'month',
+          cancelAtCycleEnd: input.cancelAtCycleEnd,
+          mandate: input.status === 'created' ? 'created' : 'active',
+          pendingQuantity: null,
+          pendingPlanId: null,
+          retryOutcome: 'failed',
+          entity: {
+            id: input.id,
+            entity: 'subscription',
+            plan_id: input.planId,
+            customer_id: input.customerId,
+            status: input.status,
+            current_start: unix(input.currentStart),
+            current_end: unix(input.currentEnd),
+            ended_at: null,
+            quantity: input.quantity,
+            notes: [],
+            charge_at: unix(input.currentEnd),
+            start_at: unix(input.currentStart),
+            end_at: input.cancelAtCycleEnd ? unix(input.currentEnd) : null,
+            auth_attempts: 0,
+            total_count: DEFAULT_TOTAL_COUNT,
+            paid_count: input.currentStart === null ? 0 : 1,
+            customer_notify: true,
+            created_at: seconds(),
+            expire_by: null,
+            short_url: `${MOCK_MANDATE_BASE_URL}${input.id}`,
+            has_scheduled_changes: false,
+            change_scheduled_at: null,
+            source: 'api',
+            payment_method: 'upi',
+            offer_id: null,
+            remaining_count: DEFAULT_TOTAL_COUNT - (input.currentStart === null ? 0 : 1),
+          },
+        };
+        subscriptions.set(input.id, rec);
         return view(rec);
       });
     },

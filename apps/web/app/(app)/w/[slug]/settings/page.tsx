@@ -8,23 +8,28 @@ import {
   type WorkspacePageProps,
 } from '../../../../../components/shell/placeholder-page.tsx';
 import { serverEnv } from '../../../../../lib/env.ts';
+import { can } from '../../../../../lib/workspace-context.ts';
+import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 
 /** The settings index. Its sections (profile, members, privacy, ...) arrive in #25. */
 const SettingsIndex = placeholderPage('settings');
 
 /**
- * The index, links to the notification preferences (#199) and the audit log (#232), and the push
- * permission card (#197),
+ * The index, a link to the notification preferences (#199), a link to usage for owners
+ * (`billing.read`, #223), a link to the audit log (#232) and the push permission card (#197),
  * which moves to the notification panel footer with #198. The card renders nothing when push is
  * disabled (no VAPID keys) or unsupported.
  */
 export default async function SettingsPage(props: WorkspacePageProps) {
   const index = await SettingsIndex(props);
-  const [{ slug }, t, tAudit] = await Promise.all([
+  const [{ slug }, t, tUsage, tAudit] = await Promise.all([
     props.params,
     getTranslations('notifications.preferences'),
+    getTranslations('usage'),
     getTranslations('audit.settingsLink'),
   ]);
+  const context = await getWorkspaceContext(slug);
+  const showUsage = context !== null && can(context.role, 'billing.read');
   const vapidPublicKey = pushConfig(serverEnv())?.publicKey ?? null;
   return (
     <div className="flex flex-col gap-6">
@@ -36,6 +41,15 @@ export default async function SettingsPage(props: WorkspacePageProps) {
         <span className="text-sm font-medium">{t('link')}</span>
         <span className="text-ink-muted text-xs">{t('linkHint')}</span>
       </Link>
+      {showUsage ? (
+        <Link
+          href={`/w/${encodeURIComponent(slug)}/settings/usage`}
+          className="border-line hover:bg-surface-sunken focus-visible:outline-ring flex flex-col gap-0.5 rounded-lg border p-4 outline-offset-2 focus-visible:outline-2"
+        >
+          <span className="text-sm font-medium">{tUsage('link')}</span>
+          <span className="text-ink-muted text-xs">{tUsage('linkHint')}</span>
+        </Link>
+      ) : null}
       <Link
         href={`/w/${encodeURIComponent(slug)}/settings/audit`}
         className="border-line hover:bg-surface-sunken focus-visible:outline-ring flex flex-col gap-0.5 rounded-lg border p-4 outline-offset-2 focus-visible:outline-2"

@@ -1,8 +1,9 @@
 // `/w/[slug]/billing` (#256): the workspace's plan, seats (with clerk seats), next renewal, UPI
 // Autopay state, grace banners and invoices, read on the workspace-scoped transaction
 // (`withWorkspace`). Owners only (`billing.read`); other roles see `Only workspace owners can manage
-// billing.` Changing plan, seats or the payment method arrives with the billing actions (#257);
-// the invoice PDF route with #258.
+// billing.` With `billing.manage` (#257) the cards host the owner actions: change plan, seats,
+// cancel or resume, and the GSTIN; without it they are read-only. The payment method update
+// arrives later; the invoice PDF route with #258.
 //
 // States: loading (skeleton cards and rows while billing streams in), error (`Could not load
 // billing.` with `Try again`), empty invoices, offline (the shell banner; every action is disabled
@@ -10,6 +11,7 @@
 // (upgrade cards for Advocate and Chamber). `?__state=loading|error` previews the first two in
 // development, like the members page.
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
@@ -24,6 +26,7 @@ import { toBillingView, type BillingView } from './billing-view.ts';
 import { BillingError, BillingPermissionDenied } from './billing-error.tsx';
 import { InvoiceTable } from './invoice-table.tsx';
 import { BillingSkeleton } from './loading.tsx';
+import { GstinForm } from './gstin-form.tsx';
 import { BillingBanner, PaymentMethodCard } from './payment-method-card.tsx';
 import { JuniorPlanCard, PlanCard } from './plan-card.tsx';
 import { SeatSummary } from './seat-summary.tsx';
@@ -99,15 +102,21 @@ async function BillingSection({
       </div>
     );
   }
+  const manage = can(context.role, 'billing.manage')
+    ? { workspaceId: context.workspace.id, slug: context.workspace.slug, view: view.manage }
+    : undefined;
   return (
     <div data-billing="paid" className="flex flex-col gap-6">
       {view.banner === null ? null : <BillingBanner banner={view.banner} />}
       {/* 360: stacked. 768: Plan and Seats left, Payment right. 1280: one summary row. */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <PlanCard plan={view.plan} status={view.status} renewal={view.renewal} />
+        <PlanCard plan={view.plan} status={view.status} renewal={view.renewal} manage={manage} />
         {view.paymentMethod === null ? null : <PaymentMethodCard state={view.paymentMethod} />}
-        <SeatSummary seats={view.seats} />
+        <SeatSummary seats={view.seats} manage={manage} />
       </div>
+      {manage ? (
+        <GstinForm workspaceId={manage.workspaceId} slug={manage.slug} gstin={view.manage.gstin} />
+      ) : null}
       <InvoiceTable invoices={view.invoices} />
     </div>
   );
@@ -119,7 +128,7 @@ export default async function BillingPage({ params, searchParams }: BillingPageP
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
   if (!can(context.role, 'billing.read')) return <BillingPermissionDenied />;
-  const t = await getTranslations('billing');
+  const [t, tUsage] = await Promise.all([getTranslations('billing'), getTranslations('usage')]);
   const state = devState(query);
 
   return (
@@ -130,6 +139,12 @@ export default async function BillingPage({ params, searchParams }: BillingPageP
         <p className="text-ink-muted text-sm">
           {t('description', { workspace: context.workspace.name })}
         </p>
+        <Link
+          href={`/w/${encodeURIComponent(slug)}/settings/usage`}
+          className="text-accent focus-visible:outline-ring w-fit text-sm underline-offset-4 outline-offset-2 hover:underline focus-visible:outline-2"
+        >
+          {tUsage('billingLink')}
+        </Link>
       </header>
       {state === 'loading' ? (
         <BillingSkeleton />

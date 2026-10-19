@@ -3,8 +3,11 @@
 import { parseObjectKey, workspacePrefix, type ObjectKey } from './keys.ts';
 import { assertWithinLimit, isObjectKind, type ObjectKind } from './limits.ts';
 
-/** Lifetime of every signed upload and download URL: 5 minutes. */
+/** Lifetime of every signed upload URL, and the default for downloads: 5 minutes. */
 export const SIGNED_URL_TTL_SECONDS = 300;
+
+/** Lifetime of a document download URL (`createDownloadUrl`, #217): 60 seconds. */
+export const DOWNLOAD_URL_TTL_SECONDS = 60;
 
 export interface ObjectMeta {
   key: ObjectKey;
@@ -39,6 +42,15 @@ export interface SignedUpload {
   expiresAt: Date;
 }
 
+export interface SignedDownloadOptions {
+  /** 1 to 300 seconds; defaults to `SIGNED_URL_TTL_SECONDS`. */
+  expiresInSeconds?: number;
+  /** Sent back as `Content-Disposition` (S3 `response-content-disposition`). */
+  contentDisposition?: string;
+  /** Sent back as `Content-Type` (S3 `response-content-type`), overriding the stored type. */
+  contentType?: string;
+}
+
 export interface SignedDownload {
   url: string;
   expiresAt: Date;
@@ -60,8 +72,8 @@ export interface ObjectStore {
   list(workspaceId: string, options?: ListOptions): Promise<ObjectMeta[]>;
   /** A PUT URL bound to the exact key, content type and length, valid for 5 minutes. */
   presignPut(input: SignedUploadInput): Promise<SignedUpload>;
-  /** A GET URL for the key, valid for 5 minutes. */
-  presignGet(key: ObjectKey): Promise<SignedDownload>;
+  /** A GET URL for the key, valid for 5 minutes unless `options` shortens it. */
+  presignGet(key: ObjectKey, options?: SignedDownloadOptions): Promise<SignedDownload>;
   /** Readiness probe: resolves when the bucket is reachable (head-bucket). */
   ping(): Promise<void>;
 }
@@ -109,8 +121,24 @@ export function listPrefix(workspaceId: string, options: ListOptions = {}): stri
   return options.kind === undefined ? prefix : `${prefix}${options.kind}/`;
 }
 
-export function expiry(now: Date): Date {
-  return new Date(now.getTime() + SIGNED_URL_TTL_SECONDS * 1000);
+export function expiry(now: Date, seconds: number = SIGNED_URL_TTL_SECONDS): Date {
+  return new Date(now.getTime() + seconds * 1000);
+}
+
+/** Validate download options; returns the TTL in seconds. */
+export function checkDownloadOptions(options: SignedDownloadOptions = {}): number {
+  const ttl = options.expiresInSeconds ?? SIGNED_URL_TTL_SECONDS;
+  if (!Number.isSafeInteger(ttl) || ttl < 1 || ttl > SIGNED_URL_TTL_SECONDS) {
+    throw new RangeError('download URL lifetime must be 1 to 300 seconds');
+  }
+  if (options.contentType !== undefined) requireContentType(options.contentType);
+  if (
+    options.contentDisposition !== undefined &&
+    !/^[\x20-\x7e]{1,4096}$/.test(options.contentDisposition)
+  ) {
+    throw new RangeError('invalid content disposition');
+  }
+  return ttl;
 }
 
 export function requireContentType(contentType: string): void {

@@ -772,6 +772,127 @@
       "chamberBody": "For chambers, priced per seat (at least {minSeats} seats).",
       "from": "From {price}",
       "upgrade": "Upgrade to {plan}"
+    },
+    "quote": {
+      "base": "New price per period",
+      "gst": "GST at 18%",
+      "total": "Total per period (incl. GST)",
+      "proration": "Prorated charge for this period",
+      "prorationGst": "GST at 18% on the prorated charge",
+      "prorationTotal": "Due now (incl. GST)",
+      "effectiveNow": "Takes effect now ({date}).",
+      "effectivePeriodEnd": "Takes effect on {date}, at the end of this billing period."
+    },
+    "seatManager": {
+      "seats": "Seats",
+      "clerkSeats": "Clerk seats",
+      "increaseSeats": "Add a seat",
+      "decreaseSeats": "Remove a seat",
+      "increaseClerkSeats": "Add a clerk seat",
+      "decreaseClerkSeats": "Remove a clerk seat",
+      "announceSeats": "{count, plural, one {# seat} other {# seats}}",
+      "announceClerkSeats": "{count, plural, one {# clerk seat} other {# clerk seats}}",
+      "minHint": "At least {min} seats: {used} are in use.",
+      "review": "Review change",
+      "confirm": "Confirm change",
+      "back": "Back",
+      "done": "Seats updated."
+    },
+    "changePlan": {
+      "title": "Change plan",
+      "chooseBody": "Choose a plan. Moving to a more expensive plan takes effect now; a cheaper plan from the end of this period.",
+      "confirmTitle": "Move to {plan}?",
+      "confirmBody": "Check the amounts before you confirm.",
+      "perSeat": "{price} per seat",
+      "flat": "{price}",
+      "back": "Back",
+      "confirm": "Confirm change",
+      "close": "Close"
+    },
+    "gstin": {
+      "title": "GSTIN",
+      "label": "GSTIN",
+      "hint": "15 characters, for example 27AAPFU0939F1ZV. Leave empty to remove it.",
+      "clientInvalid": "This does not look like a valid GSTIN yet.",
+      "note": "Applies to future invoices only; issued invoices are not changed.",
+      "save": "Save GSTIN",
+      "saved": "GSTIN saved.",
+      "cleared": "GSTIN removed."
+    },
+    "cancel": {
+      "open": "Cancel plan",
+      "title": "Cancel at the end of this period?",
+      "body": "Your plan stays active until {date}.",
+      "bodyNoDate": "Your plan stays active until the end of this billing period.",
+      "readOnlyNote": "After your plan ends, your data remains accessible read-only and can be exported.",
+      "keep": "Keep plan",
+      "confirm": "Cancel at period end",
+      "resume": "Resume plan"
+    },
+    "errors": {
+      "invalidGstinFormat": "Enter a 15-character GSTIN: a 2-digit state code, a 10-character PAN, the entity number, Z and a check character.",
+      "invalidGstinChecksum": "The last character of this GSTIN does not match the rest. Check it for typos.",
+      "invalid": "This change is not possible on your plan.",
+      "notAllowed": "This change is not possible while the subscription is in its current state.",
+      "unsupported": "Your payment provider cannot undo a scheduled cancellation. Subscribe again after the plan ends.",
+      "forbidden": "Only workspace owners can manage billing.",
+      "offline": "You are offline. Billing changes are unavailable until you reconnect.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
+  "usage": {
+    "metaTitle": "Usage",
+    "title": "Usage",
+    "description": "This month's usage for {workspace}. Monthly meters reset at the start of each month (IST).",
+    "loading": "Loading usage",
+    "link": "Usage",
+    "linkHint": "AI processing, OCR pages, transcription and matters this month",
+    "billingLink": "View usage",
+    "permissionDenied": "Only workspace owners can see usage.",
+    "empty": {
+      "title": "No usage yet this month.",
+      "description": "The meters fill as you use AI processing, OCR and transcription."
+    },
+    "error": {
+      "title": "Could not load usage.",
+      "retry": "Try again"
+    },
+    "meters": {
+      "ai": "AI processing",
+      "ocr": "OCR pages",
+      "stt": "Transcription",
+      "matters": "Active matters"
+    },
+    "value": "{used} of {limit}",
+    "percentUsed": "{percent}% used",
+    "valueText": "{percent}% used, {used} of {limit}",
+    "unlimited": "No limit on your plan",
+    "aiResets": "AI processing budget resets on {date}",
+    "resets": "Resets on {date}",
+    "level": {
+      "warning": "Nearing the limit",
+      "exceeded": "Limit reached"
+    },
+    "aiWarning": "You have used {percent}% of this month's AI processing budget. Existing work is not affected.",
+    "aiExceeded": "You have used this month's AI processing budget. New AI processing resumes on {date}. Existing work is not affected.",
+    "limitWarning": "You have used {percent}% of this limit.",
+    "limitExceeded": "You have reached this limit. Existing work is not affected.",
+    "breakdown": {
+      "title": "This month in detail",
+      "caption": "Usage by resource this month",
+      "resource": "Resource",
+      "used": "Used",
+      "limit": "Limit",
+      "noLimit": "No limit",
+      "rows": {
+        "aiSpend": "AI processing spend",
+        "tokensIn": "AI tokens read",
+        "tokensOut": "AI tokens written",
+        "ocr": "OCR pages",
+        "stt": "Transcription",
+        "storage": "Storage",
+        "matters": "Active matters"
+      }
     }
   },
   "audit": {

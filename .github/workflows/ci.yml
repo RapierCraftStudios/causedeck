@@ -42,6 +42,8 @@ jobs:
         run: pnpm adr:test
       - name: Docs links
         run: pnpm docs:links
+      - name: Permissions doc
+        run: pnpm docs:permissions:check
       - name: ESLint
         run: bash infra/scripts/ci-affected.sh lint
       - name: Validate dev compose file

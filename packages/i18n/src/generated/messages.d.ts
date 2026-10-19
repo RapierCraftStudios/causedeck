@@ -16,6 +16,10 @@ export type Messages = {
     tagline: string;
     signIn: string;
   };
+  locale: {
+    label: string;
+    updated: string;
+  };
   nav: {
     today: string;
     tomorrow: string;

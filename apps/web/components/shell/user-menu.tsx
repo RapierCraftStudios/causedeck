@@ -8,6 +8,7 @@ import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
 import type { Role, ShellUser } from '../../lib/workspace-context.ts';
+import { LocaleSwitcher } from '../locale-switcher.tsx';
 import { THEMES, persistThemeCookie, type ThemeChoice } from '../theme-toggle.tsx';
 
 import { loadShellOverlays, useShellOverlays } from './use-shell-overlays.ts';
@@ -18,7 +19,10 @@ export interface UserMenuProps {
   slug: string;
 }
 
-/** Avatar menu button: who is signed in, account and workspace settings, theme and sign out. */
+/**
+ * Avatar menu button: who is signed in, account and workspace settings, theme, language and sign
+ * out.
+ */
 export function UserMenu({ user, role, slug }: UserMenuProps) {
   const t = useTranslations();
   const { theme, setTheme } = useTheme();
@@ -95,6 +99,12 @@ export function UserMenu({ user, role, slug }: UserMenuProps) {
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{t('locale.label')}</DropdownMenuLabel>
+        <LocaleSwitcher
+          variant="menu"
+          menu={{ RadioGroup: DropdownMenuRadioGroup, RadioItem: DropdownMenuRadioItem }}
+        />
         <DropdownMenuSeparator />
         {/* TODO(#12/#152): sign out once Better Auth sessions land. */}
         <DropdownMenuItem disabled>

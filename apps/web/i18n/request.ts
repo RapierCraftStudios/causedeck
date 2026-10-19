@@ -1,3 +1,4 @@
+import { getSessionCookie } from 'better-auth/cookies';
 import { cookies, headers } from 'next/headers';
 import { getRequestConfig } from 'next-intl/server';
 
@@ -13,18 +14,32 @@ import { logger } from '../src/health.ts';
 
 import { isLocale, LOCALE_COOKIE, type Locale } from './routing.ts';
 
-/** The signed-in user's saved locale. Returns nothing until sessions exist (#12). */
-function userLocale(): Promise<Locale | undefined> {
-  return Promise.resolve(undefined);
+/**
+ * The signed-in user's saved `user.locale` (#175). Without a session cookie there is no session to
+ * look up, so public pages such as `/sign-in` never touch the database here. A failed lookup falls
+ * through to the cookie rather than failing the render.
+ */
+async function userLocale(requestHeaders: Headers): Promise<Locale | undefined> {
+  if (!getSessionCookie(requestHeaders)) return undefined;
+  try {
+    // Loaded lazily so this module stays free of the database until a session cookie is present.
+    const { getSession } = await import('../lib/auth.ts');
+    const locale = (await getSession())?.user.locale;
+    return isLocale(locale) ? locale : undefined;
+  } catch (error) {
+    logger.warn({ err: error }, 'i18n: could not read the user locale');
+    return undefined;
+  }
 }
 
-/** Locale order: `NEXT_LOCALE` cookie > user setting > `Accept-Language` > `en`. */
+/** Locale order: user setting > `NEXT_LOCALE` cookie > `Accept-Language` > `en`. */
 export async function resolveLocale(): Promise<Locale> {
+  const requestHeaders = await headers();
+  const saved = await userLocale(requestHeaders);
+  if (saved) return saved;
   const cookie = (await cookies()).get(LOCALE_COOKIE)?.value;
   if (isLocale(cookie)) return cookie;
-  const saved = await userLocale();
-  if (saved) return saved;
-  return negotiateLocale(undefined, (await headers()).get('accept-language'));
+  return negotiateLocale(undefined, requestHeaders.get('accept-language'));
 }
 
 /** Development shows missing keys; production renders English and reports to the logger. */

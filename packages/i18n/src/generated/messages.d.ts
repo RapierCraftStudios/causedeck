@@ -691,6 +691,89 @@ export type Messages = {
         body: string;
       };
     };
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    comingSoon: string;
+    permissionDenied: string;
+    error: {
+      title: string;
+      retry: string;
+    };
+    plan: {
+      title: string;
+      perMonth: string;
+      perYear: string;
+      seatBreakdown: string;
+      renewal: string;
+      noRenewal: string;
+      endsOn: string;
+      gstNote: string;
+      change: string;
+    };
+    status: {
+      active: string;
+      pending: string;
+      pastDue: string;
+      grace: string;
+      paused: string;
+      cancelsOn: string;
+      cancelled: string;
+    };
+    seats: {
+      title: string;
+      members: string;
+      clerks: string;
+      membersLabel: string;
+      clerksLabel: string;
+      hint: string;
+    };
+    paymentMethod: {
+      title: string;
+      active: string;
+      pending: string;
+      failed: string;
+      activeHint: string;
+      pendingHint: string;
+      failedHint: string;
+      update: string;
+    };
+    banner: {
+      graceTitle: string;
+      grace: string;
+      paymentFailed: string;
+      cancels: string;
+    };
+    invoices: {
+      title: string;
+      caption: string;
+      columns: {
+        number: string;
+        date: string;
+        amount: string;
+        status: string;
+        pdf: string;
+      };
+      status: {
+        issued: string;
+        paid: string;
+        void: string;
+      };
+      download: string;
+      preparing: string;
+      empty: string;
+    };
+    junior: {
+      title: string;
+      body: string;
+      advocate: string;
+      advocateBody: string;
+      chamber: string;
+      chamberBody: string;
+      from: string;
+      upgrade: string;
+    };
   };
   error: {
     title: string;

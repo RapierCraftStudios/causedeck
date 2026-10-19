@@ -59,6 +59,14 @@ shared set: `NOT_FOUND`, `FORBIDDEN`, `CONFLICT`, `VALIDATION` and `RATE_LIMITED
 | Offboarding | `removeMember` (owner-only; last owner is a `CONFLICT`). It runs `offboardMember`: reassign open work, delete sessions active in this workspace, mark `removed`, write an audit event. `countOpenWork` tells the UI beforehand whether a reassignment is required |
 | Seats | `countBillableSeats` (active members by role, clerks counted separately) and the `entitlements.assertCanAddSeat` gate (permissive by default) |
 
+Under row-level security (#19, [tenancy.md](tenancy.md)) the functions that run before a workspace
+is selected scope themselves: `listMemberships`, `listWorkspacesForUser` and `memberRole` open a
+`withUser` scope (only the user's own memberships are visible); `createWorkspace` chooses the id and
+writes inside `withWorkspace(newId)`; slug generation, rename checks and `resolveSlug(db, slug,
+userId)` use SECURITY DEFINER lookups that return only slugs, ids and booleans; `acceptInvitation`
+and `previewInvitation` find the workspace by token hash the same way, then work inside its scope.
+Every other function expects the caller's workspace-scoped transaction (`ctx.tx`).
+
 Invitation tokens are 32 random bytes (base64url). Only their SHA-256 is stored. They are valid for
 7 days and are single-use. Invite and accept are rate limited (20 an hour per actor). Neither
 reveals whether an email already has an account.
@@ -131,7 +139,7 @@ Tests:
 
 | Issue | Seam | Today |
 |---|---|---|
-| #19 RLS | `withWorkspace(db, { workspaceId, userId }, fn)` sets `app.workspace_id` and `app.user_id` for one transaction. Handlers and page loads use `ctx.tx` / that transaction only | The settings are informational until #19 turns RLS on. No caller changes then |
+| #19 RLS | `withWorkspace(db, { workspaceId, userId }, fn)` sets `app.workspace_id` and `app.user_id` for one transaction. Handlers and page loads use `ctx.tx` / that transaction only | FORCE RLS is on (`0005_rls_baseline`); a query outside a scope sees no tenant rows. The cross-tenant suite and CI gate are #19 part 2 |
 | #20 `can()` | `INVITABLE_ROLES` in `invitations.ts`, owner-only checks in `members.ts`, the local `can()` in `apps/web/lib/workspace-context.ts` and `INVITABLE` in `role-select.tsx` | Replace them with the central policy (including the per-workspace "advocates may invite" setting) |
 | #23 email | `Mailer` (`@causedeck/auth/mailer`) with template `workspace.invitation` | Console/Mailpit transports. #23 adds the SES transport and the real template. The invite dialog's optional note is collected but not yet sent, because the template has no field for it |
 | #25 settings | The settings shell and its section navigation (the Settings nav item opens the `settings` index placeholder) | The members page is reachable by URL until #25 links it from the settings sections |

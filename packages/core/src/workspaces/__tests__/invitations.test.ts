@@ -10,22 +10,19 @@ import {
 } from '@causedeck/auth/mailer';
 import { AUTH_EMAIL_KEYS } from '@causedeck/auth/messages';
 import { schema, type Transaction } from '@causedeck/db';
-import { withTestDb } from '@causedeck/db/testing';
+import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import * as core from '../index.ts';
 import {
   ACCEPT_RATE_LIMIT,
   acceptInvitation,
   createWorkspace,
   INVITATION_TTL_MS,
   InvitationError,
-  inviteMember,
   memberRole,
   previewInvitation,
-  reissueInvitation,
-  removeMember,
-  revokeInvitation,
   setEntitlements,
   WorkspaceError,
   type InvitationErrorReason,
@@ -33,6 +30,18 @@ import {
 } from '../index.ts';
 
 const APP_URL = 'http://localhost:3000';
+
+// Workspace-scoped operations run inside the workspace's scope, as the members actions call them
+// (`ctx.tx` from `withWorkspace`). Accept and preview stay unscoped: the invitee has no workspace yet.
+function scoped<R extends { workspaceId: string }, T>(
+  fn: (db: Transaction, request: R) => Promise<T>,
+): (tx: Transaction, request: R) => Promise<T> {
+  return (tx, request) => inWorkspace(tx, request.workspaceId, (s) => fn(s, request));
+}
+const inviteMember = scoped(core.inviteMember);
+const reissueInvitation = scoped(core.reissueInvitation);
+const revokeInvitation = scoped(core.revokeInvitation);
+const removeMember = scoped(core.removeMember);
 
 interface RecordingMailer extends Mailer {
   sent: AuthEmail[];
@@ -64,10 +73,12 @@ async function addMember(
   role: WorkspaceRole,
 ): Promise<{ userId: string; memberId: string }> {
   const userId = await newUser(tx);
-  const [row] = await tx
-    .insert(schema.member)
-    .values({ organizationId: workspaceId, userId, role })
-    .returning({ id: schema.member.id });
+  const [row] = await inWorkspace(tx, workspaceId, (s) =>
+    s
+      .insert(schema.member)
+      .values({ organizationId: workspaceId, userId, role })
+      .returning({ id: schema.member.id }),
+  );
   if (!row) throw new Error('member insert failed');
   return { userId, memberId: row.id };
 }
@@ -81,8 +92,10 @@ async function setup(tx: Transaction) {
   return { ownerId, workspaceId: workspace.id };
 }
 
-async function invitationRow(tx: Transaction, id: string) {
-  const [row] = await tx.select().from(schema.invitation).where(eq(schema.invitation.id, id));
+async function invitationRow(tx: Transaction, workspaceId: string, id: string) {
+  const [row] = await inWorkspace(tx, workspaceId, (s) =>
+    s.select().from(schema.invitation).where(eq(schema.invitation.id, id)),
+  );
   if (!row) throw new Error('invitation not found');
   return row;
 }
@@ -129,7 +142,7 @@ describe('inviteMember', () => {
       });
 
       expect(Buffer.from(token, 'base64url')).toHaveLength(32);
-      const row = await invitationRow(tx, invitation.id);
+      const row = await invitationRow(tx, workspaceId, invitation.id);
       expect(row.tokenHash).toBe(createHash('sha256').update(token).digest('hex'));
       expect(row.tokenHash).not.toContain(token);
       expect(row.email).toBe('new.junior@example.test');
@@ -219,7 +232,7 @@ describe('inviteMember', () => {
 
       expect(second.invitation.id).toBe(first.invitation.id);
       expect(second.token).not.toBe(first.token);
-      expect((await invitationRow(tx, first.invitation.id)).role).toBe('clerk');
+      expect((await invitationRow(tx, workspaceId, first.invitation.id)).role).toBe('clerk');
 
       const userId = await newUser(tx, 'again@example.test');
       await expectReason(acceptInvitation(tx, { userId, token: first.token }), 'INVALID');
@@ -319,7 +332,7 @@ describe('reissueInvitation and revokeInvitation', () => {
         actorUserId: ownerId,
         invitationId: first.invitation.id,
       });
-      const row = await invitationRow(tx, first.invitation.id);
+      const row = await invitationRow(tx, workspaceId, first.invitation.id);
       expect(row.revokedAt).not.toBeNull();
       expect(row.status).toBe('canceled');
 
@@ -354,7 +367,7 @@ describe('acceptInvitation', () => {
       const accepted = await acceptInvitation(tx, { userId, token });
       expect(accepted).toMatchObject({ workspaceId, role: 'clerk' });
       expect(await memberRole(tx, userId, workspaceId)).toBe('clerk');
-      const row = await invitationRow(tx, invitation.id);
+      const row = await invitationRow(tx, workspaceId, invitation.id);
       expect(row.acceptedAt).not.toBeNull();
       expect(row.status).toBe('accepted');
 
@@ -442,10 +455,12 @@ describe('previewInvitation', () => {
   it('reports each state with the same checks as accept, without writing', async () => {
     await withTestDb(async (tx) => {
       const { ownerId, workspaceId } = await setup(tx);
-      const [workspace] = await tx
-        .select({ name: schema.organization.name, slug: schema.organization.slug })
-        .from(schema.organization)
-        .where(eq(schema.organization.id, workspaceId));
+      const [workspace] = await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .select({ name: schema.organization.name, slug: schema.organization.slug })
+          .from(schema.organization)
+          .where(eq(schema.organization.id, workspaceId)),
+      );
       const email = `${randomUUID()}@example.test`;
       const now = new Date('2026-10-19T10:00:00Z');
       const { token, invitation } = await inviteMember(tx, {
@@ -482,11 +497,11 @@ describe('previewInvitation', () => {
       expect(JSON.stringify(mismatch)).not.toContain(email);
 
       // Previewing never writes or spends the accept limit.
-      const before = await invitationRow(tx, invitation.id);
+      const before = await invitationRow(tx, workspaceId, invitation.id);
       for (let i = 0; i < ACCEPT_RATE_LIMIT.max + 2; i++) {
         await previewInvitation(tx, { userId: invitee, token, now });
       }
-      expect(await invitationRow(tx, invitation.id)).toEqual(before);
+      expect(await invitationRow(tx, workspaceId, invitation.id)).toEqual(before);
 
       const accepted = await acceptInvitation(tx, { userId: invitee, token, now });
       expect(accepted.workspaceSlug).toBe(workspace?.slug);
@@ -527,10 +542,12 @@ describe('previewInvitation', () => {
         (await previewInvitation(tx, { userId: existing.userId, token: again.token })).state,
       ).toBe('ALREADY_MEMBER');
 
-      await tx
-        .update(schema.organization)
-        .set({ deletedAt: new Date() })
-        .where(eq(schema.organization.id, workspaceId));
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ deletedAt: new Date() })
+          .where(eq(schema.organization.id, workspaceId)),
+      );
       expect(await previewInvitation(tx, { userId: existing.userId, token: again.token })).toEqual({
         state: 'INVALID',
       });

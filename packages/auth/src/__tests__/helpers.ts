@@ -3,6 +3,7 @@
 import { randomInt, randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
+import type { Database } from '@causedeck/db';
 import { testAppDb } from '@causedeck/db/testing';
 
 import type { AuthEmail, AuthLogger, Mailer } from '../mailer';
@@ -49,11 +50,18 @@ export function capturingLogger(): CapturingLogger {
 }
 
 export function makeAuth(
-  options: { env?: Partial<AuthEnv>; mailer?: RecordingMailer; logger?: AuthLogger } = {},
+  options: {
+    env?: Partial<AuthEnv>;
+    mailer?: RecordingMailer;
+    logger?: AuthLogger;
+    /** Defaults to the shared app-role client. */
+    db?: Database;
+  } = {},
 ) {
   const mailer = options.mailer ?? recordingMailer();
   const logger = options.logger ?? capturingLogger();
-  const auth = createAuth({ db: testAppDb(), env: testEnv(options.env), mailer, logger });
+  const db = options.db ?? testAppDb();
+  const auth = createAuth({ db, env: testEnv(options.env), mailer, logger });
   return { auth, mailer, logger };
 }
 

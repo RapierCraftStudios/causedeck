@@ -57,6 +57,29 @@ export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
   ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
 );
 
+/**
+ * `withoutWorkspace` (#19) drops the tenancy scope for allow-listed global tables. Only the db
+ * package, the admin app and migrations may import it; everything else works inside
+ * `withWorkspace` / `withUser`. A separate rule from core `no-restricted-imports`, whose per-glob
+ * blocks below replace one another.
+ */
+const WITHOUT_WORKSPACE_MESSAGE =
+  '`withoutWorkspace` is for packages/db, apps/admin and migrations only (docs/engineering/tenancy.md). Use `withWorkspace` or `withUser`.';
+export const withoutWorkspaceImportBan = {
+  paths: ['@causedeck/db', '@causedeck/db/rls'].map((name) => ({
+    name,
+    importNames: ['withoutWorkspace'],
+    message: WITHOUT_WORKSPACE_MESSAGE,
+  })),
+};
+
+/** Where `withoutWorkspace` may be imported. */
+export const WITHOUT_WORKSPACE_ALLOWED_GLOBS = [
+  '**/packages/db/**',
+  '**/apps/admin/**',
+  '**/migrations/**',
+];
+
 /** Files treated as client modules (browser bundles). */
 export const CLIENT_FILE_GLOBS = [
   '**/*.client.{ts,tsx}',
@@ -119,6 +142,7 @@ export const base = tseslint.config(
       '@typescript-eslint/no-unsafe-unary-minus': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-restricted-imports': ['error', { patterns: deepImportPatterns }],
+      '@typescript-eslint/no-restricted-imports': ['error', withoutWorkspaceImportBan],
       // Read configuration through `@causedeck/config/env` (spike §3.2), never `process.env`.
       'no-process-env': 'error',
       'no-restricted-syntax': ['error', ...loggerContentRestrictions],
@@ -173,6 +197,10 @@ export const base = tseslint.config(
   {
     files: PROCESS_ENV_ALLOWED_GLOBS,
     rules: { 'no-process-env': 'off' },
+  },
+  {
+    files: WITHOUT_WORKSPACE_ALLOWED_GLOBS,
+    rules: { '@typescript-eslint/no-restricted-imports': 'off' },
   },
   {
     // Plain JS config files and root-level TS config files are not part of any tsconfig project.

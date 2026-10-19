@@ -4,6 +4,7 @@
 // `.test` TLD, so nothing here can reach a real person.
 import { createHash } from 'node:crypto';
 
+import { withWorkspace } from '../rls.ts';
 import { invitation, member, organization, user, WORKSPACE_ROLES } from '../schema/auth.ts';
 
 import { registerSeed, type SeedDb } from './index.ts';
@@ -213,19 +214,13 @@ function invitationRow(seeded: E2eInvitation, at: Date) {
   }
 }
 
+/**
+ * Users are global; each workspace's organization, memberships and invitations are written inside
+ * that workspace's scope (`withWorkspace`), because FORCE row-level security (#19) rejects tenant
+ * rows written with no workspace pinned, as the app role and the owner alike.
+ */
 export async function seedE2e(db: SeedDb): Promise<void> {
   const at = E2E_SEED_TIME;
-  await db
-    .insert(organization)
-    .values(
-      Object.values(E2E_WORKSPACES).map((w) => ({
-        id: w.id,
-        name: w.name,
-        slug: w.slug,
-        createdAt: at,
-      })),
-    )
-    .onConflictDoNothing();
   await db
     .insert(user)
     .values(
@@ -240,57 +235,63 @@ export async function seedE2e(db: SeedDb): Promise<void> {
       })),
     )
     .onConflictDoNothing();
-  await db
-    .insert(member)
-    .values(
-      E2E_WORKSPACE_SLUGS.flatMap((slug, w) =>
-        WORKSPACE_ROLES.map((role, r) => ({
-          id: memberId(w, r),
-          organizationId: E2E_WORKSPACES[slug].id,
-          userId: userId(w, r),
-          role,
-          joinedAt: at,
-          createdAt: at,
-        })),
-      ),
-    )
-    .onConflictDoNothing();
-  await db
-    .insert(organization)
-    .values({
+
+  const owner = E2E_DELETED_WORKSPACE.owner;
+  const workspaces: (typeof organization.$inferInsert)[] = [
+    ...Object.values(E2E_WORKSPACES).map((w) => ({
+      id: w.id,
+      name: w.name,
+      slug: w.slug,
+      createdAt: at,
+    })),
+    {
       id: E2E_DELETED_WORKSPACE.id,
       name: E2E_DELETED_WORKSPACE.name,
       slug: E2E_DELETED_WORKSPACE.slug,
       createdAt: at,
       deletedAt: at,
-    })
-    .onConflictDoNothing();
-  const owner = E2E_DELETED_WORKSPACE.owner;
-  await db
-    .insert(member)
-    .values([
-      ...E2E_EXTRA_MEMBERSHIPS.map((m) => ({
-        id: m.id,
-        organizationId: E2E_WORKSPACES[m.workspace].id,
-        userId: e2eUser(m.user.role, m.user.workspace).id,
-        role: m.role,
+    },
+  ];
+  const members: (typeof member.$inferInsert)[] = [
+    ...E2E_WORKSPACE_SLUGS.flatMap((slug, w) =>
+      WORKSPACE_ROLES.map((role, r) => ({
+        id: memberId(w, r),
+        organizationId: E2E_WORKSPACES[slug].id,
+        userId: userId(w, r),
+        role,
         joinedAt: at,
         createdAt: at,
       })),
-      {
-        id: E2E_DELETED_WORKSPACE.memberId,
-        organizationId: E2E_DELETED_WORKSPACE.id,
-        userId: e2eUser(owner.role, owner.workspace).id,
-        role: owner.role,
-        joinedAt: at,
-        createdAt: at,
-      },
-    ])
-    .onConflictDoNothing();
-  await db
-    .insert(invitation)
-    .values(Object.values(E2E_INVITATIONS).map((seeded) => invitationRow(seeded, at)))
-    .onConflictDoNothing();
+    ),
+    ...E2E_EXTRA_MEMBERSHIPS.map((m) => ({
+      id: m.id,
+      organizationId: E2E_WORKSPACES[m.workspace].id,
+      userId: e2eUser(m.user.role, m.user.workspace).id,
+      role: m.role,
+      joinedAt: at,
+      createdAt: at,
+    })),
+    {
+      id: E2E_DELETED_WORKSPACE.memberId,
+      organizationId: E2E_DELETED_WORKSPACE.id,
+      userId: e2eUser(owner.role, owner.workspace).id,
+      role: owner.role,
+      joinedAt: at,
+      createdAt: at,
+    },
+  ];
+  const invitations = Object.values(E2E_INVITATIONS).map((seeded) => invitationRow(seeded, at));
+
+  for (const workspace of workspaces) {
+    const workspaceId = workspace.id ?? '';
+    await withWorkspace(db, { workspaceId }, async (tx) => {
+      await tx.insert(organization).values(workspace).onConflictDoNothing();
+      const own = members.filter((m) => m.organizationId === workspaceId);
+      if (own.length > 0) await tx.insert(member).values(own).onConflictDoNothing();
+      const invited = invitations.filter((i) => i.organizationId === workspaceId);
+      if (invited.length > 0) await tx.insert(invitation).values(invited).onConflictDoNothing();
+    });
+  }
 }
 
 registerSeed({ name: 'e2e-workspaces', profiles: ['e2e'], order: 10, run: seedE2e });

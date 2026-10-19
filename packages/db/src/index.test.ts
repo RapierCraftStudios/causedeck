@@ -19,6 +19,10 @@ describe('@causedeck/db root entry point', () => {
       'EMBEDDING_DIMENSIONS',
       'schema',
       'withWorkspace',
+      'withUser',
+      'TenancyError',
+      'tenantTable',
+      'tenantPolicy',
     ]) {
       expect(root, name).toHaveProperty(name);
     }

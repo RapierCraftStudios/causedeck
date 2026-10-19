@@ -2,9 +2,9 @@
 
 `packages/db` owns the Postgres 17 + pgvector schema (spike §1, §4): Drizzle ORM over the
 `postgres` (postgres-js) driver, drizzle-kit migrations, the column conventions below, the
-Testcontainers test harness and the seed registry. Row-level security and its policies arrive
-with #19; this package guarantees the role model and the `workspace_id` conventions they rely on,
-and a minimal `withWorkspace` (#15) that #19 hardens.
+Testcontainers test harness and the seed registry. Every tenant table is under FORCE row-level
+security (#19, `0005_rls_baseline`); see [tenancy.md](tenancy.md) for the policies, the scopes
+(`withWorkspace`, `withUser`, `withoutWorkspace`) and how to add a tenant table.
 
 ```sh
 pnpm stack:up      # local Postgres from infra/docker (#5)
@@ -13,19 +13,20 @@ pnpm db:generate   # schema diff -> new SQL migration in packages/db/migrations
 pnpm db:check      # conventions + migration lint + drizzle-kit snapshot check (also runs in CI)
 pnpm db:studio     # Drizzle Studio against DATABASE_URL_OWNER
 pnpm db:seed       # registered seeders, profile demo (`-- --profile test` for test)
+pnpm db:check-rls  # live catalog: RLS on every tenant table, no cross-workspace FKs (tenancy.md)
 ```
 
 ## Entry points
 
 | Import | What |
 |---|---|
-| `@causedeck/db` | `db`, `createDb`, `withWorkspace`, column helpers, `checkSchemaConventions`, `schema`, `EMBEDDING_DIMENSIONS` |
-| `@causedeck/db/rls` | `withWorkspace(db, { workspaceId, userId? }, fn)`: a transaction with `app.workspace_id` / `app.user_id` set via `set_config(..., true)`; uuid-validated. Policies, nesting checks and `withoutWorkspace` come with #19 |
+| `@causedeck/db` | `db`, `createDb`, `withWorkspace`, `withUser`, `tenantTable`, `tenantPolicy`, column helpers, `checkSchemaConventions`, `schema`, `EMBEDDING_DIMENSIONS` |
+| `@causedeck/db/rls` | `withWorkspace(db, { workspaceId, userId? }, fn)` (throws `TENANCY_VIOLATION` when nested in another workspace), `withUser(db, { userId }, fn)` (pre-workspace flows) and `@internal withoutWorkspace` (global tables only, lint-restricted). Settings are `set_config(..., true)`; see [tenancy.md](tenancy.md) |
 | `@causedeck/db/client` | `db` (app role, connects on first use), `createDb({ url, role })`, `closeDb()`, `Database`, `Transaction` |
 | `@causedeck/db/columns` | `id()`, `timestamps()`, `workspaceId()`, `workspaceIndex()`, `provenance()`, `provenanceCheck()` and the two enums |
 | `@causedeck/db/schema` | every migrated table and enum, including `job_effect` (job idempotency, see [jobs.md](jobs.md)) |
 | `@causedeck/db/vector` | `EMBEDDING_DIMENSIONS` (1024 until an ADR picks the embedding model), `embedding()` |
-| `@causedeck/db/testing` | `withTestDb()`, `truncateAll()`, `testAppDb()`, `createScratchDatabase()` |
+| `@causedeck/db/testing` | `withTestDb()`, `inWorkspace()` (tenant fixtures under RLS), `truncateAll()`, `testAppDb()`, `createScratchDatabase()` |
 | `@causedeck/db/testing/global-setup` | Vitest `globalSetup` that starts the test container |
 | `@causedeck/db/seed` | `registerSeed()`, `seed(db, { profile })` |
 
@@ -72,8 +73,10 @@ for the owner, and a 20 s `idle_timeout`.
 - **Global tables** (not workspace-scoped: the Better Auth tables `user`, `session`, `account`,
   `verification`, `passkey`, `two_factor` and `rate_limit`, later the court layer) are listed in
   `GLOBAL_TABLES` in `packages/db/src/conventions.ts` and are exempt from both checks.
-  `organization` (the workspace, exported as `workspace`), `member` and `invitation` are tenant
-  roots, not global: their organization FK column is `workspace_id`, and RLS for them comes in #19.
+  `organization` (the workspace, exported as `workspace`) is the tenant root; `member` and
+  `invitation` are tenant tables whose organization FK column is `workspace_id`. Global tables have
+  no row-level security; every other table with `workspace_id` does ([tenancy.md](tenancy.md)).
+  New tenant tables use `tenantTable()` and get `tenantPolicy()` in the migration that creates them.
 - **Provenance on every fact:** `...provenance()` adds `source_type` (enum `manual | document |
   capture | adapter | ai | import | system`, not null), `source_ref text`, `anchor_id uuid`,
   `confidence numeric(4,3)` and `confirmation_state` (enum `proposed | confirmed | edited |

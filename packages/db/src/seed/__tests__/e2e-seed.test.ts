@@ -1,7 +1,9 @@
 import { Secret } from '@causedeck/config/env';
+import { sql } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createDb } from '../../client.ts';
+import { withWorkspace } from '../../rls.ts';
 import { runMigrations } from '../../migrate.ts';
 import { createScratchDatabase, testDatabaseUrls } from '../../testing/index.ts';
 import {
@@ -17,6 +19,11 @@ import {
 import { registeredSeeds, seed } from '../index.ts';
 
 const cleanups: (() => Promise<void>)[] = [];
+
+const SEEDED_WORKSPACE_IDS = [
+  ...Object.values(E2E_WORKSPACES).map((w) => w.id),
+  E2E_DELETED_WORKSPACE.id,
+];
 afterEach(async () => {
   for (const cleanup of cleanups.splice(0).reverse()) await cleanup();
 });
@@ -31,10 +38,22 @@ async function seedAndDump(name: string, times = 1): Promise<Record<string, stri
     for (let i = 0; i < times; i++) await seed(db, { profile: 'e2e' });
     const dump: Record<string, string> = {};
     for (const table of ['organization', 'user', 'member', 'invitation']) {
-      const rows = await db.$client.unsafe<{ row: string }[]>(
-        `select row_to_json(t)::text as row from "${table}" t order by id`,
-      );
-      dump[table] = rows.map((r) => r.row).join('\n');
+      // Tenant rows are only visible inside their workspace (FORCE RLS, #19): read each one.
+      const rows: { id: string; row: string }[] = [];
+      for (const workspaceId of SEEDED_WORKSPACE_IDS) {
+        rows.push(
+          ...(await withWorkspace(db, { workspaceId }, (tx) =>
+            tx.execute<{ id: string; row: string }>(
+              sql.raw(`select id::text, row_to_json(t)::text as row from "${table}" t`),
+            ),
+          )),
+        );
+      }
+      const unique = new Map(rows.map((r) => [r.id, r.row]));
+      dump[table] = [...unique.keys()]
+        .sort()
+        .map((id) => unique.get(id))
+        .join('\n');
     }
     return dump;
   } finally {

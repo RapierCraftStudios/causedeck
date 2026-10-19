@@ -7,6 +7,7 @@ import { inject } from 'vitest';
 
 import { createDb, type Database, type Transaction } from '../client.ts';
 import { createOwnerDb } from '../owner.ts';
+import { withWorkspace } from '../rls.ts';
 import type { TestDatabaseUrls } from './container.ts';
 // Brings in the `ProvidedContext` augmentation for `inject()`.
 import type {} from './global-setup.ts';
@@ -49,6 +50,21 @@ export async function withTestDb<T>(fn: (tx: Transaction) => Promise<T>): Promis
   }
   if (result === undefined) throw new Error('withTestDb: transaction ended without a result');
   return result.value;
+}
+
+/**
+ * Fixtures under FORCE row-level security (#19): run `fn` on a savepoint of the test transaction
+ * scoped to `workspaceId` (and `userId`), so tenant rows can be inserted and read. The outer
+ * transaction's scope is restored afterwards. Owner sessions do not help here: FORCE RLS binds the
+ * owner too, and it has no BYPASSRLS.
+ */
+export function inWorkspace<T>(
+  tx: Transaction,
+  workspaceId: string,
+  fn: (scoped: Transaction) => Promise<T>,
+  userId?: string,
+): Promise<T> {
+  return withWorkspace(tx, userId === undefined ? { workspaceId } : { workspaceId, userId }, fn);
 }
 
 /**

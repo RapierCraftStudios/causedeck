@@ -8,6 +8,7 @@
     "./env": "./src/env/index.ts",
     "./env/client": "./src/env/client.ts",
     "./tsconfig/*.json": "./tsconfig/*.json",
+    "./eslint/authorization": "./eslint/authorization.js",
     "./eslint/base": "./eslint/base.js",
     "./eslint/boundaries": "./eslint/boundaries.js",
     "./eslint/next": "./eslint/next.js",

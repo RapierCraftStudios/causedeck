@@ -14,6 +14,7 @@ const BILLING_PROCESS_EVENT_TEST =
   'packages/core/src/jobs/definitions/billing-process-event.test.ts';
 const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
 const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
+const USAGE_BUDGET_TEST = 'packages/core/src/usage/__tests__/budget.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -195,6 +196,42 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
   },
+  // usage: AI budget (#220)
+  reserve: {
+    test: USAGE_BUDGET_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId',
+  },
+  commit: {
+    test: USAGE_BUDGET_TEST,
+    kind: 'denies',
+    note: 'rejects a reservation from another workspace; writes inside withWorkspace',
+  },
+  release: {
+    test: USAGE_BUDGET_TEST,
+    kind: 'denies',
+    note: 'rejects a reservation from another workspace; deletes inside withWorkspace',
+  },
+  reapExpiredReservations: {
+    test: USAGE_BUDGET_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId',
+  },
+  getAiBudget: {
+    test: USAGE_BUDGET_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId',
+  },
+  activeOverride: {
+    test: USAGE_BUDGET_TEST,
+    kind: 'caller-checked',
+    note: 'reads on the caller transaction, which must already be pinned to the workspace',
+  },
+  setBudgetOverride: {
+    test: USAGE_BUDGET_TEST,
+    kind: 'self-scoped',
+    note: 'staff only; writes and audits inside withWorkspace on the target workspace',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -243,8 +280,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   hashUserAgent: 'pure',
   truncateIpForDisplay: 'pure',
   // audit: security event emitters (#228)
-  createSecurityEventRecorder: 'factory; its events are account-level record() writes (no workspace data)',
-  flagChangeAuditSink: 'flag audit sink implementation; writes through recordFlagChanged in the caller transaction',
+  createSecurityEventRecorder:
+    'factory; its events are account-level record() writes (no workspace data)',
+  flagChangeAuditSink:
+    'flag audit sink implementation; writes through recordFlagChanged in the caller transaction',
   hashEmail: 'pure',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
@@ -303,6 +342,13 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   periodStart: 'pure',
   nextPeriodStart: 'pure',
   incrementSql: 'pure (SQL builder; increment runs it inside withWorkspace)',
+  // usage: AI budget (#220)
+  AI_BUDGET_KEY: 'constant',
+  RESERVATION_TTL_MS: 'constant',
+  BudgetError: 'error class',
+  budgetLockSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
+  budgetReadSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
+  reservationInsertSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;

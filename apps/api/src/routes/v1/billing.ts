@@ -1,7 +1,7 @@
 // `GET /v1/billing/plans` and `GET /v1/billing/subscription` (#204). Plans are the active
 // catalogue (not workspace data). The subscription is the workspace's current one (the live row,
 // else the most recent ended one), read under the workspace scope; provider ids, GSTIN and the
-// billing email are never returned.
+// billing email are never returned. Reading the subscription needs `billing.read` (owners, #235).
 import { PLAN_CATALOGUE } from '@causedeck/billing/plans';
 import { loadSubscription } from '@causedeck/core/billing';
 import type { Database } from '@causedeck/db';
@@ -12,8 +12,10 @@ import {
 } from '@causedeck/validators/api';
 
 import { createRouter, defineRoute, problemResponses, type AppRouter } from '../../lib/openapi.ts';
+import { authorize } from '../../middleware/authorize.ts';
 import { requireWorkspace } from '../../middleware/workspace.ts';
 
+// authz: public — authenticated (`defineRoute`); the plan catalogue, not workspace data.
 export const listBillingPlansRoute = defineRoute({
   method: 'get',
   path: '/billing/plans',
@@ -36,7 +38,7 @@ export function billingSubscriptionRoute(db: Database) {
     operationId: 'getBillingSubscription',
     tags: ['Billing'],
     summary: "The workspace's current subscription (x-workspace-id header)",
-    middleware: [requireWorkspace(db)],
+    middleware: [requireWorkspace(db), authorize('billing.read')],
     responses: {
       200: {
         description: 'The current subscription, or null on the free plan',

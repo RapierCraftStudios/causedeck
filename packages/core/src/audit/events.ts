@@ -24,7 +24,10 @@ export const AUDIT_ACTIONS = {
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },
   'auth.passkey_added': { security: true, description: 'A passkey was registered' },
   'auth.passkey_removed': { security: true, description: 'A passkey was removed' },
-  'auth.two_factor_enabled': { security: true, description: 'Two-factor authentication was enabled' },
+  'auth.two_factor_enabled': {
+    security: true,
+    description: 'Two-factor authentication was enabled',
+  },
   'auth.two_factor_disabled': {
     security: true,
     description: 'Two-factor authentication was disabled',
@@ -34,6 +37,14 @@ export const AUDIT_ACTIONS = {
   'support.session_started': { security: true, description: 'A support session started' },
   'support.session_ended': { security: true, description: 'A support session ended' },
   'access.denied': { security: true, description: 'An action was denied' },
+  'usage.budget_override_set': {
+    security: true,
+    description: 'A staff member set a workspace AI budget override',
+  },
+  'audit.retention_purged': {
+    security: true,
+    description: 'Audit events older than the retention window were purged',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

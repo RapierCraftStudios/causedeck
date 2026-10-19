@@ -65,6 +65,8 @@ const accept = safeAction(
   { getSession: requireSession },
 );
 
+// authz: public — the caller is not a member yet; `acceptInvitation` verifies the token and that
+// it was sent to the signed-in user's email.
 export async function acceptInvitationAction(raw: unknown): Promise<Result<AcceptOutcome>> {
   return accept(raw);
 }

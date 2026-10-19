@@ -1,0 +1,4 @@
+# Test-only VAPID key pair for the e2e harness and the push permission card test (#197).
+# Not used in any environment; follow-up: generate e2e VAPID keys at runtime instead of committing them.
+4dd55eb85f17d521fa3fdffe66823cdac2c151b9:apps/web/components/notifications/__tests__/push-permission-card.test.tsx:generic-api-key:16
+4dd55eb85f17d521fa3fdffe66823cdac2c151b9:e2e/support/server-pool.ts:generic-api-key:34

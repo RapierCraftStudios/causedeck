@@ -316,5 +316,147 @@
         "generic": "Could not create the workspace. Please try again."
       }
     }
+  },
+  "members": {
+    "metaTitle": "Members",
+    "title": "Members",
+    "description": "People in {workspace} and what they can do.",
+    "loading": "Loading members",
+    "you": "You",
+    "inviteButton": "Invite member",
+    "needsConnection": "Needs a connection",
+    "readOnly": {
+      "viewer": "You can view members but not change them.",
+      "member": "Only owners can change roles or remove members."
+    },
+    "empty": "It is just you for now. Invite juniors, clerks or co-counsel when you are ready.",
+    "error": {
+      "title": "Could not load members.",
+      "retry": "Try again"
+    },
+    "tableCaption": "Members of {workspace}",
+    "columns": {
+      "member": "Member",
+      "role": "Role",
+      "status": "Status",
+      "lastActive": "Last active",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "invited": "Invited"
+    },
+    "lastActive": {
+      "never": "Not yet"
+    },
+    "invitedOn": "Invited {date}",
+    "roles": {
+      "owner": "Owner",
+      "advocate": "Advocate",
+      "junior": "Junior",
+      "clerk": "Clerk",
+      "viewer": "Viewer"
+    },
+    "roleDescriptions": {
+      "owner": "Everything, including billing, members and deleting the workspace.",
+      "advocate": "Full practice access. Can invite juniors, clerks and viewers.",
+      "junior": "Works on assigned matters and shared chamber matters.",
+      "clerk": "Listings, tasks and documents. No strategy notes or matter memory.",
+      "viewer": "Can read, but not change anything."
+    },
+    "rolesPanel": {
+      "title": "Roles",
+      "description": "What each person can see and do in this workspace.",
+      "clerkNote": "Clerks never see strategy notes or matter memory, even on matters they work on."
+    },
+    "menu": {
+      "label": "Actions for {name}",
+      "changeRole": "Change role",
+      "transferOwnership": "Transfer ownership",
+      "resend": "Resend invitation",
+      "revoke": "Revoke",
+      "remove": "Remove from workspace"
+    },
+    "invite": {
+      "title": "Invite members",
+      "description": "They get an email with a link to join {workspace}. The link works for 7 days.",
+      "emailsLabel": "Email addresses",
+      "emailsHint": "Paste several addresses at once. Separate them with commas or spaces.",
+      "emailsPlaceholder": "name@example.com",
+      "removeEmail": "Remove {email}",
+      "invalidChip": "{email} is not a valid email address",
+      "roleLabel": "Role",
+      "noteLabel": "Note (optional)",
+      "noteHint": "A short line for the people you invite.",
+      "cancel": "Cancel",
+      "submit": "Send invitation",
+      "sending": "Sending",
+      "copyLink": "Copy link",
+      "linkCopied": "Invitation link copied",
+      "sent": "Invitation sent to {email}",
+      "resent": "Invitation sent again to {email}",
+      "revoked": "Invitation to {email} revoked",
+      "errors": {
+        "emailsRequired": "Add at least one email address.",
+        "invalidEmails": "Fix or remove the addresses marked as not valid.",
+        "tooMany": "Invite at most {max} people at a time.",
+        "forbidden": "You cannot invite {email} with this role.",
+        "rateLimited": "Too many invitations for now. Try {email} again later.",
+        "invalid": "{email} could not be invited. Check the address.",
+        "conflict": "{email} could not be invited: the workspace has no seat left for this role.",
+        "failed": "Could not invite {email}. Please try again."
+      }
+    },
+    "changeRole": {
+      "title": "Change role",
+      "description": "Choose what {name} can do in {workspace}.",
+      "label": "Role for {name}",
+      "ownerHint": "Making someone the owner is an ownership transfer. You confirm it on the next step.",
+      "cancel": "Cancel",
+      "submit": "Save role",
+      "saving": "Saving",
+      "continue": "Continue",
+      "success": "{name} is now {role}."
+    },
+    "transfer": {
+      "title": "Transfer ownership to {name}?",
+      "description": "{name} becomes the owner of {workspace}.",
+      "consequences": {
+        "newOwner": "{name} gets billing, member management and workspace deletion.",
+        "you": "You become an advocate and keep full practice access.",
+        "undo": "Only the new owner can transfer ownership back."
+      },
+      "confirmLabel": "Type {slug} to confirm",
+      "confirmMismatch": "Type the workspace address exactly as shown.",
+      "back": "Back",
+      "submit": "Transfer ownership",
+      "transferring": "Transferring",
+      "success": "{name} now owns {workspace}."
+    },
+    "remove": {
+      "title": "Remove {name} from {workspace}?",
+      "consequencesTitle": "What happens next",
+      "access": "{name} loses access to {workspace} straight away.",
+      "sessions": "Their sessions in this workspace end.",
+      "otherWorkspaces": "Their other workspaces are not affected.",
+      "openWork": "{count, plural, one {# open task or obligation moves} other {# open tasks and obligations move}} to the member you choose.",
+      "checking": "Checking for open tasks and obligations",
+      "reassignLabel": "Hand open work to",
+      "reassignPlaceholder": "Choose a member",
+      "reassignRequired": "Choose who takes over the open work.",
+      "cancel": "Cancel",
+      "submit": "Remove from workspace",
+      "removing": "Removing",
+      "success": "{name} was removed from {workspace}."
+    },
+    "errors": {
+      "lastOwner": "A workspace always needs an owner. Transfer ownership first.",
+      "forbidden": "You do not have permission to do this.",
+      "notFound": "This member or invitation is no longer here. Reload to see the latest list.",
+      "validation": "Some details need attention. Check and try again.",
+      "signedOut": "Your session ended. Sign in again to continue.",
+      "offline": "You are offline. Connect to make changes.",
+      "generic": "Something went wrong. Please try again."
+    }
   }
 }

@@ -8,7 +8,7 @@ import { AUTH_EMAIL_KEYS, type AuthLocale } from '@causedeck/auth/messages';
 import { consumeRateLimit } from '@causedeck/auth/rate-limit';
 import { schema, type Database, type Transaction } from '@causedeck/db';
 import { InviteInput } from '@causedeck/validators/workspace';
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 
 import { conflict, forbidden, invalid, InvitationError, notFound, rateLimited } from './errors.ts';
 import { entitlements } from './members.ts';
@@ -267,6 +267,35 @@ export async function revokeInvitation(
       .set({ revokedAt: request.now ?? new Date(), status: 'canceled' })
       .where(eq(invitation.id, pending.id));
   });
+}
+
+export interface PendingInvitation extends InvitationSummary {
+  invitedAt: Date;
+}
+
+/**
+ * Invitations of a live workspace still waiting for an answer (not accepted, revoked or expired),
+ * oldest first. The members page lists them next to members with `Resend` and `Revoke`.
+ */
+export async function listPendingInvitations(
+  db: Queryable,
+  workspaceId: string,
+  now: Date = new Date(),
+): Promise<PendingInvitation[]> {
+  return db
+    .select({ ...summaryColumns, invitedAt: invitation.createdAt })
+    .from(invitation)
+    .innerJoin(organization, eq(organization.id, invitation.organizationId))
+    .where(
+      and(
+        eq(invitation.organizationId, workspaceId),
+        isNull(organization.deletedAt),
+        isNull(invitation.acceptedAt),
+        isNull(invitation.revokedAt),
+        gt(invitation.expiresAt, now),
+      ),
+    )
+    .orderBy(asc(invitation.createdAt), asc(invitation.id));
 }
 
 export interface AcceptInvitationRequest {

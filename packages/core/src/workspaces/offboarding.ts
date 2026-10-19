@@ -82,6 +82,22 @@ export interface OffboardMemberRequest {
   reassignTo?: string | undefined;
 }
 
+/**
+ * Open items (tasks, obligations) `userId` holds in the workspace, across every registered
+ * provider. The members page asks before removal whether a reassignment is required.
+ */
+export async function countOpenWork(
+  tx: Queryable,
+  workspaceId: string,
+  userId: string,
+): Promise<number> {
+  let open = 0;
+  for (const provider of reassignProviders) {
+    open += await provider.countOpen(tx, workspaceId, userId);
+  }
+  return open;
+}
+
 async function reassignTarget(
   tx: Queryable,
   request: OffboardMemberRequest,
@@ -113,16 +129,12 @@ export async function offboardMember(tx: Queryable, request: OffboardMemberReque
   const { workspaceId, target } = request;
   const toUserId = await reassignTarget(tx, request);
 
-  const providers = [...reassignProviders];
-  let open = 0;
-  for (const provider of providers) {
-    open += await provider.countOpen(tx, workspaceId, target.userId);
-  }
+  const open = await countOpenWork(tx, workspaceId, target.userId);
   if (open > 0 && toUserId === null) {
     throw invalid('Choose a member to take over open tasks and obligations');
   }
   if (toUserId !== null) {
-    for (const provider of providers) {
+    for (const provider of reassignProviders) {
       await provider.reassign(tx, workspaceId, target.userId, toUserId);
     }
   }

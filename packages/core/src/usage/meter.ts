@@ -5,10 +5,12 @@
 // excluded.value`) is atomic under concurrency. Only
 // keys, numbers and ids are written, never customer content.
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
+import type { DeliveryJob } from '@causedeck/notifications';
 import { and, eq, sql, type SQL } from 'drizzle-orm';
 
 import { isUsageKey, USAGE_KEY_KINDS, type UsageKey } from './keys.ts';
 import { periodStart, usagePeriod, type UsagePeriod } from './period.ts';
+import type { UsageThresholds } from './thresholds.ts';
 
 const { usageCounter, usageEvent } = schema;
 
@@ -22,6 +24,10 @@ export interface UsageContext {
   workspaceId: string;
   /** Clock override (tests, jobs replaying a past event). */
   now?: () => Date;
+  /** Threshold config (#221): the courtesy grace `reserve` allows beyond the AI budget. */
+  thresholds?: Partial<UsageThresholds>;
+  /** Sends `notification.deliver`; when set, `commit` sends the 80% `usage.warning` (#221). */
+  enqueueDelivery?: (job: DeliveryJob) => Promise<unknown>;
 }
 
 export interface IncrementOptions {

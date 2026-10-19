@@ -14,7 +14,7 @@ export interface AuditActionSpec {
   description: string;
 }
 
-/** Every audit action. #229 (export) and #27 (support sessions) wire the call sites for theirs. */
+/** Every audit action. #27 (support sessions) wires the call sites for its actions. */
 export const AUDIT_ACTIONS = {
   'member.removed': { security: true, description: 'A member was removed from the workspace' },
   'member.role_changed': { security: true, description: "A member's role was changed" },
@@ -33,7 +33,6 @@ export const AUDIT_ACTIONS = {
     description: 'Two-factor authentication was disabled',
   },
   'auth.session_revoked': { security: true, description: 'A session was revoked' },
-  'audit.exported': { security: true, description: 'The audit log was exported' },
   'support.session_started': { security: true, description: 'A support session started' },
   'support.session_ended': { security: true, description: 'A support session ended' },
   'access.denied': { security: true, description: 'An action was denied' },
@@ -45,6 +44,8 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Audit events older than the retention window were purged',
   },
+  // Fail-closed: an export whose own audit event cannot be written is refused (#229).
+  'audit.exported': { security: true, description: 'The audit log was exported' },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

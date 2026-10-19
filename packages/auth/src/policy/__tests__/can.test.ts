@@ -85,6 +85,22 @@ describe('role rules', () => {
     });
   });
 
+  it('advocate reads the audit log by default, not when the workspace turns it off (#229)', () => {
+    expect(can(actor('advocate'), 'audit.read')).toEqual({ allow: true });
+    const off = { advocatesCanReadAudit: false };
+    expect(reasonOf(can(actor('advocate'), 'audit.read', undefined, off))).toBe('ROLE_DENIED');
+    expect(can(actor('owner'), 'audit.read', undefined, off)).toEqual({ allow: true });
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(reasonOf(can(actor(role), 'audit.read')), role).toBe('ROLE_DENIED');
+      expect(
+        reasonOf(can(actor(role), 'audit.read', undefined, { advocatesCanReadAudit: true })),
+        role,
+      ).toBe('ROLE_DENIED');
+    }
+    // The setting is scoped to audit.read only.
+    expect(can(actor('advocate'), 'member.invite', undefined, off)).toEqual({ allow: true });
+  });
+
   it('junior is limited to assigned, shared or own matters', () => {
     const junior = actor('junior', { assignedMatterIds: new Set(['matter-assigned']) });
     expect(can(junior, 'matter.read', matter({ matterId: 'matter-assigned' }))).toEqual({

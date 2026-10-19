@@ -176,6 +176,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'reads only the given workspace chain inside withWorkspace; RLS hides other workspaces',
   },
+  // audit read and export (#229): the audit.read gate denies non-members and A's id from B's scope
+  authorizeAuditRead: denies,
+  queryAudit: denies,
+  exportAudit: denies,
   recordAiCall: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -232,6 +236,22 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'staff only; writes and audits inside withWorkspace on the target workspace',
   },
+  // usage: thresholds, fair use and job fairness (#221)
+  checkAiBudgetThresholds: {
+    test: 'packages/core/src/usage/__tests__/thresholds.test.ts',
+    kind: 'self-scoped',
+    note: 'reads usage, budget and owners inside withWorkspace on ctx.workspaceId',
+  },
+  assertWithinFairUse: {
+    test: 'packages/core/src/usage/__tests__/fair-use.test.ts',
+    kind: 'self-scoped',
+    note: 'reads entitlements and usage inside withWorkspace on ctx.workspaceId',
+  },
+  getWorkspaceFairnessConcurrency: {
+    test: 'packages/core/src/usage/__tests__/fairness.test.ts',
+    kind: 'self-scoped',
+    note: 'reads entitlements inside withWorkspace on the given workspaceId',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -271,6 +291,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // audit: registry, guards and the default sink (#227)
   recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
   AUDIT_ACTIONS: 'constant (audit action registry)',
+  AUDIT_EXPORT_COLUMNS: 'constant (audit export column order)',
   AUDIT_BANNED_METADATA_KEYS: 'constant',
   isAuditAction: 'pure',
   isSecurityAction: 'pure',
@@ -349,6 +370,21 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   budgetLockSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
   budgetReadSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
   reservationInsertSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
+  // usage: thresholds, fair use and job fairness (#221)
+  DEFAULT_USAGE_THRESHOLDS: 'constant',
+  SOFT_LIMIT_BPS: 'constant',
+  HARD_LIMIT_BPS: 'constant',
+  USAGE_WARNING_EVENT: 'constant',
+  FAIR_USE_CAPS: 'constant',
+  FAIR_USE_KEYS: 'constant',
+  FAIRNESS_CONCURRENCY_BY_PLAN: 'constant',
+  FairUseError: 'error class',
+  resolveThresholds: 'pure',
+  hardLimitPaise: 'pure',
+  usageLevel: 'pure',
+  usageWarningCopy: 'pure',
+  usageWarningDedupeKey: 'pure',
+  fairnessConcurrencyForPlan: 'pure',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;

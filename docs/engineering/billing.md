@@ -164,6 +164,11 @@ naming test fails if 0017 creates any other table.
   is numbered or written. Outside production an unset supplier is the TEST supplier
   (`TEST SUPPLIER - NOT A VALID TAX INVOICE`, GSTIN `27AAAAA0000A1Z2`). The real legal entity data is
   a needs-human step.
+- **PDF** (#254): `renderInvoicePdf` (`@causedeck/billing/invoice/render-pdf`) renders an issued
+  invoice to a one-page A4 PDF with `@react-pdf/renderer`, using the layout in
+  `invoice/template.tsx`. Both are server-only subpath exports and never in the barrel. The
+  field-by-field GST mapping, numbering, rounding and the `needs CA review` items are in
+  [gst-invoicing.md](gst-invoicing.md).
 
 ## Test prices
 

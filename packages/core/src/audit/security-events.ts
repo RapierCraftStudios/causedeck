@@ -213,7 +213,7 @@ export interface ExportRunEvent {
   rowCount?: number;
 }
 
-/** `audit.exported` (wired by the export job, #229). */
+/** `audit.exported`; `exportAudit` (#229) records the same shape inline, ahead of its stream. */
 export function recordExportRun(ctx: AuditContext, event: ExportRunEvent): Promise<void> {
   const metadata: Record<string, AuditMetadataValue> = {
     format: event.format,

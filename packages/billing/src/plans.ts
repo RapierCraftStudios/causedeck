@@ -55,9 +55,15 @@ export const AI_BUDGET_PAISE_PER_SEAT = 17_500;
 /** Usage limits a plan grants. `null` means unlimited. Entitlements (#203) derive from these. */
 export interface PlanLimits {
   maxActiveMatters: number | null;
-  /** Fair-use caps. Capture minutes are a placeholder until #221 calibrates them. */
+  /**
+   * Fair-use caps, enforced by `assertWithinFairUse` (#221, `@causedeck/core/usage`). The Junior
+   * values are tunable placeholders, as plain data.
+   */
   fairUse: {
+    /** Hearing-capture transcription (STT) minutes per IST month. */
     captureMinutesPerMonth: number | null;
+    /** OCR pages per IST month. */
+    ocrPagesPerMonth: number | null;
     /** A flat monthly AI budget for the workspace; used when there is no per-seat budget. */
     aiBudgetPaisePerMonth: number | null;
     /** A monthly AI budget per seat, pooled across the workspace's seats; wins when set. */
@@ -85,6 +91,7 @@ const PAID: PlanLimits = {
   maxActiveMatters: null,
   fairUse: {
     captureMinutesPerMonth: null,
+    ocrPagesPerMonth: null,
     aiBudgetPaisePerMonth: null,
     aiBudgetPaisePerSeatPerMonth: AI_BUDGET_PAISE_PER_SEAT,
   },
@@ -113,6 +120,7 @@ export const PLAN_CATALOGUE: readonly Readonly<Plan>[] = Object.freeze([
       maxActiveMatters: 15,
       fairUse: {
         captureMinutesPerMonth: 300,
+        ocrPagesPerMonth: 200,
         aiBudgetPaisePerMonth: JUNIOR_AI_BUDGET_PAISE,
         aiBudgetPaisePerSeatPerMonth: null,
       },

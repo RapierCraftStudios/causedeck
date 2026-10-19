@@ -16,15 +16,17 @@ const SettingsIndex = placeholderPage('settings');
 
 /**
  * The index, a link to the notification preferences (#199), a link to usage for owners
- * (`billing.read`, #223) and the push permission card (#197), which moves to the notification panel
- * footer with #198. The card renders nothing when push is disabled (no VAPID keys) or unsupported.
+ * (`billing.read`, #223), a link to the audit log (#232) and the push permission card (#197),
+ * which moves to the notification panel footer with #198. The card renders nothing when push is
+ * disabled (no VAPID keys) or unsupported.
  */
 export default async function SettingsPage(props: WorkspacePageProps) {
   const index = await SettingsIndex(props);
-  const [{ slug }, t, tUsage] = await Promise.all([
+  const [{ slug }, t, tUsage, tAudit] = await Promise.all([
     props.params,
     getTranslations('notifications.preferences'),
     getTranslations('usage'),
+    getTranslations('audit.settingsLink'),
   ]);
   const context = await getWorkspaceContext(slug);
   const showUsage = context !== null && can(context.role, 'billing.read');
@@ -48,6 +50,13 @@ export default async function SettingsPage(props: WorkspacePageProps) {
           <span className="text-ink-muted text-xs">{tUsage('linkHint')}</span>
         </Link>
       ) : null}
+      <Link
+        href={`/w/${encodeURIComponent(slug)}/settings/audit`}
+        className="border-line hover:bg-surface-sunken focus-visible:outline-ring flex flex-col gap-0.5 rounded-lg border p-4 outline-offset-2 focus-visible:outline-2"
+      >
+        <span className="text-sm font-medium">{tAudit('title')}</span>
+        <span className="text-ink-muted text-xs">{tAudit('hint')}</span>
+      </Link>
       <PushPermissionCard vapidPublicKey={vapidPublicKey} />
     </div>
   );

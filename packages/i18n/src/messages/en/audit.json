@@ -1,0 +1,116 @@
+{
+  "audit": {
+    "metaTitle": "Activity",
+    "title": "Activity",
+    "description": "Security and administrative events in {workspace}.",
+    "tabs": {
+      "label": "Activity views",
+      "security": "Security and audit"
+    },
+    "tableLabel": "Security events",
+    "loading": "Loading activity",
+    "empty": "No security events in this period.",
+    "error": {
+      "title": "Could not load activity.",
+      "retry": "Try again"
+    },
+    "offline": "You are offline. Showing the first page as saved; filters and export are paused.",
+    "denied": "Only owners and advocates can view the audit log.",
+    "loadMore": "Load more",
+    "loadMoreFailed": "Could not load more events.",
+    "columns": {
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "target": "Target",
+      "outcome": "Outcome",
+      "ip": "IP"
+    },
+    "outcome": {
+      "success": "Allowed",
+      "denied": "Denied",
+      "error": "Failed"
+    },
+    "actor": {
+      "system": "CauseDeck",
+      "staff": "CauseDeck support",
+      "api": "An API client",
+      "unknown": "A former member"
+    },
+    "sentence": {
+      "memberRemoved": "{actor} removed {target} from the workspace",
+      "memberRoleChanged": "{actor} changed {target}'s role to {role}",
+      "memberRoleChangedNoRole": "{actor} changed {target}'s role",
+      "flagChanged": "{actor} changed the feature flag {target}",
+      "budgetOverride": "{actor} set an AI budget override",
+      "retentionPurged": "{actor} purged audit events past the retention window",
+      "exported": "{actor} exported the audit log",
+      "settingsViewed": "{actor} opened the workspace settings",
+      "generic": "{actor} recorded {action}"
+    },
+    "selected": "Selected: {event}",
+    "filters": {
+      "label": "Filters",
+      "date": "Date range",
+      "dateAll": "Any date",
+      "dateRange": "{from} to {to}",
+      "dateFrom": "From {from}",
+      "dateHint": "Pick the first and last day. Times are in IST.",
+      "actor": "Actor",
+      "actorAll": "Anyone",
+      "action": "Action",
+      "actionAll": "All actions",
+      "apply": "Apply",
+      "clear": "Clear filters",
+      "groups": {
+        "member": "Members",
+        "flag": "Feature flags",
+        "usage": "AI usage",
+        "audit": "Audit log",
+        "workspace": "Workspace"
+      }
+    },
+    "export": {
+      "button": "Export",
+      "title": "Export the audit log",
+      "description": "The file covers the selected range and is itself recorded in the audit log.",
+      "format": "Format",
+      "csv": "CSV",
+      "jsonl": "JSON Lines",
+      "bom": "Add a byte order mark for Excel",
+      "from": "From",
+      "to": "To",
+      "rangeInvalid": "The start date must be before the end date.",
+      "confirm": "Download",
+      "cancel": "Cancel",
+      "started": "Your download has started.",
+      "failed": "Could not start the export.",
+      "denied": "Only owners and advocates can export the audit log.",
+      "offline": "You are offline. Export needs a connection."
+    },
+    "drawer": {
+      "title": "Event details",
+      "who": "Who",
+      "when": "When",
+      "target": "Target",
+      "outcome": "Outcome",
+      "ip": "IP address",
+      "requestId": "Request id",
+      "eventId": "Event id",
+      "metadata": "Metadata",
+      "noMetadata": "No metadata recorded.",
+      "copyId": "Copy event id",
+      "copied": "Event id copied.",
+      "chain": "Chain",
+      "chainVerified": "Verified",
+      "chainUnverified": "Chain not yet verified",
+      "chainChecking": "Checking the chain",
+      "close": "Close"
+    },
+    "shortcuts": "J and K move between rows, Enter opens the details, E exports.",
+    "settingsLink": {
+      "title": "Audit log",
+      "hint": "Security and administrative events, with export."
+    }
+  }
+}

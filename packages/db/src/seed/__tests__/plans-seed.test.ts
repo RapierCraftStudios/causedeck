@@ -1,6 +1,6 @@
 // The `plans` seeder (#200): every profile, idempotent, rows equal to the billing catalogue.
-import { PLAN_CATALOGUE } from '@causedeck/billing/plans';
 import { Secret } from '@causedeck/config/env';
+import { PLAN_CATALOGUE } from '@causedeck/validators/plans';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createDb } from '../../client.ts';

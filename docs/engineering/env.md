@@ -100,8 +100,9 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `SARVAM_API_KEY` | secret | — | AI_PROVIDER=sarvam | #44 | #113 |
 | `STORAGE_PROVIDER` | enum(minio\|s3) | `minio` | never (defaults to minio) | #21 | — |
 | `S3_ENDPOINT` | url | `http://localhost:9000` (non-prod only) | STORAGE_PROVIDER=minio | #21 | — |
-| `S3_BUCKET` | string | `causedeck` (non-prod only) | always (dev default outside production) | #21 | — |
-| `S3_ACCESS_KEY` | string | `causedeck` (non-prod only) | always (dev default outside production) | #21 | #116 |
+| `S3_REGION` | string | `ap-south-1` | never (defaults to ap-south-1); India only unless `AWS_REGION_OVERRIDE_ACK` | #21 | — |
+| `S3_BUCKET` | string | `causedeck-dev` (non-prod only) | always (dev default outside production) | #21 | — |
+| `S3_ACCESS_KEY` | secret | dev placeholder (non-prod only) | always (dev default outside production) | #21 | #116 |
 | `S3_SECRET_KEY` | secret | dev placeholder (non-prod only) | always (dev default outside production) | #21 | #116 |
 | `BILLING_PROVIDER` | enum(mock\|razorpay) | `mock` | never (defaults to mock) | #28 | — |
 | `RAZORPAY_KEY_ID` | string | — | BILLING_PROVIDER=razorpay | #28 | #111 |

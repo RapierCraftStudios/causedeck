@@ -32,6 +32,14 @@ const MIGRATION = fileURLToPath(
   new URL('../../../migrations/0006_rls_baseline.sql', import.meta.url),
 );
 
+/** Tenant tables created after the baseline, with their policies in the same migration (#218). */
+const USAGE_TABLES = [
+  'usage_reservation',
+  'usage_event',
+  'budget_override',
+  'usage_period_summary',
+];
+
 const owner = createOwnerDb(new Secret(testDatabaseUrls().owner));
 const cleanups: (() => Promise<void> | void)[] = [];
 afterEach(async () => {
@@ -75,7 +83,7 @@ describe('row-level security catalog', () => {
         and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'workspace_id')
         and not (c.relname = any(${sql.raw(`array[${GLOBAL_TABLES.map((t) => `'${t}'`).join(', ')}]`)}))
       order by 1`);
-    // Baseline tables plus the tenant tables created after 0006 (#226, #194).
+    // Baseline tables plus the tenant tables created after 0006 (#226, #194, #218).
     expect(rows.map((r) => r.name)).toEqual(
       [
         ...BASELINE_TENANT_TABLES,
@@ -83,6 +91,7 @@ describe('row-level security catalog', () => {
         'ai_call',
         'notification',
         'notification_pref',
+        ...USAGE_TABLES,
       ].sort(),
     );
     for (const row of rows)

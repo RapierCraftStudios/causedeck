@@ -12,12 +12,15 @@
     "./mailer": "./src/mailer.ts",
     "./messages": "./src/messages.ts",
     "./rate-limit": "./src/rate-limit.ts",
-    "./dev-provider": "./src/dev-provider.ts"
+    "./dev-provider": "./src/dev-provider.ts",
+    "./policy": "./src/policy/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "docs:permissions": "tsx scripts/gen-permissions-doc.ts",
+    "docs:permissions:check": "tsx scripts/gen-permissions-doc.ts --check"
   },
   "dependencies": {
     "@better-auth/passkey": "catalog:",
@@ -32,6 +35,8 @@
     "@types/node": "catalog:",
     "esbuild": "catalog:",
     "eslint": "catalog:",
+    "fast-check": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

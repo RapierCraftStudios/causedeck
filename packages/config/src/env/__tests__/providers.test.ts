@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createEnv, EnvValidationError } from '../index.ts';
-import { envError } from './helpers.ts';
+import { envError, productionEnv } from './helpers.ts';
 
 describe('provider switches', () => {
   it('EMAIL_PROVIDER=ses without SES keys fails once, naming every missing key', () => {
@@ -115,5 +115,15 @@ describe('provider switches', () => {
 
     expect(env.AI_PROVIDER === 'sarvam' && String(env.SARVAM_API_KEY)).toBe('[REDACTED]');
     expect(env.AI_PROVIDER === 'sarvam' && env.SARVAM_API_KEY.reveal()).toBe('sarvam-key');
+  });
+
+  it('STORAGE_PROVIDER=s3 selects ap-south-1 with no endpoint and Secret credentials (#21)', () => {
+    const env = createEnv(productionEnv);
+
+    expect(env.STORAGE_PROVIDER).toBe('s3');
+    expect(env.S3_REGION).toBe('ap-south-1');
+    expect(env.S3_ENDPOINT).toBeUndefined();
+    expect(String(env.S3_ACCESS_KEY)).toBe('[REDACTED]');
+    expect(env.S3_ACCESS_KEY.reveal()).toBe(productionEnv.S3_ACCESS_KEY);
   });
 });

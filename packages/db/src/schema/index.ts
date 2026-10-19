@@ -24,5 +24,6 @@ export {
   notificationPref,
   pushSubscription,
 } from './notifications.ts';
+export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from './usage.ts';
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';

@@ -7,6 +7,7 @@
 //   - one server per Playwright worker on E2E_PORT + 1 + parallelIndex, each pointed at its own
 //     clone of the template (`DATABASE_URL` per worker), started by the worker fixture.
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
+import { generateKeyPairSync } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,12 +28,34 @@ const inheritedEnv = process.env;
 /** Fixed dev secret: sessions minted in global setup must verify on every worker server. */
 const E2E_AUTH_SECRET = 'e2e-only-better-auth-secret-0123456789abcdef';
 
-/** A fixed, e2e-only VAPID pair so Web Push is enabled (#197); no push ever leaves the machine. */
-const E2E_VAPID = {
-  VAPID_PUBLIC_KEY:
-    'BIPgLY2D3hI8T55kDGKwSuy544nHucAUByjOd-1RsNDzz_bAeq9nQSifSCXsVmzYJBsc1ExOoaW0d-SOejOOMiU',
-  VAPID_PRIVATE_KEY: 'zv-tQmyFd--O4j3Ygq6aBGwEYAf2EztGwXWI2gkTiCI',
-};
+/**
+ * An e2e-only VAPID pair so Web Push is enabled (#197); no push ever leaves the machine. Generated
+ * at runtime (#271), never committed: the first process to load this module (the Playwright
+ * runner) writes it to its env, so the `webServer`, the build and every worker server inherit the
+ * same pair.
+ */
+function e2eVapid(): { VAPID_PUBLIC_KEY: string; VAPID_PRIVATE_KEY: string } {
+  const { E2E_VAPID_PUBLIC_KEY, E2E_VAPID_PRIVATE_KEY } = inheritedEnv;
+  if (E2E_VAPID_PUBLIC_KEY && E2E_VAPID_PRIVATE_KEY) {
+    return { VAPID_PUBLIC_KEY: E2E_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY: E2E_VAPID_PRIVATE_KEY };
+  }
+  const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+  const jwk = publicKey.export({ format: 'jwk' });
+  // The uncompressed P-256 point (0x04 || x || y), URL-safe base64, as `web-push` expects.
+  const point = Buffer.concat([
+    Buffer.from([4]),
+    Buffer.from(jwk.x ?? '', 'base64url'),
+    Buffer.from(jwk.y ?? '', 'base64url'),
+  ]);
+  const pair = {
+    VAPID_PUBLIC_KEY: point.toString('base64url'),
+    VAPID_PRIVATE_KEY: privateKey.export({ format: 'jwk' }).d ?? '',
+  };
+  inheritedEnv.E2E_VAPID_PUBLIC_KEY = pair.VAPID_PUBLIC_KEY;
+  inheritedEnv.E2E_VAPID_PRIVATE_KEY = pair.VAPID_PRIVATE_KEY;
+  return pair;
+}
+const E2E_VAPID = e2eVapid();
 
 export function workerPort(parallelIndex: number): number {
   return BASE_PORT + 1 + parallelIndex;

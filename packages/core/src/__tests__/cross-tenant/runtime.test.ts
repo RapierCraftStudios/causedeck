@@ -152,6 +152,12 @@ const CASES: Record<string, () => Promise<void>> = {
     // A denied export records nothing in A's chain.
     expect(await aAuditIds()).toEqual(before);
   },
+  recordAccessDeniedFor: async () => {
+    const before = await aAuditIds();
+    // guard reports `ub` as a non-member of A, so the denial goes to the global chain, not A's.
+    await runtime.recordAccessDeniedFor({ workspaceId: t.a.id, member: false, actorUserId: t.ub });
+    expect(await aAuditIds()).toEqual(before);
+  },
   loadNotificationPreferences: async () => {
     await expectDenied(runtime.loadNotificationPreferences(forged()));
     await expectDenied(runtime.loadNotificationPreferences({ workspaceId: t.b.id, userId: t.ua }));

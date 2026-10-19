@@ -49,6 +49,7 @@ const withWorkspace = vi.hoisted(() =>
   vi.fn((_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn(TX)),
 );
 const revalidatePath = vi.hoisted(() => vi.fn());
+const recordAccessDenied = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
 vi.mock('../lib/auth.ts', () => ({
   requireSession: () =>
@@ -65,6 +66,7 @@ vi.mock('../src/health.ts', () => ({
 }));
 vi.mock('@causedeck/db', () => ({ db: { fake: 'db' }, withWorkspace }));
 vi.mock('@causedeck/core/workspaces', () => core);
+vi.mock('@causedeck/core/audit', () => ({ recordAccessDenied }));
 vi.mock('@causedeck/core/billing', () => ({ installBillingEntitlements }));
 vi.mock('@causedeck/auth/mailer', () => ({ createMailer }));
 vi.mock('next/cache', () => ({ revalidatePath }));
@@ -114,6 +116,10 @@ describe('membership guard', () => {
     expect(result).toMatchObject({ ok: false, error: { code: 'FORBIDDEN' } });
     expect(core.inviteMember).not.toHaveBeenCalled();
     expect(withWorkspace).not.toHaveBeenCalled();
+    expect(recordAccessDenied).toHaveBeenCalledWith(
+      { fake: 'db' },
+      expect.objectContaining({ workspaceId: WS, member: false }),
+    );
   });
 
   it('rejects a signed-out caller as UNAUTHENTICATED', async () => {

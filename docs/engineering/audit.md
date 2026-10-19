@@ -38,21 +38,46 @@ Each action is either **security** or **informational**:
 | security      | fail-closed: `record()` throws, so the action fails and its transaction rolls back | yes       |
 | informational | fail-open: logged (`service: audit`, action, workspace and error code only) and dropped. The write ran on its own savepoint, so the caller's transaction stays usable | no        |
 
-| Action                      | Kind          | Emitted by                                          |
-| --------------------------- | ------------- | --------------------------------------------------- |
-| `member.removed`            | security      | `offboardMember` through the `AuditSink`            |
-| `member.role_changed`       | security      | role change (#228)                                  |
-| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22)     |
-| `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220) |
-| `audit.exported`            | security      | `exportAudit`, before the first byte (#229)         |
+| Action | Kind | Emitted by |
+| --- | --- | --- |
+| `member.removed`            | security      | `offboardMember` through the `AuditSink`                          |
+| `member.role_changed`       | security      | `changeRole`, `transferOwnership` (both roles)                    |
+| `flag.changed`              | security      | `flagChangeAuditSink` for `setFlagAuditSink` (#22)                |
+| `auth.sign_in`              | security      | Better Auth `databaseHooks.session.create`                        |
+| `auth.sign_in_failed`       | security      | `hooks.after`: magic-link, passkey, 2FA verify                    |
+| `auth.magic_link_requested` | security      | `hooks.after`: `/sign-in/magic-link`                              |
+| `auth.passkey_added`        | security      | `hooks.after`: `/passkey/verify-registration`                     |
+| `auth.passkey_removed`      | security      | `hooks.after`: `/passkey/delete-passkey`                          |
+| `auth.two_factor_enabled`   | security      | `databaseHooks.user.update` (`/two-factor/*`)                     |
+| `auth.two_factor_disabled`  | security      | `databaseHooks.user.update` (`/two-factor/disable`)               |
+| `auth.session_revoked`      | security      | `databaseHooks.session.delete` (revoke paths)                     |
+| `audit.exported`            | security      | `exportAudit`, before the first byte (#229); `recordExportRun`    |
+| `support.session_started`   | security      | `recordSupportSessionStarted` (#27)                               |
+| `support.session_ended`     | security      | `recordSupportSessionEnded` (#27)                                 |
+| `access.denied`             | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize` |
+| `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)               |
 | `billing.subscription_changed` | security | owner billing actions (`changeSubscription`, #257) |
 | `billing.gstin_updated`     | security      | `setSubscriptionGstin` (#257)                       |
 | `billing.invoice_downloaded` | security    | `openSaasInvoicePdf`, before the first byte (#258)  |
-| `workspace.settings_viewed` | informational | reserved                                            |
-| `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)      |
+| `workspace.settings_viewed` | informational | reserved                                                          |
+| `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)                    |
 
-#228 adds the sign-in, magic link, passkey, 2FA, session, export, support session and access-denied
-actions.
+Security events (#228):
+
+- Auth events reach `record()` through the `SecurityEventRecorder` that `@causedeck/auth`
+  `createAuth` takes as `securityEvents` (core depends on auth, so auth only defines the interface;
+  `createSecurityEventRecorder(db)` in `@causedeck/core/audit` implements it, injected in
+  `apps/web/lib/auth.ts` and `apps/api/src/server.ts`). They are account-level (`workspaceId: null`).
+  Magic-link requests and failed sign-ins carry an `emailHash` (sha256 of the trimmed, lowercased
+  address), never the email. A magic-link request is recorded for known and unknown addresses alike,
+  and a request rejected by the per-email rate limit is not recorded. A failed sign-in that cannot be
+  recorded is logged, so the original auth error still reaches the client.
+- `access.denied` is written by `recordAccessDenied` in a fresh transaction on the root `db`, so it
+  survives the denied action's rolled-back transaction, and a failed write is logged, never masking
+  the original `FORBIDDEN`. A member's denial goes to the workspace chain; a non-member's is
+  account-level (target `workspace`), so a non-member never writes into a chain it cannot read.
+- `flag.changed` stores the old and new values and whether a legal acknowledgement was given
+  (`legalAck`); the free-text legal note is never stored.
 
 Three errors are always thrown, whatever the action kind: an unknown action, content-bearing
 metadata (`AuditRedactionError`), and a tenancy violation (`TENANCY_VIOLATION`).

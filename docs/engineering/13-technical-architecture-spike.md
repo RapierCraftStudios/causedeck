@@ -92,6 +92,7 @@ causedeck/
 - Apps may import packages. Packages never import apps.
 - `core` depends on `db`, `auth`, `flags`, `storage`, `ai`, `adapters`, `intelligence`, `drafting`, `notifications`, `billing`, `validators`.
 - `ui` depends on nothing domain-specific.
+- `db` is a leaf under the domain packages: it depends only on `config`, `i18n` and `validators` (`DB_DEPENDENCIES`). `validators` is itself a leaf (zod only) and holds the GSTIN pattern and the plan catalogue that the billing tables and the `plans` seed need; `billing` re-exports them.
 
 ## 3. Runtime topology
 

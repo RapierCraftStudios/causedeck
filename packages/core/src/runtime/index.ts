@@ -8,6 +8,7 @@ import type { StorageCtx } from '@causedeck/storage';
 
 import type { AuditExportContext, AuditExportOptions } from '../audit/export.ts';
 import type { AuditPage, AuditQueryFilters, AuditReadContext } from '../audit/query.ts';
+import type { AccessDeniedEvent } from '../audit/security-events.ts';
 import type { InvoicePdfContext, SaasInvoicePdf } from '../billing/invoice-pdf.ts';
 import type {
   AcceptInvitationRequest,
@@ -169,6 +170,12 @@ export async function exportAuditFor(
 ): Promise<ReadableStream<Uint8Array>> {
   const { exportAudit } = await import('../audit/index.ts');
   return exportAudit({ db, ...ctx }, options);
+}
+
+/** `access.denied` in its own transaction (never throws): members' to the workspace chain. */
+export async function recordAccessDeniedFor(event: AccessDeniedEvent): Promise<void> {
+  const { recordAccessDenied } = await import('../audit/index.ts');
+  return recordAccessDenied(db, event);
 }
 
 // notifications, push, uploads, flags

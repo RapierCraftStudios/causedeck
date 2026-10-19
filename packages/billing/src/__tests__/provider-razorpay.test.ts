@@ -235,6 +235,19 @@ describe('Razorpay adapter: request mapping', () => {
     });
   });
 
+  it('retries a payment without any write call: Razorpay retries pending charges itself', async () => {
+    const client = fakeClient({
+      fetch: vi.fn(() => Promise.resolve({ ...fetchFixture, status: 'pending' })),
+    });
+    const result = await provider(client).retryPayment('sub_FIXTURE0000001');
+    expect(result.outcome).toBe('provider_scheduled');
+    expect(result.subscription.status).toBe('pending');
+    expect(client.subscriptions.fetch).toHaveBeenCalledWith('sub_FIXTURE0000001');
+    for (const write of ['create', 'update', 'cancel', 'pause', 'resume'] as const) {
+      expect(client.subscriptions[write]).not.toHaveBeenCalled();
+    }
+  });
+
   it('maps SDK errors to BillingProviderError', async () => {
     const client = fakeClient({
       fetch: vi.fn(() =>

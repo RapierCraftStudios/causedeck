@@ -82,6 +82,10 @@ export const subscription = pgTable(
     currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
     graceUntil: timestamp('grace_until', { withTimezone: true }),
     cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+    /** When the current dunning episode began (first failed charge or halt); null when paid up (#205). */
+    dunningStartedAt: timestamp('dunning_started_at', { withTimezone: true }),
+    /** Payment retries made in the current dunning episode (`DUNNING_RETRY_DAYS`). */
+    dunningAttempts: integer('dunning_attempts').notNull().default(0),
     gstin: text('gstin'),
     billingEmail: text('billing_email'),
     ...timestamps(),
@@ -97,6 +101,7 @@ export const subscription = pgTable(
     ),
     check('subscription_status_chk', sql`status in ${inList(SUBSCRIPTION_STATUSES)}`),
     check('subscription_seats_chk', sql`seats >= 1 and clerk_seats >= 0`),
+    check('subscription_dunning_attempts_chk', sql`dunning_attempts between 0 and 4`),
     check('subscription_gstin_chk', sql.raw(`gstin is null or gstin ~ '${GSTIN_PATTERN_SOURCE}'`)),
   ],
 );

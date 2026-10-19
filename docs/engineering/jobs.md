@@ -99,6 +99,9 @@ same pattern ([tenancy.md](tenancy.md)).
 `system.billing.reconcile` lists its targets the same way, through
 `app_billing_reconcile_targets()` (ids only, `0007_billing_reconcile`), then reads each
 subscription inside `withWorkspace` ([billing.md](billing.md#daily-reconcile)).
+`system.billing.dunning-tick` does the same through `app_billing_dunning_targets()` (ids of
+`past_due` subscriptions, `0015_billing_dunning`), then retries, moves and notifies each one inside
+`withWorkspace` ([billing.md](billing.md#dunning)).
 `billing.process-event` (workspace job, payload `{ workspaceId, providerEventId }`, singleton per
 event id) applies one stored Razorpay webhook event exactly once by locking its `billing_event` row
 and setting `processed_at` in the same transaction ([billing.md](billing.md#webhooks)).
@@ -119,7 +122,8 @@ A definition may declare `schedule: { cron, payload }`. `registerSchedules` regi
 `boss.schedule(..., { tz: 'Asia/Kolkata' })`. pg-boss keeps schedules in its own table and sends
 each occurrence once, so every replica registers on boot without double-sending. Current
 schedules: `system.retention.sweep` daily at 03:30 IST, `system.billing.reconcile` daily at
-04:00 IST and `system.notification.digest` every half hour.
+04:00 IST, `system.billing.dunning-tick` daily at 04:30 IST and `system.notification.digest` every
+half hour.
 
 ## Notification jobs
 

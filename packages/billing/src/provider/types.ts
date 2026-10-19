@@ -101,6 +101,17 @@ export interface UpdateQuantityOptions {
   at: 'now' | 'cycle_end';
 }
 
+/**
+ * What a payment retry did. `provider_scheduled`: the provider retries on its own schedule and
+ * nothing was charged by this call.
+ */
+export type PaymentRetryOutcome = 'charged' | 'failed' | 'provider_scheduled';
+
+export interface PaymentRetryResult {
+  subscription: BillingSubscription;
+  outcome: PaymentRetryOutcome;
+}
+
 export interface BillingProvider {
   readonly name: BillingProviderName;
   createCustomer(input: CreateCustomerInput): Promise<BillingCustomer>;
@@ -115,6 +126,11 @@ export interface BillingProvider {
   resume(subscriptionId: string): Promise<BillingSubscription>;
   fetchSubscription(subscriptionId: string): Promise<BillingSubscription>;
   createMandateLink(subscriptionId: string): Promise<MandateLink>;
+  /**
+   * Retry a failed subscription charge (dunning, #205). The subscription's state still changes
+   * only through webhooks (`subscription.charged` / `payment.failed`), never from this result.
+   */
+  retryPayment(subscriptionId: string): Promise<PaymentRetryResult>;
 }
 
 /** Razorpay webhook body (https://razorpay.com/docs/webhooks/payloads/subscriptions/). */

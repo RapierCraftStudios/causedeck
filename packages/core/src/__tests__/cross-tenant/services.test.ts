@@ -835,6 +835,66 @@ const CASES: Record<string, Case> = {
     expect(await f.asB((s) => core.activeOverride(s, f.a.id, USAGE_NOW))).toBeUndefined();
     expect(await f.asB((s) => core.activeOverride(s, f.b.id, USAGE_NOW))).toBeUndefined();
   },
+  assertWithinFairUse: async (f) => {
+    // A's metered OCR pages are A's own: B's fair-use check never counts them.
+    await core.increment(aCtx(f), 'ocr.pages', 1_000_000, { idempotencyKey: 'xt-fair-use' });
+    const before = await aBudgetState(f);
+    await expect(
+      f.asB((s) =>
+        core.assertWithinFairUse(
+          { db: s, workspaceId: f.a.id, now: () => USAGE_NOW },
+          'ocr.pages',
+          1,
+        ),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    await f.asB((s) =>
+      core.assertWithinFairUse(
+        { db: s, workspaceId: f.b.id, now: () => USAGE_NOW },
+        'ocr.pages',
+        1,
+      ),
+    );
+    expect((await aBudgetState(f)).usage).toEqual(before.usage);
+  },
+  checkAiBudgetThresholds: async (f) => {
+    await budgetA(f);
+    await core.increment(aCtx(f), 'ai.spend_paise', 100_000, { idempotencyKey: 'xt-threshold' });
+    const before = await aBudgetState(f);
+    const notifications = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s.select({ id: schema.notification.id }).from(schema.notification),
+      );
+    const notificationsBefore = await notifications();
+    const delivered: unknown[] = [];
+    const enqueueDelivery = (job: unknown) => {
+      delivered.push(job);
+      return Promise.resolve();
+    };
+    await expect(
+      f.asB((s) =>
+        core.checkAiBudgetThresholds({
+          db: s,
+          workspaceId: f.a.id,
+          now: () => USAGE_NOW,
+          enqueueDelivery,
+        }),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    // B's own check sees B's spend (none), not A's exceeded budget, and notifies nobody.
+    const own = await core.checkAiBudgetThresholds({ ...bCtx(f), enqueueDelivery });
+    expect(own).toMatchObject({ level: 'ok', notified: 0 });
+    expect(delivered).toEqual([]);
+    expect(await notifications()).toEqual(notificationsBefore);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  getWorkspaceFairnessConcurrency: async (f) => {
+    await expect(
+      f.asB((s) => core.getWorkspaceFairnessConcurrency(s, f.a.id, USAGE_NOW)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    const own = await f.asB((s) => core.getWorkspaceFairnessConcurrency(s, f.b.id, USAGE_NOW));
+    expect(own).toBeGreaterThanOrEqual(1);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)

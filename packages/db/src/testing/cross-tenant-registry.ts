@@ -204,6 +204,21 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'rls-empty',
     note: 'takes the caller transaction; filters by workspace id and RLS hides other workspaces rows',
   },
+  assertWithinFairUse: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads entitlements and usage for ctx.workspaceId inside withWorkspace; other scope throws TenancyError',
+  },
+  checkAiBudgetThresholds: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads spend and owners of ctx.workspaceId only and notifies that workspace owners; other scope throws TenancyError',
+  },
+  getWorkspaceFairnessConcurrency: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id (worker fairness gate); other scope throws TenancyError',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -309,6 +324,21 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   periodStart: 'pure',
   nextPeriodStart: 'pure',
   incrementSql: 'pure (SQL builder; increment runs it inside withWorkspace)',
+  // usage: thresholds, fair-use caps and plan fairness (#221)
+  DEFAULT_USAGE_THRESHOLDS: 'constant',
+  SOFT_LIMIT_BPS: 'constant',
+  HARD_LIMIT_BPS: 'constant',
+  USAGE_WARNING_EVENT: 'constant',
+  FAIR_USE_KEYS: 'constant',
+  FAIR_USE_CAPS: 'constant (cap table)',
+  FAIRNESS_CONCURRENCY_BY_PLAN: 'constant (per-plan concurrency table)',
+  FairUseError: 'error class',
+  resolveThresholds: 'pure (validates ctx.thresholds)',
+  hardLimitPaise: 'pure (arithmetic)',
+  usageLevel: 'pure (arithmetic)',
+  fairnessConcurrencyForPlan: 'pure (table lookup by plan id)',
+  usageWarningDedupeKey: 'pure (string builder)',
+  usageWarningCopy: 'pure (static notice copy, no data)',
   // usage: AI budget (#220)
   AI_BUDGET_KEY: 'constant',
   RESERVATION_TTL_MS: 'constant',

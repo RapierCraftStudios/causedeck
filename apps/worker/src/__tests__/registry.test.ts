@@ -119,6 +119,7 @@ describe('enqueue', () => {
       'system.ping',
       'system.retention.sweep',
       'system.billing.reconcile',
+      'billing.process-event',
     ]);
   });
 });

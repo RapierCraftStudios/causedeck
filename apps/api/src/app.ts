@@ -4,6 +4,9 @@
 // Global middleware order: logger (opens the request context) → request id → secure headers →
 // CORS → body limit → health and docs (public) → `/v1` (see routes/v1/index.ts).
 import type { SessionSource } from '@causedeck/auth/session';
+import type { ReplayWindow } from '@causedeck/billing/webhook';
+import type { Secret } from '@causedeck/config/env';
+import type { JobSender } from '@causedeck/core/jobs';
 import type { Database } from '@causedeck/db';
 import { createHealthHandlers, type HealthCheck, type Logger } from '@causedeck/observability';
 import { Scalar } from '@scalar/hono-api-reference';
@@ -23,7 +26,7 @@ import { allowedOrigins, cors, csrf } from './middleware/cors.ts';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.ts';
 import { idempotency } from './middleware/idempotency.ts';
 import { requestLogger } from './middleware/logger.ts';
-import { rateLimit, type RateLimitOptions } from './middleware/rate-limit.ts';
+import { rateLimit, type RateLimitOptions, type RateLimitRule } from './middleware/rate-limit.ts';
 import { requestId } from './middleware/request-id.ts';
 import { secureHeaders } from './middleware/secure-headers.ts';
 import { v1Router } from './routes/v1/index.ts';
@@ -44,7 +47,20 @@ export interface AppDeps {
   readyChecks?: Record<string, HealthCheck>;
   /** Extra `/v1` routes, registered after the built-in ones. */
   routes?: (v1: AppRouter) => void;
+  /** Razorpay webhooks (#204). Without it `POST /v1/webhooks/razorpay` rejects every call. */
+  billing?: BillingDeps;
 }
+
+export interface BillingDeps {
+  /** `webhookSecretFor(env)`: `RAZORPAY_WEBHOOK_SECRET`, or the mock secret in dev and CI. */
+  webhookSecret: Secret;
+  /** Sender for `billing.process-event`; defaults to the process-wide producer. */
+  sender?: JobSender;
+  replayWindow?: ReplayWindow;
+}
+
+/** Razorpay delivers in bursts from a few IPs; webhooks get a roomier anonymous limit. */
+export const WEBHOOK_RATE_LIMIT: RateLimitRule = { limit: 1200, windowMs: 60_000 };
 
 export const OPENAPI_PATH = '/openapi.json';
 export const DOCS_PATH = '/docs';
@@ -85,9 +101,14 @@ export function createApp(deps: AppDeps): AppRouter {
     middleware: [
       resolvePrincipal({ auth: deps.auth, ...(deps.bearer && { bearer: deps.bearer }) }),
       csrf(origins),
-      rateLimit({ now: () => now().getTime(), ...deps.rateLimit }),
+      rateLimit({
+        now: () => now().getTime(),
+        ...deps.rateLimit,
+        groups: { '/v1/webhooks': WEBHOOK_RATE_LIMIT, ...deps.rateLimit?.groups },
+      }),
       idempotency({ store: deps.idempotencyStore ?? createIdempotencyStore(db), now }),
     ],
+    ...(deps.billing && { billing: { ...deps.billing, logger, now } }),
     ...(deps.routes && { routes: deps.routes }),
   });
   app.route(`/${API_VERSION}`, v1);

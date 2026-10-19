@@ -7,6 +7,7 @@
 // `setMandateState`) and raise provider events (`simulate`), returning the same webhook body
 // Razorpay would send (see `src/__fixtures__/razorpay/`).
 import { getPlan, type PlanInterval } from '../plans';
+import { MOCK_WEBHOOK_SECRET, signRazorpayWebhook } from '../webhook';
 import {
   BillingProviderError,
   type BillingCustomer,
@@ -42,6 +43,23 @@ export interface MockBillingProviderOptions {
 export interface MockWebhookDelivery {
   eventId: string;
   body: RazorpayWebhookEvent;
+}
+
+/** A delivery as it goes over the wire: the exact body bytes and their signature (#204). */
+export interface SignedMockDelivery {
+  eventId: string;
+  rawBody: string;
+  signature: string;
+}
+
+/** Serialise and sign a mock delivery with `MOCK_WEBHOOK_SECRET`, as Razorpay would send it. */
+export function signMockDelivery(delivery: MockWebhookDelivery): SignedMockDelivery {
+  const rawBody = JSON.stringify(delivery.body);
+  return {
+    eventId: delivery.eventId,
+    rawBody,
+    signature: signRazorpayWebhook(rawBody, MOCK_WEBHOOK_SECRET),
+  };
 }
 
 export interface MockBillingProvider extends BillingProvider {

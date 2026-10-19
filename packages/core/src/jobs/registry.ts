@@ -3,6 +3,7 @@
 import type { SendOptions } from 'pg-boss';
 import type { z } from 'zod';
 
+import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { retentionSweep } from './definitions/retention-sweep.ts';
 import { systemPing } from './definitions/system-ping.ts';
 import type { AnyJobDefinition, JobPayloadBase } from './define.ts';
@@ -105,9 +106,11 @@ export function createRegistry<const D extends readonly AnyJobDefinition[]>(
 }
 
 /** Every job the platform runs. */
-export const registry = createRegistry([systemPing, retentionSweep] as const);
+export const registry = createRegistry([systemPing, retentionSweep, billingReconcile] as const);
 
-export type JobMap = RegistryMap<readonly [typeof systemPing, typeof retentionSweep]>;
+export type JobMap = RegistryMap<
+  readonly [typeof systemPing, typeof retentionSweep, typeof billingReconcile]
+>;
 export type JobName = keyof JobMap;
 export type PayloadOf<N extends JobName> = z.input<JobMap[N]['schema']>;
 

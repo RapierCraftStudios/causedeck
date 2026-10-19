@@ -1,5 +1,5 @@
 // Cron schedules: Asia/Kolkata, registered and sent once across two worker replicas (#15).
-import { defineJob, registry, retentionSweep } from '@causedeck/core/jobs';
+import { billingReconcile, defineJob, registry, retentionSweep } from '@causedeck/core/jobs';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -14,9 +14,12 @@ afterAll(async () => {
 });
 
 describe('registerSchedules', () => {
-  it('registers system.retention.sweep in Asia/Kolkata', async () => {
-    const worker = await startTestWorker([retentionSweep]);
-    expect(await registerSchedules(worker.boss, registry)).toEqual(['system.retention.sweep']);
+  it('registers the daily system schedules in Asia/Kolkata', async () => {
+    const worker = await startTestWorker([retentionSweep, billingReconcile]);
+    expect(await registerSchedules(worker.boss, registry)).toEqual([
+      'system.retention.sweep',
+      'system.billing.reconcile',
+    ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
     expect(schedule).toMatchObject({ cron: '30 3 * * *', timezone: 'Asia/Kolkata' });
@@ -28,6 +31,17 @@ describe('registerSchedules', () => {
     });
     expect(next?.toISOString()).toBe('2026-10-18T22:00:00.000Z');
     await worker.boss.unschedule('system.retention.sweep');
+
+    // The billing reconcile runs daily at 04:00 IST (22:30 UTC the day before).
+    const reconcile = await worker.boss.getSchedule('system.billing.reconcile');
+    expect(reconcile).toMatchObject({ cron: '0 4 * * *', timezone: 'Asia/Kolkata' });
+    const [nextReconcile] = worker.boss.previewSchedule(reconcile?.cron ?? '', {
+      tz: SCHEDULE_TIMEZONE,
+      from: new Date('2026-10-18T00:00:00Z'),
+      count: 1,
+    });
+    expect(nextReconcile?.toISOString()).toBe('2026-10-18T22:30:00.000Z');
+    await worker.boss.unschedule('system.billing.reconcile');
   });
 
   it('is registered once and sends each occurrence once with two worker replicas', async () => {

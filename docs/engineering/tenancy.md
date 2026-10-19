@@ -78,6 +78,7 @@ that returns only what the caller needs: slugs, ids, booleans or a count. The fu
 | `app_resolve_slug(text)` returns `(workspace_id, redirected)` | `resolveSlug`, which then reads the row inside `withWorkspace` |
 | `app_invitation_workspace(text)` (token hash in, workspace id out) | `acceptInvitation`, `previewInvitation`, which then work inside `withWorkspace` |
 | `app_purge_job_effects(timestamptz)` | `system.retention.sweep` |
+| `app_billing_reconcile_targets()` returns `(workspace_id, subscription_id)` | `system.billing.reconcile`, which then reads each row inside `withWorkspace` |
 
 `createWorkspace` needs no bypass: it picks the new workspace's id itself and writes the
 organization, owner membership and settings inside `withWorkspace(newId)`.
@@ -89,7 +90,7 @@ organization, owner membership and settings inside `withWorkspace(newId)`.
 | `member`, `invitation`, `workspace_settings`, `workspace_slug_history`, `job_effect`, and the billing tables `subscription`, `entitlement`, `usage_counter`, `billing_event` (#200) | `ws_isolation` FOR ALL, USING and WITH CHECK `workspace_id = app.workspace_id` |
 | `member` | `member_self` FOR SELECT: `user_id = app.user_id`, only while no workspace is pinned (so a user scope never widens a workspace scope) |
 | `organization` (the tenant root, no `workspace_id`) | `ws_isolation` FOR ALL on `id = app.workspace_id`; `member_read` FOR SELECT while no workspace is pinned, for workspaces the user is a member of |
-| owner-only | `owner_definer_read` (SELECT) on `organization`, `invitation`, `workspace_slug_history`, `job_effect`; `owner_definer_release` (DELETE expired redirects) on `workspace_slug_history`; `owner_definer_purge` (DELETE) on `job_effect` |
+| owner-only | `owner_definer_read` (SELECT) on `organization`, `invitation`, `workspace_slug_history`, `job_effect`, `subscription` (`0007_billing_reconcile`); `owner_definer_release` (DELETE expired redirects) on `workspace_slug_history`; `owner_definer_purge` (DELETE) on `job_effect` |
 
 WITH CHECK rejects an `INSERT` or `UPDATE` that writes another workspace's id, so a row cannot be
 moved between workspaces (`with-check.test.ts`). Foreign-key checks and `ON DELETE CASCADE` run

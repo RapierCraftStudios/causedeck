@@ -43,6 +43,7 @@ const withWorkspace = vi.hoisted(() =>
 );
 const logger = vi.hoisted(() => ({ error: vi.fn() }));
 const reportError = vi.hoisted(() => vi.fn());
+const ShellOfflineBanner = vi.hoisted(() => () => null);
 
 vi.mock('next/navigation', () => ({
   useRouter: () => router,
@@ -60,7 +61,7 @@ vi.mock('../lib/workspace-loader.ts', () => ({
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
 vi.mock('../lib/report-error.ts', () => ({ reportError }));
 vi.mock('../src/health.ts', () => ({ logger }));
-vi.mock('../components/shell/offline-banner.tsx', () => ({ ShellOfflineBanner: () => null }));
+vi.mock('../components/shell/offline-banner.tsx', () => ({ ShellOfflineBanner }));
 vi.mock('@causedeck/db', () => ({ db: { fake: 'db' }, withWorkspace }));
 vi.mock('@causedeck/core/billing', () => ({
   loadSubscription: () =>
@@ -364,6 +365,14 @@ describe('billing page (server)', () => {
     page.dev = false;
     await renderPage({ __state: 'error' });
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('renders the shell offline banner above the billing content', async () => {
+    const tree = (await BillingPage({
+      params: Promise.resolve({ slug: WORKSPACE.slug }),
+      searchParams: Promise.resolve({}),
+    })) as ReactElement<{ children: ReactElement[] }>;
+    expect(tree.props.children[0]?.type).toBe(ShellOfflineBanner);
   });
 
   it('shows the empty invoices state', async () => {

@@ -70,7 +70,7 @@ describe('deriveEntitlements', () => {
       max_active_matters: 15,
       seats: 1,
       clerk_seats: 0,
-      ai_budget_paise: 5_000,
+      ai_budget_paise: 1_000,
       capture_minutes: 300,
       features: { write: true },
     });
@@ -127,6 +127,28 @@ describe('deriveEntitlements', () => {
       features: { write: false },
     });
     expect(derive(snapshot({ state: 'downgraded' }))).toEqual(beyond);
+  });
+});
+
+describe('AI budget (#220)', () => {
+  it('gives Junior Rs 10 a month', () => {
+    expect(derive(null).ai_budget_paise).toBe(1_000);
+  });
+
+  it('pools Rs 175 per purchased seat on a chamber plan, without clerk seats', () => {
+    expect(derive(snapshot({ seats: 5, clerkSeats: 2 })).ai_budget_paise).toBe(5 * 17_500);
+    // Below the 3-seat minimum the budget follows the granted seats.
+    expect(derive(snapshot({ seats: 1, clerkSeats: 0 })).ai_budget_paise).toBe(3 * 17_500);
+  });
+
+  it('gives a solo advocate plan one seat of budget', () => {
+    expect(derive(snapshot({ planId: 'advocate-monthly-2', seats: 4 })).ai_budget_paise).toBe(
+      17_500,
+    );
+  });
+
+  it('drops a downgraded workspace to the Junior budget', () => {
+    expect(derive(snapshot({ state: 'downgraded', seats: 8 })).ai_budget_paise).toBe(1_000);
   });
 });
 
@@ -208,8 +230,8 @@ describe('createEntitlements', () => {
     service.invalidate('w1');
     const next: WorkspaceEntitlements = await service.getEntitlements('w1');
     expect(next).toMatchObject({ planId: 'chamber-seat-1', seats: 6 });
-    // #30 budgets read the same entitlements.
-    expect(next.ai_budget_paise).toBeNull();
+    // #30 budgets read the same entitlements: Rs 175 per seat, pooled.
+    expect(next.ai_budget_paise).toBe(6 * 17_500);
   });
 
   it('assertEntitled rejects with the typed error', async () => {

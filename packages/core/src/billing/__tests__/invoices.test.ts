@@ -42,8 +42,12 @@ function invoice(
   );
 }
 
-/** A unique invoice number per test run (numbers are globally unique). */
-const num = (n: number) => `T${randomUUID().slice(0, 6)}/${String(n).padStart(6, '0')}`;
+/**
+ * Invoice numbers unique to this run (numbers are globally unique). One prefix per run, so numbers
+ * sort by `n`: the ordering test's tiebreak on equal issue dates depends on it.
+ */
+const RUN = `T${randomUUID().slice(0, 6)}`;
+const num = (n: number) => `${RUN}/${String(n).padStart(6, '0')}`;
 
 describe('listSaasInvoices', () => {
   it('lists issued, paid and void invoices newest first and never drafts', async () => {
@@ -87,7 +91,7 @@ describe('listSaasInvoices', () => {
     await withTestDb(async (tx) => {
       const a = await newWorkspace(tx);
       const b = await newWorkspace(tx);
-      await invoice(tx, a, { number: num(1), status: 'issued', issueDate: '2026-04-01' });
+      await invoice(tx, a, { number: num(4), status: 'issued', issueDate: '2026-04-01' });
       expect(await inWorkspace(tx, b, (s) => listSaasInvoices(s, a))).toEqual([]);
       expect(await inWorkspace(tx, b, (s) => listSaasInvoices(s, b))).toEqual([]);
       expect(await inWorkspace(tx, a, (s) => listSaasInvoices(s, a))).toHaveLength(1);

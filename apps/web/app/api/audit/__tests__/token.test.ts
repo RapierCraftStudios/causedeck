@@ -40,7 +40,9 @@ describe('audit export token', () => {
     const token = signExportToken(payload, SECRET, NOW);
     const [body, sig] = token.split('.') as [string, string];
     expect(verifyExportToken(token, 't'.repeat(40), NOW)).toBeNull();
-    const forged = Buffer.from(JSON.stringify({ ...payload, w: '00000000-0000-4000-8000-00000000000b' })).toString('base64url');
+    const forged = Buffer.from(
+      JSON.stringify({ ...payload, w: '00000000-0000-4000-8000-00000000000b' }),
+    ).toString('base64url');
     expect(verifyExportToken(`${forged}.${sig}`, SECRET, NOW)).toBeNull();
     expect(verifyExportToken(`${body}.${sig.slice(0, -2)}`, SECRET, NOW)).toBeNull();
     expect(verifyExportToken(`${body}.${sig}.x`, SECRET, NOW)).toBeNull();

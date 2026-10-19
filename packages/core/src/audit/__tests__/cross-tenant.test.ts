@@ -12,7 +12,10 @@ import { WorkspaceError } from '../../workspaces/errors.ts';
 import { authorizeAuditRead, exportAudit, queryAudit, record, verifyChain } from '../index.ts';
 import { failure, newWorkspace } from './fixtures.ts';
 
-const range = () => ({ from: new Date('2000-01-01T00:00:00Z'), to: new Date(Date.now() + 86_400_000) });
+const range = () => ({
+  from: new Date('2000-01-01T00:00:00Z'),
+  to: new Date(Date.now() + 86_400_000),
+});
 
 async function seed(tx: Transaction) {
   const a = await newWorkspace(tx);

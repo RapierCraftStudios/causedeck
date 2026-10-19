@@ -107,7 +107,11 @@ describe('POST /api/audit/export', () => {
     const ttl = Date.parse(expiresAt) - before;
     expect(ttl).toBeGreaterThan(55_000);
     expect(ttl).toBeLessThanOrEqual(61_000);
-    expect(state.authorize).toHaveBeenCalledWith({ db: { marker: 'db' }, workspaceId: WS, userId: USER });
+    expect(state.authorize).toHaveBeenCalledWith({
+      db: { marker: 'db' },
+      workspaceId: WS,
+      userId: USER,
+    });
   });
 
   it('rejects signed-out callers, other origins, bad bodies and non-members', async () => {
@@ -115,7 +119,13 @@ describe('POST /api/audit/export', () => {
     expect((await route.POST(post(BODY))).status).toBe(401);
     state.session = { user: { id: USER } };
     expect((await route.POST(post(BODY, { origin: 'https://evil.example' }))).status).toBe(403);
-    for (const bad of ['{nope', {}, { ...BODY, workspaceId: 'x' }, { ...BODY, format: 'xlsx' }, { ...BODY, to: BODY.from }]) {
+    for (const bad of [
+      '{nope',
+      {},
+      { ...BODY, workspaceId: 'x' },
+      { ...BODY, format: 'xlsx' },
+      { ...BODY, to: BODY.from },
+    ]) {
       const res = await route.POST(post(bad));
       expect(res.status, JSON.stringify(bad)).toBe(400);
       expect(await res.json()).toEqual({ error: 'invalid' });
@@ -145,19 +155,34 @@ describe('GET /api/audit/export', () => {
     const { stream, pulls } = counted(['\uFEFFid,created_at\r\n', 'a,b\r\n']);
     state.exportAudit.mockResolvedValue(stream);
     const res = await route.GET(
-      get(url, { 'x-request-id': 'req-1', 'user-agent': 'UA/1', 'x-forwarded-for': '203.0.113.5, 10.0.0.1' }),
+      get(url, {
+        'x-request-id': 'req-1',
+        'user-agent': 'UA/1',
+        'x-forwarded-for': '203.0.113.5, 10.0.0.1',
+      }),
     );
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('text/csv; charset=utf-8');
-    expect(res.headers.get('content-disposition')).toBe('attachment; filename="audit-2026-01-01-2026-02-01.csv"');
+    expect(res.headers.get('content-disposition')).toBe(
+      'attachment; filename="audit-2026-01-01-2026-02-01.csv"',
+    );
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     // Not buffered: nothing was read before the body is consumed.
     expect(pulls.n).toBe(0);
     // Raw bytes: `text()` would drop the BOM.
-    expect(Buffer.from(await res.arrayBuffer()).toString('utf8')).toBe('\uFEFFid,created_at\r\na,b\r\n');
+    expect(Buffer.from(await res.arrayBuffer()).toString('utf8')).toBe(
+      '\uFEFFid,created_at\r\na,b\r\n',
+    );
     expect(state.exportAudit).toHaveBeenCalledWith(
-      { db: { marker: 'db' }, workspaceId: WS, userId: USER, requestId: 'req-1', userAgent: 'UA/1', ip: '203.0.113.5' },
+      {
+        db: { marker: 'db' },
+        workspaceId: WS,
+        userId: USER,
+        requestId: 'req-1',
+        userAgent: 'UA/1',
+        ip: '203.0.113.5',
+      },
       { from: new Date(BODY.from), to: new Date(BODY.to), format: 'csv', bom: true },
     );
   });
@@ -168,11 +193,13 @@ describe('GET /api/audit/export', () => {
     state.exportAudit.mockResolvedValue(counted(['{"id":"a"}\n']).stream);
     const res = await route.GET(get(url));
     expect(res.headers.get('content-type')).toBe('application/x-ndjson; charset=utf-8');
-    expect(res.headers.get('content-disposition')).toBe('attachment; filename="audit-2026-01-01-2026-02-01.jsonl"');
+    expect(res.headers.get('content-disposition')).toBe(
+      'attachment; filename="audit-2026-01-01-2026-02-01.jsonl"',
+    );
     expect(state.exportAudit.mock.calls[0]?.[1]).toMatchObject({ format: 'jsonl', bom: false });
   });
 
-  it('rejects no session, bad, tampered, expired or someone else\'s tokens', async () => {
+  it("rejects no session, bad, tampered, expired or someone else's tokens", async () => {
     state.authorize.mockResolvedValue('owner');
     const url = await link();
     state.session = null;

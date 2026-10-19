@@ -228,11 +228,17 @@ const CASES: Record<string, Case> = {
     const range = { from: new Date(0), to: new Date(Date.now() + 86_400_000) };
     await expectTenancyViolation(
       f.asB((s) =>
-        core.exportAudit({ db: s, workspaceId: f.a.id, userId: f.ub }, { ...range, format: 'jsonl' }),
+        core.exportAudit(
+          { db: s, workspaceId: f.a.id, userId: f.ub },
+          { ...range, format: 'jsonl' },
+        ),
       ),
     );
     await expectDenied(
-      core.exportAudit({ db: f.tx, workspaceId: f.a.id, userId: f.ub }, { ...range, format: 'csv' }),
+      core.exportAudit(
+        { db: f.tx, workspaceId: f.a.id, userId: f.ub },
+        { ...range, format: 'csv' },
+      ),
     );
     // No export event (or anything else) was written to A.
     expect(await auditIds(f, f.a.id)).toEqual(before);

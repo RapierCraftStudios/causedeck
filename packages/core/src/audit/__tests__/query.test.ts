@@ -59,7 +59,11 @@ describe('queryAudit', () => {
   it('pages newest first without gaps or repeats, and filters by actor, action group and date', async () => {
     await withTestDb(async (tx) => {
       const { ownerId, workspaceId, roles, ctx } = await seed(tx);
-      const actx = (userId: string) => ({ db: tx, workspaceId, actor: { userId, kind: 'user' as const } });
+      const actx = (userId: string) => ({
+        db: tx,
+        workspaceId,
+        actor: { userId, kind: 'user' as const },
+      });
       for (let i = 0; i < 5; i++) {
         await record(actx(ownerId), { action: 'member.role_changed', metadata: { n: i } });
       }
@@ -96,7 +100,13 @@ describe('queryAudit', () => {
     await withTestDb(async (tx) => {
       const { ownerId, workspaceId, roles, ctx } = await seed(tx);
       await record(
-        { db: tx, workspaceId, actor: { userId: ownerId, kind: 'user' }, ip: '203.0.113.7', userAgent: 'Mozilla/5.0 Secret' },
+        {
+          db: tx,
+          workspaceId,
+          actor: { userId: ownerId, kind: 'user' },
+          ip: '203.0.113.7',
+          userAgent: 'Mozilla/5.0 Secret',
+        },
         { action: 'member.removed' },
       );
       const [asOwner] = (await queryAudit(ctx(ownerId))).events;

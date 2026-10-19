@@ -110,7 +110,9 @@ export async function exportAudit(
 ): Promise<ReadableStream<Uint8Array>> {
   const { from, to, format } = options;
   if (!(from instanceof Date) || !(to instanceof Date)) throw invalid('from and to are required');
-  if (format !== 'csv' && format !== 'jsonl') throw invalid('format must be csv or jsonl');
+  // Callers outside TypeScript (route handlers parse input) could still pass anything.
+  if (!(['csv', 'jsonl'] as string[]).includes(format))
+    throw invalid('format must be csv or jsonl');
   const range = {
     from,
     to,

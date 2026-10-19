@@ -92,7 +92,10 @@ describe('role rules', () => {
     expect(can(actor('owner'), 'audit.read', undefined, off)).toEqual({ allow: true });
     for (const role of ['junior', 'clerk', 'viewer'] as const) {
       expect(reasonOf(can(actor(role), 'audit.read')), role).toBe('ROLE_DENIED');
-      expect(reasonOf(can(actor(role), 'audit.read', undefined, { advocatesCanReadAudit: true })), role).toBe('ROLE_DENIED');
+      expect(
+        reasonOf(can(actor(role), 'audit.read', undefined, { advocatesCanReadAudit: true })),
+        role,
+      ).toBe('ROLE_DENIED');
     }
     // The setting is scoped to audit.read only.
     expect(can(actor('advocate'), 'member.invite', undefined, off)).toEqual({ allow: true });

@@ -24,6 +24,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   billing_event: DB_TABLES_TEST,
   audit_event: DB_TABLES_TEST,
   ai_call: DB_TABLES_TEST,
+  workspace_key: DB_TABLES_TEST,
 };
 
 /**

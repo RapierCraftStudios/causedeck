@@ -13,10 +13,15 @@
     "test": "vitest run",
     "test:tenancy": "vitest run src/__tests__/cross-tenant-presign.test.ts"
   },
-  "devDependencies": {
+  "dependencies": {
     "@causedeck/config": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "drizzle-orm": "catalog:"
+  },
+  "devDependencies": {
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "pino": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

@@ -75,9 +75,9 @@ describe('row-level security catalog', () => {
         and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'workspace_id')
         and not (c.relname = any(${sql.raw(`array[${GLOBAL_TABLES.map((t) => `'${t}'`).join(', ')}]`)}))
       order by 1`);
-    // Baseline tables plus the tenant tables created after 0006 (#226).
+    // Baseline tables plus the tenant tables created after 0006 (#226, #216).
     expect(rows.map((r) => r.name)).toEqual(
-      [...BASELINE_TENANT_TABLES, 'audit_event', 'ai_call'].sort(),
+      [...BASELINE_TENANT_TABLES, 'audit_event', 'ai_call', 'workspace_key'].sort(),
     );
     for (const row of rows)
       expect(row, row.name).toMatchObject({ enabled: true, forced: true, policy: true });

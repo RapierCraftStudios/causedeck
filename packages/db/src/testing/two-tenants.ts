@@ -14,6 +14,7 @@ import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { workspaceKey } from '../schema/storage.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -147,6 +148,13 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: aiCall.id });
     return { aiCallId: first(rows, 'ai_call').id };
+  },
+  workspace_key: async (tx, { workspaceId }) => {
+    // Opaque bytes standing in for a wrapped DEK; the table never sees a plaintext key.
+    await tx
+      .insert(workspaceKey)
+      .values({ workspaceId, wrappedDek: randomBytes(60), kekId: 'kek-test' });
+    return { workspaceId };
   },
 };
 

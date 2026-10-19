@@ -3,6 +3,7 @@ export const packageName: string = '@causedeck/core';
 
 export * from './audit/index.ts';
 export * from './jobs/index.ts';
+export * from './lifecycle/index.ts';
 export * from './matters/index.ts';
 export * from './usage/index.ts';
 export * from './workspaces/index.ts';

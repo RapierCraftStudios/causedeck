@@ -20,10 +20,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  invoicePdfFilename,
-  runBillingInvoiceRender,
-} from '../../jobs/index.ts';
+import { invoicePdfFilename, runBillingInvoiceRender } from '../../jobs/index.ts';
 import { issueSaasInvoice, openSaasInvoicePdf } from '../index.ts';
 
 const { auditEvent, blob, saasInvoice } = schema;

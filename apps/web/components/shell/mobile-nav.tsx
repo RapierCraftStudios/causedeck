@@ -1,18 +1,13 @@
 'use client';
 
+import { useIsEnabled } from '@causedeck/flags/react';
 import { Bell, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import {
-  NAV_GROUPS,
-  flagsOff,
-  visibleNavItems,
-  type NavItem,
-  type WorkspaceRoute,
-} from '../../lib/nav.ts';
+import { NAV_GROUPS, visibleNavItems, type NavItem, type WorkspaceRoute } from '../../lib/nav.ts';
 import type { FlagKey, Role } from '../../lib/workspace-context.ts';
 import { LocaleSwitcher } from '../locale-switcher.tsx';
 import {
@@ -41,7 +36,7 @@ const slotTone = (active: boolean) => (active ? 'text-accent' : 'text-ink-muted 
 export interface MobileNavProps {
   slug: string;
   role: Role;
-  /** Feature-flag check. TODO(#22): the real evaluator from `@causedeck/flags`. Defaults to off. */
+  /** Feature-flag check; defaults to the server-evaluated `FlagsProvider` snapshot (off without one). */
   isEnabled?: ((flag: FlagKey) => boolean) | undefined;
 }
 
@@ -51,7 +46,9 @@ export interface MobileNavProps {
  * More opens a bottom sheet with Notifications (opening the notification panel), the remaining
  * destinations and the language switcher.
  */
-export function MobileNav({ slug, role, isEnabled = flagsOff }: MobileNavProps) {
+export function MobileNav({ slug, role, isEnabled: isEnabledProp }: MobileNavProps) {
+  const fromFlags = useIsEnabled();
+  const isEnabled = isEnabledProp ?? fromFlags;
   const t = useTranslations();
   const pathname = usePathname();
   const overlays = useShellOverlays();

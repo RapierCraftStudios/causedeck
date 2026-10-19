@@ -45,7 +45,7 @@ function insertFor(tx: Transaction, table: string, workspaceId: string, ownerId:
 
 describe('cross-tenant SQL: every tenant table', () => {
   it('covers the registered tables', () => {
-    expect(tables.length).toBeGreaterThan(9);
+    expect(tables.length).toBeGreaterThan(13);
   });
 
   it.each(tables)('%s: workspace A cannot read, change or add workspace B rows', async (table) => {

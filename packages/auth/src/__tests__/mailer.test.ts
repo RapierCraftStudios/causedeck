@@ -11,6 +11,18 @@ const { createTransport, sendMail } = vi.hoisted(() => {
 });
 vi.mock('nodemailer', () => ({ createTransport }));
 
+const { SESv2Client, SendEmailCommand, sesSend } = vi.hoisted(() => {
+  const sesSend = vi.fn(() => Promise.resolve({ MessageId: 'ses-1' }));
+  return {
+    sesSend,
+    SESv2Client: vi.fn(function (this: { send: typeof sesSend }) {
+      this.send = sesSend;
+    }),
+    SendEmailCommand: vi.fn(),
+  };
+});
+vi.mock('@aws-sdk/client-sesv2', () => ({ SESv2Client, SendEmailCommand }));
+
 const SMTP_URL = 'smtp://mailpit-user:smtp-password-never-log@localhost:1025';
 
 const message: AuthEmail = {
@@ -26,6 +38,8 @@ const message: AuthEmail = {
 beforeEach(() => {
   createTransport.mockClear();
   sendMail.mockClear();
+  SESv2Client.mockClear();
+  sesSend.mockClear();
 });
 
 describe('consoleMailer', () => {
@@ -76,17 +90,63 @@ describe('createMailer', () => {
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: message.to,
-        subject: message.subjectKey,
+        subject: 'Your CauseDeck sign-in link',
+        html: expect.stringMatching(/^<!DOCTYPE html/) as unknown,
         text: expect.stringContaining(message.url) as unknown,
       }),
+    );
+    // e2e reads the magic link from Mailpit's text part: the bare URL, nothing glued to it.
+    const [mail] = sendMail.mock.calls[0] as unknown as [{ text: string }];
+    expect(/http:\/\/localhost:3000\/api\/auth\/magic-link\/verify\S*/.exec(mail.text)?.[0]).toBe(
+      message.url,
     );
     expect(logger.lines.join('\n')).not.toContain('smtp-password-never-log');
   });
 
-  it('falls back to the console mailer for SES until #23', async () => {
+  it('sends through SES in ap-south-1 when EMAIL_PROVIDER=ses has credentials', async () => {
+    const logger = capturingLogger();
+    const mailer = createMailer(
+      {
+        EMAIL_PROVIDER: 'ses',
+        SES_REGION: 'ap-south-1',
+        SES_ACCESS_KEY_ID: 'AKIA-TEST',
+        SES_SECRET_ACCESS_KEY: new Secret('ses-secret-never-log'),
+      },
+      logger,
+    );
+    await mailer.send(message);
+    expect(SESv2Client).toHaveBeenCalledWith(expect.objectContaining({ region: 'ap-south-1' }));
+    expect(sesSend).toHaveBeenCalledTimes(1);
+    expect(createTransport).not.toHaveBeenCalled();
+    expect(logger.lines.join('\n')).not.toContain('ses-secret-never-log');
+  });
+
+  it('falls back to the console mailer when SES credentials are missing, without throwing', async () => {
     const logger = capturingLogger();
     await createMailer({ EMAIL_PROVIDER: 'ses' } as never, logger).send(message);
     expect(createTransport).not.toHaveBeenCalled();
+    expect(SESv2Client).not.toHaveBeenCalled();
     expect(logger.lines.join('\n')).toContain(message.url);
+  });
+
+  it('renders the invitation template with the translated subject and a preferences link', async () => {
+    const logger = capturingLogger();
+    const mailer = createMailer({ EMAIL_PROVIDER: 'smtp', SMTP_URL: new Secret(SMTP_URL) }, logger);
+    await mailer.send({
+      to: 'junior@example.in',
+      template: 'workspace.invitation',
+      subjectKey: AUTH_EMAIL_KEYS.invitation.subject,
+      bodyKey: AUTH_EMAIL_KEYS.invitation.body,
+      url: 'http://localhost:3000/invite/abc',
+      locale: 'ta',
+      expiresInMinutes: 7 * 24 * 60,
+    });
+    const [mail] = sendMail.mock.calls[0] as unknown as [
+      { subject: string; text: string; html: string },
+    ];
+    expect(mail.subject).toBe('CauseDeck பணியிடத்தில் சேர உங்களுக்கு அழைப்பு');
+    expect(mail.text.split('\n')).toContain('http://localhost:3000/invite/abc');
+    expect(mail.text).toContain('7 நாட்களில்');
+    expect(mail.html).toContain('href="http://localhost:3000/settings/notifications"');
   });
 });

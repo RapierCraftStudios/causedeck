@@ -525,6 +525,52 @@ export type Messages = {
     };
   };
   notifications: {
+    email: {
+      layout: {
+        brand: string;
+        footer: string;
+        preferences: string;
+        mandatory: string;
+      };
+      magicLink: {
+        subject: string;
+        preview: string;
+        heading: string;
+        body: string;
+        cta: string;
+        fallback: string;
+        ignore: string;
+      };
+      invitation: {
+        subject: string;
+        preview: string;
+        heading: string;
+        body: string;
+        cta: string;
+        fallback: string;
+        ignore: string;
+      };
+      securityAlert: {
+        subject: string;
+        preview: string;
+        intro: string;
+        cta: string;
+        help: string;
+      };
+      dailyDigest: {
+        subject: string;
+        preview: string;
+        heading: string;
+        summary: string;
+        empty: string;
+        cta: string;
+      };
+      billingNotice: {
+        subject: string;
+        preview: string;
+        cta: string;
+      };
+    };
     title: string;
     bell: {
       label: string;

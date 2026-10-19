@@ -1,7 +1,8 @@
 // The workspace the shell is rendering, and who the user is in it. Pure types and helpers: client
 // modules (nav, commands, shortcuts) import `can()` from here, so the database loader lives in the
-// server-only `lib/workspace-loader.ts` (#179). Roles, permissions and flag keys are local unions
-// until `@causedeck/auth` (#20) and `@causedeck/flags` (#22) export the real ones.
+// server-only `lib/workspace-loader.ts` (#179). Roles and permissions are local unions until
+// `@causedeck/auth` (#20) exports the real ones; flag keys come from `@causedeck/flags` (#22).
+import type { FlagKey } from '@causedeck/flags/keys';
 
 /** Workspace roles, least to most privileged. TODO(#20): re-export from `@causedeck/auth`. */
 export type Role = 'viewer' | 'clerk' | 'junior' | 'advocate' | 'owner';
@@ -10,8 +11,8 @@ export type Role = 'viewer' | 'clerk' | 'junior' | 'advocate' | 'owner';
 export type Permission =
   'billing.read' | 'invoices.read' | 'limitation.read' | 'insights.read' | 'settings.read';
 
-/** Feature flags the shell gates on. TODO(#22): re-export from `@causedeck/flags`. */
-export type FlagKey = 'invoices.enabled' | 'limitation.enabled';
+/** Feature flags the shell gates on: the typed registry keys from `@causedeck/flags`. */
+export type { FlagKey };
 
 export interface Workspace {
   id: string;

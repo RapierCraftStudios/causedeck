@@ -1,5 +1,6 @@
 'use client';
 
+import { useIsEnabled } from '@causedeck/flags/react';
 import { useIsMac } from '@causedeck/ui/hooks';
 import { useRouter } from 'next/navigation';
 import {
@@ -87,18 +88,22 @@ export interface ShortcutsProviderProps {
 
 /**
  * The shell's keyboard shortcuts: `g` chords to destinations, `c` capture, `[` sidebar, `/` page
- * search, `Shift+N` notifications and `?` help, through one document listener. `mod+k` is listed here but bound by the
- * palette itself (use-command-palette.ts). Also adds the capture, sidebar and help actions to the
- * command palette with their key hints. Needs `<CaptureProvider>` and `<SidebarProvider>` above.
+ * search, `Shift+N` notifications and `?` help, through one document listener. `mod+k` is listed
+ * here but bound by the palette itself (use-command-palette.ts). Also adds the capture, sidebar,
+ * notifications and help actions to the command palette with their key hints. Needs
+ * `<CaptureProvider>` and `<SidebarProvider>` above.
  */
 export function ShortcutsProvider({ slug, role, isEnabled, children }: ShortcutsProviderProps) {
+  // Flag-gated chords follow the server-evaluated snapshot unless a caller overrides it.
+  const fromFlags = useIsEnabled();
+  const enabled = isEnabled ?? fromFlags;
   const router = useRouter();
   const sidebar = useSidebar();
   const capture = useCapture();
   const mac = useIsMac();
   const [helpOpen, setHelpOpen] = useState(false);
   const { Dialog } = useShortcutsDialog();
-  const shortcuts = useMemo(() => visibleShortcuts({ role, isEnabled }), [role, isEnabled]);
+  const shortcuts = useMemo(() => visibleShortcuts({ role, isEnabled: enabled }), [role, enabled]);
 
   const openHelp = () => {
     void loadShortcutsDialog();

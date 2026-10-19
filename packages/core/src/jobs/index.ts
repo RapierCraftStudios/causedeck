@@ -50,6 +50,13 @@ export {
   type ProducerEnqueueOptions,
   type RegistryMap,
 } from './registry.ts';
+export {
+  billingProcessEvent,
+  billingProcessEventSchema,
+  runBillingProcessEvent,
+  type BillingProcessEventOutcome,
+  type BillingProcessEventPayload,
+} from './definitions/billing-process-event.ts';
 export { billingReconcile, runBillingReconcile } from './definitions/billing-reconcile.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { systemPing } from './definitions/system-ping.ts';

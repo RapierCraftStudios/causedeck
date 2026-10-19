@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { defaultSnapshot } from '@causedeck/flags/keys';
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -163,7 +164,7 @@ describe('visible shortcuts', () => {
 describe('shortcuts in the app shell', () => {
   const renderShell = (context: WorkspaceContext = owner) =>
     renderWithIntl(
-      <AppShell context={context} sidebarState="expanded">
+      <AppShell context={context} sidebarState="expanded" flags={defaultSnapshot()}>
         <input aria-label="Note" data-testid="field" />
         <div data-testid="editable" contentEditable suppressContentEditableWarning>
           text
@@ -269,7 +270,7 @@ describe('shortcuts in the app shell', () => {
     expect(event.defaultPrevented).toBe(false);
     cleanup();
     renderWithIntl(
-      <AppShell context={owner} sidebarState="expanded">
+      <AppShell context={owner} sidebarState="expanded" flags={defaultSnapshot()}>
         <input aria-label="Search matters" data-page-search="" />
       </AppShell>,
     );

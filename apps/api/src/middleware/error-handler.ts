@@ -2,6 +2,7 @@
 // request id and become a generic `INTERNAL`; their message and stack never reach the client.
 import { UnauthenticatedError as SessionUnauthenticatedError } from '@causedeck/auth';
 import { InvalidCursorError } from '@causedeck/core/workspaces';
+import { isFlagOffError } from '@causedeck/flags/server';
 import type { Logger } from '@causedeck/observability';
 import { requestIdFrom } from '@causedeck/observability';
 import type { Context, ErrorHandler, NotFoundHandler } from 'hono';
@@ -27,6 +28,8 @@ function requestIdOf(c: Context<AppEnv>): string {
 export function toApiError(error: unknown): ApiError | null {
   if (error instanceof ApiError) return error;
   if (error instanceof SessionUnauthenticatedError) return new UnauthenticatedError();
+  // A disabled feature (`requireFlag` in a handler) is indistinguishable from a missing route (#22).
+  if (isFlagOffError(error)) return new NotFoundError();
   if (error instanceof InvalidCursorError) {
     return new ValidationError([{ path: 'query.cursor', message: 'Invalid cursor' }]);
   }

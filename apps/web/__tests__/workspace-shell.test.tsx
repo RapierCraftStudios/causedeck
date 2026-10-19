@@ -21,12 +21,15 @@ const state = vi.hoisted(
     cookies: Record<string, { value: string }>;
     pathname: string;
     noWorkspaces: boolean;
+    /** Flags the server evaluates on (#22); everything else is off, as on a fresh database. */
+    flagsOn: string[];
   } => ({
     locale: 'en',
     dev: true,
     cookies: {},
     pathname: '/w/demo/today',
     noWorkspaces: false,
+    flagsOn: [],
   }),
 );
 
@@ -65,6 +68,22 @@ vi.mock('../lib/workspace-loader.ts', async () => {
     getWorkspaceContext: async (slug: string) => {
       const result = await getWorkspaceResult(slug);
       return result.kind === 'ok' ? result.context : null;
+    },
+  };
+});
+
+// Flags are evaluated by `@causedeck/flags` against the database (#22); here from `state.flagsOn`.
+vi.mock('../lib/flags.ts', async () => {
+  const { defaultSnapshot } = await import('@causedeck/flags/keys');
+  const snapshot = () => ({
+    ...defaultSnapshot(),
+    ...Object.fromEntries(state.flagsOn.map((key) => [key, true])),
+  });
+  return {
+    getWorkspaceFlags: () => Promise.resolve(snapshot()),
+    requireWorkspaceFlag: (key: string) => {
+      if (!state.flagsOn.includes(key)) throw new Error('NEXT_NOT_FOUND');
+      return Promise.resolve();
     },
   };
 });
@@ -129,6 +148,7 @@ beforeEach(() => {
   state.cookies = {};
   state.pathname = '/w/demo/today';
   state.noWorkspaces = false;
+  state.flagsOn = [];
   online = true;
   Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
   reporter = vi.fn<ErrorReporter>();
@@ -201,6 +221,26 @@ describe('workspace layout', () => {
       }),
     );
     expect(document.querySelector('[data-shell]')?.getAttribute('data-sidebar')).toBe('collapsed');
+  });
+
+  it('hides the invoices and limitation nav items while their flags are off', async () => {
+    const navHrefs = async () => {
+      cleanup();
+      withIntl(
+        await WorkspaceLayout({ children: <p />, params: Promise.resolve({ slug: 'demo' }) }),
+      );
+      const nav = screen.getByRole('navigation', { name: 'Primary' });
+      return [...nav.querySelectorAll('a')].map((a) => a.getAttribute('href'));
+    };
+    const off = await navHrefs();
+    expect(off).toContain('/w/demo/today');
+    expect(off).not.toContain('/w/demo/invoices');
+    expect(off).not.toContain('/w/demo/limitation');
+
+    state.flagsOn = ['invoices.enabled', 'limitation.enabled'];
+    const on = await navHrefs();
+    expect(on).toContain('/w/demo/invoices');
+    expect(on).toContain('/w/demo/limitation');
   });
 
   it('placeholder pages refuse a non-member workspace on their own', async () => {
@@ -303,6 +343,13 @@ describe('placeholder pages', () => {
 
   it('keeps flagged pages behind notFound while the flag is off (the default)', async () => {
     await expect(PAGES.invoices(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(PAGES.limitation(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
+  it('serves flagged pages once the server evaluates their flag on', async () => {
+    state.flagsOn = ['invoices.enabled'];
+    withIntl(await PAGES.invoices(props('demo')));
+    expect(document.querySelector('[data-route="invoices"]')).not.toBeNull();
     await expect(PAGES.limitation(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
   });
 

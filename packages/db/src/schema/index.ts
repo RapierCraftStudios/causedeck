@@ -15,6 +15,13 @@ export {
   user,
   verification,
 } from './auth.ts';
+export {
+  ACCESS_MODE_NAMES,
+  accessMode,
+  accessModeRegistry,
+  featureFlag,
+  workspaceFeatureFlag,
+} from './flags.ts';
 export { jobEffect } from './job-effect.ts';
 export {
   emailSuppression,
@@ -24,5 +31,6 @@ export {
   notificationPref,
   pushSubscription,
 } from './notifications.ts';
+export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from './usage.ts';
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';

@@ -22,6 +22,7 @@ import {
   usagePeriodSummary,
   usageReservation,
 } from '../schema/usage.ts';
+import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -42,6 +43,23 @@ export type SeedRow = Record<string, string>;
 
 /** Writes one row into its table for `ctx.workspaceId`, on a transaction scoped to it. */
 export type TenantSeeder = (tx: Transaction, ctx: SeedContext) => Promise<SeedRow>;
+
+/** A draft SaaS invoice for the workspace (the seed for `saas_invoice` and `saas_invoice_line`). */
+async function seedDraftInvoice(tx: Transaction, workspaceId: string): Promise<string> {
+  const party = { legalName: 'XT Seed', address: 'Seed Road', gstin: null, stateCode: '29' };
+  const rows = await tx
+    .insert(saasInvoice)
+    .values({
+      workspaceId,
+      series: 'XT',
+      fy: '26-27',
+      supplier: party,
+      recipient: party,
+      placeOfSupplyStateCode: '29',
+    })
+    .returning({ id: saasInvoice.id });
+  return first(rows, 'saas_invoice').id;
+}
 
 function first<T>(rows: T[], table: string): T {
   const [row] = rows;
@@ -231,6 +249,24 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(workspaceFeatureFlag)
       .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
     return { key };
+  },
+  saas_invoice: async (tx, { workspaceId }) => ({
+    invoiceId: await seedDraftInvoice(tx, workspaceId),
+  }),
+  saas_invoice_line: async (tx, { workspaceId }) => {
+    const invoiceId = await seedDraftInvoice(tx, workspaceId);
+    const rows = await tx
+      .insert(saasInvoiceLine)
+      .values({
+        workspaceId,
+        invoiceId,
+        description: 'Seed seat',
+        quantity: 1,
+        unitPricePaise: 100,
+        amountPaise: 100,
+      })
+      .returning({ id: saasInvoiceLine.id });
+    return { invoiceId, lineId: first(rows, 'saas_invoice_line').id };
   },
 };
 

@@ -134,6 +134,13 @@
       "when": 1792400000000,
       "tag": "0018_usage_rollup",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792402091537,
+      "tag": "0019_audit_read_setting",
+      "breakpoints": true
     }
   ]
 }

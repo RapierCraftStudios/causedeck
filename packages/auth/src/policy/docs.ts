@@ -45,6 +45,8 @@ export function renderPermissionsDoc(): string {
     '## Settings and resource rules',
     '',
     '- `advocatesCanInvite` (default true): when false, advocates are denied `member.invite`.',
+    '- `advocatesCanReadAudit` (default true, `workspace_settings.advocates_can_read_audit`): when',
+    '  false, advocates are denied `audit.read` (the activity feed and audit export).',
     '- Restricted matters: only users in `restricted.allowUserIds` may act on them, plus owners',
     '  while `ownersSeeRestrictedMatters` is true (the default).',
     '- Juniors act on a matter only when it is assigned to them, shared with them (allow list) or',

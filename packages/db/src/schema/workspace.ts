@@ -28,6 +28,8 @@ export const workspaceSettings = pgTable(
     retention: jsonb('retention').$type<Record<string, unknown>>().notNull().default({}),
     locale: text('locale').notNull().default('en'),
     timezone: text('timezone').notNull().default('Asia/Kolkata'),
+    // Advocates may read and export the audit log unless an owner turns this off (#229).
+    advocatesCanReadAudit: boolean('advocates_can_read_audit').notNull().default(true),
     ...timestamps(),
   },
   (t) => [

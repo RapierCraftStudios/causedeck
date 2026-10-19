@@ -34,6 +34,8 @@ const setLocale = safeAction(SetLocaleInput, async ({ locale }, ctx): Promise<Se
   return { locale, message: t('updated') };
 });
 
+// authz: public — open to signed-out callers (sign-in footer); only writes the caller's own
+// locale cookie and, when signed in, their own user row.
 export async function setLocaleAction(raw: unknown): Promise<Result<SetLocaleOutcome>> {
   return setLocale(raw);
 }

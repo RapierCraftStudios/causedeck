@@ -119,9 +119,9 @@ The policy is pure, in `packages/billing/src/dunning.ts` (`planDunning`); the da
 ## SaaS invoices
 
 The GST tax invoices CauseDeck issues to workspaces (#29) live in
-`packages/db/src/schema/saas-invoice.ts`, created by `0016_saas_invoices`. They are prefixed `saas_`
+`packages/db/src/schema/saas-invoice.ts`, created by `0017_saas_invoices`. They are prefixed `saas_`
 so they never collide with the client-fee `invoice` tables, which are legal-gated and separate. A
-naming test fails if 0016 creates any other table.
+naming test fails if 0017 creates any other table.
 
 - `saas_invoice` and `saas_invoice_line` are tenant tables under FORCE RLS. A line references its
   invoice through the composite `(invoice_id, workspace_id)` foreign key, so it cannot point into

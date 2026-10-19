@@ -1,9 +1,9 @@
 // SaaS invoice tables (#252, #29 part 1): the GST tax invoices CauseDeck issues to workspaces for
 // their subscription. Named `saas_*` so they never collide with the client-fee `invoice` tables,
 // which are legal-gated and separate (spike §4.2). `saas_invoice` and `saas_invoice_line` are tenant
-// tables built with `tenantTable()` and get `ws_isolation` in 0016_saas_invoices; `invoice_counter`
+// tables built with `tenantTable()` and get `ws_isolation` in 0017_saas_invoices; `invoice_counter`
 // is global (GLOBAL_TABLES): one gapless series per supplier and financial year, allocated under a
-// row lock by #253. Issued invoices are immutable: the 0016 triggers reject any change to an issued
+// row lock by #253. Issued invoices are immutable: the 0017 triggers reject any change to an issued
 // invoice except `status` and `pdf_blob_id`, and any change to its lines (void and reissue only).
 import { sql } from 'drizzle-orm';
 import {

@@ -1,5 +1,5 @@
 // SaaS invoice schema (#252, #29 part 1): the saas_* tables and the global counter, the naming rule
-// (no client-fee `invoice` table), and the 0016 triggers that keep issued invoices immutable.
+// (no client-fee `invoice` table), and the 0017 triggers that keep issued invoices immutable.
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -23,7 +23,7 @@ afterAll(closeTestDb);
 
 const MIGRATION = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../migrations/0016_saas_invoices.sql',
+  '../../migrations/0017_saas_invoices.sql',
 );
 const migrationSql = () => readFileSync(MIGRATION, 'utf8');
 
@@ -114,7 +114,7 @@ describe('saas invoice schema (#252)', () => {
     }
     expect(getTableConfig(invoiceCounter).columns.map((c) => c.name)).not.toContain('workspace_id');
     expect(checkSchemaConventions(tablesOf(schema))).toEqual([]);
-    expect(missingTenantPolicies('0016_saas_invoices.sql', migrationSql(), GLOBAL_TABLES)).toEqual(
+    expect(missingTenantPolicies('0017_saas_invoices.sql', migrationSql(), GLOBAL_TABLES)).toEqual(
       [],
     );
   });
@@ -123,7 +123,7 @@ describe('saas invoice schema (#252)', () => {
     const created = [...migrationSql().matchAll(/CREATE TABLE "([a-z_]+)"/g)].map((m) => m[1]);
     expect(created.sort()).toEqual(['invoice_counter', 'saas_invoice', 'saas_invoice_line']);
     for (const name of created) expect(name).toMatch(/^(saas_invoice.*|invoice_counter)$/);
-    // No statement in 0016 names a bare `invoice` (or `invoice_line`) table.
+    // No statement in 0017 names a bare `invoice` (or `invoice_line`) table.
     expect(migrationSql()).not.toMatch(/"invoice(_line)?"/);
     const rows = await withTestDb((tx) =>
       tx.execute<{ name: string }>(

@@ -144,7 +144,8 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     return { key };
   },
   usage_counter: async (tx, { workspaceId }) => {
-    const key = `xt.seed.${randomUUID()}`;
+    // Usage keys are lowercase dotted segments (usage_*_key_chk): no hyphens, so strip the UUID's.
+    const key = `xt.seed.${randomUUID().replaceAll('-', '')}`;
     await tx.insert(usageCounter).values({ workspaceId, key, periodStart: new Date(), value: 1 });
     return { key };
   },

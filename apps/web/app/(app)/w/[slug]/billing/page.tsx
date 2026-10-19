@@ -3,7 +3,7 @@
 // (`withWorkspace`). Owners only (`billing.read`); other roles see `Only workspace owners can manage
 // billing.` With `billing.manage` (#257) the cards host the owner actions: change plan, seats,
 // cancel or resume, and the GSTIN; without it they are read-only. The payment method update
-// arrives later; the invoice PDF route with #258.
+// arrives later. Invoice PDFs download through `invoices/[id]/pdf/route.ts` (#258).
 //
 // States: loading (skeleton cards and rows while billing streams in), error (`Could not load
 // billing.` with `Try again`), empty invoices, offline (the shell banner; every action is disabled

@@ -252,6 +252,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'reads entitlements inside withWorkspace on the given workspaceId',
   },
+  // usage: ai_call reconciliation (#225)
+  reconcileAiCalls: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -385,6 +391,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   usageWarningCopy: 'pure',
   usageWarningDedupeKey: 'pure',
   fairnessConcurrencyForPlan: 'pure',
+  // usage: ai_call reconciliation (#225)
+  reconcileAiCallsSql: 'pure (SQL builder; reconcileAiCalls runs it inside withWorkspace)',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;

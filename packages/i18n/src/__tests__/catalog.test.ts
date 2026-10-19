@@ -100,6 +100,7 @@ describe('namespaced catalogs (#174)', () => {
         'shell',
         'shortcuts',
         'theme',
+        'usage',
         'workspace',
       ].sort(),
     );

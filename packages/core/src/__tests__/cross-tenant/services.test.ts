@@ -788,6 +788,23 @@ const CASES: Record<string, Case> = {
       f.asB((s) => core.getUsage({ db: s, workspaceId: f.a.id }, 'ocr.pages')),
     ).rejects.toBeInstanceOf(TenancyError);
   },
+  reconcileAiCalls: async (f) => {
+    // A's seeded ai_call plus a ledger row for it; B's reconciliation sees neither.
+    const aiCallId = f.a.rows.ai_call?.aiCallId;
+    if (aiCallId === undefined) throw new Error('two-tenant ai_call seed missing');
+    await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ai.spend_paise', 3, {
+      idempotencyKey: 'xt-usage-reconcile',
+      metadata: { ai_call_id: aiCallId },
+    });
+    const before = await aUsage(f);
+    const own = await f.asB((s) => core.reconcileAiCalls({ db: s, workspaceId: f.b.id }));
+    expect(own.mismatches.map((m) => m.aiCallId)).not.toContain(aiCallId);
+    expect(own.matched).toBe(0);
+    await expect(
+      f.asB((s) => core.reconcileAiCalls({ db: s, workspaceId: f.a.id })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aUsage(f)).toEqual(before);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)

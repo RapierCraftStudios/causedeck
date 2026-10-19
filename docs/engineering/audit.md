@@ -34,13 +34,14 @@ Each action is either **security** or **informational**:
 | security      | fail-closed: `record()` throws, so the action fails and its transaction rolls back | yes       |
 | informational | fail-open: logged (`service: audit`, action, workspace and error code only) and dropped. The write ran on its own savepoint, so the caller's transaction stays usable | no        |
 
-| Action                      | Kind          | Emitted by                                      |
-| --------------------------- | ------------- | ----------------------------------------------- |
-| `member.removed`            | security      | `offboardMember` through the `AuditSink`        |
-| `member.role_changed`       | security      | role change (#228)                              |
-| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22) |
-| `workspace.settings_viewed` | informational | reserved                                        |
-| `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)  |
+| Action                      | Kind          | Emitted by                                        |
+| --------------------------- | ------------- | ------------------------------------------------- |
+| `member.removed`            | security      | `offboardMember` through the `AuditSink`          |
+| `member.role_changed`       | security      | role change (#228)                                |
+| `flag.changed`              | security      | flag admin (#228; `@causedeck/flags` sink, #22)   |
+| `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220) |
+| `workspace.settings_viewed` | informational | reserved                                          |
+| `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)    |
 
 #228 adds the sign-in, magic link, passkey, 2FA, session, export, support session and access-denied
 actions.
@@ -114,7 +115,7 @@ below).
 Two jobs keep the chains checked and trimmed (#230, [jobs.md](jobs.md#audit-jobs)):
 
 - **Nightly verification.** `system.audit.verify` runs at 02:00 IST. It verifies the account chain
-  through the owner-defined `app_audit_verify_account_chain(from, to)` (`0018_audit_jobs`; the
+  through the owner-defined `app_audit_verify_account_chain(from, to)` (`0019_audit_jobs`; the
   app role can read account events only as their actor). It then enqueues `audit.verify` for every
   workspace listed by `app_audit_chain_targets()`, deleted workspaces included. Each run starts
   `from` the epoch, so a chain whose oldest events were purged is verified from its oldest

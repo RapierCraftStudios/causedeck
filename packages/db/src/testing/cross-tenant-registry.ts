@@ -13,6 +13,7 @@ const WEB_ACTIONS_TEST = 'apps/web/__tests__/cross-tenant-actions.test.ts';
 const BILLING_PROCESS_EVENT_TEST =
   'packages/core/src/jobs/definitions/billing-process-event.test.ts';
 const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
+const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -75,6 +76,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listWorkspacesForUser: empty,
   memberRole: empty,
   requireOwner: denies,
+  requireCan: denies,
   listMembers: empty,
   changeRole: denies,
   removeMember: denies,
@@ -120,6 +122,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: BILLING_RECONCILE_TEST,
     kind: 'self-scoped',
     note: 'system job: lists ids through a definer function, reads each row in its own workspace',
+  },
+  runUsageRollup: {
+    test: USAGE_ROLLUP_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids through a definer function, writes each workspace inside withWorkspace',
   },
   runNotificationDeliver: selfScoped,
   runNotificationDigest: selfScoped,
@@ -233,6 +240,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   billingProcessEvent: 'job definition (handler is runBillingProcessEvent)',
   billingProcessEventSchema: 'zod schema',
   billingReconcile: 'job definition (handler is runBillingReconcile)',
+  // jobs: usage rollup (#222)
+  usageRollup: 'job definition (handler is runUsageRollup)',
+  USAGE_SUMMARY_RETENTION_MONTHS: 'constant',
   // jobs: notification definitions, schemas, helpers and constants (#196)
   notificationDeliver: 'job definition (handler is runNotificationDeliver)',
   notificationDeliverSchema: 'zod schema',

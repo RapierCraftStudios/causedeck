@@ -2,7 +2,7 @@
 // - `system.audit.verify` runs daily at 02:00 IST. It verifies the account chain (account-level
 //   events, `workspace_id` null) and enqueues `audit.verify` for every workspace with a chain. It
 //   has no workspace and `audit_event` is under FORCE RLS, so it reads through the owner-defined
-//   `app_audit_verify_account_chain` and `app_audit_chain_targets` functions (0018_audit_jobs).
+//   `app_audit_verify_account_chain` and `app_audit_chain_targets` functions (0019_audit_jobs).
 // - `audit.verify` runs `verifyChain` for one workspace inside its `withWorkspace` transaction.
 // Both start at the oldest surviving row (`from` the epoch): retention deletes a chain's oldest
 // events, leaving the first survivor's `prev_hash` pointing at a deleted row. Every surviving

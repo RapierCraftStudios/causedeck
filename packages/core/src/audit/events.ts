@@ -19,6 +19,10 @@ export const AUDIT_ACTIONS = {
   'member.removed': { security: true, description: 'A member was removed from the workspace' },
   'member.role_changed': { security: true, description: "A member's role was changed" },
   'flag.changed': { security: true, description: 'A feature flag was changed' },
+  'usage.budget_override_set': {
+    security: true,
+    description: 'A staff member set a workspace AI budget override',
+  },
   'audit.retention_purged': {
     security: true,
     description: 'Audit events older than the retention window were purged',

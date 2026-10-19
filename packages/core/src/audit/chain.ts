@@ -23,7 +23,7 @@ export interface ChainVerification {
  * Verify one workspace's audit chain (optionally a `created_at` range of it). The nightly
  * `system.audit.verify` job (#230) passes `from: new Date(0)`, so a chain whose oldest events were
  * purged by retention is verified from its oldest surviving row; it verifies account-level events
- * through `app_audit_verify_account_chain` (0018_audit_jobs), the same query for the account chain.
+ * through `app_audit_verify_account_chain` (0019_audit_jobs), the same query for the account chain.
  */
 export async function verifyChain(
   db: Queryable,

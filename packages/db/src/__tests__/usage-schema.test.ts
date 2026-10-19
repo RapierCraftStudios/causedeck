@@ -87,7 +87,7 @@ describe('usage schema (#218)', () => {
     expect(checkSchemaConventions(tablesOf(schema))).toEqual([]);
   });
 
-  it('migrates them under ENABLE + FORCE RLS with ws_isolation, in 0010_usage', async () => {
+  it('migrates them under ENABLE + FORCE RLS with ws_isolation, in 0010_usage (owner definer policies in 0018)', async () => {
     const rows = await owner.execute<{
       name: string;
       enabled: boolean;
@@ -107,9 +107,17 @@ describe('usage schema (#218)', () => {
         name,
         enabled: true,
         forced: true,
-        policies: ['ws_isolation'],
+        // 0018_usage_rollup adds owner-only policies for the rollup's definer functions (#222).
+        policies:
+          name === 'usage_period_summary'
+            ? ['owner_definer_purge', 'owner_definer_read', 'ws_isolation']
+            : ['ws_isolation'],
       })),
     );
+    const ownerOnly = await owner.execute<{ roles: string[] }>(sql`
+      select roles::text[] as roles from pg_policies
+      where tablename = 'usage_period_summary' and policyname like 'owner_definer_%'`);
+    expect(ownerOnly.map((p) => p.roles)).toEqual([['causedeck_owner'], ['causedeck_owner']]);
     expect(await checkRls(owner)).toEqual([]);
     expect(
       missingTenantPolicies('0010_usage', readFileSync(MIGRATION, 'utf8'), GLOBAL_TABLES),

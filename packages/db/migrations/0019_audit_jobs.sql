@@ -1,4 +1,4 @@
--- Migration 0018_audit_jobs: hand-written (no schema diff for drizzle-kit), reviewed before commit.
+-- Migration 0019_audit_jobs: hand-written (no schema diff for drizzle-kit), reviewed before commit.
 -- Reviewed-by: Claude (agent, #230)
 -- Cross-tenant reads for the nightly `system.audit.verify` job (#230, #26 part 5). The job has no
 -- workspace, and audit_event is under FORCE row-level security (0008_audit), so it reads through

@@ -1,5 +1,5 @@
 // `can()`: the pure permission decision (#231). No IO, never throws; RLS is the backstop.
-import { atLeast, type Role } from '../roles';
+import { atLeast, ROLE_RANK, ROLES, type Role } from '../role-rank';
 import { domainOf, isAction, type Action, type ActionDomain } from './actions';
 import { JUNIOR_MATTER_SCOPED, MATRIX } from './matrix';
 
@@ -87,4 +87,18 @@ export function can(
     return deny('NOT_ASSIGNED');
   }
   return ALLOW;
+}
+
+/**
+ * The role-only decision (no resource, no actor identity): what the shell gates nav, commands and
+ * buttons on. Goes through `can()` so the role rules exist once.
+ */
+export function roleCan(role: Role, action: Action, settings?: PolicySettings): boolean {
+  return can({ userId: '', workspaceId: '', role }, action, undefined, settings).allow;
+}
+
+/** Roles `role` may invite: every role ranked below it, or none without `member.invite`. */
+export function invitableRoles(role: Role, settings?: PolicySettings): Role[] {
+  if (!roleCan(role, 'member.invite', settings)) return [];
+  return ROLES.filter((candidate) => ROLE_RANK[candidate] < ROLE_RANK[role]);
 }

@@ -170,7 +170,7 @@ checked and trimmed ([audit.md](audit.md#verification-and-retention)).
 
 - `system.audit.verify` (daily 02:00 IST, stately singleton) verifies the account chain through
   `app_audit_verify_account_chain` and enqueues one `audit.verify` per workspace listed by
-  `app_audit_chain_targets()` (ids only, `0018_audit_jobs`).
+  `app_audit_chain_targets()` (ids only, `0019_audit_jobs`).
 - `audit.verify` (payload `{ workspaceId }`, singleton per workspace) runs `verifyChain` from the
   epoch inside the workspace transaction, so a chain trimmed by retention starts at its oldest
   surviving row. A mismatch logs `fatal` `audit.chain_mismatch` with `severity: 'critical'`,

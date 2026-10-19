@@ -94,3 +94,10 @@ export {
 } from './definitions/notification-digest.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { systemPing } from './definitions/system-ping.ts';
+export {
+  runUsageRollup,
+  USAGE_SUMMARY_RETENTION_MONTHS,
+  usageRollup,
+  type UsageRollupDeps,
+  type UsageRollupReport,
+} from './definitions/usage-rollup.ts';

@@ -1,15 +1,21 @@
 // The workspace the shell is rendering, and who the user is in it. Pure types and helpers: client
 // modules (nav, commands, shortcuts) import `can()` from here, so the database loader lives in the
-// server-only `lib/workspace-loader.ts` (#179). Roles and permissions are local unions until
-// `@causedeck/auth` (#20) exports the real ones; flag keys come from `@causedeck/flags` (#22).
+// server-only `lib/workspace-loader.ts` (#179). Roles, permissions and `can()` come from the
+// central policy in `@causedeck/auth/policy` (#231, #234); flag keys from `@causedeck/flags` (#22).
+import type { Action, Role } from '@causedeck/auth/policy';
 import type { FlagKey } from '@causedeck/flags/keys';
 
-/** Workspace roles, least to most privileged. TODO(#20): re-export from `@causedeck/auth`. */
-export type Role = 'viewer' | 'clerk' | 'junior' | 'advocate' | 'owner';
+/** Workspace roles, most privileged first (`ROLES` in `@causedeck/auth/policy`). */
+export type { Role };
 
-/** Permissions the shell gates on. TODO(#20): re-export from `@causedeck/auth`. */
-export type Permission =
-  'billing.read' | 'invoices.read' | 'limitation.read' | 'insights.read' | 'settings.read';
+/** Permissions the shell gates on: policy actions. */
+export type Permission = Action;
+
+/**
+ * `can(role, permission)`: the policy's role-only decision (`roleCan`), the same module the
+ * server's `assertCan` uses, so nav, commands and shortcuts never carry rules of their own.
+ */
+export { roleCan as can, MATRIX } from '@causedeck/auth/policy';
 
 /** Feature flags the shell gates on: the typed registry keys from `@causedeck/flags`. */
 export type { FlagKey };
@@ -38,19 +44,6 @@ export interface WorkspaceContext {
   role: Role;
   /** Every workspace the user belongs to (for the switcher). Never other users' workspaces. */
   memberships: Membership[];
-}
-
-/** Role-to-permission table. TODO(#20): replace with the central `can()` policy. */
-const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
-  owner: ['billing.read', 'invoices.read', 'limitation.read', 'insights.read', 'settings.read'],
-  advocate: ['limitation.read', 'insights.read', 'settings.read'],
-  junior: ['limitation.read', 'settings.read'],
-  clerk: ['settings.read'],
-  viewer: [],
-};
-
-export function can(role: Role, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[role].includes(permission);
 }
 
 /** Last workspace the user opened (`/w/<slug>/...`); set by `proxy.ts`, read by `/` and `/w`. */

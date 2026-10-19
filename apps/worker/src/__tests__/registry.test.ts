@@ -124,6 +124,7 @@ describe('enqueue', () => {
       'notification.deliver',
       'system.notification.digest',
       'notification.digest',
+      'system.usage.rollup',
       'system.audit.verify',
       'audit.verify',
       'system.audit.retention',

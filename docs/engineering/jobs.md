@@ -93,7 +93,7 @@ side effect in `once(ctx, key, fn)`. It inserts `(workspace_id, job_name, idempo
 failed effect rolls the claim back so a retry can apply it. `once()` needs a workspace-scoped job.
 `system.retention.sweep` deletes `job_effect` rows older than 30 days in every workspace. It has
 no workspace and `job_effect` is under FORCE RLS, so it calls the owner-defined
-`app_purge_job_effects(cutoff)` (SECURITY DEFINER, `0005_rls_baseline`) rather than
+`app_purge_job_effects(cutoff)` (SECURITY DEFINER, `0006_rls_baseline`) rather than
 `withoutWorkspace`, which only reaches global tables. Other cross-tenant maintenance follows the
 same pattern ([tenancy.md](tenancy.md)).
 

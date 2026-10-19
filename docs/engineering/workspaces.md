@@ -139,7 +139,7 @@ Tests:
 
 | Issue | Seam | Today |
 |---|---|---|
-| #19 RLS | `withWorkspace(db, { workspaceId, userId }, fn)` sets `app.workspace_id` and `app.user_id` for one transaction. Handlers and page loads use `ctx.tx` / that transaction only | FORCE RLS is on (`0005_rls_baseline`); a query outside a scope sees no tenant rows. The cross-tenant suite and CI gate are #19 part 2 |
+| #19 RLS | `withWorkspace(db, { workspaceId, userId }, fn)` sets `app.workspace_id` and `app.user_id` for one transaction. Handlers and page loads use `ctx.tx` / that transaction only | FORCE RLS is on (`0006_rls_baseline`); a query outside a scope sees no tenant rows. The cross-tenant suite and CI gate are #19 part 2 |
 | #20 `can()` | `INVITABLE_ROLES` in `invitations.ts`, owner-only checks in `members.ts`, the local `can()` in `apps/web/lib/workspace-context.ts` and `INVITABLE` in `role-select.tsx` | Replace them with the central policy (including the per-workspace "advocates may invite" setting) |
 | #23 email | `Mailer` (`@causedeck/auth/mailer`) with template `workspace.invitation` | Console/Mailpit transports. #23 adds the SES transport and the real template. The invite dialog's optional note is collected but not yet sent, because the template has no field for it |
 | #25 settings | The settings shell and its section navigation (the Settings nav item opens the `settings` index placeholder) | The members page is reachable by URL until #25 links it from the settings sections |

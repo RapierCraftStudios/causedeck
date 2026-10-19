@@ -5,7 +5,9 @@
   "description": "Plans, entitlements, Razorpay, GST invoices.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./gstin": "./src/gstin.ts",
+    "./plans": "./src/plans.ts"
   },
   "scripts": {
     "lint": "eslint .",

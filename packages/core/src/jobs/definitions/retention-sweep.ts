@@ -2,7 +2,7 @@
 // `job_effect` rows older than 30 days; raw audio, memory and crypto-erase windows arrive with
 // their domains. `job_effect` is a tenant table under FORCE row-level security (#19), and this job
 // has no workspace, so the delete runs in the owner-defined `app_purge_job_effects` function
-// (0005_rls_baseline) rather than by widening the app role's scope.
+// (0006_rls_baseline) rather than by widening the app role's scope.
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 

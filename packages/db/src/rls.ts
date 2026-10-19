@@ -1,5 +1,5 @@
 // Tenancy scopes per transaction (#19, spike §4.1, docs/engineering/tenancy.md). Row-level security
-// policies (0005_rls_baseline) read two transaction-local settings:
+// policies (0006_rls_baseline) read two transaction-local settings:
 //   app.workspace_id  pinned by `withWorkspace`; tenant rows of that workspace only.
 //   app.user_id       the acting user; `withUser` pins it alone for pre-workspace flows (the
 //                     switcher, membership checks), where policies expose only the user's own

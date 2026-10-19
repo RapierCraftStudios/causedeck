@@ -29,7 +29,7 @@ import { runCli } from '../run-cli.ts';
 
 const PACKAGE_DIR = fileURLToPath(new URL('../../..', import.meta.url));
 const MIGRATION = fileURLToPath(
-  new URL('../../../migrations/0005_rls_baseline.sql', import.meta.url),
+  new URL('../../../migrations/0006_rls_baseline.sql', import.meta.url),
 );
 
 const owner = createOwnerDb(new Secret(testDatabaseUrls().owner));
@@ -167,7 +167,7 @@ describe('tenantTable and tenantPolicy', () => {
   it('the baseline migration contains exactly tenantPolicy() for every baseline tenant table', async () => {
     const { readFileSync } = await import('node:fs');
     const text = readFileSync(MIGRATION, 'utf8');
-    expect(missingTenantPolicies('0005', text, GLOBAL_TABLES)).toEqual([]);
+    expect(missingTenantPolicies('0006', text, GLOBAL_TABLES)).toEqual([]);
     const normalized = text.replace(/\s+/g, ' ');
     for (const table of BASELINE_TENANT_TABLES) {
       for (const statement of tenantPolicy(table)) expect(normalized).toContain(statement);
@@ -182,16 +182,16 @@ describe('tenantTable and tenantPolicy', () => {
     const create =
       'CREATE TABLE "matter" (\n\t"id" uuid PRIMARY KEY,\n\t"workspace_id" uuid NOT NULL\n);\n';
     writeFileSync(path.join(dir, '0001_old.sql'), create);
-    writeFileSync(path.join(dir, '0006_matter.sql'), create);
+    writeFileSync(path.join(dir, '0007_matter.sql'), create);
     writeFileSync(
-      path.join(dir, '0007_matter_ok.sql'),
+      path.join(dir, '0008_matter_ok.sql'),
       create.replace('"matter"', '"matter_ok"') +
         tenantPolicy('matter_ok')
           .map((s) => `${s};--> statement-breakpoint\n`)
           .join(''),
     );
     expect(checkMigrationPolicies(dir).map((i) => `${i.file}:${i.table}`)).toEqual([
-      '0006_matter.sql:matter',
+      '0007_matter.sql:matter',
     ]);
   });
 });

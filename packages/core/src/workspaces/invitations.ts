@@ -308,7 +308,7 @@ export async function listPendingInvitations(
 
 /**
  * The workspace of the invitation `token` belongs to, or `null`. Looked up by token hash through a
- * SECURITY DEFINER function (0005_rls_baseline), because the invitee has no workspace scope yet;
+ * SECURITY DEFINER function (0006_rls_baseline), because the invitee has no workspace scope yet;
  * the invitation itself is then read inside that workspace's scope.
  */
 async function invitationWorkspace(db: Queryable, token: string): Promise<string | null> {

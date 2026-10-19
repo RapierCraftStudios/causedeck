@@ -3,7 +3,7 @@
 `packages/db` owns the Postgres 17 + pgvector schema (spike §1, §4): Drizzle ORM over the
 `postgres` (postgres-js) driver, drizzle-kit migrations, the column conventions below, the
 Testcontainers test harness and the seed registry. Every tenant table is under FORCE row-level
-security (#19, `0005_rls_baseline`); see [tenancy.md](tenancy.md) for the policies, the scopes
+security (#19, `0006_rls_baseline`); see [tenancy.md](tenancy.md) for the policies, the scopes
 (`withWorkspace`, `withUser`, `withoutWorkspace`) and how to add a tenant table.
 
 ```sh

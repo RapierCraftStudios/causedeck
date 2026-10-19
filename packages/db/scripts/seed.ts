@@ -6,6 +6,7 @@ import { createDb } from '../src/client.ts';
 import { seed, SEED_PROFILES, type SeedProfile } from '../src/seed/index.ts';
 // Seeders register on import.
 import '../src/seed/e2e.ts';
+import '../src/seed/plans.ts';
 
 const flag = process.argv.indexOf('--profile');
 const requested = flag === -1 ? 'demo' : process.argv[flag + 1];

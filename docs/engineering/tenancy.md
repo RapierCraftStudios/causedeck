@@ -9,7 +9,7 @@ The pieces:
 
 | Piece | Where |
 |---|---|
-| Policies, GUC helpers, SECURITY DEFINER lookups | `packages/db/migrations/0005_rls_baseline.sql` |
+| Policies, GUC helpers, SECURITY DEFINER lookups | `packages/db/migrations/0006_rls_baseline.sql` |
 | Scopes: `withWorkspace`, `withUser`, `withoutWorkspace` | `packages/db/src/rls.ts` (`@causedeck/db`) |
 | `tenantPolicy(table)` and the tenant-table registry | `packages/db/src/rls-policies.ts` |
 | `tenantTable(name, cols, extras)` | `packages/db/src/schema-helpers/tenant-table.ts` |
@@ -24,7 +24,7 @@ The pieces:
 | `causedeck_owner` | migrations (`DATABASE_URL_OWNER`), `db:check-rls`, the test harness | Owns every table and function. Runs DDL. Has no `BYPASSRLS`, so FORCE RLS binds it too; it reads across tenants only through the narrow `owner_definer_*` policies that back the SECURITY DEFINER functions |
 | `causedeck_app` | every app and the worker (`DATABASE_URL`) | DML on `public` tables and `EXECUTE` on the `app_*` functions. Not the owner, `NOSUPERUSER`, `NOBYPASSRLS`, `NOINHERIT`: it cannot `ALTER` a table, disable or un-force RLS, drop a policy or `SET ROLE` to the owner (`owner.test.ts`) |
 
-`0005_rls_baseline` also revokes the `PUBLIC` defaults: no table privileges for `PUBLIC`, and
+`0006_rls_baseline` also revokes the `PUBLIC` defaults: no table privileges for `PUBLIC`, and
 functions the owner creates are not executable by `PUBLIC` (each `app_*` function is granted to
 `causedeck_app` explicitly).
 
@@ -86,7 +86,7 @@ organization, owner membership and settings inside `withWorkspace(newId)`.
 
 | Table | Policies |
 |---|---|
-| `member`, `invitation`, `workspace_settings`, `workspace_slug_history`, `job_effect` | `ws_isolation` FOR ALL, USING and WITH CHECK `workspace_id = app.workspace_id` |
+| `member`, `invitation`, `workspace_settings`, `workspace_slug_history`, `job_effect`, and the billing tables `subscription`, `entitlement`, `usage_counter`, `billing_event` (#200) | `ws_isolation` FOR ALL, USING and WITH CHECK `workspace_id = app.workspace_id` |
 | `member` | `member_self` FOR SELECT: `user_id = app.user_id`, only while no workspace is pinned (so a user scope never widens a workspace scope) |
 | `organization` (the tenant root, no `workspace_id`) | `ws_isolation` FOR ALL on `id = app.workspace_id`; `member_read` FOR SELECT while no workspace is pinned, for workspaces the user is a member of |
 | owner-only | `owner_definer_read` (SELECT) on `organization`, `invitation`, `workspace_slug_history`, `job_effect`; `owner_definer_release` (DELETE expired redirects) on `workspace_slug_history`; `owner_definer_purge` (DELETE) on `job_effect` |
@@ -99,7 +99,7 @@ outside RLS, so deleting a workspace still cascades to its rows.
 
 `GLOBAL_TABLES` in `packages/db/src/conventions.ts` lists the tables without RLS: `schema_info`,
 Better Auth's identity tables (`user`, `session`, `account`, `verification`, `passkey`,
-`two_factor`, `rate_limit`) and `api_idempotency_key`. The last has a nullable `workspace_id` but is
+`two_factor`, `rate_limit`), the billing `plan` catalogue and `api_idempotency_key`. The last has a nullable `workspace_id` but is
 keyed by user, so it stays global. The court layer will join this list. Adding a table here is a
 security decision: say why in the PR.
 
@@ -120,7 +120,7 @@ security decision: say why in the PR.
 3. Foreign keys to another tenant table are composite and pair `workspace_id` with `workspace_id`.
 4. `pnpm db:check` (Drizzle conventions) and `pnpm db:check-rls` (the live catalog and the
    migrations) must pass. `db:check-rls` fails when a tenant table lacks ENABLE, FORCE or
-   `ws_isolation`, when an FK can cross workspaces, or when a migration after `0005_rls_baseline`
+   `ws_isolation`, when an FK can cross workspaces, or when a migration after `0006_rls_baseline`
    creates a tenant table without its `tenantPolicy()` statements.
 5. Write tenant rows in tests through `inWorkspace(tx, workspaceId, fn)` from
    `@causedeck/db/testing`. An owner connection does not help: FORCE RLS binds the owner too.

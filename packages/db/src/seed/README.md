@@ -5,7 +5,12 @@
 - `demo`: the synthetic, court-faithful demo data (spike §4.3): two workspaces (a Chennai solo and a Bengaluru chamber) with Madras HC and Karnataka HC nomenclature and **fictional parties only**. It powers the demo, Storybook fixtures and e2e tests.
 - `test`: the minimal rows integration tests need.
 
-No seeders exist yet. Each issue that adds tables registers its own:
+Registered seeders:
+
+- `plans` (`plans.ts`, every profile, order 0): the plan catalogue from `@causedeck/billing/plans`, upserted by id so a price edited in the catalogue reaches the table on the next seed.
+- `e2e-workspaces` (`e2e.ts`, `e2e` profile, order 10): the fixed e2e workspaces, users and invitations.
+
+Each issue that adds tables registers its own:
 
 ```ts
 import { registerSeed } from '@causedeck/db/seed';

@@ -12,8 +12,8 @@ export const CURRENT_WORKSPACE_SQL = "nullif(current_setting('app.workspace_id',
 export const WS_ISOLATION_PREDICATE = `workspace_id = ${CURRENT_WORKSPACE_SQL}`;
 
 /**
- * Tenant tables that existed before RLS (#15, #151, #177); 0005_rls_baseline applies their policies.
- * Tables created later register through `tenantTable()`.
+ * Tenant tables that existed before RLS (#15, #151, #177, #200); 0006_rls_baseline applies their
+ * policies. Tables created later register through `tenantTable()`.
  */
 export const BASELINE_TENANT_TABLES: readonly string[] = [
   'member',
@@ -21,10 +21,14 @@ export const BASELINE_TENANT_TABLES: readonly string[] = [
   'workspace_settings',
   'workspace_slug_history',
   'job_effect',
+  'subscription',
+  'entitlement',
+  'usage_counter',
+  'billing_event',
 ];
 
 /** Migrations up to and including this one predate the same-migration rule for tenant tables. */
-export const RLS_BASELINE_MIGRATION = '0005_rls_baseline';
+export const RLS_BASELINE_MIGRATION = '0006_rls_baseline';
 
 const registry = new Set<string>(BASELINE_TENANT_TABLES);
 

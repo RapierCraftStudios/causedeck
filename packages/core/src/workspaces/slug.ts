@@ -2,7 +2,7 @@
 // renamed workspaces, never a reserved route word. A slug changes only by an owner rename, and the
 // old slug redirects to the workspace for SLUG_REDIRECT_DAYS (`workspace_slug_history`).
 // Uniqueness and resolution must see every workspace, which row-level security (#19) hides, so
-// they go through SECURITY DEFINER functions (0005_rls_baseline) that return only slugs, ids and
+// they go through SECURITY DEFINER functions (0006_rls_baseline) that return only slugs, ids and
 // booleans; the unique indexes stay the backstop against races.
 import {
   schema,

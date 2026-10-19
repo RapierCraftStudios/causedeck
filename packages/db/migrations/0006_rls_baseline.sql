@@ -1,10 +1,12 @@
--- Migration 0005_rls_baseline: hand-written (no schema diff for drizzle-kit), reviewed before commit.
+-- Migration 0006_rls_baseline: hand-written (no schema diff for drizzle-kit), reviewed before commit.
 -- Reviewed-by: Claude (agent, #208)
 -- Row-level security baseline (#19 part 1, spike §4.1, docs/engineering/tenancy.md).
 --   * GUC helpers app_current_workspace() / app_current_user() read the transaction-local settings
 --     pinned by withWorkspace / withUser (packages/db/src/rls.ts).
 --   * Every tenant table gets ENABLE + FORCE ROW LEVEL SECURITY and `ws_isolation` (the statements
---     are exactly what tenantPolicy() in packages/db/src/rls-policies.ts emits).
+--     are exactly what tenantPolicy() in packages/db/src/rls-policies.ts emits), including the
+--     billing tables from 0005_billing (#200): subscription, entitlement, usage_counter and
+--     billing_event. `plan` is a global catalogue.
 --   * organization (the tenant root) is readable as the current workspace or, before a workspace is
 --     selected, by its members (app.user_id); member_self lets a user list their own memberships.
 --   * FORCE binds the owner too, so the owner gets narrow read/purge policies used only by the
@@ -44,6 +46,18 @@ CREATE POLICY "owner_definer_read" ON "job_effect" AS PERMISSIVE FOR SELECT TO c
   USING (true);--> statement-breakpoint
 CREATE POLICY "owner_definer_purge" ON "job_effect" AS PERMISSIVE FOR DELETE TO causedeck_owner
   USING (true);--> statement-breakpoint
+ALTER TABLE "subscription" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "subscription" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "ws_isolation" ON "subscription" AS PERMISSIVE FOR ALL TO PUBLIC USING (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid) WITH CHECK (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid);--> statement-breakpoint
+ALTER TABLE "entitlement" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "entitlement" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "ws_isolation" ON "entitlement" AS PERMISSIVE FOR ALL TO PUBLIC USING (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid) WITH CHECK (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid);--> statement-breakpoint
+ALTER TABLE "usage_counter" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "usage_counter" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "ws_isolation" ON "usage_counter" AS PERMISSIVE FOR ALL TO PUBLIC USING (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid) WITH CHECK (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid);--> statement-breakpoint
+ALTER TABLE "billing_event" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "billing_event" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "ws_isolation" ON "billing_event" AS PERMISSIVE FOR ALL TO PUBLIC USING (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid) WITH CHECK (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid);--> statement-breakpoint
 ALTER TABLE "organization" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "organization" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
 CREATE POLICY "ws_isolation" ON "organization" AS PERMISSIVE FOR ALL TO PUBLIC

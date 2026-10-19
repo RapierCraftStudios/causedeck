@@ -199,7 +199,20 @@ describe('two-factor', () => {
   it('records enable on the first verification and disable', async () => {
     const { auth, events } = setup();
     const { user, cookie } = await devSignInAs(auth);
-    const enable = await authRequest(auth, '/two-factor/enable', { cookie, body: {} });
+    // `/two-factor/enable` re-checks a password, so give the passwordless user a credential.
+    const ctx = await auth.$context;
+    await testAppDb()
+      .insert(schema.account)
+      .values({
+        userId: user.id,
+        accountId: user.id,
+        providerId: 'credential',
+        password: await ctx.password.hash('correct horse battery staple'),
+      });
+    const enable = await authRequest(auth, '/two-factor/enable', {
+      cookie,
+      body: { password: 'correct horse battery staple' },
+    });
     expect(enable.status).toBe(200);
     const { totpURI } = (await enable.json()) as { totpURI: string };
     // Enabling needs a first verification; nothing is enabled yet.
@@ -215,7 +228,7 @@ describe('two-factor', () => {
 
     const disable = await authRequest(auth, '/two-factor/disable', {
       cookie: cookieHeader(verify) || cookie,
-      body: {},
+      body: { password: 'correct horse battery staple' },
     });
     expect(disable.status).toBe(200);
     expect(events.of('twoFactorDisabled')).toEqual([expect.objectContaining({ userId: user.id })]);

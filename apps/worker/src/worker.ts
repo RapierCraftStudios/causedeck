@@ -8,6 +8,7 @@ import {
   type AnyJobDefinition,
   type JobOutcome,
 } from '@causedeck/core/jobs';
+import { getWorkspaceFairnessConcurrency } from '@causedeck/core/usage';
 import type { Database } from '@causedeck/db';
 import type { Logger } from '@causedeck/observability';
 import { PgBoss, type ConstructorOptions, type Job, type JobResult } from 'pg-boss';
@@ -46,6 +47,33 @@ export interface Worker {
   isReady(): boolean;
   /** Round trip to Postgres through pg-boss's pool. */
   ping(): Promise<void>;
+}
+
+/**
+ * The per-call gate limit for a workspace-grouped job: its plan's default (#221). Explicit
+ * `fairnessKey` groups and system jobs keep the definition's cap (undefined). A failed lookup falls
+ * back to that cap too.
+ */
+async function workspaceGroupLimit(
+  db: Database,
+  logger: Logger,
+  def: AnyJobDefinition,
+  data: unknown,
+  group: string | undefined,
+): Promise<number | undefined> {
+  const workspaceId =
+    data !== null && typeof data === 'object'
+      ? (data as { workspaceId?: unknown }).workspaceId
+      : null;
+  if (group === undefined || typeof workspaceId !== 'string' || group !== workspaceId) {
+    return undefined;
+  }
+  try {
+    return await getWorkspaceFairnessConcurrency(db, workspaceId);
+  } catch (err) {
+    logger.warn({ err, job: def.name }, 'fairness plan lookup failed; using the job default');
+    return undefined;
+  }
 }
 
 function toResult(id: string, outcome: JobOutcome): JobResult {
@@ -112,7 +140,9 @@ export function createWorker(options: CreateWorkerOptions): Worker {
             const results: JobResult[] = [];
             for (const job of jobs) {
               const run = () => runJob(def, job, { db, logger });
-              const outcome = await gate.run(fairnessGroupOf(job.data), run);
+              const group = fairnessGroupOf(job.data);
+              const limit = await workspaceGroupLimit(db, logger, def, job.data, group);
+              const outcome = await gate.run(group, run, limit);
               results.push(toResult(job.id, outcome));
             }
             return results;

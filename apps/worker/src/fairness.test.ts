@@ -63,7 +63,43 @@ describe('GroupGate', () => {
     await expect(gate.run('g', () => Promise.resolve('ok'))).resolves.toBe('ok');
   });
 
-  it('rejects a non-positive limit', () => {
+  it('rejects a non-positive limit', async () => {
     expect(() => new GroupGate(0)).toThrow(RangeError);
+    await expect(new GroupGate(3).run('g', () => Promise.resolve(1), 0)).rejects.toThrow(
+      RangeError,
+    );
+  });
+
+  async function maxInFlight(gate: GroupGate, limit: number | undefined, jobs = 6) {
+    let active = 0;
+    let max = 0;
+    const order: number[] = [];
+    await Promise.all(
+      Array.from({ length: jobs }, (_, i) =>
+        gate.run(
+          'ws',
+          async () => {
+            active += 1;
+            max = Math.max(max, active);
+            order.push(i);
+            await tick(5);
+            active -= 1;
+          },
+          limit,
+        ),
+      ),
+    );
+    expect(order).toEqual(Array.from({ length: jobs }, (_, i) => i));
+    expect(gate.active('ws')).toBe(0);
+    return max;
+  }
+
+  it('caps a group at a lower per-call limit (#221 plan defaults), FIFO', async () => {
+    expect(await maxInFlight(new GroupGate(3), 1)).toBe(1);
+    expect(await maxInFlight(new GroupGate(3), 2)).toBe(2);
+  });
+
+  it('clamps a per-call limit above the constructor limit', async () => {
+    expect(await maxInFlight(new GroupGate(2), 5)).toBe(2);
   });
 });

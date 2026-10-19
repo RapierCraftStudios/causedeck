@@ -9,7 +9,7 @@ import { offboardMember } from './offboarding.ts';
 type Queryable = Database | Transaction;
 type WorkspaceRole = (typeof schema.member.$inferSelect)['role'];
 
-const { member, organization, user } = schema;
+const { member, organization, session, user } = schema;
 
 const ROLE_VALUES = ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const;
 type SeatRole = (typeof ROLE_VALUES)[number];
@@ -81,6 +81,8 @@ export interface MemberSummary {
   email: string;
   role: WorkspaceRole;
   joinedAt: Date;
+  /** Latest activity on any of the user's sessions, or `null` when they have none. */
+  lastActiveAt: Date | null;
 }
 
 /** Active members of a live workspace, earliest joiner first. */
@@ -93,6 +95,10 @@ export async function listMembers(db: Queryable, workspaceId: string): Promise<M
       email: user.email,
       role: member.role,
       joinedAt: member.joinedAt,
+      lastActiveAt:
+        sql<Date | null>`(select max(${session.updatedAt}) from ${session} where ${session.userId} = ${member.userId})`.mapWith(
+          (value: string | Date) => new Date(value),
+        ),
     })
     .from(member)
     .innerJoin(user, eq(user.id, member.userId))

@@ -374,6 +374,148 @@ export type Messages = {
       generic: string;
     };
   };
+  members: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    you: string;
+    inviteButton: string;
+    needsConnection: string;
+    readOnly: {
+      viewer: string;
+      member: string;
+    };
+    empty: string;
+    error: {
+      title: string;
+      retry: string;
+    };
+    tableCaption: string;
+    columns: {
+      member: string;
+      role: string;
+      status: string;
+      lastActive: string;
+      actions: string;
+    };
+    status: {
+      active: string;
+      invited: string;
+    };
+    lastActive: {
+      never: string;
+    };
+    invitedOn: string;
+    roles: {
+      owner: string;
+      advocate: string;
+      junior: string;
+      clerk: string;
+      viewer: string;
+    };
+    roleDescriptions: {
+      owner: string;
+      advocate: string;
+      junior: string;
+      clerk: string;
+      viewer: string;
+    };
+    rolesPanel: {
+      title: string;
+      description: string;
+      clerkNote: string;
+    };
+    menu: {
+      label: string;
+      changeRole: string;
+      transferOwnership: string;
+      resend: string;
+      revoke: string;
+      remove: string;
+    };
+    invite: {
+      title: string;
+      description: string;
+      emailsLabel: string;
+      emailsHint: string;
+      emailsPlaceholder: string;
+      removeEmail: string;
+      invalidChip: string;
+      roleLabel: string;
+      noteLabel: string;
+      noteHint: string;
+      cancel: string;
+      submit: string;
+      sending: string;
+      copyLink: string;
+      linkCopied: string;
+      sent: string;
+      resent: string;
+      revoked: string;
+      errors: {
+        emailsRequired: string;
+        invalidEmails: string;
+        tooMany: string;
+        forbidden: string;
+        rateLimited: string;
+        invalid: string;
+        conflict: string;
+        failed: string;
+      };
+    };
+    changeRole: {
+      title: string;
+      description: string;
+      label: string;
+      ownerHint: string;
+      cancel: string;
+      submit: string;
+      saving: string;
+      continue: string;
+      success: string;
+    };
+    transfer: {
+      title: string;
+      description: string;
+      consequences: {
+        newOwner: string;
+        you: string;
+        undo: string;
+      };
+      confirmLabel: string;
+      confirmMismatch: string;
+      back: string;
+      submit: string;
+      transferring: string;
+      success: string;
+    };
+    remove: {
+      title: string;
+      consequencesTitle: string;
+      access: string;
+      sessions: string;
+      otherWorkspaces: string;
+      openWork: string;
+      checking: string;
+      reassignLabel: string;
+      reassignPlaceholder: string;
+      reassignRequired: string;
+      cancel: string;
+      submit: string;
+      removing: string;
+      success: string;
+    };
+    errors: {
+      lastOwner: string;
+      forbidden: string;
+      notFound: string;
+      validation: string;
+      signedOut: string;
+      offline: string;
+      generic: string;
+    };
+  };
   error: {
     title: string;
     description: string;

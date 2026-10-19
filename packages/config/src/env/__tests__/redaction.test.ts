@@ -60,6 +60,7 @@ describe('env secrets', () => {
       'KEK_BASE64',
       'SES_SECRET_ACCESS_KEY',
       'SARVAM_API_KEY',
+      'S3_ACCESS_KEY',
       'S3_SECRET_KEY',
       'RAZORPAY_SECRET',
       'RAZORPAY_WEBHOOK_SECRET',

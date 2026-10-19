@@ -99,6 +99,18 @@ const CASES: Record<string, Case> = {
       }),
     );
   },
+  getNotificationSetting: async (f) => {
+    await expectDenied(notifications.getNotificationSetting(f.inA, { userId: f.ub }));
+    await expectDenied(notifications.getNotificationSetting(f.inB, { userId: f.ua }));
+  },
+  setLockScreenDetails: async (f) => {
+    await expectDenied(notifications.setLockScreenDetails(f.inA, { userId: f.ub, enabled: true }));
+    await expectDenied(notifications.setLockScreenDetails(f.inB, { userId: f.ua, enabled: true }));
+    const settings = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.notificationSetting),
+    );
+    expect(settings.filter((r) => r.userId === f.ub)).toEqual([]);
+  },
 };
 
 const registered = Object.entries(NOTIFICATION_SERVICE_TESTS)

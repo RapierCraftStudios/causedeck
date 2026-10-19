@@ -27,6 +27,13 @@ const inheritedEnv = process.env;
 /** Fixed dev secret: sessions minted in global setup must verify on every worker server. */
 const E2E_AUTH_SECRET = 'e2e-only-better-auth-secret-0123456789abcdef';
 
+/** A fixed, e2e-only VAPID pair so Web Push is enabled (#197); no push ever leaves the machine. */
+const E2E_VAPID = {
+  VAPID_PUBLIC_KEY:
+    'BIPgLY2D3hI8T55kDGKwSuy544nHucAUByjOd-1RsNDzz_bAeq9nQSifSCXsVmzYJBsc1ExOoaW0d-SOejOOMiU',
+  VAPID_PRIVATE_KEY: 'zv-tQmyFd--O4j3Ygq6aBGwEYAf2EztGwXWI2gkTiCI',
+};
+
 export function workerPort(parallelIndex: number): number {
   return BASE_PORT + 1 + parallelIndex;
 }
@@ -55,6 +62,7 @@ export function serverEnv(
     NEXT_PUBLIC_APP_URL: originFor(port),
     DATABASE_URL: dbUrl,
     BETTER_AUTH_SECRET: E2E_AUTH_SECRET,
+    ...E2E_VAPID,
     ...(mail === 'mailpit' ? { EMAIL_PROVIDER: 'smtp', SMTP_URL } : { EMAIL_PROVIDER: 'console' }),
     AI_PROVIDER: 'mock',
     AUTH_GOOGLE_ENABLED: 'false',

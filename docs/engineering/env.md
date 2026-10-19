@@ -83,6 +83,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `KEK_BASE64` | secret base64 (32 bytes) | dev placeholder (non-prod only) | NODE_ENV=production | #21 | #116 |
 | `VAPID_PUBLIC_KEY` | string | — | VAPID_PRIVATE_KEY is set | #23 | #116 |
 | `VAPID_PRIVATE_KEY` | secret | — | VAPID_PUBLIC_KEY is set | #23 | #116 |
+| `VAPID_SUBJECT` | mailto: or https url | — | never | #197 | — |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | url | — | never | #13 | — |
 | `API_PORT` | port | `3001` | never (defaults to 3001) | #14 | — |
 | `WORKER_PORT` | port | `3003` | never (defaults to 3003) | #15 | — |

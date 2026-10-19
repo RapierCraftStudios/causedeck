@@ -25,7 +25,7 @@ import {
 } from './categories.ts';
 import { forbidden, invalid, notFound } from './errors.ts';
 
-const { member, notification, notificationPref, organization } = schema;
+const { member, notification, notificationPref, notificationSetting, organization } = schema;
 
 export const LIST_LIMIT_MAX = 100;
 const LIST_LIMIT_DEFAULT = 50;
@@ -68,6 +68,19 @@ export interface NotificationItem {
   createdAt: Date;
 }
 
+/** A member's per-workspace delivery settings (`notification_setting`); defaults when no row. */
+export interface NotificationSettings {
+  /** `Do not push during court hours` (#196). */
+  courtHoursQuiet: boolean;
+  /** `Show details on lock screen` (#197): push carries the title and body. Default off. */
+  lockScreenDetails: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_SETTINGS: Readonly<NotificationSettings> = {
+  courtHoursQuiet: false,
+  lockScreenDetails: false,
+};
+
 export interface ResolvedPreference {
   category: CategoryKey;
   channel: Channel;
@@ -95,6 +108,8 @@ const notifySchema = z.strictObject({
 });
 
 const userSchema = z.strictObject({ userId: uuid });
+
+const lockScreenSchema = z.strictObject({ userId: uuid, enabled: z.boolean() });
 
 const listSchema = z.strictObject({
   userId: uuid,
@@ -391,5 +406,51 @@ export async function setPreference(
         set: { enabled, digest, updatedAt: new Date() },
       });
     return resolve(key, p.channel, [{ category: key, channel: p.channel, enabled, digest }]);
+  });
+}
+
+/** The member's delivery settings in the context workspace, defaults filled in. */
+export async function getNotificationSetting(
+  ctx: NotificationContext,
+  input: { userId: string },
+): Promise<NotificationSettings> {
+  const { userId } = parse(userSchema, input);
+  return asMember(ctx, userId, async (tx) => {
+    const [row] = await tx
+      .select({
+        courtHoursQuiet: notificationSetting.courtHoursQuiet,
+        lockScreenDetails: notificationSetting.lockScreenDetails,
+      })
+      .from(notificationSetting)
+      .where(
+        and(
+          eq(notificationSetting.workspaceId, ctx.workspaceId),
+          eq(notificationSetting.userId, userId),
+        ),
+      );
+    return row ?? { ...DEFAULT_NOTIFICATION_SETTINGS };
+  });
+}
+
+/** Turn `Show details on lock screen` on or off for the member in the context workspace. */
+export async function setLockScreenDetails(
+  ctx: NotificationContext,
+  input: { userId: string; enabled: boolean },
+): Promise<NotificationSettings> {
+  const { userId, enabled } = parse(lockScreenSchema, input);
+  return asMember(ctx, userId, async (tx) => {
+    const [row] = await tx
+      .insert(notificationSetting)
+      .values({ workspaceId: ctx.workspaceId, userId, lockScreenDetails: enabled })
+      .onConflictDoUpdate({
+        target: [notificationSetting.workspaceId, notificationSetting.userId],
+        set: { lockScreenDetails: enabled, updatedAt: new Date() },
+      })
+      .returning({
+        courtHoursQuiet: notificationSetting.courtHoursQuiet,
+        lockScreenDetails: notificationSetting.lockScreenDetails,
+      });
+    if (!row) throw new Error('notification_setting upsert returned no row');
+    return row;
   });
 }

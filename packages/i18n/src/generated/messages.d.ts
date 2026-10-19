@@ -576,6 +576,17 @@ export type Messages = {
         cta: string;
       };
     };
+    push: {
+      card: {
+        title: string;
+        body: string;
+        turnOn: string;
+        notNow: string;
+        enabled: string;
+        blocked: string;
+        error: string;
+      };
+    };
     title: string;
     bell: {
       label: string;

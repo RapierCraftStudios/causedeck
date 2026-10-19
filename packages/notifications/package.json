@@ -9,13 +9,15 @@
     "./categories": "./src/categories.ts",
     "./service": "./src/service.ts",
     "./email": "./src/email/index.ts",
-    "./quiet-hours": "./src/quiet-hours.ts"
+    "./quiet-hours": "./src/quiet-hours.ts",
+    "./push": "./src/push/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:tenancy": "vitest run src/__tests__/cross-tenant"
+    "test:tenancy": "vitest run src/__tests__/cross-tenant",
+    "vapid:generate": "tsx scripts/vapid-generate.ts"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "catalog:",
@@ -28,12 +30,15 @@
     "nodemailer": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "web-push": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "@types/web-push": "catalog:",
     "eslint": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

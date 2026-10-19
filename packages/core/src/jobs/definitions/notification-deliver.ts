@@ -10,8 +10,11 @@
 //   never retried or re-sent; any other failure throws `RetryableError`, which rolls back the
 //   `once()` claim, and pg-boss retries with backoff.
 // The outcome is written to `notification.data.delivery.<channel>` on the existing row; the job
-// never inserts a notification. Push is disabled until #197 provides a sender. Logs carry ids,
-// status and error codes only, never the address, title or body.
+// never inserts a notification. Push (#197) goes through `PushSender` from
+// `@causedeck/notifications/push`: absent VAPID keys disable it (recorded as skipped), the payload
+// is content-free unless the member turned on `Show details on lock screen`, a member with no
+// active subscription is skipped, and 404/410 subscriptions are revoked by the sender. Logs carry
+// ids, status and error codes only, never the address, title or body.
 import { serverEnv } from '@causedeck/config/env';
 import { schema } from '@causedeck/db';
 import {
@@ -31,6 +34,7 @@ import {
   type EmailTransport,
   type RenderedEmail,
 } from '@causedeck/notifications/email';
+import { createPushSender, type PushSender } from '@causedeck/notifications/push';
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -39,7 +43,7 @@ import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
 import { once } from '../idempotency.ts';
 
-const { notification, user } = schema;
+const { notification, notificationSetting, user } = schema;
 
 export const DELIVERY_CHANNELS = ['email', 'push'] as const;
 export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
@@ -52,10 +56,7 @@ export const notificationDeliverSchema = z.object({
 
 export type NotificationDeliverPayload = z.output<typeof notificationDeliverSchema>;
 
-/** What the push channel needs from #197; content stays minimal (no body). */
-export interface PushSender {
-  send(push: { userId: string; category: string; title: string; href: string }): Promise<void>;
-}
+export type { PushSender };
 
 /** Transports and links the notification jobs use; injectable for tests. */
 export interface NotificationJobDeps {
@@ -79,7 +80,11 @@ export function notificationJobDeps(log: JobContext['log']): NotificationJobDeps
   if (override !== null) return override;
   if (defaults === undefined) {
     const env = serverEnv();
-    defaults = { email: createEmailTransport(env, log), appUrl: env.APP_URL };
+    defaults = {
+      email: createEmailTransport(env, log),
+      push: createPushSender({ env, log }),
+      appUrl: env.APP_URL,
+    };
   }
   return defaults;
 }
@@ -188,7 +193,7 @@ export async function runNotificationDeliver(
   if (enabled === null) return skip('not_member');
   if (!enabled) return skip('disabled');
 
-  let send: () => Promise<void>;
+  let send: () => Promise<DeliveryRecord | undefined>;
   if (channel === 'email') {
     const [recipient] = await ctx.db
       .select({ email: user.email, locale: user.locale })
@@ -199,23 +204,40 @@ export async function runNotificationDeliver(
     const email = await renderFor(row, recipient.locale, deps.appUrl);
     send = async () => {
       await deps.email.send({ to: recipient.email, ...email, tags: { category: row.category } });
+      return undefined;
     };
   } else {
     const push = deps.push;
     if (push === undefined) return skip('push_disabled');
-    send = () =>
-      push.send({
-        userId: row.userId,
-        category: row.category,
-        title: row.title,
-        href: appLink(deps.appUrl, row.href),
-      });
+    const [setting] = await ctx.db
+      .select({ lockScreenDetails: notificationSetting.lockScreenDetails })
+      .from(notificationSetting)
+      .where(
+        and(
+          eq(notificationSetting.workspaceId, workspaceId),
+          eq(notificationSetting.userId, row.userId),
+        ),
+      );
+    const message = {
+      notificationId,
+      userId: row.userId,
+      category: row.category,
+      title: row.title,
+      body: row.body,
+      href: appLink(deps.appUrl, row.href),
+      showDetails: setting?.lockScreenDetails ?? false,
+    };
+    send = async () => {
+      const { delivered } = await push.send(message, ctx.db);
+      return delivered === 0
+        ? { status: 'skipped', reason: 'no_subscription', at: at() }
+        : undefined;
+    };
   }
 
   const result = await once(ctx, ctx.idempotencyKey, async (): Promise<DeliveryRecord> => {
     try {
-      await send();
-      return { status: 'sent', at: at() };
+      return (await send()) ?? { status: 'sent', at: at() };
     } catch (error) {
       const code = emailErrorCode(error);
       if (channel === 'email' && isPermanentEmailError(error)) {
@@ -234,6 +256,11 @@ export async function runNotificationDeliver(
     ctx.log.warn(
       { ...fields, status: 'failed', code: result.value.code },
       'notification delivery failed permanently',
+    );
+  } else if (result.value.status === 'skipped') {
+    ctx.log.info(
+      { ...fields, status: 'skipped', reason: result.value.reason },
+      'notification delivery skipped',
     );
   } else {
     ctx.log.info({ ...fields, status: 'sent' }, 'notification delivered');

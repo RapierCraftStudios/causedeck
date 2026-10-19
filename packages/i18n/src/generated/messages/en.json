@@ -575,6 +575,17 @@
         "cta": "Open in CauseDeck"
       }
     },
+    "push": {
+      "card": {
+        "title": "Push notifications",
+        "body": "Get a nudge before your hearings. You can change this any time.",
+        "turnOn": "Turn on",
+        "notNow": "Not now",
+        "enabled": "Push notifications are on for this browser.",
+        "blocked": "Notifications are blocked for this site. Allow them in your browser settings to turn them on.",
+        "error": "Could not turn on push notifications. Try again."
+      }
+    },
     "title": "Notifications",
     "bell": {
       "label": "Notifications",

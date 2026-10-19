@@ -46,7 +46,10 @@ vi.mock('next/navigation', () => ({
 vi.mock('next-intl/server', () => ({
   getTranslations: (namespace?: string) => fakeGetTranslations(state.locale)(namespace),
 }));
-vi.mock('../lib/env.ts', () => ({ isDev: () => state.dev }));
+vi.mock('../lib/env.ts', () => ({
+  isDev: () => state.dev,
+  serverEnv: () => ({ APP_URL: 'http://localhost:3000' }),
+}));
 vi.mock('next/headers', () => ({
   cookies: () => Promise.resolve({ get: (name: string) => state.cookies[name] }),
   headers: () => Promise.resolve(new Headers({ 'x-pathname': state.pathname })),

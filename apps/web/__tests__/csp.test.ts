@@ -17,6 +17,7 @@ describe('buildCsp', () => {
     "base-uri 'self'",
     "default-src 'self'",
     "font-src 'self'",
+    "worker-src 'self'",
   ])('contains %s', (directive) => {
     expect(csp.split('; ')).toContain(directive);
   });

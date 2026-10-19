@@ -27,6 +27,14 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Audit events older than the retention window were purged',
   },
+  'billing.subscription_changed': {
+    security: true,
+    description: 'An owner changed the plan or seats, or cancelled or resumed the subscription',
+  },
+  'billing.gstin_updated': {
+    security: true,
+    description: "An owner saved or cleared the workspace's GSTIN",
+  },
   // Fail-closed: an export whose own audit event cannot be written is refused (#229).
   'audit.exported': { security: true, description: 'The audit log was exported' },
   'workspace.settings_viewed': {

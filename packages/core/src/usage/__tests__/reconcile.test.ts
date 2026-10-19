@@ -35,7 +35,18 @@ async function aiCallAt(tx: Transaction, workspaceId: string, costPaise: number,
   const [row] = await inWorkspace(tx, workspaceId, (s) =>
     s
       .insert(schema.aiCall)
-      .values({ workspaceId, ...call(costPaise), createdAt: at })
+      .values({
+        workspaceId,
+        purpose: 'brief.draft',
+        provider: 'mock',
+        model: 'mock-1',
+        region: 'ap-south-1',
+        inputTokens: 100,
+        outputTokens: 20,
+        costPaise,
+        automationLevel: 2,
+        createdAt: at,
+      })
       .returning({ id: schema.aiCall.id }),
   );
   if (!row) throw new Error('ai_call insert failed');

@@ -4,8 +4,8 @@ import { seedPlans } from '@causedeck/db/seed/plans';
 import { withTestDb } from '@causedeck/db/testing';
 import { describe, expect, it } from 'vitest';
 
-import { newWorkspace } from '../../audit/__tests__/fixtures.ts';
-import { DEFAULT_FAIRNESS_CONCURRENCY } from '../../jobs/define.ts';
+import { newWorkspace } from '../../__tests__/fixtures.ts';
+import { DEFAULT_FAIRNESS_CONCURRENCY } from '../../jobs/index.ts';
 import {
   FAIRNESS_CONCURRENCY_BY_PLAN,
   fairnessConcurrencyForPlan,

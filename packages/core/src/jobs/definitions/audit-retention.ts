@@ -8,7 +8,7 @@
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { record } from '../../audit/writer.ts';
+import { record } from '../../audit/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 import { PermanentError } from '../errors.ts';

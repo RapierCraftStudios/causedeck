@@ -10,7 +10,7 @@
 import { getPlan, type LimitKey } from '@causedeck/billing';
 import { withWorkspace } from '@causedeck/db';
 
-import { getWorkspaceEntitlements } from '../billing/entitlements.ts';
+import { getWorkspaceEntitlements } from '../billing/index.ts';
 import type { UsageKey } from './keys.ts';
 import { getUsage, type UsageContext } from './meter.ts';
 import { nextPeriodStart, USAGE_TIME_ZONE } from './period.ts';

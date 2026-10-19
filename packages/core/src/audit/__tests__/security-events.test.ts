@@ -18,7 +18,7 @@ import {
   recordSupportSessionEnded,
   recordSupportSessionStarted,
 } from '../index.ts';
-import { newUser, newWorkspace } from './fixtures.ts';
+import { newUser, newWorkspace } from '../../__tests__/fixtures.ts';
 
 const UA = 'Mozilla/5.0 CauseDeckTest/228';
 const IP = '203.0.113.28';

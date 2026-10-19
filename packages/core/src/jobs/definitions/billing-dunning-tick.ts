@@ -29,7 +29,7 @@ import { notify, type DeliveryJob } from '@causedeck/notifications';
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { invalidateEntitlements } from '../../billing/entitlements.ts';
+import { invalidateEntitlements } from '../../billing/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 import { getProducer } from '../producer.ts';

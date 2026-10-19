@@ -6,8 +6,8 @@ import { can, isRole, type Role } from '@causedeck/auth/policy';
 import { schema, withWorkspace, type Queryable, type Transaction } from '@causedeck/db';
 import { and, eq, sql, type SQL } from 'drizzle-orm';
 
-import { forbidden, invalid, notFound } from '../workspaces/errors.ts';
-import { activeMember, liveWorkspace } from '../workspaces/members.ts';
+import { forbidden, invalid, notFound } from '../shared/errors.ts';
+import { activeMember, liveWorkspace } from '../shared/membership.ts';
 import type { AuditActorKind, AuditOutcome } from './events.ts';
 import { truncateIpForDisplay } from './redact.ts';
 

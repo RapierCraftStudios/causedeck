@@ -5,8 +5,8 @@
 import { getPlan, type PlanKind } from '@causedeck/billing';
 import { withWorkspace, type Queryable } from '@causedeck/db';
 
-import { getWorkspaceEntitlements } from '../billing/entitlements.ts';
-import { DEFAULT_FAIRNESS_CONCURRENCY } from '../jobs/define.ts';
+import { getWorkspaceEntitlements } from '../billing/index.ts';
+import { DEFAULT_FAIRNESS_CONCURRENCY } from '../shared/fairness.ts';
 
 /** Concurrent jobs per workspace and queue, by plan; each in [1, DEFAULT_FAIRNESS_CONCURRENCY]. */
 export const FAIRNESS_CONCURRENCY_BY_PLAN: Readonly<Record<PlanKind, number>> = Object.freeze({

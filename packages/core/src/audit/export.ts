@@ -5,7 +5,7 @@
 // docs/engineering/audit.md.
 import { withWorkspace } from '@causedeck/db';
 
-import { invalid } from '../workspaces/errors.ts';
+import { invalid } from '../shared/errors.ts';
 import {
   auditPage,
   authorizeAuditRead,

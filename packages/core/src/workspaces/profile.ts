@@ -10,7 +10,7 @@ import {
 } from '@causedeck/validators/workspace';
 import { and, eq } from 'drizzle-orm';
 
-import { record } from '../audit/writer.ts';
+import { record } from '../audit/index.ts';
 
 import { invalid, notFound } from './errors.ts';
 import { liveWorkspace, requireCan } from './members.ts';

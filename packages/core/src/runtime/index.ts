@@ -6,16 +6,21 @@
 import { db, isUuid as isUuidValue, withWorkspace, type Transaction } from '@causedeck/db';
 import type { StorageCtx } from '@causedeck/storage';
 
-import type { AuditExportContext, AuditExportOptions } from '../audit/export.ts';
-import type { AuditPage, AuditQueryFilters, AuditReadContext } from '../audit/query.ts';
-import type { AccessDeniedEvent } from '../audit/security-events.ts';
-import type { InvoicePdfContext, SaasInvoicePdf } from '../billing/invoice-pdf.ts';
+import type {
+  AccessDeniedEvent,
+  AuditExportContext,
+  AuditExportOptions,
+  AuditPage,
+  AuditQueryFilters,
+  AuditReadContext,
+} from '../audit/index.ts';
+import type { InvoicePdfContext, SaasInvoicePdf } from '../billing/index.ts';
 import type {
   AcceptInvitationRequest,
   AcceptedInvitation,
+  CreateWorkspaceRequest,
   PreviewInvitationRequest,
-} from '../workspaces/invitations.ts';
-import type { CreateWorkspaceRequest } from '../workspaces/service.ts';
+} from '../workspaces/index.ts';
 
 export type { Transaction };
 

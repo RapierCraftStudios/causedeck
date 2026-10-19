@@ -5,7 +5,8 @@
 import { schema, type Database, type Transaction } from '@causedeck/db';
 import { and, eq } from 'drizzle-orm';
 
-import { recordAuditSink } from '../audit/sink.ts';
+import { recordAuditSink } from '../audit/index.ts';
+import type { AuditSink } from '../shared/audit-sink.ts';
 import { invalid, notFound } from './errors.ts';
 
 type Queryable = Database | Transaction;
@@ -38,23 +39,7 @@ export function clearReassignProviders(): void {
   reassignProviders.clear();
 }
 
-export interface AuditEvent {
-  action: 'member.removed';
-  workspaceId: string;
-  actorUserId: string;
-  targetUserId: string;
-  /** The user who took over open work, or `null` when there was none to reassign. */
-  reassignedTo: string | null;
-  at: Date;
-}
-
-/**
- * Where offboarding sends its audit event. The default writes an `audit_event` row through
- * `record()` in the caller's transaction (security action: a failed write fails the removal).
- */
-export interface AuditSink {
-  write(tx: Queryable, event: AuditEvent): Promise<void>;
-}
+export type { AuditEvent, AuditSink } from '../shared/audit-sink.ts';
 
 export const noopAuditSink: AuditSink = {
   write: () => Promise.resolve(),

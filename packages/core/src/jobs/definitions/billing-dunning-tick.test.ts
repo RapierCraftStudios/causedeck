@@ -13,7 +13,7 @@ import type { Logger } from '@causedeck/observability';
 import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getWorkspaceEntitlements } from '../../billing/entitlements.ts';
+import { getWorkspaceEntitlements } from '../../billing/index.ts';
 import { registry } from '../registry.ts';
 import { billingDunningTick, runBillingDunningTick } from './billing-dunning-tick.ts';
 

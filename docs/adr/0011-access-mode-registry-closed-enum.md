@@ -28,7 +28,7 @@ Court adapters read cause lists, orders, case status and display boards. How a c
 
 ## Decision
 
-- Access modes are exactly these five, in code (`ACCESS_MODES` in `packages/flags/src/access-mode.ts`) and in the Postgres enum `access_mode` (migration `0007_flags`):
+- Access modes are exactly these five, in code (`ACCESS_MODES` in `packages/flags/src/access-mode.ts`) and in the Postgres enum `access_mode` (migration `0011_flags`):
   - `user_supplied`: the lawyer supplies the data (upload, paste, forward, share).
   - `device_user_triggered`: the lawyer's own device fetches it on their explicit action, with their session; never on our servers, never scheduled.
   - `official`: an official feed or API the court publishes for this use.

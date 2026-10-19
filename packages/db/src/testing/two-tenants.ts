@@ -5,13 +5,23 @@
 // committed data (the api and web suites, whose users come from Better Auth).
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
+import { sql } from 'drizzle-orm';
+
 import type { Database, Transaction } from '../client.ts';
 import { registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
+import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { notification, notificationPref } from '../schema/notifications.ts';
+import {
+  budgetOverride,
+  usageEvent,
+  usagePeriodSummary,
+  usageReservation,
+} from '../schema/usage.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -124,6 +134,90 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(billingEvent)
       .values({ providerEventId, workspaceId, type: 'xt.seed', payloadHash: randomUUID() });
     return { providerEventId };
+  },
+  audit_event: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx.execute<{ id: string }>(
+      sql`select id from app_audit_append(${workspaceId}::uuid, ${ownerId}::uuid, 'user', 'xt.seed')`,
+    );
+    return { auditEventId: first([...rows], 'audit_event').id };
+  },
+  ai_call: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(aiCall)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        purpose: 'xt.seed',
+        provider: 'mock',
+        model: 'mock-1',
+        region: 'ap-south-1',
+        automationLevel: 1,
+      })
+      .returning({ id: aiCall.id });
+    return { aiCallId: first(rows, 'ai_call').id };
+  },
+  notification: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(notification)
+      .values({ workspaceId, userId: ownerId, category: 'system.notice', title: 'Seed notice' })
+      .returning({ id: notification.id });
+    return { notificationId: first(rows, 'notification').id, userId: ownerId };
+  },
+  notification_pref: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(notificationPref).values({
+      workspaceId,
+      userId: ownerId,
+      category: 'system.notice',
+      channel: 'email',
+      enabled: false,
+    });
+    return { userId: ownerId, category: 'system.notice', channel: 'email' };
+  },
+  usage_reservation: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(usageReservation)
+      .values({
+        workspaceId,
+        amountPaise: 100,
+        purpose: 'xt.seed',
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      })
+      .returning({ id: usageReservation.id });
+    return { reservationId: first(rows, 'usage_reservation').id };
+  },
+  usage_event: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(usageEvent)
+      .values({
+        workspaceId,
+        key: 'xt.seed',
+        amount: 1,
+        idempotencyKey: randomUUID(),
+        metadata: { seed_id: randomUUID() },
+      })
+      .returning({ id: usageEvent.id });
+    return { usageEventId: first(rows, 'usage_event').id };
+  },
+  budget_override: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(budgetOverride)
+      .values({
+        workspaceId,
+        key: 'xt.seed',
+        limitValue: 1000,
+        setBy: ownerId,
+        reason: 'cross-tenant seed',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      })
+      .returning({ id: budgetOverride.id });
+    return { budgetOverrideId: first(rows, 'budget_override').id };
+  },
+  usage_period_summary: async (tx, { workspaceId }) => {
+    const key = `xt.seed_${randomUUID().replaceAll('-', '')}`;
+    await tx
+      .insert(usagePeriodSummary)
+      .values({ workspaceId, key, periodStart: new Date(), value: 1 });
+    return { key };
   },
   workspace_feature_flag: async (tx, { workspaceId, ownerId }) => {
     const key = `xt.seed.${randomUUID()}`;

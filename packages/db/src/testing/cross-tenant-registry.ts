@@ -1,14 +1,17 @@
 // The cross-tenant registry (#19, #209): every tenant table and every exported `@causedeck/core`
-// service names the test that proves workspace B cannot reach workspace A through it. The registry
-// tests (`packages/db/src/__tests__/cross-tenant/registry.test.ts` for tables, introspected from the
-// live catalog, and `packages/core/src/__tests__/cross-tenant/registry.test.ts` for core exports)
-// fail `pnpm test:tenancy` when something is added without an entry here. Data and pure helpers
+// and `@causedeck/notifications` service names the test that proves workspace B cannot reach
+// workspace A through it. The registry tests (`packages/db/src/__tests__/cross-tenant/registry.test.ts`
+// for tables, introspected from the live catalog, and `packages/core/src/__tests__/cross-tenant/
+// registry.test.ts` and `packages/notifications/src/__tests__/cross-tenant/registry.test.ts` for
+// package exports) fail `pnpm test:tenancy` when something is added without an entry here. Data and pure helpers
 // only: `@causedeck/db` must not import `@causedeck/core`. See docs/engineering/tenancy.md.
 
 /** Paths are relative to the repository root. */
 const DB_TABLES_TEST = 'packages/db/src/__tests__/cross-tenant/tables.test.ts';
 const CORE_SERVICES_TEST = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const WEB_ACTIONS_TEST = 'apps/web/__tests__/cross-tenant-actions.test.ts';
+const NOTIFICATIONS_SERVICES_TEST =
+  'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
 /** Tenant table (and the tenant root `organization`) → its cross-tenant SQL test. */
 export const TABLE_TESTS: Readonly<Record<string, string>> = {
@@ -22,8 +25,22 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   entitlement: DB_TABLES_TEST,
   usage_counter: DB_TABLES_TEST,
   billing_event: DB_TABLES_TEST,
+  audit_event: DB_TABLES_TEST,
+  ai_call: DB_TABLES_TEST,
+  notification: DB_TABLES_TEST,
+  notification_pref: DB_TABLES_TEST,
+  usage_reservation: DB_TABLES_TEST,
+  usage_event: DB_TABLES_TEST,
+  budget_override: DB_TABLES_TEST,
+  usage_period_summary: DB_TABLES_TEST,
   workspace_feature_flag: DB_TABLES_TEST,
 };
+
+/**
+ * Append-only tenant tables (#226): the app role has no UPDATE or DELETE, so the cross-tenant suite
+ * expects a permission error (42501) where it would otherwise expect zero rows.
+ */
+export const APPEND_ONLY_TABLES: readonly string[] = ['audit_event', 'ai_call'];
 
 /**
  * How a service is proven safe when user B passes workspace A's ids:
@@ -149,6 +166,35 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   closeProducer: 'pg-boss producer',
 };
 
+const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;
+
+/**
+ * Exported `@causedeck/notifications` services (#194) → their cross-tenant test. Each checks that
+ * the user is an active member of the context workspace (`FORBIDDEN`) and touches only their rows.
+ */
+export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  notify: notificationDenies,
+  listForUser: notificationDenies,
+  markRead: notificationDenies,
+  markAllRead: notificationDenies,
+  unreadCount: notificationDenies,
+  getPreferences: notificationDenies,
+  setPreference: notificationDenies,
+};
+
+/** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */
+export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  packageName: 'constant',
+  CATEGORIES: 'constant (category registry)',
+  CATEGORY_KEYS: 'constant',
+  CHANNELS: 'constant',
+  DIGESTS: 'constant',
+  isCategoryKey: 'pure',
+  isLockedChannel: 'pure',
+  NotificationError: 'error class',
+  LIST_LIMIT_MAX: 'constant',
+};
+
 /** The storage presign cross-tenant test (#21). */
 export const STORAGE_PRESIGN_TEST = 'packages/storage/src/__tests__/cross-tenant-presign.test.ts';
 
@@ -160,10 +206,17 @@ export function unregisteredTables(liveTenantTables: readonly string[]): string[
   return [...new Set(liveTenantTables)].filter((t) => !(t in TABLE_TESTS)).sort();
 }
 
-/** Core runtime exports that are neither a registered service nor listed as not a service. */
-export function unregisteredServices(exportNames: readonly string[]): string[] {
+/**
+ * Runtime exports that are neither a registered service nor listed as not a service. Defaults to
+ * the core maps; pass the notifications maps for `@causedeck/notifications`.
+ */
+export function unregisteredServices(
+  exportNames: readonly string[],
+  services: Readonly<Record<string, ServiceEntry>> = SERVICE_TESTS,
+  notAService: Readonly<Record<string, string>> = NOT_A_SERVICE,
+): string[] {
   return [...new Set(exportNames)]
-    .filter((name) => !(name in SERVICE_TESTS) && !(name in NOT_A_SERVICE))
+    .filter((name) => !(name in services) && !(name in notAService))
     .sort();
 }
 
@@ -184,6 +237,7 @@ export function registeredTestFiles(): string[] {
     ...new Set([
       ...Object.values(TABLE_TESTS),
       ...Object.values(SERVICE_TESTS).map((entry) => entry.test),
+      ...Object.values(NOTIFICATION_SERVICE_TESTS).map((entry) => entry.test),
       STORAGE_PRESIGN_TEST,
     ]),
   ].sort();

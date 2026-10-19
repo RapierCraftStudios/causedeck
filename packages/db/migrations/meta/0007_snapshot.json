@@ -1,89 +1,9 @@
 {
-  "id": "c9d3331b-de87-4927-b719-68a1b1eb24e2",
+  "id": "71f28ddc-e439-44e0-b0b0-b43ff5db1bfe",
   "prevId": "79dce352-28cc-4e9e-8364-165b891a62db",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.access_mode_registry": {
-      "name": "access_mode_registry",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "adapter_id": {
-          "name": "adapter_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "resource": {
-          "name": "resource",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "mode": {
-          "name": "mode",
-          "type": "access_mode",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "counsel_note": {
-          "name": "counsel_note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reviewed_by": {
-          "name": "reviewed_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reviewed_at": {
-          "name": "reviewed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "enabled": {
-          "name": "enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "access_mode_registry_reviewed_by_user_id_fk": {
-          "name": "access_mode_registry_reviewed_by_user_id_fk",
-          "tableFrom": "access_mode_registry",
-          "tableTo": "user",
-          "columnsFrom": ["reviewed_by"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "access_mode_registry_adapter_resource_uq": {
-          "name": "access_mode_registry_adapter_resource_uq",
-          "nullsNotDistinct": false,
-          "columns": ["adapter_id", "resource"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.account": {
       "name": "account",
       "schema": "",
@@ -469,81 +389,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.feature_flag": {
-      "name": "feature_flag",
-      "schema": "",
-      "columns": {
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "enabled": {
-          "name": "enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "legal_ack_by": {
-          "name": "legal_ack_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "legal_ack_note": {
-          "name": "legal_ack_note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "feature_flag_legal_ack_by_user_id_fk": {
-          "name": "feature_flag_legal_ack_by_user_id_fk",
-          "tableFrom": "feature_flag",
-          "tableTo": "user",
-          "columnsFrom": ["legal_ack_by"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "feature_flag_updated_by_user_id_fk": {
-          "name": "feature_flag_updated_by_user_id_fk",
-          "tableFrom": "feature_flag",
-          "tableTo": "user",
-          "columnsFrom": ["updated_by"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "feature_flag_legal_ack_chk": {
-          "name": "feature_flag_legal_ack_chk",
-          "value": "legal_ack_by is null or legal_ack_note is not null"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.invitation": {
@@ -1970,117 +1815,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.workspace_feature_flag": {
-      "name": "workspace_feature_flag",
-      "schema": "",
-      "columns": {
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "enabled": {
-          "name": "enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "legal_ack_by": {
-          "name": "legal_ack_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "legal_ack_note": {
-          "name": "legal_ack_note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "workspace_feature_flag_workspace_id_idx": {
-          "name": "workspace_feature_flag_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "workspace_feature_flag_legal_ack_by_user_id_fk": {
-          "name": "workspace_feature_flag_legal_ack_by_user_id_fk",
-          "tableFrom": "workspace_feature_flag",
-          "tableTo": "user",
-          "columnsFrom": ["legal_ack_by"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "workspace_feature_flag_updated_by_user_id_fk": {
-          "name": "workspace_feature_flag_updated_by_user_id_fk",
-          "tableFrom": "workspace_feature_flag",
-          "tableTo": "user",
-          "columnsFrom": ["updated_by"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "workspace_feature_flag_workspace_id_fk": {
-          "name": "workspace_feature_flag_workspace_id_fk",
-          "tableFrom": "workspace_feature_flag",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "workspace_feature_flag_workspace_key_uq": {
-          "name": "workspace_feature_flag_workspace_key_uq",
-          "nullsNotDistinct": false,
-          "columns": ["workspace_id", "key"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "workspace_feature_flag_legal_ack_chk": {
-          "name": "workspace_feature_flag_legal_ack_chk",
-          "value": "legal_ack_by is null or legal_ack_note is not null"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.workspace_settings": {
       "name": "workspace_settings",
       "schema": "",
@@ -2241,11 +1975,6 @@
     }
   },
   "enums": {
-    "public.access_mode": {
-      "name": "access_mode",
-      "schema": "public",
-      "values": ["user_supplied", "device_user_triggered", "official", "licensed", "none"]
-    },
     "public.confirmation_state": {
       "name": "confirmation_state",
       "schema": "public",

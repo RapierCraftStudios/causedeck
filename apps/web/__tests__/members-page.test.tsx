@@ -444,6 +444,39 @@ describe('MembersView', () => {
     expect(dialog.textContent).toContain('Too many invitations for now. Try b@x.test again later.');
   });
 
+  it('shows the seat-limit prompt with Manage plan when the plan has no seat left (#203)', async () => {
+    const actions = fakeActions();
+    actions.invite.mockResolvedValue({
+      ok: true,
+      data: { results: [{ email: 'c@x.test', status: 'seatLimit', seats: 3 }] },
+    });
+    view({ actions });
+    fireEvent.click(screen.getAllByRole('button', { name: en.inviteButton })[0] as HTMLElement);
+    const dialog = await screen.findByRole('dialog', { name: en.invite.title }, { timeout: 5000 });
+    const input = within(dialog).getByLabelText(new RegExp(en.invite.emailsLabel));
+    fireEvent.change(input, { target: { value: 'c@x.test' } });
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: en.invite.submit }));
+      await Promise.resolve();
+    });
+    const prompt = await waitFor(() => {
+      const found = dialog.querySelector('[data-slot="seat-limit"]');
+      expect(found).not.toBeNull();
+      return found as HTMLElement;
+    });
+    expect(prompt.textContent).toContain(
+      'Your plan includes 3 seats. Add a seat to invite more people.',
+    );
+    expect(prompt.getAttribute('data-tone')).toBe('info');
+    const manage = within(prompt).getByRole('link', { name: en.invite.seatLimit.managePlan });
+    expect(manage.getAttribute('href')).toBe(`/w/${WORKSPACE.slug}/billing`);
+    // The dialog stays open with the address kept, and no danger line repeats it.
+    expect(
+      [...dialog.querySelectorAll('[data-chip]')].map((c) => c.getAttribute('data-chip')),
+    ).toEqual(['c@x.test']);
+    expect(dialog.querySelector('[data-slot="invite-failures"]')).toBeNull();
+  });
+
   it('removes a member: the row collapses, then the list refreshes', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const actions = fakeActions();

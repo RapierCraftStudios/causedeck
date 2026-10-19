@@ -157,6 +157,15 @@ describe('AcceptForm', () => {
     expect(router.push).not.toHaveBeenCalled();
   });
 
+  it('says when the workspace has no seat left (#203)', async () => {
+    const action = vi.fn<AcceptInvitation>(() =>
+      Promise.resolve({ ok: true, data: { status: 'rejected', reason: 'SEAT_LIMIT' } }),
+    );
+    await accept(action);
+    expect(screen.getByRole('alert').textContent).toContain(en.states.seatLimit.title);
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
   it('does not call the action offline', async () => {
     online = false;
     const action = vi.fn<AcceptInvitation>();

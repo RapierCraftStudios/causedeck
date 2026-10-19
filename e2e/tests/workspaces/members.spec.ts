@@ -5,9 +5,11 @@
 // tests also run axe (zero serious or critical violations) on the page they end on. Every test
 // starts from the reset e2e seed, so mutations never leak between tests.
 import type { Locator, Page } from '@playwright/test';
+import postgres from 'postgres';
 
 import { E2E_WORKSPACES, e2eUser, expect, test, type E2eRole } from '../../fixtures/index.ts';
 import type { AsUser } from '../../fixtures/auth.ts';
+import { databaseUrl } from '../../support/db-reset.ts';
 import { layoutOf, SHELL_WORKSPACE, shellReady } from '../shell/helpers.ts';
 
 const PATH = 'settings/members';
@@ -44,6 +46,16 @@ async function openRowMenu(page: Page, name: string) {
     .getByRole('button', { name: `Actions for ${name}` })
     .click();
   await expect(page.getByRole('menu')).toBeVisible();
+}
+
+/** Set the workspace's purchased (non-clerk) seats on the worker database (#203). */
+async function setPurchasedSeats(database: string, seats: number): Promise<void> {
+  const sql = postgres(databaseUrl(database, 'superuser'), { max: 1, onnotice: () => undefined });
+  try {
+    await sql`update subscription set seats = ${seats} where workspace_id = ${WORKSPACE.id}`;
+  } finally {
+    await sql.end();
+  }
 }
 
 test.describe('members page', () => {
@@ -111,6 +123,31 @@ test.describe('members page', () => {
       await expect(invited.locator('[data-role="clerk"]')).toHaveText('Clerk');
     },
   );
+
+  test('a full plan shows the seat upgrade prompt with Manage plan (#203)', async ({
+    page,
+    asUser,
+    db,
+  }) => {
+    // Owner, advocate, junior and viewer hold the four non-clerk seats.
+    await setPurchasedSeats(db.name, 4);
+    await openMembers(page, asUser);
+    await inviteButton(page).click();
+    const dialog = page.getByRole('dialog', { name: 'Invite members' });
+    await dialog.getByRole('radio', { name: /Advocate/ }).click();
+    await dialog.getByRole('textbox', { name: /Email addresses/ }).fill('one.more@e2e.test');
+    await dialog.getByRole('button', { name: 'Send invitation' }).click();
+
+    const prompt = dialog.locator('[data-slot="seat-limit"]');
+    await expect(prompt).toHaveText(
+      /Your plan includes 4 seats\. Add a seat to invite more people\./,
+    );
+    const manage = prompt.getByRole('link', { name: 'Manage plan' });
+    await expect(manage).toHaveAttribute('href', `/w/${WORKSPACE.slug}/billing`);
+    await expect(dialog.locator('[data-chip="one.more@e2e.test"]')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(row(page, 'one.more@e2e.test')).toHaveCount(0);
+  });
 
   test('resends and revokes a pending invitation', async ({ page, asUser }) => {
     await openMembers(page, asUser);

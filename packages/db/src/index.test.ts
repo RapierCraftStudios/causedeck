@@ -34,7 +34,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200) and the flag tables (#22)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218) and the flag tables (#22)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -43,22 +43,32 @@ describe('@causedeck/db root entry point', () => {
     ).toEqual([
       'access_mode_registry',
       'account',
+      'ai_call',
       'api_idempotency_key',
+      'audit_event',
       'billing_event',
+      'budget_override',
+      'email_suppression',
       'entitlement',
       'feature_flag',
       'invitation',
       'job_effect',
       'member',
+      'notification',
+      'notification_pref',
       'organization',
       'passkey',
       'plan',
+      'push_subscription',
       'rate_limit',
       'schema_info',
       'session',
       'subscription',
       'two_factor',
       'usage_counter',
+      'usage_event',
+      'usage_period_summary',
+      'usage_reservation',
       'user',
       'verification',
       'workspace_feature_flag',

@@ -6,9 +6,11 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./entitlements": "./src/entitlements.ts",
     "./gstin": "./src/gstin.ts",
     "./plans": "./src/plans.ts",
     "./proration": "./src/proration.ts",
+    "./reconcile": "./src/reconcile.ts",
     "./provider": "./src/provider/index.ts",
     "./service": "./src/service.ts",
     "./state-machine": "./src/state-machine.ts"

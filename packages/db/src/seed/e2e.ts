@@ -6,8 +6,11 @@ import { createHash } from 'node:crypto';
 
 import { withWorkspace } from '../rls.ts';
 import { invitation, member, organization, user, WORKSPACE_ROLES } from '../schema/auth.ts';
+import { subscription } from '../schema/billing.ts';
 
 import { registerSeed, type SeedDb } from './index.ts';
+// The e2e subscriptions reference catalogue rows: register the `plans` seeder (order 0) too.
+import './plans.ts';
 
 export type E2eRole = (typeof WORKSPACE_ROLES)[number];
 
@@ -185,6 +188,52 @@ export const E2E_INVITATIONS: Record<E2eInvitationState, E2eInvitation> = {
   },
 };
 
+/**
+ * A paid chamber subscription per e2e workspace (#203): the billing seat gate allows a free Junior
+ * workspace one seat, and every e2e workspace already has more members, so each gets spare seats
+ * for the invite and accept flows. Tests that need a full workspace lower `seats` themselves.
+ */
+export interface E2eSubscription {
+  id: string;
+  workspace: E2eWorkspaceSlug;
+  planId: string;
+  seats: number;
+  clerkSeats: number;
+}
+
+export const E2E_SUBSCRIPTIONS: Record<E2eWorkspaceSlug, E2eSubscription> = {
+  'chennai-solo': {
+    id: '00000000-0000-4000-8000-0000000e0001',
+    workspace: 'chennai-solo',
+    planId: 'chamber-seat-1',
+    seats: 10,
+    clerkSeats: 4,
+  },
+  'bengaluru-chamber': {
+    id: '00000000-0000-4000-8000-0000000e0002',
+    workspace: 'bengaluru-chamber',
+    planId: 'chamber-seat-1',
+    seats: 10,
+    clerkSeats: 4,
+  },
+};
+
+function subscriptionRow(seeded: E2eSubscription, at: Date) {
+  return {
+    id: seeded.id,
+    workspaceId: E2E_WORKSPACES[seeded.workspace].id,
+    planId: seeded.planId,
+    status: 'active',
+    seats: seeded.seats,
+    clerkSeats: seeded.clerkSeats,
+    provider: 'mock',
+    providerSubscriptionId: `sub_e2e_${seeded.workspace}`,
+    providerCustomerId: `cust_e2e_${seeded.workspace}`,
+    createdAt: at,
+    updatedAt: at,
+  };
+}
+
 /** SHA-256 hex, identical to `hashInvitationToken` in `@causedeck/core/workspaces`. */
 export function e2eInvitationTokenHash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -281,6 +330,9 @@ export async function seedE2e(db: SeedDb): Promise<void> {
     },
   ];
   const invitations = Object.values(E2E_INVITATIONS).map((seeded) => invitationRow(seeded, at));
+  const subscriptions = Object.values(E2E_SUBSCRIPTIONS).map((seeded) =>
+    subscriptionRow(seeded, at),
+  );
 
   for (const workspace of workspaces) {
     const workspaceId = workspace.id ?? '';
@@ -290,6 +342,8 @@ export async function seedE2e(db: SeedDb): Promise<void> {
       if (own.length > 0) await tx.insert(member).values(own).onConflictDoNothing();
       const invited = invitations.filter((i) => i.organizationId === workspaceId);
       if (invited.length > 0) await tx.insert(invitation).values(invited).onConflictDoNothing();
+      const paid = subscriptions.filter((s) => s.workspaceId === workspaceId);
+      if (paid.length > 0) await tx.insert(subscription).values(paid).onConflictDoNothing();
     });
   }
 }

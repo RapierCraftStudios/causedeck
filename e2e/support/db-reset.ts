@@ -7,7 +7,10 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { symmetricEncrypt } from 'better-auth/crypto';
 import postgres from 'postgres';
+
+import { ADMIN_FIXTURES, ADMIN_TOTP_SECRET } from '../fixtures/admin-data.ts';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -28,6 +31,9 @@ const ROLES = {
 } as const;
 
 export const TEMPLATE_DB = `${DB_PREFIX}_template`;
+
+/** Fixed dev secret: sessions minted in global setup must verify on every worker server. */
+export const E2E_AUTH_SECRET = 'e2e-only-better-auth-secret-0123456789abcdef';
 
 export function workerDbName(workerIndex: number): string {
   return `${DB_PREFIX}_w${String(workerIndex)}`;
@@ -129,6 +135,41 @@ export async function createTemplateDb(): Promise<void> {
   await admin(initStatements(TEMPLATE_DB), TEMPLATE_DB);
   runDbScript('migrate.ts', { DATABASE_URL_OWNER: databaseUrl(TEMPLATE_DB, 'owner') }, []);
   runDbScript('seed.ts', { DATABASE_URL: databaseUrl(TEMPLATE_DB, 'app') }, ['--profile', 'e2e']);
+  await seedAdminFixtures();
+}
+
+/**
+ * Admin console fixtures (#309): staff accounts with and without TOTP, a disabled one, and a
+ * non-staff user with TOTP. `staff_user` is write-revoked for the app role, so this runs as the
+ * owner (the e2e seed runs as the app role). TOTP secrets are encrypted with the e2e auth secret,
+ * exactly as Better Auth's twoFactor plugin stores them.
+ */
+async function seedAdminFixtures(): Promise<void> {
+  const sql = postgres(databaseUrl(TEMPLATE_DB, 'owner'), { max: 1, onnotice: () => undefined });
+  try {
+    const secret = await symmetricEncrypt({ key: E2E_AUTH_SECRET, data: ADMIN_TOTP_SECRET });
+    const backupCodes = await symmetricEncrypt({ key: E2E_AUTH_SECRET, data: '[]' });
+    for (const fixture of Object.values(ADMIN_FIXTURES)) {
+      const [row] = await sql<{ id: string }[]>`
+        insert into "user" (name, email, email_verified, two_factor_enabled)
+        values (${fixture.email.split('@')[0] ?? 'staff'}, ${fixture.email}, true, ${fixture.twoFactor})
+        returning id`;
+      if (!row) throw new Error(`e2e: admin fixture ${fixture.email} not created`);
+      if (fixture.twoFactor) {
+        await sql`
+          insert into two_factor (secret, backup_codes, user_id, verified)
+          values (${secret}, ${backupCodes}, ${row.id}, true)`;
+      }
+      if (fixture.role !== null) {
+        const disabled = fixture.email.startsWith('staff-disabled@');
+        await sql`
+          insert into staff_user (user_id, role, disabled_at)
+          values (${row.id}, ${fixture.role}, case when ${disabled} then now() else null end)`;
+      }
+    }
+  } finally {
+    await sql.end();
+  }
 }
 
 /** Close every connection to the template and freeze it, so it can be cloned. */

@@ -69,7 +69,8 @@ export { withoutWorkspaceImportBan };
 /** Where `withoutWorkspace` may be imported. */
 export const WITHOUT_WORKSPACE_ALLOWED_GLOBS = [
   '**/packages/db/**',
-  '**/apps/admin/**',
+  // The audited admin data layer (#309); the rest of apps/admin goes through it.
+  '**/apps/admin/lib/data/**',
   '**/migrations/**',
 ];
 
@@ -195,8 +196,10 @@ export const base = tseslint.config(
     files: WITHOUT_WORKSPACE_ALLOWED_GLOBS.filter((glob) => !glob.includes('/apps/')),
     rules: { '@typescript-eslint/no-restricted-imports': 'off' },
   },
-  // apps/admin may import `withoutWorkspace`, but like every app no other `@causedeck/db` value (#299).
-  ...appDbImportBlocks('**/apps/admin', { withoutWorkspace: false }),
+  // apps/admin, like every app, imports no `@causedeck/db` value (#299). Only its audited data
+  // layer (`apps/admin/lib/data`, #309) may import `withoutWorkspace`; the later blocks win there.
+  ...appDbImportBlocks('**/apps/admin', { withoutWorkspace: true }),
+  ...appDbImportBlocks('**/apps/admin/lib/data', { withoutWorkspace: false }),
   {
     // Plain JS config files and root-level TS config files are not part of any tsconfig project.
     files: ['**/*.{js,mjs,cjs}', 'vitest.workspace.ts'],

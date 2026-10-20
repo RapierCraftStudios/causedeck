@@ -18,7 +18,7 @@ The pieces:
 | Two-tenant fixture (`seedTwoTenants`, `TENANT_SEEDERS`)                  | `packages/db/src/testing/two-tenants.ts` (`@causedeck/db/testing/two-tenants`)                     |
 | Cross-tenant registry                                                    | `packages/db/src/testing/cross-tenant-registry.ts` (`@causedeck/db/testing/cross-tenant-registry`) |
 | Cross-tenant suite, `pnpm test:tenancy`, CI job `tenancy`                | see [Cross-tenant suite](#cross-tenant-suite)                                                      |
-| Lint: `withoutWorkspace` only in `packages/db`, `apps/admin`, migrations | `packages/config/eslint/base.js`                                                                   |
+| Lint: `withoutWorkspace` only in `packages/db`, the `apps/admin/lib/data` layer (#309), migrations | `packages/config/eslint/base.js`                                                                   |
 
 ## The role model
 

@@ -11,17 +11,29 @@ import {
   assertActiveSupportSession,
   grantSession,
   requestSession,
+  DEV_STAFF_EMAIL,
+  StaffAdminError,
   SupportSessionInactiveError,
 } from '@causedeck/core/support';
-import { createDb, schema, withWorkspace, type Database } from '@causedeck/db';
-import { testDatabaseUrls } from '@causedeck/db/testing';
+import type { Database } from '@causedeck/db';
+import { createDb, schema, testDatabaseUrls, withWorkspace } from '@causedeck/db/testing';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { addStaff, disableStaff, parseStaffArgs, runStaffCli, StaffCliError } from './staff';
+import {
+  addStaff,
+  disableStaff,
+  parseStaffArgs,
+  runStaffCli,
+  seedDevStaff,
+  StaffCliError,
+} from './staff';
 
 const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
 const THIS_CLI = path.join(REPO_ROOT, 'apps/admin/src/cli/staff.ts');
+// The CLI's table half: apps never value-import `@causedeck/db` (#299), so the writes live in core.
+const STAFF_ADMIN = path.join(REPO_ROOT, 'packages/core/src/support/staff.ts');
+const STAFF_WRITERS = /\b(addStaff|disableStaff|seedDevStaff)\s*\(/;
 
 let owner: Database;
 let app: Database;
@@ -81,6 +93,7 @@ describe('parseStaffArgs', () => {
     [['add', 'a@b.in', '--role', 'owner']],
     [['add', 'not-an-email', '--role', 'ops']],
     [['remove', 'a@b.in']],
+    [['seed-dev', 'a@b.in']],
     [[]],
   ])('rejects %j as bad usage', (argv) => {
     expect(() => parseStaffArgs(argv)).toThrow(StaffCliError);
@@ -89,6 +102,10 @@ describe('parseStaffArgs', () => {
     } catch (error) {
       expect((error as StaffCliError).exitCode).toBe(2);
     }
+  });
+
+  it('parses seed-dev (#309)', () => {
+    expect(parseStaffArgs(['seed-dev'])).toEqual({ command: 'seed-dev' });
   });
 
   it('exits 2 on bad usage before touching the database', async () => {
@@ -125,7 +142,7 @@ describe('staff accounts are created only by the operator CLI', () => {
     expect(row).toMatchObject({ role: 'ops', disabledAt: null });
 
     await expect(addStaff(owner, { email: 'nobody@example.test', role: 'ops' })).rejects.toThrow(
-      StaffCliError,
+      StaffAdminError,
     );
   });
 
@@ -143,7 +160,23 @@ describe('staff accounts are created only by the operator CLI', () => {
     expect(await denied(app.execute(sql`update staff_user set role = 'admin'`))).toBe('42501');
   });
 
-  it('no source outside this CLI writes staff_user', () => {
+  it('seedDevStaff creates the dev staff account as admin, idempotently (#309)', async () => {
+    const first = await seedDevStaff(owner);
+    const second = await seedDevStaff(owner);
+    expect(second.userId).toBe(first.userId);
+    const [row] = await owner
+      .select({ role: schema.staffUser.role, disabledAt: schema.staffUser.disabledAt })
+      .from(schema.staffUser)
+      .where(eq(schema.staffUser.userId, first.userId));
+    expect(row).toEqual({ role: 'admin', disabledAt: null });
+    const [account] = await owner
+      .select({ email: schema.user.email })
+      .from(schema.user)
+      .where(eq(schema.user.id, first.userId));
+    expect(account?.email).toBe(DEV_STAFF_EMAIL);
+  });
+
+  it('no source outside this CLI (and its core half) writes staff_user', () => {
     const roots = ['apps', 'packages'].map((d) => path.join(REPO_ROOT, d));
     const offenders: string[] = [];
     const walk = (dir: string): void => {
@@ -155,8 +188,14 @@ describe('staff accounts are created only by the operator CLI', () => {
           continue;
         }
         if (!/\.(ts|tsx)$/.test(name) || /\.test\.tsx?$/.test(name)) continue;
-        if (file === THIS_CLI || file.includes(`${path.sep}__tests__${path.sep}`)) continue;
+        if (file === THIS_CLI || file === STAFF_ADMIN) continue;
+        if (file.includes(`${path.sep}__tests__${path.sep}`)) continue;
         const text = readFileSync(file, 'utf8');
+        // Only the CLI calls the core write functions.
+        if (STAFF_WRITERS.test(text)) {
+          offenders.push(path.relative(REPO_ROOT, file));
+          continue;
+        }
         if (
           /insert\(\s*(schema\.)?staffUser\b|update\(\s*(schema\.)?staffUser\b|(insert into|update)\s+"?staff_user/i.test(
             text,

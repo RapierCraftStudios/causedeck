@@ -88,6 +88,11 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `API_PORT` | port | `3001` | never (defaults to 3001) | #14 | — |
 | `WORKER_PORT` | port | `3003` | never (defaults to 3003) | #15 | — |
 | `GIT_SHA` | string | — | never | #13 | — |
+| `ADMIN_URL` | url | `http://localhost:3200` (non-prod only) | NODE_ENV=production, for apps/admin only | #309 | — |
+| `ADMIN_IP_ALLOWLIST` | list (comma-separated IPs/CIDRs) | — | never (set per deployment) | #309 | — |
+| `CF_ACCESS_AUD` | string | — | never (set per deployment) | #309 | — |
+| `CF_ACCESS_TEAM_DOMAIN` | host | — | CF_ACCESS_AUD is set | #309 | — |
+| `ADMIN_ENV_LABEL` | enum(development\|staging\|production) | — | never | #309 | — |
 | `BILLING_SUPPLIER_LEGAL_NAME` | string | — | never (issuing an invoice in production refuses while unset) | #253 | — |
 | `BILLING_SUPPLIER_ADDRESS` | string | — | never | #253 | — |
 | `BILLING_SUPPLIER_GSTIN` | GSTIN | — | never (issuing an invoice in production refuses while unset) | #253 | — |

@@ -55,6 +55,8 @@ Each action is either **security** or **informational**:
 | `support.session_started`             | security      | `recordSupportSessionStarted` (#27)                                                                                        |
 | `support.session_ended`               | security      | `recordSupportSessionEnded` (#27)                                                                                          |
 | `access.denied`                       | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize`                                                          |
+| `staff.read` | security | admin data layer `staffQuery`, before the read (#309) |
+| `staff.two_factor_verified` | security | admin console TOTP step (`verify-2fa`, #309) |
 | `usage.budget_override_set`           | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)                                                                        |
 | `billing.subscription_changed`        | security      | owner billing actions (`changeSubscription`, #257)                                                                         |
 | `billing.gstin_updated`               | security      | `setSubscriptionGstin` (#257)                                                                                              |

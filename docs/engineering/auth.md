@@ -102,6 +102,7 @@ valid session. `SessionUser` is `{ id, email, name: string | null, image: string
 | Cookie | `better-auth.session_token`, or `__Secure-better-auth.session_token` in production |
 | Attributes | `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` only when `NODE_ENV=production` |
 | Lifetime | 30 days (`Max-Age=2592000`), sliding: a session used more than 1 day after its last refresh is extended to a full 30 days again |
+| Admin console | `createAuth({ sessionExpiresInSeconds })` shortens the lifetime; the refresh age becomes a quarter of it (at most 1 day). apps/admin passes 8 hours and `disableSignUp: true`, so its magic links never create users (#309, [admin-console.md](admin-console.md)) |
 | Sign-out | `POST /api/auth/sign-out` deletes the session row and expires the cookie (`Max-Age=0`) |
 | CSRF | Better Auth origin checks against `trustedOrigins` (the origin of `APP_URL`), plus `SameSite=Lax` |
 | IDs | `advanced.database.generateId: 'uuid'`, matching the uuid primary keys |

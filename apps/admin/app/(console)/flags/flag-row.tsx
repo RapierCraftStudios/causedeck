@@ -17,7 +17,7 @@ import {
 import { Input } from '@causedeck/ui/input';
 import { Label } from '@causedeck/ui/label';
 import { Switch } from '@causedeck/ui/switch';
-import { TableCell, TableRow } from '@causedeck/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@causedeck/ui/table';
 import { Textarea } from '@causedeck/ui/textarea';
 import { useActionState, useState } from 'react';
 
@@ -337,5 +337,73 @@ export function PendingRequestRow({ request, admin, totpRequired }: PendingReque
         ) : null}
       </TableCell>
     </TableRow>
+  );
+}
+
+// The tables live here, not in page.tsx: `@causedeck/ui/table` keeps its density in React context,
+// which only works in a client component.
+
+export interface FlagTableProps {
+  label: string;
+  flags: FlagRowView[];
+  workspaceId?: string | undefined;
+  totpRequired: boolean;
+}
+
+export function FlagTable({ label, flags, workspaceId, totpRequired }: FlagTableProps) {
+  return (
+    <Table aria-label={label}>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Flag</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>{workspaceId === undefined ? 'Global row' : 'Override'}</TableHead>
+          <TableHead>Effective</TableHead>
+          <TableHead>Change</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {flags.map((flag) => (
+          <FlagRow
+            key={flag.key}
+            flag={flag}
+            workspaceId={workspaceId}
+            totpRequired={totpRequired}
+          />
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+export interface PendingRequestsTableProps {
+  requests: PendingRequestView[];
+  admin: boolean;
+  totpRequired: boolean;
+}
+
+export function PendingRequestsTable({ requests, admin, totpRequired }: PendingRequestsTableProps) {
+  return (
+    <Table aria-label="Pending approvals">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Flag</TableHead>
+          <TableHead>Scope</TableHead>
+          <TableHead>Legal note</TableHead>
+          <TableHead>Requested</TableHead>
+          <TableHead>Decision</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {requests.map((request) => (
+          <PendingRequestRow
+            key={request.id}
+            request={request}
+            admin={admin}
+            totpRequired={totpRequired}
+          />
+        ))}
+      </TableBody>
+    </Table>
   );
 }

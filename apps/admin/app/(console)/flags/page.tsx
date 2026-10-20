@@ -5,53 +5,16 @@ import { Button } from '@causedeck/ui/button';
 import { EmptyState } from '@causedeck/ui/empty-state';
 import { Input } from '@causedeck/ui/input';
 import { Label } from '@causedeck/ui/label';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@causedeck/ui/table';
 import type { Metadata } from 'next';
 import { z } from 'zod';
 
 import { adminEnv } from '../../../lib/env.ts';
-import { flagRowsView, pendingRequestsView, type FlagRowView } from '../../../lib/flags.ts';
+import { flagRowsView, pendingRequestsView } from '../../../lib/flags.ts';
 import { DEV_STAFF_EMAIL } from '../../../lib/roles.ts';
 import { requireStaff } from '../../../lib/staff.ts';
-import { FlagRow, PendingRequestRow } from './flag-row.tsx';
+import { FlagTable, PendingRequestsTable } from './flag-row.tsx';
 
 export const metadata: Metadata = { title: 'Flags' };
-
-function FlagTable({
-  label,
-  flags,
-  workspaceId,
-  totpRequired,
-}: {
-  label: string;
-  flags: FlagRowView[];
-  workspaceId?: string;
-  totpRequired: boolean;
-}) {
-  return (
-    <Table aria-label={label}>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Flag</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>{workspaceId === undefined ? 'Global row' : 'Override'}</TableHead>
-          <TableHead>Effective</TableHead>
-          <TableHead>Change</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {flags.map((flag) => (
-          <FlagRow
-            key={flag.key}
-            flag={flag}
-            workspaceId={workspaceId}
-            totpRequired={totpRequired}
-          />
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
 
 export default async function FlagsPage({
   searchParams,
@@ -94,27 +57,11 @@ export default async function FlagsPage({
             description="Requests to enable a legal-gated flag wait here for a second admin."
           />
         ) : (
-          <Table aria-label="Pending approvals">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Flag</TableHead>
-                <TableHead>Scope</TableHead>
-                <TableHead>Legal note</TableHead>
-                <TableHead>Requested</TableHead>
-                <TableHead>Decision</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pending.map((request) => (
-                <PendingRequestRow
-                  key={request.id}
-                  request={request}
-                  admin={staff.role === 'admin'}
-                  totpRequired={totpRequired}
-                />
-              ))}
-            </TableBody>
-          </Table>
+          <PendingRequestsTable
+            requests={pending}
+            admin={staff.role === 'admin'}
+            totpRequired={totpRequired}
+          />
         )}
       </section>
 

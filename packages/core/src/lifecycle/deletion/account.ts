@@ -12,7 +12,7 @@
 //   then in one transaction deletes the `user` row (cascading sessions, accounts, passkeys,
 //   two-factor, memberships, invitations, notification prefs, exports and idempotency keys; the
 //   workspace's files, restrictions and flag overrides keep their rows with the user set to null,
-//   0030) and anonymises the user's audit events (`app_audit_anonymise_actor`: `actor_user_id`
+//   0031) and anonymises the user's audit events (`app_audit_anonymise_actor`: `actor_user_id`
 //   becomes null, the chain hashes `actor_ref` and stays valid, and the salt is deleted so the ref
 //   cannot be recomputed). Idempotent: an erased job is a no-op, and every step can be rerun.
 //

@@ -54,6 +54,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   export_job: DB_TABLES_TEST,
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
+  workspace_integration: DB_TABLES_TEST,
 };
 
 /**
@@ -113,6 +114,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // privacy settings (#286)
   getPrivacySettings: empty,
   updateWorkspacePrivacy: denies,
+  // integration tokens (#287)
+  getIntegrations: empty,
+  rotateIntegrationToken: denies,
   acceptInvitation: denies,
   previewInvitation: selfScoped,
   generateUniqueSlug: selfScoped,
@@ -419,6 +423,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // privacy settings (#286)
   PRIVACY_SETTING_FIELDS: 'constant',
   DEFAULT_PRIVACY_SETTINGS: 'constant',
+  // integration tokens (#287)
+  INTEGRATION_KINDS: 'constant',
+  generateIntegrationToken: 'pure (random bytes)',
+  hashIntegrationToken: 'pure',
   // audit: registry, guards and the default sink (#227)
   recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
   AUDIT_ACTIONS: 'constant (audit action registry)',

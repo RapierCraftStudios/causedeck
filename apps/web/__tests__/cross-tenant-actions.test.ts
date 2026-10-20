@@ -68,6 +68,11 @@ vi.mock('@causedeck/core/runtime', async (original) => ({
   ...(await original<Record<string, unknown>>()),
   recordAccountProfileUpdatedFor: vi.fn(() => Promise.resolve()),
 }));
+// The integration cards' flags are on, so B's own rotate reaches the service (#287).
+vi.mock('@causedeck/flags/server', async (original) => ({
+  ...(await original<Record<string, unknown>>()),
+  isEnabled: vi.fn(() => Promise.resolve(true)),
+}));
 vi.mock('next-intl/server', () => ({
   getLocale: () => Promise.resolve('en'),
   getTranslations: () => Promise.resolve((key: string) => key),
@@ -82,6 +87,7 @@ const preferences = await import('../app/(app)/w/[slug]/settings/notifications/a
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
+const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
@@ -118,6 +124,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
   updateWorkspacePrivacyAction: privacy,
+  rotateIntegrationTokenAction: integrations,
   loadMoreAuditAction: activity,
   verifyAuditEventAction: activity,
   grantSupportSessionAction: support,
@@ -182,6 +189,14 @@ function snapshotA() {
       .select()
       .from(schema.supportSession)
       .orderBy(schema.supportSession.id),
+    integrations: await tx
+      .select({
+        kind: schema.workspaceIntegration.kind,
+        tokenHash: schema.workspaceIntegration.tokenHash,
+        rotatedAt: schema.workspaceIntegration.rotatedAt,
+      })
+      .from(schema.workspaceIntegration)
+      .orderBy(schema.workspaceIntegration.kind),
   }));
 }
 
@@ -265,6 +280,7 @@ function inputs(workspaceId: string): Record<string, unknown> {
       sensitiveDefaultRestricted: false,
       retentionAudioDays: 7,
     },
+    rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
     // A page position past every row, so a leak would return A's real audit event.
     loadMoreAuditAction: {
       workspaceId,
@@ -464,6 +480,20 @@ describe('cross-tenant server actions', () => {
       sensitiveDefaultRestricted: true,
       retentionAudioDays: 30,
     });
+  });
+
+  it('rotateIntegrationTokenAction under B’s own workspace changes only B', async () => {
+    const before = await snapshotA();
+    expect(before.integrations).toHaveLength(1);
+    const input = inputs(t.b.id).rotateIntegrationTokenAction;
+    const result = (await action('rotateIntegrationTokenAction')(input)) as {
+      ok: boolean;
+      data: { kind: string; value: string };
+    };
+    expect(result.ok).toBe(true);
+    expect(result.data.kind).toBe('ics_feed');
+    expect(result.data.value).toMatch(/^http:\/\/localhost:3000\/api\/ics\/[\w-]{43}$/);
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

@@ -10,7 +10,7 @@
 // NULLABLE_WORKSPACE_TABLES in conventions.ts.
 //
 // Each event also stores `actor_ref`, a salted sha256 of `actor_user_id` (per-user salt in the
-// owner-only `audit_actor_salt`, migration 0030). The hash covers `actor_ref` instead of the id, so
+// owner-only `audit_actor_salt`, migration 0031). The hash covers `actor_ref` instead of the id, so
 // account deletion (#303) can null `actor_user_id` through `app_audit_anonymise_actor()` without
 // breaking the chain; deleting the salt then makes the ref unlinkable. See docs/engineering/audit.md.
 //

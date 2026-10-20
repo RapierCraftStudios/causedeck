@@ -94,6 +94,12 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member changed the sensitive-matter default or the raw audio retention window',
   },
+  // Fail-closed: it creates or replaces the intake address or ICS feed token, so the old one stops
+  // working (#287). Metadata names the kind only, never the token or its hash.
+  'workspace.integration_token_rotated': {
+    security: true,
+    description: 'A member created or rotated the email intake address or ICS feed token',
+  },
   // Account-level (`workspaceId: null`); metadata names the changed fields only (#289).
   'account.profile_updated': {
     security: false,

@@ -84,6 +84,7 @@ describe('@causedeck/db root entry point', () => {
       'user',
       'verification',
       'workspace_feature_flag',
+      'workspace_integration',
       'workspace_key',
       'workspace_settings',
       'workspace_slug_history',

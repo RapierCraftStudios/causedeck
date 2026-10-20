@@ -169,6 +169,8 @@ export const settingsExporter = tablesExporter('settings', [
   ws('workspace_settings', { keys: ['workspace_id'] }),
   ws('workspace_feature_flag', { keys: ['key'] }),
   ws('matter_restriction'),
+  // Integration tokens (#287): the kind and dates only; the token hash is a secret.
+  ws('workspace_integration', { exclude: ['token_hash'] }),
 ]);
 
 export const auditExporter: Exporter = {

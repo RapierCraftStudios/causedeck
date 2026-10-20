@@ -14,11 +14,11 @@ pnpm --filter @causedeck/web exec vitest run app/api/exports
 
 ## Tables (`0025_lifecycle`)
 
-| Table                | Scope                                                      | Notes                                                                                                                                                                           |
-| -------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `export_job`         | tenant, FORCE RLS                                          | `scope` `workspace` or `user`; `status` `queued`, `running`, `ready`, `failed`, `expired`; `progress` 0 to 100; `steps` checkpoints; `blob_id`, `size_bytes`, `sha256` of the plaintext ZIP; `download_token_hash`; `expires_at`. One queued or running export per requester and workspace. |
-| `deletion_job`       | tenant, FORCE RLS, `workspace_id` null for account deletion | Account and memory jobs (#303, below); workspace jobs land with #302. Account jobs have no workspace and are read and written through the `account_self` policy (0030).          |
-| `deletion_tombstone` | global (`GLOBAL_TABLES`)                                   | Minimal record of an erased workspace. No foreign key, so it outlives the purge; the app and clerk roles cannot update or delete it.                                           |
+| Table                | Scope                                                       | Notes                                                                                                                                                                                                                                                                                       |
+| -------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `export_job`         | tenant, FORCE RLS                                           | `scope` `workspace` or `user`; `status` `queued`, `running`, `ready`, `failed`, `expired`; `progress` 0 to 100; `steps` checkpoints; `blob_id`, `size_bytes`, `sha256` of the plaintext ZIP; `download_token_hash`; `expires_at`. One queued or running export per requester and workspace. |
+| `deletion_job`       | tenant, FORCE RLS, `workspace_id` null for account deletion | Account and memory jobs (#303, below); workspace jobs land with #302. Account jobs have no workspace and are read and written through the `account_self` policy (0031).          |
+| `deletion_tombstone` | global (`GLOBAL_TABLES`)                                    | Minimal record of an erased workspace. No foreign key, so it outlives the purge; the app and clerk roles cannot update or delete it.                                                                                                                                                        |
 
 `app_export_due_jobs(now)` is an owner-defined function returning only the ids of ready exports past
 their expiry, for the system expiry job.
@@ -30,16 +30,16 @@ their expiry, for the system expiry job.
 own `withWorkspace` transaction, so row-level security keeps every read in the requesting workspace
 and memory stays bounded.
 
-| Exporter        | Tables                                                                                                                                                           |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `workspace`     | `organization`, `workspace_slug_history`                                                                                                                         |
-| `members`       | `member` (with each member's name and email), `invitation` (no token hash)                                                                                       |
-| `settings`      | `workspace_settings`, `workspace_feature_flag`, `matter_restriction`                                                                                             |
-| `audit`         | `audit_event` (through the audit read path, owners' view), `ai_call`, `support_session`                                                                          |
-| `notifications` | `notification_pref`, `notification_setting`, `notification`                                                                                                      |
+| Exporter        | Tables                                                                                                                                                                                               |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workspace`     | `organization`, `workspace_slug_history`                                                                                                                                                             |
+| `members`       | `member` (with each member's name and email), `invitation` (no token hash)                                                                                                                           |
+| `settings`      | `workspace_settings`, `workspace_feature_flag`, `matter_restriction`, `workspace_integration` (no token hash)                                                                                        |
+| `audit`         | `audit_event` (through the audit read path, owners' view), `ai_call`, `support_session`                                                                                                              |
+| `notifications` | `notification_pref`, `notification_setting`, `notification`                                                                                                                                          |
 | `billing`       | `subscription`, `entitlement`, `billing_event` (no raw payload), `saas_invoice`, `saas_invoice_line`, `usage_counter`, `usage_event`, `usage_reservation`, `budget_override`, `usage_period_summary` |
-| `blobs`         | `blob` (no envelope header or storage key) and the files themselves                                                                                             |
-| `lifecycle`     | `export_job` (no token hash), `deletion_job`                                                                                                                    |
+| `blobs`         | `blob` (no envelope header or storage key) and the files themselves                                                                                                                                  |
+| `lifecycle`     | `export_job` (no token hash), `deletion_job`                                                                                                                                                         |
 
 Exclusions (`EXPORT_EXCLUSIONS`), each with its reason:
 
@@ -160,7 +160,7 @@ caller's own account only.
 - **What the delete removes.** It cascades to sessions, logins (`account`), passkeys, two-factor,
   memberships, invitations the user sent, notification preferences, exports and idempotency keys.
   Workspace data stays with the workspace with the user set to null: files (`blob.created_by`;
-  before 0030 this cascaded and deleted the files), matter restrictions (`created_by`) and flag
+  before 0031 this cascaded and deleted the files), matter restrictions (`created_by`) and flag
   overrides (`updated_by`, `legal_ack_by`).
 - **What remains.** Audit events, anonymised as described below. The `deletion_job` row keeps the
   bare user id as the receipt. No audit event names the user in `target_id` or metadata.

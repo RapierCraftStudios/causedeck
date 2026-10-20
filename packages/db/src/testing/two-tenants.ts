@@ -27,6 +27,7 @@ import {
 import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
 import { supportSession } from '../schema/staff.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
+import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -278,6 +279,18 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
         .values({ workspaceId, requestedByStaff: ownerId, reason: 'Seed support request' })
         .returning({ id: supportSession.id }),
       'support_session',
+    );
+    return { id: row.id };
+  },
+  workspace_integration: async (tx, { workspaceId }) => {
+    // The hash of a random token: the plaintext is never stored.
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const row = first(
+      await tx
+        .insert(workspaceIntegration)
+        .values({ workspaceId, kind: 'ics_feed', tokenHash })
+        .returning({ id: workspaceIntegration.id }),
+      'workspace_integration',
     );
     return { id: row.id };
   },

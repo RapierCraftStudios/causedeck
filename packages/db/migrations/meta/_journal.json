@@ -215,8 +215,15 @@
     {
       "idx": 30,
       "version": "7",
-      "when": 1792493359721,
-      "tag": "0030_account_memory_erasure",
+      "when": 1792490181230,
+      "tag": "0030_workspace_integration",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792496956772,
+      "tag": "0031_account_memory_erasure",
       "breakpoints": true
     }
   ]

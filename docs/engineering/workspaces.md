@@ -18,13 +18,14 @@ action rules in `apps/web`, and the members page. #18 was built in five slices:
 Workspaces are Better Auth organizations (#12, #153). Better Auth's tables are the only copy. We
 extend them in place, with no parallel `workspace` table, no views and no sync:
 
-| Concept | Table (`packages/db/src/schema/auth.ts`) | Added by #177/#178 (migration `0004_workspaces.sql`) |
-|---|---|---|
-| workspace | `organization` | `slug` as `citext` (unique), `kind` (`solo`/`chamber`), `plan_id`, `created_by`, `deleted_at` |
-| member | `member` | `status` (`active`/`suspended`/`removed`), `joined_at`; unique `(workspace_id, user_id)` |
-| invitation | `invitation` | `token_hash` (unique), `accepted_at`, `revoked_at` |
-| settings | `workspace_settings` (new) | `india_only_ai` (default true; nothing in the app writes it, #286), `retention`, `locale`, `timezone` (default `Asia/Kolkata`); later `sensitive_default_restricted` (default true) and `retention_audio_days` (7, 14 or 30; default 30) from migration `0029_privacy_settings.sql` (#286) |
-| old slugs | `workspace_slug_history` (new) | old `slug` (unique) and `expires_at`; redirects live for 90 days |
+| Concept            | Table (`packages/db/src/schema/auth.ts`)                                                                                      | Added by #177/#178 (migration `0004_workspaces.sql`)                                                                                                                                                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| workspace          | `organization`                                                                                                                | `slug` as `citext` (unique), `kind` (`solo`/`chamber`), `plan_id`, `created_by`, `deleted_at`                                                                                                                                                                                              |
+| member             | `member`                                                                                                                      | `status` (`active`/`suspended`/`removed`), `joined_at`; unique `(workspace_id, user_id)`                                                                                                                                                                                                   |
+| invitation         | `invitation`                                                                                                                  | `token_hash` (unique), `accepted_at`, `revoked_at`                                                                                                                                                                                                                                         |
+| settings           | `workspace_settings` (new)                                                                                                    | `india_only_ai` (default true; nothing in the app writes it, #286), `retention`, `locale`, `timezone` (default `Asia/Kolkata`); later `sensitive_default_restricted` (default true) and `retention_audio_days` (7, 14 or 30; default 30) from migration `0029_privacy_settings.sql` (#286) |
+| old slugs          | `workspace_slug_history` (new)                                                                                                | old `slug` (unique) and `expires_at`; redirects live for 90 days                                                                                                                                                                                                                           |
+| integration tokens | `workspace_integration` (`packages/db/src/schema/workspace-integration.ts`, migration `0030_workspace_integration.sql`, #287) | one row per `(workspace_id, kind)`, kind `email_intake` or `ics_feed`; `token_hash` (sha256 hex, unique) only, the token is shown once; `rotateIntegrationToken` replaces the hash, so the old token stops working at once                                                                 |
 
 The rules that follow from this:
 
@@ -37,6 +38,7 @@ The rules that follow from this:
 
   The org plugin's role-check hooks (`packages/auth/src/server.ts`) only keep its own endpoints in
   line.
+
 - **Filter every read.** Reads go through `activeMember` and `liveWorkspace`
   (`packages/core/src/workspaces/members.ts`). Suspended and removed members, and soft-deleted
   workspaces, count as "not a member" everywhere: in the API (#14), the shell loader and server
@@ -49,15 +51,15 @@ schemas in `@causedeck/validators/workspace`. Failures are `WorkspaceError` with
 shared set: `NOT_FOUND`, `FORBIDDEN`, `CONFLICT`, `VALIDATION` and `RATE_LIMITED`.
 `InvitationError` adds a typed `reason`.
 
-| Area | Functions |
-|---|---|
-| Create, delete | `createWorkspace` (atomic: organization, owner membership, settings; unique slug with a collision suffix; reserved words blocked), `softDeleteWorkspace` (owner-only; sets `deleted_at`; hard delete is #31) |
-| Slugs | `slugify`, `generateUniqueSlug`, `renameSlug` (owner-only; writes history), `resolveSlug` (current slug or an old one within 90 days) |
-| Reads | `listMemberships`, `listWorkspacesForUser` (keyset pages), `memberRole`, `listMembers` (with `lastActiveAt`), `listPendingInvitations` |
-| Roles | `changeRole` (owner-only; last owner is a `CONFLICT`), `prepareOwnershipTransfer` and `transferOwnership` (two steps; step 2 echoes the workspace slug; the old owner becomes `advocate`) |
-| Invitations | `inviteMember` (owners invite any non-owner role, advocates invite junior/clerk/viewer; re-inviting an email reissues the token), `reissueInvitation`, `revokeInvitation`, `acceptInvitation` (email must match; distinct `INVALID`/`EXPIRED`/`REVOKED`/`USED`/`EMAIL_MISMATCH`) |
-| Offboarding | `removeMember` (owner-only; last owner is a `CONFLICT`). It runs `offboardMember`: reassign open work, delete sessions active in this workspace, mark `removed`, write an audit event. `countOpenWork` tells the UI beforehand whether a reassignment is required |
-| Seats | `countBillableSeats` (active members by role, clerks counted separately) and the `entitlements.assertCanAddSeat` gate (permissive by default) |
+| Area           | Functions                                                                                                                                                                                                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create, delete | `createWorkspace` (atomic: organization, owner membership, settings; unique slug with a collision suffix; reserved words blocked), `softDeleteWorkspace` (owner-only; sets `deleted_at`; hard delete is #31)                                                                     |
+| Slugs          | `slugify`, `generateUniqueSlug`, `renameSlug` (owner-only; writes history), `resolveSlug` (current slug or an old one within 90 days)                                                                                                                                            |
+| Reads          | `listMemberships`, `listWorkspacesForUser` (keyset pages), `memberRole`, `listMembers` (with `lastActiveAt`), `listPendingInvitations`                                                                                                                                           |
+| Roles          | `changeRole` (owner-only; last owner is a `CONFLICT`), `prepareOwnershipTransfer` and `transferOwnership` (two steps; step 2 echoes the workspace slug; the old owner becomes `advocate`)                                                                                        |
+| Invitations    | `inviteMember` (owners invite any non-owner role, advocates invite junior/clerk/viewer; re-inviting an email reissues the token), `reissueInvitation`, `revokeInvitation`, `acceptInvitation` (email must match; distinct `INVALID`/`EXPIRED`/`REVOKED`/`USED`/`EMAIL_MISMATCH`) |
+| Offboarding    | `removeMember` (owner-only; last owner is a `CONFLICT`). It runs `offboardMember`: reassign open work, delete sessions active in this workspace, mark `removed`, write an audit event. `countOpenWork` tells the UI beforehand whether a reassignment is required                |
+| Seats          | `countBillableSeats` (active members by role, clerks counted separately) and the `entitlements.assertCanAddSeat` gate (permissive by default)                                                                                                                                    |
 
 Under row-level security (#19, [tenancy.md](tenancy.md)) the functions that run before a workspace
 is selected scope themselves: `listMemberships`, `listWorkspacesForUser` and `memberRole` open a
@@ -103,6 +105,7 @@ The page lives in `apps/web/app/(app)/w/[slug]/settings/members/`:
 
   Pending invitations appear as `Invited` rows. Arrow keys move between table rows, and `Enter`
   opens the row menu.
+
 - **`invite-dialog.tsx`** takes multiple emails as chips, role radio-cards and an optional note.
 - **`role-select.tsx`** holds the role pills, the change-role dialog and the two-step ownership
   transfer.
@@ -110,12 +113,12 @@ The page lives in `apps/web/app/(app)/w/[slug]/settings/members/`:
   has open work. All three dialogs are loaded on first use.
 - **`actions.ts`** holds one `workspaceAction` per operation.
 
-| Who | Sees | Can |
-|---|---|---|
-| owner | everything | invite any non-owner role, change roles, transfer ownership, remove, resend/revoke invitations |
-| advocate | everything | invite junior/clerk/viewer, resend/revoke those invitations; members read-only |
-| junior, clerk | the list | nothing (`Only owners can change roles or remove members.`) |
-| viewer | the list | nothing (`You can view members but not change them.`) |
+| Who           | Sees       | Can                                                                                            |
+| ------------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| owner         | everything | invite any non-owner role, change roles, transfer ownership, remove, resend/revoke invitations |
+| advocate      | everything | invite junior/clerk/viewer, resend/revoke those invitations; members read-only                 |
+| junior, clerk | the list   | nothing (`Only owners can change roles or remove members.`)                                    |
+| viewer        | the list   | nothing (`You can view members but not change them.`)                                          |
 
 These gates are UI only. The domain service checks every one again.
 
@@ -137,12 +140,12 @@ Tests:
 
 ## Seams for later issues
 
-| Issue | Seam | Today |
-|---|---|---|
-| #19 RLS | `withWorkspace(db, { workspaceId, userId }, fn)` sets `app.workspace_id` and `app.user_id` for one transaction. Handlers and page loads use `ctx.tx` / that transaction only | FORCE RLS is on (`0006_rls_baseline`); a query outside a scope sees no tenant rows. The cross-tenant suite and CI gate are #19 part 2 |
-| #20 `can()` | `INVITABLE_ROLES` in `invitations.ts`, owner-only checks in `members.ts`, the local `can()` in `apps/web/lib/workspace-context.ts` and `INVITABLE` in `role-select.tsx` | Replace them with the central policy (including the per-workspace "advocates may invite" setting) |
-| #23 email | `Mailer` (`@causedeck/auth/mailer`) with template `workspace.invitation` | Console/Mailpit transports. #23 adds the SES transport and the real template. The invite dialog's optional note is collected but not yet sent, because the template has no field for it |
-| #25 settings | The settings shell and its section navigation (the Settings nav item opens the `settings` index placeholder) | The members page is reachable by URL until #25 links it from the settings sections |
-| #26 audit | `AuditSink` / `setAuditSink` in `offboarding.ts` (`member.removed` events) | `record()`-backed sink by default (`packages/core/src/audit/sink.ts`, see [audit.md](audit.md)); `setAuditSink` swaps it in tests, `null` restores it |
-| #28 billing | `countBillableSeats`, and `Entitlements` / `setEntitlements` (`assertCanAddSeat` is called before every invite and accept) | Permissive default |
-| tasks, obligations | `registerReassignProvider({ countOpen, reassign })` in `offboarding.ts` | No providers yet, so removal never needs a reassignment |
+| Issue              | Seam                                                                                                                                                                         | Today                                                                                                                                                                                   |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #19 RLS            | `withWorkspace(db, { workspaceId, userId }, fn)` sets `app.workspace_id` and `app.user_id` for one transaction. Handlers and page loads use `ctx.tx` / that transaction only | FORCE RLS is on (`0006_rls_baseline`); a query outside a scope sees no tenant rows. The cross-tenant suite and CI gate are #19 part 2                                                   |
+| #20 `can()`        | `INVITABLE_ROLES` in `invitations.ts`, owner-only checks in `members.ts`, the local `can()` in `apps/web/lib/workspace-context.ts` and `INVITABLE` in `role-select.tsx`      | Replace them with the central policy (including the per-workspace "advocates may invite" setting)                                                                                       |
+| #23 email          | `Mailer` (`@causedeck/auth/mailer`) with template `workspace.invitation`                                                                                                     | Console/Mailpit transports. #23 adds the SES transport and the real template. The invite dialog's optional note is collected but not yet sent, because the template has no field for it |
+| #25 settings       | The settings shell and its section navigation (the Settings nav item opens the `settings` index placeholder)                                                                 | The members page is reachable by URL until #25 links it from the settings sections                                                                                                      |
+| #26 audit          | `AuditSink` / `setAuditSink` in `offboarding.ts` (`member.removed` events)                                                                                                   | `record()`-backed sink by default (`packages/core/src/audit/sink.ts`, see [audit.md](audit.md)); `setAuditSink` swaps it in tests, `null` restores it                                   |
+| #28 billing        | `countBillableSeats`, and `Entitlements` / `setEntitlements` (`assertCanAddSeat` is called before every invite and accept)                                                   | Permissive default                                                                                                                                                                      |
+| tasks, obligations | `registerReassignProvider({ countOpen, reassign })` in `offboarding.ts`                                                                                                      | No providers yet, so removal never needs a reassignment                                                                                                                                 |

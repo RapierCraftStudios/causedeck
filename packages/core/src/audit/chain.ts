@@ -1,7 +1,7 @@
 // Chain verification (#227, #26 part 2). Recomputes each event's hash with the same canonical JSON
 // the writer used (`app_audit_canonical`, migration 0008_audit) and checks every `prev_hash` links
 // to the event before it, so an altered, inserted or removed row is reported. The hash covers
-// `actor_ref`, not `actor_user_id` (0030, #303), so a row whose `actor_user_id` no longer matches its
+// `actor_ref`, not `actor_user_id` (0031, #303), so a row whose `actor_user_id` no longer matches its
 // `actor_ref` is reported as `actor`; an anonymised row (`actor_user_id` null) passes.
 import { withWorkspace, type Queryable } from '@causedeck/db';
 import { sql } from 'drizzle-orm';

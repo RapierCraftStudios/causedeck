@@ -230,9 +230,6 @@
       "more": "More"
     },
     "placeholder": {
-      "title": "This section is on its way.",
-      "hint": "It will appear here in a coming update. Nothing needs to be set up yet.",
-      "integrations": "The private email intake address and calendar feed for this workspace.",
       "export": "Download a copy of everything in this workspace.",
       "danger": "Transfer ownership or delete this workspace."
     },
@@ -474,6 +471,52 @@
       "error": {
         "title": "Could not load the role settings.",
         "retry": "Try again"
+      }
+    },
+    "integrations": {
+      "metaTitle": "Integrations",
+      "title": "Integrations",
+      "description": "The private email intake address and calendar feed for this workspace.",
+      "loading": "Loading the integrations",
+      "notEnabled": "Not enabled yet",
+      "notEnabledReason": "This is not enabled yet for this workspace.",
+      "offlineReason": "Settings can be changed when you are back online.",
+      "tokenLabel": "Private link",
+      "notCreated": "Not created yet.",
+      "createdOn": "Created on {date}.",
+      "rotatedOn": "Last rotated on {date}.",
+      "create": "Create",
+      "rotate": "Rotate",
+      "rotating": "Rotating...",
+      "rotateConfirm": "Rotate",
+      "rotateCancel": "Cancel",
+      "copy": "Copy",
+      "copied": "Copied",
+      "shownOnce": "This is shown only once. Copy it now and keep it private.",
+      "error": {
+        "title": "Could not load the integrations.",
+        "retry": "Try again"
+      },
+      "toast": {
+        "created": "Created. Copy it now: it is shown only once.",
+        "rotated": "Rotated. The old one no longer works.",
+        "error": "Could not change it. Nothing was changed.",
+        "forbidden": "You do not have permission to change this.",
+        "copyFailed": "Could not copy. Select the text and copy it instead."
+      },
+      "emailIntake": {
+        "title": "Email intake address",
+        "description": "A private address you can forward court and registry emails to. Anyone who knows it can send to it, so keep it private.",
+        "label": "Intake address",
+        "rotateTitle": "Rotate the intake address?",
+        "rotateBody": "A new address is created and the current one stops working at once. Emails sent to the old address will not arrive."
+      },
+      "icsFeed": {
+        "title": "Calendar feed",
+        "description": "A private link your calendar app can subscribe to. Anyone with this link can see your hearing dates. Keep it private.",
+        "label": "Feed URL",
+        "rotateTitle": "Rotate the calendar feed link?",
+        "rotateBody": "A new link is created and the current one stops working at once. Calendars subscribed to the old link stop updating."
       }
     },
     "privacy": {

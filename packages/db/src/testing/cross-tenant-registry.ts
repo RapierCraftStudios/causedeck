@@ -270,6 +270,22 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'counts the global staff_user table only; no tenant rows',
   },
+  // staff console reads (#310): owner-defined functions that refuse anyone but enabled staff
+  staffWorkspaceSearch: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_workspace_search() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
+  staffWorkspaceMetadata: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_workspace_metadata() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
+  staffAuditEvents: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_audit_events() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
   addStaff: {
     test: ADMIN_STAFF_CLI_TEST,
     kind: 'caller-checked',
@@ -509,6 +525,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   STAFF_ROLES: 'constant',
   DEV_STAFF_EMAIL: 'constant',
   StaffAdminError: 'error class',
+  STAFF_WORKSPACE_FIELDS: 'constant (staff console field list)',
+  STAFF_AUDIT_FIELDS: 'constant (staff console field list)',
   withOwnerDb: 'connection helper (owner-role handle for the operator CLI); reads nothing itself',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',

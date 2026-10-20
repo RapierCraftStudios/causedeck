@@ -225,6 +225,13 @@
       "when": 1792496956772,
       "tag": "0031_account_memory_erasure",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792504015085,
+      "tag": "0032_staff_console_reads",
+      "breakpoints": true
     }
   ]
 }

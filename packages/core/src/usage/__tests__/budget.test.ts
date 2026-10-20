@@ -21,10 +21,10 @@ import {
   reserve,
   RESERVATION_TTL_MS,
 } from '../budget.ts';
-import { getAiBudget, setBudgetOverride } from '../limits.ts';
+import { expireBudgetOverride, getAiBudget, setBudgetOverride } from '../limits.ts';
 import { getUsage, increment } from '../meter.ts';
 
-const { auditEvent, usageEvent, usageReservation } = schema;
+const { auditEvent, budgetOverride, usageEvent, usageReservation } = schema;
 
 const NOW = new Date('2026-03-10T06:30:00.000Z');
 const MINUTE = 60_000;
@@ -257,6 +257,128 @@ describe('budget: staff overrides', () => {
         /limitPaise/,
       );
       expect(await getAiBudget(ctx)).toEqual({ budgetPaise: 1_000, source: 'entitlement' });
+    });
+  });
+});
+
+describe('budget: expiring a staff override early (#224)', () => {
+  async function withOverrides(tx: Transaction) {
+    const j = await junior(tx);
+    const staffUserId = await newUser(tx);
+    const set = (limitPaise: number, at: number) =>
+      setBudgetOverride(
+        { ...j.ctx, now: () => new Date(NOW.getTime() - at) },
+        {
+          limitPaise,
+          reason: 'Pilot',
+          expiresAt: new Date(NOW.getTime() + 24 * 60 * MINUTE),
+          staffUserId,
+        },
+      );
+    const older = await set(3_000, 2 * MINUTE);
+    const newer = await set(5_000, MINUTE);
+    return { ...j, staffUserId, older, newer };
+  }
+
+  function overrideRow(tx: Transaction, workspaceId: string, id: string) {
+    return inWorkspace(tx, workspaceId, async (s) => {
+      const [row] = await s.select().from(budgetOverride).where(eq(budgetOverride.id, id));
+      return row;
+    });
+  }
+
+  it('ends the override now, falls back to the next one, records who and why, and is audited', async () => {
+    await withTestDb(async (tx) => {
+      const { ctx, workspaceId, staffUserId, older, newer } = await withOverrides(tx);
+      // createdAt is the database clock, so both rows share the transaction time; the newest by id
+      // wins. End whichever is active first, then the other.
+      const first = await getAiBudget(ctx);
+      expect(first.source).toBe('override');
+      const active = first.budgetPaise === 5_000 ? newer : older;
+      const other = active === newer ? older : newer;
+
+      await expireBudgetOverride(ctx, {
+        overrideId: active.id,
+        reason: '  Pilot ended early  ',
+        staffUserId,
+        requestId: 'req-224',
+      });
+      expect((await getAiBudget(ctx)).budgetPaise).toBe(active === newer ? 3_000 : 5_000);
+      expect(await overrideRow(tx, workspaceId, active.id)).toMatchObject({
+        expiresAt: NOW,
+        expiredAt: NOW,
+        expiredBy: staffUserId,
+        expireReason: 'Pilot ended early',
+        reason: 'Pilot',
+      });
+
+      await expireBudgetOverride(ctx, { overrideId: other.id, reason: 'Done', staffUserId });
+      expect(await getAiBudget(ctx)).toEqual({ budgetPaise: 1_000, source: 'entitlement' });
+
+      const audited = await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .select()
+          .from(auditEvent)
+          .where(
+            and(
+              eq(auditEvent.workspaceId, workspaceId),
+              eq(auditEvent.action, 'usage.budget_override_expired'),
+            ),
+          ),
+      );
+      expect(audited).toHaveLength(2);
+      expect(audited.find((a) => a.targetId === active.id)).toMatchObject({
+        actorUserId: staffUserId,
+        actorKind: 'staff',
+        targetKind: 'budget_override',
+        requestId: 'req-224',
+        metadata: { key: 'ai.spend_paise', expired_at: NOW.toISOString() },
+      });
+      // The free-text reason stays on the override, out of the audit log.
+      expect(JSON.stringify(audited.map((a) => a.metadata))).not.toContain('Pilot');
+    });
+  });
+
+  it('refuses a blank reason, an unknown, ended or expired override and another workspace', async () => {
+    await withTestDb(async (tx) => {
+      const { ctx, workspaceId, staffUserId, newer } = await withOverrides(tx);
+      const other = await newWorkspace(tx);
+      const before = await overrideRow(tx, workspaceId, newer.id);
+      const input = { overrideId: newer.id, reason: 'Done', staffUserId };
+      await expect(expireBudgetOverride(ctx, { ...input, reason: '  ' })).rejects.toThrow(/reason/);
+      await expect(
+        expireBudgetOverride(ctx, { ...input, overrideId: randomUUID() }),
+      ).rejects.toThrow(/no active override/);
+      await expect(
+        expireBudgetOverride(ctx, { ...input, overrideId: 'not-a-uuid' }),
+      ).rejects.toThrow(/no active override/);
+      await expect(
+        expireBudgetOverride({ ...ctx, workspaceId: other.workspaceId }, input),
+      ).rejects.toThrow(/no active override/);
+      // After its natural expiry it can no longer be ended early.
+      const later = { ...ctx, now: () => new Date(NOW.getTime() + 25 * 60 * MINUTE) };
+      await expect(expireBudgetOverride(later, input)).rejects.toThrow(/no active override/);
+      expect(await overrideRow(tx, workspaceId, newer.id)).toEqual(before);
+
+      await expireBudgetOverride(ctx, input);
+      await expect(expireBudgetOverride(ctx, input)).rejects.toThrow(/no active override/);
+    });
+  });
+
+  it('rolls the expiry back when its audit event cannot be written', async () => {
+    await withTestDb(async (tx) => {
+      const { ctx, workspaceId, staffUserId, newer } = await withOverrides(tx);
+      const before = await overrideRow(tx, workspaceId, newer.id);
+      // A NUL byte cannot be stored in text, so the audit append fails after the update ran.
+      await expect(
+        tx.transaction((s) =>
+          expireBudgetOverride(
+            { ...ctx, db: s },
+            { overrideId: newer.id, reason: 'Done', staffUserId, requestId: 'bad\u0000id' },
+          ),
+        ),
+      ).rejects.toThrow();
+      expect(await overrideRow(tx, workspaceId, newer.id)).toEqual(before);
     });
   });
 });

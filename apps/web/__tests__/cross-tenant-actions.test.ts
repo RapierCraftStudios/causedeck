@@ -8,8 +8,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { schema, withWorkspace } from '@causedeck/db';
-import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { closeTestDb, schema, testAppDb, withWorkspace } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

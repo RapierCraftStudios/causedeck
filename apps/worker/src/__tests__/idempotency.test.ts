@@ -2,8 +2,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { defineJob, once, runJob, systemPing } from '@causedeck/core/jobs';
-import { schema, withWorkspace } from '@causedeck/db';
-import { inWorkspace, testAppDb, withTestDb } from '@causedeck/db/testing';
+import { inWorkspace, schema, testAppDb, withTestDb, withWorkspace } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';

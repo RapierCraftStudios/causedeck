@@ -17,9 +17,8 @@ import {
 } from '@causedeck/billing/webhook';
 import { Secret } from '@causedeck/config/env';
 import { runBillingProcessEvent, type JobSender } from '@causedeck/core/jobs';
-import { schema, withWorkspace } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
-import { testAppDb } from '@causedeck/db/testing';
+import { schema, testAppDb, withWorkspace } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 

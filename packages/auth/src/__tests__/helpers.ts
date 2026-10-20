@@ -1,6 +1,6 @@
 // Shared fixtures for the API tests: a real `createAuth` on the #6 Testcontainers database.
 // Better Auth commits its own writes, so tests isolate by unique emails and client IPs.
-import { randomInt, randomUUID } from 'node:crypto';
+import { createHmac, randomInt, randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
 import type { Database } from '@causedeck/db';
@@ -122,4 +122,21 @@ export async function devSignInAs(auth: TestAuth, email = uniqueEmail()) {
   if (response.status !== 200) throw new Error(`dev sign-in failed: ${String(response.status)}`);
   const { user } = (await response.json()) as { user: { id: string; email: string } };
   return { user, cookie: cookieHeader(response), response };
+}
+
+/** RFC 6238 TOTP (SHA-1, 30 s, 6 digits) from a base32 secret. */
+export function totp(secret: string): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '';
+  for (const char of secret.replace(/=+$/, '').toUpperCase()) {
+    bits += alphabet.indexOf(char).toString(2).padStart(5, '0');
+  }
+  const bytes: number[] = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 1000 / 30)));
+  const hmac = createHmac('sha1', Buffer.from(bytes)).update(counter).digest();
+  const offset = (hmac[hmac.length - 1] ?? 0) & 0xf;
+  const code = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
+  return String(code).padStart(6, '0');
 }

@@ -88,6 +88,11 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'An owner changed whether advocates may invite or owners see restricted matters',
   },
+  // Account-level (`workspaceId: null`); metadata names the changed fields only (#289).
+  'account.profile_updated': {
+    security: false,
+    description: 'A user changed their own account profile (display name)',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

@@ -10,8 +10,7 @@ import { webhookSecretFor } from '@causedeck/billing/webhook';
 import { serverEnv } from '@causedeck/config/env';
 import { createSecurityEventRecorder } from '@causedeck/core/audit';
 import { closeProducer } from '@causedeck/core/jobs';
-import { closeDb, db } from '@causedeck/db';
-import { startFlagListener } from '@causedeck/flags';
+import { closeAppDb, db, startAppFlagListener } from '@causedeck/core/runtime';
 import {
   createLogger,
   initTelemetry,
@@ -137,7 +136,7 @@ async function main(): Promise<void> {
   });
   const { server, port } = await startServer({ app, port: env.API_PORT });
   // Staff flag changes drop this process's flag cache at once; the 15 s TTL covers a failure (#22).
-  const flagListener = await startFlagListener(db).catch((err: unknown) => {
+  const flagListener = await startAppFlagListener().catch((err: unknown) => {
     logger.warn({ err }, 'LISTEN flag_changed failed; flag changes apply after the cache TTL');
     return undefined;
   });
@@ -146,7 +145,7 @@ async function main(): Promise<void> {
     cleanup: async () => {
       await flagListener?.unlisten();
       await closeProducer();
-      await closeDb();
+      await closeAppDb();
       await telemetry.shutdown();
     },
   });

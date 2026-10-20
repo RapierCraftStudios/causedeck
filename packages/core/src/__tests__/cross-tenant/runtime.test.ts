@@ -72,6 +72,13 @@ const CASES: Record<string, () => Promise<void>> = {
     expect(seen.map((r) => r.id)).toEqual([t.b.id]);
     await expectCallerGateRefusesA();
   },
+  inWorkspaceOn: async () => {
+    const seen = await runtime.inWorkspaceOn(testAppDb(), asB(), (tx) =>
+      tx.select({ id: schema.organization.id }).from(schema.organization),
+    );
+    expect(seen.map((r) => r.id)).toEqual([t.b.id]);
+    await expectCallerGateRefusesA();
+  },
   memberRoleFor: async () => {
     expect(await runtime.memberRoleFor(t.ub, t.a.id)).toBeNull();
     expect(await runtime.memberRoleFor(t.ub, t.b.id)).toBe('owner');
@@ -163,6 +170,12 @@ const CASES: Record<string, () => Promise<void>> = {
     await runtime.recordAccessDeniedFor({ workspaceId: t.a.id, member: false, actorUserId: t.ub });
     expect(await aAuditIds()).toEqual(before);
   },
+  recordAccountProfileUpdatedFor: async () => {
+    const before = await aAuditIds();
+    // Account-level: `ua`'s own profile change never writes into workspace A's chain.
+    await runtime.recordAccountProfileUpdatedFor(t.ua, ['name']);
+    expect(await aAuditIds()).toEqual(before);
+  },
   requestExportFor: async () => {
     const before = await aAuditIds();
     // Refused before anything is written or enqueued: ub is not an owner of A.
@@ -206,7 +219,7 @@ const CASES: Record<string, () => Promise<void>> = {
     expect(await runtime.consumeRequestLimit(bKey, limit)).toBe(true);
   },
   startAppFlagListener: async () => {
-    const listener = (await runtime.startAppFlagListener()) as { unlisten: () => Promise<void> };
+    const listener = await runtime.startAppFlagListener();
     expect(typeof listener.unlisten).toBe('function');
     await listener.unlisten();
   },

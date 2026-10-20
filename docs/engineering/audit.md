@@ -61,6 +61,7 @@ Each action is either **security** or **informational**:
 | `billing.invoice_downloaded` | security    | `openSaasInvoicePdf`, before the first byte (#258)  |
 | `workspace.role_settings_updated` | security | `updateRoleSettings` (#285)                     |
 | `workspace.settings_viewed` | informational | reserved                                                          |
+| `account.profile_updated`   | informational | `/account` `updateAccountProfileAction` via `recordAccountProfileUpdatedFor` (account-level; metadata `fields` only, #289) |
 | `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)                    |
 
 Security events (#228):

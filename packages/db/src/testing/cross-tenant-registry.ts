@@ -547,6 +547,11 @@ const runtimeScopeChecked = {
  */
 export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   inWorkspace: runtimeScopeChecked,
+  inWorkspaceOn: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: "inWorkspace on an injected handle; the api's requireWorkspace checks membership first",
+  },
   memberRoleFor: runtimeEmpty,
   resolveSlugFor: {
     test: CORE_RUNTIME_TEST,
@@ -574,6 +579,11 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',
     note: "recordAccessDenied on the app db; guard sets member from memberRoleFor, a non-member's denial never lands in that workspace chain",
+  },
+  recordAccountProfileUpdatedFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: "account-level audit row (workspaceId null) for the caller's own profile; never lands in a workspace chain",
   },
   requestExportFor: runtimeDenies,
   issueExportDownloadFor: runtimeDenies,
@@ -605,6 +615,11 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   db: 'the lazy app-role handle (Better Auth adapter); tenant reads go through the services above',
   isUuid: 'pure',
+  closeAppDb: 'closes the app-role pool on shutdown; reads no rows',
+  createIdempotencyStore:
+    'api_idempotency_key is a global table keyed by (user, key) (GLOBAL_TABLES); every query filters by the caller user id',
+  IDEMPOTENCY_TTL_MS: 'constant',
+  IN_PROGRESS_STATUS: 'constant',
   uploadContext:
     'pure (binds the app db into a StorageCtx; the uploads route checks membership and authorize gates each storage call)',
 };

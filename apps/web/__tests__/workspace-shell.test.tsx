@@ -95,7 +95,6 @@ const { default: WorkspaceLayout } = await import('../app/(app)/w/[slug]/layout.
 const { default: WorkspaceError } = await import('../app/(app)/w/[slug]/error.tsx');
 const { default: WorkspaceLoading } = await import('../app/(app)/w/[slug]/loading.tsx');
 const { default: WorkspaceNotFound } = await import('../app/(app)/w/[slug]/not-found.tsx');
-const { default: AccountPage } = await import('../app/(app)/account/page.tsx');
 const { EMPTY_ACTION_TARGET, placeholderPage } =
   await import('../components/shell/placeholder-page.tsx');
 
@@ -464,17 +463,6 @@ describe('settings and account', () => {
 
   it('settings refuses a non-member workspace', async () => {
     await expect(PAGES.settings(props('other-chambers'))).rejects.toThrow('NEXT_NOT_FOUND');
-  });
-
-  it('account renders its placeholder', async () => {
-    render(await AccountPage());
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Account');
-    expect(document.getElementById('main')).not.toBeNull();
-    const empty = document.querySelector('[data-pattern-state="empty"]');
-    expect(empty?.querySelector('[data-slot="empty-state-description"]')?.textContent).toBe(
-      catalogs.en.shell.account.hint,
-    );
-    expect(empty?.querySelector('a[data-empty-action]')?.getAttribute('href')).toBe('/');
   });
 });
 

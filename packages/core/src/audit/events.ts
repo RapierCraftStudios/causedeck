@@ -82,6 +82,11 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'An owner renamed the workspace slug; the old slug redirects for 90 days',
   },
+  // Account-level (`workspaceId: null`); metadata names the changed fields only (#289).
+  'account.profile_updated': {
+    security: false,
+    description: 'A user changed their own account profile (display name)',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

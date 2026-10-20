@@ -1,6 +1,6 @@
 // Security event capture from the Better Auth hooks (#228): every flow below runs through a real
 // `createAuth` with a recording `SecurityEventRecorder` in place of the core audit writer.
-import { createHmac, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 
 import { schema } from '@causedeck/db';
 import { closeTestDb, testAppDb } from '@causedeck/db/testing';
@@ -23,6 +23,7 @@ import {
   devSignInAs,
   makeAuth,
   recordingMailer,
+  totp,
   uniqueEmail,
   uniqueIp,
   type TestAuth,
@@ -66,23 +67,6 @@ function setup() {
 
 async function requestLink(auth: TestAuth, email: string, ip = uniqueIp()) {
   return authRequest(auth, '/sign-in/magic-link', { ip, body: { email } });
-}
-
-/** RFC 6238 TOTP (SHA-1, 30 s, 6 digits) from a base32 secret. */
-function totp(secret: string): string {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const char of secret.replace(/=+$/, '').toUpperCase()) {
-    bits += alphabet.indexOf(char).toString(2).padStart(5, '0');
-  }
-  const bytes: number[] = [];
-  for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 1000 / 30)));
-  const hmac = createHmac('sha1', Buffer.from(bytes)).update(counter).digest();
-  const offset = (hmac[hmac.length - 1] ?? 0) & 0xf;
-  const code = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
-  return String(code).padStart(6, '0');
 }
 
 describe('magic link', () => {

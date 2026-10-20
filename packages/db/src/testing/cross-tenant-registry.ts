@@ -567,6 +567,11 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'caller-checked',
     note: "recordAccessDenied on the app db; guard sets member from memberRoleFor, a non-member's denial never lands in that workspace chain",
   },
+  recordAccountProfileUpdatedFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: "account-level audit row (workspaceId null) for the caller's own profile; never lands in a workspace chain",
+  },
   requestExportFor: runtimeDenies,
   issueExportDownloadFor: runtimeDenies,
   openExportDownloadFor: runtimeDenies,

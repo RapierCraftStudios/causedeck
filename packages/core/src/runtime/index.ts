@@ -220,6 +220,32 @@ export async function recordAccessDeniedFor(event: AccessDeniedEvent): Promise<v
   return recordAccessDenied(db, event);
 }
 
+/**
+ * `account.profile_updated` (account-level, informational) for the user's own profile change.
+ * Metadata names the changed fields only, never their values (#289).
+ */
+export async function recordAccountProfileUpdatedFor(
+  userId: string,
+  fields: readonly string[],
+  request: { requestId?: string; userAgent?: string } = {},
+): Promise<void> {
+  const { record } = await import('../audit/index.ts');
+  await record(
+    {
+      db,
+      workspaceId: null,
+      actor: { userId, kind: 'user' },
+      ...(request.requestId === undefined ? {} : { requestId: request.requestId }),
+      ...(request.userAgent === undefined ? {} : { userAgent: request.userAgent }),
+    },
+    {
+      action: 'account.profile_updated',
+      target: { kind: 'user', id: userId },
+      metadata: { fields: fields.join(',') },
+    },
+  );
+}
+
 // lifecycle: workspace export (#301)
 
 /** Request an export (owners only) and enqueue `export.build` for it. */

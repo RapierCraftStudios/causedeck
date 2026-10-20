@@ -24,9 +24,13 @@ import {
   expireSupportSessions,
   grantSession,
   isActiveStaff,
+  listStaffSupportSessions,
   listSupportSessions,
+  readSupportWorkspaceView,
   requestSession,
   revokeSession,
+  staffSupportSession,
+  supportSessionState,
   SupportSessionInactiveError,
   withSupportSession,
   type SupportSession,
@@ -41,6 +45,7 @@ const enqueueDelivery = (job: DeliveryJob) => {
   return Promise.resolve();
 };
 let staffId: string;
+let otherStaffId: string;
 let disabledStaffId: string;
 
 async function newUser(db: Database | Transaction, label: string): Promise<string> {
@@ -55,15 +60,19 @@ async function newUser(db: Database | Transaction, label: string): Promise<strin
 beforeAll(async () => {
   owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
   staffId = await newUser(owner, 'staff');
+  otherStaffId = await newUser(owner, 'staff-other');
   disabledStaffId = await newUser(owner, 'staff-disabled');
   await owner.insert(schema.staffUser).values([
     { userId: staffId, role: 'support' },
+    { userId: otherStaffId, role: 'support' },
     { userId: disabledStaffId, role: 'support', disabledAt: new Date() },
   ]);
 });
 
 afterAll(async () => {
-  await owner.execute(sql`delete from "user" where id in (${staffId}, ${disabledStaffId})`);
+  await owner.execute(
+    sql`delete from "user" where id in (${staffId}, ${otherStaffId}, ${disabledStaffId})`,
+  );
   await owner.$client.end();
 });
 
@@ -639,6 +648,123 @@ describe('the read-only support context', () => {
       const meta = await withSupportSession({ db: tx, staffUserId: staffId }, w.workspaceId);
       expect(
         await codeOf(meta.supportSession.read('matter.read', target, () => Promise.resolve(1))),
+      ).toBe('FORBIDDEN');
+      expect(await audits(tx, w.workspaceId, 'access.denied')).toEqual([
+        expect.objectContaining({
+          actorKind: 'staff',
+          metadata: expect.objectContaining({ reason: 'SUPPORT_SCOPE_METADATA' }) as unknown,
+        }),
+      ]);
+      expect(await audits(tx, w.workspaceId, 'support.view')).toEqual([]);
+    });
+  });
+});
+
+describe('the staff console reads (#314)', () => {
+  it("lists a staff member's own sessions in every workspace, all states, and nobody else's", async () => {
+    await withTestDb(async (tx) => {
+      const w = await seed(tx);
+      const other = await seed(tx);
+      const pending = await requested(tx, w);
+      const active = await granted(tx, other);
+      const theirs = await requestSession(
+        { db: tx, staffUserId: otherStaffId, enqueueDelivery },
+        { workspaceId: w.workspaceId, reason: 'Another staff member' },
+      );
+      await denySession(
+        { db: tx, userId: w.ownerId, workspaceId: w.workspaceId },
+        { sessionId: pending.id },
+      );
+
+      const mine = await listStaffSupportSessions(tx, staffId);
+      const ids = mine.map((row) => row.id);
+      expect(ids).toEqual(expect.arrayContaining([pending.id, active.id]));
+      expect(ids).not.toContain(theirs.id);
+      expect(mine.every((row) => row.requestedByStaff === staffId)).toBe(true);
+      expect(mine.find((row) => row.id === pending.id)?.status).toBe('denied');
+
+      expect((await staffSupportSession(tx, staffId, active.id))?.id).toBe(active.id);
+      expect(await staffSupportSession(tx, staffId, theirs.id)).toBeNull();
+      expect(await staffSupportSession(tx, otherStaffId, active.id)).toBeNull();
+      expect(await staffSupportSession(tx, staffId, 'not-a-uuid')).toBeNull();
+      // Owners and disabled staff are not staff: nothing.
+      expect(await listStaffSupportSessions(tx, w.ownerId)).toEqual([]);
+      expect(await staffSupportSession(tx, w.ownerId, pending.id)).toBeNull();
+      expect(await listStaffSupportSessions(tx, disabledStaffId)).toEqual([]);
+    });
+  });
+
+  it('counts an elapsed grant as expired before the job runs', () => {
+    const now = new Date('2026-10-20T10:00:00Z');
+    const at = (minutes: number) => new Date(now.getTime() + minutes * 60_000);
+    expect(supportSessionState({ status: 'granted', expiresAt: at(5) }, now)).toBe('active');
+    expect(supportSessionState({ status: 'granted', expiresAt: at(-1) }, now)).toBe('expired');
+    expect(supportSessionState({ status: 'granted', expiresAt: null }, now)).toBe('expired');
+    for (const status of ['requested', 'denied', 'expired', 'ended'] as const) {
+      expect(supportSessionState({ status, expiresAt: null }, now)).toBe(status);
+    }
+  });
+
+  it('reads the workspace view through the support context, auditing each read', async () => {
+    await withTestDb(async (tx) => {
+      const w = await seed(tx);
+      const ctx = { db: tx, staffUserId: staffId };
+      await expect(readSupportWorkspaceView(ctx, w.workspaceId)).rejects.toBeInstanceOf(
+        SupportSessionInactiveError,
+      );
+
+      const s = await granted(tx, w);
+      const view = await readSupportWorkspaceView(ctx, w.workspaceId);
+      expect(view.session.id).toBe(s.id);
+      expect(view.profile).toMatchObject({ id: w.workspaceId, name: 'Chambers' });
+      expect(view.members.map((m) => m.role).sort()).toEqual(['advocate', 'owner']);
+      // Minimum necessary: no email or activity.
+      for (const m of view.members)
+        expect(Object.keys(m).sort()).toEqual(['joinedAt', 'name', 'role']);
+
+      const views = await audits(tx, w.workspaceId, 'support.view');
+      expect(views).toHaveLength(2);
+      for (const row of views) {
+        expect(row).toMatchObject({
+          actorUserId: staffId,
+          actorKind: 'staff',
+          targetKind: 'workspace',
+          targetId: w.workspaceId,
+          metadata: expect.objectContaining({
+            supportSessionId: s.id,
+            readAction: 'settings.read',
+          }) as unknown,
+        });
+      }
+
+      // Another staff member has no session here.
+      await expect(
+        readSupportWorkspaceView({ db: tx, staffUserId: otherStaffId }, w.workspaceId),
+      ).rejects.toBeInstanceOf(SupportSessionInactiveError);
+
+      await revokeSession(
+        { db: tx, userId: staffId, workspaceId: w.workspaceId },
+        { sessionId: s.id },
+      );
+      await expect(readSupportWorkspaceView(ctx, w.workspaceId)).rejects.toBeInstanceOf(
+        SupportSessionInactiveError,
+      );
+
+      const elapsed = await granted(tx, w);
+      await age(tx, elapsed, 61);
+      await expect(readSupportWorkspaceView(ctx, w.workspaceId)).rejects.toBeInstanceOf(
+        SupportSessionInactiveError,
+      );
+      expect(await audits(tx, w.workspaceId, 'support.view')).toHaveLength(2);
+    });
+  });
+
+  it('never shows content in a metadata session, and audits the denial', async () => {
+    await withTestDb(async (tx) => {
+      const w = await seed(tx);
+      await granted(tx, w, 60, 'metadata');
+      expect(
+        await codeOf(readSupportWorkspaceView({ db: tx, staffUserId: staffId }, w.workspaceId)),
       ).toBe('FORBIDDEN');
       expect(await audits(tx, w.workspaceId, 'access.denied')).toEqual([
         expect.objectContaining({

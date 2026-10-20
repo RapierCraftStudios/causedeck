@@ -2,9 +2,9 @@
 
 The staff-only ops console (#27; shell, gate, headers and image in #309). Staff see platform
 metadata only; workspace content is reachable only through a consented support session (#308,
-[support-sessions](../../packages/core/src/support/index.ts)). Workspaces and audit
-(#310), adapters (#312) and flags (#311, [below](#flags)) have arrived; support sessions (#314)
-follow.
+#313, #314; policy, flow and audit events in [support-sessions.md](support-sessions.md)). Workspaces
+and audit (#310), adapters (#312), support sessions (#314) and flags (#311, [below](#flags)) have
+arrived.
 
 |            |                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------- |

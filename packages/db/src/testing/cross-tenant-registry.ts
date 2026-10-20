@@ -259,6 +259,18 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: "sweep through app_end_staff_support_sessions(); touches only that staff member's sessions",
   },
+  // the staff console (#314): a staff member's own sessions and the read-only workspace view
+  listStaffSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "withUser on the staff id; only the staff_self policy exposes rows: that staff member's own sessions",
+  },
+  staffSupportSession: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "withUser on the staff id; only the staff_self policy exposes rows: that staff member's own sessions",
+  },
+  readSupportWorkspaceView: denies,
   // platform staff accounts (#309): the admin console's reads and the operator CLI's writes
   staffMember: {
     test: CORE_SERVICES_TEST,
@@ -521,6 +533,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   supportRequestCopy: 'pure (owner notice copy)',
   supportRequestDedupeKey: 'pure',
   SupportSessionInactiveError: 'error class',
+  STAFF_SUPPORT_LIST_LIMIT: 'constant',
+  supportSessionState: 'pure (session state at a time)',
   // platform staff accounts (#309)
   STAFF_ROLES: 'constant',
   DEV_STAFF_EMAIL: 'constant',
@@ -739,6 +753,10 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   grantSupportSessionFor: runtimeDenies,
   denySupportSessionFor: runtimeDenies,
   revokeSupportSessionFor: runtimeDenies,
+  // support sessions, staff side (#314)
+  listStaffSupportSessionsFor: runtimeSelfScoped,
+  staffSupportSessionFor: runtimeSelfScoped,
+  supportWorkspaceViewFor: runtimeDenies,
   recordAccountProfileUpdatedFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'self-scoped',

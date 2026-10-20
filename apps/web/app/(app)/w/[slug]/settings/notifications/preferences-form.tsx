@@ -5,9 +5,11 @@
 // a lock with the explanation. Below the matrix: the digest selector (`Instant / Daily at 6:30 pm /
 // Off`, which drives the `digest.daily` email, so that category has no row), `Do not push during
 // court hours` and `Show details on lock screen`. Every change saves at once through its server
-// action, optimistically, and rolls back with an error message if the save fails.
+// action, optimistically, and rolls back with an error message if the save fails. With no
+// categories to show (#288 empty state) the matrix gives way to `No notification settings...`.
 import { Alert } from '@causedeck/ui/alert';
 import { Button } from '@causedeck/ui/button';
+import { EmptyState } from '@causedeck/ui/empty-state';
 import { Field } from '@causedeck/ui/field';
 import { Skeleton, SkeletonGroup } from '@causedeck/ui/skeleton';
 import { Switch } from '@causedeck/ui/switch';
@@ -29,7 +31,7 @@ import {
   type Channel,
   type Digest,
 } from '@causedeck/notifications/categories';
-import { Lock } from 'lucide-react';
+import { BellOff, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
@@ -226,7 +228,19 @@ export function PreferencesForm({
 
   return (
     <div data-slot="notification-preferences" className="flex flex-col gap-8">
-      <div data-slot="preferences-matrix" className="hidden md:block">
+      {preferences.length === 0 ? (
+        <EmptyState
+          data-pattern-state="empty"
+          data-slot="preferences-empty"
+          icon={<BellOff />}
+          title={t('empty')}
+          className="py-8"
+        />
+      ) : null}
+      <div
+        data-slot="preferences-matrix"
+        className={preferences.length === 0 ? 'hidden' : 'hidden md:block'}
+      >
         <Table>
           <TableCaption className="sr-only">{t('matrixCaption')}</TableCaption>
           <TableHeader>
@@ -254,7 +268,10 @@ export function PreferencesForm({
         </Table>
       </div>
 
-      <ul data-slot="preferences-cards" className="flex flex-col gap-3 md:hidden">
+      <ul
+        data-slot="preferences-cards"
+        className={preferences.length === 0 ? 'hidden' : 'flex flex-col gap-3 md:hidden'}
+      >
         {ROWS.map((category) => (
           <li
             key={category}

@@ -203,6 +203,9 @@ describe('actor_ref and app_audit_anonymise_actor', () => {
   });
 });
 
+/** Migrations from 0031 on: staged later, so the legacy database stops just before 0031. */
+const isFrom0031 = (tag: string) => tag >= '0031_';
+
 /** The migrations folder up to (not including) 0031, to stage legacy audit rows. */
 function migrationsBefore0031(): string {
   const dir = mkdtempSync(path.join(tmpdir(), 'causedeck-migrations-0029-'));
@@ -210,10 +213,12 @@ function migrationsBefore0031(): string {
     rmSync(dir, { recursive: true, force: true });
   });
   cpSync(MIGRATIONS_FOLDER, dir, { recursive: true });
-  rmSync(path.join(dir, '0031_account_memory_erasure.sql'));
   const journalPath = path.join(dir, 'meta', '_journal.json');
   const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as { entries: { tag: string }[] };
-  journal.entries = journal.entries.filter((e) => e.tag !== '0031_account_memory_erasure');
+  for (const entry of journal.entries.filter((e) => isFrom0031(e.tag))) {
+    rmSync(path.join(dir, `${entry.tag}.sql`));
+  }
+  journal.entries = journal.entries.filter((e) => !isFrom0031(e.tag));
   writeFileSync(journalPath, JSON.stringify(journal));
   return dir;
 }
@@ -244,7 +249,8 @@ describe('0031 re-chain of legacy audit rows', () => {
   it('backfills actor_ref and keeps every chain valid', async () => {
     const { db, app, userId, ws } = await legacyDatabase('audit_rechain_ok');
     const result = await runMigrations({ url: new Secret(db.owner) });
-    expect(result.applied).toEqual(['0031_account_memory_erasure']);
+    // 0031 first; later migrations (0032 on) follow it.
+    expect(result.applied[0]).toBe('0031_account_memory_erasure');
     const migrated = createOwnerDb(new Secret(db.owner));
     cleanups.push(() => migrated.$client.end());
     const rows = await migrated.execute<{ actor: string | null; ref: string | null }>(

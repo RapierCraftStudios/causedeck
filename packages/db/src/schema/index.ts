@@ -19,8 +19,11 @@ export {
   ACCESS_MODE_NAMES,
   accessMode,
   accessModeRegistry,
+  FLAG_CHANGE_REQUEST_STATUSES,
   featureFlag,
+  flagChangeRequest,
   workspaceFeatureFlag,
+  type FlagChangeRequestStatus,
 } from './flags.ts';
 export { jobEffect } from './job-effect.ts';
 export {

@@ -127,6 +127,8 @@ export function adminServerEnv(port: number, dbUrl: string): NodeJS.ProcessEnv {
     ADMIN_URL: originFor(port),
     ADMIN_IP_ALLOWLIST: ADMIN_E2E_ALLOWLIST,
     ADMIN_ENV_LABEL: 'development',
+    // The flags page shows this flag as forced off by its kill switch (#311, flags.spec.ts).
+    KILL_INSIGHTS_ENABLED: '1',
   };
 }
 

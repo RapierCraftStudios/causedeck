@@ -2,8 +2,9 @@
 
 The staff-only ops console (#27; shell, gate, headers and image in #309). Staff see platform
 metadata only; workspace content is reachable only through a consented support session (#308,
-[support-sessions](../../packages/core/src/support/index.ts)). Pages beyond the shell arrive with
-#310 (workspaces, audit), #311 (flags), #312 (adapters) and #314 (support sessions).
+[support-sessions](../../packages/core/src/support/index.ts)). Flags are managed on `/flags`
+(#311, [below](#flags)). The other pages beyond the shell arrive with #310 (workspaces, audit), #312
+(adapters) and #314 (support sessions).
 
 | | |
 |---|---|
@@ -85,6 +86,46 @@ Every response, the 404 included:
   `object-src 'none'` and `base-uri 'none'`. The 404 gets a static policy with `default-src 'none'`.
 
 `apps/admin/__tests__/headers.test.ts` covers all of these.
+
+## Flags
+
+`/flags` (`app/(console)/flags/`) is open to the `ops` and `admin` roles only (`requireStaff('flags')`
+on the page and on every action). Everyone else gets the generic 404. It shows:
+
+- **Global flags.** Every registered flag, with its global row, its effective value and a toggle.
+- **Workspace overrides.** The same table for one workspace, picked by workspace id (a UUID). This
+  lasts until the staff workspace lookup (#310) lands.
+- **Pending approvals.** Legal-gated enables waiting for a second admin.
+
+Every change opens a confirmation that restates the diff (`<key> · <Global|Workspace id> · Off →
+On`) before it is applied. A flag whose `KILL_<KEY>` env kill switch is set shows `Forced off by
+environment` with the variable name. Its toggle is disabled, since the kill switch wins over every
+row.
+
+Enabling a **legal-gated (⚖)** flag takes two people:
+
+1. A staff member with `flags` writes the legal note, ticks `I confirm counsel has approved enabling
+   this flag` and enters a fresh TOTP code. That creates a pending `flag_change_request` (one per
+   key and workspace), and nothing turns on yet.
+2. A different, enabled `admin` approves it with their own fresh TOTP code. The flag row is written
+   with `legal_ack_by` = the requester and `updated_by` = the approver. An admin may reject the
+   request instead, or its requester may withdraw it.
+
+The TOTP re-verify (`reverifyTotp` in `lib/flags.ts`) asks Better Auth's `verifyTOTP` for the
+current session, under the same 5-per-15-minutes limit as the TOTP step. It does not change the
+`cd_admin_2fa` cookie. #304's step-up primitive may replace it later. The dev staff account skips
+it outside production, as it skips the TOTP step.
+
+All writes go through `@causedeck/flags`, which writes each audit event in the same transaction as
+the change:
+
+- `flag.changed` (actor, old and new value);
+- `flag.change_requested`, `flag.change_approved` and `flag.change_rejected`.
+
+`lib/flags.ts` installs `flagChangeAuditSink` from `@causedeck/core/audit` as the flag audit
+writer. Reads record a fail-closed `staff.read` (`flags.list`, `flags.workspace_overrides`)
+first. Rows, notes and actors stay on the server, apart from a pending request's note, which the
+approver needs to see.
 
 ## Data layer
 

@@ -22,6 +22,9 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `staff_user` is the platform staff registry (#308): written only by the operator CLI as the
  * owner role (the app role may only read it). `audit_actor_salt` (#303) holds the per-user salt of
  * `audit_event.actor_ref`; the app role has no privileges on it, only the audit functions do.
+ * `flag_change_request` (#311) holds staff requests for a legal-gated flag enable awaiting a second
+ * admin; its nullable `workspace_id` names the override it targets, but the table is staff-only and
+ * has no RLS.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -42,6 +45,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'deletion_tombstone',
   'staff_user',
   'audit_actor_salt',
+  'flag_change_request',
 ];
 
 /**

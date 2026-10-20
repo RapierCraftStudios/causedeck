@@ -7,6 +7,8 @@ import { createHash, createHmac } from 'node:crypto';
 export const ADMIN_FIXTURES = {
   /** `admin` staff with TOTP enrolled (secret below). */
   staff: { email: 'staff-admin@e2e.causedeck.test', role: 'admin', twoFactor: true },
+  /** `ops` staff with TOTP enrolled: the first person of a legal-gated flag enable (#311). */
+  ops: { email: 'staff-ops@e2e.causedeck.test', role: 'ops', twoFactor: true },
   /** `support` staff without 2FA: always the generic 404. */
   noTwoFactor: { email: 'staff-no2fa@e2e.causedeck.test', role: 'support', twoFactor: false },
   /** Disabled `admin` staff with TOTP enrolled: always the generic 404. */

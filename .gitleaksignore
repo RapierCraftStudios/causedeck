@@ -3,3 +3,8 @@
 # covers full git history (.github/workflows/security.yml), which still contains commit 4dd55eb.
 4dd55eb85f17d521fa3fdffe66823cdac2c151b9:apps/web/components/notifications/__tests__/push-permission-card.test.tsx:generic-api-key:16
 4dd55eb85f17d521fa3fdffe66823cdac2c151b9:e2e/support/server-pool.ts:generic-api-key:34
+# Test-only signing secrets in the admin gate/2FA tests (#309), history only: the tests now generate them per run.
+29dfa5e36d47b8324af16c162e18352bb4ae9031:apps/admin/__tests__/gate.test.ts:generic-api-key:16
+29dfa5e36d47b8324af16c162e18352bb4ae9031:apps/admin/__tests__/two-factor.test.ts:generic-api-key:11
+# Test-only fake integration token (#287), history only: the test now generates it per run.
+5409c7811a1be307988dc0f8a5197b7fd7ae1b05:apps/web/__tests__/integrations-actions.test.ts:generic-api-key:13

@@ -112,6 +112,9 @@ const CASES: Record<string, () => Promise<void>> = {
     expect(page.members.length).toBeGreaterThan(0);
     expect(page.members.filter((m) => aMembers.has(m.memberId))).toEqual([]);
     expect(page.invitations.map((i) => i.id)).not.toContain(t.a.rows.invitation?.invitationId);
+    // The seat summary counts B's active members only, never A's.
+    expect(page.seats?.used.total).toBe(page.members.length);
+    expect(page.seats?.granted.seats).toBeGreaterThanOrEqual(1);
     await expectCallerGateRefusesA();
   },
   listMembersIn: async () => {

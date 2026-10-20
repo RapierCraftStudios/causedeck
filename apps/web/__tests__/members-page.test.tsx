@@ -2,7 +2,9 @@
 // `/w/[slug]/settings/members` (#181): the server page (membership, workspace-scoped load, the
 // loading and error states) and the client view (cards/table/Roles panel, role-gated actions,
 // empty, offline and read-only states, keyboard, invite chips with `Copy link`, removal with a
-// required reassignment, the two-step ownership transfer). Every string comes from the catalogs.
+// required reassignment, the two-step ownership transfer). #288: the seat summary, the members /
+// pending invitations tabs, the roles explainer below 1280, a single (settings) offline banner and
+// the `?transfer=1` picker. Every string comes from the catalogs.
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement, ReactNode } from 'react';
@@ -14,6 +16,7 @@ import type {
   InvitationRow,
   MemberRow,
   MembersActions,
+  SeatSummary,
 } from '../app/(app)/w/[slug]/settings/members/members-table.tsx';
 import type { WorkspaceContext } from '../lib/workspace-context.ts';
 
@@ -27,13 +30,19 @@ const page = vi.hoisted(() => ({
   members: [] as unknown[],
   invitations: [] as unknown[],
   fail: false,
+  seatsFail: false,
 }));
 const withWorkspace = vi.hoisted(() =>
-  vi.fn((_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) =>
-    fn({ scoped: true }),
-  ),
+  vi.fn((_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) => {
+    const tx = {
+      scoped: true,
+      // The seat read runs in a savepoint.
+      transaction: (inner: (sp: unknown) => Promise<unknown>) => inner(tx),
+    };
+    return fn(tx);
+  }),
 );
-const logger = vi.hoisted(() => ({ error: vi.fn() }));
+const logger = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn() }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => router,
@@ -50,11 +59,17 @@ vi.mock('../lib/workspace-loader.ts', () => ({
 }));
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
 vi.mock('../src/health.ts', () => ({ logger }));
-vi.mock('../components/shell/offline-banner.tsx', () => ({ ShellOfflineBanner: () => null }));
 vi.mock('@causedeck/db', () => ({ db: { fake: 'db' }, withWorkspace }));
 vi.mock('@causedeck/core/workspaces', () => ({
   listMembers: () => (page.fail ? Promise.reject(new Error('db down')) : page.members),
   listPendingInvitations: () => Promise.resolve(page.invitations),
+  countBillableSeats: () => Promise.resolve({ total: 2, clerk: 0, nonClerk: 2 }),
+}));
+vi.mock('@causedeck/core/billing', () => ({
+  getWorkspaceEntitlements: () =>
+    page.seatsFail
+      ? Promise.reject(new Error('plan unreadable'))
+      : Promise.resolve({ seats: 3, clerk_seats: 1 }),
 }));
 vi.mock('../app/(app)/w/[slug]/settings/members/actions.ts', () => ({
   inviteMembersAction: vi.fn(),
@@ -145,6 +160,8 @@ function view(
     role: MemberRow['role'];
     members: MemberRow[];
     invitations: InvitationRow[];
+    seats: SeatSummary | null;
+    openTransfer: boolean;
     actions: MembersActions;
     locale: TestLocale;
   }> = {},
@@ -156,6 +173,8 @@ function view(
       viewer={{ userId: 'u-owner', role: props.role ?? 'owner' }}
       members={props.members ?? [owner, junior, clerk]}
       invitations={props.invitations ?? [invitedJunior]}
+      seats={props.seats}
+      openTransfer={props.openTransfer}
       actions={actions}
     />,
     props.locale,
@@ -179,6 +198,7 @@ beforeEach(() => {
   page.members = [owner, junior];
   page.invitations = [];
   page.fail = false;
+  page.seatsFail = false;
 });
 afterEach(() => {
   cleanup();
@@ -187,6 +207,12 @@ afterEach(() => {
 });
 
 const table = () => screen.getByRole('table');
+/** Radix tabs activate on mouse down. */
+function openTab(name: RegExp) {
+  fireEvent.mouseDown(screen.getByRole('tab', { name }), { button: 0 });
+}
+const invitationsTab = /^Pending invitations/;
+const membersTab = /^Members \(/;
 const menuButton = (name: string) =>
   within(table()).queryByRole('button', { name: en.menu.label.replace('{name}', name) });
 
@@ -196,10 +222,11 @@ async function renderPage(search: Record<string, string> = {}) {
     params: Promise.resolve({ slug: WORKSPACE.slug }),
     searchParams: Promise.resolve(search),
   })) as ReactElement<{
-    children: [ReactElement, ReactElement, ReactElement<{ children?: unknown }>];
+    children: [ReactElement, ReactElement<{ children?: unknown }>];
   }>;
-  // Children: the offline banner (mocked out), the header, then the skeleton or the Suspense list.
-  const [, header, body] = tree.props.children;
+  // Children: the header, then the skeleton or the Suspense list. The settings layout owns the
+  // offline banner, so the page renders none of its own (#288).
+  const [header, body] = tree.props.children;
   const section = (body.props as { children?: ReactElement }).children;
   let content: ReactNode = body;
   if (section && typeof section.type === 'function') {
@@ -235,6 +262,37 @@ describe('members page (server)', () => {
     expect(within(table()).getByText('Arun Kumar')).toBeTruthy();
   });
 
+  it('renders no offline banner of its own: the settings layout owns it (#288)', async () => {
+    const tree = (await MembersPage({
+      params: Promise.resolve({ slug: WORKSPACE.slug }),
+      searchParams: Promise.resolve({}),
+    })) as ReactElement<{ children: ReactElement[] }>;
+    expect(tree.props.children).toHaveLength(2);
+    online = false;
+    await renderPage();
+    expect(document.querySelector('[data-pattern-state="offline"]')).toBeNull();
+  });
+
+  it('shows the seat summary read on the same transaction', async () => {
+    await renderPage();
+    const card = document.querySelector('[data-slot="seat-summary"]') as HTMLElement;
+    expect(card.textContent).toContain('2 of 3 seats in use');
+    expect(card.textContent).toContain('0 of 1 clerk seats in use');
+  });
+
+  it('still lists members when the seat read fails, without the seat card', async () => {
+    page.seatsFail = true;
+    await renderPage();
+    expect(within(table()).getByText('Arun Kumar')).toBeTruthy();
+    expect(document.querySelector('[data-slot="seat-summary"]')).toBeNull();
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('passes ?transfer=1 through so an owner lands in the transfer picker', async () => {
+    await renderPage({ transfer: '1' });
+    expect(await screen.findByRole('dialog', { name: en.transferPicker.title })).toBeTruthy();
+  });
+
   it('shows the error state with Try again when loading fails', async () => {
     page.fail = true;
     await renderPage();
@@ -262,8 +320,12 @@ describe('members page (server)', () => {
 });
 
 describe('MembersView', () => {
-  it('lists members and invitations in a table with Member, Role, Status and Last active', () => {
+  it('lists members and invitations in tabbed tables with Member, Role, Status and Last active', () => {
     view();
+    expect(screen.getByRole('tab', { name: membersTab }).textContent).toBe('Members (3)');
+    expect(screen.getByRole('tab', { name: invitationsTab }).textContent).toBe(
+      'Pending invitations (1)',
+    );
     const headers = within(table())
       .getAllByRole('columnheader')
       .map((h) => h.textContent);
@@ -275,18 +337,91 @@ describe('MembersView', () => {
       en.columns.actions,
     ]);
     const rows = within(table()).getAllByRole('row').slice(1);
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(3);
     expect(rows[0]?.textContent).toContain(`(${en.you})`);
     expect(rows[1]?.textContent).toContain(en.lastActive.never);
-    // Status is text plus an icon, never colour alone.
-    expect(rows[3]?.querySelector('[data-status="invited"]')?.textContent).toBe(en.status.invited);
     expect(rows[0]?.querySelector('[data-status="active"]')?.textContent).toBe(en.status.active);
     expect(rows[0]?.querySelector('[data-role="owner"]')?.textContent).toBe(en.roles.owner);
+    openTab(invitationsTab);
+    const invited = within(table()).getAllByRole('row').slice(1);
+    expect(invited).toHaveLength(1);
+    // Status is text plus an icon, never colour alone.
+    expect(invited[0]?.querySelector('[data-status="invited"]')?.textContent).toBe(
+      en.status.invited,
+    );
+    expect(invited[0]?.textContent).toContain('new@x.test');
+  });
+
+  it('shows the pending invitations empty state in its own tab', () => {
+    view({ invitations: [] });
+    expect(screen.getByRole('tab', { name: invitationsTab }).textContent).toBe(
+      'Pending invitations (0)',
+    );
+    openTab(invitationsTab);
+    expect(screen.getByText(en.invitationsEmpty)).toBeTruthy();
+    expect(screen.queryByRole('table')).toBeNull();
+  });
+
+  it('summarises seats in use against the plan, flagging an over-limit plan', () => {
+    view({ seats: { used: 2, granted: 3, clerkUsed: 1, clerkGranted: 1 } });
+    const card = document.querySelector('[data-slot="seat-summary"]') as HTMLElement;
+    expect(within(card).getByRole('heading', { name: en.seats.title })).toBeTruthy();
+    expect(card.textContent).toContain('2 of 3 seats in use');
+    expect(card.textContent).toContain('1 of 1 clerk seats in use');
+    expect(card.querySelector('[data-slot="seat-over-limit"]')).toBeNull();
+    cleanup();
+    view({ seats: { used: 4, granted: 3, clerkUsed: 0, clerkGranted: 0 } });
+    const over = document.querySelector('[data-slot="seat-summary"]') as HTMLElement;
+    expect(over.querySelector('[data-slot="seat-over-limit"]')?.textContent).toBe(
+      en.seats.overLimit,
+    );
+    expect(over.querySelector('[data-seats="clerk"]')).toBeNull();
+  });
+
+  it('hides the seat card when the plan could not be read', () => {
+    view({ seats: null });
+    expect(document.querySelector('[data-slot="seat-summary"]')).toBeNull();
+    expect(within(table()).getByText('Arun Kumar')).toBeTruthy();
+  });
+
+  it('offers the roles explainer below 1280 as a collapsible About roles', () => {
+    view();
+    const trigger = screen.getByRole('button', { name: en.aboutRoles });
+    expect(trigger.closest('[data-slot="roles-disclosure"]')?.className).toContain('xl:hidden');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    const disclosure = document.querySelector('[data-slot="roles-disclosure"]') as HTMLElement;
+    expect(disclosure.textContent).toContain(en.roleDescriptions.junior);
+    expect(disclosure.textContent).toContain(en.rolesPanel.clerkNote);
+  });
+
+  it('opens the transfer picker for an owner and continues to the two-step transfer', async () => {
+    window.history.replaceState(null, '', '/w/chennai-solo/settings/members?transfer=1');
+    view({ openTransfer: true });
+    const picker = await screen.findByRole('dialog', { name: en.transferPicker.title });
+    expect(window.location.search).toBe('');
+    // Only non-owners other than the caller can become owner; the first is preselected.
+    fireEvent.click(within(picker).getByRole('button', { name: en.transferPicker.continue }));
+    const step = await screen.findByRole('dialog', { name: en.changeRole.title });
+    expect(step.textContent).toContain('Arun Kumar');
+  });
+
+  it('says to invite someone first when nobody can take ownership', async () => {
+    view({ openTransfer: true, members: [owner], invitations: [] });
+    const picker = await screen.findByRole('dialog', { name: en.transferPicker.title });
+    expect(picker.textContent).toContain(en.transferPicker.none);
+    expect(within(picker).queryByRole('button', { name: en.transferPicker.continue })).toBeNull();
+  });
+
+  it('ignores ?transfer=1 for anyone but an owner', () => {
+    view({ role: 'advocate', openTransfer: true });
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('renders cards for phones and a Roles panel that states the clerk restriction', () => {
     view();
-    expect(document.querySelectorAll('ul[class*="md:hidden"] > li')).toHaveLength(4);
+    expect(document.querySelectorAll('ul[class*="md:hidden"] > li')).toHaveLength(3);
     const panel = screen.getByRole('complementary', { name: en.rolesPanel.title });
     expect(panel.textContent).toContain(en.rolesPanel.clerkNote);
     expect(panel.textContent).toContain(en.roleDescriptions.clerk);
@@ -296,9 +431,10 @@ describe('MembersView', () => {
     view({ members: [owner, junior, clerk], invitations: [invitedAdvocate] });
     const pill = (role: string) => within(table()).getAllByText(en.roles[role as 'owner'])[0];
     expect(pill('owner')?.className).toContain('bg-seal/15');
-    expect(pill('advocate')?.getAttribute('data-tone')).toBe('accent');
     expect(pill('junior')?.getAttribute('data-tone')).toBe('info');
     expect(pill('clerk')?.getAttribute('data-tone')).toBe('warning');
+    openTab(invitationsTab);
+    expect(pill('advocate')?.getAttribute('data-tone')).toBe('accent');
   });
 
   it('shows the empty state when the caller is the only member', () => {
@@ -309,6 +445,7 @@ describe('MembersView', () => {
   it('gives owners the full row menu', () => {
     view();
     expect(menuButton('Arun Kumar')).toBeTruthy();
+    openTab(invitationsTab);
     expect(menuButton('new@x.test')).toBeTruthy();
     expect(screen.getAllByRole('button', { name: en.inviteButton }).length).toBeGreaterThan(0);
     expect(screen.queryByText(en.readOnly.member)).toBeNull();
@@ -318,6 +455,7 @@ describe('MembersView', () => {
     view({ role: 'advocate', invitations: [invitedJunior, invitedAdvocate] });
     expect(screen.getAllByRole('button', { name: en.inviteButton }).length).toBeGreaterThan(0);
     expect(menuButton('Arun Kumar')).toBeNull();
+    openTab(invitationsTab);
     expect(menuButton('new@x.test')).toBeTruthy();
     expect(menuButton('adv@x.test')).toBeNull();
     expect(screen.getByText(en.readOnly.member)).toBeTruthy();
@@ -349,7 +487,7 @@ describe('MembersView', () => {
   it('moves between rows with the arrow keys and opens the row menu with Enter', async () => {
     view();
     const rows = within(table()).getAllByRole('row').slice(1);
-    expect(rows.map((r) => r.tabIndex)).toEqual([0, -1, -1, -1]);
+    expect(rows.map((r) => r.tabIndex)).toEqual([0, -1, -1]);
     rows[0]?.focus();
     fireEvent.keyDown(rows[0] as HTMLElement, { key: 'ArrowDown' });
     expect(document.activeElement).toBe(rows[1]);
@@ -363,9 +501,10 @@ describe('MembersView', () => {
     const actions = fakeActions();
     actions.resendInvitation.mockResolvedValue({ ok: true, data: { email: 'new@x.test' } });
     view({ actions });
+    openTab(invitationsTab);
     const rows = within(table()).getAllByRole('row').slice(1);
-    rows[3]?.focus();
-    fireEvent.keyDown(rows[3] as HTMLElement, { key: 'Enter' });
+    rows[0]?.focus();
+    fireEvent.keyDown(rows[0] as HTMLElement, { key: 'Enter' });
     expect(screen.queryByRole('menuitem', { name: en.menu.changeRole })).toBeNull();
     fireEvent.click(await screen.findByRole('menuitem', { name: en.menu.resend }));
     await waitFor(() => {

@@ -6,7 +6,13 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AUTH_EMAIL_KEYS } from '../messages';
 import { magicLinkEmailKey, RATE_LIMIT_MESSAGE } from '../rate-limit';
-import { createAuth, MAGIC_LINK_EXPIRES_IN_SECONDS, SESSION_EXPIRES_IN_SECONDS } from '../server';
+import {
+  createAuth,
+  MAGIC_LINK_EXPIRES_IN_SECONDS,
+  SESSION_EXPIRES_IN_SECONDS,
+  SESSION_UPDATE_AGE_SECONDS,
+  sessionUpdateAgeFor,
+} from '../server';
 import {
   authRequest,
   capturingLogger,
@@ -128,6 +134,18 @@ describe('session cookies', () => {
     expect(cookie).toMatch(/SameSite=Lax/i);
     expect(cookie).toContain(`Max-Age=${String(SESSION_EXPIRES_IN_SECONDS)}`);
     expect(cookie).not.toMatch(/;\s*Secure/i);
+  });
+
+  it('take a shorter lifetime when `sessionExpiresInSeconds` is set (admin console, #309)', async () => {
+    const auth = createAuth({
+      db: testAppDb(),
+      env: testEnv(),
+      mailer: recordingMailer(),
+      logger: capturingLogger(),
+      sessionExpiresInSeconds: 8 * 60 * 60,
+    });
+    const { response } = await devSignInAs(auth);
+    expect(sessionSetCookie(response) ?? '').toContain('Max-Age=28800');
   });
 
   it('are Secure with the __Secure- prefix in production', async () => {
@@ -377,6 +395,34 @@ describe('secrets', () => {
     expect(output).not.toContain(TEST_SECRET);
     expect(output).not.toContain(googleSecret);
     expect(JSON.stringify(testEnv())).not.toContain(TEST_SECRET);
+  });
+});
+
+describe('session refresh age', () => {
+  it('stays a day for the default lifetime and shrinks for short ones', () => {
+    expect(sessionUpdateAgeFor(SESSION_EXPIRES_IN_SECONDS)).toBe(SESSION_UPDATE_AGE_SECONDS);
+    expect(sessionUpdateAgeFor(8 * 60 * 60)).toBe(2 * 60 * 60);
+  });
+});
+
+describe('disableSignUp (admin console, #309)', () => {
+  it('never creates a user from a magic link for an unknown address', async () => {
+    const mailer = recordingMailer();
+    const auth = createAuth({
+      db: testAppDb(),
+      env: testEnv(),
+      mailer,
+      logger: capturingLogger(),
+      disableSignUp: true,
+    });
+    const email = uniqueEmail('nosignup');
+    await requestLink(auth, email);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    for (const sent of mailer.sent) {
+      const verify = await authRequest(auth, sent.url, { method: 'GET' });
+      expect(sessionSetCookie(verify)).toBeUndefined();
+    }
+    expect(await findUser(email)).toBeUndefined();
   });
 });
 

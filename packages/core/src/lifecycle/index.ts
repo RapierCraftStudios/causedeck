@@ -1,7 +1,7 @@
-// `@causedeck/core/lifecycle` (#301, #302): DPDP data lifecycle. Workspace export: the exporter
-// registry, requests, download links and the build. Workspace deletion (#302): requests with a
-// 14-day cool-off, the tick, the ordered erase, the signed receipt and the invoice legal hold.
-// Account and memory deletion land with #303. See docs/engineering/data-lifecycle.md.
+// `@causedeck/core/lifecycle` (#301, #302, #303): DPDP data lifecycle. Workspace export: the
+// exporter registry, requests, download links and the build (#301). Workspace deletion (#302):
+// requests with a 14-day cool-off, the tick, the ordered erase, the signed receipt and the invoice
+// legal hold. Account deletion and memory erasure (#303). See docs/engineering/data-lifecycle.md.
 import './export/exporters.ts';
 
 export {
@@ -100,3 +100,32 @@ export {
   type DeletionNotifyDeps,
   type DeletionRequestCtx,
 } from './deletion/request.ts';
+export {
+  ACCOUNT_DELETION_ERRORS,
+  ACCOUNT_DELETION_SOLE_OWNER_MESSAGE,
+  ACCOUNT_DELETION_STAFF_MESSAGE,
+  requestAccountDeletion,
+  runAccountDeletion,
+  soleOwnedWorkspaces,
+  type AccountDeletionCtx,
+  type AccountDeletionError,
+  type AccountDeletionJob,
+  type AccountDeletionOutcome,
+  type AccountDeletionRunCtx,
+  type RequestAccountDeletionDeps,
+  type SoleOwnedWorkspace,
+} from './deletion/account.ts';
+export {
+  eraseMemory,
+  MEMORY_ERASE_BATCH,
+  MEMORY_ERASE_PRIORITY,
+  MEMORY_ERASURE_SLA_MS,
+  MEMORY_TABLES,
+  requestMemoryErasure,
+  runMemoryErasure,
+  type MemoryErasureCtx,
+  type MemoryErasureJob,
+  type MemoryErasureOutcome,
+  type MemoryErasureRunCtx,
+  type RequestMemoryErasureDeps,
+} from './deletion/memory.ts';

@@ -49,13 +49,14 @@ const pkg = (name) => ['package', { pkg: name }];
 
 /**
  * `withoutWorkspace` (#19) drops the tenancy scope for allow-listed global tables. Only the db
- * package, the admin app and migrations may import it; everything else works inside
+ * package, the admin console's audited data layer (`apps/admin/lib/data`, #309) and migrations may
+ * import it; everything else works inside
  * `withWorkspace` / `withUser`. A separate rule from core `no-restricted-imports`, whose per-glob
  * blocks replace one another. Defined here so the app→db blocks can carry it (a flat-config block
  * replaces the rule's options); `base.js` re-exports it.
  */
 const WITHOUT_WORKSPACE_MESSAGE =
-  '`withoutWorkspace` is for packages/db, apps/admin and migrations only (docs/engineering/tenancy.md). Use `withWorkspace` or `withUser`.';
+  '`withoutWorkspace` is for packages/db, the apps/admin data layer (apps/admin/lib/data) and migrations only (docs/engineering/tenancy.md). Use `withWorkspace` or `withUser`.';
 export const withoutWorkspaceImportBan = {
   paths: ['@causedeck/db', '@causedeck/db/rls'].map((name) => ({
     name,
@@ -75,7 +76,8 @@ const APP_DB_TEST_MESSAGE =
 /**
  * `@typescript-eslint/no-restricted-imports` options for app files: no value import of
  * `@causedeck/db` (any entry), `import type` allowed. Test files may value-import the
- * `testing` and `seed` entries.
+ * `testing` and `seed` entries. With `withoutWorkspace: false` (an exempt folder) the root entry's
+ * `withoutWorkspace` is allowed as a value too.
  *
  * @param {{ test: boolean; withoutWorkspace: boolean }} options
  */
@@ -90,7 +92,13 @@ export function appDbImportBan({ test, withoutWorkspace }) {
   return {
     paths: [
       ...(withoutWorkspace ? withoutWorkspaceImportBan.paths : []),
-      { name: '@causedeck/db', allowTypeImports: true, message },
+      {
+        name: '@causedeck/db',
+        allowTypeImports: true,
+        // An exempt folder (the admin data layer, #309) may take `withoutWorkspace` as a value.
+        ...(withoutWorkspace ? {} : { allowImportNames: ['withoutWorkspace'] }),
+        message,
+      },
     ],
     patterns: [
       {

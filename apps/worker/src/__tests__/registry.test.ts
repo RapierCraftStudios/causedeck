@@ -135,6 +135,8 @@ describe('enqueue', () => {
       'system.support.session-expire',
       'system.deletion.tick',
       'deletion.erase',
+      'account.delete',
+      'memory.erase',
     ]);
   });
 });

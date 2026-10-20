@@ -20,12 +20,12 @@ pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/{deletion,
 | Table                | Scope                                                       | Notes                                                                                                                                                                                                                                                                                       |
 | -------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `export_job`         | tenant, FORCE RLS                                           | `scope` `workspace` or `user`; `status` `queued`, `running`, `ready`, `failed`, `expired`; `progress` 0 to 100; `steps` checkpoints; `blob_id`, `size_bytes`, `sha256` of the plaintext ZIP; `download_token_hash`; `expires_at`. One queued or running export per requester and workspace. |
-| `deletion_job` | tenant, FORCE RLS, `workspace_id` null for account deletion | `kind` `workspace` (#302), `account` and `memory` (#303); `status`, `cooloff_until`, `erase_after`, `steps` checkpoints. One pending, scheduled or running workspace deletion per workspace (`deletion_job_workspace_active_uq`, 0031). |
-| `deletion_tombstone` | global (`GLOBAL_TABLES`) | Minimal record of an erased workspace with its signed `receipt` (0031) and `receipt_hash`. No foreign key, so it outlives the purge; the app and clerk roles cannot update or delete it. |
-| `legal_hold_invoice` | global (`GLOBAL_TABLES`, 0031) | Minimal statutory copy of an erased workspace's issued, paid and void SaaS invoices (`legal_hold = true`, `retain_until`). No foreign key; write-once for the app and clerk roles. |
+| `deletion_job` | tenant, FORCE RLS, `workspace_id` null for account deletion | `kind` `workspace` (#302), `account` and `memory` (#303); `status`, `cooloff_until`, `erase_after`, `steps` checkpoints. Account jobs have no workspace and are read and written through the `account_self` policy (0031). One pending, scheduled or running workspace deletion per workspace (`deletion_job_workspace_active_uq`, 0032). |
+| `deletion_tombstone` | global (`GLOBAL_TABLES`) | Minimal record of an erased workspace with its signed `receipt` (0032) and `receipt_hash`. No foreign key, so it outlives the purge; the app and clerk roles cannot update or delete it. |
+| `legal_hold_invoice` | global (`GLOBAL_TABLES`, 0032) | Minimal statutory copy of an erased workspace's issued, paid and void SaaS invoices (`legal_hold = true`, `retain_until`). No foreign key; write-once for the app and clerk roles. |
 
 `app_export_due_jobs(now)` is an owner-defined function returning only the ids of ready exports past
-their expiry, for the system expiry job. `app_deletion_due_jobs(now)` (0031) returns the ids of
+their expiry, for the system expiry job. `app_deletion_due_jobs(now)` (0032) returns the ids of
 workspace deletions whose cool-off has ended (or that a crash left scheduled or running), and
 `app_finalize_workspace_deletion(workspace, receipt_hash, receipt)` runs the final erase step for
 the pinned workspace only.
@@ -247,9 +247,69 @@ Everything else, including the workspace's own audit chain, is erased.
 
 | DPDP Act 2023 / Rules                                   | Mechanism                                                                                               |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Right to erasure (s. 12)                                | Owner-requested workspace deletion; account deletion with #303                                          |
+| Right to erasure (s. 12)                                | Owner-requested workspace deletion; account deletion and memory erasure (#303, below)                                          |
 | Erase when the purpose is served (s. 8(7))              | Crypto-erase (DEK destroyed) plus purge of every tenant row and object; purge-coverage test              |
 | Retention required by other law (s. 8(7) proviso)       | Legal-hold rule for tax invoices, minimal form, fixed retention                                         |
 | Security safeguards (s. 8(5))                           | Envelope encryption; key destruction makes backups and stray copies unreadable                           |
 | Proof and accountability                                | Signed, content-free receipt on the tombstone, emailed to the requester; audit events until the final step |
 | Right to access (s. 11)                                 | Workspace export (above), recommended before deletion (#305)                                            |
+
+## Account deletion (#303)
+
+```sh
+pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/account-deletion.test.ts
+pnpm --filter @causedeck/db exec vitest run src/__tests__/audit-anonymise.test.ts
+```
+
+`requestAccountDeletion(ctx, { enqueue })` (runtime: `requestAccountDeletionFor`) acts on the
+caller's own account only.
+
+- **Blocks.** A user who is the only active owner of a live workspace gets `CONFLICT`:
+  `You are the only owner of a workspace. Transfer ownership or delete the workspace before deleting
+  your account: <names>`. The refusal is audited as `account.deletion_blocked`. Platform staff
+  accounts are refused too; the operator removes them.
+- **Request.** One `deletion_job` (`kind` `account`, `workspace_id` null, `status` `scheduled`,
+  `erase_after` = now) per user; a second request returns the pending one. `account.deletion_requested`
+  is recorded on the account chain in the same transaction, then `account.delete` is enqueued with
+  ids only. There is no cool-off (that is workspace deletion, #302); step-up authentication gates
+  the entry point (#304).
+- **Job (`account.delete`).** It re-checks both blocks (ownership can change while the job waits;
+  the job then ends `failed` with `steps.error` `sole_owner` or `staff_account`). It removes the user
+  from `matter_restriction.allowed_user_ids` in each workspace. Then, in one transaction, it deletes
+  the `user` row and calls `app_audit_anonymise_actor(user)`, records `account.deleted` (system actor,
+  target the job) and marks the job `erased`.
+- **What the delete removes.** It cascades to sessions, logins (`account`), passkeys, two-factor,
+  memberships, invitations the user sent, notification preferences, exports and idempotency keys.
+  Workspace data stays with the workspace with the user set to null: files (`blob.created_by`;
+  before 0031 this cascaded and deleted the files), matter restrictions (`created_by`) and flag
+  overrides (`updated_by`, `legal_ack_by`).
+- **What remains.** Audit events, anonymised as described below. The `deletion_job` row keeps the
+  bare user id as the receipt. No audit event names the user in `target_id` or metadata.
+
+### Audit anonymisation
+
+The chain hashes a salted `actor_ref` instead of the raw `actor_user_id`
+([audit.md](audit.md#chain-format)), so nulling the id keeps every chain valid. The salt is per user
+and is deleted with the account, so the ref cannot be recomputed even from the old id. Not covered
+yet: `ai_call.user_id`, and `target_id` or metadata of other users' events that name the user (for
+example `member.removed`).
+
+## Memory erasure (#303)
+
+```sh
+pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/memory-erasure.test.ts
+```
+
+NFR Privacy: memory and embeddings are deleted within 24 h of a request.
+
+- **Request.** `requestMemoryErasure(ctx, { enqueue })` (runtime: `requestMemoryErasureFor`), for
+  owners only, schedules one `deletion_job` (`kind` `memory`) with `erase_after` = request + 24 h,
+  which is the SLA deadline. It records `memory.erasure_requested` and enqueues `memory.erase` at
+  `MEMORY_ERASE_PRIORITY`, ahead of default-priority jobs.
+- **Job.** `memory.erase` runs `runMemoryErasure` in one workspace transaction. `eraseMemory`
+  deletes the workspace's rows from each `MEMORY_TABLES` table (`memory_embedding`, then
+  `memory_item`) in batches of 1000, under row-level security. It then marks the job `erased` with
+  per-table counts and records `memory.erased` (counts only). A rerun is a no-op.
+- **Fixtures until the real tables ship.** The tables arrive in a later milestone; until then a
+  missing table is skipped. The tests create fixtures with `tenantPolicy()` in a rolled-back owner
+  transaction.

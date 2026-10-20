@@ -18,7 +18,10 @@ const BILLING_INVOICE_RENDER_TEST =
 const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
 const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
 const LIFECYCLE_TEST = 'packages/core/src/lifecycle/__tests__/cross-tenant.test.ts';
+const ACCOUNT_DELETION_TEST = 'packages/core/src/lifecycle/__tests__/account-deletion.test.ts';
+const MEMORY_ERASURE_TEST = 'packages/core/src/lifecycle/__tests__/memory-erasure.test.ts';
 const CORE_RUNTIME_TEST = 'packages/core/src/__tests__/cross-tenant/runtime.test.ts';
+const ADMIN_STAFF_CLI_TEST = 'apps/admin/src/cli/staff.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -256,6 +259,32 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: "sweep through app_end_staff_support_sessions(); touches only that staff member's sessions",
   },
+  // platform staff accounts (#309): the admin console's reads and the operator CLI's writes
+  staffMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads the global staff_user table only; no tenant rows',
+  },
+  countActiveStaff: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'counts the global staff_user table only; no tenant rows',
+  },
+  addStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: 'owner-role write of the global staff_user table; only the operator CLI calls it',
+  },
+  disableStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: "owner-role write of staff_user, then ends only that staff member's support sessions",
+  },
+  seedDevStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: 'creates the dev staff account; the CLI refuses it in production',
+  },
   supportSessionExpire: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -356,6 +385,33 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'system.deletion.tick: lists due ids through app_deletion_due_jobs, then updates each job in its own workspace scope',
   },
+  // lifecycle: account deletion and memory erasure (#303)
+  requestAccountDeletion: {
+    test: ACCOUNT_DELETION_TEST,
+    kind: 'self-scoped',
+    note: "the caller's own account only (withUser); a deletion job is visible to its user alone (account_self)",
+  },
+  runAccountDeletion: {
+    test: ACCOUNT_DELETION_TEST,
+    kind: 'self-scoped',
+    note: "account.delete: loads the job for its own user only; another user's job id is missing and nothing of theirs changes",
+  },
+  soleOwnedWorkspaces: {
+    test: ACCOUNT_DELETION_TEST,
+    kind: 'self-scoped',
+    note: "the user's own memberships (member_self), each owner count inside that workspace's withWorkspace",
+  },
+  requestMemoryErasure: { test: MEMORY_ERASURE_TEST, kind: 'denies' },
+  runMemoryErasure: {
+    test: MEMORY_ERASURE_TEST,
+    kind: 'self-scoped',
+    note: "memory.erase: only the payload workspace; another workspace's job id is missing",
+  },
+  eraseMemory: {
+    test: MEMORY_ERASURE_TEST,
+    kind: 'self-scoped',
+    note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -449,6 +505,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   supportRequestCopy: 'pure (owner notice copy)',
   supportRequestDedupeKey: 'pure',
   SupportSessionInactiveError: 'error class',
+  // platform staff accounts (#309)
+  STAFF_ROLES: 'constant',
+  DEV_STAFF_EMAIL: 'constant',
+  StaffAdminError: 'error class',
+  withOwnerDb: 'connection helper (owner-role handle for the operator CLI); reads nothing itself',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',
   RetryableError: 'error class',
@@ -555,6 +616,14 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   receiptHash: 'pure (sha256)',
   receiptWorkspaceIdHash: 'pure (sha256)',
   verifyDeletionReceipt: 'pure (HMAC check)',
+  // lifecycle: account deletion and memory erasure constants (#303)
+  ACCOUNT_DELETION_ERRORS: 'constant',
+  ACCOUNT_DELETION_SOLE_OWNER_MESSAGE: 'constant',
+  ACCOUNT_DELETION_STAFF_MESSAGE: 'constant',
+  MEMORY_ERASE_BATCH: 'constant',
+  MEMORY_ERASE_PRIORITY: 'constant',
+  MEMORY_ERASURE_SLA_MS: 'constant',
+  MEMORY_TABLES: 'constant',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;
@@ -660,6 +729,12 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   requestExportFor: runtimeDenies,
   issueExportDownloadFor: runtimeDenies,
   openExportDownloadFor: runtimeDenies,
+  requestAccountDeletionFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: "requestAccountDeletion for the caller's own account; never writes into a workspace chain",
+  },
+  requestMemoryErasureFor: runtimeDenies,
   loadNotificationPreferences: runtimeDenies,
   subscribePush: {
     test: CORE_RUNTIME_TEST,

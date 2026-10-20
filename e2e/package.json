@@ -20,6 +20,7 @@
     "@lhci/cli": "catalog:",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
+    "better-auth": "catalog:",
     "eslint": "catalog:",
     "lighthouse": "catalog:",
     "postgres": "catalog:",

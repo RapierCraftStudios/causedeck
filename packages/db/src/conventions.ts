@@ -21,7 +21,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * every tenant row, so it has no RLS and no foreign key. `legal_hold_invoice` (#302) is the minimal
  * statutory copy of an erased workspace's SaaS invoices; it outlives the purge the same way.
  * `staff_user` is the platform staff registry (#308): written only by the operator CLI as the
- * owner role (the app role may only read it).
+ * owner role (the app role may only read it). `audit_actor_salt` (#303) holds the per-user salt of
+ * `audit_event.actor_ref`; the app role has no privileges on it, only the audit functions do.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -42,6 +43,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'deletion_tombstone',
   'staff_user',
   'legal_hold_invoice',
+  'audit_actor_salt',
 ];
 
 /**

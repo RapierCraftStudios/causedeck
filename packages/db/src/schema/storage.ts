@@ -79,8 +79,11 @@ export const blob = tenantTable(
     mime: text('mime').notNull(),
     encHeader: bytea('enc_header'),
     scanStatus: text('scan_status').$type<BlobScanStatus>(),
-    /** The uploading user; null for objects the platform writes itself (#255). */
-    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'cascade' }),
+    /**
+     * The uploading user; null for objects the platform writes itself (#255) and after the
+     * uploader's account is deleted (#303): workspace files belong to the workspace.
+     */
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     finalizedAt: timestamp('finalized_at', { withTimezone: true }),
   },

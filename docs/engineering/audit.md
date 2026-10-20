@@ -55,6 +55,8 @@ Each action is either **security** or **informational**:
 | `support.session_started`             | security      | `recordSupportSessionStarted` (#27)                                                                                        |
 | `support.session_ended`               | security      | `recordSupportSessionEnded` (#27)                                                                                          |
 | `access.denied`                       | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize`                                                          |
+| `staff.read` | security | admin data layer `staffQuery`, before the read (#309) |
+| `staff.two_factor_verified` | security | admin console TOTP step (`verify-2fa`, #309) |
 | `usage.budget_override_set`           | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)                                                                        |
 | `billing.subscription_changed`        | security      | owner billing actions (`changeSubscription`, #257)                                                                         |
 | `billing.gstin_updated`               | security      | `setSubscriptionGstin` (#257)                                                                                              |
@@ -231,11 +233,27 @@ hash = sha256(coalesce(prev_hash, '') || convert_to(app_audit_canonical(event)::
 `created_at` in UTC to the microsecond and `ip` as `host(ip)`. `audit_event_chain_uq` (unique
 `(workspace_id, prev_hash)`, nulls not distinct) makes a fork impossible to store.
 
+**Actor reference (0031, #303).** Every event with a user actor also stores `actor_ref`: the hex
+`sha256(salt || uuid bytes)` of `actor_user_id`, with a per-user salt in `audit_actor_salt`. That
+table is global and owner-only: the app and clerk roles have no privileges on it. When `actor_ref`
+is set, the canonical form contains `actor_ref` in place of `actor_user_id`; events with no user
+actor keep the 0008 form. Migration 0031 first verified every chain and refused to run over a broken
+one. It then backfilled `actor_ref` on the legacy rows and recomputed every chain's hashes once, in
+chain order.
+
+**Anonymisation.** `app_audit_anonymise_actor(user)` (SECURITY DEFINER) works only once the `user`
+row is gone, so it runs in the account-deletion transaction. It nulls `actor_user_id` in every
+chain and deletes the user's salt. `app_audit_immutable` allows exactly that update (`actor_user_id`
+to null on a row with `actor_ref`, nothing else changed) while the transaction-local
+`app.audit_anonymise` is `on`. Every other update is still rejected.
+
 `verifyChain(db, workspaceId, { from?, to? })` recomputes every hash in SQL with the same function
 and checks each `prev_hash` against the previous event's hash. It returns
-`{ ok, checked, brokenAt?: { id, reason: 'hash' | 'link' } }`:
+`{ ok, checked, brokenAt?: { id, reason: 'hash' | 'link' | 'actor' } }`:
 
 - An edited row is reported as `hash`.
+- A row whose `actor_user_id` no longer matches its `actor_ref` is reported as `actor`
+  (`app_audit_actor_ref_matches`). An anonymised row (`actor_user_id` null) passes.
 - An edited row whose hash was also recomputed breaks the next row's `link`.
 - A whole chain must start with a `null` `prev_hash`. A range starting at `from` takes its first
   `prev_hash` as given.
@@ -255,7 +273,7 @@ Two jobs keep the chains checked and trimmed (#230, [jobs.md](jobs.md#audit-jobs
   surviving row; every surviving row's hash is still checked.
 - **Mismatch alert.** A broken chain logs at `fatal` with message and `event`
   `audit.chain_mismatch`, `severity: 'critical'`, `workspaceId` (null for the account chain),
-  `eventId` (the first broken event), `reason` (`hash` or `link`) and `checked`. Metadata and row
+  `eventId` (the first broken event), `reason` (`hash`, `link` or `actor`) and `checked`. Metadata and row
   content are never logged. The job does not fail, so it does not retry and re-alert.
 - **Retention.** `system.audit.retention` runs at 03:00 IST. CERT-In requires logs to be kept in
   India for at least 180 days, so the window (`retentionDays`) is at least 180 and defaults to 400.

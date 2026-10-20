@@ -6,27 +6,31 @@
 //     the per-role sessions before the template is sealed;
 //   - one server per Playwright worker on E2E_PORT + 1 + parallelIndex, each pointed at its own
 //     clone of the template (`DATABASE_URL` per worker), started by the worker fixture.
+// The admin console (apps/admin, #309) is built the same way into apps/admin/.next-e2e by the
+// `webServer` step; admin specs start one admin server per worker on E2E_ADMIN_PORT + 1 + index,
+// against that worker's database (fixtures/admin.ts).
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import { generateKeyPairSync } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { assertStackUp, databaseUrl, TEMPLATE_DB } from './db-reset.ts';
+import { assertStackUp, databaseUrl, E2E_AUTH_SECRET, TEMPLATE_DB } from './db-reset.ts';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const webDir = path.join(repoRoot, 'apps/web');
 const nextBin = path.join(webDir, 'node_modules/next/dist/bin/next');
+const adminDir = path.join(repoRoot, 'apps/admin');
+const adminNextBin = path.join(adminDir, 'node_modules/next/dist/bin/next');
 
 /* eslint-disable no-process-env -- the harness is configured by its own env vars, read here. */
 export const BASE_PORT = Number(process.env.E2E_PORT ?? 3100);
+/** Admin servers listen on E2E_ADMIN_PORT + 1 + parallelIndex (default 3300 + 1 + index). */
+export const ADMIN_BASE_PORT = Number(process.env.E2E_ADMIN_PORT ?? BASE_PORT + 200);
 /** The dev stack's Mailpit (infra/docker/compose.dev.yml): SMTP in, HTTP API out. */
 export const MAILPIT_URL = process.env.E2E_MAILPIT_URL ?? 'http://127.0.0.1:8025';
 const SMTP_URL = process.env.E2E_SMTP_URL ?? 'smtp://127.0.0.1:1025';
 const inheritedEnv = process.env;
 /* eslint-enable no-process-env */
-
-/** Fixed dev secret: sessions minted in global setup must verify on every worker server. */
-const E2E_AUTH_SECRET = 'e2e-only-better-auth-secret-0123456789abcdef';
 
 /**
  * An e2e-only VAPID pair so Web Push is enabled (#197); no push ever leaves the machine. Generated
@@ -60,6 +64,17 @@ const E2E_VAPID = e2eVapid();
 export function workerPort(parallelIndex: number): number {
   return BASE_PORT + 1 + parallelIndex;
 }
+
+export function adminWorkerPort(parallelIndex: number): number {
+  return ADMIN_BASE_PORT + 1 + parallelIndex;
+}
+
+/**
+ * The admin servers' IP allowlist (#309). The admin fixtures send `X-Forwarded-For` from inside
+ * it, so a test probes the allowlist by sending an address outside it.
+ */
+export const ADMIN_E2E_ALLOWLIST = '203.0.113.0/24';
+export const ADMIN_E2E_ALLOWED_IP = '203.0.113.10';
 
 export function originFor(port: number): string {
   return `http://localhost:${String(port)}`;
@@ -105,6 +120,29 @@ export function buildApp(): void {
   if (result.status !== 0) throw new Error(`e2e: next build failed (${String(result.status)})`);
 }
 
+/** Environment of an e2e admin server: the web server's, on the admin origin, with the allowlist. */
+export function adminServerEnv(port: number, dbUrl: string): NodeJS.ProcessEnv {
+  return {
+    ...serverEnv(port, dbUrl, 'mailpit'),
+    ADMIN_URL: originFor(port),
+    ADMIN_IP_ALLOWLIST: ADMIN_E2E_ALLOWLIST,
+    ADMIN_ENV_LABEL: 'development',
+  };
+}
+
+/** `next build` of apps/admin into `.next-e2e` (#309). Skipped with `E2E_SKIP_BUILD=1`. */
+export function buildAdminApp(): void {
+  if (inheritedEnv.E2E_SKIP_BUILD === '1') return;
+  const result = spawnSync(process.execPath, [adminNextBin, 'build'], {
+    cwd: adminDir,
+    stdio: 'inherit',
+    env: adminServerEnv(ADMIN_BASE_PORT, databaseUrl(TEMPLATE_DB, 'app')),
+  });
+  if (result.status !== 0) {
+    throw new Error(`e2e: admin next build failed (${String(result.status)})`);
+  }
+}
+
 export interface RunningServer {
   url: string;
   /** Everything the server printed so far (stdout and stderr). */
@@ -130,10 +168,24 @@ async function waitForHealthy(url: string, child: ChildProcess, timeoutMs: numbe
 }
 
 /** `next start` from the e2e build on `port`, against `dbUrl`. */
-export async function startServer(port: number, dbUrl: string): Promise<RunningServer> {
-  const child = spawn(process.execPath, [nextBin, 'start', '-p', String(port)], {
-    cwd: webDir,
-    env: serverEnv(port, dbUrl, 'mailpit'),
+export function startServer(port: number, dbUrl: string): Promise<RunningServer> {
+  return startNext(webDir, nextBin, port, serverEnv(port, dbUrl, 'mailpit'));
+}
+
+/** `next start` of the apps/admin e2e build on `port`, against `dbUrl` (#309). */
+export function startAdminServer(port: number, dbUrl: string): Promise<RunningServer> {
+  return startNext(adminDir, adminNextBin, port, adminServerEnv(port, dbUrl));
+}
+
+async function startNext(
+  cwd: string,
+  bin: string,
+  port: number,
+  env: NodeJS.ProcessEnv,
+): Promise<RunningServer> {
+  const child = spawn(process.execPath, [bin, 'start', '-p', String(port)], {
+    cwd,
+    env,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let output = '';
@@ -171,6 +223,7 @@ export async function startServer(port: number, dbUrl: string): Promise<RunningS
 async function serve(): Promise<void> {
   await assertStackUp(MAILPIT_URL);
   buildApp();
+  buildAdminApp();
   const child = spawn(process.execPath, [nextBin, 'start', '-p', String(BASE_PORT)], {
     cwd: webDir,
     env: serverEnv(BASE_PORT, databaseUrl(TEMPLATE_DB, 'app')),

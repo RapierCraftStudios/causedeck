@@ -222,8 +222,15 @@
     {
       "idx": 31,
       "version": "7",
-      "when": 1792497562155,
-      "tag": "0031_workspace_deletion",
+      "when": 1792496956772,
+      "tag": "0031_account_memory_erasure",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792503407844,
+      "tag": "0032_workspace_deletion",
       "breakpoints": true
     }
   ]

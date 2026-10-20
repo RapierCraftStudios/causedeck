@@ -100,7 +100,7 @@ retention removes them.
 
 | Table         | Columns                                                                                                                                                                                                                                                                                                                                                             |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `audit_event` | `id` (uuid v7), `workspace_id` (null for account-level events), `actor_user_id`, `actor_kind` (`user`, `staff`, `system`, `api`), `action`, `target_kind`, `target_id`, `outcome` (`success`, `denied`, `error`), `ip inet`, `user_agent_hash`, `request_id`, `metadata jsonb` (ids only, never content), `prev_hash bytea`, `hash bytea`, `created_at`             |
+| `audit_event` | `id` (uuid v7), `workspace_id` (null for account-level events), `actor_user_id` (null once anonymised), `actor_ref` (salted hash of the actor, 0031), `actor_kind` (`user`, `staff`, `system`, `api`), `action`, `target_kind`, `target_id`, `outcome` (`success`, `denied`, `error`), `ip inet`, `user_agent_hash`, `request_id`, `metadata jsonb` (ids only, never content), `prev_hash bytea`, `hash bytea`, `created_at`             |
 | `ai_call`     | `id` (uuid v7), `workspace_id`, `user_id`, `purpose`, `provider`, `model`, `model_version`, `region`, `input_tokens`, `output_tokens`, `cost_paise`, `sources jsonb` (ids and anchors only), `confidence numeric(4,3)`, `automation_level smallint` (CHECK `between 1 and 4`: no L5 record can be stored), `auto_applied`, `user_action`, `undone_at`, `created_at` |
 
 - **Ids:** `app_uuid_v7()` (Postgres 17 has no `uuidv7()`): a millisecond timestamp followed by
@@ -127,6 +127,15 @@ metadata?)`, which returns `(id, hash)`. A non-null workspace must be the pinned
   constraint `(workspace_id, prev_hash) NULLS NOT DISTINCT` makes a fork unstorable. Call it in a
   READ COMMITTED transaction (the default): a REPEATABLE READ snapshot would miss a concurrent
   append and fail on that constraint. The TypeScript `record()` writer and `verifyChain` are #227.
+- **Actor reference and anonymisation (0031, #303):**
+  - Since 0031, `app_audit_append` also stores `actor_ref`, the salted sha256 of `actor_user_id`.
+    The salt is per user, in the owner-only global `audit_actor_salt`.
+  - For rows with `actor_ref`, `app_audit_canonical` hashes it in place of `actor_user_id`.
+  - `app_audit_anonymise_actor(user)` nulls a deleted user's `actor_user_id` everywhere and drops
+    their salt. It is the only `UPDATE` the immutability trigger lets through, and only while
+    `app.audit_anonymise` is `on`.
+  - 0031 re-chained the existing rows once, after verifying every chain.
+  - See [audit.md](audit.md#chain-format).
 - **Writing `ai_call` (AI gateway contract, #44):** insert one row per model call inside the
   workspace transaction, with `purpose`, `provider`, `model`, `model_version`, `region` (the
   provider region, India for India-only workspaces), token counts, `cost_paise`, `sources` as

@@ -1,6 +1,8 @@
 // Chain verification (#227, #26 part 2). Recomputes each event's hash with the same canonical JSON
 // the writer used (`app_audit_canonical`, migration 0008_audit) and checks every `prev_hash` links
-// to the event before it, so an altered, inserted or removed row is reported.
+// to the event before it, so an altered, inserted or removed row is reported. The hash covers
+// `actor_ref`, not `actor_user_id` (0031, #303), so a row whose `actor_user_id` no longer matches its
+// `actor_ref` is reported as `actor`; an anonymised row (`actor_user_id` null) passes.
 import { withWorkspace, type Queryable } from '@causedeck/db';
 import { sql } from 'drizzle-orm';
 
@@ -11,12 +13,15 @@ export interface ChainRange {
   to?: Date;
 }
 
+/** `hash`: content changed; `link`: a row inserted or removed; `actor`: `actor_user_id` altered. */
+export type ChainBreak = 'hash' | 'link' | 'actor';
+
 export interface ChainVerification {
   ok: boolean;
   /** Events checked. */
   checked: number;
   /** The first event in chain order that fails: its `hash` or its link to the previous event. */
-  brokenAt?: { id: string; reason: 'hash' | 'link' };
+  brokenAt?: { id: string; reason: ChainBreak };
 }
 
 /**
@@ -33,14 +38,16 @@ export async function verifyChain(
   const from = range.from?.toISOString() ?? null;
   const to = range.to?.toISOString() ?? null;
   const rows = await withWorkspace(db, { workspaceId }, (tx) =>
-    tx.execute<{ checked: number; id: string | null; reason: 'hash' | 'link' | null }>(sql`
+    tx.execute<{ checked: number; id: string | null; reason: ChainBreak | null }>(sql`
       with c as (
         select a.id, a.created_at,
                a.hash = sha256(coalesce(a.prev_hash, ''::bytea)
                                || convert_to(app_audit_canonical(a)::text, 'UTF8')) as hash_ok,
                case when row_number() over w = 1
                     then ${from}::timestamptz is not null or a.prev_hash is null
-                    else a.prev_hash is not distinct from lag(a.hash) over w end as link_ok
+                    else a.prev_hash is not distinct from lag(a.hash) over w end as link_ok,
+               (a.actor_user_id is null or a.actor_ref is null
+                or app_audit_actor_ref_matches(a.actor_user_id, a.actor_ref)) as actor_ok
         from audit_event a
         where a.workspace_id = ${workspaceId}::uuid
           and (${from}::timestamptz is null or a.created_at >= ${from}::timestamptz)
@@ -50,8 +57,9 @@ export async function verifyChain(
       select n.checked, b.id, b.reason
       from (select count(*)::int as checked from c) n
       left join lateral (
-        select c.id, case when not c.hash_ok then 'hash' else 'link' end as reason
-        from c where not c.hash_ok or not c.link_ok
+        select c.id, case when not c.hash_ok then 'hash' when not c.link_ok then 'link'
+                          else 'actor' end as reason
+        from c where not c.hash_ok or not c.link_ok or not c.actor_ok
         order by c.created_at, c.id limit 1
       ) b on true`),
   );

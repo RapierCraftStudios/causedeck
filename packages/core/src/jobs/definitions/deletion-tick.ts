@@ -1,7 +1,7 @@
 // `system.deletion.tick` (#302): hourly at :45. Moves every workspace deletion whose 14-day cool-off
 // has ended to `scheduled` and enqueues `deletion.erase` (ids only); re-enqueues a deletion a crash
 // left scheduled or running. The listing goes through the owner-defined `app_deletion_due_jobs`
-// (0031); each update runs in its own workspace's scope. Idempotent.
+// (0032); each update runs in its own workspace's scope. Idempotent.
 import { z } from 'zod';
 
 import { runDeletionTick } from '../../lifecycle/index.ts';

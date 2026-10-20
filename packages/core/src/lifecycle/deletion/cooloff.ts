@@ -1,6 +1,6 @@
 // Workspace deletion cool-off (#302; docs/engineering/data-lifecycle.md). A request waits 14 days
 // in `pending_cooloff`, cancellable by any owner. `system.deletion.tick` runs hourly: it lists due
-// deletions (ids only) through the owner-defined `app_deletion_due_jobs` (0031), moves each one
+// deletions (ids only) through the owner-defined `app_deletion_due_jobs` (0032), moves each one
 // whose cool-off has ended to `scheduled` in its own workspace's scope, and enqueues
 // `deletion.erase`. A job a crash left `scheduled` or `running` is enqueued again (the erase is
 // resumable and singleton per job). Nothing is ever erased before `cooloff_until`.

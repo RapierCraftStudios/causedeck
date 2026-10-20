@@ -8,7 +8,7 @@
 //   4. rows     copy the tax invoices to `legal_hold_invoice`, then purge the tenant tables in
 //               `PURGE_ORDER` in batches (children before parents), plus `api_idempotency_key`.
 //   5. receipt  capture the audit chain head, build and sign the receipt, email it to the requester,
-//               then `app_finalize_workspace_deletion` (0031) writes the tombstone, purges
+//               then `app_finalize_workspace_deletion` (0032) writes the tombstone, purges
 //               `audit_event`, `ai_call` and `usage_period_summary` and deletes the organization row
 //               (cascading `deletion_job` and the destroyed `workspace_key`) in one transaction.
 // Each step checkpoints `{startedAt, doneAt, ...counts}` in `deletion_job.steps` through the root

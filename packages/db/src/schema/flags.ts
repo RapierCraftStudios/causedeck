@@ -62,11 +62,10 @@ export const workspaceFeatureFlag = tenantTable(
   {
     key: text('key').notNull(),
     enabled: boolean('enabled').notNull(),
-    legalAckBy: uuid('legal_ack_by').references(() => user.id),
+    // Both null once that user's account is deleted (#303); the override stays with the workspace.
+    legalAckBy: uuid('legal_ack_by').references(() => user.id, { onDelete: 'set null' }),
     legalAckNote: text('legal_ack_note'),
-    updatedBy: uuid('updated_by')
-      .notNull()
-      .references(() => user.id),
+    updatedBy: uuid('updated_by').references(() => user.id, { onDelete: 'set null' }),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

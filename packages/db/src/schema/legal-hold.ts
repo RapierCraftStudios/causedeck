@@ -4,7 +4,7 @@
 // financial year, GSTINs, state codes, SAC) and the amounts, never a legal name, address, line
 // description, payment id or PDF. Written once by the erase job before the tenant rows are purged;
 // like `deletion_tombstone` it is global (GLOBAL_TABLES), has no foreign key so it outlives the
-// purge, and the app and clerk roles may not UPDATE, DELETE or TRUNCATE it (0031).
+// purge, and the app and clerk roles may not UPDATE, DELETE or TRUNCATE it (0032).
 import { sql } from 'drizzle-orm';
 import {
   bigint,

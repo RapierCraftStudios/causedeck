@@ -301,18 +301,11 @@
     "danger": {
       "title": "Danger zone",
       "description": "These actions affect everyone in the workspace.",
-      "unavailable": "Available once the export and deletion service is ready.",
       "transfer": {
         "label": "Transfer ownership",
         "description": "Make another member the owner of this workspace.",
         "action": "Transfer ownership"
       },
-      "delete": {
-        "label": "Delete workspace",
-        "description": "Permanently delete this workspace and all its data after an export.",
-        "action": "Delete workspace"
-      },
-      "exportFirst": "Export first",
       "transferHint": "Opens the members list, where you choose the new owner.",
       "loading": "Loading danger zone",
       "error": {
@@ -636,7 +629,8 @@
       "navLabel": "Account sections",
       "nav": {
         "profile": "Profile",
-        "security": "Security"
+        "security": "Security",
+        "danger": "Danger zone"
       },
       "loading": "Loading your account",
       "error": {

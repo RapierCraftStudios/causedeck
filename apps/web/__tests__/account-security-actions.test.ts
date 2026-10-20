@@ -14,7 +14,10 @@ vi.mock('next/headers', () => ({
   headers: () => Promise.resolve(requestHeaders),
 }));
 
-const runtime = vi.hoisted(() => ({ recordAccountProfileUpdatedFor: vi.fn() }));
+const runtime = vi.hoisted(() => ({
+  recordAccountProfileUpdatedFor: vi.fn(),
+  requestAccountDeletionFor: vi.fn(),
+}));
 vi.mock('@causedeck/core/runtime', () => runtime);
 
 const SECRET = 'JBSWY3DPEHPK3PXP';
@@ -45,6 +48,7 @@ vi.mock('../lib/auth.ts', () => ({
 const {
   deletePasskeyAction,
   enableTwoFactorAction,
+  requestAccountDeletionAction,
   revokeSessionAction,
   updateAccountProfileAction,
   verifyTwoFactorAction,
@@ -82,6 +86,7 @@ describe('signed out', () => {
     ['verifyTwoFactorAction', () => verifyTwoFactorAction({ code: '123456' })],
     ['deletePasskeyAction', () => deletePasskeyAction({ id: 'pk-mine' })],
     ['revokeSessionAction', () => revokeSessionAction({ sessionId: 'session-phone' })],
+    ['requestAccountDeletionAction', () => requestAccountDeletionAction({})],
   ])('%s is UNAUTHENTICATED and calls nothing', async (_name, run) => {
     expect(await run()).toMatchObject({ ok: false, error: { code: 'UNAUTHENTICATED' } });
     expect(auth.updateUser).not.toHaveBeenCalled();
@@ -89,6 +94,7 @@ describe('signed out', () => {
     expect(auth.api.verifyTOTP).not.toHaveBeenCalled();
     expect(auth.api.deletePasskey).not.toHaveBeenCalled();
     expect(auth.api.revokeSession).not.toHaveBeenCalled();
+    expect(runtime.requestAccountDeletionFor).not.toHaveBeenCalled();
   });
 });
 

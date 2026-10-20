@@ -3,9 +3,10 @@
 // Usage, Audit log and, for owners, Support access, #313) and hides what the role cannot open; a
 // direct URL to a hidden section shows the permission-denied page. Layout: a scrollable segmented
 // strip at 360 (no page-level horizontal scroll), a 200 px sticky sub-nav with a 560 px column at
-// 768, 220/640 px from 1280. Offline, the settings banner appears. #288: the export page (disabled
-// `Export workspace` with the `Coming from export service` tooltip) and the danger zone (transfer
-// links to the members picker, delete disabled with its reason) are owner-only; members,
+// 768, 220/640 px from 1280. Offline, the settings banner appears. #288: the export page (with the
+// `workspace.export` flag off, a disabled `Export workspace` with the `Coming from export service`
+// tooltip) and the danger zone (transfer links to the members picker; #305: `Delete workspace`
+// opens the deletion dialog, see e2e/tests/lifecycle) are owner-only; members,
 // notifications, export and danger never scroll sideways and show one offline banner. `@a11y` tests
 // run axe on the page they end on.
 import type { Page } from '@playwright/test';
@@ -98,19 +99,17 @@ test.describe('settings shell', () => {
   );
 
   test(
-    'the danger zone keeps delete disabled with a reason you can reach by keyboard',
+    'the danger zone offers Delete workspace with its consequences and the 3-step dialog',
     { tag: '@a11y' },
     async ({ page, asUser }) => {
       await openSettings(page, asUser, 'owner', 'settings/danger');
-      const zone = page.locator('[data-slot="danger-zone"]');
-      await expect(zone).toBeVisible();
-      const remove = zone.getByRole('button', { name: 'Delete workspace' });
-      await expect(remove).toBeDisabled();
-      const reason = 'Available once the export and deletion service is ready.';
-      await expect(remove).toHaveAccessibleDescription(new RegExp(reason));
-      await zone.locator('[data-slot="disabled-with-reason"]').focus();
-      await expect(page.getByRole('tooltip')).toHaveText(reason);
-      await expect(zone.getByRole('link', { name: 'Export first' })).toHaveAttribute(
+      const card = page.locator('[data-slot="delete-workspace-card"]');
+      await expect(card.getByRole('heading', { name: 'Delete this workspace' })).toBeVisible();
+      await expect(card.getByText(/permanent after a 14-day cooling-off period/)).toBeVisible();
+      await card.getByRole('button', { name: 'Delete workspace' }).click();
+      const dialog = page.getByRole('dialog', { name: 'Delete this workspace' });
+      await expect(dialog.getByText('Step 1 of 3')).toBeVisible();
+      await expect(dialog.getByRole('link', { name: 'Open export' })).toHaveAttribute(
         'href',
         `/w/${SHELL_WORKSPACE}/settings/export`,
       );
@@ -136,7 +135,7 @@ test.describe('settings shell', () => {
   );
 
   test(
-    'export explains the ZIP; the button waits for the export service',
+    'export explains the ZIP; with the flag off the button waits for the export service',
     { tag: '@a11y' },
     async ({ page, asUser }) => {
       await openSettings(page, asUser, 'owner', 'settings/export');
@@ -185,6 +184,7 @@ test.describe('settings shell', () => {
       }
       if (section === 'danger') {
         await expect(page.getByRole('button', { name: 'Transfer ownership' })).toBeDisabled();
+        await expect(page.getByRole('button', { name: 'Delete workspace' })).toBeDisabled();
       }
       await page.context().setOffline(false);
     });

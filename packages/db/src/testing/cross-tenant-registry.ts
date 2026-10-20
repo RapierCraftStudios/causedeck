@@ -778,6 +778,10 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   requestExportFor: runtimeDenies,
   issueExportDownloadFor: runtimeDenies,
   openExportDownloadFor: runtimeDenies,
+  listExportJobsFor: runtimeEmpty,
+  requestWorkspaceDeletionFor: runtimeDenies,
+  cancelWorkspaceDeletionFor: runtimeDenies,
+  activeWorkspaceDeletionIn: runtimeEmpty,
   requestAccountDeletionFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'self-scoped',

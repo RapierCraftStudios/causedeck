@@ -343,3 +343,46 @@ NFR Privacy: memory and embeddings are deleted within 24 h of a request.
 - **Fixtures until the real tables ship.** The tables arrive in a later milestone; until then a
   missing table is skipped. The tests create fixtures with `tenantPolicy()` in a rolled-back owner
   transaction.
+
+## Web UI (#305)
+
+The lifecycle entry points in `apps/web`. Each server action calls a `@causedeck/core/runtime`
+wrapper on the app db, not the action's own `ctx.tx`. The services run their own transaction, and
+they audit refusals after the rollback, which the action's transaction would undo. Strings live in
+the `lifecycle` i18n namespace.
+
+- **Step-up prompt.** A core step-up refusal reaches the browser as `FORBIDDEN` with
+  `fieldErrors.stepUp`. `StepUpVerify` (`components/settings/step-up-verify.tsx`) then asks
+  `Confirm it is you`, and the caller retries the action. The user can confirm two ways:
+  - A passkey (`authClient.signIn.passkey()`, which creates a new, stamped session).
+  - An authenticator code through `verifyTwoFactorAction`, which stamps the current session. This
+    option is offered only when two-factor is on.
+- **Export page** (`settings/export`, owners, `workspace.export` flag). The `Export everything`
+  card holds `Request export` and its helper text, next to the History card (the last 5 exports).
+  - **Building:** while an export is queued or building, the card polls `listExportsAction` every
+    3 s. It shows a progress bar and the build step: `Collecting records`, `Decrypting files` or
+    `Packaging`.
+  - **Ready:** the file name, size, the expiry countdown, `Download` (a POST to
+    `/api/exports/<id>/download` for a signed link) and `Copy SHA-256`.
+  - **Failed:** `Try again`.
+  - **Expired:** a ready export past `expires_at` is shown as expired.
+
+  No email is sent when an export is ready yet, so the copy only says the user can come back.
+- **Danger zone** (`settings/danger`, owners). The `Delete this workspace` card lists the
+  consequences. `Delete workspace` opens a 3-step dialog:
+  1. The export reminder.
+  2. Step-up.
+  3. The workspace name, typed exactly.
+
+  `Delete` stays disabled until all three are done. If the server finds the step-up stale, the
+  dialog returns to step 2. During the cool-off, the card shows the date and `Cancel deletion`,
+  which asks for step-up again.
+- **Cool-off banner.** The workspace layout reads `activeWorkspaceDeletionIn`, and the shell shows
+  `Scheduled for deletion on <date>. Cancel any time before then.` to every member under the
+  topbar. Owners also get a `Cancel deletion` link to the danger zone. The banner is
+  server-rendered and adds no client JS.
+- **Account** (`/account#danger`). `Delete account` asks for step-up and the account email, then
+  calls `requestAccountDeletionAction`. A sole owner or a staff account sees the core `CONFLICT`
+  message.
+- **Roles.** Other roles get the permission-denied page with `Only workspace owners can export or
+  delete this workspace.` Their actions return `FORBIDDEN` and are recorded as `access.denied`.

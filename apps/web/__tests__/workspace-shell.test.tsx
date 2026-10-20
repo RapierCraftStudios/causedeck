@@ -86,8 +86,13 @@ const support = vi.hoisted(() => ({
   activeSupportSessionIn: vi.fn(),
   revoke: vi.fn(),
 }));
+// The workspace deletion in its cool-off (#305), read through the runtime seam; here a fixture.
+const deletion = vi.hoisted(() => ({
+  active: null as { id: string; status: string; cooloffUntil: Date | null } | null,
+}));
 vi.mock('@causedeck/core/runtime', () => ({
   activeSupportSessionIn: support.activeSupportSessionIn,
+  activeWorkspaceDeletionIn: () => Promise.resolve(deletion.active),
 }));
 vi.mock('../app/(app)/w/[slug]/settings/support/actions.ts', () => ({
   revokeSupportSessionAction: support.revoke,
@@ -376,6 +381,35 @@ describe('workspace layout', () => {
     expect(shown?.querySelector('a')?.getAttribute('href')).toBe('/account#two-factor');
     // Above the page content, outside main#main.
     expect(document.getElementById('main')?.contains(shown ?? null)).toBe(false);
+  });
+
+  it('shows the cool-off banner to every member while a deletion waits (#305)', async () => {
+    const banner = async (slug: string) => {
+      cleanup();
+      withIntl(
+        await WorkspaceLayout({ children: <p>content</p>, params: Promise.resolve({ slug }) }),
+      );
+      return document.querySelector('[data-slot="cooloff-banner"]');
+    };
+    deletion.active = null;
+    expect(await banner('demo')).toBeNull();
+    deletion.active = {
+      id: '00000000-0000-4000-8000-0000000d0001',
+      status: 'pending_cooloff',
+      cooloffUntil: new Date('2026-04-01T06:00:00Z'),
+    };
+    // The owner gets the link to the danger zone, where the cancel runs after step-up.
+    const owner = await banner('demo');
+    expect(owner?.textContent).toContain('Scheduled for deletion on');
+    expect(owner?.textContent).toContain('Cancel any time before then.');
+    expect(owner?.querySelector('a')?.getAttribute('href')).toBe('/w/demo/settings/danger');
+    // Under the topbar, outside main#main.
+    expect(document.getElementById('main')?.contains(owner ?? null)).toBe(false);
+    // A clerk sees the banner without the cancel link.
+    const clerk = await banner('clerk-desk');
+    expect(clerk?.textContent).toContain('Scheduled for deletion on');
+    expect(clerk?.querySelector('a')).toBeNull();
+    deletion.active = null;
   });
 
   it('paints the sidebar state from the cookie', async () => {

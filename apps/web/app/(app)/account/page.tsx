@@ -1,7 +1,8 @@
 // `/account` (#289): the signed-in user's own profile and security, not workspace-scoped. Profile
-// (name, initials avatar, email, language) and Security: passkeys, two-factor authentication,
-// active sessions and connected accounts. Data comes from Better Auth for the session's user only;
-// every change goes through the account server actions (`./actions.ts`).
+// (name, initials avatar, email, language), Security (passkeys, two-factor authentication,
+// active sessions and connected accounts) and the Danger zone with `Delete account` (#305). Data
+// comes from Better Auth for the session's user only; every change goes through the account server
+// actions (`./actions.ts`).
 //
 // States: loading (skeleton cards while the sections stream in), error (`Could not load your
 // account.` with `Try again`), empty (no passkeys, no other sessions, no connected accounts),
@@ -18,7 +19,12 @@ import { isDev } from '../../../lib/env.ts';
 import { getAuth } from '../../../lib/auth.ts';
 import { logger } from '../../../src/health.ts';
 
-import { updateAccountProfileAction } from './actions.ts';
+import {
+  requestAccountDeletionAction,
+  updateAccountProfileAction,
+  verifyTwoFactorAction,
+} from './actions.ts';
+import { DeleteAccount } from './danger/delete-account.tsx';
 import { AccountError } from './error.tsx';
 import { AccountProfileForm, AccountSkeleton } from './profile/profile-form.tsx';
 import { ConnectedAccountsSection, loadConnectedAccounts } from './security/connected-accounts.tsx';
@@ -88,6 +94,14 @@ async function AccountSections({ state }: { state: string | undefined }) {
         <TwoFactorSection enabled={user.twoFactorEnabled} />
         <SessionsSection sessions={data.sessions} />
         <ConnectedAccountsSection accounts={data.accounts} />
+      </div>
+      <div id="danger" className="scroll-mt-4">
+        <DeleteAccount
+          email={user.email}
+          twoFactorEnabled={user.twoFactorEnabled}
+          requestDeletion={requestAccountDeletionAction}
+          verifyCode={verifyTwoFactorAction}
+        />
       </div>
     </>
   );

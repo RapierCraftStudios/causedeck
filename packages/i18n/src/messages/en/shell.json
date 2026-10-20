@@ -116,13 +116,6 @@
       "title": "Page not found",
       "message": "We could not find this page in this workspace."
     },
-    "account": {
-      "title": "Account",
-      "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
-      "empty": "Account settings are coming soon.",
-      "hint": "Passkeys, two-factor sign-in and sessions will be managed here.",
-      "action": "Back to your workspace"
-    },
     "sidebar": {
       "label": "Sidebar",
       "primary": "Primary",

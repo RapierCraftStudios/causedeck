@@ -2,8 +2,7 @@
 // policy; a denial is a 403 `FORBIDDEN` problem, and a read of a resource the caller may not see
 // is a 404 `NOT_FOUND`, so its existence does not leak. Neither names the action or the reason.
 import { ForbiddenError as PolicyForbiddenError } from '@causedeck/auth/policy';
-import { schema, withUser, withWorkspace } from '@causedeck/db';
-import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { closeTestDb, schema, testAppDb, withUser, withWorkspace } from '@causedeck/db/testing';
 import { and, eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 

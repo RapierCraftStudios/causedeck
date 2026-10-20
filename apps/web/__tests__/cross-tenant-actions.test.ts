@@ -8,8 +8,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { schema, withWorkspace } from '@causedeck/db';
-import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { closeTestDb, schema, testAppDb, withWorkspace } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -17,6 +16,22 @@ import type { AppSession } from '../lib/auth.ts';
 
 const state = vi.hoisted(() => ({ session: null as AppSession | null }));
 const updateUser = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+// Better Auth's account endpoints (#289), answered from the real tables for the signed-in user;
+// the mutating ones only record their calls.
+const authApi = vi.hoisted(() => ({
+  listSessions: vi.fn(),
+  listPasskeys: vi.fn(),
+  revokeSession: vi.fn(() => Promise.resolve({ status: true })),
+  deletePasskey: vi.fn(() => Promise.resolve({ status: true })),
+  getSession: vi.fn(() => Promise.resolve({ user: { twoFactorEnabled: false } })),
+  enableTwoFactor: vi.fn(() =>
+    Promise.resolve({
+      totpURI: 'otpauth://totp/CauseDeck:x?secret=JBSWY3DPEHPK3PXP',
+      backupCodes: [],
+    }),
+  ),
+  verifyTOTP: vi.fn(() => Promise.resolve({ headers: new Headers(), response: {} })),
+}));
 
 vi.mock('@causedeck/db', async (original) => {
   const actual = await original<Record<string, unknown>>();
@@ -29,7 +44,10 @@ vi.mock('../lib/auth.ts', () => ({
     state.session
       ? Promise.resolve(state.session)
       : Promise.reject(Object.assign(new Error('signed out'), { code: 'UNAUTHENTICATED' })),
-  getAuth: () => ({ $context: Promise.resolve({ internalAdapter: { updateUser } }) }),
+  getAuth: () => ({
+    api: authApi,
+    $context: Promise.resolve({ internalAdapter: { updateUser } }),
+  }),
 }));
 vi.mock('../lib/env.ts', () => ({
   isProd: () => false,
@@ -42,7 +60,14 @@ vi.mock('@causedeck/auth/mailer', () => ({
   createMailer: () => ({ send: () => Promise.resolve() }),
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('next/headers', () => ({ cookies: () => Promise.resolve({ set: vi.fn() }) }));
+vi.mock('next/headers', () => ({
+  cookies: () => Promise.resolve({ set: vi.fn() }),
+  headers: () => Promise.resolve(new Headers()),
+}));
+vi.mock('@causedeck/core/runtime', async (original) => ({
+  ...(await original<Record<string, unknown>>()),
+  recordAccountProfileUpdatedFor: vi.fn(() => Promise.resolve()),
+}));
 vi.mock('next-intl/server', () => ({
   getLocale: () => Promise.resolve('en'),
   getTranslations: () => Promise.resolve((key: string) => key),
@@ -76,6 +101,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   acceptInvitationAction: invite,
   createWorkspaceAction: onboarding,
   setLocaleAction: account,
+  updateAccountProfileAction: account,
+  enableTwoFactorAction: account,
+  verifyTwoFactorAction: account,
+  deletePasskeyAction: account,
+  revokeSessionAction: account,
   listNotificationsAction: notifications,
   markNotificationReadAction: notifications,
   markAllNotificationsReadAction: notifications,
@@ -400,6 +430,60 @@ describe('cross-tenant server actions', () => {
     await action('setLocaleAction')({ locale: 'ta' });
     expect(updateUser).toHaveBeenCalledTimes(1);
     expect(updateUser).toHaveBeenCalledWith(t.ub, { locale: 'ta' });
+  });
+
+  it('account actions (#289) never reach ua’s sessions, passkeys or user row', async () => {
+    const db = testAppDb();
+    const [aSession] = await db
+      .insert(schema.session)
+      .values({
+        userId: t.ua,
+        token: `xt-${crypto.randomUUID()}`,
+        expiresAt: new Date(Date.now() + 86_400_000),
+      })
+      .returning({ id: schema.session.id, token: schema.session.token });
+    const [aPasskey] = await db
+      .insert(schema.passkey)
+      .values({
+        userId: t.ua,
+        publicKey: 'pk',
+        credentialID: crypto.randomUUID(),
+        counter: 0,
+        deviceType: 'singleDevice',
+        backedUp: false,
+      })
+      .returning({ id: schema.passkey.id });
+    if (!aSession || !aPasskey) throw new Error('seed account rows');
+    const mine = <T extends { userId: string }>(rows: T[]) =>
+      rows.filter((row) => row.userId === state.session?.user.id);
+    authApi.listSessions.mockImplementation(async () =>
+      mine(await db.select().from(schema.session)),
+    );
+    authApi.listPasskeys.mockImplementation(async () =>
+      mine(await db.select().from(schema.passkey)),
+    );
+
+    signInAs(t.ub);
+    expect(code(await action('revokeSessionAction')({ sessionId: aSession.id }))).toBe('FORBIDDEN');
+    expect(code(await action('deletePasskeyAction')({ id: aPasskey.id }))).toBe('FORBIDDEN');
+    expect(authApi.revokeSession).not.toHaveBeenCalled();
+    expect(authApi.deletePasskey).not.toHaveBeenCalled();
+
+    updateUser.mockClear();
+    expect(await action('updateAccountProfileAction')({ name: 'Renamed by B' })).toMatchObject({
+      ok: true,
+    });
+    expect(updateUser).toHaveBeenCalledTimes(1);
+    expect(updateUser).toHaveBeenCalledWith(t.ub, { name: 'Renamed by B' });
+
+    // TOTP setup and verification act on the caller's own session only (no target id at all).
+    expect(await action('enableTwoFactorAction')({})).toMatchObject({ ok: true });
+    expect(await action('verifyTwoFactorAction')({ code: '123456' })).toMatchObject({ ok: true });
+
+    const sessions = await db.select().from(schema.session);
+    expect(sessions.some((row) => row.id === aSession.id)).toBe(true);
+    const passkeys = await db.select().from(schema.passkey);
+    expect(passkeys.some((row) => row.id === aPasskey.id)).toBe(true);
   });
 
   it('the workspace loader (resolveSlug) shows A’s slugs to ub as not found', async () => {

@@ -7,7 +7,12 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 import { causedeck } from './authorization.js';
-import { APP_NAMES, boundaries } from './boundaries.js';
+import {
+  APP_NAMES,
+  appDbImportBlocks,
+  boundaries,
+  withoutWorkspaceImportBan,
+} from './boundaries.js';
 
 /** Deep imports into another workspace's sources bypass its public `exports`. */
 export const deepImportPatterns = [
@@ -58,21 +63,8 @@ export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
   ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
 );
 
-/**
- * `withoutWorkspace` (#19) drops the tenancy scope for allow-listed global tables. Only the db
- * package, the admin app and migrations may import it; everything else works inside
- * `withWorkspace` / `withUser`. A separate rule from core `no-restricted-imports`, whose per-glob
- * blocks below replace one another.
- */
-const WITHOUT_WORKSPACE_MESSAGE =
-  '`withoutWorkspace` is for packages/db, apps/admin and migrations only (docs/engineering/tenancy.md). Use `withWorkspace` or `withUser`.';
-export const withoutWorkspaceImportBan = {
-  paths: ['@causedeck/db', '@causedeck/db/rls'].map((name) => ({
-    name,
-    importNames: ['withoutWorkspace'],
-    message: WITHOUT_WORKSPACE_MESSAGE,
-  })),
-};
+/** `withoutWorkspace` (#19) import ban; defined in boundaries.js so the app→db blocks reuse it. */
+export { withoutWorkspaceImportBan };
 
 /** Where `withoutWorkspace` may be imported. */
 export const WITHOUT_WORKSPACE_ALLOWED_GLOBS = [
@@ -200,9 +192,11 @@ export const base = tseslint.config(
     rules: { 'no-process-env': 'off' },
   },
   {
-    files: WITHOUT_WORKSPACE_ALLOWED_GLOBS,
+    files: WITHOUT_WORKSPACE_ALLOWED_GLOBS.filter((glob) => !glob.includes('/apps/')),
     rules: { '@typescript-eslint/no-restricted-imports': 'off' },
   },
+  // apps/admin may import `withoutWorkspace`, but like every app no other `@causedeck/db` value (#299).
+  ...appDbImportBlocks('**/apps/admin', { withoutWorkspace: false }),
   {
     // Plain JS config files and root-level TS config files are not part of any tsconfig project.
     files: ['**/*.{js,mjs,cjs}', 'vitest.workspace.ts'],

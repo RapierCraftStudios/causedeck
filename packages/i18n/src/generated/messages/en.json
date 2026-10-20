@@ -196,13 +196,6 @@
       "title": "Page not found",
       "message": "We could not find this page in this workspace."
     },
-    "account": {
-      "title": "Account",
-      "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
-      "empty": "Account settings are coming soon.",
-      "hint": "Passkeys, two-factor sign-in and sessions will be managed here.",
-      "action": "Back to your workspace"
-    },
     "sidebar": {
       "label": "Sidebar",
       "primary": "Primary",
@@ -1110,6 +1103,149 @@
         "generic": "Something went wrong. Try again."
       },
       "loading": "Loading support sessions"
+    },
+    "account": {
+      "metaTitle": "Account",
+      "title": "Account",
+      "description": "Your profile, sign-in methods and active sessions. These apply in every workspace.",
+      "navLabel": "Account sections",
+      "nav": {
+        "profile": "Profile",
+        "security": "Security"
+      },
+      "loading": "Loading your account",
+      "error": {
+        "title": "Could not load your account.",
+        "retry": "Try again"
+      },
+      "forbidden": "You can only manage your own account.",
+      "offline": "You are offline. Settings can be changed when you are back online.",
+      "cancel": "Cancel",
+      "profile": {
+        "title": "Profile",
+        "description": "How you appear to colleagues in every workspace.",
+        "name": "Name",
+        "nameHint": "Shown on matters, tasks and the activity log.",
+        "avatar": "Avatar",
+        "avatarHint": "Your initials for now. Photo upload comes later.",
+        "email": "Email",
+        "emailHint": "The address you sign in with.",
+        "language": "Language",
+        "languageHint": "The language CauseDeck uses for you on every device.",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "saved": "Saved",
+        "toast": {
+          "saved": "Profile saved."
+        },
+        "errors": {
+          "name": "Enter a name of up to 120 characters.",
+          "language": "Could not change the language. Try again.",
+          "generic": "Could not save your profile. Try again."
+        }
+      },
+      "security": {
+        "title": "Security",
+        "description": "Passkeys, two-factor authentication, sessions and connected accounts."
+      },
+      "passkeys": {
+        "title": "Passkeys",
+        "description": "Sign in with your fingerprint, face or screen lock instead of an email link.",
+        "listLabel": "Your passkeys",
+        "add": "Add passkey",
+        "empty": "No passkeys yet. Add one to sign in with your fingerprint or screen lock.",
+        "unnamed": "Passkey",
+        "added": "Added {date}",
+        "remove": "Remove",
+        "removeLabel": "Remove {name}",
+        "removeTitle": "Remove this passkey?",
+        "removeBody": "You will no longer be able to sign in with {name}. You can add it again later.",
+        "removeConfirm": "Remove passkey",
+        "unsupported": "This browser cannot create passkeys.",
+        "toast": {
+          "added": "Passkey added.",
+          "removed": "Passkey removed.",
+          "addFailed": "Could not add the passkey. Try again.",
+          "removeFailed": "Could not remove the passkey. Try again."
+        }
+      },
+      "twoFactor": {
+        "title": "Two-factor authentication",
+        "description": "Ask for a code from an authenticator app as a second step.",
+        "status": "Status",
+        "on": "On",
+        "off": "Off",
+        "onHint": "Your account is protected with an authenticator app.",
+        "offHint": "Add an authenticator app to protect your account if someone gets your email.",
+        "setUp": "Set up",
+        "toast": {
+          "enabled": "Two-factor authentication is on."
+        },
+        "dialog": {
+          "title": "Set up two-factor authentication",
+          "step": "Step {current} of {total}",
+          "preparing": "Preparing your QR code",
+          "scanTitle": "Scan the QR code",
+          "scanBody": "Open an authenticator app, such as Google Authenticator or Microsoft Authenticator, and scan this code.",
+          "qrAlt": "QR code for your authenticator app",
+          "manual": "Can't scan? Enter this key",
+          "next": "Next",
+          "back": "Back",
+          "verifyTitle": "Enter the 6-digit code",
+          "verifyBody": "Type the code your authenticator app shows for CauseDeck.",
+          "code": "Code",
+          "verify": "Verify",
+          "codesTitle": "Save your backup codes",
+          "codesBody": "Each code works once if you lose your phone. They are shown only now, so keep them somewhere safe.",
+          "codesLabel": "Backup codes",
+          "copy": "Copy",
+          "copied": "Backup codes copied.",
+          "download": "Download",
+          "done": "Done",
+          "retry": "Try again",
+          "errors": {
+            "code": "Enter the 6-digit code from your app.",
+            "wrongCode": "That code did not work. Check the time on your phone and try again.",
+            "copy": "Could not copy. Select the codes and copy them yourself.",
+            "generic": "Could not set up two-factor authentication. Try again."
+          }
+        }
+      },
+      "sessions": {
+        "title": "Active sessions",
+        "description": "Devices signed in to your account. Revoke any you don't recognise.",
+        "tableCaption": "Your active sessions",
+        "columns": {
+          "device": "Device",
+          "ip": "IP address",
+          "signedIn": "Signed in",
+          "actions": "Actions"
+        },
+        "device": "{browser} on {os}",
+        "unknownDevice": "Unknown device",
+        "unknownIp": "Unknown",
+        "current": "This device",
+        "empty": "No other active sessions.",
+        "revoke": "Revoke",
+        "revokeLabel": "Revoke the session on {device}",
+        "revokeTitle": "Revoke this session?",
+        "revokeBody": "{device} will be signed out on its next request.",
+        "revokeConfirm": "Revoke session",
+        "toast": {
+          "revoked": "Session revoked.",
+          "failed": "Could not revoke the session. Try again."
+        }
+      },
+      "connected": {
+        "title": "Connected accounts",
+        "description": "Services you can sign in with besides email links and passkeys.",
+        "listLabel": "Connected accounts",
+        "empty": "No connected accounts. You sign in with an email link or a passkey.",
+        "connectedOn": "Connected {date}",
+        "providers": {
+          "google": "Google"
+        }
+      }
     }
   },
   "audit": {

@@ -12,6 +12,13 @@ import type { TestDatabaseUrls } from './container.ts';
 // Brings in the `ProvidedContext` augmentation for `inject()`.
 import type {} from './global-setup.ts';
 
+// Values app test files need from the root entry (#299): apps may value-import `@causedeck/db` only
+// through `@causedeck/db/testing` (and `testing/*`, `seed/*`) in tests.
+export { createDb } from '../client.ts';
+export { isUuid, withUser, withWorkspace } from '../rls.ts';
+export { registeredTenantTables } from '../rls-policies.ts';
+export * as schema from '../schema/index.ts';
+
 export {
   createScratchDatabase,
   POSTGRES_IMAGE,

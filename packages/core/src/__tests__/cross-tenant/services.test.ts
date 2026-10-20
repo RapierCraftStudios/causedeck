@@ -52,6 +52,12 @@ async function expectDenied(promise: Promise<unknown>): Promise<void> {
   expect(['NOT_FOUND', 'FORBIDDEN']).toContain((error as core.WorkspaceError).code);
 }
 
+async function aWorkspaceRow(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
+  );
+}
+
 async function aMembers(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s
@@ -1025,6 +1031,29 @@ const CASES: Record<string, Case> = {
     // staff_user is global: B's scope sees the same count as the unscoped handle, no tenant rows.
     const all = await core.countActiveStaff(f.tx);
     expect(await f.asB((s) => core.countActiveStaff(s))).toBe(all);
+  },
+  staffWorkspaceSearch: async (f) => {
+    // ub is not staff: the definer function refuses, by slug and by A's owner email alike.
+    const before = await aWorkspaceRow(f);
+    const [owner] = await f.tx
+      .select({ email: schema.user.email })
+      .from(schema.user)
+      .where(eq(schema.user.id, f.ua));
+    await expectDenied(core.staffWorkspaceSearch(f.tx, f.ub, f.a.slug));
+    await expectDenied(core.staffWorkspaceSearch(f.tx, f.ub, owner?.email ?? 'x@example.test'));
+    expect(await aWorkspaceRow(f)).toEqual(before);
+  },
+  staffWorkspaceMetadata: async (f) => {
+    const before = await aWorkspaceRow(f);
+    await expectDenied(core.staffWorkspaceMetadata(f.tx, f.ub, f.a.id));
+    await expectDenied(core.staffWorkspaceMetadata(f.tx, f.ub, 'not-a-uuid'));
+    expect(await aWorkspaceRow(f)).toEqual(before);
+  },
+  staffAuditEvents: async (f) => {
+    const before = await aWorkspaceRow(f);
+    await expectDenied(core.staffAuditEvents(f.tx, f.ub));
+    await expectDenied(core.staffAuditEvents(f.tx, f.ua));
+    expect(await aWorkspaceRow(f)).toEqual(before);
   },
   expireSupportSessions: async (f) => {
     const before = await aSupportSessions(f);

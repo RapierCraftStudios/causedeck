@@ -136,7 +136,7 @@ describe('privacy settings', () => {
   it('is FORBIDDEN for roles without workspace.manage and changes nothing', async () => {
     await withTestDb(async (tx) => {
       const { workspaceId } = await setup(tx);
-      for (const role of ['clerk', 'viewer'] as const) {
+      for (const role of ['junior', 'clerk', 'viewer'] as const) {
         const userId = await addMember(tx, workspaceId, role);
         await expectCode(
           update(tx, { workspaceId, actorUserId: userId, input: CHANGED }),

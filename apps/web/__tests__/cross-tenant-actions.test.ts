@@ -81,6 +81,7 @@ const notifications = await import('../app/(app)/w/[slug]/notifications/actions.
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
+const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
@@ -116,6 +117,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setLockScreenDetailsAction: preferences,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  updateWorkspacePrivacyAction: privacy,
   loadMoreAuditAction: activity,
   verifyAuditEventAction: activity,
   grantSupportSessionAction: support,
@@ -257,6 +259,11 @@ function inputs(workspaceId: string): Record<string, unknown> {
       workspaceId,
       advocatesCanInvite: false,
       ownersSeeRestrictedMatters: false,
+    },
+    updateWorkspacePrivacyAction: {
+      workspaceId,
+      sensitiveDefaultRestricted: false,
+      retentionAudioDays: 7,
     },
     // A page position past every row, so a leak would return A's real audit event.
     loadMoreAuditAction: {
@@ -429,6 +436,33 @@ describe('cross-tenant server actions', () => {
       workspaceId: t.b.id,
       advocatesCanInvite: true,
       ownersSeeRestrictedMatters: true,
+    });
+  });
+
+  it('updateWorkspacePrivacyAction under B’s own workspace changes only B', async () => {
+    const before = await snapshotA();
+    const privacyOfA = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx
+          .select({
+            sensitiveDefaultRestricted: schema.workspaceSettings.sensitiveDefaultRestricted,
+            retentionAudioDays: schema.workspaceSettings.retentionAudioDays,
+          })
+          .from(schema.workspaceSettings),
+      );
+    const privacyBefore = await privacyOfA();
+    const input = inputs(t.b.id).updateWorkspacePrivacyAction;
+    expect(await action('updateWorkspacePrivacyAction')(input)).toMatchObject({
+      ok: true,
+      data: { indiaOnlyAi: true, sensitiveDefaultRestricted: false, retentionAudioDays: 7 },
+    });
+    expect(await snapshotA()).toEqual(before);
+    expect(await privacyOfA()).toEqual(privacyBefore);
+    // Put B back to the defaults for the tests that follow.
+    await action('updateWorkspacePrivacyAction')({
+      workspaceId: t.b.id,
+      sensitiveDefaultRestricted: true,
+      retentionAudioDays: 30,
     });
   });
 

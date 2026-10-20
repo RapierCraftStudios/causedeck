@@ -210,10 +210,16 @@ function migrationsBefore0031(): string {
     rmSync(dir, { recursive: true, force: true });
   });
   cpSync(MIGRATIONS_FOLDER, dir, { recursive: true });
-  rmSync(path.join(dir, '0031_account_memory_erasure.sql'));
+  // Drop 0031 and every later migration: the migrator applies by timestamp, so a later one left
+  // in the staged folder would be applied first and 0031 then skipped as already behind.
   const journalPath = path.join(dir, 'meta', '_journal.json');
-  const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as { entries: { tag: string }[] };
-  journal.entries = journal.entries.filter((e) => e.tag !== '0031_account_memory_erasure');
+  const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as {
+    entries: { idx: number; tag: string }[];
+  };
+  for (const e of journal.entries.filter((entry) => entry.idx >= 31)) {
+    rmSync(path.join(dir, `${e.tag}.sql`));
+  }
+  journal.entries = journal.entries.filter((e) => e.idx < 31);
   writeFileSync(journalPath, JSON.stringify(journal));
   return dir;
 }
@@ -244,7 +250,8 @@ describe('0031 re-chain of legacy audit rows', () => {
   it('backfills actor_ref and keeps every chain valid', async () => {
     const { db, app, userId, ws } = await legacyDatabase('audit_rechain_ok');
     const result = await runMigrations({ url: new Secret(db.owner) });
-    expect(result.applied).toEqual(['0031_account_memory_erasure']);
+    // 0031 first; later migrations (e.g. 0032) follow it.
+    expect(result.applied[0]).toBe('0031_account_memory_erasure');
     const migrated = createOwnerDb(new Secret(db.owner));
     cleanups.push(() => migrated.$client.end());
     const rows = await migrated.execute<{ actor: string | null; ref: string | null }>(

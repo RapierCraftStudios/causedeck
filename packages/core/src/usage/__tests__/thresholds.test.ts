@@ -9,8 +9,8 @@ import type { DeliveryJob } from '@causedeck/notifications';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
-import { newUser, newWorkspace } from '../../audit/__tests__/fixtures.ts';
-import { getWorkspaceEntitlements } from '../../billing/entitlements.ts';
+import { newUser, newWorkspace } from '../../__tests__/fixtures.ts';
+import { getWorkspaceEntitlements } from '../../billing/index.ts';
 import { BudgetError, commit, reserve } from '../budget.ts';
 import { USAGE_WARNING_EVENT, usageWarningDedupeKey } from '../events.ts';
 import { getUsage, increment } from '../meter.ts';

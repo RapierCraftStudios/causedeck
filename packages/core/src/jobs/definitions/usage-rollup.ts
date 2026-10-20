@@ -13,7 +13,7 @@ import { schema, withWorkspace } from '@causedeck/db';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { periodStart } from '../../usage/period.ts';
+import { periodStart } from '../../usage/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 

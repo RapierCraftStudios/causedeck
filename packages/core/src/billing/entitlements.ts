@@ -21,7 +21,7 @@ import {
 import { schema, type Database, type Transaction } from '@causedeck/db';
 import { desc, eq, sql } from 'drizzle-orm';
 
-import { countBillableSeats, setEntitlements, type Entitlements } from '../workspaces/members.ts';
+import { countBillableSeats, setEntitlements, type Entitlements } from '../workspaces/index.ts';
 
 type Queryable = Database | Transaction;
 

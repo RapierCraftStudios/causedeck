@@ -29,11 +29,8 @@ interface InvitePageProps {
 }
 
 async function preview(userId: string, token: string): Promise<InvitationPreview> {
-  const [{ db }, { previewInvitation }] = await Promise.all([
-    import('@causedeck/db'),
-    import('@causedeck/core/workspaces'),
-  ]);
-  return previewInvitation(db, { userId, token });
+  const { previewInvitationFor } = await import('@causedeck/core/runtime');
+  return previewInvitationFor({ userId, token });
 }
 
 /**

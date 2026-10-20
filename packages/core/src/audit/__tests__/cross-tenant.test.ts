@@ -8,9 +8,9 @@ import { withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
-import { WorkspaceError } from '../../workspaces/errors.ts';
+import { WorkspaceError } from '../../workspaces/index.ts';
 import { authorizeAuditRead, exportAudit, queryAudit, record, verifyChain } from '../index.ts';
-import { failure, newWorkspace } from './fixtures.ts';
+import { failure, newWorkspace } from '../../__tests__/fixtures.ts';
 
 const range = () => ({
   from: new Date('2000-01-01T00:00:00Z'),

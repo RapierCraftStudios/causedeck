@@ -8,8 +8,8 @@ import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { seedTwoTenants } from '@causedeck/db/testing/two-tenants';
 import { describe, expect, it } from 'vitest';
 
-import { recordAiCall, type AiCallInput } from '../../audit/ai-call.ts';
-import { newWorkspace } from '../../audit/__tests__/fixtures.ts';
+import { recordAiCall, type AiCallInput } from '../../audit/index.ts';
+import { newWorkspace } from '../../__tests__/fixtures.ts';
 import { commit, reserve } from '../budget.ts';
 import { increment } from '../meter.ts';
 import { usagePeriod } from '../period.ts';

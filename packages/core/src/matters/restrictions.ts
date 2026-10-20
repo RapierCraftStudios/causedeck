@@ -22,8 +22,8 @@ import {
 } from '@causedeck/db';
 import { and, eq, inArray } from 'drizzle-orm';
 
-import { forbidden, invalid, notFound } from '../workspaces/errors.ts';
-import { activeMember } from '../workspaces/members.ts';
+import { forbidden, invalid, notFound } from '../shared/errors.ts';
+import { activeMember } from '../shared/membership.ts';
 import { memberRole } from '../workspaces/index.ts';
 
 type Queryable = Database | Transaction;

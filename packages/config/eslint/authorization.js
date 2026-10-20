@@ -1,11 +1,16 @@
 // The local `causedeck` ESLint plugin and the blocks that enable `causedeck/require-authorization`
-// (#235): server actions in the Next.js apps and `/v1` routes in apps/api must authorize.
+// (#235): server actions in the Next.js apps and `/v1` routes in apps/api must authorize. The plugin
+// also carries `causedeck/core-domain-boundaries` (#293), enabled for packages/core in base.js.
+import { coreDomainBoundaries } from './rules/core-domain-boundaries.js';
 import { requireAuthorization } from './rules/require-authorization.js';
 
 /** @type {import('eslint').ESLint.Plugin} */
 export const causedeck = {
   meta: { name: 'causedeck' },
-  rules: { 'require-authorization': requireAuthorization },
+  rules: {
+    'require-authorization': requireAuthorization,
+    'core-domain-boundaries': coreDomainBoundaries,
+  },
 };
 
 /** Every module of a Next.js app; the rule only acts on `'use server'` code. */

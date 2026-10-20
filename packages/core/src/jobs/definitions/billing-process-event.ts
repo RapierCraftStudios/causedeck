@@ -28,8 +28,7 @@ import { schema, withWorkspace } from '@causedeck/db';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { invalidateEntitlements } from '../../billing/entitlements.ts';
-import { createInvoiceStore } from '../../billing/invoices.ts';
+import { createInvoiceStore, invalidateEntitlements } from '../../billing/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';

@@ -47,30 +47,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Every counter for this IST month, the AI budget and the plan's caps, in one transaction. */
 async function loadUsage(context: WorkspaceContext, emptyOnPurpose: boolean): Promise<UsageView> {
-  const [
-    { db, withWorkspace },
-    { getAiBudget, getUsage, nextPeriodStart, SOFT_LIMIT_BPS, USAGE_KEYS },
-    { getWorkspaceEntitlements },
-  ] = await Promise.all([
-    import('@causedeck/db'),
-    import('@causedeck/core/usage'),
-    import('@causedeck/core/billing'),
-  ]);
-  const [{ isLocale, DEFAULT_LOCALE }, requested] = await Promise.all([
-    import('@causedeck/i18n'),
-    getLocale(),
-  ]);
+  const { loadUsagePage } = await import('@causedeck/core/runtime');
   const workspaceId = context.workspace.id;
   const now = new Date();
-  const loaded = await withWorkspace(db, { workspaceId, userId: context.user.id }, async (tx) => {
-    const ctx = { db: tx, workspaceId, now: () => now };
-    // One after another: each read nests a savepoint on this transaction's connection.
-    const counters: Partial<Record<(typeof USAGE_KEYS)[number], number>> = {};
-    for (const key of USAGE_KEYS) counters[key] = await getUsage(ctx, key);
-    const budget = await getAiBudget(ctx);
-    const entitlements = await getWorkspaceEntitlements(tx, workspaceId, now);
-    return { counters, budget, entitlements };
-  });
+  const loaded = await loadUsagePage({ workspaceId, userId: context.user.id }, now);
+  // After the read: `loadUsagePage` has already loaded `@causedeck/core/usage` for it.
+  const [{ nextPeriodStart, SOFT_LIMIT_BPS }, { isLocale, DEFAULT_LOCALE }, requested] =
+    await Promise.all([import('@causedeck/core/usage'), import('@causedeck/i18n'), getLocale()]);
   return toUsageView({
     counters: emptyOnPurpose ? {} : loaded.counters,
     limits: {

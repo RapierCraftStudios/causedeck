@@ -9,7 +9,7 @@ import { inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing
 import { and, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { newUser, newWorkspace } from '../../audit/__tests__/fixtures.ts';
+import { newUser, newWorkspace } from '../../__tests__/fixtures.ts';
 import {
   BudgetError,
   budgetLockSql,

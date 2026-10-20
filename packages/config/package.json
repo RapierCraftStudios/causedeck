@@ -11,6 +11,8 @@
     "./eslint/authorization": "./eslint/authorization.js",
     "./eslint/base": "./eslint/base.js",
     "./eslint/boundaries": "./eslint/boundaries.js",
+    "./eslint/core-domains": "./eslint/core-domains.js",
+    "./eslint/rules/core-domain-boundaries": "./eslint/rules/core-domain-boundaries.js",
     "./eslint/next": "./eslint/next.js",
     "./eslint/node": "./eslint/node.js",
     "./eslint/react": "./eslint/react.js",

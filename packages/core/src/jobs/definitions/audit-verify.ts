@@ -11,7 +11,7 @@
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { verifyChain, type ChainVerification } from '../../audit/chain.ts';
+import { verifyChain, type ChainVerification } from '../../audit/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { getProducer } from '../producer.ts';

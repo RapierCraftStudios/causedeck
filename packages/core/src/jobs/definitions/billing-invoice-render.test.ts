@@ -34,8 +34,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
-import { issueSaasInvoice } from '../../billing/invoices.ts';
-import { recordBillingEvent } from '../../billing/webhook-events.ts';
+import { issueSaasInvoice, recordBillingEvent } from '../../billing/index.ts';
 import type { JobContext } from '../context.ts';
 import { RetryableError } from '../errors.ts';
 import { registry } from '../registry.ts';

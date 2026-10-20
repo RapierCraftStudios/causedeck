@@ -19,7 +19,7 @@ import {
 } from '@causedeck/storage';
 import { and, eq, isNotNull, ne } from 'drizzle-orm';
 
-import { record } from '../audit/writer.ts';
+import { record } from '../audit/index.ts';
 
 const { blob, saasInvoice } = schema;
 

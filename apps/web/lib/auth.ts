@@ -5,7 +5,7 @@ import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth, type Auth } from '@causedeck/auth/server';
 import { createSessionHelpers } from '@causedeck/auth/session';
 import { createSecurityEventRecorder } from '@causedeck/core/audit';
-import { db } from '@causedeck/db';
+import { db } from '@causedeck/core/runtime';
 import { headers } from 'next/headers';
 
 import { logger } from '../src/health.ts';

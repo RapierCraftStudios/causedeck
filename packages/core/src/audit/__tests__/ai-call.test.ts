@@ -8,7 +8,7 @@ import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { AiCallContractError, recordAiCall, type AiCallInput } from '../index.ts';
-import { failure, sqlState } from './fixtures.ts';
+import { failure, sqlState } from '../../__tests__/fixtures.ts';
 
 const input: AiCallInput = {
   purpose: 'brief.draft',

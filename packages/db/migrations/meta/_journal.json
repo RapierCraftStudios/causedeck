@@ -239,6 +239,13 @@
       "when": 1792510782462,
       "tag": "0033_staff_console_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792513653199,
+      "tag": "0034_staff_workspace_usage",
+      "breakpoints": true
     }
   ]
 }

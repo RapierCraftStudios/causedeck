@@ -54,6 +54,10 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A staff member set a workspace AI budget override',
   },
+  'usage.budget_override_expired': {
+    security: true,
+    description: 'A staff member expired a workspace AI budget override early',
+  },
   'audit.retention_purged': {
     security: true,
     description: 'Audit events older than the retention window were purged',

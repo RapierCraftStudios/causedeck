@@ -1049,6 +1049,14 @@ const CASES: Record<string, Case> = {
     await expectDenied(core.staffWorkspaceMetadata(f.tx, f.ub, 'not-a-uuid'));
     expect(await aWorkspaceRow(f)).toEqual(before);
   },
+  staffWorkspaceUsage: async (f) => {
+    // ub is not staff: the definer functions refuse, for A's id and a malformed one alike.
+    await budgetA(f);
+    const before = await aBudgetState(f);
+    await expectDenied(core.staffWorkspaceUsage(f.tx, f.ub, f.a.id));
+    await expectDenied(core.staffWorkspaceUsage(f.tx, f.ub, 'not-a-uuid'));
+    expect(await aBudgetState(f)).toEqual(before);
+  },
   staffAuditEvents: async (f) => {
     const before = await aWorkspaceRow(f);
     await expectDenied(core.staffAuditEvents(f.tx, f.ub));
@@ -1221,6 +1229,34 @@ const CASES: Record<string, Case> = {
       ),
     ).rejects.toBeInstanceOf(TenancyError);
     expect(await aBudgetState(f)).toEqual(before);
+  },
+  expireBudgetOverride: async (f) => {
+    await budgetA(f);
+    const [target] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select({ id: schema.budgetOverride.id }).from(schema.budgetOverride),
+    );
+    if (!target) throw new Error('no override seeded for A');
+    const overrides = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({
+            id: schema.budgetOverride.id,
+            expiresAt: schema.budgetOverride.expiresAt,
+            expiredAt: schema.budgetOverride.expiredAt,
+          })
+          .from(schema.budgetOverride)
+          .orderBy(schema.budgetOverride.id),
+      );
+    const before = { state: await aBudgetState(f), overrides: await overrides() };
+    const input = { overrideId: target.id, reason: 'xt attack', staffUserId: f.ub };
+    // B's own context cannot reach A's override; A's context inside B's scope is a violation.
+    await expect(core.expireBudgetOverride(bCtx(f), input)).rejects.toBeInstanceOf(TypeError);
+    await expect(
+      f.asB((s) =>
+        core.expireBudgetOverride({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW }, input),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect({ state: await aBudgetState(f), overrides: await overrides() }).toEqual(before);
   },
   activeOverride: async (f) => {
     await budgetA(f);

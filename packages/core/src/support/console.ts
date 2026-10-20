@@ -1,4 +1,5 @@
-// Staff console reads (#310, part of #27): workspace metadata lookup and the platform staff audit.
+// Staff console reads (#310, part of #27): workspace metadata lookup and the platform staff audit;
+// and a workspace's usage counters and AI budget overrides (#224, migration 0034).
 // The rows live in tenant tables under FORCE RLS, so they come from the owner-defined functions of
 // migration 0033, which run only for an enabled staff member (app.user_id, pinned here through
 // `withUser`) and return metadata only: plan, seats, storage, dates, flags and the owner's email,
@@ -25,6 +26,23 @@ export const STAFF_WORKSPACE_FIELDS = [
   'lastActiveAt',
   'deletedAt',
   'flags',
+] as const;
+
+/** The keys of a `StaffUsageCounter`. */
+export const STAFF_USAGE_COUNTER_FIELDS = ['key', 'periodStart', 'value'] as const;
+
+/** The keys of a `StaffBudgetOverride`. */
+export const STAFF_BUDGET_OVERRIDE_FIELDS = [
+  'id',
+  'key',
+  'limitValue',
+  'setBy',
+  'reason',
+  'expiresAt',
+  'createdAt',
+  'expiredAt',
+  'expiredBy',
+  'expireReason',
 ] as const;
 
 /** The keys of a `StaffAuditEntry`. */
@@ -75,6 +93,52 @@ export interface StaffAuditEntry {
 export interface StaffAuditCursor {
   createdAt: Date;
   id: string;
+}
+
+/** A metered key's value in its newest period (gauges such as `storage.bytes` included). */
+export interface StaffUsageCounter {
+  key: string;
+  periodStart: Date;
+  value: number;
+}
+
+/** A staff budget override: limit, who set it, why, and when it ends or was ended early. */
+export interface StaffBudgetOverride {
+  id: string;
+  key: string;
+  limitValue: number;
+  setBy: string;
+  reason: string;
+  expiresAt: Date;
+  createdAt: Date;
+  expiredAt: Date | null;
+  expiredBy: string | null;
+  expireReason: string | null;
+}
+
+/** A workspace's usage metadata for staff: counters and overrides, no content. */
+export interface StaffWorkspaceUsage {
+  counters: StaffUsageCounter[];
+  overrides: StaffBudgetOverride[];
+}
+
+interface CounterRow extends Record<string, unknown> {
+  key: string;
+  period_start: Date | string;
+  value: number | string;
+}
+
+interface OverrideRow extends Record<string, unknown> {
+  id: string;
+  key: string;
+  limit_value: number | string;
+  set_by: string;
+  reason: string;
+  expires_at: Date | string;
+  created_at: Date | string;
+  expired_at: Date | string | null;
+  expired_by: string | null;
+  expire_reason: string | null;
 }
 
 interface WorkspaceRow extends Record<string, unknown> {
@@ -136,6 +200,25 @@ function toWorkspace(row: WorkspaceRow): StaffWorkspaceMetadata {
     lastActiveAt: row.last_active_at === null ? null : toDate(row.last_active_at),
     deletedAt: row.deleted_at === null ? null : toDate(row.deleted_at),
     flags: toFlags(row.flags),
+  };
+}
+
+function toCounter(row: CounterRow): StaffUsageCounter {
+  return { key: row.key, periodStart: toDate(row.period_start), value: Number(row.value) };
+}
+
+function toOverride(row: OverrideRow): StaffBudgetOverride {
+  return {
+    id: row.id,
+    key: row.key,
+    limitValue: Number(row.limit_value),
+    setBy: row.set_by,
+    reason: row.reason,
+    expiresAt: toDate(row.expires_at),
+    createdAt: toDate(row.created_at),
+    expiredAt: row.expired_at === null ? null : toDate(row.expired_at),
+    expiredBy: row.expired_by,
+    expireReason: row.expire_reason,
   };
 }
 
@@ -227,4 +310,28 @@ export async function staffAuditEvents(
     ),
   );
   return rows.map(toAuditEntry);
+}
+
+/** A workspace's usage counters and its newest budget overrides (at most 50), or `null` for a bad id. */
+export async function staffWorkspaceUsage(
+  db: Queryable,
+  staffUserId: string,
+  workspaceId: string,
+): Promise<StaffWorkspaceUsage | null> {
+  if (!isUuid(workspaceId)) {
+    // Still refuse a non-staff caller, so the answer does not depend on the input.
+    await asStaff(db, staffUserId, (tx) =>
+      tx.execute(sql`select 1 from app_staff_workspace_usage(null::uuid)`),
+    );
+    return null;
+  }
+  return asStaff(db, staffUserId, async (tx) => {
+    const counters = await tx.execute<CounterRow>(
+      sql`select * from app_staff_workspace_usage(${workspaceId}::uuid)`,
+    );
+    const overrides = await tx.execute<OverrideRow>(
+      sql`select * from app_staff_budget_overrides(${workspaceId}::uuid, 50)`,
+    );
+    return { counters: counters.map(toCounter), overrides: overrides.map(toOverride) };
+  });
 }

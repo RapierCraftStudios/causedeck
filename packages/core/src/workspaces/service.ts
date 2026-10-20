@@ -49,6 +49,7 @@ export async function createWorkspace(
           .values({ id, name, slug, kind, createdBy: userId })
           .returning();
         if (!workspace) throw new Error('workspace insert returned no row');
+        // `role_granted_at` defaults to now(): the creator's owner 2FA grace starts here (#290).
         await tx.insert(member).values({ organizationId: workspace.id, userId, role: 'owner' });
         await tx.insert(workspaceSettings).values({ workspaceId: workspace.id });
         return workspace;

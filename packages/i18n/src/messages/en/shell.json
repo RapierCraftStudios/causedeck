@@ -171,6 +171,10 @@
     },
     "sheet": {
       "close": "Close"
+    },
+    "ownerTwoFactor": {
+      "message": "Turn on two-factor authentication to keep owner access. Deleting, exporting and billing changes are blocked until you do.",
+      "action": "Set up two-factor"
     }
   }
 }

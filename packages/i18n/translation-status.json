@@ -943,7 +943,9 @@
     "members.transferPicker.continue": "draft",
     "members.transferPicker.cancel": "draft",
     "members.transferPicker.none": "draft",
-    "notifications.preferences.empty": "draft"
+    "notifications.preferences.empty": "draft",
+    "shell.ownerTwoFactor.message": "draft",
+    "shell.ownerTwoFactor.action": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -1882,6 +1884,8 @@
     "members.transferPicker.continue": "draft",
     "members.transferPicker.cancel": "draft",
     "members.transferPicker.none": "draft",
-    "notifications.preferences.empty": "draft"
+    "notifications.preferences.empty": "draft",
+    "shell.ownerTwoFactor.message": "draft",
+    "shell.ownerTwoFactor.action": "draft"
   }
 }

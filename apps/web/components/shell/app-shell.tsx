@@ -3,12 +3,14 @@ import type { FlagSnapshot } from '@causedeck/flags/keys';
 import { FlagsProvider } from '@causedeck/flags/react';
 import type { ReactNode } from 'react';
 
+import type { OwnerTwoFactorState } from '../../lib/require-2fa-for-owners.ts';
 import { ShortcutsProvider } from '../../lib/shortcuts/provider.tsx';
 import type { SidebarState } from '../../lib/sidebar-state.ts';
 import type { WorkspaceContext } from '../../lib/workspace-context.ts';
 
 import { CaptureProvider } from './capture-fab.tsx';
 import { MobileNav } from './mobile-nav.tsx';
+import { OwnerTwoFactorBanner } from './owner-two-factor-banner.tsx';
 import { SidebarProvider } from './sidebar-collapse.tsx';
 import { Sidebar } from './sidebar.tsx';
 import { Topbar } from './topbar.tsx';
@@ -19,6 +21,8 @@ export interface AppShellProps {
   sidebarState: SidebarState;
   /** Server-evaluated flags (`getWorkspaceFlags`); booleans only, for hiding dark features. */
   flags: FlagSnapshot;
+  /** The owner 2FA policy for the signed-in user (#290); `required` shows the banner. */
+  ownerTwoFactor?: OwnerTwoFactorState;
   children: ReactNode;
 }
 
@@ -29,7 +33,13 @@ export interface AppShellProps {
  * button) replaces the sidebar, and `main` pads its bottom to clear it. Flag-gated nav items,
  * commands and shortcuts read `flags` through `FlagsProvider`.
  */
-export function AppShell({ context, sidebarState, flags, children }: AppShellProps) {
+export function AppShell({
+  context,
+  sidebarState,
+  flags,
+  ownerTwoFactor = 'not-owner',
+  children,
+}: AppShellProps) {
   return (
     <PolicyProvider
       actor={{ userId: context.user.id, workspaceId: context.workspace.id, role: context.role }}
@@ -41,6 +51,7 @@ export function AppShell({ context, sidebarState, flags, children }: AppShellPro
               <Sidebar context={context} />
               <div className="bg-surface flex min-w-0 flex-col">
                 <Topbar context={context} />
+                <OwnerTwoFactorBanner state={ownerTwoFactor} />
                 <main
                   id="main"
                   tabIndex={-1}

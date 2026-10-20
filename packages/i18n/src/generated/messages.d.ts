@@ -253,6 +253,10 @@ export type Messages = {
     sheet: {
       close: string;
     };
+    ownerTwoFactor: {
+      message: string;
+      action: string;
+    };
   };
   auth: {
     signIn: {

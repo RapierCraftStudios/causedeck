@@ -2,6 +2,8 @@
 // central policy (`assertCan` from `@causedeck/auth/policy`). Server actions reach it through
 // `workspaceAction` (lib/workspace-action.ts); route handlers call `guard` directly and turn
 // failures into responses with `guardResponse`. The UI's `<Can>`/`useCan` only mirror this.
+// Destructive actions (delete, export, billing) also need the owner 2FA policy
+// (lib/require-2fa-for-owners.ts, #290): an owner past the 7-day grace without 2FA is refused.
 import {
   assertCan,
   conceals,
@@ -14,6 +16,12 @@ import {
 } from '@causedeck/auth/policy';
 
 import type { AppSession } from './auth.ts';
+import {
+  assertOwnerTwoFactor,
+  isDestructive,
+  TWO_FACTOR_REQUIRED,
+  type OwnerGraceLookup,
+} from './require-2fa-for-owners.ts';
 import { ActionError } from './safe-action.ts';
 
 export interface GuardRequest {
@@ -23,6 +31,11 @@ export interface GuardRequest {
   resource?: Resource | undefined;
   /** An already-resolved session (e.g. `safeAction`'s); otherwise `requireSession` runs. */
   session?: AppSession | undefined;
+  /**
+   * Apply the owner 2FA policy even though `action` is not one of `DESTRUCTIVE_ACTIONS` (or is
+   * omitted), e.g. data downloads whose permission core checks. Destructive actions always apply it.
+   */
+  destructive?: boolean | undefined;
 }
 
 /** An access denial to audit (`access.denied`, #228). */
@@ -42,6 +55,8 @@ export interface GuardDeps {
   memberRole?: (userId: string, workspaceId: string) => Promise<string | null>;
   /** Defaults to `@causedeck/core/runtime` `recordAccessDeniedFor` (the app db). */
   recordDenied?: (denial: AccessDenial) => Promise<void>;
+  /** Defaults to `@causedeck/core/runtime` `ownerGraceFor` (the owner 2FA grace, #290). */
+  ownerGrace?: OwnerGraceLookup;
 }
 
 export interface Guarded {
@@ -75,14 +90,16 @@ export async function defaultRecordDenied(denial: AccessDenial): Promise<void> {
 /**
  * Authenticate, check membership and authorize. Throws `UnauthenticatedError` when signed out,
  * `ActionError('FORBIDDEN')` for non-members (suspended, removed, soft-deleted workspace), and the
- * policy's `ForbiddenError` when `action` is denied.
+ * policy's `ForbiddenError` when `action` is denied, and `ActionError('FORBIDDEN')` when a
+ * destructive action meets an owner without 2FA after the grace.
  */
 export async function guard(
-  { workspaceId, action, resource, session: given }: GuardRequest,
+  { workspaceId, action, resource, session: given, destructive = false }: GuardRequest,
   {
     requireSession = defaultRequireSession,
     memberRole = defaultMemberRole,
     recordDenied = defaultRecordDenied,
+    ownerGrace,
   }: GuardDeps = {},
 ): Promise<Guarded> {
   const session = given ?? (await requireSession());
@@ -105,6 +122,22 @@ export async function guard(
           actorUserId: userId,
           action,
           reason: error.reason,
+        });
+      }
+      throw error;
+    }
+  }
+  if (destructive || isDestructive(action)) {
+    try {
+      await assertOwnerTwoFactor(session, workspaceId, { role, ...(ownerGrace && { ownerGrace }) });
+    } catch (error) {
+      if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+        await recordDenied({
+          workspaceId,
+          member: true,
+          actorUserId: userId,
+          action,
+          reason: TWO_FACTOR_REQUIRED,
         });
       }
       throw error;

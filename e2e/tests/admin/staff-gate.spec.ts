@@ -10,6 +10,8 @@ const PROBES = [
   '/flags',
   '/workspaces',
   '/support',
+  // A support session page (#314): someone else's, unknown or not, the same 404.
+  '/support/00000000-0000-4000-8000-000000000000',
   '/audit',
   '/adapters',
   '/does-not-exist',

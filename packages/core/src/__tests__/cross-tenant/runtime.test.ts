@@ -216,6 +216,19 @@ const CASES: Record<string, () => Promise<void>> = {
     await expectDenied(runtime.revokeSupportSessionFor(forged(), { sessionId }));
     await expectDenied(runtime.revokeSupportSessionFor(asB(), { sessionId }));
   },
+  // the staff console (#314): ub is not staff, so nothing of A's is listed, opened or viewed
+  listStaffSupportSessionsFor: async () => {
+    expect(await runtime.listStaffSupportSessionsFor(t.ub)).toEqual([]);
+  },
+  staffSupportSessionFor: async () => {
+    const sessionId = t.a.rows.support_session?.id ?? '';
+    expect(await runtime.staffSupportSessionFor(t.ub, sessionId)).toBeNull();
+  },
+  supportWorkspaceViewFor: async () => {
+    const before = await aAuditIds();
+    await expectDenied(runtime.supportWorkspaceViewFor({ staffUserId: t.ub }, t.a.id));
+    expect(await aAuditIds()).toEqual(before);
+  },
   recordAccountProfileUpdatedFor: async () => {
     const before = await aAuditIds();
     // Account-level: `ua`'s own profile change never writes into workspace A's chain.

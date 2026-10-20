@@ -9,6 +9,7 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as DataLayer from '../lib/data/index.ts';
+import type * as TwoFactor from '../lib/two-factor.ts';
 
 const mocks = vi.hoisted(() => ({
   record: vi.fn<(ctx: unknown, event: unknown) => Promise<void>>(() => Promise.resolve()),
@@ -17,6 +18,8 @@ const mocks = vi.hoisted(() => ({
 
 const STAFF_ID = '0192d3b0-0000-7000-8000-000000000310';
 const SESSION_ID = '0192d3b0-0000-7000-8000-0000000003a0';
+const SUPPORT_SESSION_ID = '0192d3b0-0000-7000-8000-0000000003b0';
+const SUPPORT_WORKSPACE_ID = '0192d3b0-0000-7000-8000-0000000003c0';
 const WORKSPACE_ID = '0192d3b0-0000-7000-8000-000000000224';
 const OVERRIDE_ID = '0192d3b0-0000-7000-8000-0000000002a4';
 
@@ -27,10 +30,44 @@ function auditedOverrideWrite(action: string) {
 }
 
 vi.mock('@causedeck/core/audit', () => ({ record: mocks.record }));
-vi.mock('@causedeck/core/runtime', () => ({ db: {} }));
+// Core audits a support session's lifecycle (`support.session_*`) with the staff actor it is handed
+// (#314); the mocks below stand in for core and record the same staff-actor event.
+vi.mock('@causedeck/core/runtime', () => ({
+  db: {},
+  requestSupportSessionFor: async (ctx: { staffUserId: string }) => {
+    await mocks.record(
+      { actor: { kind: 'staff', userId: ctx.staffUserId } },
+      { action: 'support.session_requested' },
+    );
+    return { id: SUPPORT_SESSION_ID };
+  },
+  staffSupportSessionFor: () =>
+    Promise.resolve({ id: SUPPORT_SESSION_ID, workspaceId: SUPPORT_WORKSPACE_ID }),
+  revokeSupportSessionFor: async (ctx: { userId: string }) => {
+    await mocks.record(
+      { actor: { kind: 'staff', userId: ctx.userId } },
+      { action: 'support.session_ended' },
+    );
+    return { id: SUPPORT_SESSION_ID };
+  },
+}));
+vi.mock('@causedeck/core/workspaces', () => ({
+  WorkspaceError: class WorkspaceError extends Error {
+    constructor(readonly code: string) {
+      super(code);
+    }
+  },
+}));
+vi.mock('../lib/two-factor.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof TwoFactor>()),
+  verifyTwoFactorCookie: () => true,
+}));
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@causedeck/core/support', () => ({
   isActiveStaff: () => Promise.resolve(true),
   countActiveStaff: () => Promise.resolve(1),
+  staffMember: () => Promise.resolve({ userId: STAFF_ID, role: 'admin' }),
+  SUPPORT_REASON_MAX_LENGTH: 1000,
   staffWorkspaceSearch: () => Promise.resolve([]),
   staffWorkspaceMetadata: () => Promise.resolve(null),
   staffAuditEvents: () => Promise.resolve([]),
@@ -39,11 +76,6 @@ vi.mock('@causedeck/core/support', () => ({
 vi.mock('@causedeck/core/usage', () => ({
   setBudgetOverride: auditedOverrideWrite('usage.budget_override_set'),
   expireBudgetOverride: auditedOverrideWrite('usage.budget_override_expired'),
-}));
-vi.mock('next/cache', () => ({ revalidatePath: () => undefined }));
-vi.mock('../lib/staff.ts', () => ({
-  requireStaff: () =>
-    Promise.resolve({ userId: STAFF_ID, email: 'ops@causedeck.test', role: 'admin' }),
 }));
 vi.mock('@causedeck/db', () => ({
   withoutWorkspace: (_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) =>
@@ -84,6 +116,20 @@ const APP_DIR = path.join(ADMIN_ROOT, 'app');
 
 /** Each admin server action, `<file relative to apps/admin>#<export>`, and its success path. */
 const ACTIONS: Record<string, () => Promise<unknown>> = {
+  'app/(console)/support/actions.ts#requestSupportSessionAction': async () => {
+    const { requestSupportSessionAction } = await import('../app/(console)/support/actions.ts');
+    const form = new FormData();
+    form.set('workspaceId', SUPPORT_WORKSPACE_ID);
+    form.set('reason', 'Customer asked us to look at a failing import');
+    form.set('scope', 'view');
+    return requestSupportSessionAction({}, form);
+  },
+  'app/(console)/support/actions.ts#endSupportSessionAction': async () => {
+    const { endSupportSessionAction } = await import('../app/(console)/support/actions.ts');
+    const form = new FormData();
+    form.set('sessionId', SUPPORT_SESSION_ID);
+    return endSupportSessionAction(form);
+  },
   'app/verify-2fa/actions.ts#verifyTwoFactor': async () => {
     const { verifyTwoFactor } = await import('../app/verify-2fa/actions.ts');
     const form = new FormData();

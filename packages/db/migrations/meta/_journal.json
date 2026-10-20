@@ -176,6 +176,13 @@
       "when": 1792425511682,
       "tag": "0024_workspace_practice_city",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792443797614,
+      "tag": "0025_lifecycle",
+      "breakpoints": true
     }
   ]
 }

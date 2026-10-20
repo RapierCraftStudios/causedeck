@@ -85,7 +85,10 @@ export {
 } from './upload.ts';
 export {
   storeSystemBlob,
+  storeSystemBlobStream,
   type StoredSystemBlob,
+  type StoredSystemBlobStream,
   type SystemBlobCtx,
   type SystemBlobInput,
+  type SystemBlobStreamInput,
 } from './system-blob.ts';

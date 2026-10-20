@@ -61,13 +61,18 @@ graph LR
   billing --> audit
   usage --> audit
   usage --> billing
+  lifecycle --> audit
+  lifecycle --> workspaces
   jobs --> audit
   jobs --> billing
   jobs --> usage
+  jobs --> lifecycle
   runtime --> audit
   runtime --> billing
   runtime --> usage
   runtime --> workspaces
+  runtime --> jobs
+  runtime --> lifecycle
 ```
 
 | Domain | May import |
@@ -78,8 +83,9 @@ graph LR
 | `matters` | `workspaces`, `audit` |
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
-| `jobs` | `audit`, `billing`, `usage` |
-| `runtime` | `audit`, `billing`, `usage`, `workspaces` |
+| `lifecycle` | `audit`, `workspaces` |
+| `jobs` | `audit`, `billing`, `usage`, `lifecycle` |
+| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,
 fair-use caps and job fairness read billing entitlements.

@@ -82,7 +82,7 @@ describe('checkSchemaConventions', () => {
       }).map((v) => `${v.table}:${v.rule}`);
     expect(check([nullable])).toEqual([]);
     expect(check([unindexed])).toEqual(['nullable_unindexed:workspace-index']);
-    expect(NULLABLE_WORKSPACE_TABLES).toEqual(['audit_event']);
+    expect(NULLABLE_WORKSPACE_TABLES).toEqual(['audit_event', 'deletion_job']);
   });
 
   it('fails a single-column FK from a tenant table to another tenant table', () => {

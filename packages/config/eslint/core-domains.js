@@ -16,8 +16,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   matters: Object.freeze(['workspaces', 'audit']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
-  jobs: Object.freeze(['audit', 'billing', 'usage']),
-  runtime: Object.freeze(['audit', 'billing', 'usage', 'workspaces']),
+  // Data lifecycle (#301): export reads audit and checks owners through workspaces.
+  lifecycle: Object.freeze(['audit', 'workspaces']),
+  jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle']),
+  runtime: Object.freeze(['audit', 'billing', 'usage', 'workspaces', 'jobs', 'lifecycle']),
 });
 
 /** Every top-level folder of packages/core/src/ (`shared` included). */

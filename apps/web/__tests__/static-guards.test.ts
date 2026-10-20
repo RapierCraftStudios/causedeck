@@ -89,13 +89,16 @@ describe('apps/web static guards', () => {
     expect(config).toMatch(/reactStrictMode:\s*true/);
   });
 
-  it('has no API routes besides Better Auth, Web Push, the audit export and uploads (webhooks live in apps/api)', () => {
+  it('has no API routes besides Better Auth, Web Push, the audit and workspace exports and uploads (webhooks live in apps/api)', () => {
     expect(readdirSync(path.join(appDir, 'app/api')).sort()).toEqual([
       'audit',
       'auth',
+      'exports',
       'push',
       'uploads',
     ]);
+    // The workspace data export download (#301); tests sit beside it.
+    expect(readdirSync(path.join(appDir, 'app/api/exports')).sort()).toEqual(['[id]', '__tests__']);
     expect(readdirSync(path.join(appDir, 'app/api/auth'))).toEqual(['[...all]']);
     // The browser's own push subscription endpoints (#197); tests sit beside them.
     expect(readdirSync(path.join(appDir, 'app/api/push')).sort()).toEqual([

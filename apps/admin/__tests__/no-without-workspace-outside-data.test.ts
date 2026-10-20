@@ -8,7 +8,8 @@ import { describe, expect, it } from 'vitest';
 
 const ADMIN_ROOT = path.resolve(import.meta.dirname, '..');
 const DATA_LAYER = path.join(ADMIN_ROOT, 'lib', 'data') + path.sep;
-const SKIP = new Set(['node_modules', '.next', '.next-e2e', '__tests__']);
+// eslint.config.js names the identifier to ban it; it is configuration, not a user.
+const SKIP = new Set(['node_modules', '.next', '.next-e2e', '__tests__', 'eslint.config.js']);
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

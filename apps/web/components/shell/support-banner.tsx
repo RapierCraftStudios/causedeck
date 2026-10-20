@@ -32,20 +32,18 @@ export function SupportBanner({ workspaceId, session }: SupportBannerProps) {
   const format = useFormatter();
   const router = useRouter();
   const [ended, setEnded] = useState(false);
-  const [expired, setExpired] = useState(false);
+  // The grant end this banner saw run out; a new grant (different `expiresAt`) is live again.
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const expired = expiredAt === session.expiresAt;
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    const delay = new Date(session.expiresAt).getTime() - Date.now();
-    if (delay <= 0) {
-      setExpired(true);
-      return;
-    }
-    setExpired(false);
+    // Always from the timer callback (0 ms when already past), never synchronously in the effect.
+    const delay = Math.max(0, new Date(session.expiresAt).getTime() - Date.now());
     const timer = window.setTimeout(
       () => {
-        setExpired(true);
+        setExpiredAt(session.expiresAt);
       },
       Math.min(delay, MAX_DELAY),
     );

@@ -68,8 +68,9 @@ const { UnsavedChangesGuard } = await import('../components/settings/unsaved-cha
 const { default: RolesPage } = await import('../app/(app)/w/[slug]/settings/roles/page.tsx');
 const PLACEHOLDERS = {
   integrations: (await import('../app/(app)/w/[slug]/settings/integrations/page.tsx')).default,
-  privacy: (await import('../app/(app)/w/[slug]/settings/privacy/page.tsx')).default,
 };
+// The privacy page (#286) is real; its own states are covered in privacy-page.test.tsx.
+const { default: PrivacyPage } = await import('../app/(app)/w/[slug]/settings/privacy/page.tsx');
 const { default: ExportPage } = await import('../app/(app)/w/[slug]/settings/export/page.tsx');
 const { default: ExportLoading } =
   await import('../app/(app)/w/[slug]/settings/export/loading.tsx');
@@ -236,12 +237,17 @@ describe('settings shell', () => {
 describe('section pages', () => {
   const denied = catalogs.en.shell.permissionDenied.title;
 
-  it.each([
-    ['clerk', 'integrations'],
-    ['clerk', 'privacy'],
-  ] as const)('a %s opening %s directly gets the permission-denied page', async (role, id) => {
-    asRole(role);
-    withIntl(await PLACEHOLDERS[id]({ params: params() }));
+  it('a clerk opening integrations directly gets the permission-denied page', async () => {
+    asRole('clerk');
+    withIntl(await PLACEHOLDERS.integrations({ params: params() }));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
+  });
+
+  it('a clerk opening privacy directly gets the permission-denied page', async () => {
+    asRole('clerk');
+    withIntl(
+      (await PrivacyPage({ params: params(), searchParams: Promise.resolve({}) })) as ReactElement,
+    );
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
   });
 

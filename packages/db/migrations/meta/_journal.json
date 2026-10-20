@@ -204,6 +204,13 @@
       "when": 1792481363476,
       "tag": "0028_role_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792483048268,
+      "tag": "0029_privacy_settings",
+      "breakpoints": true
     }
   ]
 }

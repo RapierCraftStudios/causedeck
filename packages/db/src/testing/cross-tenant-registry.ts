@@ -108,6 +108,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,
+  // privacy settings (#286)
+  getPrivacySettings: empty,
+  updateWorkspacePrivacy: denies,
   acceptInvitation: denies,
   previewInvitation: selfScoped,
   generateUniqueSlug: selfScoped,
@@ -384,6 +387,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   ROLE_SETTING_FIELDS: 'constant',
   DEFAULT_ROLE_SETTINGS: 'constant',
   toPolicySettings: 'pure',
+  // privacy settings (#286)
+  PRIVACY_SETTING_FIELDS: 'constant',
+  DEFAULT_PRIVACY_SETTINGS: 'constant',
   // audit: registry, guards and the default sink (#227)
   recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
   AUDIT_ACTIONS: 'constant (audit action registry)',

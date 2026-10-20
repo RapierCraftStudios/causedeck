@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   check,
+  integer,
   jsonb,
   pgTable,
   primaryKey,
@@ -37,6 +38,11 @@ export const workspaceSettings = pgTable(
     advocatesCanInvite: boolean('advocates_can_invite').notNull().default(true),
     /** Owners see restricted matters they are not listed on unless an owner turns this off. */
     ownersSeeRestricted: boolean('owners_see_restricted').notNull().default(true),
+    // Privacy settings on the settings privacy page (#286). `india_only_ai` above has no write path.
+    /** New sensitive matters start restricted unless a member with `workspace.manage` turns this off. */
+    sensitiveDefaultRestricted: boolean('sensitive_default_restricted').notNull().default(true),
+    /** Days raw audio is kept before deletion: 7, 14 or 30 (the PRD maximum, and the default). */
+    retentionAudioDays: integer('retention_audio_days').notNull().default(30),
     ...timestamps(),
   },
   (t) => [
@@ -44,6 +50,7 @@ export const workspaceSettings = pgTable(
     primaryKey({ name: 'workspace_settings_pkey', columns: [t.workspaceId] }),
     check('workspace_settings_locale_chk', sql`locale in ${inList(LOCALES)}`),
     check('workspace_settings_practice_city_chk', sql`char_length(practice_city) <= 80`),
+    check('workspace_settings_retention_audio_days_chk', sql`retention_audio_days in (7, 14, 30)`),
   ],
 );
 

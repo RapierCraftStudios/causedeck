@@ -943,7 +943,6 @@
       "title": "This section is on its way.",
       "hint": "It will appear here in a coming update. Nothing needs to be set up yet.",
       "integrations": "The private email intake address and calendar feed for this workspace.",
-      "privacy": "Where your data is processed and how long it is kept.",
       "export": "Download a copy of everything in this workspace.",
       "danger": "Transfer ownership or delete this workspace."
     },
@@ -1184,6 +1183,63 @@
       },
       "error": {
         "title": "Could not load the role settings.",
+        "retry": "Try again"
+      }
+    },
+    "privacy": {
+      "metaTitle": "Privacy",
+      "title": "Privacy",
+      "description": "Where your data is processed, how sensitive matters start and how long raw audio is kept.",
+      "loading": "Loading the privacy settings",
+      "summary": "Your data stays in India. AI processing stays in India. We never train on your content.",
+      "indiaOnly": {
+        "title": "AI processing",
+        "label": "India-only AI processing",
+        "description": "AI features run only on providers that process data in India, under terms that forbid keeping or training on your content.",
+        "locked": "Locked on",
+        "note": "This stays on for every workspace. It protects client confidentiality and cannot be turned off here."
+      },
+      "settings": {
+        "title": "Sensitive matters and retention",
+        "description": "Two choices this workspace can make about how matters start and how long recordings are kept.",
+        "readOnly": "Only owners and advocates can change these settings.",
+        "sensitiveDefaultRestricted": {
+          "label": "Restrict sensitive matters by default",
+          "description": "New matters marked sensitive start open only to the people listed on them."
+        },
+        "retentionAudioDays": {
+          "label": "Keep raw audio for",
+          "description": "Voice recordings are deleted after this many days. Transcripts stay until you delete them.",
+          "option": "{days} days"
+        }
+      },
+      "subProcessors": {
+        "title": "Sub-processors",
+        "description": "The companies that help us run CauseDeck, what they do and where they process data.",
+        "link": "See the sub-processor list"
+      },
+      "neverDoes": {
+        "title": "What CauseDeck never does",
+        "items": {
+          "train": "Train AI models on your matters, documents or notes.",
+          "sell": "Sell or share your data for advertising.",
+          "abroad": "Send matter content to AI providers outside India.",
+          "access": "Let our staff open your workspace without your consent.",
+          "keep": "Keep raw audio longer than the window you choose."
+        }
+      },
+      "saving": "Saving...",
+      "saved": "Saved",
+      "toast": {
+        "saved": "Privacy settings saved.",
+        "undo": "Undo",
+        "undone": "Change undone.",
+        "error": "Could not save the privacy settings. Try again.",
+        "forbidden": "Only owners and advocates can change privacy settings.",
+        "offline": "Settings can be changed when you are back online."
+      },
+      "error": {
+        "title": "Could not load the privacy settings.",
         "retry": "Try again"
       }
     },

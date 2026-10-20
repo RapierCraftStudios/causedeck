@@ -7,6 +7,7 @@ import {
   RESERVED_SLUGS,
   Slug,
   UpdateRoleSettingsInput,
+  UpdateWorkspacePrivacyInput,
   UpdateWorkspaceProfileInput,
 } from './workspace';
 
@@ -31,6 +32,30 @@ describe('UpdateRoleSettingsInput', () => {
         advocatesCanReadAudit: false,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('UpdateWorkspacePrivacyInput', () => {
+  it.each([7, 14, 30])('accepts a %i day raw audio window', (retentionAudioDays) => {
+    const input = { sensitiveDefaultRestricted: false, retentionAudioDays };
+    expect(UpdateWorkspacePrivacyInput.parse(input)).toEqual(input);
+  });
+
+  it.each([0, 1, 31, 90, '30'])('rejects a %j day window', (retentionAudioDays) => {
+    expect(
+      UpdateWorkspacePrivacyInput.safeParse({
+        sensitiveDefaultRestricted: true,
+        retentionAudioDays,
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects India-only AI and any other unknown field', () => {
+    const base = { sensitiveDefaultRestricted: true, retentionAudioDays: 30 };
+    expect(UpdateWorkspacePrivacyInput.safeParse({ ...base, indiaOnlyAi: false }).success).toBe(
+      false,
+    );
+    expect(UpdateWorkspacePrivacyInput.safeParse({ retentionAudioDays: 30 }).success).toBe(false);
   });
 });
 

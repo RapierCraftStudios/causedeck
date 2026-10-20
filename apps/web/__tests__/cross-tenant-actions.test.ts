@@ -90,6 +90,8 @@ const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts'
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
+const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
+const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -130,6 +132,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   grantSupportSessionAction: support,
   denySupportSessionAction: support,
   revokeSupportSessionAction: support,
+  requestExportAction: exports,
+  listExportsAction: exports,
+  requestWorkspaceDeletionAction: danger,
+  cancelWorkspaceDeletionAction: danger,
+  requestAccountDeletionAction: account,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -141,6 +148,7 @@ let aInvitation: { invitationId: string; token: string };
 let aNotificationId: string;
 let aAuditEvent: { id: string; createdAt: string };
 let aSupportSessionId: string;
+let aDeletionId: string;
 
 function signInAs(userId: string): void {
   state.session = {
@@ -189,6 +197,8 @@ function snapshotA() {
       .select()
       .from(schema.supportSession)
       .orderBy(schema.supportSession.id),
+    exportJobs: await tx.select().from(schema.exportJob).orderBy(schema.exportJob.id),
+    deletionJobs: await tx.select().from(schema.deletionJob).orderBy(schema.deletionJob.id),
     integrations: await tx
       .select({
         kind: schema.workspaceIntegration.kind,
@@ -225,6 +235,9 @@ beforeAll(async () => {
   const ss = t.a.rows.support_session;
   if (!ss?.id) throw new Error('seed rows');
   aSupportSessionId = ss.id;
+  const dj = t.a.rows.deletion_job;
+  if (!dj?.id) throw new Error('seed rows');
+  aDeletionId = dj.id;
 });
 
 beforeEach(() => {
@@ -297,6 +310,11 @@ function inputs(workspaceId: string): Record<string, unknown> {
     grantSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     denySupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     revokeSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
+    // Lifecycle (#305): ub, owner of B, may not export, delete or cancel A's deletion.
+    requestExportAction: { workspaceId },
+    listExportsAction: { workspaceId },
+    requestWorkspaceDeletionAction: { workspaceId, confirmName: t.a.name },
+    cancelWorkspaceDeletionAction: { workspaceId, jobId: aDeletionId },
   };
 }
 
@@ -566,6 +584,14 @@ describe('cross-tenant server actions', () => {
     // TOTP setup and verification act on the caller's own session only (no target id at all).
     expect(await action('enableTwoFactorAction')({})).toMatchObject({ ok: true });
     expect(await action('verifyTwoFactorAction')({ code: '123456' })).toMatchObject({ ok: true });
+
+    // Account deletion (#305) acts on the caller's own account only: never on ua's.
+    const deletion = await action('requestAccountDeletionAction')({});
+    expect(deletion).toMatchObject({ ok: false });
+    const deletions = await db
+      .select({ userId: schema.deletionJob.userId })
+      .from(schema.deletionJob);
+    expect(deletions.filter((row) => row.userId === t.ua)).toEqual([]);
 
     const sessions = await db.select().from(schema.session);
     expect(sessions.some((row) => row.id === aSession.id)).toBe(true);

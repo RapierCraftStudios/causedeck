@@ -5,7 +5,9 @@
 // optimistically with rollback and toasts, keeps the slug rename owner-only, turns read-only
 // offline, and guards unsaved changes. The export and
 // danger pages (#288) gate on `export.run` / `workspace.delete`, explain disabled actions with a
-// focusable tooltip and the `workspace.export` flag, and link transfer to the members flow.
+// focusable tooltip and the `workspace.export` flag, and link transfer to the members flow. With
+// the flag on, export shows the export and history cards; danger opens the deletion dialog, or
+// shows the scheduled date and `Cancel deletion` while a deletion waits (#305).
 import { readFileSync } from 'node:fs';
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -27,6 +29,10 @@ const page = vi.hoisted(() => ({
 }));
 const toast = vi.hoisted(() => vi.fn());
 const flags = vi.hoisted(() => ({ on: new Set<string>() }));
+const lifecycle = vi.hoisted(() => ({
+  jobs: [] as unknown[],
+  deletion: null as null | { id: string; status: string; cooloffUntil: Date | null },
+}));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => router,
@@ -40,7 +46,33 @@ vi.mock('next/navigation', () => ({
 }));
 vi.mock('next-intl/server', () => ({
   getTranslations: (namespace?: string) => fakeGetTranslations('en')(namespace),
+  getFormatter: () =>
+    Promise.resolve({
+      dateTime: (date: Date) =>
+        new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' }).format(
+          date,
+        ),
+    }),
 }));
+vi.mock('next/headers', () => ({ headers: () => Promise.resolve(new Headers()) }));
+vi.mock('../lib/auth.ts', () => ({
+  getAuth: () => ({
+    api: { getSession: () => Promise.resolve({ user: { twoFactorEnabled: true } }) },
+  }),
+}));
+vi.mock('@causedeck/core/runtime', () => ({
+  listExportJobsFor: () => Promise.resolve(lifecycle.jobs),
+  activeWorkspaceDeletionIn: () => Promise.resolve(lifecycle.deletion),
+}));
+vi.mock('../app/(app)/w/[slug]/settings/export/actions.ts', () => ({
+  requestExportAction: vi.fn(),
+  listExportsAction: vi.fn(),
+}));
+vi.mock('../app/(app)/w/[slug]/settings/danger/actions.ts', () => ({
+  requestWorkspaceDeletionAction: vi.fn(),
+  cancelWorkspaceDeletionAction: vi.fn(),
+}));
+vi.mock('../app/(app)/account/actions.ts', () => ({ verifyTwoFactorAction: vi.fn() }));
 vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),
 }));
@@ -113,6 +145,8 @@ beforeEach(() => {
   page.dev = true;
   page.pathname = '/w/demo/settings/profile';
   flags.on.clear();
+  lifecycle.jobs = [];
+  lifecycle.deletion = null;
   setOnline(true);
 });
 
@@ -266,6 +300,7 @@ describe('section pages', () => {
     const Page = id === 'export' ? ExportPage : DangerPage;
     withIntl(await Page({ params: params() }));
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
+    expect(screen.getByText(catalogs.en.lifecycle.forbidden)).toBeTruthy();
     expect(document.querySelector(`[data-route="settings-${id}"]`)).toBeNull();
   });
 
@@ -298,34 +333,55 @@ describe('section pages', () => {
     expect(trigger.getAttribute('data-disabled-reason')).toBe(en.export.comingSoon);
   });
 
-  it('export enables the button once workspace.export is on, but not offline', async () => {
+  it('export shows the export and history cards once workspace.export is on, but not offline', async () => {
     flags.on.add('workspace.export');
     withIntl(await ExportPage({ params: params() }));
-    const button = screen.getByRole('button', { name: en.export.action });
+    const lc = catalogs.en.lifecycle;
+    expect(screen.getByRole('heading', { level: 2, name: lc.export.title })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2, name: lc.history.title })).toBeTruthy();
+    expect(screen.getByText(lc.history.empty)).toBeTruthy();
+    const button = screen.getByRole('button', { name: lc.export.action });
     expect(button.hasAttribute('disabled')).toBe(false);
     expect(button.getAttribute('data-slot')).toBe('export-start');
     act(() => {
       setOnline(false);
     });
-    const offline = screen.getByRole('button', { name: en.export.action });
+    const offline = screen.getByRole('button', { name: lc.export.action });
     expect(offline.hasAttribute('disabled')).toBe(true);
-    expect(reasonOf(offline)).toBe(en.offline);
+    expect(screen.getByText(lc.offline)).toBeTruthy();
   });
 
-  it('danger links transfer to the members flow and keeps delete disabled with a reason', async () => {
+  it('danger links transfer to the members flow and opens the deletion dialog', async () => {
     withIntl(await DangerPage({ params: params() }));
+    const lc = catalogs.en.lifecycle;
     const zone = document.querySelector('[data-slot="danger-zone"]') as HTMLElement;
     expect(zone).not.toBeNull();
     expect(zone.className).toContain('border-danger-soft');
     const transfer = within(zone).getByRole('link', { name: en.danger.transfer.action });
     expect(transfer.getAttribute('href')).toBe('/w/demo/settings/members?transfer=1');
-    const remove = within(zone).getByRole('button', { name: en.danger.delete.action });
-    expect(remove.hasAttribute('disabled')).toBe(true);
-    expect(remove.hasAttribute('title')).toBe(false);
-    expect(reasonOf(remove)).toBe(en.danger.unavailable);
-    expect(
-      within(zone).getByRole('link', { name: en.danger.exportFirst }).getAttribute('href'),
-    ).toBe('/w/demo/settings/export');
+    const card = document.querySelector('[data-slot="delete-workspace-card"]') as HTMLElement;
+    expect(card.className).toContain('border-danger-soft');
+    expect(within(card).getByRole('heading', { name: lc.danger.title })).toBeTruthy();
+    for (const item of Object.values(lc.danger.consequences)) {
+      expect(within(card).getByText(item)).toBeTruthy();
+    }
+    fireEvent.click(within(card).getByRole('button', { name: lc.danger.action }));
+    expect(await screen.findByRole('dialog', { name: lc.danger.dialog.title })).toBeTruthy();
+  });
+
+  it('danger shows the scheduled date and Cancel deletion while a deletion waits', async () => {
+    lifecycle.deletion = {
+      id: '00000000-0000-4000-8000-0000000d0001',
+      status: 'pending_cooloff',
+      cooloffUntil: new Date('2026-04-01T06:00:00Z'),
+    };
+    withIntl(await DangerPage({ params: params() }));
+    const lc = catalogs.en.lifecycle;
+    const card = document.querySelector('[data-slot="delete-workspace-card"]') as HTMLElement;
+    expect(card.getAttribute('data-deletion')).toBe('pending_cooloff');
+    expect(within(card).getByText(/Scheduled for deletion on 1 Apr 2026/)).toBeTruthy();
+    expect(within(card).getByRole('button', { name: lc.danger.cancel })).toBeTruthy();
+    expect(within(card).queryByRole('button', { name: lc.danger.action })).toBeNull();
   });
 
   it('danger disables transfer too while offline', async () => {

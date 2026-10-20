@@ -1,5 +1,5 @@
 // The account shell (#289, #25 design spec). `/account` is the signed-in user's own settings, not
-// workspace-scoped: the `Account` header, a sub-nav (Profile, Security) and the content column,
+// workspace-scoped: the `Account` header, a sub-nav (Profile, Security, Danger zone) and the content column,
 // with the settings offline banner on top (settings are read-only offline).
 // - 360: one column; the sub-nav is a row of links under the header; no horizontal scroll.
 // - 768: a 200 px sticky sub-nav at the left and a content column of at most 560 px.
@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 
 import { SettingsOfflineBanner } from '../../../components/settings/settings-offline-banner.tsx';
 
-const SECTIONS = ['profile', 'security'] as const;
+const SECTIONS = ['profile', 'security', 'danger'] as const;
 
 export default async function AccountLayout({ children }: { children: ReactNode }) {
   const t = await getTranslations('settings.account');

@@ -26,6 +26,8 @@ import type { InvoicePdfContext, SaasInvoicePdf } from '../billing/index.ts';
 import type {
   AccountDeletionCtx,
   AccountDeletionJob,
+  DeletionJob,
+  DeletionRequestCtx,
   ExportDownload,
   ExportDownloadDeps,
   ExportDownloadLink,
@@ -395,6 +397,12 @@ export async function requestExportFor(
   });
 }
 
+/** The requester's latest exports in the current workspace (at most 5), newest first. */
+export async function listExportJobsFor(ctx: Omit<ExportRequestCtx, 'db'>): Promise<ExportJob[]> {
+  const { listExportJobs } = await import('../lifecycle/index.ts');
+  return listExportJobs({ db, ...ctx });
+}
+
 /** A signed download link for the requester's ready export (`NOT_FOUND` otherwise). */
 export async function issueExportDownloadFor(
   ctx: Omit<ExportRequestCtx, 'db'>,
@@ -414,6 +422,38 @@ export async function openExportDownloadFor(
 ): Promise<ExportDownload> {
   const { openExportDownload } = await import('../lifecycle/index.ts');
   return openExportDownload({ db, ...ctx }, jobId, token, deps);
+}
+
+// lifecycle: workspace deletion (#302, wired in #305)
+
+/** Request deletion of the workspace (owners only, fresh step-up, typed name); owners are emailed. */
+export async function requestWorkspaceDeletionFor(
+  ctx: Omit<DeletionRequestCtx, 'db'>,
+  input: { confirmName: string },
+): Promise<DeletionJob> {
+  const { requestWorkspaceDeletion } = await import('../lifecycle/index.ts');
+  const { enqueueNotificationDelivery } = await import('../jobs/index.ts');
+  return requestWorkspaceDeletion({ db, ...ctx }, input, {
+    enqueueDelivery: (job) => enqueueNotificationDelivery(job),
+  });
+}
+
+/** Cancel the workspace's pending deletion (owners only, fresh step-up); owners are emailed. */
+export async function cancelWorkspaceDeletionFor(
+  ctx: Omit<DeletionRequestCtx, 'db'>,
+  jobId: string,
+): Promise<DeletionJob> {
+  const { cancelWorkspaceDeletion } = await import('../lifecycle/index.ts');
+  const { enqueueNotificationDelivery } = await import('../jobs/index.ts');
+  return cancelWorkspaceDeletion({ db, ...ctx }, jobId, {
+    enqueueDelivery: (job) => enqueueNotificationDelivery(job),
+  });
+}
+
+/** The workspace's deletion in progress, for the shell's cool-off banner (members only), or `null`. */
+export async function activeWorkspaceDeletionIn(scope: RuntimeScope): Promise<DeletionJob | null> {
+  const { getActiveWorkspaceDeletion } = await import('../lifecycle/index.ts');
+  return getActiveWorkspaceDeletion({ db, ...scope });
 }
 
 // lifecycle: account deletion and memory erasure (#303)

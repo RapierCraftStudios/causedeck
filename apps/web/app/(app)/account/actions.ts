@@ -214,3 +214,46 @@ const revokeSession = safeAction(
 export async function revokeSessionAction(raw: unknown): Promise<Result<{ sessionId: string }>> {
   return revokeSession(raw);
 }
+
+// Account deletion (#305, wiring #303): self only and gated on a fresh step-up (passkey or TOTP
+// within 10 minutes, #304), which comes back as FORBIDDEN with `fieldErrors.stepUp` so the dialog
+// asks the user to confirm and retries. A sole owner or a staff account gets CONFLICT with the core
+// message (the sole owner's names the workspaces to transfer or delete first).
+export interface AccountDeletionOutcome {
+  jobId: string;
+  status: string;
+}
+
+const requestAccountDeletion = safeAction(
+  z.object({}),
+  async (_input, ctx): Promise<AccountDeletionOutcome> => {
+    const session = sessionOf(ctx);
+    const sessionId = (session.session as { id?: unknown }).id;
+    if (typeof sessionId !== 'string') throw new UnauthenticatedError();
+    const { requestAccountDeletionFor } = await import('@causedeck/core/runtime');
+    const userAgent = (await headers()).get('user-agent') ?? undefined;
+    try {
+      const job = await requestAccountDeletionFor({
+        userId: session.user.id,
+        sessionId,
+        requestId: ctx.requestId,
+        ...(userAgent === undefined ? {} : { userAgent }),
+      });
+      return { jobId: job.id, status: job.status };
+    } catch (error) {
+      if ((error as { reason?: unknown } | null)?.reason === 'step_up_required') {
+        throw new ActionError('FORBIDDEN', (error as Error).message, { stepUp: ['required'] });
+      }
+      const { toActionError } = await import('../../../lib/workspace-action.ts');
+      throw toActionError(error);
+    }
+  },
+);
+
+// authz: public — self only: requires a session and deletes the caller's own account after a fresh
+// step-up; core refuses sole owners and staff.
+export async function requestAccountDeletionAction(
+  raw: unknown,
+): Promise<Result<AccountDeletionOutcome>> {
+  return requestAccountDeletion(raw);
+}

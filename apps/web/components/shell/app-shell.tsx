@@ -3,6 +3,11 @@ import type { FlagSnapshot } from '@causedeck/flags/keys';
 import { FlagsProvider } from '@causedeck/flags/react';
 import type { ReactNode } from 'react';
 
+import {
+  CooloffBanner,
+  type ShellDeletion,
+} from '../../app/(app)/w/[slug]/settings/danger/cooloff-banner.tsx';
+
 import type { OwnerTwoFactorState } from '../../lib/require-2fa-for-owners.ts';
 import { ShortcutsProvider } from '../../lib/shortcuts/provider.tsx';
 import type { SidebarState } from '../../lib/sidebar-state.ts';
@@ -26,6 +31,8 @@ export interface AppShellProps {
   ownerTwoFactor?: OwnerTwoFactorState;
   /** The active support session (#313), loaded for owners only; shows the support banner. */
   supportSession?: ShellSupportSession | null;
+  /** The workspace deletion waiting out its cool-off (#305); every member sees the banner. */
+  deletion?: ShellDeletion | null;
   children: ReactNode;
 }
 
@@ -35,7 +42,8 @@ export interface AppShellProps {
  * link targets. Content is max 1200 px, centred. Below 768 px the bottom nav (with the capture
  * button) replaces the sidebar, and `main` pads its bottom to clear it. Flag-gated nav items,
  * commands and shortcuts read `flags` through `FlagsProvider`. During an active support session the
- * owner sees the support banner between the topbar and the page.
+ * owner sees the support banner between the topbar and the page. While a workspace deletion waits
+ * out its cool-off, every member sees the cool-off banner first (#305).
  */
 export function AppShell({
   context,
@@ -43,6 +51,7 @@ export function AppShell({
   flags,
   ownerTwoFactor = 'not-owner',
   supportSession = null,
+  deletion = null,
   children,
 }: AppShellProps) {
   return (
@@ -56,6 +65,11 @@ export function AppShell({
               <Sidebar context={context} />
               <div className="bg-surface flex min-w-0 flex-col">
                 <Topbar context={context} />
+                <CooloffBanner
+                  deletion={deletion}
+                  slug={context.workspace.slug}
+                  owner={context.role === 'owner'}
+                />
                 <OwnerTwoFactorBanner state={ownerTwoFactor} />
                 {supportSession ? (
                   <SupportBanner workspaceId={context.workspace.id} session={supportSession} />

@@ -24,9 +24,8 @@ export const matterRestriction = tenantTable(
       .notNull()
       .default(sql`'{}'::uuid[]`),
     reason: text('reason'),
-    createdBy: uuid('created_by')
-      .notNull()
-      .references(() => user.id),
+    // Null once the creator's account is deleted (#303).
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

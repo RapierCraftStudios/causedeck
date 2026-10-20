@@ -17,7 +17,7 @@ pnpm --filter @causedeck/web exec vitest run app/api/exports
 | Table                | Scope                                                       | Notes                                                                                                                                                                                                                                                                                       |
 | -------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `export_job`         | tenant, FORCE RLS                                           | `scope` `workspace` or `user`; `status` `queued`, `running`, `ready`, `failed`, `expired`; `progress` 0 to 100; `steps` checkpoints; `blob_id`, `size_bytes`, `sha256` of the plaintext ZIP; `download_token_hash`; `expires_at`. One queued or running export per requester and workspace. |
-| `deletion_job`       | tenant, FORCE RLS, `workspace_id` null for account deletion | Schema only; behaviour in #302 and #303.                                                                                                                                                                                                                                                    |
+| `deletion_job`       | tenant, FORCE RLS, `workspace_id` null for account deletion | Account and memory jobs (#303, below); workspace jobs land with #302. Account jobs have no workspace and are read and written through the `account_self` policy (0031).          |
 | `deletion_tombstone` | global (`GLOBAL_TABLES`)                                    | Minimal record of an erased workspace. No foreign key, so it outlives the purge; the app and clerk roles cannot update or delete it.                                                                                                                                                        |
 
 `app_export_due_jobs(now)` is an owner-defined function returning only the ids of ready exports past
@@ -132,3 +132,63 @@ Anything wrong is a 404; only non-members and non-owners get 403.
   (MinIO or S3 in India) and to the requesting owner.
 - Download tokens are unguessable (256-bit nonce, HMAC-signed), bound to one export, one requester
   and one workspace, and expire with the export.
+
+## Account deletion (#303)
+
+```sh
+pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/account-deletion.test.ts
+pnpm --filter @causedeck/db exec vitest run src/__tests__/audit-anonymise.test.ts
+```
+
+`requestAccountDeletion(ctx, { enqueue })` (runtime: `requestAccountDeletionFor`) acts on the
+caller's own account only.
+
+- **Blocks.** A user who is the only active owner of a live workspace gets `CONFLICT`:
+  `You are the only owner of a workspace. Transfer ownership or delete the workspace before deleting
+  your account: <names>`. The refusal is audited as `account.deletion_blocked`. Platform staff
+  accounts are refused too; the operator removes them.
+- **Request.** One `deletion_job` (`kind` `account`, `workspace_id` null, `status` `scheduled`,
+  `erase_after` = now) per user; a second request returns the pending one. `account.deletion_requested`
+  is recorded on the account chain in the same transaction, then `account.delete` is enqueued with
+  ids only. There is no cool-off (that is workspace deletion, #302); step-up authentication gates
+  the entry point (#304).
+- **Job (`account.delete`).** It re-checks both blocks (ownership can change while the job waits;
+  the job then ends `failed` with `steps.error` `sole_owner` or `staff_account`). It removes the user
+  from `matter_restriction.allowed_user_ids` in each workspace. Then, in one transaction, it deletes
+  the `user` row and calls `app_audit_anonymise_actor(user)`, records `account.deleted` (system actor,
+  target the job) and marks the job `erased`.
+- **What the delete removes.** It cascades to sessions, logins (`account`), passkeys, two-factor,
+  memberships, invitations the user sent, notification preferences, exports and idempotency keys.
+  Workspace data stays with the workspace with the user set to null: files (`blob.created_by`;
+  before 0031 this cascaded and deleted the files), matter restrictions (`created_by`) and flag
+  overrides (`updated_by`, `legal_ack_by`).
+- **What remains.** Audit events, anonymised as described below. The `deletion_job` row keeps the
+  bare user id as the receipt. No audit event names the user in `target_id` or metadata.
+
+### Audit anonymisation
+
+The chain hashes a salted `actor_ref` instead of the raw `actor_user_id`
+([audit.md](audit.md#chain-format)), so nulling the id keeps every chain valid. The salt is per user
+and is deleted with the account, so the ref cannot be recomputed even from the old id. Not covered
+yet: `ai_call.user_id`, and `target_id` or metadata of other users' events that name the user (for
+example `member.removed`).
+
+## Memory erasure (#303)
+
+```sh
+pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/memory-erasure.test.ts
+```
+
+NFR Privacy: memory and embeddings are deleted within 24 h of a request.
+
+- **Request.** `requestMemoryErasure(ctx, { enqueue })` (runtime: `requestMemoryErasureFor`), for
+  owners only, schedules one `deletion_job` (`kind` `memory`) with `erase_after` = request + 24 h,
+  which is the SLA deadline. It records `memory.erasure_requested` and enqueues `memory.erase` at
+  `MEMORY_ERASE_PRIORITY`, ahead of default-priority jobs.
+- **Job.** `memory.erase` runs `runMemoryErasure` in one workspace transaction. `eraseMemory`
+  deletes the workspace's rows from each `MEMORY_TABLES` table (`memory_embedding`, then
+  `memory_item`) in batches of 1000, under row-level security. It then marks the job `erased` with
+  per-table counts and records `memory.erased` (counts only). A rerun is a no-op.
+- **Fixtures until the real tables ship.** The tables arrive in a later milestone; until then a
+  missing table is skipped. The tests create fixtures with `tenantPolicy()` in a rolled-back owner
+  transaction.

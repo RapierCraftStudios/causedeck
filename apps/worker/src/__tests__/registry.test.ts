@@ -133,6 +133,8 @@ describe('enqueue', () => {
       'export.build',
       'system.export.expire',
       'system.support.session-expire',
+      'account.delete',
+      'memory.erase',
     ]);
   });
 });

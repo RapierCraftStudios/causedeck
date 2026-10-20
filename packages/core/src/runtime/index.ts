@@ -24,11 +24,15 @@ import type {
 } from '../audit/index.ts';
 import type { InvoicePdfContext, SaasInvoicePdf } from '../billing/index.ts';
 import type {
+  AccountDeletionCtx,
+  AccountDeletionJob,
   ExportDownload,
   ExportDownloadDeps,
   ExportDownloadLink,
   ExportJob,
   ExportRequestCtx,
+  MemoryErasureCtx,
+  MemoryErasureJob,
 } from '../lifecycle/index.ts';
 import type {
   GrantSessionInput,
@@ -383,6 +387,35 @@ export async function openExportDownloadFor(
 ): Promise<ExportDownload> {
   const { openExportDownload } = await import('../lifecycle/index.ts');
   return openExportDownload({ db, ...ctx }, jobId, token, deps);
+}
+
+// lifecycle: account deletion and memory erasure (#303)
+
+/** Request the caller's account deletion and enqueue `account.delete` for it. */
+export async function requestAccountDeletionFor(
+  ctx: Omit<AccountDeletionCtx, 'db'>,
+): Promise<AccountDeletionJob> {
+  const { requestAccountDeletion } = await import('../lifecycle/index.ts');
+  const { enqueue } = await import('../jobs/index.ts');
+  return requestAccountDeletion(
+    { db, ...ctx },
+    {
+      enqueue: (job) =>
+        enqueue('account.delete', { workspaceId: null, ...job, fairnessKey: job.userId }),
+    },
+  );
+}
+
+/** Request the erasure of the workspace's memory (owners only) and enqueue `memory.erase`. */
+export async function requestMemoryErasureFor(
+  ctx: Omit<MemoryErasureCtx, 'db'>,
+): Promise<MemoryErasureJob> {
+  const { MEMORY_ERASE_PRIORITY, requestMemoryErasure } = await import('../lifecycle/index.ts');
+  const { enqueue } = await import('../jobs/index.ts');
+  return requestMemoryErasure(
+    { db, ...ctx },
+    { enqueue: (job) => enqueue('memory.erase', job, { priority: MEMORY_ERASE_PRIORITY }) },
+  );
 }
 
 // notifications, push, uploads, flags

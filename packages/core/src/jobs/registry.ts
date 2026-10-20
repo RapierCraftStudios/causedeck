@@ -3,6 +3,7 @@
 import type { SendOptions } from 'pg-boss';
 import type { z } from 'zod';
 
+import { accountDelete } from './definitions/account-delete.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
@@ -12,6 +13,7 @@ import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
+import { memoryErase } from './definitions/memory-erase.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
 import {
   notificationDigest,
@@ -139,6 +141,8 @@ export const registry = createRegistry([
   exportBuild,
   exportExpire,
   supportSessionExpire,
+  accountDelete,
+  memoryErase,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -160,6 +164,8 @@ export type JobMap = RegistryMap<
     typeof exportBuild,
     typeof exportExpire,
     typeof supportSessionExpire,
+    typeof accountDelete,
+    typeof memoryErase,
   ]
 >;
 export type JobName = keyof JobMap;

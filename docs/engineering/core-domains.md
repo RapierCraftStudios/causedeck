@@ -21,6 +21,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `matters` | `@causedeck/core/matters` | matter restrictions |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
+| `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
 | `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains. apps/web, apps/api and apps/worker use it (#299): the `db` handle, `closeAppDb`, `inWorkspaceOn` for an injected handle and the api idempotency store |
 | `shared` | none | helpers no domain owns |
@@ -61,13 +62,21 @@ graph LR
   billing --> audit
   usage --> audit
   usage --> billing
+  lifecycle --> audit
+  lifecycle --> workspaces
+  support --> workspaces
+  support --> audit
   jobs --> audit
   jobs --> billing
   jobs --> usage
+  jobs --> lifecycle
+  jobs --> support
   runtime --> audit
   runtime --> billing
   runtime --> usage
   runtime --> workspaces
+  runtime --> jobs
+  runtime --> lifecycle
 ```
 
 | Domain | May import |
@@ -78,8 +87,10 @@ graph LR
 | `matters` | `workspaces`, `audit` |
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
-| `jobs` | `audit`, `billing`, `usage` |
-| `runtime` | `audit`, `billing`, `usage`, `workspaces` |
+| `lifecycle` | `audit`, `workspaces` |
+| `support` | `workspaces`, `audit` |
+| `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support` |
+| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,
 fair-use caps and job fairness read billing entitlements.

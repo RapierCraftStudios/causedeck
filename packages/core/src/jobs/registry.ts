@@ -10,12 +10,15 @@ import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
 import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { exportBuild } from './definitions/export-build.ts';
+import { exportExpire } from './definitions/export-expire.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
 import {
   notificationDigest,
   notificationDigestSchedule,
 } from './definitions/notification-digest.ts';
 import { retentionSweep } from './definitions/retention-sweep.ts';
+import { supportSessionExpire } from './definitions/support-session-expire.ts';
 import { systemPing } from './definitions/system-ping.ts';
 import { usageRollup } from './definitions/usage-rollup.ts';
 import type { AnyJobDefinition, JobPayloadBase } from './define.ts';
@@ -133,6 +136,9 @@ export const registry = createRegistry([
   systemAuditVerify,
   auditVerify,
   auditRetention,
+  exportBuild,
+  exportExpire,
+  supportSessionExpire,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -151,6 +157,9 @@ export type JobMap = RegistryMap<
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
+    typeof exportBuild,
+    typeof exportExpire,
+    typeof supportSessionExpire,
   ]
 >;
 export type JobName = keyof JobMap;

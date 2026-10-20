@@ -53,11 +53,13 @@ export {
   recordRoleChanged,
   recordSupportSessionEnded,
   recordSupportSessionStarted,
+  recordSupportView,
   type AccessDeniedEvent,
   type ExportRunEvent,
   type FlagChangedEvent,
   type RoleChangedEvent,
   type SupportSessionEvent,
+  type SupportViewEvent,
 } from './security-events.ts';
 export { recordAuditSink } from './sink.ts';
 export { record } from './writer.ts';

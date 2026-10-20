@@ -17,6 +17,7 @@ const BILLING_INVOICE_RENDER_TEST =
   'packages/core/src/jobs/definitions/billing-invoice-render.test.ts';
 const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
 const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
+const LIFECYCLE_TEST = 'packages/core/src/lifecycle/__tests__/cross-tenant.test.ts';
 const CORE_RUNTIME_TEST = 'packages/core/src/__tests__/cross-tenant/runtime.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
@@ -48,6 +49,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   saas_invoice: DB_TABLES_TEST,
   saas_invoice_line: DB_TABLES_TEST,
   matter_restriction: DB_TABLES_TEST,
+  export_job: DB_TABLES_TEST,
+  deletion_job: DB_TABLES_TEST,
+  support_session: DB_TABLES_TEST,
 };
 
 /**
@@ -75,6 +79,8 @@ export interface ServiceEntry {
 const denies = { test: CORE_SERVICES_TEST, kind: 'denies' } as const;
 const empty = { test: CORE_SERVICES_TEST, kind: 'rls-empty' } as const;
 const selfScoped = { test: CORE_SERVICES_TEST, kind: 'self-scoped' } as const;
+const lifecycleDenies = { test: LIFECYCLE_TEST, kind: 'denies' } as const;
+const lifecycleEmpty = { test: LIFECYCLE_TEST, kind: 'rls-empty' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
@@ -184,6 +190,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'record() wrapper (#228); pins the event workspace like record()',
   },
+  recordSupportView: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#308); pins the event workspace like record()',
+  },
   verifyChain: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -200,6 +211,33 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   restrictMatter: denies,
   assertMatterReadable: denies,
+  // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
+  requestSession: denies,
+  grantSession: denies,
+  denySession: denies,
+  revokeSession: denies,
+  assertActiveSupportSession: denies,
+  withSupportSession: denies,
+  isActiveStaff: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads the global staff_user table only; no tenant rows',
+  },
+  expireSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system sweep through app_expire_support_sessions(); touches only elapsed grants',
+  },
+  endStaffSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "sweep through app_end_staff_support_sessions(); touches only that staff member's sessions",
+  },
+  supportSessionExpire: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job; runs expireSupportSessions',
+  },
   enqueueNotificationDelivery: {
     test: CORE_SERVICES_TEST,
     kind: 'caller-checked',
@@ -269,6 +307,17 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
     note: 'opens withWorkspace on the given workspace id (worker fairness gate); other scope throws TenancyError',
+  },
+  // lifecycle: workspace export (#301)
+  requestExport: lifecycleDenies,
+  issueExportDownload: lifecycleDenies,
+  openExportDownload: lifecycleDenies,
+  getExportJob: lifecycleEmpty,
+  listExportJobs: lifecycleEmpty,
+  runExportBuild: {
+    test: LIFECYCLE_TEST,
+    kind: 'self-scoped',
+    note: 'export.build: reads and writes only the payload workspace, each page inside withWorkspace',
   },
 };
 
@@ -344,6 +393,12 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   contentFieldViolations: 'pure payload lint',
   createRegistry: 'pure (builds a job map)',
   registry: 'job definition map',
+  // support sessions (#308): constants and error class
+  SUPPORT_GRANT_DEFAULT_MINUTES: 'constant',
+  SUPPORT_GRANT_MAX_MINUTES: 'constant',
+  SUPPORT_REASON_MAX_LENGTH: 'constant',
+  SUPPORT_ACTOR_ROLE: 'constant',
+  SupportSessionInactiveError: 'error class',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',
   RetryableError: 'error class',
@@ -411,6 +466,23 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
   // usage: ai_call reconciliation (#225)
   reconcileAiCallsSql: 'pure (SQL builder; reconcileAiCalls runs it inside withWorkspace)',
+  // lifecycle: export registry, plan, manifest and constants (#301)
+  CSV_TABLES: 'constant',
+  EXPORT_EXCLUSIONS: 'constant (documented exclusions)',
+  exportCoverage: 'pure (registry vs tenant tables)',
+  exporterFor: 'pure registry lookup',
+  registeredExporters: 'pure registry read',
+  registerExporter: 'extension point (process-wide registry, no database access)',
+  MANIFEST_PATH: 'constant',
+  MANIFEST_VERSION: 'constant',
+  README_PATH: 'constant',
+  verifyManifest: 'pure',
+  planExport: 'pure',
+  EXPORT_TTL_MS: 'constant',
+  exportFilename: 'pure',
+  EXPORT_HISTORY_LIMIT: 'constant',
+  EXPORT_TOKEN_NONCE_BYTES: 'constant',
+  readExportToken: 'pure (HMAC check)',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;
@@ -500,6 +572,9 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'caller-checked',
     note: "recordAccessDenied on the app db; guard sets member from memberRoleFor, a non-member's denial never lands in that workspace chain",
   },
+  requestExportFor: runtimeDenies,
+  issueExportDownloadFor: runtimeDenies,
+  openExportDownloadFor: runtimeDenies,
   loadNotificationPreferences: runtimeDenies,
   subscribePush: {
     test: CORE_RUNTIME_TEST,

@@ -3,7 +3,10 @@
 // and Audit log) and hides what the role cannot open; a direct URL to a hidden section shows the
 // permission-denied page. Layout: a scrollable segmented strip at 360 (no page-level horizontal
 // scroll), a 200 px sticky sub-nav with a 560 px column at 768, 220/640 px from 1280. Offline,
-// the settings banner appears. `@a11y` tests run axe on the page they end on.
+// the settings banner appears. #288: the export page (disabled `Export workspace` with the
+// `Coming from export service` tooltip) and the danger zone (transfer links to the members picker,
+// delete disabled with its reason) are owner-only; members, notifications, export and danger never
+// scroll sideways and show one offline banner. `@a11y` tests run axe on the page they end on.
 import type { Page } from '@playwright/test';
 
 import { expect, test, type E2eRole } from '../../fixtures/index.ts';
@@ -94,17 +97,97 @@ test.describe('settings shell', () => {
   );
 
   test(
-    'the danger zone is owner-only with disabled, explained actions',
+    'the danger zone keeps delete disabled with a reason you can reach by keyboard',
     { tag: '@a11y' },
     async ({ page, asUser }) => {
       await openSettings(page, asUser, 'owner', 'settings/danger');
       const zone = page.locator('[data-slot="danger-zone"]');
       await expect(zone).toBeVisible();
-      for (const name of ['Transfer ownership', 'Delete workspace']) {
-        await expect(zone.getByRole('button', { name })).toBeDisabled();
-      }
+      const remove = zone.getByRole('button', { name: 'Delete workspace' });
+      await expect(remove).toBeDisabled();
+      const reason = 'Available once the export and deletion service is ready.';
+      await expect(remove).toHaveAccessibleDescription(new RegExp(reason));
+      await zone.locator('[data-slot="disabled-with-reason"]').focus();
+      await expect(page.getByRole('tooltip')).toHaveText(reason);
+      await expect(zone.getByRole('link', { name: 'Export first' })).toHaveAttribute(
+        'href',
+        `/w/${SHELL_WORKSPACE}/settings/export`,
+      );
     },
   );
+
+  test(
+    'transfer ownership opens the members picker, then the two-step transfer',
+    { tag: '@a11y' },
+    async ({ page, asUser }) => {
+      await openSettings(page, asUser, 'owner', 'settings/danger');
+      await page
+        .locator('[data-slot="danger-zone"]')
+        .getByRole('link', { name: 'Transfer ownership' })
+        .click();
+      await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/settings/members`));
+      const picker = page.getByRole('dialog', { name: 'Transfer ownership' });
+      await expect(picker).toBeVisible();
+      await picker.getByRole('button', { name: 'Continue' }).click();
+      // axe runs with the change-role dialog open.
+      await expect(page.getByRole('dialog', { name: 'Change role' })).toBeVisible();
+    },
+  );
+
+  test(
+    'export explains the ZIP; the button waits for the export service',
+    { tag: '@a11y' },
+    async ({ page, asUser }) => {
+      await openSettings(page, asUser, 'owner', 'settings/export');
+      await expect(page.getByRole('heading', { name: 'Export workspace data' })).toBeVisible();
+      const button = page.getByRole('button', { name: 'Export workspace' });
+      await expect(button).toBeDisabled();
+      await expect(button).toHaveAccessibleDescription(/Coming from export service/);
+      await page.locator('[data-slot="disabled-with-reason"]').hover();
+      await expect(page.getByRole('tooltip')).toHaveText('Coming from export service');
+    },
+  );
+
+  for (const role of ['advocate', 'clerk'] as const) {
+    test(`export and danger are denied to a ${role} by direct URL`, async ({ page, asUser }) => {
+      for (const section of ['export', 'danger']) {
+        await openSettings(page, asUser, role, `settings/${section}`);
+        await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText(
+          'No access',
+        );
+      }
+    });
+  }
+
+  for (const section of ['members', 'notifications', 'export', 'danger']) {
+    test(`${section} never scrolls sideways`, async ({ page, asUser }) => {
+      await openSettings(page, asUser, 'owner', `settings/${section}`);
+      const overflow = await page.evaluate(() => {
+        const root = document.documentElement;
+        return root.scrollWidth - root.clientWidth;
+      });
+      expect(overflow).toBeLessThanOrEqual(0);
+    });
+  }
+
+  for (const section of ['members', 'export', 'danger']) {
+    test(`offline: ${section} is read-only under one banner`, async ({ page, asUser }) => {
+      await openSettings(page, asUser, 'owner', `settings/${section}`);
+      await page.context().setOffline(true);
+      await expect(page.getByText('Settings can be changed when you are back online.')).toHaveCount(
+        1,
+      );
+      // The page-level shell banner would be a second one.
+      await expect(page.getByText(/You are offline\. Showing saved data/)).toHaveCount(0);
+      if (section === 'export') {
+        await expect(page.getByRole('button', { name: 'Export workspace' })).toBeDisabled();
+      }
+      if (section === 'danger') {
+        await expect(page.getByRole('button', { name: 'Transfer ownership' })).toBeDisabled();
+      }
+      await page.context().setOffline(false);
+    });
+  }
 
   test('layout matches the viewport and never scrolls sideways', async ({ page, asUser }) => {
     await openSettings(page, asUser, 'owner', 'settings/profile');

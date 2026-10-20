@@ -35,6 +35,11 @@ export const AUDIT_ACTIONS = {
   'auth.session_revoked': { security: true, description: 'A session was revoked' },
   'support.session_started': { security: true, description: 'A support session started' },
   'support.session_ended': { security: true, description: 'A support session ended' },
+  // Fail-closed: a support read whose audit event cannot be written is not served (#308).
+  'support.view': {
+    security: true,
+    description: 'Staff read workspace content in a support session',
+  },
   'access.denied': { security: true, description: 'An action was denied' },
   'usage.budget_override_set': {
     security: true,
@@ -59,6 +64,14 @@ export const AUDIT_ACTIONS = {
   },
   // Fail-closed: an export whose own audit event cannot be written is refused (#229).
   'audit.exported': { security: true, description: 'The audit log was exported' },
+  // Workspace data export (#301): fail-closed, so an export or download that cannot be audited is
+  // refused.
+  'export.requested': { security: true, description: 'An owner requested a workspace data export' },
+  'export.download_link_issued': {
+    security: true,
+    description: 'A download link for a workspace data export was issued to its requester',
+  },
+  'export.downloaded': { security: true, description: 'A workspace data export was downloaded' },
   // Metadata names the changed fields only, never their values (#284).
   'workspace.profile_updated': {
     security: false,

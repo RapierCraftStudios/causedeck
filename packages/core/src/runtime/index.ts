@@ -24,6 +24,13 @@ import type {
 } from '../audit/index.ts';
 import type { InvoicePdfContext, SaasInvoicePdf } from '../billing/index.ts';
 import type {
+  ExportDownload,
+  ExportDownloadDeps,
+  ExportDownloadLink,
+  ExportJob,
+  ExportRequestCtx,
+} from '../lifecycle/index.ts';
+import type {
   AcceptInvitationRequest,
   AcceptedInvitation,
   CreateWorkspaceRequest,
@@ -122,13 +129,40 @@ export async function acceptInvitationFor(
   return acceptInvitation(db, request);
 }
 
-/** Members and pending invitations, read in one workspace-scoped transaction. */
-export async function loadMembersPage(scope: RuntimeScope) {
-  const { listMembers, listPendingInvitations } = await import('../workspaces/index.ts');
-  return inWorkspace(scope, async (tx) => ({
-    members: await listMembers(tx, scope.workspaceId),
-    invitations: await listPendingInvitations(tx, scope.workspaceId),
-  }));
+/** Seats in use (active members by role) against the plan's `seats` and `clerk_seats`. */
+export interface MembersSeatSummary {
+  used: { total: number; clerk: number; nonClerk: number };
+  granted: { seats: number; clerkSeats: number };
+}
+
+/**
+ * Members, pending invitations and the seat summary at `now`, read in one workspace-scoped
+ * transaction. The seat read runs in a savepoint: if the plan cannot be read, `seats` is `null`
+ * and the members list still loads.
+ */
+export async function loadMembersPage(scope: RuntimeScope, now: Date = new Date()) {
+  const [
+    { countBillableSeats, listMembers, listPendingInvitations },
+    { getWorkspaceEntitlements },
+  ] = await Promise.all([import('../workspaces/index.ts'), import('../billing/index.ts')]);
+  return inWorkspace(scope, async (tx) => {
+    const members = await listMembers(tx, scope.workspaceId);
+    const invitations = await listPendingInvitations(tx, scope.workspaceId);
+    let seats: MembersSeatSummary | null;
+    try {
+      seats = await tx.transaction(async (sp) => {
+        const { total, clerk, nonClerk } = await countBillableSeats(sp, scope.workspaceId);
+        const entitlements = await getWorkspaceEntitlements(sp, scope.workspaceId, now);
+        return {
+          used: { total, clerk, nonClerk },
+          granted: { seats: entitlements.seats, clerkSeats: entitlements.clerk_seats },
+        };
+      });
+    } catch {
+      seats = null;
+    }
+    return { members, invitations, seats };
+  });
 }
 
 /** The workspace's members, read in its scope. */
@@ -216,6 +250,43 @@ export async function exportAuditFor(
 export async function recordAccessDeniedFor(event: AccessDeniedEvent): Promise<void> {
   const { recordAccessDenied } = await import('../audit/index.ts');
   return recordAccessDenied(db, event);
+}
+
+// lifecycle: workspace export (#301)
+
+/** Request an export (owners only) and enqueue `export.build` for it. */
+export async function requestExportFor(
+  ctx: Omit<ExportRequestCtx, 'db'>,
+  input: { scope: 'workspace' | 'user' },
+): Promise<ExportJob> {
+  const [{ requestExport }, { enqueue }] = await Promise.all([
+    import('../lifecycle/index.ts'),
+    import('../jobs/index.ts'),
+  ]);
+  return requestExport({ db, ...ctx }, input, {
+    enqueue: (job) => enqueue('export.build', job),
+  });
+}
+
+/** A signed download link for the requester's ready export (`NOT_FOUND` otherwise). */
+export async function issueExportDownloadFor(
+  ctx: Omit<ExportRequestCtx, 'db'>,
+  jobId: string,
+  options: { secret: string },
+): Promise<ExportDownloadLink> {
+  const { issueExportDownload } = await import('../lifecycle/index.ts');
+  return issueExportDownload({ db, ...ctx }, jobId, options);
+}
+
+/** The requester's export as a decrypted stream, after the token and audit checks. */
+export async function openExportDownloadFor(
+  ctx: Omit<ExportRequestCtx, 'db'>,
+  jobId: string,
+  token: string,
+  deps: ExportDownloadDeps,
+): Promise<ExportDownload> {
+  const { openExportDownload } = await import('../lifecycle/index.ts');
+  return openExportDownload({ db, ...ctx }, jobId, token, deps);
 }
 
 // notifications, push, uploads, flags

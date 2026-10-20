@@ -1,17 +1,20 @@
 // `/w/[slug]/settings/members` (#181): who is in the workspace, with what role, and pending
 // invitations. Every member may look; what they may change is decided per role in the client view
-// and enforced again by the domain service behind each server action. The settings shell and its
-// navigation arrive in #25.
+// and enforced again by the domain service behind each server action. It renders inside the
+// settings shell (#284), whose banner covers the offline state. #288 adds the seat summary, the
+// members / pending invitations tabs and the roles explainer below 1280; `?transfer=1` (the danger
+// zone's `Transfer ownership`) opens the transfer picker for an owner.
 //
 // States: loading (six skeleton rows while the list streams in), error (`Could not load members.`
-// with `Try again`), empty (only the caller, no invitations), offline and permission-denied (in the
-// client view). `?__state=loading|error` previews the first two in development, like the shell.
+// with `Try again`), empty (only the caller; no pending invitations), offline (read-only, the
+// settings banner) and permission-denied (in the client view). If only the seat read fails, the
+// list still renders without the seat card. `?__state=loading|error` previews the first two in
+// development, like the shell.
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
-import { ShellOfflineBanner } from '../../../../../../components/shell/offline-banner.tsx';
 import { isDev } from '../../../../../../lib/env.ts';
 import type { Role, WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
@@ -33,6 +36,7 @@ import {
   MembersView,
   type InvitationRow,
   type MemberRow,
+  type SeatSummary,
 } from './members-table.tsx';
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -66,12 +70,23 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('metaTitle') };
 }
 
-/** Members and pending invitations, read on one workspace-scoped transaction (`loadMembersPage`). */
-async function loadMembers(
-  context: WorkspaceContext,
-): Promise<{ members: MemberRow[]; invitations: InvitationRow[] }> {
+/** `?transfer=1`: open the ownership transfer picker (the danger zone's entry point). */
+function wantsTransfer(searchParams: SearchParams): boolean {
+  const value = searchParams.transfer;
+  return (Array.isArray(value) ? value[0] : value) === '1';
+}
+
+/**
+ * Members, pending invitations and the seat summary, read on one workspace-scoped transaction
+ * (`loadMembersPage`). `seats` is `null` when the plan could not be read.
+ */
+async function loadMembers(context: WorkspaceContext): Promise<{
+  members: MemberRow[];
+  invitations: InvitationRow[];
+  seats: SeatSummary | null;
+}> {
   const { loadMembersPage } = await import('@causedeck/core/runtime');
-  const { members, invitations } = await loadMembersPage({
+  const { members, invitations, seats } = await loadMembersPage({
     workspaceId: context.workspace.id,
     userId: context.user.id,
   });
@@ -82,15 +97,25 @@ async function loadMembers(
     invitations: invitations.flatMap(({ id, email, role, invitedAt, expiresAt }) =>
       isRole(role) ? [{ id, email, role, invitedAt, expiresAt }] : [],
     ),
+    seats: seats
+      ? {
+          used: seats.used.nonClerk,
+          granted: seats.granted.seats,
+          clerkUsed: seats.used.clerk,
+          clerkGranted: seats.granted.clerkSeats,
+        }
+      : null,
   };
 }
 
 async function MembersSection({
   context,
   failOnPurpose,
+  openTransfer,
 }: {
   context: WorkspaceContext;
   failOnPurpose: boolean;
+  openTransfer: boolean;
 }) {
   let data: Awaited<ReturnType<typeof loadMembers>>;
   try {
@@ -100,12 +125,15 @@ async function MembersSection({
     if (!failOnPurpose) logger.error({ err: error }, 'members page: could not load members');
     return <MembersError />;
   }
+  if (!data.seats) logger.warn('members page: could not read the seat summary');
   return (
     <MembersView
       workspace={context.workspace}
       viewer={{ userId: context.user.id, role: context.role }}
       members={data.members}
       invitations={data.invitations}
+      seats={data.seats}
+      openTransfer={openTransfer}
       actions={{
         invite: inviteMembersAction,
         changeRole: changeRoleAction,
@@ -130,7 +158,6 @@ export default async function MembersPage({ params, searchParams }: MembersPageP
 
   return (
     <div data-route="members" className="flex flex-col gap-6">
-      <ShellOfflineBanner />
       <header className="flex flex-col gap-1">
         <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
         <p className="text-ink-muted text-sm">
@@ -141,7 +168,11 @@ export default async function MembersPage({ params, searchParams }: MembersPageP
         <MembersSkeleton />
       ) : (
         <Suspense fallback={<MembersSkeleton />}>
-          <MembersSection context={context} failOnPurpose={state === 'error'} />
+          <MembersSection
+            context={context}
+            failOnPurpose={state === 'error'}
+            openTransfer={wantsTransfer(query)}
+          />
         </Suspense>
       )}
     </div>

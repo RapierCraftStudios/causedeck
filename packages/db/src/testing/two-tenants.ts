@@ -15,6 +15,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
@@ -24,6 +25,7 @@ import {
   usageReservation,
 } from '../schema/usage.ts';
 import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
+import { supportSession } from '../schema/staff.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
@@ -268,6 +270,17 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     );
     return { id: row.id, matterId: row.matterId };
   },
+  support_session: async (tx, { workspaceId, ownerId }) => {
+    // A pending request; the requester's staff_user row is not needed at the SQL level.
+    const row = first(
+      await tx
+        .insert(supportSession)
+        .values({ workspaceId, requestedByStaff: ownerId, reason: 'Seed support request' })
+        .returning({ id: supportSession.id }),
+      'support_session',
+    );
+    return { id: row.id };
+  },
   workspace_key: async (tx, { workspaceId }) => {
     // Opaque bytes standing in for a wrapped DEK; the table never sees a plaintext key.
     await tx
@@ -311,6 +324,26 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: saasInvoiceLine.id });
     return { invoiceId, lineId: first(rows, 'saas_invoice_line').id };
+  },
+  export_job: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(exportJob)
+        .values({ workspaceId, requestedBy: ownerId, scope: 'workspace', status: 'failed' })
+        .returning({ id: exportJob.id }),
+      'export_job',
+    );
+    return { id: row.id };
+  },
+  deletion_job: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(deletionJob)
+        .values({ workspaceId, kind: 'workspace', requestedBy: ownerId, status: 'cancelled' })
+        .returning({ id: deletionJob.id }),
+      'deletion_job',
+    );
+    return { id: row.id };
   },
 };
 

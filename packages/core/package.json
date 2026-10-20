@@ -9,8 +9,10 @@
     "./audit": "./src/audit/index.ts",
     "./billing": "./src/billing/index.ts",
     "./jobs": "./src/jobs/index.ts",
+    "./lifecycle": "./src/lifecycle/index.ts",
     "./matters": "./src/matters/index.ts",
     "./runtime": "./src/runtime/index.ts",
+    "./support": "./src/support/index.ts",
     "./usage": "./src/usage/index.ts",
     "./workspaces": "./src/workspaces/index.ts"
   },
@@ -30,12 +32,14 @@
     "@causedeck/observability": "workspace:*",
     "@causedeck/storage": "workspace:*",
     "@causedeck/validators": "workspace:*",
+    "archiver": "catalog:",
     "drizzle-orm": "catalog:",
     "pg-boss": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@opentelemetry/sdk-trace-base": "catalog:",
+    "@types/archiver": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",

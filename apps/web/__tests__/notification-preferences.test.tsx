@@ -394,6 +394,20 @@ describe('PreferencesForm', () => {
     ).toBe('true');
   });
 
+  it('shows the empty state when no categories are returned (#288)', () => {
+    form({ preferences: [] });
+    const empty = document.querySelector('[data-slot="preferences-empty"]');
+    expect(empty?.getAttribute('data-pattern-state')).toBe('empty');
+    expect(empty?.textContent).toContain(en.empty);
+    expect(matrix().className).toBe('hidden');
+    expect(cards().className).toBe('hidden');
+  });
+
+  it('shows no empty state when there are categories', () => {
+    form();
+    expect(document.querySelector('[data-slot="preferences-empty"]')).toBeNull();
+  });
+
   it('does not save anything on load', () => {
     const actions = form();
     for (const fn of Object.values(actions)) expect(fn).not.toHaveBeenCalled();

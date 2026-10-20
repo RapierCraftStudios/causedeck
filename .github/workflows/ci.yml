@@ -164,3 +164,7 @@ jobs:
       - name: Cross-tenant suite
         timeout-minutes: 4
         run: pnpm test:tenancy
+      # Export completeness (#301): every tenant table has an exporter or a documented exclusion.
+      - name: Export coverage
+        timeout-minutes: 3
+        run: pnpm test:export-coverage

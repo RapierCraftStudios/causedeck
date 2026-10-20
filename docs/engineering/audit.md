@@ -14,17 +14,17 @@ AUDIT_BENCH=1 pnpm --filter @causedeck/core exec vitest run src/audit/__tests__/
 
 ## Layout
 
-| Path                                  | What                                                                                                              |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `packages/core/src/audit/events.ts`   | `AUDIT_ACTIONS` registry, `AuditAction`, `AuditEventInput`, `AuditContext`                                        |
-| `packages/core/src/audit/writer.ts`   | `record(ctx, input)`                                                                                              |
-| `packages/core/src/audit/redact.ts`   | `assertRedacted`, `AUDIT_BANNED_METADATA_KEYS`, `hashUserAgent`, `truncateIpForDisplay`                           |
-| `packages/core/src/audit/chain.ts`    | `verifyChain(db, workspaceId, range)`                                                                             |
-| `packages/core/src/audit/sink.ts`     | `recordAuditSink`, the default `AuditSink` behind `offboardMember` (`member.removed`)                             |
-| `packages/core/src/audit/ai-call.ts`  | `ai_call` writer contract for the AI gateway (#44): `AiCallInput`, `recordAiCall`                                 |
-| `packages/core/src/audit/query.ts`    | `authorizeAuditRead`, `queryAudit` (activity feed, #229)                                                          |
-| `packages/core/src/audit/export.ts`   | `exportAudit`, `AUDIT_EXPORT_COLUMNS` (CSV / JSON Lines stream, #229)                                             |
-| `apps/web/app/api/audit/export/route.ts` | Signed-link download of the export (#229); token helper in `apps/web/lib/audit-export-token.ts`                |
+| Path                                     | What                                                                                            |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `packages/core/src/audit/events.ts`      | `AUDIT_ACTIONS` registry, `AuditAction`, `AuditEventInput`, `AuditContext`                      |
+| `packages/core/src/audit/writer.ts`      | `record(ctx, input)`                                                                            |
+| `packages/core/src/audit/redact.ts`      | `assertRedacted`, `AUDIT_BANNED_METADATA_KEYS`, `hashUserAgent`, `truncateIpForDisplay`         |
+| `packages/core/src/audit/chain.ts`       | `verifyChain(db, workspaceId, range)`                                                           |
+| `packages/core/src/audit/sink.ts`        | `recordAuditSink`, the default `AuditSink` behind `offboardMember` (`member.removed`)           |
+| `packages/core/src/audit/ai-call.ts`     | `ai_call` writer contract for the AI gateway (#44): `AiCallInput`, `recordAiCall`               |
+| `packages/core/src/audit/query.ts`       | `authorizeAuditRead`, `queryAudit` (activity feed, #229)                                        |
+| `packages/core/src/audit/export.ts`      | `exportAudit`, `AUDIT_EXPORT_COLUMNS` (CSV / JSON Lines stream, #229)                           |
+| `apps/web/app/api/audit/export/route.ts` | Signed-link download of the export (#229); token helper in `apps/web/lib/audit-export-token.ts` |
 
 Everything is exported from `@causedeck/core` and `@causedeck/core/audit`.
 
@@ -33,37 +33,38 @@ Everything is exported from `@causedeck/core` and `@causedeck/core/audit`.
 Every action is named in `AUDIT_ACTIONS`. `record()` rejects an action that is not registered.
 Each action is either **security** or **informational**:
 
-| Kind          | Failed write                                                                      | IP stored |
-| ------------- | --------------------------------------------------------------------------------- | --------- |
-| security      | fail-closed: `record()` throws, so the action fails and its transaction rolls back | yes       |
+| Kind          | Failed write                                                                                                                                                          | IP stored |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| security      | fail-closed: `record()` throws, so the action fails and its transaction rolls back                                                                                    | yes       |
 | informational | fail-open: logged (`service: audit`, action, workspace and error code only) and dropped. The write ran on its own savepoint, so the caller's transaction stays usable | no        |
 
-| Action | Kind | Emitted by |
-| --- | --- | --- |
-| `member.removed`            | security      | `offboardMember` through the `AuditSink`                          |
-| `member.role_changed`       | security      | `changeRole`, `transferOwnership` (both roles)                    |
-| `flag.changed`              | security      | `flagChangeAuditSink` for `setFlagAuditSink` (#22)                |
-| `auth.sign_in`              | security      | Better Auth `databaseHooks.session.create`                        |
-| `auth.sign_in_failed`       | security      | `hooks.after`: magic-link, passkey, 2FA verify                    |
-| `auth.magic_link_requested` | security      | `hooks.after`: `/sign-in/magic-link`                              |
-| `auth.passkey_added`        | security      | `hooks.after`: `/passkey/verify-registration`                     |
-| `auth.passkey_removed`      | security      | `hooks.after`: `/passkey/delete-passkey`                          |
-| `auth.two_factor_enabled`   | security      | `databaseHooks.user.update` (`/two-factor/*`)                     |
-| `auth.two_factor_disabled`  | security      | `databaseHooks.user.update` (`/two-factor/disable`)               |
-| `auth.session_revoked`      | security      | `databaseHooks.session.delete` (revoke paths)                     |
-| `audit.exported`            | security      | `exportAudit`, before the first byte (#229); `recordExportRun`    |
-| `support.session_started`   | security      | `recordSupportSessionStarted` (#27)                               |
-| `support.session_ended`     | security      | `recordSupportSessionEnded` (#27)                                 |
-| `access.denied`             | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize` |
-| `usage.budget_override_set` | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)               |
-| `billing.subscription_changed` | security | owner billing actions (`changeSubscription`, #257) |
-| `billing.gstin_updated`     | security      | `setSubscriptionGstin` (#257)                       |
-| `billing.invoice_downloaded` | security    | `openSaasInvoicePdf`, before the first byte (#258)  |
-| `workspace.role_settings_updated` | security | `updateRoleSettings` (#285)                     |
-| `workspace.privacy_updated` | security | `updateWorkspacePrivacy` (#286)                  |
-| `workspace.settings_viewed` | informational | reserved                                                          |
-| `account.profile_updated`   | informational | `/account` `updateAccountProfileAction` via `recordAccountProfileUpdatedFor` (account-level; metadata `fields` only, #289) |
-| `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)                    |
+| Action                                | Kind          | Emitted by                                                                                                                 |
+| ------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `member.removed`                      | security      | `offboardMember` through the `AuditSink`                                                                                   |
+| `member.role_changed`                 | security      | `changeRole`, `transferOwnership` (both roles)                                                                             |
+| `flag.changed`                        | security      | `flagChangeAuditSink` for `setFlagAuditSink` (#22)                                                                         |
+| `auth.sign_in`                        | security      | Better Auth `databaseHooks.session.create`                                                                                 |
+| `auth.sign_in_failed`                 | security      | `hooks.after`: magic-link, passkey, 2FA verify                                                                             |
+| `auth.magic_link_requested`           | security      | `hooks.after`: `/sign-in/magic-link`                                                                                       |
+| `auth.passkey_added`                  | security      | `hooks.after`: `/passkey/verify-registration`                                                                              |
+| `auth.passkey_removed`                | security      | `hooks.after`: `/passkey/delete-passkey`                                                                                   |
+| `auth.two_factor_enabled`             | security      | `databaseHooks.user.update` (`/two-factor/*`)                                                                              |
+| `auth.two_factor_disabled`            | security      | `databaseHooks.user.update` (`/two-factor/disable`)                                                                        |
+| `auth.session_revoked`                | security      | `databaseHooks.session.delete` (revoke paths)                                                                              |
+| `audit.exported`                      | security      | `exportAudit`, before the first byte (#229); `recordExportRun`                                                             |
+| `support.session_started`             | security      | `recordSupportSessionStarted` (#27)                                                                                        |
+| `support.session_ended`               | security      | `recordSupportSessionEnded` (#27)                                                                                          |
+| `access.denied`                       | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize`                                                          |
+| `usage.budget_override_set`           | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)                                                                        |
+| `billing.subscription_changed`        | security      | owner billing actions (`changeSubscription`, #257)                                                                         |
+| `billing.gstin_updated`               | security      | `setSubscriptionGstin` (#257)                                                                                              |
+| `billing.invoice_downloaded`          | security      | `openSaasInvoicePdf`, before the first byte (#258)                                                                         |
+| `workspace.role_settings_updated`     | security      | `updateRoleSettings` (#285)                                                                                                |
+| `workspace.privacy_updated`           | security      | `updateWorkspacePrivacy` (#286)                                                                                            |
+| `workspace.integration_token_rotated` | security      | `rotateIntegrationToken` (#287; metadata `kind` only)                                                                      |
+| `workspace.settings_viewed`           | informational | reserved                                                                                                                   |
+| `account.profile_updated`             | informational | `/account` `updateAccountProfileAction` via `recordAccountProfileUpdatedFor` (account-level; metadata `fields` only, #289) |
+| `audit.retention_purged`              | security      | `system.audit.retention` (account chain, #230)                                                                             |
 
 Security events (#228):
 
@@ -108,12 +109,12 @@ The feed and the export are gated by `audit.read`, checked by `authorizeAuditRea
 central policy (`can()` in `@causedeck/auth/policy`) and the workspace setting
 `workspace_settings.advocates_can_read_audit` (default true):
 
-| Role                     | `audit.read`                                         |
-| ------------------------ | ---------------------------------------------------- |
-| owner                    | always                                               |
-| advocate                 | unless an owner sets `advocates_can_read_audit` false |
-| junior, clerk, viewer    | never (`FORBIDDEN`)                                  |
-| not an active member     | `NOT_FOUND` (also a missing or soft-deleted workspace) |
+| Role                  | `audit.read`                                           |
+| --------------------- | ------------------------------------------------------ |
+| owner                 | always                                                 |
+| advocate              | unless an owner sets `advocates_can_read_audit` false  |
+| junior, clerk, viewer | never (`FORBIDDEN`)                                    |
+| not an active member  | `NOT_FOUND` (also a missing or soft-deleted workspace) |
 
 The check takes no row locks. Staff get no content through it; events hold no content anyway.
 
@@ -146,21 +147,21 @@ rows with under 64 MB of heap growth).
 
 Columns, in order (`AUDIT_EXPORT_COLUMNS`):
 
-| Column            | Value                                             |
-| ----------------- | ------------------------------------------------- |
-| `id`              | event uuid                                        |
-| `created_at`      | ISO 8601 UTC, microseconds                        |
-| `actor_user_id`   | uuid or empty                                     |
-| `actor_kind`      | `user`, `staff`, `system`, `api`                  |
-| `action`          | registered action                                 |
-| `target_kind`     | or empty                                          |
-| `target_id`       | or empty                                          |
-| `outcome`         | `success`, `denied`, `error`                      |
-| `request_id`      | or empty                                          |
-| `user_agent_hash` | sha256 hex of the user agent, or empty            |
-| `metadata`        | compact JSON                                      |
-| `hash`            | chain hash, hex                                   |
-| `ip`              | owners only: truncated (`/24`, `/48`), or empty   |
+| Column            | Value                                           |
+| ----------------- | ----------------------------------------------- |
+| `id`              | event uuid                                      |
+| `created_at`      | ISO 8601 UTC, microseconds                      |
+| `actor_user_id`   | uuid or empty                                   |
+| `actor_kind`      | `user`, `staff`, `system`, `api`                |
+| `action`          | registered action                               |
+| `target_kind`     | or empty                                        |
+| `target_id`       | or empty                                        |
+| `outcome`         | `success`, `denied`, `error`                    |
+| `request_id`      | or empty                                        |
+| `user_agent_hash` | sha256 hex of the user agent, or empty          |
+| `metadata`        | compact JSON                                    |
+| `hash`            | chain hash, hex                                 |
+| `ip`              | owners only: truncated (`/24`, `/48`), or empty |
 
 - **CSV**: a header row of the column names, RFC 4180 quoting (fields with `,`, `"`, CR or LF are
   quoted, inner quotes doubled), CRLF line ends. `bom: true` prefixes a UTF-8 BOM (EF BB BF) for
@@ -178,7 +179,7 @@ Columns, in order (`AUDIT_EXPORT_COLUMNS`):
 2. `GET /api/audit/export?token=…`: the token must verify, be unexpired and belong to the signed-in
    user (else 401 `invalid_token`). `exportAudit` re-checks the permission (403 or 404) and the
    stream is returned unbuffered with `Content-Disposition: attachment;
-   filename="audit-<from>-<to>.<csv|jsonl>"`, `Cache-Control: no-store` and
+filename="audit-<from>-<to>.<csv|jsonl>"`, `Cache-Control: no-store` and
    `X-Content-Type-Options: nosniff`.
 
 The token is `base64url(payload) "." base64url(HMAC-SHA256)`, keyed by
@@ -190,7 +191,11 @@ user, range, format, BOM flag and expiry, and it is valid for 60 s (`EXPORT_TOKE
 ```ts
 await record(
   { db: tx, workspaceId, actor: { userId, kind: 'user' }, requestId, userAgent, ip },
-  { action: 'member.role_changed', target: { kind: 'member', id: memberId }, metadata: { to: 'clerk' } },
+  {
+    action: 'member.role_changed',
+    target: { kind: 'member', id: memberId },
+    metadata: { to: 'clerk' },
+  },
 );
 ```
 
@@ -270,14 +275,14 @@ The AI gateway records every model call with
 `recordAiCall(tx, workspaceId, input: AiCallInput)`, inside its workspace transaction. It returns
 `{ id }`. Fields (PRD TR-3):
 
-| Field                                         | Notes                                                                       |
-| --------------------------------------------- | --------------------------------------------------------------------------- |
-| `purpose`, `provider`, `model`, `modelVersion`, `region` | What ran, where (data residency)                                 |
-| `inputTokens`, `outputTokens`, `costPaise`    | Non-negative (CHECK `ai_call_usage_chk`)                                    |
-| `sources`                                     | `{ id, anchor? }[]` only. Any other key (such as a quote) is rejected       |
-| `confidence`                                  | 0-1, stored to three decimals                                               |
-| `automationLevel`                             | `1 \| 2 \| 3 \| 4`. L5 is rejected by the writer and by CHECK `ai_call_automation_level_chk` |
-| `autoApplied`, `userAction`, `userId`         | `userAction` is what the user did with the output                           |
+| Field                                                    | Notes                                                                                        |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `purpose`, `provider`, `model`, `modelVersion`, `region` | What ran, where (data residency)                                                             |
+| `inputTokens`, `outputTokens`, `costPaise`               | Non-negative (CHECK `ai_call_usage_chk`)                                                     |
+| `sources`                                                | `{ id, anchor? }[]` only. Any other key (such as a quote) is rejected                        |
+| `confidence`                                             | 0-1, stored to three decimals                                                                |
+| `automationLevel`                                        | `1 \| 2 \| 3 \| 4`. L5 is rejected by the writer and by CHECK `ai_call_automation_level_chk` |
+| `autoApplied`, `userAction`, `userId`                    | `userAction` is what the user did with the output                                            |
 
 `ai_call` is append-only. Record a later user action or an undo as a new row, never as an update.
 A breach of the contract throws `AiCallContractError`.

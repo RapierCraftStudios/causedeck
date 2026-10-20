@@ -84,6 +84,18 @@ export interface CreateAuthDeps {
   logger?: AuthLogger;
   /** Defaults to `noopSecurityEventRecorder`. */
   securityEvents?: SecurityEventRecorder;
+  /**
+   * Session lifetime; defaults to `SESSION_EXPIRES_IN_SECONDS` (30 days). The admin console passes
+   * 8 hours (#309). The refresh age shrinks with it, so a short session never slides to 30 days.
+   */
+  sessionExpiresInSeconds?: number;
+  /** When true, magic-link sign-in never creates a user (the admin console, #309). */
+  disableSignUp?: boolean;
+}
+
+/** Refresh age for a session lifetime: a day, or a quarter of a shorter lifetime. */
+export function sessionUpdateAgeFor(expiresInSeconds: number): number {
+  return Math.min(SESSION_UPDATE_AGE_SECONDS, Math.floor(expiresInSeconds / 4));
 }
 
 const MAGIC_LINK_VERIFY_PATH = '/magic-link/verify';
@@ -221,6 +233,8 @@ export function createAuth({
   mailer,
   logger = consoleLogger,
   securityEvents = noopSecurityEventRecorder,
+  sessionExpiresInSeconds = SESSION_EXPIRES_IN_SECONDS,
+  disableSignUp = false,
 }: CreateAuthDeps) {
   const appUrl = new URL(env.APP_URL);
   const isProduction = env.NODE_ENV === 'production';
@@ -229,7 +243,7 @@ export function createAuth({
     magicLink({
       expiresIn: MAGIC_LINK_EXPIRES_IN_SECONDS,
       storeToken: 'hashed',
-      disableSignUp: false,
+      disableSignUp,
       // Same path whether or not the address has an account (no enumeration), and the send is
       // not awaited so transport latency cannot reveal anything either.
       sendMagicLink: ({ email, url, metadata }) => {
@@ -300,8 +314,8 @@ export function createAuth({
       },
     },
     session: {
-      expiresIn: SESSION_EXPIRES_IN_SECONDS,
-      updateAge: SESSION_UPDATE_AGE_SECONDS,
+      expiresIn: sessionExpiresInSeconds,
+      updateAge: sessionUpdateAgeFor(sessionExpiresInSeconds),
     },
     advanced: {
       database: { generateId: 'uuid' },

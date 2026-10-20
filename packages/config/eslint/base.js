@@ -60,12 +60,12 @@ export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
 
 /**
  * `withoutWorkspace` (#19) drops the tenancy scope for allow-listed global tables. Only the db
- * package, the admin app and migrations may import it; everything else works inside
- * `withWorkspace` / `withUser`. A separate rule from core `no-restricted-imports`, whose per-glob
- * blocks below replace one another.
+ * package, the admin console's audited data layer (`apps/admin/lib/data`, #309) and migrations may
+ * import it; everything else works inside `withWorkspace` / `withUser`. A separate rule from core
+ * `no-restricted-imports`, whose per-glob blocks below replace one another.
  */
 const WITHOUT_WORKSPACE_MESSAGE =
-  '`withoutWorkspace` is for packages/db, apps/admin and migrations only (docs/engineering/tenancy.md). Use `withWorkspace` or `withUser`.';
+  '`withoutWorkspace` is for packages/db, the apps/admin data layer (apps/admin/lib/data) and migrations only (docs/engineering/tenancy.md). Use `withWorkspace` or `withUser`.';
 export const withoutWorkspaceImportBan = {
   paths: ['@causedeck/db', '@causedeck/db/rls'].map((name) => ({
     name,
@@ -77,7 +77,8 @@ export const withoutWorkspaceImportBan = {
 /** Where `withoutWorkspace` may be imported. */
 export const WITHOUT_WORKSPACE_ALLOWED_GLOBS = [
   '**/packages/db/**',
-  '**/apps/admin/**',
+  // The audited admin data layer (#309); the rest of apps/admin goes through it.
+  '**/apps/admin/lib/data/**',
   '**/migrations/**',
 ];
 

@@ -41,7 +41,7 @@ describe('type-safety and import rules', () => {
     expect(ruleIds(result)).not.toContain('no-restricted-syntax');
   });
 
-  it('bans importing withoutWorkspace outside packages/db, apps/admin and migrations', async () => {
+  it('bans importing withoutWorkspace outside packages/db, the admin data layer and migrations', async () => {
     const banned = await lintFixture('rules', 'apps/web/imports-without-workspace.ts');
     const restricted = banned.messages.filter(
       (m) => m.ruleId === '@typescript-eslint/no-restricted-imports',
@@ -54,6 +54,21 @@ describe('type-safety and import rules', () => {
 
     const scoped = await lintFixture('rules', 'packages/core/imports-with-workspace.ts');
     expect(ruleIds(scoped)).not.toContain('@typescript-eslint/no-restricted-imports');
+  });
+
+  it('allows withoutWorkspace in apps/admin only inside its audited data layer (#309)', async () => {
+    const dataLayer = await lintFixture(
+      'rules',
+      'apps/admin/lib/data/imports-without-workspace.ts',
+    );
+    expect(ruleIds(dataLayer)).not.toContain('@typescript-eslint/no-restricted-imports');
+
+    const outside = await lintFixture('rules', 'apps/admin/app/imports-without-workspace.ts');
+    const restricted = outside.messages.filter(
+      (m) => m.ruleId === '@typescript-eslint/no-restricted-imports',
+    );
+    expect(restricted.map((m) => m.line)).toEqual([1]);
+    expect(restricted[0]?.message).toContain('the apps/admin data layer');
   });
 
   it('accepts clean code', async () => {

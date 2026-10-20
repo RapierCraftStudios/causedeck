@@ -41,6 +41,15 @@ export const AUDIT_ACTIONS = {
     description: 'Staff read workspace content in a support session',
   },
   'access.denied': { security: true, description: 'An action was denied' },
+  // Admin console (#309). Fail-closed: a staff metadata read that cannot be audited is not run.
+  'staff.read': {
+    security: true,
+    description: 'Staff read platform metadata in the admin console',
+  },
+  'staff.two_factor_verified': {
+    security: true,
+    description: 'Staff passed the admin console two-factor step for a session',
+  },
   'usage.budget_override_set': {
     security: true,
     description: 'A staff member set a workspace AI budget override',

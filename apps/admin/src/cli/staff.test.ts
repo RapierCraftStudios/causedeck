@@ -18,7 +18,16 @@ import { testDatabaseUrls } from '@causedeck/db/testing';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { addStaff, disableStaff, parseStaffArgs, runStaffCli, StaffCliError } from './staff';
+import { DEV_STAFF_EMAIL } from '../../lib/roles.ts';
+
+import {
+  addStaff,
+  disableStaff,
+  parseStaffArgs,
+  runStaffCli,
+  seedDevStaff,
+  StaffCliError,
+} from './staff';
 
 const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
 const THIS_CLI = path.join(REPO_ROOT, 'apps/admin/src/cli/staff.ts');
@@ -81,6 +90,7 @@ describe('parseStaffArgs', () => {
     [['add', 'a@b.in', '--role', 'owner']],
     [['add', 'not-an-email', '--role', 'ops']],
     [['remove', 'a@b.in']],
+    [['seed-dev', 'a@b.in']],
     [[]],
   ])('rejects %j as bad usage', (argv) => {
     expect(() => parseStaffArgs(argv)).toThrow(StaffCliError);
@@ -89,6 +99,10 @@ describe('parseStaffArgs', () => {
     } catch (error) {
       expect((error as StaffCliError).exitCode).toBe(2);
     }
+  });
+
+  it('parses seed-dev (#309)', () => {
+    expect(parseStaffArgs(['seed-dev'])).toEqual({ command: 'seed-dev' });
   });
 
   it('exits 2 on bad usage before touching the database', async () => {
@@ -141,6 +155,22 @@ describe('staff accounts are created only by the operator CLI', () => {
       '42501',
     );
     expect(await denied(app.execute(sql`update staff_user set role = 'admin'`))).toBe('42501');
+  });
+
+  it('seedDevStaff creates the dev staff account as admin, idempotently (#309)', async () => {
+    const first = await seedDevStaff(owner);
+    const second = await seedDevStaff(owner);
+    expect(second.userId).toBe(first.userId);
+    const [row] = await owner
+      .select({ role: schema.staffUser.role, disabledAt: schema.staffUser.disabledAt })
+      .from(schema.staffUser)
+      .where(eq(schema.staffUser.userId, first.userId));
+    expect(row).toEqual({ role: 'admin', disabledAt: null });
+    const [account] = await owner
+      .select({ email: schema.user.email })
+      .from(schema.user)
+      .where(eq(schema.user.id, first.userId));
+    expect(account?.email).toBe(DEV_STAFF_EMAIL);
   });
 
   it('no source outside this CLI writes staff_user', () => {

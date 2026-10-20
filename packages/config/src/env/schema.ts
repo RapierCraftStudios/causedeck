@@ -222,6 +222,46 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 13,
   },
+  ADMIN_URL: {
+    domain: 'server',
+    type: 'url',
+    description: 'Public URL of the staff admin console (apps/admin).',
+    devDefault: 'http://localhost:3200',
+    requiredWhen: 'NODE_ENV=production, for apps/admin only',
+    ownerIssue: 309,
+  },
+  ADMIN_IP_ALLOWLIST: {
+    domain: 'server',
+    type: 'list (comma-separated IPs/CIDRs)',
+    description:
+      'Optional client IP allowlist for apps/admin (IPv4/IPv6 addresses or CIDRs, comma-separated). Unset allows any IP.',
+    requiredWhen: 'never (set per deployment)',
+    ownerIssue: 309,
+  },
+  CF_ACCESS_AUD: {
+    domain: 'server',
+    type: 'string',
+    description:
+      'Cloudflare Access application audience tag. When set, apps/admin requires a valid Cf-Access-Jwt-Assertion.',
+    requiredWhen: 'never (set per deployment)',
+    ownerIssue: 309,
+  },
+  CF_ACCESS_TEAM_DOMAIN: {
+    domain: 'server',
+    type: 'host',
+    description:
+      'Cloudflare Access team domain that signs the JWT, e.g. team.cloudflareaccess.com.',
+    requiredWhen: 'CF_ACCESS_AUD is set',
+    ownerIssue: 309,
+  },
+  ADMIN_ENV_LABEL: {
+    domain: 'server',
+    type: 'enum(development|staging|production)',
+    description:
+      'Environment tag shown in the admin console strip. Defaults to production when NODE_ENV=production, else development.',
+    requiredWhen: 'never',
+    ownerIssue: 309,
+  },
   BILLING_SUPPLIER_LEGAL_NAME: {
     domain: 'server',
     type: 'string',
@@ -310,6 +350,14 @@ export const sharedShape = {
 
 const postgresUrl = z.url({ protocol: /^postgres(ql)?$/ });
 
+const ipOrCidr = z.union([z.ipv4(), z.ipv6(), z.cidrv4(), z.cidrv6()]);
+
+/** `ADMIN_IP_ALLOWLIST`: one or more comma-separated IPv4/IPv6 addresses or CIDRs. */
+export function isIpAllowlist(value: string): boolean {
+  const entries = value.split(',').map((entry) => entry.trim());
+  return entries.length > 0 && entries.every((entry) => ipOrCidr.safeParse(entry).success);
+}
+
 export const serverShape = {
   DATABASE_URL: secret(postgresUrl).describe(d(serverKeys.DATABASE_URL)),
   DATABASE_URL_OWNER: secret(postgresUrl).optional().describe(d(serverKeys.DATABASE_URL_OWNER)),
@@ -337,6 +385,23 @@ export const serverShape = {
   API_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.API_PORT)),
   WORKER_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.WORKER_PORT)),
   GIT_SHA: z.string().min(1).optional().describe(d(serverKeys.GIT_SHA)),
+  // The staff admin console (#309); its own accessor requires ADMIN_URL in production.
+  ADMIN_URL: z.url().optional().describe(d(serverKeys.ADMIN_URL)),
+  ADMIN_IP_ALLOWLIST: z
+    .string()
+    .refine(isIpAllowlist, 'must be comma-separated IPv4/IPv6 addresses or CIDRs')
+    .optional()
+    .describe(d(serverKeys.ADMIN_IP_ALLOWLIST)),
+  CF_ACCESS_AUD: z.string().min(1).optional().describe(d(serverKeys.CF_ACCESS_AUD)),
+  CF_ACCESS_TEAM_DOMAIN: z
+    .string()
+    .regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i, 'must be a host name, e.g. team.cloudflareaccess.com')
+    .optional()
+    .describe(d(serverKeys.CF_ACCESS_TEAM_DOMAIN)),
+  ADMIN_ENV_LABEL: z
+    .enum(['development', 'staging', 'production'])
+    .optional()
+    .describe(d(serverKeys.ADMIN_ENV_LABEL)),
   // Checked when an invoice is issued (`@causedeck/billing/config/supplier`), not at boot.
   BILLING_SUPPLIER_LEGAL_NAME: z
     .string()
@@ -419,6 +484,10 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
       'SES_REGION',
       `must be an India region (${INDIA_AWS_REGIONS.join(', ')}) unless AWS_REGION_OVERRIDE_ACK=${OVERRIDE_ACK}`,
     );
+  }
+
+  if (env.CF_ACCESS_AUD !== undefined && env.CF_ACCESS_TEAM_DOMAIN === undefined) {
+    add('CF_ACCESS_TEAM_DOMAIN', 'is required when CF_ACCESS_AUD is set');
   }
 
   if (!isProd) return issues;

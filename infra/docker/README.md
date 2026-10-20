@@ -98,3 +98,13 @@ Nothing connects to Postgres until the first request that needs it, so `/healthz
 - **Init SQL changes do not apply.** Scripts in `postgres/init/` run only when the `pgdata` volume is first created. Run `pnpm stack:reset` and then `pnpm stack:up`.
 - **`stack:up` times out on a healthcheck.** `docker compose -f infra/docker/compose.dev.yml logs <service>` shows why. A corrupt volume is fixed with `pnpm stack:reset`.
 - **`stack:reset` refuses to run in a script.** It needs a terminal for the prompt. Pass `--yes` (`pnpm stack:reset --yes`) when deleting the data is intended.
+
+## Admin image
+
+`infra/docker/admin.Dockerfile` builds the staff console (`apps/admin`, #309) as a Next.js standalone server. It runs as the non-root `node` user, listens on port 3200 and has a `HEALTHCHECK` on `/healthz`. Exposure (Cloudflare Access, `ADMIN_IP_ALLOWLIST`) is set per deployment at runtime, never baked in; see [docs/engineering/admin-console.md](../../docs/engineering/admin-console.md).
+
+```sh
+docker build -f infra/docker/admin.Dockerfile --build-arg ADMIN_URL=https://admin.example.test -t causedeck-admin .
+docker run --rm -p 127.0.0.1:3200:3200 --env-file .env.admin causedeck-admin
+curl -s http://127.0.0.1:3200/healthz
+```

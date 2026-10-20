@@ -3,7 +3,7 @@
 // shared migrated test database through their own app-role pool, in fresh two-tenant workspaces
 // that `cleanup` deletes again (every tenant row cascades from the workspace).
 import { Secret } from '@causedeck/config/env';
-import { createDb, schema, withWorkspace, type Database } from '@causedeck/db';
+import { createDb, schema, withWorkspace, type Database, type Queryable } from '@causedeck/db';
 import { testDatabaseUrls } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import {
@@ -56,6 +56,28 @@ export async function cleanup(db: Database, workspaceIds: readonly string[]): Pr
     );
   }
   await db.$client.end();
+}
+
+/**
+ * A live session of `userId` whose last passkey or TOTP verification was at `stepUpAt` (default:
+ * `at`, itself default now), for the step-up gate (#304). Pass a fake clock's time as `at`.
+ * Returns the session id.
+ */
+export async function stepUpSession(
+  db: Queryable,
+  userId: string,
+  {
+    at = new Date(),
+    stepUpAt = at,
+    expiresAt = new Date(at.getTime() + 24 * 60 * 60 * 1000),
+  }: { at?: Date; stepUpAt?: Date | null; expiresAt?: Date } = {},
+): Promise<string> {
+  const [row] = await db
+    .insert(schema.session)
+    .values({ token: crypto.randomUUID(), userId, expiresAt, stepUpAt })
+    .returning({ id: schema.session.id });
+  if (row === undefined) throw new Error('stepUpSession: insert returned no row');
+  return row.id;
 }
 
 export function newStore(): MemoryObjectStore {

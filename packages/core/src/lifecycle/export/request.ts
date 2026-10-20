@@ -1,6 +1,7 @@
 // Export requests and downloads (#301; docs/engineering/data-lifecycle.md).
 //
-// - `requestExport`: owners only. One export in flight per requester and workspace (a second
+// - `requestExport`: owners only, with a passkey or TOTP verification in the caller's session
+//   within 10 minutes (step-up, #304; a refusal is `FORBIDDEN` and audited). One export in flight per requester and workspace (a second
 //   request returns the running one). Records `export.requested` (fail-closed) in the same
 //   transaction, then enqueues `export.build` with ids only (through the caller's `enqueue`).
 // - `getExportJob` / `listExportJobs`: the requester's own exports in the current workspace; row-
@@ -27,6 +28,7 @@ import { z } from 'zod';
 
 import { record } from '../../audit/index.ts';
 import { notFound, requireOwner } from '../../workspaces/index.ts';
+import { assertStepUp, auditedGate } from '../step-up.ts';
 
 const { blob, exportJob } = schema;
 
@@ -61,6 +63,11 @@ export interface ExportRequestCtx {
   userAgent?: string;
   ip?: string;
   now?: () => Date;
+}
+
+/** `requestExport`'s context: the caller's Better Auth session, for the step-up check (#304). */
+export interface GatedExportRequestCtx extends ExportRequestCtx {
+  sessionId: string;
 }
 
 type Row = typeof exportJob.$inferSelect;
@@ -105,7 +112,7 @@ export interface RequestExportDeps {
 
 /** Request an export of the current workspace (`workspace`) or of the requester's own records. */
 export async function requestExport(
-  ctx: ExportRequestCtx,
+  ctx: GatedExportRequestCtx,
   { scope }: { scope: ExportScope },
   deps: RequestExportDeps,
 ): Promise<ExportJob> {
@@ -113,37 +120,40 @@ export async function requestExport(
   if (!(['workspace', 'user'] as string[]).includes(scope)) {
     throw new TypeError('requestExport: bad scope');
   }
-  const { job, created } = await withWorkspace(ctx.db, scopeOf(ctx), async (tx) => {
-    await requireOwner(tx, ctx.workspaceId, ctx.userId);
-    const [active] = await tx
-      .select()
-      .from(exportJob)
-      .where(
-        and(
-          eq(exportJob.workspaceId, ctx.workspaceId),
-          eq(exportJob.requestedBy, ctx.userId),
-          inArray(exportJob.status, ['queued', 'running']),
-        ),
-      )
-      .limit(1);
-    if (active !== undefined) return { job: active, created: false };
-    const [row] = await tx
-      .insert(exportJob)
-      .values({
-        workspaceId: ctx.workspaceId,
-        requestedBy: ctx.userId,
-        scope,
-        ...(ctx.now ? { createdAt: ctx.now() } : {}),
-      })
-      .returning();
-    if (row === undefined) throw new Error('requestExport: insert returned no row');
-    await record(auditCtx(ctx, tx), {
-      action: 'export.requested',
-      target: { kind: 'export_job', id: row.id },
-      metadata: { scope },
-    });
-    return { job: row, created: true };
-  });
+  const { job, created } = await auditedGate(ctx, 'export.request', () =>
+    withWorkspace(ctx.db, scopeOf(ctx), async (tx) => {
+      await requireOwner(tx, ctx.workspaceId, ctx.userId);
+      await assertStepUp(tx, ctx);
+      const [active] = await tx
+        .select()
+        .from(exportJob)
+        .where(
+          and(
+            eq(exportJob.workspaceId, ctx.workspaceId),
+            eq(exportJob.requestedBy, ctx.userId),
+            inArray(exportJob.status, ['queued', 'running']),
+          ),
+        )
+        .limit(1);
+      if (active !== undefined) return { job: active, created: false };
+      const [row] = await tx
+        .insert(exportJob)
+        .values({
+          workspaceId: ctx.workspaceId,
+          requestedBy: ctx.userId,
+          scope,
+          ...(ctx.now ? { createdAt: ctx.now() } : {}),
+        })
+        .returning();
+      if (row === undefined) throw new Error('requestExport: insert returned no row');
+      await record(auditCtx(ctx, tx), {
+        action: 'export.requested',
+        target: { kind: 'export_job', id: row.id },
+        metadata: { scope },
+      });
+      return { job: row, created: true };
+    }),
+  );
   if (created) {
     await deps.enqueue({ workspaceId: ctx.workspaceId, jobId: job.id });
   }

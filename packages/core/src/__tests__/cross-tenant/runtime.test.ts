@@ -45,6 +45,21 @@ const asB = () => ({ workspaceId: t.b.id, userId: t.ub });
 /** A's ids under `ub`: what a forged request would pass. */
 const forged = () => ({ workspaceId: t.a.id, userId: t.ub });
 
+/** A live session of `userId` with a fresh step-up (#304), so only the tenancy check can refuse. */
+async function steppedUp(userId: string): Promise<string> {
+  const [row] = await testAppDb()
+    .insert(schema.session)
+    .values({
+      token: randomUUID(),
+      userId,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      stepUpAt: new Date(),
+    })
+    .returning({ id: schema.session.id });
+  if (row === undefined) throw new Error('steppedUp: insert returned no row');
+  return row.id;
+}
+
 async function aMemberIds(): Promise<string[]> {
   const rows = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (s) =>
     s.select({ id: schema.member.id }).from(schema.member),
@@ -225,17 +240,24 @@ const CASES: Record<string, () => Promise<void>> = {
   requestExportFor: async () => {
     const before = await aAuditIds();
     // Refused before anything is written or enqueued: ub is not an owner of A.
-    await expectDenied(runtime.requestExportFor(forged(), { scope: 'workspace' }));
+    await expectDenied(
+      runtime.requestExportFor(
+        { ...forged(), sessionId: await steppedUp(t.ub) },
+        { scope: 'workspace' },
+      ),
+    );
     expect(await aAuditIds()).toEqual(before);
   },
   requestAccountDeletionFor: async () => {
     const before = { audit: await aAuditIds(), members: await aMemberIds() };
     // Acts on the caller's own account only: ub owns B alone, so it is refused, and A is unchanged.
     expect(
-      await runtime.requestAccountDeletionFor({ userId: t.ub }).then(
-        () => undefined,
-        (e: unknown) => (e as { code?: string }).code,
-      ),
+      await runtime
+        .requestAccountDeletionFor({ userId: t.ub, sessionId: await steppedUp(t.ub) })
+        .then(
+          () => undefined,
+          (e: unknown) => (e as { code?: string }).code,
+        ),
     ).toBe('CONFLICT');
     expect({ audit: await aAuditIds(), members: await aMemberIds() }).toEqual(before);
   },

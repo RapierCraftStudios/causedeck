@@ -134,6 +134,14 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A user requested the deletion of their account',
   },
+  // Step-up authentication (#304). Like `access.denied`, the gate logs a failed write and still
+  // refuses. Workspace chain for an owner's workspace action, account-level for account deletion.
+  // Metadata names the refused action only.
+  'auth.step_up_required': {
+    security: true,
+    description:
+      'An owner-only lifecycle action was refused: no passkey or TOTP verification in the last 10 minutes',
+  },
   'account.deletion_blocked': {
     security: true,
     description: 'An account deletion was refused: the user is the only owner of a workspace',

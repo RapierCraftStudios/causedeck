@@ -35,6 +35,7 @@ import {
   lifecycleDb,
   newStore,
   seedWorkspaces,
+  stepUpSession,
   testKeys,
 } from './fixtures.ts';
 
@@ -78,7 +79,13 @@ afterAll(async () => {
 describe('requestWorkspaceDeletion', () => {
   it('needs the exact workspace name and an owner; nothing is created otherwise', async () => {
     const ws = first.b;
-    const ctx = { db, workspaceId: ws.id, userId: first.ub, now: () => T0 };
+    const ctx = {
+      db,
+      workspaceId: ws.id,
+      userId: first.ub,
+      sessionId: await stepUpSession(db, first.ub, { at: T0 }),
+      now: () => T0,
+    };
     expect(
       await codeOf(requestWorkspaceDeletion(ctx, { confirmName: 'wrong name' }, noDelivery)),
     ).toBe('VALIDATION');
@@ -91,7 +98,12 @@ describe('requestWorkspaceDeletion', () => {
     expect(
       await codeOf(
         requestWorkspaceDeletion(
-          { db, workspaceId: ws.id, userId: first.uboth },
+          {
+            db,
+            workspaceId: ws.id,
+            userId: first.uboth,
+            sessionId: await stepUpSession(db, first.uboth),
+          },
           { confirmName: ws.name },
           noDelivery,
         ),
@@ -111,7 +123,13 @@ describe('requestWorkspaceDeletion', () => {
         return Promise.resolve(null);
       },
     };
-    const ctx = { db, workspaceId: ws.id, userId: first.ub, now: () => T0 };
+    const ctx = {
+      db,
+      workspaceId: ws.id,
+      userId: first.ub,
+      sessionId: await stepUpSession(db, first.ub, { at: T0 }),
+      now: () => T0,
+    };
     const job = await requestWorkspaceDeletion(ctx, { confirmName: ` ${ws.name} ` }, deps);
     expect(job.status).toBe('pending_cooloff');
     expect(job.cooloffUntil?.getTime()).toBe(T0.getTime() + DELETION_COOLOFF_MS);
@@ -163,7 +181,12 @@ describe('requestWorkspaceDeletion', () => {
     if (pending === null) throw new Error('expected a pending deletion');
     // A different owner than the requester cancels.
     const cancelled = await cancelWorkspaceDeletion(
-      { db, workspaceId: ws.id, userId: first.uboth },
+      {
+        db,
+        workspaceId: ws.id,
+        userId: first.uboth,
+        sessionId: await stepUpSession(db, first.uboth),
+      },
       pending.id,
       noDelivery,
     );
@@ -198,7 +221,13 @@ describe('requestWorkspaceDeletion', () => {
 describe('runWorkspaceErase', () => {
   it('erases in order, within 24 h of the cool-off end, and is idempotent', async () => {
     const ws = first.a;
-    const requestCtx = { db, workspaceId: ws.id, userId: first.ua, now: () => T0 };
+    const requestCtx = {
+      db,
+      workspaceId: ws.id,
+      userId: first.ua,
+      sessionId: await stepUpSession(db, first.ua, { at: T0 }),
+      now: () => T0,
+    };
     const job = await requestWorkspaceDeletion(requestCtx, { confirmName: ws.name }, noDelivery);
     await addSession(db, ws.id, first.ua);
     const clock = fakeClock(new Date(T0.getTime() + 14 * DAY + 60 * 60 * 1000));
@@ -297,7 +326,13 @@ describe('runWorkspaceErase', () => {
   it('resumes after the worker dies at any step and does nothing twice (kill-worker)', async () => {
     const ws = second.a;
     const job = await requestWorkspaceDeletion(
-      { db, workspaceId: ws.id, userId: second.ua, now: () => T0 },
+      {
+        db,
+        workspaceId: ws.id,
+        userId: second.ua,
+        sessionId: await stepUpSession(db, second.ua, { at: T0 }),
+        now: () => T0,
+      },
       { confirmName: ws.name },
       noDelivery,
     );
@@ -351,7 +386,13 @@ describe('runWorkspaceErase', () => {
   it('a running erase can no longer be cancelled', async () => {
     const ws = second.b;
     const job = await requestWorkspaceDeletion(
-      { db, workspaceId: ws.id, userId: second.ub, now: () => T0 },
+      {
+        db,
+        workspaceId: ws.id,
+        userId: second.ub,
+        sessionId: await stepUpSession(db, second.ub, { at: T0 }),
+        now: () => T0,
+      },
       { confirmName: ws.name },
       noDelivery,
     );
@@ -362,7 +403,7 @@ describe('runWorkspaceErase', () => {
         .where(eq(schema.deletionJob.id, job.id)),
     );
     const error = await cancelWorkspaceDeletion(
-      { db, workspaceId: ws.id, userId: second.ub },
+      { db, workspaceId: ws.id, userId: second.ub, sessionId: await stepUpSession(db, second.ub) },
       job.id,
       noDelivery,
     ).catch((e: unknown) => e);

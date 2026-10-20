@@ -354,9 +354,9 @@ export async function recordAccountProfileUpdatedFor(
 
 // lifecycle: workspace export (#301)
 
-/** Request an export (owners only) and enqueue `export.build` for it. */
+/** Request an export (owners only, fresh step-up in `sessionId`, #304) and enqueue `export.build`. */
 export async function requestExportFor(
-  ctx: Omit<ExportRequestCtx, 'db'>,
+  ctx: Omit<ExportRequestCtx, 'db'> & { sessionId: string },
   input: { scope: 'workspace' | 'user' },
 ): Promise<ExportJob> {
   const [{ requestExport }, { enqueue }] = await Promise.all([
@@ -391,7 +391,7 @@ export async function openExportDownloadFor(
 
 // lifecycle: account deletion and memory erasure (#303)
 
-/** Request the caller's account deletion and enqueue `account.delete` for it. */
+/** Request the caller's account deletion (fresh step-up in `sessionId`, #304) and enqueue `account.delete`. */
 export async function requestAccountDeletionFor(
   ctx: Omit<AccountDeletionCtx, 'db'>,
 ): Promise<AccountDeletionJob> {

@@ -21,6 +21,7 @@ import {
   RATE_LIMIT_MESSAGE,
 } from './rate-limit';
 import { ac, isRole, roles } from './roles';
+import { markStepUp } from './step-up';
 
 export const MAGIC_LINK_PATH = '/sign-in/magic-link';
 export const MAGIC_LINK_EXPIRES_IN_SECONDS = 10 * 60;
@@ -104,6 +105,11 @@ const TWO_FACTOR_VERIFY_PATHS: ReadonlySet<string> = new Set([
   '/two-factor/verify-totp',
   '/two-factor/verify-otp',
   '/two-factor/verify-backup-code',
+]);
+/** The ceremonies that count as step-up (#304): a passkey or a TOTP code, nothing else. */
+const STEP_UP_PATHS: ReadonlySet<string> = new Set([
+  PASSKEY_SIGN_IN_PATH,
+  '/two-factor/verify-totp',
 ]);
 const REVOKE_PATHS: ReadonlySet<string> = new Set([
   '/revoke-session',
@@ -227,6 +233,30 @@ export function securityEventHook(securityEvents: SecurityEventRecorder, logger:
   };
 }
 
+/** The `hooks.after` view of a request that `stepUpHook` reads. */
+export interface StepUpHookContext {
+  path: string;
+  context: {
+    returned?: unknown;
+    session?: { session: { id: string } } | null;
+    newSession?: unknown;
+  };
+}
+
+/**
+ * Step-up for a signed-in user (#304): a successful `/two-factor/verify-totp` on an existing
+ * session that did not create a new one stamps that session. Sessions created by a passkey or TOTP
+ * ceremony are stamped on creation instead (`databaseHooks.session.create.before`).
+ */
+export function stepUpHook(db: Database) {
+  return async (ctx: StepUpHookContext): Promise<void> => {
+    if (ctx.path !== '/two-factor/verify-totp' || failed(ctx.context.returned)) return;
+    const current = ctx.context.session?.session.id;
+    if (current === undefined || ctx.context.newSession) return;
+    await markStepUp(db, current, new Date());
+  };
+}
+
 export function createAuth({
   db,
   env,
@@ -316,6 +346,10 @@ export function createAuth({
       },
     },
     session: {
+      // The last passkey or TOTP verification in this session (#304, `step-up.ts`).
+      additionalFields: {
+        stepUpAt: { type: 'date', required: false, input: false },
+      },
       expiresIn: sessionExpiresInSeconds,
       updateAge: sessionUpdateAgeFor(sessionExpiresInSeconds),
     },
@@ -354,11 +388,22 @@ export function createAuth({
         }
       }),
       // Security events (#228); session, 2FA and revocation events come from `databaseHooks`.
-      after: createAuthMiddleware((ctx) => securityEventHook(securityEvents, logger)(ctx)),
+      // Then the step-up stamp for a signed-in TOTP re-verification (#304).
+      after: createAuthMiddleware(async (ctx) => {
+        await securityEventHook(securityEvents, logger)(ctx);
+        await stepUpHook(db)(ctx);
+      }),
     },
     databaseHooks: {
       session: {
         create: {
+          // A session created by a passkey or TOTP ceremony starts with a fresh step-up (#304).
+          before: (session, ctx) =>
+            Promise.resolve(
+              ctx?.path !== undefined && STEP_UP_PATHS.has(ctx.path)
+                ? { data: { ...session, stepUpAt: new Date() } }
+                : undefined,
+            ),
           after: async (session, ctx) => {
             await securityEvents.signInSucceeded({
               ...requestInfo(ctx),

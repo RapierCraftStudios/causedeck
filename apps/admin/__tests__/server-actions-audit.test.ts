@@ -31,6 +31,7 @@ vi.mock('@causedeck/db', () => ({
   withoutWorkspace: (_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) =>
     fn({}),
 }));
+vi.mock('@causedeck/flags', () => ({ listAccessModeRegistry: () => Promise.resolve([]) }));
 vi.mock('@causedeck/auth/rate-limit', () => ({ consumeRateLimit: () => Promise.resolve(true) }));
 vi.mock('next/headers', () => ({
   headers: () =>
@@ -150,6 +151,7 @@ describe('admin data layer reads', () => {
   const staff = { userId: STAFF_ID, role: 'admin' as const };
   const READS: Record<string, (data: typeof DataLayer) => Promise<unknown>> = {
     activeStaffCount: (d) => d.activeStaffCount(staff),
+    adapterRegistry: (d) => d.adapterRegistry(staff),
     searchWorkspaces: (d) => d.searchWorkspaces(staff, 'chambers'),
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),

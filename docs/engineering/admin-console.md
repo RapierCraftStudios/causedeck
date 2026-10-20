@@ -3,7 +3,7 @@
 The staff-only ops console (#27; shell, gate, headers and image in #309). Staff see platform
 metadata only; workspace content is reachable only through a consented support session (#308,
 [support-sessions](../../packages/core/src/support/index.ts)). Workspaces and audit
-arrived with #310; flags (#311), adapters (#312) and support sessions (#314) follow.
+(#310) and adapters (#312) have arrived; flags (#311) and support sessions (#314) follow.
 
 | | |
 |---|---|
@@ -104,8 +104,9 @@ Pages call `staffQuery(staff, { purpose, capability, tables }, fn)`, which:
    role). This is fail-closed: a read that cannot be audited does not run;
 3. runs `fn` in `withoutWorkspace` on the listed global tables only.
 
-Callers pass a fixed query function from `@causedeck/core` (e.g. `countActiveStaff`), never SQL
-text.
+Callers pass a fixed query function from `@causedeck/core` (e.g. `countActiveStaff`), or from the
+package that owns the global table (`listAccessModeRegistry` from `@causedeck/flags` for
+`access_mode_registry`), never SQL text.
 
 Workspace metadata and the staff audit live in tenant tables under FORCE RLS, which
 `withoutWorkspace` cannot read. Those pages call `staffCall(staff, { purpose, capability,
@@ -115,6 +116,19 @@ owner-defined function names instead of tables), then `fn` runs a `@causedeck/co
 reads go through the SECURITY DEFINER functions of migration `0032_staff_console_reads`, which
 refuse anyone but an enabled staff member ([tenancy](tenancy.md)). The data layer exports
 `searchWorkspaces`, `workspaceMetadata` and `staffAuditLog`.
+
+## Adapters
+
+`/adapters` (#312, `ops` and `admin` only) lists court adapters through an `AdapterHealthSource`
+(`apps/admin/lib/adapter-health.ts`): `list()` returns one entry per adapter resource with its
+access mode, whether it is enabled, a status (`healthy`, `degraded`, `down` or `unknown`) and when
+health was last checked. Each status is a chip with an icon and a text label.
+
+Health collection arrives with Court Graph, whose adapter-monitor implements the interface. Until
+then `registryHealthSource` reads `access_mode_registry` through the data layer
+(`adapterRegistry`, purpose `adapters.registry`) and reports every row as `unknown`, never
+checked. The page shows `No adapters registered yet.` when the registry is empty, and a
+`No health data yet` notice when no row has been checked.
 
 ## Workspaces and audit pages
 

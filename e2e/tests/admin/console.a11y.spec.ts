@@ -5,7 +5,7 @@ import { ALLOWED_HEADERS, expect, test } from '../../fixtures/index.ts';
 test.describe('admin console a11y', () => {
   test('console pages', async ({ adminAs, a11y }) => {
     const page = await adminAs('staff');
-    for (const path of ['/', '/flags', '/support']) {
+    for (const path of ['/', '/adapters', '/flags', '/support']) {
       await page.goto(path);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await a11y.expectNoViolations(page);

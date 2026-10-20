@@ -170,6 +170,41 @@ const CASES: Record<string, () => Promise<void>> = {
     await runtime.recordAccessDeniedFor({ workspaceId: t.a.id, member: false, actorUserId: t.ub });
     expect(await aAuditIds()).toEqual(before);
   },
+  loadSupportPage: async () => {
+    const page = await runtime.loadSupportPage(asB());
+    expect(page.map((s) => s.workspaceId).filter((id) => id !== t.b.id)).toEqual([]);
+    expect(page.map((s) => s.id)).not.toContain(t.a.rows.support_session?.id);
+    await expectCallerGateRefusesA();
+  },
+  activeSupportSessionIn: async () => {
+    const active = await runtime.activeSupportSessionIn(asB());
+    expect(active === null || active.workspaceId === t.b.id).toBe(true);
+    await expectCallerGateRefusesA();
+  },
+  requestSupportSessionFor: async () => {
+    // ub is not staff: refused before a row or notification is written.
+    await expectDenied(
+      runtime.requestSupportSessionFor(
+        { staffUserId: t.ub },
+        { workspaceId: t.a.id, reason: 'Probe' },
+      ),
+    );
+  },
+  grantSupportSessionFor: async () => {
+    const sessionId = t.a.rows.support_session?.id ?? '';
+    await expectDenied(runtime.grantSupportSessionFor(forged(), { sessionId }));
+    await expectDenied(runtime.grantSupportSessionFor(asB(), { sessionId }));
+  },
+  denySupportSessionFor: async () => {
+    const sessionId = t.a.rows.support_session?.id ?? '';
+    await expectDenied(runtime.denySupportSessionFor(forged(), { sessionId }));
+    await expectDenied(runtime.denySupportSessionFor(asB(), { sessionId }));
+  },
+  revokeSupportSessionFor: async () => {
+    const sessionId = t.a.rows.support_session?.id ?? '';
+    await expectDenied(runtime.revokeSupportSessionFor(forged(), { sessionId }));
+    await expectDenied(runtime.revokeSupportSessionFor(asB(), { sessionId }));
+  },
   recordAccountProfileUpdatedFor: async () => {
     const before = await aAuditIds();
     // Account-level: `ua`'s own profile change never writes into workspace A's chain.

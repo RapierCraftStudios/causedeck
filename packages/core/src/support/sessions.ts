@@ -7,8 +7,15 @@
 // flipped the row. Start and end are audited (`support.session_started` / `_ended`, actor kind
 // `staff`). Staff are the enabled rows of the global `staff_user` table, which only the operator CLI
 // writes (apps/admin `staff:add`, `staff:disable`). See docs/engineering/audit.md.
+//
+// A request notifies every active owner (#313): an in-app `security.alert` written in the request's
+// own transaction (no request exists that its owners were not told about) and, once that commits,
+// the email delivery through the caller's `enqueueDelivery` (core/runtime binds the job queue).
+// The owner's settings page reads `listSupportSessions` and the product shell banner reads
+// `activeSupportSession`.
 import { db as appDb, isUuid, schema, withWorkspace, type Queryable } from '@causedeck/db';
-import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { notify, type DeliveryJob } from '@causedeck/notifications';
+import { and, desc, eq, gt, isNull, or, sql } from 'drizzle-orm';
 
 import { recordSupportSessionEnded, recordSupportSessionStarted } from '../audit/index.ts';
 import {
@@ -50,6 +57,11 @@ export interface WorkspaceActorContext extends SupportRequestMeta {
   db: Queryable;
   userId: string;
   workspaceId: string;
+}
+
+/** A staff request also notifies the owners; `enqueueDelivery` sends their email deliveries. */
+export interface RequestSessionContext extends StaffContext {
+  enqueueDelivery: (job: DeliveryJob) => Promise<unknown>;
 }
 
 export interface RequestSessionInput {
@@ -104,9 +116,33 @@ function assertIds(...ids: string[]): void {
   if (!ids.every(isUuid)) throw sessionNotFound();
 }
 
-/** Staff ask a workspace for a support session; the owner decides. */
+/** The in-app and email copy owners get for a new request (English, like other system notices). */
+export function supportRequestCopy({
+  reason,
+  scope,
+}: {
+  reason: string;
+  scope: SupportSessionScope;
+}): { title: string; body: string } {
+  return {
+    title: 'CauseDeck support asked to view this workspace',
+    body:
+      `${scope === 'view' ? 'Read-only access to your workspace' : 'Plan and usage details only'}. ` +
+      `Reason: ${reason}. Nothing is shared unless you grant it in Settings, Support access.`,
+  };
+}
+
+/** The dedupe key of the owner notice for one request. */
+export function supportRequestDedupeKey(sessionId: string): string {
+  return `support.requested:${sessionId}`;
+}
+
+/**
+ * Staff ask a workspace for a support session; the owner decides. Every active owner is notified
+ * (`security.alert`, in-app and email) of the request.
+ */
 export async function requestSession(
-  ctx: StaffContext,
+  ctx: RequestSessionContext,
   { workspaceId, reason, scope = 'view' }: RequestSessionInput,
 ): Promise<SupportSession> {
   if (!isUuid(workspaceId)) throw notFound();
@@ -123,20 +159,54 @@ export async function requestSession(
   }
   const [workspace] = await withWorkspace(ctx.db, { workspaceId }, (tx) =>
     tx
-      .select({ id: schema.organization.id })
+      .select({ id: schema.organization.id, slug: schema.organization.slug })
       .from(schema.organization)
       .where(and(eq(schema.organization.id, workspaceId), isNull(schema.organization.deletedAt)))
       .limit(1),
   );
   if (workspace === undefined) throw notFound();
-  return withWorkspace(ctx.db, { workspaceId, userId: ctx.staffUserId }, async (tx) => {
-    const [row] = await tx
+  // Deliveries are held until the request (and its in-app notices) commit, so the delivery job
+  // never looks for a notification that is not there yet.
+  const deliveries: DeliveryJob[] = [];
+  const row = await withWorkspace(ctx.db, { workspaceId, userId: ctx.staffUserId }, async (tx) => {
+    const [inserted] = await tx
       .insert(supportSession)
       .values({ workspaceId, requestedByStaff: ctx.staffUserId, reason: trimmed, scope })
       .returning();
-    if (row === undefined) throw new Error('support_session insert returned nothing');
-    return row;
+    if (inserted === undefined) throw new Error('support_session insert returned nothing');
+    const owners = await tx
+      .select({ userId: schema.member.userId })
+      .from(schema.member)
+      .where(
+        and(
+          eq(schema.member.organizationId, workspaceId),
+          eq(schema.member.role, 'owner'),
+          eq(schema.member.status, 'active'),
+        ),
+      );
+    const copy = supportRequestCopy({ reason: trimmed, scope });
+    const notifyCtx = {
+      db: tx,
+      workspaceId,
+      enqueueDelivery: (job: DeliveryJob) => {
+        deliveries.push(job);
+        return Promise.resolve();
+      },
+    };
+    for (const { userId } of owners) {
+      await notify(notifyCtx, {
+        userId,
+        category: 'security.alert',
+        title: copy.title,
+        body: copy.body,
+        href: `/w/${workspace.slug}/settings/support`,
+        dedupeKey: supportRequestDedupeKey(inserted.id),
+      });
+    }
+    return inserted;
   });
+  for (const job of deliveries) await ctx.enqueueDelivery(job);
+  return row;
 }
 
 async function assertOwner(ctx: WorkspaceActorContext): Promise<void> {
@@ -264,6 +334,55 @@ export async function revokeSession(
     }
     return row;
   });
+}
+
+/**
+ * The workspace's support sessions an owner acts on: pending requests and granted sessions that
+ * have not expired, newest first. Denied, ended, expired and elapsed grants are left out.
+ */
+export async function listSupportSessions(
+  db: Queryable,
+  workspaceId: string,
+): Promise<SupportSession[]> {
+  if (!isUuid(workspaceId)) return [];
+  return withWorkspace(db, { workspaceId }, (tx) =>
+    tx
+      .select()
+      .from(supportSession)
+      .where(
+        and(
+          eq(supportSession.workspaceId, workspaceId),
+          or(
+            eq(supportSession.status, 'requested'),
+            and(eq(supportSession.status, 'granted'), gt(supportSession.expiresAt, sql`now()`)),
+          ),
+        ),
+      )
+      .orderBy(desc(supportSession.createdAt)),
+  );
+}
+
+/** The latest granted, unexpired session in the workspace (the shell banner), or `null`. */
+export async function activeSupportSession(
+  db: Queryable,
+  workspaceId: string,
+): Promise<SupportSession | null> {
+  if (!isUuid(workspaceId)) return null;
+  const [row] = await withWorkspace(db, { workspaceId }, (tx) =>
+    tx
+      .select()
+      .from(supportSession)
+      .where(
+        and(
+          eq(supportSession.workspaceId, workspaceId),
+          eq(supportSession.status, 'granted'),
+          gt(supportSession.expiresAt, sql`now()`),
+        ),
+      )
+      .orderBy(desc(supportSession.expiresAt))
+      .limit(1),
+  );
+  return row ?? null;
 }
 
 export interface AssertActiveOptions {

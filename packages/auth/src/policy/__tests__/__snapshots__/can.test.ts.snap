@@ -70,6 +70,7 @@ exports[`can() totality and the matrix > returns a decision for every (role, act
     "draft.write",
     "audit.read",
     "export.run",
+    "support.manage",
     "limitation.read",
     "insights.read",
     "settings.read",

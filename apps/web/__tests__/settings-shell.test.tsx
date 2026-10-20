@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-// Settings shell and workspace profile (#284): the sub-nav lists the eight sections plus usage and
-// audit, hidden by `can()` per role; direct URLs to a hidden section show the permission-denied
-// page; the profile form validates with zod, saves optimistically with rollback and toasts, keeps
-// the slug rename owner-only, turns read-only offline, and guards unsaved changes. The export and
+// Settings shell and workspace profile (#284): the sub-nav lists the eight sections plus usage,
+// audit and support access (#313, owners only), hidden by `can()` per role; direct URLs to a hidden
+// section show the permission-denied page; the profile form validates with zod, saves
+// optimistically with rollback and toasts, keeps the slug rename owner-only, turns read-only
+// offline, and guards unsaved changes. The export and
 // danger pages (#288) gate on `export.run` / `workspace.delete`, explain disabled actions with a
 // focusable tooltip and the `workspace.export` flag, and link transfer to the members flow.
 import { readFileSync } from 'node:fs';
@@ -122,7 +123,7 @@ afterEach(() => {
 describe('settings nav manifest', () => {
   const ids = (role: Role) => nav.visibleSettingsItems(role).map((item) => item.id);
 
-  it('lists the eight sections in order, then usage and the audit log', () => {
+  it('lists the eight sections in order, then usage, the audit log and support access', () => {
     expect(nav.SETTINGS_NAV.filter((i) => i.group === 'sections').map((i) => i.id)).toEqual([
       'profile',
       'members',
@@ -133,7 +134,7 @@ describe('settings nav manifest', () => {
       'export',
       'danger',
     ]);
-    expect(ids('owner')).toEqual([...nav.SETTINGS_SECTIONS, 'usage', 'audit']);
+    expect(ids('owner')).toEqual([...nav.SETTINGS_SECTIONS, 'usage', 'audit', 'support']);
   });
 
   it('hides the sections a role cannot open', () => {
@@ -160,6 +161,7 @@ describe('settings nav manifest', () => {
   it('finds the section of a pathname', () => {
     expect(nav.settingsItemFor('/w/demo/settings/privacy')?.id).toBe('privacy');
     expect(nav.settingsItemFor('/w/demo/settings/members/x')?.id).toBe('members');
+    expect(nav.settingsItemFor('/w/demo/settings/support')?.id).toBe('support');
     expect(nav.settingsItemFor('/w/demo/today')).toBeUndefined();
   });
 });
@@ -194,6 +196,7 @@ describe('settings shell', () => {
       en.nav.danger,
       en.nav.usage,
       en.nav.audit,
+      en.nav.support,
     ]);
     expect(links[0]?.getAttribute('href')).toBe('/w/demo/settings/profile');
     expect(links[0]?.getAttribute('aria-current')).toBe('page');

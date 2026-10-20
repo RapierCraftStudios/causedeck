@@ -251,6 +251,11 @@
     },
     "sheet": {
       "close": "Close"
+    },
+    "supportBanner": {
+      "message": "Support is viewing this workspace until {time}",
+      "end": "End session",
+      "error": "Could not end the session. Try again."
     }
   },
   "auth": {
@@ -926,6 +931,7 @@
       "danger": "Danger zone",
       "usage": "Usage",
       "audit": "Audit log",
+      "support": "Support access",
       "more": "More"
     },
     "placeholder": {
@@ -1044,6 +1050,59 @@
         "title": "Could not load the export page.",
         "retry": "Try again"
       }
+    },
+    "support": {
+      "title": "Support access",
+      "description": "CauseDeck support can see this workspace only when you allow it, and only for the time you choose.",
+      "scope": {
+        "title": "What support can see",
+        "view": "Read-only view: support can open the matters, documents and tasks an advocate could see. Restricted matters and billing stay hidden, and support cannot change anything.",
+        "metadata": "Details only: support sees your plan, seat count and usage, never your matters or documents.",
+        "audit": "Access ends when the time runs out or when you end it. Everything support opens is recorded in the audit log."
+      },
+      "scopeLabel": {
+        "view": "Read-only view",
+        "metadata": "Details only"
+      },
+      "pending": {
+        "title": "Pending requests",
+        "requestedAt": "Requested {time}",
+        "reason": "Reason: {reason}"
+      },
+      "active": {
+        "title": "Active sessions",
+        "until": "Until {time}"
+      },
+      "duration": {
+        "label": "Length",
+        "h1": "1 hour",
+        "h2": "2 hours",
+        "h4": "4 hours"
+      },
+      "grant": "Grant for {duration}",
+      "deny": "Deny",
+      "revoke": "Revoke now",
+      "empty": {
+        "title": "No support requests.",
+        "hint": "When CauseDeck support asks to see this workspace, the request appears here and you get a security alert."
+      },
+      "error": {
+        "title": "Could not load support sessions.",
+        "retry": "Try again"
+      },
+      "toast": {
+        "granted": "Support can view this workspace until {time}.",
+        "denied": "Request denied.",
+        "revoked": "Support session ended."
+      },
+      "errors": {
+        "conflict": "This request has changed. Refresh to see where it stands.",
+        "forbidden": "Only workspace owners can decide on support access.",
+        "notFound": "This support request no longer exists.",
+        "offline": "You are offline. Support access can be changed when you are back online.",
+        "generic": "Something went wrong. Try again."
+      },
+      "loading": "Loading support sessions"
     },
     "account": {
       "metaTitle": "Account",

@@ -21,7 +21,16 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle', 'support']),
-  runtime: Object.freeze(['audit', 'billing', 'usage', 'workspaces', 'jobs', 'lifecycle']),
+  // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
+  runtime: Object.freeze([
+    'audit',
+    'billing',
+    'usage',
+    'workspaces',
+    'jobs',
+    'lifecycle',
+    'support',
+  ]),
 });
 
 /** Every top-level folder of packages/core/src/ (`shared` included). */

@@ -1,5 +1,6 @@
 // The settings sub-nav (#284): the eight sections from the #25 design spec, in order, plus a
-// secondary group for usage and the audit log (linked from the old settings index). Each entry names
+// secondary group for usage, the audit log (linked from the old settings index) and support access
+// (owners grant, deny and revoke support sessions, #313). Each entry names
 // the policy permission it needs; the shell hides entries the role lacks and every page renders the
 // permission-denied state for a direct URL, both through the same `can()`. Entries without
 // `requires` are open to every member (members list and personal notification preferences, as
@@ -17,7 +18,7 @@ export const SETTINGS_SECTIONS = [
   'danger',
 ] as const;
 
-export const SETTINGS_EXTRAS = ['usage', 'audit'] as const;
+export const SETTINGS_EXTRAS = ['usage', 'audit', 'support'] as const;
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number];
 export type SettingsItemId = SettingsSectionId | (typeof SETTINGS_EXTRAS)[number];
@@ -42,6 +43,7 @@ const REQUIRES: Readonly<Record<SettingsItemId, Permission | undefined>> = {
   danger: 'workspace.delete',
   usage: 'billing.read',
   audit: 'audit.read',
+  support: 'support.manage',
 };
 
 export const SETTINGS_NAV: readonly SettingsNavItem[] = [

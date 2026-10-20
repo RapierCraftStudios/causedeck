@@ -253,6 +253,11 @@ export type Messages = {
     sheet: {
       close: string;
     };
+    supportBanner: {
+      message: string;
+      end: string;
+      error: string;
+    };
   };
   auth: {
     signIn: {
@@ -927,6 +932,7 @@ export type Messages = {
       danger: string;
       usage: string;
       audit: string;
+      support: string;
       more: string;
     };
     placeholder: {
@@ -1045,6 +1051,59 @@ export type Messages = {
         title: string;
         retry: string;
       };
+    };
+    support: {
+      title: string;
+      description: string;
+      scope: {
+        title: string;
+        view: string;
+        metadata: string;
+        audit: string;
+      };
+      scopeLabel: {
+        view: string;
+        metadata: string;
+      };
+      pending: {
+        title: string;
+        requestedAt: string;
+        reason: string;
+      };
+      active: {
+        title: string;
+        until: string;
+      };
+      duration: {
+        label: string;
+        h1: string;
+        h2: string;
+        h4: string;
+      };
+      grant: string;
+      deny: string;
+      revoke: string;
+      empty: {
+        title: string;
+        hint: string;
+      };
+      error: {
+        title: string;
+        retry: string;
+      };
+      toast: {
+        granted: string;
+        denied: string;
+        revoked: string;
+      };
+      errors: {
+        conflict: string;
+        forbidden: string;
+        notFound: string;
+        offline: string;
+        generic: string;
+      };
+      loading: string;
     };
     account: {
       metaTitle: string;

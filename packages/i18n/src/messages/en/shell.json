@@ -171,6 +171,11 @@
     },
     "sheet": {
       "close": "Close"
+    },
+    "supportBanner": {
+      "message": "Support is viewing this workspace until {time}",
+      "end": "End session",
+      "error": "Could not end the session. Try again."
     }
   }
 }

@@ -90,6 +90,12 @@ the matrix, before the resource checks below.
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `export.run` | ✓     | —        | —      | —     | —      |
 
+## support
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `support.manage` | ✓     | —        | —      | —     | —      |
+
 ## shell
 
 | Action | owner | advocate | junior | clerk | viewer |

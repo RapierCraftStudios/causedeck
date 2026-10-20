@@ -85,6 +85,7 @@ export async function proxy(request: NextRequest): Promise<Response> {
 }
 
 export const config = {
-  // Everything but the liveness probe: static assets still pass the network checks.
-  matcher: ['/((?!healthz$).*)'],
+  // Everything but the liveness probe (same form as apps/web); static assets still pass the
+  // network checks. Unmatched `/healthz…` paths only reach `app/healthz` or the not-found page.
+  matcher: ['/((?!healthz).*)'],
 };

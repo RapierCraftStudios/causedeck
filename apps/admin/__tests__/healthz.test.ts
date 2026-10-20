@@ -16,6 +16,5 @@ describe('/healthz', () => {
     const matcher = new RegExp(`^${config.matcher[0] ?? ''}$`);
     expect(matcher.test('/healthz')).toBe(false);
     expect(matcher.test('/flags')).toBe(true);
-    expect(matcher.test('/healthzx')).toBe(true);
   });
 });

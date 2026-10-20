@@ -73,6 +73,12 @@ async function aInvitations(f: Fixture) {
   );
 }
 
+async function aSupportSessions(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.supportSession).orderBy(schema.supportSession.id),
+  );
+}
+
 async function aRestrictions(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.matterRestriction).orderBy(schema.matterRestriction.id),
@@ -303,6 +309,24 @@ const CASES: Record<string, Case> = {
         core.recordSupportSessionStarted(
           { db: s },
           { supportSessionId: randomUUID(), staffUserId: f.ub, workspaceId: f.a.id },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordSupportView: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordSupportView(
+          { db: s },
+          {
+            supportSessionId: randomUUID(),
+            staffUserId: f.ub,
+            workspaceId: f.a.id,
+            targets: [{ kind: 'matter', id: randomUUID() }],
+            action: 'matter.read',
+          },
         ),
       ),
     );
@@ -820,6 +844,80 @@ const CASES: Record<string, Case> = {
     const { seen } = await runProbe(f, f.a.id);
     expect(seen[0]).toEqual([f.a.id]);
     expect(seen[0]).not.toContain(f.b.id);
+  },
+  // Support sessions (#308): ub owns B and is not staff; A's seed session was requested by ua.
+  requestSession: async (f) => {
+    const before = await aSupportSessions(f);
+    const input = { workspaceId: f.a.id, reason: 'Probe' };
+    await expectDenied(core.requestSession({ db: f.tx, staffUserId: f.ub }, input));
+    await expectDenied(f.asB((s) => core.requestSession({ db: s, staffUserId: f.ub }, input)));
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  grantSession: async (f) => {
+    const before = await aSupportSessions(f);
+    const sessionId = f.a.rows.support_session?.id ?? '';
+    await expectDenied(
+      core.grantSession({ db: f.tx, userId: f.ub, workspaceId: f.a.id }, { sessionId }),
+    );
+    // As B's owner, A's session does not exist in B.
+    await expectDenied(
+      core.grantSession({ db: f.tx, userId: f.ub, workspaceId: f.b.id }, { sessionId }),
+    );
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  denySession: async (f) => {
+    const before = await aSupportSessions(f);
+    const sessionId = f.a.rows.support_session?.id ?? '';
+    await expectDenied(
+      core.denySession({ db: f.tx, userId: f.ub, workspaceId: f.a.id }, { sessionId }),
+    );
+    await expectDenied(
+      core.denySession({ db: f.tx, userId: f.ub, workspaceId: f.b.id }, { sessionId }),
+    );
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  revokeSession: async (f) => {
+    const before = await aSupportSessions(f);
+    const sessionId = f.a.rows.support_session?.id ?? '';
+    await expectDenied(
+      core.revokeSession({ db: f.tx, userId: f.ub, workspaceId: f.a.id }, { sessionId }),
+    );
+    await expectDenied(
+      core.revokeSession({ db: f.tx, userId: f.ub, workspaceId: f.b.id }, { sessionId }),
+    );
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  assertActiveSupportSession: async (f) => {
+    await expectDenied(core.assertActiveSupportSession(f.ub, f.a.id, { db: f.tx }));
+  },
+  withSupportSession: async (f) => {
+    await expectDenied(core.withSupportSession({ db: f.tx, staffUserId: f.ub }, f.a.id));
+  },
+  isActiveStaff: async (f) => {
+    expect(await core.isActiveStaff(f.tx, f.ub)).toBe(false);
+    expect(await f.asB((s) => core.isActiveStaff(s, f.ub))).toBe(false);
+  },
+  expireSupportSessions: async (f) => {
+    const before = await aSupportSessions(f);
+    await core.expireSupportSessions(f.tx);
+    // A's pending request is not a grant, so the sweep leaves it alone.
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  endStaffSupportSessions: async (f) => {
+    const before = await aSupportSessions(f);
+    // Only ub's own request (B's seed row) ends; A's sessions, requested by ua, are untouched.
+    expect(await core.endStaffSupportSessions(f.tx, f.ub)).toBe(1);
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  supportSessionExpire: async (f) => {
+    const before = await aSupportSessions(f);
+    const outcome = await core.runJob(
+      core.supportSessionExpire,
+      { id: randomUUID(), data: {}, retryCount: 0 },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+    expect(await aSupportSessions(f)).toEqual(before);
   },
   retentionSweep: async (f) => {
     const outcome = await core.runJob(

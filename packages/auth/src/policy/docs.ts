@@ -12,6 +12,8 @@ const REASON_NOTES: Record<(typeof DENY_REASONS)[number], string> = {
   NOT_ASSIGNED: 'a junior acting on a matter not assigned to, shared with or owned by them',
   FEATURE_OFF: 'the action’s domain is switched off for the workspace',
   SUSPENDED: 'the member is suspended',
+  STAFF_READ_ONLY:
+    'platform staff in a support session may never write (every action other than `.read`)',
 };
 
 function table(domain: ActionDomain): string[] {

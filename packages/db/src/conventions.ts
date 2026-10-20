@@ -19,6 +19,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * supplier-wide gapless SaaS invoice series (#252): no workspace, no RLS, allocated under a row lock
  * by #253. `deletion_tombstone` (#301) records an erased workspace and must outlive the purge of
  * every tenant row, so it has no RLS and no foreign key.
+ * `staff_user` is the platform staff registry (#308): written only by the operator CLI as the
+ * owner role (the app role may only read it).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -37,6 +39,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'access_mode_registry',
   'invoice_counter',
   'deletion_tombstone',
+  'staff_user',
 ];
 
 /**

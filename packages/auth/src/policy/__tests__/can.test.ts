@@ -222,6 +222,7 @@ describe('deny reasons', () => {
         },
       ),
     SUSPENDED: () => can(actor('owner', { suspended: true }), 'matter.read'),
+    STAFF_READ_ONLY: () => can(actor('owner', { kind: 'staff' }), 'matter.write'),
   };
 
   it.each(DENY_REASONS)('%s is produced by can()', (reason) => {
@@ -231,5 +232,46 @@ describe('deny reasons', () => {
   it('FEATURE_OFF only switches off the named domain', () => {
     const settings = { disabledDomains: new Set(['billing'] as const) };
     expect(can(actor('owner'), 'matter.read', undefined, settings)).toEqual({ allow: true });
+  });
+});
+
+describe('staff actors (support sessions, #308)', () => {
+  it('denies every write action to staff, whatever the role', () => {
+    for (const role of ROLES) {
+      for (const action of WRITE_ACTIONS) {
+        expect(can(actor(role, { kind: 'staff' }), action)).toEqual({
+          allow: false,
+          reason: 'STAFF_READ_ONLY',
+        });
+      }
+    }
+  });
+
+  it('leaves staff reads to the role and resource rules', () => {
+    expect(can(actor('advocate', { kind: 'staff' }), 'matter.read', matter())).toEqual({
+      allow: true,
+    });
+    expect(
+      reasonOf(
+        can(
+          actor('advocate', { kind: 'staff' }),
+          'matter.read',
+          matter({ restricted: { allowUserIds: [] } }),
+        ),
+      ),
+    ).toBe('RESTRICTED_MATTER');
+    expect(
+      reasonOf(
+        can(actor('owner', { kind: 'staff' }), 'matter.write', matter({ workspaceId: OTHER_WS })),
+      ),
+    ).toBe('CROSS_WORKSPACE');
+  });
+
+  it('treats an actor without kind, or kind user, exactly as before', () => {
+    for (const role of ROLES) {
+      for (const action of ALL_ACTIONS) {
+        expect(can(actor(role, { kind: 'user' }), action)).toEqual(can(actor(role), action));
+      }
+    }
   });
 });

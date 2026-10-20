@@ -8,12 +8,20 @@
     "build": "node -e \"console.log('@causedeck/admin: nothing to build yet; app code arrives in a later issue')\"",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "staff:add": "tsx src/cli/staff.ts add",
+    "staff:disable": "tsx src/cli/staff.ts disable"
+  },
+  "dependencies": {
+    "@causedeck/config": "workspace:*",
+    "@causedeck/core": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "drizzle-orm": "catalog:"
   },
   "devDependencies": {
-    "@causedeck/config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

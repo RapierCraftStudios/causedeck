@@ -51,6 +51,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   matter_restriction: DB_TABLES_TEST,
   export_job: DB_TABLES_TEST,
   deletion_job: DB_TABLES_TEST,
+  support_session: DB_TABLES_TEST,
 };
 
 /**
@@ -189,6 +190,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'record() wrapper (#228); pins the event workspace like record()',
   },
+  recordSupportView: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#308); pins the event workspace like record()',
+  },
   verifyChain: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -205,6 +211,33 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   restrictMatter: denies,
   assertMatterReadable: denies,
+  // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
+  requestSession: denies,
+  grantSession: denies,
+  denySession: denies,
+  revokeSession: denies,
+  assertActiveSupportSession: denies,
+  withSupportSession: denies,
+  isActiveStaff: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads the global staff_user table only; no tenant rows',
+  },
+  expireSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system sweep through app_expire_support_sessions(); touches only elapsed grants',
+  },
+  endStaffSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "sweep through app_end_staff_support_sessions(); touches only that staff member's sessions",
+  },
+  supportSessionExpire: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job; runs expireSupportSessions',
+  },
   enqueueNotificationDelivery: {
     test: CORE_SERVICES_TEST,
     kind: 'caller-checked',
@@ -360,6 +393,12 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   contentFieldViolations: 'pure payload lint',
   createRegistry: 'pure (builds a job map)',
   registry: 'job definition map',
+  // support sessions (#308): constants and error class
+  SUPPORT_GRANT_DEFAULT_MINUTES: 'constant',
+  SUPPORT_GRANT_MAX_MINUTES: 'constant',
+  SUPPORT_REASON_MAX_LENGTH: 'constant',
+  SUPPORT_ACTOR_ROLE: 'constant',
+  SupportSessionInactiveError: 'error class',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',
   RetryableError: 'error class',

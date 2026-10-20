@@ -132,6 +132,7 @@ describe('enqueue', () => {
       'system.audit.retention',
       'export.build',
       'system.export.expire',
+      'system.support.session-expire',
     ]);
   });
 });

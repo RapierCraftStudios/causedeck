@@ -12,6 +12,7 @@
     "./lifecycle": "./src/lifecycle/index.ts",
     "./matters": "./src/matters/index.ts",
     "./runtime": "./src/runtime/index.ts",
+    "./support": "./src/support/index.ts",
     "./usage": "./src/usage/index.ts",
     "./workspaces": "./src/workspaces/index.ts"
   },

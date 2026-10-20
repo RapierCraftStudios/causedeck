@@ -409,6 +409,17 @@ const CASES: Record<string, Case> = {
     // Even asking about A's owner from B's scope reveals nothing.
     expect(await f.asB((s) => core.memberRole(s, f.ua, f.a.id))).toBeNull();
   },
+  ownerGrace: async (f) => {
+    const before = await core.ownerGrace(f.tx, f.ua, f.a.id);
+    expect(before?.role).toBe('owner');
+    // B's member asks about A: nothing, from the plain scope and from B's scope.
+    expect(await core.ownerGrace(f.tx, f.ub, f.a.id)).toBeNull();
+    expect(await f.asB((s) => core.ownerGrace(s, f.ub, f.a.id))).toBeNull();
+    // Even asking about A's owner from B's scope reveals neither role nor grant time.
+    expect(await f.asB((s) => core.ownerGrace(s, f.ua, f.a.id))).toBeNull();
+    // A is unchanged by the attempts.
+    expect(await core.ownerGrace(f.tx, f.ua, f.a.id)).toEqual(before);
+  },
   requireOwner: async (f) => {
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ub)));
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ua)));

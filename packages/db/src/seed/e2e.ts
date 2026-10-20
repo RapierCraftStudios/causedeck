@@ -148,6 +148,12 @@ export interface E2eInvitation {
 
 /** Far enough ahead that a `valid` invitation never expires during a run. */
 const E2E_INVITE_FAR_FUTURE = new Date('2099-01-01T00:00:00+05:30');
+/**
+ * Every seeded role is "granted" far in the future: a fixed, byte-stable value (not `now()`), and the
+ * owner 2FA grace (#290, 7 days from the grant) never runs out for seeded owners. E2E specs that need
+ * the grace over back-date `member.role_granted_at` themselves.
+ */
+const E2E_ROLE_GRANTED_AT = new Date('2099-01-01T00:00:00+05:30');
 
 /**
  * Invitations to `chennai-solo` (#180) for the `bengaluru-chamber` viewer, who is not a member
@@ -309,6 +315,7 @@ export async function seedE2e(db: SeedDb): Promise<void> {
         userId: userId(w, r),
         role,
         joinedAt: at,
+        roleGrantedAt: E2E_ROLE_GRANTED_AT,
         createdAt: at,
       })),
     ),
@@ -318,6 +325,7 @@ export async function seedE2e(db: SeedDb): Promise<void> {
       userId: e2eUser(m.user.role, m.user.workspace).id,
       role: m.role,
       joinedAt: at,
+      roleGrantedAt: E2E_ROLE_GRANTED_AT,
       createdAt: at,
     })),
     {
@@ -326,6 +334,7 @@ export async function seedE2e(db: SeedDb): Promise<void> {
       userId: e2eUser(owner.role, owner.workspace).id,
       role: owner.role,
       joinedAt: at,
+      roleGrantedAt: E2E_ROLE_GRANTED_AT,
       createdAt: at,
     },
   ];

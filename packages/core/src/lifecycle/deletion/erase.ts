@@ -246,7 +246,8 @@ export async function runWorkspaceErase(
         .set({ status: 'canceled', revokedAt: now() })
         .where(and(eq(invitation.organizationId, workspaceId), eq(invitation.status, 'pending')))
         .returning({ id: invitation.id });
-      // Integration tokens stop resolving at once (only their hashes are stored).
+      // Integration tokens stop resolving at once (only their hashes are stored). Any future
+      // workspace-scoped API token or key table is revoked here too, before the DEK is destroyed.
       const tokens = await tx
         .delete(workspaceIntegration)
         .where(eq(workspaceIntegration.workspaceId, workspaceId))

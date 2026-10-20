@@ -7,9 +7,13 @@ import {
   staffAuditEvents,
   staffWorkspaceMetadata,
   staffWorkspaceSearch,
+  staffWorkspaceUsage,
   type StaffAuditCursor,
   type StaffAuditEntry,
+  type StaffBudgetOverride,
+  type StaffUsageCounter,
   type StaffWorkspaceMetadata,
+  type StaffWorkspaceUsage,
 } from '@causedeck/core/support';
 import type { Database } from '@causedeck/db';
 import { listAccessModeRegistry, type AccessModeRegistryEntry } from '@causedeck/flags';
@@ -24,7 +28,14 @@ export {
   type StaffCall,
   type StaffQuery,
 } from './scope.ts';
-export type { StaffAuditCursor, StaffAuditEntry, StaffWorkspaceMetadata };
+export type {
+  StaffAuditCursor,
+  StaffAuditEntry,
+  StaffBudgetOverride,
+  StaffUsageCounter,
+  StaffWorkspaceMetadata,
+  StaffWorkspaceUsage,
+};
 
 /** Enabled staff accounts, for the Overview page. */
 export function activeStaffCount(staff: StaffActor): Promise<number> {
@@ -64,6 +75,22 @@ export function workspaceMetadata(
       functions: ['app_staff_workspace_metadata'],
     },
     (db) => staffWorkspaceMetadata(db, staff.userId, workspaceId),
+  );
+}
+
+/** One workspace's usage counters and AI budget overrides, or `null` for a malformed id (#224). */
+export function workspaceUsage(
+  staff: StaffActor,
+  workspaceId: string,
+): Promise<StaffWorkspaceUsage | null> {
+  return staffCall(
+    staff,
+    {
+      purpose: 'workspaces.usage',
+      capability: 'workspaces',
+      functions: ['app_staff_budget_overrides', 'app_staff_workspace_usage'],
+    },
+    (db) => staffWorkspaceUsage(db, staff.userId, workspaceId),
   );
 }
 

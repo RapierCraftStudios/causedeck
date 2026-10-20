@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation';
 import { workspaceMetadata } from '../../../../lib/data/index.ts';
 import { requireStaff } from '../../../../lib/staff.ts';
 
+import { WorkspaceUsage } from './usage.tsx';
+
 export const metadata: Metadata = { title: 'Workspace' };
 
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
@@ -24,8 +26,9 @@ function formatDate(date: Date | null): string {
 }
 
 /**
- * One workspace's metadata (#310): plan, seats, storage, dates and flags. No matter, document,
- * memory, party or draft content, and no member data beyond the owner's email.
+ * One workspace's metadata (#310): plan, seats, storage, dates and flags; then its usage counters
+ * and AI budget overrides (#224, `usage.tsx`). No matter, document, memory, party or draft
+ * content, and no member data beyond the owner's email.
  */
 export default async function WorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const staff = await requireStaff('workspaces');
@@ -82,6 +85,7 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
           </ul>
         )}
       </section>
+      <WorkspaceUsage staff={staff} workspaceId={workspace.workspaceId} />
     </section>
   );
 }

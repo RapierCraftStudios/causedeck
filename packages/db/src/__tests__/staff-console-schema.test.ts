@@ -1,7 +1,8 @@
 // Staff console reads (#310, migration 0033): the owner-defined workspace metadata and staff audit
 // functions run only for an enabled staff member (app.user_id), are not executable by PUBLIC, and
 // return the listed metadata columns only; owner_definer_read on member and workspace_feature_flag
-// is for the owner role alone.
+// is for the owner role alone. The usage functions of 0035 (#224) follow the same rules, and
+// budget_override's early-expiry columns are all set or none.
 import { randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
@@ -11,8 +12,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDb, type Database, type Transaction } from '../client.ts';
 import { withUser } from '../rls.ts';
 import { user } from '../schema/auth.ts';
+import { usageCounter } from '../schema/billing.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { staffUser } from '../schema/staff.ts';
+import { budgetOverride } from '../schema/usage.ts';
 import { inWorkspace, testDatabaseUrls, withTestDb } from '../testing/index.ts';
 import { seedTwoTenants } from '../testing/two-tenants.ts';
 import { sqlState } from './rls/fixtures.ts';
@@ -46,6 +49,21 @@ const FUNCTIONS = [
   'app_staff_workspace_search(text,integer)',
   'app_staff_workspace_metadata(uuid)',
   'app_staff_audit_events(timestamp with time zone,uuid,integer)',
+  'app_staff_workspace_usage(uuid)',
+  'app_staff_budget_overrides(uuid,integer)',
+];
+const COUNTER_COLUMNS = ['key', 'period_start', 'value'];
+const OVERRIDE_COLUMNS = [
+  'created_at',
+  'expire_reason',
+  'expired_at',
+  'expired_by',
+  'expires_at',
+  'id',
+  'key',
+  'limit_value',
+  'reason',
+  'set_by',
 ];
 
 let owner: Database;
@@ -88,6 +106,8 @@ describe('staff console functions (0033)', () => {
         sql`select * from app_staff_workspace_search(${t.a.slug}, 10)`,
         sql`select * from app_staff_workspace_metadata(${t.a.id}::uuid)`,
         sql`select * from app_staff_audit_events(null, null, 10)`,
+        sql`select * from app_staff_workspace_usage(${t.a.id}::uuid)`,
+        sql`select * from app_staff_budget_overrides(${t.a.id}::uuid, 10)`,
       ];
       for (const call of calls) {
         for (const userId of [t.ua, disabledStaffId]) {
@@ -214,6 +234,131 @@ describe('staff console functions (0033)', () => {
       const t = await seedTwoTenants(tx);
       const seen = await tx.execute(sql`select 1 from member where workspace_id = ${t.a.id}::uuid`);
       expect(seen).toEqual([]);
+    });
+  });
+
+  it('owner_definer_read on budget_override is for the owner only (0035)', async () => {
+    await withTestDb(async (tx) => {
+      const rows = await tx.execute<{ roles: string }>(
+        sql`select roles::text as roles from pg_policies
+             where policyname = 'owner_definer_read' and tablename = 'budget_override'`,
+      );
+      expect(rows).toEqual([{ roles: '{causedeck_owner}' }]);
+      const t = await seedTwoTenants(tx);
+      const seen = await tx.execute(
+        sql`select 1 from budget_override where workspace_id = ${t.a.id}::uuid`,
+      );
+      expect(seen).toEqual([]);
+    });
+  });
+});
+
+describe('staff workspace usage functions (0035, #224)', () => {
+  it("return the workspace's newest counter per key, with the listed columns only", async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      const older = new Date('2026-08-31T18:30:00.000Z');
+      const newer = new Date('2026-09-30T18:30:00.000Z');
+      await inWorkspace(tx, t.a.id, (s) =>
+        s.insert(usageCounter).values([
+          { workspaceId: t.a.id, key: 'ai.spend_paise', periodStart: older, value: 900 },
+          { workspaceId: t.a.id, key: 'ai.spend_paise', periodStart: newer, value: 120 },
+        ]),
+      );
+      await inWorkspace(tx, t.b.id, (s) =>
+        s
+          .insert(usageCounter)
+          .values({ workspaceId: t.b.id, key: 'ai.spend_paise', periodStart: newer, value: 7 }),
+      );
+      const rows = await as(tx, staffId, (s) =>
+        s.execute<{ key: string; period_start: string | Date; value: string | number }>(
+          sql`select * from app_staff_workspace_usage(${t.a.id}::uuid)`,
+        ),
+      );
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual(COUNTER_COLUMNS);
+      const spend = rows.filter((r) => r.key === 'ai.spend_paise');
+      expect(spend).toHaveLength(1);
+      expect(Number(spend[0]?.value)).toBe(120);
+      expect(new Date(spend[0]?.period_start ?? 0).toISOString()).toBe(newer.toISOString());
+      // A's seeded counter is there too; B's value is not.
+      expect(rows.length).toBeGreaterThan(1);
+      expect(rows.some((r) => Number(r.value) === 7)).toBe(false);
+    });
+  });
+
+  it("return the workspace's overrides newest first, capped by max", async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      const day = 86_400_000;
+      await inWorkspace(tx, t.a.id, (s) =>
+        s.insert(budgetOverride).values(
+          [1, 2, 3].map((n) => ({
+            workspaceId: t.a.id,
+            key: 'ai.spend_paise',
+            limitValue: n * 1000,
+            setBy: t.ua,
+            reason: `step ${String(n)}`,
+            expiresAt: new Date(Date.now() + day),
+            createdAt: new Date(Date.now() - (10 - n) * 60_000),
+          })),
+        ),
+      );
+      const all = await as(tx, staffId, (s) =>
+        s.execute<{ reason: string }>(
+          sql`select * from app_staff_budget_overrides(${t.a.id}::uuid, 50)`,
+        ),
+      );
+      expect(Object.keys(all[0] ?? {}).sort()).toEqual(OVERRIDE_COLUMNS);
+      // Newest first (the cross-tenant seed row, created now, comes before them).
+      expect(all.map((r) => r.reason).filter((r) => r.startsWith('step'))).toEqual([
+        'step 3',
+        'step 2',
+        'step 1',
+      ]);
+      expect(all).toHaveLength(4);
+      const two = await as(tx, staffId, (s) =>
+        s.execute(sql`select * from app_staff_budget_overrides(${t.a.id}::uuid, 2)`),
+      );
+      expect(two).toHaveLength(2);
+      const bRows = await as(tx, staffId, (s) =>
+        s.execute<{ reason: string }>(
+          sql`select * from app_staff_budget_overrides(${t.b.id}::uuid, 50)`,
+        ),
+      );
+      expect(bRows.map((r) => r.reason)).not.toContain('step 1');
+    });
+  });
+
+  it('budget_override_expiry_chk rejects partial or blank early-expiry columns', async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      const base = {
+        workspaceId: t.a.id,
+        key: 'ai.spend_paise',
+        limitValue: 1000,
+        setBy: t.ua,
+        reason: 'pilot',
+        expiresAt: new Date(Date.now() + 86_400_000),
+      };
+      const now = new Date();
+      for (const partial of [
+        { expiredAt: now },
+        { expiredAt: now, expiredBy: t.ua },
+        { expiredAt: now, expiredBy: t.ua, expireReason: '   ' },
+        { expireReason: 'done' },
+      ]) {
+        const error = await sqlState(
+          inWorkspace(tx, t.a.id, (s) =>
+            s.transaction((x) => x.insert(budgetOverride).values({ ...base, ...partial })),
+          ),
+        );
+        expect(error, JSON.stringify(partial)).toBe('23514');
+      }
+      await inWorkspace(tx, t.a.id, (s) =>
+        s
+          .insert(budgetOverride)
+          .values({ ...base, expiredAt: now, expiredBy: t.ua, expireReason: 'pilot ended' }),
+      );
     });
   });
 });

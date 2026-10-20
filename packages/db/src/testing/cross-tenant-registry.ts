@@ -298,6 +298,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'denies',
     note: 'app_staff_audit_events() runs only for an enabled staff_user; others are FORBIDDEN',
   },
+  // staff workspace usage (#224)
+  staffWorkspaceUsage: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_workspace_usage() and app_staff_budget_overrides() run only for an enabled staff_user; others are FORBIDDEN',
+  },
   addStaff: {
     test: ADMIN_STAFF_CLI_TEST,
     kind: 'caller-checked',
@@ -367,6 +373,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
     note: 'staff-only by caller contract; writes only ctx.workspaceId (override and audit row), other scope throws TenancyError',
+  },
+  expireBudgetOverride: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'staff-only by caller contract; updates only an active override of ctx.workspaceId (and its audit row), other scope throws TenancyError',
   },
   activeOverride: {
     test: CORE_SERVICES_TEST,
@@ -541,6 +552,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   StaffAdminError: 'error class',
   STAFF_WORKSPACE_FIELDS: 'constant (staff console field list)',
   STAFF_AUDIT_FIELDS: 'constant (staff console field list)',
+  STAFF_USAGE_COUNTER_FIELDS: 'constant (staff console field list)',
+  STAFF_BUDGET_OVERRIDE_FIELDS: 'constant (staff console field list)',
   withOwnerDb: 'connection helper (owner-role handle for the operator CLI); reads nothing itself',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',

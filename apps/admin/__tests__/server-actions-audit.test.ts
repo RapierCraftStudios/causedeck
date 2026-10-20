@@ -20,6 +20,14 @@ const STAFF_ID = '0192d3b0-0000-7000-8000-000000000310';
 const SESSION_ID = '0192d3b0-0000-7000-8000-0000000003a0';
 const SUPPORT_SESSION_ID = '0192d3b0-0000-7000-8000-0000000003b0';
 const SUPPORT_WORKSPACE_ID = '0192d3b0-0000-7000-8000-0000000003c0';
+const WORKSPACE_ID = '0192d3b0-0000-7000-8000-000000000224';
+const OVERRIDE_ID = '0192d3b0-0000-7000-8000-0000000002a4';
+
+/** A core usage write: records its audit event with the staff actor, as limits.ts does. */
+function auditedOverrideWrite(action: string) {
+  return (_ctx: unknown, input: { staffUserId: string }) =>
+    mocks.record({ actor: { userId: input.staffUserId, kind: 'staff' } }, { action });
+}
 
 vi.mock('@causedeck/core/audit', () => ({ record: mocks.record }));
 // Core audits a support session's lifecycle (`support.session_*`) with the staff actor it is handed
@@ -63,6 +71,11 @@ vi.mock('@causedeck/core/support', () => ({
   staffWorkspaceSearch: () => Promise.resolve([]),
   staffWorkspaceMetadata: () => Promise.resolve(null),
   staffAuditEvents: () => Promise.resolve([]),
+  staffWorkspaceUsage: () => Promise.resolve(null),
+}));
+vi.mock('@causedeck/core/usage', () => ({
+  setBudgetOverride: auditedOverrideWrite('usage.budget_override_set'),
+  expireBudgetOverride: auditedOverrideWrite('usage.budget_override_expired'),
 }));
 vi.mock('@causedeck/db', () => ({
   withoutWorkspace: (_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) =>
@@ -122,6 +135,24 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
     const form = new FormData();
     form.set('code', '123456');
     return verifyTwoFactor({}, form);
+  },
+  'app/(console)/workspaces/[id]/actions.ts#setBudgetOverrideAction': async () => {
+    const { setBudgetOverrideAction } = await import('../app/(console)/workspaces/[id]/actions.ts');
+    const form = new FormData();
+    form.set('workspaceId', WORKSPACE_ID);
+    form.set('limitRupees', '350');
+    form.set('expiresAt', '2999-01-01T00:00');
+    form.set('reason', 'pilot extension');
+    return setBudgetOverrideAction({}, form);
+  },
+  'app/(console)/workspaces/[id]/actions.ts#expireBudgetOverrideAction': async () => {
+    const { expireBudgetOverrideAction } =
+      await import('../app/(console)/workspaces/[id]/actions.ts');
+    const form = new FormData();
+    form.set('workspaceId', WORKSPACE_ID);
+    form.set('overrideId', OVERRIDE_ID);
+    form.set('reason', 'pilot ended');
+    return expireBudgetOverrideAction({}, form);
   },
 };
 
@@ -206,6 +237,7 @@ describe('admin data layer reads', () => {
     searchWorkspaces: (d) => d.searchWorkspaces(staff, 'chambers'),
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),
+    workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
   };
   // The building blocks every read goes through, not reads themselves.
   const PRIMITIVES = ['staffCall', 'staffQuery', 'StaffQueryDeniedError'];

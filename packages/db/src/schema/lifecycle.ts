@@ -5,11 +5,13 @@
 //   `steps` checkpoints and `progress`, stores the ZIP as an encrypted `blob` (kind `export`) and
 //   sets `expires_at` 24 h after completion; `system.export.expire` deletes it after that. Only the
 //   sha256 of a download token is kept (`download_token_hash`), never the token. Tenant table.
-// - `deletion_job`: workspace, account and memory deletions (behaviour lands with #302 and #303).
-//   `workspace_id` is null only for account deletions, so the table is in NULLABLE_WORKSPACE_TABLES
-//   and still under FORCE RLS with `ws_isolation`.
-// - `deletion_tombstone`: the minimal global record that a workspace was erased. It must outlive the
-//   purge of every tenant row, so it has no foreign key and is in GLOBAL_TABLES.
+// - `deletion_job`: workspace, account and memory deletions (workspace deletion is #302, account and
+//   memory #303). `workspace_id` is null only for account deletions, so the table is in
+//   NULLABLE_WORKSPACE_TABLES and still under FORCE RLS with `ws_isolation`. At most one workspace
+//   deletion is active (pending, scheduled or running) per workspace (0031).
+// - `deletion_tombstone`: the minimal global record that a workspace was erased, with its signed,
+//   content-free deletion receipt (`receipt`, 0031). It must outlive the purge of every tenant row,
+//   so it has no foreign key and is in GLOBAL_TABLES.
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -119,6 +121,10 @@ export const deletionJob = pgTable(
   },
   (t) => [
     index('deletion_job_workspace_id_idx').on(t.workspaceId, t.createdAt),
+    // One active workspace deletion per workspace (the backstop for `requestWorkspaceDeletion`).
+    uniqueIndex('deletion_job_workspace_active_uq')
+      .on(t.workspaceId)
+      .where(sql`kind = 'workspace' and status in ('pending_cooloff', 'scheduled', 'running')`),
     check('deletion_job_kind_chk', sql`kind in ${inList(DELETION_KINDS)}`),
     check('deletion_job_status_chk', sql`status in ${inList(DELETION_STATUSES)}`),
     // Only an account deletion may have no workspace.
@@ -131,4 +137,6 @@ export const deletionTombstone = pgTable('deletion_tombstone', {
   workspaceId: uuid('workspace_id').primaryKey(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }).notNull().defaultNow(),
   receiptHash: text('receipt_hash').notNull(),
+  /** The signed deletion receipt (hashes, timestamps and counts only; #302). */
+  receipt: jsonb('receipt').$type<Record<string, unknown>>().notNull().default({}),
 });

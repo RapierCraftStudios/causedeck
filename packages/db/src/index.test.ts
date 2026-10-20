@@ -34,7 +34,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301) and the staff support tables (#308)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308) and the legal-hold invoice table (#302)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -58,6 +58,7 @@ describe('@causedeck/db root entry point', () => {
       'invitation',
       'invoice_counter',
       'job_effect',
+      'legal_hold_invoice',
       'matter_restriction',
       'member',
       'notification',

@@ -1,6 +1,7 @@
-// `@causedeck/core/lifecycle` (#301): DPDP data lifecycle. Workspace export: the exporter
-// registry, requests, download links and the build. Deletion lands with #302 and #303. See
-// docs/engineering/data-lifecycle.md.
+// `@causedeck/core/lifecycle` (#301, #302): DPDP data lifecycle. Workspace export: the exporter
+// registry, requests, download links and the build. Workspace deletion (#302): requests with a
+// 14-day cool-off, the tick, the ordered erase, the signed receipt and the invoice legal hold.
+// Account and memory deletion land with #303. See docs/engineering/data-lifecycle.md.
 import './export/exporters.ts';
 
 export {
@@ -49,3 +50,53 @@ export {
   type ExportTokenPayload,
   type RequestExportDeps,
 } from './export/request.ts';
+export {
+  DELETION_COOLOFF_MS,
+  runDeletionTick,
+  type DeletionTickDeps,
+  type DeletionTickReport,
+} from './deletion/cooloff.ts';
+export {
+  ERASE_STEPS,
+  FINALIZE_TABLES,
+  PURGE_BATCH,
+  PURGE_ORDER,
+  purgeCoverage,
+  runWorkspaceErase,
+  type EraseCtx,
+  type EraseDeps,
+  type EraseOutcome,
+  type EraseStep,
+  type PurgeCoverage,
+} from './deletion/erase.ts';
+export {
+  LEGAL_HOLD_RULE,
+  LEGAL_HOLD_STATUSES,
+  LEGAL_HOLD_YEARS,
+  legalHoldRetainUntil,
+  retainInvoicesForLegalHold,
+} from './deletion/legal-hold.ts';
+export {
+  buildDeletionReceipt,
+  canonicalJson,
+  DELETION_RECEIPT_VERSION,
+  receiptHash,
+  receiptWorkspaceIdHash,
+  verifyDeletionReceipt,
+  type BuildReceiptInput,
+  type DeletionReceipt,
+  type DeletionReceiptBody,
+  type ReceiptStep,
+} from './deletion/receipt.ts';
+export {
+  ACTIVE_DELETION_STATUSES,
+  cancelWorkspaceDeletion,
+  DeletionError,
+  deletionNoticeCopy,
+  getActiveWorkspaceDeletion,
+  requestWorkspaceDeletion,
+  type DeletionErrorReason,
+  type DeletionJob,
+  type DeletionNotifyDeps,
+  type DeletionRequestCtx,
+} from './deletion/request.ts';

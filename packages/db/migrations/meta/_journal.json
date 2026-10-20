@@ -218,6 +218,13 @@
       "when": 1792490181230,
       "tag": "0030_workspace_integration",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792497562155,
+      "tag": "0031_workspace_deletion",
+      "breakpoints": true
     }
   ]
 }

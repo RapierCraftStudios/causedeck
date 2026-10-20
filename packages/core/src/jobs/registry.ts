@@ -10,6 +10,8 @@ import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
 import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { deletionErase } from './definitions/deletion-erase.ts';
+import { deletionTick } from './definitions/deletion-tick.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
@@ -139,6 +141,8 @@ export const registry = createRegistry([
   exportBuild,
   exportExpire,
   supportSessionExpire,
+  deletionTick,
+  deletionErase,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -160,6 +164,8 @@ export type JobMap = RegistryMap<
     typeof exportBuild,
     typeof exportExpire,
     typeof supportSessionExpire,
+    typeof deletionTick,
+    typeof deletionErase,
   ]
 >;
 export type JobName = keyof JobMap;

@@ -3,7 +3,7 @@
 // Runs as causedeck_app in a rolled-back transaction, under FORCE row-level security.
 import { randomBytes } from 'node:crypto';
 
-import { workspaceKey } from '@causedeck/db/schema';
+import { deletionTombstone, workspaceKey } from '@causedeck/db/schema';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -109,6 +109,28 @@ describe('workspace keys and crypto-erase', () => {
       await destroyWorkspaceKey(tx, ws);
       expect((await rejection(ensureWorkspaceKey(tx, provider, ws))).code).toBe('KEY_DESTROYED');
       expect((await rejection(getWorkspaceDek(tx, provider, ws))).code).toBe('KEY_DESTROYED');
+    });
+  });
+
+  it('after workspace deletion purges the key row, the tombstone keeps reads at KEY_DESTROYED (#302)', async () => {
+    await withTestDb(async (tx) => {
+      const ws = await newWorkspace(tx);
+      const plaintext = randomBytes(1_000);
+      const ciphertext = await collect(await encryptForWorkspace(tx, provider, ws, [plaintext]));
+      await destroyWorkspaceKey(tx, ws);
+      await tx.insert(deletionTombstone).values({ workspaceId: ws, receiptHash: 'ab'.repeat(32) });
+      await inWorkspace(tx, ws, (s) =>
+        s.delete(workspaceKey).where(eq(workspaceKey.workspaceId, ws)),
+      );
+
+      expect((await rejection(getWorkspaceDek(tx, provider, ws))).code).toBe('KEY_DESTROYED');
+      expect(
+        (await rejection(collect(decryptForWorkspace(tx, provider, ws, [ciphertext])))).code,
+      ).toBe('KEY_DESTROYED');
+      expect((await rejection(ensureWorkspaceKey(tx, provider, ws))).code).toBe('KEY_DESTROYED');
+      // A live workspace without a key (and without a tombstone) is still NO_WORKSPACE_KEY.
+      const live = await newWorkspace(tx);
+      expect((await rejection(getWorkspaceDek(tx, provider, live))).code).toBe('NO_WORKSPACE_KEY');
     });
   });
 

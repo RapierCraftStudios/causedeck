@@ -197,13 +197,6 @@ export type Messages = {
       title: string;
       message: string;
     };
-    account: {
-      title: string;
-      description: string;
-      empty: string;
-      hint: string;
-      action: string;
-    };
     sidebar: {
       label: string;
       primary: string;
@@ -1000,6 +993,149 @@ export type Messages = {
         label: string;
         description: string;
         action: string;
+      };
+    };
+    account: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      navLabel: string;
+      nav: {
+        profile: string;
+        security: string;
+      };
+      loading: string;
+      error: {
+        title: string;
+        retry: string;
+      };
+      forbidden: string;
+      offline: string;
+      cancel: string;
+      profile: {
+        title: string;
+        description: string;
+        name: string;
+        nameHint: string;
+        avatar: string;
+        avatarHint: string;
+        email: string;
+        emailHint: string;
+        language: string;
+        languageHint: string;
+        save: string;
+        saving: string;
+        saved: string;
+        toast: {
+          saved: string;
+        };
+        errors: {
+          name: string;
+          language: string;
+          generic: string;
+        };
+      };
+      security: {
+        title: string;
+        description: string;
+      };
+      passkeys: {
+        title: string;
+        description: string;
+        listLabel: string;
+        add: string;
+        empty: string;
+        unnamed: string;
+        added: string;
+        remove: string;
+        removeLabel: string;
+        removeTitle: string;
+        removeBody: string;
+        removeConfirm: string;
+        unsupported: string;
+        toast: {
+          added: string;
+          removed: string;
+          addFailed: string;
+          removeFailed: string;
+        };
+      };
+      twoFactor: {
+        title: string;
+        description: string;
+        status: string;
+        on: string;
+        off: string;
+        onHint: string;
+        offHint: string;
+        setUp: string;
+        toast: {
+          enabled: string;
+        };
+        dialog: {
+          title: string;
+          step: string;
+          preparing: string;
+          scanTitle: string;
+          scanBody: string;
+          qrAlt: string;
+          manual: string;
+          next: string;
+          back: string;
+          verifyTitle: string;
+          verifyBody: string;
+          code: string;
+          verify: string;
+          codesTitle: string;
+          codesBody: string;
+          codesLabel: string;
+          copy: string;
+          copied: string;
+          download: string;
+          done: string;
+          retry: string;
+          errors: {
+            code: string;
+            wrongCode: string;
+            copy: string;
+            generic: string;
+          };
+        };
+      };
+      sessions: {
+        title: string;
+        description: string;
+        tableCaption: string;
+        columns: {
+          device: string;
+          ip: string;
+          signedIn: string;
+          actions: string;
+        };
+        device: string;
+        unknownDevice: string;
+        unknownIp: string;
+        current: string;
+        empty: string;
+        revoke: string;
+        revokeLabel: string;
+        revokeTitle: string;
+        revokeBody: string;
+        revokeConfirm: string;
+        toast: {
+          revoked: string;
+          failed: string;
+        };
+      };
+      connected: {
+        title: string;
+        description: string;
+        listLabel: string;
+        empty: string;
+        connectedOn: string;
+        providers: {
+          google: string;
+        };
       };
     };
   };

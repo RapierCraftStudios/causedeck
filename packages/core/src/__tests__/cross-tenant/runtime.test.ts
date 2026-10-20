@@ -158,6 +158,12 @@ const CASES: Record<string, () => Promise<void>> = {
     await runtime.recordAccessDeniedFor({ workspaceId: t.a.id, member: false, actorUserId: t.ub });
     expect(await aAuditIds()).toEqual(before);
   },
+  recordAccountProfileUpdatedFor: async () => {
+    const before = await aAuditIds();
+    // Account-level: `ua`'s own profile change never writes into workspace A's chain.
+    await runtime.recordAccountProfileUpdatedFor(t.ua, ['name']);
+    expect(await aAuditIds()).toEqual(before);
+  },
   loadNotificationPreferences: async () => {
     await expectDenied(runtime.loadNotificationPreferences(forged()));
     await expectDenied(runtime.loadNotificationPreferences({ workspaceId: t.b.id, userId: t.ua }));

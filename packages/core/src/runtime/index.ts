@@ -97,13 +97,40 @@ export async function acceptInvitationFor(
   return acceptInvitation(db, request);
 }
 
-/** Members and pending invitations, read in one workspace-scoped transaction. */
-export async function loadMembersPage(scope: RuntimeScope) {
-  const { listMembers, listPendingInvitations } = await import('../workspaces/index.ts');
-  return inWorkspace(scope, async (tx) => ({
-    members: await listMembers(tx, scope.workspaceId),
-    invitations: await listPendingInvitations(tx, scope.workspaceId),
-  }));
+/** Seats in use (active members by role) against the plan's `seats` and `clerk_seats`. */
+export interface MembersSeatSummary {
+  used: { total: number; clerk: number; nonClerk: number };
+  granted: { seats: number; clerkSeats: number };
+}
+
+/**
+ * Members, pending invitations and the seat summary at `now`, read in one workspace-scoped
+ * transaction. The seat read runs in a savepoint: if the plan cannot be read, `seats` is `null`
+ * and the members list still loads.
+ */
+export async function loadMembersPage(scope: RuntimeScope, now: Date = new Date()) {
+  const [
+    { countBillableSeats, listMembers, listPendingInvitations },
+    { getWorkspaceEntitlements },
+  ] = await Promise.all([import('../workspaces/index.ts'), import('../billing/index.ts')]);
+  return inWorkspace(scope, async (tx) => {
+    const members = await listMembers(tx, scope.workspaceId);
+    const invitations = await listPendingInvitations(tx, scope.workspaceId);
+    let seats: MembersSeatSummary | null;
+    try {
+      seats = await tx.transaction(async (sp) => {
+        const { total, clerk, nonClerk } = await countBillableSeats(sp, scope.workspaceId);
+        const entitlements = await getWorkspaceEntitlements(sp, scope.workspaceId, now);
+        return {
+          used: { total, clerk, nonClerk },
+          granted: { seats: entitlements.seats, clerkSeats: entitlements.clerk_seats },
+        };
+      });
+    } catch {
+      seats = null;
+    }
+    return { members, invitations, seats };
+  });
 }
 
 /** The workspace's members, read in its scope. */

@@ -89,6 +89,12 @@ export const FLAGS = {
     [28, 111],
   ),
   'insights.enabled': flag('insights.enabled', 'Practice insights dashboard.', false, [85]),
+  'workspace.export': flag(
+    'workspace.export',
+    'Workspace data export (ZIP) from settings.',
+    false,
+    [31, 288],
+  ),
 } as const;
 
 /** A registered flag key. Anything else is a compile error. */

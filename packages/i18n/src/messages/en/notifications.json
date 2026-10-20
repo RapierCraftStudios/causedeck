@@ -151,7 +151,8 @@
       "error": "Could not save your change. Try again.",
       "loadError": "Could not load notification preferences.",
       "retry": "Try again",
-      "loading": "Loading notification preferences"
+      "loading": "Loading notification preferences",
+      "empty": "No notification settings are available for this workspace yet."
     }
   }
 }

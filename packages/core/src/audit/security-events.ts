@@ -9,7 +9,13 @@ import type { SecurityEventInput, SecurityEventRecorder } from '@causedeck/auth/
 import type { Database, Queryable } from '@causedeck/db';
 import { createLogger, type Logger } from '@causedeck/observability';
 
-import type { AuditAction, AuditContext, AuditMetadataValue, AuditOutcome } from './events.ts';
+import type {
+  AuditAction,
+  AuditActorKind,
+  AuditContext,
+  AuditMetadataValue,
+  AuditOutcome,
+} from './events.ts';
 import { record } from './writer.ts';
 
 let log: Logger | undefined;
@@ -119,6 +125,10 @@ export interface AccessDeniedEvent {
   action?: string | undefined;
   /** The policy deny reason or domain error code. */
   reason?: string | undefined;
+  /** Who was denied; defaults to `'user'`. `'staff'` for writes attempted in a support session. */
+  actorKind?: AuditActorKind | undefined;
+  /** The support session a staff denial happened in (#308). */
+  supportSessionId?: string | undefined;
   ip?: string | undefined;
   userAgent?: string | undefined;
   requestId?: string | undefined;
@@ -133,12 +143,13 @@ export async function recordAccessDenied(db: Database, event: AccessDeniedEvent)
   const metadata: Record<string, AuditMetadataValue> = { member: event.member };
   if (event.action !== undefined) metadata.deniedAction = event.action;
   if (event.reason !== undefined) metadata.reason = event.reason;
+  if (event.supportSessionId !== undefined) metadata.supportSessionId = event.supportSessionId;
   try {
     await record(
       {
         db,
         workspaceId: event.member ? event.workspaceId : null,
-        actor: { userId: event.actorUserId, kind: 'user' },
+        actor: { userId: event.actorUserId, kind: event.actorKind ?? 'user' },
         ...(event.ip === undefined ? {} : { ip: event.ip }),
         ...(event.userAgent === undefined ? {} : { userAgent: event.userAgent }),
         ...(event.requestId === undefined ? {} : { requestId: event.requestId }),
@@ -232,6 +243,8 @@ export interface SupportSessionEvent {
   supportSessionId: string;
   staffUserId: string;
   workspaceId: string;
+  /** Why a session ended (`revoked`, `expired`, `staff_disabled`); stored as metadata. */
+  endReason?: 'revoked' | 'expired' | 'staff_disabled' | undefined;
 }
 
 function supportSession(
@@ -241,11 +254,15 @@ function supportSession(
 ): Promise<void> {
   return record(
     { ...ctx, workspaceId: event.workspaceId, actor: { userId: event.staffUserId, kind: 'staff' } },
-    { action, target: { kind: 'support_session', id: event.supportSessionId } },
+    {
+      action,
+      target: { kind: 'support_session', id: event.supportSessionId },
+      ...(event.endReason === undefined ? {} : { metadata: { endReason: event.endReason } }),
+    },
   );
 }
 
-/** `support.session_started` by staff in the workspace (wired by #27). */
+/** `support.session_started` by staff in the workspace (wired by `grantSession`, #308). */
 export function recordSupportSessionStarted(
   ctx: Omit<AuditContext, 'workspaceId' | 'actor'>,
   event: SupportSessionEvent,
@@ -253,10 +270,49 @@ export function recordSupportSessionStarted(
   return supportSession('support.session_started', ctx, event);
 }
 
-/** `support.session_ended` by staff in the workspace (wired by #27). */
+/**
+ * `support.session_ended` by staff in the workspace (wired by `revokeSession`, the expiry job and
+ * `endStaffSupportSessions`, #308).
+ */
 export function recordSupportSessionEnded(
   ctx: Omit<AuditContext, 'workspaceId' | 'actor'>,
   event: SupportSessionEvent,
 ): Promise<void> {
   return supportSession('support.session_ended', ctx, event);
+}
+
+export interface SupportViewEvent {
+  supportSessionId: string;
+  staffUserId: string;
+  workspaceId: string;
+  /** What was read: the first target is the event's target, every id goes to `targetIds`. */
+  targets: readonly { kind: string; id: string }[];
+  /** The policy action the read was checked against (e.g. `matter.read`). */
+  action: string;
+}
+
+/**
+ * `support.view`: staff read workspace content in a support session (#308). Security, so
+ * fail-closed: a read that cannot be audited fails with it.
+ */
+export function recordSupportView(
+  ctx: Omit<AuditContext, 'workspaceId' | 'actor'>,
+  event: SupportViewEvent,
+): Promise<void> {
+  const [first] = event.targets;
+  if (first === undefined)
+    throw new TypeError('recordSupportView: at least one target is required');
+  return record(
+    { ...ctx, workspaceId: event.workspaceId, actor: { userId: event.staffUserId, kind: 'staff' } },
+    {
+      action: 'support.view',
+      target: first,
+      metadata: {
+        supportSessionId: event.supportSessionId,
+        readAction: event.action,
+        targetKinds: [...new Set(event.targets.map((t) => t.kind))].join(','),
+        targetIds: event.targets.map((t) => t.id).join(','),
+      },
+    },
+  );
 }

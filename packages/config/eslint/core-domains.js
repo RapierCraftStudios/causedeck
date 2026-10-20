@@ -18,7 +18,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   usage: Object.freeze(['audit', 'billing']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.
   lifecycle: Object.freeze(['audit', 'workspaces']),
-  jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle']),
+  // Staff support sessions (#308): owner checks through workspaces, session events through audit.
+  support: Object.freeze(['workspaces', 'audit']),
+  jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle', 'support']),
   runtime: Object.freeze(['audit', 'billing', 'usage', 'workspaces', 'jobs', 'lifecycle']),
 });
 

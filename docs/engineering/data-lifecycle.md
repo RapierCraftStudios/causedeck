@@ -35,7 +35,7 @@ and memory stays bounded.
 | `workspace`     | `organization`, `workspace_slug_history`                                                                                                                         |
 | `members`       | `member` (with each member's name and email), `invitation` (no token hash)                                                                                       |
 | `settings`      | `workspace_settings`, `workspace_feature_flag`, `matter_restriction`                                                                                             |
-| `audit`         | `audit_event` (through the audit read path, owners' view), `ai_call`                                                                                             |
+| `audit`         | `audit_event` (through the audit read path, owners' view), `ai_call`, `support_session`                                                                          |
 | `notifications` | `notification_pref`, `notification_setting`, `notification`                                                                                                      |
 | `billing`       | `subscription`, `entitlement`, `billing_event` (no raw payload), `saas_invoice`, `saas_invoice_line`, `usage_counter`, `usage_event`, `usage_reservation`, `budget_override`, `usage_period_summary` |
 | `blobs`         | `blob` (no envelope header or storage key) and the files themselves                                                                                             |

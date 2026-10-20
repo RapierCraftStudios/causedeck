@@ -1,7 +1,9 @@
 // Members settings page (#181): `/w/<slug>/settings/members` lists members (cards on phones, a
 // table from 768, plus the Roles panel from 1280) with role-gated actions: owners invite, change
 // roles, transfer ownership and remove; advocates invite; everyone else reads. Invitations use the
-// dev mailer, so the toast offers `Copy link`. States: loading, error, empty, offline. `@a11y`
+// dev mailer, so the toast offers `Copy link`. #288: a seat summary, `Members` / `Pending
+// invitations` tabs (pending invitations live in the second) and `About roles` below 1280; offline
+// shows the one settings banner. States: loading, error, empty, offline. `@a11y`
 // tests also run axe (zero serious or critical violations) on the page they end on. Every test
 // starts from the reset e2e seed, so mutations never leak between tests.
 import type { Locator, Page } from '@playwright/test';
@@ -35,6 +37,15 @@ function list(page: Page): Locator {
 function row(page: Page, text: string): Locator {
   const selector = layoutOf(page) === 'phone' ? 'li' : 'tr';
   return list(page).locator(selector).filter({ hasText: text });
+}
+
+/** Switch to the `Pending invitations (n)` tab. */
+async function openInvitations(page: Page) {
+  await page.getByRole('tab', { name: /^Pending invitations/ }).click();
+  await expect(page.getByRole('tab', { name: /^Pending invitations/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
 }
 
 function inviteButton(page: Page): Locator {
@@ -117,12 +128,48 @@ test.describe('members page', () => {
       const toast = page.getByText('Invitation sent to new.clerk@e2e.test');
       await expect(toast).toBeVisible();
       await expect(page.getByRole('button', { name: 'Copy link' }).first()).toBeVisible();
+      await openInvitations(page);
       const invited = row(page, 'new.clerk@e2e.test');
       await expect(invited).toBeVisible();
       await expect(invited.locator('[data-status="invited"]')).toHaveText('Invited');
       await expect(invited.locator('[data-role="clerk"]')).toHaveText('Clerk');
     },
   );
+
+  test(
+    'the seat summary shows seats in use against the plan',
+    { tag: '@a11y' },
+    async ({ page, asUser }) => {
+      await openMembers(page, asUser);
+      const seats = page.locator('[data-slot="seat-summary"]');
+      await expect(seats.getByRole('heading', { name: 'Seats' })).toBeVisible();
+      await expect(seats.locator('[data-seats="members"]')).toHaveText(/\d+ of \d+ seats in use/);
+    },
+  );
+
+  test('pending invitations have their own tab', { tag: '@a11y' }, async ({ page, asUser }) => {
+    await openMembers(page, asUser);
+    await expect(page.getByRole('tab', { name: /^Members \(5\)/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(list(page).locator('[data-status="invited"]')).toHaveCount(0);
+    await openInvitations(page);
+    // The seed's valid invitation to chennai-solo (#180) is pending; axe runs on this panel.
+    await expect(list(page).locator('[data-status="invited"]').first()).toBeVisible();
+  });
+
+  test('About roles opens the roles explainer below 1280 px', async ({ page, asUser }) => {
+    test.skip(layoutOf(page) === 'desktop', 'from 1280 px the Roles panel is always shown');
+    await openMembers(page, asUser);
+    const about = page.getByRole('button', { name: 'About roles' });
+    await expect(about).toHaveAttribute('aria-expanded', 'false');
+    await about.click();
+    await expect(about).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('[data-slot="roles-disclosure"]')).toContainText(
+      'Clerks never see strategy notes or matter memory',
+    );
+  });
 
   test('a full plan shows the seat upgrade prompt with Manage plan (#203)', async ({
     page,
@@ -155,6 +202,8 @@ test.describe('members page', () => {
     const dialog = page.getByRole('dialog', { name: 'Invite members' });
     await dialog.getByRole('textbox', { name: /Email addresses/ }).fill('pending@e2e.test');
     await dialog.getByRole('button', { name: 'Send invitation' }).click();
+    await expect(dialog).toBeHidden();
+    await openInvitations(page);
     await expect(row(page, 'pending@e2e.test')).toBeVisible();
 
     await openRowMenu(page, 'pending@e2e.test');
@@ -296,7 +345,9 @@ test.describe('members page', () => {
     async ({ page, asUser }) => {
       await openMembers(page, asUser);
       await page.context().setOffline(true);
-      await expect(page.getByText(/You are offline/).first()).toBeVisible();
+      await expect(page.getByText('Settings can be changed when you are back online.')).toHaveCount(
+        1,
+      );
       await expect(inviteButton(page)).toBeDisabled();
       await expect(page.getByText('Needs a connection').locator('visible=true')).toBeVisible();
       await page.context().setOffline(false);
@@ -315,6 +366,8 @@ test.describe('members page', () => {
         'It is just you for now. Invite juniors, clerks or co-counsel when you are ready.',
       ),
     ).toBeVisible();
+    await openInvitations(page);
+    await expect(page.getByText('No pending invitations.')).toBeVisible();
   });
 
   test('keyboard: arrow keys move between rows, Enter opens the menu, Esc closes it', async ({

@@ -145,7 +145,11 @@ async function* auditEvents(ctx: ExportCtx): AsyncGenerator<Record<string, unkno
   }
 }
 
-const AUDIT_SPECS: readonly TableSpec[] = [ws('ai_call', { userColumn: 'user_id' })];
+const AUDIT_SPECS: readonly TableSpec[] = [
+  ws('ai_call', { userColumn: 'user_id' }),
+  // Staff support sessions (#308): who asked for access, why, and who granted it for how long.
+  ws('support_session', { userColumn: 'granted_by_user' }),
+];
 
 export const workspaceExporter = tablesExporter('workspace', [
   { table: 'organization', workspaceColumn: 'id', keys: ['id'] },
@@ -169,7 +173,7 @@ export const settingsExporter = tablesExporter('settings', [
 
 export const auditExporter: Exporter = {
   name: 'audit',
-  tables: ['audit_event', 'ai_call'],
+  tables: ['audit_event', 'ai_call', 'support_session'],
   collect(ctx) {
     if (ctx.table === 'audit_event') return auditEvents(ctx);
     return tablesExporter('audit', AUDIT_SPECS).collect(ctx);

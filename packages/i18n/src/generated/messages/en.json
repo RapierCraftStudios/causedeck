@@ -527,7 +527,29 @@
       "offline": "You are offline. Connect to make changes.",
       "generic": "Something went wrong. Please try again."
     },
-    "rolesLink": "How roles work"
+    "rolesLink": "How roles work",
+    "tabs": {
+      "label": "Members and invitations",
+      "members": "Members ({count})",
+      "invitations": "Pending invitations ({count})"
+    },
+    "invitationsEmpty": "No pending invitations.",
+    "seats": {
+      "title": "Seats",
+      "used": "{used} of {granted} seats in use",
+      "clerk": "{used} of {granted} clerk seats in use",
+      "overLimit": "Over plan limit",
+      "note": "Invitations take a seat when they are accepted."
+    },
+    "aboutRoles": "About roles",
+    "transferPicker": {
+      "title": "Transfer ownership",
+      "description": "Choose the member who will become the owner of {workspace}.",
+      "label": "New owner",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "none": "Invite another member before you transfer ownership."
+    }
   },
   "notifications": {
     "email": {
@@ -681,7 +703,8 @@
       "error": "Could not save your change. Try again.",
       "loadError": "Could not load notification preferences.",
       "retry": "Try again",
-      "loading": "Loading notification preferences"
+      "loading": "Loading notification preferences",
+      "empty": "No notification settings are available for this workspace yet."
     }
   },
   "billing": {
@@ -999,6 +1022,34 @@
         "label": "Delete workspace",
         "description": "Permanently delete this workspace and all its data after an export.",
         "action": "Delete workspace"
+      },
+      "exportFirst": "Export first",
+      "transferHint": "Opens the members list, where you choose the new owner.",
+      "loading": "Loading danger zone",
+      "error": {
+        "title": "Could not load the danger zone.",
+        "retry": "Try again"
+      }
+    },
+    "export": {
+      "title": "Export workspace data",
+      "description": "A complete copy of this workspace, for your records or to move to another tool.",
+      "contentsTitle": "What the export includes",
+      "contents": {
+        "matters": "Matters, hearings and tasks",
+        "documents": "Documents and notes",
+        "people": "Clients, members and roles",
+        "audit": "The audit log"
+      },
+      "delivery": "Only owners can export. When the file is ready, we email you a download link that works for 24 hours.",
+      "actionLabel": "Download a copy",
+      "actionDescription": "Prepares a ZIP of everything in this workspace.",
+      "action": "Export workspace",
+      "comingSoon": "Coming from export service",
+      "loading": "Loading export",
+      "error": {
+        "title": "Could not load the export page.",
+        "retry": "Try again"
       }
     },
     "roles": {

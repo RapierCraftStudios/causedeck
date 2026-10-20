@@ -3,6 +3,7 @@
 // write, returns NOT_FOUND while the kind's flag is off, and calls the domain service (which stores
 // only the new token's hash and records the `workspace.integration_token_rotated` audit event) on
 // the workspace-scoped transaction. The full address or URL comes back once, built from APP_URL.
+import { randomBytes } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppSession } from '../lib/auth.ts';
@@ -10,7 +11,8 @@ import type { AppSession } from '../lib/auth.ts';
 const WS = '00000000-0000-4000-8000-00000000a001';
 const USER = '00000000-0000-4000-8000-0000000b0101';
 const TX = { scoped: true };
-const TOKEN = 'tok_ABCdef-123';
+// Generated per run so no token-shaped literal is committed (gitleaks).
+const TOKEN = `tok_${randomBytes(16).toString('hex')}`;
 const CREATED = new Date('2026-10-20T10:00:00Z');
 
 interface State {

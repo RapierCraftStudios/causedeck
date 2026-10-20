@@ -45,8 +45,10 @@ export {
   assertAccessMode,
   decideAccessMode,
   isAccessMode,
+  listAccessModeRegistry,
   type AccessMode,
   type AccessModeDenial,
+  type AccessModeRegistryEntry,
 } from './access-mode.ts';
 export { ACCESS_MODE_SEED, LAUNCH_ADAPTERS, seedAccessModes } from './seed.ts';
 export {

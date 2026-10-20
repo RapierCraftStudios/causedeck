@@ -18,7 +18,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * per-workspace overrides are the tenant table `workspace_feature_flag`. `invoice_counter` is the
  * supplier-wide gapless SaaS invoice series (#252): no workspace, no RLS, allocated under a row lock
  * by #253. `deletion_tombstone` (#301) records an erased workspace and must outlive the purge of
- * every tenant row, so it has no RLS and no foreign key.
+ * every tenant row, so it has no RLS and no foreign key. `legal_hold_invoice` (#302) is the minimal
+ * statutory copy of an erased workspace's SaaS invoices; it outlives the purge the same way.
  * `staff_user` is the platform staff registry (#308): written only by the operator CLI as the
  * owner role (the app role may only read it). `audit_actor_salt` (#303) holds the per-user salt of
  * `audit_event.actor_ref`; the app role has no privileges on it, only the audit functions do.
@@ -44,6 +45,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'invoice_counter',
   'deletion_tombstone',
   'staff_user',
+  'legal_hold_invoice',
   'audit_actor_salt',
   'flag_change_request',
 ];

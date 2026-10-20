@@ -203,10 +203,10 @@ describe('actor_ref and app_audit_anonymise_actor', () => {
   });
 });
 
-/** Migrations from 0031 on: staged later, so the legacy database stops just before 0031. */
-const isFrom0031 = (tag: string) => tag >= '0031_';
-
-/** The migrations folder up to (not including) 0031, to stage legacy audit rows. */
+/**
+ * The migrations folder up to (not including) 0031, to stage legacy audit rows. Later migrations
+ * are dropped too: the migrator skips any migration older than the last one applied.
+ */
 function migrationsBefore0031(): string {
   const dir = mkdtempSync(path.join(tmpdir(), 'causedeck-migrations-0029-'));
   cleanups.push(() => {
@@ -214,11 +214,13 @@ function migrationsBefore0031(): string {
   });
   cpSync(MIGRATIONS_FOLDER, dir, { recursive: true });
   const journalPath = path.join(dir, 'meta', '_journal.json');
-  const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as { entries: { tag: string }[] };
-  for (const entry of journal.entries.filter((e) => isFrom0031(e.tag))) {
-    rmSync(path.join(dir, `${entry.tag}.sql`));
+  const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as {
+    entries: { idx: number; tag: string }[];
+  };
+  for (const e of journal.entries.filter((e) => e.idx >= 31)) {
+    rmSync(path.join(dir, `${e.tag}.sql`));
   }
-  journal.entries = journal.entries.filter((e) => !isFrom0031(e.tag));
+  journal.entries = journal.entries.filter((e) => e.idx < 31);
   writeFileSync(journalPath, JSON.stringify(journal));
   return dir;
 }
@@ -249,7 +251,6 @@ describe('0031 re-chain of legacy audit rows', () => {
   it('backfills actor_ref and keeps every chain valid', async () => {
     const { db, app, userId, ws } = await legacyDatabase('audit_rechain_ok');
     const result = await runMigrations({ url: new Secret(db.owner) });
-    // 0031 first; later migrations (0032 on) follow it.
     expect(result.applied[0]).toBe('0031_account_memory_erasure');
     const migrated = createOwnerDb(new Secret(db.owner));
     cleanups.push(() => migrated.$client.end());

@@ -126,6 +126,8 @@ describe('row-level security catalog', () => {
       where tablename = 'deletion_job' order by policyname`);
     expect(policies).toEqual([
       { policyname: 'account_self', cmd: 'ALL' },
+      // Owner role only: backs app_deletion_due_jobs (#302, 0032).
+      { policyname: 'owner_definer_read', cmd: 'SELECT' },
       { policyname: 'ws_isolation', cmd: 'ALL' },
     ]);
   });

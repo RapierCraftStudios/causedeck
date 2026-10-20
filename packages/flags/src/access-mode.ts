@@ -5,7 +5,7 @@
 // and adding one needs a superseding ADR (enforced by `__tests__/access-mode-guard.test.ts`).
 import { db as appDb, type Queryable } from '@causedeck/db';
 import { accessModeRegistry } from '@causedeck/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 
 export const ACCESS_MODES = [
   'user_supplied',
@@ -81,4 +81,31 @@ export async function assertAccessMode(
     .limit(1);
   const decision = decideAccessMode(row, requestedMode);
   if (!decision.allowed) throw new AccessModeError(decision.reason, adapterId, resource);
+}
+
+/** One `access_mode_registry` row, as the staff console's Adapters page lists it (#312). */
+export interface AccessModeRegistryEntry {
+  adapterId: string;
+  resource: string;
+  mode: AccessMode;
+  enabled: boolean;
+  reviewedAt: Date | null;
+}
+
+/**
+ * Every registry row, ordered by adapter then resource. Read-only; `access_mode_registry` is a
+ * global table, readable in any scope. The handle is required so the admin data layer passes its
+ * audited `withoutWorkspace` transaction.
+ */
+export async function listAccessModeRegistry(db: Queryable): Promise<AccessModeRegistryEntry[]> {
+  return db
+    .select({
+      adapterId: accessModeRegistry.adapterId,
+      resource: accessModeRegistry.resource,
+      mode: accessModeRegistry.mode,
+      enabled: accessModeRegistry.enabled,
+      reviewedAt: accessModeRegistry.reviewedAt,
+    })
+    .from(accessModeRegistry)
+    .orderBy(asc(accessModeRegistry.adapterId), asc(accessModeRegistry.resource));
 }

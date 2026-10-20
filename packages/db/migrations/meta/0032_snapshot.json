@@ -1,5 +1,5 @@
 {
-  "id": "5dcde6a6-8b82-48f0-af61-c2d53edd7e35",
+  "id": "b951b020-11e0-4b05-8df2-0657e2190aa9",
   "prevId": "de63f29a-6f20-4905-877f-578439591ca8",
   "version": "7",
   "dialect": "postgresql",
@@ -1153,6 +1153,22 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "deletion_job_workspace_active_uq": {
+          "name": "deletion_job_workspace_active_uq",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "kind = 'workspace' and status in ('pending_cooloff', 'scheduled', 'running')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -1211,6 +1227,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "receipt": {
+          "name": "receipt",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
         }
       },
       "indexes": {},
@@ -1618,140 +1641,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.flag_change_request": {
-      "name": "flag_change_request",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "legal_ack_note": {
-          "name": "legal_ack_note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "requested_by": {
-          "name": "requested_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "requested_at": {
-          "name": "requested_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "decided_by": {
-          "name": "decided_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "decided_at": {
-          "name": "decided_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "flag_change_request_pending_uq": {
-          "name": "flag_change_request_pending_uq",
-          "columns": [
-            {
-              "expression": "key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "coalesce(\"workspace_id\", '00000000-0000-0000-0000-000000000000'::uuid)",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"flag_change_request\".\"status\" = 'pending'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "flag_change_request_workspace_id_organization_id_fk": {
-          "name": "flag_change_request_workspace_id_organization_id_fk",
-          "tableFrom": "flag_change_request",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "flag_change_request_requested_by_user_id_fk": {
-          "name": "flag_change_request_requested_by_user_id_fk",
-          "tableFrom": "flag_change_request",
-          "tableTo": "user",
-          "columnsFrom": ["requested_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "flag_change_request_decided_by_user_id_fk": {
-          "name": "flag_change_request_decided_by_user_id_fk",
-          "tableFrom": "flag_change_request",
-          "tableTo": "user",
-          "columnsFrom": ["decided_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "flag_change_request_status_chk": {
-          "name": "flag_change_request_status_chk",
-          "value": "\"flag_change_request\".\"status\" in ('pending', 'approved', 'rejected')"
-        },
-        "flag_change_request_decided_chk": {
-          "name": "flag_change_request_decided_chk",
-          "value": "\"flag_change_request\".\"status\" = 'pending' or \"flag_change_request\".\"decided_at\" is not null"
-        },
-        "flag_change_request_not_self_chk": {
-          "name": "flag_change_request_not_self_chk",
-          "value": "\"flag_change_request\".\"decided_by\" is null or \"flag_change_request\".\"requested_by\" is null or \"flag_change_request\".\"decided_by\" <> \"flag_change_request\".\"requested_by\""
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.invitation": {
       "name": "invitation",
       "schema": "",
@@ -2053,6 +1942,190 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.legal_hold_invoice": {
+      "name": "legal_hold_invoice",
+      "schema": "",
+      "columns": {
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "series": {
+          "name": "series",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fy": {
+          "name": "fy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issue_date": {
+          "name": "issue_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "period_end": {
+          "name": "period_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "place_of_supply_state_code": {
+          "name": "place_of_supply_state_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sac": {
+          "name": "sac",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "taxable_paise": {
+          "name": "taxable_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cgst_paise": {
+          "name": "cgst_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sgst_paise": {
+          "name": "sgst_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "igst_paise": {
+          "name": "igst_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_paise": {
+          "name": "total_paise",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supplier_gstin": {
+          "name": "supplier_gstin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supplier_state_code": {
+          "name": "supplier_state_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recipient_gstin": {
+          "name": "recipient_gstin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recipient_state_code": {
+          "name": "recipient_state_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "legal_hold": {
+          "name": "legal_hold",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "retain_until": {
+          "name": "retain_until",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "retained_at": {
+          "name": "retained_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "legal_hold_invoice_workspace_id_idx": {
+          "name": "legal_hold_invoice_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "legal_hold_invoice_hold_chk": {
+          "name": "legal_hold_invoice_hold_chk",
+          "value": "legal_hold = true"
+        },
+        "legal_hold_invoice_status_chk": {
+          "name": "legal_hold_invoice_status_chk",
+          "value": "status in ('issued', 'paid', 'void')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.matter_restriction": {

@@ -39,6 +39,7 @@ export {
   type ExportScope,
   type ExportStatus,
 } from './lifecycle.ts';
+export { legalHoldInvoice } from './legal-hold.ts';
 export { matterRestriction } from './matter-restriction.ts';
 export {
   emailSuppression,

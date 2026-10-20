@@ -130,6 +130,8 @@ describe('enqueue', () => {
       'system.audit.verify',
       'audit.verify',
       'system.audit.retention',
+      'export.build',
+      'system.export.expire',
       'system.support.session-expire',
     ]);
   });

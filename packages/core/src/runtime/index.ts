@@ -16,6 +16,13 @@ import type {
 } from '../audit/index.ts';
 import type { InvoicePdfContext, SaasInvoicePdf } from '../billing/index.ts';
 import type {
+  ExportDownload,
+  ExportDownloadDeps,
+  ExportDownloadLink,
+  ExportJob,
+  ExportRequestCtx,
+} from '../lifecycle/index.ts';
+import type {
   AcceptInvitationRequest,
   AcceptedInvitation,
   CreateWorkspaceRequest,
@@ -184,6 +191,43 @@ export async function exportAuditFor(
 export async function recordAccessDeniedFor(event: AccessDeniedEvent): Promise<void> {
   const { recordAccessDenied } = await import('../audit/index.ts');
   return recordAccessDenied(db, event);
+}
+
+// lifecycle: workspace export (#301)
+
+/** Request an export (owners only) and enqueue `export.build` for it. */
+export async function requestExportFor(
+  ctx: Omit<ExportRequestCtx, 'db'>,
+  input: { scope: 'workspace' | 'user' },
+): Promise<ExportJob> {
+  const [{ requestExport }, { enqueue }] = await Promise.all([
+    import('../lifecycle/index.ts'),
+    import('../jobs/index.ts'),
+  ]);
+  return requestExport({ db, ...ctx }, input, {
+    enqueue: (job) => enqueue('export.build', job),
+  });
+}
+
+/** A signed download link for the requester's ready export (`NOT_FOUND` otherwise). */
+export async function issueExportDownloadFor(
+  ctx: Omit<ExportRequestCtx, 'db'>,
+  jobId: string,
+  options: { secret: string },
+): Promise<ExportDownloadLink> {
+  const { issueExportDownload } = await import('../lifecycle/index.ts');
+  return issueExportDownload({ db, ...ctx }, jobId, options);
+}
+
+/** The requester's export as a decrypted stream, after the token and audit checks. */
+export async function openExportDownloadFor(
+  ctx: Omit<ExportRequestCtx, 'db'>,
+  jobId: string,
+  token: string,
+  deps: ExportDownloadDeps,
+): Promise<ExportDownload> {
+  const { openExportDownload } = await import('../lifecycle/index.ts');
+  return openExportDownload({ db, ...ctx }, jobId, token, deps);
 }
 
 // notifications, push, uploads, flags

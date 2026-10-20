@@ -1,5 +1,5 @@
 {
-  "id": "62ca7f47-d23f-42ff-b575-b66cd70b650c",
+  "id": "02e9e057-4747-4ea7-a3a7-5bdf37950271",
   "prevId": "784dcb41-2270-4640-9d3d-5ebce3f76a0f",
   "version": "7",
   "dialect": "postgresql",
@@ -997,6 +997,176 @@
       },
       "isRLSEnabled": false
     },
+    "public.deletion_job": {
+      "name": "deletion_job",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending_cooloff'"
+        },
+        "cooloff_until": {
+          "name": "cooloff_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "erase_after": {
+          "name": "erase_after",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "steps": {
+          "name": "steps",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "receipt_hash": {
+          "name": "receipt_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "deletion_job_workspace_id_idx": {
+          "name": "deletion_job_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "deletion_job_workspace_id_organization_id_fk": {
+          "name": "deletion_job_workspace_id_organization_id_fk",
+          "tableFrom": "deletion_job",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "deletion_job_kind_chk": {
+          "name": "deletion_job_kind_chk",
+          "value": "kind in ('workspace', 'account', 'memory')"
+        },
+        "deletion_job_status_chk": {
+          "name": "deletion_job_status_chk",
+          "value": "status in ('pending_cooloff', 'scheduled', 'running', 'erased', 'cancelled', 'failed')"
+        },
+        "deletion_job_workspace_chk": {
+          "name": "deletion_job_workspace_chk",
+          "value": "kind = 'account' or workspace_id is not null"
+        },
+        "deletion_job_account_user_chk": {
+          "name": "deletion_job_account_user_chk",
+          "value": "kind <> 'account' or user_id is not null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.deletion_tombstone": {
+      "name": "deletion_tombstone",
+      "schema": "",
+      "columns": {
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "receipt_hash": {
+          "name": "receipt_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.email_suppression": {
       "name": "email_suppression",
       "schema": "",
@@ -1098,6 +1268,225 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.export_job": {
+      "name": "export_job",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'queued'"
+        },
+        "progress": {
+          "name": "progress",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "steps": {
+          "name": "steps",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "blob_id": {
+          "name": "blob_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "download_token_hash": {
+          "name": "download_token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "export_job_workspace_id_idx": {
+          "name": "export_job_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "export_job_workspace_created_idx": {
+          "name": "export_job_workspace_created_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "export_job_ready_expires_idx": {
+          "name": "export_job_ready_expires_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "status = 'ready'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "export_job_active_uq": {
+          "name": "export_job_active_uq",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "requested_by",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "status in ('queued', 'running')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "export_job_requested_by_user_id_fk": {
+          "name": "export_job_requested_by_user_id_fk",
+          "tableFrom": "export_job",
+          "tableTo": "user",
+          "columnsFrom": ["requested_by"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "export_job_workspace_id_fk": {
+          "name": "export_job_workspace_id_fk",
+          "tableFrom": "export_job",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "export_job_scope_chk": {
+          "name": "export_job_scope_chk",
+          "value": "scope in ('workspace', 'user')"
+        },
+        "export_job_status_chk": {
+          "name": "export_job_status_chk",
+          "value": "status in ('queued', 'running', 'ready', 'failed', 'expired')"
+        },
+        "export_job_progress_chk": {
+          "name": "export_job_progress_chk",
+          "value": "progress between 0 and 100"
+        },
+        "export_job_ready_chk": {
+          "name": "export_job_ready_chk",
+          "value": "status <> 'ready' or (blob_id is not null and sha256 is not null and expires_at is not null)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.feature_flag": {
@@ -3078,70 +3467,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.staff_user": {
-      "name": "staff_user",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "role": {
-          "name": "role",
-          "type": "staff_role",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "disabled_at": {
-          "name": "disabled_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "staff_user_user_id_user_id_fk": {
-          "name": "staff_user_user_id_user_id_fk",
-          "tableFrom": "staff_user",
-          "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "staff_user_created_by_user_id_fk": {
-          "name": "staff_user_created_by_user_id_fk",
-          "tableFrom": "staff_user",
-          "tableTo": "user",
-          "columnsFrom": ["created_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.subscription": {
       "name": "subscription",
       "schema": "",
@@ -3362,190 +3687,6 @@
         "subscription_gstin_chk": {
           "name": "subscription_gstin_chk",
           "value": "gstin is null or gstin ~ '^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$'"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.support_session": {
-      "name": "support_session",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "requested_by_staff": {
-          "name": "requested_by_staff",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "granted_by_user": {
-          "name": "granted_by_user",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "scope": {
-          "name": "scope",
-          "type": "support_session_scope",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'metadata'"
-        },
-        "reason": {
-          "name": "reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "support_session_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'requested'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "granted_at": {
-          "name": "granted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ended_at": {
-          "name": "ended_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "support_session_workspace_id_idx": {
-          "name": "support_session_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "support_session_workspace_status_idx": {
-          "name": "support_session_workspace_status_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "support_session_staff_status_idx": {
-          "name": "support_session_staff_status_idx",
-          "columns": [
-            {
-              "expression": "requested_by_staff",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "support_session_requested_by_staff_user_id_fk": {
-          "name": "support_session_requested_by_staff_user_id_fk",
-          "tableFrom": "support_session",
-          "tableTo": "user",
-          "columnsFrom": ["requested_by_staff"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "support_session_granted_by_user_user_id_fk": {
-          "name": "support_session_granted_by_user_user_id_fk",
-          "tableFrom": "support_session",
-          "tableTo": "user",
-          "columnsFrom": ["granted_by_user"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "support_session_workspace_id_fk": {
-          "name": "support_session_workspace_id_fk",
-          "tableFrom": "support_session",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "support_session_reason_chk": {
-          "name": "support_session_reason_chk",
-          "value": "length(btrim(reason)) between 1 and 500"
-        },
-        "support_session_granted_chk": {
-          "name": "support_session_granted_chk",
-          "value": "status <> 'granted' or (granted_at is not null and expires_at is not null)"
-        },
-        "support_session_window_chk": {
-          "name": "support_session_window_chk",
-          "value": "expires_at is null or (granted_at is not null and expires_at > granted_at and expires_at <= granted_at + interval '240 minutes')"
         }
       },
       "isRLSEnabled": false
@@ -4557,21 +4698,6 @@
       "name": "source_type",
       "schema": "public",
       "values": ["manual", "document", "capture", "adapter", "ai", "import", "system"]
-    },
-    "public.staff_role": {
-      "name": "staff_role",
-      "schema": "public",
-      "values": ["support", "ops", "admin"]
-    },
-    "public.support_session_scope": {
-      "name": "support_session_scope",
-      "schema": "public",
-      "values": ["metadata", "view"]
-    },
-    "public.support_session_status": {
-      "name": "support_session_status",
-      "schema": "public",
-      "values": ["requested", "granted", "denied", "expired", "ended"]
     }
   },
   "schemas": {},

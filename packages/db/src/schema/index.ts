@@ -23,6 +23,19 @@ export {
   workspaceFeatureFlag,
 } from './flags.ts';
 export { jobEffect } from './job-effect.ts';
+export {
+  DELETION_KINDS,
+  DELETION_STATUSES,
+  deletionJob,
+  deletionTombstone,
+  EXPORT_SCOPES,
+  EXPORT_STATUSES,
+  exportJob,
+  type DeletionKind,
+  type DeletionStatus,
+  type ExportScope,
+  type ExportStatus,
+} from './lifecycle.ts';
 export { matterRestriction } from './matter-restriction.ts';
 export {
   emailSuppression,

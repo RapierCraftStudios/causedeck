@@ -25,6 +25,7 @@ describe('registerSchedules', () => {
       'system.usage.rollup',
       'system.audit.verify',
       'system.audit.retention',
+      'system.export.expire',
       'system.support.session-expire',
     ]);
 

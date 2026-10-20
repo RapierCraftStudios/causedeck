@@ -3,12 +3,14 @@ import type { FlagSnapshot } from '@causedeck/flags/keys';
 import { FlagsProvider } from '@causedeck/flags/react';
 import type { ReactNode } from 'react';
 
+import type { OwnerTwoFactorState } from '../../lib/require-2fa-for-owners.ts';
 import { ShortcutsProvider } from '../../lib/shortcuts/provider.tsx';
 import type { SidebarState } from '../../lib/sidebar-state.ts';
 import type { WorkspaceContext } from '../../lib/workspace-context.ts';
 
 import { CaptureProvider } from './capture-fab.tsx';
 import { MobileNav } from './mobile-nav.tsx';
+import { OwnerTwoFactorBanner } from './owner-two-factor-banner.tsx';
 import { SidebarProvider } from './sidebar-collapse.tsx';
 import { Sidebar } from './sidebar.tsx';
 import { SupportBanner, type ShellSupportSession } from './support-banner.tsx';
@@ -20,6 +22,8 @@ export interface AppShellProps {
   sidebarState: SidebarState;
   /** Server-evaluated flags (`getWorkspaceFlags`); booleans only, for hiding dark features. */
   flags: FlagSnapshot;
+  /** The owner 2FA policy for the signed-in user (#290); `required` shows the banner. */
+  ownerTwoFactor?: OwnerTwoFactorState;
   /** The active support session (#313), loaded for owners only; shows the support banner. */
   supportSession?: ShellSupportSession | null;
   children: ReactNode;
@@ -37,6 +41,7 @@ export function AppShell({
   context,
   sidebarState,
   flags,
+  ownerTwoFactor = 'not-owner',
   supportSession = null,
   children,
 }: AppShellProps) {
@@ -51,6 +56,7 @@ export function AppShell({
               <Sidebar context={context} />
               <div className="bg-surface flex min-w-0 flex-col">
                 <Topbar context={context} />
+                <OwnerTwoFactorBanner state={ownerTwoFactor} />
                 {supportSession ? (
                   <SupportBanner workspaceId={context.workspace.id} session={supportSession} />
                 ) : null}

@@ -256,6 +256,10 @@
       "message": "Support is viewing this workspace until {time}",
       "end": "End session",
       "error": "Could not end the session. Try again."
+    },
+    "ownerTwoFactor": {
+      "message": "Turn on two-factor authentication to keep owner access. Deleting, exporting and billing changes are blocked until you do.",
+      "action": "Set up two-factor"
     }
   },
   "auth": {

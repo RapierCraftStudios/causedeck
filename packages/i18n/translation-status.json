@@ -980,7 +980,9 @@
     "shell.supportBanner.message": "draft",
     "shell.supportBanner.end": "draft",
     "shell.supportBanner.error": "draft",
-    "settings.support.loading": "draft"
+    "settings.support.loading": "draft",
+    "shell.ownerTwoFactor.message": "draft",
+    "shell.ownerTwoFactor.action": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -1956,6 +1958,8 @@
     "shell.supportBanner.message": "draft",
     "shell.supportBanner.end": "draft",
     "shell.supportBanner.error": "draft",
-    "settings.support.loading": "draft"
+    "settings.support.loading": "draft",
+    "shell.ownerTwoFactor.message": "draft",
+    "shell.ownerTwoFactor.action": "draft"
   }
 }

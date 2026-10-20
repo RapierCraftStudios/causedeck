@@ -87,6 +87,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listMemberships: empty,
   listWorkspacesForUser: empty,
   memberRole: empty,
+  ownerGrace: empty,
   requireOwner: denies,
   requireCan: denies,
   listMembers: empty,
@@ -558,6 +559,7 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: "inWorkspace on an injected handle; the api's requireWorkspace checks membership first",
   },
   memberRoleFor: runtimeEmpty,
+  ownerGraceFor: runtimeEmpty,
   resolveSlugFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',

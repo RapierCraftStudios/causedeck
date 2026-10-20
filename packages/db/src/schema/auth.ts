@@ -202,6 +202,8 @@ export const member = pgTable(
     role: text('role').notNull(),
     status: text('status').notNull().default('active'),
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+    /** When the current `role` was granted; starts the owner 2FA grace (#290). */
+    roleGrantedAt: timestamp('role_granted_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: createdAt(),
   },
   (t) => [

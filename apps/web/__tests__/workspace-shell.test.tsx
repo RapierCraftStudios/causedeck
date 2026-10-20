@@ -24,6 +24,8 @@ const state = vi.hoisted(
     noWorkspaces: boolean;
     /** Flags the server evaluates on (#22); everything else is off, as on a fresh database. */
     flagsOn: string[];
+    /** The owner 2FA policy state the layout reads (#290). */
+    ownerTwoFactor: 'not-owner' | 'enabled' | 'grace' | 'required';
   } => ({
     locale: 'en',
     dev: true,
@@ -31,6 +33,7 @@ const state = vi.hoisted(
     pathname: '/w/demo/today',
     noWorkspaces: false,
     flagsOn: [],
+    ownerTwoFactor: 'not-owner',
   }),
 );
 
@@ -106,6 +109,11 @@ vi.mock('../lib/flags.ts', async () => {
   };
 });
 
+// The owner 2FA state comes from the session and the member row (#290); here from `state`.
+vi.mock('../lib/require-2fa-for-owners.ts', () => ({
+  loadOwnerTwoFactorState: () => Promise.resolve(state.ownerTwoFactor),
+}));
+
 const { default: WorkspaceLayout } = await import('../app/(app)/w/[slug]/layout.tsx');
 const { default: WorkspaceError } = await import('../app/(app)/w/[slug]/error.tsx');
 const { default: WorkspaceLoading } = await import('../app/(app)/w/[slug]/loading.tsx');
@@ -176,6 +184,7 @@ beforeEach(() => {
   state.pathname = '/w/demo/today';
   state.noWorkspaces = false;
   state.flagsOn = [];
+  state.ownerTwoFactor = 'not-owner';
   support.active = null;
   support.fail = false;
   support.activeSupportSessionIn.mockImplementation(() =>
@@ -343,6 +352,30 @@ describe('workspace layout', () => {
     expect(screen.getByRole('banner').tagName).toBe('HEADER');
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeTruthy();
     expect(document.querySelector('[data-shell]')?.getAttribute('data-sidebar')).toBe('auto');
+  });
+
+  it('shows the persistent owner 2FA banner only once the grace has run out (#290)', async () => {
+    const banner = async () => {
+      cleanup();
+      withIntl(
+        await WorkspaceLayout({
+          children: <p>content</p>,
+          params: Promise.resolve({ slug: 'demo' }),
+        }),
+      );
+      return document.querySelector('[data-slot="owner-two-factor-banner"]');
+    };
+    for (const quiet of ['not-owner', 'enabled', 'grace'] as const) {
+      state.ownerTwoFactor = quiet;
+      expect(await banner()).toBeNull();
+    }
+    state.ownerTwoFactor = 'required';
+    const shown = await banner();
+    expect(shown?.getAttribute('role')).toBe('status');
+    expect(shown?.textContent).toContain('Turn on two-factor authentication');
+    expect(shown?.querySelector('a')?.getAttribute('href')).toBe('/account#two-factor');
+    // Above the page content, outside main#main.
+    expect(document.getElementById('main')?.contains(shown ?? null)).toBe(false);
   });
 
   it('paints the sidebar state from the cookie', async () => {

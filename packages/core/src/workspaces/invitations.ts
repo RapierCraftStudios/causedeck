@@ -397,7 +397,7 @@ export async function acceptInvitation(
     const [joined] = existing
       ? await tx
           .update(member)
-          .set({ status: 'active', role: found.role, joinedAt: now })
+          .set({ status: 'active', role: found.role, joinedAt: now, roleGrantedAt: now })
           .where(eq(member.id, existing.id))
           .returning({ id: member.id })
       : await tx

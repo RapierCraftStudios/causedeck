@@ -101,6 +101,12 @@ export async function memberRoleFor(userId: string, workspaceId: string) {
   return memberRole(db, userId, workspaceId);
 }
 
+/** The user's role in the workspace and when it was granted (owner 2FA grace, #290), or `null`. */
+export async function ownerGraceFor(userId: string, workspaceId: string) {
+  const { ownerGrace } = await import('../workspaces/index.ts');
+  return ownerGrace(db, userId, workspaceId);
+}
+
 /** The live workspace a slug points at; membership is the caller's check. */
 export async function resolveSlugFor(slug: string, userId: string) {
   const { resolveSlug } = await import('../workspaces/index.ts');

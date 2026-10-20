@@ -17,7 +17,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * flag rows) and `access_mode_registry` (court-adapter access modes) are global by design (#22); the
  * per-workspace overrides are the tenant table `workspace_feature_flag`. `invoice_counter` is the
  * supplier-wide gapless SaaS invoice series (#252): no workspace, no RLS, allocated under a row lock
- * by #253.
+ * by #253. `deletion_tombstone` (#301) records an erased workspace and must outlive the purge of
+ * every tenant row, so it has no RLS and no foreign key.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -35,15 +36,17 @@ export const GLOBAL_TABLES: readonly string[] = [
   'feature_flag',
   'access_mode_registry',
   'invoice_counter',
+  'deletion_tombstone',
 ];
 
 /**
  * Tenant tables whose `workspace_id` may be null. `audit_event` holds account-level events (sign-in,
  * passkey, 2FA) that belong to no workspace; they are written only through `app_audit_append()` and
  * read through the `account_self` policy. The table is still under FORCE RLS with `ws_isolation`, and
- * still needs an index led by `workspace_id`. Adding a table here is a security decision.
+ * still needs an index led by `workspace_id`. `deletion_job` (#301) has no workspace only for
+ * account deletions (a check constraint enforces that). Adding a table here is a security decision.
  */
-export const NULLABLE_WORKSPACE_TABLES: readonly string[] = ['audit_event'];
+export const NULLABLE_WORKSPACE_TABLES: readonly string[] = ['audit_event', 'deletion_job'];
 
 export const WORKSPACE_COLUMN = 'workspace_id';
 

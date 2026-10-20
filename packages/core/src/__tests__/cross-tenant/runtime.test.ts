@@ -27,6 +27,8 @@ const RANGE = { from: new Date(0), to: new Date(Date.now() + 86_400_000) };
 let t: TwoTenants;
 let aInvitationToken: string;
 let aInvoiceId: string;
+let aExportId: string;
+const SECRET = 'xt-runtime-export-secret-0123456789abcdef';
 
 /** Rejects with a NOT_FOUND or FORBIDDEN error (workspace, invitation or notification). */
 async function expectDenied(promise: Promise<unknown>): Promise<void> {
@@ -158,6 +160,21 @@ const CASES: Record<string, () => Promise<void>> = {
     await runtime.recordAccessDeniedFor({ workspaceId: t.a.id, member: false, actorUserId: t.ub });
     expect(await aAuditIds()).toEqual(before);
   },
+  requestExportFor: async () => {
+    const before = await aAuditIds();
+    // Refused before anything is written or enqueued: ub is not an owner of A.
+    await expectDenied(runtime.requestExportFor(forged(), { scope: 'workspace' }));
+    expect(await aAuditIds()).toEqual(before);
+  },
+  issueExportDownloadFor: async () => {
+    await expectDenied(runtime.issueExportDownloadFor(forged(), aExportId, { secret: SECRET }));
+    await expectDenied(runtime.issueExportDownloadFor(asB(), aExportId, { secret: SECRET }));
+  },
+  openExportDownloadFor: async () => {
+    const deps = { store: {} as never, keys: {} as never, secret: SECRET };
+    await expectDenied(runtime.openExportDownloadFor(forged(), aExportId, 'forged.token', deps));
+    await expectDenied(runtime.openExportDownloadFor(asB(), aExportId, 'forged.token', deps));
+  },
   loadNotificationPreferences: async () => {
     await expectDenied(runtime.loadNotificationPreferences(forged()));
     await expectDenied(runtime.loadNotificationPreferences({ workspaceId: t.b.id, userId: t.ua }));
@@ -196,7 +213,9 @@ beforeAll(async () => {
   t = await seedTwoTenants(testAppDb());
   const token = t.a.rows.invitation?.token;
   const invoiceId = t.a.rows.saas_invoice?.invoiceId;
-  if (!token || !invoiceId) throw new Error('seed rows');
+  const exportId = t.a.rows.export_job?.id;
+  if (!token || !invoiceId || !exportId) throw new Error('seed rows');
+  aExportId = exportId;
   aInvitationToken = token;
   aInvoiceId = invoiceId;
 });

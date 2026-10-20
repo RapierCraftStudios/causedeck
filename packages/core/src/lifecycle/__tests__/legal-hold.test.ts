@@ -26,7 +26,14 @@ import {
   spyEmail,
   superuserDb,
 } from './deletion-fixtures.ts';
-import { captureLog, cleanup, lifecycleDb, newStore, seedWorkspaces } from './fixtures.ts';
+import {
+  captureLog,
+  cleanup,
+  lifecycleDb,
+  newStore,
+  seedWorkspaces,
+  stepUpSession,
+} from './fixtures.ts';
 
 const T0 = new Date('2026-11-25T00:00:00.000Z');
 const RECIPIENT = {
@@ -110,7 +117,13 @@ describe('legal hold', () => {
     const ws = seeded.a;
     const invoice = await issuedInvoice(ws.id);
     const job = await requestWorkspaceDeletion(
-      { db, workspaceId: ws.id, userId: seeded.ua, now: () => T0 },
+      {
+        db,
+        workspaceId: ws.id,
+        userId: seeded.ua,
+        sessionId: await stepUpSession(db, seeded.ua, { at: T0 }),
+        now: () => T0,
+      },
       { confirmName: ws.name },
       noDelivery,
     );

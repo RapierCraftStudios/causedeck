@@ -24,6 +24,7 @@ import {
   lifecycleDb,
   newStore,
   seedWorkspaces,
+  stepUpSession,
   testKeys,
 } from './fixtures.ts';
 
@@ -108,7 +109,7 @@ async function exportWithin(total: number, files: number, boundBytes: number) {
   const sizes = await syntheticFiles(workspaceId, files, Math.floor(total / files));
   const { store, stats } = syntheticStore(sizes);
   const job = await requestExport(
-    { db, workspaceId, userId: seeded.ua },
+    { db, workspaceId, userId: seeded.ua, sessionId: await stepUpSession(db, seeded.ua) },
     { scope: 'workspace' },
     { enqueue: () => Promise.resolve(null) },
   );

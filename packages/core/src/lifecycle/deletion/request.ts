@@ -9,7 +9,9 @@
 //   is running). Records `workspace.deletion_cancelled` and notifies the owners.
 // - `getActiveWorkspaceDeletion`: the pending, scheduled or running deletion of the current
 //   workspace, for the cool-off banner (#305): active members only, null for anyone else.
-// Metadata and logs hold ids and dates only; step-up authentication (#304) wraps these calls.
+// Requesting and cancelling also need a passkey or TOTP verification in the caller's session within
+// 10 minutes (step-up, #304, `../step-up.ts`); a role or step-up refusal is `FORBIDDEN` and audited.
+// Metadata and logs hold ids and dates only.
 import { schema, withWorkspace, type Queryable } from '@causedeck/db';
 import type { DeletionStatus } from '@causedeck/db/schema';
 import { notify, type DeliveryJob } from '@causedeck/notifications';
@@ -18,6 +20,8 @@ import { and, eq, inArray } from 'drizzle-orm';
 
 import { record } from '../../audit/index.ts';
 import { notFound, requireOwner, WorkspaceError } from '../../workspaces/index.ts';
+
+import { assertStepUp, auditedGate } from '../step-up.ts';
 
 import { DELETION_COOLOFF_MS } from './cooloff.ts';
 
@@ -68,6 +72,8 @@ export interface DeletionRequestCtx {
   db: Queryable;
   workspaceId: string;
   userId: string;
+  /** The caller's Better Auth session, for the step-up check (#304). */
+  sessionId: string;
   requestId?: string;
   userAgent?: string;
   ip?: string;
@@ -208,50 +214,53 @@ export async function requestWorkspaceDeletion(
 ): Promise<DeletionJob> {
   // Callers outside TypeScript (server actions parse input) could still pass anything.
   if (typeof confirmName !== 'string') throw new DeletionError('CONFIRM_NAME_MISMATCH');
-  const result = await withWorkspace(ctx.db, scopeOf(ctx), async (tx) => {
-    const workspace = await requireOwner(tx, ctx.workspaceId, ctx.userId);
-    const [org] = await tx
-      .select({ name: organization.name })
-      .from(organization)
-      .where(eq(organization.id, ctx.workspaceId));
-    if (org === undefined) throw notFound();
-    if (confirmName.trim() !== org.name) throw new DeletionError('CONFIRM_NAME_MISMATCH');
-    const [active] = await tx
-      .select()
-      .from(deletionJob)
-      .where(activeWorkspaceDeletion(ctx.workspaceId))
-      .limit(1);
-    if (active !== undefined) return { job: active, notice: null };
-    const now = ctx.now?.() ?? new Date();
-    const cooloffUntil = new Date(now.getTime() + DELETION_COOLOFF_MS);
-    const [row] = await tx
-      .insert(deletionJob)
-      .values({
+  const result = await auditedGate(ctx, 'workspace.delete', () =>
+    withWorkspace(ctx.db, scopeOf(ctx), async (tx) => {
+      const workspace = await requireOwner(tx, ctx.workspaceId, ctx.userId);
+      await assertStepUp(tx, ctx);
+      const [org] = await tx
+        .select({ name: organization.name })
+        .from(organization)
+        .where(eq(organization.id, ctx.workspaceId));
+      if (org === undefined) throw notFound();
+      if (confirmName.trim() !== org.name) throw new DeletionError('CONFIRM_NAME_MISMATCH');
+      const [active] = await tx
+        .select()
+        .from(deletionJob)
+        .where(activeWorkspaceDeletion(ctx.workspaceId))
+        .limit(1);
+      if (active !== undefined) return { job: active, notice: null };
+      const now = ctx.now?.() ?? new Date();
+      const cooloffUntil = new Date(now.getTime() + DELETION_COOLOFF_MS);
+      const [row] = await tx
+        .insert(deletionJob)
+        .values({
+          workspaceId: ctx.workspaceId,
+          kind: 'workspace',
+          requestedBy: ctx.userId,
+          status: 'pending_cooloff',
+          cooloffUntil,
+          eraseAfter: cooloffUntil,
+          createdAt: now,
+        })
+        .returning();
+      if (row === undefined) throw new Error('requestWorkspaceDeletion: insert returned no row');
+      await record(auditCtx(ctx, tx), {
+        action: 'workspace.deletion_requested',
+        target: { kind: 'deletion_job', id: row.id },
+        metadata: { jobId: row.id, cooloffUntil: cooloffUntil.toISOString() },
+      });
+      const notice: OwnerNotice = {
         workspaceId: ctx.workspaceId,
-        kind: 'workspace',
-        requestedBy: ctx.userId,
-        status: 'pending_cooloff',
+        slug: workspace.slug,
+        name: org.name,
+        owners: await ownersOf(tx, ctx.workspaceId),
+        jobId: row.id,
         cooloffUntil,
-        eraseAfter: cooloffUntil,
-        createdAt: now,
-      })
-      .returning();
-    if (row === undefined) throw new Error('requestWorkspaceDeletion: insert returned no row');
-    await record(auditCtx(ctx, tx), {
-      action: 'workspace.deletion_requested',
-      target: { kind: 'deletion_job', id: row.id },
-      metadata: { jobId: row.id, cooloffUntil: cooloffUntil.toISOString() },
-    });
-    const notice: OwnerNotice = {
-      workspaceId: ctx.workspaceId,
-      slug: workspace.slug,
-      name: org.name,
-      owners: await ownersOf(tx, ctx.workspaceId),
-      jobId: row.id,
-      cooloffUntil,
-    };
-    return { job: row, notice };
-  });
+      };
+      return { job: row, notice };
+    }),
+  );
   if (result.notice !== null) await notifyOwners(ctx.db, 'requested', result.notice, deps);
   return toJob(result.job);
 }
@@ -262,49 +271,52 @@ export async function cancelWorkspaceDeletion(
   jobId: string,
   deps: DeletionNotifyDeps,
 ): Promise<DeletionJob> {
-  const result = await withWorkspace(ctx.db, scopeOf(ctx), async (tx) => {
-    const workspace = await requireOwner(tx, ctx.workspaceId, ctx.userId);
-    const [current] = await tx
-      .select()
-      .from(deletionJob)
-      .where(
-        and(
-          eq(deletionJob.id, jobId),
-          eq(deletionJob.workspaceId, ctx.workspaceId),
-          eq(deletionJob.kind, 'workspace'),
-        ),
-      )
-      .for('update');
-    if (current === undefined) throw notFound('Deletion not found');
-    if (current.status === 'cancelled') return { job: current, notice: null };
-    if (current.status !== 'pending_cooloff' && current.status !== 'scheduled') {
-      throw new DeletionError('DELETION_NOT_CANCELLABLE');
-    }
-    const [row] = await tx
-      .update(deletionJob)
-      .set({ status: 'cancelled', completedAt: ctx.now?.() ?? new Date() })
-      .where(eq(deletionJob.id, jobId))
-      .returning();
-    if (row === undefined) throw notFound('Deletion not found');
-    await record(auditCtx(ctx, tx), {
-      action: 'workspace.deletion_cancelled',
-      target: { kind: 'deletion_job', id: row.id },
-      metadata: { jobId: row.id },
-    });
-    const [org] = await tx
-      .select({ name: organization.name })
-      .from(organization)
-      .where(eq(organization.id, ctx.workspaceId));
-    const notice: OwnerNotice = {
-      workspaceId: ctx.workspaceId,
-      slug: workspace.slug,
-      name: org?.name ?? workspace.slug,
-      owners: await ownersOf(tx, ctx.workspaceId),
-      jobId: row.id,
-      cooloffUntil: row.cooloffUntil,
-    };
-    return { job: row, notice };
-  });
+  const result = await auditedGate(ctx, 'workspace.delete_cancel', () =>
+    withWorkspace(ctx.db, scopeOf(ctx), async (tx) => {
+      const workspace = await requireOwner(tx, ctx.workspaceId, ctx.userId);
+      await assertStepUp(tx, ctx);
+      const [current] = await tx
+        .select()
+        .from(deletionJob)
+        .where(
+          and(
+            eq(deletionJob.id, jobId),
+            eq(deletionJob.workspaceId, ctx.workspaceId),
+            eq(deletionJob.kind, 'workspace'),
+          ),
+        )
+        .for('update');
+      if (current === undefined) throw notFound('Deletion not found');
+      if (current.status === 'cancelled') return { job: current, notice: null };
+      if (current.status !== 'pending_cooloff' && current.status !== 'scheduled') {
+        throw new DeletionError('DELETION_NOT_CANCELLABLE');
+      }
+      const [row] = await tx
+        .update(deletionJob)
+        .set({ status: 'cancelled', completedAt: ctx.now?.() ?? new Date() })
+        .where(eq(deletionJob.id, jobId))
+        .returning();
+      if (row === undefined) throw notFound('Deletion not found');
+      await record(auditCtx(ctx, tx), {
+        action: 'workspace.deletion_cancelled',
+        target: { kind: 'deletion_job', id: row.id },
+        metadata: { jobId: row.id },
+      });
+      const [org] = await tx
+        .select({ name: organization.name })
+        .from(organization)
+        .where(eq(organization.id, ctx.workspaceId));
+      const notice: OwnerNotice = {
+        workspaceId: ctx.workspaceId,
+        slug: workspace.slug,
+        name: org?.name ?? workspace.slug,
+        owners: await ownersOf(tx, ctx.workspaceId),
+        jobId: row.id,
+        cooloffUntil: row.cooloffUntil,
+      };
+      return { job: row, notice };
+    }),
+  );
   if (result.notice !== null) await notifyOwners(ctx.db, 'cancelled', result.notice, deps);
   return toJob(result.job);
 }

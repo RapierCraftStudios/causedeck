@@ -4,7 +4,6 @@
 import { listStaffSupportSessionsFor } from '@causedeck/core/runtime';
 import { SUPPORT_REASON_MAX_LENGTH, supportSessionState } from '@causedeck/core/support';
 import { EmptyState } from '@causedeck/ui/empty-state';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@causedeck/ui/table';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -38,36 +37,61 @@ export default async function SupportPage({
           description="Request one below. The workspace owner decides, and can end it at any time."
         />
       ) : (
-        <Table aria-label="Your support sessions" data-slot="support-sessions">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Workspace</TableHead>
-              <TableHead>Access</TableHead>
-              <TableHead>State</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Requested</TableHead>
-              <TableHead>Ends</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sessions.map((s) => (
-              <TableRow key={s.id} data-slot="support-session-row" data-session-id={s.id}>
-                <TableCell className="font-mono text-xs">
-                  <Link href={`/support/${s.id}`} className="underline-offset-2 hover:underline">
-                    {s.workspaceId}
-                  </Link>
-                </TableCell>
-                <TableCell>{s.scope === 'view' ? 'Read-only view' : 'Metadata'}</TableCell>
-                <TableCell>
-                  <SessionStateChip state={supportSessionState(s, now)} />
-                </TableCell>
-                <TableCell className="max-w-72 truncate">{s.reason}</TableCell>
-                <TableCell>{dateTime(s.createdAt)}</TableCell>
-                <TableCell>{dateTime(s.expiresAt)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="border-line overflow-x-auto rounded-md border">
+          <table
+            aria-label="Your support sessions"
+            data-slot="support-sessions"
+            className="w-full text-left text-sm"
+          >
+            <thead className="bg-surface-sunken text-ink-muted">
+              <tr>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Workspace
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Access
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  State
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Reason
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Requested
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Ends
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((s) => (
+                <tr
+                  className="border-line border-t"
+                  key={s.id}
+                  data-slot="support-session-row"
+                  data-session-id={s.id}
+                >
+                  <td className="px-3 py-2 font-mono text-xs">
+                    <Link href={`/support/${s.id}`} className="underline-offset-2 hover:underline">
+                      {s.workspaceId}
+                    </Link>
+                  </td>
+                  <td className="px-3 py-2">
+                    {s.scope === 'view' ? 'Read-only view' : 'Metadata'}
+                  </td>
+                  <td className="px-3 py-2">
+                    <SessionStateChip state={supportSessionState(s, now)} />
+                  </td>
+                  <td className="max-w-72 truncate px-3 py-2">{s.reason}</td>
+                  <td className="px-3 py-2">{dateTime(s.createdAt)}</td>
+                  <td className="px-3 py-2">{dateTime(s.expiresAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <RequestForm workspaceId={prefill} reasonMaxLength={SUPPORT_REASON_MAX_LENGTH} />
     </section>

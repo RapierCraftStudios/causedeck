@@ -1,7 +1,7 @@
 // Staff console reads (#310, migration 0033): the owner-defined workspace metadata and staff audit
 // functions run only for an enabled staff member (app.user_id), are not executable by PUBLIC, and
 // return the listed metadata columns only; owner_definer_read on member and workspace_feature_flag
-// is for the owner role alone. The usage functions of 0034 (#224) follow the same rules, and
+// is for the owner role alone. The usage functions of 0035 (#224) follow the same rules, and
 // budget_override's early-expiry columns are all set or none.
 import { randomUUID } from 'node:crypto';
 
@@ -237,7 +237,7 @@ describe('staff console functions (0033)', () => {
     });
   });
 
-  it('owner_definer_read on budget_override is for the owner only (0034)', async () => {
+  it('owner_definer_read on budget_override is for the owner only (0035)', async () => {
     await withTestDb(async (tx) => {
       const rows = await tx.execute<{ roles: string }>(
         sql`select roles::text as roles from pg_policies
@@ -253,7 +253,7 @@ describe('staff console functions (0033)', () => {
   });
 });
 
-describe('staff workspace usage functions (0034, #224)', () => {
+describe('staff workspace usage functions (0035, #224)', () => {
   it("return the workspace's newest counter per key, with the listed columns only", async () => {
     await withTestDb(async (tx) => {
       const t = await seedTwoTenants(tx);

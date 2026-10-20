@@ -108,7 +108,7 @@ describe('usage schema (#218)', () => {
         enabled: true,
         forced: true,
         // 0018_usage_rollup adds owner-only policies for the rollup's definer functions (#222);
-        // 0034 adds owner_definer_read on budget_override for the staff console (#224).
+        // 0035 adds owner_definer_read on budget_override for the staff console (#224).
         policies:
           name === 'usage_period_summary'
             ? ['owner_definer_purge', 'owner_definer_read', 'ws_isolation']

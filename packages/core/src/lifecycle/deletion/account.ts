@@ -6,7 +6,9 @@
 //   (`kind` `account`, no workspace, read and written through the `account_self` policy) is
 //   scheduled with `account.deletion_requested` (account chain, fail-closed) in the same
 //   transaction, and `account.delete` is enqueued with ids only. No cool-off: that is for
-//   workspace deletion only (#302); step-up authentication gates the entry point (#304).
+//   workspace deletion only (#302). First of all, the caller's session must have verified a
+//   passkey or TOTP within 10 minutes (step-up, #304): otherwise `FORBIDDEN`, audited as
+//   `auth.step_up_required` on the account chain.
 // - `runAccountDeletion`: the job body. It re-checks the blocks (ownership can change while the
 //   job waits), strips the user from `matter_restriction.allowed_user_ids` in each workspace,
 //   then in one transaction deletes the `user` row (cascading sessions, accounts, passkeys,
@@ -25,6 +27,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { record } from '../../audit/index.ts';
 import { conflict, listMemberships } from '../../workspaces/index.ts';
+import { assertStepUp, auditedGate } from '../step-up.ts';
 
 const { deletionJob, matterRestriction, member, staffUser, user } = schema;
 
@@ -49,6 +52,8 @@ export interface AccountDeletionJob {
 export interface AccountDeletionCtx {
   db: Queryable;
   userId: string;
+  /** The caller's Better Auth session, for the step-up check (#304). */
+  sessionId: string;
   requestId?: string;
   userAgent?: string;
   ip?: string;
@@ -137,6 +142,9 @@ export async function requestAccountDeletion(
   ctx: AccountDeletionCtx,
   deps: RequestAccountDeletionDeps,
 ): Promise<AccountDeletionJob> {
+  await auditedGate({ ...ctx, workspaceId: null }, 'account.delete', () =>
+    withUser(ctx.db, { userId: ctx.userId }, (tx) => assertStepUp(tx, ctx)),
+  );
   if (await withUser(ctx.db, { userId: ctx.userId }, (tx) => isStaff(tx, ctx.userId))) {
     throw conflict(ACCOUNT_DELETION_STAFF_MESSAGE);
   }

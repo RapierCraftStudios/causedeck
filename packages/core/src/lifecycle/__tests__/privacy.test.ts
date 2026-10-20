@@ -26,6 +26,7 @@ import {
   readAll,
   SECRET,
   seedWorkspaces,
+  stepUpSession,
   testKeys,
 } from './fixtures.ts';
 
@@ -60,7 +61,12 @@ beforeAll(async () => {
     },
   };
   job = await requestExport(
-    { db, workspaceId: seeded.a.id, userId: seeded.ua },
+    {
+      db,
+      workspaceId: seeded.a.id,
+      userId: seeded.ua,
+      sessionId: await stepUpSession(db, seeded.ua),
+    },
     { scope: 'workspace' },
     { enqueue: () => Promise.resolve(null) },
   );

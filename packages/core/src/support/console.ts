@@ -1,5 +1,5 @@
 // Staff console reads (#310, part of #27): workspace metadata lookup and the platform staff audit;
-// and a workspace's usage counters and AI budget overrides (#224, migration 0034).
+// and a workspace's usage counters and AI budget overrides (#224, migration 0035).
 // The rows live in tenant tables under FORCE RLS, so they come from the owner-defined functions of
 // migration 0033, which run only for an enabled staff member (app.user_id, pinned here through
 // `withUser`) and return metadata only: plan, seats, storage, dates, flags and the owner's email,

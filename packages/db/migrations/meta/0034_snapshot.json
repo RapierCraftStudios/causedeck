@@ -1,5 +1,5 @@
 {
-  "id": "e26106ee-63af-4ad3-8a26-42167d3a641a",
+  "id": "e69b990a-a5e5-43dd-bce8-7ce2e6572e96",
   "prevId": "78141def-ede6-46e6-8010-a89b84998d78",
   "version": "7",
   "dialect": "postgresql",
@@ -967,24 +967,6 @@
           "notNull": true,
           "default": "now()"
         },
-        "expired_at": {
-          "name": "expired_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "expired_by": {
-          "name": "expired_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "expire_reason": {
-          "name": "expire_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "workspace_id": {
           "name": "workspace_id",
           "type": "uuid",
@@ -1040,15 +1022,6 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "budget_override_expired_by_user_id_fk": {
-          "name": "budget_override_expired_by_user_id_fk",
-          "tableFrom": "budget_override",
-          "tableTo": "user",
-          "columnsFrom": ["expired_by"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "budget_override_workspace_id_organization_id_fk": {
           "name": "budget_override_workspace_id_organization_id_fk",
           "tableFrom": "budget_override",
@@ -1070,10 +1043,6 @@
         "budget_override_reason_chk": {
           "name": "budget_override_reason_chk",
           "value": "length(btrim(reason)) > 0"
-        },
-        "budget_override_expiry_chk": {
-          "name": "budget_override_expiry_chk",
-          "value": "(expired_at is null and expired_by is null and expire_reason is null) or (expired_at is not null and expired_by is not null and expire_reason is not null and length(btrim(expire_reason)) > 0)"
         },
         "budget_override_key_chk": {
           "name": "budget_override_key_chk",
@@ -3699,6 +3668,12 @@
         "active_organization_id": {
           "name": "active_organization_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "step_up_at": {
+          "name": "step_up_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

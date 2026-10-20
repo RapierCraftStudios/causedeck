@@ -82,7 +82,7 @@ export const usageEvent = tenantTable(
 
 /**
  * A staff override of a workspace limit; always justified and always expiring. Staff may expire one
- * early (#224, 0034): `expires_at` moves to that moment and who did it and why are kept on the row
+ * early (#224, 0035): `expires_at` moves to that moment and who did it and why are kept on the row
  * (`expired_at`, `expired_by`, `expire_reason`: all set or none).
  */
 export const budgetOverride = tenantTable(

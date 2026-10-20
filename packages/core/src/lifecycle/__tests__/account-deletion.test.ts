@@ -18,7 +18,7 @@ import {
   runAccountDeletion,
 } from '../index.ts';
 
-import { captureLog } from './fixtures.ts';
+import { captureLog, stepUpSession } from './fixtures.ts';
 
 const { account, blob, deletionJob, matterRestriction, member, passkey, session, twoFactor, user } =
   schema;
@@ -131,7 +131,10 @@ describe('requestAccountDeletion', () => {
       const enqueue = vi.fn(() => Promise.resolve(null));
       let message = '';
       try {
-        await requestAccountDeletion({ db: tx, userId: seeded.ua }, { enqueue });
+        await requestAccountDeletion(
+          { db: tx, userId: seeded.ua, sessionId: await stepUpSession(tx, seeded.ua) },
+          { enqueue },
+        );
       } catch (error) {
         expect((error as { code?: string }).code).toBe('CONFLICT');
         message = (error as Error).message;
@@ -151,8 +154,14 @@ describe('requestAccountDeletion', () => {
     await withTestDb(async (tx) => {
       const seeded = await seedTwoTenants(tx);
       const enqueue = vi.fn(() => Promise.resolve(null));
-      const first = await requestAccountDeletion({ db: tx, userId: seeded.uboth }, { enqueue });
-      const again = await requestAccountDeletion({ db: tx, userId: seeded.uboth }, { enqueue });
+      const first = await requestAccountDeletion(
+        { db: tx, userId: seeded.uboth, sessionId: await stepUpSession(tx, seeded.uboth) },
+        { enqueue },
+      );
+      const again = await requestAccountDeletion(
+        { db: tx, userId: seeded.uboth, sessionId: await stepUpSession(tx, seeded.uboth) },
+        { enqueue },
+      );
       expect(first.status).toBe('scheduled');
       expect(again.id).toBe(first.id);
       expect(enqueue).toHaveBeenCalledTimes(1);
@@ -182,7 +191,7 @@ describe('runAccountDeletion', () => {
 
       const { log } = captureLog();
       const job = await requestAccountDeletion(
-        { db: tx, userId: target },
+        { db: tx, userId: target, sessionId: await stepUpSession(tx, target) },
         { enqueue: () => Promise.resolve(null) },
       );
       const outcome = await runAccountDeletion({ db: tx, log }, { userId: target, jobId: job.id });
@@ -259,7 +268,7 @@ describe('runAccountDeletion', () => {
         s.insert(member).values({ organizationId: seeded.a.id, userId: target, role: 'owner' }),
       );
       const job = await requestAccountDeletion(
-        { db: tx, userId: target },
+        { db: tx, userId: target, sessionId: await stepUpSession(tx, target) },
         { enqueue: () => Promise.resolve(null) },
       );
       // The other owner leaves before the job runs.
@@ -274,7 +283,12 @@ describe('runAccountDeletion', () => {
       expect(outcome).toMatchObject({ status: 'failed', error: 'sole_owner' });
       expect((await countFor(tx, target))?.user).toBe(1);
       expect(
-        await codeOf(requestAccountDeletion({ db: tx, userId: target }, { enqueue: vi.fn() })),
+        await codeOf(
+          requestAccountDeletion(
+            { db: tx, userId: target, sessionId: await stepUpSession(tx, target) },
+            { enqueue: vi.fn() },
+          ),
+        ),
       ).toBe('CONFLICT');
     });
   });
@@ -287,7 +301,7 @@ describe('runAccountDeletion', () => {
       );
       const { log } = captureLog();
       const job = await requestAccountDeletion(
-        { db: tx, userId: seeded.uboth },
+        { db: tx, userId: seeded.uboth, sessionId: await stepUpSession(tx, seeded.uboth) },
         { enqueue: () => Promise.resolve(null) },
       );
       // A job id belonging to uboth cannot be run for ua.

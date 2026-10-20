@@ -32,6 +32,7 @@ import {
   newStore,
   readAll,
   seedWorkspaces,
+  stepUpSession,
   testKeys,
 } from './fixtures.ts';
 import { unzip } from './unzip.ts';
@@ -60,7 +61,11 @@ afterAll(async () => {
 const noEnqueue = { enqueue: () => Promise.resolve(null) };
 
 async function build(workspaceId: string, userId: string, scope: 'workspace' | 'user') {
-  const job = await requestExport({ db, workspaceId, userId }, { scope }, noEnqueue);
+  const job = await requestExport(
+    { db, workspaceId, userId, sessionId: await stepUpSession(db, userId) },
+    { scope },
+    noEnqueue,
+  );
   const { log } = captureLog();
   const outcome = await runExportBuild(
     { db, log },
@@ -189,7 +194,12 @@ describe('workspace export', () => {
 describe('export job lifecycle', () => {
   it('reports progress that only grows while it builds', async () => {
     const job = await requestExport(
-      { db, workspaceId: seeded.b.id, userId: seeded.ub },
+      {
+        db,
+        workspaceId: seeded.b.id,
+        userId: seeded.ub,
+        sessionId: await stepUpSession(db, seeded.ub),
+      },
       { scope: 'workspace' },
       noEnqueue,
     );
@@ -219,7 +229,12 @@ describe('export job lifecycle', () => {
       tx.update(schema.member).set({ role: 'owner' }).where(eq(schema.member.userId, seeded.uboth)),
     );
     const job = await requestExport(
-      { db, workspaceId: ws, userId: seeded.uboth },
+      {
+        db,
+        workspaceId: ws,
+        userId: seeded.uboth,
+        sessionId: await stepUpSession(db, seeded.uboth),
+      },
       { scope: 'workspace' },
       noEnqueue,
     );

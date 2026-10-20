@@ -119,7 +119,7 @@ owner-defined function names instead of tables), then `fn` runs a `@causedeck/co
 reads go through the SECURITY DEFINER functions of migration `0033_staff_console_reads`, which
 refuse anyone but an enabled staff member ([tenancy](tenancy.md)). The data layer exports
 `searchWorkspaces`, `workspaceMetadata`, `staffAuditLog` and `workspaceUsage` (#224, purpose
-`workspaces.usage`, through `staffWorkspaceUsage` and the `0034_staff_workspace_usage` functions
+`workspaces.usage`, through `staffWorkspaceUsage` and the `0035_staff_workspace_usage` functions
 `app_staff_workspace_usage` and `app_staff_budget_overrides`).
 
 ## Adapters

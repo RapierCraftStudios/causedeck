@@ -54,7 +54,8 @@ Each action is either **security** or **informational**:
 | `audit.exported`                      | security      | `exportAudit`, before the first byte (#229); `recordExportRun`                                                             |
 | `support.session_started`             | security      | `recordSupportSessionStarted` (#27)                                                                                        |
 | `support.session_ended`               | security      | `recordSupportSessionEnded` (#27)                                                                                          |
-| `access.denied`                       | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize`                                                          |
+| `access.denied`                       | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize`; core lifecycle step-up gate (role refusals, #304)        |
+| `auth.step_up_required`               | security      | core lifecycle step-up gate: no passkey or TOTP verification in the session within 10 minutes (#304)                       |
 | `staff.read` | security | admin data layer `staffQuery`, before the read (#309) |
 | `staff.two_factor_verified` | security | admin console TOTP step (`verify-2fa`, #309) |
 | `usage.budget_override_set`           | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)                                                                        |
@@ -91,6 +92,13 @@ Security events (#228):
   survives the denied action's rolled-back transaction, and a failed write is logged, never masking
   the original `FORBIDDEN`. A member's denial goes to the workspace chain; a non-member's is
   account-level (target `workspace`), so a non-member never writes into a chain it cannot read.
+  The lifecycle step-up gate (`packages/core/src/lifecycle/step-up.ts`, #304) writes the same shape
+  for role refusals of export and workspace deletion (metadata `deniedAction`, `reason: 'role'`).
+- `auth.step_up_required` is written by the same gate, after the refused action's transaction rolls
+  back, when the caller's session has no passkey or TOTP verification within 10 minutes. It goes to
+  the workspace chain for an owner's workspace action and is account-level for account deletion.
+  Metadata names the refused action only (`deniedAction`). A failed write is logged; the refusal
+  stands.
 - `flag.changed` stores the old and new values and whether a legal acknowledgement was given
   (`legalAck`); the free-text legal note is never stored.
 

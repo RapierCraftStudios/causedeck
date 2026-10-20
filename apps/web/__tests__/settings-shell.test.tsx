@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
-// Settings shell and workspace profile (#284): the sub-nav lists the eight sections plus usage and
-// audit, hidden by `can()` per role; direct URLs to a hidden section show the permission-denied
-// page; the profile form validates with zod, saves optimistically with rollback and toasts, keeps
-// the slug rename owner-only, turns read-only offline, and guards unsaved changes. The export and
+// Settings shell and workspace profile (#284): the sub-nav lists the eight sections plus usage,
+// audit and support access (#313, owners only), hidden by `can()` per role; direct URLs to a hidden
+// section show the permission-denied page; the profile form validates with zod, saves
+// optimistically with rollback and toasts, keeps the slug rename owner-only, turns read-only
+// offline, and guards unsaved changes. The export and
 // danger pages (#288) gate on `export.run` / `workspace.delete`, explain disabled actions with a
 // focusable tooltip and the `workspace.export` flag, and link transfer to the members flow.
 import { readFileSync } from 'node:fs';
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProfileView } from '../app/(app)/w/[slug]/settings/profile/actions.ts';
@@ -53,6 +54,9 @@ vi.mock('../lib/report-error.ts', () => ({ reportError: vi.fn() }));
 vi.mock('../app/(app)/w/[slug]/settings/profile/actions.ts', () => ({
   updateWorkspaceProfileAction: vi.fn(),
 }));
+vi.mock('../app/(app)/w/[slug]/settings/roles/actions.ts', () => ({
+  updateRoleSettingsAction: vi.fn(),
+}));
 
 const nav = await import('../lib/settings-nav.ts');
 const { default: SettingsLayout } = await import('../app/(app)/w/[slug]/settings/layout.tsx');
@@ -61,11 +65,12 @@ const { default: ProfilePage } = await import('../app/(app)/w/[slug]/settings/pr
 const { ProfileForm, renamedPath } =
   await import('../app/(app)/w/[slug]/settings/profile/profile-form.tsx');
 const { UnsavedChangesGuard } = await import('../components/settings/unsaved-changes-guard.tsx');
+const { default: RolesPage } = await import('../app/(app)/w/[slug]/settings/roles/page.tsx');
 const PLACEHOLDERS = {
-  roles: (await import('../app/(app)/w/[slug]/settings/roles/page.tsx')).default,
   integrations: (await import('../app/(app)/w/[slug]/settings/integrations/page.tsx')).default,
-  privacy: (await import('../app/(app)/w/[slug]/settings/privacy/page.tsx')).default,
 };
+// The privacy page (#286) is real; its own states are covered in privacy-page.test.tsx.
+const { default: PrivacyPage } = await import('../app/(app)/w/[slug]/settings/privacy/page.tsx');
 const { default: ExportPage } = await import('../app/(app)/w/[slug]/settings/export/page.tsx');
 const { default: ExportLoading } =
   await import('../app/(app)/w/[slug]/settings/export/loading.tsx');
@@ -119,7 +124,7 @@ afterEach(() => {
 describe('settings nav manifest', () => {
   const ids = (role: Role) => nav.visibleSettingsItems(role).map((item) => item.id);
 
-  it('lists the eight sections in order, then usage and the audit log', () => {
+  it('lists the eight sections in order, then usage, the audit log and support access', () => {
     expect(nav.SETTINGS_NAV.filter((i) => i.group === 'sections').map((i) => i.id)).toEqual([
       'profile',
       'members',
@@ -130,7 +135,7 @@ describe('settings nav manifest', () => {
       'export',
       'danger',
     ]);
-    expect(ids('owner')).toEqual([...nav.SETTINGS_SECTIONS, 'usage', 'audit']);
+    expect(ids('owner')).toEqual([...nav.SETTINGS_SECTIONS, 'usage', 'audit', 'support']);
   });
 
   it('hides the sections a role cannot open', () => {
@@ -157,6 +162,7 @@ describe('settings nav manifest', () => {
   it('finds the section of a pathname', () => {
     expect(nav.settingsItemFor('/w/demo/settings/privacy')?.id).toBe('privacy');
     expect(nav.settingsItemFor('/w/demo/settings/members/x')?.id).toBe('members');
+    expect(nav.settingsItemFor('/w/demo/settings/support')?.id).toBe('support');
     expect(nav.settingsItemFor('/w/demo/today')).toBeUndefined();
   });
 });
@@ -191,6 +197,7 @@ describe('settings shell', () => {
       en.nav.danger,
       en.nav.usage,
       en.nav.audit,
+      en.nav.support,
     ]);
     expect(links[0]?.getAttribute('href')).toBe('/w/demo/settings/profile');
     expect(links[0]?.getAttribute('aria-current')).toBe('page');
@@ -230,13 +237,17 @@ describe('settings shell', () => {
 describe('section pages', () => {
   const denied = catalogs.en.shell.permissionDenied.title;
 
-  it.each([
-    ['clerk', 'integrations'],
-    ['clerk', 'privacy'],
-    ['viewer', 'roles'],
-  ] as const)('a %s opening %s directly gets the permission-denied page', async (role, id) => {
-    asRole(role);
-    withIntl(await PLACEHOLDERS[id]({ params: params() }));
+  it('a clerk opening integrations directly gets the permission-denied page', async () => {
+    asRole('clerk');
+    withIntl(await PLACEHOLDERS.integrations({ params: params() }));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
+  });
+
+  it('a clerk opening privacy directly gets the permission-denied page', async () => {
+    asRole('clerk');
+    withIntl(
+      (await PrivacyPage({ params: params(), searchParams: Promise.resolve({}) })) as ReactElement,
+    );
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
   });
 
@@ -345,6 +356,22 @@ describe('section pages', () => {
       fireEvent.click(screen.getByRole('button', { name: copy.retry }));
       expect(reset).toHaveBeenCalled();
       cleanup();
+    }
+  });
+
+  it('roles (#285) is permission-denied for a viewer and renders for clerks and up', async () => {
+    asRole('viewer');
+    withIntl(await RolesPage({ params: params(), searchParams: Promise.resolve({}) }));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
+    // The page holds the async matrix (a server component), so check the tree, not a render; its
+    // content is covered in roles-page.test.tsx.
+    for (const role of ['clerk', 'owner'] as const) {
+      asRole(role);
+      const tree = (await RolesPage({
+        params: params(),
+        searchParams: Promise.resolve({ __state: 'loading' }),
+      })) as ReactElement<{ 'data-route'?: string }>;
+      expect(tree.props['data-route']).toBe('settings-roles');
     }
   });
 

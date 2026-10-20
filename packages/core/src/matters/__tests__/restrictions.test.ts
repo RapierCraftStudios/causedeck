@@ -7,7 +7,13 @@ import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { describe, expect, it } from 'vitest';
 
-import { assertMatterReadable, restrictMatter, WorkspaceError } from '../../index.ts';
+import {
+  assertMatterReadable,
+  listMatterRestrictions,
+  restrictMatter,
+  updateRoleSettings,
+  WorkspaceError,
+} from '../../index.ts';
 
 type Users = Record<Role | 'listed' | 'outsider', string>;
 
@@ -206,6 +212,92 @@ describe('assertMatterReadable', () => {
       expect(
         await assertMatterReadable(tx, { userId: users.viewer, workspaceId }, randomUUID()),
       ).toBeNull();
+    });
+  });
+});
+
+/** Turn the workspace's stored `owners_see_restricted` off, as its owner. */
+async function ownersSeeRestricted(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  value: boolean,
+): Promise<void> {
+  await inWorkspace(tx, workspaceId, (s) =>
+    updateRoleSettings(s, {
+      workspaceId,
+      actorUserId: ownerId,
+      input: { advocatesCanInvite: true, ownersSeeRestrictedMatters: value },
+    }),
+  );
+}
+
+describe('stored owners_see_restricted (#285)', () => {
+  it('applies when the caller passes no settings; passed settings still win', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId, users } = await seed(tx);
+      const matterId = randomUUID();
+      await restrictMatter(
+        tx,
+        { userId: users.advocate, workspaceId },
+        { matterId, allowedUserIds: [users.listed] },
+      );
+      const owner = { userId: users.owner, workspaceId };
+      expect((await assertMatterReadable(tx, owner, matterId))?.matterId).toBe(matterId);
+
+      await ownersSeeRestricted(tx, workspaceId, users.owner, false);
+      expect(await codeOf(assertMatterReadable(tx, owner, matterId))).toBe('NOT_FOUND');
+      expect(
+        (await assertMatterReadable(tx, owner, matterId, { ownersSeeRestrictedMatters: true }))
+          ?.matterId,
+      ).toBe(matterId);
+      // A listed user is unaffected.
+      expect(
+        (await assertMatterReadable(tx, { userId: users.listed, workspaceId }, matterId))?.matterId,
+      ).toBe(matterId);
+    });
+  });
+});
+
+describe('listMatterRestrictions (#285)', () => {
+  it('lists what the actor may read, newest first, with allowed members by name', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId, users } = await seed(tx);
+      const first = randomUUID();
+      const second = randomUUID();
+      const advocate = { userId: users.advocate, workspaceId };
+      await restrictMatter(tx, advocate, {
+        matterId: first,
+        allowedUserIds: [users.listed, users.advocate],
+        reason: 'Sealed cover',
+      });
+      await restrictMatter(tx, advocate, { matterId: second, allowedUserIds: [users.listed] });
+
+      const owner = await listMatterRestrictions(tx, { userId: users.owner, workspaceId });
+      expect(owner.map((r) => r.matterId).sort()).toEqual([first, second].sort());
+      const sealed = owner.find((r) => r.matterId === first);
+      expect(sealed?.reason).toBe('Sealed cover');
+      expect(sealed?.allowedUsers.map((u) => u.name).sort()).toEqual(['advocate', 'listed']);
+
+      // Others see only what they are listed on; a clerk sees none of them.
+      expect((await listMatterRestrictions(tx, advocate)).map((r) => r.matterId)).toEqual([first]);
+      expect((await listMatterRestrictions(tx, { userId: users.listed, workspaceId })).length).toBe(
+        2,
+      );
+      expect(await listMatterRestrictions(tx, { userId: users.clerk, workspaceId })).toEqual([]);
+
+      // With owners_see_restricted off, the owner sees only matters they are listed on: none.
+      await ownersSeeRestricted(tx, workspaceId, users.owner, false);
+      expect(await listMatterRestrictions(tx, { userId: users.owner, workspaceId })).toEqual([]);
+    });
+  });
+
+  it('is NOT_FOUND for a non-member', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId, users } = await seed(tx);
+      expect(
+        await codeOf(listMatterRestrictions(tx, { userId: users.outsider, workspaceId })),
+      ).toBe('NOT_FOUND');
     });
   });
 });

@@ -16,12 +16,14 @@ import {
 import {
   authRequest,
   capturingLogger,
+  cookieHeader,
   devSignInAs,
   makeAuth,
   recordingMailer,
   sessionSetCookie,
   TEST_SECRET,
   testEnv,
+  totp,
   uniqueEmail,
   uniqueIp,
   type TestAuth,
@@ -423,3 +425,49 @@ describe('disableSignUp (admin console, #309)', () => {
     expect(await findUser(email)).toBeUndefined();
   });
 });
+
+describe('two-factor without a password (#289)', () => {
+  it('lets a passwordless user enable TOTP with the session alone, then verify it', async () => {
+    const twoFactorEnabled = vi.fn(() => Promise.resolve());
+    const { auth } = makeAuth({
+      securityEvents: {
+        signInSucceeded: () => Promise.resolve(),
+        signInFailed: () => Promise.resolve(),
+        magicLinkRequested: () => Promise.resolve(),
+        passkeyAdded: () => Promise.resolve(),
+        passkeyRemoved: () => Promise.resolve(),
+        twoFactorEnabled,
+        twoFactorDisabled: () => Promise.resolve(),
+        sessionRevoked: () => Promise.resolve(),
+      },
+    });
+    // Dev sign-in creates no credential account: the user has no password at all.
+    const { user, cookie } = await devSignInAs(auth);
+    const enable = await authRequest(auth, '/two-factor/enable', { cookie, body: {} });
+    expect(enable.status).toBe(200);
+    const { totpURI, backupCodes } = (await enable.json()) as {
+      totpURI: string;
+      backupCodes: string[];
+    };
+    expect(totpURI).toMatch(/^otpauth:\/\/totp\/CauseDeck:/);
+    expect(backupCodes.length).toBeGreaterThan(0);
+    // Not enabled until the first code is verified.
+    expect((await findUserById(user.id))?.twoFactorEnabled).toBe(false);
+
+    const secret = new URL(totpURI).searchParams.get('secret') ?? '';
+    const verify = await authRequest(auth, '/two-factor/verify-totp', {
+      cookie,
+      body: { code: totp(secret) },
+    });
+    expect(verify.status).toBe(200);
+    // Verification rotates the session: a fresh session cookie comes back.
+    expect(cookieHeader(verify)).toContain('session_token=');
+    expect((await findUserById(user.id))?.twoFactorEnabled).toBe(true);
+    expect(twoFactorEnabled).toHaveBeenCalledTimes(1);
+  });
+});
+
+async function findUserById(id: string) {
+  const [row] = await testAppDb().select().from(schema.user).where(eq(schema.user.id, id));
+  return row;
+}

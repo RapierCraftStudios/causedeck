@@ -8,8 +8,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { schema, withWorkspace } from '@causedeck/db';
-import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { closeTestDb, schema, testAppDb, withWorkspace } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -17,6 +16,22 @@ import type { AppSession } from '../lib/auth.ts';
 
 const state = vi.hoisted(() => ({ session: null as AppSession | null }));
 const updateUser = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+// Better Auth's account endpoints (#289), answered from the real tables for the signed-in user;
+// the mutating ones only record their calls.
+const authApi = vi.hoisted(() => ({
+  listSessions: vi.fn(),
+  listPasskeys: vi.fn(),
+  revokeSession: vi.fn(() => Promise.resolve({ status: true })),
+  deletePasskey: vi.fn(() => Promise.resolve({ status: true })),
+  getSession: vi.fn(() => Promise.resolve({ user: { twoFactorEnabled: false } })),
+  enableTwoFactor: vi.fn(() =>
+    Promise.resolve({
+      totpURI: 'otpauth://totp/CauseDeck:x?secret=JBSWY3DPEHPK3PXP',
+      backupCodes: [],
+    }),
+  ),
+  verifyTOTP: vi.fn(() => Promise.resolve({ headers: new Headers(), response: {} })),
+}));
 
 vi.mock('@causedeck/db', async (original) => {
   const actual = await original<Record<string, unknown>>();
@@ -29,7 +44,10 @@ vi.mock('../lib/auth.ts', () => ({
     state.session
       ? Promise.resolve(state.session)
       : Promise.reject(Object.assign(new Error('signed out'), { code: 'UNAUTHENTICATED' })),
-  getAuth: () => ({ $context: Promise.resolve({ internalAdapter: { updateUser } }) }),
+  getAuth: () => ({
+    api: authApi,
+    $context: Promise.resolve({ internalAdapter: { updateUser } }),
+  }),
 }));
 vi.mock('../lib/env.ts', () => ({
   isProd: () => false,
@@ -42,7 +60,14 @@ vi.mock('@causedeck/auth/mailer', () => ({
   createMailer: () => ({ send: () => Promise.resolve() }),
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('next/headers', () => ({ cookies: () => Promise.resolve({ set: vi.fn() }) }));
+vi.mock('next/headers', () => ({
+  cookies: () => Promise.resolve({ set: vi.fn() }),
+  headers: () => Promise.resolve(new Headers()),
+}));
+vi.mock('@causedeck/core/runtime', async (original) => ({
+  ...(await original<Record<string, unknown>>()),
+  recordAccountProfileUpdatedFor: vi.fn(() => Promise.resolve()),
+}));
 vi.mock('next-intl/server', () => ({
   getLocale: () => Promise.resolve('en'),
   getTranslations: () => Promise.resolve((key: string) => key),
@@ -55,7 +80,10 @@ const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
+const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
+const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
+const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -75,6 +103,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   acceptInvitationAction: invite,
   createWorkspaceAction: onboarding,
   setLocaleAction: account,
+  updateAccountProfileAction: account,
+  enableTwoFactorAction: account,
+  verifyTwoFactorAction: account,
+  deletePasskeyAction: account,
+  revokeSessionAction: account,
   listNotificationsAction: notifications,
   markNotificationReadAction: notifications,
   markAllNotificationsReadAction: notifications,
@@ -83,8 +116,13 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
   updateWorkspaceProfileAction: profile,
+  updateRoleSettingsAction: roles,
+  updateWorkspacePrivacyAction: privacy,
   loadMoreAuditAction: activity,
   verifyAuditEventAction: activity,
+  grantSupportSessionAction: support,
+  denySupportSessionAction: support,
+  revokeSupportSessionAction: support,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -95,6 +133,7 @@ let aMember: { memberId: string; userId: string };
 let aInvitation: { invitationId: string; token: string };
 let aNotificationId: string;
 let aAuditEvent: { id: string; createdAt: string };
+let aSupportSessionId: string;
 
 function signInAs(userId: string): void {
   state.session = {
@@ -139,6 +178,10 @@ function snapshotA() {
       .orderBy(schema.auditEvent.id),
     notificationPrefs: await tx.select().from(schema.notificationPref),
     notificationSettings: await tx.select().from(schema.notificationSetting),
+    supportSessions: await tx
+      .select()
+      .from(schema.supportSession)
+      .orderBy(schema.supportSession.id),
   }));
 }
 
@@ -164,6 +207,9 @@ beforeAll(async () => {
   const event = feed.events.find((item) => item.id === ae.auditEventId);
   if (!event) throw new Error('seed rows');
   aAuditEvent = { id: ae.auditEventId, createdAt: event.createdAt };
+  const ss = t.a.rows.support_session;
+  if (!ss?.id) throw new Error('seed rows');
+  aSupportSessionId = ss.id;
 });
 
 beforeEach(() => {
@@ -209,6 +255,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       practiceCity: 'Probe City',
       slug: `xt-probe-${workspaceId.slice(0, 8)}`,
     },
+    updateRoleSettingsAction: {
+      workspaceId,
+      advocatesCanInvite: false,
+      ownersSeeRestrictedMatters: false,
+    },
+    updateWorkspacePrivacyAction: {
+      workspaceId,
+      sensitiveDefaultRestricted: false,
+      retentionAudioDays: 7,
+    },
     // A page position past every row, so a leak would return A's real audit event.
     loadMoreAuditAction: {
       workspaceId,
@@ -221,6 +277,10 @@ function inputs(workspaceId: string): Record<string, unknown> {
       eventId: aAuditEvent.id,
       createdAt: aAuditEvent.createdAt,
     },
+    // A's pending support request (#313): ub, owner of B, may not grant, deny or end it.
+    grantSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
+    denySupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
+    revokeSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
   };
 }
 
@@ -292,6 +352,22 @@ describe('cross-tenant server actions', () => {
     expect(await snapshotA()).toEqual(before);
   });
 
+  it('under B’s own workspace, A’s support session is not found and stays pending', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    for (const name of [
+      'grantSupportSessionAction',
+      'denySupportSessionAction',
+      'revokeSupportSessionAction',
+    ]) {
+      expect(code(await action(name)(all[name])), name).toBe('NOT_FOUND');
+    }
+    expect(await snapshotA()).toEqual(before);
+    expect(before.supportSessions.find((row) => row.id === aSupportSessionId)?.status).toBe(
+      'requested',
+    );
+  });
+
   it('notifications under B’s own workspace never show or mark A’s notification', async () => {
     const before = await snapshotA();
     expect(before.notifications.map((row) => row.id)).toContain(aNotificationId);
@@ -347,6 +423,49 @@ describe('cross-tenant server actions', () => {
     expect(await snapshotA()).toEqual(before);
   });
 
+  it('updateRoleSettingsAction under B’s own workspace changes only B', async () => {
+    const before = await snapshotA();
+    const input = inputs(t.b.id).updateRoleSettingsAction;
+    expect(await action('updateRoleSettingsAction')(input)).toMatchObject({
+      ok: true,
+      data: { advocatesCanInvite: false, ownersSeeRestrictedMatters: false },
+    });
+    expect(await snapshotA()).toEqual(before);
+    // Put B back to the defaults for the tests that follow.
+    await action('updateRoleSettingsAction')({
+      workspaceId: t.b.id,
+      advocatesCanInvite: true,
+      ownersSeeRestrictedMatters: true,
+    });
+  });
+
+  it('updateWorkspacePrivacyAction under B’s own workspace changes only B', async () => {
+    const before = await snapshotA();
+    const privacyOfA = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx
+          .select({
+            sensitiveDefaultRestricted: schema.workspaceSettings.sensitiveDefaultRestricted,
+            retentionAudioDays: schema.workspaceSettings.retentionAudioDays,
+          })
+          .from(schema.workspaceSettings),
+      );
+    const privacyBefore = await privacyOfA();
+    const input = inputs(t.b.id).updateWorkspacePrivacyAction;
+    expect(await action('updateWorkspacePrivacyAction')(input)).toMatchObject({
+      ok: true,
+      data: { indiaOnlyAi: true, sensitiveDefaultRestricted: false, retentionAudioDays: 7 },
+    });
+    expect(await snapshotA()).toEqual(before);
+    expect(await privacyOfA()).toEqual(privacyBefore);
+    // Put B back to the defaults for the tests that follow.
+    await action('updateWorkspacePrivacyAction')({
+      workspaceId: t.b.id,
+      sensitiveDefaultRestricted: true,
+      retentionAudioDays: 30,
+    });
+  });
+
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {
     const before = await snapshotA();
     const result = await action('acceptInvitationAction')({ token: aInvitation.token });
@@ -368,6 +487,60 @@ describe('cross-tenant server actions', () => {
     await action('setLocaleAction')({ locale: 'ta' });
     expect(updateUser).toHaveBeenCalledTimes(1);
     expect(updateUser).toHaveBeenCalledWith(t.ub, { locale: 'ta' });
+  });
+
+  it('account actions (#289) never reach ua’s sessions, passkeys or user row', async () => {
+    const db = testAppDb();
+    const [aSession] = await db
+      .insert(schema.session)
+      .values({
+        userId: t.ua,
+        token: `xt-${crypto.randomUUID()}`,
+        expiresAt: new Date(Date.now() + 86_400_000),
+      })
+      .returning({ id: schema.session.id, token: schema.session.token });
+    const [aPasskey] = await db
+      .insert(schema.passkey)
+      .values({
+        userId: t.ua,
+        publicKey: 'pk',
+        credentialID: crypto.randomUUID(),
+        counter: 0,
+        deviceType: 'singleDevice',
+        backedUp: false,
+      })
+      .returning({ id: schema.passkey.id });
+    if (!aSession || !aPasskey) throw new Error('seed account rows');
+    const mine = <T extends { userId: string }>(rows: T[]) =>
+      rows.filter((row) => row.userId === state.session?.user.id);
+    authApi.listSessions.mockImplementation(async () =>
+      mine(await db.select().from(schema.session)),
+    );
+    authApi.listPasskeys.mockImplementation(async () =>
+      mine(await db.select().from(schema.passkey)),
+    );
+
+    signInAs(t.ub);
+    expect(code(await action('revokeSessionAction')({ sessionId: aSession.id }))).toBe('FORBIDDEN');
+    expect(code(await action('deletePasskeyAction')({ id: aPasskey.id }))).toBe('FORBIDDEN');
+    expect(authApi.revokeSession).not.toHaveBeenCalled();
+    expect(authApi.deletePasskey).not.toHaveBeenCalled();
+
+    updateUser.mockClear();
+    expect(await action('updateAccountProfileAction')({ name: 'Renamed by B' })).toMatchObject({
+      ok: true,
+    });
+    expect(updateUser).toHaveBeenCalledTimes(1);
+    expect(updateUser).toHaveBeenCalledWith(t.ub, { name: 'Renamed by B' });
+
+    // TOTP setup and verification act on the caller's own session only (no target id at all).
+    expect(await action('enableTwoFactorAction')({})).toMatchObject({ ok: true });
+    expect(await action('verifyTwoFactorAction')({ code: '123456' })).toMatchObject({ ok: true });
+
+    const sessions = await db.select().from(schema.session);
+    expect(sessions.some((row) => row.id === aSession.id)).toBe(true);
+    const passkeys = await db.select().from(schema.passkey);
+    expect(passkeys.some((row) => row.id === aPasskey.id)).toBe(true);
   });
 
   it('the workspace loader (resolveSlug) shows A’s slugs to ub as not found', async () => {

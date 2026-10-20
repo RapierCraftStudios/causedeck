@@ -197,13 +197,6 @@ export type Messages = {
       title: string;
       message: string;
     };
-    account: {
-      title: string;
-      description: string;
-      empty: string;
-      hint: string;
-      action: string;
-    };
     sidebar: {
       label: string;
       primary: string;
@@ -259,6 +252,15 @@ export type Messages = {
     };
     sheet: {
       close: string;
+    };
+    supportBanner: {
+      message: string;
+      end: string;
+      error: string;
+    };
+    ownerTwoFactor: {
+      message: string;
+      action: string;
     };
   };
   auth: {
@@ -528,6 +530,7 @@ export type Messages = {
       offline: string;
       generic: string;
     };
+    rolesLink: string;
     tabs: {
       label: string;
       members: string;
@@ -934,14 +937,13 @@ export type Messages = {
       danger: string;
       usage: string;
       audit: string;
+      support: string;
       more: string;
     };
     placeholder: {
       title: string;
       hint: string;
-      roles: string;
       integrations: string;
-      privacy: string;
       export: string;
       danger: string;
     };
@@ -1051,6 +1053,391 @@ export type Messages = {
       error: {
         title: string;
         retry: string;
+      };
+    };
+    roles: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      loading: string;
+      clerkLimits: string;
+      matrix: {
+        title: string;
+        description: string;
+        caption: string;
+        action: string;
+        allowed: string;
+        denied: string;
+        settingsNote: string;
+      };
+      domains: {
+        workspace: string;
+        member: string;
+        billing: string;
+        matter: string;
+        strategy: string;
+        memory: string;
+        document: string;
+        task: string;
+        listing: string;
+        draft: string;
+        audit: string;
+        export: string;
+        support: string;
+        shell: string;
+      };
+      actions: {
+        workspace: {
+          manage: string;
+          rename: string;
+          delete: string;
+        };
+        member: {
+          invite: string;
+          remove: string;
+          role: string;
+        };
+        billing: {
+          manage: string;
+          read: string;
+        };
+        matter: {
+          read: string;
+          write: string;
+          restrict: string;
+        };
+        strategy: {
+          read: string;
+        };
+        memory: {
+          read: string;
+          write: string;
+        };
+        document: {
+          read: string;
+          write: string;
+        };
+        task: {
+          read: string;
+          write: string;
+        };
+        listing: {
+          read: string;
+        };
+        draft: {
+          write: string;
+        };
+        audit: {
+          read: string;
+        };
+        export: {
+          run: string;
+        };
+        support: {
+          manage: string;
+        };
+        limitation: {
+          read: string;
+        };
+        insights: {
+          read: string;
+        };
+        settings: {
+          read: string;
+        };
+        invoices: {
+          read: string;
+        };
+      };
+      settings: {
+        title: string;
+        description: string;
+        readOnly: string;
+        advocatesCanInvite: {
+          label: string;
+          description: string;
+        };
+        ownersSeeRestrictedMatters: {
+          label: string;
+          description: string;
+        };
+      };
+      toast: {
+        saved: string;
+        undo: string;
+        undone: string;
+        error: string;
+        forbidden: string;
+        offline: string;
+      };
+      restricted: {
+        title: string;
+        description: string;
+        matter: string;
+        allowed: string;
+        ownersOnly: string;
+        since: string;
+        empty: string;
+        emptyHint: string;
+        picker: string;
+        pickerUnavailable: string;
+      };
+      error: {
+        title: string;
+        retry: string;
+      };
+    };
+    privacy: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      loading: string;
+      summary: string;
+      indiaOnly: {
+        title: string;
+        label: string;
+        description: string;
+        locked: string;
+        note: string;
+      };
+      settings: {
+        title: string;
+        description: string;
+        readOnly: string;
+        sensitiveDefaultRestricted: {
+          label: string;
+          description: string;
+        };
+        retentionAudioDays: {
+          label: string;
+          description: string;
+          option: string;
+        };
+      };
+      subProcessors: {
+        title: string;
+        description: string;
+        link: string;
+      };
+      neverDoes: {
+        title: string;
+        items: {
+          train: string;
+          sell: string;
+          abroad: string;
+          access: string;
+          keep: string;
+        };
+      };
+      saving: string;
+      saved: string;
+      toast: {
+        saved: string;
+        undo: string;
+        undone: string;
+        error: string;
+        forbidden: string;
+        offline: string;
+      };
+      error: {
+        title: string;
+        retry: string;
+      };
+    };
+    support: {
+      title: string;
+      description: string;
+      scope: {
+        title: string;
+        view: string;
+        metadata: string;
+        audit: string;
+      };
+      scopeLabel: {
+        view: string;
+        metadata: string;
+      };
+      pending: {
+        title: string;
+        requestedAt: string;
+        reason: string;
+      };
+      active: {
+        title: string;
+        until: string;
+      };
+      duration: {
+        label: string;
+        h1: string;
+        h2: string;
+        h4: string;
+      };
+      grant: string;
+      deny: string;
+      revoke: string;
+      empty: {
+        title: string;
+        hint: string;
+      };
+      error: {
+        title: string;
+        retry: string;
+      };
+      toast: {
+        granted: string;
+        denied: string;
+        revoked: string;
+      };
+      errors: {
+        conflict: string;
+        forbidden: string;
+        notFound: string;
+        offline: string;
+        generic: string;
+      };
+      loading: string;
+    };
+    account: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      navLabel: string;
+      nav: {
+        profile: string;
+        security: string;
+      };
+      loading: string;
+      error: {
+        title: string;
+        retry: string;
+      };
+      forbidden: string;
+      offline: string;
+      cancel: string;
+      profile: {
+        title: string;
+        description: string;
+        name: string;
+        nameHint: string;
+        avatar: string;
+        avatarHint: string;
+        email: string;
+        emailHint: string;
+        language: string;
+        languageHint: string;
+        save: string;
+        saving: string;
+        saved: string;
+        toast: {
+          saved: string;
+        };
+        errors: {
+          name: string;
+          language: string;
+          generic: string;
+        };
+      };
+      security: {
+        title: string;
+        description: string;
+      };
+      passkeys: {
+        title: string;
+        description: string;
+        listLabel: string;
+        add: string;
+        empty: string;
+        unnamed: string;
+        added: string;
+        remove: string;
+        removeLabel: string;
+        removeTitle: string;
+        removeBody: string;
+        removeConfirm: string;
+        unsupported: string;
+        toast: {
+          added: string;
+          removed: string;
+          addFailed: string;
+          removeFailed: string;
+        };
+      };
+      twoFactor: {
+        title: string;
+        description: string;
+        status: string;
+        on: string;
+        off: string;
+        onHint: string;
+        offHint: string;
+        setUp: string;
+        toast: {
+          enabled: string;
+        };
+        dialog: {
+          title: string;
+          step: string;
+          preparing: string;
+          scanTitle: string;
+          scanBody: string;
+          qrAlt: string;
+          manual: string;
+          next: string;
+          back: string;
+          verifyTitle: string;
+          verifyBody: string;
+          code: string;
+          verify: string;
+          codesTitle: string;
+          codesBody: string;
+          codesLabel: string;
+          copy: string;
+          copied: string;
+          download: string;
+          done: string;
+          retry: string;
+          errors: {
+            code: string;
+            wrongCode: string;
+            copy: string;
+            generic: string;
+          };
+        };
+      };
+      sessions: {
+        title: string;
+        description: string;
+        tableCaption: string;
+        columns: {
+          device: string;
+          ip: string;
+          signedIn: string;
+          actions: string;
+        };
+        device: string;
+        unknownDevice: string;
+        unknownIp: string;
+        current: string;
+        empty: string;
+        revoke: string;
+        revokeLabel: string;
+        revokeTitle: string;
+        revokeBody: string;
+        revokeConfirm: string;
+        toast: {
+          revoked: string;
+          failed: string;
+        };
+      };
+      connected: {
+        title: string;
+        description: string;
+        listLabel: string;
+        empty: string;
+        connectedOn: string;
+        providers: {
+          google: string;
+        };
       };
     };
   };

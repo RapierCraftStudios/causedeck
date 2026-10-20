@@ -192,6 +192,7 @@
       "offline": "You are offline. Connect to make changes.",
       "generic": "Something went wrong. Please try again."
     },
+    "rolesLink": "How roles work",
     "tabs": {
       "label": "Members and invitations",
       "members": "Members ({count})",

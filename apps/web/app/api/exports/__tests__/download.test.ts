@@ -14,6 +14,8 @@ const JOB = '00000000-0000-4000-8000-0000000000e1';
 interface State {
   session: { user: { id: string } } | null;
   role: string | null;
+  /** When the owner role was granted (#290); the session has no 2FA, so this decides. */
+  roleGrantedAt: Date;
   issue: ReturnType<typeof vi.fn>;
   open: ReturnType<typeof vi.fn>;
   read: ReturnType<typeof vi.fn>;
@@ -22,6 +24,7 @@ interface State {
 const state: State = vi.hoisted(() => ({
   session: { user: { id: '00000000-0000-4000-8000-000000000001' } },
   role: 'owner',
+  roleGrantedAt: new Date(),
   issue: vi.fn(),
   open: vi.fn(),
   read: vi.fn(),
@@ -41,6 +44,8 @@ vi.mock('@causedeck/storage', async (importOriginal) => ({
 }));
 vi.mock('@causedeck/core/runtime', () => ({
   memberRoleFor: () => Promise.resolve(state.role),
+  ownerGraceFor: () =>
+    Promise.resolve(state.role ? { role: state.role, roleGrantedAt: state.roleGrantedAt } : null),
   recordAccessDeniedFor: () => Promise.resolve(),
   issueExportDownloadFor: state.issue,
   openExportDownloadFor: state.open,
@@ -76,6 +81,7 @@ const payload = (over: Partial<Record<string, unknown>> = {}) => ({
 afterEach(() => {
   state.session = { user: { id: USER } };
   state.role = 'owner';
+  state.roleGrantedAt = new Date();
   state.issue.mockReset();
   state.open.mockReset();
   state.read.mockReset();
@@ -119,6 +125,17 @@ describe('POST /api/exports/[id]/download', () => {
     expect((await route.POST(post({ workspaceId: WS }), params())).status).toBe(404);
     state.issue.mockRejectedValueOnce(new WorkspaceError('FORBIDDEN', 'owners only'));
     expect((await route.POST(post({ workspaceId: WS }), params())).status).toBe(403);
+  });
+});
+
+describe('owner 2FA policy (#290)', () => {
+  it('refuses an owner without 2FA after the 7-day grace on POST and GET, before core', async () => {
+    state.roleGrantedAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+    expect((await route.POST(post({ workspaceId: WS }), params())).status).toBe(403);
+    state.read.mockReturnValue(payload());
+    expect((await route.GET(get(), params())).status).toBe(403);
+    expect(state.issue).not.toHaveBeenCalled();
+    expect(state.open).not.toHaveBeenCalled();
   });
 });
 

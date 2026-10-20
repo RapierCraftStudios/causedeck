@@ -30,6 +30,7 @@ const page = vi.hoisted(() => ({
   members: [] as unknown[],
   invitations: [] as unknown[],
   fail: false,
+  roleSettings: { advocatesCanInvite: true, ownersSeeRestrictedMatters: true },
   seatsFail: false,
 }));
 const withWorkspace = vi.hoisted(() =>
@@ -63,6 +64,8 @@ vi.mock('@causedeck/db', () => ({ db: { fake: 'db' }, withWorkspace }));
 vi.mock('@causedeck/core/workspaces', () => ({
   listMembers: () => (page.fail ? Promise.reject(new Error('db down')) : page.members),
   listPendingInvitations: () => Promise.resolve(page.invitations),
+  getRoleSettings: () => Promise.resolve(page.roleSettings),
+  toPolicySettings: (settings: unknown) => settings,
   countBillableSeats: () => Promise.resolve({ total: 2, clerk: 0, nonClerk: 2 }),
 }));
 vi.mock('@causedeck/core/billing', () => ({
@@ -198,6 +201,7 @@ beforeEach(() => {
   page.members = [owner, junior];
   page.invitations = [];
   page.fail = false;
+  page.roleSettings = { advocatesCanInvite: true, ownersSeeRestrictedMatters: true };
   page.seatsFail = false;
 });
 afterEach(() => {
@@ -260,6 +264,30 @@ describe('members page (server)', () => {
       expect.any(Function),
     );
     expect(within(table()).getByText('Arun Kumar')).toBeTruthy();
+  });
+
+  it('links to the roles page (#285) for clerks and up, not for viewers', async () => {
+    await renderPage();
+    const link = screen.getByRole('link', { name: en.rolesLink });
+    expect(link.getAttribute('href')).toBe(`/w/${WORKSPACE.slug}/settings/roles`);
+    cleanup();
+    page.context = { ...(page.context as WorkspaceContext), role: 'viewer' };
+    await renderPage();
+    expect(screen.queryByRole('link', { name: en.rolesLink })).toBeNull();
+  });
+
+  it('hides inviting from advocates while advocatesCanInvite is off (#285)', async () => {
+    page.context = { ...(page.context as WorkspaceContext), role: 'advocate' };
+    await renderPage();
+    expect(screen.getAllByRole('button', { name: en.inviteButton }).length).toBeGreaterThan(0);
+    cleanup();
+    page.roleSettings = { advocatesCanInvite: false, ownersSeeRestrictedMatters: true };
+    await renderPage();
+    expect(screen.queryByRole('button', { name: en.inviteButton })).toBeNull();
+    cleanup();
+    page.context = { ...page.context, role: 'owner' };
+    await renderPage();
+    expect(screen.getAllByRole('button', { name: en.inviteButton }).length).toBeGreaterThan(0);
   });
 
   it('renders no offline banner of its own: the settings layout owns it (#288)', async () => {

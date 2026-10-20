@@ -87,6 +87,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listMemberships: empty,
   listWorkspacesForUser: empty,
   memberRole: empty,
+  ownerGrace: empty,
   requireOwner: denies,
   requireCan: denies,
   listMembers: empty,
@@ -104,6 +105,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // workspace profile (#284)
   getWorkspaceProfile: empty,
   updateWorkspaceProfile: denies,
+  // role settings (#285)
+  getRoleSettings: empty,
+  updateRoleSettings: denies,
+  // privacy settings (#286)
+  getPrivacySettings: empty,
+  updateWorkspacePrivacy: denies,
   acceptInvitation: denies,
   previewInvitation: selfScoped,
   generateUniqueSlug: selfScoped,
@@ -211,6 +218,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   restrictMatter: denies,
   assertMatterReadable: denies,
+  listMatterRestrictions: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -218,6 +226,17 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   revokeSession: denies,
   assertActiveSupportSession: denies,
   withSupportSession: denies,
+  // the owner's support page and shell banner (#313)
+  listSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; nested in another workspace scope it throws TenancyError',
+  },
+  activeSupportSession: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; nested in another workspace scope it throws TenancyError',
+  },
   isActiveStaff: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -364,6 +383,13 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // workspace profile (#284)
   PROFILE_FIELDS: 'constant',
   toProfileView: 'pure (drops the id)',
+  // role settings (#285)
+  ROLE_SETTING_FIELDS: 'constant',
+  DEFAULT_ROLE_SETTINGS: 'constant',
+  toPolicySettings: 'pure',
+  // privacy settings (#286)
+  PRIVACY_SETTING_FIELDS: 'constant',
+  DEFAULT_PRIVACY_SETTINGS: 'constant',
   // audit: registry, guards and the default sink (#227)
   recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
   AUDIT_ACTIONS: 'constant (audit action registry)',
@@ -398,6 +424,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   SUPPORT_GRANT_MAX_MINUTES: 'constant',
   SUPPORT_REASON_MAX_LENGTH: 'constant',
   SUPPORT_ACTOR_ROLE: 'constant',
+  supportRequestCopy: 'pure (owner notice copy)',
+  supportRequestDedupeKey: 'pure',
   SupportSessionInactiveError: 'error class',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',
@@ -539,7 +567,13 @@ const runtimeScopeChecked = {
  */
 export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   inWorkspace: runtimeScopeChecked,
+  inWorkspaceOn: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: "inWorkspace on an injected handle; the api's requireWorkspace checks membership first",
+  },
   memberRoleFor: runtimeEmpty,
+  ownerGraceFor: runtimeEmpty,
   resolveSlugFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',
@@ -566,6 +600,18 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',
     note: "recordAccessDenied on the app db; guard sets member from memberRoleFor, a non-member's denial never lands in that workspace chain",
+  },
+  // support sessions (#313)
+  loadSupportPage: runtimeScopeChecked,
+  activeSupportSessionIn: runtimeScopeChecked,
+  requestSupportSessionFor: runtimeDenies,
+  grantSupportSessionFor: runtimeDenies,
+  denySupportSessionFor: runtimeDenies,
+  revokeSupportSessionFor: runtimeDenies,
+  recordAccountProfileUpdatedFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: "account-level audit row (workspaceId null) for the caller's own profile; never lands in a workspace chain",
   },
   requestExportFor: runtimeDenies,
   issueExportDownloadFor: runtimeDenies,
@@ -597,6 +643,11 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   db: 'the lazy app-role handle (Better Auth adapter); tenant reads go through the services above',
   isUuid: 'pure',
+  closeAppDb: 'closes the app-role pool on shutdown; reads no rows',
+  createIdempotencyStore:
+    'api_idempotency_key is a global table keyed by (user, key) (GLOBAL_TABLES); every query filters by the caller user id',
+  IDEMPOTENCY_TTL_MS: 'constant',
+  IN_PROGRESS_STATUS: 'constant',
   uploadContext:
     'pure (binds the app db into a StorageCtx; the uploads route checks membership and authorize gates each storage call)',
 };

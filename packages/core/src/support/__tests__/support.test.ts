@@ -9,6 +9,7 @@ import { isForbiddenError } from '@causedeck/auth/policy';
 import { Secret } from '@causedeck/config/env';
 import { createDb, schema, type Database, type Transaction } from '@causedeck/db';
 import { inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
+import type { DeliveryJob } from '@causedeck/notifications';
 import { createLogger } from '@causedeck/observability';
 import { and, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -16,12 +17,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runJob, supportSessionExpire } from '../../jobs/index.ts';
 import { WorkspaceError } from '../../workspaces/index.ts';
 import {
+  activeSupportSession,
   assertActiveSupportSession,
   denySession,
   endStaffSupportSessions,
   expireSupportSessions,
   grantSession,
   isActiveStaff,
+  listSupportSessions,
   requestSession,
   revokeSession,
   SupportSessionInactiveError,
@@ -30,6 +33,13 @@ import {
 } from '../index.ts';
 
 let owner: Database;
+
+/** Email deliveries the requests enqueued (one per owner and channel), reset per test. */
+let deliveries: DeliveryJob[] = [];
+const enqueueDelivery = (job: DeliveryJob) => {
+  deliveries.push(job);
+  return Promise.resolve();
+};
 let staffId: string;
 let disabledStaffId: string;
 
@@ -127,7 +137,7 @@ async function age(tx: Transaction, s: SupportSession, minutesAgo: number): Prom
 
 async function requested(tx: Transaction, w: Seed, scope: 'view' | 'metadata' = 'view') {
   return requestSession(
-    { db: tx, staffUserId: staffId },
+    { db: tx, staffUserId: staffId, enqueueDelivery },
     { workspaceId: w.workspaceId, reason: 'Customer reported a sync issue', scope },
   );
 }
@@ -153,20 +163,153 @@ describe('requestSession', () => {
       expect(await isActiveStaff(tx, disabledStaffId)).toBe(false);
 
       const input = { workspaceId: w.workspaceId, reason: 'Help' };
-      expect(await codeOf(requestSession({ db: tx, staffUserId: w.ownerId }, input))).toBe(
-        'FORBIDDEN',
-      );
-      expect(await codeOf(requestSession({ db: tx, staffUserId: disabledStaffId }, input))).toBe(
-        'FORBIDDEN',
-      );
       expect(
-        await codeOf(requestSession({ db: tx, staffUserId: staffId }, { ...input, reason: '   ' })),
+        await codeOf(requestSession({ db: tx, staffUserId: w.ownerId, enqueueDelivery }, input)),
+      ).toBe('FORBIDDEN');
+      expect(
+        await codeOf(
+          requestSession({ db: tx, staffUserId: disabledStaffId, enqueueDelivery }, input),
+        ),
+      ).toBe('FORBIDDEN');
+      expect(
+        await codeOf(
+          requestSession(
+            { db: tx, staffUserId: staffId, enqueueDelivery },
+            { ...input, reason: '   ' },
+          ),
+        ),
       ).toBe('VALIDATION');
       expect(
         await codeOf(
-          requestSession({ db: tx, staffUserId: staffId }, { ...input, workspaceId: randomUUID() }),
+          requestSession(
+            { db: tx, staffUserId: staffId, enqueueDelivery },
+            { ...input, workspaceId: randomUUID() },
+          ),
         ),
       ).toBe('NOT_FOUND');
+    });
+  });
+});
+
+async function noticesFor(tx: Transaction, workspaceId: string) {
+  return inWorkspace(tx, workspaceId, (q) =>
+    q
+      .select({
+        id: schema.notification.id,
+        userId: schema.notification.userId,
+        category: schema.notification.category,
+        title: schema.notification.title,
+        body: schema.notification.body,
+        href: schema.notification.href,
+        dedupeKey: schema.notification.dedupeKey,
+      })
+      .from(schema.notification)
+      .where(eq(schema.notification.workspaceId, workspaceId)),
+  );
+}
+
+describe('requestSession notifies the owners (#313)', () => {
+  it('writes a security.alert for every active owner and enqueues their email', async () => {
+    await withTestDb(async (tx) => {
+      deliveries = [];
+      const w = await seed(tx);
+      const coOwnerId = await newUser(tx, 'co-owner');
+      const suspendedOwnerId = await newUser(tx, 'suspended-owner');
+      await inWorkspace(tx, w.workspaceId, (q) =>
+        q.insert(schema.member).values([
+          { organizationId: w.workspaceId, userId: coOwnerId, role: 'owner' },
+          {
+            organizationId: w.workspaceId,
+            userId: suspendedOwnerId,
+            role: 'owner',
+            status: 'suspended',
+          },
+        ]),
+      );
+      const s = await requested(tx, w);
+
+      const notices = await noticesFor(tx, w.workspaceId);
+      expect(notices.map((n) => n.userId).sort()).toEqual([w.ownerId, coOwnerId].sort());
+      for (const n of notices) {
+        expect(n).toMatchObject({
+          category: 'security.alert',
+          href: `/w/sup-${w.workspaceId}/settings/support`,
+          dedupeKey: `support.requested:${s.id}`,
+        });
+        expect(n.body).toContain('Customer reported a sync issue');
+      }
+      // security.alert email is locked on: one email delivery per owner, after the insert.
+      const emails = deliveries.filter((d) => d.channel === 'email');
+      expect(emails.map((d) => d.notificationId).sort()).toEqual(notices.map((n) => n.id).sort());
+      expect(emails.every((d) => d.workspaceId === w.workspaceId)).toBe(true);
+    });
+  });
+
+  it('notifies nobody and writes no request when the request is refused', async () => {
+    await withTestDb(async (tx) => {
+      deliveries = [];
+      const w = await seed(tx);
+      expect(
+        await codeOf(
+          requestSession(
+            { db: tx, staffUserId: w.ownerId, enqueueDelivery },
+            { workspaceId: w.workspaceId, reason: 'Help' },
+          ),
+        ),
+      ).toBe('FORBIDDEN');
+      expect(await noticesFor(tx, w.workspaceId)).toEqual([]);
+      expect(deliveries).toEqual([]);
+    });
+  });
+});
+
+describe('listSupportSessions and activeSupportSession (#313)', () => {
+  it('lists pending requests and unexpired grants only, newest first', async () => {
+    await withTestDb(async (tx) => {
+      const w = await seed(tx);
+      expect(await listSupportSessions(tx, w.workspaceId)).toEqual([]);
+      expect(await activeSupportSession(tx, w.workspaceId)).toBeNull();
+
+      const pending = await requested(tx, w);
+      const active = await granted(tx, w);
+      const elapsed = await granted(tx, w);
+      await age(tx, elapsed, 120);
+      const denied = await requested(tx, w);
+      await denySession(
+        { db: tx, userId: w.ownerId, workspaceId: w.workspaceId },
+        { sessionId: denied.id },
+      );
+      const ended = await granted(tx, w);
+      await revokeSession(
+        { db: tx, userId: w.ownerId, workspaceId: w.workspaceId },
+        { sessionId: ended.id },
+      );
+
+      const listed = await listSupportSessions(tx, w.workspaceId);
+      expect(listed.map((row) => row.id).sort()).toEqual([pending.id, active.id].sort());
+      expect((await activeSupportSession(tx, w.workspaceId))?.id).toBe(active.id);
+
+      await revokeSession(
+        { db: tx, userId: w.ownerId, workspaceId: w.workspaceId },
+        { sessionId: active.id },
+      );
+      expect(await activeSupportSession(tx, w.workspaceId)).toBeNull();
+      expect((await listSupportSessions(tx, w.workspaceId)).map((row) => row.id)).toEqual([
+        pending.id,
+      ]);
+    });
+  });
+
+  it('treats an elapsed grant as inactive before the expiry job runs', async () => {
+    await withTestDb(async (tx) => {
+      const w = await seed(tx);
+      const s = await granted(tx, w, 30);
+      expect((await activeSupportSession(tx, w.workspaceId))?.id).toBe(s.id);
+      await age(tx, s, 31);
+      expect(await activeSupportSession(tx, w.workspaceId)).toBeNull();
+      expect(await listSupportSessions(tx, w.workspaceId)).toEqual([]);
+      expect(await listSupportSessions(tx, 'not-a-uuid')).toEqual([]);
+      expect(await activeSupportSession(tx, 'not-a-uuid')).toBeNull();
     });
   });
 });

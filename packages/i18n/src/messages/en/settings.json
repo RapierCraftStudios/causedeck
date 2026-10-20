@@ -226,14 +226,13 @@
       "danger": "Danger zone",
       "usage": "Usage",
       "audit": "Audit log",
+      "support": "Support access",
       "more": "More"
     },
     "placeholder": {
       "title": "This section is on its way.",
       "hint": "It will appear here in a coming update. Nothing needs to be set up yet.",
-      "roles": "What each role can see and do in this workspace.",
       "integrations": "The private email intake address and calendar feed for this workspace.",
-      "privacy": "Where your data is processed and how long it is kept.",
       "export": "Download a copy of everything in this workspace.",
       "danger": "Transfer ownership or delete this workspace."
     },
@@ -343,6 +342,391 @@
       "error": {
         "title": "Could not load the export page.",
         "retry": "Try again"
+      }
+    },
+    "roles": {
+      "metaTitle": "Roles and permissions",
+      "title": "Roles",
+      "description": "What each role can see and do in this workspace.",
+      "loading": "Loading the role settings",
+      "clerkLimits": "Clerks cannot see strategy notes or matter memory, even on matters they work on.",
+      "matrix": {
+        "title": "Permissions by role",
+        "description": "Set by CauseDeck for every workspace. A tick means the role can do it.",
+        "caption": "What each role can do",
+        "action": "Action",
+        "allowed": "Allowed",
+        "denied": "Not allowed",
+        "settingsNote": "Advocates invite members only while Advocates can invite members is on. Restricted matters are open only to the people listed on them, and to owners while Owners see restricted matters is on."
+      },
+      "domains": {
+        "workspace": "Workspace",
+        "member": "Members",
+        "billing": "Billing",
+        "matter": "Matters",
+        "strategy": "Strategy",
+        "memory": "Matter memory",
+        "document": "Documents",
+        "task": "Tasks",
+        "listing": "Cause list",
+        "draft": "Drafts",
+        "audit": "Audit log",
+        "export": "Export",
+        "support": "Support",
+        "shell": "Workspace areas"
+      },
+      "actions": {
+        "workspace": {
+          "manage": "Edit the workspace profile and settings",
+          "rename": "Rename the web address",
+          "delete": "Delete the workspace"
+        },
+        "member": {
+          "invite": "Invite members",
+          "remove": "Remove members",
+          "role": "Change roles and transfer ownership"
+        },
+        "billing": {
+          "manage": "Manage the plan and payment",
+          "read": "See billing and usage"
+        },
+        "matter": {
+          "read": "See matters",
+          "write": "Edit matters",
+          "restrict": "Restrict a matter"
+        },
+        "strategy": {
+          "read": "See strategy notes"
+        },
+        "memory": {
+          "read": "See matter memory",
+          "write": "Add to matter memory"
+        },
+        "document": {
+          "read": "See documents",
+          "write": "Upload and edit documents"
+        },
+        "task": {
+          "read": "See tasks",
+          "write": "Create and update tasks"
+        },
+        "listing": {
+          "read": "See the cause list"
+        },
+        "draft": {
+          "write": "Write drafts"
+        },
+        "audit": {
+          "read": "Read and export the audit log"
+        },
+        "export": {
+          "run": "Export all workspace data"
+        },
+        "support": {
+          "manage": "Allow and end support access"
+        },
+        "limitation": {
+          "read": "See limitation dates"
+        },
+        "insights": {
+          "read": "See practice insights"
+        },
+        "settings": {
+          "read": "Open workspace settings"
+        },
+        "invoices": {
+          "read": "Download invoices"
+        }
+      },
+      "settings": {
+        "title": "Role settings",
+        "description": "Two choices this workspace can make on top of the roles above.",
+        "readOnly": "Only workspace owners can change these settings.",
+        "advocatesCanInvite": {
+          "label": "Advocates can invite members",
+          "description": "When off, only owners can invite people to this workspace."
+        },
+        "ownersSeeRestrictedMatters": {
+          "label": "Owners see restricted matters",
+          "description": "When off, owners see a restricted matter only if they are listed on it."
+        }
+      },
+      "toast": {
+        "saved": "Role settings saved.",
+        "undo": "Undo",
+        "undone": "Change undone.",
+        "error": "Could not save the role settings. Try again.",
+        "forbidden": "Only workspace owners can change role settings.",
+        "offline": "Settings can be changed when you are back online."
+      },
+      "restricted": {
+        "title": "Restricted matters",
+        "description": "Matters open only to the people listed on them.",
+        "matter": "Matter {id}",
+        "allowed": "Open to {names}",
+        "ownersOnly": "Open to owners only",
+        "since": "Restricted on {date}",
+        "empty": "No restricted matters",
+        "emptyHint": "Restricted matters you can see will be listed here.",
+        "picker": "Restrict a matter",
+        "pickerUnavailable": "You can restrict matters once matters arrive in CauseDeck."
+      },
+      "error": {
+        "title": "Could not load the role settings.",
+        "retry": "Try again"
+      }
+    },
+    "privacy": {
+      "metaTitle": "Privacy",
+      "title": "Privacy",
+      "description": "Where your data is processed, how sensitive matters start and how long raw audio is kept.",
+      "loading": "Loading the privacy settings",
+      "summary": "Your data stays in India. AI processing stays in India. We never train on your content.",
+      "indiaOnly": {
+        "title": "AI processing",
+        "label": "India-only AI processing",
+        "description": "AI features run only on providers that process data in India, under terms that forbid keeping or training on your content.",
+        "locked": "Locked on",
+        "note": "This stays on for every workspace. It protects client confidentiality and cannot be turned off here."
+      },
+      "settings": {
+        "title": "Sensitive matters and retention",
+        "description": "Two choices this workspace can make about how matters start and how long recordings are kept.",
+        "readOnly": "Only owners and advocates can change these settings.",
+        "sensitiveDefaultRestricted": {
+          "label": "Restrict sensitive matters by default",
+          "description": "New matters marked sensitive start open only to the people listed on them."
+        },
+        "retentionAudioDays": {
+          "label": "Keep raw audio for",
+          "description": "Voice recordings are deleted after this many days. Transcripts stay until you delete them.",
+          "option": "{days} days"
+        }
+      },
+      "subProcessors": {
+        "title": "Sub-processors",
+        "description": "The companies that help us run CauseDeck, what they do and where they process data.",
+        "link": "See the sub-processor list"
+      },
+      "neverDoes": {
+        "title": "What CauseDeck never does",
+        "items": {
+          "train": "Train AI models on your matters, documents or notes.",
+          "sell": "Sell or share your data for advertising.",
+          "abroad": "Send matter content to AI providers outside India.",
+          "access": "Let our staff open your workspace without your consent.",
+          "keep": "Keep raw audio longer than the window you choose."
+        }
+      },
+      "saving": "Saving...",
+      "saved": "Saved",
+      "toast": {
+        "saved": "Privacy settings saved.",
+        "undo": "Undo",
+        "undone": "Change undone.",
+        "error": "Could not save the privacy settings. Try again.",
+        "forbidden": "Only owners and advocates can change privacy settings.",
+        "offline": "Settings can be changed when you are back online."
+      },
+      "error": {
+        "title": "Could not load the privacy settings.",
+        "retry": "Try again"
+      }
+    },
+    "support": {
+      "title": "Support access",
+      "description": "CauseDeck support can see this workspace only when you allow it, and only for the time you choose.",
+      "scope": {
+        "title": "What support can see",
+        "view": "Read-only view: support can open the matters, documents and tasks an advocate could see. Restricted matters and billing stay hidden, and support cannot change anything.",
+        "metadata": "Details only: support sees your plan, seat count and usage, never your matters or documents.",
+        "audit": "Access ends when the time runs out or when you end it. Everything support opens is recorded in the audit log."
+      },
+      "scopeLabel": {
+        "view": "Read-only view",
+        "metadata": "Details only"
+      },
+      "pending": {
+        "title": "Pending requests",
+        "requestedAt": "Requested {time}",
+        "reason": "Reason: {reason}"
+      },
+      "active": {
+        "title": "Active sessions",
+        "until": "Until {time}"
+      },
+      "duration": {
+        "label": "Length",
+        "h1": "1 hour",
+        "h2": "2 hours",
+        "h4": "4 hours"
+      },
+      "grant": "Grant for {duration}",
+      "deny": "Deny",
+      "revoke": "Revoke now",
+      "empty": {
+        "title": "No support requests.",
+        "hint": "When CauseDeck support asks to see this workspace, the request appears here and you get a security alert."
+      },
+      "error": {
+        "title": "Could not load support sessions.",
+        "retry": "Try again"
+      },
+      "toast": {
+        "granted": "Support can view this workspace until {time}.",
+        "denied": "Request denied.",
+        "revoked": "Support session ended."
+      },
+      "errors": {
+        "conflict": "This request has changed. Refresh to see where it stands.",
+        "forbidden": "Only workspace owners can decide on support access.",
+        "notFound": "This support request no longer exists.",
+        "offline": "You are offline. Support access can be changed when you are back online.",
+        "generic": "Something went wrong. Try again."
+      },
+      "loading": "Loading support sessions"
+    },
+    "account": {
+      "metaTitle": "Account",
+      "title": "Account",
+      "description": "Your profile, sign-in methods and active sessions. These apply in every workspace.",
+      "navLabel": "Account sections",
+      "nav": {
+        "profile": "Profile",
+        "security": "Security"
+      },
+      "loading": "Loading your account",
+      "error": {
+        "title": "Could not load your account.",
+        "retry": "Try again"
+      },
+      "forbidden": "You can only manage your own account.",
+      "offline": "You are offline. Settings can be changed when you are back online.",
+      "cancel": "Cancel",
+      "profile": {
+        "title": "Profile",
+        "description": "How you appear to colleagues in every workspace.",
+        "name": "Name",
+        "nameHint": "Shown on matters, tasks and the activity log.",
+        "avatar": "Avatar",
+        "avatarHint": "Your initials for now. Photo upload comes later.",
+        "email": "Email",
+        "emailHint": "The address you sign in with.",
+        "language": "Language",
+        "languageHint": "The language CauseDeck uses for you on every device.",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "saved": "Saved",
+        "toast": {
+          "saved": "Profile saved."
+        },
+        "errors": {
+          "name": "Enter a name of up to 120 characters.",
+          "language": "Could not change the language. Try again.",
+          "generic": "Could not save your profile. Try again."
+        }
+      },
+      "security": {
+        "title": "Security",
+        "description": "Passkeys, two-factor authentication, sessions and connected accounts."
+      },
+      "passkeys": {
+        "title": "Passkeys",
+        "description": "Sign in with your fingerprint, face or screen lock instead of an email link.",
+        "listLabel": "Your passkeys",
+        "add": "Add passkey",
+        "empty": "No passkeys yet. Add one to sign in with your fingerprint or screen lock.",
+        "unnamed": "Passkey",
+        "added": "Added {date}",
+        "remove": "Remove",
+        "removeLabel": "Remove {name}",
+        "removeTitle": "Remove this passkey?",
+        "removeBody": "You will no longer be able to sign in with {name}. You can add it again later.",
+        "removeConfirm": "Remove passkey",
+        "unsupported": "This browser cannot create passkeys.",
+        "toast": {
+          "added": "Passkey added.",
+          "removed": "Passkey removed.",
+          "addFailed": "Could not add the passkey. Try again.",
+          "removeFailed": "Could not remove the passkey. Try again."
+        }
+      },
+      "twoFactor": {
+        "title": "Two-factor authentication",
+        "description": "Ask for a code from an authenticator app as a second step.",
+        "status": "Status",
+        "on": "On",
+        "off": "Off",
+        "onHint": "Your account is protected with an authenticator app.",
+        "offHint": "Add an authenticator app to protect your account if someone gets your email.",
+        "setUp": "Set up",
+        "toast": {
+          "enabled": "Two-factor authentication is on."
+        },
+        "dialog": {
+          "title": "Set up two-factor authentication",
+          "step": "Step {current} of {total}",
+          "preparing": "Preparing your QR code",
+          "scanTitle": "Scan the QR code",
+          "scanBody": "Open an authenticator app, such as Google Authenticator or Microsoft Authenticator, and scan this code.",
+          "qrAlt": "QR code for your authenticator app",
+          "manual": "Can't scan? Enter this key",
+          "next": "Next",
+          "back": "Back",
+          "verifyTitle": "Enter the 6-digit code",
+          "verifyBody": "Type the code your authenticator app shows for CauseDeck.",
+          "code": "Code",
+          "verify": "Verify",
+          "codesTitle": "Save your backup codes",
+          "codesBody": "Each code works once if you lose your phone. They are shown only now, so keep them somewhere safe.",
+          "codesLabel": "Backup codes",
+          "copy": "Copy",
+          "copied": "Backup codes copied.",
+          "download": "Download",
+          "done": "Done",
+          "retry": "Try again",
+          "errors": {
+            "code": "Enter the 6-digit code from your app.",
+            "wrongCode": "That code did not work. Check the time on your phone and try again.",
+            "copy": "Could not copy. Select the codes and copy them yourself.",
+            "generic": "Could not set up two-factor authentication. Try again."
+          }
+        }
+      },
+      "sessions": {
+        "title": "Active sessions",
+        "description": "Devices signed in to your account. Revoke any you don't recognise.",
+        "tableCaption": "Your active sessions",
+        "columns": {
+          "device": "Device",
+          "ip": "IP address",
+          "signedIn": "Signed in",
+          "actions": "Actions"
+        },
+        "device": "{browser} on {os}",
+        "unknownDevice": "Unknown device",
+        "unknownIp": "Unknown",
+        "current": "This device",
+        "empty": "No other active sessions.",
+        "revoke": "Revoke",
+        "revokeLabel": "Revoke the session on {device}",
+        "revokeTitle": "Revoke this session?",
+        "revokeBody": "{device} will be signed out on its next request.",
+        "revokeConfirm": "Revoke session",
+        "toast": {
+          "revoked": "Session revoked.",
+          "failed": "Could not revoke the session. Try again."
+        }
+      },
+      "connected": {
+        "title": "Connected accounts",
+        "description": "Services you can sign in with besides email links and passkeys.",
+        "listLabel": "Connected accounts",
+        "empty": "No connected accounts. You sign in with an email link or a passkey.",
+        "connectedOn": "Connected {date}",
+        "providers": {
+          "google": "Google"
+        }
       }
     }
   }

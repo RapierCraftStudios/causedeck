@@ -3,19 +3,24 @@
 // and enforced again by the domain service behind each server action. It renders inside the
 // settings shell (#284), whose banner covers the offline state. #288 adds the seat summary, the
 // members / pending invitations tabs and the roles explainer below 1280; `?transfer=1` (the danger
-// zone's `Transfer ownership`) opens the transfer picker for an owner.
+// zone's `Transfer ownership`) opens the transfer picker for an owner. The header links to the
+// roles page (`How roles work`, #285) for roles that can open it; advocates see no invite button
+// while the workspace turns `advocatesCanInvite` off.
 //
 // States: loading (six skeleton rows while the list streams in), error (`Could not load members.`
 // with `Try again`), empty (only the caller; no pending invitations), offline (read-only, the
 // settings banner) and permission-denied (in the client view). If only the seat read fails, the
 // list still renders without the seat card. `?__state=loading|error` previews the first two in
 // development, like the shell.
+import type { PolicySettings } from '@causedeck/auth/policy';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
 import { isDev } from '../../../../../../lib/env.ts';
+import { canOpenSettings, settingsHref } from '../../../../../../lib/settings-nav.ts';
 import type { Role, WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
@@ -78,19 +83,23 @@ function wantsTransfer(searchParams: SearchParams): boolean {
 
 /**
  * Members, pending invitations and the seat summary, read on one workspace-scoped transaction
- * (`loadMembersPage`). `seats` is `null` when the plan could not be read.
+ * (`loadMembersPage`), plus the workspace's role settings (#285). `seats` is `null` when the plan
+ * could not be read.
  */
 async function loadMembers(context: WorkspaceContext): Promise<{
   members: MemberRow[];
   invitations: InvitationRow[];
   seats: SeatSummary | null;
+  policySettings: PolicySettings;
 }> {
-  const { loadMembersPage } = await import('@causedeck/core/runtime');
-  const { members, invitations, seats } = await loadMembersPage({
-    workspaceId: context.workspace.id,
-    userId: context.user.id,
-  });
+  const { inWorkspace, loadMembersPage } = await import('@causedeck/core/runtime');
+  const scope = { workspaceId: context.workspace.id, userId: context.user.id };
+  const { members, invitations, seats } = await loadMembersPage(scope);
+  // Imported after the runtime, not alongside it: concurrent imports race the test mocks.
+  const { getRoleSettings, toPolicySettings } = await import('@causedeck/core/workspaces');
+  const roleSettings = await inWorkspace(scope, (tx) => getRoleSettings(tx, scope.workspaceId));
   return {
+    policySettings: toPolicySettings(roleSettings),
     members: members.flatMap(({ memberId, userId, name, email, role, joinedAt, lastActiveAt }) =>
       isRole(role) ? [{ memberId, userId, name, email, role, joinedAt, lastActiveAt }] : [],
     ),
@@ -134,6 +143,7 @@ async function MembersSection({
       invitations={data.invitations}
       seats={data.seats}
       openTransfer={openTransfer}
+      policySettings={data.policySettings}
       actions={{
         invite: inviteMembersAction,
         changeRole: changeRoleAction,
@@ -163,6 +173,15 @@ export default async function MembersPage({ params, searchParams }: MembersPageP
         <p className="text-ink-muted text-sm">
           {t('description', { workspace: context.workspace.name })}
         </p>
+        {canOpenSettings(context.role, 'roles') ? (
+          <Link
+            href={settingsHref(context.workspace.slug, 'roles')}
+            data-slot="roles-link"
+            className="text-accent focus-visible:outline-ring w-fit text-sm underline-offset-4 outline-offset-2 hover:underline focus-visible:outline-2"
+          >
+            {t('rolesLink')}
+          </Link>
+        ) : null}
       </header>
       {state === 'loading' ? (
         <MembersSkeleton />

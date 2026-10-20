@@ -190,6 +190,27 @@
       "when": 1792468606438,
       "tag": "0026_staff_support",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1792473416553,
+      "tag": "0027_member_role_granted_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792481363476,
+      "tag": "0028_role_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792483048268,
+      "tag": "0029_privacy_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -1,9 +1,17 @@
 // `@causedeck/core/runtime` (#298): the app's runtime database seam. Apps never import `db` or
 // `withWorkspace` from `@causedeck/db`; they call these services, which bind the app-role handle
-// and run the core (or package) service on it. Importing this module opens nothing and reads no
+// and run the core (or package) service on it. apps/api and apps/worker use it too (#299). Importing this module opens nothing and reads no
 // env (`db` connects on first use), so `next build` never needs runtime secrets. Each service loads
 // its implementation on first call, so a page pulls in only what it uses.
-import { db, isUuid as isUuidValue, withWorkspace, type Transaction } from '@causedeck/db';
+import {
+  closeDb,
+  db,
+  isUuid as isUuidValue,
+  withWorkspace,
+  type Database,
+  type Transaction,
+} from '@causedeck/db';
+import type { FlagListener } from '@causedeck/flags';
 import type { StorageCtx } from '@causedeck/storage';
 
 import type {
@@ -23,16 +31,39 @@ import type {
   ExportRequestCtx,
 } from '../lifecycle/index.ts';
 import type {
+  GrantSessionInput,
+  RequestSessionInput,
+  SessionRef,
+  StaffContext,
+  SupportSession,
+  WorkspaceActorContext,
+} from '../support/index.ts';
+import type {
   AcceptInvitationRequest,
   AcceptedInvitation,
   CreateWorkspaceRequest,
   PreviewInvitationRequest,
 } from '../workspaces/index.ts';
 
-export type { Transaction };
+export type { Database, Transaction };
 
 /** The app-role database handle (lazy). Only for adapters that need a handle, e.g. Better Auth. */
 export { db };
+
+export {
+  createIdempotencyStore,
+  IDEMPOTENCY_TTL_MS,
+  IN_PROGRESS_STATUS,
+  type ClaimInput,
+  type IdempotencyRecord,
+  type IdempotencyStore,
+  type StoredApiResponse,
+} from './idempotency-store.ts';
+
+/** Close the app-role pool (graceful shutdown); `timeoutSec` bounds waiting for open queries. */
+export function closeAppDb(options?: { timeoutSec?: number }): Promise<void> {
+  return closeDb(options?.timeoutSec === undefined ? undefined : { timeout: options.timeoutSec });
+}
 
 /** The acting user in one workspace: the RLS scope `inWorkspace` pins. */
 export interface RuntimeScope {
@@ -53,12 +84,27 @@ export function inWorkspace<T>(
   return withWorkspace(db, scope, fn);
 }
 
+/** `inWorkspace` on a handle the caller injected (the api's `requireWorkspace(db)`). */
+export function inWorkspaceOn<T>(
+  database: Database,
+  scope: RuntimeScope,
+  fn: (tx: Transaction) => Promise<T>,
+): Promise<T> {
+  return withWorkspace(database, scope, fn);
+}
+
 // workspaces
 
 /** The user's role in the workspace, or `null` when not an active member of a live one. */
 export async function memberRoleFor(userId: string, workspaceId: string) {
   const { memberRole } = await import('../workspaces/index.ts');
   return memberRole(db, userId, workspaceId);
+}
+
+/** The user's role in the workspace and when it was granted (owner 2FA grace, #290), or `null`. */
+export async function ownerGraceFor(userId: string, workspaceId: string) {
+  const { ownerGrace } = await import('../workspaces/index.ts');
+  return ownerGrace(db, userId, workspaceId);
 }
 
 /** The live workspace a slug points at; membership is the caller's check. */
@@ -220,6 +266,88 @@ export async function recordAccessDeniedFor(event: AccessDeniedEvent): Promise<v
   return recordAccessDenied(db, event);
 }
 
+// support sessions (#313)
+
+/** The owner's support settings page: pending requests and unexpired grants, newest first. */
+export async function loadSupportPage(scope: RuntimeScope): Promise<SupportSession[]> {
+  const { listSupportSessions } = await import('../support/index.ts');
+  return inWorkspace(scope, (tx) => listSupportSessions(tx, scope.workspaceId));
+}
+
+/** The granted, unexpired session the product shell banner shows, or `null`. */
+export async function activeSupportSessionIn(scope: RuntimeScope): Promise<SupportSession | null> {
+  const { activeSupportSession } = await import('../support/index.ts');
+  return inWorkspace(scope, (tx) => activeSupportSession(tx, scope.workspaceId));
+}
+
+/** Staff request a session; the owners' email deliveries go on the job queue. */
+export async function requestSupportSessionFor(
+  ctx: Omit<StaffContext, 'db'>,
+  input: RequestSessionInput,
+): Promise<SupportSession> {
+  const [{ requestSession }, { enqueueNotificationDelivery }] = await Promise.all([
+    import('../support/index.ts'),
+    import('../jobs/index.ts'),
+  ]);
+  return requestSession(
+    { db, ...ctx, enqueueDelivery: (job) => enqueueNotificationDelivery(job) },
+    input,
+  );
+}
+
+/** The owner grants a pending request (default 60 minutes, at most 240). */
+export async function grantSupportSessionFor(
+  ctx: Omit<WorkspaceActorContext, 'db'>,
+  input: GrantSessionInput,
+): Promise<SupportSession> {
+  const { grantSession } = await import('../support/index.ts');
+  return grantSession({ db, ...ctx }, input);
+}
+
+/** The owner turns down a pending request. */
+export async function denySupportSessionFor(
+  ctx: Omit<WorkspaceActorContext, 'db'>,
+  input: SessionRef,
+): Promise<SupportSession> {
+  const { denySession } = await import('../support/index.ts');
+  return denySession({ db, ...ctx }, input);
+}
+
+/** The owner (or the requesting staff member) ends a pending or granted session now. */
+export async function revokeSupportSessionFor(
+  ctx: Omit<WorkspaceActorContext, 'db'>,
+  input: SessionRef,
+): Promise<SupportSession> {
+  const { revokeSession } = await import('../support/index.ts');
+  return revokeSession({ db, ...ctx }, input);
+}
+
+/**
+ * `account.profile_updated` (account-level, informational) for the user's own profile change.
+ * Metadata names the changed fields only, never their values (#289).
+ */
+export async function recordAccountProfileUpdatedFor(
+  userId: string,
+  fields: readonly string[],
+  request: { requestId?: string; userAgent?: string } = {},
+): Promise<void> {
+  const { record } = await import('../audit/index.ts');
+  await record(
+    {
+      db,
+      workspaceId: null,
+      actor: { userId, kind: 'user' },
+      ...(request.requestId === undefined ? {} : { requestId: request.requestId }),
+      ...(request.userAgent === undefined ? {} : { userAgent: request.userAgent }),
+    },
+    {
+      action: 'account.profile_updated',
+      target: { kind: 'user', id: userId },
+      metadata: { fields: fields.join(',') },
+    },
+  );
+}
+
 // lifecycle: workspace export (#301)
 
 /** Request an export (owners only) and enqueue `export.build` for it. */
@@ -301,7 +429,7 @@ export async function consumeRequestLimit(
 }
 
 /** `LISTEN flag_changed` on the app pool so flag changes drop the cache. Once per process. */
-export async function startAppFlagListener(): Promise<unknown> {
+export async function startAppFlagListener(): Promise<FlagListener> {
   const { startFlagListener } = await import('@causedeck/flags');
   return startFlagListener(db);
 }

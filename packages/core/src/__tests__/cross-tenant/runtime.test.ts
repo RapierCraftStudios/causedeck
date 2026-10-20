@@ -72,9 +72,27 @@ const CASES: Record<string, () => Promise<void>> = {
     expect(seen.map((r) => r.id)).toEqual([t.b.id]);
     await expectCallerGateRefusesA();
   },
+  inWorkspaceOn: async () => {
+    const seen = await runtime.inWorkspaceOn(testAppDb(), asB(), (tx) =>
+      tx.select({ id: schema.organization.id }).from(schema.organization),
+    );
+    expect(seen.map((r) => r.id)).toEqual([t.b.id]);
+    await expectCallerGateRefusesA();
+  },
   memberRoleFor: async () => {
     expect(await runtime.memberRoleFor(t.ub, t.a.id)).toBeNull();
     expect(await runtime.memberRoleFor(t.ub, t.b.id)).toBe('owner');
+  },
+  ownerGraceFor: async () => {
+    const before = await runtime.ownerGraceFor(t.ua, t.a.id);
+    expect(before?.role).toBe('owner');
+    // `ub` is not a member of A: no role and no grant time come back for A.
+    expect(await runtime.ownerGraceFor(t.ub, t.a.id)).toBeNull();
+    // Asking about A's owner under B's workspace id reveals nothing either.
+    expect(await runtime.ownerGraceFor(t.ua, t.b.id)).toBeNull();
+    expect((await runtime.ownerGraceFor(t.ub, t.b.id))?.role).toBe('owner');
+    // A's grant is unchanged.
+    expect(await runtime.ownerGraceFor(t.ua, t.a.id)).toEqual(before);
   },
   resolveSlugFor: async () => {
     // The slug resolves for anyone; the workspace loader refuses it because `ub` is not a member.
@@ -163,6 +181,47 @@ const CASES: Record<string, () => Promise<void>> = {
     await runtime.recordAccessDeniedFor({ workspaceId: t.a.id, member: false, actorUserId: t.ub });
     expect(await aAuditIds()).toEqual(before);
   },
+  loadSupportPage: async () => {
+    const page = await runtime.loadSupportPage(asB());
+    expect(page.map((s) => s.workspaceId).filter((id) => id !== t.b.id)).toEqual([]);
+    expect(page.map((s) => s.id)).not.toContain(t.a.rows.support_session?.id);
+    await expectCallerGateRefusesA();
+  },
+  activeSupportSessionIn: async () => {
+    const active = await runtime.activeSupportSessionIn(asB());
+    expect(active === null || active.workspaceId === t.b.id).toBe(true);
+    await expectCallerGateRefusesA();
+  },
+  requestSupportSessionFor: async () => {
+    // ub is not staff: refused before a row or notification is written.
+    await expectDenied(
+      runtime.requestSupportSessionFor(
+        { staffUserId: t.ub },
+        { workspaceId: t.a.id, reason: 'Probe' },
+      ),
+    );
+  },
+  grantSupportSessionFor: async () => {
+    const sessionId = t.a.rows.support_session?.id ?? '';
+    await expectDenied(runtime.grantSupportSessionFor(forged(), { sessionId }));
+    await expectDenied(runtime.grantSupportSessionFor(asB(), { sessionId }));
+  },
+  denySupportSessionFor: async () => {
+    const sessionId = t.a.rows.support_session?.id ?? '';
+    await expectDenied(runtime.denySupportSessionFor(forged(), { sessionId }));
+    await expectDenied(runtime.denySupportSessionFor(asB(), { sessionId }));
+  },
+  revokeSupportSessionFor: async () => {
+    const sessionId = t.a.rows.support_session?.id ?? '';
+    await expectDenied(runtime.revokeSupportSessionFor(forged(), { sessionId }));
+    await expectDenied(runtime.revokeSupportSessionFor(asB(), { sessionId }));
+  },
+  recordAccountProfileUpdatedFor: async () => {
+    const before = await aAuditIds();
+    // Account-level: `ua`'s own profile change never writes into workspace A's chain.
+    await runtime.recordAccountProfileUpdatedFor(t.ua, ['name']);
+    expect(await aAuditIds()).toEqual(before);
+  },
   requestExportFor: async () => {
     const before = await aAuditIds();
     // Refused before anything is written or enqueued: ub is not an owner of A.
@@ -206,7 +265,7 @@ const CASES: Record<string, () => Promise<void>> = {
     expect(await runtime.consumeRequestLimit(bKey, limit)).toBe(true);
   },
   startAppFlagListener: async () => {
-    const listener = (await runtime.startAppFlagListener()) as { unlisten: () => Promise<void> };
+    const listener = await runtime.startAppFlagListener();
     expect(typeof listener.unlisten).toBe('function');
     await listener.unlisten();
   },

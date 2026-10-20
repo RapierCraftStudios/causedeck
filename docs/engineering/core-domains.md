@@ -23,7 +23,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
-| `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains |
+| `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains. apps/web, apps/api and apps/worker use it (#299): the `db` handle, `closeAppDb`, `inWorkspaceOn` for an injected handle and the api idempotency store |
 | `shared` | none | helpers no domain owns |
 
 `packages/core/src/index.ts` re-exports only domain entry points (`./<domain>/index.ts`). It does
@@ -77,6 +77,7 @@ graph LR
   runtime --> workspaces
   runtime --> jobs
   runtime --> lifecycle
+  runtime --> support
 ```
 
 | Domain | May import |
@@ -90,7 +91,7 @@ graph LR
 | `lifecycle` | `audit`, `workspaces` |
 | `support` | `workspaces`, `audit` |
 | `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support` |
-| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle` |
+| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,
 fair-use caps and job fairness read billing entitlements.

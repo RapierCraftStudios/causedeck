@@ -2,6 +2,7 @@
 // Lines. `POST` checks session, membership and `audit.read` (owners; advocates unless the
 // workspace turned it off) and returns a signed link valid for 60 s; `GET ?token=` re-checks the
 // permission, records `audit.exported` and streams the file page by page (never buffered).
+// Both refuse an owner without 2FA after the 7-day grace (403, #290: an export is destructive).
 // 401 signed out or bad token, 403 cross-origin or forbidden, 404 not a member, 400 bad input.
 import { authorizeAuditReadFor, exportAuditFor } from '@causedeck/core/runtime';
 import { WorkspaceError } from '@causedeck/core/workspaces';
@@ -15,6 +16,7 @@ import {
 import { getSession } from '../../../../lib/auth.ts';
 import { serverEnv } from '../../../../lib/env.ts';
 import { guard, guardResponse } from '../../../../lib/guard.ts';
+import { assertOwnerTwoFactor } from '../../../../lib/require-2fa-for-owners.ts';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -67,7 +69,8 @@ export async function POST(request: Request): Promise<Response> {
 
   let userId: string;
   try {
-    ({ userId } = await guard({ workspaceId: body.workspaceId, session }));
+    // An export is destructive (#290): an owner past the 2FA grace is refused.
+    ({ userId } = await guard({ workspaceId: body.workspaceId, session, destructive: true }));
   } catch (error) {
     const response = guardResponse(error);
     if (response) return response;
@@ -119,6 +122,15 @@ export async function GET(request: Request): Promise<Response> {
   const token = new URL(request.url).searchParams.get('token');
   const payload = token === null ? null : verifyExportToken(token, secret(), Date.now());
   if (!payload || payload.u !== session.user.id) return json(401, { error: 'invalid_token' });
+  try {
+    // Re-checked on download too (#290), so a link signed before the grace ran out is refused;
+    // membership and permission stay core's check below.
+    await assertOwnerTwoFactor(session, payload.w);
+  } catch (error) {
+    const response = guardResponse(error);
+    if (response) return response;
+    throw error;
+  }
 
   const requestId = request.headers.get('x-request-id') ?? undefined;
   const userAgent = request.headers.get('user-agent') ?? undefined;

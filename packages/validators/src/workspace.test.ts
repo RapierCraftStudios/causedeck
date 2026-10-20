@@ -6,8 +6,58 @@ import {
   InviteInput,
   RESERVED_SLUGS,
   Slug,
+  UpdateRoleSettingsInput,
+  UpdateWorkspacePrivacyInput,
   UpdateWorkspaceProfileInput,
 } from './workspace';
+
+describe('UpdateRoleSettingsInput', () => {
+  it('accepts both role settings as booleans', () => {
+    const input = { advocatesCanInvite: false, ownersSeeRestrictedMatters: true };
+    expect(UpdateRoleSettingsInput.parse(input)).toEqual(input);
+  });
+
+  it('rejects a missing, non-boolean or unknown setting', () => {
+    expect(UpdateRoleSettingsInput.safeParse({ advocatesCanInvite: true }).success).toBe(false);
+    expect(
+      UpdateRoleSettingsInput.safeParse({
+        advocatesCanInvite: 'false',
+        ownersSeeRestrictedMatters: true,
+      }).success,
+    ).toBe(false);
+    expect(
+      UpdateRoleSettingsInput.safeParse({
+        advocatesCanInvite: true,
+        ownersSeeRestrictedMatters: true,
+        advocatesCanReadAudit: false,
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe('UpdateWorkspacePrivacyInput', () => {
+  it.each([7, 14, 30])('accepts a %i day raw audio window', (retentionAudioDays) => {
+    const input = { sensitiveDefaultRestricted: false, retentionAudioDays };
+    expect(UpdateWorkspacePrivacyInput.parse(input)).toEqual(input);
+  });
+
+  it.each([0, 1, 31, 90, '30'])('rejects a %j day window', (retentionAudioDays) => {
+    expect(
+      UpdateWorkspacePrivacyInput.safeParse({
+        sensitiveDefaultRestricted: true,
+        retentionAudioDays,
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects India-only AI and any other unknown field', () => {
+    const base = { sensitiveDefaultRestricted: true, retentionAudioDays: 30 };
+    expect(UpdateWorkspacePrivacyInput.safeParse({ ...base, indiaOnlyAi: false }).success).toBe(
+      false,
+    );
+    expect(UpdateWorkspacePrivacyInput.safeParse({ retentionAudioDays: 30 }).success).toBe(false);
+  });
+});
 
 describe('Slug', () => {
   it('accepts lowercase hyphenated slugs', () => {

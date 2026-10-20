@@ -75,6 +75,28 @@ export const UpdateWorkspaceProfileInput = z.object({
   slug: Slug.optional(),
 });
 
+/**
+ * The two role settings on the settings roles page (#285), both required: whether advocates may
+ * invite members, and whether owners see restricted matters they are not listed on.
+ */
+export const UpdateRoleSettingsInput = z.strictObject({
+  advocatesCanInvite: z.boolean(),
+  ownersSeeRestrictedMatters: z.boolean(),
+});
+
+/** The raw audio retention windows the settings privacy page offers, in days (#286); 30 is the maximum. */
+export const RETENTION_AUDIO_DAYS = [7, 14, 30] as const;
+
+/**
+ * The two editable privacy settings on the settings privacy page (#286), both required: whether new
+ * sensitive matters start restricted, and how many days raw audio is kept. Strict and without an
+ * India-only AI field, so no request can turn India-only AI processing off.
+ */
+export const UpdateWorkspacePrivacyInput = z.strictObject({
+  sensitiveDefaultRestricted: z.boolean(),
+  retentionAudioDays: z.literal(RETENTION_AUDIO_DAYS),
+});
+
 export const InviteInput = z.object({
   email: z.email().transform((value) => value.toLowerCase()),
   role: z.enum(INVITE_ROLE_VALUES),
@@ -94,5 +116,8 @@ export type CreateWorkspaceInput = z.input<typeof CreateWorkspaceInput>;
 export type InviteInput = z.infer<typeof InviteInput>;
 export type UpdateWorkspaceProfileInput = z.input<typeof UpdateWorkspaceProfileInput>;
 export type WorkspaceProfileFields = z.output<typeof UpdateWorkspaceProfileInput>;
+export type UpdateRoleSettingsInput = z.infer<typeof UpdateRoleSettingsInput>;
+export type UpdateWorkspacePrivacyInput = z.infer<typeof UpdateWorkspacePrivacyInput>;
+export type RetentionAudioDays = (typeof RETENTION_AUDIO_DAYS)[number];
 export type AcceptInviteInput = z.infer<typeof AcceptInviteInput>;
 export type ChangeRoleInput = z.infer<typeof ChangeRoleInput>;

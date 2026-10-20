@@ -148,6 +148,9 @@ type Case = (f: Fixture) => Promise<void>;
 
 // The seeded reservation expires 5 minutes after the real clock, so the usage clock is the real one.
 const USAGE_NOW = new Date();
+
+/** A request's owner email deliveries; never reached when the request is refused. */
+const enqueueDelivery = () => Promise.resolve();
 const aCtx = (f: Fixture) => ({ db: f.tx, workspaceId: f.a.id, now: () => USAGE_NOW });
 const bCtx = (f: Fixture) => ({ db: f.tx, workspaceId: f.b.id, now: () => USAGE_NOW });
 
@@ -409,6 +412,17 @@ const CASES: Record<string, Case> = {
     // Even asking about A's owner from B's scope reveals nothing.
     expect(await f.asB((s) => core.memberRole(s, f.ua, f.a.id))).toBeNull();
   },
+  ownerGrace: async (f) => {
+    const before = await core.ownerGrace(f.tx, f.ua, f.a.id);
+    expect(before?.role).toBe('owner');
+    // B's member asks about A: nothing, from the plain scope and from B's scope.
+    expect(await core.ownerGrace(f.tx, f.ub, f.a.id)).toBeNull();
+    expect(await f.asB((s) => core.ownerGrace(s, f.ub, f.a.id))).toBeNull();
+    // Even asking about A's owner from B's scope reveals neither role nor grant time.
+    expect(await f.asB((s) => core.ownerGrace(s, f.ua, f.a.id))).toBeNull();
+    // A is unchanged by the attempts.
+    expect(await core.ownerGrace(f.tx, f.ua, f.a.id)).toEqual(before);
+  },
   requireOwner: async (f) => {
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ub)));
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ua)));
@@ -621,6 +635,50 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getWorkspaceProfile(f.tx, f.a.id)).toEqual(before);
   },
+  getRoleSettings: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ advocatesCanInvite: false, ownersSeeRestricted: false })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the defaults, not A's values.
+    expect(await f.asB((s) => core.getRoleSettings(s, f.a.id))).toEqual(core.DEFAULT_ROLE_SETTINGS);
+  },
+  updateRoleSettings: async (f) => {
+    const before = await core.getRoleSettings(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.updateRoleSettings(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          input: { advocatesCanInvite: false, ownersSeeRestrictedMatters: false },
+        }),
+      ),
+    );
+    expect(await core.getRoleSettings(f.tx, f.a.id)).toEqual(before);
+  },
+  getPrivacySettings: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ sensitiveDefaultRestricted: false, retentionAudioDays: 7 })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the defaults, not A's values.
+    expect(await f.asB((s) => core.getPrivacySettings(s, f.a.id))).toEqual(
+      core.DEFAULT_PRIVACY_SETTINGS,
+    );
+  },
+  updateWorkspacePrivacy: async (f) => {
+    const before = await core.getPrivacySettings(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.updateWorkspacePrivacy(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          input: { sensitiveDefaultRestricted: false, retentionAudioDays: 7 },
+        }),
+      ),
+    );
+    expect(await core.getPrivacySettings(f.tx, f.a.id)).toEqual(before);
+  },
   acceptInvitation: async (f) => {
     const error: unknown = await core
       .acceptInvitation(f.tx, { userId: f.ub, token: f.aInvitation.token })
@@ -826,6 +884,16 @@ const CASES: Record<string, Case> = {
     );
     expect(await aRestrictions(f)).toEqual(before);
   },
+  listMatterRestrictions: async (f) => {
+    await expectDenied(core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.a.id }));
+    await expectDenied(
+      f.asB((s) => core.listMatterRestrictions(s, { userId: f.ub, workspaceId: f.a.id })),
+    );
+    // B's own list never includes A's restriction.
+    const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
+    const own = await core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.b.id });
+    expect(own.map((r) => r.matterId)).not.toContain(aMatter);
+  },
   assertMatterReadable: async (f) => {
     const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
     await expectDenied(
@@ -849,8 +917,12 @@ const CASES: Record<string, Case> = {
   requestSession: async (f) => {
     const before = await aSupportSessions(f);
     const input = { workspaceId: f.a.id, reason: 'Probe' };
-    await expectDenied(core.requestSession({ db: f.tx, staffUserId: f.ub }, input));
-    await expectDenied(f.asB((s) => core.requestSession({ db: s, staffUserId: f.ub }, input)));
+    await expectDenied(
+      core.requestSession({ db: f.tx, staffUserId: f.ub, enqueueDelivery }, input),
+    );
+    await expectDenied(
+      f.asB((s) => core.requestSession({ db: s, staffUserId: f.ub, enqueueDelivery }, input)),
+    );
     expect(await aSupportSessions(f)).toEqual(before);
   },
   grantSession: async (f) => {
@@ -886,6 +958,19 @@ const CASES: Record<string, Case> = {
       core.revokeSession({ db: f.tx, userId: f.ub, workspaceId: f.b.id }, { sessionId }),
     );
     expect(await aSupportSessions(f)).toEqual(before);
+  },
+  listSupportSessions: async (f) => {
+    await expect(f.asB((s) => core.listSupportSessions(s, f.a.id))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    const own = await f.asB((s) => core.listSupportSessions(s, f.b.id));
+    expect(own.filter((row) => row.workspaceId !== f.b.id)).toEqual([]);
+  },
+  activeSupportSession: async (f) => {
+    await expect(f.asB((s) => core.activeSupportSession(s, f.a.id))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    expect(await f.asB((s) => core.activeSupportSession(s, f.b.id))).toBeNull();
   },
   assertActiveSupportSession: async (f) => {
     await expectDenied(core.assertActiveSupportSession(f.ub, f.a.id, { db: f.tx }));

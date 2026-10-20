@@ -1,7 +1,7 @@
-// A settings section that a sibling issue fills in (#284): roles (#285), privacy (#286) and
-// integrations (#287); export and danger became real pages in #288. It renders inside the settings shell so the sub-nav
-// never leads to a missing page, and checks the section's permission with the same `can()` as the
-// sub-nav: a direct URL without it shows the permission-denied page.
+// A settings section that a sibling issue fills in (#284): integrations (#287); roles (#285),
+// privacy (#286), export and danger (#288) became real pages. It renders inside the settings shell
+// so the sub-nav never leads to a missing page, and checks the section's permission with the same
+// `can()` as the sub-nav: a direct URL without it shows the permission-denied page.
 import { EmptyState } from '@causedeck/ui/empty-state';
 import { Hourglass } from 'lucide-react';
 import { notFound } from 'next/navigation';
@@ -15,7 +15,7 @@ export interface SettingsPlaceholderProps {
   params: Promise<{ slug: string }>;
 }
 
-export type PlaceholderSection = Extract<SettingsSectionId, 'roles' | 'integrations' | 'privacy'>;
+export type PlaceholderSection = Extract<SettingsSectionId, 'integrations'>;
 
 export function settingsPlaceholderPage(section: PlaceholderSection) {
   return async function SettingsPlaceholderPage({ params }: SettingsPlaceholderProps) {

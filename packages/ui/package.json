@@ -69,7 +69,7 @@
     "./fonts/*": "./fonts/*"
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "NODE_OPTIONS=--max-old-space-size=4096 eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit",
     "test:storybook": "vitest run --project storybook --project storybook-dark --project browser",

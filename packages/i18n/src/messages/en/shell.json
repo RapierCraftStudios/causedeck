@@ -116,13 +116,6 @@
       "title": "Page not found",
       "message": "We could not find this page in this workspace."
     },
-    "account": {
-      "title": "Account",
-      "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
-      "empty": "Account settings are coming soon.",
-      "hint": "Passkeys, two-factor sign-in and sessions will be managed here.",
-      "action": "Back to your workspace"
-    },
     "sidebar": {
       "label": "Sidebar",
       "primary": "Primary",
@@ -178,6 +171,15 @@
     },
     "sheet": {
       "close": "Close"
+    },
+    "supportBanner": {
+      "message": "Support is viewing this workspace until {time}",
+      "end": "End session",
+      "error": "Could not end the session. Try again."
+    },
+    "ownerTwoFactor": {
+      "message": "Turn on two-factor authentication to keep owner access. Deleting, exporting and billing changes are blocked until you do.",
+      "action": "Set up two-factor"
     }
   }
 }

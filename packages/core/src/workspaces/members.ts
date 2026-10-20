@@ -135,7 +135,10 @@ export async function changeRole(db: Queryable, request: ChangeRoleRequest): Pro
     if (target.role === 'owner' && (await activeOwnerCount(tx, request.workspaceId)) <= 1) {
       throw conflict('The last owner cannot be demoted; transfer ownership first');
     }
-    await tx.update(member).set({ role: request.role }).where(eq(member.id, target.id));
+    await tx
+      .update(member)
+      .set({ role: request.role, roleGrantedAt: sql`now()` })
+      .where(eq(member.id, target.id));
     await recordRoleChanged(tx, {
       workspaceId: request.workspaceId,
       actorUserId: request.actorUserId,
@@ -238,10 +241,13 @@ export async function transferOwnership(
       throw invalid('Confirm the transfer by entering the workspace slug');
     }
     const target = await transferTarget(tx, request);
-    await tx.update(member).set({ role: 'owner' }).where(eq(member.id, target.memberId));
+    await tx
+      .update(member)
+      .set({ role: 'owner', roleGrantedAt: sql`now()` })
+      .where(eq(member.id, target.memberId));
     const [previous] = await tx
       .update(member)
-      .set({ role: 'advocate' })
+      .set({ role: 'advocate', roleGrantedAt: sql`now()` })
       .where(
         and(eq(member.organizationId, request.workspaceId), eq(member.userId, request.actorUserId)),
       )

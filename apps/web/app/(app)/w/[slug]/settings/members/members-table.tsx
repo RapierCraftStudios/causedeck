@@ -5,10 +5,11 @@
 // (seats in use against the plan) sits above two tabs (#288): `Members` and `Pending invitations`,
 // each with its own empty state. What a row offers depends on the caller's role: owners manage
 // members, owners and advocates manage the invitations they could have sent, everyone else sees
-// the list read-only. Offline the page is read-only and `Invite member` says it needs a connection.
+// the list read-only; advocates cannot invite while the workspace turns `advocatesCanInvite` off
+// (#285). Offline the page is read-only and `Invite member` says it needs a connection.
 // `openTransfer` (the danger zone's `Transfer ownership`) opens a picker for the new owner, then
 // the two-step transfer. The invite and remove dialogs load on first use.
-import { invitableRoles } from '@causedeck/auth/policy';
+import { invitableRoles, type PolicySettings } from '@causedeck/auth/policy';
 import { Alert } from '@causedeck/ui/alert';
 import { Avatar } from '@causedeck/ui/avatar';
 import { Badge } from '@causedeck/ui/badge';
@@ -139,6 +140,8 @@ export interface MembersViewProps {
   /** Open the ownership transfer picker on mount (owners only; `?transfer=1`). */
   openTransfer?: boolean | undefined;
   actions: MembersActions;
+  /** The workspace's role settings (#285); `advocatesCanInvite` off hides inviting from advocates. */
+  policySettings?: PolicySettings;
 }
 
 type ListKey = 'members' | 'invitations';
@@ -394,6 +397,7 @@ export function MembersView({
   seats,
   openTransfer = false,
   actions,
+  policySettings,
 }: MembersViewProps) {
   const t = useTranslations('members');
   const format = useFormatter();
@@ -426,7 +430,7 @@ export function MembersView({
   }, [openTransfer]);
 
   const canManageMembers = isOwner && can(viewer.role, 'member.remove');
-  const invitable = invitableRoles(viewer.role).filter(
+  const invitable = invitableRoles(viewer.role, policySettings).filter(
     (role): role is Exclude<Role, 'owner'> => role !== 'owner',
   );
   const canInvite = invitable.length > 0;

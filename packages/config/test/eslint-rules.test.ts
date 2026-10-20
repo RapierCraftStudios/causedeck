@@ -43,8 +43,11 @@ describe('type-safety and import rules', () => {
 
   it('bans importing withoutWorkspace outside packages/db, the admin data layer and migrations', async () => {
     const banned = await lintFixture('rules', 'apps/web/imports-without-workspace.ts');
+    // The app→db value ban (#299) also reports this line; this test is about withoutWorkspace.
     const restricted = banned.messages.filter(
-      (m) => m.ruleId === '@typescript-eslint/no-restricted-imports',
+      (m) =>
+        m.ruleId === '@typescript-eslint/no-restricted-imports' &&
+        m.message.includes('withoutWorkspace'),
     );
     expect(restricted.map((m) => m.line)).toEqual([1]);
     expect(restricted[0]?.message).toContain('`withoutWorkspace` is for packages/db');

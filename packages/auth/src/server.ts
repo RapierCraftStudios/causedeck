@@ -285,7 +285,9 @@ export function createAuth({
         },
       },
     }),
-    twoFactor({ issuer: 'CauseDeck' }),
+    // Accounts have no password (magic link, passkeys, Google), so enabling and disabling 2FA rely on
+    // the session alone (#289); a user who somehow has a credential password is still asked for it.
+    twoFactor({ issuer: 'CauseDeck', allowPasswordless: true }),
   ] satisfies BetterAuthPlugin[];
 
   // Literal `process.env.NODE_ENV` so production bundles drop the dev provider entirely.

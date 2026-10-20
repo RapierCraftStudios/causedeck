@@ -1,12 +1,13 @@
 // Settings shell (#284): `/w/<slug>/settings` redirects to the workspace profile; the sub-nav lists
-// Profile, Members, Roles, Notifications, Integrations, Privacy, Export and Danger zone (plus Usage
-// and Audit log) and hides what the role cannot open; a direct URL to a hidden section shows the
-// permission-denied page. Layout: a scrollable segmented strip at 360 (no page-level horizontal
-// scroll), a 200 px sticky sub-nav with a 560 px column at 768, 220/640 px from 1280. Offline,
-// the settings banner appears. #288: the export page (disabled `Export workspace` with the
-// `Coming from export service` tooltip) and the danger zone (transfer links to the members picker,
-// delete disabled with its reason) are owner-only; members, notifications, export and danger never
-// scroll sideways and show one offline banner. `@a11y` tests run axe on the page they end on.
+// Profile, Members, Roles, Notifications, Integrations, Privacy, Export and Danger zone (plus
+// Usage, Audit log and, for owners, Support access, #313) and hides what the role cannot open; a
+// direct URL to a hidden section shows the permission-denied page. Layout: a scrollable segmented
+// strip at 360 (no page-level horizontal scroll), a 200 px sticky sub-nav with a 560 px column at
+// 768, 220/640 px from 1280. Offline, the settings banner appears. #288: the export page (disabled
+// `Export workspace` with the `Coming from export service` tooltip) and the danger zone (transfer
+// links to the members picker, delete disabled with its reason) are owner-only; members,
+// notifications, export and danger never scroll sideways and show one offline banner. `@a11y` tests
+// run axe on the page they end on.
 import type { Page } from '@playwright/test';
 
 import { expect, test, type E2eRole } from '../../fixtures/index.ts';
@@ -46,7 +47,7 @@ test.describe('settings shell', () => {
     async ({ page, asUser }) => {
       await openSettings(page, asUser, 'owner');
       await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/settings/profile$`));
-      expect(await navLabels(page)).toEqual([...SECTIONS, 'Usage', 'Audit log']);
+      expect(await navLabels(page)).toEqual([...SECTIONS, 'Usage', 'Audit log', 'Support access']);
       await expect(subNav(page).getByRole('link', { name: 'Profile' })).toHaveAttribute(
         'aria-current',
         'page',

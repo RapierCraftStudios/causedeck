@@ -2,8 +2,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { defineJob, PermanentError, runJob, type JobContext } from '@causedeck/core/jobs';
-import { withWorkspace } from '@causedeck/db';
-import { testAppDb } from '@causedeck/db/testing';
+import { testAppDb, withWorkspace } from '@causedeck/db/testing';
 import { initTelemetry, type Telemetry } from '@causedeck/observability';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import { sql } from 'drizzle-orm';

@@ -11,6 +11,8 @@ const WS = '00000000-0000-4000-8000-00000000000a';
 interface State {
   session: { user: { id: string } } | null;
   role: string | null;
+  /** The owner's 2FA grace has run out (#290); the session has no 2FA. */
+  overdue: boolean;
   authorize: ReturnType<typeof vi.fn>;
   exportAudit: ReturnType<typeof vi.fn>;
 }
@@ -18,6 +20,7 @@ interface State {
 const state: State = vi.hoisted(() => ({
   session: { user: { id: '00000000-0000-4000-8000-000000000001' } },
   role: 'owner',
+  overdue: false,
   authorize: vi.fn(),
   exportAudit: vi.fn(),
 }));
@@ -36,6 +39,15 @@ vi.mock('../../../../lib/env.ts', () => ({
 vi.mock('@causedeck/core/workspaces', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   memberRole: () => Promise.resolve(state.role),
+  ownerGrace: () =>
+    Promise.resolve(
+      state.role
+        ? {
+            role: state.role,
+            roleGrantedAt: new Date(Date.now() - (state.overdue ? 8 : 0) * 24 * 60 * 60 * 1000),
+          }
+        : null,
+    ),
 }));
 vi.mock('@causedeck/core/audit', () => ({
   authorizeAuditRead: state.authorize,
@@ -93,6 +105,7 @@ afterEach(() => {
   vi.useRealTimers();
   state.session = { user: { id: USER } };
   state.role = 'owner';
+  state.overdue = false;
   state.authorize.mockReset();
   state.exportAudit.mockReset();
 });
@@ -147,6 +160,24 @@ describe('POST /api/audit/export', () => {
     }
     state.authorize.mockRejectedValueOnce(new WorkspaceError('NOT_FOUND', 'gone'));
     expect((await route.POST(post(BODY))).status).toBe(404);
+  });
+});
+
+describe('owner 2FA policy (#290)', () => {
+  it('refuses an owner without 2FA after the grace, on POST and on a link issued before', async () => {
+    state.authorize.mockResolvedValue(undefined);
+    const url = await link();
+    state.overdue = true;
+    expect((await route.POST(post(BODY))).status).toBe(403);
+    expect((await route.GET(get(url))).status).toBe(403);
+    expect(state.exportAudit).not.toHaveBeenCalled();
+  });
+
+  it('never applies to advocates', async () => {
+    state.role = 'advocate';
+    state.overdue = true;
+    state.authorize.mockResolvedValue(undefined);
+    await link();
   });
 });
 

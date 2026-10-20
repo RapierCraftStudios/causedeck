@@ -23,7 +23,7 @@ extend them in place, with no parallel `workspace` table, no views and no sync:
 | workspace | `organization` | `slug` as `citext` (unique), `kind` (`solo`/`chamber`), `plan_id`, `created_by`, `deleted_at` |
 | member | `member` | `status` (`active`/`suspended`/`removed`), `joined_at`; unique `(workspace_id, user_id)` |
 | invitation | `invitation` | `token_hash` (unique), `accepted_at`, `revoked_at` |
-| settings | `workspace_settings` (new) | `india_only_ai` (default true), `retention`, `locale`, `timezone` (default `Asia/Kolkata`) |
+| settings | `workspace_settings` (new) | `india_only_ai` (default true; nothing in the app writes it, #286), `retention`, `locale`, `timezone` (default `Asia/Kolkata`); later `sensitive_default_restricted` (default true) and `retention_audio_days` (7, 14 or 30; default 30) from migration `0029_privacy_settings.sql` (#286) |
 | old slugs | `workspace_slug_history` (new) | old `slug` (unique) and `expires_at`; redirects live for 90 days |
 
 The rules that follow from this:

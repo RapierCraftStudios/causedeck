@@ -88,6 +88,12 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'An owner changed whether advocates may invite or owners see restricted matters',
   },
+  // Fail-closed: it changes how sensitive matters start and how long raw audio is kept (#286).
+  // Metadata names the changed settings and their new values.
+  'workspace.privacy_updated': {
+    security: true,
+    description: 'A member changed the sensitive-matter default or the raw audio retention window',
+  },
   // Account-level (`workspaceId: null`); metadata names the changed fields only (#289).
   'account.profile_updated': {
     security: false,

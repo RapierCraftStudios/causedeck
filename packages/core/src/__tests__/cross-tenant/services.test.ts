@@ -656,6 +656,29 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getRoleSettings(f.tx, f.a.id)).toEqual(before);
   },
+  getPrivacySettings: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ sensitiveDefaultRestricted: false, retentionAudioDays: 7 })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the defaults, not A's values.
+    expect(await f.asB((s) => core.getPrivacySettings(s, f.a.id))).toEqual(
+      core.DEFAULT_PRIVACY_SETTINGS,
+    );
+  },
+  updateWorkspacePrivacy: async (f) => {
+    const before = await core.getPrivacySettings(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.updateWorkspacePrivacy(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          input: { sensitiveDefaultRestricted: false, retentionAudioDays: 7 },
+        }),
+      ),
+    );
+    expect(await core.getPrivacySettings(f.tx, f.a.id)).toEqual(before);
+  },
   acceptInvitation: async (f) => {
     const error: unknown = await core
       .acceptInvitation(f.tx, { userId: f.ub, token: f.aInvitation.token })

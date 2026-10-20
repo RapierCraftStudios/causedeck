@@ -104,8 +104,22 @@ Pages call `staffQuery(staff, { purpose, capability, tables }, fn)`, which:
    role). This is fail-closed: a read that cannot be audited does not run;
 3. runs `fn` in `withoutWorkspace` on the listed global tables only.
 
-Callers pass a fixed query function from `@causedeck/core` (e.g. `countActiveStaff`), never SQL
-text.
+Callers pass a fixed query function from `@causedeck/core` (e.g. `countActiveStaff`), or from the
+package that owns the global table (`listAccessModeRegistry` from `@causedeck/flags` for
+`access_mode_registry`), never SQL text.
+
+## Adapters
+
+`/adapters` (#312, `ops` and `admin` only) lists court adapters through an `AdapterHealthSource`
+(`apps/admin/lib/adapter-health.ts`): `list()` returns one entry per adapter resource with its
+access mode, whether it is enabled, a status (`healthy`, `degraded`, `down` or `unknown`) and when
+health was last checked. Each status is a chip with an icon and a text label.
+
+Health collection arrives with Court Graph, whose adapter-monitor implements the interface. Until
+then `registryHealthSource` reads `access_mode_registry` through the data layer
+(`adapterRegistry`, purpose `adapters.registry`) and reports every row as `unknown`, never
+checked. The page shows `No adapters registered yet.` when the registry is empty, and a
+`No health data yet` notice when no row has been checked.
 
 ## Exposure (per deployment, never hard-coded)
 

@@ -7,7 +7,7 @@ import { closeTestDb, schema, withTestDb, withUser } from '@causedeck/db/testing
 import { and, count, eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import { staffQuery, StaffQueryDeniedError } from '../lib/data/index.ts';
+import { adapterRegistry, staffQuery, StaffQueryDeniedError } from '../lib/data/index.ts';
 
 afterAll(closeTestDb);
 
@@ -103,5 +103,63 @@ describe('staffQuery', () => {
         ),
       ).rejects.toThrow(/only allow-listed global tables/);
     });
+  });
+});
+
+describe('adapterRegistry', () => {
+  it('records staff.read for adapters.registry, then lists the registry (#312)', async () => {
+    await withTestDb(async (tx) => {
+      const userId = randomUUID();
+      await tx
+        .insert(schema.user)
+        .values({ id: userId, name: 'ops', email: `ops-${userId}@causedeck.test` });
+      await tx.delete(schema.accessModeRegistry);
+      await tx.insert(schema.accessModeRegistry).values([
+        { adapterId: 'madras-hc', resource: 'case-status', mode: 'user_supplied', enabled: true },
+        { adapterId: 'bombay-hc', resource: 'case-status', mode: 'none', enabled: false },
+      ]);
+      const rows = await adapterRegistry({ userId, role: 'ops' }, tx as unknown as Database);
+      expect(rows).toEqual([
+        {
+          adapterId: 'bombay-hc',
+          resource: 'case-status',
+          mode: 'none',
+          enabled: false,
+          reviewedAt: null,
+        },
+        {
+          adapterId: 'madras-hc',
+          resource: 'case-status',
+          mode: 'user_supplied',
+          enabled: true,
+          reviewedAt: null,
+        },
+      ]);
+      const events = await withUser(tx, { userId }, (s) =>
+        s
+          .select()
+          .from(schema.auditEvent)
+          .where(
+            and(
+              eq(schema.auditEvent.actorUserId, userId),
+              eq(schema.auditEvent.action, 'staff.read'),
+            ),
+          ),
+      );
+      expect(events).toHaveLength(1);
+      expect(events[0]?.metadata).toEqual({
+        purpose: 'adapters.registry',
+        capability: 'adapters',
+        tables: 'access_mode_registry',
+        role: 'ops',
+      });
+    });
+  });
+
+  it('is denied to the support role', async () => {
+    const db = { transaction: vi.fn() } as unknown as Database;
+    await expect(
+      adapterRegistry({ userId: randomUUID(), role: 'support' }, db),
+    ).rejects.toBeInstanceOf(StaffQueryDeniedError);
   });
 });

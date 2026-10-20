@@ -8,6 +8,7 @@ import {
   AccessModeError,
   assertAccessMode,
   decideAccessMode,
+  listAccessModeRegistry,
   type AccessMode,
 } from '../access-mode.ts';
 import { ACCESS_MODE_SEED, seedAccessModes } from '../seed.ts';
@@ -105,5 +106,28 @@ describe('assertAccessMode against the registry', () => {
         ).toMatchObject({ enabled: false });
       }
     }
+  });
+});
+
+describe('listAccessModeRegistry', () => {
+  it('lists every registry row ordered by adapter, then resource (#312)', async () => {
+    await withTestDb(async (tx) => {
+      await tx.delete(accessModeRegistry);
+      expect(await listAccessModeRegistry(tx)).toEqual([]);
+      await seedAccessModes(tx);
+      const rows = await listAccessModeRegistry(tx);
+      const expected = [...ACCESS_MODE_SEED]
+        .sort(
+          (a, b) => a.adapterId.localeCompare(b.adapterId) || a.resource.localeCompare(b.resource),
+        )
+        .map(({ adapterId, resource, mode, enabled }) => ({
+          adapterId,
+          resource,
+          mode,
+          enabled,
+          reviewedAt: null,
+        }));
+      expect(rows).toEqual(expected);
+    });
   });
 });

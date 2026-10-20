@@ -9,6 +9,7 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as DataLayer from '../lib/data/index.ts';
+import type * as TwoFactor from '../lib/two-factor.ts';
 
 const mocks = vi.hoisted(() => ({
   record: vi.fn<(ctx: unknown, event: unknown) => Promise<void>>(() => Promise.resolve()),
@@ -50,7 +51,7 @@ vi.mock('@causedeck/core/workspaces', () => ({
   },
 }));
 vi.mock('../lib/two-factor.ts', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../lib/two-factor.ts')>()),
+  ...(await importOriginal<typeof TwoFactor>()),
   verifyTwoFactorCookie: () => true,
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));

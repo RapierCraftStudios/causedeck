@@ -102,6 +102,7 @@ describe('row-level security catalog', () => {
         'export_job',
         'deletion_job',
         'support_session',
+        'workspace_integration',
       ].sort(),
     );
     for (const row of rows)

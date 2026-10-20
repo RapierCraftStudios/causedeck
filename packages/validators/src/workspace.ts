@@ -97,6 +97,17 @@ export const UpdateWorkspacePrivacyInput = z.strictObject({
   retentionAudioDays: z.literal(RETENTION_AUDIO_DAYS),
 });
 
+/**
+ * The integration tokens on the settings integrations page (#287): the private email intake address
+ * and the private ICS feed URL. Mirrors `INTEGRATION_KINDS` in `@causedeck/db`.
+ */
+export const INTEGRATION_KIND_VALUES = ['email_intake', 'ics_feed'] as const;
+
+/** Rotate (or create) one integration token; the only input is which one. */
+export const RotateIntegrationTokenInput = z.strictObject({
+  kind: z.enum(INTEGRATION_KIND_VALUES),
+});
+
 export const InviteInput = z.object({
   email: z.email().transform((value) => value.toLowerCase()),
   role: z.enum(INVITE_ROLE_VALUES),
@@ -119,5 +130,7 @@ export type WorkspaceProfileFields = z.output<typeof UpdateWorkspaceProfileInput
 export type UpdateRoleSettingsInput = z.infer<typeof UpdateRoleSettingsInput>;
 export type UpdateWorkspacePrivacyInput = z.infer<typeof UpdateWorkspacePrivacyInput>;
 export type RetentionAudioDays = (typeof RETENTION_AUDIO_DAYS)[number];
+export type IntegrationKindValue = (typeof INTEGRATION_KIND_VALUES)[number];
+export type RotateIntegrationTokenInput = z.infer<typeof RotateIntegrationTokenInput>;
 export type AcceptInviteInput = z.infer<typeof AcceptInviteInput>;
 export type ChangeRoleInput = z.infer<typeof ChangeRoleInput>;

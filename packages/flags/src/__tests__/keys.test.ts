@@ -34,6 +34,7 @@ describe('flag registry', () => {
         'ai.sarvam',
         'capture.whatsapp-import',
         'capture.email-forward',
+        'capture.ics-feed',
         'pwa.offline',
         'billing.razorpay',
         'insights.enabled',

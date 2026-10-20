@@ -66,9 +66,9 @@ const { ProfileForm, renamedPath } =
   await import('../app/(app)/w/[slug]/settings/profile/profile-form.tsx');
 const { UnsavedChangesGuard } = await import('../components/settings/unsaved-changes-guard.tsx');
 const { default: RolesPage } = await import('../app/(app)/w/[slug]/settings/roles/page.tsx');
-const PLACEHOLDERS = {
-  integrations: (await import('../app/(app)/w/[slug]/settings/integrations/page.tsx')).default,
-};
+// The integrations page (#287) is real; its own states are covered in integrations-page.test.tsx.
+const { default: IntegrationsPage } =
+  await import('../app/(app)/w/[slug]/settings/integrations/page.tsx');
 // The privacy page (#286) is real; its own states are covered in privacy-page.test.tsx.
 const { default: PrivacyPage } = await import('../app/(app)/w/[slug]/settings/privacy/page.tsx');
 const { default: ExportPage } = await import('../app/(app)/w/[slug]/settings/export/page.tsx');
@@ -239,7 +239,12 @@ describe('section pages', () => {
 
   it('a clerk opening integrations directly gets the permission-denied page', async () => {
     asRole('clerk');
-    withIntl(await PLACEHOLDERS.integrations({ params: params() }));
+    withIntl(
+      (await IntegrationsPage({
+        params: params(),
+        searchParams: Promise.resolve({}),
+      })) as ReactElement,
+    );
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
   });
 
@@ -250,15 +255,6 @@ describe('section pages', () => {
     );
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
   });
-
-  it.each(Object.keys(PLACEHOLDERS) as (keyof typeof PLACEHOLDERS)[])(
-    '%s renders inside the shell for an owner',
-    async (id) => {
-      withIntl(await PLACEHOLDERS[id]({ params: params() }));
-      expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.nav[id]);
-      expect(document.querySelector(`[data-route="settings-${id}"]`)).not.toBeNull();
-    },
-  );
 
   it.each([
     ['advocate', 'export'],

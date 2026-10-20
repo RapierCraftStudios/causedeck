@@ -211,6 +211,13 @@
       "when": 1792483048268,
       "tag": "0029_privacy_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792490181230,
+      "tag": "0030_workspace_integration",
+      "breakpoints": true
     }
   ]
 }

@@ -58,6 +58,7 @@ Each action is either **security** or **informational**:
 | `staff.read` | security | admin data layer `staffQuery`, before the read (#309) |
 | `staff.two_factor_verified` | security | admin console TOTP step (`verify-2fa`, #309) |
 | `usage.budget_override_set`           | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)                                                                        |
+| `usage.budget_override_expired`       | security      | `expireBudgetOverride` (#224); metadata `key`, `expired_at`                                                        |
 | `billing.subscription_changed`        | security      | owner billing actions (`changeSubscription`, #257)                                                                         |
 | `billing.gstin_updated`               | security      | `setSubscriptionGstin` (#257)                                                                                              |
 | `billing.invoice_downloaded`          | security      | `openSaasInvoicePdf`, before the first byte (#258)                                                                         |

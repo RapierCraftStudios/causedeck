@@ -80,6 +80,7 @@ const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
+const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
@@ -114,6 +115,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
   updateWorkspaceProfileAction: profile,
+  updateRoleSettingsAction: roles,
   loadMoreAuditAction: activity,
   verifyAuditEventAction: activity,
   grantSupportSessionAction: support,
@@ -250,6 +252,11 @@ function inputs(workspaceId: string): Record<string, unknown> {
       locale: 'kn',
       practiceCity: 'Probe City',
       slug: `xt-probe-${workspaceId.slice(0, 8)}`,
+    },
+    updateRoleSettingsAction: {
+      workspaceId,
+      advocatesCanInvite: false,
+      ownersSeeRestrictedMatters: false,
     },
     // A page position past every row, so a leak would return A's real audit event.
     loadMoreAuditAction: {
@@ -407,6 +414,22 @@ describe('cross-tenant server actions', () => {
       data: { name: 'Cross-tenant probe', slug: t.b.slug, practiceCity: 'Probe City' },
     });
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('updateRoleSettingsAction under B’s own workspace changes only B', async () => {
+    const before = await snapshotA();
+    const input = inputs(t.b.id).updateRoleSettingsAction;
+    expect(await action('updateRoleSettingsAction')(input)).toMatchObject({
+      ok: true,
+      data: { advocatesCanInvite: false, ownersSeeRestrictedMatters: false },
+    });
+    expect(await snapshotA()).toEqual(before);
+    // Put B back to the defaults for the tests that follow.
+    await action('updateRoleSettingsAction')({
+      workspaceId: t.b.id,
+      advocatesCanInvite: true,
+      ownersSeeRestrictedMatters: true,
+    });
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

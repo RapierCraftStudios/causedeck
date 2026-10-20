@@ -105,6 +105,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // workspace profile (#284)
   getWorkspaceProfile: empty,
   updateWorkspaceProfile: denies,
+  // role settings (#285)
+  getRoleSettings: empty,
+  updateRoleSettings: denies,
   acceptInvitation: denies,
   previewInvitation: selfScoped,
   generateUniqueSlug: selfScoped,
@@ -212,6 +215,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   restrictMatter: denies,
   assertMatterReadable: denies,
+  listMatterRestrictions: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -376,6 +380,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // workspace profile (#284)
   PROFILE_FIELDS: 'constant',
   toProfileView: 'pure (drops the id)',
+  // role settings (#285)
+  ROLE_SETTING_FIELDS: 'constant',
+  DEFAULT_ROLE_SETTINGS: 'constant',
+  toPolicySettings: 'pure',
   // audit: registry, guards and the default sink (#227)
   recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
   AUDIT_ACTIONS: 'constant (audit action registry)',

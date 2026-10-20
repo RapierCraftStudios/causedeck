@@ -75,6 +75,15 @@ export const UpdateWorkspaceProfileInput = z.object({
   slug: Slug.optional(),
 });
 
+/**
+ * The two role settings on the settings roles page (#285), both required: whether advocates may
+ * invite members, and whether owners see restricted matters they are not listed on.
+ */
+export const UpdateRoleSettingsInput = z.strictObject({
+  advocatesCanInvite: z.boolean(),
+  ownersSeeRestrictedMatters: z.boolean(),
+});
+
 export const InviteInput = z.object({
   email: z.email().transform((value) => value.toLowerCase()),
   role: z.enum(INVITE_ROLE_VALUES),
@@ -94,5 +103,6 @@ export type CreateWorkspaceInput = z.input<typeof CreateWorkspaceInput>;
 export type InviteInput = z.infer<typeof InviteInput>;
 export type UpdateWorkspaceProfileInput = z.input<typeof UpdateWorkspaceProfileInput>;
 export type WorkspaceProfileFields = z.output<typeof UpdateWorkspaceProfileInput>;
+export type UpdateRoleSettingsInput = z.infer<typeof UpdateRoleSettingsInput>;
 export type AcceptInviteInput = z.infer<typeof AcceptInviteInput>;
 export type ChangeRoleInput = z.infer<typeof ChangeRoleInput>;

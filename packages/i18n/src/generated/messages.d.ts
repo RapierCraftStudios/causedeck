@@ -530,6 +530,7 @@ export type Messages = {
       offline: string;
       generic: string;
     };
+    rolesLink: string;
     tabs: {
       label: string;
       members: string;
@@ -942,7 +943,6 @@ export type Messages = {
     placeholder: {
       title: string;
       hint: string;
-      roles: string;
       integrations: string;
       privacy: string;
       export: string;
@@ -1051,6 +1051,138 @@ export type Messages = {
       action: string;
       comingSoon: string;
       loading: string;
+      error: {
+        title: string;
+        retry: string;
+      };
+    };
+    roles: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      loading: string;
+      clerkLimits: string;
+      matrix: {
+        title: string;
+        description: string;
+        caption: string;
+        action: string;
+        allowed: string;
+        denied: string;
+        settingsNote: string;
+      };
+      domains: {
+        workspace: string;
+        member: string;
+        billing: string;
+        matter: string;
+        strategy: string;
+        memory: string;
+        document: string;
+        task: string;
+        listing: string;
+        draft: string;
+        audit: string;
+        export: string;
+        support: string;
+        shell: string;
+      };
+      actions: {
+        workspace: {
+          manage: string;
+          rename: string;
+          delete: string;
+        };
+        member: {
+          invite: string;
+          remove: string;
+          role: string;
+        };
+        billing: {
+          manage: string;
+          read: string;
+        };
+        matter: {
+          read: string;
+          write: string;
+          restrict: string;
+        };
+        strategy: {
+          read: string;
+        };
+        memory: {
+          read: string;
+          write: string;
+        };
+        document: {
+          read: string;
+          write: string;
+        };
+        task: {
+          read: string;
+          write: string;
+        };
+        listing: {
+          read: string;
+        };
+        draft: {
+          write: string;
+        };
+        audit: {
+          read: string;
+        };
+        export: {
+          run: string;
+        };
+        support: {
+          manage: string;
+        };
+        limitation: {
+          read: string;
+        };
+        insights: {
+          read: string;
+        };
+        settings: {
+          read: string;
+        };
+        invoices: {
+          read: string;
+        };
+      };
+      settings: {
+        title: string;
+        description: string;
+        readOnly: string;
+        advocatesCanInvite: {
+          label: string;
+          description: string;
+        };
+        ownersSeeRestrictedMatters: {
+          label: string;
+          description: string;
+        };
+      };
+      toast: {
+        saved: string;
+        undo: string;
+        undone: string;
+        error: string;
+        forbidden: string;
+        offline: string;
+      };
+      restricted: {
+        title: string;
+        description: string;
+        matter: string;
+        allowed: string;
+        ownersOnly: string;
+        since: string;
+        empty: string;
+        emptyHint: string;
+        picker: string;
+        pickerUnavailable: string;
+      };
       error: {
         title: string;
         retry: string;

@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProfileView } from '../app/(app)/w/[slug]/settings/profile/actions.ts';
@@ -54,6 +54,9 @@ vi.mock('../lib/report-error.ts', () => ({ reportError: vi.fn() }));
 vi.mock('../app/(app)/w/[slug]/settings/profile/actions.ts', () => ({
   updateWorkspaceProfileAction: vi.fn(),
 }));
+vi.mock('../app/(app)/w/[slug]/settings/roles/actions.ts', () => ({
+  updateRoleSettingsAction: vi.fn(),
+}));
 
 const nav = await import('../lib/settings-nav.ts');
 const { default: SettingsLayout } = await import('../app/(app)/w/[slug]/settings/layout.tsx');
@@ -62,8 +65,8 @@ const { default: ProfilePage } = await import('../app/(app)/w/[slug]/settings/pr
 const { ProfileForm, renamedPath } =
   await import('../app/(app)/w/[slug]/settings/profile/profile-form.tsx');
 const { UnsavedChangesGuard } = await import('../components/settings/unsaved-changes-guard.tsx');
+const { default: RolesPage } = await import('../app/(app)/w/[slug]/settings/roles/page.tsx');
 const PLACEHOLDERS = {
-  roles: (await import('../app/(app)/w/[slug]/settings/roles/page.tsx')).default,
   integrations: (await import('../app/(app)/w/[slug]/settings/integrations/page.tsx')).default,
   privacy: (await import('../app/(app)/w/[slug]/settings/privacy/page.tsx')).default,
 };
@@ -236,7 +239,6 @@ describe('section pages', () => {
   it.each([
     ['clerk', 'integrations'],
     ['clerk', 'privacy'],
-    ['viewer', 'roles'],
   ] as const)('a %s opening %s directly gets the permission-denied page', async (role, id) => {
     asRole(role);
     withIntl(await PLACEHOLDERS[id]({ params: params() }));
@@ -348,6 +350,22 @@ describe('section pages', () => {
       fireEvent.click(screen.getByRole('button', { name: copy.retry }));
       expect(reset).toHaveBeenCalled();
       cleanup();
+    }
+  });
+
+  it('roles (#285) is permission-denied for a viewer and renders for clerks and up', async () => {
+    asRole('viewer');
+    withIntl(await RolesPage({ params: params(), searchParams: Promise.resolve({}) }));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
+    // The page holds the async matrix (a server component), so check the tree, not a render; its
+    // content is covered in roles-page.test.tsx.
+    for (const role of ['clerk', 'owner'] as const) {
+      asRole(role);
+      const tree = (await RolesPage({
+        params: params(),
+        searchParams: Promise.resolve({ __state: 'loading' }),
+      })) as ReactElement<{ 'data-route'?: string }>;
+      expect(tree.props['data-route']).toBe('settings-roles');
     }
   });
 

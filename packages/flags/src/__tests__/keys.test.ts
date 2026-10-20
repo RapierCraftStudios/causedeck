@@ -37,6 +37,7 @@ describe('flag registry', () => {
         'pwa.offline',
         'billing.razorpay',
         'insights.enabled',
+        'workspace.export',
       ].sort(),
     );
     for (const key of FLAG_KEYS) {

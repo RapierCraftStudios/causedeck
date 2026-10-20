@@ -282,6 +282,22 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'counts the global staff_user table only; no tenant rows',
   },
+  // staff console reads (#310): owner-defined functions that refuse anyone but enabled staff
+  staffWorkspaceSearch: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_workspace_search() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
+  staffWorkspaceMetadata: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_workspace_metadata() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
+  staffAuditEvents: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_audit_events() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
   addStaff: {
     test: ADMIN_STAFF_CLI_TEST,
     kind: 'caller-checked',
@@ -382,6 +398,20 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: LIFECYCLE_TEST,
     kind: 'self-scoped',
     note: 'export.build: reads and writes only the payload workspace, each page inside withWorkspace',
+  },
+  // lifecycle: workspace deletion (#302)
+  requestWorkspaceDeletion: lifecycleDenies,
+  cancelWorkspaceDeletion: lifecycleDenies,
+  getActiveWorkspaceDeletion: lifecycleEmpty,
+  runWorkspaceErase: {
+    test: LIFECYCLE_TEST,
+    kind: 'self-scoped',
+    note: 'deletion.erase: every read and write inside withWorkspace on the payload workspace; finalize refuses any other workspace',
+  },
+  runDeletionTick: {
+    test: LIFECYCLE_TEST,
+    kind: 'self-scoped',
+    note: 'system.deletion.tick: lists due ids through app_deletion_due_jobs, then updates each job in its own workspace scope',
   },
   // lifecycle: account deletion and memory erasure (#303)
   requestAccountDeletion: {
@@ -509,6 +539,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   STAFF_ROLES: 'constant',
   DEV_STAFF_EMAIL: 'constant',
   StaffAdminError: 'error class',
+  STAFF_WORKSPACE_FIELDS: 'constant (staff console field list)',
+  STAFF_AUDIT_FIELDS: 'constant (staff console field list)',
   withOwnerDb: 'connection helper (owner-role handle for the operator CLI); reads nothing itself',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',
@@ -594,6 +626,28 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   EXPORT_HISTORY_LIMIT: 'constant',
   EXPORT_TOKEN_NONCE_BYTES: 'constant',
   readExportToken: 'pure (HMAC check)',
+  // lifecycle: workspace deletion constants, receipt and errors (#302)
+  DELETION_COOLOFF_MS: 'constant',
+  ACTIVE_DELETION_STATUSES: 'constant',
+  DeletionError: 'error class',
+  deletionNoticeCopy: 'pure (notice copy)',
+  ERASE_STEPS: 'constant',
+  FINALIZE_TABLES: 'constant (documented finalize-step tables)',
+  PURGE_BATCH: 'constant',
+  PURGE_ORDER: 'constant (purge order)',
+  purgeCoverage: 'pure (purge lists vs tenant tables)',
+  LEGAL_HOLD_RULE: 'constant (documented legal-hold rule)',
+  LEGAL_HOLD_STATUSES: 'constant',
+  LEGAL_HOLD_YEARS: 'constant',
+  legalHoldRetainUntil: 'pure (date arithmetic)',
+  retainInvoicesForLegalHold:
+    "internal erase helper: runs on the caller's transaction, which runWorkspaceErase pins to the payload workspace (RLS limits the read); covered by the runWorkspaceErase case",
+  buildDeletionReceipt: 'pure (builds and signs a receipt)',
+  canonicalJson: 'pure',
+  DELETION_RECEIPT_VERSION: 'constant',
+  receiptHash: 'pure (sha256)',
+  receiptWorkspaceIdHash: 'pure (sha256)',
+  verifyDeletionReceipt: 'pure (HMAC check)',
   // lifecycle: account deletion and memory erasure constants (#303)
   ACCOUNT_DELETION_ERRORS: 'constant',
   ACCOUNT_DELETION_SOLE_OWNER_MESSAGE: 'constant',

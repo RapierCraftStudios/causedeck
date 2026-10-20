@@ -2,9 +2,8 @@
 
 The staff-only ops console (#27; shell, gate, headers and image in #309). Staff see platform
 metadata only; workspace content is reachable only through a consented support session (#308,
-#313, #314; policy, flow and audit events in [support-sessions.md](support-sessions.md)). Support
-sessions arrived with #314. The other pages beyond the shell arrive with #310 (workspaces, audit),
-#311 (flags) and #312 (adapters).
+#313, #314; policy, flow and audit events in [support-sessions.md](support-sessions.md)). Workspaces
+and audit (#310), adapters (#312) and support sessions (#314) have arrived; flags (#311) follows.
 
 | | |
 |---|---|
@@ -105,8 +104,55 @@ Pages call `staffQuery(staff, { purpose, capability, tables }, fn)`, which:
    role). This is fail-closed: a read that cannot be audited does not run;
 3. runs `fn` in `withoutWorkspace` on the listed global tables only.
 
-Callers pass a fixed query function from `@causedeck/core` (e.g. `countActiveStaff`), never SQL
-text.
+Callers pass a fixed query function from `@causedeck/core` (e.g. `countActiveStaff`), or from the
+package that owns the global table (`listAccessModeRegistry` from `@causedeck/flags` for
+`access_mode_registry`), never SQL text.
+
+Workspace metadata and the staff audit live in tenant tables under FORCE RLS, which
+`withoutWorkspace` cannot read. Those pages call `staffCall(staff, { purpose, capability,
+functions }, fn)` instead (#310): the same role check and fail-closed `staff.read` event (with the
+owner-defined function names instead of tables), then `fn` runs a `@causedeck/core/support` read
+(`staffWorkspaceSearch`, `staffWorkspaceMetadata`, `staffAuditEvents`) on the root handle. Those
+reads go through the SECURITY DEFINER functions of migration `0033_staff_console_reads`, which
+refuse anyone but an enabled staff member ([tenancy](tenancy.md)). The data layer exports
+`searchWorkspaces`, `workspaceMetadata` and `staffAuditLog`.
+
+## Adapters
+
+`/adapters` (#312, `ops` and `admin` only) lists court adapters through an `AdapterHealthSource`
+(`apps/admin/lib/adapter-health.ts`): `list()` returns one entry per adapter resource with its
+access mode, whether it is enabled, a status (`healthy`, `degraded`, `down` or `unknown`) and when
+health was last checked. Each status is a chip with an icon and a text label.
+
+Health collection arrives with Court Graph, whose adapter-monitor implements the interface. Until
+then `registryHealthSource` reads `access_mode_registry` through the data layer
+(`adapterRegistry`, purpose `adapters.registry`) and reports every row as `unknown`, never
+checked. The page shows `No adapters registered yet.` when the registry is empty, and a
+`No health data yet` notice when no row has been checked.
+
+## Workspaces and audit pages
+
+- **Workspaces** (`/workspaces`, roles `support` and `admin`): a GET search (`?q=`) by slug prefix
+  or exact owner email, then `/workspaces/[id]` (404 for an unknown or malformed id). Staff see
+  metadata only: plan, seats and clerk seats, active member count, the owner's email, storage
+  bytes (the `storage.bytes` usage gauge), created, last-active (newest audit event) and deleted
+  dates, and per-workspace flag overrides. No matter, document, memory, party or draft content,
+  and no member data beyond the owner's email.
+- **Audit** (`/audit`, every role): staff actions (`actor_kind = 'staff'`) newest first, 50 per
+  page with an "Older" cursor: time, staff id, action, workspace, session id (the support or auth
+  session the event targets, else `metadata.supportSessionId`) and outcome. No metadata, IP or
+  user agent.
+
+`__tests__/no-content-fields.test.ts` reads fully seeded workspaces through the data layer and the
+pages and fails on any content field or another member's email.
+
+## Server actions are audited
+
+Every admin server action records an audit event with actor kind `staff` (today only
+`verifyTwoFactor`, `staff.two_factor_verified`); reads record `staff.read` in the data layer.
+`__tests__/server-actions-audit.test.ts` enumerates every `'use server'` export under
+`apps/admin/app` and every data-layer read, invokes each with mocks and asserts the event. A new
+action fails that test until it is registered there with its success path.
 
 ## Exposure (per deployment, never hard-coded)
 

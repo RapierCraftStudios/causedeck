@@ -130,8 +130,11 @@ describe('saas invoice schema (#252)', () => {
         sql`select tablename as name from pg_tables where schemaname = 'public' and tablename like '%invoice%' order by 1`,
       ),
     );
+    // `legal_hold_invoice` (#302, 0032) is the minimal statutory copy of an erased workspace's SaaS
+    // invoices, not a client-fee invoice.
     expect(rows.map((r) => r.name)).toEqual([
       'invoice_counter',
+      'legal_hold_invoice',
       'saas_invoice',
       'saas_invoice_line',
     ]);

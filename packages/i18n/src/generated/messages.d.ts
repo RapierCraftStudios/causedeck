@@ -944,7 +944,6 @@ export type Messages = {
       title: string;
       hint: string;
       integrations: string;
-      privacy: string;
       export: string;
       danger: string;
     };
@@ -1182,6 +1181,63 @@ export type Messages = {
         emptyHint: string;
         picker: string;
         pickerUnavailable: string;
+      };
+      error: {
+        title: string;
+        retry: string;
+      };
+    };
+    privacy: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      loading: string;
+      summary: string;
+      indiaOnly: {
+        title: string;
+        label: string;
+        description: string;
+        locked: string;
+        note: string;
+      };
+      settings: {
+        title: string;
+        description: string;
+        readOnly: string;
+        sensitiveDefaultRestricted: {
+          label: string;
+          description: string;
+        };
+        retentionAudioDays: {
+          label: string;
+          description: string;
+          option: string;
+        };
+      };
+      subProcessors: {
+        title: string;
+        description: string;
+        link: string;
+      };
+      neverDoes: {
+        title: string;
+        items: {
+          train: string;
+          sell: string;
+          abroad: string;
+          access: string;
+          keep: string;
+        };
+      };
+      saving: string;
+      saved: string;
+      toast: {
+        saved: string;
+        undo: string;
+        undone: string;
+        error: string;
+        forbidden: string;
+        offline: string;
       };
       error: {
         title: string;

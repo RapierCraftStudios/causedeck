@@ -90,13 +90,29 @@ export async function acceptInvitationFor(
   return acceptInvitation(db, request);
 }
 
-/** Members and pending invitations, read in one workspace-scoped transaction. */
-export async function loadMembersPage(scope: RuntimeScope) {
-  const { listMembers, listPendingInvitations } = await import('../workspaces/index.ts');
-  return inWorkspace(scope, async (tx) => ({
-    members: await listMembers(tx, scope.workspaceId),
-    invitations: await listPendingInvitations(tx, scope.workspaceId),
-  }));
+/**
+ * Members, pending invitations and the seat summary (seats in use against the plan's `seats` and
+ * `clerk_seats` at `now`), read in one workspace-scoped transaction.
+ */
+export async function loadMembersPage(scope: RuntimeScope, now: Date = new Date()) {
+  const [
+    { countBillableSeats, listMembers, listPendingInvitations },
+    { getWorkspaceEntitlements },
+  ] = await Promise.all([import('../workspaces/index.ts'), import('../billing/index.ts')]);
+  return inWorkspace(scope, async (tx) => {
+    const members = await listMembers(tx, scope.workspaceId);
+    const invitations = await listPendingInvitations(tx, scope.workspaceId);
+    const used = await countBillableSeats(tx, scope.workspaceId);
+    const entitlements = await getWorkspaceEntitlements(tx, scope.workspaceId, now);
+    return {
+      members,
+      invitations,
+      seats: {
+        used,
+        granted: { seats: entitlements.seats, clerkSeats: entitlements.clerk_seats },
+      },
+    };
+  });
 }
 
 /** The workspace's members, read in its scope. */

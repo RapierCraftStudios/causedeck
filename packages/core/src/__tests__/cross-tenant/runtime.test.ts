@@ -83,6 +83,17 @@ const CASES: Record<string, () => Promise<void>> = {
     expect(await runtime.memberRoleFor(t.ub, t.a.id)).toBeNull();
     expect(await runtime.memberRoleFor(t.ub, t.b.id)).toBe('owner');
   },
+  ownerGraceFor: async () => {
+    const before = await runtime.ownerGraceFor(t.ua, t.a.id);
+    expect(before?.role).toBe('owner');
+    // `ub` is not a member of A: no role and no grant time come back for A.
+    expect(await runtime.ownerGraceFor(t.ub, t.a.id)).toBeNull();
+    // Asking about A's owner under B's workspace id reveals nothing either.
+    expect(await runtime.ownerGraceFor(t.ua, t.b.id)).toBeNull();
+    expect((await runtime.ownerGraceFor(t.ub, t.b.id))?.role).toBe('owner');
+    // A's grant is unchanged.
+    expect(await runtime.ownerGraceFor(t.ua, t.a.id)).toEqual(before);
+  },
   resolveSlugFor: async () => {
     // The slug resolves for anyone; the workspace loader refuses it because `ub` is not a member.
     const resolved = await runtime.resolveSlugFor(t.a.slug, t.ub);

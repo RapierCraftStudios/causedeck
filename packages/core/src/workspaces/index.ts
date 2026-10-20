@@ -185,3 +185,36 @@ export async function memberRole(
   );
   return row?.role ?? null;
 }
+
+export interface OwnerGrace {
+  role: WorkspaceRole;
+  /** When the current role was granted; the owner 2FA grace runs from it (#290). */
+  roleGrantedAt: Date;
+}
+
+/**
+ * The user's role in the workspace and when it was granted, or `null` when they are not an active
+ * member of a live one. The owner 2FA policy (#290) reads it.
+ */
+export async function ownerGrace(
+  db: Queryable,
+  userId: string,
+  workspaceId: string,
+): Promise<OwnerGrace | null> {
+  const [row] = await asUser(db, userId, (tx) =>
+    tx
+      .select({ role: schema.member.role, roleGrantedAt: schema.member.roleGrantedAt })
+      .from(schema.member)
+      .innerJoin(schema.organization, eq(schema.organization.id, schema.member.organizationId))
+      .where(
+        and(
+          eq(schema.member.userId, userId),
+          eq(schema.member.organizationId, workspaceId),
+          activeMember,
+          liveWorkspace,
+        ),
+      )
+      .limit(1),
+  );
+  return row ?? null;
+}

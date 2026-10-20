@@ -1,5 +1,5 @@
 {
-  "id": "e6e02108-0258-4459-bacb-d8a982f0d5ec",
+  "id": "465ff17b-2095-4471-8808-ade3c7928ff5",
   "prevId": "8c3b333e-c53f-4cf7-98bf-5627dee673be",
   "version": "7",
   "dialect": "postgresql",
@@ -2004,6 +2004,13 @@
         },
         "joined_at": {
           "name": "joined_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "role_granted_at": {
+          "name": "role_granted_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -4785,20 +4792,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "advocates_can_invite": {
-          "name": "advocates_can_invite",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "owners_see_restricted": {
-          "name": "owners_see_restricted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
         },
         "created_at": {
           "name": "created_at",

@@ -7,7 +7,8 @@
 //   256-bit nonce whose hash is stored on the export. Core `openExportDownload` checks it against
 //   the session user, records `export.downloaded` before the first byte, and the decrypted ZIP
 //   streams as an attachment, never buffered, cached or sniffed.
-// 401 signed out, 403 cross-origin, not a member or not an owner, 404 not the requester, wrong,
+// 401 signed out, 403 cross-origin, not a member, not an owner or an owner without 2FA after the
+// grace (#290), 404 not the requester, wrong,
 // revoked or expired token, 400 bad input. Export contents never reach a log.
 import { readExportToken } from '@causedeck/core/lifecycle';
 import { issueExportDownloadFor, openExportDownloadFor } from '@causedeck/core/runtime';
@@ -71,10 +72,13 @@ function coreResponse(error: unknown): Response | null {
 const idSchema = z.uuid();
 const bodySchema = z.object({ workspaceId: z.uuid() }).strict();
 
-/** Membership through the server guard; core checks owner and requester. */
+/**
+ * Membership through the server guard, which also refuses an owner past the 2FA grace (#290: an
+ * export is destructive); core checks owner and requester.
+ */
 async function member(workspaceId: string, session: AppSession) {
   try {
-    return { userId: (await guard({ workspaceId, session })).userId };
+    return { userId: (await guard({ workspaceId, session, destructive: true })).userId };
   } catch (error) {
     const response = guardResponse(error);
     if (response) return { response };

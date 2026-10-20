@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { AppShell } from '../../../../components/shell/app-shell.tsx';
 import type { ShellSupportSession } from '../../../../components/shell/support-banner.tsx';
 import { getWorkspaceFlags } from '../../../../lib/flags.ts';
+import { loadOwnerTwoFactorState } from '../../../../lib/require-2fa-for-owners.ts';
 import { SIDEBAR_COOKIE, parseSidebarCookie } from '../../../../lib/sidebar-state.ts';
 import { movedPath } from '../../../../lib/workspace-context.ts';
 import type { WorkspaceContext } from '../../../../lib/workspace-context.ts';
@@ -43,8 +44,9 @@ interface WorkspaceLayoutProps {
  * old slug (renamed within 90 days) redirects to the same page on the current slug, and a user with
  * no workspace at all goes to `/onboarding`. The last-workspace cookie (`cd_last_ws`) is set by
  * `proxy.ts`, since layouts cannot set cookies. Flags are evaluated here, server-side, and only
- * their boolean values reach the shell (#22). An owner also gets the active support session, if any,
- * for the shell's support banner (#313).
+ * their boolean values reach the shell (#22). An owner past the 7-day 2FA grace gets the shell's
+ * persistent banner (#290, lib/require-2fa-for-owners.ts), and gets the active support session, if
+ * any, for the shell's support banner (#313).
  */
 export default async function WorkspaceLayout({ children, params }: WorkspaceLayoutProps) {
   const { slug } = await params;
@@ -55,9 +57,10 @@ export default async function WorkspaceLayout({ children, params }: WorkspaceLay
   if (result.kind === 'no-workspaces') redirect('/onboarding');
   if (result.kind === 'not-found') notFound();
 
-  const [cookieStore, flags, supportSession] = await Promise.all([
+  const [cookieStore, flags, ownerTwoFactor, supportSession] = await Promise.all([
     cookies(),
     getWorkspaceFlags(result.context),
+    loadOwnerTwoFactorState(result.context.workspace.id, result.context.role),
     loadSupportSession(result.context),
   ]);
   const sidebarState = parseSidebarCookie(cookieStore.get(SIDEBAR_COOKIE)?.value);
@@ -66,6 +69,7 @@ export default async function WorkspaceLayout({ children, params }: WorkspaceLay
       context={result.context}
       sidebarState={sidebarState}
       flags={flags}
+      ownerTwoFactor={ownerTwoFactor}
       supportSession={supportSession}
     >
       {children}

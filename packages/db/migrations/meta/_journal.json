@@ -194,8 +194,15 @@
     {
       "idx": 27,
       "version": "7",
-      "when": 1792472060177,
-      "tag": "0027_role_settings",
+      "when": 1792473416553,
+      "tag": "0027_member_role_granted_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792481363476,
+      "tag": "0028_role_settings",
       "breakpoints": true
     }
   ]

@@ -4,6 +4,8 @@
 // the handler runs. Suspended or removed members and soft-deleted workspaces count as non-members.
 // With an `action` option, `guard` (lib/guard.ts) also authorizes it with the central policy
 // (#234); a denial is the policy's `ForbiddenError`, which `safeAction` returns as `FORBIDDEN`.
+// Destructive actions (delete, export, billing) are also refused to an owner without 2FA after
+// the 7-day grace (lib/require-2fa-for-owners.ts, #290), again as `FORBIDDEN`.
 //
 // The `withWorkspace` seam (#19): the handler's DB work runs inside `inWorkspace` from
 // `@causedeck/core/runtime` (`withWorkspace` on the app db, #298), which pins `app.workspace_id` / `app.user_id` for one transaction, and gets that
@@ -17,6 +19,7 @@ import { z, type ZodType } from 'zod';
 
 import type { AppSession } from './auth.ts';
 import { defaultRecordDenied, guard, type AccessDenial } from './guard.ts';
+import type { OwnerGraceLookup } from './require-2fa-for-owners.ts';
 import {
   ActionError,
   safeAction,
@@ -50,6 +53,8 @@ export interface WorkspaceActionOptions<I = unknown> {
   memberRole?: (userId: string, workspaceId: string) => Promise<WorkspaceRole | null>;
   /** Defaults to `@causedeck/core/runtime` `recordAccessDeniedFor` on the app db (#228). */
   recordDenied?: (denial: AccessDenial) => Promise<void>;
+  /** Defaults to `@causedeck/core/runtime` `ownerGraceFor` (the owner 2FA grace in `guard`, #290). */
+  ownerGrace?: OwnerGraceLookup;
   /** Defaults to `@causedeck/core/runtime` `inWorkspace` (`withWorkspace` on the app db). */
   runInWorkspace?: <T>(
     scope: { workspaceId: string; userId: string },
@@ -112,6 +117,7 @@ export function workspaceAction<I extends { workspaceId: string }, O>(
     requireSession = defaultRequireSession,
     memberRole = defaultMemberRole,
     recordDenied = defaultRecordDenied,
+    ownerGrace,
     runInWorkspace = defaultRunInWorkspace,
   }: WorkspaceActionOptions<I> = {},
 ): (raw: unknown) => Promise<Result<O>> {
@@ -126,7 +132,7 @@ export function workspaceAction<I extends { workspaceId: string }, O>(
       const { workspaceId } = scope.data;
       const { role, actor } = await guard(
         { workspaceId, action, resource: resource?.(input), session },
-        { memberRole, recordDenied },
+        { memberRole, recordDenied, ...(ownerGrace && { ownerGrace }) },
       );
       try {
         return await runInWorkspace({ workspaceId, userId }, (tx) =>

@@ -258,6 +258,10 @@ export type Messages = {
       end: string;
       error: string;
     };
+    ownerTwoFactor: {
+      message: string;
+      action: string;
+    };
   };
   auth: {
     signIn: {

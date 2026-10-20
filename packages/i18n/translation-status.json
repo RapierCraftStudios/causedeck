@@ -1058,7 +1058,9 @@
     "shell.supportBanner.error": "draft",
     "settings.support.loading": "draft",
     "settings.roles.domains.support": "draft",
-    "settings.roles.actions.support.manage": "draft"
+    "settings.roles.actions.support.manage": "draft",
+    "shell.ownerTwoFactor.message": "draft",
+    "shell.ownerTwoFactor.action": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -2112,6 +2114,8 @@
     "shell.supportBanner.error": "draft",
     "settings.support.loading": "draft",
     "settings.roles.domains.support": "draft",
-    "settings.roles.actions.support.manage": "draft"
+    "settings.roles.actions.support.manage": "draft",
+    "shell.ownerTwoFactor.message": "draft",
+    "shell.ownerTwoFactor.action": "draft"
   }
 }

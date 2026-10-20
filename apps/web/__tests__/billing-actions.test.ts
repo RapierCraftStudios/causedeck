@@ -9,10 +9,13 @@ const USER = '00000000-0000-4000-8000-0000000b0101';
 const TX = { scoped: true };
 const SLUG = 'iyer-chambers';
 
-const state = vi.hoisted((): { session: AppSession | null; role: string | null } => ({
-  session: null,
-  role: 'owner',
-}));
+const state = vi.hoisted(
+  (): { session: AppSession | null; role: string | null; roleGrantedAt: Date } => ({
+    session: null,
+    role: 'owner',
+    roleGrantedAt: new Date(),
+  }),
+);
 
 class NamedError extends Error {
   constructor(name: string, extra: Record<string, unknown> = {}) {
@@ -24,6 +27,10 @@ class NamedError extends Error {
 
 const core = vi.hoisted(() => ({
   memberRole: vi.fn(() => Promise.resolve(state.role)),
+  // The owner 2FA grace (#290): the session has no 2FA, so the grant time decides.
+  ownerGrace: vi.fn(() =>
+    Promise.resolve(state.role ? { role: state.role, roleGrantedAt: state.roleGrantedAt } : null),
+  ),
 }));
 const billing = vi.hoisted(() => ({
   quoteSubscriptionChange: vi.fn(),
@@ -83,6 +90,7 @@ beforeEach(() => {
     user: { id: USER, name: 'Meenakshi', email: 'm@x.test' },
   } as AppSession;
   state.role = 'owner';
+  state.roleGrantedAt = new Date();
 });
 
 afterEach(() => {
@@ -101,6 +109,25 @@ describe('billing.manage guard', () => {
       expect(withWorkspace).not.toHaveBeenCalled();
     },
   );
+
+  it('rejects an owner without 2FA after the 7-day grace with FORBIDDEN on every action (#290)', async () => {
+    state.roleGrantedAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+    for (const call of Object.values(calls)) {
+      expect(await call()).toMatchObject({ ok: false, error: { code: 'FORBIDDEN' } });
+    }
+    for (const fn of Object.values(billing)) expect(fn).not.toHaveBeenCalled();
+    expect(withWorkspace).not.toHaveBeenCalled();
+  });
+
+  it('lets an owner with 2FA through after the grace (#290)', async () => {
+    state.roleGrantedAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    state.session = {
+      session: {},
+      user: { id: USER, name: 'Meenakshi', email: 'm@x.test', twoFactorEnabled: true },
+    } as unknown as AppSession;
+    expect(await calls.cancelAtPeriodEnd()).toMatchObject({ ok: true });
+    expect(core.ownerGrace).not.toHaveBeenCalled();
+  });
 
   it('rejects a signed-out caller as UNAUTHENTICATED', async () => {
     state.session = null;

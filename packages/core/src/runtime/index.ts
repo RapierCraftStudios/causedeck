@@ -1,9 +1,17 @@
 // `@causedeck/core/runtime` (#298): the app's runtime database seam. Apps never import `db` or
 // `withWorkspace` from `@causedeck/db`; they call these services, which bind the app-role handle
-// and run the core (or package) service on it. Importing this module opens nothing and reads no
+// and run the core (or package) service on it. apps/api and apps/worker use it too (#299). Importing this module opens nothing and reads no
 // env (`db` connects on first use), so `next build` never needs runtime secrets. Each service loads
 // its implementation on first call, so a page pulls in only what it uses.
-import { db, isUuid as isUuidValue, withWorkspace, type Transaction } from '@causedeck/db';
+import {
+  closeDb,
+  db,
+  isUuid as isUuidValue,
+  withWorkspace,
+  type Database,
+  type Transaction,
+} from '@causedeck/db';
+import type { FlagListener } from '@causedeck/flags';
 import type { StorageCtx } from '@causedeck/storage';
 
 import type {
@@ -29,10 +37,25 @@ import type {
   PreviewInvitationRequest,
 } from '../workspaces/index.ts';
 
-export type { Transaction };
+export type { Database, Transaction };
 
 /** The app-role database handle (lazy). Only for adapters that need a handle, e.g. Better Auth. */
 export { db };
+
+export {
+  createIdempotencyStore,
+  IDEMPOTENCY_TTL_MS,
+  IN_PROGRESS_STATUS,
+  type ClaimInput,
+  type IdempotencyRecord,
+  type IdempotencyStore,
+  type StoredApiResponse,
+} from './idempotency-store.ts';
+
+/** Close the app-role pool (graceful shutdown); `timeoutSec` bounds waiting for open queries. */
+export function closeAppDb(options?: { timeoutSec?: number }): Promise<void> {
+  return closeDb(options?.timeoutSec === undefined ? undefined : { timeout: options.timeoutSec });
+}
 
 /** The acting user in one workspace: the RLS scope `inWorkspace` pins. */
 export interface RuntimeScope {
@@ -51,6 +74,15 @@ export function inWorkspace<T>(
   fn: (tx: Transaction) => Promise<T>,
 ): Promise<T> {
   return withWorkspace(db, scope, fn);
+}
+
+/** `inWorkspace` on a handle the caller injected (the api's `requireWorkspace(db)`). */
+export function inWorkspaceOn<T>(
+  database: Database,
+  scope: RuntimeScope,
+  fn: (tx: Transaction) => Promise<T>,
+): Promise<T> {
+  return withWorkspace(database, scope, fn);
 }
 
 // workspaces
@@ -327,7 +359,7 @@ export async function consumeRequestLimit(
 }
 
 /** `LISTEN flag_changed` on the app pool so flag changes drop the cache. Once per process. */
-export async function startAppFlagListener(): Promise<unknown> {
+export async function startAppFlagListener(): Promise<FlagListener> {
   const { startFlagListener } = await import('@causedeck/flags');
   return startFlagListener(db);
 }

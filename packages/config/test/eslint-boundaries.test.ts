@@ -66,6 +66,56 @@ describe('dependency boundaries (spike §2)', () => {
   });
 });
 
+describe('app → db boundary (#299)', () => {
+  const RESTRICTED = '@typescript-eslint/no-restricted-imports';
+
+  it('fails an app value import of @causedeck/db', async () => {
+    const result = await lintFixture('boundaries', 'apps/api/src/imports-db-value.ts');
+
+    expect(ruleIds(result)).toContain(RESTRICTED);
+    expect(result.messages[0]?.message).toContain('@causedeck/core');
+  });
+
+  it('passes an app `import type` from @causedeck/db', async () => {
+    const result = await lintFixture('boundaries', 'apps/api/src/imports-db-type.ts');
+
+    expect(result.messages).toEqual([]);
+  });
+
+  it('fails @causedeck/db/testing outside a test file', async () => {
+    const result = await lintFixture('boundaries', 'apps/api/src/imports-db-testing.ts');
+
+    expect(ruleIds(result)).toContain(RESTRICTED);
+  });
+
+  it('passes @causedeck/db/testing, testing/* and seed/* in an app test file', async () => {
+    const result = await lintFixture(
+      'boundaries',
+      'apps/api/src/__tests__/imports-db-testing.test.ts',
+    );
+
+    expect(result.messages).toEqual([]);
+  });
+
+  it('fails a root @causedeck/db value import in an app test file', async () => {
+    const result = await lintFixture(
+      'boundaries',
+      'apps/api/src/__tests__/imports-db-root.test.ts',
+    );
+
+    expect(ruleIds(result)).toContain(RESTRICTED);
+    expect(result.messages[0]?.message).toContain('@causedeck/db/testing');
+  });
+
+  it('applies to apps/admin, which keeps only its withoutWorkspace exemption', async () => {
+    const banned = await lintFixture('boundaries', 'apps/admin/src/imports-db-value.ts');
+    expect(ruleIds(banned)).toContain(RESTRICTED);
+
+    const exempt = await lintFixture('boundaries', 'apps/admin/src/imports-without-workspace.ts');
+    expect(exempt.messages).toEqual([]);
+  });
+});
+
 describe('core domain boundaries (#293)', () => {
   it('fails a deep import into another domain', async () => {
     const result = await lintFixture(

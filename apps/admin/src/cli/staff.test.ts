@@ -187,7 +187,7 @@ describe('disabling a staff member', () => {
         .values({ organizationId: workspaceId, userId: ownerUser.id, role: 'owner' });
     });
     const pending = await requestSession(
-      { db: app, staffUserId: staff.id },
+      { db: app, staffUserId: staff.id, enqueueDelivery: () => Promise.resolve() },
       { workspaceId, reason: 'Investigating a sync issue' },
     );
     await grantSession(

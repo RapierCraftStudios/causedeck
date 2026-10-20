@@ -13,6 +13,7 @@ import { MobileNav } from './mobile-nav.tsx';
 import { OwnerTwoFactorBanner } from './owner-two-factor-banner.tsx';
 import { SidebarProvider } from './sidebar-collapse.tsx';
 import { Sidebar } from './sidebar.tsx';
+import { SupportBanner, type ShellSupportSession } from './support-banner.tsx';
 import { Topbar } from './topbar.tsx';
 
 export interface AppShellProps {
@@ -23,6 +24,8 @@ export interface AppShellProps {
   flags: FlagSnapshot;
   /** The owner 2FA policy for the signed-in user (#290); `required` shows the banner. */
   ownerTwoFactor?: OwnerTwoFactorState;
+  /** The active support session (#313), loaded for owners only; shows the support banner. */
+  supportSession?: ShellSupportSession | null;
   children: ReactNode;
 }
 
@@ -31,13 +34,15 @@ export interface AppShellProps {
  * there unless the user chose otherwise), the topbar and the single `main#main` the root skip
  * link targets. Content is max 1200 px, centred. Below 768 px the bottom nav (with the capture
  * button) replaces the sidebar, and `main` pads its bottom to clear it. Flag-gated nav items,
- * commands and shortcuts read `flags` through `FlagsProvider`.
+ * commands and shortcuts read `flags` through `FlagsProvider`. During an active support session the
+ * owner sees the support banner between the topbar and the page.
  */
 export function AppShell({
   context,
   sidebarState,
   flags,
   ownerTwoFactor = 'not-owner',
+  supportSession = null,
   children,
 }: AppShellProps) {
   return (
@@ -52,6 +57,9 @@ export function AppShell({
               <div className="bg-surface flex min-w-0 flex-col">
                 <Topbar context={context} />
                 <OwnerTwoFactorBanner state={ownerTwoFactor} />
+                {supportSession ? (
+                  <SupportBanner workspaceId={context.workspace.id} session={supportSession} />
+                ) : null}
                 <main
                   id="main"
                   tabIndex={-1}

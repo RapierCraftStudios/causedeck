@@ -31,6 +31,14 @@ import type {
   ExportRequestCtx,
 } from '../lifecycle/index.ts';
 import type {
+  GrantSessionInput,
+  RequestSessionInput,
+  SessionRef,
+  StaffContext,
+  SupportSession,
+  WorkspaceActorContext,
+} from '../support/index.ts';
+import type {
   AcceptInvitationRequest,
   AcceptedInvitation,
   CreateWorkspaceRequest,
@@ -256,6 +264,62 @@ export async function exportAuditFor(
 export async function recordAccessDeniedFor(event: AccessDeniedEvent): Promise<void> {
   const { recordAccessDenied } = await import('../audit/index.ts');
   return recordAccessDenied(db, event);
+}
+
+// support sessions (#313)
+
+/** The owner's support settings page: pending requests and unexpired grants, newest first. */
+export async function loadSupportPage(scope: RuntimeScope): Promise<SupportSession[]> {
+  const { listSupportSessions } = await import('../support/index.ts');
+  return inWorkspace(scope, (tx) => listSupportSessions(tx, scope.workspaceId));
+}
+
+/** The granted, unexpired session the product shell banner shows, or `null`. */
+export async function activeSupportSessionIn(scope: RuntimeScope): Promise<SupportSession | null> {
+  const { activeSupportSession } = await import('../support/index.ts');
+  return inWorkspace(scope, (tx) => activeSupportSession(tx, scope.workspaceId));
+}
+
+/** Staff request a session; the owners' email deliveries go on the job queue. */
+export async function requestSupportSessionFor(
+  ctx: Omit<StaffContext, 'db'>,
+  input: RequestSessionInput,
+): Promise<SupportSession> {
+  const [{ requestSession }, { enqueueNotificationDelivery }] = await Promise.all([
+    import('../support/index.ts'),
+    import('../jobs/index.ts'),
+  ]);
+  return requestSession(
+    { db, ...ctx, enqueueDelivery: (job) => enqueueNotificationDelivery(job) },
+    input,
+  );
+}
+
+/** The owner grants a pending request (default 60 minutes, at most 240). */
+export async function grantSupportSessionFor(
+  ctx: Omit<WorkspaceActorContext, 'db'>,
+  input: GrantSessionInput,
+): Promise<SupportSession> {
+  const { grantSession } = await import('../support/index.ts');
+  return grantSession({ db, ...ctx }, input);
+}
+
+/** The owner turns down a pending request. */
+export async function denySupportSessionFor(
+  ctx: Omit<WorkspaceActorContext, 'db'>,
+  input: SessionRef,
+): Promise<SupportSession> {
+  const { denySession } = await import('../support/index.ts');
+  return denySession({ db, ...ctx }, input);
+}
+
+/** The owner (or the requesting staff member) ends a pending or granted session now. */
+export async function revokeSupportSessionFor(
+  ctx: Omit<WorkspaceActorContext, 'db'>,
+  input: SessionRef,
+): Promise<SupportSession> {
+  const { revokeSession } = await import('../support/index.ts');
+  return revokeSession({ db, ...ctx }, input);
 }
 
 /**

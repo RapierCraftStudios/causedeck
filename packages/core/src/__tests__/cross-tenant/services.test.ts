@@ -148,6 +148,9 @@ type Case = (f: Fixture) => Promise<void>;
 
 // The seeded reservation expires 5 minutes after the real clock, so the usage clock is the real one.
 const USAGE_NOW = new Date();
+
+/** A request's owner email deliveries; never reached when the request is refused. */
+const enqueueDelivery = () => Promise.resolve();
 const aCtx = (f: Fixture) => ({ db: f.tx, workspaceId: f.a.id, now: () => USAGE_NOW });
 const bCtx = (f: Fixture) => ({ db: f.tx, workspaceId: f.b.id, now: () => USAGE_NOW });
 
@@ -860,8 +863,12 @@ const CASES: Record<string, Case> = {
   requestSession: async (f) => {
     const before = await aSupportSessions(f);
     const input = { workspaceId: f.a.id, reason: 'Probe' };
-    await expectDenied(core.requestSession({ db: f.tx, staffUserId: f.ub }, input));
-    await expectDenied(f.asB((s) => core.requestSession({ db: s, staffUserId: f.ub }, input)));
+    await expectDenied(
+      core.requestSession({ db: f.tx, staffUserId: f.ub, enqueueDelivery }, input),
+    );
+    await expectDenied(
+      f.asB((s) => core.requestSession({ db: s, staffUserId: f.ub, enqueueDelivery }, input)),
+    );
     expect(await aSupportSessions(f)).toEqual(before);
   },
   grantSession: async (f) => {
@@ -897,6 +904,19 @@ const CASES: Record<string, Case> = {
       core.revokeSession({ db: f.tx, userId: f.ub, workspaceId: f.b.id }, { sessionId }),
     );
     expect(await aSupportSessions(f)).toEqual(before);
+  },
+  listSupportSessions: async (f) => {
+    await expect(f.asB((s) => core.listSupportSessions(s, f.a.id))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    const own = await f.asB((s) => core.listSupportSessions(s, f.b.id));
+    expect(own.filter((row) => row.workspaceId !== f.b.id)).toEqual([]);
+  },
+  activeSupportSession: async (f) => {
+    await expect(f.asB((s) => core.activeSupportSession(s, f.a.id))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    expect(await f.asB((s) => core.activeSupportSession(s, f.b.id))).toBeNull();
   },
   assertActiveSupportSession: async (f) => {
     await expectDenied(core.assertActiveSupportSession(f.ub, f.a.id, { db: f.tx }));

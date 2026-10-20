@@ -63,6 +63,7 @@ describe('role rules', () => {
       'member.remove',
       'member.role',
       'export.run',
+      'support.manage',
     ]);
     for (const action of ALL_ACTIONS) {
       expect(allowed(can(actor('advocate'), action)), action).toBe(!denied.has(action));

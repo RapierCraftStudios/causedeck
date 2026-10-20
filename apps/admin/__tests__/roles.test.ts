@@ -1,8 +1,9 @@
-import { schema } from '@causedeck/db';
+import * as support from '@causedeck/core/support';
 import { describe, expect, it } from 'vitest';
 
 import {
   canStaff,
+  DEV_STAFF_EMAIL,
   STAFF_CAPABILITIES,
   STAFF_ROLE_MATRIX,
   STAFF_ROLES,
@@ -11,7 +12,12 @@ import {
 
 describe('staff role matrix', () => {
   it('has exactly the staff_user roles', () => {
-    expect([...STAFF_ROLES]).toEqual([...schema.STAFF_ROLES]);
+    expect([...STAFF_ROLES]).toEqual([...support.STAFF_ROLES]);
+  });
+
+  it('names the same dev staff account as the CLI seed (core/support)', () => {
+    // lib/roles.ts stays client-safe (the nav imports it), so it mirrors the core constant.
+    expect(DEV_STAFF_EMAIL).toBe(support.DEV_STAFF_EMAIL);
   });
 
   it('gives support metadata and sessions, ops adapters and flags, admin everything', () => {

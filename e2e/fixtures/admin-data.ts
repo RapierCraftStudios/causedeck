@@ -1,7 +1,7 @@
 // Admin console e2e fixture data (#309), shared by support/db-reset.ts (which seeds it into the
 // template as the owner role) and fixtures/admin.ts. No Playwright imports, so the seed step can
 // load it.
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 
 /** Seeded in the template by support/db-reset.ts (owner role). */
 export const ADMIN_FIXTURES = {
@@ -16,8 +16,15 @@ export const ADMIN_FIXTURES = {
 } as const;
 export type AdminFixture = keyof typeof ADMIN_FIXTURES;
 
-/** The TOTP secret of every enrolled fixture (Better Auth keys HMAC-SHA1 with its UTF-8 bytes). */
-export const ADMIN_TOTP_SECRET = 'e2e-admin-totp-secret-0123456789';
+/**
+ * The TOTP secret of every enrolled fixture (Better Auth keys HMAC-SHA1 with its UTF-8 bytes).
+ * Derived from a label rather than written out, so no key-shaped literal sits in the tree (gitleaks);
+ * the seed and the fixtures run in different processes and must agree on it.
+ */
+export const ADMIN_TOTP_SECRET = createHash('sha256')
+  .update('causedeck e2e admin console totp')
+  .digest('hex')
+  .slice(0, 32);
 
 /** The current six-digit TOTP code for `secret` (RFC 6238, 30 s, SHA-1), as Better Auth computes. */
 export function totpCode(secret: string = ADMIN_TOTP_SECRET, now: number = Date.now()): string {

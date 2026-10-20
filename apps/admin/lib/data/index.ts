@@ -1,7 +1,7 @@
 // Admin data layer (#309): audited reads of global tables. Pages import from here, never
-// `withoutWorkspace` itself.
-import { schema } from '@causedeck/db';
-import { count, isNull } from 'drizzle-orm';
+// `withoutWorkspace` itself. The queries come from `@causedeck/core` (apps never value-import
+// `@causedeck/db`, #299); this layer only scopes and audits them.
+import { countActiveStaff } from '@causedeck/core/support';
 
 import { staffQuery, type StaffActor } from './scope.ts';
 
@@ -12,12 +12,6 @@ export function activeStaffCount(staff: StaffActor): Promise<number> {
   return staffQuery(
     staff,
     { purpose: 'overview.staff_count', capability: 'overview', tables: ['staff_user'] },
-    async (tx) => {
-      const [row] = await tx
-        .select({ value: count() })
-        .from(schema.staffUser)
-        .where(isNull(schema.staffUser.disabledAt));
-      return row?.value ?? 0;
-    },
+    (tx) => countActiveStaff(tx),
   );
 }

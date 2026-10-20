@@ -11,14 +11,14 @@ import {
   assertActiveSupportSession,
   grantSession,
   requestSession,
+  DEV_STAFF_EMAIL,
+  StaffAdminError,
   SupportSessionInactiveError,
 } from '@causedeck/core/support';
-import { createDb, schema, withWorkspace, type Database } from '@causedeck/db';
-import { testDatabaseUrls } from '@causedeck/db/testing';
+import type { Database } from '@causedeck/db';
+import { createDb, schema, testDatabaseUrls, withWorkspace } from '@causedeck/db/testing';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
-import { DEV_STAFF_EMAIL } from '../../lib/roles.ts';
 
 import {
   addStaff,
@@ -31,6 +31,9 @@ import {
 
 const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
 const THIS_CLI = path.join(REPO_ROOT, 'apps/admin/src/cli/staff.ts');
+// The CLI's table half: apps never value-import `@causedeck/db` (#299), so the writes live in core.
+const STAFF_ADMIN = path.join(REPO_ROOT, 'packages/core/src/support/staff.ts');
+const STAFF_WRITERS = /\b(addStaff|disableStaff|seedDevStaff)\s*\(/;
 
 let owner: Database;
 let app: Database;
@@ -139,7 +142,7 @@ describe('staff accounts are created only by the operator CLI', () => {
     expect(row).toMatchObject({ role: 'ops', disabledAt: null });
 
     await expect(addStaff(owner, { email: 'nobody@example.test', role: 'ops' })).rejects.toThrow(
-      StaffCliError,
+      StaffAdminError,
     );
   });
 
@@ -173,7 +176,7 @@ describe('staff accounts are created only by the operator CLI', () => {
     expect(account?.email).toBe(DEV_STAFF_EMAIL);
   });
 
-  it('no source outside this CLI writes staff_user', () => {
+  it('no source outside this CLI (and its core half) writes staff_user', () => {
     const roots = ['apps', 'packages'].map((d) => path.join(REPO_ROOT, d));
     const offenders: string[] = [];
     const walk = (dir: string): void => {
@@ -185,8 +188,14 @@ describe('staff accounts are created only by the operator CLI', () => {
           continue;
         }
         if (!/\.(ts|tsx)$/.test(name) || /\.test\.tsx?$/.test(name)) continue;
-        if (file === THIS_CLI || file.includes(`${path.sep}__tests__${path.sep}`)) continue;
+        if (file === THIS_CLI || file === STAFF_ADMIN) continue;
+        if (file.includes(`${path.sep}__tests__${path.sep}`)) continue;
         const text = readFileSync(file, 'utf8');
+        // Only the CLI calls the core write functions.
+        if (STAFF_WRITERS.test(text)) {
+          offenders.push(path.relative(REPO_ROOT, file));
+          continue;
+        }
         if (
           /insert\(\s*(schema\.)?staffUser\b|update\(\s*(schema\.)?staffUser\b|(insert into|update)\s+"?staff_user/i.test(
             text,

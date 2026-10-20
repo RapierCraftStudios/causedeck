@@ -19,6 +19,7 @@ const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-recon
 const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
 const LIFECYCLE_TEST = 'packages/core/src/lifecycle/__tests__/cross-tenant.test.ts';
 const CORE_RUNTIME_TEST = 'packages/core/src/__tests__/cross-tenant/runtime.test.ts';
+const ADMIN_STAFF_CLI_TEST = 'apps/admin/src/cli/staff.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -252,6 +253,32 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: "sweep through app_end_staff_support_sessions(); touches only that staff member's sessions",
   },
+  // platform staff accounts (#309): the admin console's reads and the operator CLI's writes
+  staffMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads the global staff_user table only; no tenant rows',
+  },
+  countActiveStaff: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'counts the global staff_user table only; no tenant rows',
+  },
+  addStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: 'owner-role write of the global staff_user table; only the operator CLI calls it',
+  },
+  disableStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: "owner-role write of staff_user, then ends only that staff member's support sessions",
+  },
+  seedDevStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: 'creates the dev staff account; the CLI refuses it in production',
+  },
   supportSessionExpire: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -427,6 +454,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   supportRequestCopy: 'pure (owner notice copy)',
   supportRequestDedupeKey: 'pure',
   SupportSessionInactiveError: 'error class',
+  // platform staff accounts (#309)
+  STAFF_ROLES: 'constant',
+  DEV_STAFF_EMAIL: 'constant',
+  StaffAdminError: 'error class',
+  withOwnerDb: 'connection helper (owner-role handle for the operator CLI); reads nothing itself',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',
   RetryableError: 'error class',

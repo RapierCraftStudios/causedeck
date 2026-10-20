@@ -76,7 +76,8 @@ const APP_DB_TEST_MESSAGE =
 /**
  * `@typescript-eslint/no-restricted-imports` options for app files: no value import of
  * `@causedeck/db` (any entry), `import type` allowed. Test files may value-import the
- * `testing` and `seed` entries.
+ * `testing` and `seed` entries. With `withoutWorkspace: false` (an exempt folder) the root entry's
+ * `withoutWorkspace` is allowed as a value too.
  *
  * @param {{ test: boolean; withoutWorkspace: boolean }} options
  */
@@ -91,7 +92,13 @@ export function appDbImportBan({ test, withoutWorkspace }) {
   return {
     paths: [
       ...(withoutWorkspace ? withoutWorkspaceImportBan.paths : []),
-      { name: '@causedeck/db', allowTypeImports: true, message },
+      {
+        name: '@causedeck/db',
+        allowTypeImports: true,
+        // An exempt folder (the admin data layer, #309) may take `withoutWorkspace` as a value.
+        ...(withoutWorkspace ? {} : { allowImportNames: ['withoutWorkspace'] }),
+        message,
+      },
     ],
     patterns: [
       {

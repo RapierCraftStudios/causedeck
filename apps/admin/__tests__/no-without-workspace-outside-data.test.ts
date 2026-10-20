@@ -29,4 +29,25 @@ describe('withoutWorkspace in apps/admin', () => {
       users.filter((file) => !file.startsWith(DATA_LAYER)).map((f) => path.relative(ADMIN_ROOT, f)),
     ).toEqual([]);
   });
+
+  it('is the only @causedeck/db value the app imports (#299)', () => {
+    // `import type` is fine; tests are skipped above (they use @causedeck/db/testing).
+    const valueImport = /^import\s+(?!type\b)[^;]*?from\s+'@causedeck\/db(?:\/[^']*)?';/gm;
+    const offenders: string[] = [];
+    for (const file of sources(ADMIN_ROOT)) {
+      for (const [statement] of readFileSync(file, 'utf8').matchAll(valueImport)) {
+        const names = /\{([^}]*)\}/.exec(statement)?.[1] ?? '*';
+        const values = names
+          .split(',')
+          .map((n) => n.trim())
+          .filter((n) => n !== '' && !n.startsWith('type '));
+        const allowed =
+          file.startsWith(DATA_LAYER) &&
+          statement.endsWith("'@causedeck/db';") &&
+          values.every((n) => n === 'withoutWorkspace');
+        if (values.length > 0 && !allowed) offenders.push(path.relative(ADMIN_ROOT, file));
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
 });

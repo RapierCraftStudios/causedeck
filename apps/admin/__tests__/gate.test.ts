@@ -1,5 +1,7 @@
 // The staff gate (#309): deny by default, one generic 404 for every reason, a TOTP redirect only
 // for enrolled staff on pages, and the dev bypass only for the dev staff account outside production.
+import { randomBytes } from 'node:crypto';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -13,7 +15,8 @@ import { parseIpAllowlist } from '../lib/ip-allowlist.ts';
 import { DEV_STAFF_EMAIL } from '../lib/roles.ts';
 import { ADMIN_TWO_FACTOR_COOKIE, signTwoFactorCookie } from '../lib/two-factor.ts';
 
-const SECRET = 'test-secret-0123456789abcdef0123456789';
+// Generated per run: a fixed test key would trip gitleaks.
+const SECRET = randomBytes(32).toString('hex');
 const NOW = 1_800_000_000_000;
 
 const STAFF: GateSession = {

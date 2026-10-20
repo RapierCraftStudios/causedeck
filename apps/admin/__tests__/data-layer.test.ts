@@ -2,8 +2,8 @@
 // fails closed when the audit write fails, and checks the role matrix before anything runs.
 import { randomUUID } from 'node:crypto';
 
-import { schema, withUser, type Database } from '@causedeck/db';
-import { closeTestDb, withTestDb } from '@causedeck/db/testing';
+import type { Database } from '@causedeck/db';
+import { closeTestDb, schema, withTestDb, withUser } from '@causedeck/db/testing';
 import { and, count, eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 

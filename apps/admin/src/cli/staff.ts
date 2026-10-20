@@ -9,16 +9,27 @@
 import { pathToFileURL } from 'node:url';
 
 import { createEnv } from '@causedeck/config/env';
-import { endStaffSupportSessions } from '@causedeck/core/support';
-import { createDb, schema, type Database } from '@causedeck/db';
-import { eq, sql } from 'drizzle-orm';
+import {
+  addStaff,
+  DEV_STAFF_EMAIL,
+  disableStaff,
+  seedDevStaff,
+  StaffAdminError,
+  STAFF_ROLES,
+  withOwnerDb,
+  type StaffRole,
+} from '@causedeck/core/support';
 
-import { DEV_STAFF_EMAIL } from '../../lib/roles.ts';
-
-const { staffUser, user } = schema;
-
-export const STAFF_ROLES = schema.STAFF_ROLES;
-export type StaffRole = (typeof STAFF_ROLES)[number];
+// The table work lives in `@causedeck/core/support` (apps never value-import `@causedeck/db`, #299).
+export {
+  addStaff,
+  disableStaff,
+  seedDevStaff,
+  STAFF_ROLES,
+  type AddStaffResult,
+  type DisableStaffResult,
+  type StaffRole,
+} from '@causedeck/core/support';
 
 export const USAGE = [
   'Usage:',
@@ -78,81 +89,6 @@ export function parseStaffArgs(argv: readonly string[]): StaffCommand {
   return by === undefined ? { command, email, role } : { command, email, role, by };
 }
 
-async function userIdFor(db: Database, email: string): Promise<string> {
-  const [row] = await db
-    .select({ id: user.id })
-    .from(user)
-    .where(sql`lower(${user.email}) = lower(${email})`)
-    .limit(1);
-  if (row === undefined) {
-    throw new StaffCliError(`No user with that email. They must sign up before becoming staff.`);
-  }
-  return row.id;
-}
-
-export interface AddStaffResult {
-  userId: string;
-  role: StaffRole;
-  /** True when a disabled staff row was re-enabled. */
-  reenabled: boolean;
-}
-
-/** Make the user staff with `role` (re-enabling a disabled row). `db` must be the owner role. */
-export async function addStaff(
-  db: Database,
-  { email, role, by }: { email: string; role: StaffRole; by?: string },
-): Promise<AddStaffResult> {
-  const userId = await userIdFor(db, email);
-  const createdBy = by === undefined ? null : await userIdFor(db, by);
-  const [existing] = await db
-    .select({ disabledAt: staffUser.disabledAt })
-    .from(staffUser)
-    .where(eq(staffUser.userId, userId));
-  await db
-    .insert(staffUser)
-    .values({ userId, role, createdBy })
-    .onConflictDoUpdate({ target: staffUser.userId, set: { role, disabledAt: null } });
-  return { userId, role, reenabled: existing?.disabledAt != null };
-}
-
-export interface DisableStaffResult {
-  userId: string;
-  /** Support sessions ended by the disable. */
-  endedSessions: number;
-}
-
-/**
- * Disable a staff member and end their sessions immediately. `db` must be the owner role.
- * Idempotent: disabling again re-runs the session sweep.
- */
-export async function disableStaff(
-  db: Database,
-  { email }: { email: string },
-): Promise<DisableStaffResult> {
-  const userId = await userIdFor(db, email);
-  const [row] = await db
-    .update(staffUser)
-    .set({ disabledAt: sql`coalesce(${staffUser.disabledAt}, now())` })
-    .where(eq(staffUser.userId, userId))
-    .returning({ userId: staffUser.userId });
-  if (row === undefined) throw new StaffCliError('That user is not staff.');
-  const endedSessions = await endStaffSupportSessions(db, userId);
-  return { userId, endedSessions };
-}
-
-/**
- * Create (or re-enable) the local dev staff account, DEV_STAFF_EMAIL, as `admin`; idempotent. The
- * admin gate skips the IP allowlist and the 2FA step for this account outside production only.
- * `db` must be the owner role.
- */
-export async function seedDevStaff(db: Database): Promise<AddStaffResult> {
-  await db
-    .insert(user)
-    .values({ email: DEV_STAFF_EMAIL, name: 'Dev staff', emailVerified: true })
-    .onConflictDoNothing({ target: user.email });
-  return addStaff(db, { email: DEV_STAFF_EMAIL, role: 'admin' });
-}
-
 /** Run one CLI invocation; returns the process exit code. */
 export async function runStaffCli(
   argv: readonly string[],
@@ -176,27 +112,27 @@ export async function runStaffCli(
     err('DATABASE_URL_OWNER is not set: staff are managed by an operator as the owner role.');
     return 1;
   }
-  const db = createDb({ url, role: 'owner', max: 1 });
   try {
-    if (parsed.command === 'add') {
-      const added = await addStaff(db, parsed);
-      out(`${added.reenabled ? 'Re-enabled' : 'Added'} staff ${parsed.email} (${added.role}).`);
-    } else if (parsed.command === 'seed-dev') {
-      await seedDevStaff(db);
-      out(`Dev staff ${DEV_STAFF_EMAIL} (admin) is ready. Sign in with the dev sign-in.`);
-    } else {
-      const disabled = await disableStaff(db, parsed);
-      out(
-        `Disabled staff ${parsed.email}; ended ${String(disabled.endedSessions)} support session(s).`,
-      );
-    }
+    await withOwnerDb(url, async (db) => {
+      if (parsed.command === 'add') {
+        const added = await addStaff(db, parsed);
+        out(`${added.reenabled ? 'Re-enabled' : 'Added'} staff ${parsed.email} (${added.role}).`);
+      } else if (parsed.command === 'seed-dev') {
+        await seedDevStaff(db);
+        out(`Dev staff ${DEV_STAFF_EMAIL} (admin) is ready. Sign in with the dev sign-in.`);
+      } else {
+        const disabled = await disableStaff(db, parsed);
+        out(
+          `Disabled staff ${parsed.email}; ended ${String(disabled.endedSessions)} support session(s).`,
+        );
+      }
+    });
     return 0;
   } catch (error) {
     // Never echo driver errors: they can carry connection details.
-    err(error instanceof StaffCliError ? error.message : 'Staff command failed.');
+    const known = error instanceof StaffCliError || error instanceof StaffAdminError;
+    err(known ? error.message : 'Staff command failed.');
     return error instanceof StaffCliError ? error.exitCode : 1;
-  } finally {
-    await db.$client.end();
   }
 }
 

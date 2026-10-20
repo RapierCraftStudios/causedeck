@@ -2,8 +2,7 @@
 // actions. It re-validates the session and the enabled staff_user row and returns the staff
 // member's role, or answers with the generic not-found page.
 import { db } from '@causedeck/core/runtime';
-import { schema } from '@causedeck/db';
-import { and, eq, isNull } from 'drizzle-orm';
+import { staffMember } from '@causedeck/core/support';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
@@ -21,11 +20,7 @@ export interface StaffMember {
 
 /** The enabled staff role of `userId`, or `null`. `staff_user` is global, readable in any scope. */
 export async function staffRoleOf(userId: string): Promise<StaffRole | null> {
-  const [row] = await db
-    .select({ role: schema.staffUser.role })
-    .from(schema.staffUser)
-    .where(and(eq(schema.staffUser.userId, userId), isNull(schema.staffUser.disabledAt)))
-    .limit(1);
+  const row = await staffMember(db, userId);
   return row && isStaffRole(row.role) ? row.role : null;
 }
 

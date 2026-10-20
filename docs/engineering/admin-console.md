@@ -89,8 +89,13 @@ Every response, the 404 included:
 ## Data layer
 
 `withoutWorkspace` (unscoped access to `GLOBAL_TABLES`) may be imported in apps/admin only under
-`apps/admin/lib/data`. The ESLint rule enforces this (`WITHOUT_WORKSPACE_ALLOWED_GLOBS`), and
-`__tests__/no-without-workspace-outside-data.test.ts` scans for it.
+`apps/admin/lib/data`. Like every app (#299), apps/admin imports no other `@causedeck/db` value:
+the staff-table queries (`staffMember`, `countActiveStaff`) and the operator CLI's owner-role
+writes (`addStaff`, `disableStaff`, `seedDevStaff`, `withOwnerDb`) live in
+`@causedeck/core/support`. The ESLint app→db blocks enforce both
+(`packages/config/eslint/base.js`: `appDbImportBlocks` for `apps/admin` with the `withoutWorkspace`
+ban, and for `apps/admin/lib/data` without it), and
+`__tests__/no-without-workspace-outside-data.test.ts` scans for both.
 
 Pages call `staffQuery(staff, { purpose, capability, tables }, fn)`, which:
 
@@ -99,7 +104,8 @@ Pages call `staffQuery(staff, { purpose, capability, tables }, fn)`, which:
    role). This is fail-closed: a read that cannot be audited does not run;
 3. runs `fn` in `withoutWorkspace` on the listed global tables only.
 
-Callers pass a fixed query function, never SQL text.
+Callers pass a fixed query function from `@causedeck/core` (e.g. `countActiveStaff`), never SQL
+text.
 
 ## Exposure (per deployment, never hard-coded)
 

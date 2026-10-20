@@ -982,6 +982,17 @@ const CASES: Record<string, Case> = {
     expect(await core.isActiveStaff(f.tx, f.ub)).toBe(false);
     expect(await f.asB((s) => core.isActiveStaff(s, f.ub))).toBe(false);
   },
+  staffMember: async (f) => {
+    // ub is not staff; and staff_user is global, so B's scope reads A's user exactly as unscoped.
+    expect(await core.staffMember(f.tx, f.ub)).toBeNull();
+    const ua = await core.staffMember(f.tx, f.ua);
+    expect(await f.asB((s) => core.staffMember(s, f.ua))).toEqual(ua);
+  },
+  countActiveStaff: async (f) => {
+    // staff_user is global: B's scope sees the same count as the unscoped handle, no tenant rows.
+    const all = await core.countActiveStaff(f.tx);
+    expect(await f.asB((s) => core.countActiveStaff(s))).toBe(all);
+  },
   expireSupportSessions: async (f) => {
     const before = await aSupportSessions(f);
     await core.expireSupportSessions(f.tx);

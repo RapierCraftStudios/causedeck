@@ -5,7 +5,7 @@
 /** Staff session lifetime: 8 hours, then sign in (and pass the 2FA step) again. */
 export const STAFF_SESSION_SECONDS = 8 * 60 * 60;
 
-/** Mirrors `schema.STAFF_ROLES` (`staff_user.role`); a test keeps the two equal. */
+/** Mirrors `STAFF_ROLES` from `@causedeck/core/support` (`staff_user.role`); a test keeps them equal. */
 export const STAFF_ROLES = ['support', 'ops', 'admin'] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
@@ -36,7 +36,8 @@ export function canStaff(role: StaffRole, capability: StaffCapability): boolean 
 }
 
 /**
- * The local dev staff account, created by `pnpm --filter @causedeck/admin staff:seed-dev`. Outside
+ * Mirrors `DEV_STAFF_EMAIL` from `@causedeck/core/support` (a test keeps them equal). The local dev
+ * staff account, created by `pnpm --filter @causedeck/admin staff:seed-dev`. Outside
  * production, and for this account only, the gate skips the IP allowlist and the 2FA step.
  */
 export const DEV_STAFF_EMAIL = 'staff@causedeck.local';

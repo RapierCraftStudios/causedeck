@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import { describe, expect, it } from 'vitest';
 
 import { STAFF_SESSION_SECONDS } from '../lib/roles.ts';
@@ -8,7 +10,8 @@ import {
   verifyTwoFactorCookie,
 } from '../lib/two-factor.ts';
 
-const SECRET = 'test-secret-0123456789abcdef0123456789';
+// Generated per run: a fixed test key would trip gitleaks.
+const SECRET = randomBytes(32).toString('hex');
 const NOW = 1_800_000_000_000;
 
 describe('admin 2FA cookie', () => {

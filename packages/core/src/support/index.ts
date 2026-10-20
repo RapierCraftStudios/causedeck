@@ -2,3 +2,4 @@
 // read-only support context staff reach workspace content through.
 export * from './access.ts';
 export * from './sessions.ts';
+export * from './staff.ts';

@@ -107,12 +107,23 @@ describe('app → db boundary (#299)', () => {
     expect(result.messages[0]?.message).toContain('@causedeck/db/testing');
   });
 
-  it('applies to apps/admin, which keeps only its withoutWorkspace exemption', async () => {
+  it('applies to apps/admin, whose withoutWorkspace exemption is its data layer only (#309)', async () => {
     const banned = await lintFixture('boundaries', 'apps/admin/src/imports-db-value.ts');
     expect(ruleIds(banned)).toContain(RESTRICTED);
 
-    const exempt = await lintFixture('boundaries', 'apps/admin/src/imports-without-workspace.ts');
+    const outside = await lintFixture('boundaries', 'apps/admin/src/imports-without-workspace.ts');
+    expect(outside.messages.map((m) => m.message).join('\n')).toContain(
+      'the apps/admin data layer',
+    );
+
+    const exempt = await lintFixture(
+      'boundaries',
+      'apps/admin/lib/data/imports-without-workspace.ts',
+    );
     expect(exempt.messages).toEqual([]);
+
+    const dataLayerDb = await lintFixture('boundaries', 'apps/admin/lib/data/imports-db-value.ts');
+    expect(ruleIds(dataLayerDb)).toContain(RESTRICTED);
   });
 });
 

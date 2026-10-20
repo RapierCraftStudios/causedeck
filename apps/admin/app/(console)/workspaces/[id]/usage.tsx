@@ -3,7 +3,7 @@
 // customer content. Admin staff also get the forms to set an override or expire an active one.
 import { Badge, type BadgeTone } from '@causedeck/ui/badge';
 
-import { workspaceUsage, type StaffBudgetOverride } from '../../../../lib/data/index.ts';
+import type { StaffBudgetOverride, StaffWorkspaceUsage } from '../../../../lib/data/index.ts';
 import { canOverrideBudget } from '../../../../lib/roles.ts';
 import type { StaffMember } from '../../../../lib/staff.ts';
 
@@ -36,14 +36,16 @@ const TONES: Record<OverrideStatus, BadgeTone> = {
   'expired early': 'warning',
 };
 
-export async function WorkspaceUsage({
+/** Renders what the page read through the data layer (`workspaceUsage`, audited `staff.read`). */
+export function WorkspaceUsage({
   staff,
   workspaceId,
+  usage,
 }: {
   staff: StaffMember;
   workspaceId: string;
+  usage: StaffWorkspaceUsage | null;
 }) {
-  const usage = await workspaceUsage(staff, workspaceId);
   const counters = usage?.counters ?? [];
   const overrides = usage?.overrides ?? [];
   const canWrite = canOverrideBudget(staff.role);

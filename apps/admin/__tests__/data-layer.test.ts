@@ -2,7 +2,12 @@
 // fails closed when the audit write fails, and checks the role matrix before anything runs.
 import { randomUUID } from 'node:crypto';
 
-import { staffWorkspaceMetadata, staffWorkspaceSearch } from '@causedeck/core/support';
+import {
+  staffWorkspaceMetadata,
+  staffWorkspaceSearch,
+  staffWorkspaceUsage,
+} from '@causedeck/core/support';
+import { setBudgetOverride } from '@causedeck/core/usage';
 import type { Database } from '@causedeck/db';
 import { closeTestDb, schema, withTestDb, withUser } from '@causedeck/db/testing';
 import { seedTwoTenants } from '@causedeck/db/testing/two-tenants';
@@ -271,6 +276,71 @@ describe('staffCall (#310)', () => {
           functions: 'app_staff_workspace_search',
           role: 'support',
         },
+      });
+    });
+  });
+
+  const usage = {
+    purpose: 'workspaces.usage',
+    capability: 'workspaces',
+    functions: ['app_staff_budget_overrides', 'app_staff_workspace_usage'],
+  } as const;
+
+  it('denies the usage read to a role without Workspaces (#224)', async () => {
+    const fn = vi.fn(() => Promise.resolve(null));
+    const db = { transaction: vi.fn() } as unknown as Database;
+    await expect(
+      staffCall({ userId: randomUUID(), role: 'ops' }, usage, fn, db),
+    ).rejects.toBeInstanceOf(StaffQueryDeniedError);
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('records staff.read for workspaces.usage, then reads that workspace only (#224)', async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      const staff = { userId: support.userId, role: 'support' as const };
+      const db = tx as unknown as Database;
+      const { id } = await setBudgetOverride(
+        { db, workspaceId: t.a.id },
+        {
+          limitPaise: 35_000,
+          reason: 'pilot extension',
+          expiresAt: new Date(Date.now() + 86_400_000),
+          staffUserId: support.userId,
+        },
+      );
+      const result = await staffCall(
+        staff,
+        usage,
+        (q) => staffWorkspaceUsage(q, staff.userId, t.a.id),
+        db,
+      );
+      expect(result?.overrides.map((o) => o.id)).toContain(id);
+      expect(result?.overrides.every((o) => o.reason.length > 0)).toBe(true);
+      const other = await staffCall(
+        staff,
+        usage,
+        (q) => staffWorkspaceUsage(q, staff.userId, t.b.id),
+        db,
+      );
+      expect(other?.overrides.map((o) => o.id)).not.toContain(id);
+
+      const rows = await withUser(tx, { userId: staff.userId }, (s) =>
+        s
+          .select()
+          .from(schema.auditEvent)
+          .where(
+            and(
+              eq(schema.auditEvent.actorUserId, staff.userId),
+              eq(schema.auditEvent.action, 'staff.read'),
+            ),
+          ),
+      );
+      expect(rows.map((r) => r.metadata)).toContainEqual({
+        purpose: 'workspaces.usage',
+        capability: 'workspaces',
+        functions: 'app_staff_budget_overrides,app_staff_workspace_usage',
+        role: 'support',
       });
     });
   });

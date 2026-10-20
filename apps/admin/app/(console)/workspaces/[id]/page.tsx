@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { workspaceMetadata } from '../../../../lib/data/index.ts';
+import { workspaceMetadata, workspaceUsage } from '../../../../lib/data/index.ts';
 import { requireStaff } from '../../../../lib/staff.ts';
 
 import { WorkspaceUsage } from './usage.tsx';
@@ -35,6 +35,7 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const workspace = await workspaceMetadata(staff, id);
   if (workspace === null) notFound();
+  const usage = await workspaceUsage(staff, workspace.workspaceId);
   const rows: [string, string][] = [
     ['Plan', workspace.planId ?? '—'],
     [
@@ -85,7 +86,7 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
           </ul>
         )}
       </section>
-      <WorkspaceUsage staff={staff} workspaceId={workspace.workspaceId} />
+      <WorkspaceUsage staff={staff} workspaceId={workspace.workspaceId} usage={usage} />
     </section>
   );
 }

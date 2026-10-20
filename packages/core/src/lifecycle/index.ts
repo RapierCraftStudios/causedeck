@@ -1,6 +1,6 @@
 // `@causedeck/core/lifecycle` (#301): DPDP data lifecycle. Workspace export: the exporter
-// registry, requests, download links and the build. Deletion lands with #302 and #303. See
-// docs/engineering/data-lifecycle.md.
+// registry, requests, download links and the build (#301). Account deletion and memory erasure
+// (#303). Workspace deletion lands with #302. See docs/engineering/data-lifecycle.md.
 import './export/exporters.ts';
 
 export {
@@ -49,3 +49,32 @@ export {
   type ExportTokenPayload,
   type RequestExportDeps,
 } from './export/request.ts';
+export {
+  ACCOUNT_DELETION_ERRORS,
+  ACCOUNT_DELETION_SOLE_OWNER_MESSAGE,
+  ACCOUNT_DELETION_STAFF_MESSAGE,
+  requestAccountDeletion,
+  runAccountDeletion,
+  soleOwnedWorkspaces,
+  type AccountDeletionCtx,
+  type AccountDeletionError,
+  type AccountDeletionJob,
+  type AccountDeletionOutcome,
+  type AccountDeletionRunCtx,
+  type RequestAccountDeletionDeps,
+  type SoleOwnedWorkspace,
+} from './deletion/account.ts';
+export {
+  eraseMemory,
+  MEMORY_ERASE_BATCH,
+  MEMORY_ERASE_PRIORITY,
+  MEMORY_ERASURE_SLA_MS,
+  MEMORY_TABLES,
+  requestMemoryErasure,
+  runMemoryErasure,
+  type MemoryErasureCtx,
+  type MemoryErasureJob,
+  type MemoryErasureOutcome,
+  type MemoryErasureRunCtx,
+  type RequestMemoryErasureDeps,
+} from './deletion/memory.ts';

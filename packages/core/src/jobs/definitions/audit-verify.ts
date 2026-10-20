@@ -60,7 +60,7 @@ export async function runAccountChainVerify(
   const [row] = await ctx.db.execute<{
     checked: number;
     id: string | null;
-    reason: 'hash' | 'link' | null;
+    reason: 'hash' | 'link' | 'actor' | null;
   }>(
     sql`select checked, id::text, reason
         from app_audit_verify_account_chain(${from}::timestamptz, null)`,

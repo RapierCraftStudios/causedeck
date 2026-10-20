@@ -228,6 +228,23 @@ const CASES: Record<string, () => Promise<void>> = {
     await expectDenied(runtime.requestExportFor(forged(), { scope: 'workspace' }));
     expect(await aAuditIds()).toEqual(before);
   },
+  requestAccountDeletionFor: async () => {
+    const before = { audit: await aAuditIds(), members: await aMemberIds() };
+    // Acts on the caller's own account only: ub owns B alone, so it is refused, and A is unchanged.
+    expect(
+      await runtime.requestAccountDeletionFor({ userId: t.ub }).then(
+        () => undefined,
+        (e: unknown) => (e as { code?: string }).code,
+      ),
+    ).toBe('CONFLICT');
+    expect({ audit: await aAuditIds(), members: await aMemberIds() }).toEqual(before);
+  },
+  requestMemoryErasureFor: async () => {
+    const before = await aAuditIds();
+    // Refused before anything is written or enqueued: ub is not an owner of A.
+    await expectDenied(runtime.requestMemoryErasureFor(forged()));
+    expect(await aAuditIds()).toEqual(before);
+  },
   issueExportDownloadFor: async () => {
     await expectDenied(runtime.issueExportDownloadFor(forged(), aExportId, { secret: SECRET }));
     await expectDenied(runtime.issueExportDownloadFor(asB(), aExportId, { secret: SECRET }));

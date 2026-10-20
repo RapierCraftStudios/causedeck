@@ -9,6 +9,11 @@
 // `workspace_id` is null for account-level events (one chain of their own); see
 // NULLABLE_WORKSPACE_TABLES in conventions.ts.
 //
+// Each event also stores `actor_ref`, a salted sha256 of `actor_user_id` (per-user salt in the
+// owner-only `audit_actor_salt`, migration 0030). The hash covers `actor_ref` instead of the id, so
+// account deletion (#303) can null `actor_user_id` through `app_audit_anonymise_actor()` without
+// breaking the chain; deleting the salt then makes the ref unlinkable. See docs/engineering/audit.md.
+//
 // `ai_call` is the AI gateway's record of every model call (#44 writes it; the TypeScript writer
 // contract is #227). Columns the gateway fills: `purpose`, `provider`, `model`, `model_version`,
 // `region`, token counts, `cost_paise`, `sources` (ids and anchors only, never content),
@@ -62,6 +67,8 @@ export const auditEvent = pgTable(
     id: idV7(),
     workspaceId: uuid('workspace_id'),
     actorUserId: uuid('actor_user_id'),
+    /** Salted sha256 (hex) of `actor_user_id`; the chain hash covers this, not the id. */
+    actorRef: text('actor_ref'),
     actorKind: auditActorKind('actor_kind').notNull(),
     action: text('action').notNull(),
     targetKind: text('target_kind'),
@@ -77,10 +84,25 @@ export const auditEvent = pgTable(
   },
   (t) => [
     index('audit_event_workspace_id_idx').on(t.workspaceId, t.createdAt, t.id),
+    // Account deletion (#303) finds a user's events across every chain.
+    index('audit_event_actor_user_id_idx')
+      .on(t.actorUserId)
+      .where(sql`actor_user_id is not null`),
     // One genesis and one successor per hash in each chain: a fork cannot be stored.
     unique('audit_event_chain_uq').on(t.workspaceId, t.prevHash).nullsNotDistinct(),
   ],
 );
+
+/**
+ * Per-user salt for `audit_event.actor_ref` (#303). Global and owner-only: the app role has no
+ * privileges; only the SECURITY DEFINER audit functions read or write it. Account deletion deletes
+ * the row, so a deleted user's `actor_ref` cannot be recomputed from their id.
+ */
+export const auditActorSalt = pgTable('audit_actor_salt', {
+  userId: uuid('user_id').primaryKey(),
+  salt: bytea('salt').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 /** One row per AI model call, written by the AI gateway. */
 export const aiCall = tenantTable(

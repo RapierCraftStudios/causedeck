@@ -99,6 +99,28 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A user changed their own account profile (display name)',
   },
+  // Data lifecycle (#303). Account events are account-level (`workspaceId: null`); fail-closed, so
+  // a deletion or erasure that cannot be audited does not happen. Metadata holds ids and counts.
+  'account.deletion_requested': {
+    security: true,
+    description: 'A user requested the deletion of their account',
+  },
+  'account.deletion_blocked': {
+    security: true,
+    description: 'An account deletion was refused: the user is the only owner of a workspace',
+  },
+  'account.deleted': {
+    security: true,
+    description: 'An account was deleted and its audit attribution anonymised',
+  },
+  'memory.erasure_requested': {
+    security: true,
+    description: "An owner requested the erasure of the workspace's memory and embeddings",
+  },
+  'memory.erased': {
+    security: true,
+    description: "The workspace's memory and embeddings were erased",
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

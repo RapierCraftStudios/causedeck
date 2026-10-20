@@ -40,6 +40,7 @@ import type {
   SessionRef,
   StaffContext,
   SupportSession,
+  SupportWorkspaceView,
   WorkspaceActorContext,
 } from '../support/index.ts';
 import type {
@@ -324,6 +325,32 @@ export async function revokeSupportSessionFor(
 ): Promise<SupportSession> {
   const { revokeSession } = await import('../support/index.ts');
   return revokeSession({ db, ...ctx }, input);
+}
+
+// support sessions, staff side (#314)
+
+/** The staff member's own support sessions in every workspace, newest first. */
+export async function listStaffSupportSessionsFor(staffUserId: string): Promise<SupportSession[]> {
+  const { listStaffSupportSessions } = await import('../support/index.ts');
+  return listStaffSupportSessions(db, staffUserId);
+}
+
+/** One of the staff member's own support sessions, or `null`. */
+export async function staffSupportSessionFor(
+  staffUserId: string,
+  sessionId: string,
+): Promise<SupportSession | null> {
+  const { staffSupportSession } = await import('../support/index.ts');
+  return staffSupportSession(db, staffUserId, sessionId);
+}
+
+/** The read-only workspace view of a granted `view` session; every read audited `support.view`. */
+export async function supportWorkspaceViewFor(
+  ctx: Omit<StaffContext, 'db'>,
+  workspaceId: string,
+): Promise<SupportWorkspaceView> {
+  const { readSupportWorkspaceView } = await import('../support/index.ts');
+  return readSupportWorkspaceView({ db, ...ctx }, workspaceId);
 }
 
 /**

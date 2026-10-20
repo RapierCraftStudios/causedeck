@@ -1011,6 +1011,24 @@ const CASES: Record<string, Case> = {
   withSupportSession: async (f) => {
     await expectDenied(core.withSupportSession({ db: f.tx, staffUserId: f.ub }, f.a.id));
   },
+  // the staff console (#314): ub is not staff, so it lists nothing, opens none of A's sessions
+  // and gets no view of A; A's sessions are unchanged.
+  listStaffSupportSessions: async (f) => {
+    const before = await aSupportSessions(f);
+    expect(await core.listStaffSupportSessions(f.tx, f.ub)).toEqual([]);
+    expect(await core.listStaffSupportSessions(f.tx, f.ua)).toEqual([]);
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  staffSupportSession: async (f) => {
+    const sessionId = f.a.rows.support_session?.id ?? '';
+    expect(await core.staffSupportSession(f.tx, f.ub, sessionId)).toBeNull();
+    expect(await core.staffSupportSession(f.tx, f.ua, sessionId)).toBeNull();
+  },
+  readSupportWorkspaceView: async (f) => {
+    const before = await aSupportSessions(f);
+    await expectDenied(core.readSupportWorkspaceView({ db: f.tx, staffUserId: f.ub }, f.a.id));
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
   isActiveStaff: async (f) => {
     expect(await core.isActiveStaff(f.tx, f.ub)).toBe(false);
     expect(await f.asB((s) => core.isActiveStaff(s, f.ub))).toBe(false);

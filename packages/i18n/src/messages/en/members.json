@@ -191,6 +191,28 @@
       "signedOut": "Your session ended. Sign in again to continue.",
       "offline": "You are offline. Connect to make changes.",
       "generic": "Something went wrong. Please try again."
+    },
+    "tabs": {
+      "label": "Members and invitations",
+      "members": "Members ({count})",
+      "invitations": "Pending invitations ({count})"
+    },
+    "invitationsEmpty": "No pending invitations.",
+    "seats": {
+      "title": "Seats",
+      "used": "{used} of {granted} seats in use",
+      "clerk": "{used} of {granted} clerk seats in use",
+      "overLimit": "Over plan limit",
+      "note": "Invitations take a seat when they are accepted."
+    },
+    "aboutRoles": "About roles",
+    "transferPicker": {
+      "title": "Transfer ownership",
+      "description": "Choose the member who will become the owner of {workspace}.",
+      "label": "New owner",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "none": "Invite another member before you transfer ownership."
     }
   }
 }

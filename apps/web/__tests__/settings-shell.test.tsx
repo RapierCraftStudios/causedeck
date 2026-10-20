@@ -2,7 +2,9 @@
 // Settings shell and workspace profile (#284): the sub-nav lists the eight sections plus usage and
 // audit, hidden by `can()` per role; direct URLs to a hidden section show the permission-denied
 // page; the profile form validates with zod, saves optimistically with rollback and toasts, keeps
-// the slug rename owner-only, turns read-only offline, and guards unsaved changes.
+// the slug rename owner-only, turns read-only offline, and guards unsaved changes. The export and
+// danger pages (#288) gate on `export.run` / `workspace.delete`, explain disabled actions with a
+// focusable tooltip and the `workspace.export` flag, and link transfer to the members flow.
 import { readFileSync } from 'node:fs';
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -23,6 +25,7 @@ const page = vi.hoisted(() => ({
   pathname: '/w/demo/settings/profile',
 }));
 const toast = vi.hoisted(() => vi.fn());
+const flags = vi.hoisted(() => ({ on: new Set<string>() }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => router,
@@ -43,6 +46,10 @@ vi.mock('../lib/workspace-loader.ts', () => ({
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
 vi.mock('../src/health.ts', () => ({ logger: { error: vi.fn() } }));
 vi.mock('@causedeck/ui/sonner', () => ({ toast }));
+vi.mock('../lib/flags.ts', () => ({
+  workspaceFlagCheck: () => Promise.resolve((key: string) => flags.on.has(key)),
+}));
+vi.mock('../lib/report-error.ts', () => ({ reportError: vi.fn() }));
 vi.mock('../app/(app)/w/[slug]/settings/profile/actions.ts', () => ({
   updateWorkspaceProfileAction: vi.fn(),
 }));
@@ -58,9 +65,15 @@ const PLACEHOLDERS = {
   roles: (await import('../app/(app)/w/[slug]/settings/roles/page.tsx')).default,
   integrations: (await import('../app/(app)/w/[slug]/settings/integrations/page.tsx')).default,
   privacy: (await import('../app/(app)/w/[slug]/settings/privacy/page.tsx')).default,
-  export: (await import('../app/(app)/w/[slug]/settings/export/page.tsx')).default,
-  danger: (await import('../app/(app)/w/[slug]/settings/danger/page.tsx')).default,
 };
+const { default: ExportPage } = await import('../app/(app)/w/[slug]/settings/export/page.tsx');
+const { default: ExportLoading } =
+  await import('../app/(app)/w/[slug]/settings/export/loading.tsx');
+const { default: ExportError } = await import('../app/(app)/w/[slug]/settings/export/error.tsx');
+const { default: DangerPage } = await import('../app/(app)/w/[slug]/settings/danger/page.tsx');
+const { default: DangerLoading } =
+  await import('../app/(app)/w/[slug]/settings/danger/loading.tsx');
+const { default: DangerError } = await import('../app/(app)/w/[slug]/settings/danger/error.tsx');
 
 const en = catalogs.en.settings;
 const WORKSPACE_ID = '00000000-0000-4000-8000-00000000a001';
@@ -94,6 +107,7 @@ beforeEach(() => {
   asRole('owner');
   page.dev = true;
   page.pathname = '/w/demo/settings/profile';
+  flags.on.clear();
   setOnline(true);
 });
 
@@ -219,8 +233,6 @@ describe('section pages', () => {
   it.each([
     ['clerk', 'integrations'],
     ['clerk', 'privacy'],
-    ['advocate', 'export'],
-    ['advocate', 'danger'],
     ['viewer', 'roles'],
   ] as const)('a %s opening %s directly gets the permission-denied page', async (role, id) => {
     asRole(role);
@@ -237,14 +249,102 @@ describe('section pages', () => {
     },
   );
 
-  it('danger lists transfer and delete, disabled with an explanation', async () => {
-    withIntl(await PLACEHOLDERS.danger({ params: params() }));
-    const zone = document.querySelector('[data-slot="danger-zone"]');
+  it.each([
+    ['advocate', 'export'],
+    ['clerk', 'export'],
+    ['advocate', 'danger'],
+    ['viewer', 'danger'],
+  ] as const)('a %s opening %s directly gets the permission-denied page', async (role, id) => {
+    asRole(role);
+    const Page = id === 'export' ? ExportPage : DangerPage;
+    withIntl(await Page({ params: params() }));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(denied);
+    expect(document.querySelector(`[data-route="settings-${id}"]`)).toBeNull();
+  });
+
+  it('export and danger are not found for a non-member', async () => {
+    page.context = null;
+    await expect(ExportPage({ params: params() })).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(DangerPage({ params: params() })).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
+  /** The reason a disabled settings action names through `aria-describedby`. */
+  function reasonOf(button: HTMLElement): string {
+    const ids = (button.getAttribute('aria-describedby') ?? '').split(' ');
+    const reason = ids.find((id) => id.endsWith('-reason'));
+    return reason ? (document.getElementById(reason)?.textContent ?? '') : '';
+  }
+
+  it('export explains the ZIP and keeps the button disabled with a reason until the flag is on', async () => {
+    withIntl(await ExportPage({ params: params() }));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.nav.export);
+    expect(screen.getByRole('heading', { level: 2, name: en.export.title })).toBeTruthy();
+    for (const item of Object.values(en.export.contents)) {
+      expect(screen.getByText(item)).toBeTruthy();
+    }
+    const button = screen.getByRole('button', { name: en.export.action });
+    expect(button.hasAttribute('disabled')).toBe(true);
+    expect(reasonOf(button)).toBe(en.export.comingSoon);
+    // A disabled button takes no focus, so the reason sits on a focusable tooltip trigger.
+    const trigger = button.closest('[data-slot="disabled-with-reason"]') as HTMLElement;
+    expect(trigger.tabIndex).toBe(0);
+    expect(trigger.getAttribute('data-disabled-reason')).toBe(en.export.comingSoon);
+  });
+
+  it('export enables the button once workspace.export is on, but not offline', async () => {
+    flags.on.add('workspace.export');
+    withIntl(await ExportPage({ params: params() }));
+    const button = screen.getByRole('button', { name: en.export.action });
+    expect(button.hasAttribute('disabled')).toBe(false);
+    expect(button.getAttribute('data-slot')).toBe('export-start');
+    act(() => {
+      setOnline(false);
+    });
+    const offline = screen.getByRole('button', { name: en.export.action });
+    expect(offline.hasAttribute('disabled')).toBe(true);
+    expect(reasonOf(offline)).toBe(en.offline);
+  });
+
+  it('danger links transfer to the members flow and keeps delete disabled with a reason', async () => {
+    withIntl(await DangerPage({ params: params() }));
+    const zone = document.querySelector('[data-slot="danger-zone"]') as HTMLElement;
     expect(zone).not.toBeNull();
-    for (const name of [en.danger.transfer.action, en.danger.delete.action]) {
-      const button = screen.getByRole('button', { name });
-      expect(button.hasAttribute('disabled')).toBe(true);
-      expect(button.getAttribute('title')).toBe(en.danger.unavailable);
+    expect(zone.className).toContain('border-danger-soft');
+    const transfer = within(zone).getByRole('link', { name: en.danger.transfer.action });
+    expect(transfer.getAttribute('href')).toBe('/w/demo/settings/members?transfer=1');
+    const remove = within(zone).getByRole('button', { name: en.danger.delete.action });
+    expect(remove.hasAttribute('disabled')).toBe(true);
+    expect(remove.hasAttribute('title')).toBe(false);
+    expect(reasonOf(remove)).toBe(en.danger.unavailable);
+    expect(
+      within(zone).getByRole('link', { name: en.danger.exportFirst }).getAttribute('href'),
+    ).toBe('/w/demo/settings/export');
+  });
+
+  it('danger disables transfer too while offline', async () => {
+    setOnline(false);
+    withIntl(await DangerPage({ params: params() }));
+    const transfer = screen.getByRole('button', { name: en.danger.transfer.action });
+    expect(transfer.hasAttribute('disabled')).toBe(true);
+    expect(reasonOf(transfer)).toBe(en.offline);
+  });
+
+  it('export and danger have skeleton loading and inline-retry error states', () => {
+    for (const Loading of [ExportLoading, DangerLoading]) {
+      withIntl(<Loading />);
+      expect(document.querySelector('[data-pattern-state="loading"]')).not.toBeNull();
+      cleanup();
+    }
+    for (const [ErrorPage, copy] of [
+      [ExportError, en.export.error],
+      [DangerError, en.danger.error],
+    ] as const) {
+      const reset = vi.fn();
+      withIntl(<ErrorPage error={new Error('boom')} reset={reset} />);
+      expect(screen.getByText(copy.title)).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: copy.retry }));
+      expect(reset).toHaveBeenCalled();
+      cleanup();
     }
   });
 

@@ -521,6 +521,28 @@ export type Messages = {
       offline: string;
       generic: string;
     };
+    tabs: {
+      label: string;
+      members: string;
+      invitations: string;
+    };
+    invitationsEmpty: string;
+    seats: {
+      title: string;
+      used: string;
+      clerk: string;
+      overLimit: string;
+      note: string;
+    };
+    aboutRoles: string;
+    transferPicker: {
+      title: string;
+      description: string;
+      label: string;
+      continue: string;
+      cancel: string;
+      none: string;
+    };
   };
   notifications: {
     email: {
@@ -675,6 +697,7 @@ export type Messages = {
       loadError: string;
       retry: string;
       loading: string;
+      empty: string;
     };
   };
   billing: {
@@ -993,6 +1016,34 @@ export type Messages = {
         label: string;
         description: string;
         action: string;
+      };
+      exportFirst: string;
+      transferHint: string;
+      loading: string;
+      error: {
+        title: string;
+        retry: string;
+      };
+    };
+    export: {
+      title: string;
+      description: string;
+      contentsTitle: string;
+      contents: {
+        matters: string;
+        documents: string;
+        people: string;
+        audit: string;
+      };
+      delivery: string;
+      actionLabel: string;
+      actionDescription: string;
+      action: string;
+      comingSoon: string;
+      loading: string;
+      error: {
+        title: string;
+        retry: string;
       };
     };
     account: {

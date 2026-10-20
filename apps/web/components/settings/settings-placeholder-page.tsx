@@ -1,12 +1,11 @@
-// A settings section that a sibling issue fills in (#284): roles (#285), privacy (#286),
-// integrations (#287), export and danger (#288). It renders inside the settings shell so the sub-nav
+// A settings section that a sibling issue fills in (#284): roles (#285), privacy (#286) and
+// integrations (#287); export and danger became real pages in #288. It renders inside the settings shell so the sub-nav
 // never leads to a missing page, and checks the section's permission with the same `can()` as the
 // sub-nav: a direct URL without it shows the permission-denied page.
 import { EmptyState } from '@causedeck/ui/empty-state';
 import { Hourglass } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import type { ReactNode } from 'react';
 
 import { canOpenSettings, type SettingsSectionId } from '../../lib/settings-nav.ts';
 import { getWorkspaceContext } from '../../lib/workspace-loader.ts';
@@ -16,15 +15,9 @@ export interface SettingsPlaceholderProps {
   params: Promise<{ slug: string }>;
 }
 
-export type PlaceholderSection = Extract<
-  SettingsSectionId,
-  'roles' | 'integrations' | 'privacy' | 'export' | 'danger'
->;
+export type PlaceholderSection = Extract<SettingsSectionId, 'roles' | 'integrations' | 'privacy'>;
 
-export function settingsPlaceholderPage(
-  section: PlaceholderSection,
-  body?: () => Promise<ReactNode>,
-) {
+export function settingsPlaceholderPage(section: PlaceholderSection) {
   return async function SettingsPlaceholderPage({ params }: SettingsPlaceholderProps) {
     const { slug } = await params;
     // The layout already checks membership; checking again keeps the page safe on its own.
@@ -38,16 +31,12 @@ export function settingsPlaceholderPage(
           <h1 className="font-serif text-2xl font-medium">{t(`nav.${section}`)}</h1>
           <p className="text-ink-muted text-sm">{t(`placeholder.${section}`)}</p>
         </header>
-        {body ? (
-          await body()
-        ) : (
-          <EmptyState
-            data-pattern-state="empty"
-            icon={<Hourglass aria-hidden="true" />}
-            title={t('placeholder.title')}
-            description={t('placeholder.hint')}
-          />
-        )}
+        <EmptyState
+          data-pattern-state="empty"
+          icon={<Hourglass aria-hidden="true" />}
+          title={t('placeholder.title')}
+          description={t('placeholder.hint')}
+        />
       </div>
     );
   };

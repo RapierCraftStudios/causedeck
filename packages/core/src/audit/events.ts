@@ -69,6 +69,12 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'An owner renamed the workspace slug; the old slug redirects for 90 days',
   },
+  // Fail-closed: it changes who may invite and who sees restricted matters (#285). Metadata names the
+  // changed settings and their new on/off values.
+  'workspace.role_settings_updated': {
+    security: true,
+    description: 'An owner changed whether advocates may invite or owners see restricted matters',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

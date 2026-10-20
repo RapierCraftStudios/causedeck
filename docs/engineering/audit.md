@@ -59,6 +59,7 @@ Each action is either **security** or **informational**:
 | `billing.subscription_changed` | security | owner billing actions (`changeSubscription`, #257) |
 | `billing.gstin_updated`     | security      | `setSubscriptionGstin` (#257)                       |
 | `billing.invoice_downloaded` | security    | `openSaasInvoicePdf`, before the first byte (#258)  |
+| `workspace.role_settings_updated` | security | `updateRoleSettings` (#285)                     |
 | `workspace.settings_viewed` | informational | reserved                                                          |
 | `audit.retention_purged`    | security      | `system.audit.retention` (account chain, #230)                    |
 

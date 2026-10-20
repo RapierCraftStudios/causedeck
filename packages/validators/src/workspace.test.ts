@@ -6,8 +6,33 @@ import {
   InviteInput,
   RESERVED_SLUGS,
   Slug,
+  UpdateRoleSettingsInput,
   UpdateWorkspaceProfileInput,
 } from './workspace';
+
+describe('UpdateRoleSettingsInput', () => {
+  it('accepts both role settings as booleans', () => {
+    const input = { advocatesCanInvite: false, ownersSeeRestrictedMatters: true };
+    expect(UpdateRoleSettingsInput.parse(input)).toEqual(input);
+  });
+
+  it('rejects a missing, non-boolean or unknown setting', () => {
+    expect(UpdateRoleSettingsInput.safeParse({ advocatesCanInvite: true }).success).toBe(false);
+    expect(
+      UpdateRoleSettingsInput.safeParse({
+        advocatesCanInvite: 'false',
+        ownersSeeRestrictedMatters: true,
+      }).success,
+    ).toBe(false);
+    expect(
+      UpdateRoleSettingsInput.safeParse({
+        advocatesCanInvite: true,
+        ownersSeeRestrictedMatters: true,
+        advocatesCanReadAudit: false,
+      }).success,
+    ).toBe(false);
+  });
+});
 
 describe('Slug', () => {
   it('accepts lowercase hyphenated slugs', () => {

@@ -597,6 +597,27 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getWorkspaceProfile(f.tx, f.a.id)).toEqual(before);
   },
+  getRoleSettings: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ advocatesCanInvite: false, ownersSeeRestricted: false })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the defaults, not A's values.
+    expect(await f.asB((s) => core.getRoleSettings(s, f.a.id))).toEqual(core.DEFAULT_ROLE_SETTINGS);
+  },
+  updateRoleSettings: async (f) => {
+    const before = await core.getRoleSettings(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.updateRoleSettings(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          input: { advocatesCanInvite: false, ownersSeeRestrictedMatters: false },
+        }),
+      ),
+    );
+    expect(await core.getRoleSettings(f.tx, f.a.id)).toEqual(before);
+  },
   acceptInvitation: async (f) => {
     const error: unknown = await core
       .acceptInvitation(f.tx, { userId: f.ub, token: f.aInvitation.token })
@@ -801,6 +822,16 @@ const CASES: Record<string, Case> = {
       ),
     );
     expect(await aRestrictions(f)).toEqual(before);
+  },
+  listMatterRestrictions: async (f) => {
+    await expectDenied(core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.a.id }));
+    await expectDenied(
+      f.asB((s) => core.listMatterRestrictions(s, { userId: f.ub, workspaceId: f.a.id })),
+    );
+    // B's own list never includes A's restriction.
+    const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
+    const own = await core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.b.id });
+    expect(own.map((r) => r.matterId)).not.toContain(aMatter);
   },
   assertMatterReadable: async (f) => {
     const aMatter = f.a.rows.matter_restriction?.matterId ?? '';

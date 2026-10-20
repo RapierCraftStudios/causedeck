@@ -231,7 +231,6 @@
     "placeholder": {
       "title": "This section is on its way.",
       "hint": "It will appear here in a coming update. Nothing needs to be set up yet.",
-      "roles": "What each role can see and do in this workspace.",
       "integrations": "The private email intake address and calendar feed for this workspace.",
       "privacy": "Where your data is processed and how long it is kept.",
       "export": "Download a copy of everything in this workspace.",
@@ -315,6 +314,134 @@
         "label": "Delete workspace",
         "description": "Permanently delete this workspace and all its data after an export.",
         "action": "Delete workspace"
+      }
+    },
+    "roles": {
+      "metaTitle": "Roles and permissions",
+      "title": "Roles",
+      "description": "What each role can see and do in this workspace.",
+      "loading": "Loading the role settings",
+      "clerkLimits": "Clerks cannot see strategy notes or matter memory, even on matters they work on.",
+      "matrix": {
+        "title": "Permissions by role",
+        "description": "Set by CauseDeck for every workspace. A tick means the role can do it.",
+        "caption": "What each role can do",
+        "action": "Action",
+        "allowed": "Allowed",
+        "denied": "Not allowed",
+        "settingsNote": "Advocates invite members only while Advocates can invite members is on. Restricted matters are open only to the people listed on them, and to owners while Owners see restricted matters is on."
+      },
+      "domains": {
+        "workspace": "Workspace",
+        "member": "Members",
+        "billing": "Billing",
+        "matter": "Matters",
+        "strategy": "Strategy",
+        "memory": "Matter memory",
+        "document": "Documents",
+        "task": "Tasks",
+        "listing": "Cause list",
+        "draft": "Drafts",
+        "audit": "Audit log",
+        "export": "Export",
+        "shell": "Workspace areas"
+      },
+      "actions": {
+        "workspace": {
+          "manage": "Edit the workspace profile and settings",
+          "rename": "Rename the web address",
+          "delete": "Delete the workspace"
+        },
+        "member": {
+          "invite": "Invite members",
+          "remove": "Remove members",
+          "role": "Change roles and transfer ownership"
+        },
+        "billing": {
+          "manage": "Manage the plan and payment",
+          "read": "See billing and usage"
+        },
+        "matter": {
+          "read": "See matters",
+          "write": "Edit matters",
+          "restrict": "Restrict a matter"
+        },
+        "strategy": {
+          "read": "See strategy notes"
+        },
+        "memory": {
+          "read": "See matter memory",
+          "write": "Add to matter memory"
+        },
+        "document": {
+          "read": "See documents",
+          "write": "Upload and edit documents"
+        },
+        "task": {
+          "read": "See tasks",
+          "write": "Create and update tasks"
+        },
+        "listing": {
+          "read": "See the cause list"
+        },
+        "draft": {
+          "write": "Write drafts"
+        },
+        "audit": {
+          "read": "Read and export the audit log"
+        },
+        "export": {
+          "run": "Export all workspace data"
+        },
+        "limitation": {
+          "read": "See limitation dates"
+        },
+        "insights": {
+          "read": "See practice insights"
+        },
+        "settings": {
+          "read": "Open workspace settings"
+        },
+        "invoices": {
+          "read": "Download invoices"
+        }
+      },
+      "settings": {
+        "title": "Role settings",
+        "description": "Two choices this workspace can make on top of the roles above.",
+        "readOnly": "Only workspace owners can change these settings.",
+        "advocatesCanInvite": {
+          "label": "Advocates can invite members",
+          "description": "When off, only owners can invite people to this workspace."
+        },
+        "ownersSeeRestrictedMatters": {
+          "label": "Owners see restricted matters",
+          "description": "When off, owners see a restricted matter only if they are listed on it."
+        }
+      },
+      "toast": {
+        "saved": "Role settings saved.",
+        "undo": "Undo",
+        "undone": "Change undone.",
+        "error": "Could not save the role settings. Try again.",
+        "forbidden": "Only workspace owners can change role settings.",
+        "offline": "Settings can be changed when you are back online."
+      },
+      "restricted": {
+        "title": "Restricted matters",
+        "description": "Matters open only to the people listed on them.",
+        "matter": "Matter {id}",
+        "allowed": "Open to {names}",
+        "ownersOnly": "Open to owners only",
+        "since": "Restricted on {date}",
+        "empty": "No restricted matters",
+        "emptyHint": "Restricted matters you can see will be listed here.",
+        "picker": "Restrict a matter",
+        "pickerUnavailable": "You can restrict matters once matters arrive in CauseDeck."
+      },
+      "error": {
+        "title": "Could not load the role settings.",
+        "retry": "Try again"
       }
     }
   }

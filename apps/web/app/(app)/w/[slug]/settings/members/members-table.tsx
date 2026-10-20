@@ -6,7 +6,7 @@
 // advocates manage the invitations they could have sent, everyone else sees the list read-only.
 // Offline the page is read-only and `Invite member` says it needs a connection. The dialogs load on
 // first use.
-import { invitableRoles } from '@causedeck/auth/policy';
+import { invitableRoles, type PolicySettings } from '@causedeck/auth/policy';
 import { Alert } from '@causedeck/ui/alert';
 import { Avatar } from '@causedeck/ui/avatar';
 import { Badge } from '@causedeck/ui/badge';
@@ -99,6 +99,8 @@ export interface MembersViewProps {
   members: readonly MemberRow[];
   invitations: readonly InvitationRow[];
   actions: MembersActions;
+  /** The workspace's role settings (#285); `advocatesCanInvite` off hides inviting from advocates. */
+  policySettings?: PolicySettings;
 }
 
 type Row =
@@ -209,6 +211,7 @@ export function MembersView({
   members,
   invitations,
   actions,
+  policySettings,
 }: MembersViewProps) {
   const t = useTranslations('members');
   const format = useFormatter();
@@ -224,7 +227,7 @@ export function MembersView({
   // The central policy decides (#234); the server actions and domain service check it again.
   const isOwner = can(viewer.role, 'member.role');
   const canManageMembers = isOwner && can(viewer.role, 'member.remove');
-  const invitable = invitableRoles(viewer.role).filter(
+  const invitable = invitableRoles(viewer.role, policySettings).filter(
     (role): role is Exclude<Role, 'owner'> => role !== 'owner',
   );
   const canInvite = invitable.length > 0;

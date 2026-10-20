@@ -21,6 +21,7 @@ import {
   type InvitationErrorReason,
 } from './errors.ts';
 import { entitlements } from './members.ts';
+import { getRoleSettings, toPolicySettings } from './role-settings.ts';
 
 type Queryable = Database | Transaction;
 type WorkspaceRole = (typeof schema.member.$inferSelect)['role'];
@@ -73,12 +74,14 @@ async function requireInviter(
         eq(member.status, 'active'),
       ),
     );
-  // The policy decides (#234): `member.invite`, granting only roles ranked below the inviter's.
+  // The policy decides (#234): `member.invite`, granting only roles ranked below the inviter's,
+  // and none to advocates while the workspace turns `advocates_can_invite` off (#285).
+  const settings = toPolicySettings(await getRoleSettings(tx, workspaceId));
   if (
     !actor ||
     !isRole(actor.role) ||
     !isRole(role) ||
-    !invitableRoles(actor.role).includes(role)
+    !invitableRoles(actor.role, settings).includes(role)
   ) {
     throw forbidden('You cannot invite members with this role');
   }

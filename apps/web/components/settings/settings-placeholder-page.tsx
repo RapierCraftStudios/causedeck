@@ -1,5 +1,5 @@
-// A settings section that a sibling issue fills in (#284): roles (#285), privacy (#286),
-// integrations (#287), export and danger (#288). It renders inside the settings shell so the sub-nav
+// A settings section that a sibling issue fills in (#284): privacy (#286), integrations (#287),
+// export and danger (#288). It renders inside the settings shell so the sub-nav
 // never leads to a missing page, and checks the section's permission with the same `can()` as the
 // sub-nav: a direct URL without it shows the permission-denied page.
 import { EmptyState } from '@causedeck/ui/empty-state';
@@ -18,7 +18,7 @@ export interface SettingsPlaceholderProps {
 
 export type PlaceholderSection = Extract<
   SettingsSectionId,
-  'roles' | 'integrations' | 'privacy' | 'export' | 'danger'
+  'integrations' | 'privacy' | 'export' | 'danger'
 >;
 
 export function settingsPlaceholderPage(

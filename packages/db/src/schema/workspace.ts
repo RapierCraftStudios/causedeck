@@ -32,6 +32,11 @@ export const workspaceSettings = pgTable(
     advocatesCanReadAudit: boolean('advocates_can_read_audit').notNull().default(true),
     /** The city the practice is based in, shown on the workspace profile (#284). */
     practiceCity: text('practice_city'),
+    // Role settings on the settings roles page (#285); both default on, so `can()` behaves as before.
+    /** Advocates may invite members (`member.invite`) unless an owner turns this off. */
+    advocatesCanInvite: boolean('advocates_can_invite').notNull().default(true),
+    /** Owners see restricted matters they are not listed on unless an owner turns this off. */
+    ownersSeeRestricted: boolean('owners_see_restricted').notNull().default(true),
     ...timestamps(),
   },
   (t) => [

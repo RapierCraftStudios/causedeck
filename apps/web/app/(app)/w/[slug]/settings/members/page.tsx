@@ -1,18 +1,22 @@
 // `/w/[slug]/settings/members` (#181): who is in the workspace, with what role, and pending
 // invitations. Every member may look; what they may change is decided per role in the client view
-// and enforced again by the domain service behind each server action. The settings shell and its
-// navigation arrive in #25.
+// and enforced again by the domain service behind each server action. The header links to the roles
+// page (`How roles work`, #285) for roles that can open it; advocates see no invite button while the
+// workspace turns `advocatesCanInvite` off.
 //
 // States: loading (six skeleton rows while the list streams in), error (`Could not load members.`
 // with `Try again`), empty (only the caller, no invitations), offline and permission-denied (in the
 // client view). `?__state=loading|error` previews the first two in development, like the shell.
+import type { PolicySettings } from '@causedeck/auth/policy';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
 import { ShellOfflineBanner } from '../../../../../../components/shell/offline-banner.tsx';
 import { isDev } from '../../../../../../lib/env.ts';
+import { canOpenSettings, settingsHref } from '../../../../../../lib/settings-nav.ts';
 import type { Role, WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
@@ -67,15 +71,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** Members and pending invitations, read on one workspace-scoped transaction (`loadMembersPage`). */
-async function loadMembers(
-  context: WorkspaceContext,
-): Promise<{ members: MemberRow[]; invitations: InvitationRow[] }> {
-  const { loadMembersPage } = await import('@causedeck/core/runtime');
-  const { members, invitations } = await loadMembersPage({
-    workspaceId: context.workspace.id,
-    userId: context.user.id,
-  });
+async function loadMembers(context: WorkspaceContext): Promise<{
+  members: MemberRow[];
+  invitations: InvitationRow[];
+  policySettings: PolicySettings;
+}> {
+  const { inWorkspace, loadMembersPage } = await import('@causedeck/core/runtime');
+  const scope = { workspaceId: context.workspace.id, userId: context.user.id };
+  const { members, invitations } = await loadMembersPage(scope);
+  const { getRoleSettings, toPolicySettings } = await import('@causedeck/core/workspaces');
+  const roleSettings = await inWorkspace(scope, (tx) => getRoleSettings(tx, scope.workspaceId));
   return {
+    policySettings: toPolicySettings(roleSettings),
     members: members.flatMap(({ memberId, userId, name, email, role, joinedAt, lastActiveAt }) =>
       isRole(role) ? [{ memberId, userId, name, email, role, joinedAt, lastActiveAt }] : [],
     ),
@@ -106,6 +113,7 @@ async function MembersSection({
       viewer={{ userId: context.user.id, role: context.role }}
       members={data.members}
       invitations={data.invitations}
+      policySettings={data.policySettings}
       actions={{
         invite: inviteMembersAction,
         changeRole: changeRoleAction,
@@ -136,6 +144,15 @@ export default async function MembersPage({ params, searchParams }: MembersPageP
         <p className="text-ink-muted text-sm">
           {t('description', { workspace: context.workspace.name })}
         </p>
+        {canOpenSettings(context.role, 'roles') ? (
+          <Link
+            href={settingsHref(context.workspace.slug, 'roles')}
+            data-slot="roles-link"
+            className="text-accent focus-visible:outline-ring w-fit text-sm underline-offset-4 outline-offset-2 hover:underline focus-visible:outline-2"
+          >
+            {t('rolesLink')}
+          </Link>
+        ) : null}
       </header>
       {state === 'loading' ? (
         <MembersSkeleton />

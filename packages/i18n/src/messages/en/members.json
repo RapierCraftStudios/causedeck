@@ -191,6 +191,7 @@
       "signedOut": "Your session ended. Sign in again to continue.",
       "offline": "You are offline. Connect to make changes.",
       "generic": "Something went wrong. Please try again."
-    }
+    },
+    "rolesLink": "How roles work"
   }
 }

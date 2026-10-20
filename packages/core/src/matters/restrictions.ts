@@ -2,7 +2,8 @@
 // only by its listed users and owners (unless `ownersSeeRestrictedMatters` is off); to everyone
 // else it does not exist, so these services answer `NOT_FOUND`, never `FORBIDDEN`, for it. The
 // decision is `can()` from `@causedeck/auth/policy`; the role comes from the membership row, never
-// from the caller, and every query runs in the actor's workspace scope under RLS.
+// from the caller, and every query runs in the actor's workspace scope under RLS. Settings a
+// caller passes win; otherwise the workspace's stored role settings apply (#285).
 import { isRole } from '@causedeck/auth';
 import {
   assertCan,
@@ -20,15 +21,15 @@ import {
   type Database,
   type Transaction,
 } from '@causedeck/db';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 
 import { forbidden, invalid, notFound } from '../shared/errors.ts';
 import { activeMember } from '../shared/membership.ts';
-import { memberRole } from '../workspaces/index.ts';
+import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
 
 type Queryable = Database | Transaction;
 
-const { matterRestriction, member } = schema;
+const { matterRestriction, member, user } = schema;
 
 export type MatterRestriction = typeof matterRestriction.$inferSelect;
 
@@ -46,7 +47,25 @@ export interface MatterRestrictionOptions {
   settings?: PolicySettings;
 }
 
+/** A restricted matter as the settings roles page lists it, with its allowed members' names. */
+export interface MatterRestrictionSummary {
+  matterId: string;
+  reason: string | null;
+  createdAt: Date;
+  /** Active members on the allow list, by name; ids that are no longer members are left out. */
+  allowedUsers: { userId: string; name: string }[];
+}
+
 const matterNotFound = () => notFound('Matter not found');
+
+/** The caller's settings, or the workspace's stored role settings when none were passed. */
+async function policySettings(
+  tx: Queryable,
+  workspaceId: string,
+  settings: PolicySettings | undefined,
+): Promise<PolicySettings> {
+  return settings ?? toPolicySettings(await getRoleSettings(tx, workspaceId));
+}
 
 /** The actor with their role from the membership row; `NOT_FOUND` when not an active member. */
 async function resolveActor(tx: Queryable, actor: MatterActor): Promise<Actor> {
@@ -91,11 +110,16 @@ async function readableMatter(
   actor: Actor,
   matterId: string,
   settings: PolicySettings | undefined,
-): Promise<{ resource: Resource; restriction: MatterRestriction | undefined }> {
+): Promise<{
+  resource: Resource;
+  restriction: MatterRestriction | undefined;
+  settings: PolicySettings;
+}> {
   const restriction = await loadRestriction(tx, actor.workspaceId, matterId);
   const resource = matterResource(actor.workspaceId, matterId, restriction);
-  if (!can(actor, 'matter.read', resource, settings).allow) throw matterNotFound();
-  return { resource, restriction };
+  const effective = await policySettings(tx, actor.workspaceId, settings);
+  if (!can(actor, 'matter.read', resource, effective).allow) throw matterNotFound();
+  return { resource, restriction, settings: effective };
 }
 
 /** Malformed ids, or a call from inside another workspace's scope, find nothing. */
@@ -147,9 +171,14 @@ export async function restrictMatter(
   const { workspaceId, userId } = actor;
   return withWorkspace(db, { workspaceId, userId }, async (tx) => {
     const resolved = await resolveActor(tx, actor);
-    const { resource } = await readableMatter(tx, resolved, input.matterId, options.settings);
+    const { resource, settings } = await readableMatter(
+      tx,
+      resolved,
+      input.matterId,
+      options.settings,
+    );
     try {
-      assertCan(resolved, 'matter.restrict', resource, options);
+      assertCan(resolved, 'matter.restrict', resource, { ...options, settings });
     } catch (error) {
       if (error instanceof ForbiddenError) throw forbidden('You cannot restrict this matter');
       throw error;
@@ -185,5 +214,61 @@ export async function restrictMatter(
       .returning();
     if (!row) throw new Error('restrictMatter: upsert returned no row');
     return row;
+  });
+}
+
+/**
+ * The workspace's restricted matters that `actor` may read (owners see all of them unless
+ * `ownersSeeRestrictedMatters` is off; others only those they are listed on), newest first, with
+ * the allowed members' names. `NOT_FOUND` for anyone who is not an active member.
+ */
+export async function listMatterRestrictions(
+  db: Queryable,
+  actor: MatterActor,
+  settings?: PolicySettings,
+): Promise<MatterRestrictionSummary[]> {
+  if (!isUuid(actor.workspaceId) || !isUuid(actor.userId)) throw matterNotFound();
+  const outer = currentScope();
+  if (
+    outer?.kind === 'workspace' &&
+    outer.workspaceId?.toLowerCase() !== actor.workspaceId.toLowerCase()
+  ) {
+    throw matterNotFound();
+  }
+  const { workspaceId, userId } = actor;
+  return withWorkspace(db, { workspaceId, userId }, async (tx) => {
+    const resolved = await resolveActor(tx, actor);
+    const effective = await policySettings(tx, workspaceId, settings);
+    const rows = await tx
+      .select()
+      .from(matterRestriction)
+      .where(eq(matterRestriction.workspaceId, workspaceId))
+      .orderBy(desc(matterRestriction.createdAt), asc(matterRestriction.id));
+    const readable = rows.filter(
+      (row) =>
+        can(resolved, 'matter.read', matterResource(workspaceId, row.matterId, row), effective)
+          .allow,
+    );
+    const ids = [...new Set(readable.flatMap((row) => row.allowedUserIds))];
+    const names = new Map<string, string>();
+    if (ids.length > 0) {
+      const members = await tx
+        .select({ userId: member.userId, name: user.name })
+        .from(member)
+        .innerJoin(user, eq(user.id, member.userId))
+        .where(
+          and(eq(member.organizationId, workspaceId), inArray(member.userId, ids), activeMember),
+        );
+      for (const row of members) names.set(row.userId, row.name);
+    }
+    return readable.map((row) => ({
+      matterId: row.matterId,
+      reason: row.reason,
+      createdAt: row.createdAt,
+      allowedUsers: row.allowedUserIds.flatMap((id) => {
+        const name = names.get(id);
+        return name === undefined ? [] : [{ userId: id, name }];
+      }),
+    }));
   });
 }

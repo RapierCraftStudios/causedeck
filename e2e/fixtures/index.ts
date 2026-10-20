@@ -2,18 +2,21 @@
 //   - `db` (auto): the worker database, reset from the template before each test;
 //   - `asUser(role)`: a page signed in as that seeded role (dev sign-in provider);
 //   - `a11y.expectNoViolations(page)`: axe, serious and critical; automatic after `@a11y` tests;
-//   - `clock.freeze()`: page time pinned to 2026-03-12 09:30 IST; automatic for `@visual` tests.
+//   - `clock.freeze()`: page time pinned to 2026-03-12 09:30 IST; automatic for `@visual` tests;
+//   - `adminAs(kind)` / `adminServer`: the staff console (#309), started only by specs that use it.
 import { mergeTests } from '@playwright/test';
 
 import { test as a11yTest } from './a11y.ts';
+import { test as adminTest } from './admin.ts';
 import { test as authTest } from './auth.ts';
 import { test as clockTest } from './clock.ts';
 
 export { expect } from '@playwright/test';
 export { FROZEN_TIME } from './clock.ts';
 export * from './workspace.ts';
+export { ADMIN_FIXTURES, ALLOWED_HEADERS, totpCode, type AdminFixture } from './admin.ts';
 
-const merged = mergeTests(authTest, a11yTest, clockTest);
+const merged = mergeTests(authTest, a11yTest, clockTest, adminTest);
 
 export const test = merged.extend<{ autoClock: undefined; autoA11y: undefined }>({
   // Freeze time before the test navigates, for every `@visual` test.

@@ -21,6 +21,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `matters` | `@causedeck/core/matters` | matter restrictions |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
+| `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
 | `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains |
 | `shared` | none | helpers no domain owns |
@@ -61,9 +62,12 @@ graph LR
   billing --> audit
   usage --> audit
   usage --> billing
+  support --> workspaces
+  support --> audit
   jobs --> audit
   jobs --> billing
   jobs --> usage
+  jobs --> support
   runtime --> audit
   runtime --> billing
   runtime --> usage
@@ -78,7 +82,8 @@ graph LR
 | `matters` | `workspaces`, `audit` |
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
-| `jobs` | `audit`, `billing`, `usage` |
+| `support` | `workspaces`, `audit` |
+| `jobs` | `audit`, `billing`, `usage`, `support` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

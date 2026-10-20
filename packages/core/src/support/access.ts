@@ -18,8 +18,8 @@ import {
 import { withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { TransactionRollbackError } from 'drizzle-orm';
 
-import { recordAccessDenied, recordSupportView } from '../audit/security-events.ts';
-import { forbidden } from '../workspaces/errors.ts';
+import { recordAccessDenied, recordSupportView } from '../audit/index.ts';
+import { forbidden } from '../workspaces/index.ts';
 import { assertActiveSupportSession, type StaffContext, type SupportSession } from './sessions.ts';
 
 /** What a staff member reads; ids only, never content. */

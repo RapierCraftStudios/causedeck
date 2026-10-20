@@ -10,12 +10,15 @@
 import { db as appDb, isUuid, schema, withWorkspace, type Queryable } from '@causedeck/db';
 import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 
+import { recordSupportSessionEnded, recordSupportSessionStarted } from '../audit/index.ts';
 import {
-  recordSupportSessionEnded,
-  recordSupportSessionStarted,
-} from '../audit/security-events.ts';
-import { conflict, forbidden, invalid, notFound, WorkspaceError } from '../workspaces/errors.ts';
-import { memberRole } from '../workspaces/index.ts';
+  conflict,
+  forbidden,
+  invalid,
+  memberRole,
+  notFound,
+  WorkspaceError,
+} from '../workspaces/index.ts';
 
 const { staffUser, supportSession } = schema;
 

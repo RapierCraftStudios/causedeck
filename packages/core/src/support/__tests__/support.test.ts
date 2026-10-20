@@ -13,9 +13,8 @@ import { createLogger } from '@causedeck/observability';
 import { and, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { runJob } from '../../jobs/context.ts';
-import { supportSessionExpire } from '../../jobs/definitions/support-session-expire.ts';
-import { WorkspaceError } from '../../workspaces/errors.ts';
+import { runJob, supportSessionExpire } from '../../jobs/index.ts';
+import { WorkspaceError } from '../../workspaces/index.ts';
 import {
   assertActiveSupportSession,
   denySession,

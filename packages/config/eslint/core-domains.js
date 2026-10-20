@@ -16,7 +16,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   matters: Object.freeze(['workspaces', 'audit']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
-  jobs: Object.freeze(['audit', 'billing', 'usage']),
+  support: Object.freeze(['workspaces', 'audit']),
+  jobs: Object.freeze(['audit', 'billing', 'usage', 'support']),
   runtime: Object.freeze(['audit', 'billing', 'usage', 'workspaces']),
 });
 

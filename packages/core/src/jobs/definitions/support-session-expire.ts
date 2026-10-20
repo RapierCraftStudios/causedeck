@@ -5,7 +5,7 @@
 // passes (`assertActiveSupportSession`); the job makes the status and the audit trail match.
 import { z } from 'zod';
 
-import { expireSupportSessions } from '../../support/sessions.ts';
+import { expireSupportSessions } from '../../support/index.ts';
 import { defineJob } from '../define.ts';
 
 export const supportSessionExpire = defineJob({

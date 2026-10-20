@@ -2,6 +2,8 @@
 // owner cannot request, see, get a link for or download workspace A's export; A's members who are
 // not owners cannot request one; A's archive holds no row of B; a user who belongs to both
 // workspaces exports only the current one; and `runExportBuild` stays in its payload workspace.
+// Workspace deletion (#302): B's owner cannot request, cancel or see A's deletion, and
+// `runWorkspaceErase` refuses a job that is not in its payload workspace; A is unchanged.
 import { schema, withWorkspace, type Database } from '@causedeck/db';
 import type { TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { decryptForWorkspace, type MemoryObjectStore, type ObjectKey } from '@causedeck/storage';
@@ -9,14 +11,20 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
+  cancelWorkspaceDeletion,
+  getActiveWorkspaceDeletion,
   getExportJob,
   issueExportDownload,
   listExportJobs,
   openExportDownload,
   requestExport,
+  requestWorkspaceDeletion,
   runExportBuild,
+  runWorkspaceErase,
   type ExportJob,
 } from '../index.ts';
+
+import { eraseDeps, noDelivery, spyEmail } from './deletion-fixtures.ts';
 
 import {
   captureLog,
@@ -185,5 +193,82 @@ describe('export services across workspaces', () => {
         { store, keys },
       ),
     ).toBe('missing');
+  });
+});
+
+describe('deletion services across workspaces (#302)', () => {
+  const T0 = new Date('2026-11-01T00:00:00.000Z');
+  let deletionA: string;
+
+  beforeAll(async () => {
+    const job = await requestWorkspaceDeletion(
+      { db, workspaceId: seeded.a.id, userId: seeded.ua, now: () => T0 },
+      { confirmName: seeded.a.name },
+      noDelivery,
+    );
+    deletionA = job.id;
+  });
+
+  const pendingA = async () =>
+    (await getActiveWorkspaceDeletion({ db, workspaceId: seeded.a.id, userId: seeded.ua }))?.status;
+
+  it("B's owner cannot request deletion of A, even with A's name", async () => {
+    expect(
+      await codeOf(
+        requestWorkspaceDeletion(
+          { db, workspaceId: seeded.a.id, userId: seeded.ub },
+          { confirmName: seeded.a.name },
+          noDelivery,
+        ),
+      ),
+    ).toMatch(/^(FORBIDDEN|NOT_FOUND)$/);
+  });
+
+  it("B's owner cannot cancel A's deletion, in A's scope or in B's", async () => {
+    expect(
+      await codeOf(
+        cancelWorkspaceDeletion(
+          { db, workspaceId: seeded.a.id, userId: seeded.ub },
+          deletionA,
+          noDelivery,
+        ),
+      ),
+    ).toMatch(/^(FORBIDDEN|NOT_FOUND)$/);
+    expect(
+      await codeOf(
+        cancelWorkspaceDeletion(
+          { db, workspaceId: seeded.b.id, userId: seeded.ub },
+          deletionA,
+          noDelivery,
+        ),
+      ),
+    ).toBe('NOT_FOUND');
+    expect(await pendingA()).toBe('pending_cooloff');
+  });
+
+  it("B's owner cannot see A's deletion", async () => {
+    expect(
+      await getActiveWorkspaceDeletion({ db, workspaceId: seeded.a.id, userId: seeded.ub }),
+    ).toBe(null);
+    expect(
+      await getActiveWorkspaceDeletion({ db, workspaceId: seeded.b.id, userId: seeded.ub }),
+    ).toBe(null);
+  });
+
+  it("runWorkspaceErase does not touch A's deletion from B's payload", async () => {
+    const { log } = captureLog();
+    const after = new Date(T0.getTime() + 30 * 24 * 60 * 60 * 1000);
+    expect(
+      await runWorkspaceErase(
+        { db, log },
+        { workspaceId: seeded.b.id, jobId: deletionA },
+        eraseDeps(store, spyEmail(), () => after),
+      ),
+    ).toBe('missing');
+    expect(await pendingA()).toBe('pending_cooloff');
+    const [orgB] = await withWorkspace(db, { workspaceId: seeded.b.id }, (tx) =>
+      tx.select({ deletedAt: schema.organization.deletedAt }).from(schema.organization),
+    );
+    expect(orgB?.deletedAt).toBeNull();
   });
 });

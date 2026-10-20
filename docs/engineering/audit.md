@@ -64,9 +64,17 @@ Each action is either **security** or **informational**:
 | `workspace.role_settings_updated`     | security      | `updateRoleSettings` (#285)                                                                                                |
 | `workspace.privacy_updated`           | security      | `updateWorkspacePrivacy` (#286)                                                                                            |
 | `workspace.integration_token_rotated` | security      | `rotateIntegrationToken` (#287; metadata `kind` only)                                                                      |
+| `workspace.deletion_requested` | security | `requestWorkspaceDeletion` (#302); metadata: job id, cool-off end |
+| `workspace.deletion_cancelled` | security | `cancelWorkspaceDeletion` (#302); metadata: job id |
+| `workspace.deletion_started` | security | `runWorkspaceErase`, before step 1 (system actor, #302) |
 | `workspace.settings_viewed`           | informational | reserved                                                                                                                   |
 | `account.profile_updated`             | informational | `/account` `updateAccountProfileAction` via `recordAccountProfileUpdatedFor` (account-level; metadata `fields` only, #289) |
 | `audit.retention_purged`              | security      | `system.audit.retention` (account chain, #230)                                                                             |
+
+Workspace deletion (#302) purges the workspace's own chain (`audit_event` and `ai_call` rows) in
+the final erase step, through `app_finalize_workspace_deletion`, after the chain head hash has been
+captured in the signed deletion receipt kept on `deletion_tombstone`. See
+[data-lifecycle.md](data-lifecycle.md).
 
 Security events (#228):
 

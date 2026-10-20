@@ -81,6 +81,20 @@ export const AUDIT_ACTIONS = {
     description: 'A download link for a workspace data export was issued to its requester',
   },
   'export.downloaded': { security: true, description: 'A workspace data export was downloaded' },
+  // Workspace deletion (#302): fail-closed. Metadata holds the deletion job id and dates only. These
+  // events are purged with the workspace in the final erase step; the receipt keeps the chain head.
+  'workspace.deletion_requested': {
+    security: true,
+    description: 'An owner requested deletion of the workspace (14-day cooling-off)',
+  },
+  'workspace.deletion_cancelled': {
+    security: true,
+    description: 'An owner cancelled a pending workspace deletion',
+  },
+  'workspace.deletion_started': {
+    security: true,
+    description: 'The cooling-off ended and erasure of the workspace started',
+  },
   // Metadata names the changed fields only, never their values (#284).
   'workspace.profile_updated': {
     security: false,

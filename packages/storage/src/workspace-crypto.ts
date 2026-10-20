@@ -5,8 +5,11 @@
 //   getWorkspaceDek      unwrap it, with the KEK the row names (not the one in an object header)
 //   destroyWorkspaceKey  crypto-erase (#31): zero the wrapped DEK and mark it destroyed
 //   rewrapAll            KEK rotation: re-wrap every live DEK under a new KEK; objects untouched
+// Workspace deletion (#302) later purges the zeroed key row with the rest of the workspace; a
+// `deletion_tombstone` then stands in for it, so the key still reads as `KEY_DESTROYED` (never
+// `NO_WORKSPACE_KEY`) and is never re-created.
 import { withWorkspace, type Queryable, type Transaction } from '@causedeck/db';
-import { workspaceKey } from '@causedeck/db/schema';
+import { deletionTombstone, workspaceKey } from '@causedeck/db/schema';
 import type { Secret } from '@causedeck/config/env';
 import { eq, sql } from 'drizzle-orm';
 
@@ -34,6 +37,15 @@ async function readKey(tx: Transaction, workspaceId: string, lock = false): Prom
   return row ?? null;
 }
 
+/** Whether the workspace was erased (#302): its key row is gone, its tombstone stays. */
+async function erased(tx: Transaction, workspaceId: string): Promise<boolean> {
+  const [row] = await tx
+    .select({ workspaceId: deletionTombstone.workspaceId })
+    .from(deletionTombstone)
+    .where(eq(deletionTombstone.workspaceId, workspaceId));
+  return row !== undefined;
+}
+
 function destroyed(): StorageCryptoError {
   return new StorageCryptoError('KEY_DESTROYED', 'the workspace key was destroyed');
 }
@@ -52,6 +64,7 @@ export function ensureWorkspaceKey(
   return withWorkspace(db, { workspaceId }, async (tx) => {
     const existing = await readKey(tx, workspaceId);
     if (existing === null) {
+      if (await erased(tx, workspaceId)) throw destroyed();
       const kekId = provider.currentKekId();
       const wrappedDek = await wrapDek(provider, kekId, generateDek(), workspaceId);
       const inserted = await tx
@@ -68,7 +81,10 @@ export function ensureWorkspaceKey(
   });
 }
 
-/** The workspace's DEK. `KEY_DESTROYED` after crypto-erase, `NO_WORKSPACE_KEY` before creation. */
+/**
+ * The workspace's DEK. `KEY_DESTROYED` after crypto-erase (also once the erased workspace's key row
+ * was purged), `NO_WORKSPACE_KEY` before creation.
+ */
 export function getWorkspaceDek(
   db: Queryable,
   provider: KeyProvider,
@@ -76,7 +92,10 @@ export function getWorkspaceDek(
 ): Promise<Secret<Buffer>> {
   return withWorkspace(db, { workspaceId }, async (tx) => {
     const row = await readKey(tx, workspaceId);
-    if (row === null) throw new StorageCryptoError('NO_WORKSPACE_KEY', 'workspace has no key');
+    if (row === null) {
+      if (await erased(tx, workspaceId)) throw destroyed();
+      throw new StorageCryptoError('NO_WORKSPACE_KEY', 'workspace has no key');
+    }
     if (row.destroyedAt !== null) throw destroyed();
     return unwrapDek(provider, row.kekId, row.wrappedDek, workspaceId);
   });

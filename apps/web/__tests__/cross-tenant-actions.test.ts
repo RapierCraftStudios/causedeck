@@ -56,6 +56,7 @@ const notifications = await import('../app/(app)/w/[slug]/notifications/actions.
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
+const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -85,6 +86,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateWorkspaceProfileAction: profile,
   loadMoreAuditAction: activity,
   verifyAuditEventAction: activity,
+  grantSupportSessionAction: support,
+  denySupportSessionAction: support,
+  revokeSupportSessionAction: support,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -95,6 +99,7 @@ let aMember: { memberId: string; userId: string };
 let aInvitation: { invitationId: string; token: string };
 let aNotificationId: string;
 let aAuditEvent: { id: string; createdAt: string };
+let aSupportSessionId: string;
 
 function signInAs(userId: string): void {
   state.session = {
@@ -139,6 +144,10 @@ function snapshotA() {
       .orderBy(schema.auditEvent.id),
     notificationPrefs: await tx.select().from(schema.notificationPref),
     notificationSettings: await tx.select().from(schema.notificationSetting),
+    supportSessions: await tx
+      .select()
+      .from(schema.supportSession)
+      .orderBy(schema.supportSession.id),
   }));
 }
 
@@ -164,6 +173,9 @@ beforeAll(async () => {
   const event = feed.events.find((item) => item.id === ae.auditEventId);
   if (!event) throw new Error('seed rows');
   aAuditEvent = { id: ae.auditEventId, createdAt: event.createdAt };
+  const ss = t.a.rows.support_session;
+  if (!ss?.id) throw new Error('seed rows');
+  aSupportSessionId = ss.id;
 });
 
 beforeEach(() => {
@@ -221,6 +233,10 @@ function inputs(workspaceId: string): Record<string, unknown> {
       eventId: aAuditEvent.id,
       createdAt: aAuditEvent.createdAt,
     },
+    // A's pending support request (#313): ub, owner of B, may not grant, deny or end it.
+    grantSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
+    denySupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
+    revokeSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
   };
 }
 
@@ -290,6 +306,22 @@ describe('cross-tenant server actions', () => {
       data: { count: 0 },
     });
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('under B’s own workspace, A’s support session is not found and stays pending', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    for (const name of [
+      'grantSupportSessionAction',
+      'denySupportSessionAction',
+      'revokeSupportSessionAction',
+    ]) {
+      expect(code(await action(name)(all[name])), name).toBe('NOT_FOUND');
+    }
+    expect(await snapshotA()).toEqual(before);
+    expect(before.supportSessions.find((row) => row.id === aSupportSessionId)?.status).toBe(
+      'requested',
+    );
   });
 
   it('notifications under B’s own workspace never show or mark A’s notification', async () => {

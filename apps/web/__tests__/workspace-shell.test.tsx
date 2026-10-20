@@ -13,6 +13,7 @@ import { setErrorReporter, type ErrorReporter } from '../lib/report-error.ts';
 import type { WorkspaceContextResult } from '../lib/workspace-context.ts';
 
 import { catalogs, fakeGetTranslations, type TestLocale } from './helpers/intl.ts';
+import { TEST_USER } from './helpers/workspace.ts';
 
 const state = vi.hoisted(
   (): {
@@ -74,6 +75,20 @@ vi.mock('../lib/workspace-loader.ts', async () => {
     },
   };
 });
+
+// The owner's active support session (#313), read through the runtime seam; here a fixture.
+const support = vi.hoisted(() => ({
+  active: null as { id: string; expiresAt: Date } | null,
+  fail: false,
+  activeSupportSessionIn: vi.fn(),
+  revoke: vi.fn(),
+}));
+vi.mock('@causedeck/core/runtime', () => ({
+  activeSupportSessionIn: support.activeSupportSessionIn,
+}));
+vi.mock('../app/(app)/w/[slug]/settings/support/actions.ts', () => ({
+  revokeSupportSessionAction: support.revoke,
+}));
 
 // Flags are evaluated by `@causedeck/flags` against the database (#22); here from `state.flagsOn`.
 vi.mock('../lib/flags.ts', async () => {
@@ -162,6 +177,12 @@ beforeEach(() => {
   state.pathname = '/w/demo/today';
   state.noWorkspaces = false;
   state.flagsOn = [];
+  support.active = null;
+  support.fail = false;
+  support.activeSupportSessionIn.mockImplementation(() =>
+    support.fail ? Promise.reject(new Error('db down')) : Promise.resolve(support.active),
+  );
+  support.revoke.mockResolvedValue({ ok: true, data: { sessionId: 's1', status: 'ended' } });
   online = true;
   Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
   reporter = vi.fn<ErrorReporter>();
@@ -171,6 +192,106 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+});
+
+describe('support session banner (#313)', () => {
+  const SESSION_ID = '00000000-0000-4000-8000-0000000e0001';
+  // 09:00 UTC is 14:30 in Asia/Kolkata, the provider's time zone.
+  const until = () => new Date(Date.now() + 60 * 60_000);
+
+  async function renderLayout(slug = 'demo') {
+    withIntl(
+      await WorkspaceLayout({ children: <p>content</p>, params: Promise.resolve({ slug }) }),
+    );
+  }
+
+  it('shows the owner `Support is viewing this workspace until HH:MM` above the page', async () => {
+    const expiresAt = until();
+    support.active = { id: SESSION_ID, expiresAt };
+    await renderLayout();
+    const banner = document.querySelector('[data-slot="support-banner"]');
+    const time = new Intl.DateTimeFormat('en', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+      timeZone: 'Asia/Kolkata',
+    }).format(expiresAt);
+    expect(banner?.textContent).toContain(`Support is viewing this workspace until ${time}`);
+    expect(banner?.getAttribute('role')).toBe('status');
+    // Between the topbar and main, never inside the page.
+    expect(document.getElementById('main')?.contains(banner ?? null)).toBe(false);
+    expect(support.activeSupportSessionIn).toHaveBeenCalledWith({
+      workspaceId: 'ws-1',
+      userId: TEST_USER.id,
+    });
+  });
+
+  it('formats the end time as 14:30 for a grant ending at 09:00 UTC', async () => {
+    vi.useFakeTimers({ now: new Date('2026-10-20T08:00:00Z'), toFake: ['Date'] });
+    try {
+      support.active = { id: SESSION_ID, expiresAt: new Date('2026-10-20T09:00:00Z') };
+      await renderLayout();
+      expect(screen.getByText('Support is viewing this workspace until 14:30')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('`End session` revokes in one click and the banner goes at once', async () => {
+    support.active = { id: SESSION_ID, expiresAt: until() };
+    await renderLayout();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'End session' }));
+      await Promise.resolve();
+    });
+    expect(support.revoke).toHaveBeenCalledWith({ workspaceId: 'ws-1', sessionId: SESSION_ID });
+    expect(document.querySelector('[data-slot="support-banner"]')).toBeNull();
+  });
+
+  it('keeps the banner with an error when ending fails', async () => {
+    support.active = { id: SESSION_ID, expiresAt: until() };
+    support.revoke.mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: 'x' } });
+    await renderLayout();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'End session' }));
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('alert').textContent).toBe('Could not end the session. Try again.');
+    expect(document.querySelector('[data-slot="support-banner"]')).not.toBeNull();
+  });
+
+  it('shows no banner without an active session, for non-owners, or when the read fails', async () => {
+    await renderLayout();
+    expect(document.querySelector('[data-slot="support-banner"]')).toBeNull();
+
+    cleanup();
+    support.active = { id: SESSION_ID, expiresAt: until() };
+    support.activeSupportSessionIn.mockClear();
+    await renderLayout('clerk-desk');
+    expect(document.querySelector('[data-slot="support-banner"]')).toBeNull();
+    expect(support.activeSupportSessionIn).not.toHaveBeenCalled();
+
+    cleanup();
+    support.fail = true;
+    await renderLayout();
+    expect(document.querySelector('[data-slot="support-banner"]')).toBeNull();
+    expect(document.getElementById('main')?.textContent).toBe('content');
+  });
+
+  it('removes itself when the grant runs out', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    try {
+      support.active = { id: SESSION_ID, expiresAt: new Date(Date.now() + 5 * 60_000) };
+      await renderLayout();
+      expect(document.querySelector('[data-slot="support-banner"]')).not.toBeNull();
+      act(() => {
+        vi.advanceTimersByTime(5 * 60_000 + 1);
+      });
+      expect(document.querySelector('[data-slot="support-banner"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('workspace layout', () => {

@@ -32,6 +32,11 @@ describe('roleCan', () => {
     expect(ROLES.filter((role) => roleCan(role, 'member.role'))).toEqual(['owner']);
     expect(ROLES.filter((role) => roleCan(role, 'workspace.rename'))).toEqual(['owner']);
   });
+
+  it('keeps support-session decisions owner-only and never open to staff (#313)', () => {
+    expect(ROLES.filter((role) => roleCan(role, 'support.manage'))).toEqual(['owner']);
+    expect(can(actor('owner', { kind: 'staff' }), 'support.manage').allow).toBe(false);
+  });
 });
 
 describe('invitableRoles', () => {

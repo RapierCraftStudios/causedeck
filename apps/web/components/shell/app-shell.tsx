@@ -11,6 +11,7 @@ import { CaptureProvider } from './capture-fab.tsx';
 import { MobileNav } from './mobile-nav.tsx';
 import { SidebarProvider } from './sidebar-collapse.tsx';
 import { Sidebar } from './sidebar.tsx';
+import { SupportBanner, type ShellSupportSession } from './support-banner.tsx';
 import { Topbar } from './topbar.tsx';
 
 export interface AppShellProps {
@@ -19,6 +20,8 @@ export interface AppShellProps {
   sidebarState: SidebarState;
   /** Server-evaluated flags (`getWorkspaceFlags`); booleans only, for hiding dark features. */
   flags: FlagSnapshot;
+  /** The active support session (#313), loaded for owners only; shows the support banner. */
+  supportSession?: ShellSupportSession | null;
   children: ReactNode;
 }
 
@@ -27,9 +30,16 @@ export interface AppShellProps {
  * there unless the user chose otherwise), the topbar and the single `main#main` the root skip
  * link targets. Content is max 1200 px, centred. Below 768 px the bottom nav (with the capture
  * button) replaces the sidebar, and `main` pads its bottom to clear it. Flag-gated nav items,
- * commands and shortcuts read `flags` through `FlagsProvider`.
+ * commands and shortcuts read `flags` through `FlagsProvider`. During an active support session the
+ * owner sees the support banner between the topbar and the page.
  */
-export function AppShell({ context, sidebarState, flags, children }: AppShellProps) {
+export function AppShell({
+  context,
+  sidebarState,
+  flags,
+  supportSession = null,
+  children,
+}: AppShellProps) {
   return (
     <PolicyProvider
       actor={{ userId: context.user.id, workspaceId: context.workspace.id, role: context.role }}
@@ -41,6 +51,9 @@ export function AppShell({ context, sidebarState, flags, children }: AppShellPro
               <Sidebar context={context} />
               <div className="bg-surface flex min-w-0 flex-col">
                 <Topbar context={context} />
+                {supportSession ? (
+                  <SupportBanner workspaceId={context.workspace.id} session={supportSession} />
+                ) : null}
                 <main
                   id="main"
                   tabIndex={-1}

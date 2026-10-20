@@ -14,6 +14,7 @@ export const ACTIONS = {
   draft: ['draft.write'],
   audit: ['audit.read'],
   export: ['export.run'],
+  support: ['support.manage'],
   // Shell surfaces gated in apps/web/lib/workspace-context.ts.
   shell: ['limitation.read', 'insights.read', 'settings.read'],
 } as const;

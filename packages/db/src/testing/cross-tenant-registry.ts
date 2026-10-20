@@ -218,6 +218,17 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   revokeSession: denies,
   assertActiveSupportSession: denies,
   withSupportSession: denies,
+  // the owner's support page and shell banner (#313)
+  listSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; nested in another workspace scope it throws TenancyError',
+  },
+  activeSupportSession: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; nested in another workspace scope it throws TenancyError',
+  },
   isActiveStaff: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -398,6 +409,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   SUPPORT_GRANT_MAX_MINUTES: 'constant',
   SUPPORT_REASON_MAX_LENGTH: 'constant',
   SUPPORT_ACTOR_ROLE: 'constant',
+  supportRequestCopy: 'pure (owner notice copy)',
+  supportRequestDedupeKey: 'pure',
   SupportSessionInactiveError: 'error class',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',
@@ -567,6 +580,13 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'caller-checked',
     note: "recordAccessDenied on the app db; guard sets member from memberRoleFor, a non-member's denial never lands in that workspace chain",
   },
+  // support sessions (#313)
+  loadSupportPage: runtimeScopeChecked,
+  activeSupportSessionIn: runtimeScopeChecked,
+  requestSupportSessionFor: runtimeDenies,
+  grantSupportSessionFor: runtimeDenies,
+  denySupportSessionFor: runtimeDenies,
+  revokeSupportSessionFor: runtimeDenies,
   requestExportFor: runtimeDenies,
   issueExportDownloadFor: runtimeDenies,
   openExportDownloadFor: runtimeDenies,

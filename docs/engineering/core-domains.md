@@ -77,6 +77,7 @@ graph LR
   runtime --> workspaces
   runtime --> jobs
   runtime --> lifecycle
+  runtime --> support
 ```
 
 | Domain | May import |
@@ -90,7 +91,7 @@ graph LR
 | `lifecycle` | `audit`, `workspaces` |
 | `support` | `workspaces`, `audit` |
 | `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support` |
-| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle` |
+| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,
 fair-use caps and job fairness read billing entitlements.

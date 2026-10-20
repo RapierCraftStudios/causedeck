@@ -1,6 +1,10 @@
 // `ObjectStore` over the S3 API: MinIO on the VPS (path-style, custom endpoint) or AWS S3 in
 // ap-south-1. India-only unless explicitly overridden; Cloudflare R2 is refused for tenant data.
 // Credentials stay in `Secret`s and SDK errors are rewrapped so neither key reaches a log.
+// `putStream` and `getStream` (#301) stream large objects (workspace exports): multipart upload of
+// `STREAM_PART_BYTES` parts, `STREAM_QUEUE` at a time, so memory stays bounded whatever the size.
+import { Readable } from 'node:stream';
+
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -10,15 +14,18 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { INDIA_AWS_REGIONS, OVERRIDE_ACK, type Secret } from '@causedeck/config/env';
 
 import { isObjectKey, type ObjectKey } from './keys.ts';
+import { ObjectTooLargeError } from './limits.ts';
 import {
   checkDownloadOptions,
   checkedKey,
   checkUpload,
   expiry,
+  limitStream,
   listPrefix,
   ObjectNotFoundError,
   requireContentType,
@@ -57,6 +64,10 @@ export interface StorageEnv {
 export class StorageConfigError extends Error {
   override name = 'StorageConfigError';
 }
+
+/** Multipart part size (S3 minimum is 5 MiB) and parts in flight for `putStream`. */
+const STREAM_PART_BYTES = 8 * 1024 * 1024;
+const STREAM_QUEUE = 2;
 
 const SIGNED_HEADERS = new Set(['content-type', 'content-length']);
 
@@ -127,6 +138,60 @@ export function createS3ObjectStore(options: S3ObjectStoreOptions): ObjectStore 
           }),
         ),
       );
+    },
+
+    async putStream(input) {
+      const { kind } = checkedKey(input.key);
+      requireContentType(input.contentType);
+      let size = 0;
+      const upload = new Upload({
+        client,
+        params: {
+          Bucket: bucket,
+          Key: input.key,
+          Body: Readable.from(limitStream(kind, input.body, (n) => (size = n))),
+          ContentType: input.contentType,
+        },
+        partSize: STREAM_PART_BYTES,
+        queueSize: STREAM_QUEUE,
+        leavePartsOnError: false,
+      });
+      try {
+        await upload.done();
+      } catch (error) {
+        if (error instanceof ObjectTooLargeError) throw error;
+        throw wrap('put', error);
+      }
+      return { size };
+    },
+
+    async getStream(key) {
+      checkedKey(key);
+      let output;
+      try {
+        output = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      } catch (error) {
+        if (isNotFound(error)) throw new ObjectNotFoundError(key);
+        throw wrap('get', error);
+      }
+      const source = output.Body as AsyncIterable<Uint8Array> | undefined;
+      async function* body(): AsyncGenerator<Uint8Array, void, undefined> {
+        if (source === undefined) return;
+        try {
+          yield* source;
+        } catch (error) {
+          throw wrap('get', error);
+        }
+      }
+      return {
+        body: body(),
+        meta: {
+          key,
+          size: output.ContentLength ?? 0,
+          ...(output.ContentType === undefined ? {} : { contentType: output.ContentType }),
+          ...(output.LastModified === undefined ? {} : { lastModified: output.LastModified }),
+        },
+      };
     },
 
     async get(key) {

@@ -42,12 +42,15 @@ export interface StoredSystemBlob {
 // eslint-disable-next-line no-control-regex
 const BAD_FILENAME_CHARS = /[/\\\u0000-\u001f\u007f]/;
 
-function checkInput(input: SystemBlobInput): void {
-  if (!isObjectKind(input.kind)) throw new TypeError('storeSystemBlob: unknown kind');
-  const name = input.filename;
+function checkName(kind: string, name: string): void {
+  if (!isObjectKind(kind)) throw new TypeError('storeSystemBlob: unknown kind');
   if (name.length === 0 || name.length > 255 || BAD_FILENAME_CHARS.test(name)) {
     throw new TypeError('storeSystemBlob: invalid file name');
   }
+}
+
+function checkInput(input: SystemBlobInput): void {
+  checkName(input.kind, input.filename);
   if (input.bytes.byteLength === 0) throw new TypeError('storeSystemBlob: empty object');
   assertWithinLimit(input.kind, input.bytes.byteLength);
 }
@@ -104,4 +107,86 @@ export async function storeSystemBlob(
     throw error;
   }
   return { blobId, key };
+}
+
+export interface SystemBlobStreamInput {
+  kind: ObjectKind;
+  /** A display name only: no path separators or control characters. */
+  filename: string;
+  mime: string;
+  /** Plaintext, consumed once; never held whole. */
+  body: AsyncIterable<Uint8Array>;
+}
+
+export interface StoredSystemBlobStream extends StoredSystemBlob {
+  /** Plaintext bytes. */
+  size: number;
+  /** Hex sha256 of the plaintext. */
+  sha256: string;
+}
+
+/**
+ * `storeSystemBlob` for large objects (#301, workspace exports): the plaintext streams through the
+ * sha256, the workspace envelope encryption and a multipart `putStream`, so memory stays bounded.
+ * The finalized `blob` row is written after the upload; a failure deletes the object again.
+ */
+export async function storeSystemBlobStream(
+  ctx: SystemBlobCtx,
+  input: SystemBlobStreamInput,
+): Promise<StoredSystemBlobStream> {
+  checkName(input.kind, input.filename);
+  const now = ctx.now?.() ?? new Date();
+  const blobId = randomUUID();
+  const key = objectKey({ workspaceId: ctx.workspaceId, kind: input.kind, id: blobId }, now);
+  const hash = createHash('sha256');
+  let size = 0;
+  async function* plaintext(): AsyncGenerator<Uint8Array, void, undefined> {
+    for await (const chunk of input.body) {
+      hash.update(chunk);
+      size += chunk.byteLength;
+      yield chunk;
+    }
+  }
+  let header: Buffer | undefined;
+  const sealed = await encryptForWorkspace(ctx.db, ctx.keys, ctx.workspaceId, plaintext());
+  async function* ciphertext(): AsyncGenerator<Uint8Array, void, undefined> {
+    for await (const chunk of sealed) {
+      // The first chunk is the envelope header (encryptStream), kept on the row for readers.
+      header ??= chunk;
+      yield chunk;
+    }
+  }
+
+  try {
+    await ctx.store.putStream({
+      key,
+      body: ciphertext(),
+      contentType: 'application/octet-stream',
+    });
+    if (header === undefined) throw new Error('storeSystemBlobStream: no envelope header');
+    if (size === 0) throw new TypeError('storeSystemBlobStream: empty object');
+    const sha256 = hash.digest('hex');
+    const encHeader = header;
+    await withWorkspace(ctx.db, { workspaceId: ctx.workspaceId }, async (tx) => {
+      await tx.insert(blob).values({
+        id: blobId,
+        workspaceId: ctx.workspaceId,
+        key,
+        kind: input.kind,
+        filename: input.filename,
+        size,
+        sha256,
+        mime: input.mime,
+        encHeader,
+        scanStatus: 'skipped',
+        createdBy: null,
+        createdAt: now,
+        finalizedAt: now,
+      });
+    });
+    return { blobId, key, size, sha256 };
+  } catch (error) {
+    await ctx.store.delete(key).catch(() => undefined);
+    throw error;
+  }
 }

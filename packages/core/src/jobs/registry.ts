@@ -10,6 +10,8 @@ import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
 import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { exportBuild } from './definitions/export-build.ts';
+import { exportExpire } from './definitions/export-expire.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
 import {
   notificationDigest,
@@ -133,6 +135,8 @@ export const registry = createRegistry([
   systemAuditVerify,
   auditVerify,
   auditRetention,
+  exportBuild,
+  exportExpire,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -151,6 +155,8 @@ export type JobMap = RegistryMap<
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
+    typeof exportBuild,
+    typeof exportExpire,
   ]
 >;
 export type JobName = keyof JobMap;

@@ -1,7 +1,13 @@
 // The `ObjectStore` seam (#21): one interface over MinIO, AWS S3 and an in-memory fake, so
 // callers never depend on a provider. Every method takes an `ObjectKey`, never a raw path.
 import { parseObjectKey, workspacePrefix, type ObjectKey } from './keys.ts';
-import { assertWithinLimit, isObjectKind, type ObjectKind } from './limits.ts';
+import {
+  assertWithinLimit,
+  isObjectKind,
+  MAX_OBJECT_BYTES,
+  ObjectTooLargeError,
+  type ObjectKind,
+} from './limits.ts';
 
 /** Lifetime of every signed upload URL, and the default for downloads: 5 minutes. */
 export const SIGNED_URL_TTL_SECONDS = 300;
@@ -24,6 +30,24 @@ export interface PutObjectInput {
 
 export interface StoredObject {
   body: Uint8Array;
+  meta: ObjectMeta;
+}
+
+/** A streamed upload (#301): the body is consumed once, in order, and never held whole. */
+export interface PutStreamInput {
+  key: ObjectKey;
+  body: AsyncIterable<Uint8Array>;
+  contentType: string;
+}
+
+export interface PutStreamResult {
+  /** Bytes written. */
+  size: number;
+}
+
+/** A streamed read (#301): `body` yields the object in chunks and can be iterated once. */
+export interface StoredObjectStream {
+  body: AsyncIterable<Uint8Array>;
   meta: ObjectMeta;
 }
 
@@ -62,8 +86,16 @@ export interface ListOptions {
 
 export interface ObjectStore {
   put(input: PutObjectInput): Promise<void>;
+  /**
+   * Upload a body of unknown length in parts (S3 multipart), holding at most a few parts in
+   * memory. Fails with `ObjectTooLargeError` once the body passes the kind's cap; nothing is left
+   * behind on failure.
+   */
+  putStream(input: PutStreamInput): Promise<PutStreamResult>;
   /** Throws `ObjectNotFoundError` when the key does not exist. */
   get(key: ObjectKey): Promise<StoredObject>;
+  /** Like `get`, but the body streams. Throws `ObjectNotFoundError` when the key does not exist. */
+  getStream(key: ObjectKey): Promise<StoredObjectStream>;
   /** `null` when the key does not exist. */
   head(key: ObjectKey): Promise<ObjectMeta | null>;
   /** Idempotent: deleting a missing key succeeds. */
@@ -111,6 +143,24 @@ export function checkUpload(key: ObjectKey, bytes: number): ReturnType<typeof pa
   const parsed = checkedKey(key);
   assertWithinLimit(parsed.kind, bytes);
   return parsed;
+}
+
+/**
+ * Pass `source` through, counting bytes, and throw `ObjectTooLargeError` as soon as the total
+ * passes the cap for `kind`. `onDone` gets the total once the source ends.
+ */
+export async function* limitStream(
+  kind: ObjectKind,
+  source: AsyncIterable<Uint8Array>,
+  onDone: (size: number) => void,
+): AsyncGenerator<Uint8Array, void, undefined> {
+  let size = 0;
+  for await (const chunk of source) {
+    size += chunk.byteLength;
+    if (size > MAX_OBJECT_BYTES[kind]) throw new ObjectTooLargeError(kind, size);
+    yield chunk;
+  }
+  onDone(size);
 }
 
 export function listPrefix(workspaceId: string, options: ListOptions = {}): string {

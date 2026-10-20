@@ -9,6 +9,7 @@ import {
   checkedKey,
   checkUpload,
   expiry,
+  limitStream,
   listPrefix,
   ObjectNotFoundError,
   requireContentType,
@@ -58,6 +59,9 @@ function settle<T>(fn: () => T): Promise<T> {
   }
 }
 
+/** Chunk size `getStream` yields, like a network read. */
+const STREAM_CHUNK_BYTES = 64 * 1024;
+
 const forbidden = (operation: string) => new StorageError(operation, 'AccessDenied', 403);
 
 export function createMemoryObjectStore(options: MemoryObjectStoreOptions = {}): MemoryObjectStore {
@@ -96,12 +100,38 @@ export function createMemoryObjectStore(options: MemoryObjectStoreOptions = {}):
         requireContentType(input.contentType);
         put(input.key, input.body, input.contentType);
       }),
+    async putStream(input) {
+      const { kind } = checkedKey(input.key);
+      requireContentType(input.contentType);
+      // The fake keeps objects in memory anyway; real providers upload part by part.
+      const parts: Uint8Array[] = [];
+      let size = 0;
+      for await (const chunk of limitStream(kind, input.body, (n) => (size = n))) {
+        parts.push(chunk.slice());
+      }
+      put(input.key, Buffer.concat(parts), input.contentType);
+      return { size };
+    },
     get: (key) =>
       settle(() => {
         checkedKey(key);
         const entry = objects.get(key);
         if (!entry) throw new ObjectNotFoundError(key);
         return { body: entry.body.slice(), meta: meta(key, entry) };
+      }),
+    getStream: (key) =>
+      settle(() => {
+        checkedKey(key);
+        const entry = objects.get(key);
+        if (!entry) throw new ObjectNotFoundError(key);
+        const { body } = entry;
+        async function* chunks(): AsyncGenerator<Uint8Array, void, undefined> {
+          for (let at = 0; at < body.byteLength; at += STREAM_CHUNK_BYTES) {
+            yield body.slice(at, at + STREAM_CHUNK_BYTES);
+            await Promise.resolve();
+          }
+        }
+        return { body: chunks(), meta: meta(key, entry) };
       }),
     head: (key) =>
       settle(() => {

@@ -180,8 +180,15 @@
     {
       "idx": 25,
       "version": "7",
-      "when": 1792465608158,
-      "tag": "0025_role_settings",
+      "when": 1792443797614,
+      "tag": "0025_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792470461625,
+      "tag": "0026_role_settings",
       "breakpoints": true
     }
   ]

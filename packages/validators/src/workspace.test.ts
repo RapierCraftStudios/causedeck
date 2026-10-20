@@ -5,11 +5,22 @@ import {
   CreateWorkspaceInput,
   InviteInput,
   RESERVED_SLUGS,
+  RotateIntegrationTokenInput,
   Slug,
   UpdateRoleSettingsInput,
   UpdateWorkspacePrivacyInput,
   UpdateWorkspaceProfileInput,
 } from './workspace';
+
+describe('RotateIntegrationTokenInput', () => {
+  it.each(['email_intake', 'ics_feed'] as const)('accepts %s', (kind) => {
+    expect(RotateIntegrationTokenInput.parse({ kind })).toEqual({ kind });
+  });
+
+  it.each([{}, { kind: 'webhook' }, { kind: 'ics_feed', token: 'x' }])('rejects %j', (input) => {
+    expect(RotateIntegrationTokenInput.safeParse(input).success).toBe(false);
+  });
+});
 
 describe('UpdateRoleSettingsInput', () => {
   it('accepts both role settings as booleans', () => {

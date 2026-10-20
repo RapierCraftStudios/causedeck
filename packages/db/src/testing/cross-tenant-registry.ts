@@ -52,6 +52,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   export_job: DB_TABLES_TEST,
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
+  workspace_integration: DB_TABLES_TEST,
 };
 
 /**

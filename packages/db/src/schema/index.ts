@@ -72,3 +72,8 @@ export { BLOB_SCAN_STATUSES, blob, workspaceKey, type BlobScanStatus } from './s
 export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from './usage.ts';
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';
+export {
+  INTEGRATION_KINDS,
+  workspaceIntegration,
+  type IntegrationKind,
+} from './workspace-integration.ts';

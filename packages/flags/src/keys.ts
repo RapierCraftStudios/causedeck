@@ -80,7 +80,13 @@ export const FLAGS = {
     false,
     [55],
   ),
-  'capture.email-forward': flag('capture.email-forward', 'Email forward-in intake.', false, [54]),
+  'capture.email-forward': flag(
+    'capture.email-forward',
+    'Email forward-in intake.',
+    false,
+    [54, 287],
+  ),
+  'capture.ics-feed': flag('capture.ics-feed', 'Private ICS calendar feed.', false, [53, 287]),
   'pwa.offline': flag('pwa.offline', 'Offline outbox and 7-day offline cache.', false, [50, 65]),
   'billing.razorpay': flag(
     'billing.razorpay',

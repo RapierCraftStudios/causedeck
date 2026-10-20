@@ -1,4 +1,4 @@
--- Migration 0032_staff_console_reads: hand-written (no schema diff for drizzle-kit), reviewed before commit.
+-- Migration 0033_staff_console_reads: hand-written (no schema diff for drizzle-kit), reviewed before commit.
 -- Reviewed-by: Claude (agent, #310)
 -- The staff console's workspace metadata lookup and platform staff audit (#310, part of #27; spike
 -- §4.2, §6; PRD PL-6). Every table they read is under FORCE RLS, so, as with

@@ -1,4 +1,4 @@
-// Staff console reads (#310, migration 0032): the owner-defined workspace metadata and staff audit
+// Staff console reads (#310, migration 0033): the owner-defined workspace metadata and staff audit
 // functions run only for an enabled staff member (app.user_id), are not executable by PUBLIC, and
 // return the listed metadata columns only; owner_definer_read on member and workspace_feature_flag
 // is for the owner role alone.
@@ -80,7 +80,7 @@ function as<T>(tx: Transaction, userId: string, fn: (s: Transaction) => Promise<
   return withUser(tx, { userId }, fn);
 }
 
-describe('staff console functions (0032)', () => {
+describe('staff console functions (0033)', () => {
   it('refuse anyone but an enabled staff member, and are not executable by PUBLIC', async () => {
     await withTestDb(async (tx) => {
       const t = await seedTwoTenants(tx);

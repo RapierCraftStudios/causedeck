@@ -1,6 +1,6 @@
 // Staff console reads (#310, part of #27): workspace metadata lookup and the platform staff audit.
 // The rows live in tenant tables under FORCE RLS, so they come from the owner-defined functions of
-// migration 0032, which run only for an enabled staff member (app.user_id, pinned here through
+// migration 0033, which run only for an enabled staff member (app.user_id, pinned here through
 // `withUser`) and return metadata only: plan, seats, storage, dates, flags and the owner's email,
 // never matter, document, memory, party or draft content. The admin app reaches these through its
 // audited data layer (apps/admin/lib/data), which records `staff.read` first.

@@ -27,6 +27,7 @@ describe('registerSchedules', () => {
       'system.audit.retention',
       'system.export.expire',
       'system.support.session-expire',
+      'system.deletion.tick',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');

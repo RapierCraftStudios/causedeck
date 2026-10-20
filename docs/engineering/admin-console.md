@@ -113,7 +113,7 @@ Workspace metadata and the staff audit live in tenant tables under FORCE RLS, wh
 functions }, fn)` instead (#310): the same role check and fail-closed `staff.read` event (with the
 owner-defined function names instead of tables), then `fn` runs a `@causedeck/core/support` read
 (`staffWorkspaceSearch`, `staffWorkspaceMetadata`, `staffAuditEvents`) on the root handle. Those
-reads go through the SECURITY DEFINER functions of migration `0032_staff_console_reads`, which
+reads go through the SECURITY DEFINER functions of migration `0033_staff_console_reads`, which
 refuse anyone but an enabled staff member ([tenancy](tenancy.md)). The data layer exports
 `searchWorkspaces`, `workspaceMetadata` and `staffAuditLog`.
 

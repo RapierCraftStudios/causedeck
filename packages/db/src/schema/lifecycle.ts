@@ -7,7 +7,9 @@
 //   sha256 of a download token is kept (`download_token_hash`), never the token. Tenant table.
 // - `deletion_job`: workspace, account and memory deletions (behaviour lands with #302 and #303).
 //   `workspace_id` is null only for account deletions, so the table is in NULLABLE_WORKSPACE_TABLES
-//   and still under FORCE RLS with `ws_isolation`.
+//   and still under FORCE RLS with `ws_isolation`. Account jobs (`kind = 'account'`, null workspace)
+//   are reachable through the `account_self` policy (migration 0031): only with no pinned workspace
+//   and only for the session user's own `user_id`.
 // - `deletion_tombstone`: the minimal global record that a workspace was erased. It must outlive the
 //   purge of every tenant row, so it has no foreign key and is in GLOBAL_TABLES.
 import { sql } from 'drizzle-orm';

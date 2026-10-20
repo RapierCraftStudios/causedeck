@@ -13,7 +13,14 @@
 // the email delivery through the caller's `enqueueDelivery` (core/runtime binds the job queue).
 // The owner's settings page reads `listSupportSessions` and the product shell banner reads
 // `activeSupportSession`.
-import { db as appDb, isUuid, schema, withWorkspace, type Queryable } from '@causedeck/db';
+import {
+  db as appDb,
+  isUuid,
+  schema,
+  withUser,
+  withWorkspace,
+  type Queryable,
+} from '@causedeck/db';
 import { notify, type DeliveryJob } from '@causedeck/notifications';
 import { and, desc, eq, gt, isNull, or, sql } from 'drizzle-orm';
 
@@ -380,6 +387,60 @@ export async function activeSupportSession(
         ),
       )
       .orderBy(desc(supportSession.expiresAt))
+      .limit(1),
+  );
+  return row ?? null;
+}
+
+/** How many of their own sessions the staff console lists. */
+export const STAFF_SUPPORT_LIST_LIMIT = 100;
+
+/** A session as staff see it: `granted` with an elapsed `expires_at` is already `expired`. */
+export type SupportSessionState = 'requested' | 'active' | 'denied' | 'expired' | 'ended';
+
+/** The state a session is in at `now`, counting an elapsed grant as expired before the job runs. */
+export function supportSessionState(
+  row: Pick<SupportSession, 'status' | 'expiresAt'>,
+  now: Date = new Date(),
+): SupportSessionState {
+  if (row.status === 'granted') {
+    return row.expiresAt !== null && row.expiresAt.getTime() > now.getTime() ? 'active' : 'expired';
+  }
+  return row.status;
+}
+
+/**
+ * The staff member's own support sessions in every workspace, newest first (at most
+ * STAFF_SUPPORT_LIST_LIMIT). Read from a user scope, where only the `staff_self` policy exposes
+ * rows; empty for anyone who is not enabled staff.
+ */
+export async function listStaffSupportSessions(
+  db: Queryable,
+  staffId: string,
+): Promise<SupportSession[]> {
+  if (!isUuid(staffId) || !(await isActiveStaff(db, staffId))) return [];
+  return withUser(db, { userId: staffId }, (tx) =>
+    tx
+      .select()
+      .from(supportSession)
+      .where(eq(supportSession.requestedByStaff, staffId))
+      .orderBy(desc(supportSession.createdAt), desc(supportSession.id))
+      .limit(STAFF_SUPPORT_LIST_LIMIT),
+  );
+}
+
+/** One of the staff member's own sessions, or `null` (unknown, someone else's, or not staff). */
+export async function staffSupportSession(
+  db: Queryable,
+  staffId: string,
+  sessionId: string,
+): Promise<SupportSession | null> {
+  if (!isUuid(staffId) || !isUuid(sessionId) || !(await isActiveStaff(db, staffId))) return null;
+  const [row] = await withUser(db, { userId: staffId }, (tx) =>
+    tx
+      .select()
+      .from(supportSession)
+      .where(and(eq(supportSession.id, sessionId), eq(supportSession.requestedByStaff, staffId)))
       .limit(1),
   );
   return row ?? null;

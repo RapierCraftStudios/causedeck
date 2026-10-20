@@ -941,9 +941,6 @@ export type Messages = {
       more: string;
     };
     placeholder: {
-      title: string;
-      hint: string;
-      integrations: string;
       export: string;
       danger: string;
     };
@@ -1185,6 +1182,52 @@ export type Messages = {
       error: {
         title: string;
         retry: string;
+      };
+    };
+    integrations: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      loading: string;
+      notEnabled: string;
+      notEnabledReason: string;
+      offlineReason: string;
+      tokenLabel: string;
+      notCreated: string;
+      createdOn: string;
+      rotatedOn: string;
+      create: string;
+      rotate: string;
+      rotating: string;
+      rotateConfirm: string;
+      rotateCancel: string;
+      copy: string;
+      copied: string;
+      shownOnce: string;
+      error: {
+        title: string;
+        retry: string;
+      };
+      toast: {
+        created: string;
+        rotated: string;
+        error: string;
+        forbidden: string;
+        copyFailed: string;
+      };
+      emailIntake: {
+        title: string;
+        description: string;
+        label: string;
+        rotateTitle: string;
+        rotateBody: string;
+      };
+      icsFeed: {
+        title: string;
+        description: string;
+        label: string;
+        rotateTitle: string;
+        rotateBody: string;
       };
     };
     privacy: {

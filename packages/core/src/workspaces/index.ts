@@ -10,6 +10,7 @@ import { PgTransaction } from 'drizzle-orm/pg-core';
 import { activeMember, liveWorkspace } from './members.ts';
 
 export * from './errors.ts';
+export * from './integrations.ts';
 export * from './invitations.ts';
 export * from './members.ts';
 export * from './offboarding.ts';

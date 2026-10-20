@@ -679,6 +679,39 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getPrivacySettings(f.tx, f.a.id)).toEqual(before);
   },
+  getIntegrations: async (f) => {
+    // A has a seeded ics_feed token; under B's scope it is invisible, so every kind reads as none.
+    const ofA = await inWorkspace(f.tx, f.a.id, (s) => core.getIntegrations(s, f.a.id));
+    expect(ofA.ics_feed).not.toBeNull();
+    expect(await f.asB((s) => core.getIntegrations(s, f.a.id))).toEqual({
+      email_intake: null,
+      ics_feed: null,
+    });
+  },
+  rotateIntegrationToken: async (f) => {
+    const hashesOfA = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({
+            kind: schema.workspaceIntegration.kind,
+            hash: schema.workspaceIntegration.tokenHash,
+          })
+          .from(schema.workspaceIntegration)
+          .where(eq(schema.workspaceIntegration.workspaceId, f.a.id)),
+      );
+    const before = await hashesOfA();
+    expect(before).toHaveLength(1);
+    await expectDenied(
+      f.asB((s) =>
+        core.rotateIntegrationToken(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          kind: 'ics_feed',
+        }),
+      ),
+    );
+    expect(await hashesOfA()).toEqual(before);
+  },
   acceptInvitation: async (f) => {
     const error: unknown = await core
       .acceptInvitation(f.tx, { userId: f.ub, token: f.aInvitation.token })

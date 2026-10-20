@@ -39,9 +39,10 @@ export interface IdempotencyStore {
   purgeExpired(now: Date): Promise<number>;
 }
 
-const t = schema.apiIdempotencyKey;
-
 export function createIdempotencyStore(db: Database): IdempotencyStore {
+  // Read lazily: this module loads with `@causedeck/core/runtime`, which must not touch the
+  // schema at import time (page tests mock `@causedeck/db` without it).
+  const t = schema.apiIdempotencyKey;
   const byKey = (userId: string, key: string) => and(eq(t.userId, userId), eq(t.key, key));
 
   return {

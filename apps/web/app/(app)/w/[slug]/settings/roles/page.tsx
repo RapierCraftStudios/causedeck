@@ -52,11 +52,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 async function loadRoles(context: WorkspaceContext): Promise<RolesData> {
-  const [{ inWorkspace }, { getRoleSettings }, { listMatterRestrictions }] = await Promise.all([
-    import('@causedeck/core/runtime'),
-    import('@causedeck/core/workspaces'),
-    import('@causedeck/core/matters'),
-  ]);
+  // One at a time, not in a Promise.all: concurrent imports race the test mocks.
+  const { inWorkspace } = await import('@causedeck/core/runtime');
+  const { getRoleSettings } = await import('@causedeck/core/workspaces');
+  const { listMatterRestrictions } = await import('@causedeck/core/matters');
   const workspaceId = context.workspace.id;
   const userId = context.user.id;
   return inWorkspace({ workspaceId, userId }, async (tx) => {

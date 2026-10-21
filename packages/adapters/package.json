@@ -12,8 +12,13 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@causedeck/flags": "workspace:*",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
+    "@causedeck/db": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",

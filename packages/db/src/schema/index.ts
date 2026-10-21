@@ -61,6 +61,19 @@ export {
   type ProceedingLinkKind,
 } from './proceedings.ts';
 export {
+  OBLIGATION_CLOSED_REASON_TYPES,
+  TASK_STATUSES,
+  appearance,
+  hearing,
+  listing,
+  obligation,
+  order,
+  task,
+  type ObligationClosedReasonType,
+  type OperativeDirection,
+  type TaskStatus,
+} from './docket.ts';
+export {
   emailSuppression,
   notification,
   notificationChannel,

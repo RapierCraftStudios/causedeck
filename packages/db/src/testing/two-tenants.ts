@@ -20,6 +20,7 @@ import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { proceeding, proceedingLink } from '../schema/proceedings.ts';
+import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
@@ -147,6 +148,50 @@ async function seedDocument(tx: Transaction, workspaceId: string, tag: string): 
     })
     .returning({ id: document.id });
   return first(rows, 'document').id;
+}
+
+/** A listing of a fresh proceeding (#347), on the daily list. */
+async function seedListing(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const proceedingId = await seedProceeding(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(listing)
+    .values({
+      workspaceId,
+      proceedingId,
+      listDate: '2026-11-02',
+      listType: 'daily',
+      stageRaw: 'FOR ADMISSION',
+      canonical: true,
+      sourceType: 'manual',
+    })
+    .returning({ id: listing.id });
+  return first(rows, 'listing').id;
+}
+
+/** A hearing of a fresh listing (#347). */
+async function seedHearing(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const listingId = await seedListing(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(hearing)
+    .values({ workspaceId, listingId, heldOn: '2026-11-02', sourceType: 'manual' })
+    .returning({ id: hearing.id });
+  return first(rows, 'hearing').id;
+}
+
+/** An open obligation of a fresh matter (#347). */
+async function seedObligation(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(obligation)
+    .values({
+      workspaceId,
+      matterId,
+      source: 'internal',
+      description: 'File the counter affidavit',
+      sourceType: 'manual',
+    })
+    .returning({ id: obligation.id });
+  return first(rows, 'obligation').id;
 }
 
 /** Tenant tables and global-or-workspace reference tables: every table the suite seeds. */
@@ -474,6 +519,52 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: proceedingLink.id });
     return { parentId, childId, linkId: first(rows, 'proceeding_link').id };
+  },
+  listing: async (tx, { workspaceId, tag }) => ({
+    listingId: await seedListing(tx, workspaceId, tag),
+  }),
+  hearing: async (tx, { workspaceId, tag }) => ({
+    hearingId: await seedHearing(tx, workspaceId, tag),
+  }),
+  appearance: async (tx, { workspaceId, tag }) => {
+    const hearingId = await seedHearing(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(appearance)
+      .values({ workspaceId, hearingId, capacity: 'arguing' })
+      .returning({ id: appearance.id });
+    return { hearingId, appearanceId: first(rows, 'appearance').id };
+  },
+  order: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(order)
+      .values({
+        workspaceId,
+        proceedingId,
+        documentId,
+        orderDate: '2026-11-02',
+        orderType: 'procedural',
+        sourceType: 'manual',
+      })
+      .returning({ id: order.id });
+    return { proceedingId, documentId, orderId: first(rows, 'order').id };
+  },
+  obligation: async (tx, { workspaceId, tag }) => ({
+    obligationId: await seedObligation(tx, workspaceId, tag),
+  }),
+  task: async (tx, { workspaceId, tag }) => {
+    const obligationId = await seedObligation(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(task)
+      .values({
+        workspaceId,
+        title: 'Draft the counter affidavit',
+        fulfilsObligationId: obligationId,
+        sourceType: 'manual',
+      })
+      .returning({ id: task.id });
+    return { obligationId, taskId: first(rows, 'task').id };
   },
   deletion_job: async (tx, { workspaceId, ownerId }) => {
     const row = first(

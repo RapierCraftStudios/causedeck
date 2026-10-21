@@ -37,7 +37,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345) and the proceeding tables (#346)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346) and the docket tables (#347)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -49,6 +49,7 @@ describe('@causedeck/db root entry point', () => {
       'ai_call',
       'anchor',
       'api_idempotency_key',
+      'appearance',
       'audit_actor_salt',
       'audit_event',
       'bench',
@@ -66,16 +67,20 @@ describe('@causedeck/db root entry point', () => {
       'feature_flag',
       'flag_change_request',
       'forum',
+      'hearing',
       'invitation',
       'invoice_counter',
       'job_effect',
       'legal_hold_invoice',
+      'listing',
       'matter',
       'matter_restriction',
       'member',
       'notification',
       'notification_pref',
       'notification_setting',
+      'obligation',
+      'order',
       'organization',
       'passkey',
       'plan',
@@ -90,6 +95,7 @@ describe('@causedeck/db root entry point', () => {
       'staff_user',
       'subscription',
       'support_session',
+      'task',
       'two_factor',
       'usage_counter',
       'usage_event',

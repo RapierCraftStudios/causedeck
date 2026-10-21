@@ -7,4 +7,3 @@ describe('@causedeck/validators', () => {
     expect(packageName).toBe('@causedeck/validators');
   });
 });
-it('CI-PROBE deliberate failure', () => { expect(1).toBe(2); });

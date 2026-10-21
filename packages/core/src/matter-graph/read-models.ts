@@ -543,27 +543,23 @@ function sortKey(sort: MatterSort, nextDate: SQL): { key: SQL; dir: 'asc' | 'des
   }
 }
 
+/** Each matter's upcoming next date, as parallel arrays. */
+export interface UpcomingDates {
+  matterIds: string[];
+  dates: string[];
+}
+
 /**
- * The first query of `searchMatters`: the page's matters, their sort key as text and their owner
- * (`limit + 1` rows, to tell whether another page follows). Internal to the domain; the perf test
- * (__tests__/search-perf.test.ts) measures it with EXPLAIN ANALYZE.
+ * The workspace's matters with an upcoming next date (the earliest canonical listing dated `day`
+ * or later): one grouped pass over its canonical listings.
  */
-export function searchMattersQuery(
+export async function upcomingNextDates(
   tx: Transaction,
-  resolved: Actor,
-  settings: PolicySettings,
-  data: ParsedSearchMatters,
+  workspaceId: string,
   day: string,
-  after?: readonly string[],
-) {
-  const { workspaceId } = resolved;
-  const ownerUserId = sql`(select ${member.userId} from ${member} where ${member.organizationId} = ${matter.workspaceId} and ${member.id} = ${matter.ownerMemberId})`;
-  // Each matter's next date, from one grouped pass over the upcoming canonical listings.
-  const upcoming = tx
-    .select({
-      matterId: proceeding.matterId,
-      nextDate: sql<string>`min(${listing.listDate})`.as('next_date'),
-    })
+): Promise<UpcomingDates> {
+  const rows = await tx
+    .select({ matterId: proceeding.matterId, date: sql<string>`min(${listing.listDate})::text` })
     .from(listing)
     .innerJoin(
       proceeding,
@@ -576,7 +572,36 @@ export function searchMattersQuery(
         sql`${listing.listDate} >= ${day}::date`,
       ),
     )
-    .groupBy(proceeding.matterId)
+    .groupBy(proceeding.matterId);
+  return { matterIds: rows.map((r) => r.matterId), dates: rows.map((r) => r.date) };
+}
+
+/**
+ * The first query of `searchMatters`: the page's matters, their sort key as text and their owner
+ * (`limit + 1` rows, to tell whether another page follows), given the upcoming next dates.
+ * Internal to the domain; the perf test (__tests__/search-perf.test.ts) measures both with
+ * EXPLAIN ANALYZE.
+ */
+export function searchMattersQuery(
+  tx: Transaction,
+  resolved: Actor,
+  settings: PolicySettings,
+  data: ParsedSearchMatters,
+  next: UpcomingDates,
+  after?: readonly string[],
+) {
+  const { workspaceId } = resolved;
+  const ownerUserId = sql`(select ${member.userId} from ${member} where ${member.organizationId} = ${matter.workspaceId} and ${member.id} = ${matter.ownerMemberId})`;
+  // The next dates come in as arrays: a function scan is evaluated once, whatever plan the
+  // page query gets (a grouped subquery here was re-run per matter on bloated tables).
+  const upcoming = tx
+    .select({
+      matterId: sql<string>`u.matter_id`.as('matter_id'),
+      nextDate: sql<string>`u.next_date`.as('next_date'),
+    })
+    .from(
+      sql`unnest(${`{${next.matterIds.join(',')}}`}::uuid[], ${`{${next.dates.join(',')}}`}::date[]) as u(matter_id, next_date)`,
+    )
     .as('upcoming');
   const nextDate = sql`${upcoming.nextDate}`;
   const conditions: SQL[] = [
@@ -644,7 +669,8 @@ export async function searchMatters(
       return { items: [], nextCursor: null };
     }
     const { workspaceId } = resolved;
-    const rows = await searchMattersQuery(tx, resolved, settings, data, day, after);
+    const upcoming = await upcomingNextDates(tx, workspaceId, day);
+    const rows = await searchMattersQuery(tx, resolved, settings, data, upcoming, after);
     const page = rows.slice(0, data.limit);
     const ids = page.map((r) => r.matter.id);
     const proceedings = groupBy(

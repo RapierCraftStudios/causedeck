@@ -2,8 +2,11 @@
 // or job code: they emit these through an injected `GraphEvents` port, and audit, notifications and
 // AI work attach to that port elsewhere. Every event names its matter and carries the matter's
 // `sensitive` flag, so a subscriber can refuse AI work for a sensitive matter (CA-10) without a
-// lookup. Later #33 parts (#363-#366) append members to the union.
+// lookup. Later #33 parts (#363-#366) append members to the union. A merge or split (#365) names the
+// matter rows moved into (`matterId`), so `sensitive` there is the receiving matter's flag: documents
+// moved into a sensitive matter arrive with `sensitive: true`.
 import type { ProceedingLinkKind } from '@causedeck/db/schema';
+import type { IdentifierSource } from '@causedeck/validators/matter-graph-inputs';
 
 /** What every graph event carries. */
 export interface GraphEventBase {
@@ -31,7 +34,32 @@ export type GraphEvent =
       toProceedingId: string;
       kind: ProceedingLinkKind;
     })
-  | (GraphEventBase & { type: 'document.created'; documentId: string });
+  | (GraphEventBase & { type: 'document.created'; documentId: string })
+  | (GraphEventBase & {
+      type: 'matter.merged';
+      fromMatterId: string;
+      proceedingIds: string[];
+      documentIds: string[];
+    })
+  | (GraphEventBase & { type: 'matter.merge_undone'; fromMatterId: string })
+  | (GraphEventBase & {
+      type: 'matter.split';
+      newMatterId: string;
+      proceedingIds: string[];
+      crossingLinks: number;
+    })
+  | (GraphEventBase & { type: 'matter.split_undone'; newMatterId: string })
+  | (GraphEventBase & {
+      type: 'proceeding.merged';
+      proceedingId: string;
+      fromProceedingId: string;
+      identifierSources: Record<string, IdentifierSource>;
+    })
+  | (GraphEventBase & {
+      type: 'proceeding.merge_undone';
+      proceedingId: string;
+      fromProceedingId: string;
+    });
 
 export type GraphEventType = GraphEvent['type'];
 

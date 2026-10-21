@@ -14,4 +14,5 @@ export {
 export * from './errors.ts';
 export type * from './events.ts';
 export * from './matters.ts';
+export * from './merge-split.ts';
 export * from './proceedings.ts';

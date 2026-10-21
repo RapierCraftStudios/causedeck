@@ -12,6 +12,12 @@ import {
   FindDuplicateProceedingsInput,
   LinkProceedingsInput,
   ListMattersInput,
+  MergeMattersInput,
+  MergeProceedingsInput,
+  SplitMatterInput,
+  UndoMergeInput,
+  UndoMergeProceedingsInput,
+  UndoSplitInput,
   UpdateIdentifiersInput,
   UpdateMatterInput,
 } from './matter-graph-inputs';
@@ -115,5 +121,107 @@ describe('document input', () => {
     expect(CreateDocumentInput.safeParse(doc).success).toBe(true);
     expect(CreateDocumentInput.safeParse({ ...doc, sha256: 'A'.repeat(64) }).success).toBe(false);
     expect(CreateDocumentInput.safeParse({ ...doc, kind: 'memo' }).success).toBe(false);
+  });
+});
+
+describe('merge and split inputs (#365)', () => {
+  it('needs two different matters or proceedings to merge', () => {
+    const [a, b] = [id(), id()];
+    expect(MergeMattersInput.safeParse({ intoMatterId: a, fromMatterId: b }).success).toBe(true);
+    expect(MergeMattersInput.safeParse({ intoMatterId: a, fromMatterId: a }).success).toBe(false);
+    expect(
+      MergeMattersInput.safeParse({ intoMatterId: a, fromMatterId: b, force: true }).success,
+    ).toBe(false);
+    expect(
+      MergeProceedingsInput.safeParse({ intoProceedingId: a, fromProceedingId: b }).success,
+    ).toBe(true);
+    expect(
+      MergeProceedingsInput.safeParse({ intoProceedingId: a, fromProceedingId: a }).success,
+    ).toBe(false);
+  });
+
+  it('needs at least one distinct proceeding and a title to split', () => {
+    const p = id();
+    const split = { matterId: id(), proceedingIds: [p], newTitle: 'Writ appeal' };
+    expect(SplitMatterInput.safeParse(split).success).toBe(true);
+    expect(SplitMatterInput.safeParse({ ...split, proceedingIds: [] }).success).toBe(false);
+    expect(SplitMatterInput.safeParse({ ...split, proceedingIds: [p, p] }).success).toBe(false);
+    expect(
+      SplitMatterInput.safeParse({ ...split, proceedingIds: [p, p.toUpperCase()] }).success,
+    ).toBe(false);
+    expect(SplitMatterInput.safeParse({ ...split, newTitle: ' ' }).success).toBe(false);
+  });
+
+  it('takes back only a payload of the matching operation and version', () => {
+    const at = '2026-10-21 10:00:00.123456+00';
+    const stamps = { id: id(), updatedAt: at };
+    const merge = {
+      op: 'matter.merge',
+      version: 1,
+      before: {
+        intoMatterId: id(),
+        fromMatterId: id(),
+        fromMatter: { mergedIntoMatterId: null, updatedAt: at },
+        rows: {
+          proceeding: [stamps],
+          document: [],
+          roleEdge: [],
+          obligation: [],
+          task: [],
+          mergedMatter: [],
+        },
+        links: [],
+      },
+      after: { intoMatterId: id() },
+    };
+    expect(UndoMergeInput.safeParse({ payload: merge }).success).toBe(true);
+    expect(UndoMergeInput.safeParse({ payload: { ...merge, version: 2 } }).success).toBe(false);
+    expect(UndoSplitInput.safeParse({ payload: merge }).success).toBe(false);
+    const badStamp = {
+      ...merge.before,
+      rows: { ...merge.before.rows, proceeding: [{ id: id(), updatedAt: 'yesterday' }] },
+    };
+    expect(UndoMergeInput.safeParse({ payload: { ...merge, before: badStamp } }).success).toBe(
+      false,
+    );
+    const split = {
+      op: 'matter.split',
+      version: 1,
+      before: { matterId: id(), rows: { proceeding: [stamps], obligation: [], task: [] } },
+      after: { newMatterId: id() },
+    };
+    expect(UndoSplitInput.safeParse({ payload: split }).success).toBe(true);
+    const proceedingMerge = {
+      op: 'proceeding.merge',
+      version: 1,
+      before: {
+        intoProceedingId: id(),
+        fromProceedingId: id(),
+        into: { id: id(), cnr: null },
+        from: { id: id(), matter_id: id() },
+        rows: {
+          listing: [stamps],
+          order: [],
+          obligation: [{ ...stamps, matterId: id() }],
+          task: [{ ...stamps, matterId: null }],
+          roleEdge: [],
+          child: [],
+          link: [],
+        },
+        demotedListing: null,
+        deletedLinks: [],
+      },
+      after: {
+        intoProceedingId: id(),
+        identifierSources: {
+          cnr: { proceedingId: id(), sourceType: 'adapter', sourceRef: 'ecourts:1' },
+        },
+      },
+    };
+    expect(UndoMergeProceedingsInput.safeParse({ payload: proceedingMerge }).success).toBe(true);
+    expect(
+      UndoMergeProceedingsInput.safeParse({ payload: { ...proceedingMerge, op: 'matter.merge' } })
+        .success,
+    ).toBe(false);
   });
 });

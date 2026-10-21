@@ -30,7 +30,7 @@ import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/ind
 import { crossWorkspace, graphNotFound } from './errors.ts';
 import type { GraphEvent, GraphEvents } from './events.ts';
 
-const { matter, matterRestriction, member } = schema;
+const { matter, matterRestriction, member, proceeding } = schema;
 
 /** What every matter-graph service is given besides the actor and the input. */
 export interface MatterGraphDeps {
@@ -44,6 +44,7 @@ export interface MatterGraphDeps {
 export type GraphActor = MatterActor;
 
 export type MatterRow = typeof matter.$inferSelect;
+export type ProceedingRow = typeof proceeding.$inferSelect;
 
 /** A running service call: the scoped transaction, the resolved actor and the event buffer. */
 export interface GraphScope {
@@ -144,6 +145,21 @@ export async function requireMatter(
     throw forbidden('You cannot change this matter');
   }
   return row.matter;
+}
+
+/** The proceeding of the actor's workspace, or NOT_FOUND. */
+export async function loadProceeding(
+  tx: Transaction,
+  workspaceId: string,
+  proceedingId: string,
+): Promise<ProceedingRow> {
+  const [row] = await tx
+    .select()
+    .from(proceeding)
+    .where(and(eq(proceeding.workspaceId, workspaceId), eq(proceeding.id, proceedingId)))
+    .limit(1);
+  if (row === undefined) throw graphNotFound('proceeding');
+  return row;
 }
 
 /** The Postgres error under drizzle's wrapper: SQLSTATE and constraint name, if any. */

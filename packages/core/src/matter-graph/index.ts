@@ -16,7 +16,18 @@ export {
 export * from './errors.ts';
 export type * from './events.ts';
 export * from './matters.ts';
-export * from './next-date.ts';
+export * from './merge-split.ts';
+// Named, not `export *`: next-date.ts also holds the merge's canonical-flag helpers (#365), which
+// stay inside the domain.
+export {
+  confirmNextDate,
+  getCanonicalNextDate,
+  proposeNextDate,
+  type ListingRef,
+  type ListingRow,
+  type NextDateConflict,
+  type NextDateResult,
+} from './next-date.ts';
 export {
   createProceeding,
   findDuplicateProceedings,

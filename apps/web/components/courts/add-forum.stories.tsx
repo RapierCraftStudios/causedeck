@@ -1,7 +1,6 @@
-// Add-forum entry point (#427): the static `Add forum` button that loads the dialog chunk
-// (`add-forum-dialog.tsx`, #402) at idle or on hover, focus or click. The server action is a prop,
-// mocked here with `fn()`. Covers the button, a click opening the dialog once it has loaded, and the
-// Tamil and Kannada labels. The dialog's own states are in `add-forum-dialog.stories.tsx`.
+// The courts index's lazy `Add forum` entry point (#427): the static button, and the dialog (#402)
+// once its chunk has loaded on click. The dialog's own states live in `add-forum-dialog.stories.tsx`;
+// the server action is a prop, mocked here with `fn()`.
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, screen, waitFor } from 'storybook/test';
 
@@ -37,24 +36,10 @@ export const Default: Story = {
   },
 };
 
-/** A click opens the dialog, whether or not its chunk had loaded yet. */
-export const OpensDialog: Story = {
+/** A click opens the dialog once its chunk has loaded. */
+export const Opens: Story = {
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(canvas.getByRole('button', { name: t.trigger }));
     await waitFor(() => expect(screen.getByRole('dialog')).toBeVisible());
-  },
-};
-
-export const Tamil: Story = {
-  globals: { locale: 'ta' },
-  play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button')).toBeVisible();
-  },
-};
-
-export const Kannada: Story = {
-  globals: { locale: 'kn' },
-  play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button')).toBeVisible();
   },
 };

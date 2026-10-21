@@ -1314,6 +1314,21 @@ const CASES: Record<string, Case> = {
     );
     expect(own?.id).toBe(listingId);
   },
+  getMatterTimeline: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getMatterTimeline({ ...deps, db }, { userId: f.ub, workspaceId }, { matterId }),
+    );
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.getMatterTimeline(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { matterId },
+    );
+    expect(Array.isArray(own)).toBe(true);
+    expect(events).toEqual([]);
+  },
   // Merges and splits (#365): A's ids from B, or ub claiming A, are denied; one id of each workspace
   // is the typed cross-workspace error.
   mergeMatters: async (f) => {

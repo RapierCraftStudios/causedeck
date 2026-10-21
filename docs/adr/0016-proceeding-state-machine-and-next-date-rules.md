@@ -73,6 +73,7 @@ stateDiagram-v2
 ## Consequences
 
 - Positive: one tested place decides proceeding moves; the timeline and audit can read an append-only history; the obligation service reacts to an event instead of being called.
+- Positive: the matter timeline (`getMatterTimeline`, #366) reads `proceeding_state_change` for its `state_change` events, so state moves appear next to listings, orders and obligations.
 - Positive: SR/FR/diary numbers survive numbering, so a proceeding stays findable by every identifier it ever had.
 - Negative: a state imported in bulk (e.g. a migration from another tool) has to replay legal transitions, or be written by a reviewed data migration outside the service.
 - Negative: a reopen asks the caller to repeat the number and year it already had.

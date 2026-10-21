@@ -91,6 +91,24 @@ describe('forum catalogue data (#34)', () => {
     );
   });
 
+  it('marks the captcha-gated official pages, each one a deep link of the forum (#397)', () => {
+    for (const code of [
+      'in.tn.madras-hc.principal.original',
+      'in.tn.madras-hc.principal.appellate',
+    ]) {
+      expect(byCode(code).config.captchaGated).toEqual(['cause_list', 'case_status']);
+    }
+    expect(byCode('in.ka.karnataka-hc.bengaluru').config.captchaGated).toEqual([
+      'case_status',
+      'orders',
+    ]);
+    for (const f of FORUM_CATALOGUE) {
+      for (const kind of f.config.captchaGated ?? []) {
+        expect(f.config.deepLinks[kind], `${f.code} ${kind}`).toBeDefined();
+      }
+    }
+  });
+
   it('gives each forum its adapter id and level', () => {
     for (const code of [
       'in.tn.madras-hc.principal.original',

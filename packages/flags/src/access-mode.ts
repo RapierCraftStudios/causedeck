@@ -125,3 +125,34 @@ export async function listAccessModeRegistry(db: Queryable): Promise<AccessModeR
     .from(accessModeRegistry)
     .orderBy(asc(accessModeRegistry.adapterId), asc(accessModeRegistry.resource));
 }
+
+/** One registry row of an adapter with counsel's note, as the courts area shows it (#397). */
+export interface AdapterAccessMode {
+  resource: string;
+  mode: AccessMode;
+  enabled: boolean;
+  /** Null (or blank) while legal review is pending. */
+  counselNote: string | null;
+  reviewedAt: Date | null;
+}
+
+/**
+ * The registry rows of one adapter (exact id), ordered by resource. Read-only;
+ * `access_mode_registry` is a global table, readable in any scope.
+ */
+export async function listAdapterAccessModes(
+  db: Queryable,
+  adapterId: string,
+): Promise<AdapterAccessMode[]> {
+  return db
+    .select({
+      resource: accessModeRegistry.resource,
+      mode: accessModeRegistry.mode,
+      enabled: accessModeRegistry.enabled,
+      counselNote: accessModeRegistry.counselNote,
+      reviewedAt: accessModeRegistry.reviewedAt,
+    })
+    .from(accessModeRegistry)
+    .where(eq(accessModeRegistry.adapterId, adapterId))
+    .orderBy(asc(accessModeRegistry.resource));
+}

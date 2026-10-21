@@ -62,6 +62,9 @@ export const ForumConfigSchema = z
     hosts: z.array(z.string().regex(HOSTNAME_PATTERN, 'a bare hostname')).min(1),
     deepLinks: z.partialRecord(z.enum(FORUM_DEEP_LINK_KINDS), DeepLinkTemplateSchema),
     disabledReason: z.string().min(1).exactOptional(),
+    // Official pages that sit behind a captcha the lawyer solves on the court's site (#397); the
+    // product never solves or fetches them, it only warns before opening the link.
+    captchaGated: z.array(z.enum(FORUM_DEEP_LINK_KINDS)).exactOptional(),
     notes: z.string().min(1).exactOptional(),
   })
   .strict()
@@ -73,6 +76,15 @@ export const ForumConfigSchema = z
           code: 'custom',
           path: ['deepLinks', kind],
           message: `host ${host} is not in config.hosts`,
+        });
+      }
+    }
+    for (const [index, kind] of (config.captchaGated ?? []).entries()) {
+      if (config.deepLinks[kind] === undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['captchaGated', index],
+          message: `captcha-gated ${kind} has no deep-link template`,
         });
       }
     }

@@ -17,6 +17,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:tenancy": "turbo run test:tenancy",
+    "test:golden": "turbo run test:golden",
     "test:export-coverage": "pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/export-coverage.test.ts",
     "db:generate": "turbo run db:generate --filter=@causedeck/db",
     "db:migrate": "turbo run db:migrate --filter=@causedeck/db",

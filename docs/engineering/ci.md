@@ -22,7 +22,7 @@ All jobs run on `ubuntu-latest`. `lint`, `typecheck` and `build` have `timeout-m
 | `lint` | Prettier (changed files only on pull requests, else `pnpm format:check`), then the docs checks (`pnpm adr:lint`, `pnpm adr:test`, `pnpm docs:links`, `pnpm docs:permissions:check`; see [docs/adr](../adr/README.md)), then ESLint (`turbo run lint`), then `docker compose -f infra/docker/compose.dev.yml config -q` (dev stack definition, #5) |
 | `typecheck` | `tsc --noEmit` (`turbo run typecheck`) |
 | `test` | The required check: an aggregating job that `needs` every `test-shard` and fails unless all of them succeeded. It runs no tests itself |
-| `test-shard (<group>)` | One per package group: Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports-<group>` artifact (`coverage/` and `reports/junit.xml` per package). `rest` also runs `pnpm db:check` and `pnpm i18n:check` |
+| `test-shard (<group>)` | One per package group: Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports-<group>` artifact (`coverage/` and `reports/junit.xml` per package). `rest` also runs `pnpm db:check`, `pnpm i18n:check` and `pnpm --filter @causedeck/adapters test:golden` (committed synthetic fixtures only) |
 | `build` | `turbo run build` |
 | `tenancy` | The cross-tenant suite (#19, #209), always in full: a `pgvector/pgvector:0.8.7-pg17` service gets the dev init SQL (`infra/docker/postgres/init/*.sql`) and `pnpm db:migrate`, then `pnpm db:check-rls` and `pnpm test:tenancy` (Testcontainers, a 4-minute step timeout). Any failure is a release blocker; see [tenancy.md](tenancy.md#cross-tenant-suite) |
 

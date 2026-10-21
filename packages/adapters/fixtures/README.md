@@ -1,0 +1,74 @@
+# Adapter fixtures
+
+Golden fixtures for the court adapters (#371, [ADR 0015](../../../docs/adr/0015-court-adapter-framework.md)).
+`src/testing/golden.ts` (`runGolden(adapterId)`) parses every listed input with the adapter and
+compares the result with its expected file.
+
+## Layout
+
+```
+fixtures/<adapter-id>/
+  manifest.json
+  <name>.input.txt | <name>.input.html | <name>.input.pdf
+  <name>.expected.json
+```
+
+- Every `<name>.input.*` has a `<name>.expected.json`: the adapter's `ParsedCauseList` for that
+  input, read with `receivedAt` `2026-10-21T04:00:00.000Z` and the adapter's first forum code
+  (or the entry's `forumCode`).
+- `.txt` is read as text (pages split on form feeds), `.html` through `layoutFromHtml` and `.pdf`
+  through `layoutFromPdf`.
+- `manifest.json` lists every input file:
+
+  ```json
+  {
+    "adapter": "echo",
+    "classification": "FICTIONAL",
+    "fixtures": [
+      {
+        "file": "list-01-admission.input.txt",
+        "kind": "cause_list",
+        "origin": "synthetic",
+        "classification": "FICTIONAL"
+      }
+    ]
+  }
+  ```
+
+  `origin` is `synthetic` (generated or hand-written, every name fictional and flagged
+  `FICTIONAL`) or `lawyer-supplied`. An input file the manifest does not list fails the run.
+
+## What the runner reports
+
+For each fixture it reports a readable diff (`rows[2].caseType: expected "WP", got "WA"`) and
+every anchor whose quote is not verbatim in its page's text. For the set it reports a per-field
+precision/recall table over `listDate` and the row fields. Rows are aligned by their anchor (page
+and quote).
+
+```sh
+pnpm --filter @causedeck/adapters test:golden
+```
+
+## Synthetic fixtures
+
+`src/testing/synthetic.ts` has seeded generators (`mulberry32`): the same seed always gives the
+same bytes. `writeSyntheticPdf` writes text-layer PDFs with `pdf-lib`. Court-faithful generators
+come with each adapter (#36, #37, #38).
+
+To regenerate an expected file after a deliberate parser change, write the adapter's output for
+the input to `<name>.expected.json`, then review the diff before committing.
+
+## Lawyer-supplied fixtures are never committed
+
+Real lists and orders stay on the machine of whoever holds them. Put them in a `fixtures-private/`
+directory (git-ignored anywhere in the repo) or any other directory, using the same
+`<adapter-id>/` layout with `origin: lawyer-supplied`, and point `ADAPTER_PRIVATE_FIXTURES_DIR`
+at it:
+
+```sh
+ADAPTER_PRIVATE_FIXTURES_DIR=$PWD/fixtures-private pnpm --filter @causedeck/adapters test:golden
+```
+
+The runner reports them as a separate set, so they never change the committed counts. CI never
+sets the variable and never needs private fixtures. The real-fixture acceptance gate (at least 30
+lists and 50 orders per High Court) is #119.

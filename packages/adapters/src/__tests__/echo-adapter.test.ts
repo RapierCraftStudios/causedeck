@@ -13,12 +13,13 @@ import {
   ParsedOrderHeaderSchema,
   type ParserInput,
 } from '../index.ts';
+import { syntheticEchoList } from '../testing/synthetic.ts';
 
-const FIXTURES = path.resolve(import.meta.dirname, '../example/fixtures');
+const FIXTURES = path.resolve(import.meta.dirname, '../../fixtures/echo');
 
 interface Manifest {
   classification: string;
-  fixtures: { file: string; kind: string; classification: string }[];
+  fixtures: { file: string; kind: string; origin: string; classification: string }[];
 }
 const manifest = JSON.parse(readFileSync(path.join(FIXTURES, 'manifest.json'), 'utf8')) as Manifest;
 
@@ -30,44 +31,17 @@ const textInput = (text: string): ParserInput => ({
 const fixture = (file: string) => readFileSync(path.join(FIXTURES, file), 'utf8');
 const sha256 = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
-/** Deterministic PRNG for the synthetic 40-page list. */
-function mulberry32(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function syntheticList(pages: number, rowsPerPage: number, seed: number): string {
-  const random = mulberry32(seed);
-  const types = ['W.P.', 'W.P.(MD)', 'Crl.O.P.', 'CRL OP', 'Arb.O.P.', 'W.A.', 'C.M.A.'];
-  const stages = ['FOR ADMISSION', 'FOR ORDERS', 'FOR FINAL HEARING'];
-  const out: string[] = [];
-  let item = 0;
-  for (let page = 0; page < pages; page += 1) {
-    const lines = page === 0 ? ['ECHO TEST COURT (FICTIONAL)', 'CAUSE LIST FOR 21.10.2026'] : [];
-    lines.push(`COURT HALL ${String(page + 1)}`, stages[page % stages.length] ?? 'FOR ORDERS');
-    for (let row = 0; row < rowsPerPage; row += 1) {
-      item += 1;
-      const type = types[Math.floor(random() * types.length)] ?? 'W.P.';
-      const number = String(Math.floor(random() * 99_999) + 1);
-      lines.push(
-        `${String(item)}. ${type} No. ${number} of 2026  Fictional Party ${String(item)} vs Pretend Respondent`,
-      );
-    }
-    out.push(lines.join('\n'));
-  }
-  return out.join('\f');
-}
+const syntheticList = (pages: number, rowsPerPage: number, seed: number): string =>
+  syntheticEchoList({ pages, rowsPerPage, seed }).text;
 
 describe('echo fixtures', () => {
-  it('ships three fictional lists, all flagged FICTIONAL', () => {
+  it('ships three synthetic lists, all flagged FICTIONAL', () => {
     expect(manifest.classification).toBe('FICTIONAL');
     expect(manifest.fixtures).toHaveLength(3);
-    for (const entry of manifest.fixtures) expect(entry.classification).toBe('FICTIONAL');
+    for (const entry of manifest.fixtures) {
+      expect(entry.classification).toBe('FICTIONAL');
+      expect(entry.origin).toBe('synthetic');
+    }
   });
 });
 
@@ -91,7 +65,7 @@ describe('echo adapter parseCauseList', () => {
   );
 
   it('reads hall, stage, case identity and the list date', async () => {
-    const parsed = await adapter.parseCauseList(textInput(fixture('list-01-admission.txt')));
+    const parsed = await adapter.parseCauseList(textInput(fixture('list-01-admission.input.txt')));
     expect(parsed.listDate).toBe('2026-10-21');
     expect(parsed.rows.map((r) => [r.hallNo, r.stageNorm, r.matchKey])).toEqual([
       ['1', 'admission', 'WP/12345/2026'],
@@ -112,7 +86,7 @@ describe('echo adapter parseCauseList', () => {
   });
 
   it('keeps unknown headings verbatim, counts them, and reports unknown types and empty halls', async () => {
-    const parsed = await adapter.parseCauseList(textInput(fixture('list-02-multi-page.txt')));
+    const parsed = await adapter.parseCauseList(textInput(fixture('list-02-multi-page.input.txt')));
     const sitting = parsed.rows.filter((r) => r.hallNo === '3');
     expect(sitting.map((r) => [r.stageRaw, r.stageNorm])).toEqual([
       ['AFTER LUNCH SPECIAL SITTING', null],
@@ -128,7 +102,7 @@ describe('echo adapter parseCauseList', () => {
 
   it('maps adapter aliases', async () => {
     const parsed = await adapter.parseCauseList(
-      textInput(fixture('list-03-alias-and-mentions.txt')),
+      textInput(fixture('list-03-alias-and-mentions.input.txt')),
     );
     expect(parsed.rows.map((r) => [r.caseType, r.stageNorm])).toEqual([
       ['WP', 'mention'],
@@ -175,11 +149,11 @@ describe('echo adapter parseCauseList', () => {
       expect(sha256(second)).toBe(sha256(first));
     }
     const other = await adapter.parseCauseList({
-      ...textInput(fixture('list-01-admission.txt')),
+      ...textInput(fixture('list-01-admission.input.txt')),
       meta: { receivedAt: '2027-01-01T00:00:00.000Z', forumCode: ECHO_FORUM_CODE },
     });
     expect(sha256(other)).toBe(
-      sha256(await adapter.parseCauseList(textInput(fixture('list-01-admission.txt')))),
+      sha256(await adapter.parseCauseList(textInput(fixture('list-01-admission.input.txt')))),
     );
   });
 

@@ -25,6 +25,9 @@ e2e/.auth/
 storybook-static/
 *.tsbuildinfo
 
+# Lawyer-supplied court fixtures: never committed (#371, #119).
+fixtures-private/
+
 # OS and editor noise
 .DS_Store
 *.log

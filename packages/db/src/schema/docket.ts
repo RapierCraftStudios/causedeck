@@ -3,11 +3,11 @@
 // `tenantTable()`. All but `appearance` carry provenance. A proceeding has at most one canonical
 // listing (the next date): `listing_one_canonical_uq` is a partial unique index. Hall and bench
 // references are single-column FKs into the global-or-workspace court tables, guarded by
-// `<table>_<column>_scope_guard` triggers (mode `same_or_global`, migration 0040).
+// `<table>_<column>_scope_guard` triggers (mode `same_or_global`, migration 0041).
 //
 // Delete actions: the facts keep the proceeding, matter, document and anchor they cite until they
 // go themselves (NO ACTION; the erase purges them first). Appearances cascade with their hearing.
-// Member references and optional fact links are `ON DELETE SET NULL (<column>)` in migration 0040
+// Member references and optional fact links are `ON DELETE SET NULL (<column>)` in migration 0041
 // (a plain composite SET NULL would also null `workspace_id`); Drizzle records them as `set null`.
 //
 // A closed obligation needs a reason type and `closed_at` (and a note for `not_applicable`):

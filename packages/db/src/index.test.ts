@@ -37,7 +37,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346) and the docket tables (#347)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347) and the people tables (#348)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -81,13 +81,16 @@ describe('@causedeck/db root entry point', () => {
       'notification_setting',
       'obligation',
       'order',
+      'organisation',
       'organization',
       'passkey',
+      'person',
       'plan',
       'proceeding',
       'proceeding_link',
       'push_subscription',
       'rate_limit',
+      'role_edge',
       'saas_invoice',
       'saas_invoice_line',
       'schema_info',

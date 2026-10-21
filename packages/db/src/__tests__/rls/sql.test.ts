@@ -124,6 +124,10 @@ describe('row-level security catalog', () => {
         'order',
         'obligation',
         'task',
+        // People (#348).
+        'person',
+        'organisation',
+        'role_edge',
       ].sort(),
     );
     for (const row of rows)

@@ -135,10 +135,24 @@ NO ACTION FK to `anchor` on both tables. `parent_proceeding_id` is `ON DELETE SE
 (`app_proceeding_link_cycle_guard()`) rejects, with 23514, an insert or update of a `parent_of` link
 that would close a cycle; it serializes per workspace with a transaction advisory lock.
 
+## People tables
+
+`person`, `organisation` and `role_edge` in `packages/db/src/schema/people.ts`, migration
+`0040_people` (#348, part 5 of #32, [ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant tables
+under FORCE RLS; `person` and `role_edge` carry `provenance()` and `provenanceCheck()`, with the
+provenance `anchor_id` a composite NO ACTION FK to `anchor`. Tested in
+`packages/db/src/__tests__/people-schema.test.ts`.
+
+| Table          | Columns and constraints                                                                                                                                                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `person`       | `name` (CHECK not blank), `aliases text[]` (default `{}`), `kind` (`person_kind`), `contact jsonb` (CHECK null unless `kind` is `client` or `professional`: PRD §9, no contact-book upload)                                                                                                             |
+| `organisation` | `name` (CHECK not blank), `aliases text[]` (default `{}`); no provenance                                                                                                                                                                                                                                 |
+| `role_edge`    | `kind` (`role_edge_kind`), `from_person_id` (-> `person`), exactly one of `to_person_id` (-> `person`, not `from_person_id`), `matter_id` (-> `matter`), `proceeding_id` (-> `proceeding`) (CHECK `num_nonnulls(...) = 1`); every FK composite and ON DELETE CASCADE; an index led by `workspace_id` on each |
+
 ## Docket tables
 
 `listing`, `hearing`, `appearance`, `order`, `obligation` and `task` in
-`packages/db/src/schema/docket.ts`, migration `0040_docket` (#347, part 4 of #32,
+`packages/db/src/schema/docket.ts`, migration `0041_docket` (#347, part 4 of #32,
 [ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant tables under FORCE RLS; all but `appearance`
 carry `provenance()` and `provenanceCheck()`. Tested in
 `packages/db/src/__tests__/docket-schema.test.ts`.
@@ -147,7 +161,7 @@ carry `provenance()` and `provenanceCheck()`. Tested in
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `listing`    | `proceeding_id` (-> `proceeding`, NO ACTION), `list_date`, `list_type` (`list_type`), `list_no`, `item_no`, `stage_raw`, `stage_norm`, `hall_id` / `bench_id` (-> `court_hall` / `bench`, `same_or_global` scope guards), `canonical` (unique `(workspace_id, proceeding_id) WHERE canonical`: one next date per proceeding), `source_document_id` (-> `document`, SET NULL); indexes `(workspace_id, proceeding_id, list_date)`, `(workspace_id, list_date, hall_id)` |
 | `hearing`    | `listing_id` (-> `listing`, NO ACTION), `held_on`, `outcome`, `adjournment_reason`, `next_date_proposed`, `next_date_confirmed`, `stage_after_raw`                                                                                                                                                                                                                                                                                                                     |
-| `appearance` | `hearing_id` (-> `hearing`, ON DELETE CASCADE), `member_id` (-> `member`, SET NULL), `capacity` (`appearance_capacity`), `appearing_for_person_id` (no FK until #348)                                                                                                                                                                                                                                                                                                  |
+| `appearance` | `hearing_id` (-> `hearing`, ON DELETE CASCADE), `member_id` (-> `member`, SET NULL), `capacity` (`appearance_capacity`), `appearing_for_person_id` (no FK yet; a follow-up adds the composite FK to `person`)                                                                                                                                                                                                                                                                                                  |
 | `order`      | `proceeding_id`, `document_id` (NO ACTION), `order_date`, `bench_id` (-> `bench`, scope guard), `order_type` (`order_type`), `neutral_citation`, `operative_directions` (jsonb array of `{text, anchorId}`), `next_date`                                                                                                                                                                                                                                               |
 | `obligation` | `matter_id` (NOT NULL), `proceeding_id`, `source` (`obligation_source`), `description`, `due_date`, `basis`, `owner_member_id` (SET NULL), `status` (`obligation_status`), `closed_reason_type`, `closed_by` (-> `member`, SET NULL), `closed_at`, `closed_note`, `source_order_id` (-> `order`, SET NULL); closure: `obligation_closure_chk` plus the `obligation_closed_by_guard` trigger                                                                            |
 | `task`       | `matter_id`, `proceeding_id`, `title`, `due_date`, `owner_member_id` (SET NULL), `status` (CHECK `open`, `done`, `cancelled`), `fulfils_obligation_id` (-> `obligation`, SET NULL)                                                                                                                                                                                                                                                                                     |

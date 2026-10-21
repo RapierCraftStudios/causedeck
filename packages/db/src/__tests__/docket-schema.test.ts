@@ -2,7 +2,7 @@
 // `task` are tenant tables under FORCE RLS with composite (workspace_id, <parent>_id) FKs (member
 // references included) and provenance; one canonical listing per proceeding; the obligation closure
 // invariant (CHECK plus the closed_by guard, which still lets the closer's account go); hall and
-// bench references scope-guarded to a catalogue or own row; and migration 0040 applying on 0039.
+// bench references scope-guarded to a catalogue or own row; and migration 0041 applying on 0040.
 import { randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -830,14 +830,14 @@ async function dropWorkspaceAsOwner(id: string): Promise<void> {
   });
 }
 
-describe('migration 0040', () => {
+describe('migration 0041', () => {
   const cleanups: (() => Promise<void> | void)[] = [];
   afterAll(async () => {
     for (const cleanup of cleanups.splice(0).reverse()) await cleanup();
   });
 
-  it('applies on a database migrated through 0039', async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'causedeck-0039-'));
+  it('applies on a database migrated through 0040', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'causedeck-0040-'));
     cleanups.push(() => {
       rmSync(dir, { recursive: true, force: true });
     });
@@ -846,15 +846,15 @@ describe('migration 0040', () => {
     const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as {
       entries: { tag: string }[];
     };
-    const head = journal.entries.findIndex((e) => e.tag === '0039_proceedings');
+    const head = journal.entries.findIndex((e) => e.tag === '0040_people');
     expect(head).toBeGreaterThan(0);
     journal.entries = journal.entries.slice(0, head + 1);
     writeFileSync(journalPath, JSON.stringify(journal));
 
-    const db = await createScratchDatabase(testDatabaseUrls(), 'docket_0039');
+    const db = await createScratchDatabase(testDatabaseUrls(), 'docket_0040');
     cleanups.push(db.drop);
     const before = await runMigrations({ url: new Secret(db.owner), migrationsFolder: dir });
-    expect(before.latest).toBe('0039_proceedings');
+    expect(before.latest).toBe('0040_people');
 
     const scratch = createOwnerDb(new Secret(db.owner));
     cleanups.push(() => scratch.$client.end());
@@ -865,7 +865,7 @@ describe('migration 0040', () => {
     });
 
     const after = await runMigrations({ url: new Secret(db.owner) });
-    expect(after.applied[0]).toBe('0040_docket');
+    expect(after.applied[0]).toBe('0041_docket');
     await scratch.transaction(async (o) => {
       await o.execute(sql`select set_config('app.workspace_id', ${ws.workspaceId}, true)`);
       await newListing(o, ws, { canonical: true });

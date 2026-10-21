@@ -3,13 +3,14 @@
 // `packages/db/src/__tests__/matter-graph-validators.test.ts`), the `PortfolioRule` an entry
 // carries, the `RosterCandidate` the heuristic roster-PDF parser proposes (#385) and the inputs of
 // the roster services: preview (#385), confirm, lookups and supersede (#387), bench-change
-// detection and dismissal (#389). Parsing is always confirmed by the lawyer: a candidate is a
+// detection and dismissal (#389). `bench_roster.confirmation_state` (#387) is `confirmed` on every
+// version the lawyer confirmed; only a draft stays `proposed`. Parsing is always confirmed by the lawyer: a candidate is a
 // proposal, never written as is. `RosterCandidate.judges` is the court-published composition as
 // printed, kept only until the lawyer confirms a bench; no schema here aggregates by judge
 // (PX-9, ME-6). Input objects are strict: an unknown key is an error, not silently dropped.
 import { z } from 'zod';
 
-import { ANCHOR_QUOTE_MAX, BENCH_KINDS } from './matter-graph';
+import { ANCHOR_QUOTE_MAX, BENCH_KINDS, CONFIRMATION_STATES } from './matter-graph';
 
 export const BENCH_ROSTER_STATUSES = ['draft', 'active', 'superseded'] as const;
 export const BENCH_CHANGE_REASONS = ['hall', 'portfolio'] as const;
@@ -92,6 +93,7 @@ const benchRosterShape = {
   sourceDocumentId: uuid.nullable(),
   importedBy: uuid.nullable(),
   note: z.string().nullable(),
+  confirmationState: z.enum(CONFIRMATION_STATES),
   ...timestamps,
 };
 export const BenchRosterSelectSchema = z.object(benchRosterShape);
@@ -104,6 +106,7 @@ export const BenchRosterInsertSchema = z
     sourceDocumentId: true,
     importedBy: true,
     note: true,
+    confirmationState: true,
   })
   .refine((r) => r.effectiveTo == null || r.effectiveTo > r.effectiveFrom, {
     path: ['effectiveTo'],

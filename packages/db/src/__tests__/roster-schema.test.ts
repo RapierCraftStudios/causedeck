@@ -157,6 +157,8 @@ const newRoster = async (
         forumId: g.forumId,
         effectiveFrom: '2026-11-01',
         version: (version += 1),
+        // Only a draft may stay `proposed` (bench_roster_confirmed_chk, #387).
+        confirmationState: (values.status ?? 'draft') === 'draft' ? 'proposed' : 'confirmed',
         ...values,
       })
       .returning({ id: benchRoster.id }),
@@ -300,7 +302,10 @@ describe('bench roster tables (#384)', () => {
         const draft = await newRoster(s, g, { effectiveFrom: '2026-11-20' });
         expect(
           await stateOf(s, (sp) =>
-            sp.update(benchRoster).set({ status: 'active' }).where(eq(benchRoster.id, draft)),
+            sp
+              .update(benchRoster)
+              .set({ status: 'active', confirmationState: 'confirmed' })
+              .where(eq(benchRoster.id, draft)),
           ),
         ).toBe('23P01');
         const other = await newGraph(s, a.id);
@@ -364,6 +369,50 @@ describe('bench roster tables (#384)', () => {
         expect(await stateOf(s, (sp) => newAlert(sp, g, rosterId, { reason: 'portfolio' }))).toBe(
           '23505',
         );
+      });
+    });
+  });
+
+  it('records the confirmation state and lets only a draft stay proposed (#387)', async () => {
+    const column = await owner.execute<{ type: string; def: string; nullable: string }>(sql`
+      select udt_name::text as type, column_default as def, is_nullable as nullable
+        from information_schema.columns
+       where table_name = 'bench_roster' and column_name = 'confirmation_state'`);
+    expect(column).toEqual([
+      { type: 'confirmation_state', def: "'proposed'::confirmation_state", nullable: 'NO' },
+    ]);
+    await withTestDb(async (tx) => {
+      const { id } = await newWorkspace(tx);
+      await inWorkspace(tx, id, async (s) => {
+        const g = await newGraph(s, id);
+        const draft = await newRoster(s, g);
+        const [row] = await s
+          .select({ state: benchRoster.confirmationState })
+          .from(benchRoster)
+          .where(eq(benchRoster.id, draft));
+        expect(row?.state).toBe('proposed');
+        // An active or superseded roster must have been confirmed.
+        for (const status of ['active', 'superseded'] as const) {
+          expect(
+            await stateOf(s, (sp) =>
+              newRoster(sp, g, {
+                status,
+                effectiveFrom: '2028-01-01',
+                confirmationState: 'proposed',
+              }),
+            ),
+            status,
+          ).toBe('23514');
+        }
+        expect(
+          await stateOf(s, (sp) =>
+            sp.update(benchRoster).set({ status: 'active' }).where(eq(benchRoster.id, draft)),
+          ),
+        ).toBe('23514');
+        await s
+          .update(benchRoster)
+          .set({ status: 'active', confirmationState: 'confirmed' })
+          .where(eq(benchRoster.id, draft));
       });
     });
   });

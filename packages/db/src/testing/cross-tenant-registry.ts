@@ -22,6 +22,7 @@ const ACCOUNT_DELETION_TEST = 'packages/core/src/lifecycle/__tests__/account-del
 const MEMORY_ERASURE_TEST = 'packages/core/src/lifecycle/__tests__/memory-erasure.test.ts';
 const CORE_RUNTIME_TEST = 'packages/core/src/__tests__/cross-tenant/runtime.test.ts';
 const ADMIN_STAFF_CLI_TEST = 'apps/admin/src/cli/staff.test.ts';
+const CORE_ROSTERS_TEST = 'packages/core/src/__tests__/cross-tenant/rosters.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -116,6 +117,12 @@ const empty = { test: CORE_SERVICES_TEST, kind: 'rls-empty' } as const;
 const selfScoped = { test: CORE_SERVICES_TEST, kind: 'self-scoped' } as const;
 const lifecycleDenies = { test: LIFECYCLE_TEST, kind: 'denies' } as const;
 const lifecycleEmpty = { test: LIFECYCLE_TEST, kind: 'rls-empty' } as const;
+const rosterDenies = { test: CORE_ROSTERS_TEST, kind: 'denies' } as const;
+const rosterSelfScoped = {
+  test: CORE_ROSTERS_TEST,
+  kind: 'self-scoped',
+  note: 'opens withWorkspace on the given workspace id; RLS limits rosters and entries to that workspace',
+} as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
@@ -296,6 +303,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
   },
+  // court: roster services (#387), cases in their own file beside services.test.ts
+  confirmRosterImport: rosterDenies,
+  supersede: rosterDenies,
+  getRosterAt: rosterSelfScoped,
+  resolveBenchForHall: rosterSelfScoped,
+  listRosters: rosterSelfScoped,
   listHallsSeen: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -586,6 +599,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // court: roster-PDF preview (#385)
   previewRosterImport: 'pure (parses supplied PDF bytes; reads and writes no tenant data)',
   normaliseJudgeName: 'pure',
+  // court: roster lookup statements (#387), exported for the plan and budget test
+  rosterAtStatement:
+    'pure SQL builder; getRosterAt runs it inside withWorkspace on the given workspace',
+  benchForHallStatement:
+    'pure SQL builder; resolveBenchForHall runs it inside withWorkspace on the given workspace',
   // matter graph (#362): errors and pure proceeding-identity helpers
   CrossWorkspaceError: 'error class',
   crossWorkspace: 'error factory',

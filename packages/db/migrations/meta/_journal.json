@@ -334,8 +334,15 @@
     {
       "idx": 47,
       "version": "7",
-      "when": 1792611068694,
-      "tag": "0047_karnataka_hc_adapter_v1",
+      "when": 1792611968253,
+      "tag": "0047_bench_roster_confirmation",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792616487550,
+      "tag": "0048_karnataka_hc_adapter_v1",
       "breakpoints": true
     }
   ]

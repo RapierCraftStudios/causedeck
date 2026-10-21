@@ -1,4 +1,4 @@
-// The canonical next date (#364, part 3 of #33; ADR 0015). A proceeding has at most one canonical
+// The canonical next date (#364, part 3 of #33; ADR 0016). A proceeding has at most one canonical
 // listing, its next date (`listing_one_canonical_uq`, ADR 0013). This module is the only writer of
 // `listing.list_date` and `listing.canonical` in packages/core; the `no-direct-listing-update`
 // architecture test (__tests__/no-direct-listing-update.test.ts) fails the build otherwise.

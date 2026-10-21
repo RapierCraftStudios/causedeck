@@ -101,7 +101,9 @@ A database change (staff toggling a row) needs no restart. It propagates within 
   - there is no row;
   - the row is disabled;
   - either mode is `none`;
-  - the requested mode differs from the registered one.
+  - the requested mode differs from the registered one;
+  - the mode is `device_user_triggered`, `official` or `licensed` and the row has no counsel note (reason `no-counsel-note`, #369).
+- Court adapters call it through `assertAccessMode(adapterId, resource, mode)` in `@causedeck/adapters`, which throws `AccessModeViolationError` (same code and reason) and refuses a declared `none` without reading the registry ([ADR 0015](../adr/0015-court-adapter-framework.md)).
 - The modes are a closed enum, fixed by [ADR 0011](../adr/0011-access-mode-registry-closed-enum.md) and pinned by `access-mode-guard.test.ts`.
 - `seedAccessModes` (`packages/flags/src/seed.ts`) seeds the launch adapters:
   - `madras-hc` and `karnataka-hc` have `case-status` rows with mode `user_supplied`, enabled.

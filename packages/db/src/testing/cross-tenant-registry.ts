@@ -68,6 +68,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Proceedings (#346).
   proceeding: DB_TABLES_TEST,
   proceeding_link: DB_TABLES_TEST,
+  // Proceeding state history (#363).
+  proceeding_state_change: DB_TABLES_TEST,
   // Docket (#347).
   listing: DB_TABLES_TEST,
   hearing: DB_TABLES_TEST,
@@ -275,6 +277,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   createProceeding: denies,
   updateIdentifiers: denies,
   linkProceedings: denies,
+  // proceeding state machine (#363): A's proceeding from B, or ub claiming A, is NOT_FOUND
+  transitionProceeding: denies,
   findDuplicateProceedings: empty,
   createDocument: denies,
   // canonical next date (#364): A's proceeding or listing from B, or ub claiming A, is NOT_FOUND
@@ -546,6 +550,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   expandYear: 'pure',
   identityKey: 'pure',
   isSameProceeding: 'pure',
+  // proceeding state machine (#363): the error and the pure transition table
+  InvalidTransitionError: 'error class',
+  assertTransition: 'pure',
+  PROCEEDING_TRANSITIONS: 'constant',
   // workspaces: extension points (process-wide wiring, no database access of their own)
   permissiveEntitlements: 'default entitlements implementation (allows everything, no queries)',
   setEntitlements: 'setter',

@@ -14,6 +14,7 @@ import {
   MATTER_STATUSES,
   PROCEEDING_KINDS,
   PROCEEDING_LINK_KINDS,
+  PROCEEDING_STATES,
   ProvenanceSchema,
 } from './matter-graph';
 
@@ -146,6 +147,67 @@ export const FindDuplicateProceedingsInput = z.strictObject({
 });
 
 // ---------------------------------------------------------------------------------------------
+// Proceeding state machine (#363, ADR 0016).
+
+/**
+ * A state change is always made by a resolved member, its confirming actor, so its provenance is
+ * never `proposed` (proposals are #47's); the service records `confirmed` when none is given.
+ */
+const transitionProvenance = ProvenanceSchema.refine(
+  (value) => value.confirmationState !== 'proposed',
+  {
+    path: ['confirmationState'],
+    message: 'A state change is confirmed by its actor; it cannot be proposed',
+  },
+);
+
+/**
+ * Move a proceeding to `to`. Numbering takes `number` and `year` in the same call; entering
+ * `defects` may carry the registry's `cureDeadline`. Which pairs are allowed is the state
+ * machine's call (`InvalidTransitionError`), not the input's.
+ */
+export const TransitionProceedingInput = z
+  .strictObject({
+    proceedingId: uuid,
+    to: z.enum(PROCEEDING_STATES),
+    reason: text.optional(),
+    number: text.optional(),
+    year: year.optional(),
+    cureDeadline: day.optional(),
+    provenance: transitionProvenance.optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.to === 'numbered') {
+      for (const key of ['number', 'year'] as const) {
+        if (value[key] === undefined) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'Numbering needs a number and a year',
+          });
+        }
+      }
+    } else {
+      for (const key of ['number', 'year'] as const) {
+        if (value[key] !== undefined) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'A number and year are only given when numbering',
+          });
+        }
+      }
+    }
+    if (value.cureDeadline !== undefined && value.to !== 'defects') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['cureDeadline'],
+        message: 'A cure deadline only applies when entering defects',
+      });
+    }
+  });
+
+// ---------------------------------------------------------------------------------------------
 // Documents.
 
 export const CreateDocumentInput = z.strictObject({
@@ -202,6 +264,8 @@ export type ParsedLinkProceedings = z.output<typeof LinkProceedingsInput>;
 export type ProceedingIdentityInput = z.input<typeof ProceedingIdentityInput>;
 export type FindDuplicateProceedingsInput = z.input<typeof FindDuplicateProceedingsInput>;
 export type ParsedFindDuplicateProceedings = z.output<typeof FindDuplicateProceedingsInput>;
+export type TransitionProceedingInput = z.input<typeof TransitionProceedingInput>;
+export type ParsedTransitionProceeding = z.output<typeof TransitionProceedingInput>;
 export type CreateDocumentInput = z.input<typeof CreateDocumentInput>;
 export type ParsedCreateDocument = z.output<typeof CreateDocumentInput>;
 export type ProposeNextDateInput = z.input<typeof ProposeNextDateInput>;

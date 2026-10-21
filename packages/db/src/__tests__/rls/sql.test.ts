@@ -117,6 +117,8 @@ describe('row-level security catalog', () => {
         // Proceedings (#346).
         'proceeding',
         'proceeding_link',
+        // Proceeding state history (#363).
+        'proceeding_state_change',
         // Docket (#347).
         'listing',
         'hearing',

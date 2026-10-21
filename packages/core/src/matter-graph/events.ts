@@ -3,7 +3,12 @@
 // AI work attach to that port elsewhere. Every event names its matter and carries the matter's
 // `sensitive` flag, so a subscriber can refuse AI work for a sensitive matter (CA-10) without a
 // lookup. Later #33 parts (#363-#366) append members to the union.
-import type { ProceedingLinkKind } from '@causedeck/db/schema';
+import type {
+  ConfirmationState,
+  ProceedingLinkKind,
+  ProceedingState,
+  SourceType,
+} from '@causedeck/db/schema';
 
 /** What every graph event carries. */
 export interface GraphEventBase {
@@ -32,6 +37,7 @@ export type GraphEvent =
       kind: ProceedingLinkKind;
     })
   | (GraphEventBase & { type: 'document.created'; documentId: string })
+  | ProceedingStateChangedEvent
   // Next date (#364): a proposal, a conflict with the canonical date (never resolved here), and a
   // confirmation by a member (`actorUserId`), which makes the listing canonical.
   | (GraphEventBase & {
@@ -55,6 +61,31 @@ export type GraphEvent =
       previousListingId: string | null;
       date: string;
     });
+
+/** The provenance a state change was recorded with (#363). */
+export interface StateChangeProvenance {
+  sourceType: SourceType;
+  sourceRef: string | null;
+  anchorId: string | null;
+  confidence: string | null;
+  confirmationState: ConfirmationState;
+}
+
+/**
+ * A proceeding moved state (#363, ADR 0016). `cureDeadline` (an ISO date) is present only when
+ * entering `defects` with one, so the obligation service (#67) can create the cure obligation.
+ */
+export interface ProceedingStateChangedEvent extends GraphEventBase {
+  type: 'proceeding.state_changed';
+  proceedingId: string;
+  stateChangeId: string;
+  from: ProceedingState;
+  to: ProceedingState;
+  reason: string | null;
+  actor: { userId: string; memberId: string };
+  provenance: StateChangeProvenance;
+  cureDeadline?: string;
+}
 
 export type GraphEventType = GraphEvent['type'];
 

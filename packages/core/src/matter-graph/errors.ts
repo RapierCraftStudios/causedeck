@@ -4,6 +4,8 @@
 // workspace (a link, and later merges and splits, #365), or that runs inside another workspace's
 // scope. It is a `WorkspaceError` with code NOT_FOUND, so the API and server actions map it as
 // they map every other domain error.
+import type { ProceedingState } from '@causedeck/db/schema';
+
 import { WorkspaceError } from '../shared/errors.ts';
 
 export type GraphEntity = 'matter' | 'proceeding' | 'forum' | 'document';
@@ -21,6 +23,24 @@ export class CrossWorkspaceError extends WorkspaceError {
   constructor(message = 'Not found in this workspace') {
     super('NOT_FOUND', message);
     this.name = 'CrossWorkspaceError';
+  }
+}
+
+/**
+ * A proceeding state change the state machine does not allow (#363, ADR 0016): a pair outside the
+ * transition table, or a reopen (`disposed` -> `numbered`) without a reason. CONFLICT: the
+ * request is well-formed but contradicts the proceeding's current state.
+ */
+export class InvalidTransitionError extends WorkspaceError {
+  readonly reason = 'invalid_transition' as const;
+  readonly from: ProceedingState;
+  readonly to: ProceedingState;
+
+  constructor(from: ProceedingState, to: ProceedingState, message?: string) {
+    super('CONFLICT', message ?? `A proceeding cannot move from ${from} to ${to}`);
+    this.name = 'InvalidTransitionError';
+    this.from = from;
+    this.to = to;
   }
 }
 

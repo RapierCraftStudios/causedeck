@@ -103,13 +103,18 @@ async function aRestrictions(f: Fixture) {
 
 /**
  * A's matter-graph rows, for before/after checks: one key per table the services write (matters.ts,
- * proceedings.ts and its links, documents.ts, and next-date.ts, which writes listings).
+ * proceedings.ts and its links, documents.ts, state-machine.ts, which writes state history, and
+ * next-date.ts, which writes listings).
  */
 async function aGraph(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, async (s) => ({
     matters: await s.select().from(schema.matter).orderBy(schema.matter.id),
     proceedings: await s.select().from(schema.proceeding).orderBy(schema.proceeding.id),
     links: await s.select().from(schema.proceedingLink).orderBy(schema.proceedingLink.id),
+    stateChanges: await s
+      .select()
+      .from(schema.proceedingStateChange)
+      .orderBy(schema.proceedingStateChange.id),
     documents: await s.select().from(schema.document).orderBy(schema.document.id),
     // next-date.ts (#364): proposals and the canonical swap.
     listings: await s.select().from(schema.listing).orderBy(schema.listing.id),
@@ -1172,6 +1177,29 @@ const CASES: Record<string, Case> = {
     }
     expect(await bLinks()).toEqual(bBefore);
     expect(events).toEqual([]);
+  },
+  transitionProceeding: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const bProceeding = f.b.rows.proceeding?.proceedingId ?? '';
+    // A legal transition for A's filed proceeding: only the workspace boundary can refuse it.
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.transitionProceeding(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId: aProceeding, to: 'sr_fr' },
+      ),
+    );
+    expect(events).toEqual([]);
+    // ub moves B's own proceeding; A's graph, history included, is unchanged.
+    const before = await aGraph(f);
+    const { stateChange } = await core.transitionProceeding(
+      deps,
+      { userId: f.ub, workspaceId: f.b.id },
+      { proceedingId: bProceeding, to: 'sr_fr' },
+    );
+    expect(stateChange.workspaceId).toBe(f.b.id);
+    expect(await aGraph(f)).toEqual(before);
   },
   findDuplicateProceedings: async (f) => {
     const { deps } = graphDeps(f.tx);

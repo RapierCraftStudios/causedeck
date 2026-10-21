@@ -117,6 +117,13 @@ describe('row-level security catalog', () => {
         // Proceedings (#346).
         'proceeding',
         'proceeding_link',
+        // Docket (#347).
+        'listing',
+        'hearing',
+        'appearance',
+        'order',
+        'obligation',
+        'task',
         // People (#348).
         'person',
         'organisation',

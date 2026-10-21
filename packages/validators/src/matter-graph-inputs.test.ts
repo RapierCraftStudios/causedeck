@@ -12,6 +12,7 @@ import {
   FindDuplicateProceedingsInput,
   LinkProceedingsInput,
   ListMattersInput,
+  TransitionProceedingInput,
   UpdateIdentifiersInput,
   UpdateMatterInput,
 } from './matter-graph-inputs';
@@ -100,6 +101,80 @@ describe('proceeding inputs', () => {
     expect(
       FindDuplicateProceedingsInput.safeParse({ identity: { caseType: 'WP', number: '1' } })
         .success,
+    ).toBe(false);
+  });
+});
+
+describe('transition input (#363)', () => {
+  const proceedingId = id();
+
+  it('accepts minimal transitions and a reopen reason', () => {
+    expect(TransitionProceedingInput.safeParse({ proceedingId, to: 'sr_fr' }).success).toBe(true);
+    expect(
+      TransitionProceedingInput.safeParse({
+        proceedingId,
+        to: 'numbered',
+        number: '0123',
+        year: 24,
+        reason: 'Restored on review',
+        provenance: { ...manual, confirmationState: 'confirmed' },
+      }).success,
+    ).toBe(true);
+    expect(
+      TransitionProceedingInput.safeParse({
+        proceedingId,
+        to: 'defects',
+        cureDeadline: '2026-11-02',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('needs a number and a year to number, and only then', () => {
+    const paths = (value: unknown) =>
+      (TransitionProceedingInput.safeParse(value).error?.issues ?? []).map((i) => i.path.join('.'));
+    expect(paths({ proceedingId, to: 'numbered' })).toEqual(['number', 'year']);
+    expect(paths({ proceedingId, to: 'numbered', number: '12' })).toEqual(['year']);
+    expect(paths({ proceedingId, to: 'disposed', number: '12', year: 2024 })).toEqual([
+      'number',
+      'year',
+    ]);
+  });
+
+  it('takes a cure deadline only when entering defects', () => {
+    expect(
+      TransitionProceedingInput.safeParse({ proceedingId, to: 'sr_fr', cureDeadline: '2026-11-02' })
+        .success,
+    ).toBe(false);
+    expect(
+      TransitionProceedingInput.safeParse({
+        proceedingId,
+        to: 'defects',
+        cureDeadline: '02/11/2026',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a proposed state change, a blank reason, an unknown state or key', () => {
+    expect(
+      TransitionProceedingInput.safeParse({
+        proceedingId,
+        to: 'sr_fr',
+        provenance: { ...manual, confirmationState: 'proposed' },
+      }).success,
+    ).toBe(false);
+    expect(
+      TransitionProceedingInput.safeParse({ proceedingId, to: 'sr_fr', reason: ' ' }).success,
+    ).toBe(false);
+    expect(TransitionProceedingInput.safeParse({ proceedingId, to: 'merged' }).success).toBe(false);
+    expect(
+      TransitionProceedingInput.safeParse({ proceedingId, to: 'sr_fr', state: 'filed' }).success,
+    ).toBe(false);
+    expect(
+      TransitionProceedingInput.safeParse({
+        proceedingId,
+        to: 'sr_fr',
+        provenance: { sourceType: 'adapter' },
+      }).success,
     ).toBe(false);
   });
 });

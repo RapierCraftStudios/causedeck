@@ -8,6 +8,9 @@
 // proceeding goes (the erase purges proceedings first). `parent_proceeding_id` is `ON DELETE SET
 // NULL (parent_proceeding_id)` in migration 0039. Links die with either end; the
 // `proceeding_link_parent_of_cycle_guard` trigger (migration 0039) rejects a `parent_of` cycle.
+// `proceeding_state_change` (#363, migration 0042, ADR 0014) is the append-only history of state
+// transitions written by the matter-graph state machine; it dies with its proceeding, and its actor
+// reference is cleared (SET NULL) when the actor's membership goes.
 import { sql } from 'drizzle-orm';
 import {
   check,
@@ -25,7 +28,7 @@ import {
 import { id, provenance, provenanceCheck, timestamps } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';
 
-import { inList, organization } from './auth.ts';
+import { inList, member, organization } from './auth.ts';
 import { forum } from './court.ts';
 import { anchor } from './documents.ts';
 import { proceedingKind, proceedingState } from './enums.ts';
@@ -164,5 +167,63 @@ export const proceedingLink = tenantTable(
     provenanceCheck('proceeding_link'),
     check('proceeding_link_kind_chk', sql`kind in ${inList(PROCEEDING_LINK_KINDS)}`),
     check('proceeding_link_not_self_chk', sql`from_proceeding_id <> to_proceeding_id`),
+  ],
+);
+
+export const proceedingStateChange = tenantTable(
+  'proceeding_state_change',
+  {
+    id: id(),
+    proceedingId: uuid('proceeding_id').notNull(),
+    fromState: proceedingState('from_state').notNull(),
+    toState: proceedingState('to_state').notNull(),
+    /** Why; required on a reopen (`disposed` -> `numbered`). */
+    reason: text('reason'),
+    /** Null once the actor's membership is gone (account deletion). */
+    actorMemberId: uuid('actor_member_id'),
+    /** The registry's cure deadline, only when entering `defects`. */
+    cureDeadline: date('cure_deadline'),
+    changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow(),
+    ...provenance(),
+    ...timestamps(),
+  },
+  (t) => [
+    unique('proceeding_state_change_workspace_id_id_uq').on(t.workspaceId, t.id),
+    index('proceeding_state_change_workspace_proceeding_idx').on(
+      t.workspaceId,
+      t.proceedingId,
+      t.changedAt,
+    ),
+    foreignKey({
+      name: 'proceeding_state_change_workspace_id_fk',
+      columns: [t.workspaceId],
+      foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'proceeding_state_change_proceeding_fk',
+      columns: [t.workspaceId, t.proceedingId],
+      foreignColumns: [proceeding.workspaceId, proceeding.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'proceeding_state_change_actor_member_fk',
+      columns: [t.workspaceId, t.actorMemberId],
+      foreignColumns: [member.organizationId, member.id],
+    }).onDelete('set null'),
+    foreignKey({
+      name: 'proceeding_state_change_anchor_fk',
+      columns: [t.workspaceId, t.anchorId],
+      foreignColumns: [anchor.workspaceId, anchor.id],
+    }),
+    provenanceCheck('proceeding_state_change'),
+    check('proceeding_state_change_not_same_chk', sql`from_state <> to_state`),
+    check('proceeding_state_change_reason_chk', sql`reason is null or btrim(reason) <> ''`),
+    check(
+      'proceeding_state_change_cure_deadline_chk',
+      sql`cure_deadline is null or to_state = 'defects'`,
+    ),
+    check(
+      'proceeding_state_change_reopen_reason_chk',
+      sql`from_state <> 'disposed' or to_state <> 'numbered' or reason is not null`,
+    ),
   ],
 );

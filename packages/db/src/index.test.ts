@@ -88,6 +88,7 @@ describe('@causedeck/db root entry point', () => {
       'plan',
       'proceeding',
       'proceeding_link',
+      'proceeding_state_change',
       'push_subscription',
       'rate_limit',
       'role_edge',

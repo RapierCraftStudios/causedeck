@@ -295,6 +295,13 @@
       "when": 1792581158285,
       "tag": "0041_docket",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1792589501122,
+      "tag": "0042_proceeding_state_change",
+      "breakpoints": true
     }
   ]
 }

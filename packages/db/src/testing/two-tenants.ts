@@ -20,7 +20,7 @@ import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
-import { proceeding, proceedingLink } from '../schema/proceedings.ts';
+import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
@@ -529,6 +529,21 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: proceedingLink.id });
     return { parentId, childId, linkId: first(rows, 'proceeding_link').id };
+  },
+  proceeding_state_change: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(proceedingStateChange)
+      .values({
+        workspaceId,
+        proceedingId,
+        fromState: 'filed',
+        toState: 'sr_fr',
+        sourceType: 'manual',
+        confirmationState: 'confirmed',
+      })
+      .returning({ id: proceedingStateChange.id });
+    return { proceedingId, stateChangeId: first(rows, 'proceeding_state_change').id };
   },
   listing: async (tx, { workspaceId, tag }) => ({
     listingId: await seedListing(tx, workspaceId, tag),

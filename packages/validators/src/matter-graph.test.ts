@@ -6,6 +6,8 @@ import {
   ListingInsertSchema,
   ObligationInsertSchema,
   ProceedingInsertSchema,
+  ProceedingStateChangeInsertSchema,
+  ProceedingStateChangeSelectSchema,
   ProvenanceSchema,
   RoleEdgeInsertSchema,
 } from './matter-graph';
@@ -174,5 +176,71 @@ describe('ProceedingInsertSchema', () => {
       ProceedingInsertSchema.safeParse({ ...proceeding, cnr: 'TNHC010012342026' }).success,
     ).toBe(true);
     expect(ProceedingInsertSchema.safeParse({ ...proceeding, cnr: 'tnhc01' }).success).toBe(false);
+  });
+});
+
+describe('ProceedingStateChangeInsertSchema (#363)', () => {
+  const change = {
+    workspaceId,
+    proceedingId: randomUUID(),
+    fromState: 'sr_fr',
+    toState: 'defects',
+    sourceType: 'manual',
+  } as const;
+
+  it('accepts a transition and mirrors the table CHECKs', () => {
+    expect(ProceedingStateChangeInsertSchema.safeParse(change).success).toBe(true);
+    expect(
+      ProceedingStateChangeInsertSchema.safeParse({ ...change, cureDeadline: '2026-11-02' })
+        .success,
+    ).toBe(true);
+    expect(
+      issuePaths(ProceedingStateChangeInsertSchema.safeParse({ ...change, toState: 'sr_fr' })),
+    ).toEqual(['toState']);
+    expect(
+      issuePaths(
+        ProceedingStateChangeInsertSchema.safeParse({
+          ...change,
+          fromState: 're_presented',
+          toState: 'numbered',
+          cureDeadline: '2026-11-02',
+        }),
+      ),
+    ).toEqual(['cureDeadline']);
+    expect(
+      issuePaths(
+        ProceedingStateChangeInsertSchema.safeParse({
+          ...change,
+          fromState: 'disposed',
+          toState: 'numbered',
+        }),
+      ),
+    ).toEqual(['reason']);
+    expect(ProceedingStateChangeInsertSchema.safeParse({ ...change, reason: '  ' }).success).toBe(
+      false,
+    );
+  });
+
+  it('selects every column, nullable where the table is', () => {
+    const now = new Date();
+    const row = {
+      ...change,
+      id: randomUUID(),
+      reason: null,
+      actorMemberId: null,
+      cureDeadline: null,
+      changedAt: now,
+      sourceRef: null,
+      anchorId: null,
+      confidence: null,
+      confirmationState: 'confirmed',
+      capturedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    expect(ProceedingStateChangeSelectSchema.safeParse(row).success).toBe(true);
+    expect(
+      ProceedingStateChangeSelectSchema.safeParse({ ...row, changedAt: undefined }).success,
+    ).toBe(false);
   });
 });

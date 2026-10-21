@@ -34,6 +34,7 @@ import {
   CNR_PATTERN,
   proceeding,
   proceedingLink,
+  proceedingStateChange,
   PROCEEDING_LINK_KINDS,
 } from '../schema/proceedings.ts';
 import { inWorkspace, withTestDb } from '../testing/index.ts';
@@ -66,6 +67,12 @@ const PAIRS: [string, Table, ObjectParser, ObjectParser][] = [
   ['anchor', anchor, v.AnchorSelectSchema, v.AnchorInsertSchema],
   ['proceeding', proceeding, v.ProceedingSelectSchema, v.ProceedingInsertSchema],
   ['proceeding_link', proceedingLink, v.ProceedingLinkSelectSchema, v.ProceedingLinkInsertSchema],
+  [
+    'proceeding_state_change',
+    proceedingStateChange,
+    v.ProceedingStateChangeSelectSchema,
+    v.ProceedingStateChangeInsertSchema,
+  ],
   ['listing', listing, v.ListingSelectSchema, v.ListingInsertSchema],
   ['hearing', hearing, v.HearingSelectSchema, v.HearingInsertSchema],
   ['appearance', appearance, v.AppearanceSelectSchema, v.AppearanceInsertSchema],
@@ -145,6 +152,9 @@ describe('@causedeck/validators/matter-graph matches the tables', () => {
     expectTypeOf<v.Anchor>().toEqualTypeOf<InferSelectModel<typeof anchor>>();
     expectTypeOf<v.Proceeding>().toEqualTypeOf<InferSelectModel<typeof proceeding>>();
     expectTypeOf<v.ProceedingLink>().toEqualTypeOf<InferSelectModel<typeof proceedingLink>>();
+    expectTypeOf<v.ProceedingStateChange>().toEqualTypeOf<
+      InferSelectModel<typeof proceedingStateChange>
+    >();
     expectTypeOf<v.Listing>().toEqualTypeOf<InferSelectModel<typeof listing>>();
     expectTypeOf<v.Hearing>().toEqualTypeOf<InferSelectModel<typeof hearing>>();
     expectTypeOf<v.Appearance>().toEqualTypeOf<InferSelectModel<typeof appearance>>();

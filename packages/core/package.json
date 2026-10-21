@@ -43,6 +43,7 @@
     "@types/archiver": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "fast-check": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

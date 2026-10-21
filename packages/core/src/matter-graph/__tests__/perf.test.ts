@@ -1,5 +1,6 @@
-// Matter-graph service budget (#362, AC of #33): p95 for each mutating service call stays under
-// 100 ms on seeded data (a Chennai-solo graph plus a matter with 50 proceedings).
+// Matter-graph service budget (#362, #363, AC of #33): p95 for each mutating service call stays
+// under 100 ms on seeded data (a Chennai-solo graph plus a matter with 50 numbered and 50
+// pre-numbering proceedings, the latter for the state machine).
 //
 // As packages/db/src/__tests__/matter-graph-perf.test.ts does, the always-on gate measures Postgres
 // execution time (`EXPLAIN (ANALYZE, FORMAT JSON)` runs the statement for real, triggers and FK
@@ -21,6 +22,7 @@ import {
   createMatter,
   createProceeding,
   linkProceedings,
+  transitionProceeding,
   updateIdentifiers,
   updateMatter,
   type MatterGraphDeps,
@@ -47,6 +49,8 @@ interface Seeded {
   forumId: string;
   matterId: string;
   proceedingIds: string[];
+  /** Pre-numbering proceedings in `defects`, cycled defects <-> re_presented (#363). */
+  defectIds: string[];
 }
 
 async function seed(tx: Transaction): Promise<Seeded> {
@@ -59,12 +63,18 @@ async function seed(tx: Transaction): Promise<Seeded> {
       select ${workspaceId}::uuid, ${m.id}::uuid, ${graph.forumId}::uuid, 'WP', (20000 + g)::text, 2026, 'numbered', 'manual'
       from generate_series(1, ${PROCEEDINGS}) as g
       returning id`);
+    const defects = await s.execute<{ id: string }>(sql`
+      insert into proceeding (workspace_id, matter_id, forum_id, case_type_code, sr_no, state, source_type)
+      select ${workspaceId}::uuid, ${m.id}::uuid, ${graph.forumId}::uuid, 'WP', 'SR ' || g, 'defects', 'manual'
+      from generate_series(1, ${PROCEEDINGS}) as g
+      returning id`);
     return {
       workspaceId,
       ownerId,
       forumId: graph.forumId,
       matterId: m.id,
       proceedingIds: rows.map((r) => r.id),
+      defectIds: defects.map((r) => r.id),
     };
   });
 }
@@ -172,6 +182,25 @@ function services(deps: MatterGraphDeps, s: Transaction, d: Seeded) {
         });
       },
     },
+    transitionProceeding: {
+      // Sample i visits defect proceeding i % N for the floor(i / N)-th time: even visits move it to
+      // re_presented, odd ones back to defects, so every call is a legal transition.
+      call: (i: number) =>
+        transitionProceeding(deps, actor, {
+          proceedingId: d.defectIds[i % PROCEEDINGS] ?? '',
+          to: Math.floor(i / PROCEEDINGS) % 2 === 0 ? 're_presented' : 'defects',
+        }),
+      statement: (i: number): SQLWrapper =>
+        s.insert(schema.proceedingStateChange).values({
+          workspaceId: d.workspaceId,
+          proceedingId: d.defectIds[i % PROCEEDINGS] ?? '',
+          fromState: 're_presented',
+          toState: 'defects',
+          cureDeadline: '2026-11-02',
+          sourceType: 'manual',
+          confirmationState: 'confirmed',
+        }),
+    },
     createDocument: {
       call: (i: number) => createDocument(deps, actor, { matterId: d.matterId, ...doc(i) }),
       statement: (i: number): SQLWrapper =>
@@ -194,6 +223,7 @@ describe(`matter-graph mutating services under ${String(BUDGET_MS)} ms p95`, () 
     await withTestDb(async (tx) => {
       const d = await seed(tx);
       expect(d.proceedingIds).toHaveLength(PROCEEDINGS);
+      expect(d.defectIds).toHaveLength(PROCEEDINGS);
       await inWorkspace(tx, d.workspaceId, async (s) => {
         const deps: MatterGraphDeps = { db: s, events: { emit: () => undefined } };
         for (const [name, service] of Object.entries(services(deps, s, d))) {

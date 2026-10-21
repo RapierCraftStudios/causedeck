@@ -1,0 +1,272 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.original",
+  "listDate": "2026-10-23",
+  "listType": null,
+  "source": "email",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "12",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "5. W.P.No.12345 of 2026 and W.M.P.Nos.13001 & 13002 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "5",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "12345",
+              "caseYear": 2026,
+              "matchKey": "WP/12345/2026",
+              "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                },
+                {
+                  "raw": "Mr. P. Pretend, Govt. Advocate",
+                  "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "WMP",
+                  "caseTypeRaw": "W.M.P.",
+                  "number": "13001",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "WMP/13001/2026",
+                  "parentProceedingKey": "WP/12345/2026"
+                },
+                {
+                  "caseTypeCode": "WMP",
+                  "caseTypeRaw": "W.M.P.",
+                  "number": "13002",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "WMP/13002/2026",
+                  "parentProceedingKey": "WP/12345/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "17. W.P.No.9876 of 2025",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "17",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "9876",
+              "caseYear": 2025,
+              "matchKey": "WP/9876/2025",
+              "parties": "Fictional Mills Ltd. vs Pretend Municipal Corporation",
+              "stageRaw": "FOR ORDERS",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "hallNo": "9",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. CRL OP No.4570 of 2026 and Crl.M.P.No.3 of 2026",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "9",
+              "itemNo": "3",
+              "caseTypeRaw": "CRL OP",
+              "caseType": "CRLOP",
+              "caseNumber": "4570",
+              "caseYear": 2026,
+              "matchKey": "CRLOP/4570/2026",
+              "parties": "R. Karpanai Murugan vs State rep. by the Public Prosecutor",
+              "stageRaw": "FRESH CASES",
+              "stageNorm": "fresh",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "CRLMP",
+                  "caseTypeRaw": "Crl.M.P.",
+                  "number": "3",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "CRLMP/3/2026",
+                  "parentProceedingKey": "CRLOP/4570/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. W.P.No.12345 of 2026 and W.M.P.Nos.13001 & 13002 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "5",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "12345",
+      "caseYear": 2026,
+      "matchKey": "WP/12345/2026",
+      "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        },
+        {
+          "raw": "Mr. P. Pretend, Govt. Advocate",
+          "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "WMP",
+          "caseTypeRaw": "W.M.P.",
+          "number": "13001",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "WMP/13001/2026",
+          "parentProceedingKey": "WP/12345/2026"
+        },
+        {
+          "caseTypeCode": "WMP",
+          "caseTypeRaw": "W.M.P.",
+          "number": "13002",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "WMP/13002/2026",
+          "parentProceedingKey": "WP/12345/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "17. W.P.No.9876 of 2025",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "17",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "9876",
+      "caseYear": 2025,
+      "matchKey": "WP/9876/2025",
+      "parties": "Fictional Mills Ltd. vs Pretend Municipal Corporation",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. CRL OP No.4570 of 2026 and Crl.M.P.No.3 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "9",
+      "itemNo": "3",
+      "caseTypeRaw": "CRL OP",
+      "caseType": "CRLOP",
+      "caseNumber": "4570",
+      "caseYear": 2026,
+      "matchKey": "CRLOP/4570/2026",
+      "parties": "R. Karpanai Murugan vs State rep. by the Public Prosecutor",
+      "stageRaw": "FRESH CASES",
+      "stageNorm": "fresh",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "CRLMP",
+          "caseTypeRaw": "Crl.M.P.",
+          "number": "3",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "CRLMP/3/2026",
+          "parentProceedingKey": "CRLOP/4570/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["12", "9"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "for 23.10.2026",
+    "rowIndex": 0
+  }
+}

@@ -1,4 +1,5 @@
 // Playwright config for the e2e harness (#16). See README.md for the moving parts.
+//   - `E2E_SCOPE=ship|full` trims the matrix (see `scope` below; D-046).
 //   - Projects: Chromium at 360, 768 and 1280 px, each in light and dark (`chromium-<w>-<theme>`),
 //     plus a WebKit 360 px smoke project (`@smoke` tests only).
 //   - `webServer`: support/server-pool.ts checks the Docker stack, builds apps/web (`E2E_BUILD=1`,
@@ -11,6 +12,15 @@ import { BASE_PORT, originFor } from './support/server-pool.ts';
 
 // eslint-disable-next-line no-process-env -- Playwright's own CI switch.
 const isCI = Boolean(process.env.CI);
+
+// `ship` (ship PRs, D-046): every functional spec on chromium-1280-light, `@smoke` on 360-light and
+// WebKit, no visual specs. `full` (default locally, nightly): the whole matrix plus visual specs.
+// eslint-disable-next-line no-process-env -- the scope switch is read before Playwright loads projects.
+const scope = process.env.E2E_SCOPE ?? 'full';
+if (scope !== 'ship' && scope !== 'full') {
+  throw new Error(`e2e: E2E_SCOPE must be "ship" or "full", got "${scope}"`);
+}
+const isShip = scope === 'ship';
 
 const VIEWPORTS = {
   360: { width: 360, height: 780 },
@@ -60,8 +70,16 @@ export default defineConfig({
     locale: 'en-IN',
     timezoneId: 'Asia/Kolkata',
   },
+  testIgnore: isShip ? ['**/*.visual.spec.ts'] : [],
   projects: [
-    ...chromiumProjects,
+    ...(isShip
+      ? chromiumProjects
+          .filter(({ name }) => name === 'chromium-1280-light' || name === 'chromium-360-light')
+          .map((project) =>
+            // The 360 project only carries the smoke subset; 1280 runs everything.
+            project.name === 'chromium-360-light' ? { ...project, grep: /@smoke/ } : project,
+          )
+      : chromiumProjects),
     {
       name: 'webkit-360',
       grep: /@smoke/,

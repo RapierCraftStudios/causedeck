@@ -228,6 +228,9 @@ catalogs:
     hono:
       specifier: 4.13.13
       version: 4.13.13
+    icu-minify:
+      specifier: 4.14.9
+      version: 4.14.9
     intl-messageformat:
       specifier: 11.2.15
       version: 11.2.15
@@ -1231,6 +1234,9 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(kysely@0.29.6)(pg@8.23.1)(postgres@3.4.9)
+      icu-minify:
+        specifier: 'catalog:'
+        version: 4.14.9
       intl-messageformat:
         specifier: 'catalog:'
         version: 11.2.15

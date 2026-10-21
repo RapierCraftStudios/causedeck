@@ -26,6 +26,7 @@
     "@causedeck/i18n": "workspace:*",
     "@react-email/components": "catalog:",
     "drizzle-orm": "catalog:",
+    "icu-minify": "catalog:",
     "intl-messageformat": "catalog:",
     "nodemailer": "catalog:",
     "react": "catalog:",

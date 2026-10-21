@@ -117,6 +117,10 @@ describe('row-level security catalog', () => {
         // Proceedings (#346).
         'proceeding',
         'proceeding_link',
+        // People (#348).
+        'person',
+        'organisation',
+        'role_edge',
       ].sort(),
     );
     for (const row of rows)

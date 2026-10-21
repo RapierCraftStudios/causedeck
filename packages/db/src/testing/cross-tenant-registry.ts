@@ -68,6 +68,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Proceedings (#346).
   proceeding: DB_TABLES_TEST,
   proceeding_link: DB_TABLES_TEST,
+  // People (#348).
+  person: DB_TABLES_TEST,
+  organisation: DB_TABLES_TEST,
+  role_edge: DB_TABLES_TEST,
 };
 
 /**

@@ -19,6 +19,7 @@ import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { matter } from '../schema/matter-graph.ts';
+import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink } from '../schema/proceedings.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
@@ -129,6 +130,15 @@ async function seedProceeding(tx: Transaction, workspaceId: string, tag: string)
     })
     .returning({ id: proceeding.id });
   return first(rows, 'proceeding').id;
+}
+
+/** A fictional party (#348). */
+async function seedPerson(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(person)
+    .values({ workspaceId, name: `Party ${tag}`, kind: 'party', sourceType: 'manual' })
+    .returning({ id: person.id });
+  return first(rows, 'person').id;
 }
 
 /** A document of a fresh matter (#345). */
@@ -474,6 +484,31 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: proceedingLink.id });
     return { parentId, childId, linkId: first(rows, 'proceeding_link').id };
+  },
+  person: async (tx, { workspaceId, tag }) => ({
+    personId: await seedPerson(tx, workspaceId, tag),
+  }),
+  organisation: async (tx, { workspaceId, tag }) => {
+    const rows = await tx
+      .insert(organisation)
+      .values({ workspaceId, name: `Firm ${tag}` })
+      .returning({ id: organisation.id });
+    return { organisationId: first(rows, 'organisation').id };
+  },
+  role_edge: async (tx, { workspaceId, tag }) => {
+    const advocateId = await seedPerson(tx, workspaceId, `${tag}-advocate`);
+    const partyId = await seedPerson(tx, workspaceId, `${tag}-party`);
+    const rows = await tx
+      .insert(roleEdge)
+      .values({
+        workspaceId,
+        kind: 'represents',
+        fromPersonId: advocateId,
+        toPersonId: partyId,
+        sourceType: 'manual',
+      })
+      .returning({ id: roleEdge.id });
+    return { advocateId, partyId, roleEdgeId: first(rows, 'role_edge').id };
   },
   deletion_job: async (tx, { workspaceId, ownerId }) => {
     const row = first(

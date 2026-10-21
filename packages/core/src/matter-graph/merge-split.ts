@@ -407,7 +407,6 @@ export async function mergeMatters(
         proceedingIds,
         documentIds,
         roleEdgeIds: rows.roleEdge.map((r) => r.id),
-        stateChangeIds: rows.stateChange.map((r) => r.id),
         obligationIds: rows.obligation.map((r) => r.id),
         taskIds: rows.task.map((r) => r.id),
         mergedMatterIds: rows.mergedMatter.map((r) => r.id),
@@ -483,7 +482,6 @@ export async function undoMerge(
       await restoreRows(tx, 'proceeding', ws, back, rows.proceeding);
       await restoreRows(tx, 'document', ws, back, rows.document);
       await restoreRows(tx, 'role_edge', ws, back, rows.roleEdge);
-      await restoreRows(tx, 'proceeding_state_change', ws, back, rows.stateChange);
       await restoreRows(tx, 'obligation', ws, back, rows.obligation);
       await restoreRows(tx, 'task', ws, back, rows.task);
       await restoreRows(
@@ -1016,6 +1014,7 @@ export async function mergeProceedings(
         obligationIds: rows.obligation.map((r) => r.id),
         taskIds: rows.task.map((r) => r.id),
         roleEdgeIds: rows.roleEdge.map((r) => r.id),
+        stateChangeIds: rows.stateChange.map((r) => r.id),
         childIds: rows.child.map((r) => r.id),
         linkIds: rows.link.map((r) => r.id),
         deletedLinkIds: deletedLinks.map((l) => l.id),
@@ -1154,6 +1153,7 @@ export async function undoMergeProceedings(
       );
       await restoreRows(tx, 'task', ws, sql`${back}, matter_id = v.matter_id`, rows.task);
       await restoreRows(tx, 'role_edge', ws, back, rows.roleEdge);
+      await restoreRows(tx, 'proceeding_state_change', ws, back, rows.stateChange);
       await restoreRows(tx, 'proceeding', ws, sql`parent_proceeding_id = ${fromId}`, rows.child);
       for (const l of rows.link) {
         await tx.execute(sql`

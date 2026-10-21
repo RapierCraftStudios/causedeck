@@ -412,6 +412,22 @@ describe('workspace layout', () => {
     deletion.active = null;
   });
 
+  it('shows the demo-data banner in the demo workspace only, to every member (#182)', async () => {
+    const banner = async (slug: string) => {
+      cleanup();
+      withIntl(
+        await WorkspaceLayout({ children: <p>content</p>, params: Promise.resolve({ slug }) }),
+      );
+      return document.querySelector('[data-slot="demo-banner"]');
+    };
+    const demo = await banner('demo');
+    expect(demo?.textContent).toContain('Demo data — fictional');
+    expect(demo?.getAttribute('role')).toBe('status');
+    // Above the page content, outside main#main.
+    expect(document.getElementById('main')?.contains(demo ?? null)).toBe(false);
+    expect(await banner('clerk-desk')).toBeNull();
+  });
+
   it('paints the sidebar state from the cookie', async () => {
     state.cookies = { sidebar: { value: 'collapsed' } };
     withIntl(

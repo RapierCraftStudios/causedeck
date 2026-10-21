@@ -27,6 +27,8 @@ storybook-static/
 
 # Lawyer-supplied court fixtures: never committed (#371, #119).
 fixtures-private/
+# Seeded output of `pnpm --filter @causedeck/adapters gen:fixtures` (#401): never committed.
+packages/adapters/fixtures/generated/
 
 # OS and editor noise
 .DS_Store

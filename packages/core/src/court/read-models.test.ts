@@ -255,12 +255,12 @@ describe('getAdapterStatus (#397)', () => {
     });
   });
 
-  it('is empty for an adapter with no version or runs, and takes its level from forums', async () => {
+  it('takes the version from migration 0047 and the level from forums when no run exists', async () => {
     await withTestDb(async (tx) => {
       const { a } = await seedTwoTenants(tx);
       expect(await getAdapterStatus(tx, a.id, 'in.tn.madras-hc.principal')).toEqual({
         adapterId: 'in.tn.madras-hc.principal',
-        activeVersion: null,
+        activeVersion: '1.0.0',
         level: 'A1',
         lastVerifiedAt: null,
         health: null,

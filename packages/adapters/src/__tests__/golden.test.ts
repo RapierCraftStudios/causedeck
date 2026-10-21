@@ -25,8 +25,9 @@ import {
 } from '../testing/golden.ts';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../../..');
+// `generated/` is the git-ignored output of `gen:fixtures` (#401), not an adapter's committed set.
 const adapterDirs = readdirSync(FIXTURES_ROOT, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
+  .filter((entry) => entry.isDirectory() && entry.name !== 'generated')
   .map((entry) => entry.name);
 
 const scratch = () => mkdtempSync(path.join(os.tmpdir(), 'golden-'));

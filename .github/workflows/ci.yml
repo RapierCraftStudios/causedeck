@@ -135,6 +135,13 @@ jobs:
       - name: Adapter golden fixtures
         if: matrix.shard == 'rest'
         run: pnpm --filter @causedeck/adapters test:golden
+      # Golden metrics on seeded generated data (#401): row precision, recall, order-date accuracy
+      # and zero invented dates, gated in packages/adapters/src/madras-hc/generated-metrics.test.ts.
+      - name: Adapter golden metrics (generated)
+        if: matrix.shard == 'rest'
+        run: >-
+          pnpm --filter @causedeck/adapters gen:fixtures --adapter madras --seed 7 &&
+          pnpm --filter @causedeck/adapters test:metrics
       - name: Test
         env:
           CI_TURBO_CONCURRENCY: 3

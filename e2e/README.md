@@ -117,6 +117,25 @@ Enrolled fixtures share `ADMIN_TOTP_SECRET`, and `totpCode()` computes the curre
 `adminAs(kind)` signs in through the admin dev sign-in and, for enrolled staff, completes the
 `/verify-2fa` step. Pass `{ verify: false }` to stop before it.
 
+## Courts fixtures (#425)
+
+`support/db-reset.ts` also seeds `chennai-solo`'s parse history into the template, as the owner role
+inside one transaction with `app.workspace_id` set (`document` and `adapter_parse_run` force
+row-level security). The data is in `fixtures/courts-data.ts`: one `cause_list` document per
+`adapter_parse_run` row, with metrics and hall numbers only. The forums are the system catalogue
+that `migrate.ts` seeds, and the seeder fails the template build if these rows change:
+
+- `in.tn.madras-hc.principal.original` (A1): an older `ok` run, then a newer `degraded` run that
+  could not read Hall 12, so its card and header show the parse-failure banner;
+- `in.tn.madras-hc.principal.appellate` (A1): an `ok` run naming halls 2, 5 and 12A;
+- `in.tn.chennai.city-civil-court` (A0): no lists, so its Halls tab is empty;
+- `in.tn.madras-hc.madurai`: disabled, listed under Planned.
+
+It seeds no `access_mode_registry` rows, because `tests/admin/adapters.spec.ts` starts from an empty
+registry. To reach the empty index, `tests/courts` deletes the catalogue forums in the worker
+database. The courts page previews permission-denied with `?__state=denied` (development builds
+only, like `loading` and `error`), because every role can read courts.
+
 ## Visual baselines
 
 Baselines live in `e2e/__screenshots__/<project>/<spec>/<name>.png`. They are only ever generated in

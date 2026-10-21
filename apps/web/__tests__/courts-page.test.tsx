@@ -2,7 +2,8 @@
 // Courts index page (#399): every role, clerk and viewer included, reads the index from
 // `getCourtsIndex` in its own workspace scope; a FORBIDDEN from core renders permission-denied; any
 // other failure shows `Could not load courts.` with `Try again`; no forums shows the empty state;
-// offline shows `Showing saved court information`; `?__state=loading` previews the skeleton in dev.
+// offline shows `Showing saved court information`; `?__state=loading` previews the skeleton and
+// `?__state=denied` permission-denied in dev (#425).
 // The route's loading.tsx and error.tsx boundaries are covered too. `Add forum` (#402) shows for
 // owners and advocates only.
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -182,6 +183,18 @@ describe('courts page (#399)', () => {
     page.dev = false;
     withIntl(await CourtsPage(props({ __state: 'loading' })));
     expect(document.querySelector('[data-slot="courts-skeleton"]')).toBeNull();
+    expect(screen.getByRole('grid')).toBeTruthy();
+  });
+
+  it('previews permission-denied in development only (#425)', async () => {
+    withIntl(await CourtsPage(props({ __state: 'denied' })));
+    expect(document.querySelector('[data-pattern-state="permission-denied"]')).not.toBeNull();
+    expect(screen.queryByRole('grid')).toBeNull();
+    expect(court.getCourtsIndex).not.toHaveBeenCalled();
+    cleanup();
+    page.dev = false;
+    withIntl(await CourtsPage(props({ __state: 'denied' })));
+    expect(document.querySelector('[data-pattern-state="permission-denied"]')).toBeNull();
     expect(screen.getByRole('grid')).toBeTruthy();
   });
 

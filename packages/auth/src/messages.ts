@@ -5,6 +5,10 @@ export const AUTH_EMAIL_KEYS = {
     subject: 'auth.email.magicLink.subject',
     body: 'auth.email.magicLink.body',
   },
+  invitation: {
+    subject: 'auth.email.invitation.subject',
+    body: 'auth.email.invitation.body',
+  },
 } as const;
 
 export const AUTH_LOCALES = ['en', 'ta', 'kn'] as const;

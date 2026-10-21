@@ -1,4 +1,4 @@
-# Required status checks: the job names below (`lint`, `typecheck`, `test`, `build`).
+# Required status checks: the job names below (`lint`, `typecheck`, `test`, `build`, `tenancy`).
 # See docs/engineering/ci.md before renaming any of them.
 name: CI
 
@@ -42,6 +42,8 @@ jobs:
         run: pnpm adr:test
       - name: Docs links
         run: pnpm docs:links
+      - name: Permissions doc
+        run: pnpm docs:permissions:check
       - name: ESLint
         run: bash infra/scripts/ci-affected.sh lint
       - name: Validate dev compose file
@@ -64,7 +66,9 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # A change to db, core or auth affects every package, and turbo then runs all of their
+    # Testcontainers suites at once on the 4-vCPU runner: 9 to 14 minutes by now, over the old 15 limit.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -75,7 +79,12 @@ jobs:
       # Static: no database needed.
       - name: DB conventions
         run: pnpm db:check
+      # Message catalogs (#174): en/ta/kn key parity, ICU syntax, placeholders, generated files.
+      - name: i18n catalogs
+        run: pnpm i18n:check
       - name: Test
+        env:
+          CI_TURBO_CONCURRENCY: 3
         run: >-
           bash infra/scripts/ci-affected.sh test --
           --coverage --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
@@ -110,3 +119,52 @@ jobs:
       - name: Web bundle budget
         if: hashFiles('apps/web/.next/build-manifest.json') != ''
         run: pnpm --filter @causedeck/web bundle:budget
+
+  # Cross-tenant suite (#19, #209): always the full suite, never change-aware. Any failure is a
+  # release blocker (docs/engineering/tenancy.md). `db:check-rls` reads the catalog of a freshly
+  # migrated database; `test:tenancy` starts its own Testcontainers Postgres like `test`.
+  tenancy:
+    name: tenancy
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg17
+        env:
+          POSTGRES_USER: causedeck
+          POSTGRES_PASSWORD: causedeck
+          POSTGRES_DB: causedeck
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U causedeck -d causedeck"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://causedeck_app:causedeck_app@127.0.0.1:5432/causedeck
+      DATABASE_URL_OWNER: postgres://causedeck_owner:causedeck_owner@127.0.0.1:5432/causedeck
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      # The dev stack's init SQL (extensions, causedeck_owner / causedeck_app), as the superuser.
+      - name: Create roles and extensions
+        env:
+          PGPASSWORD: causedeck
+        run: |
+          for file in infra/docker/postgres/init/*.sql; do
+            psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U causedeck -d causedeck -f "$file"
+          done
+      - name: Migrate
+        run: pnpm db:migrate
+      - name: RLS catalog check
+        run: pnpm db:check-rls
+      - name: Cross-tenant suite
+        timeout-minutes: 4
+        run: pnpm test:tenancy
+      # Export completeness (#301): every tenant table has an exporter or a documented exclusion.
+      - name: Export coverage
+        timeout-minutes: 3
+        run: pnpm test:export-coverage

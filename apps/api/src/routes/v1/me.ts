@@ -11,6 +11,7 @@ import {
   type AppRouter,
 } from '../../lib/openapi.ts';
 
+// authz: public — authenticated (`defineRoute`), caller-scoped and not workspace data.
 export const meRoute = defineRoute({
   method: 'get',
   path: '/me',

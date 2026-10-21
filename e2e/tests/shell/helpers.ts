@@ -1,18 +1,20 @@
-// Shared setup for the app shell suites (#159). The shell resolves workspaces from the in-memory
-// dev stub (apps/web/lib/workspace-context.ts): the signed-in user is `owner` of `demo` and `clerk`
-// of `clerk-desk`, and never a member of `other-chambers`.
+// Shared setup for the app shell suites (#159). The shell loads memberships from the database
+// (#179): the seeded `chennai-solo` owner (packages/db/src/seed/e2e.ts) is also `clerk` of
+// `bengaluru-chamber`, and owns the soft-deleted `mysuru-archived`, which never shows.
 import type { Locator, Page } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
 
-/** TODO(#18): switch to the seeded `chennai-solo` once memberships come from the database. */
-export const SHELL_WORKSPACE = 'demo';
-/** The stub's second membership, held as `clerk`: the switch target and the permission check. */
-export const CLERK_WORKSPACE = 'clerk-desk';
+/** The signed-in owner's own workspace. */
+export const SHELL_WORKSPACE = 'chennai-solo';
+/** The owner's second membership, held as `clerk`: the switch target and the permission check. */
+export const CLERK_WORKSPACE = 'bengaluru-chamber';
 
 /**
  * Placeholder routes an owner sees with flags off (apps/web/lib/nav.ts `WORKSPACE_ROUTES`, minus
- * `settings`, which redirects, and the flag-gated `invoices` and `limitation`).
+ * the flag-gated `invoices` and `limitation`, and `billing` and `activity`, real pages since #256
+ * and #232 with their own specs in tests/billing and tests/activity). `settings` redirects to its
+ * profile section since #284 (tests/settings).
  */
 export const PLACEHOLDER_ROUTES = [
   'today',
@@ -26,8 +28,6 @@ export const PLACEHOLDER_ROUTES = [
   'memory',
   'people',
   'courts',
-  'activity',
-  'billing',
   'insights',
 ] as const;
 
@@ -36,8 +36,11 @@ export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];
 /** Routes behind a flag that ships dark: they 404 for everyone. */
 export const FLAG_GATED_ROUTES = ['invoices', 'limitation'] as const;
 
-/** `clerk` lacks `billing.read` and `insights.read`: these render the permission-denied page. */
-export const CLERK_DENIED_ROUTES = ['billing', 'insights'] as const;
+/**
+ * `clerk` lacks `insights.read`: it renders the shell permission-denied page. Billing (also denied)
+ * has its own owners-only copy since #256 (tests/billing).
+ */
+export const CLERK_DENIED_ROUTES = ['insights'] as const;
 
 /** Layout tier of the project's viewport: phone below 768 px, rail to 1280 px, then desktop. */
 export type Layout = 'phone' | 'rail' | 'desktop';
@@ -64,7 +67,7 @@ export interface OpenShellOptions {
   wait?: boolean;
 }
 
-/** Sign in as the stub's user and open `/w/<workspace>/<path>` (default `demo/today`). */
+/** Sign in as the `chennai-solo` owner and open `/w/<workspace>/<path>` (default its Today). */
 export async function openShell(
   page: Page,
   asUser: AsUser,

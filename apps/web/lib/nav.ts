@@ -66,16 +66,15 @@ function item(
   id: WorkspaceRoute,
   icon: LucideIcon,
   group: NavGroup,
-  extra: Partial<Pick<NavItem, 'requires' | 'flag' | 'badge'>> & { path?: string } = {},
+  extra: Partial<Pick<NavItem, 'requires' | 'flag' | 'badge'>> = {},
 ): NavItem {
-  const { path = id, ...rest } = extra;
   return {
     id,
     labelKey: `nav.${id}`,
     icon,
-    href: (slug) => `/w/${encodeURIComponent(slug)}/${path}`,
+    href: (slug) => `/w/${encodeURIComponent(slug)}/${id}`,
     group,
-    ...rest,
+    ...extra,
   };
 }
 
@@ -105,7 +104,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     flag: 'limitation.enabled',
   }),
   item('insights', BarChart3, 'practice', { requires: 'insights.read' }),
-  item('settings', Settings, 'settings', { requires: 'settings.read', path: 'settings/profile' }),
+  item('settings', Settings, 'settings', { requires: 'settings.read' }),
 ];
 
 export function getNavItem(id: WorkspaceRoute): NavItem {
@@ -114,7 +113,10 @@ export function getNavItem(id: WorkspaceRoute): NavItem {
   return found;
 }
 
-/** Legal-gated flags ship dark. TODO(#22): the real evaluator is injected from `@causedeck/flags`. */
+/**
+ * Every flag off: the default when no evaluator is injected. The shell injects the server-evaluated
+ * `@causedeck/flags` snapshot (`FlagsProvider` / `useIsEnabled`, #22).
+ */
 export const flagsOff: (flag: FlagKey) => boolean = () => false;
 
 export interface VisibleNavOptions {

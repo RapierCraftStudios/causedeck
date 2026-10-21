@@ -83,10 +83,21 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `KEK_BASE64` | secret base64 (32 bytes) | dev placeholder (non-prod only) | NODE_ENV=production | #21 | #116 |
 | `VAPID_PUBLIC_KEY` | string | — | VAPID_PRIVATE_KEY is set | #23 | #116 |
 | `VAPID_PRIVATE_KEY` | secret | — | VAPID_PUBLIC_KEY is set | #23 | #116 |
+| `VAPID_SUBJECT` | mailto: or https url | — | never | #197 | — |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | url | — | never | #13 | — |
 | `API_PORT` | port | `3001` | never (defaults to 3001) | #14 | — |
 | `WORKER_PORT` | port | `3003` | never (defaults to 3003) | #15 | — |
 | `GIT_SHA` | string | — | never | #13 | — |
+| `ADMIN_URL` | url | `http://localhost:3200` (non-prod only) | NODE_ENV=production, for apps/admin only | #309 | — |
+| `ADMIN_IP_ALLOWLIST` | list (comma-separated IPs/CIDRs) | — | never (set per deployment) | #309 | — |
+| `CF_ACCESS_AUD` | string | — | never (set per deployment) | #309 | — |
+| `CF_ACCESS_TEAM_DOMAIN` | host | — | CF_ACCESS_AUD is set | #309 | — |
+| `ADMIN_ENV_LABEL` | enum(development\|staging\|production) | — | never | #309 | — |
+| `BILLING_SUPPLIER_LEGAL_NAME` | string | — | never (issuing an invoice in production refuses while unset) | #253 | — |
+| `BILLING_SUPPLIER_ADDRESS` | string | — | never | #253 | — |
+| `BILLING_SUPPLIER_GSTIN` | GSTIN | — | never (issuing an invoice in production refuses while unset) | #253 | — |
+| `BILLING_INVOICE_SERIES` | string (1-3 capitals) | `CD` | never (defaults to CD) | #253 | — |
+| `BILLING_SAC` | string (99xxxx) | `998314` | never (defaults to 998314) | #253 | — |
 | `EMAIL_PROVIDER` | enum(console\|ses\|smtp) | `console` | never (defaults to console) | #23 | — |
 | `SES_REGION` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SES_ACCESS_KEY_ID` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
@@ -100,8 +111,9 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `SARVAM_API_KEY` | secret | — | AI_PROVIDER=sarvam | #44 | #113 |
 | `STORAGE_PROVIDER` | enum(minio\|s3) | `minio` | never (defaults to minio) | #21 | — |
 | `S3_ENDPOINT` | url | `http://localhost:9000` (non-prod only) | STORAGE_PROVIDER=minio | #21 | — |
-| `S3_BUCKET` | string | `causedeck` (non-prod only) | always (dev default outside production) | #21 | — |
-| `S3_ACCESS_KEY` | string | `causedeck` (non-prod only) | always (dev default outside production) | #21 | #116 |
+| `S3_REGION` | string | `ap-south-1` | never (defaults to ap-south-1); India only unless `AWS_REGION_OVERRIDE_ACK` | #21 | — |
+| `S3_BUCKET` | string | `causedeck-dev` (non-prod only) | always (dev default outside production) | #21 | — |
+| `S3_ACCESS_KEY` | secret | dev placeholder (non-prod only) | always (dev default outside production) | #21 | #116 |
 | `S3_SECRET_KEY` | secret | dev placeholder (non-prod only) | always (dev default outside production) | #21 | #116 |
 | `BILLING_PROVIDER` | enum(mock\|razorpay) | `mock` | never (defaults to mock) | #28 | — |
 | `RAZORPAY_KEY_ID` | string | — | BILLING_PROVIDER=razorpay | #28 | #111 |

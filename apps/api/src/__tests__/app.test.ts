@@ -1,12 +1,15 @@
 // End-to-end behaviour of `createApp` over `app.request()`: health, tenancy, validation, body
 // limits and headers.
 import { createRoute, z } from '@hono/zod-openapi';
+import { Secret } from '@causedeck/config/env';
 import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { createMemoryObjectStore, storageReadyCheck } from '@causedeck/storage';
 import { sql } from 'drizzle-orm';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { defineRoute, principalOf, type AppRouter } from '../lib/openapi.ts';
 import { requireWorkspace } from '../middleware/workspace.ts';
+import { readyChecksFromEnv } from '../server.ts';
 
 import { addMember, call, createWorkspace, makeApp, problemOf, signIn } from './helpers.ts';
 
@@ -31,6 +34,35 @@ describe('health', () => {
     const body = (await notReady.json()) as { checks: Record<string, { ok: boolean }> };
     expect(body.checks.storage?.ok).toBe(false);
     expect(JSON.stringify(body)).not.toContain('down');
+  });
+
+  it('registers `storage` from env and is not ready when the bucket is unreachable (#21)', async () => {
+    const readyChecks = readyChecksFromEnv({
+      STORAGE_PROVIDER: 'minio',
+      S3_ENDPOINT: 'http://127.0.0.1:1',
+      S3_REGION: 'ap-south-1',
+      S3_BUCKET: 'causedeck-dev',
+      S3_ACCESS_KEY: new Secret('AKIAREADYZCHECK'),
+      S3_SECRET_KEY: new Secret('readyz-secret-value'),
+    });
+    expect(Object.keys(readyChecks)).toEqual(['storage']);
+
+    const response = await call(makeApp({ readyChecks }), '/readyz');
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as { checks: Record<string, { ok: boolean }> };
+    expect(body.checks.db?.ok).toBe(true);
+    expect(body.checks.storage?.ok).toBe(false);
+    expect(JSON.stringify(body)).not.toMatch(/AKIAREADYZCHECK|readyz-secret-value/);
+  });
+
+  it('is ready when the storage check passes', async () => {
+    const store = createMemoryObjectStore();
+    const ready = await call(
+      makeApp({ readyChecks: { storage: storageReadyCheck(store) } }),
+      '/readyz',
+    );
+    expect(ready.status).toBe(200);
+    expect(await ready.json()).toMatchObject({ checks: { storage: { ok: true } } });
   });
 });
 

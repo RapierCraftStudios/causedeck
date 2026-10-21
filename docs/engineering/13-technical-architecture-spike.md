@@ -90,8 +90,10 @@ causedeck/
 
 **Dependency rules** (enforced by eslint-plugin-boundaries):
 - Apps may import packages. Packages never import apps.
+- Apps never value-import `db`: they reach the database through `core` (the `@causedeck/core/runtime` seam, or a `core` service the app calls). `import type` from `@causedeck/db` is allowed, and app test files may take values from `@causedeck/db/testing` (plus `testing/*` and `seed/*`). Enforced by `appDbImportBlocks` in `packages/config/eslint/boundaries.js` (#299); `apps/admin` keeps only its `withoutWorkspace` exemption.
 - `core` depends on `db`, `auth`, `flags`, `storage`, `ai`, `adapters`, `intelligence`, `drafting`, `notifications`, `billing`, `validators`.
 - `ui` depends on nothing domain-specific.
+- `db` is a leaf under the domain packages: it depends only on `config`, `i18n` and `validators` (`DB_DEPENDENCIES`). `validators` is itself a leaf (zod only) and holds the GSTIN pattern and the plan catalogue that the billing tables and the `plans` seed need; `billing` re-exports them.
 
 ## 3. Runtime topology
 

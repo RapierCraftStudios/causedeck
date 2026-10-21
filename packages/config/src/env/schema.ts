@@ -184,6 +184,14 @@ export const serverKeys = {
     credentialIssue: 116,
     secret: true,
   },
+  VAPID_SUBJECT: {
+    domain: 'server',
+    type: 'mailto: or https url',
+    description:
+      'Web push VAPID subject (contact for push services). Defaults to mailto:push@<APP_URL host>.',
+    requiredWhen: 'never',
+    ownerIssue: 197,
+  },
   OTEL_EXPORTER_OTLP_ENDPOINT: {
     domain: 'server',
     type: 'url',
@@ -213,6 +221,85 @@ export const serverKeys = {
     description: 'Build commit SHA; used as the service version and Sentry release.',
     requiredWhen: 'never',
     ownerIssue: 13,
+  },
+  ADMIN_URL: {
+    domain: 'server',
+    type: 'url',
+    description: 'Public URL of the staff admin console (apps/admin).',
+    devDefault: 'http://localhost:3200',
+    requiredWhen: 'NODE_ENV=production, for apps/admin only',
+    ownerIssue: 309,
+  },
+  ADMIN_IP_ALLOWLIST: {
+    domain: 'server',
+    type: 'list (comma-separated IPs/CIDRs)',
+    description:
+      'Optional client IP allowlist for apps/admin (IPv4/IPv6 addresses or CIDRs, comma-separated). Unset allows any IP.',
+    requiredWhen: 'never (set per deployment)',
+    ownerIssue: 309,
+  },
+  CF_ACCESS_AUD: {
+    domain: 'server',
+    type: 'string',
+    description:
+      'Cloudflare Access application audience tag. When set, apps/admin requires a valid Cf-Access-Jwt-Assertion.',
+    requiredWhen: 'never (set per deployment)',
+    ownerIssue: 309,
+  },
+  CF_ACCESS_TEAM_DOMAIN: {
+    domain: 'server',
+    type: 'host',
+    description:
+      'Cloudflare Access team domain that signs the JWT, e.g. team.cloudflareaccess.com.',
+    requiredWhen: 'CF_ACCESS_AUD is set',
+    ownerIssue: 309,
+  },
+  ADMIN_ENV_LABEL: {
+    domain: 'server',
+    type: 'enum(development|staging|production)',
+    description:
+      'Environment tag shown in the admin console strip. Defaults to production when NODE_ENV=production, else development.',
+    requiredWhen: 'never',
+    ownerIssue: 309,
+  },
+  BILLING_SUPPLIER_LEGAL_NAME: {
+    domain: 'server',
+    type: 'string',
+    description:
+      'Legal name of the supplier on SaaS GST invoices. Outside production a TEST supplier is used when unset.',
+    requiredWhen: 'never (issuing an invoice in production refuses while unset)',
+    ownerIssue: 253,
+  },
+  BILLING_SUPPLIER_ADDRESS: {
+    domain: 'server',
+    type: 'string',
+    description: 'Registered address of the supplier on SaaS GST invoices.',
+    requiredWhen: 'never',
+    ownerIssue: 253,
+  },
+  BILLING_SUPPLIER_GSTIN: {
+    domain: 'server',
+    type: 'GSTIN',
+    description:
+      'GSTIN of the supplier on SaaS GST invoices; its state code decides CGST+SGST or IGST.',
+    requiredWhen: 'never (issuing an invoice in production refuses while unset)',
+    ownerIssue: 253,
+  },
+  BILLING_INVOICE_SERIES: {
+    domain: 'server',
+    type: 'string (1-3 capitals)',
+    description: 'SaaS invoice number series, as in CD/26-27/000001.',
+    default: 'CD',
+    requiredWhen: 'never (defaults to CD)',
+    ownerIssue: 253,
+  },
+  BILLING_SAC: {
+    domain: 'server',
+    type: 'string (99xxxx)',
+    description: 'SAC printed on SaaS GST invoices (needs CA confirmation).',
+    default: '998314',
+    requiredWhen: 'never (defaults to 998314)',
+    ownerIssue: 253,
   },
 } satisfies KeyMetaRecord;
 
@@ -263,6 +350,14 @@ export const sharedShape = {
 
 const postgresUrl = z.url({ protocol: /^postgres(ql)?$/ });
 
+const ipOrCidr = z.union([z.ipv4(), z.ipv6(), z.cidrv4(), z.cidrv6()]);
+
+/** `ADMIN_IP_ALLOWLIST`: one or more comma-separated IPv4/IPv6 addresses or CIDRs. */
+export function isIpAllowlist(value: string): boolean {
+  const entries = value.split(',').map((entry) => entry.trim());
+  return entries.length > 0 && entries.every((entry) => ipOrCidr.safeParse(entry).success);
+}
+
 export const serverShape = {
   DATABASE_URL: secret(postgresUrl).describe(d(serverKeys.DATABASE_URL)),
   DATABASE_URL_OWNER: secret(postgresUrl).optional().describe(d(serverKeys.DATABASE_URL_OWNER)),
@@ -278,6 +373,11 @@ export const serverShape = {
   ).describe(d(serverKeys.KEK_BASE64)),
   VAPID_PUBLIC_KEY: z.string().min(1).optional().describe(d(serverKeys.VAPID_PUBLIC_KEY)),
   VAPID_PRIVATE_KEY: secret(z.string().min(1)).optional().describe(d(serverKeys.VAPID_PRIVATE_KEY)),
+  VAPID_SUBJECT: z
+    .string()
+    .regex(/^(mailto:\S+@\S+|https:\/\/\S+)$/, 'must be a mailto: address or an https URL')
+    .optional()
+    .describe(d(serverKeys.VAPID_SUBJECT)),
   OTEL_EXPORTER_OTLP_ENDPOINT: z
     .url()
     .optional()
@@ -285,6 +385,38 @@ export const serverShape = {
   API_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.API_PORT)),
   WORKER_PORT: z.coerce.number().int().min(1).max(65535).describe(d(serverKeys.WORKER_PORT)),
   GIT_SHA: z.string().min(1).optional().describe(d(serverKeys.GIT_SHA)),
+  // The staff admin console (#309); its own accessor requires ADMIN_URL in production.
+  ADMIN_URL: z.url().optional().describe(d(serverKeys.ADMIN_URL)),
+  ADMIN_IP_ALLOWLIST: z
+    .string()
+    .refine(isIpAllowlist, 'must be comma-separated IPv4/IPv6 addresses or CIDRs')
+    .optional()
+    .describe(d(serverKeys.ADMIN_IP_ALLOWLIST)),
+  CF_ACCESS_AUD: z.string().min(1).optional().describe(d(serverKeys.CF_ACCESS_AUD)),
+  CF_ACCESS_TEAM_DOMAIN: z
+    .string()
+    .regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i, 'must be a host name, e.g. team.cloudflareaccess.com')
+    .optional()
+    .describe(d(serverKeys.CF_ACCESS_TEAM_DOMAIN)),
+  ADMIN_ENV_LABEL: z
+    .enum(['development', 'staging', 'production'])
+    .optional()
+    .describe(d(serverKeys.ADMIN_ENV_LABEL)),
+  // Checked when an invoice is issued (`@causedeck/billing/config/supplier`), not at boot.
+  BILLING_SUPPLIER_LEGAL_NAME: z
+    .string()
+    .optional()
+    .describe(d(serverKeys.BILLING_SUPPLIER_LEGAL_NAME)),
+  BILLING_SUPPLIER_ADDRESS: z.string().optional().describe(d(serverKeys.BILLING_SUPPLIER_ADDRESS)),
+  BILLING_SUPPLIER_GSTIN: z.string().optional().describe(d(serverKeys.BILLING_SUPPLIER_GSTIN)),
+  BILLING_INVOICE_SERIES: z
+    .string()
+    .regex(/^[A-Z]{1,3}$/, 'must be 1-3 capital letters')
+    .describe(d(serverKeys.BILLING_INVOICE_SERIES)),
+  BILLING_SAC: z
+    .string()
+    .regex(/^99[0-9]{4}$/, 'must be a six-digit SAC starting 99')
+    .describe(d(serverKeys.BILLING_SAC)),
 };
 
 const baseSchema = z.object({ ...sharedShape, ...serverShape, ...clientShape });
@@ -327,6 +459,12 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
   if (env.DATA_REGION !== undefined && env.DATA_REGION !== 'in' && !regionAck) {
     add('DATA_REGION', `must be "in" unless AWS_REGION_OVERRIDE_ACK=${OVERRIDE_ACK}`);
   }
+  if (env.S3_REGION !== undefined && !isIndiaRegion(env.S3_REGION) && !regionAck) {
+    add(
+      'S3_REGION',
+      `must be an India region (${INDIA_AWS_REGIONS.join(', ')}) unless AWS_REGION_OVERRIDE_ACK=${OVERRIDE_ACK}`,
+    );
+  }
   if (
     parsed.AI_INDIA_ONLY !== false &&
     env.AI_PROVIDER === 'bedrock' &&
@@ -334,6 +472,22 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
     !isIndiaRegion(env.BEDROCK_REGION)
   ) {
     add('BEDROCK_REGION', 'must be an India region while AI_INDIA_ONLY=true');
+  }
+  if (
+    env.EMAIL_PROVIDER === 'ses' &&
+    env.SES_REGION !== undefined &&
+    env.SES_REGION !== '' &&
+    !isIndiaRegion(env.SES_REGION) &&
+    !regionAck
+  ) {
+    add(
+      'SES_REGION',
+      `must be an India region (${INDIA_AWS_REGIONS.join(', ')}) unless AWS_REGION_OVERRIDE_ACK=${OVERRIDE_ACK}`,
+    );
+  }
+
+  if (env.CF_ACCESS_AUD !== undefined && env.CF_ACCESS_TEAM_DOMAIN === undefined) {
+    add('CF_ACCESS_TEAM_DOMAIN', 'is required when CF_ACCESS_AUD is set');
   }
 
   if (!isProd) return issues;

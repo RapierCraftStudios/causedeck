@@ -88,6 +88,25 @@ describe('Command', () => {
     expect(screen.getByText('முடிவுகள் இல்லை')).toBeInTheDocument();
   });
 
+  it('draws the list focus ring inside it, so the overflow-hidden palette cannot clip it', () => {
+    render(
+      <CommandDialog open onOpenChange={() => undefined}>
+        <CommandInput />
+        <CommandList>
+          <CommandItem value="Add note">Add note</CommandItem>
+        </CommandList>
+      </CommandDialog>,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Command palette' });
+    expect(dialog.className).toContain('overflow-hidden');
+    const list = dialog.querySelector('[data-slot="command-list"]');
+    expect(list).toHaveClass(
+      'focus-visible:outline-ring',
+      'focus-visible:outline-2',
+      'focus-visible:-outline-offset-2!',
+    );
+  });
+
   it('opens as a titled dialog that is full screen on phones', () => {
     render(
       <CommandDialog open onOpenChange={() => undefined}>

@@ -35,7 +35,7 @@ async function snap(page: Page, name: string) {
 interface Shot {
   name: string;
   layouts: readonly Layout[];
-  /** Puts the page in the state to capture, starting from the hydrated `/w/demo/today`. */
+  /** Puts the page in the state to capture, starting from the hydrated `/w/chennai-solo/today`. */
   setUp: (page: Page) => Promise<void>;
 }
 

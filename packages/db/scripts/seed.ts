@@ -1,10 +1,12 @@
-// `pnpm db:seed [--profile demo|test|e2e]`: run the registered seeders as the app role.
+// `pnpm db:seed [--profile demo|test|e2e]`: run the registered seeders as the app role. Under FORCE
+// row-level security (#19) seeders write tenant rows inside `withWorkspace`, one workspace at a time.
 import { createEnv } from '@causedeck/config/env';
 
 import { createDb } from '../src/client.ts';
 import { seed, SEED_PROFILES, type SeedProfile } from '../src/seed/index.ts';
 // Seeders register on import.
 import '../src/seed/e2e.ts';
+import '../src/seed/plans.ts';
 
 const flag = process.argv.indexOf('--profile');
 const requested = flag === -1 ? 'demo' : process.argv[flag + 1];

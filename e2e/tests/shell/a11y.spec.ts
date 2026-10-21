@@ -13,7 +13,7 @@ import {
 } from './helpers.ts';
 
 test.describe('shell accessibility', { tag: '@a11y' }, () => {
-  for (const route of ['today', 'matters', 'courts'] as const) {
+  for (const route of ['today', 'matters', 'courts', 'settings'] as const) {
     test(`/${route}`, async ({ page, asUser }) => {
       await openShell(page, asUser, { path: route });
       await expect(page.getByRole('main')).toBeVisible();

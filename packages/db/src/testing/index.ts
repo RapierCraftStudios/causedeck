@@ -7,9 +7,17 @@ import { inject } from 'vitest';
 
 import { createDb, type Database, type Transaction } from '../client.ts';
 import { createOwnerDb } from '../owner.ts';
+import { withWorkspace } from '../rls.ts';
 import type { TestDatabaseUrls } from './container.ts';
 // Brings in the `ProvidedContext` augmentation for `inject()`.
 import type {} from './global-setup.ts';
+
+// Values app test files need from the root entry (#299): apps may value-import `@causedeck/db` only
+// through `@causedeck/db/testing` (and `testing/*`, `seed/*`) in tests.
+export { createDb } from '../client.ts';
+export { isUuid, withUser, withWorkspace } from '../rls.ts';
+export { registeredTenantTables } from '../rls-policies.ts';
+export * as schema from '../schema/index.ts';
 
 export {
   createScratchDatabase,
@@ -52,6 +60,21 @@ export async function withTestDb<T>(fn: (tx: Transaction) => Promise<T>): Promis
 }
 
 /**
+ * Fixtures under FORCE row-level security (#19): run `fn` on a savepoint of the test transaction
+ * scoped to `workspaceId` (and `userId`), so tenant rows can be inserted and read. The outer
+ * transaction's scope is restored afterwards. Owner sessions do not help here: FORCE RLS binds the
+ * owner too, and it has no BYPASSRLS.
+ */
+export function inWorkspace<T>(
+  tx: Transaction,
+  workspaceId: string,
+  fn: (scoped: Transaction) => Promise<T>,
+  userId?: string,
+): Promise<T> {
+  return withWorkspace(tx, userId === undefined ? { workspaceId } : { workspaceId, userId }, fn);
+}
+
+/**
  * Empty every table in `public` except `schema_info` (as the owner; the app role has no TRUNCATE). For suites that must
  * commit, such as tests of code that opens its own transactions. Not safe alongside parallel files
  * that commit to the same tables.
@@ -63,9 +86,13 @@ export async function truncateAll(): Promise<void> {
       sql`select quote_ident(tablename) as name from pg_tables where schemaname = 'public' and tablename <> 'schema_info'`,
     );
     if (rows.length > 0) {
-      await owner.execute(
-        sql.raw(`truncate table ${rows.map((r) => r.name).join(', ')} restart identity cascade`),
-      );
+      // The append-only audit tables (#226) reject TRUNCATE outside the retention path.
+      await owner.transaction(async (tx) => {
+        await tx.execute(sql`select set_config('app.audit_retention', 'on', true)`);
+        await tx.execute(
+          sql.raw(`truncate table ${rows.map((r) => r.name).join(', ')} restart identity cascade`),
+        );
+      });
     }
   } finally {
     await owner.$client.end();

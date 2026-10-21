@@ -6,16 +6,24 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AUTH_EMAIL_KEYS } from '../messages';
 import { magicLinkEmailKey, RATE_LIMIT_MESSAGE } from '../rate-limit';
-import { createAuth, MAGIC_LINK_EXPIRES_IN_SECONDS, SESSION_EXPIRES_IN_SECONDS } from '../server';
+import {
+  createAuth,
+  MAGIC_LINK_EXPIRES_IN_SECONDS,
+  SESSION_EXPIRES_IN_SECONDS,
+  SESSION_UPDATE_AGE_SECONDS,
+  sessionUpdateAgeFor,
+} from '../server';
 import {
   authRequest,
   capturingLogger,
+  cookieHeader,
   devSignInAs,
   makeAuth,
   recordingMailer,
   sessionSetCookie,
   TEST_SECRET,
   testEnv,
+  totp,
   uniqueEmail,
   uniqueIp,
   type TestAuth,
@@ -126,6 +134,18 @@ describe('session cookies', () => {
     expect(cookie).toMatch(/SameSite=Lax/i);
     expect(cookie).toContain(`Max-Age=${String(SESSION_EXPIRES_IN_SECONDS)}`);
     expect(cookie).not.toMatch(/;\s*Secure/i);
+  });
+
+  it('take a shorter lifetime when `sessionExpiresInSeconds` is set (admin console, #309)', async () => {
+    const auth = createAuth({
+      db: testAppDb(),
+      env: testEnv(),
+      mailer: recordingMailer(),
+      logger: capturingLogger(),
+      sessionExpiresInSeconds: 8 * 60 * 60,
+    });
+    const { response } = await devSignInAs(auth);
+    expect(sessionSetCookie(response) ?? '').toContain('Max-Age=28800');
   });
 
   it('are Secure with the __Secure- prefix in production', async () => {
@@ -377,3 +397,127 @@ describe('secrets', () => {
     expect(JSON.stringify(testEnv())).not.toContain(TEST_SECRET);
   });
 });
+
+describe('session refresh age', () => {
+  it('stays a day for the default lifetime and shrinks for short ones', () => {
+    expect(sessionUpdateAgeFor(SESSION_EXPIRES_IN_SECONDS)).toBe(SESSION_UPDATE_AGE_SECONDS);
+    expect(sessionUpdateAgeFor(8 * 60 * 60)).toBe(2 * 60 * 60);
+  });
+});
+
+describe('disableSignUp (admin console, #309)', () => {
+  it('never creates a user from a magic link for an unknown address', async () => {
+    const mailer = recordingMailer();
+    const auth = createAuth({
+      db: testAppDb(),
+      env: testEnv(),
+      mailer,
+      logger: capturingLogger(),
+      disableSignUp: true,
+    });
+    const email = uniqueEmail('nosignup');
+    await requestLink(auth, email);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    for (const sent of mailer.sent) {
+      const verify = await authRequest(auth, sent.url, { method: 'GET' });
+      expect(sessionSetCookie(verify)).toBeUndefined();
+    }
+    expect(await findUser(email)).toBeUndefined();
+  });
+});
+
+describe('two-factor without a password (#289)', () => {
+  it('lets a passwordless user enable TOTP with the session alone, then verify it', async () => {
+    const twoFactorEnabled = vi.fn(() => Promise.resolve());
+    const { auth } = makeAuth({
+      securityEvents: {
+        signInSucceeded: () => Promise.resolve(),
+        signInFailed: () => Promise.resolve(),
+        magicLinkRequested: () => Promise.resolve(),
+        passkeyAdded: () => Promise.resolve(),
+        passkeyRemoved: () => Promise.resolve(),
+        twoFactorEnabled,
+        twoFactorDisabled: () => Promise.resolve(),
+        sessionRevoked: () => Promise.resolve(),
+      },
+    });
+    // Dev sign-in creates no credential account: the user has no password at all.
+    const { user, cookie } = await devSignInAs(auth);
+    const enable = await authRequest(auth, '/two-factor/enable', { cookie, body: {} });
+    expect(enable.status).toBe(200);
+    const { totpURI, backupCodes } = (await enable.json()) as {
+      totpURI: string;
+      backupCodes: string[];
+    };
+    expect(totpURI).toMatch(/^otpauth:\/\/totp\/CauseDeck:/);
+    expect(backupCodes.length).toBeGreaterThan(0);
+    // Not enabled until the first code is verified.
+    expect((await findUserById(user.id))?.twoFactorEnabled).toBe(false);
+
+    const secret = new URL(totpURI).searchParams.get('secret') ?? '';
+    const verify = await authRequest(auth, '/two-factor/verify-totp', {
+      cookie,
+      body: { code: totp(secret) },
+    });
+    expect(verify.status).toBe(200);
+    // Verification rotates the session: a fresh session cookie comes back.
+    expect(cookieHeader(verify)).toContain('session_token=');
+    expect((await findUserById(user.id))?.twoFactorEnabled).toBe(true);
+    expect(twoFactorEnabled).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('step-up stamps (#304)', () => {
+  async function sessionsOf(userId: string) {
+    return testAppDb()
+      .select({ id: schema.session.id, stepUpAt: schema.session.stepUpAt })
+      .from(schema.session)
+      .where(eq(schema.session.userId, userId));
+  }
+
+  it('a TOTP verification stamps the session; a failed code and dev sign-in do not', async () => {
+    const { auth } = makeAuth();
+    const { user, cookie } = await devSignInAs(auth);
+    expect((await sessionsOf(user.id)).every((s) => s.stepUpAt === null)).toBe(true);
+
+    const enable = await authRequest(auth, '/two-factor/enable', { cookie, body: {} });
+    const { totpURI } = (await enable.json()) as { totpURI: string };
+    const secret = new URL(totpURI).searchParams.get('secret') ?? '';
+    // The first verification rotates the session: the new one starts with a step-up.
+    const before = Date.now();
+    const verify = await authRequest(auth, '/two-factor/verify-totp', {
+      cookie,
+      body: { code: totp(secret) },
+    });
+    expect(verify.status).toBe(200);
+    const stamped = (await sessionsOf(user.id)).filter((s) => s.stepUpAt !== null);
+    expect(stamped).toHaveLength(1);
+    expect(stamped[0]?.stepUpAt?.getTime()).toBeGreaterThanOrEqual(before - 1000);
+
+    // A wrong code on the rotated session changes nothing.
+    const rotated = cookieHeader(verify);
+    await testAppDb()
+      .update(schema.session)
+      .set({ stepUpAt: null })
+      .where(eq(schema.session.userId, user.id));
+    const wrong = await authRequest(auth, '/two-factor/verify-totp', {
+      cookie: rotated,
+      body: { code: totp(secret) === '000000' ? '111111' : '000000' },
+    });
+    expect(wrong.status).toBeGreaterThanOrEqual(400);
+    expect((await sessionsOf(user.id)).every((s) => s.stepUpAt === null)).toBe(true);
+
+    // A signed-in re-verification (2FA already on) stamps the current session.
+    const again = await authRequest(auth, '/two-factor/verify-totp', {
+      cookie: rotated,
+      body: { code: totp(secret) },
+    });
+    expect(again.status).toBe(200);
+    expect((await sessionsOf(user.id)).some((s) => s.stepUpAt !== null)).toBe(true);
+  });
+});
+
+async function findUserById(id: string) {
+  const [row] = await testAppDb().select().from(schema.user).where(eq(schema.user.id, id));
+  return row;
+}

@@ -1,0 +1,99 @@
+{
+  "lifecycle": {
+    "offline": "Needs a connection",
+    "forbidden": "Only workspace owners can export or delete this workspace.",
+    "stepUp": {
+      "title": "Confirm it is you",
+      "body": "Use your passkey or the code from your authenticator app. It stays confirmed for 10 minutes.",
+      "passkey": "Use passkey",
+      "code": "Authenticator code",
+      "verify": "Verify code",
+      "verified": "Confirmed. You can continue.",
+      "wrongCode": "That code did not work.",
+      "codeFormat": "Enter the 6-digit code.",
+      "passkeyFailed": "The passkey check did not finish. Try again.",
+      "required": "Confirm it is you to continue."
+    },
+    "export": {
+      "title": "Export everything",
+      "action": "Request export",
+      "helper": "A ZIP containing your matters, documents, memory and activity. Ready within minutes for most workspaces.",
+      "leave": "You can leave this page; come back here to download it.",
+      "progressLabel": "Export progress",
+      "steps": {
+        "queued": "Waiting to start",
+        "collecting": "Collecting records",
+        "files": "Decrypting files",
+        "packaging": "Packaging"
+      },
+      "readyTitle": "Your export is ready",
+      "expires": "Expires in {hours, plural, =0 {less than an hour} one {# hour} other {# hours}}",
+      "download": "Download",
+      "copySha": "Copy SHA-256",
+      "copied": "SHA-256 copied",
+      "copyFailed": "Could not copy the SHA-256.",
+      "failed": "The export did not finish.",
+      "retry": "Try again",
+      "requestError": "Could not request the export. Try again.",
+      "downloadError": "Could not start the download. Try again."
+    },
+    "history": {
+      "title": "History",
+      "empty": "No exports yet.",
+      "requested": "Requested {date}",
+      "status": {
+        "queued": "Queued",
+        "running": "Building",
+        "ready": "Ready",
+        "failed": "Failed",
+        "expired": "Expired"
+      }
+    },
+    "danger": {
+      "title": "Delete this workspace",
+      "consequences": {
+        "data": "Every matter, document, member and setting in this workspace is deleted.",
+        "permanent": "Deletion becomes permanent after a 14-day cooling-off period.",
+        "export": "Export the workspace first if you need a copy.",
+        "cryptoErase": "We destroy the workspace's encryption key, so stored files can never be read again."
+      },
+      "action": "Delete workspace",
+      "scheduled": "Scheduled for deletion on {date}. Cancel any time before then.",
+      "cancel": "Cancel deletion",
+      "cancelled": "Deletion cancelled",
+      "cancelError": "Could not cancel the deletion. Try again.",
+      "requested": "Deletion scheduled",
+      "dialog": {
+        "title": "Delete this workspace",
+        "step": "Step {current} of {total}",
+        "exportTitle": "Export first",
+        "exportBody": "After deletion nothing can be recovered. Download an export if you need a copy.",
+        "exportLink": "Open export",
+        "exportAck": "I have exported what I need, or I do not need a copy",
+        "nameTitle": "Type the workspace name",
+        "nameLabel": "Workspace name",
+        "nameHint": "Type {name} to confirm.",
+        "nameMismatch": "The name does not match.",
+        "next": "Next",
+        "back": "Back",
+        "close": "Cancel",
+        "delete": "Delete",
+        "error": "Could not request deletion. Try again."
+      }
+    },
+    "account": {
+      "title": "Delete account",
+      "description": "Delete your CauseDeck account and sign out everywhere.",
+      "consequences": "Your name and email are removed and your activity in workspaces is anonymised. You must first transfer or delete any workspace you are the only owner of.",
+      "action": "Delete account",
+      "dialogTitle": "Delete your account",
+      "confirmLabel": "Type your email to confirm",
+      "confirmHint": "Type {email} to confirm.",
+      "mismatch": "The email does not match.",
+      "delete": "Delete account",
+      "close": "Cancel",
+      "requested": "Your account deletion has started.",
+      "error": "Could not delete your account. Try again."
+    }
+  }
+}

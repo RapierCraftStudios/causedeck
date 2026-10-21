@@ -1,7 +1,7 @@
 // Shared Hono env, the router factory and the OpenAPI security rule (#14): every `/v1` route either
 // declares `security` (and gets `requireAuth`) or is explicitly `public: true` (webhooks, which
 // verify signatures instead). `assertRouteSecurity` is the guard the unit tests run.
-import type { SessionUser } from '@causedeck/auth';
+import type { Role, SessionUser } from '@causedeck/auth';
 import type { Transaction } from '@causedeck/db';
 import { OpenAPIHono, type RouteConfig } from '@hono/zod-openapi';
 import { PROBLEM_CONTENT_TYPE, ProblemSchema } from '@causedeck/validators/api';
@@ -21,6 +21,8 @@ export interface AppVariables {
   requestId: string;
   principal: Principal | null;
   workspaceId: string;
+  /** The caller's role in `workspaceId`, set by `requireWorkspace`; `authorize` checks it. */
+  role: Role;
   withWorkspace: WithWorkspace;
 }
 

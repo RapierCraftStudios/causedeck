@@ -3,7 +3,7 @@
 // sidebar is the 64 px rail; from 1280 px it is expanded; nothing scrolls sideways at 360 px.
 import { expect, test } from '../../fixtures/index.ts';
 
-import { PLACEHOLDER_ROUTES, layoutOf, openShell, sidebar } from './helpers.ts';
+import { PLACEHOLDER_ROUTES, layoutOf, openShell, sidebar, SHELL_WORKSPACE } from './helpers.ts';
 
 const BAR = ['today', 'inbox', 'matters', 'obligations'];
 
@@ -76,7 +76,7 @@ test.describe('layouts', () => {
     );
 
     await sheet.locator('[data-more-item="courts"]').click();
-    await expect(page).toHaveURL(/\/w\/demo\/courts$/);
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/courts$`));
     await expect(sheet).toBeHidden();
     // A destination from the sheet marks More as current.
     await expect(page.locator('[data-mobile-nav-item="more"]')).toHaveAttribute(
@@ -102,15 +102,19 @@ test.describe('layouts', () => {
 
   test('no placeholder page scrolls sideways at 360 px', async ({ page, asUser }) => {
     test.skip(layoutOf(page) !== 'phone', 'phone layout only');
+    // One full page load per placeholder route.
+    test.setTimeout(90_000);
     await openShell(page, asUser);
-    for (const route of PLACEHOLDER_ROUTES) {
-      await page.goto(`/w/demo/${route}`);
+    for (const route of [...PLACEHOLDER_ROUTES, 'billing', 'activity']) {
+      await page.goto(`/w/${SHELL_WORKSPACE}/${route}`);
       await expect(page.locator(`[data-route="${route}"]`)).toBeVisible();
       const overflow = await page.evaluate(() => {
         const root = document.documentElement;
         return root.scrollWidth - root.clientWidth;
       });
-      expect(overflow, `/w/demo/${route} overflows horizontally`).toBeLessThanOrEqual(0);
+      expect(overflow, `/w/${SHELL_WORKSPACE}/${route} overflows horizontally`).toBeLessThanOrEqual(
+        0,
+      );
     }
   });
 });

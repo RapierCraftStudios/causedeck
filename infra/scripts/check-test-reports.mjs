@@ -60,7 +60,7 @@ function turboDryRun(root, filter) {
   // TURBO_FILTER holds one filter, or several separated by spaces (a CI test shard's packages).
   for (const one of filter.split(/\s+/).filter(Boolean)) args.push(`--filter=${one}`);
   const turbo = path.join(root, 'node_modules', '.bin', 'turbo');
-  return JSON.parse(execFileSync(turbo, args, { cwd: root, encoding: 'utf8' }));
+  return JSON.parse(execFileSync(turbo, args, { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
 }
 
 function main() {

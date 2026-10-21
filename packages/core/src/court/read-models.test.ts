@@ -77,7 +77,12 @@ describe('getCourtsIndex (#397)', () => {
     await withTestDb(async (tx) => {
       const seeded = await seedTwoTenants(tx);
       await addRun(tx, seeded, { status: 'ok', createdAt: at(1) });
-      await addRun(tx, seeded, { status: 'degraded', createdAt: at(2) });
+      await addRun(tx, seeded, {
+        status: 'degraded',
+        hallsSeen: ['3'],
+        hallsUnreadable: ['7'],
+        createdAt: at(2),
+      });
       const index = await getCourtsIndex(tx, seeded.a.id);
 
       const cities = index.cities.map((c) => c.city);
@@ -96,8 +101,18 @@ describe('getCourtsIndex (#397)', () => {
         side: 'appellate',
         languageProfile: { primary: 'en' },
         workspaceOwned: false,
-        latestParse: { status: 'degraded', at: at(2) },
+        latestParse: { status: 'degraded', at: at(2), hallsUnreadable: ['7'] },
       });
+      // The banner's "Open the official list" (#399): a new-window link, never fetched.
+      expect(appellate?.officialList).toMatchObject({
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      });
+      expect(appellate?.officialList?.url).toMatch(/^https:\/\/[^/]+\/cause_list_mhc\.php$/);
+      const civil = chennai?.courts
+        .flatMap((c) => c.forums)
+        .find((f) => f.code === 'in.tn.chennai.city-civil-court');
+      expect(civil?.officialList).toBeNull();
       expect(forums.find((f) => f.code !== APPELLATE)?.latestParse).toBeNull();
       for (const city of index.cities) {
         for (const court of city.courts) {

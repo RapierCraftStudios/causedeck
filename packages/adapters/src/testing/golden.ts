@@ -13,6 +13,7 @@ import path from 'node:path';
 import { serverEnv } from '@causedeck/config/env';
 import { z } from 'zod';
 
+import { layoutFromEmail } from '../layout/email.ts';
 import { layoutFromHtml } from '../layout/html.ts';
 import { layoutFromPdf } from '../layout/pdf.ts';
 import { resolveById } from '../registry.ts';
@@ -50,7 +51,10 @@ export const FixtureManifestSchema = z.object({
     z.object({
       file: z
         .string()
-        .regex(/^[\w.-]+\.input\.(txt|html|pdf|json)$/, 'must be <name>.input.txt|html|pdf|json'),
+        .regex(
+          /^[\w.-]+\.input\.(txt|html|pdf|json|eml)$/,
+          'must be <name>.input.txt|html|pdf|json|eml',
+        ),
       kind: FixtureKindSchema,
       origin: FixtureOriginSchema,
       classification: z.string().optional(),
@@ -144,6 +148,10 @@ async function inputFor(file: string, forumCode: string): Promise<ParserInput> {
   }
   if (file.endsWith('.html')) {
     return { kind: 'html', html: content, layout: layoutFromHtml(content), meta };
+  }
+  // A forwarded email (#396): the raw message, with its decoded pages for the anchor check.
+  if (file.endsWith('.eml')) {
+    return { kind: 'email', text: content, layout: layoutFromEmail(content), meta };
   }
   return { kind: 'text', text: content, meta };
 }

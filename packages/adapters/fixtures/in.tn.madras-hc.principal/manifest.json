@@ -1,8 +1,120 @@
 {
   "adapter": "in.tn.madras-hc.principal",
   "classification": "FICTIONAL",
-  "note": "Synthetic Madras HC orders and registry notices (#398). Every party, advocate and judge is fictional; real-fixture sign-off is #119. Cause lists and AIMS emails are added by #396.",
+  "note": "Synthetic Madras HC cause lists and AIMS emails (#396) and orders and registry notices (#398). Every party, advocate and judge is fictional; the list, email and order layouts are unverified assumptions until real fixtures are checked with #119.",
   "fixtures": [
+    {
+      "file": "email-01-plain.input.eml",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "email-02-html.input.eml",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "email-03-gmail-forward.input.eml",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "email-04-outlook-forward.input.eml",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "email-05-pdf-only.input.eml",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-01-appellate-writ-daily.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-02-db-writ-appeals.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-03-original-side.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-04-commercial-division.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-05-supplementary.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-06-criminal-side.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-07-madurai-md.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-08-multi-page.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-09-ocr-noisy.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-10-no-cases.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-11-unknown-headings.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
+    {
+      "file": "list-12-no-of-slash-variants.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.madras-hc.principal.appellate"
+    },
     {
       "file": "order-01-interim-relative-date.input.txt",
       "kind": "order",

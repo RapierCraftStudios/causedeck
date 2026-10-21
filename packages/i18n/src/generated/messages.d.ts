@@ -1696,6 +1696,58 @@ export type Messages = {
       hint: string;
     };
   };
+  courts: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    search: {
+      label: string;
+      placeholder: string;
+      noMatch: string;
+    };
+    gridLabel: string;
+    cityOther: string;
+    workspaceOwned: string;
+    languagesLabel: string;
+    planned: {
+      title: string;
+      hint: string;
+      reasonFallback: string;
+    };
+    side: {
+      original: string;
+      appellate: string;
+    };
+    levels: {
+      label: string;
+      A0: string;
+      A1: string;
+    };
+    status: {
+      ok: string;
+      degraded: string;
+      failed: string;
+      none: string;
+    };
+    banner: {
+      hall: string;
+      halls: string;
+      generic: string;
+      openOfficial: string;
+      shareAgain: string;
+      newWindow: string;
+    };
+    empty: {
+      title: string;
+      hint: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    offline: string;
+  };
   error: {
     title: string;
     description: string;

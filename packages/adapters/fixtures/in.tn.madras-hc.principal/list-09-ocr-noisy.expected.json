@@ -1,0 +1,117 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "text",
+  "status": "ok",
+  "halls": [],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. W.P.No.l2345 of 2O26",
+        "rowIndex": 0
+      },
+      "confidence": 0.8,
+      "itemNo": "1",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "12345",
+      "caseYear": 2026,
+      "matchKey": "WP/12345/2026",
+      "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. W.P.No.12346of2026",
+        "rowIndex": 1
+      },
+      "confidence": 0.8,
+      "itemNo": "2",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "12346",
+      "caseYear": 2026,
+      "matchKey": "WP/12346/2026",
+      "parties": "K. Imaginary Selvam vs The District Collector, Example District",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. WPNo.5O1 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 0.8,
+      "itemNo": "3",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "501",
+      "caseYear": 2026,
+      "matchKey": "WP/501/2026",
+      "parties": "Made-up Traders vs Pretend Municipal Corporation",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. W.F.No.77 of 2026",
+        "rowIndex": 3
+      },
+      "confidence": 0.7,
+      "itemNo": "5",
+      "caseTypeRaw": "W.F.",
+      "caseType": null,
+      "caseNumber": "77",
+      "caseYear": 2026,
+      "matchKey": null,
+      "parties": "M. Kalpitha Devi vs Pretend Municipal Corporation",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    }
+  ],
+  "unparsedRows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. W.P.No.### of 2026",
+        "rowIndex": 0
+      },
+      "text": "4. W.P.No.### of 2026",
+      "reason": "case_number_unparseable"
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": ["W.F."],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": [],
+    "hallsUnreadable": ["C0URT N0. l2"]
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

@@ -1,0 +1,316 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "21",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. WP No. 12345/2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "21",
+              "itemNo": "1",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "12345",
+              "caseYear": 2026,
+              "matchKey": "WP/12345/2026",
+              "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. W.P. No. 678 / 2026",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "21",
+              "itemNo": "2",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "678",
+              "caseYear": 2026,
+              "matchKey": "WP/678/2026",
+              "parties": "K. Imaginary Selvam vs Pretend Municipal Corporation",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. W.M.P.Nos.13001 to 13003 of 2026",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "21",
+              "itemNo": "3",
+              "caseTypeRaw": "W.M.P.",
+              "caseType": "WMP",
+              "caseNumber": "13001",
+              "caseYear": 2026,
+              "matchKey": "WMP/13001/2026",
+              "parties": "Made-up Traders vs The District Collector, Example District",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. W.M.P.Nos.13001 to 13003 of 2026",
+                "rowIndex": 3
+              },
+              "confidence": 1,
+              "hallNo": "21",
+              "itemNo": "3",
+              "caseTypeRaw": "W.M.P.",
+              "caseType": "WMP",
+              "caseNumber": "13002",
+              "caseYear": 2026,
+              "matchKey": "WMP/13002/2026",
+              "parties": "Made-up Traders vs The District Collector, Example District",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. W.M.P.Nos.13001 to 13003 of 2026",
+                "rowIndex": 4
+              },
+              "confidence": 1,
+              "hallNo": "21",
+              "itemNo": "3",
+              "caseTypeRaw": "W.M.P.",
+              "caseType": "WMP",
+              "caseNumber": "13003",
+              "caseYear": 2026,
+              "matchKey": "WMP/13003/2026",
+              "parties": "Made-up Traders vs The District Collector, Example District",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "4. C.R.P.(NPD)No.44/26",
+                "rowIndex": 5
+              },
+              "confidence": 1,
+              "hallNo": "21",
+              "itemNo": "4",
+              "caseTypeRaw": "C.R.P.(NPD)",
+              "caseType": "CRPNPD",
+              "caseNumber": "44",
+              "caseYear": 2026,
+              "matchKey": "CRPNPD/44/2026",
+              "parties": "M. Kalpitha Devi vs R. Karpanai Murugan",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "5(a). S.A.No.9 of 2025",
+                "rowIndex": 6
+              },
+              "confidence": 1,
+              "hallNo": "21",
+              "itemNo": "5(a)",
+              "caseTypeRaw": "S.A.",
+              "caseType": "SA",
+              "caseNumber": "9",
+              "caseYear": 2025,
+              "matchKey": "SA/9/2025",
+              "parties": "S. Fictional Lakshmi vs Example Textiles Pvt. Ltd.",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. WP No. 12345/2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "21",
+      "itemNo": "1",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "12345",
+      "caseYear": 2026,
+      "matchKey": "WP/12345/2026",
+      "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. W.P. No. 678 / 2026",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "21",
+      "itemNo": "2",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "678",
+      "caseYear": 2026,
+      "matchKey": "WP/678/2026",
+      "parties": "K. Imaginary Selvam vs Pretend Municipal Corporation",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. W.M.P.Nos.13001 to 13003 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "21",
+      "itemNo": "3",
+      "caseTypeRaw": "W.M.P.",
+      "caseType": "WMP",
+      "caseNumber": "13001",
+      "caseYear": 2026,
+      "matchKey": "WMP/13001/2026",
+      "parties": "Made-up Traders vs The District Collector, Example District",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. W.M.P.Nos.13001 to 13003 of 2026",
+        "rowIndex": 3
+      },
+      "confidence": 1,
+      "hallNo": "21",
+      "itemNo": "3",
+      "caseTypeRaw": "W.M.P.",
+      "caseType": "WMP",
+      "caseNumber": "13002",
+      "caseYear": 2026,
+      "matchKey": "WMP/13002/2026",
+      "parties": "Made-up Traders vs The District Collector, Example District",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. W.M.P.Nos.13001 to 13003 of 2026",
+        "rowIndex": 4
+      },
+      "confidence": 1,
+      "hallNo": "21",
+      "itemNo": "3",
+      "caseTypeRaw": "W.M.P.",
+      "caseType": "WMP",
+      "caseNumber": "13003",
+      "caseYear": 2026,
+      "matchKey": "WMP/13003/2026",
+      "parties": "Made-up Traders vs The District Collector, Example District",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. C.R.P.(NPD)No.44/26",
+        "rowIndex": 5
+      },
+      "confidence": 1,
+      "hallNo": "21",
+      "itemNo": "4",
+      "caseTypeRaw": "C.R.P.(NPD)",
+      "caseType": "CRPNPD",
+      "caseNumber": "44",
+      "caseYear": 2026,
+      "matchKey": "CRPNPD/44/2026",
+      "parties": "M. Kalpitha Devi vs R. Karpanai Murugan",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5(a). S.A.No.9 of 2025",
+        "rowIndex": 6
+      },
+      "confidence": 1,
+      "hallNo": "21",
+      "itemNo": "5(a)",
+      "caseTypeRaw": "S.A.",
+      "caseType": "SA",
+      "caseNumber": "9",
+      "caseYear": 2025,
+      "matchKey": "SA/9/2025",
+      "parties": "S. Fictional Lakshmi vs Example Textiles Pvt. Ltd.",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["21"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

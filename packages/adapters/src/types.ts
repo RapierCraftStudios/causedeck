@@ -185,6 +185,14 @@ export const CauseListHallSchema = z.object({
 });
 export type CauseListHall = z.infer<typeof CauseListHallSchema>;
 
+/** An attachment of a supplied email: its MIME part path (`2`, `1.2`), never its bytes. */
+export const ListAttachmentSchema = z.object({
+  ref: z.string().min(1),
+  fileName: z.string().optional(),
+  contentType: z.string().min(1),
+});
+export type ListAttachment = z.infer<typeof ListAttachmentSchema>;
+
 /**
  * `needs_ocr`: the document has no text layer (every page has `textCoverage` 0), so nothing is
  * guessed; the caller OCRs it (#45) and parses the OCR layout again (ADR 0018).
@@ -211,6 +219,10 @@ export const ParsedCauseListSchema = z.object({
   /** Daily, advance, supplementary, special: the printed marker's key, or null. */
   listType: z.string().nullable().optional(),
   source: z.enum(LIST_SOURCES).optional(),
+  /** The phrase `listDate` was read from (#396). */
+  listDateAnchor: AnchorSchema.nullable().optional(),
+  /** Attachments the list may sit in (a PDF-only AIMS email, #396), for the caller's PDF path. */
+  attachments: z.array(ListAttachmentSchema).optional(),
 });
 export type ParsedCauseList = z.infer<typeof ParsedCauseListSchema>;
 

@@ -1,0 +1,240 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.original",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "6",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. C.S.(COMM DIV)No.4 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "6",
+              "itemNo": "1",
+              "caseTypeRaw": "C.S.(COMM DIV)",
+              "caseType": "CSCOMMDIV",
+              "caseNumber": "4",
+              "caseYear": 2026,
+              "matchKey": "CSCOMMDIV/4/2026",
+              "parties": "Example Textiles Pvt. Ltd. vs Fictional Mills Ltd.",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "M/s Fictional & Example Associates",
+                  "aliases": ["FICTIONAL EXAMPLE ASSOCIATES"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. O.P.(COMM DIV)No.2 of 2026",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "6",
+              "itemNo": "2",
+              "caseTypeRaw": "O.P.(COMM DIV)",
+              "caseType": "OPCOMMDIV",
+              "caseNumber": "2",
+              "caseYear": 2026,
+              "matchKey": "OPCOMMDIV/2/2026",
+              "parties": "Made-up Traders vs Pretend Weavers Co-operative Society",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+                  "aliases": ["K KALPITHAM", "KALPITHAM K"],
+                  "enrolmentNo": "MS/4567/2004"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. Arb O.P.(Com.Div.)No.7 of 2026",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "6",
+              "itemNo": "3",
+              "caseTypeRaw": "Arb O.P.(Com.Div.)",
+              "caseType": "ARBOPCOMDIV",
+              "caseNumber": "7",
+              "caseYear": 2026,
+              "matchKey": "ARBOPCOMDIV/7/2026",
+              "parties": "Fictional Mills Ltd. vs Made-up Traders",
+              "stageRaw": "FOR ORDERS",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "4. APPEAL (CAD)No.3 of 2026",
+                "rowIndex": 3
+              },
+              "confidence": 1,
+              "hallNo": "6",
+              "itemNo": "4",
+              "caseTypeRaw": "APPEAL (CAD)",
+              "caseType": "APPEALCAD",
+              "caseNumber": "3",
+              "caseYear": 2026,
+              "matchKey": "APPEALCAD/3/2026",
+              "parties": "Pretend Weavers Co-operative Society vs Example Textiles Pvt. Ltd.",
+              "stageRaw": "FOR ORDERS",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. C.S.(COMM DIV)No.4 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "6",
+      "itemNo": "1",
+      "caseTypeRaw": "C.S.(COMM DIV)",
+      "caseType": "CSCOMMDIV",
+      "caseNumber": "4",
+      "caseYear": 2026,
+      "matchKey": "CSCOMMDIV/4/2026",
+      "parties": "Example Textiles Pvt. Ltd. vs Fictional Mills Ltd.",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "M/s Fictional & Example Associates",
+          "aliases": ["FICTIONAL EXAMPLE ASSOCIATES"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. O.P.(COMM DIV)No.2 of 2026",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "6",
+      "itemNo": "2",
+      "caseTypeRaw": "O.P.(COMM DIV)",
+      "caseType": "OPCOMMDIV",
+      "caseNumber": "2",
+      "caseYear": 2026,
+      "matchKey": "OPCOMMDIV/2/2026",
+      "parties": "Made-up Traders vs Pretend Weavers Co-operative Society",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+          "aliases": ["K KALPITHAM", "KALPITHAM K"],
+          "enrolmentNo": "MS/4567/2004"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. Arb O.P.(Com.Div.)No.7 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "6",
+      "itemNo": "3",
+      "caseTypeRaw": "Arb O.P.(Com.Div.)",
+      "caseType": "ARBOPCOMDIV",
+      "caseNumber": "7",
+      "caseYear": 2026,
+      "matchKey": "ARBOPCOMDIV/7/2026",
+      "parties": "Fictional Mills Ltd. vs Made-up Traders",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. APPEAL (CAD)No.3 of 2026",
+        "rowIndex": 3
+      },
+      "confidence": 1,
+      "hallNo": "6",
+      "itemNo": "4",
+      "caseTypeRaw": "APPEAL (CAD)",
+      "caseType": "APPEALCAD",
+      "caseNumber": "3",
+      "caseYear": 2026,
+      "matchKey": "APPEALCAD/3/2026",
+      "parties": "Pretend Weavers Co-operative Society vs Example Textiles Pvt. Ltd.",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["6"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

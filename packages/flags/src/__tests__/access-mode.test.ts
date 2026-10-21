@@ -1,5 +1,6 @@
 // Access-mode registry enforcement (#22, PRD CL-6): deny without an enabled row for exactly the
-// requested mode; `none` always denies; the launch seeds allow `user_supplied` for madras-hc.
+// requested mode; `none` always denies; any mode but `user_supplied` also needs a counsel note
+// (#369); the launch seeds allow `user_supplied` for madras-hc.
 import { accessModeRegistry } from '@causedeck/db/schema';
 import { withTestDb } from '@causedeck/db/testing';
 import { describe, expect, it } from 'vitest';
@@ -41,6 +42,67 @@ describe('decideAccessMode', () => {
     });
     expect(decideAccessMode({ mode: 'user_supplied', enabled: true }, 'user_supplied')).toEqual({
       allowed: true,
+    });
+  });
+});
+
+describe('the counsel-note gate (#369)', () => {
+  it('denies device_user_triggered, official and licensed rows without a counsel note', () => {
+    for (const mode of ['device_user_triggered', 'official', 'licensed'] as const) {
+      expect(decideAccessMode({ mode, enabled: true }, mode), mode).toEqual({
+        allowed: false,
+        reason: 'no-counsel-note',
+      });
+      expect(decideAccessMode({ mode, enabled: true, counselNote: null }, mode), mode).toEqual({
+        allowed: false,
+        reason: 'no-counsel-note',
+      });
+      expect(decideAccessMode({ mode, enabled: true, counselNote: '  ' }, mode), mode).toEqual({
+        allowed: false,
+        reason: 'no-counsel-note',
+      });
+      expect(
+        decideAccessMode({ mode, enabled: true, counselNote: 'Cleared in memo #118' }, mode),
+        mode,
+      ).toEqual({ allowed: true });
+    }
+  });
+
+  it('does not need a counsel note for user_supplied', () => {
+    expect(decideAccessMode({ mode: 'user_supplied', enabled: true }, 'user_supplied')).toEqual({
+      allowed: true,
+    });
+  });
+
+  it('reads the counsel note from the registry row', async () => {
+    await withTestDb(async (tx) => {
+      await tx.delete(accessModeRegistry);
+      await tx.insert(accessModeRegistry).values([
+        { adapterId: 'x-hc', resource: 'cause_list', mode: 'official', enabled: true },
+        {
+          adapterId: 'x-hc',
+          resource: 'orders',
+          mode: 'licensed',
+          enabled: true,
+          counselNote: 'Licence agreement reviewed by counsel',
+        },
+      ]);
+      const deps = { db: tx };
+      const error = await assertAccessMode(
+        { adapterId: 'x-hc', resource: 'cause_list', requestedMode: 'official' },
+        deps,
+      ).then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+      expect(error).toBeInstanceOf(AccessModeError);
+      expect(error).toMatchObject({ reason: 'no-counsel-note' });
+      await expect(
+        assertAccessMode(
+          { adapterId: 'x-hc', resource: 'orders', requestedMode: 'licensed' },
+          deps,
+        ),
+      ).resolves.toBeUndefined();
     });
   });
 });

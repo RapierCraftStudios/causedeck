@@ -262,6 +262,10 @@ export type Messages = {
       message: string;
       action: string;
     };
+    demoBanner: {
+      label: string;
+      hint: string;
+    };
   };
   auth: {
     signIn: {

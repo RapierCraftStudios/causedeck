@@ -23,6 +23,7 @@ ruleTester.run('causedeck/core-domain-boundaries', coreDomainBoundaries, {
   valid: [
     // Through the target domain's entry point, in every accepted form.
     at('usage/limits.ts', `import { x } from '../billing/index.ts';`),
+    at('court/forums.ts', `import { x } from '../workspaces/index.ts';`),
     at('usage/limits.ts', `import { x } from '../billing/index';`),
     at('usage/limits.ts', `import { x } from '../billing/index.js';`),
     at('usage/limits.ts', `import { x } from '../billing';`),
@@ -70,8 +71,10 @@ ruleTester.run('causedeck/core-domain-boundaries', coreDomainBoundaries, {
     bad('billing/plans.ts', `import { x } from '../usage/index.ts';`, 'undeclaredDependency'),
     bad('shared/errors.ts', `import { x } from '../workspaces/index.ts';`, 'sharedImportsDomain'),
     bad('shared/errors.ts', `import { x } from '../audit/writer.ts';`, 'sharedImportsDomain'),
-    bad('court/graph.ts', `import { x } from '../audit/index.ts';`, 'unknownDomain'),
-    bad('audit/sink.ts', `import { x } from '../court/index.ts';`, 'unknownDomain'),
+    // `court` is a declared domain since #34, so the unknown-domain cases use an undeclared folder.
+    bad('briefs/graph.ts', `import { x } from '../audit/index.ts';`, 'unknownDomain'),
+    bad('audit/sink.ts', `import { x } from '../briefs/index.ts';`, 'unknownDomain'),
+    bad('court/forums.ts', `import { x } from '../audit/index.ts';`, 'undeclaredDependency'),
   ],
 });
 

@@ -23,6 +23,7 @@
     "db:check": "turbo run db:check --filter=@causedeck/db",
     "db:studio": "turbo run db:studio --filter=@causedeck/db",
     "db:seed": "turbo run db:seed --filter=@causedeck/db",
+    "db:seed:demo": "turbo run db:seed:demo --filter=@causedeck/db",
     "db:check-rls": "turbo run db:check-rls --filter=@causedeck/db",
     "i18n:check": "pnpm --filter @causedeck/i18n i18n:check",
     "i18n:types": "pnpm --filter @causedeck/i18n i18n:types",

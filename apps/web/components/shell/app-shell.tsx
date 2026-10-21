@@ -14,6 +14,7 @@ import type { SidebarState } from '../../lib/sidebar-state.ts';
 import type { WorkspaceContext } from '../../lib/workspace-context.ts';
 
 import { CaptureProvider } from './capture-fab.tsx';
+import { DemoBanner } from './demo-banner.tsx';
 import { MobileNav } from './mobile-nav.tsx';
 import { OwnerTwoFactorBanner } from './owner-two-factor-banner.tsx';
 import { SidebarProvider } from './sidebar-collapse.tsx';
@@ -43,7 +44,8 @@ export interface AppShellProps {
  * button) replaces the sidebar, and `main` pads its bottom to clear it. Flag-gated nav items,
  * commands and shortcuts read `flags` through `FlagsProvider`. During an active support session the
  * owner sees the support banner between the topbar and the page. While a workspace deletion waits
- * out its cool-off, every member sees the cool-off banner first (#305).
+ * out its cool-off, every member sees the cool-off banner first (#305). The fictional `demo`
+ * workspace shows the demo-data banner (#182).
  */
 export function AppShell({
   context,
@@ -71,6 +73,7 @@ export function AppShell({
                   owner={context.role === 'owner'}
                 />
                 <OwnerTwoFactorBanner state={ownerTwoFactor} />
+                <DemoBanner slug={context.workspace.slug} />
                 {supportSession ? (
                   <SupportBanner workspaceId={context.workspace.id} session={supportSession} />
                 ) : null}

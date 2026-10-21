@@ -78,6 +78,18 @@ export {
   type TaskStatus,
 } from './docket.ts';
 export {
+  BENCH_CHANGE_ALERT_STATUSES,
+  BENCH_CHANGE_REASONS,
+  BENCH_ROSTER_STATUSES,
+  benchChangeAlert,
+  benchRoster,
+  benchRosterEntry,
+  type BenchChangeAlertStatus,
+  type BenchChangeReason,
+  type BenchRosterStatus,
+  type PortfolioRule,
+} from './roster.ts';
+export {
   emailSuppression,
   notification,
   notificationChannel,

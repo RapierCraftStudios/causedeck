@@ -37,6 +37,13 @@ fixtures/<adapter-id>/
   }
   ```
 
+  `kind` is `cause_list`, `order` or `registry_notice` (#398). The golden runner parses and scores
+  `cause_list` entries only: their expected file is the adapter's `ParsedCauseList`. An `order`
+  entry's expected file is `{"header": ParsedOrderHeader, "cues": DirectionCue[]}` (the adapter's
+  `parseOrderHeader` and `findDirectionCues`) and a `registry_notice` entry's is
+  `{"events": RegistryEvent[]}`; the adapter's own fixture test checks them
+  (`src/madras-hc/fixtures.test.ts`).
+
   `origin` is `synthetic` (generated or hand-written, every name fictional and flagged
   `FICTIONAL`) or `lawyer-supplied`. An input file the manifest does not list fails the run.
 
@@ -67,8 +74,9 @@ writs, division-bench writ appeals, Original Side, Commercial Division, suppleme
 side, a `(MD)` list, a multi-page list with repeated headers and a row split across pages, an
 OCR-noisy list, a "no cases" list, an HTML list with unknown headings, `No./of` and slash
 variants) and 5 AIMS emails (`email-*`: plain, HTML table, Gmail forward, Outlook forward,
-PDF-only). The list and email layouts are assumptions from parent #36, not observed documents;
-real lists and emails are checked with #119.
+PDF-only), next to the 12 orders (`order-*`) and 5 registry notices (`registry-*`) of #398. The
+list and email layouts are assumptions from parent #36, not observed documents; real lists and
+emails are checked with #119.
 
 ## Lawyer-supplied fixtures are never committed
 

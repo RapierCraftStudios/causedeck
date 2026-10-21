@@ -15,6 +15,7 @@ import { tablesOf } from '../conventions.ts';
 import { MIGRATIONS_FOLDER } from '../migrate.ts';
 import { createOwnerDb } from '../owner.ts';
 import * as schema from '../schema/index.ts';
+import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { testDatabaseUrls } from '../testing/index.ts';
 
 const JUDGE = /judge/i;
@@ -25,6 +26,9 @@ const ALLOWED_COLUMNS = ['bench.judges'];
  * runs per court adapter and version and reads only `adapter_parse_run`, which has no judge data.
  */
 const ALLOWED_VIEWS = ['adapterHealthSummary'];
+
+/** The roster tables (#384): an entry names a bench; judges live only in `bench.judges`. */
+const ROSTER_TABLES = [benchRoster, benchRosterEntry, benchChangeAlert];
 
 const owner = createOwnerDb(new Secret(testDatabaseUrls().owner));
 afterAll(async () => {
@@ -107,5 +111,41 @@ describe('no judge aggregation (PX-9, ME-6)', () => {
       where table_schema = 'public' and column_name ilike '%judge%'
       order by 1`);
     expect(columns.map((c) => c.name)).toEqual(ALLOWED_COLUMNS);
+  });
+
+  it('adds no judge-bearing column, index or constraint on the roster tables (#384)', async () => {
+    const names = ROSTER_TABLES.flatMap((table) => {
+      const config = getTableConfig(table);
+      return [
+        ...config.columns.map((column) => column.name),
+        ...config.indexes.map((index) => index.config.name ?? ''),
+        ...config.uniqueConstraints.map((unique) => unique.name ?? ''),
+        ...config.checks.map((check) => check.name),
+        ...config.foreignKeys.map((fk) => fk.getName()),
+      ].map((name) => `${config.name}.${name}`);
+    });
+    expect(names.length).toBeGreaterThan(20);
+    expect(names.filter((name) => JUDGE.test(name))).toEqual([]);
+
+    const tables = sql.raw(
+      `(${ROSTER_TABLES.map((table) => `'${getTableName(table)}'`).join(', ')})`,
+    );
+    const catalog = await owner.execute<{ name: string }>(sql`
+      select indexname::text as name from pg_indexes
+       where schemaname = 'public' and tablename in ${tables}
+         and (indexname ilike '%judge%' or indexdef ilike '%judge%')
+      union all
+      select conname::text from pg_constraint
+       where conrelid in (select oid from pg_class where relname in ${tables})
+         and (conname ilike '%judge%' or pg_get_constraintdef(oid) ilike '%judge%')
+      union all
+      select table_name || '.' || column_name from information_schema.columns
+       where table_schema = 'public' and table_name in ${tables}
+         and column_name ilike '%judge%'`);
+    expect(catalog).toEqual([]);
+    // The GiST index behind the exclusion constraint is there, and covers no judges.
+    const gist = await owner.execute<{ def: string }>(sql`
+      select indexdef as def from pg_indexes where indexname = 'bench_roster_active_period_excl'`);
+    expect(gist.map((g) => g.def)).toEqual([expect.stringContaining('USING gist')]);
   });
 });

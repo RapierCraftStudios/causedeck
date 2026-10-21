@@ -106,10 +106,16 @@ describe('committed fixtures', () => {
   });
 
   it.each(adapterDirs)(
-    '%s: every expected anchor quote is verbatim in its input page',
+    '%s: every expected cause-list anchor quote is verbatim in its input page',
     (adapter) => {
       const dir = path.join(FIXTURES_ROOT, adapter);
-      for (const file of readdirSync(dir).filter((name) => /\.input\.(txt|html|eml)$/.test(name))) {
+      // Order and registry-notice fixtures (#398) are checked by their adapter's fixture tests.
+      const lists = FixtureManifestSchema.parse(
+        JSON.parse(readFileSync(path.join(dir, 'manifest.json'), 'utf8')),
+      )
+        .fixtures.filter((entry) => entry.kind === 'cause_list')
+        .map((entry) => entry.file);
+      for (const file of lists.filter((name) => /\.input\.(txt|html|eml)$/.test(name))) {
         const content = readFileSync(path.join(dir, file), 'utf8');
         // HTML and email anchors quote the text the layout readers produce, not the source bytes.
         const pages = file.endsWith('.html')
@@ -201,6 +207,40 @@ describe('runGolden regressions', () => {
       passed: false,
       missingExpected: true,
     });
+  });
+
+  it('lists order and registry-notice fixtures without parsing them as cause lists (#398)', async () => {
+    const root = scratch();
+    const dir = copyEcho(root);
+    const manifestPath = path.join(dir, 'manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      fixtures: { file: string; kind: string; origin: string }[];
+    };
+    manifest.fixtures.push(
+      { file: 'order-01.input.txt', kind: 'order', origin: 'synthetic' },
+      { file: 'registry-01.input.txt', kind: 'registry_notice', origin: 'synthetic' },
+    );
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    writeFileSync(path.join(dir, 'order-01.input.txt'), 'ORDER\nPost on 12.11.2026.');
+    writeFileSync(path.join(dir, 'registry-01.input.txt'), 'SR.No.1 of 2026');
+
+    const report = await runGolden('echo', {
+      adapter: createEchoAdapter(),
+      fixturesRoot: root,
+      privateFixturesDir: null,
+    });
+    expect(report.public.cases.map((c) => c.name).sort()).toEqual([
+      'list-01-admission',
+      'list-02-multi-page',
+      'list-03-alias-and-mentions',
+    ]);
+    expect(report.public.passed).toBe(true);
+    expect(() =>
+      FixtureManifestSchema.parse({
+        ...manifest,
+        fixtures: [{ ...manifest.fixtures[0], kind: 'memo' }],
+      }),
+    ).toThrow();
   });
 
   it('throws for an adapter that is not registered', async () => {

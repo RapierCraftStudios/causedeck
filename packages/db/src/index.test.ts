@@ -37,7 +37,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347), the people tables (#348), the catalogue version table (#34) and the adapter tables (#372)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347), the people tables (#348), the catalogue version table (#34) the adapter tables (#372) and the bench roster tables (#384)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -55,6 +55,9 @@ describe('@causedeck/db root entry point', () => {
       'audit_actor_salt',
       'audit_event',
       'bench',
+      'bench_change_alert',
+      'bench_roster',
+      'bench_roster_entry',
       'billing_event',
       'blob',
       'budget_override',

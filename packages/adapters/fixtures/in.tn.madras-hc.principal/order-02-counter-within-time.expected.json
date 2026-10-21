@@ -1,0 +1,67 @@
+{
+  "header": {
+    "caseTypeRaw": "W.P.",
+    "caseType": "WP",
+    "caseNumber": "12400",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": null,
+    "neutralCitationRaw": null,
+    "anchor": {
+      "page": 1,
+      "quote": "W.P.No.12400 of 2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "12400",
+        "year": 2026,
+        "matchKey": "WP/12400/2026"
+      }
+    ],
+    "bench": "THE HONOURABLE MR.JUSTICE A. FICTIONAL",
+    "judges": ["THE HONOURABLE MR.JUSTICE A. FICTIONAL"],
+    "orderType": "daily"
+  },
+  "cues": [
+    {
+      "kind": "time_bound",
+      "text": "Counter within two weeks.",
+      "phrase": "within",
+      "anchor": {
+        "page": 1,
+        "quote": "Counter within two weeks.",
+        "rowIndex": 14
+      },
+      "confidence": 0.85,
+      "date": null
+    },
+    {
+      "kind": "time_bound",
+      "text": "Petitioner to file reply within 10 days thereafter.",
+      "phrase": "within",
+      "anchor": {
+        "page": 1,
+        "quote": "Petitioner to file reply within 10 days thereafter.",
+        "rowIndex": 14
+      },
+      "confidence": 0.85,
+      "date": null
+    },
+    {
+      "kind": "next_date_relative",
+      "text": "Post the matter after two weeks.",
+      "phrase": "Post the matter after",
+      "anchor": {
+        "page": 1,
+        "quote": "Post the matter after two weeks.",
+        "rowIndex": 15
+      },
+      "confidence": 0.85,
+      "date": null
+    }
+  ]
+}

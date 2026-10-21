@@ -23,6 +23,7 @@ import { matter } from '../schema/matter-graph.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
+import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
@@ -177,6 +178,28 @@ async function seedListing(tx: Transaction, workspaceId: string, tag: string): P
     })
     .returning({ id: listing.id });
   return first(rows, 'listing').id;
+}
+
+/** A draft roster of a fresh custom forum (#384), and a bench of that forum. */
+async function seedBenchRoster(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<{ forumId: string; rosterId: string; benchId: string }> {
+  const forumId = await seedForum(tx, workspaceId, `${tag}-roster`);
+  const rosters = await tx
+    .insert(benchRoster)
+    .values({ workspaceId, forumId, effectiveFrom: '2026-11-01', version: 1 })
+    .returning({ id: benchRoster.id });
+  const benches = await tx
+    .insert(bench)
+    .values({ workspaceId, forumId, judges: ['Judge B'], benchKind: 'single' })
+    .returning({ id: bench.id });
+  return {
+    forumId,
+    rosterId: first(rosters, 'bench_roster').id,
+    benchId: first(benches, 'bench').id,
+  };
 }
 
 /** A hearing of a fresh listing (#347). */
@@ -490,6 +513,39 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, forumId, judges: ['Judge A'], benchKind: 'single' })
       .returning({ id: bench.id });
     return { forumId, benchId: first(rows, 'bench').id };
+  },
+  bench_roster: async (tx, { workspaceId, tag }) => {
+    const { forumId, rosterId } = await seedBenchRoster(tx, workspaceId, tag);
+    return { forumId, rosterId };
+  },
+  bench_roster_entry: async (tx, { workspaceId, tag }) => {
+    const { forumId, rosterId, benchId } = await seedBenchRoster(tx, workspaceId, tag);
+    const halls = await tx
+      .insert(courtHall)
+      .values({ workspaceId, forumId, hallNo: '12A' })
+      .returning({ id: courtHall.id });
+    const rows = await tx
+      .insert(benchRosterEntry)
+      .values({
+        workspaceId,
+        rosterId,
+        hallId: first(halls, 'court_hall').id,
+        hallNo: '12A',
+        benchId,
+        portfolioText: 'Writ petitions',
+        portfolioRule: { caseTypes: ['WP'] },
+      })
+      .returning({ id: benchRosterEntry.id });
+    return { rosterId, entryId: first(rows, 'bench_roster_entry').id };
+  },
+  bench_change_alert: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const { rosterId, benchId } = await seedBenchRoster(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(benchChangeAlert)
+      .values({ workspaceId, proceedingId, rosterId, newBenchId: benchId, reason: 'hall' })
+      .returning({ id: benchChangeAlert.id });
+    return { proceedingId, rosterId, alertId: first(rows, 'bench_change_alert').id };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

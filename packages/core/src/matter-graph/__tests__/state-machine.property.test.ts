@@ -1,4 +1,4 @@
-// The proceeding transition table (#363, ADR 0015; AC of #33): exactly eight ordered pairs are
+// The proceeding transition table (#363, ADR 0016; AC of #33): exactly eight ordered pairs are
 // allowed, the reopen needs a non-blank reason, and every other of the 36 ordered pairs throws
 // `InvalidTransitionError`. fast-check draws the pairs and the reasons; an exhaustive loop checks
 // all 36 pairs deterministically as well.

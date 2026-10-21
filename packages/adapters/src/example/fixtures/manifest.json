@@ -1,0 +1,14 @@
+{
+  "adapter": "echo",
+  "classification": "FICTIONAL",
+  "note": "Synthetic echo lists (#369). Every party, advocate and judge is fictional; real-fixture sign-off is #119.",
+  "fixtures": [
+    { "file": "list-01-admission.txt", "kind": "cause_list", "classification": "FICTIONAL" },
+    { "file": "list-02-multi-page.txt", "kind": "cause_list", "classification": "FICTIONAL" },
+    {
+      "file": "list-03-alias-and-mentions.txt",
+      "kind": "cause_list",
+      "classification": "FICTIONAL"
+    }
+  ]
+}

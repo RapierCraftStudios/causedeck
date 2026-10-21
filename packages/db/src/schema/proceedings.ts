@@ -8,7 +8,7 @@
 // proceeding goes (the erase purges proceedings first). `parent_proceeding_id` is `ON DELETE SET
 // NULL (parent_proceeding_id)` in migration 0039. Links die with either end; the
 // `proceeding_link_parent_of_cycle_guard` trigger (migration 0039) rejects a `parent_of` cycle.
-// `proceeding_state_change` (#363, migration 0043, ADR 0015) is the append-only history of state
+// `proceeding_state_change` (#363, migration 0043, ADR 0016) is the append-only history of state
 // transitions written by the matter-graph state machine; it dies with its proceeding, and its actor
 // reference is cleared (SET NULL) when the actor's membership goes.
 import { sql } from 'drizzle-orm';

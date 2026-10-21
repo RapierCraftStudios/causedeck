@@ -11,6 +11,8 @@ import { schema, withWorkspace } from '@causedeck/db';
 import { closeTestDb, testAppDb } from '@causedeck/db/testing';
 import { RUNTIME_SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
+import { createMemoryObjectStore } from '@causedeck/storage';
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@causedeck/db', async (original) => {
@@ -83,6 +85,27 @@ async function aDeletionStatus(): Promise<string[]> {
       .from(schema.deletionJob),
   );
   return rows.map((r) => `${r.id}:${r.status}`).sort();
+}
+
+/** A workspace's two-tenant roster forum (#434): its id and code, read as its owner. */
+async function rosterForum(workspaceId: string, forumId: string) {
+  const [row] = await withWorkspace(testAppDb(), { workspaceId }, (s) =>
+    s
+      .select({ id: schema.forum.id, code: schema.forum.code })
+      .from(schema.forum)
+      .where(eq(schema.forum.id, forumId)),
+  );
+  if (row === undefined) throw new Error('two-tenant roster forum missing');
+  return row;
+}
+
+/** A's blobs, rosters and alerts, for before/after checks (#434). */
+async function aRosterState() {
+  return withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (s) => ({
+    blobs: (await s.select({ id: schema.blob.id }).from(schema.blob)).map((r) => r.id).sort(),
+    rosters: await s.select().from(schema.benchRoster).orderBy(schema.benchRoster.id),
+    alerts: await s.select().from(schema.benchChangeAlert).orderBy(schema.benchChangeAlert.id),
+  }));
 }
 
 /** The caller gate every scope-taking loader relies on: `ub` is not a member of A. */
@@ -336,6 +359,50 @@ const CASES: Record<string, () => Promise<void>> = {
     const deps = { store: {} as never, keys: {} as never, secret: SECRET };
     await expectDenied(runtime.openExportDownloadFor(forged(), aExportId, 'forged.token', deps));
     await expectDenied(runtime.openExportDownloadFor(asB(), aExportId, 'forged.token', deps));
+  },
+  // Court rosters (#434): ub may not parse A's upload nor confirm a roster on A's forum.
+  previewRosterImportFor: async () => {
+    const before = await aRosterState();
+    const aBlobId = t.a.rows.blob?.id ?? '';
+    const aForum = await rosterForum(t.a.id, t.a.rows.bench_roster?.forumId ?? '');
+    const bForum = await rosterForum(t.b.id, t.b.rows.bench_roster?.forumId ?? '');
+    const store = createMemoryObjectStore();
+    await expectDenied(
+      runtime.previewRosterImportFor(
+        { ...forged(), store },
+        { blobId: aBlobId, forumCode: aForum.code },
+      ),
+    );
+    // Under B's own scope, A's upload and A's custom forum are not there.
+    await expectDenied(
+      runtime.previewRosterImportFor(
+        { ...asB(), store },
+        { blobId: aBlobId, forumCode: bForum.code },
+      ),
+    );
+    await expectDenied(
+      runtime.previewRosterImportFor(
+        { ...asB(), store },
+        { blobId: aBlobId, forumCode: aForum.code },
+      ),
+    );
+    expect(await aRosterState()).toEqual(before);
+  },
+  confirmRosterImportFor: async () => {
+    const before = await aRosterState();
+    const aForumId = t.a.rows.bench_roster?.forumId ?? '';
+    const input = {
+      forumId: aForumId,
+      effectiveFrom: '2027-03-01',
+      entries: [{ hallNo: '1', judges: ['Justice Probe'], portfolioText: '' }],
+    };
+    await expectDenied(runtime.confirmRosterImportFor(forged(), input));
+    await expectDenied(
+      runtime.confirmRosterImportFor(forged(), { ...input, supersedeCurrent: true }),
+    );
+    await expectDenied(runtime.confirmRosterImportFor(asB(), input));
+    await expectDenied(runtime.confirmRosterImportFor(asB(), { ...input, supersedeCurrent: true }));
+    expect(await aRosterState()).toEqual(before);
   },
   loadNotificationPreferences: async () => {
     await expectDenied(runtime.loadNotificationPreferences(forged()));

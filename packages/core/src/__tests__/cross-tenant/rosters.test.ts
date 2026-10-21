@@ -226,6 +226,30 @@ const CASES: Record<string, Case> = {
     await expectDenied(core.dismissAlert(f.tx, { userId: f.ub, workspaceId: f.b.id }, input));
     expect(await aAlertState(f)).toEqual(before);
   },
+  // Rosters page read model (#434).
+  getRostersPage: async (f) => {
+    const aAlertId = f.a.rows.bench_change_alert?.alertId ?? '';
+    expect(aAlertId).not.toBe('');
+    const before = { roster: await aRosterState(f), alerts: await aAlertState(f) };
+    const on = { on: ON };
+    await expectDenied(core.getRostersPage(f.tx, { userId: f.ub, workspaceId: f.a.id }, on));
+    await expectDenied(
+      f.asB((s) => core.getRostersPage(s, { userId: f.ub, workspaceId: f.a.id }, on)),
+    );
+    const own = await core.getRostersPage(f.tx, { userId: f.ub, workspaceId: f.b.id }, on);
+    const text = JSON.stringify(own);
+    for (const id of [f.aRoster.roster.id, f.aForumId, aAlertId]) {
+      expect(text).not.toContain(id);
+    }
+    expect(own.forums.flatMap((g) => g.rosters).filter((r) => r.workspaceId !== f.b.id)).toEqual(
+      [],
+    );
+    // A's own owner still sees A's roster in force and A's alert; nothing of A changed.
+    const mine = await core.getRostersPage(f.tx, { userId: f.ua, workspaceId: f.a.id }, on);
+    expect(mine.forums.map((g) => g.activeRosterId)).toContain(f.aRoster.roster.id);
+    expect(mine.alerts.map((a) => a.alertId)).toContain(aAlertId);
+    expect({ roster: await aRosterState(f), alerts: await aAlertState(f) }).toEqual(before);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)

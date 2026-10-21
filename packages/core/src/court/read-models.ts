@@ -8,21 +8,52 @@
 // Adapter ids are matched exactly as stored: forum, registry and adapter ids are not mapped. The
 // index also carries each forum's unreadable halls and official cause-list link for the courts
 // page's parse-failure banner (#399).
+//
+// The rosters page read model (#434, part 1 of #391): each forum's roster versions with entry counts
+// and the roster in force on a day, and the open bench-change alerts on matters the actor may read
+// (matter title, the alert's roster start, and the old and new bench as the court publishes them).
+// It checks membership and `matter.read` as the roster services do. A bench's judges are shown for
+// that one bench only: nothing groups, counts or ranks by judge (PX-9, ME-6).
+import { isRole } from '@causedeck/auth';
+import { assertCan, ForbiddenError, type Actor, type PolicySettings } from '@causedeck/auth/policy';
+import { matterVisibilityPredicate } from '@causedeck/auth/policy/visibility';
 import { listAdapterAccessModes, type AccessMode } from '@causedeck/flags/access-mode';
-import { schema, withWorkspace, type Queryable, type Transaction } from '@causedeck/db';
+import {
+  currentScope,
+  isUuid,
+  schema,
+  withWorkspace,
+  type Queryable,
+  type Transaction,
+} from '@causedeck/db';
 import {
   FORUM_DEEP_LINK_KINDS,
   ForumConfigSchema,
   type ForumDeepLinkKind,
 } from '@causedeck/validators/forum';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
-import { WorkspaceError } from '../shared/errors.ts';
+import { forbidden, notFound, WorkspaceError } from '../shared/errors.ts';
+import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
 
+import type { BenchChangeAlertRow } from './bench-change.ts';
 import type { OpenInNewWindow } from './deep-links.ts';
 import { getForum, listForums, resolveDeepLink, type Forum } from './forums.ts';
+import type { BenchRosterRow, RosterActor } from './rosters.ts';
 
-const { adapterHealthSummary, adapterParseRun, adapterVersion } = schema;
+const {
+  adapterHealthSummary,
+  adapterParseRun,
+  adapterVersion,
+  bench,
+  benchChangeAlert,
+  benchRoster,
+  benchRosterEntry,
+  forum,
+  matter,
+  member,
+  proceeding,
+} = schema;
 
 type AdapterLevel = Forum['adapterLevel'];
 type ParseStatus = typeof adapterParseRun.$inferSelect.status;
@@ -335,5 +366,239 @@ export async function listHallsSeen(
     return [...halls.values()].sort((a, b) =>
       a.hallNo.localeCompare(b.hallNo, 'en', { numeric: true }),
     );
+  });
+}
+
+export interface RosterSummary extends BenchRosterRow {
+  /** The halls the version lists. */
+  entryCount: number;
+}
+
+export interface RostersPageForum {
+  forum: { id: string; code: string; court: string; seat: string | null };
+  /** The forum's roster versions, newest start and version first. */
+  rosters: RosterSummary[];
+  /** The active or superseded roster in force on the asked day, or null when none covers it. */
+  activeRosterId: string | null;
+}
+
+/** One bench as the court publishes it: never grouped, counted or ranked by judge. */
+export interface BenchSummary {
+  id: string;
+  /** The judges joined for display ("Justice A, Justice B"), or null when none are recorded. */
+  label: string | null;
+  benchKind: (typeof bench.$inferSelect)['benchKind'];
+  judges: string[];
+}
+
+export interface RostersPageAlert {
+  alertId: string;
+  proceedingId: string;
+  matterId: string;
+  matterTitle: string;
+  forumId: string;
+  rosterId: string;
+  /** The new roster's first day (ISO date). */
+  effectiveFrom: string;
+  reason: BenchChangeAlertRow['reason'];
+  createdAt: Date;
+  /** Null when the proceeding had no bench under the previous roster. */
+  oldBench: BenchSummary | null;
+  newBench: BenchSummary;
+}
+
+export interface RostersPage {
+  forums: RostersPageForum[];
+  /** Open alerts on matters the actor may read, newest first. */
+  alerts: RostersPageAlert[];
+}
+
+/** The user id owning the proceeding's matter, for a junior's "matters they own" visibility. */
+const proceedingOwnerUserId = sql`(select ${member.userId} from ${matter} join ${member} on ${member.organizationId} = ${matter.workspaceId} and ${member.id} = ${matter.ownerMemberId} where ${matter.workspaceId} = ${proceeding.workspaceId} and ${matter.id} = ${proceeding.matterId})`;
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The statement `getRostersPage` runs for the workspace's rosters (exported for the budget test). */
+export function rostersPageRostersStatement(tx: Transaction, workspaceId: string) {
+  return tx
+    .select()
+    .from(benchRoster)
+    .where(eq(benchRoster.workspaceId, workspaceId))
+    .orderBy(asc(benchRoster.forumId), desc(benchRoster.effectiveFrom), desc(benchRoster.version));
+}
+
+/** The statement `getRostersPage` runs for entries per roster (exported for the budget test). */
+export function rosterEntryCountsStatement(tx: Transaction, workspaceId: string) {
+  return tx
+    .select({ rosterId: benchRosterEntry.rosterId, entries: count() })
+    .from(benchRosterEntry)
+    .where(eq(benchRosterEntry.workspaceId, workspaceId))
+    .groupBy(benchRosterEntry.rosterId);
+}
+
+/**
+ * The statement `getRostersPage` runs for the open alerts on matters `actor` (role resolved) may
+ * read, newest first (exported for the budget test).
+ */
+export function openBenchAlertsStatement(tx: Transaction, actor: Actor, settings: PolicySettings) {
+  return tx
+    .select({
+      alert: benchChangeAlert,
+      matterId: proceeding.matterId,
+      matterTitle: matter.title,
+      forumId: benchRoster.forumId,
+      effectiveFrom: benchRoster.effectiveFrom,
+    })
+    .from(benchChangeAlert)
+    .innerJoin(
+      proceeding,
+      and(
+        eq(proceeding.workspaceId, benchChangeAlert.workspaceId),
+        eq(proceeding.id, benchChangeAlert.proceedingId),
+      ),
+    )
+    .innerJoin(
+      matter,
+      and(eq(matter.workspaceId, proceeding.workspaceId), eq(matter.id, proceeding.matterId)),
+    )
+    .innerJoin(
+      benchRoster,
+      and(
+        eq(benchRoster.workspaceId, benchChangeAlert.workspaceId),
+        eq(benchRoster.id, benchChangeAlert.rosterId),
+      ),
+    )
+    .where(
+      and(
+        eq(benchChangeAlert.workspaceId, actor.workspaceId),
+        eq(benchChangeAlert.status, 'open'),
+        matterVisibilityPredicate(actor, proceeding.matterId, {
+          settings,
+          ownerUserId: proceedingOwnerUserId,
+        }),
+      ),
+    )
+    .orderBy(desc(benchChangeAlert.createdAt), desc(benchChangeAlert.id));
+}
+
+/** Whether `a` is preferred to `b`: active before superseded, then the latest start and version. */
+function preferred(a: BenchRosterRow, b: BenchRosterRow): boolean {
+  if ((a.status === 'active') !== (b.status === 'active')) return a.status === 'active';
+  if (a.effectiveFrom !== b.effectiveFrom) return a.effectiveFrom > b.effectiveFrom;
+  return a.version > b.version;
+}
+
+/** The confirmed roster whose `[effective_from, effective_to)` contains `on` (as `getRosterAt`). */
+function inForce(rosters: readonly BenchRosterRow[], on: string): BenchRosterRow | null {
+  let best: BenchRosterRow | null = null;
+  for (const r of rosters) {
+    if (r.status !== 'active' && r.status !== 'superseded') continue;
+    if (r.effectiveFrom > on || (r.effectiveTo !== null && r.effectiveTo <= on)) continue;
+    if (best === null || preferred(r, best)) best = r;
+  }
+  return best;
+}
+
+/**
+ * The courts rosters page: every forum the workspace has rosters for, with their versions, entry
+ * counts and the roster in force on `on`, and the open bench-change alerts on matters the actor may
+ * read. Requires `matter.read`; NOT_FOUND for a malformed id, a non-member or a call from another
+ * workspace's scope, VALIDATION for a malformed day.
+ */
+export async function getRostersPage(
+  db: Queryable,
+  actor: RosterActor,
+  input: { on: string },
+): Promise<RostersPage> {
+  const { workspaceId, userId } = actor;
+  const pageNotFound = () => notFound('Workspace not found');
+  if (!isUuid(workspaceId) || !isUuid(userId)) throw pageNotFound();
+  if (!DAY.test(input.on)) throw new WorkspaceError('VALIDATION', 'Give the day as YYYY-MM-DD');
+  const outer = currentScope();
+  if (
+    outer?.kind === 'workspace' &&
+    outer.workspaceId?.toLowerCase() !== workspaceId.toLowerCase()
+  ) {
+    throw pageNotFound();
+  }
+  return withWorkspace(db, { workspaceId, userId }, async (tx) => {
+    const role = await memberRole(tx, userId, workspaceId);
+    if (role === null || !isRole(role)) throw pageNotFound();
+    const settings = toPolicySettings(await getRoleSettings(tx, workspaceId));
+    const resolved: Actor = { ...actor, role };
+    try {
+      assertCan(resolved, 'matter.read', { kind: 'roster', workspaceId }, { settings });
+    } catch (error) {
+      if (error instanceof ForbiddenError) throw forbidden('You cannot see the rosters');
+      throw error;
+    }
+
+    const rosters = await rostersPageRostersStatement(tx, workspaceId);
+    const counts = await rosterEntryCountsStatement(tx, workspaceId);
+    const entryCount = new Map(counts.map((c) => [c.rosterId, c.entries]));
+    const forumIds = [...new Set(rosters.map((r) => r.forumId))];
+    const forums =
+      forumIds.length === 0
+        ? []
+        : await tx
+            .select({ id: forum.id, code: forum.code, court: forum.court, seat: forum.seat })
+            .from(forum)
+            .where(inArray(forum.id, forumIds))
+            .orderBy(asc(forum.court), asc(forum.code));
+    const pageForums = forums.map((f) => {
+      const own = rosters.filter((r) => r.forumId === f.id);
+      return {
+        forum: f,
+        rosters: own.map((r) => ({ ...r, entryCount: entryCount.get(r.id) ?? 0 })),
+        activeRosterId: inForce(own, input.on)?.id ?? null,
+      };
+    });
+
+    const rows = await openBenchAlertsStatement(tx, resolved, settings);
+    const benchIds = [
+      ...new Set(
+        rows.flatMap((r) =>
+          r.alert.oldBenchId === null
+            ? [r.alert.newBenchId]
+            : [r.alert.oldBenchId, r.alert.newBenchId],
+        ),
+      ),
+    ];
+    const benches =
+      benchIds.length === 0
+        ? []
+        : await tx
+            .select({ id: bench.id, benchKind: bench.benchKind, judges: bench.judges })
+            .from(bench)
+            .where(inArray(bench.id, benchIds));
+    const benchOf = new Map(
+      benches.map((b): [string, BenchSummary] => [
+        b.id,
+        { ...b, label: b.judges.length === 0 ? null : b.judges.join(', ') },
+      ]),
+    );
+    const unknownBench = (id: string): BenchSummary => ({
+      id,
+      label: null,
+      benchKind: 'other',
+      judges: [],
+    });
+    const alerts = rows.map((r): RostersPageAlert => ({
+      alertId: r.alert.id,
+      proceedingId: r.alert.proceedingId,
+      matterId: r.matterId,
+      matterTitle: r.matterTitle,
+      forumId: r.forumId,
+      rosterId: r.alert.rosterId,
+      effectiveFrom: r.effectiveFrom,
+      reason: r.alert.reason,
+      createdAt: r.alert.createdAt,
+      oldBench:
+        r.alert.oldBenchId === null
+          ? null
+          : (benchOf.get(r.alert.oldBenchId) ?? unknownBench(r.alert.oldBenchId)),
+      newBench: benchOf.get(r.alert.newBenchId) ?? unknownBench(r.alert.newBenchId),
+    }));
+    return { forums: pageForums, alerts };
   });
 }

@@ -5,7 +5,9 @@
 // forums to it; the global tables (`adapter_version`, `access_mode_registry` and the tenant-free
 // `adapter_health_summary` view) are read inside the same transaction. Read-only metadata: deep
 // links come from `resolveDeepLink` and are never fetched, and no court hostname is written here.
-// Adapter ids are matched exactly as stored: forum, registry and adapter ids are not mapped.
+// Adapter ids are matched exactly as stored: forum, registry and adapter ids are not mapped. The
+// index also carries each forum's unreadable halls and official cause-list link for the courts
+// page's parse-failure banner (#399).
 import { listAdapterAccessModes, type AccessMode } from '@causedeck/flags/access-mode';
 import { schema, withWorkspace, type Queryable } from '@causedeck/db';
 import {
@@ -28,6 +30,8 @@ type ParseStatus = typeof adapterParseRun.$inferSelect.status;
 export interface LatestParse {
   status: ParseStatus;
   at: Date;
+  /** Halls the run could not read (the courts area's "Couldn't read today's list for Hall X"). */
+  hallsUnreadable: string[];
 }
 
 export interface CourtsIndexForum {
@@ -44,6 +48,8 @@ export interface CourtsIndexForum {
   workspaceOwned: boolean;
   /** This workspace's newest parse run for the forum, or null when it has none. */
   latestParse: LatestParse | null;
+  /** The forum's official cause-list page (new window), or null when it has no param-free one. */
+  officialList: OpenInNewWindow | null;
 }
 
 /** A catalogued but disabled forum: its reason only, never a link, host or config. */
@@ -71,6 +77,7 @@ export async function getCourtsIndex(db: Queryable, workspaceId: string): Promis
         forumCode: adapterParseRun.forumCode,
         status: adapterParseRun.status,
         at: adapterParseRun.createdAt,
+        hallsUnreadable: adapterParseRun.hallsUnreadable,
       })
       .from(adapterParseRun)
       .orderBy(
@@ -78,7 +85,12 @@ export async function getCourtsIndex(db: Queryable, workspaceId: string): Promis
         desc(adapterParseRun.createdAt),
         desc(adapterParseRun.id),
       );
-    const latest = new Map(runs.map((run) => [run.forumCode, { status: run.status, at: run.at }]));
+    const latest = new Map(
+      runs.map((run) => [
+        run.forumCode,
+        { status: run.status, at: run.at, hallsUnreadable: run.hallsUnreadable },
+      ]),
+    );
 
     const cities = new Map<string | null, Map<string, CourtsIndexForum[]>>();
     const disabled: DisabledForum[] = [];
@@ -111,6 +123,7 @@ export async function getCourtsIndex(db: Queryable, workspaceId: string): Promis
         adapterLevel: f.adapterLevel,
         workspaceOwned: f.workspaceId !== null,
         latestParse: latest.get(f.code) ?? null,
+        officialList: deepLinkWithoutParams(f, 'cause_list'),
       });
     }
     return {

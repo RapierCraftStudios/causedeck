@@ -187,6 +187,20 @@ describe('roster table schemas (#384)', () => {
         }),
       ),
     ).toEqual(['effectiveTo']);
+    // #387: a confirmed roster carries its confirmation state; an unknown state is rejected.
+    const confirmed = {
+      workspaceId,
+      forumId: randomUUID(),
+      effectiveFrom: '2026-11-01',
+      version: 1,
+      status: 'active',
+    } as const;
+    expect(
+      BenchRosterInsertSchema.safeParse({ ...confirmed, confirmationState: 'confirmed' }).success,
+    ).toBe(true);
+    expect(
+      issuePaths(BenchRosterInsertSchema.safeParse({ ...confirmed, confirmationState: 'maybe' })),
+    ).toEqual(['confirmationState']);
     expect(
       BenchRosterEntrySelectSchema.safeParse({
         id: randomUUID(),

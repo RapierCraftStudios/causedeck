@@ -47,6 +47,7 @@ and memory stays bounded.
 | `billing`       | `subscription`, `entitlement`, `billing_event` (no raw payload), `saas_invoice`, `saas_invoice_line`, `usage_counter`, `usage_event`, `usage_reservation`, `budget_override`, `usage_period_summary` |
 | `blobs`         | `blob` (no envelope header or storage key) and the files themselves                                                                                                                                  |
 | `lifecycle`     | `export_job` (no token hash), `deletion_job`                                                                                                                                                         |
+| `court`         | `forum`, `court_hall`, `bench`: the workspace's own custom rows only (the system catalogue, with a null `workspace_id`, is public reference data and is not exported)                                  |
 
 Exclusions (`EXPORT_EXCLUSIONS`), each with its reason:
 
@@ -186,7 +187,8 @@ step (mid-table in step 4) and no step runs twice. Up to 6 attempts with exponen
    field is now unreadable, the KEK notwithstanding (`KEY_DESTROYED`).
 3. **Delete blobs.** List and delete every object under `ws/<workspace id>/`.
 4. **Purge rows.** Copy tax invoices to `legal_hold_invoice` (below), then delete the rows of every
-   table in `PURGE_ORDER`, 500 per transaction, children before parents, plus the workspace's
+   table in `PURGE_ORDER`, 500 per transaction, children before parents (the custom `court_hall`
+   and `bench` rows before their `forum`; catalogue rows are never matched), plus the workspace's
    `api_idempotency_key` rows. `pnpm --filter @causedeck/core exec vitest run
    src/lifecycle/__tests__/purge-coverage.test.ts` fails when a tenant table is in neither
    `PURGE_ORDER` nor `FINALIZE_TABLES`, the same way export coverage works.

@@ -1,5 +1,5 @@
 // Every table and enum drizzle-kit migrates. Later issues add their tables here.
-export { confirmationState, sourceType } from '../columns.ts';
+export * from './enums.ts';
 export { aiCall, auditActorKind, auditActorSalt, auditEvent, auditOutcome } from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
@@ -25,6 +25,7 @@ export {
   workspaceFeatureFlag,
   type FlagChangeRequestStatus,
 } from './flags.ts';
+export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export { jobEffect } from './job-effect.ts';
 export {
   DELETION_KINDS,

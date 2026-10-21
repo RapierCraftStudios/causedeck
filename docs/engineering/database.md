@@ -82,9 +82,12 @@ for the owner, and a 20 s `idle_timeout`.
   New tenant tables use `tenantTable()` and get `tenantPolicy()` in the migration that creates them.
 - **Provenance on every fact:** `...provenance()` adds `source_type` (enum `manual | document |
 capture | adapter | ai | import | system`, not null), `source_ref text`, `anchor_id uuid`,
-  `confidence numeric(4,3)` and `confirmation_state` (enum `proposed | confirmed | edited |
-rejected`, default `proposed`). Pair it with `provenanceCheck('<table>')`, which enforces
-  `source_type = 'manual' or anchor_id is not null or source_ref is not null`.
+  `confidence numeric(4,3)`, `confirmation_state` (enum `proposed | confirmed | auto_applied |
+corrected`, default `proposed`; #344 renamed `edited`/`rejected`) and `captured_at timestamptz not
+  null default now()`. Pair it with `provenanceCheck('<table>')`, which enforces
+  `source_type = 'manual' or anchor_id is not null or source_ref is not null` and keeps
+  `confidence` within 0..1. The matter-graph pg enums live in `packages/db/src/schema/enums.ts`
+  ([ADR 0013](../adr/0013-matter-graph-schema.md)).
 - **Vectors:** `embedding()` columns use `EMBEDDING_DIMENSIONS`; never hard-code a width.
 
 `pnpm db:check` fails when a table with `workspace_id` has a nullable column, no index led by it,

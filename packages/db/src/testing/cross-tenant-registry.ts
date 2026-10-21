@@ -56,6 +56,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
   workspace_integration: DB_TABLES_TEST,
+  // Global-or-workspace reference tables (#344): catalogue rows are covered by court-schema.test.ts.
+  forum: DB_TABLES_TEST,
+  court_hall: DB_TABLES_TEST,
+  bench: DB_TABLES_TEST,
 };
 
 /**

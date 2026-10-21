@@ -260,6 +260,13 @@
       "when": 1792550989327,
       "tag": "0036_flag_change_request",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792559921397,
+      "tag": "0037_matter_graph_foundations",
+      "breakpoints": true
     }
   ]
 }

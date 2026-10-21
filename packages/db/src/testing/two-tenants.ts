@@ -8,11 +8,12 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 
 import type { Database, Transaction } from '../client.ts';
-import { registeredTenantTables } from '../rls-policies.ts';
+import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
 import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
+import { bench, courtHall, forum } from '../schema/court.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
@@ -83,6 +84,25 @@ async function newUser(q: Queryable, label: string): Promise<string> {
 /** The invite-token hash `@causedeck/core` stores (sha256 hex of the plaintext token). */
 export function invitationTokenHash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+/** A custom (workspace-owned) forum, as an A0 forum a workspace adds itself (#344). */
+async function seedForum(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(forum)
+    .values({
+      workspaceId,
+      code: `xt.${tag}.${randomUUID().slice(0, 8)}`,
+      court: 'Seed District Court',
+      jurisdictionKind: 'district',
+    })
+    .returning({ id: forum.id });
+  return first(rows, 'forum').id;
+}
+
+/** Tenant tables and global-or-workspace reference tables: every table the suite seeds. */
+function seededTables(): string[] {
+  return [...registeredTenantTables(), ...registeredGlobalOrWorkspaceTables()];
 }
 
 /**
@@ -348,6 +368,23 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     );
     return { id: row.id };
   },
+  forum: async (tx, { workspaceId, tag }) => ({ forumId: await seedForum(tx, workspaceId, tag) }),
+  court_hall: async (tx, { workspaceId, tag }) => {
+    const forumId = await seedForum(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(courtHall)
+      .values({ workspaceId, forumId, hallNo: '12A', label: 'Court Hall 12A' })
+      .returning({ id: courtHall.id });
+    return { forumId, hallId: first(rows, 'court_hall').id };
+  },
+  bench: async (tx, { workspaceId, tag }) => {
+    const forumId = await seedForum(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(bench)
+      .values({ workspaceId, forumId, judges: ['Judge A'], benchKind: 'single' })
+      .returning({ id: bench.id });
+    return { forumId, benchId: first(rows, 'bench').id };
+  },
   deletion_job: async (tx, { workspaceId, ownerId }) => {
     const row = first(
       await tx
@@ -362,7 +399,7 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
 
 /** Registered tenant tables with no seeder (the registry test expects none). */
 export function unseededTenantTables(): string[] {
-  return registeredTenantTables().filter((table) => !(table in TENANT_SEEDERS));
+  return seededTables().filter((table) => !(table in TENANT_SEEDERS));
 }
 
 export interface TenantFixture {
@@ -403,7 +440,7 @@ async function seedWorkspace(
       { organizationId: id, userId: ownerId, role: 'owner' },
       { organizationId: id, userId: uboth, role: 'advocate' },
     ]);
-    for (const table of registeredTenantTables()) {
+    for (const table of seededTables()) {
       const seeder = TENANT_SEEDERS[table];
       if (seeder === undefined) throw new Error(`two-tenants: no seeder for tenant table ${table}`);
       rows[table] = await seeder(tx, { workspaceId: id, ownerId, tag });

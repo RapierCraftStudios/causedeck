@@ -23,6 +23,9 @@ describe('@causedeck/db root entry point', () => {
       'TenancyError',
       'tenantTable',
       'tenantPolicy',
+      'globalOrWorkspaceTable',
+      'globalOrWorkspacePolicy',
+      'GLOBAL_OR_WORKSPACE_TABLES',
     ]) {
       expect(root, name).toHaveProperty(name);
     }
@@ -34,7 +37,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308) and the legal-hold invoice table (#302)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302) and the court reference tables (#344)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -47,9 +50,11 @@ describe('@causedeck/db root entry point', () => {
       'api_idempotency_key',
       'audit_actor_salt',
       'audit_event',
+      'bench',
       'billing_event',
       'blob',
       'budget_override',
+      'court_hall',
       'deletion_job',
       'deletion_tombstone',
       'email_suppression',
@@ -57,6 +62,7 @@ describe('@causedeck/db root entry point', () => {
       'export_job',
       'feature_flag',
       'flag_change_request',
+      'forum',
       'invitation',
       'invoice_counter',
       'job_effect',

@@ -32,7 +32,7 @@ const WS = '01890a5d-ac96-774b-bcce-b302099a8057';
 const ANCHOR = '01890a5d-ac96-774b-bcce-b302099a8058';
 
 describe('column helpers (static shape)', () => {
-  it('provenance() yields exactly the five provenance columns', () => {
+  it('provenance() yields exactly the six provenance columns', () => {
     const cols = getTableColumns(fact);
     const columns = Object.keys(provenance()).map((key) => cols[key as keyof typeof cols].name);
     expect(columns).toEqual([
@@ -41,6 +41,7 @@ describe('column helpers (static shape)', () => {
       'anchor_id',
       'confidence',
       'confirmation_state',
+      'captured_at',
     ]);
   });
 
@@ -50,6 +51,15 @@ describe('column helpers (static shape)', () => {
     expect(cols.sourceType.enumValues).toEqual([...SOURCE_TYPES]);
     expect(cols.confirmationState.enumValues).toEqual([...CONFIRMATION_STATES]);
     expect(cols.confirmationState.default).toBe('proposed');
+    expect([...CONFIRMATION_STATES]).toEqual([
+      'proposed',
+      'confirmed',
+      'auto_applied',
+      'corrected',
+    ]);
+    expect(cols.capturedAt.getSQLType()).toBe('timestamp with time zone');
+    expect(cols.capturedAt.notNull).toBe(true);
+    expect(cols.capturedAt.hasDefault).toBe(true);
     expect(cols.confidence.getSQLType()).toBe('numeric(4, 3)');
     expect(cols.anchorId.getSQLType()).toBe('uuid');
     expect(cols.anchorId.notNull).toBe(false);
@@ -122,6 +132,26 @@ describe('provenance CHECK (real Postgres)', () => {
         .values({ workspaceId: WS, body: 'x', sourceType: 'manual', confidence: '12.5' }),
     );
     expect(pgCode(tooBig)).toBe('22003'); // numeric_value_out_of_range
+  });
+
+  it('keeps confidence within 0..1 and stamps captured_at (#344)', async () => {
+    for (const confidence of ['-0.001', '1.001']) {
+      const error = await rejection(
+        scratch.appDb
+          .insert(fact)
+          .values({ workspaceId: WS, body: 'x', sourceType: 'manual', confidence }),
+      );
+      expect(pgCode(error), confidence).toBe('23514'); // check_violation
+    }
+    const rows = await scratch.appDb
+      .insert(fact)
+      .values([
+        { workspaceId: WS, body: 'low', sourceType: 'manual', confidence: '0' },
+        { workspaceId: WS, body: 'high', sourceType: 'manual', confidence: '1' },
+      ])
+      .returning();
+    expect(rows.map((r) => r.confidence)).toEqual(['0.000', '1.000']);
+    expect(rows.every((r) => r.capturedAt instanceof Date)).toBe(true);
   });
 
   it('creates the workspace index in the database', async () => {

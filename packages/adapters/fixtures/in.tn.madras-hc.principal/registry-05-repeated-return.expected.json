@@ -1,0 +1,47 @@
+{
+  "events": [
+    {
+      "kind": "sr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "S.R. No. 12348/2026",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "srNo": "12348/2026"
+    },
+    {
+      "kind": "returned_for_defects",
+      "anchor": {
+        "page": 1,
+        "quote": "returned for defects",
+        "rowIndex": 5
+      },
+      "confidence": 0.8
+    },
+    {
+      "kind": "returned_for_defects",
+      "anchor": {
+        "page": 1,
+        "quote": "returned for defects",
+        "rowIndex": 7
+      },
+      "confidence": 0.8
+    },
+    {
+      "kind": "cure_deadline",
+      "anchor": {
+        "page": 1,
+        "quote": "Re-present within 5 days",
+        "rowIndex": 8
+      },
+      "confidence": 0.9,
+      "deadline": {
+        "n": 5,
+        "unit": "days",
+        "basisDate": "2026-10-20",
+        "derived": "2026-10-25"
+      }
+    }
+  ]
+}

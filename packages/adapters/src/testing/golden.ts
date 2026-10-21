@@ -34,6 +34,14 @@ export const GOLDEN_RECEIVED_AT = '2026-10-21T04:00:00.000Z';
 export const FixtureOriginSchema = z.enum(['synthetic', 'lawyer-supplied']);
 export type FixtureOrigin = z.infer<typeof FixtureOriginSchema>;
 
+/**
+ * What a fixture holds. The golden runner parses `cause_list` entries; `order` and `registry_notice`
+ * entries (#398) are listed here and checked by their adapter's own fixture tests.
+ */
+export const FIXTURE_KINDS = ['cause_list', 'order', 'registry_notice'] as const;
+export const FixtureKindSchema = z.enum(FIXTURE_KINDS);
+export type FixtureKind = z.infer<typeof FixtureKindSchema>;
+
 export const FixtureManifestSchema = z.object({
   adapter: z.string().min(1),
   classification: z.string().optional(),
@@ -43,7 +51,7 @@ export const FixtureManifestSchema = z.object({
       file: z
         .string()
         .regex(/^[\w.-]+\.input\.(txt|html|pdf|json)$/, 'must be <name>.input.txt|html|pdf|json'),
-      kind: z.literal('cause_list'),
+      kind: FixtureKindSchema,
       origin: FixtureOriginSchema,
       classification: z.string().optional(),
       forumCode: z.string().min(1).optional(),
@@ -242,7 +250,7 @@ async function runSet(
         missingExpected: false,
       });
     }
-    for (const entry of manifest.fixtures) {
+    for (const entry of manifest.fixtures.filter((f) => f.kind === 'cause_list')) {
       const name = entry.file.replace(/\.input\.[^.]+$/, '');
       const input = await inputFor(
         path.join(dir, entry.file),

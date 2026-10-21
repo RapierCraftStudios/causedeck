@@ -1,0 +1,109 @@
+{
+  "adapter": "in.tn.madras-hc.principal",
+  "classification": "FICTIONAL",
+  "note": "Synthetic Madras HC orders and registry notices (#398). Every party, advocate and judge is fictional; real-fixture sign-off is #119. Cause lists and AIMS emails are added by #396.",
+  "fixtures": [
+    {
+      "file": "order-01-interim-relative-date.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-02-counter-within-time.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-03-absolute-post-on.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-04-final-neutral-citation.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-05-reserved.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-06-dispensed.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-07-common-order-multi-case.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-08-decoy-earlier-order-date.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-09-no-next-date.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-10-tamil-name-party.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-11-long-over-20-pages.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-12-daily-order.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-01-sr-assigned.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-02-defect-return.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-03-re-presentation-deadline.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-04-numbered.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-05-repeated-return.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    }
+  ]
+}

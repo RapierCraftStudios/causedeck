@@ -36,6 +36,13 @@ fixtures/<adapter-id>/
   }
   ```
 
+  `kind` is `cause_list`, `order` or `registry_notice` (#398). The golden runner parses and scores
+  `cause_list` entries only: their expected file is the adapter's `ParsedCauseList`. An `order`
+  entry's expected file is `{"header": ParsedOrderHeader, "cues": DirectionCue[]}` (the adapter's
+  `parseOrderHeader` and `findDirectionCues`) and a `registry_notice` entry's is
+  `{"events": RegistryEvent[]}`; the adapter's own fixture test checks them
+  (`src/madras-hc/fixtures.test.ts`).
+
   `origin` is `synthetic` (generated or hand-written, every name fictional and flagged
   `FICTIONAL`) or `lawyer-supplied`. An input file the manifest does not list fails the run.
 

@@ -25,6 +25,7 @@
     "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {
+    "@causedeck/adapters": "workspace:*",
     "@causedeck/auth": "workspace:*",
     "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
@@ -45,6 +46,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "fast-check": "catalog:",
+    "pdf-lib": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

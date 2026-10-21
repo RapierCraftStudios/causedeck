@@ -1,0 +1,30 @@
+{
+  "events": [
+    {
+      "kind": "sr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "SR.No.12345 of 2026",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "srNo": "12345/2026"
+    },
+    {
+      "kind": "numbered",
+      "anchor": {
+        "page": 1,
+        "quote": "numbered as W.P.No. 678 of 2026.",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "caseRef": {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "678",
+        "year": 2026,
+        "matchKey": "WP/678/2026"
+      }
+    }
+  ]
+}

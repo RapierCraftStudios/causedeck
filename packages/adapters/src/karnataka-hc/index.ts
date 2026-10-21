@@ -1,7 +1,8 @@
 // Karnataka High Court adapter, Principal Bench at Bengaluru (#404, part 1 of #37; A1). Identity,
 // versioned config, declared access modes, the case-type table, the case-line grammar, advocate
-// keys and official deep links. The list, order-header, direction-cue and registry parsers land in
-// parts 2 to 4 (#405-#407): until then they return well-formed empty results. Everything the
+// keys and official deep links; the order header, KHC neutral citation and direction cues (#406,
+// part 3). The list and registry parsers land in parts 2 and 4 (#405, #407): until then the list
+// parser returns a well-formed empty result. Everything the
 // adapter reads is a document the lawyer supplied; links open the court's own pages in a new window
 // and nothing here requests a URL. The Dharwad and Kalaburagi Benches are disabled forums (v2).
 // Every layout assumption is recorded in ADR 0019.
@@ -13,7 +14,6 @@ import type {
   DeepLinkParams,
   DeepLinkTarget,
   ParsedCauseList,
-  ParsedOrderHeader,
   ParserInput,
 } from '../types.ts';
 
@@ -24,6 +24,8 @@ import {
 import { KARNATAKA_HC_HALL_HEADING, KARNATAKA_HC_ROW_PATTERN } from './config/list-grammar.ts';
 import { KARNATAKA_HC_DIRECTION_PHRASES } from './config/order-cues.ts';
 import { KARNATAKA_HC_STAGE_MAP } from './config/stage-map.ts';
+import { findKarnatakaDirectionCues } from './direction-cues.ts';
+import { parseKarnatakaOrderHeader } from './order-header.ts';
 
 export * from './advocate-keys.ts';
 export * from './case-line.ts';
@@ -32,6 +34,9 @@ export * from './config/column-synonyms.ts';
 export * from './config/list-grammar.ts';
 export * from './config/order-cues.ts';
 export * from './config/stage-map.ts';
+export * from './direction-cues.ts';
+export * from './neutral-citation.ts';
+export * from './order-header.ts';
 
 export const KARNATAKA_HC_ADAPTER_ID = 'in.ka.karnataka-hc.bengaluru';
 export const KARNATAKA_HC_VERSION = '1.0.0';
@@ -116,29 +121,17 @@ function emptyCauseList(version: string, input: ParserInput): ParsedCauseList {
   };
 }
 
-function emptyOrderHeader(): ParsedOrderHeader {
-  return {
-    caseTypeRaw: null,
-    caseType: null,
-    caseNumber: null,
-    caseYear: null,
-    orderDate: null,
-    neutralCitation: null,
-    anchor: null,
-    confidence: 0,
-    caseRefs: [],
-    bench: null,
-    orderType: null,
-    authenticityFlag: null,
-  };
-}
-
 /** A fresh Karnataka HC adapter over `options.config` (default `KARNATAKA_HC_CONFIG`, 1.0.0). */
 export function createKarnatakaHcAdapter(
   options: KarnatakaHcAdapterOptions = {},
 ): KarnatakaHcAdapter {
   const config = options.config ?? KARNATAKA_HC_CONFIG;
   const version = options.version ?? KARNATAKA_HC_VERSION;
+  const orderOptions = {
+    phrases: config.orderParser.directionPhrases,
+    pivot: config.twoDigitYearPivot,
+    aliases: config.nomenclature.caseTypes,
+  };
   return {
     id: KARNATAKA_HC_ADAPTER_ID,
     version,
@@ -154,8 +147,8 @@ export function createKarnatakaHcAdapter(
     fixtures: config.fixtures,
     health: config.health,
     parseCauseList: (input) => Promise.resolve(emptyCauseList(version, input)),
-    parseOrderHeader: () => emptyOrderHeader(),
-    findDirectionCues: () => [],
+    parseOrderHeader: (input) => parseKarnatakaOrderHeader(input, orderOptions),
+    findDirectionCues: (input) => findKarnatakaDirectionCues(input, orderOptions),
     buildDeepLink(target: DeepLinkTarget, params: DeepLinkParams) {
       const kind = config.links[target];
       if (kind === undefined || options.forumConfig === undefined) return null;

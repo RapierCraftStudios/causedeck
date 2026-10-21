@@ -19,11 +19,13 @@ import { conflict, invalid } from '../shared/errors.ts';
 
 import {
   inGraphScope,
+  loadProceeding,
   parseInput,
   pgError,
   requireMatter,
   type GraphActor,
   type MatterGraphDeps,
+  type ProceedingRow,
 } from './context.ts';
 import {
   expandYear,
@@ -31,13 +33,13 @@ import {
   isSameProceeding,
   normaliseCaseNumber,
   normaliseCaseType,
-  type ProceedingIdentity,
+  rowIdentity,
 } from './duplicates.ts';
 import { crossWorkspace, graphNotFound } from './errors.ts';
 
 const { forum, matter, member, proceeding, proceedingLink } = schema;
 
-export type ProceedingRow = typeof proceeding.$inferSelect;
+export type { ProceedingRow };
 export type ProceedingLinkRow = typeof proceedingLink.$inferSelect;
 
 /** The database's verdict on a proceeding write, as a domain error. */
@@ -57,32 +59,6 @@ export function proceedingWriteError(error: unknown): unknown {
   }
   if (code === '23514') return invalid('The proceeding identifiers are not consistent');
   return error;
-}
-
-/** A stored proceeding as a `ProceedingIdentity`. */
-function rowIdentity(row: ProceedingRow): ProceedingIdentity {
-  return {
-    forumId: row.forumId,
-    caseType: row.caseTypeCode,
-    number: row.number,
-    year: row.year,
-    cnr: row.cnr,
-  };
-}
-
-/** The proceeding of the actor's workspace, or NOT_FOUND. */
-async function loadProceeding(
-  tx: Parameters<Parameters<typeof inGraphScope>[2]>[0]['tx'],
-  workspaceId: string,
-  proceedingId: string,
-): Promise<ProceedingRow> {
-  const [row] = await tx
-    .select()
-    .from(proceeding)
-    .where(and(eq(proceeding.workspaceId, workspaceId), eq(proceeding.id, proceedingId)))
-    .limit(1);
-  if (row === undefined) throw graphNotFound('proceeding');
-  return row;
 }
 
 /** A proceeding of a matter the actor may write; emits `proceeding.created`. */

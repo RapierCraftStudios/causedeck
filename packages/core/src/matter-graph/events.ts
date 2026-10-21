@@ -2,13 +2,16 @@
 // or job code: they emit these through an injected `GraphEvents` port, and audit, notifications and
 // AI work attach to that port elsewhere. Every event names its matter and carries the matter's
 // `sensitive` flag, so a subscriber can refuse AI work for a sensitive matter (CA-10) without a
-// lookup. Later #33 parts (#363-#366) append members to the union.
+// lookup. Later #33 parts (#363-#366) append members to the union. A merge or split (#365) names the
+// matter rows moved into (`matterId`), so `sensitive` there is the receiving matter's flag: documents
+// moved into a sensitive matter arrive with `sensitive: true`.
 import type {
   ConfirmationState,
   ProceedingLinkKind,
   ProceedingState,
   SourceType,
 } from '@causedeck/db/schema';
+import type { IdentifierSource } from '@causedeck/validators/matter-graph-inputs';
 
 /** What every graph event carries. */
 export interface GraphEventBase {
@@ -38,6 +41,31 @@ export type GraphEvent =
     })
   | (GraphEventBase & { type: 'document.created'; documentId: string })
   | ProceedingStateChangedEvent
+  | (GraphEventBase & {
+      type: 'matter.merged';
+      fromMatterId: string;
+      proceedingIds: string[];
+      documentIds: string[];
+    })
+  | (GraphEventBase & { type: 'matter.merge_undone'; fromMatterId: string })
+  | (GraphEventBase & {
+      type: 'matter.split';
+      newMatterId: string;
+      proceedingIds: string[];
+      crossingLinks: number;
+    })
+  | (GraphEventBase & { type: 'matter.split_undone'; newMatterId: string })
+  | (GraphEventBase & {
+      type: 'proceeding.merged';
+      proceedingId: string;
+      fromProceedingId: string;
+      identifierSources: Record<string, IdentifierSource>;
+    })
+  | (GraphEventBase & {
+      type: 'proceeding.merge_undone';
+      proceedingId: string;
+      fromProceedingId: string;
+    })
   // Next date (#364): a proposal, a conflict with the canonical date (never resolved here), and a
   // confirmation by a member (`actorUserId`), which makes the listing canonical.
   | (GraphEventBase & {

@@ -64,3 +64,20 @@ export function isSameProceeding(a: ProceedingIdentity, b: ProceedingIdentity): 
   const keyA = identityKey(a);
   return keyA !== null && keyA === identityKey(b);
 }
+
+/** A stored proceeding as a `ProceedingIdentity` (its case type is already normalised). */
+export function rowIdentity(row: {
+  forumId: string;
+  caseTypeCode: string;
+  number: string | null;
+  year: number | null;
+  cnr: string | null;
+}): ProceedingIdentity {
+  return {
+    forumId: row.forumId,
+    caseType: row.caseTypeCode,
+    number: row.number,
+    year: row.year,
+    cnr: row.cnr,
+  };
+}

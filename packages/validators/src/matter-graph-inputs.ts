@@ -1,7 +1,9 @@
 // Matter-graph service inputs (#362, part 1 of #33): the zod inputs of the `@causedeck/core`
-// matter-graph services (matters, proceedings, documents, the duplicate finder). The services parse
-// every input with these before touching the database. Later #33 parts (#363-#366) append their own
-// inputs here. Objects are strict: an unknown key is an error, not silently dropped.
+// matter-graph services (matters, proceedings, documents, the duplicate finder; merges and splits,
+// #365). The services parse every input with these before touching the database. Later #33 parts
+// (#363-#366) append their own inputs here. Objects are strict: an unknown key is an error, not
+// silently dropped. An undo takes back the `UndoPayload` its operation returned (stored by #47), and
+// parses it here too: a stored payload is input like any other.
 //
 // Case types, numbers and two-digit years arrive as printed; the services normalise them
 // (`normaliseCaseType`), so these schemas only reject what can never be valid.
@@ -220,6 +222,131 @@ export const CreateDocumentInput = z.strictObject({
 });
 
 // ---------------------------------------------------------------------------------------------
+// Merges and splits (#365).
+
+export const MergeMattersInput = z
+  .strictObject({ intoMatterId: uuid, fromMatterId: uuid })
+  .refine((value) => value.intoMatterId !== value.fromMatterId, {
+    path: ['fromMatterId'],
+    message: 'A matter cannot be merged into itself',
+  });
+
+export const SplitMatterInput = z.strictObject({
+  matterId: uuid,
+  proceedingIds: z
+    .array(uuid)
+    .min(1)
+    .max(500)
+    .refine((ids) => new Set(ids.map((id) => id.toLowerCase())).size === ids.length, {
+      message: 'Proceedings must not repeat',
+    }),
+  newTitle: text,
+});
+
+export const MergeProceedingsInput = z
+  .strictObject({ intoProceedingId: uuid, fromProceedingId: uuid })
+  .refine((value) => value.intoProceedingId !== value.fromProceedingId, {
+    path: ['fromProceedingId'],
+    message: 'A proceeding cannot be merged into itself',
+  });
+
+/** `timestamptz::text` (or ISO), microseconds kept, so an undo restores the exact value. */
+const instant = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d{1,6})?([+-]\d{2}(:\d{2})?|Z)$/,
+    'A timestamp',
+  );
+const MAX_ROWS = 10_000;
+/** A row an operation changed, with its `updated_at` before the change. */
+const stamp = z.strictObject({ id: uuid, updatedAt: instant });
+const stamps = z.array(stamp).max(MAX_ROWS);
+/** A row whose `matter_id` may have changed with its proceeding (obligation, task). */
+const matterStamps = z
+  .array(z.strictObject({ id: uuid, updatedAt: instant, matterId: uuid.nullable() }))
+  .max(MAX_ROWS);
+/** A whole row as `to_jsonb(row)`, re-inserted by the undo. */
+const wholeRow = z.looseObject({ id: uuid });
+
+/** Which proceeding (and source) an identifier of a merged proceeding came from. */
+export const IdentifierSourceSchema = z.strictObject({
+  proceedingId: uuid,
+  sourceType: z.string().min(1),
+  sourceRef: z.string().nullable(),
+});
+
+export const MatterMergeUndoPayload = z.strictObject({
+  op: z.literal('matter.merge'),
+  version: z.literal(1),
+  before: z.strictObject({
+    intoMatterId: uuid,
+    fromMatterId: uuid,
+    fromMatter: z.strictObject({ mergedIntoMatterId: uuid.nullable(), updatedAt: instant }),
+    rows: z.strictObject({
+      proceeding: stamps,
+      document: stamps,
+      roleEdge: stamps,
+      obligation: stamps,
+      task: stamps,
+      mergedMatter: stamps,
+    }),
+    links: z.array(uuid).max(MAX_ROWS),
+  }),
+  after: z.strictObject({ intoMatterId: uuid }),
+});
+
+export const MatterSplitUndoPayload = z.strictObject({
+  op: z.literal('matter.split'),
+  version: z.literal(1),
+  before: z.strictObject({
+    matterId: uuid,
+    rows: z.strictObject({ proceeding: stamps, obligation: stamps, task: stamps }),
+  }),
+  after: z.strictObject({ newMatterId: uuid }),
+});
+
+export const ProceedingMergeUndoPayload = z.strictObject({
+  op: z.literal('proceeding.merge'),
+  version: z.literal(1),
+  before: z.strictObject({
+    intoProceedingId: uuid,
+    fromProceedingId: uuid,
+    into: wholeRow,
+    from: wholeRow,
+    rows: z.strictObject({
+      listing: stamps,
+      order: stamps,
+      obligation: matterStamps,
+      task: matterStamps,
+      roleEdge: stamps,
+      // proceeding_state_change (#363): the source's state history follows the survivor.
+      stateChange: stamps,
+      child: stamps,
+      link: z
+        .array(
+          z.strictObject({
+            id: uuid,
+            updatedAt: instant,
+            fromProceedingId: uuid,
+            toProceedingId: uuid,
+          }),
+        )
+        .max(MAX_ROWS),
+    }),
+    demotedListing: stamp.nullable(),
+    deletedLinks: z.array(wholeRow).max(MAX_ROWS),
+  }),
+  after: z.strictObject({
+    intoProceedingId: uuid,
+    identifierSources: z.record(z.string(), IdentifierSourceSchema),
+  }),
+});
+
+export const UndoMergeInput = z.strictObject({ payload: MatterMergeUndoPayload });
+export const UndoSplitInput = z.strictObject({ payload: MatterSplitUndoPayload });
+export const UndoMergeProceedingsInput = z.strictObject({ payload: ProceedingMergeUndoPayload });
+
+// ---------------------------------------------------------------------------------------------
 // Next date (#364, part 3 of #33). A proposal is always stored as `proposed`: only
 // `confirmNextDate` confirms a date, so a proposal claiming another confirmation state is invalid.
 
@@ -268,6 +395,16 @@ export type TransitionProceedingInput = z.input<typeof TransitionProceedingInput
 export type ParsedTransitionProceeding = z.output<typeof TransitionProceedingInput>;
 export type CreateDocumentInput = z.input<typeof CreateDocumentInput>;
 export type ParsedCreateDocument = z.output<typeof CreateDocumentInput>;
+export type MergeMattersInput = z.input<typeof MergeMattersInput>;
+export type SplitMatterInput = z.input<typeof SplitMatterInput>;
+export type MergeProceedingsInput = z.input<typeof MergeProceedingsInput>;
+export type IdentifierSource = z.output<typeof IdentifierSourceSchema>;
+export type MatterMergeUndoPayload = z.output<typeof MatterMergeUndoPayload>;
+export type MatterSplitUndoPayload = z.output<typeof MatterSplitUndoPayload>;
+export type ProceedingMergeUndoPayload = z.output<typeof ProceedingMergeUndoPayload>;
+export type UndoMergeInput = z.input<typeof UndoMergeInput>;
+export type UndoSplitInput = z.input<typeof UndoSplitInput>;
+export type UndoMergeProceedingsInput = z.input<typeof UndoMergeProceedingsInput>;
 export type ProposeNextDateInput = z.input<typeof ProposeNextDateInput>;
 export type ParsedProposeNextDate = z.output<typeof ProposeNextDateInput>;
 export type ConfirmNextDateInput = z.input<typeof ConfirmNextDateInput>;

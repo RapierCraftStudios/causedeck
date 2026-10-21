@@ -44,7 +44,7 @@ CI runs in tiers so lane PRs stay fast, ship PRs carry one heavy gate, and the s
 
 | Tier | When | Jobs |
 | --- | --- | --- |
-| **Fast** (every PR) | Every pull request, including lane PRs into `milestone/*` | `lint` (format, ADR, docs links, affected lint), `typecheck`, `test`, `build` — change-aware via `infra/scripts/ci-affected.sh`; `audit`, `gitleaks`; `storybook` build + interaction/axe tests when `packages/ui` changes (path filter); `actionlint` when `.github/` changes |
+| **Fast** (every PR) | Every pull request, including lane PRs into `milestone/*` | `lint` (format, ADR, docs links, affected lint), `typecheck`, `test`, `build` — change-aware via `infra/scripts/ci-affected.sh`; `audit`, `gitleaks`; `storybook` build + interaction/axe tests (light and dark) for `packages/ui` and, in the `storybook-web` job, for the `apps/web` Storybook (courts components, #426) when `packages/ui`, `packages/i18n`, `apps/web/components` or the web Storybook config change (path filter); `actionlint` when `.github/` changes |
 | **Ship** | Ship PRs into `staging` or `main`, pushes to `main`, or any PR labelled `full-ci` | Everything in Fast, plus `e2e` (2 shards, `E2E_SCOPE=ship`, 30 min timeout): the one heavy merge gate |
 | **Report-only** | Nightly schedule, manual dispatch, or a PR labelled `full-ci`; `continue-on-error`, never blocks a merge | `lighthouse` (perf/a11y budgets), `visual` (Storybook visual regression, 4 shards); nightly and dispatch also run `e2e` with `E2E_SCOPE=full` (90 min timeout) |
 

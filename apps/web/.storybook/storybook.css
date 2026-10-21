@@ -1,0 +1,9 @@
+/* Storybook styles for apps/web (#426): app/globals.css minus next/font, which only runs in Next.
+ * The ui token entry brings its own fonts.css (served from packages/ui/fonts, .storybook/main.ts). */
+@import 'tailwindcss';
+@import '@causedeck/ui/tokens.css';
+@import '@causedeck/config/tailwind/preset.css';
+
+/* Compile utilities used by the app components and by the ui components they render. */
+@source '../components';
+@source '../../../packages/ui/src';

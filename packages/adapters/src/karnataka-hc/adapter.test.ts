@@ -1,5 +1,6 @@
 // The Karnataka HC adapter skeleton (#404): identity, registration, access modes, the reserved
-// display-board legend slot, config, deep links; the list parsers (#405) wired into parseCauseList.
+// display-board legend slot, config, deep links; the list parsers (#405) wired into parseCauseList,
+// and the order header and direction cues wired in part 3 (#406).
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -127,6 +128,10 @@ describe('Karnataka HC adapter (#404)', () => {
     // Text and email lists are not read yet: a well-formed empty result.
     const text = await adapter.parseCauseList({ kind: 'text', text: 'x', meta: input.meta });
     expect(text).toMatchObject({ status: 'empty', source: 'text', rows: [] });
+  });
+
+  it('reads nothing from an empty order, with the authenticity flag reserved as null', () => {
+    const adapter = createKarnatakaHcAdapter();
     expect(ParsedOrderHeaderSchema.parse(adapter.parseOrderHeader(input))).toMatchObject({
       authenticityFlag: null,
       caseRefs: [],
@@ -135,11 +140,45 @@ describe('Karnataka HC adapter (#404)', () => {
     expect(adapter.findDirectionCues(input)).toEqual([]);
   });
 
+  it('parses a supplied order header and its direction cues (#406)', () => {
+    const adapter = createKarnatakaHcAdapter();
+    const order: ParserInput = {
+      kind: 'text',
+      text: [
+        'IN THE HIGH COURT OF KARNATAKA AT BENGALURU',
+        'DATED THIS THE 14TH DAY OF NOVEMBER, 2026',
+        'BEFORE',
+        "THE HON'BLE MR JUSTICE A. FICTIONAL",
+        'W.P. No. 12345 of 2026 (GM-RES)',
+        '2026:KHC:1234',
+        'ORDER',
+        'The impugned order dated 03.03.2019 is under challenge.',
+        'Respondents to file statement of objections within four weeks. List after two weeks.',
+      ].join('\n'),
+      meta: input.meta,
+    };
+    expect(ParsedOrderHeaderSchema.parse(adapter.parseOrderHeader(order))).toMatchObject({
+      caseType: 'WP',
+      caseNumber: '12345',
+      caseYear: 2026,
+      orderDate: '2026-11-14',
+      neutralCitation: '2026:KHC:1234',
+      authenticityFlag: null,
+    });
+    expect(adapter.findDirectionCues(order).map((cue) => [cue.kind, cue.date])).toEqual([
+      ['time_bound', null],
+      ['next_date_relative', null],
+    ]);
+  });
+
   it('reads no URL: no source file of the adapter names fetch or a network module', () => {
     const files = [
       'index.ts',
       'case-line.ts',
       'advocate-keys.ts',
+      'order-header.ts',
+      'neutral-citation.ts',
+      'direction-cues.ts',
       'config/case-types.ts',
       'config/stage-map.ts',
       'config/list-grammar.ts',

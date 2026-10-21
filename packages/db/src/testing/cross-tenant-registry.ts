@@ -583,6 +583,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   resolveDeepLink: 'pure',
   buildDeepLink: 'pure',
   interpolateTemplate: 'pure',
+  // court: roster-PDF preview (#385)
+  previewRosterImport: 'pure (parses supplied PDF bytes; reads and writes no tenant data)',
+  normaliseJudgeName: 'pure',
   // matter graph (#362): errors and pure proceeding-identity helpers
   CrossWorkspaceError: 'error class',
   crossWorkspace: 'error factory',

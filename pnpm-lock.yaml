@@ -1031,6 +1031,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@causedeck/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@causedeck/auth':
         specifier: workspace:*
         version: link:../auth
@@ -1086,6 +1089,9 @@ importers:
       fast-check:
         specifier: 'catalog:'
         version: 4.10.2
+      pdf-lib:
+        specifier: 'catalog:'
+        version: 1.17.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

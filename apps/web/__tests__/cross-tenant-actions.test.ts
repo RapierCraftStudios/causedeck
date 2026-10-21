@@ -4,6 +4,7 @@
 // FORBIDDEN for A's workspace and NOT_FOUND (or nothing) for A's member and invitation ids under B,
 // and A's rows never change. The workspace loader shows A's slug to `ub` as not-found, which covers
 // `resolveSlug` (caller-checked in the registry). Every exported action is listed in ACTIONS.
+import { randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -92,6 +93,7 @@ const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
 const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
+const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -137,6 +139,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   requestWorkspaceDeletionAction: danger,
   cancelWorkspaceDeletionAction: danger,
   requestAccountDeletionAction: account,
+  createWorkspaceForumAction: courts,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -207,6 +210,15 @@ function snapshotA() {
       })
       .from(schema.workspaceIntegration)
       .orderBy(schema.workspaceIntegration.kind),
+    // The catalogue and A's own forums (#402).
+    forums: await tx
+      .select({
+        id: schema.forum.id,
+        code: schema.forum.code,
+        workspaceId: schema.forum.workspaceId,
+      })
+      .from(schema.forum)
+      .orderBy(schema.forum.id),
   }));
 }
 
@@ -315,6 +327,15 @@ function inputs(workspaceId: string): Record<string, unknown> {
     listExportsAction: { workspaceId },
     requestWorkspaceDeletionAction: { workspaceId, confirmName: t.a.name },
     cancelWorkspaceDeletionAction: { workspaceId, jobId: aDeletionId },
+    // Courts (#402): ub, owner of B, may not add a forum to A.
+    createWorkspaceForumAction: {
+      workspaceId,
+      code: `xt.probe-${workspaceId.slice(0, 8)}`,
+      name: 'Cross-tenant probe forum',
+      jurisdictionKind: 'other',
+      city: 'Probe City',
+      primaryLanguage: 'en',
+    },
   };
 }
 
@@ -512,6 +533,30 @@ describe('cross-tenant server actions', () => {
     expect(result.data.kind).toBe('ics_feed');
     expect(result.data.value).toMatch(/^http:\/\/localhost:3000\/api\/ics\/[\w-]{43}$/);
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('createWorkspaceForumAction under B’s own workspace adds the forum to B only (#402)', async () => {
+    const before = await snapshotA();
+    const code = `xt.probe-${randomUUID().slice(0, 8)}`;
+    const input = { ...(inputs(t.b.id).createWorkspaceForumAction as object), code };
+    expect(await action('createWorkspaceForumAction')(input)).toMatchObject({
+      ok: true,
+      data: { code, court: 'Cross-tenant probe forum', seat: 'Probe City' },
+    });
+    expect(await snapshotA()).toEqual(before);
+    expect(before.forums.map((row) => row.code)).not.toContain(code);
+    const inB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx
+        .select({
+          code: schema.forum.code,
+          workspaceId: schema.forum.workspaceId,
+          adapterLevel: schema.forum.adapterLevel,
+        })
+        .from(schema.forum),
+    );
+    expect(inB.filter((row) => row.code === code)).toEqual([
+      { code, workspaceId: t.b.id, adapterLevel: 'A0' },
+    ]);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

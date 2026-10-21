@@ -1,4 +1,4 @@
-// The NCLT Bengaluru adapter, `in.nclt.bengaluru` (#38, ADR 0018): cause lists from the bench's
+// The NCLT Bengaluru adapter, `in.nclt.bengaluru` (#38, ADR 0019): cause lists from the bench's
 // table-format PDFs, read as a `LayoutDocument` (`layoutFromPdf`, or an OCR layout from #45). NCLT's
 // terms of use have not been read, so every resource is `user_supplied` or `none`: the adapter
 // parses what the lawyer shares and never retrieves anything. NCLT orders stay with the A0 generic
@@ -30,7 +30,7 @@ export const NCLT_ADAPTER_ID = 'in.nclt.bengaluru';
 export const NCLT_FORUM_CODE = 'in.nclt.bengaluru';
 export const NCLT_VERSION = '1.0.0';
 
-/** Recorded with the access-mode registry rows (migration 0048) until counsel reviews them. */
+/** Recorded with the access-mode registry rows (migration 0049) until counsel reviews them. */
 export const NCLT_ACCESS_NOTE = 'NCLT T&C not yet read, counsel review pending (#118)';
 
 export const NCLT_ACCESS_MODES: AccessModes = {

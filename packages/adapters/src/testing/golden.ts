@@ -1,5 +1,5 @@
 // Golden-fixture harness (#371, ADR 0015). For an adapter, every `fixtures/<id>/<name>.input.*`
-// listed in `manifest.json` (`.txt`, `.html`, `.pdf`, or a `LayoutDocument` as `.json`, ADR 0018)
+// listed in `manifest.json` (`.txt`, `.html`, `.pdf`, or a `LayoutDocument` as `.json`, ADR 0019)
 // is parsed and compared with `<name>.expected.json`: a readable path diff, the anchors whose
 // quote is not verbatim on its page, and a per-field precision/recall table. Lawyer-supplied
 // fixtures are never committed; they are read from `ADAPTER_PRIVATE_FIXTURES_DIR` (same layout)

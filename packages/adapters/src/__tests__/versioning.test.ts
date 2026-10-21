@@ -69,7 +69,8 @@ async function insertVersion(
   });
 }
 
-// The echo adapter's rows only: migrations register other adapters' versions too (0048, #38).
+// The echo adapter's rows only: migrations register other adapters' versions too (0048, #401;
+// 0049, #38).
 const statusOf = async (tx: Transaction, version: string) =>
   (
     await tx

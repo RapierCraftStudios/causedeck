@@ -122,7 +122,7 @@ export const AdvocateSchema = z.object({
   aliases: z.array(z.string().min(1)),
   /** Bar enrolment number, e.g. `MS/123/1900`: the stable matching key when present. */
   enrolmentNo: z.string().min(1).optional(),
-  /** The side the advocate appears for, when the list prints it per side (NCLT, ADR 0018). */
+  /** The side the advocate appears for, when the list prints it per side (NCLT, ADR 0019). */
   side: z.enum(['petitioner', 'respondent']).optional(),
 });
 export type Advocate = z.infer<typeof AdvocateSchema>;
@@ -195,7 +195,7 @@ export type ListAttachment = z.infer<typeof ListAttachmentSchema>;
 
 /**
  * `needs_ocr`: the document has no text layer (every page has `textCoverage` 0), so nothing is
- * guessed; the caller OCRs it (#45) and parses the OCR layout again (ADR 0018).
+ * guessed; the caller OCRs it (#45) and parses the OCR layout again (ADR 0019).
  */
 export const PARSE_STATUSES = ['ok', 'empty', 'failed', 'needs_ocr'] as const;
 export const LIST_SOURCES = ['pdf', 'html', 'email', 'text'] as const;

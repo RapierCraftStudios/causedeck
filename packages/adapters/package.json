@@ -10,7 +10,8 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:golden": "vitest run --config vitest.golden.config.ts"
   },
   "dependencies": {
     "@causedeck/flags": "workspace:*",

@@ -40,6 +40,10 @@
     "test:tenancy": {
       "cache": false
     },
+    "test:golden": {
+      "cache": false,
+      "passThroughEnv": ["ADAPTER_PRIVATE_FIXTURES_DIR"]
+    },
     "db:generate": {
       "cache": false,
       "passThroughEnv": ["DATABASE_URL_OWNER"]

@@ -12,13 +12,18 @@
 //   immediate. It needs a member who may write the matter, and refuses a date before today in
 //   Asia/Kolkata unless `allowPast` is passed.
 // - `getCanonicalNextDate` reads the canonical listing, if any.
+// - `demoteDuplicateCanonical` and `restoreCanonical` serve `mergeProceedings` and its undo
+//   (#365, merge-split.ts) inside their transaction, which has already checked `matter.write`.
+//   They choose no date: the merge demotes the source's canonical listing only when it carries the
+//   survivor's canonical date (two records of one next date), and refuses different dates. They are
+//   internal to the domain (index.ts does not export them).
 import { schema, type Transaction } from '@causedeck/db';
 import {
   ConfirmNextDateInput,
   GetCanonicalNextDateInput,
   ProposeNextDateInput,
 } from '@causedeck/validators/matter-graph-inputs';
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, ne, sql } from 'drizzle-orm';
 
 import { conflict, invalid, notFound } from '../shared/errors.ts';
 
@@ -306,4 +311,53 @@ export async function getCanonicalNextDate(
       .limit(1);
     return row ?? null;
   });
+}
+
+/**
+ * For `mergeProceedings` (#365): clear the canonical flag of `listingId`, the merged-away
+ * proceeding's canonical listing, which carries the same date as the survivor's. Refuses (CONFLICT)
+ * a listing that is not canonical or whose date differs from `sameDateAs`.
+ */
+export async function demoteDuplicateCanonical(
+  tx: Transaction,
+  workspaceId: string,
+  listingId: string,
+  sameDateAs: string,
+): Promise<void> {
+  const [row] = await tx
+    .update(listing)
+    .set({ canonical: false, updatedAt: new Date() })
+    .where(
+      and(
+        eq(listing.workspaceId, workspaceId),
+        eq(listing.id, listingId),
+        eq(listing.canonical, true),
+        eq(listing.listDate, sameDateAs),
+      ),
+    )
+    .returning({ id: listing.id });
+  if (row === undefined) throw conflict('The next date of this proceeding changed meanwhile');
+}
+
+/**
+ * For `undoMergeProceedings` (#365): make `listingId` canonical again, as it was before the merge,
+ * with its recorded `updated_at`. CONFLICT when its proceeding has another canonical listing now.
+ */
+export async function restoreCanonical(
+  tx: Transaction,
+  workspaceId: string,
+  listingId: string,
+  updatedAt: string,
+): Promise<void> {
+  try {
+    await tx
+      .update(listing)
+      .set({ canonical: true, updatedAt: sql`${updatedAt}::timestamptz` })
+      .where(and(eq(listing.workspaceId, workspaceId), eq(listing.id, listingId)));
+  } catch (error) {
+    if (pgError(error).code === '23505') {
+      throw conflict('The next date of this proceeding changed meanwhile');
+    }
+    throw error;
+  }
 }

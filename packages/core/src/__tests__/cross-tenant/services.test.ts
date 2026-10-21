@@ -102,12 +102,13 @@ async function aRestrictions(f: Fixture) {
 }
 
 /**
- * A's matter-graph rows, for before/after checks: one key per table the services write (matters.ts,
- * proceedings.ts and its links, documents.ts, state-machine.ts, which writes state history, and
- * next-date.ts, which writes listings).
+ * A workspace's matter-graph rows (A's unless `workspaceId`), for before/after checks: one key per
+ * table the services write (matters.ts, proceedings.ts and its links, documents.ts, state-machine.ts,
+ * which writes state history, next-date.ts, which writes listings, and merge-split.ts, which also
+ * moves orders, obligations, tasks and edges).
  */
-async function aGraph(f: Fixture) {
-  return inWorkspace(f.tx, f.a.id, async (s) => ({
+async function aGraph(f: Fixture, workspaceId = f.a.id) {
+  return inWorkspace(f.tx, workspaceId, async (s) => ({
     matters: await s.select().from(schema.matter).orderBy(schema.matter.id),
     proceedings: await s.select().from(schema.proceeding).orderBy(schema.proceeding.id),
     links: await s.select().from(schema.proceedingLink).orderBy(schema.proceedingLink.id),
@@ -116,9 +117,34 @@ async function aGraph(f: Fixture) {
       .from(schema.proceedingStateChange)
       .orderBy(schema.proceedingStateChange.id),
     documents: await s.select().from(schema.document).orderBy(schema.document.id),
-    // next-date.ts (#364): proposals and the canonical swap.
     listings: await s.select().from(schema.listing).orderBy(schema.listing.id),
+    orders: await s.select().from(schema.order).orderBy(schema.order.id),
+    obligations: await s.select().from(schema.obligation).orderBy(schema.obligation.id),
+    tasks: await s.select().from(schema.task).orderBy(schema.task.id),
+    roleEdges: await s.select().from(schema.roleEdge).orderBy(schema.roleEdge.id),
   }));
+}
+
+/** The matter of A's seeded proceeding (a second matter of A, besides the seeded one). */
+async function aProceedingMatter(f: Fixture): Promise<string> {
+  const proceedingId = f.a.rows.proceeding?.proceedingId ?? '';
+  const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ matterId: schema.proceeding.matterId })
+      .from(schema.proceeding)
+      .where(eq(schema.proceeding.id, proceedingId)),
+  );
+  return row?.matterId ?? '';
+}
+
+const AT = '2026-01-01 00:00:00+00';
+const none = { proceeding: [], obligation: [], task: [] };
+
+/** Runs a mixed call (one id of B, one of A) as ub in B: CrossWorkspaceError, B unchanged. */
+async function expectCrossWorkspace(f: Fixture, call: () => Promise<unknown>): Promise<void> {
+  const before = await aGraph(f, f.b.id);
+  await expect(call()).rejects.toBeInstanceOf(core.CrossWorkspaceError);
+  expect(await aGraph(f, f.b.id)).toEqual(before);
 }
 
 /** Matter-graph deps that record every emitted event. */
@@ -1301,6 +1327,158 @@ const CASES: Record<string, Case> = {
       { matterId },
     );
     expect(Array.isArray(own)).toBe(true);
+    expect(events).toEqual([]);
+  },
+  // Merges and splits (#365): A's ids from B, or ub claiming A, are denied; one id of each workspace
+  // is the typed cross-workspace error.
+  mergeMatters: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const aOther = await aProceedingMatter(f);
+    const bMatter = f.b.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.mergeMatters(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { intoMatterId: aMatter, fromMatterId: aOther },
+      ),
+    );
+    const asB = { userId: f.ub, workspaceId: f.b.id };
+    await expectCrossWorkspace(f, () =>
+      core.mergeMatters(deps, asB, { intoMatterId: bMatter, fromMatterId: aMatter }),
+    );
+    await expectCrossWorkspace(f, () =>
+      core.mergeMatters(deps, asB, { intoMatterId: aMatter, fromMatterId: bMatter }),
+    );
+    expect(events).toEqual([]);
+  },
+  undoMerge: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const aOther = await aProceedingMatter(f);
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const payload = {
+      op: 'matter.merge' as const,
+      version: 1 as const,
+      before: {
+        intoMatterId: aMatter,
+        fromMatterId: aOther,
+        fromMatter: { mergedIntoMatterId: null, updatedAt: AT },
+        rows: {
+          proceeding: [{ id: aProceeding, updatedAt: AT }],
+          document: [],
+          roleEdge: [],
+          obligation: [],
+          task: [],
+          mergedMatter: [],
+        },
+        links: [],
+      },
+      after: { intoMatterId: aMatter },
+    };
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.undoMerge({ ...deps, db }, { userId: f.ub, workspaceId }, { payload }),
+    );
+    expect(events).toEqual([]);
+  },
+  splitMatter: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aOther = await aProceedingMatter(f);
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const bMatter = f.b.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.splitMatter(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { matterId: aOther, proceedingIds: [aProceeding], newTitle: 'Probe' },
+      ),
+    );
+    await expectCrossWorkspace(f, () =>
+      core.splitMatter(
+        deps,
+        { userId: f.ub, workspaceId: f.b.id },
+        { matterId: bMatter, proceedingIds: [aProceeding], newTitle: 'Probe' },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  undoSplit: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const aOther = await aProceedingMatter(f);
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const payload = {
+      op: 'matter.split' as const,
+      version: 1 as const,
+      before: {
+        matterId: aOther,
+        rows: { ...none, proceeding: [{ id: aProceeding, updatedAt: AT }] },
+      },
+      after: { newMatterId: aMatter },
+    };
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.undoSplit({ ...deps, db }, { userId: f.ub, workspaceId }, { payload }),
+    );
+    expect(events).toEqual([]);
+  },
+  mergeProceedings: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aParent = f.a.rows.proceeding_link?.parentId ?? '';
+    const aChild = f.a.rows.proceeding_link?.childId ?? '';
+    const bProceeding = f.b.rows.proceeding?.proceedingId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.mergeProceedings(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { intoProceedingId: aParent, fromProceedingId: aChild },
+      ),
+    );
+    for (const [intoProceedingId, fromProceedingId] of [
+      [bProceeding, aParent],
+      [aParent, bProceeding],
+    ] as const) {
+      await expectCrossWorkspace(f, () =>
+        core.mergeProceedings(
+          deps,
+          { userId: f.ub, workspaceId: f.b.id },
+          { intoProceedingId, fromProceedingId },
+        ),
+      );
+    }
+    expect(events).toEqual([]);
+  },
+  undoMergeProceedings: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aParent = f.a.rows.proceeding_link?.parentId ?? '';
+    const aChild = f.a.rows.proceeding_link?.childId ?? '';
+    const aOther = await aProceedingMatter(f);
+    const rows = {
+      listing: [],
+      order: [],
+      obligation: [],
+      task: [],
+      roleEdge: [],
+      stateChange: [],
+      child: [],
+      link: [],
+    };
+    const payload = {
+      op: 'proceeding.merge' as const,
+      version: 1 as const,
+      before: {
+        intoProceedingId: aParent,
+        fromProceedingId: aChild,
+        into: { id: aParent },
+        from: { id: aChild, matter_id: aOther },
+        rows,
+        demotedListing: null,
+        deletedLinks: [],
+      },
+      after: { intoProceedingId: aParent, identifierSources: {} },
+    };
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.undoMergeProceedings({ ...deps, db }, { userId: f.ub, workspaceId }, { payload }),
+    );
     expect(events).toEqual([]);
   },
   enqueueNotificationDelivery: async (f) => {

@@ -130,6 +130,11 @@ jobs:
       - name: i18n catalogs
         if: matrix.shard == 'rest'
         run: pnpm i18n:check
+      # Court-adapter golden fixtures (#371): committed synthetic fixtures only. CI never sets
+      # ADAPTER_PRIVATE_FIXTURES_DIR; the lawyer-supplied fixture gate is #119.
+      - name: Adapter golden fixtures
+        if: matrix.shard == 'rest'
+        run: pnpm --filter @causedeck/adapters test:golden
       - name: Test
         env:
           CI_TURBO_CONCURRENCY: 3

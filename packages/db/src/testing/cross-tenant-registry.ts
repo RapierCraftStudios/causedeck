@@ -269,7 +269,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: "opens withWorkspace on the given workspace id; another workspace's forum is NOT_FOUND",
   },
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
-  // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError)
+  // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that
+  // name a row of another workspace, and undos handed a payload of A's ids
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -281,6 +282,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   transitionProceeding: denies,
   findDuplicateProceedings: empty,
   createDocument: denies,
+  mergeMatters: denies,
+  undoMerge: denies,
+  splitMatter: denies,
+  undoSplit: denies,
+  mergeProceedings: denies,
+  undoMergeProceedings: denies,
   // canonical next date (#364): A's proceeding or listing from B, or ub claiming A, is NOT_FOUND
   proposeNextDate: denies,
   confirmNextDate: denies,

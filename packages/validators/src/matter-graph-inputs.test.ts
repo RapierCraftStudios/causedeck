@@ -14,7 +14,9 @@ import {
   GetCanonicalNextDateInput,
   GetMatterTimelineInput,
   LinkProceedingsInput,
+  ListMatterDocumentsInput,
   ListMattersInput,
+  MatterReadInput,
   MergeMattersInput,
   MergeProceedingsInput,
   SplitMatterInput,
@@ -22,9 +24,13 @@ import {
   UndoMergeProceedingsInput,
   UndoSplitInput,
   ProposeNextDateInput,
+  SearchMattersInput,
+  SetRoleEdgeInput,
+  SetSensitiveInput,
   TransitionProceedingInput,
   UpdateIdentifiersInput,
   UpdateMatterInput,
+  UpsertPersonInput,
 } from './matter-graph-inputs';
 
 const id = () => randomUUID();
@@ -368,5 +374,72 @@ describe('GetMatterTimelineInput (#366)', () => {
     expect(parses({ matterId, kinds: ['memo'] })).toBe(false);
     expect(parses({ matterId, kinds: [] })).toBe(false);
     expect(parses({ matterId, limit: 10 })).toBe(false);
+  });
+});
+
+describe('matter read model, people and sensitive inputs (#386)', () => {
+  it('defaults the search sort and page size, trims the query and bounds it', () => {
+    expect(SearchMattersInput.parse({})).toEqual({ sort: 'next_date', limit: 50 });
+    expect(SearchMattersInput.parse({ q: '  W.P. 45/2026 ' }).q).toBe('W.P. 45/2026');
+    expect(SearchMattersInput.safeParse({ q: '   ' }).success).toBe(false);
+    expect(SearchMattersInput.safeParse({ q: 'x'.repeat(201) }).success).toBe(false);
+    expect(SearchMattersInput.safeParse({ sort: 'opened' }).success).toBe(false);
+    expect(SearchMattersInput.safeParse({ limit: 101 }).success).toBe(false);
+    expect(
+      SearchMattersInput.safeParse({
+        status: 'active',
+        forumId: id(),
+        ownerMemberId: id(),
+        noNextDate: true,
+        sensitive: false,
+        sort: 'title',
+      }).success,
+    ).toBe(true);
+    expect(MatterReadInput.safeParse({ matterId: 'nope' }).success).toBe(false);
+    expect(ListMatterDocumentsInput.parse({ matterId: id() }).limit).toBe(50);
+  });
+
+  it('keeps contact details only for clients and professionals', () => {
+    const contact = { email: 'client@example.test' };
+    for (const kind of ['client', 'professional'] as const) {
+      expect(UpsertPersonInput.safeParse({ name: 'A (fictional)', kind, contact }).success).toBe(
+        true,
+      );
+    }
+    for (const kind of ['party', 'advocate', 'judge_staff', 'other'] as const) {
+      expect(UpsertPersonInput.safeParse({ name: 'A (fictional)', kind, contact }).success).toBe(
+        false,
+      );
+      expect(
+        UpsertPersonInput.safeParse({ name: 'A (fictional)', kind, contact: null }).success,
+      ).toBe(true);
+    }
+    expect(
+      UpsertPersonInput.safeParse({ name: 'A', kind: 'client', contact: { email: 'nope' } })
+        .success,
+    ).toBe(false);
+    expect(UpsertPersonInput.safeParse({ name: 'A', kind: 'client', contact: {} }).success).toBe(
+      false,
+    );
+    expect(UpsertPersonInput.safeParse({ name: ' ', kind: 'party' }).success).toBe(false);
+  });
+
+  it('needs exactly one role edge target and no self edge', () => {
+    const fromPersonId = id();
+    const kind = 'represents';
+    expect(SetRoleEdgeInput.parse({ kind, fromPersonId, matterId: id() }).remove).toBe(false);
+    expect(SetRoleEdgeInput.safeParse({ kind, fromPersonId }).success).toBe(false);
+    expect(
+      SetRoleEdgeInput.safeParse({ kind, fromPersonId, matterId: id(), proceedingId: id() })
+        .success,
+    ).toBe(false);
+    expect(
+      SetRoleEdgeInput.safeParse({ kind, fromPersonId, toPersonId: fromPersonId }).success,
+    ).toBe(false);
+    expect(
+      SetRoleEdgeInput.safeParse({ kind: 'cousin', fromPersonId, matterId: id() }).success,
+    ).toBe(false);
+    expect(SetSensitiveInput.safeParse({ matterId: id(), sensitive: true }).success).toBe(true);
+    expect(SetSensitiveInput.safeParse({ matterId: id() }).success).toBe(false);
   });
 });

@@ -294,6 +294,16 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getCanonicalNextDate: denies,
   // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
   getMatterTimeline: denies,
+  // matters read models and people (#386): A's matter or person from B, or ub claiming A, is
+  // NOT_FOUND; a search from B lists none of A's matters
+  searchMatters: empty,
+  getMatterOverview: denies,
+  listMatterProceedingsTree: denies,
+  listMatterPeople: denies,
+  listMatterDocuments: denies,
+  upsertPerson: denies,
+  setRoleEdge: denies,
+  setSensitive: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,

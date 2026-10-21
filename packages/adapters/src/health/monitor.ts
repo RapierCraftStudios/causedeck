@@ -6,7 +6,8 @@
 // - `unmapped_heading_ratio`: unmapped headings over distinct headings seen, above the limit;
 // - `unknown_case_type_ratio`: rows with an unknown case type over rows emitted, above the limit;
 // - `missing_hall_headers`: a hall heading was unreadable, or rows sat under no hall heading.
-// `failed` on zero rows, `degraded` on any other flag, `ok` otherwise. Pure: `recordParseRun`
+// `failed` on zero rows, `degraded` on any other flag, `ok` otherwise. A list the parser read as
+// genuinely empty (`status: 'empty'`, a "no cases" list, #396) is not a zero-row failure. Pure: `recordParseRun`
 // (server entry) stores the metrics and reads the history.
 import type { ParsedCauseList } from '../types.ts';
 
@@ -48,6 +49,8 @@ export interface ParseRunMetrics {
   headingsSeen: number;
   /** Emitted rows that sat under no hall heading. */
   rowsWithoutHall: number;
+  /** The parser read a list with nothing listed (`status: 'empty'`), not an unreadable one. */
+  declaredEmpty?: boolean;
 }
 
 export interface ParseHealth {
@@ -82,6 +85,7 @@ export function parseRunMetrics(parsed: ParsedCauseList): ParseRunMetrics {
     hallsUnreadable: [...diagnostics.hallsUnreadable],
     headingsSeen: headings.size,
     rowsWithoutHall: rows.filter((row) => row.hallNo === undefined || row.hallNo === '').length,
+    ...(parsed.status === 'empty' && rows.length === 0 ? { declaredEmpty: true } : {}),
   };
 }
 
@@ -99,7 +103,7 @@ export function evaluateParseHealth(
 ): ParseHealth {
   const limits = { ...PARSE_HEALTH_THRESHOLDS, ...thresholds };
   const flags: ParseHealthFlag[] = [];
-  const zeroRows = metrics.rowsAnchored === 0;
+  const zeroRows = metrics.rowsAnchored === 0 && metrics.declaredEmpty !== true;
   if (zeroRows) flags.push('zero_rows');
   const window = history.slice(0, limits.yieldWindow);
   if (window.length > 0 && metrics.rowsAnchored < limits.yieldDropRatio * median(window)) {

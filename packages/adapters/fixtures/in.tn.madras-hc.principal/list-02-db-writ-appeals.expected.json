@@ -1,0 +1,348 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "1",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. W.A.No.501 of 2026 and W.A.M.P.No.2001 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "1",
+              "itemNo": "1",
+              "caseTypeRaw": "W.A.",
+              "caseType": "WA",
+              "caseNumber": "501",
+              "caseYear": 2026,
+              "matchKey": "WA/501/2026",
+              "parties": "The Secretary to Government (Fictional Department) vs Fictional Mills Ltd.",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Mr. P. Pretend, Govt. Advocate",
+                  "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+                },
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "WAMP",
+                  "caseTypeRaw": "W.A.M.P.",
+                  "number": "2001",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "WAMP/2001/2026",
+                  "parentProceedingKey": "WA/501/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. W.A.No.502 of 2026",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "1",
+              "itemNo": "2",
+              "caseTypeRaw": "W.A.",
+              "caseType": "WA",
+              "caseNumber": "502",
+              "caseYear": 2026,
+              "matchKey": "WA/502/2026",
+              "parties": "Pretend Municipal Corporation vs K. Imaginary Selvam",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. W.A.Nos.410 and 411 of 2026",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "1",
+              "itemNo": "3",
+              "caseTypeRaw": "W.A.",
+              "caseType": "WA",
+              "caseNumber": "410",
+              "caseYear": 2026,
+              "matchKey": "WA/410/2026",
+              "parties": "The District Collector, Example District vs Made-up Traders",
+              "stageRaw": "AFTER NOTICE",
+              "stageNorm": "after_notice",
+              "advocates": [
+                {
+                  "raw": "Mr. P. Pretend, Govt. Advocate",
+                  "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+                },
+                {
+                  "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+                  "aliases": ["K KALPITHAM", "KALPITHAM K"],
+                  "enrolmentNo": "MS/4567/2004"
+                }
+              ],
+              "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. W.A.Nos.410 and 411 of 2026",
+                "rowIndex": 3
+              },
+              "confidence": 1,
+              "hallNo": "1",
+              "itemNo": "3",
+              "caseTypeRaw": "W.A.",
+              "caseType": "WA",
+              "caseNumber": "411",
+              "caseYear": 2026,
+              "matchKey": "WA/411/2026",
+              "parties": "The District Collector, Example District vs Made-up Traders",
+              "stageRaw": "AFTER NOTICE",
+              "stageNorm": "after_notice",
+              "advocates": [
+                {
+                  "raw": "Mr. P. Pretend, Govt. Advocate",
+                  "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+                },
+                {
+                  "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+                  "aliases": ["K KALPITHAM", "KALPITHAM K"],
+                  "enrolmentNo": "MS/4567/2004"
+                }
+              ],
+              "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "hallNo": "2",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. W.A.No.77 of 2025",
+                "rowIndex": 4
+              },
+              "confidence": 1,
+              "hallNo": "2",
+              "itemNo": "1",
+              "caseTypeRaw": "W.A.",
+              "caseType": "WA",
+              "caseNumber": "77",
+              "caseYear": 2025,
+              "matchKey": "WA/77/2025",
+              "parties": "The Registrar, Fictional University vs S. Fictional Lakshmi",
+              "stageRaw": "PART HEARD",
+              "stageNorm": "part_heard",
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                }
+              ],
+              "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE AND THE HONOURABLE MS. JUSTICE D. PRETEND"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE AND THE HONOURABLE MS. JUSTICE D. PRETEND"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. W.A.No.501 of 2026 and W.A.M.P.No.2001 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "W.A.",
+      "caseType": "WA",
+      "caseNumber": "501",
+      "caseYear": 2026,
+      "matchKey": "WA/501/2026",
+      "parties": "The Secretary to Government (Fictional Department) vs Fictional Mills Ltd.",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. P. Pretend, Govt. Advocate",
+          "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+        },
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "WAMP",
+          "caseTypeRaw": "W.A.M.P.",
+          "number": "2001",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "WAMP/2001/2026",
+          "parentProceedingKey": "WA/501/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. W.A.No.502 of 2026",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "W.A.",
+      "caseType": "WA",
+      "caseNumber": "502",
+      "caseYear": 2026,
+      "matchKey": "WA/502/2026",
+      "parties": "Pretend Municipal Corporation vs K. Imaginary Selvam",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. W.A.Nos.410 and 411 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "W.A.",
+      "caseType": "WA",
+      "caseNumber": "410",
+      "caseYear": 2026,
+      "matchKey": "WA/410/2026",
+      "parties": "The District Collector, Example District vs Made-up Traders",
+      "stageRaw": "AFTER NOTICE",
+      "stageNorm": "after_notice",
+      "advocates": [
+        {
+          "raw": "Mr. P. Pretend, Govt. Advocate",
+          "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+        },
+        {
+          "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+          "aliases": ["K KALPITHAM", "KALPITHAM K"],
+          "enrolmentNo": "MS/4567/2004"
+        }
+      ],
+      "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. W.A.Nos.410 and 411 of 2026",
+        "rowIndex": 3
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "W.A.",
+      "caseType": "WA",
+      "caseNumber": "411",
+      "caseYear": 2026,
+      "matchKey": "WA/411/2026",
+      "parties": "The District Collector, Example District vs Made-up Traders",
+      "stageRaw": "AFTER NOTICE",
+      "stageNorm": "after_notice",
+      "advocates": [
+        {
+          "raw": "Mr. P. Pretend, Govt. Advocate",
+          "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+        },
+        {
+          "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+          "aliases": ["K KALPITHAM", "KALPITHAM K"],
+          "enrolmentNo": "MS/4567/2004"
+        }
+      ],
+      "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. W.A.No.77 of 2025",
+        "rowIndex": 4
+      },
+      "confidence": 1,
+      "hallNo": "2",
+      "itemNo": "1",
+      "caseTypeRaw": "W.A.",
+      "caseType": "WA",
+      "caseNumber": "77",
+      "caseYear": 2025,
+      "matchKey": "WA/77/2025",
+      "parties": "The Registrar, Fictional University vs S. Fictional Lakshmi",
+      "stageRaw": "PART HEARD",
+      "stageNorm": "part_heard",
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE AND THE HONOURABLE MS. JUSTICE D. PRETEND"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1", "2"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

@@ -1,0 +1,236 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-23",
+  "listType": "supplementary",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "12",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "61. CRL OP No.4567 of 2026 and Crl.M.P.Nos.1 & 2 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "61",
+              "caseTypeRaw": "CRL OP",
+              "caseType": "CRLOP",
+              "caseNumber": "4567",
+              "caseYear": 2026,
+              "matchKey": "CRLOP/4567/2026",
+              "parties": "K. Imaginary Selvam vs State rep. by the Public Prosecutor",
+              "stageRaw": "SUPPLEMENTARY LIST",
+              "stageNorm": "supplementary",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                },
+                {
+                  "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+                  "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "CRLMP",
+                  "caseTypeRaw": "Crl.M.P.",
+                  "number": "1",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "CRLMP/1/2026",
+                  "parentProceedingKey": "CRLOP/4567/2026"
+                },
+                {
+                  "caseTypeCode": "CRLMP",
+                  "caseTypeRaw": "Crl.M.P.",
+                  "number": "2",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "CRLMP/2/2026",
+                  "parentProceedingKey": "CRLOP/4567/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "62. W.P.No.13500 of 2026",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "62",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "13500",
+              "caseYear": 2026,
+              "matchKey": "WP/13500/2026",
+              "parties": "Made-up Traders vs The District Collector, Example District",
+              "stageRaw": "SUPPLEMENTARY LIST",
+              "stageNorm": "supplementary",
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "63. W.P.No.13501 of 2026",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "63",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "13501",
+              "caseYear": 2026,
+              "matchKey": "WP/13501/2026",
+              "parties": "S. Fictional Lakshmi vs Pretend Municipal Corporation",
+              "stageRaw": "FOR MENTIONING",
+              "stageNorm": "mentioning",
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "61. CRL OP No.4567 of 2026 and Crl.M.P.Nos.1 & 2 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "61",
+      "caseTypeRaw": "CRL OP",
+      "caseType": "CRLOP",
+      "caseNumber": "4567",
+      "caseYear": 2026,
+      "matchKey": "CRLOP/4567/2026",
+      "parties": "K. Imaginary Selvam vs State rep. by the Public Prosecutor",
+      "stageRaw": "SUPPLEMENTARY LIST",
+      "stageNorm": "supplementary",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        },
+        {
+          "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+          "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "CRLMP",
+          "caseTypeRaw": "Crl.M.P.",
+          "number": "1",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "CRLMP/1/2026",
+          "parentProceedingKey": "CRLOP/4567/2026"
+        },
+        {
+          "caseTypeCode": "CRLMP",
+          "caseTypeRaw": "Crl.M.P.",
+          "number": "2",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "CRLMP/2/2026",
+          "parentProceedingKey": "CRLOP/4567/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "62. W.P.No.13500 of 2026",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "62",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "13500",
+      "caseYear": 2026,
+      "matchKey": "WP/13500/2026",
+      "parties": "Made-up Traders vs The District Collector, Example District",
+      "stageRaw": "SUPPLEMENTARY LIST",
+      "stageNorm": "supplementary",
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "63. W.P.No.13501 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "63",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "13501",
+      "caseYear": 2026,
+      "matchKey": "WP/13501/2026",
+      "parties": "S. Fictional Lakshmi vs Pretend Municipal Corporation",
+      "stageRaw": "FOR MENTIONING",
+      "stageNorm": "mentioning",
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["12"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "SUPPLEMENTARY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

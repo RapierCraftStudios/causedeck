@@ -1,7 +1,8 @@
 // Parse-health monitor (#372): each flag at its threshold (`zero_rows`, `yield_drop` below 50% of
 // the 7-run median, the unmapped-heading ratio above 0.2, the unknown-case-type ratio above 0.1,
-// `missing_hall_headers` with the affected halls), the status they give, metrics without row text,
-// and `recordParseRun` storing a run whose yield history is its own workspace's, same forum only.
+// `missing_hall_headers` with the affected halls), the status they give, a declared-empty list
+// that is not a failure (#396), metrics without row text, and `recordParseRun` storing a run whose
+// yield history is its own workspace's, same forum only.
 import { adapterParseRun } from '@causedeck/db/schema';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { seedTwoTenants } from '@causedeck/db/testing/two-tenants';
@@ -115,6 +116,20 @@ describe('evaluateParseHealth (#372)', () => {
     expect(evaluateParseHealth(metrics({ rowsWithoutHall: 1 })).flags).toEqual([
       'missing_hall_headers',
     ]);
+  });
+
+  it('does not fail a list the parser read as empty (#396), but still fails an unread one', () => {
+    const empty = { rowsAnchored: 0, rowsParsed: 0, hallsSeen: ['5'], headingsSeen: 0 };
+    expect(evaluateParseHealth(metrics({ ...empty, declaredEmpty: true }))).toEqual({
+      status: 'ok',
+      flags: [],
+      affectedHalls: [],
+    });
+    expect(evaluateParseHealth(metrics(empty))).toEqual({
+      status: 'failed',
+      flags: ['zero_rows'],
+      affectedHalls: ['5'],
+    });
   });
 });
 

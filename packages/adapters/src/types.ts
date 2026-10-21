@@ -205,6 +205,14 @@ export const CauseListHallSchema = z.object({
 });
 export type CauseListHall = z.infer<typeof CauseListHallSchema>;
 
+/** An attachment of a supplied email: its MIME part path (`2`, `1.2`), never its bytes. */
+export const ListAttachmentSchema = z.object({
+  ref: z.string().min(1),
+  fileName: z.string().optional(),
+  contentType: z.string().min(1),
+});
+export type ListAttachment = z.infer<typeof ListAttachmentSchema>;
+
 export const PARSE_STATUSES = ['ok', 'empty', 'not_a_cause_list', 'failed'] as const;
 export const LIST_SOURCES = ['pdf', 'html', 'email', 'text'] as const;
 
@@ -229,6 +237,10 @@ export const ParsedCauseListSchema = z.object({
   source: z.enum(LIST_SOURCES).optional(),
   /** ISO timestamp the list says it was published at, when printed (#404). */
   publishedAt: z.string().nullable().optional(),
+  /** The phrase `listDate` was read from (#396). */
+  listDateAnchor: AnchorSchema.nullable().optional(),
+  /** Attachments the list may sit in (a PDF-only AIMS email, #396), for the caller's PDF path. */
+  attachments: z.array(ListAttachmentSchema).optional(),
 });
 export type ParsedCauseList = z.infer<typeof ParsedCauseListSchema>;
 

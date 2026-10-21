@@ -1,0 +1,34 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-24",
+  "listType": "daily",
+  "source": "text",
+  "status": "empty",
+  "halls": [
+    {
+      "hallNo": "5",
+      "lists": [
+        {
+          "rows": []
+        }
+      ],
+      "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+    }
+  ],
+  "rows": [],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["5"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 24.10.2026",
+    "rowIndex": 0
+  }
+}

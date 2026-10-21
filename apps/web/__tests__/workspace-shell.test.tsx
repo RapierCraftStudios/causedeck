@@ -139,6 +139,7 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
   drafts: (await import('../app/(app)/w/[slug]/drafts/page.tsx')).default,
   memory: (await import('../app/(app)/w/[slug]/memory/page.tsx')).default,
   people: (await import('../app/(app)/w/[slug]/people/page.tsx')).default,
+  // The courts index since #399, not a placeholder.
   courts: (await import('../app/(app)/w/[slug]/courts/page.tsx')).default,
   activity: (await import('../app/(app)/w/[slug]/activity/page.tsx')).default,
   billing: (await import('../app/(app)/w/[slug]/billing/page.tsx')).default,
@@ -156,6 +157,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'billing',
   'activity',
   'settings',
+  // Its own page test since #399 (courts-page.test.tsx).
+  'courts',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
@@ -511,7 +514,6 @@ describe('placeholder pages', () => {
       inbox: 'Your inbox is clear.',
       matters: 'No matters yet. Import or add your first matter.',
       obligations: 'No open obligations.',
-      courts: 'Choose your courts to get started.',
     };
     for (const [route, copy] of Object.entries(spec)) {
       withIntl(await pageFor(route as PlaceholderId)(props('demo')));

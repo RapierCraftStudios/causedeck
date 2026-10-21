@@ -3,7 +3,8 @@
 // runs and custom forums never reach the page. Every role reads it (the nav item needs no
 // permission); a FORBIDDEN from core renders permission-denied. Deep links are plain new-window
 // anchors: nothing here fetches or frames a court page. Owners and advocates (`workspace.manage`)
-// also get `Add forum` (#402), which adds a workspace-owned A0 forum through `./actions.ts`.
+// also get `Add forum` (#402), which adds a workspace-owned A0 forum through `./actions.ts`; its
+// dialog loads in its own chunk (`AddForum`, #427) to keep the route within its JS budget.
 //
 // States: loading (card skeletons), error (`Could not load courts.` with `Try again`), empty,
 // offline (`Showing saved court information`) and permission-denied. `?__state=loading|error`
@@ -15,7 +16,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import { AddForumDialog } from '../../../../../components/courts/add-forum-dialog.tsx';
+import { AddForum } from '../../../../../components/courts/add-forum.tsx';
 import { CourtNav } from '../../../../../components/courts/court-nav.tsx';
 import { CourtsOfflineBanner } from '../../../../../components/courts/courts-offline-banner.tsx';
 import { CourtsLoadError, ForumList } from '../../../../../components/courts/forum-list.tsx';
@@ -94,7 +95,7 @@ export default async function CourtsPage({ params, searchParams }: CourtsPagePro
 
   const addForum =
     loaded.kind === 'index' && can(context.role, 'workspace.manage') ? (
-      <AddForumDialog
+      <AddForum
         workspaceId={context.workspace.id}
         takenCodes={indexCodes(loaded.index)}
         action={createWorkspaceForumAction}

@@ -22,6 +22,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0012](0012-core-package-split-threshold.md) | Split @causedeck/core into domain packages at a threshold | Proposed | 2026-10-20 | — |
 | [0013](0013-matter-graph-schema.md) | Matter-graph schema: composite tenant keys, global-or-workspace reference tables, case identity | Proposed | 2026-10-21 | — |
 | [0014](0014-forum-catalogue-and-deep-links.md) | Forum catalogue: hosts as data, new-window deep links, owner-role versioned seed | Proposed | 2026-10-21 | — |
+| [0015](0015-court-adapter-framework.md) | Court adapter framework: no network, registry-enforced access, config versus parser | Proposed | 2026-10-21 | — |
 
 ## Statuses
 

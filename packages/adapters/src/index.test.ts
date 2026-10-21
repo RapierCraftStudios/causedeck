@@ -29,4 +29,10 @@ describe('@causedeck/adapters', () => {
       expect(adapters[name], name).toBeDefined();
     }
   });
+
+  it('exports the layout readers (#370)', () => {
+    for (const name of ['layoutFromHtml', 'layoutFromPdf', 'layoutFromText'] as const) {
+      expect(adapters[name], name).toBeTypeOf('function');
+    }
+  });
 });

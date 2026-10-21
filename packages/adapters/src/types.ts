@@ -34,8 +34,11 @@ export const BBoxSchema = z.object({
 export type BBox = z.infer<typeof BBoxSchema>;
 
 /**
- * A positioned reading of a document (shape only; the PDF, HTML and text readers are #370). `text`
- * is the page's reading-order text that anchors quote from.
+ * A positioned reading of a document, produced by `layoutFromPdf`, `layoutFromHtml` and
+ * `layoutFromText` (#370). `text` is the page's reading-order text that anchors quote from; `items`
+ * are its lines and `words` the whitespace-split words, each with a bbox. `textCoverage` is the
+ * share of the page covered by text-layer text: 0 means there is none, so the caller OCRs the page
+ * (#45). HTML and text pages have no coordinates (width and height 0, no items).
  */
 export const LayoutDocumentSchema = z.object({
   pages: z.array(
@@ -45,6 +48,8 @@ export const LayoutDocumentSchema = z.object({
       height: z.number().nonnegative(),
       text: z.string(),
       items: z.array(z.object({ text: z.string(), bbox: BBoxSchema })),
+      words: z.array(z.object({ text: z.string().min(1), bbox: BBoxSchema })).optional(),
+      textCoverage: z.number().min(0).max(1).optional(),
     }),
   ),
 });

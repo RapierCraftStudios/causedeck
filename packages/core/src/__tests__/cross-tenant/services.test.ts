@@ -101,7 +101,11 @@ async function aRestrictions(f: Fixture) {
   );
 }
 
-/** A's matter-graph rows (matters, proceedings, links, state history, documents), for checks. */
+/**
+ * A's matter-graph rows, for before/after checks: one key per table the services write (matters.ts,
+ * proceedings.ts and its links, documents.ts, state-machine.ts, which writes state history, and
+ * next-date.ts, which writes listings).
+ */
 async function aGraph(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, async (s) => ({
     matters: await s.select().from(schema.matter).orderBy(schema.matter.id),
@@ -112,6 +116,8 @@ async function aGraph(f: Fixture) {
       .from(schema.proceedingStateChange)
       .orderBy(schema.proceedingStateChange.id),
     documents: await s.select().from(schema.document).orderBy(schema.document.id),
+    // next-date.ts (#364): proposals and the canonical swap.
+    listings: await s.select().from(schema.listing).orderBy(schema.listing.id),
   }));
 }
 
@@ -134,6 +140,19 @@ async function expectGraphDenied(
 }
 
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
+
+/** A's seeded listing (canonical) and its proceeding. */
+async function aListing(f: Fixture): Promise<{ listingId: string; proceedingId: string }> {
+  const listingId = f.a.rows.listing?.listingId ?? '';
+  const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ proceedingId: schema.listing.proceedingId })
+      .from(schema.listing)
+      .where(eq(schema.listing.id, listingId)),
+  );
+  if (!row) throw new Error("A's listing not found");
+  return { listingId, proceedingId: row.proceedingId };
+}
 
 async function aWorkspace(f: Fixture) {
   const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
@@ -1229,6 +1248,45 @@ const CASES: Record<string, Case> = {
       ),
     );
     expect(events).toEqual([]);
+  },
+  // Next date (#364): A's seeded canonical listing and its proceeding.
+  proposeNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.proposeNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId, date: '2027-01-04', provenance: PROBE_PROVENANCE },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  confirmNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { listingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.confirmNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { listingId, allowPast: true },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  getCanonicalNextDate: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    const { listingId, proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getCanonicalNextDate({ ...deps, db }, { userId: f.ub, workspaceId }, { proceedingId }),
+    );
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.getCanonicalNextDate(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { proceedingId },
+    );
+    expect(own?.id).toBe(listingId);
   },
   enqueueNotificationDelivery: async (f) => {
     // enqueueNotificationDelivery sends the payload as given; the handler is scoped to it.

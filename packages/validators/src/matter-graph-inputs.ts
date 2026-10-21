@@ -10,6 +10,7 @@ import { z } from 'zod';
 import {
   CNR_PATTERN,
   DOCUMENT_KINDS,
+  LIST_TYPES,
   MATTER_STATUSES,
   PROCEEDING_KINDS,
   PROCEEDING_LINK_KINDS,
@@ -219,6 +220,32 @@ export const CreateDocumentInput = z.strictObject({
 });
 
 // ---------------------------------------------------------------------------------------------
+// Next date (#364, part 3 of #33). A proposal is always stored as `proposed`: only
+// `confirmNextDate` confirms a date, so a proposal claiming another confirmation state is invalid.
+
+export const ProposeNextDateInput = z.strictObject({
+  proceedingId: uuid,
+  date: day,
+  provenance: ProvenanceSchema.refine(
+    (value) => value.confirmationState === undefined || value.confirmationState === 'proposed',
+    { path: ['confirmationState'], message: 'A proposed next date is always proposed' },
+  ),
+  listType: z.enum(LIST_TYPES).default('daily'),
+  /** The stage heading as printed; empty when the source does not print one. */
+  stageRaw: z.string().trim().default(''),
+  listNo: z.int().positive().nullable().optional(),
+  itemNo: text.nullable().optional(),
+});
+
+export const ConfirmNextDateInput = z.strictObject({
+  listingId: uuid,
+  /** A date before today (Asia/Kolkata) is refused unless this is set explicitly. */
+  allowPast: z.boolean().default(false),
+});
+
+export const GetCanonicalNextDateInput = z.strictObject({ proceedingId: uuid });
+
+// ---------------------------------------------------------------------------------------------
 // Types: `…Input` is what a caller passes, `Parsed…` what a service works with.
 
 export type CreateMatterInput = z.input<typeof CreateMatterInput>;
@@ -241,3 +268,8 @@ export type TransitionProceedingInput = z.input<typeof TransitionProceedingInput
 export type ParsedTransitionProceeding = z.output<typeof TransitionProceedingInput>;
 export type CreateDocumentInput = z.input<typeof CreateDocumentInput>;
 export type ParsedCreateDocument = z.output<typeof CreateDocumentInput>;
+export type ProposeNextDateInput = z.input<typeof ProposeNextDateInput>;
+export type ParsedProposeNextDate = z.output<typeof ProposeNextDateInput>;
+export type ConfirmNextDateInput = z.input<typeof ConfirmNextDateInput>;
+export type ParsedConfirmNextDate = z.output<typeof ConfirmNextDateInput>;
+export type GetCanonicalNextDateInput = z.input<typeof GetCanonicalNextDateInput>;

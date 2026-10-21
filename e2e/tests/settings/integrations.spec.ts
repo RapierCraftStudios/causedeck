@@ -55,7 +55,7 @@ test.describe('settings integrations', () => {
     async ({ page, asUser }) => {
       await openIntegrations(page, asUser);
       for (const kind of ['email_intake', 'ics_feed'] as const) {
-        await expect(card(page, kind).getByText('Not enabled yet')).toBeVisible();
+        await expect(card(page, kind).getByText('Not enabled yet', { exact: true })).toBeVisible();
         await expect(card(page, kind).getByRole('button', { name: 'Create' })).toBeDisabled();
       }
       await expect(page.getByRole('textbox', { name: 'Intake address' })).toHaveValue(

@@ -8,6 +8,8 @@ export interface SessionUser {
   name: string | null;
   image: string | null;
   locale: AuthLocale;
+  /** The twoFactor plugin's flag: the owner 2FA policy (#290) reads it from the session user. */
+  twoFactorEnabled?: boolean;
 }
 
 /** No valid session. `safeAction` (#153) maps `code` to its `UNAUTHENTICATED` result. */
@@ -26,6 +28,7 @@ interface RawUser {
   name?: string | null | undefined;
   image?: string | null | undefined;
   locale?: unknown;
+  twoFactorEnabled?: boolean | null | undefined;
 }
 
 /** The slice of `Auth` the helpers need, so this module stays independent of the server config. */
@@ -47,6 +50,7 @@ export function toSessionUser(user: RawUser): SessionUser {
     name: user.name ? user.name : null,
     image: user.image ?? null,
     locale: toAuthLocale(user.locale),
+    twoFactorEnabled: user.twoFactorEnabled === true,
   };
 }
 

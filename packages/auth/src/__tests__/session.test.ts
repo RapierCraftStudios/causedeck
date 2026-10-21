@@ -47,6 +47,7 @@ describe('getSession() / requireUser()', () => {
       name: null,
       image: null,
       locale: 'en',
+      twoFactorEnabled: false,
     });
     const session = await getSession();
     expect(session?.user.id).toBe(user.id);

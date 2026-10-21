@@ -202,7 +202,10 @@ test.describe('activity security and audit tab', () => {
     await seedAudit(db.name, 'chennai-solo');
     await openActivity(page, asUser);
     await page.context().setOffline(true);
-    await expect(page.locator('[data-pattern-state="offline"]')).toBeVisible();
+    // The shell's offline banner and the feed's own note about what is paused (both carry the
+    // `offline` pattern state, so address each one).
+    await expect(page.locator('[data-slot="offline-banner"]')).toBeVisible();
+    await expect(page.getByText(/Showing the first page as saved/)).toBeVisible();
     await expect(eventRows(page)).toHaveCount(3);
     await expect(page.getByRole('button', { name: 'Export' })).toBeDisabled();
     await page.context().setOffline(false);

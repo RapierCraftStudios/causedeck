@@ -82,7 +82,7 @@ export function TabsList({
       data-fade-end={overflow.end ? '' : undefined}
       className={cn(
         'border-line flex max-w-full items-end gap-1 border-b',
-        'snap-x [scrollbar-width:none] overflow-x-auto overscroll-x-contain',
+        'snap-x [scrollbar-width:none] overflow-x-auto overflow-y-hidden overscroll-x-contain',
         '[&::-webkit-scrollbar]:hidden',
         className,
       )}

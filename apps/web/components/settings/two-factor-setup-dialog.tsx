@@ -206,8 +206,8 @@ export function TwoFactorSetupDialog({
 
             {step === 'scan' ? (
               <div className="flex flex-col items-center gap-3">
-                {/* White surface and quiet zone in both themes, so every scanner can read it. */}
-                <div data-slot="two-factor-qr" className="rounded-lg bg-white p-2 shadow-sm">
+                {/* White surface and quiet zone in both themes, so every scanner can read it. A literal: the preset resets `--color-*`, so `bg-white` generates nothing. */}
+                <div data-slot="two-factor-qr" className="rounded-lg bg-[#ffffff] p-2 shadow-sm">
                   <img src={setup.qr} alt={t('qrAlt')} width={192} height={192} />
                 </div>
                 <div className="flex w-full flex-col gap-1">

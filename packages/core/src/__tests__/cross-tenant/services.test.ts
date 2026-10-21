@@ -95,6 +95,33 @@ async function aForums(f: Fixture) {
   );
 }
 
+/** A later parse run of A's on the two-tenant echo forum, naming a hall only A has. */
+async function aProbeRun(f: Fixture) {
+  const documentId = f.a.rows.adapter_parse_run?.documentId ?? '';
+  const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .insert(schema.adapterParseRun)
+      .values({
+        workspaceId: f.a.id,
+        documentId,
+        adapterId: 'echo',
+        adapterVersion: '1.0.0',
+        forumCode: 'test.echo.principal',
+        rowsParsed: 9,
+        rowsAnchored: 7,
+        unmappedHeadings: 0,
+        unknownCaseTypes: 0,
+        hallsSeen: ['xt-a-hall'],
+        hallsUnreadable: ['xt-a-hall'],
+        status: 'degraded',
+        createdAt: new Date(Date.now() + 60_000),
+      })
+      .returning(),
+  );
+  if (row === undefined) throw new Error('probe parse run not inserted');
+  return { run: row, before: await aParseRuns(f), forums: await aForums(f) };
+}
+
 async function aParseRuns(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.adapterParseRun).orderBy(schema.adapterParseRun.id),
@@ -1113,6 +1140,47 @@ const CASES: Record<string, Case> = {
     const echo = fromB.find((row) => row.adapterId === 'echo' && row.adapterVersion === '1.0.0');
     expect(echo?.runs).toBeGreaterThanOrEqual(2);
     expect(await aParseRuns(f)).toEqual(before);
+  },
+  // Courts read models (#397): B sees none of A's parse runs, halls or custom forum.
+  getCourtsIndex: async (f) => {
+    const probe = await aProbeRun(f);
+    await expect(f.asB((s) => core.getCourtsIndex(s, f.a.id))).rejects.toBeInstanceOf(TenancyError);
+    const own = JSON.stringify(await f.asB((s) => core.getCourtsIndex(s, f.b.id)));
+    for (const forum of probe.forums) {
+      expect(own).not.toContain(forum.id);
+      expect(own).not.toContain(`"${forum.code}"`);
+    }
+    expect(await aParseRuns(f)).toEqual(probe.before);
+  },
+  getForumDetail: async (f) => {
+    const probe = await aProbeRun(f);
+    const aCode = probe.forums[0]?.code ?? '';
+    await expect(f.asB((s) => core.getForumDetail(s, f.a.id, aCode))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    await expectDenied(core.getForumDetail(f.tx, f.b.id, aCode));
+    await expectDenied(f.asB((s) => core.getForumDetail(s, f.b.id, aCode)));
+    expect(await aForums(f)).toEqual(probe.forums);
+  },
+  getAdapterStatus: async (f) => {
+    const probe = await aProbeRun(f);
+    await expect(f.asB((s) => core.getAdapterStatus(s, f.a.id, 'echo'))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    const own = await f.asB((s) => core.getAdapterStatus(s, f.b.id, 'echo'));
+    expect(own.lastParse?.hallsUnreadable).not.toContain('xt-a-hall');
+    expect(own.lastParse?.at.getTime()).toBeLessThan(probe.run.createdAt.getTime());
+    expect(await aParseRuns(f)).toEqual(probe.before);
+  },
+  listHallsSeen: async (f) => {
+    const probe = await aProbeRun(f);
+    await expect(
+      f.asB((s) => core.listHallsSeen(s, f.a.id, 'test.echo.principal')),
+    ).rejects.toBeInstanceOf(TenancyError);
+    const own = await f.asB((s) => core.listHallsSeen(s, f.b.id, 'test.echo.principal'));
+    expect(own.map((hall) => hall.hallNo)).not.toContain('xt-a-hall');
+    expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
+    expect(await aParseRuns(f)).toEqual(probe.before);
   },
   // Matter graph (#362): A's matter, proceeding and document ids, as ub.
   createMatter: async (f) => {

@@ -31,6 +31,7 @@ export const KARNATAKA_HC: readonly ForumSeed[] = [
     config: {
       hosts: HOSTS,
       deepLinks: DEEP_LINKS,
+      captchaGated: ['case_status', 'orders'],
       notes:
         'Entire cause list (PDF): entire_causelist.php. Quick e-Filing: casediary/login.php. Case status and judgment searches sit behind a captcha: the lawyer opens them.',
     },

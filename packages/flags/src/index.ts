@@ -46,7 +46,9 @@ export {
   decideAccessMode,
   isAccessMode,
   listAccessModeRegistry,
+  listAdapterAccessModes,
   type AccessMode,
+  type AdapterAccessMode,
   type AccessModeDenial,
   type AccessModeRegistryEntry,
 } from './access-mode.ts';

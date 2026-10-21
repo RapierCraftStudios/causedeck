@@ -461,6 +461,29 @@ export async function setLockScreenDetails(
   });
 }
 
+/**
+ * Turn party names in bench-change alerts (#389) on or off for the member in the context workspace.
+ * Off (the default), an alert says only how many matters changed bench and from when.
+ */
+export async function setBenchAlertPartyNames(
+  ctx: NotificationContext,
+  input: { userId: string; enabled: boolean },
+): Promise<{ benchAlertPartyNames: boolean }> {
+  const { userId, enabled } = parse(toggleSchema, input);
+  return asMember(ctx, userId, async (tx) => {
+    const [row] = await tx
+      .insert(notificationSetting)
+      .values({ workspaceId: ctx.workspaceId, userId, benchAlertPartyNames: enabled })
+      .onConflictDoUpdate({
+        target: [notificationSetting.workspaceId, notificationSetting.userId],
+        set: { benchAlertPartyNames: enabled, updatedAt: new Date() },
+      })
+      .returning({ benchAlertPartyNames: notificationSetting.benchAlertPartyNames });
+    if (!row) throw new Error('notification_setting upsert returned no row');
+    return row;
+  });
+}
+
 /** Turn `Do not push during court hours` on or off for the member in the context workspace. */
 export async function setCourtHoursQuiet(
   ctx: NotificationContext,

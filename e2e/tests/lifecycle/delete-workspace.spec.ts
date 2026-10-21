@@ -129,7 +129,7 @@ test.describe('workspace deletion', () => {
       db.name,
       (sql) =>
         sql<{ members: number; deleted: boolean }[]>`
-        select (select count(*)::int from member where organization_id = o.id) as members,
+        select (select count(*)::int from member where workspace_id = o.id) as members,
                o.deleted_at is not null as deleted
         from organization o where o.id = ${WORKSPACE_ID}`,
     );

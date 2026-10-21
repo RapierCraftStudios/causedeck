@@ -2,7 +2,7 @@
 // worker), so the specs drive state with superuser SQL on the worker database (row-level security
 // does not apply): the `workspace.export` flag row, the session's step-up stamp (#304) and the
 // export job's progress as the `export.build` job would write it.
-import { createHmac } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 
 import type { Page } from '@playwright/test';
 import postgres from 'postgres';
@@ -61,10 +61,10 @@ export function insertExport(database: string, row: ExportRow): Promise<string> 
   return withSql(database, async (sql) => {
     const [inserted] = await sql<{ id: string }[]>`
       insert into export_job (workspace_id, requested_by, scope, status, progress, steps,
-                              size_bytes, sha256, expires_at, completed_at)
+                              size_bytes, sha256, blob_id, expires_at, completed_at)
       values (${WORKSPACE_ID}, ${userId('owner')}, 'workspace', ${row.status}, ${row.progress ?? 0},
               ${sql.json(row.phase ? { phase: row.phase } : {})}, ${row.sizeBytes ?? null},
-              ${row.sha256 ?? null},
+              ${row.sha256 ?? null}, ${row.status === 'ready' ? randomUUID() : null},
               ${row.expiresInHours === undefined ? null : sql`now() + make_interval(hours => ${row.expiresInHours})`},
               ${row.status === 'ready' || row.status === 'failed' ? sql`now()` : null})
       returning id`;
@@ -80,6 +80,7 @@ export function updateExport(database: string, id: string, row: ExportRow): Prom
       update export_job set status = ${row.status}, progress = ${row.progress ?? 0},
         steps = ${sql.json(row.phase ? { phase: row.phase } : {})},
         size_bytes = ${row.sizeBytes ?? null}, sha256 = ${row.sha256 ?? null},
+        blob_id = ${row.status === 'ready' ? randomUUID() : null},
         expires_at = ${row.expiresInHours === undefined ? null : sql`now() + make_interval(hours => ${row.expiresInHours})`}
       where id = ${id}`;
   });

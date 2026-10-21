@@ -129,7 +129,7 @@ test.describe('workspace deletion', () => {
       db.name,
       (sql) =>
         sql<{ members: number; deleted: boolean }[]>`
-        select (select count(*)::int from member where organization_id = o.id) as members,
+        select (select count(*)::int from member where workspace_id = o.id) as members,
                o.deleted_at is not null as deleted
         from organization o where o.id = ${WORKSPACE_ID}`,
     );
@@ -158,6 +158,9 @@ test.describe('workspace deletion', () => {
       tag: '@a11y',
     },
     async ({ page, asUser, db }) => {
+      // The test waits out one TOTP window (31 s, below) so the second code is a new one; the
+      // default 30 s budget cannot hold that wait on its own.
+      test.setTimeout(90_000);
       await open(page, asUser, 'today');
       const secret = await enrollTotp(page);
       await openDanger(page);

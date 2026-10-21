@@ -73,12 +73,13 @@ const idSchema = z.uuid();
 const bodySchema = z.object({ workspaceId: z.uuid() }).strict();
 
 /**
- * Membership through the server guard, which also refuses an owner past the 2FA grace (#290: an
- * export is destructive); core checks owner and requester.
+ * Membership and `export.run` through the server guard: a member who may not export (not an owner)
+ * is refused and audited as `access.denied`, and an owner past the 2FA grace is refused too (#290:
+ * an export is destructive). Core still checks owner and requester.
  */
 async function member(workspaceId: string, session: AppSession) {
   try {
-    return { userId: (await guard({ workspaceId, session, destructive: true })).userId };
+    return { userId: (await guard({ workspaceId, session, action: 'export.run' })).userId };
   } catch (error) {
     const response = guardResponse(error);
     if (response) return { response };

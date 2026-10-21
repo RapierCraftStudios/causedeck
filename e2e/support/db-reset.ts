@@ -128,12 +128,33 @@ function runDbScript(
   });
 }
 
+/**
+ * The e2e stack runs no worker, which normally installs the `pgboss` schema and the queues.
+ * Producers (the web and admin servers) refuse to start without them, so install them once here,
+ * with the worker's own code (apps/worker/scripts/e2e-install-pgboss.ts), as the owner role.
+ */
+function installPgBoss(): void {
+  const workerDir = path.join(repoRoot, 'apps/worker');
+  execFileSync(path.join(workerDir, 'node_modules/.bin/tsx'), ['scripts/e2e-install-pgboss.ts'], {
+    cwd: workerDir,
+    stdio: ['ignore', 'pipe', 'inherit'],
+    env: {
+      // eslint-disable-next-line no-process-env -- the child inherits PATH and the CI flags.
+      ...process.env,
+      NODE_ENV: 'test',
+      LOG_LEVEL: 'warn',
+      DATABASE_URL_OWNER: databaseUrl(TEMPLATE_DB, 'owner'),
+    },
+  });
+}
+
 /** Build the template: fresh database, init SQL, migrations (owner) and the `e2e` seed (app). */
 export async function createTemplateDb(): Promise<void> {
   await dropDatabase(TEMPLATE_DB);
   await admin([`create database ${TEMPLATE_DB} template template0 owner ${ROLES.owner.user}`]);
   await admin(initStatements(TEMPLATE_DB), TEMPLATE_DB);
   runDbScript('migrate.ts', { DATABASE_URL_OWNER: databaseUrl(TEMPLATE_DB, 'owner') }, []);
+  installPgBoss();
   runDbScript('seed.ts', { DATABASE_URL: databaseUrl(TEMPLATE_DB, 'app') }, ['--profile', 'e2e']);
   await seedAdminFixtures();
 }

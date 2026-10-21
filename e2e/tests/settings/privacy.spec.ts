@@ -94,6 +94,8 @@ test.describe('settings privacy', () => {
     ).toHaveCount(0);
     await sensitiveSwitch(page).click();
     await expect(sensitiveSwitch(page)).toHaveAttribute('aria-checked', 'false');
+    // The switch flips optimistically; reloading before the save lands would abort it.
+    await expect(page.locator('[data-slot="privacy-status"]')).toContainText('Saved');
     await page.reload();
     await expect(sensitiveSwitch(page)).toHaveAttribute('aria-checked', 'false');
   });

@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { SettingRow } from '../../../../components/settings/setting-row.tsx';
 import { SettingSection } from '../../../../components/settings/setting-section.tsx';
 import { TwoFactorSetup } from '../../../../components/settings/two-factor-setup-dialog.tsx';
-import { enableTwoFactorAction, verifyTwoFactorAction } from '../actions.ts';
+import { enableTwoFactorAction } from '../actions.ts';
 
 export async function TwoFactorSection({ enabled }: { enabled: boolean }) {
   const t = await getTranslations('settings.account.twoFactor');
@@ -16,11 +16,7 @@ export async function TwoFactorSection({ enabled }: { enabled: boolean }) {
         label={t('status')}
         description={enabled ? t('onHint') : t('offHint')}
       >
-        <TwoFactorSetup
-          enabled={enabled}
-          enableTwoFactor={enableTwoFactorAction}
-          verifyTwoFactor={verifyTwoFactorAction}
-        />
+        <TwoFactorSetup enabled={enabled} enableTwoFactor={enableTwoFactorAction} />
       </SettingRow>
     </SettingSection>
   );

@@ -1,6 +1,6 @@
 # End-to-end suites (#16): Playwright against a freshly built apps/web and the Compose dev stack,
-# plus Lighthouse CI on /sign-in. No secrets: every credential is a local dev default or generated
-# in the job. See e2e/README.md.
+# plus Lighthouse CI on /sign-in and the seeded courts pages. No secrets: every credential is a
+# local dev default or generated in the job. See e2e/README.md.
 #
 # Playwright runs inside the pinned Playwright image (`docker run --network host`), so browsers and
 # fonts are identical to the ones that generated the visual baselines; the job itself runs on the
@@ -98,15 +98,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      # A real production build (the dev sign-in provider is compiled out). Throwaway values: the
-      # page under test (/sign-in, signed out) never uses them.
+      # A real production build (the dev sign-in provider is compiled out) against the Compose
+      # stack, migrated and seeded with the `e2e` profile (#427): /sign-in is audited signed out,
+      # the courts pages signed in as the seeded owner, through a magic link read from Mailpit.
+      # Local dev defaults and throwaway values only.
       NODE_ENV: production
       APP_URL: http://localhost:3100
       NEXT_PUBLIC_APP_URL: http://localhost:3100
       API_URL: http://localhost:3101
       DATABASE_URL: postgres://causedeck_app:causedeck_app@127.0.0.1:5432/causedeck
+      DATABASE_URL_OWNER: postgres://causedeck_owner:causedeck_owner@127.0.0.1:5432/causedeck
       ALLOW_MOCK_PROVIDERS: 'true'
-      EMAIL_PROVIDER: console
+      EMAIL_PROVIDER: smtp
+      SMTP_URL: smtp://127.0.0.1:1025
       AI_PROVIDER: mock
       BILLING_PROVIDER: mock
       S3_ENDPOINT: http://127.0.0.1:9000
@@ -124,6 +128,12 @@ jobs:
         run: |
           echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >>"$GITHUB_ENV"
           echo "KEK_BASE64=$(openssl rand -base64 32)" >>"$GITHUB_ENV"
+      - name: Start the Compose stack (Postgres, MinIO, Mailpit)
+        run: bash infra/scripts/dev-up.sh
+      - name: Migrate and seed (e2e profile)
+        run: |
+          pnpm --filter @causedeck/db db:migrate
+          pnpm --filter @causedeck/db db:seed --profile e2e
       - name: Build apps/web (production)
         run: pnpm --filter @causedeck/web build
       - name: Cache Playwright Chromium
@@ -140,6 +150,12 @@ jobs:
           CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
           export CHROME_PATH
           pnpm --filter @causedeck/e2e lhci
+      - name: Lighthouse CI (courts index and forum detail, signed in, seeded; performance and accessibility >= 0.95)
+        if: ${{ !cancelled() }}
+        run: |
+          CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
+          export CHROME_PATH
+          pnpm --filter @causedeck/e2e lhci:courts
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

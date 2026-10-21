@@ -13,20 +13,32 @@
     "lint": "NODE_OPTIONS=--max-old-space-size=4096 eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:tenancy": "vitest run --config vitest.tenancy.config.ts"
+    "test:tenancy": "vitest run --config vitest.tenancy.config.ts",
+    "test:storybook": "vitest run --config vitest.storybook.config.ts",
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "catalog:",
+    "@storybook/addon-a11y": "catalog:",
+    "@storybook/addon-docs": "catalog:",
+    "@storybook/addon-vitest": "catalog:",
+    "@storybook/nextjs-vite": "catalog:",
     "@tailwindcss/postcss": "catalog:",
+    "@tailwindcss/vite": "catalog:",
     "@testing-library/react": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@vitest/browser": "catalog:",
     "eslint": "catalog:",
     "jsdom": "catalog:",
+    "playwright": "catalog:",
     "postcss": "catalog:",
+    "storybook": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:"
   },
   "dependencies": {

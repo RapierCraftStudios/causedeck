@@ -11,6 +11,10 @@
 // delta is every initial chunk of `/w/[slug]/today` (shell layout, workspace boundaries, page)
 // that the home route does not already load.
 //
+// Courts routes (#427): `/w/[slug]/courts` and a forum's default tab (`/w/[slug]/courts/[code]/halls`)
+// may each add at most 40 KB gzip beyond shared code: every initial chunk of the route that neither
+// the home route nor the `/w/[slug]/today` shell route loads (the shell has its own budget above).
+//
 // Active locale only (#174): no ta/kn catalog string may appear in the home route's initial chunks.
 // Messages reach the client through the RSC payload for the active locale, never as bundled JSON.
 import { readFileSync } from 'node:fs';
@@ -25,6 +29,14 @@ export const WORKSPACE_SHELL_BUDGET_BYTES = 40 * 1024;
 /** The workspace route measured for the shell budget. */
 export const WORKSPACE_ROUTE_MANIFEST =
   'server/app/(app)/w/[slug]/today/page_client-reference-manifest.js';
+
+export const ROUTE_CHUNK_BUDGET_BYTES = 40 * 1024;
+
+/** The courts routes measured for the route chunk budget (#427). */
+export const COURTS_ROUTE_MANIFESTS = [
+  'server/app/(app)/w/[slug]/courts/page_client-reference-manifest.js',
+  'server/app/(app)/w/[slug]/courts/[code]/halls/page_client-reference-manifest.js',
+];
 
 /** Unique `.js` chunk paths (relative to `.next/`) the home route loads initially. */
 export function initialChunks(buildManifest, clientReferenceManifest) {
@@ -116,8 +128,13 @@ function main() {
     );
   const homeChunks = chunksOf('server/app/page_client-reference-manifest.js');
   const routeChunks = chunksOf(WORKSPACE_ROUTE_MANIFEST);
+  const courtsChunks = COURTS_ROUTE_MANIFESTS.map((manifest) => [manifest, chunksOf(manifest)]);
   const gzipBytes = {};
-  for (const file of new Set([...homeChunks, ...routeChunks])) {
+  for (const file of new Set([
+    ...homeChunks,
+    ...routeChunks,
+    ...courtsChunks.flatMap(([, c]) => c),
+  ])) {
     gzipBytes[file] = gzipSync(readFileSync(path.join(nextDir, file))).length;
   }
   const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
@@ -131,6 +148,15 @@ function main() {
   console.log('\nWorkspace route /w/[slug]/today, chunks beyond the home route:');
   for (const file of shell.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
   console.log(`${kb(shell.total).padStart(10)}  shell delta (budget ${kb(shell.budget)} gzip)`);
+
+  const sharedChunks = [...homeChunks, ...routeChunks];
+  const courts = courtsChunks.map(([manifest, chunks]) => {
+    const delta = shellDelta(sharedChunks, chunks, gzipBytes, ROUTE_CHUNK_BUDGET_BYTES);
+    console.log(`\nCourts route ${manifest}, chunks beyond shared code:`);
+    for (const file of delta.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
+    console.log(`${kb(delta.total).padStart(10)}  route delta (budget ${kb(delta.budget)} gzip)`);
+    return { manifest, delta };
+  });
 
   const readCatalog = (locale) =>
     JSON.parse(readFileSync(path.join(appDir, GENERATED_MESSAGES, `${locale}.json`), 'utf8'));
@@ -155,6 +181,12 @@ function main() {
   if (!shell.ok) {
     console.error('The workspace shell adds more initial JS than its budget.');
     failed = true;
+  }
+  for (const { manifest, delta } of courts) {
+    if (!delta.ok) {
+      console.error(`Courts route ${manifest} adds more initial JS than its budget.`);
+      failed = true;
+    }
   }
   if (failed) process.exit(1);
 }

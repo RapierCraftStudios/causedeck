@@ -612,6 +612,15 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'pure SQL builder; getRosterAt runs it inside withWorkspace on the given workspace',
   benchForHallStatement:
     'pure SQL builder; resolveBenchForHall runs it inside withWorkspace on the given workspace',
+  // court: read-model statements (#427), exported for the plan and budget test
+  listForumsStatement:
+    'pure SQL builder; listForums runs it inside withWorkspace on the given workspace',
+  getForumStatement:
+    'pure SQL builder; getForum runs it inside withWorkspace on the given workspace',
+  latestParseRunsStatement:
+    'pure SQL builder; getCourtsIndex runs it inside withWorkspace on the given workspace',
+  hallsSeenStatement:
+    'pure SQL builder; listHallsSeen runs it inside withWorkspace on the given workspace',
   // matter graph (#362): errors and pure proceeding-identity helpers
   CrossWorkspaceError: 'error class',
   crossWorkspace: 'error factory',

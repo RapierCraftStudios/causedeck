@@ -1,4 +1,4 @@
-// The proceeding state machine (#363, part 2 of #33; ADR 0014): the only writer of
+// The proceeding state machine (#363, part 2 of #33; ADR 0015): the only writer of
 // `proceeding.state`. The transition table allows exactly filed -> sr_fr, sr_fr -> defects | numbered,
 // defects -> re_presented, re_presented -> defects | numbered, numbered -> disposed and the reopen
 // disposed -> numbered, which needs a non-blank reason; anything else is `InvalidTransitionError`.
@@ -31,7 +31,7 @@ const { member, proceeding, proceedingStateChange } = schema;
 
 export type ProceedingStateChangeRow = typeof proceedingStateChange.$inferSelect;
 
-/** The states each state may move to (ADR 0014). */
+/** The states each state may move to (ADR 0015). */
 export const PROCEEDING_TRANSITIONS: Readonly<Record<ProceedingState, readonly ProceedingState[]>> =
   Object.freeze({
     filed: Object.freeze(['sr_fr'] as const),

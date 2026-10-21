@@ -19,7 +19,8 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `audit` | `@causedeck/core/audit` | audit writer, chain verification, feed query and export ([audit.md](audit.md)) |
 | `workspaces` | `@causedeck/core/workspaces` | workspaces, members, invitations, offboarding ([workspaces.md](workspaces.md)) |
 | `matters` | `@causedeck/core/matters` | matter restrictions |
-| `matter-graph` | `@causedeck/core/matter-graph` | matter-graph services (#362): matters, proceedings, documents, the duplicate finder, the proceeding state machine (#363, ADR 0014) and the `GraphEvents` port they emit through |
+| `court` | `@causedeck/core/court` | forum catalogue reads, custom workspace forums and official deep links (#34, [ADR 0014](../adr/0014-forum-catalogue-and-deep-links.md)) |
+| `matter-graph` | `@causedeck/core/matter-graph` | matter-graph services (#362): matters, proceedings, documents, the duplicate finder, the proceeding state machine (#363, ADR 0015) and the `GraphEvents` port they emit through |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
@@ -59,6 +60,7 @@ graph LR
   workspaces --> audit
   matters --> workspaces
   matters --> audit
+  court --> workspaces
   matter-graph --> workspaces
   matter-graph --> matters
   billing --> workspaces
@@ -89,6 +91,8 @@ graph LR
 | `audit` | nothing (only `shared/`) |
 | `workspaces` | `audit` |
 | `matters` | `workspaces`, `audit` |
+| `court` | `workspaces` |
+| `matter-graph` | `workspaces`, `matters` |
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
 | `lifecycle` | `audit`, `workspaces` |

@@ -49,7 +49,7 @@ export interface StateChangeProvenance {
 }
 
 /**
- * A proceeding moved state (#363, ADR 0014). `cureDeadline` (an ISO date) is present only when
+ * A proceeding moved state (#363, ADR 0015). `cureDeadline` (an ISO date) is present only when
  * entering `defects` with one, so the obligation service (#67) can create the cure obligation.
  */
 export interface ProceedingStateChangedEvent extends GraphEventBase {

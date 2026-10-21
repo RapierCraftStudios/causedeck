@@ -1,4 +1,4 @@
-# 0014. Proceeding state machine and next-date rules
+# 0015. Proceeding state machine and next-date rules
 
 ## Status
 
@@ -50,7 +50,7 @@ stateDiagram-v2
 - Every transition locks the proceeding row, sets `state` and `state_changed_at`, appends one `proceeding_state_change` row (`from_state`, `to_state`, `reason`, `actor_member_id`, `cure_deadline`, `changed_at`, provenance) and emits `proceeding.state_changed` with `{ from, to, reason, actor, provenance }` (plus `cureDeadline` when set and the matter's `sensitive` flag) after the transaction commits.
 - `confirmation_state` on the history row comes from the caller's provenance and defaults to `confirmed`. `proposed` is rejected at input: the acting member confirms every state change.
 - Access follows the proceeding's matter: `matter.write` to move it, with the role taken from the membership. A proceeding outside the actor's workspace is NOT_FOUND.
-- `proceeding_state_change` (migration 0042) is a tenant table under FORCE RLS. Its rows cascade with their proceeding, `actor_member_id` is `ON DELETE SET NULL (actor_member_id)`, and CHECKs mirror the rules (no same-state rows, cure deadline only into `defects`, reopen with a reason). It is exported with the matter graph and purged on workspace erasure.
+- `proceeding_state_change` (migration 0043) is a tenant table under FORCE RLS. Its rows cascade with their proceeding, `actor_member_id` is `ON DELETE SET NULL (actor_member_id)`, and CHECKs mirror the rules (no same-state rows, cure deadline only into `defects`, reopen with a reason). It is exported with the matter graph and purged on workspace erasure.
 
 ### Next-date rules
 

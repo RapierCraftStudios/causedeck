@@ -146,7 +146,7 @@ export const FindDuplicateProceedingsInput = z.strictObject({
 });
 
 // ---------------------------------------------------------------------------------------------
-// Proceeding state machine (#363, ADR 0014).
+// Proceeding state machine (#363, ADR 0015).
 
 /**
  * A state change is always made by a resolved member, its confirming actor, so its provenance is

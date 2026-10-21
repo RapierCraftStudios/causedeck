@@ -1,5 +1,5 @@
 {
-  "id": "dc5aadc7-5239-41e5-af02-2ecfd343e529",
+  "id": "c353ccc8-c28b-4959-b361-9a13aa9848de",
   "prevId": "bf6fdfd3-3a4e-41e6-bf58-49a04b8742d8",
   "version": "7",
   "dialect": "postgresql",
@@ -1493,6 +1493,38 @@
           "value": "key ~ '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*$' and length(key) <= 64"
         }
       },
+      "isRLSEnabled": false
+    },
+    "public.catalogue_meta": {
+      "name": "catalogue_meta",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.court_hall": {
@@ -6234,238 +6266,6 @@
         "proceeding_link_not_self_chk": {
           "name": "proceeding_link_not_self_chk",
           "value": "from_proceeding_id <> to_proceeding_id"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.proceeding_state_change": {
-      "name": "proceeding_state_change",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "proceeding_id": {
-          "name": "proceeding_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "from_state": {
-          "name": "from_state",
-          "type": "proceeding_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "to_state": {
-          "name": "to_state",
-          "type": "proceeding_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reason": {
-          "name": "reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_member_id": {
-          "name": "actor_member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cure_deadline": {
-          "name": "cure_deadline",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "changed_at": {
-          "name": "changed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "source_type": {
-          "name": "source_type",
-          "type": "source_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source_ref": {
-          "name": "source_ref",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "anchor_id": {
-          "name": "anchor_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "confidence": {
-          "name": "confidence",
-          "type": "numeric(4, 3)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "confirmation_state": {
-          "name": "confirmation_state",
-          "type": "confirmation_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'proposed'"
-        },
-        "captured_at": {
-          "name": "captured_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "proceeding_state_change_workspace_id_idx": {
-          "name": "proceeding_state_change_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "proceeding_state_change_workspace_proceeding_idx": {
-          "name": "proceeding_state_change_workspace_proceeding_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "proceeding_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "changed_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "proceeding_state_change_workspace_id_fk": {
-          "name": "proceeding_state_change_workspace_id_fk",
-          "tableFrom": "proceeding_state_change",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "proceeding_state_change_proceeding_fk": {
-          "name": "proceeding_state_change_proceeding_fk",
-          "tableFrom": "proceeding_state_change",
-          "tableTo": "proceeding",
-          "columnsFrom": ["workspace_id", "proceeding_id"],
-          "columnsTo": ["workspace_id", "id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "proceeding_state_change_actor_member_fk": {
-          "name": "proceeding_state_change_actor_member_fk",
-          "tableFrom": "proceeding_state_change",
-          "tableTo": "member",
-          "columnsFrom": ["workspace_id", "actor_member_id"],
-          "columnsTo": ["workspace_id", "id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "proceeding_state_change_anchor_fk": {
-          "name": "proceeding_state_change_anchor_fk",
-          "tableFrom": "proceeding_state_change",
-          "tableTo": "anchor",
-          "columnsFrom": ["workspace_id", "anchor_id"],
-          "columnsTo": ["workspace_id", "id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "proceeding_state_change_workspace_id_id_uq": {
-          "name": "proceeding_state_change_workspace_id_id_uq",
-          "nullsNotDistinct": false,
-          "columns": ["workspace_id", "id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "proceeding_state_change_provenance_chk": {
-          "name": "proceeding_state_change_provenance_chk",
-          "value": "(source_type = 'manual' or anchor_id is not null or source_ref is not null) and (confidence is null or (confidence >= 0 and confidence <= 1))"
-        },
-        "proceeding_state_change_not_same_chk": {
-          "name": "proceeding_state_change_not_same_chk",
-          "value": "from_state <> to_state"
-        },
-        "proceeding_state_change_reason_chk": {
-          "name": "proceeding_state_change_reason_chk",
-          "value": "reason is null or btrim(reason) <> ''"
-        },
-        "proceeding_state_change_cure_deadline_chk": {
-          "name": "proceeding_state_change_cure_deadline_chk",
-          "value": "cure_deadline is null or to_state = 'defects'"
-        },
-        "proceeding_state_change_reopen_reason_chk": {
-          "name": "proceeding_state_change_reopen_reason_chk",
-          "value": "from_state <> 'disposed' or to_state <> 'numbered' or reason is not null"
         }
       },
       "isRLSEnabled": false

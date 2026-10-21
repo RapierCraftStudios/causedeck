@@ -27,7 +27,7 @@ export class CrossWorkspaceError extends WorkspaceError {
 }
 
 /**
- * A proceeding state change the state machine does not allow (#363, ADR 0014): a pair outside the
+ * A proceeding state change the state machine does not allow (#363, ADR 0015): a pair outside the
  * transition table, or a reopen (`disposed` -> `numbered`) without a reason. CONFLICT: the
  * request is well-formed but contradicts the proceeding's current state.
  */

@@ -135,8 +135,8 @@ NO ACTION FK to `anchor` on both tables. `parent_proceeding_id` is `ON DELETE SE
 (`app_proceeding_link_cycle_guard()`) rejects, with 23514, an insert or update of a `parent_of` link
 that would close a cycle; it serializes per workspace with a transaction advisory lock.
 
-`proceeding_state_change` (same file, migration `0042_proceeding_state_change`, #363,
-[ADR 0014](../adr/0014-proceeding-state-machine-and-next-date-rules.md)) is the append-only
+`proceeding_state_change` (same file, migration `0043_proceeding_state_change`, #363,
+[ADR 0015](../adr/0015-proceeding-state-machine-and-next-date-rules.md)) is the append-only
 history of proceeding state transitions, written only by the matter-graph state machine
 (`transitionProceeding`). It is a tenant table under FORCE RLS with `provenance()` and
 `provenanceCheck()`. Columns: `proceeding_id` (-> `proceeding`, ON DELETE CASCADE), `from_state`

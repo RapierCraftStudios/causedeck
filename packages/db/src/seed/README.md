@@ -10,6 +10,12 @@ Registered seeders:
 - `plans` (`plans.ts`, every profile, order 0): the plan catalogue from `@causedeck/billing/plans`, upserted by id so a price edited in the catalogue reaches the table on the next seed.
 - `e2e-workspaces` (`e2e.ts`, `e2e` profile, order 10): the fixed e2e workspaces, users and invitations.
 
+The system forum catalogue (`forum-catalogue/`, #34, ADR 0014) is **not** in this registry: catalogue rows (`forum` with a null `workspace_id`) are writable by the owner role only, and `pnpm db:seed` runs as the app role. `pnpm db:migrate` runs `seedForumCatalogue()` as the owner after the migrations, so every deploy re-applies it:
+
+- the entries are typed `ForumSeed[]` per market (`madras-hc.ts`, `karnataka-hc.ts`, `chennai-district.ts`, `bengaluru-district.ts`, `tribunals.ts`), parsed with `ForumSeedSchema` from `@causedeck/validators/forum`; hosts and deep-link templates are data, never constants in code;
+- the upsert is keyed by `forum_scope_code_uq` and touches only rows whose data changed (unchanged rows keep `updated_at`); a catalogue row no longer listed is soft-disabled (`enabled = false`, `config.disabledReason`), never deleted;
+- bump `FORUM_CATALOGUE_VERSION` with every data change; the seed records it in `catalogue_meta` (key `forum_catalogue`).
+
 Each issue that adds tables registers its own:
 
 ```ts

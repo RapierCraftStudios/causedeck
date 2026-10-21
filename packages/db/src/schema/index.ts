@@ -3,6 +3,7 @@ export * from './enums.ts';
 export { aiCall, auditActorKind, auditActorSalt, auditEvent, auditOutcome } from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
+export { catalogueMeta } from './catalogue-meta.ts';
 export {
   account,
   invitation,

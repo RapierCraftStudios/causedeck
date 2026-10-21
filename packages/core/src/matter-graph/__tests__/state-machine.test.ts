@@ -1,4 +1,4 @@
-// The proceeding state machine on the test database (#363, ADR 0014): numbering keeps the SR, FR
+// The proceeding state machine on the test database (#363, ADR 0015): numbering keeps the SR, FR
 // and diary numbers, a cure deadline rides on the defects event, every transition stamps
 // `state_changed_at`, appends one history row and emits `proceeding.state_changed`, a state change
 // is never `proposed`, and a disallowed pair, a viewer or another workspace's proceeding writes

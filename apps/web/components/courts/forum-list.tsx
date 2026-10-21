@@ -35,7 +35,10 @@ export function filterIndex(index: CourtsIndex, query: string): CourtsIndex {
       .map((city) => ({
         city: city.city,
         courts: city.courts
-          .map((court) => ({ court: court.court, forums: court.forums.filter((f) => matches(f, query)) }))
+          .map((court) => ({
+            court: court.court,
+            forums: court.forums.filter((f) => matches(f, query)),
+          }))
           .filter((court) => court.forums.length > 0),
       }))
       .filter((city) => city.courts.length > 0),

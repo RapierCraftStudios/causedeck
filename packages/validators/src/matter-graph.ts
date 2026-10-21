@@ -451,6 +451,51 @@ export const ProceedingLinkInsertSchema = z
     }
   });
 
+const proceedingStateChangeShape = {
+  id: uuid,
+  workspaceId: uuid,
+  proceedingId: uuid,
+  fromState: z.enum(PROCEEDING_STATES),
+  toState: z.enum(PROCEEDING_STATES),
+  reason: nonBlank.nullable(),
+  actorMemberId: uuid.nullable(),
+  cureDeadline: day.nullable(),
+  changedAt: z.date(),
+  ...provenanceShape,
+  ...timestamps,
+};
+export const ProceedingStateChangeSelectSchema = z.object(proceedingStateChangeShape);
+export const ProceedingStateChangeInsertSchema = z
+  .object(proceedingStateChangeShape)
+  .partial({
+    ...GENERATED,
+    ...PROVENANCE_OPTIONAL,
+    reason: true,
+    actorMemberId: true,
+    cureDeadline: true,
+    changedAt: true,
+  })
+  .superRefine((value, ctx) => {
+    checkProvenance(value, ctx);
+    if (value.fromState === value.toState) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['toState'],
+        message: 'A transition changes the state',
+      });
+    }
+    if (value.cureDeadline != null && value.toState !== 'defects') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['cureDeadline'],
+        message: 'A cure deadline only applies when entering defects',
+      });
+    }
+    if (value.fromState === 'disposed' && value.toState === 'numbered' && value.reason == null) {
+      ctx.addIssue({ code: 'custom', path: ['reason'], message: 'A reopen needs a reason' });
+    }
+  });
+
 // ---------------------------------------------------------------------------------------------
 // Docket.
 
@@ -747,6 +792,8 @@ export type Proceeding = z.output<typeof ProceedingSelectSchema>;
 export type NewProceeding = z.input<typeof ProceedingInsertSchema>;
 export type ProceedingLink = z.output<typeof ProceedingLinkSelectSchema>;
 export type NewProceedingLink = z.input<typeof ProceedingLinkInsertSchema>;
+export type ProceedingStateChange = z.output<typeof ProceedingStateChangeSelectSchema>;
+export type NewProceedingStateChange = z.input<typeof ProceedingStateChangeInsertSchema>;
 export type Listing = z.output<typeof ListingSelectSchema>;
 export type NewListing = z.input<typeof ListingInsertSchema>;
 export type Hearing = z.output<typeof HearingSelectSchema>;

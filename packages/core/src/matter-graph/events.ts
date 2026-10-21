@@ -5,7 +5,12 @@
 // lookup. Later #33 parts (#363-#366) append members to the union. A merge or split (#365) names the
 // matter rows moved into (`matterId`), so `sensitive` there is the receiving matter's flag: documents
 // moved into a sensitive matter arrive with `sensitive: true`.
-import type { ProceedingLinkKind } from '@causedeck/db/schema';
+import type {
+  ConfirmationState,
+  ProceedingLinkKind,
+  ProceedingState,
+  SourceType,
+} from '@causedeck/db/schema';
 import type { IdentifierSource } from '@causedeck/validators/matter-graph-inputs';
 
 /** What every graph event carries. */
@@ -35,6 +40,7 @@ export type GraphEvent =
       kind: ProceedingLinkKind;
     })
   | (GraphEventBase & { type: 'document.created'; documentId: string })
+  | ProceedingStateChangedEvent
   | (GraphEventBase & {
       type: 'matter.merged';
       fromMatterId: string;
@@ -83,6 +89,31 @@ export type GraphEvent =
       previousListingId: string | null;
       date: string;
     });
+
+/** The provenance a state change was recorded with (#363). */
+export interface StateChangeProvenance {
+  sourceType: SourceType;
+  sourceRef: string | null;
+  anchorId: string | null;
+  confidence: string | null;
+  confirmationState: ConfirmationState;
+}
+
+/**
+ * A proceeding moved state (#363, ADR 0016). `cureDeadline` (an ISO date) is present only when
+ * entering `defects` with one, so the obligation service (#67) can create the cure obligation.
+ */
+export interface ProceedingStateChangedEvent extends GraphEventBase {
+  type: 'proceeding.state_changed';
+  proceedingId: string;
+  stateChangeId: string;
+  from: ProceedingState;
+  to: ProceedingState;
+  reason: string | null;
+  actor: { userId: string; memberId: string };
+  provenance: StateChangeProvenance;
+  cureDeadline?: string;
+}
 
 export type GraphEventType = GraphEvent['type'];
 

@@ -107,6 +107,7 @@ export interface MergeProceedingsResult {
     obligationIds: string[];
     taskIds: string[];
     roleEdgeIds: string[];
+    stateChangeIds: string[];
     childIds: string[];
     linkIds: string[];
     deletedLinkIds: string[];
@@ -123,6 +124,7 @@ type GraphTable =
   | 'proceeding_link'
   | 'document'
   | 'role_edge'
+  | 'proceeding_state_change'
   | 'listing'
   | 'order'
   | 'obligation'
@@ -405,6 +407,7 @@ export async function mergeMatters(
         proceedingIds,
         documentIds,
         roleEdgeIds: rows.roleEdge.map((r) => r.id),
+        stateChangeIds: rows.stateChange.map((r) => r.id),
         obligationIds: rows.obligation.map((r) => r.id),
         taskIds: rows.task.map((r) => r.id),
         mergedMatterIds: rows.mergedMatter.map((r) => r.id),
@@ -480,6 +483,7 @@ export async function undoMerge(
       await restoreRows(tx, 'proceeding', ws, back, rows.proceeding);
       await restoreRows(tx, 'document', ws, back, rows.document);
       await restoreRows(tx, 'role_edge', ws, back, rows.roleEdge);
+      await restoreRows(tx, 'proceeding_state_change', ws, back, rows.stateChange);
       await restoreRows(tx, 'obligation', ws, back, rows.obligation);
       await restoreRows(tx, 'task', ws, back, rows.task);
       await restoreRows(
@@ -884,6 +888,8 @@ export async function mergeProceedings(
           of,
         ),
         roleEdge: await move(tx, 'role_edge', ws, to, of),
+        // Its state history (#363) would cascade with the deleted row; it follows the survivor.
+        stateChange: await move(tx, 'proceeding_state_change', ws, to, of),
         child: await move(
           tx,
           'proceeding',
@@ -1100,6 +1106,13 @@ export async function undoMergeProceedings(
       'role_edge',
       ws,
       rows.roleEdge.map((r) => r.id),
+      at,
+    );
+    await expectAll(
+      tx,
+      'proceeding_state_change',
+      ws,
+      rows.stateChange.map((r) => r.id),
       at,
     );
     await expectAll(

@@ -76,6 +76,10 @@ async function snapshot(w: World) {
         .orderBy(schema.matterRestriction.id),
       proceedings: await s.select().from(schema.proceeding).orderBy(schema.proceeding.id),
       links: await s.select().from(schema.proceedingLink).orderBy(schema.proceedingLink.id),
+      stateChanges: await s
+        .select()
+        .from(schema.proceedingStateChange)
+        .orderBy(schema.proceedingStateChange.id),
       documents: await s.select().from(schema.document).orderBy(schema.document.id),
       roleEdges: await s.select().from(schema.roleEdge).orderBy(schema.roleEdge.id),
       listings: await s.select().from(schema.listing).orderBy(schema.listing.id),
@@ -461,7 +465,20 @@ describe('mergeProceedings and undoMergeProceedings', () => {
         srNo: theirs.srNo ?? null,
         sourceType: 'adapter',
         sourceRef: 'ecourts:case/1',
+        state: 'numbered',
       });
+      // Its state history (#363), which a cascade on the deleted row would lose.
+      const [history] = await s
+        .insert(schema.proceedingStateChange)
+        .values({
+          workspaceId: w.workspaceId,
+          proceedingId: dup.id,
+          fromState: 'filed',
+          toState: 'numbered',
+          sourceType: 'manual',
+        })
+        .returning();
+      if (!history) throw new Error('pair: no state change');
       const l = await buildListing(s, w.workspaceId, {
         proceedingId: dup.id,
         canonical: true,
@@ -523,6 +540,7 @@ describe('mergeProceedings and undoMergeProceedings', () => {
         dupObligation: ob.id,
         dupTask: t.id,
         dupEdge: edge.id,
+        dupHistory: history.id,
         child: child.id,
         links: { self: self.id, duplicate: duplicate.id, repointed: repointed.id },
       };
@@ -578,6 +596,10 @@ describe('mergeProceedings and undoMergeProceedings', () => {
         g.proceedingId,
       );
       expect(after.roleEdges.find((e) => e.id === g.dupEdge)?.proceedingId).toBe(g.proceedingId);
+      expect(result.moved.stateChangeIds).toEqual([g.dupHistory]);
+      expect(after.stateChanges.find((c) => c.id === g.dupHistory)?.proceedingId).toBe(
+        g.proceedingId,
+      );
       expect(after.proceedings.find((p) => p.id === g.child)?.parentProceedingId).toBe(
         g.proceedingId,
       );

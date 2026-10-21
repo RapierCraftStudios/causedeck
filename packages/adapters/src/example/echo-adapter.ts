@@ -46,7 +46,7 @@ export const ECHO_CONFIG: AdapterConfig = defineAdapterConfig({
   },
   orderParser: { directionPhrases: ['list after', 'post after', 'is directed to', 'call on'] },
   links: { cause_list: 'cause_list', orders: 'orders' },
-  fixtures: { manifest: 'fixtures/manifest.json', fictional: true },
+  fixtures: { manifest: 'fixtures/echo/manifest.json', fictional: true },
   stageMap: [
     { pattern: '^FOR\\s+ADMISSION$', flags: 'i', key: 'admission' },
     { pattern: '^FOR\\s+ORDERS$', flags: 'i', key: 'orders' },

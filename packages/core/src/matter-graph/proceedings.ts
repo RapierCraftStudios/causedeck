@@ -43,7 +43,7 @@ export type { ProceedingRow };
 export type ProceedingLinkRow = typeof proceedingLink.$inferSelect;
 
 /** The database's verdict on a proceeding write, as a domain error. */
-function proceedingWriteError(error: unknown): unknown {
+export function proceedingWriteError(error: unknown): unknown {
   const { code, constraint } = pgError(error);
   if (code === '23505') {
     return conflict(

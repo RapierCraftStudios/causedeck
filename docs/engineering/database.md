@@ -136,6 +136,16 @@ NO ACTION FK to `anchor` on both tables. `parent_proceeding_id` is `ON DELETE SE
 (`app_proceeding_link_cycle_guard()`) rejects, with 23514, an insert or update of a `parent_of` link
 that would close a cycle; it serializes per workspace with a transaction advisory lock.
 
+`proceeding_state_change` (same file, migration `0043_proceeding_state_change`, #363,
+[ADR 0016](../adr/0016-proceeding-state-machine-and-next-date-rules.md)) is the append-only
+history of proceeding state transitions, written only by the matter-graph state machine
+(`transitionProceeding`). It is a tenant table under FORCE RLS with `provenance()` and
+`provenanceCheck()`. Columns: `proceeding_id` (-> `proceeding`, ON DELETE CASCADE), `from_state`
+and `to_state` (`proceeding_state`; CHECK not equal), `reason` (CHECK not blank; required by CHECK
+when `disposed` -> `numbered`), `actor_member_id` (-> `member`, `ON DELETE SET NULL
+(actor_member_id)`), `cure_deadline` (date; CHECK only when `to_state = 'defects'`), `changed_at`.
+Index `(workspace_id, proceeding_id, changed_at)`.
+
 ## People tables
 
 `person`, `organisation` and `role_edge` in `packages/db/src/schema/people.ts`, migration

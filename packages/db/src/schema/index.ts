@@ -60,6 +60,7 @@ export {
   PROCEEDING_LINK_KINDS,
   proceeding,
   proceedingLink,
+  proceedingStateChange,
   type ProceedingLinkKind,
 } from './proceedings.ts';
 export {

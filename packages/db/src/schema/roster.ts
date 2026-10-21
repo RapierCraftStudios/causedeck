@@ -8,7 +8,9 @@
 // and bench references are single-column FKs guarded by `<table>_<column>_scope_guard` triggers
 // (mode `same_or_global`, migration 0046). An entry names a bench, never judges: the court-published
 // composition lives only in `bench.judges`, and nothing here aggregates by judge (PX-9, ME-6).
-// Immutability once active and supersede are the roster services' rules (#387).
+// Immutability once active and supersede are the roster services' rules (#387). `confirmation_state`
+// (migration 0047) records that the lawyer confirmed the version: `bench_roster_confirmed_chk` lets
+// only a draft stay `proposed`, so an active or superseded roster was always confirmed.
 //
 // Delete actions: entries cascade with their roster; alerts keep the proceeding and roster they cite
 // (NO ACTION; the erase purges them first). `imported_by` and `source_document_id` are
@@ -27,7 +29,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { id, timestamps } from '../columns.ts';
+import { confirmationState, id, timestamps } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';
 
 import { inList, member, organization } from './auth.ts';
@@ -72,6 +74,8 @@ export const benchRoster = tenantTable(
     /** The member who imported it; null once their membership is gone. */
     importedBy: uuid('imported_by'),
     note: text('note'),
+    /** `confirmed` once the lawyer confirms the import (#387); a draft stays `proposed`. */
+    confirmationState: confirmationState('confirmation_state').notNull().default('proposed'),
     ...timestamps(),
   },
   (t) => [
@@ -96,6 +100,7 @@ export const benchRoster = tenantTable(
     check('bench_roster_status_chk', sql`status in ${inList(BENCH_ROSTER_STATUSES)}`),
     check('bench_roster_version_chk', sql`version > 0`),
     check('bench_roster_period_chk', sql`effective_to is null or effective_to > effective_from`),
+    check('bench_roster_confirmed_chk', sql`status = 'draft' or confirmation_state <> 'proposed'`),
   ],
 );
 

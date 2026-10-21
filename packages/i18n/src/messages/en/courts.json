@@ -50,6 +50,52 @@
       "retry": "Try again"
     },
     "offline": "Showing saved court information from {time}.",
+    "addForum": {
+      "trigger": "Add forum",
+      "title": "Add a forum",
+      "description": "A court or forum your workspace uses that CauseDeck does not list yet. Only your workspace sees it.",
+      "name": {
+        "label": "Forum name"
+      },
+      "courtType": {
+        "label": "Court type",
+        "high_court": "High Court",
+        "district": "District court",
+        "tribunal": "Tribunal",
+        "commission": "Commission",
+        "other": "Other"
+      },
+      "city": {
+        "label": "City"
+      },
+      "primaryLanguage": "Main language",
+      "secondaryLanguages": "Other languages",
+      "languages": {
+        "en": "English",
+        "ta": "Tamil",
+        "kn": "Kannada",
+        "hi": "Hindi"
+      },
+      "website": {
+        "label": "Court website (optional)",
+        "hint": "An https address. Links to it open in a new window."
+      },
+      "code": {
+        "label": "Forum code",
+        "hint": "A short dotted code, such as ws.chennai.city-civil-court."
+      },
+      "errors": {
+        "required": "Fill this in.",
+        "codeInvalid": "Use lower-case letters, digits and hyphens, with at least one dot.",
+        "codeTaken": "This code belongs to an existing forum. Choose another.",
+        "websiteInvalid": "Enter an https address, such as https://example.gov.in.",
+        "forbidden": "Only owners and advocates can add forums.",
+        "failed": "Couldn't add the forum. Try again."
+      },
+      "submit": "Add forum",
+      "cancel": "Cancel",
+      "created": "{name} added to your courts."
+    },
     "detail": {
       "back": "All courts",
       "tabsLabel": "Forum sections",

@@ -9,7 +9,14 @@ import path from 'node:path';
 import { resetEnvCache } from '@causedeck/config/env';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createEchoAdapter, ParsedCauseListSchema } from '../index.ts';
+import {
+  createEchoAdapter,
+  createMadrasHcAdapter,
+  layoutFromEmail,
+  layoutFromHtml,
+  MADRAS_HC_ADAPTER_ID,
+  ParsedCauseListSchema,
+} from '../index.ts';
 import {
   FIXTURES_ROOT,
   FixtureManifestSchema,
@@ -62,6 +69,24 @@ describe('runGolden on the committed echo fixtures', () => {
   });
 });
 
+describe('runGolden on the committed Madras HC fixtures (#396)', () => {
+  it('passes all 12 lists and 5 AIMS emails with precision and recall 1', async () => {
+    const report = await runGolden(MADRAS_HC_ADAPTER_ID, {
+      adapter: createMadrasHcAdapter(),
+      privateFixturesDir: null,
+    });
+    expect(report.public.cases).toHaveLength(17);
+    expect(report.public.cases.filter((c) => c.file.endsWith('.eml'))).toHaveLength(5);
+    for (const c of report.public.cases) {
+      expect(c, c.file).toMatchObject({ passed: true, diff: [], anchorViolations: [] });
+    }
+    for (const field of report.public.fields) {
+      expect(field.precision, field.field).toBe(1);
+      expect(field.recall, field.field).toBe(1);
+    }
+  });
+});
+
 describe('committed fixtures', () => {
   it.each(adapterDirs)('%s: every input has an expected file and a manifest origin', (adapter) => {
     const dir = path.join(FIXTURES_ROOT, adapter);
@@ -84,14 +109,26 @@ describe('committed fixtures', () => {
     '%s: every expected anchor quote is verbatim in its input page',
     (adapter) => {
       const dir = path.join(FIXTURES_ROOT, adapter);
-      for (const file of readdirSync(dir).filter((name) => /\.input\.(txt|html)$/.test(name))) {
-        const pages = readFileSync(path.join(dir, file), 'utf8').split('\f');
+      for (const file of readdirSync(dir).filter((name) => /\.input\.(txt|html|eml)$/.test(name))) {
+        const content = readFileSync(path.join(dir, file), 'utf8');
+        // HTML and email anchors quote the text the layout readers produce, not the source bytes.
+        const pages = file.endsWith('.html')
+          ? layoutFromHtml(content).pages.map((page) => page.text)
+          : file.endsWith('.eml')
+            ? layoutFromEmail(content).pages.map((page) => page.text)
+            : content.split('\f');
         const expected = ParsedCauseListSchema.parse(
           JSON.parse(
             readFileSync(path.join(dir, file.replace(/\.input\.[^.]+$/, '.expected.json')), 'utf8'),
           ),
         );
-        expect(expected.rows.length, file).toBeGreaterThan(0);
+        // Only a list read as empty ("no cases", a PDF-only email) may have no rows.
+        if (expected.status !== 'empty') expect(expected.rows.length, file).toBeGreaterThan(0);
+        for (const row of expected.unparsedRows ?? []) {
+          expect(pages[row.anchor.page - 1], `${file}: ${row.anchor.quote}`).toContain(
+            row.anchor.quote,
+          );
+        }
         for (const row of expected.rows) {
           expect(pages[row.anchor.page - 1], `${file}: ${row.anchor.quote}`).toContain(
             row.anchor.quote,

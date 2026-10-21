@@ -51,6 +51,17 @@ describe('@causedeck/adapters', () => {
     }
   });
 
+  it('exports the Madras HC list and AIMS email parsers and the email reader (#396)', () => {
+    for (const name of [
+      'layoutFromEmail',
+      'parseAimsEmail',
+      'parseMadrasCauseList',
+      'readEmail',
+    ] as const) {
+      expect(adapters[name], name).toBeTypeOf('function');
+    }
+  });
+
   it('keeps the database and filesystem parts off the entry (#372)', () => {
     for (const name of [
       'activateAdapterVersion',

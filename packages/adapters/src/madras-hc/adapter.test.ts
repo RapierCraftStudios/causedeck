@@ -1,5 +1,6 @@
-// The Madras HC adapter skeleton (#395): identity, registration, access modes, config, deep links
-// and well-formed empty parses until parts 2 and 3 (#396, #398).
+// The Madras HC adapter (#395, #396): identity, registration, access modes, config, deep links,
+// list and AIMS email parsing through `parseCauseList`, and well-formed empty order parses until
+// part 3 (#398).
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -25,6 +26,7 @@ import {
   MADRAS_HC_BUNDLED,
   MADRAS_HC_CONFIG,
   MADRAS_HC_FORUM_CODES,
+  parseAimsEmail,
   resolveForumLink,
 } from './index.ts';
 
@@ -35,7 +37,7 @@ if (principal === undefined) throw new Error('Madras HC Principal Seat forum mis
 
 const input: ParserInput = {
   kind: 'text',
-  text: 'CAUSE LIST\nCOURT No. 1\n1. W.P.No.1 of 2026 FICTIONAL vs FICTIONAL',
+  text: 'CAUSE LIST\nCOURT No. 1\n1. W.P.No.1 of 2026  FICTIONAL vs FICTIONAL',
   meta: { receivedAt: '2026-10-21T00:00:00Z', forumCode: 'in.tn.madras-hc.principal.appellate' },
 };
 
@@ -116,18 +118,28 @@ describe('Madras HC adapter (#395)', () => {
     expect(resolveForumLink(config, 'aims', {})).toBeNull();
   });
 
-  it('returns well-formed empty parses until the parsers land', async () => {
+  it('parses supplied lists and delegates emails to parseAimsEmail', async () => {
     const adapter = createMadrasHcAdapter();
-    const list = await adapter.parseCauseList(input);
-    expect(ParsedCauseListSchema.parse(list)).toMatchObject({
+    const list = ParsedCauseListSchema.parse(await adapter.parseCauseList(input));
+    expect(list).toMatchObject({
       adapterId: MADRAS_HC_ADAPTER_ID,
       forumCode: input.meta.forumCode,
-      status: 'empty',
+      status: 'ok',
       source: 'text',
-      rows: [],
-      halls: [],
       unparsedRows: [],
     });
+    expect(list.rows.map((row) => [row.hallNo, row.matchKey, row.parties])).toEqual([
+      ['1', 'WP/1/2026', 'FICTIONAL vs FICTIONAL'],
+    ]);
+    const email = 'Subject: Cause List for 23.10.2026\n\nCOURT No. 2\n1. W.A.No.3 of 2026';
+    const fromEmail = await adapter.parseCauseList({ ...input, kind: 'email', text: email });
+    expect(fromEmail).toEqual(parseAimsEmail(email, { forumCode: input.meta.forumCode }));
+    expect(fromEmail).toMatchObject({ source: 'email', listDate: '2026-10-23' });
+    expect(entry.parseAimsEmail).toBe(parseAimsEmail);
+  });
+
+  it('returns well-formed empty order parses until part 3 lands (#398)', () => {
+    const adapter = createMadrasHcAdapter();
     expect(ParsedOrderHeaderSchema.parse(adapter.parseOrderHeader(input))).toMatchObject({
       caseRefs: [],
       confidence: 0,

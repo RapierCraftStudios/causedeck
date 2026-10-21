@@ -11,19 +11,32 @@ CI is GitHub Actions. It gates every pull request, and the ForgeDock pipeline me
 | Lint workflows | `.github/workflows/lint-workflows.yml` | `pull_request` and `push` touching `.github/**` | `actionlint` |
 | Dependabot | `.github/dependabot.yml` | weekly | npm (one grouped `catalog` PR), github-actions (workflows and `.github/actions/*`) |
 
-Every job bootstraps with the composite action `.github/actions/setup` (pnpm from `packageManager`, Node from `.nvmrc` with the pnpm store cache, `pnpm install --frozen-lockfile`, `.turbo` cache). Later workflows (e2e #16, Storybook #8, deploys) reuse it after `actions/checkout`.
+Every job bootstraps with the composite action `.github/actions/setup` (pnpm from `packageManager`, Node from `.nvmrc` with the pnpm store cache, a Turborepo cache chosen by its `turbo-cache` input, `pnpm install --frozen-lockfile`). Later workflows (e2e #16, Storybook #8, deploys) reuse it after `actions/checkout`.
 
 ### CI jobs
 
-Each job is matrix-free and runs on `ubuntu-latest`. `lint`, `typecheck`, `test` and `build` have `timeout-minutes: 15` and call `infra/scripts/ci-affected.sh <task>`; `tenancy` (`timeout-minutes: 6`) always runs in full.
+All jobs run on `ubuntu-latest`. `lint`, `typecheck` and `build` have `timeout-minutes: 15` and call `infra/scripts/ci-affected.sh <task>`; `tenancy` (`timeout-minutes: 6`) always runs in full. `test` is a matrix of shards plus an aggregating job (D-047, below).
 
 | Job | Runs |
 |---|---|
-| `lint` | `pnpm format:check`, then the ADR checks (`pnpm adr:lint`, `pnpm adr:test`, `pnpm docs:links`; see [docs/adr](../adr/README.md)), then ESLint (`turbo run lint`), then `docker compose -f infra/docker/compose.dev.yml config -q` (dev stack definition, #5) |
+| `lint` | Prettier (changed files only on pull requests, else `pnpm format:check`), then the docs checks (`pnpm adr:lint`, `pnpm adr:test`, `pnpm docs:links`, `pnpm docs:permissions:check`; see [docs/adr](../adr/README.md)), then ESLint (`turbo run lint`), then `docker compose -f infra/docker/compose.dev.yml config -q` (dev stack definition, #5) |
 | `typecheck` | `tsc --noEmit` (`turbo run typecheck`) |
-| `test` | Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports` artifact (`coverage/` and `reports/junit.xml` per package) |
+| `test` | The required check: an aggregating job that `needs` every `test-shard` and fails unless all of them succeeded. It runs no tests itself |
+| `test-shard (<group>)` | One per package group: Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports-<group>` artifact (`coverage/` and `reports/junit.xml` per package). `rest` also runs `pnpm db:check` and `pnpm i18n:check` |
 | `build` | `turbo run build` |
 | `tenancy` | The cross-tenant suite (#19, #209), always in full: a `pgvector/pgvector:0.8.7-pg17` service gets the dev init SQL (`infra/docker/postgres/init/*.sql`) and `pnpm db:migrate`, then `pnpm db:check-rls` and `pnpm test:tenancy` (Testcontainers, a 4-minute step timeout). Any failure is a release blocker; see [tenancy.md](tenancy.md#cross-tenant-suite) |
+
+### Fast lane gate (D-047)
+
+A lane PR runs in about 6 minutes (it was about 16). Nothing is dropped; the work is cached, split and narrowed.
+
+- **Test shards.** `infra/scripts/ci-test-shard.mjs` groups the workspaces by measured Vitest duration: `db` (db, auth), `core`, `web`, `services` (admin, api, worker) and `rest` (every other workspace, so a new package is picked up automatically). `ci-affected.sh` intersects the shard with the change-aware filter (`CI_TEST_SHARD`); a shard with no affected package passes with nothing to run. `CI_TURBO_CONCURRENCY=3` still caps Testcontainers suites per runner. To rebalance, edit `NAMED_SHARDS` and the `shard` matrix in `ci.yml` together.
+- **Required check.** `test` is the job that `needs: test-shard` with `if: always()`; a failed, cancelled or skipped shard fails it. Branch protection keeps requiring `test`; never require the `test-shard (...)` names.
+- **Prettier.** On `pull_request` only the files changed against the base (`git diff --name-only --diff-filter=ACMRT origin/<base>...HEAD`) are checked; the full `prettier --check .` runs on push, `merge_group` and whenever Prettier's config, the lockfile or the root `package.json` changed (`infra/scripts/ci-changed-files.sh`).
+- **Docs checks** (ADR lint, ADR script tests, docs links, permissions doc) run on pushes and merge groups, and on pull requests that change `docs/`, `packages/auth/`, the lockfile, the root `package.json` or `.github/`.
+- **ESLint cache.** Lane PRs (base `milestone/**`) pass `--cache --cache-strategy content` and restore `.cache/eslint` with `actions/cache`. Ship PRs, pushes and merge groups lint without it, because typed linting (`projectService`) can go stale when a type changes in a file that did not. Turbo's own lint cache is exact and is always on.
+- **Next.js cache.** `build` restores `apps/*/.next/cache` with `actions/cache`.
+- **Cross-tenant gate.** `tenancy` is unchanged and still runs in full on every PR. 
 
 ## Tiers (D-044, loosened by D-045 and D-046)
 
@@ -68,9 +81,11 @@ The resolved filter is exported as `TURBO_FILTER` (and written to `$GITHUB_ENV`)
 ## Caching
 
 - pnpm store: `actions/setup-node` with `cache: pnpm`, keyed on `pnpm-lock.yaml`.
-- Turborepo: `actions/cache` on `.turbo`, key `${{ runner.os }}-turbo-${{ github.sha }}`, restore-keys `${{ runner.os }}-turbo-`. Re-running CI on an unchanged commit restores every task from cache (turbo logs `cache hit, replaying logs`), so the four jobs finish in about a minute each.
-- Remote cache (optional): set the `TURBO_TOKEN` secret and `TURBO_TEAM` variable. When unset they are empty and turbo uses only the local cache. `turbo.json` passes them through without hashing them.
-- `turbo.json` caches `coverage/**` and `reports/**` for `test`, so JUnit reports exist on cache hits too.
+- Turborepo (`ci.yml`): the setup action input `turbo-cache: github` runs `rharkor/caching-for-turbo` (pinned by SHA). It starts a local turbo remote-cache server that stores artifacts in the GitHub Actions cache and exports `TURBO_API`, `TURBO_TOKEN` and `TURBO_TEAM` itself, so no secret or paid service is needed. `ci.yml` no longer sets `TURBO_TOKEN`/`TURBO_TEAM`. Other workflows keep the default `turbo-cache: local` (`actions/cache` on `.turbo`). `tenancy` uses `none`: its tasks are never cached.
+- Scope: GitHub only lets a run read caches from its own ref, its base branch and the default branch. A re-run or a new push to the same PR hits; a brand-new lane starts cold unless the base branch or `main` has the entry.
+- Cache-safe inputs (`turbo.json`): a turbo hash covers the package's own files and its internal dependencies. Several suites read outside their package (static guards that scan `apps/` and `packages/`, `docs/engineering/*.md`, `docs/adr`, the db migrations and `infra/docker/postgres/init/*.sql` for Testcontainers), so the `test` task also hashes `apps/**`, `packages/**`, `docs/adr/**`, `docs/engineering/**` and `infra/docker/**` (build output and node_modules excluded). A test result is therefore reused only when none of those files changed; anything else re-runs. `build`, `lint` and `typecheck` use turbo's default inputs plus the global dependencies (`tsconfig.base.json`, `eslint.config.js`).
+- A cache hit never hides a failure: only successful task results are stored, and a failing test is never replayed as a pass.
+- `turbo.json` caches `coverage/**` and `reports/**` for `test`, so JUnit reports exist on cache hits too (the zero-test guard needs them).
 
 ## Zero-test guard
 
@@ -118,7 +133,7 @@ docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
 Record these once in the PR that introduces or changes CI:
 
 1. **Affected filter**: open a PR touching only `packages/ui`; the job logs list only `@causedeck/ui`, `@causedeck/web` and their task dependencies.
-2. **Cache hit**: re-run all jobs on the same commit; each completes in under 3 minutes with `cache hit` lines from turbo.
+2. **Cache hit**: re-run all jobs on the same commit; each completes in under 3 minutes with `cache hit` lines from turbo. To prove a cached run still fails, push a commit that breaks a test in one package: its shard and `test` go red.
 3. **Audit failure**: on a throwaway branch, add a production dependency with a known high advisory; `audit` fails.
 4. **Secret scan**: on a throwaway branch, commit a dummy credential (for example a fake AWS key `AKIA` + 16 characters); `gitleaks` fails. Delete the branch afterwards.
 5. **No secrets**: runs from a fork, or with `TURBO_TOKEN` unset, are green.

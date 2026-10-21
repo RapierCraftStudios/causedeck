@@ -14,6 +14,7 @@ forge.yaml.bak
 out/
 dist/
 .turbo/
+.cache/
 coverage/
 reports/
 playwright-report/

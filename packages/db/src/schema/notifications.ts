@@ -102,6 +102,8 @@ export const notificationSetting = tenantTable(
     userId: userRef(),
     courtHoursQuiet: boolean('court_hours_quiet').notNull().default(false),
     lockScreenDetails: boolean('lock_screen_details').notNull().default(false),
+    /** Bench-change alerts (#389) name the parties; off, they carry counts only. */
+    benchAlertPartyNames: boolean('bench_alert_party_names').notNull().default(false),
     ...timestamps(),
   },
   (t) => [

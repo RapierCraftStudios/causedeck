@@ -25,6 +25,7 @@ export {
   markAllRead,
   markRead,
   notify,
+  setBenchAlertPartyNames,
   setCourtHoursQuiet,
   setDigest,
   setLockScreenDetails,

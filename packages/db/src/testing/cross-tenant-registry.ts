@@ -309,6 +309,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getRosterAt: rosterSelfScoped,
   resolveBenchForHall: rosterSelfScoped,
   listRosters: rosterSelfScoped,
+  // court: bench-change alerts (#389)
+  detectBenchChanges: rosterDenies,
+  listAlerts: rosterDenies,
+  dismissAlert: rosterDenies,
   listHallsSeen: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -599,6 +603,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // court: roster-PDF preview (#385)
   previewRosterImport: 'pure (parses supplied PDF bytes; reads and writes no tenant data)',
   normaliseJudgeName: 'pure',
+  // court: bench-change alerts (#389)
+  portfolioRuleMatches: 'pure (matches a portfolio rule against a case type and year)',
+  benchChangeDay: 'pure (formats an ISO date as "05 Oct")',
+  benchChangeTitle: 'pure (the counts-only notification title)',
   // court: roster lookup statements (#387), exported for the plan and budget test
   rosterAtStatement:
     'pure SQL builder; getRosterAt runs it inside withWorkspace on the given workspace',
@@ -826,6 +834,7 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   setPreference: notificationDenies,
   getNotificationSetting: notificationDenies,
   setLockScreenDetails: notificationDenies,
+  setBenchAlertPartyNames: notificationDenies,
   setCourtHoursQuiet: notificationDenies,
   getDigest: notificationDenies,
   setDigest: notificationDenies,

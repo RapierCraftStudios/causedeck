@@ -1,7 +1,8 @@
-// Cross-tenant roster services (#387): user `ub`, working in workspace B, calls the roster services
-// with workspace A's ids. Writes must be NOT_FOUND, FORBIDDEN or VALIDATION (`denies`) and leave A's
-// rosters, entries and benches unchanged; the day lookups and the list open `withWorkspace` on the
-// given id, so from B's scope A's id is a TenancyError and B's own call never returns A's roster
+// Cross-tenant roster services (#387) and bench-change alerts (#389): user `ub`, working in
+// workspace B, calls the roster services with workspace A's ids. Writes and the alert services must
+// be NOT_FOUND, FORBIDDEN or VALIDATION (`denies`) and leave A's rosters, entries, benches, alerts
+// and notifications unchanged; the day lookups and the list open `withWorkspace` on the given id,
+// so from B's scope A's id is a TenancyError and B's own call never returns A's roster
 // (`self-scoped`). Kept beside services.test.ts and driven by the same registry
 // (`@causedeck/db/testing/cross-tenant-registry`), so a registered service without a case fails.
 import { schema, TenancyError, type Transaction } from '@causedeck/db';
@@ -69,6 +70,31 @@ async function rosterForumBench(tx: Transaction, workspaceId: string, forumId: s
 async function bForum(f: Fixture) {
   const forumId = f.b.rows.bench_roster?.forumId ?? '';
   return { forumId, benchId: await rosterForumBench(f.tx, f.b.id, forumId) };
+}
+
+/** A's bench-change alerts and notifications, for before/after checks (#389). */
+async function aAlertState(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => ({
+    alerts: await s.select().from(schema.benchChangeAlert).orderBy(schema.benchChangeAlert.id),
+    notifications: await s.select().from(schema.notification).orderBy(schema.notification.id),
+  }));
+}
+
+/** Bench-change deps that record events and deliveries. */
+function benchChangeDeps() {
+  const events: core.CourtEvent[] = [];
+  const jobs: unknown[] = [];
+  return {
+    events,
+    jobs,
+    deps: {
+      events: { emit: (e: core.CourtEvent) => events.push(e) },
+      enqueueDelivery: (job: unknown) => {
+        jobs.push(job);
+        return Promise.resolve();
+      },
+    },
+  };
 }
 
 const CASES: Record<string, Case> = {
@@ -158,13 +184,55 @@ const CASES: Record<string, Case> = {
     expect(own.filter((r) => r.workspaceId !== f.b.id)).toEqual([]);
     expect(await core.listRosters(f.tx, f.b.id, { forumId: f.aForumId })).toEqual([]);
   },
+  // Bench-change alerts (#389).
+  detectBenchChanges: async (f) => {
+    const before = await aAlertState(f);
+    const recorded = benchChangeDeps();
+    const input = { rosterId: f.aRoster.roster.id };
+    await expectDenied(
+      core.detectBenchChanges(f.tx, { userId: f.ub, workspaceId: f.a.id }, input, recorded.deps),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.detectBenchChanges(s, { userId: f.ub, workspaceId: f.a.id }, input, recorded.deps),
+      ),
+    );
+    await expectDenied(
+      core.detectBenchChanges(f.tx, { userId: f.ub, workspaceId: f.b.id }, input, recorded.deps),
+    );
+    expect(recorded.events).toEqual([]);
+    expect(recorded.jobs).toEqual([]);
+    expect(await aAlertState(f)).toEqual(before);
+  },
+  listAlerts: async (f) => {
+    const aAlertId = f.a.rows.bench_change_alert?.alertId ?? '';
+    expect(aAlertId).not.toBe('');
+    await expectDenied(core.listAlerts(f.tx, { userId: f.ub, workspaceId: f.a.id }));
+    await expectDenied(f.asB((s) => core.listAlerts(s, { userId: f.ub, workspaceId: f.a.id })));
+    const own = await core.listAlerts(f.tx, { userId: f.ub, workspaceId: f.b.id });
+    expect(own.map((a) => a.id)).not.toContain(aAlertId);
+    expect(own.filter((a) => a.workspaceId !== f.b.id)).toEqual([]);
+    // A's own owner still sees it.
+    const mine = await core.listAlerts(f.tx, { userId: f.ua, workspaceId: f.a.id });
+    expect(mine.map((a) => a.id)).toContain(aAlertId);
+  },
+  dismissAlert: async (f) => {
+    const before = await aAlertState(f);
+    const input = { alertId: f.a.rows.bench_change_alert?.alertId ?? '' };
+    await expectDenied(core.dismissAlert(f.tx, { userId: f.ub, workspaceId: f.a.id }, input));
+    await expectDenied(
+      f.asB((s) => core.dismissAlert(s, { userId: f.ub, workspaceId: f.a.id }, input)),
+    );
+    await expectDenied(core.dismissAlert(f.tx, { userId: f.ub, workspaceId: f.b.id }, input));
+    expect(await aAlertState(f)).toEqual(before);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)
   .filter(([, entry]) => entry.test === THIS_FILE)
   .map(([name]) => name);
 
-describe('cross-tenant roster services: ub on workspace B against A (#387)', () => {
+describe('cross-tenant roster services: ub on workspace B against A (#387, #389)', () => {
   it('has a case for every service the registry points here', () => {
     expect(registered.length).toBeGreaterThan(0);
     expect(registered.filter((name) => !(name in CASES))).toEqual([]);

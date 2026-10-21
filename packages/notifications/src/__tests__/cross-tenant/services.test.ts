@@ -111,6 +111,14 @@ const CASES: Record<string, Case> = {
     );
     expect(settings.filter((r) => r.userId === f.ub)).toEqual([]);
   },
+  setBenchAlertPartyNames: async (f) => {
+    await expectDenied(
+      notifications.setBenchAlertPartyNames(f.inA, { userId: f.ub, enabled: true }),
+    );
+    await expectDenied(
+      notifications.setBenchAlertPartyNames(f.inB, { userId: f.ua, enabled: true }),
+    );
+  },
   setCourtHoursQuiet: async (f) => {
     await expectDenied(notifications.setCourtHoursQuiet(f.inA, { userId: f.ub, enabled: true }));
     await expectDenied(notifications.setCourtHoursQuiet(f.inB, { userId: f.ua, enabled: true }));

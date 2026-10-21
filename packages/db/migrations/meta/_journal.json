@@ -337,6 +337,13 @@
       "when": 1792611968253,
       "tag": "0047_bench_roster_confirmation",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792616601762,
+      "tag": "0048_notification_bench_alert_party_names",
+      "breakpoints": true
     }
   ]
 }

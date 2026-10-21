@@ -61,6 +61,10 @@
       "cache": false,
       "passThroughEnv": ["DATABASE_URL"]
     },
+    "db:seed:demo": {
+      "cache": false,
+      "passThroughEnv": ["DATABASE_URL", "DATABASE_URL_OWNER", "NODE_ENV"]
+    },
     "db:check-rls": {
       "cache": false,
       "passThroughEnv": ["DATABASE_URL", "DATABASE_URL_OWNER"]

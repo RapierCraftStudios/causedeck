@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   ChangeRoleInput,
   CreateWorkspaceInput,
+  DEMO_WORKSPACE_SLUG,
   InviteInput,
+  isDemoWorkspaceSlug,
   RESERVED_SLUGS,
   RotateIntegrationTokenInput,
   Slug,
@@ -84,6 +86,15 @@ describe('Slug', () => {
 
   it.each(RESERVED_SLUGS)('rejects the reserved slug %j', (value) => {
     expect(Slug.safeParse(value).success).toBe(false);
+  });
+
+  it('reserves the demo workspace slug, which only the demo seed writes (#182)', () => {
+    expect(DEMO_WORKSPACE_SLUG).toBe('demo');
+    expect(Slug.safeParse('demo').success).toBe(false);
+    expect(isDemoWorkspaceSlug('demo')).toBe(true);
+    expect(isDemoWorkspaceSlug('DEMO')).toBe(true);
+    expect(isDemoWorkspaceSlug('Demo-x')).toBe(false);
+    expect(isDemoWorkspaceSlug('chennai-solo')).toBe(false);
   });
 });
 

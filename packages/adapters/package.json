@@ -12,7 +12,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:golden": "vitest run --config vitest.golden.config.ts"
+    "test:golden": "vitest run --config vitest.golden.config.ts",
+    "test:metrics": "vitest run --config vitest.metrics.config.ts",
+    "gen:fixtures": "node --experimental-strip-types src/testing/gen-fixtures.ts"
   },
   "dependencies": {
     "@causedeck/config": "workspace:*",

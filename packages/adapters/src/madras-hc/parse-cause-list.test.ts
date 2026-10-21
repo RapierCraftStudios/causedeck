@@ -385,16 +385,18 @@ function fortyPageList(): string {
 describe('parseMadrasCauseList: performance and determinism', () => {
   it('parses a 40-page supplementary-plus-main list in under 500 ms', () => {
     const text = fortyPageList();
+    // One untimed warm-up run, then the best of five: under coverage on a loaded CI shard single
+    // samples run several times slower than the parse itself (under 100 ms on a developer machine).
+    let list = parseMadrasCauseList({ kind: 'text', text, meta }, options);
     let best = Number.POSITIVE_INFINITY;
-    let list: ParsedCauseList | undefined;
-    for (let run = 0; run < 3; run += 1) {
+    for (let run = 0; run < 5; run += 1) {
       const start = performance.now();
       list = parseMadrasCauseList({ kind: 'text', text, meta }, options);
       best = Math.min(best, performance.now() - start);
     }
-    expect(list?.rows).toHaveLength(1000);
-    expect(list?.listType).toBe('daily');
-    expect(list?.rows.at(-1)?.stageNorm).toBe('supplementary');
+    expect(list.rows).toHaveLength(1000);
+    expect(list.listType).toBe('daily');
+    expect(list.rows.at(-1)?.stageNorm).toBe('supplementary');
     expect(best).toBeLessThan(500);
   });
 

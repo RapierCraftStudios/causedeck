@@ -8,3 +8,29 @@
 29dfa5e36d47b8324af16c162e18352bb4ae9031:apps/admin/__tests__/two-factor.test.ts:generic-api-key:11
 # Test-only fake integration token (#287), history only: the test now generates it per run.
 5409c7811a1be307988dc0f8a5197b7fd7ae1b05:apps/web/__tests__/integrations-actions.test.ts:generic-api-key:13
+# Adapter case keys (matchKey / parentProceedingKey such as 'CRLOP/4567/2026') in Madras HC tests and
+# golden fixtures (#395, #396, #398) trip generic-api-key on entropy alone; they are court case numbers, not secrets.
+978ddbb6907e85cff776b037eb30d40c1ce8510b:packages/adapters/src/madras-hc/case-line.test.ts:generic-api-key:43
+978ddbb6907e85cff776b037eb30d40c1ce8510b:packages/adapters/src/madras-hc/case-line.test.ts:generic-api-key:49
+978ddbb6907e85cff776b037eb30d40c1ce8510b:packages/adapters/src/__tests__/types.test.ts:generic-api-key:122
+978ddbb6907e85cff776b037eb30d40c1ce8510b:packages/adapters/src/__tests__/types.test.ts:generic-api-key:131
+978ddbb6907e85cff776b037eb30d40c1ce8510b:packages/adapters/src/__tests__/types.test.ts:generic-api-key:142
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/email-01-plain.expected.json:generic-api-key:114
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/email-01-plain.expected.json:generic-api-key:133
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/email-01-plain.expected.json:generic-api-key:234
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/email-01-plain.expected.json:generic-api-key:253
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-04-commercial-division.expected.json:generic-api-key:188
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-04-commercial-division.expected.json:generic-api-key:79
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-05-supplementary.expected.json:generic-api-key:135
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-05-supplementary.expected.json:generic-api-key:158
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-05-supplementary.expected.json:generic-api-key:167
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-05-supplementary.expected.json:generic-api-key:28
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-05-supplementary.expected.json:generic-api-key:51
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-05-supplementary.expected.json:generic-api-key:60
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-06-criminal-side.expected.json:generic-api-key:181
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-06-criminal-side.expected.json:generic-api-key:204
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-06-criminal-side.expected.json:generic-api-key:28
+a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras-hc.principal/list-06-criminal-side.expected.json:generic-api-key:51
+da75a0f7acaccc4600c6e36c2709e4b63c48bffe:packages/adapters/fixtures/in.tn.madras-hc.principal/order-11-long-over-20-pages.expected.json:generic-api-key:22
+da75a0f7acaccc4600c6e36c2709e4b63c48bffe:packages/adapters/fixtures/in.tn.madras-hc.principal/order-11-long-over-20-pages.expected.json:generic-api-key:31
+da75a0f7acaccc4600c6e36c2709e4b63c48bffe:packages/adapters/fixtures/in.tn.madras-hc.principal/order-11-long-over-20-pages.expected.json:generic-api-key:40

@@ -9,6 +9,7 @@
     "./api": "./src/api/index.ts",
     "./gstin": "./src/gstin.ts",
     "./matter-graph": "./src/matter-graph.ts",
+    "./matter-graph-inputs": "./src/matter-graph-inputs.ts",
     "./plans": "./src/plans.ts",
     "./workspace": "./src/workspace.ts"
   },

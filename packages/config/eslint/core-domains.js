@@ -14,6 +14,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   audit: Object.freeze([]),
   workspaces: Object.freeze(['audit']),
   matters: Object.freeze(['workspaces', 'audit']),
+  // The matter graph (#362): roles and role settings through workspaces, the matter actor through
+  // matters. It emits events through its own port and never imports audit or notifications.
+  'matter-graph': Object.freeze(['workspaces', 'matters']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.

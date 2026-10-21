@@ -10,6 +10,7 @@
     "./billing": "./src/billing/index.ts",
     "./jobs": "./src/jobs/index.ts",
     "./lifecycle": "./src/lifecycle/index.ts",
+    "./matter-graph": "./src/matter-graph/index.ts",
     "./matters": "./src/matters/index.ts",
     "./runtime": "./src/runtime/index.ts",
     "./support": "./src/support/index.ts",

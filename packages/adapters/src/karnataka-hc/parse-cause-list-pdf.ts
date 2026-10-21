@@ -132,7 +132,11 @@ function eventsOf(
       for (const word of line.words) {
         const index = columnIndex(columns, word.bbox.x);
         if (index < 0) leftOfTable = true;
-        else cells.set(index, [...(cells.get(index) ?? []), word]);
+        else {
+          const cell = cells.get(index);
+          if (cell === undefined) cells.set(index, [word]);
+          else cell.push(word);
+        }
       }
       const itemIndex = columns.findIndex((c) => c.column === 'itemNo');
       const item = (cells.get(itemIndex) ?? []).map((word) => word.text).join(' ');

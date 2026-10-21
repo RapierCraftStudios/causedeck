@@ -81,6 +81,14 @@ export type Anchor = z.infer<typeof AnchorSchema>;
 
 export const ConfidenceSchema = z.number().min(0).max(1);
 
+/** An advocate as printed on a list, with the side they appear for and their alias spellings. */
+export const AdvocateSchema = z.object({
+  raw: z.string().min(1),
+  aliases: z.array(z.string().min(1)),
+  side: z.enum(['petitioner', 'respondent']),
+});
+export type Advocate = z.infer<typeof AdvocateSchema>;
+
 /**
  * One cause-list row. It is never emitted without an anchor. Rows are returned to the caller, which
  * keeps the ones matching a matter and discards the rest (docs/product/09 §8.4); nothing persists.
@@ -101,6 +109,11 @@ export const ParsedListRowSchema = z.object({
   stageRaw: z.string().nullable(),
   /** The `stageMap` key for `stageRaw`, or null when no pattern matched (open enum). */
   stageNorm: z.string().nullable(),
+  /**
+   * Advocates printed on the row, verbatim with deterministic alias spellings (no
+   * transliteration), for advocate matching. Adapters whose lists name counsel set it (ADR 0017).
+   */
+  advocates: z.array(AdvocateSchema).optional(),
 });
 export type ParsedListRow = z.infer<typeof ParsedListRowSchema>;
 
@@ -121,6 +134,12 @@ export const ParsedCauseListSchema = z.object({
   forumCode: z.string().min(1),
   /** ISO date of the list, when the document states one. */
   listDate: z.string().nullable(),
+  /**
+   * `needs_ocr` when the document has no text layer to read (every page has `textCoverage` 0):
+   * nothing is guessed and the caller OCRs it (#45) and parses the OCR layout again. Absent means
+   * `parsed`.
+   */
+  status: z.enum(['parsed', 'needs_ocr']).optional(),
   rows: z.array(ParsedListRowSchema),
   diagnostics: ParseDiagnosticsSchema,
 });
@@ -176,9 +195,18 @@ export type ListUnreadable = z.infer<typeof ListUnreadableSchema>;
 export const DeepLinkParamsSchema = z.record(z.string(), z.string());
 export type DeepLinkParams = z.infer<typeof DeepLinkParamsSchema>;
 
+/**
+ * Adapter ids: a lower-case slug (`echo`) or dotted slugs in the forum catalogue's form
+ * (`in.nclt.bengaluru`, ADR 0017). The `adapter_version_adapter_id_chk` constraint matches it.
+ */
+export const ADAPTER_ID_PATTERN = /^[a-z][a-z0-9-]*(\.[a-z0-9-]+)*$/;
+
 /** The data half of an adapter: identity, declared access modes and its versioned config. */
 export const CourtAdapterDescriptorSchema = z.object({
-  id: z.string().regex(/^[a-z][a-z0-9-]*$/, 'adapter id must be a lower-case slug'),
+  /** A lower-case slug, optionally dotted like the forum catalogue's ids (`in.nclt.bengaluru`). */
+  id: z
+    .string()
+    .regex(ADAPTER_ID_PATTERN, 'adapter id must be a lower-case slug, optionally dotted'),
   version: z.string().regex(/^\d+\.\d+\.\d+$/, 'version must be semver'),
   forumCodes: z.array(z.string().min(1)).min(1),
   accessModes: AccessModesSchema,

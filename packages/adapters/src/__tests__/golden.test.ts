@@ -9,7 +9,7 @@ import path from 'node:path';
 import { resetEnvCache } from '@causedeck/config/env';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createEchoAdapter, ParsedCauseListSchema } from '../index.ts';
+import { createEchoAdapter, LayoutDocumentSchema, ParsedCauseListSchema } from '../index.ts';
 import {
   FIXTURES_ROOT,
   FixtureManifestSchema,
@@ -84,14 +84,21 @@ describe('committed fixtures', () => {
     '%s: every expected anchor quote is verbatim in its input page',
     (adapter) => {
       const dir = path.join(FIXTURES_ROOT, adapter);
-      for (const file of readdirSync(dir).filter((name) => /\.input\.(txt|html)$/.test(name))) {
-        const pages = readFileSync(path.join(dir, file), 'utf8').split('\f');
+      for (const file of readdirSync(dir).filter((name) =>
+        /\.input\.(txt|html|json)$/.test(name),
+      )) {
+        const content = readFileSync(path.join(dir, file), 'utf8');
+        // A `.json` input is a LayoutDocument (#38): anchors quote its page texts.
+        const pages = file.endsWith('.json')
+          ? LayoutDocumentSchema.parse(JSON.parse(content)).pages.map((page) => page.text)
+          : content.split('\f');
         const expected = ParsedCauseListSchema.parse(
           JSON.parse(
             readFileSync(path.join(dir, file.replace(/\.input\.[^.]+$/, '.expected.json')), 'utf8'),
           ),
         );
-        expect(expected.rows.length, file).toBeGreaterThan(0);
+        // Only a fixture named as an empty list may have no rows.
+        if (!file.startsWith('empty-list.')) expect(expected.rows.length, file).toBeGreaterThan(0);
         for (const row of expected.rows) {
           expect(pages[row.anchor.page - 1], `${file}: ${row.anchor.quote}`).toContain(
             row.anchor.quote,

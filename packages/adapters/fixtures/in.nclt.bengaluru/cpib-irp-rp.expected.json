@@ -1,0 +1,243 @@
+{
+  "adapterId": "in.nclt.bengaluru",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.nclt.bengaluru",
+  "listDate": "2026-10-21",
+  "status": "parsed",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1 CP(IB) No. 153/BB/2023 Compliance 66 Pretend Steel Suppliers Vs. Imaginary Mr. A. B. Imaginary, Mr. Mr. K. S. Madeup, Ms. Mr. Pretend Liquidator",
+        "rowIndex": 0,
+        "bbox": { "x": 24, "y": 102, "width": 722.48, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "153",
+      "caseYear": 2023,
+      "matchKey": "CPIB(BB)/153/2023",
+      "parties": "Pretend Steel Suppliers Vs. Imaginary Textiles Ltd.",
+      "stageRaw": "Compliance",
+      "stageNorm": "compliance",
+      "advocates": [
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Ms. Pretend Iyer",
+          "aliases": ["ms. pretend iyer", "pretend iyer"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2 CP(IB) No. 480/BB/2023 Hearing 12A Pretend Steel Suppliers Vs. Notional Mr. K. S. Madeup, Ms. Mr. A. B. Imaginary Mr. Fictional RP",
+        "rowIndex": 1,
+        "bbox": { "x": 24, "y": 125, "width": 703.02, "height": 34 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "480",
+      "caseYear": 2023,
+      "matchKey": "CPIB(BB)/480/2023",
+      "parties": "Pretend Steel Suppliers Vs. Notional Power Ltd.",
+      "stageRaw": "Hearing",
+      "stageNorm": "hearing",
+      "advocates": [
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3 CP(IB) No. 3/BB/2019 Admission 66 Fictional Bank Ltd. Vs. Imaginary Mr. A. B. Imaginary Ms. Pretend Iyer, Ms. Mr. Pretend Liquidator",
+        "rowIndex": 2,
+        "bbox": { "x": 24, "y": 166, "width": 722.48, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "3",
+      "caseYear": 2019,
+      "matchKey": "CPIB(BB)/3/2019",
+      "parties": "Fictional Bank Ltd. Vs. Imaginary Textiles Ltd.",
+      "stageRaw": "Admission",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Pretend Iyer",
+          "aliases": ["ms. pretend iyer", "pretend iyer"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4 CP(IB) No. 403/BB/2022 Reply 12A Pretend Steel Suppliers V/s Made-up Mr. K. S. Madeup, Mr. Mr. K. S. Madeup Mr. Fictional RP",
+        "rowIndex": 3,
+        "bbox": { "x": 24, "y": 189, "width": 703.02, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "4",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "403",
+      "caseYear": 2022,
+      "matchKey": "CPIB(BB)/403/2022",
+      "parties": "Pretend Steel Suppliers V/s Made-up Foods Ltd.",
+      "stageRaw": "Reply",
+      "stageNorm": "pleadings",
+      "advocates": [
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5 CP(IB) No. 388/BB/2022 Admission 10 Imaginary Finance Ltd. Vs. Fictional Mr. Fictional Rao Mr. Fictional Rao, Ms. Mr. Pretend Liquidator",
+        "rowIndex": 4,
+        "bbox": { "x": 24, "y": 212, "width": 722.48, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "5",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "388",
+      "caseYear": 2022,
+      "matchKey": "CPIB(BB)/388/2022",
+      "parties": "Imaginary Finance Ltd. Vs. Fictional Alloys Pvt. Ltd.",
+      "stageRaw": "Admission",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Ms. Sample Nair",
+          "aliases": ["ms. sample nair", "sample nair"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "6 CP(IB) No. 690/BB/2023 Pronouncement 66 Pretend Steel Suppliers V/s Fictional Ms. Notional Shetty, Mr. Ms. Notional Shetty Mr. Pretend Liquidator",
+        "rowIndex": 5,
+        "bbox": { "x": 24, "y": 235, "width": 722.48, "height": 43 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "6",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "690",
+      "caseYear": 2023,
+      "matchKey": "CPIB(BB)/690/2023",
+      "parties": "Pretend Steel Suppliers V/s Fictional Alloys Pvt. Ltd.",
+      "stageRaw": "Pronouncement",
+      "stageNorm": "pronouncement",
+      "advocates": [
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "respondent"
+        }
+      ]
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1"],
+    "hallsUnreadable": []
+  }
+}

@@ -1,12 +1,12 @@
 // Golden-fixture harness (#371, ADR 0015). For an adapter, every `fixtures/<id>/<name>.input.*`
-// listed in `manifest.json` is parsed and compared with `<name>.expected.json`: a readable path
-// diff, the anchors whose quote is not verbatim on its page, and a per-field precision/recall
-// table. Lawyer-supplied fixtures are never committed; they are read from
-// `ADAPTER_PRIVATE_FIXTURES_DIR` (same layout) only when it is set, and reported as a separate set
-// so they never mix with the committed counts. CI never sets it (the real-fixture gate is #119).
-// Reads files only: no network, no clock. Not exported from the package entry: tests use it, and
-// `activateAdapterVersion` (#372) gates activation on it with `privateFixturesDir: null` and the
-// candidate's `adapterVersion`.
+// listed in `manifest.json` (`.txt`, `.html`, `.pdf`, or a `LayoutDocument` as `.json`, ADR 0017)
+// is parsed and compared with `<name>.expected.json`: a readable path diff, the anchors whose
+// quote is not verbatim on its page, and a per-field precision/recall table. Lawyer-supplied
+// fixtures are never committed; they are read from `ADAPTER_PRIVATE_FIXTURES_DIR` (same layout)
+// only when it is set, and reported as a separate set so they never mix with the committed counts.
+// CI never sets it (the real-fixture gate is #119). Reads files only: no network, no clock. Not
+// exported from the package entry: tests use it, and `activateAdapterVersion` (#372) gates
+// activation on it with `privateFixturesDir: null` and the candidate's `adapterVersion`.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -17,6 +17,7 @@ import { layoutFromHtml } from '../layout/html.ts';
 import { layoutFromPdf } from '../layout/pdf.ts';
 import { resolveById } from '../registry.ts';
 import {
+  LayoutDocumentSchema,
   ParsedCauseListSchema,
   type CourtAdapter,
   type ParsedCauseList,
@@ -41,7 +42,7 @@ export const FixtureManifestSchema = z.object({
     z.object({
       file: z
         .string()
-        .regex(/^[\w.-]+\.input\.(txt|html|pdf)$/, 'must be <name>.input.txt|html|pdf'),
+        .regex(/^[\w.-]+\.input\.(txt|html|pdf|json)$/, 'must be <name>.input.txt|html|pdf|json'),
       kind: z.literal('cause_list'),
       origin: FixtureOriginSchema,
       classification: z.string().optional(),
@@ -129,6 +130,10 @@ async function inputFor(file: string, forumCode: string): Promise<ParserInput> {
     };
   }
   const content = readFileSync(file, 'utf8');
+  if (file.endsWith('.json')) {
+    // A `LayoutDocument` as a layout reader (or the OCR step, #45) would produce it.
+    return { kind: 'layout', layout: LayoutDocumentSchema.parse(JSON.parse(content)), meta };
+  }
   if (file.endsWith('.html')) {
     return { kind: 'html', html: content, layout: layoutFromHtml(content), meta };
   }

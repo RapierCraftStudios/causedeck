@@ -1,0 +1,201 @@
+{
+  "adapterId": "in.nclt.bengaluru",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.nclt.bengaluru",
+  "listDate": "2026-10-21",
+  "status": "parsed",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1 CP(IB) No. 830/BB/2026 Admission 9 Sample Credit Union Vs Imaginary Mr. A. B. Imaginary, Mr. Ms. Notional Shetty, Mr.",
+        "rowIndex": 0,
+        "bbox": { "x": 24, "y": 111, "width": 635.12, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "830",
+      "caseYear": 2026,
+      "matchKey": "CPIB(BB)/830/2026",
+      "parties": "Sample Credit Union Vs Imaginary Textiles Ltd.",
+      "stageRaw": "Admission",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2 CP(IB) No. 196/BB/2023 Reply 12A Fictional Bank Ltd. Vs Notional Power Ms. Sample Nair Mr. A. B. Imaginary, Mr.",
+        "rowIndex": 1,
+        "bbox": { "x": 24, "y": 134, "width": 633.31, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "196",
+      "caseYear": 2023,
+      "matchKey": "CPIB(BB)/196/2023",
+      "parties": "Fictional Bank Ltd. Vs Notional Power Ltd.",
+      "stageRaw": "Reply",
+      "stageNorm": "pleadings",
+      "advocates": [
+        {
+          "raw": "Ms. Sample Nair",
+          "aliases": ["ms. sample nair", "sample nair"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3 CP(IB) No. 552/BB/2020 Orders 9 Imaginary Finance Ltd. Vs Pretend Mr. K. S. Madeup Mr. K. S. Madeup, Mr. A.",
+        "rowIndex": 2,
+        "bbox": { "x": 24, "y": 157, "width": 636.26, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "552",
+      "caseYear": 2020,
+      "matchKey": "CPIB(BB)/552/2020",
+      "parties": "Imaginary Finance Ltd. Vs Pretend Infra Pvt. Ltd.",
+      "stageRaw": "Orders",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4 CP(IB) No. 560/BB/2025 Hearing 10 Imaginary Finance Ltd. Vs. Notional Mr. A. B. Imaginary Mr. Fictional Rao",
+        "rowIndex": 3,
+        "bbox": { "x": 24, "y": 180, "width": 614.13, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "4",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "560",
+      "caseYear": 2025,
+      "matchKey": "CPIB(BB)/560/2025",
+      "parties": "Imaginary Finance Ltd. Vs. Notional Power Ltd.",
+      "stageRaw": "Hearing",
+      "stageNorm": "hearing",
+      "advocates": [
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5 CP(IB) No. 676/BB/2020 Reply 66 Sample Credit Union V/s Sample Ms. Pretend Iyer, Mr. K. Ms. Sample Nair",
+        "rowIndex": 4,
+        "bbox": { "x": 24, "y": 203, "width": 613.2, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "5",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "676",
+      "caseYear": 2020,
+      "matchKey": "CPIB(BB)/676/2020",
+      "parties": "Sample Credit Union V/s Sample Logistics LLP",
+      "stageRaw": "Reply",
+      "stageNorm": "pleadings",
+      "advocates": [
+        {
+          "raw": "Ms. Pretend Iyer",
+          "aliases": ["ms. pretend iyer", "pretend iyer"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Sample Nair",
+          "aliases": ["ms. sample nair", "sample nair"],
+          "side": "respondent"
+        }
+      ]
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1"],
+    "hallsUnreadable": []
+  }
+}

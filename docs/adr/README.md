@@ -24,6 +24,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0014](0014-forum-catalogue-and-deep-links.md) | Forum catalogue: hosts as data, new-window deep links, owner-role versioned seed | Proposed | 2026-10-21 | — |
 | [0015](0015-court-adapter-framework.md) | Court adapter framework: no network, registry-enforced access, config versus parser | Proposed | 2026-10-21 | — |
 | [0016](0016-proceeding-state-machine-and-next-date-rules.md) | Proceeding state machine and canonical next-date rules | Proposed | 2026-10-21 | — |
+| [0017](0017-nclt-bengaluru-table-parsing.md) | NCLT Bengaluru cause lists: table parsing from word coordinates | Proposed | 2026-10-21 | — |
 
 ## Statuses
 

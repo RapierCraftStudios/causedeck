@@ -111,13 +111,14 @@ describe('forum catalogue data (#34)', () => {
     for (const f of FORUM_CATALOGUE.filter((e) => e.code.startsWith('in.ka.bengaluru-urban.'))) {
       expect(f).toMatchObject({ adapterId: 'in.ka.bengaluru-urban.district', adapterLevel: 'A0' });
     }
+    // NCLT Bengaluru is A1 since its table adapter shipped (#38); the level is data, not code.
     expect(byCode('in.nclt.bengaluru')).toMatchObject({
       adapterId: 'in.nclt.bengaluru',
-      adapterLevel: 'A0',
+      adapterLevel: 'A1',
     });
-    // Only the two HC adapters ship at A1 here.
+    // The two HC adapters (three forums) and NCLT Bengaluru ship at A1.
     expect(FORUM_CATALOGUE.filter((f) => f.adapterLevel === 'A1').map((f) => f.code)).toHaveLength(
-      3,
+      4,
     );
   });
 

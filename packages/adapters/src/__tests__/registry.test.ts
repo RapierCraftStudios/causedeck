@@ -48,6 +48,18 @@ describe('adapter registry', () => {
     expect(adding(variant({ id: 'noforum', forumCodes: [] }))).toThrow(AdapterRegistrationError);
   });
 
+  it('accepts dotted ids in the forum catalogue form and still rejects malformed ones (#38)', () => {
+    const registry = createAdapterRegistry();
+    const dotted = variant({ id: 'in.nclt.bengaluru', forumCodes: ['test.dotted.principal'] });
+    registry.register(dotted);
+    expect(registry.resolveById('in.nclt.bengaluru')).toBe(dotted);
+    for (const id of ['in..nclt', 'in.nclt.', '.in', 'In.Nclt', 'in.nclt bengaluru']) {
+      expect(() => {
+        createAdapterRegistry().register(variant({ id, forumCodes: ['test.bad.principal'] }));
+      }, id).toThrow(AdapterRegistrationError);
+    }
+  });
+
   it('has a process-wide default registry', () => {
     const adapter = variant({ id: 'default-test', forumCodes: ['test.default.principal'] });
     register(adapter);

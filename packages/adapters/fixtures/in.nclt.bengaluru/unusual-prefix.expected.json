@@ -1,0 +1,243 @@
+{
+  "adapterId": "in.nclt.bengaluru",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.nclt.bengaluru",
+  "listDate": "2026-10-21",
+  "status": "parsed",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1 TCP No. 970/BB/2023 Pronouncement 66 Sample Credit Union Vs Sample Ms. Notional Shetty Ms. Notional Shetty, Mr.",
+        "rowIndex": 0,
+        "bbox": { "x": 24, "y": 102, "width": 635.12, "height": 34 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "TCP",
+      "caseType": "TCP",
+      "seatSuffix": "BB",
+      "caseNumber": "970",
+      "caseYear": 2023,
+      "matchKey": "TCP(BB)/970/2023",
+      "parties": "Sample Credit Union Vs Sample Logistics LLP",
+      "stageRaw": "Pronouncement",
+      "stageNorm": "pronouncement",
+      "advocates": [
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2 TCP No. 133/BB/2024 Pronouncement 230-232 Pretend Steel Suppliers V/s Pretend Mr. K. S. Madeup Ms. Pretend Iyer, Ms.",
+        "rowIndex": 1,
+        "bbox": { "x": 24, "y": 143, "width": 627.4, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "TCP",
+      "caseType": "TCP",
+      "seatSuffix": "BB",
+      "caseNumber": "133",
+      "caseYear": 2024,
+      "matchKey": "TCP(BB)/133/2024",
+      "parties": "Pretend Steel Suppliers V/s Pretend Infra Pvt. Ltd.",
+      "stageRaw": "Pronouncement",
+      "stageNorm": "pronouncement",
+      "advocates": [
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Pretend Iyer",
+          "aliases": ["ms. pretend iyer", "pretend iyer"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Ms. Sample Nair",
+          "aliases": ["ms. sample nair", "sample nair"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3 CP No. 262/BB/2024 Admission 60(5) Sample Credit Union Vs Made-up Mr. K. S. Madeup, Ms. Mr. Fictional Rao, Mr. K.",
+        "rowIndex": 2,
+        "bbox": { "x": 24, "y": 166, "width": 635.64, "height": 25 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "CP",
+      "caseType": "CP",
+      "seatSuffix": "BB",
+      "caseNumber": "262",
+      "caseYear": 2024,
+      "matchKey": "CP(BB)/262/2024",
+      "parties": "Sample Credit Union Vs Made-up Foods Ltd.",
+      "stageRaw": "Admission",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Sample Nair",
+          "aliases": ["ms. sample nair", "sample nair"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4 CP(CAA) No. 366/BB/2021 Hearing 230-232 Imaginary Finance Ltd. V/s Notional Mr. K. S. Madeup, Mr. A. Mr. A. B. Imaginary",
+        "rowIndex": 3,
+        "bbox": { "x": 24, "y": 198, "width": 620.37, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "4",
+      "caseTypeRaw": "CP(CAA)",
+      "caseType": "CPCAA",
+      "seatSuffix": "BB",
+      "caseNumber": "366",
+      "caseYear": 2021,
+      "matchKey": "CPCAA(BB)/366/2021",
+      "parties": "Imaginary Finance Ltd. V/s Notional Power Ltd.",
+      "stageRaw": "Hearing",
+      "stageNorm": "hearing",
+      "advocates": [
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5 CP(CAA) No. 858/BB/2022 Reply 230-232 Imaginary Finance Ltd. Vs. Imaginary Ms. Pretend Iyer Mr. A. B. Imaginary",
+        "rowIndex": 4,
+        "bbox": { "x": 24, "y": 221, "width": 620.37, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "5",
+      "caseTypeRaw": "CP(CAA)",
+      "caseType": "CPCAA",
+      "seatSuffix": "BB",
+      "caseNumber": "858",
+      "caseYear": 2022,
+      "matchKey": "CPCAA(BB)/858/2022",
+      "parties": "Imaginary Finance Ltd. Vs. Imaginary Textiles Ltd.",
+      "stageRaw": "Reply",
+      "stageNorm": "pleadings",
+      "advocates": [
+        {
+          "raw": "Ms. Pretend Iyer",
+          "aliases": ["ms. pretend iyer", "pretend iyer"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "6 CP(CAA) No. 818/BB/2025 Pronouncement 9 Imaginary Finance Ltd. Vs Made-up Ms. Notional Shetty, Mr. Ms. Notional Shetty, Ms.",
+        "rowIndex": 5,
+        "bbox": { "x": 24, "y": 244, "width": 636.53, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "6",
+      "caseTypeRaw": "CP(CAA)",
+      "caseType": "CPCAA",
+      "seatSuffix": "BB",
+      "caseNumber": "818",
+      "caseYear": 2025,
+      "matchKey": "CPCAA(BB)/818/2025",
+      "parties": "Imaginary Finance Ltd. Vs Made-up Foods Ltd.",
+      "stageRaw": "Pronouncement",
+      "stageNorm": "pronouncement",
+      "advocates": [
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Mr. Fictional Rao",
+          "aliases": ["mr. fictional rao", "fictional rao"],
+          "side": "petitioner"
+        },
+        {
+          "raw": "Ms. Notional Shetty",
+          "aliases": ["ms. notional shetty", "notional shetty"],
+          "side": "respondent"
+        },
+        {
+          "raw": "Ms. Sample Nair",
+          "aliases": ["ms. sample nair", "sample nair"],
+          "side": "respondent"
+        }
+      ]
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1"],
+    "hallsUnreadable": []
+  }
+}

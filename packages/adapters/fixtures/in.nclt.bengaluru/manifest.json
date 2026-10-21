@@ -1,0 +1,103 @@
+{
+  "adapter": "in.nclt.bengaluru",
+  "classification": "FICTIONAL",
+  "note": "Synthetic NCLT Bengaluru lists from src/nclt-blr/synthetic/generate.ts (#38). Every party, advocate, professional and member is fictional; real-list validation is #119.",
+  "fixtures": [
+    {
+      "file": "cpib-irp-rp.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "empty-list.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "extra-columns.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "jittered-columns.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "multi-page-repeated-headers-pdf.input.pdf",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "multi-page-repeated-headers.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "nested-ias-pdf.input.pdf",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "nested-ias.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "no-counsel-columns.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "standard-10-row-pdf.input.pdf",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "standard-10-row.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "two-coram-sections-pdf.input.pdf",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "two-coram-sections.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "unusual-prefix.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "vc-notice.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "wrapped-cells.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    }
+  ]
+}

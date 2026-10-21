@@ -373,6 +373,34 @@ export const ConfirmNextDateInput = z.strictObject({
 export const GetCanonicalNextDateInput = z.strictObject({ proceedingId: uuid });
 
 // ---------------------------------------------------------------------------------------------
+// Timeline (#366, part 5 of #33). `from` and `to` are inclusive court days (Asia/Kolkata);
+// `bench_change` is reserved for #39 and matches nothing yet.
+
+export const TIMELINE_EVENT_KINDS = [
+  'listing',
+  'hearing',
+  'order',
+  'obligation_due',
+  'obligation_closed',
+  'state_change',
+  'document_added',
+  'bench_change',
+] as const;
+export type TimelineEventKind = (typeof TIMELINE_EVENT_KINDS)[number];
+
+export const GetMatterTimelineInput = z
+  .strictObject({
+    matterId: uuid,
+    from: day.optional(),
+    to: day.optional(),
+    kinds: z.array(z.enum(TIMELINE_EVENT_KINDS)).min(1, 'At least one kind').optional(),
+  })
+  .refine((value) => value.from === undefined || value.to === undefined || value.from <= value.to, {
+    path: ['to'],
+    message: 'to must not be before from',
+  });
+
+// ---------------------------------------------------------------------------------------------
 // Types: `…Input` is what a caller passes, `Parsed…` what a service works with.
 
 export type CreateMatterInput = z.input<typeof CreateMatterInput>;
@@ -410,3 +438,5 @@ export type ParsedProposeNextDate = z.output<typeof ProposeNextDateInput>;
 export type ConfirmNextDateInput = z.input<typeof ConfirmNextDateInput>;
 export type ParsedConfirmNextDate = z.output<typeof ConfirmNextDateInput>;
 export type GetCanonicalNextDateInput = z.input<typeof GetCanonicalNextDateInput>;
+export type GetMatterTimelineInput = z.input<typeof GetMatterTimelineInput>;
+export type ParsedGetMatterTimeline = z.output<typeof GetMatterTimelineInput>;

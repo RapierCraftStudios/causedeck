@@ -351,6 +351,13 @@
       "when": 1792617752528,
       "tag": "0049_karnataka_hc_adapter_v1",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792621923164,
+      "tag": "0050_karnataka_hc_adapter_v1_1",
+      "breakpoints": true
     }
   ]
 }

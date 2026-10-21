@@ -1,5 +1,5 @@
 // The Karnataka HC adapter skeleton (#404): identity, registration, access modes, the reserved
-// display-board legend slot, config, deep links and well-formed empty parses until parts 2 to 4.
+// display-board legend slot, config, deep links; the list parsers (#405) wired into parseCauseList.
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -40,7 +40,7 @@ describe('Karnataka HC adapter (#404)', () => {
   it('registers under the dotted id the catalogue binds', () => {
     const adapter = createKarnatakaHcAdapter();
     expect(adapter.id).toBe('in.ka.karnataka-hc.bengaluru');
-    expect(adapter.version).toBe('1.0.0');
+    expect(adapter.version).toBe('1.1.0');
     expect(adapter.caseTypeCompleteness).toBe('partial');
     expect(CourtAdapterDescriptorSchema.safeParse(adapter).success).toBe(true);
     expect(bengaluru.adapterId).toBe(adapter.id);
@@ -101,18 +101,32 @@ describe('Karnataka HC adapter (#404)', () => {
     expect(createKarnatakaHcAdapter().buildDeepLink('cause_list', {})).toBeNull();
   });
 
-  it('returns well-formed empty parses until the parsers land', async () => {
+  it('reads HTML and PDF lists, and fails a list input without its content (#405)', async () => {
     const adapter = createKarnatakaHcAdapter();
+    expect(adapter.version).toBe('1.1.0');
     const list = await adapter.parseCauseList(input);
     expect(ParsedCauseListSchema.parse(list)).toMatchObject({
       adapterId: KARNATAKA_HC_ADAPTER_ID,
+      adapterVersion: '1.1.0',
       forumCode: input.meta.forumCode,
-      status: 'empty',
+      status: 'failed',
       source: 'pdf',
       publishedAt: null,
       listType: null,
       rows: [],
     });
+    const html = await adapter.parseCauseList({
+      kind: 'html',
+      html:
+        '<div>COURT HALL NO. 1</div><table><tr><th>Sl. No.</th><th>Case No.</th></tr>' +
+        '<tr><td>1</td><td><a href="#">WP No. 1/2026</a></td></tr></table>',
+      meta: input.meta,
+    });
+    expect(html).toMatchObject({ status: 'ok', source: 'html' });
+    expect(html.rows.map((row) => row.matchKey)).toEqual(['WP/1/2026']);
+    // Text and email lists are not read yet: a well-formed empty result.
+    const text = await adapter.parseCauseList({ kind: 'text', text: 'x', meta: input.meta });
+    expect(text).toMatchObject({ status: 'empty', source: 'text', rows: [] });
     expect(ParsedOrderHeaderSchema.parse(adapter.parseOrderHeader(input))).toMatchObject({
       authenticityFlag: null,
       caseRefs: [],
@@ -131,6 +145,9 @@ describe('Karnataka HC adapter (#404)', () => {
       'config/list-grammar.ts',
       'config/column-synonyms.ts',
       'config/order-cues.ts',
+      'list-reader.ts',
+      'parse-cause-list-html.ts',
+      'parse-cause-list-pdf.ts',
     ];
     for (const file of files) {
       const source = readFileSync(path.join(import.meta.dirname, file), 'utf8');

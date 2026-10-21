@@ -1,7 +1,8 @@
 // Karnataka High Court adapter, Principal Bench at Bengaluru (#404, part 1 of #37; A1). Identity,
 // versioned config, declared access modes, the case-type table, the case-line grammar, advocate
-// keys and official deep links. The list, order-header, direction-cue and registry parsers land in
-// parts 2 to 4 (#405-#407): until then they return well-formed empty results. Everything the
+// keys and official deep links. Cause lists are read from a saved HTML list page or the layout of a
+// list PDF (#405, part 2); the order-header, direction-cue and registry parsers land in parts 3 and
+// 4 (#406, #407): until then they return well-formed empty results. Everything the
 // adapter reads is a document the lawyer supplied; links open the court's own pages in a new window
 // and nothing here requests a URL. The Dharwad and Kalaburagi Benches are disabled forums (v2).
 // Every layout assumption is recorded in ADR 0019.
@@ -24,6 +25,8 @@ import {
 import { KARNATAKA_HC_HALL_HEADING, KARNATAKA_HC_ROW_PATTERN } from './config/list-grammar.ts';
 import { KARNATAKA_HC_DIRECTION_PHRASES } from './config/order-cues.ts';
 import { KARNATAKA_HC_STAGE_MAP } from './config/stage-map.ts';
+import { parseKarnatakaCauseListHtml } from './parse-cause-list-html.ts';
+import { parseKarnatakaCauseListPdf } from './parse-cause-list-pdf.ts';
 
 export * from './advocate-keys.ts';
 export * from './case-line.ts';
@@ -32,9 +35,13 @@ export * from './config/column-synonyms.ts';
 export * from './config/list-grammar.ts';
 export * from './config/order-cues.ts';
 export * from './config/stage-map.ts';
+export { isKarnatakaListLine, karnatakaListTypeOf, karnatakaPublishedAt } from './list-reader.ts';
+export { parseKarnatakaCauseListHtml } from './parse-cause-list-html.ts';
+export type { KarnatakaCauseListOptions } from './parse-cause-list-html.ts';
+export { parseKarnatakaCauseListPdf } from './parse-cause-list-pdf.ts';
 
 export const KARNATAKA_HC_ADAPTER_ID = 'in.ka.karnataka-hc.bengaluru';
-export const KARNATAKA_HC_VERSION = '1.0.0';
+export const KARNATAKA_HC_VERSION = '1.1.0';
 export const KARNATAKA_HC_FORUM_CODES = ['in.ka.karnataka-hc.bengaluru'] as const;
 
 /** Lists and orders only from the lawyer; case status and the display board are never read. */
@@ -116,6 +123,22 @@ function emptyCauseList(version: string, input: ParserInput): ParsedCauseList {
   };
 }
 
+/**
+ * A supplied list: HTML through the HTML parser, a PDF layout through the PDF parser. An HTML or
+ * PDF input without its content cannot be read (`failed`); text and email lists are not read yet.
+ */
+export function parseKarnatakaCauseList(
+  input: ParserInput,
+  options: { config: AdapterConfig; version: string },
+): ParsedCauseList {
+  if (input.kind === 'html' && input.html !== undefined) {
+    return parseKarnatakaCauseListHtml(input, options);
+  }
+  if (input.layout !== undefined) return parseKarnatakaCauseListPdf(input, options);
+  const empty = emptyCauseList(options.version, input);
+  return input.kind === 'html' || input.kind === 'layout' ? { ...empty, status: 'failed' } : empty;
+}
+
 function emptyOrderHeader(): ParsedOrderHeader {
   return {
     caseTypeRaw: null,
@@ -153,7 +176,7 @@ export function createKarnatakaHcAdapter(
     links: config.links,
     fixtures: config.fixtures,
     health: config.health,
-    parseCauseList: (input) => Promise.resolve(emptyCauseList(version, input)),
+    parseCauseList: (input) => Promise.resolve(parseKarnatakaCauseList(input, { config, version })),
     parseOrderHeader: () => emptyOrderHeader(),
     findDirectionCues: () => [],
     buildDeepLink(target: DeepLinkTarget, params: DeepLinkParams) {

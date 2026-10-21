@@ -1,5 +1,6 @@
-// The Karnataka HC `adapter_version` 1.0.0 row (#404, migration 0049): active, accepted by the DB
-// checks, and equal to the bundled config with a valid checksum, so the loader serves it.
+// The Karnataka HC `adapter_version` rows: 1.0.0 (#404, migration 0049) retired by 1.1.0 (#405,
+// migration 0050), which is active, accepted by the DB checks, and equal to the bundled config with
+// a valid checksum, so the loader serves it.
 import { adapterVersion } from '@causedeck/db/schema';
 import { withTestDb } from '@causedeck/db/testing';
 import { and, eq } from 'drizzle-orm';
@@ -10,23 +11,26 @@ import { createAdapterConfigLoader, verifyStoredConfig } from '../config/loader.
 
 import { KARNATAKA_HC_ADAPTER_ID, KARNATAKA_HC_CONFIG } from './index.ts';
 
-describe('Karnataka HC adapter_version 1.0.0 (#404)', () => {
+describe('Karnataka HC adapter_version 1.1.0 (#404, #405)', () => {
   it('is active after the migrations, with the bundled config and its checksum', async () => {
     await withTestDb(async (tx) => {
       const rows = await tx
         .select()
         .from(adapterVersion)
         .where(eq(adapterVersion.adapterId, KARNATAKA_HC_ADAPTER_ID));
-      expect(rows).toHaveLength(1);
-      const [row] = rows;
-      expect(row).toMatchObject({ version: '1.0.0', status: 'active', fixturesDigest: null });
+      expect(rows.map((r) => [r.version, r.status]).sort()).toEqual([
+        ['1.0.0', 'retired'],
+        ['1.1.0', 'active'],
+      ]);
+      const row = rows.find((r) => r.version === '1.1.0');
+      expect(row).toMatchObject({ status: 'active', fixturesDigest: null });
       expect(row?.activatedAt).toBeInstanceOf(Date);
       if (row === undefined) return;
       const stored = await verifyStoredConfig(KARNATAKA_HC_ADAPTER_ID, row);
       expect(stored.config).toEqual(KARNATAKA_HC_CONFIG);
       expect(row.checksum).toBe(await configChecksum(KARNATAKA_HC_CONFIG));
       const loaded = await createAdapterConfigLoader({ db: tx }).load(KARNATAKA_HC_ADAPTER_ID);
-      expect(loaded).toMatchObject({ source: 'db', version: '1.0.0' });
+      expect(loaded).toMatchObject({ source: 'db', version: '1.1.0' });
     });
   });
 
@@ -34,7 +38,7 @@ describe('Karnataka HC adapter_version 1.0.0 (#404)', () => {
     await withTestDb(async (tx) => {
       await tx.insert(adapterVersion).values({
         adapterId: KARNATAKA_HC_ADAPTER_ID,
-        version: '1.0.1',
+        version: '1.1.1',
         config: {},
         checksum: 'b'.repeat(64),
       });
@@ -44,7 +48,7 @@ describe('Karnataka HC adapter_version 1.0.0 (#404)', () => {
         .where(
           and(
             eq(adapterVersion.adapterId, KARNATAKA_HC_ADAPTER_ID),
-            eq(adapterVersion.version, '1.0.1'),
+            eq(adapterVersion.version, '1.1.1'),
           ),
         );
       expect(draft).toEqual({ status: 'draft' });

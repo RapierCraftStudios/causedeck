@@ -170,8 +170,14 @@ export const ParsedListRowSchema = z.object({
   listNo: z.string().min(1).optional(),
   /** The list-type key of the row's list (daily, supplementary, ...), or null. */
   listType: z.string().nullable().optional(),
-  /** The office-objection marker printed on the row, verbatim, or null. */
-  registryObjection: z.string().nullable().optional(),
+  /**
+   * The row sits under a registry-objections heading (`true`, #405), or the office-objection marker
+   * printed on the row, verbatim; null when neither.
+   */
+  registryObjection: z
+    .union([z.literal(true), z.string().min(1)])
+    .nullable()
+    .optional(),
   /** The bracketed category after the case number, e.g. `GM-RES`. */
   subCategory: z.string().min(1).optional(),
   /** A number-series hint only (`100xxx`); never used to infer a sequence. */

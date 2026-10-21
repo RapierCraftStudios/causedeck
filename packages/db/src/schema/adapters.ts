@@ -57,8 +57,7 @@ export const adapterVersion = pgTable(
       .where(sql`status = 'active'`),
     check(
       'adapter_version_adapter_id_chk',
-      // Same rule as ADAPTER_ID_PATTERN (packages/adapters/src/types.ts): dotted ids since #38.
-      sql`adapter_id ~ '^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$'`,
+      sql`adapter_id ~ '^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$'`,
     ),
     check('adapter_version_semver_chk', sql`version ~ '^[0-9]+\\.[0-9]+\\.[0-9]+$'`),
     check('adapter_version_checksum_chk', sql`checksum ~ '^[0-9a-f]{64}$'`),

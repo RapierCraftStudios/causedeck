@@ -1,5 +1,5 @@
 {
-  "id": "ffa8430f-42e4-48e8-a3d0-ad1175add758",
+  "id": "2e7d2772-6387-4f19-a85f-de862cc28a33",
   "prevId": "ec0623fb-639a-4756-8610-d7b7ca3f5959",
   "version": "7",
   "dialect": "postgresql",
@@ -496,7 +496,7 @@
       "checkConstraints": {
         "adapter_version_adapter_id_chk": {
           "name": "adapter_version_adapter_id_chk",
-          "value": "adapter_id ~ '^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$'"
+          "value": "adapter_id ~ '^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$'"
         },
         "adapter_version_semver_chk": {
           "name": "adapter_version_semver_chk",

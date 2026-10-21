@@ -146,20 +146,23 @@ const METADATA_START =
 const TIME = /\b(\d{1,2})[:.](\d{2})\s*([ap])\.?\s*m\b\.?/i;
 const PARTIES_SPLIT = /\s+(?:vs\.?|v\/s\.?|versus)\s+/i;
 const COUNSEL_SPLIT = /\s*[,;]\s*/;
-const HONORIFIC = /^(?:mr|mrs|ms|dr|adv|advocate|sr|senior|shri|smt|sri|m\/s)\.?$/i;
+const HONORIFIC = /^(?:MR|MRS|MS|DR|ADV|ADVOCATE|SR|SENIOR|SHRI|SMT|SRI|M\/S)$/;
 
-/** Deterministic alias spellings of a counsel name: folded, without honorifics, initials joined. */
+/**
+ * Deterministic alias spellings of a counsel name in the shared convention (`AdvocateSchema`):
+ * upper case, titles stripped, initials split, never transliterated; plus the initials run
+ * together. `Mr. K. S. Madeup` gives `K S MADEUP`, `MADEUP K S` and `KS MADEUP`.
+ */
 export function counselAliases(raw: string): string[] {
-  const folded = raw.toLowerCase().replace(/\s+/g, ' ').trim();
-  const tokens = folded
+  const words = raw
+    .toUpperCase()
     .replace(/\(.*?\)/g, ' ')
     .split(/[\s.]+/)
-    .filter((token) => token !== '');
-  const bare = tokens.filter((token) => !HONORIFIC.test(token));
-  const initials = bare.filter((token) => token.length === 1).join('');
-  const names = bare.filter((token) => token.length > 1);
-  const aliases = [folded, bare.join(' ')];
-  if (initials !== '') aliases.push([initials, ...names].join(' '), [...names, initials].join(' '));
+    .filter((word) => word !== '' && !HONORIFIC.test(word));
+  const initials = words.filter((word) => word.length === 1);
+  const names = words.filter((word) => word.length > 1);
+  const aliases = [[...initials, ...names].join(' '), [...names, ...initials].join(' ')];
+  if (initials.length > 1) aliases.push([initials.join(''), ...names].join(' '));
   return [...new Set(aliases.filter((alias) => alias !== ''))];
 }
 

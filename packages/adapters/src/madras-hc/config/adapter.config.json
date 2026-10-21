@@ -1,0 +1,177 @@
+{
+  "nomenclature": {
+    "caseTypes": {
+      "WP": ["Writ Petition"],
+      "WPCRL": ["Crl. W.P."],
+      "WA": ["Writ Appeal"],
+      "REVAPLW": [],
+      "CONTP": ["Contempt Petition"],
+      "CONTA": ["Contempt Appeal"],
+      "HCP": ["Habeas Corpus Petition"],
+      "SA": ["Second Appeal"],
+      "CMSA": [],
+      "AS": ["Appeal Suit"],
+      "CMA": ["Civil Miscellaneous Appeal"],
+      "CMANPD": [],
+      "CMAPD": [],
+      "CRP": ["Civil Revision Petition"],
+      "CRPNPD": [],
+      "CRPPD": [],
+      "CROSOBJ": ["Cross Objection"],
+      "TRCMA": [],
+      "TRAS": [],
+      "TRCMP": [],
+      "REVAPLC": [],
+      "CRLOP": ["Criminal Original Petition"],
+      "CRLA": ["Criminal Appeal"],
+      "CRLRC": ["Criminal Revision Case"],
+      "CRLREF": [],
+      "RT": ["Referred Trial"],
+      "CS": ["Civil Suit"],
+      "OP": ["Original Petition"],
+      "OA": ["Original Application"],
+      "OSA": ["Original Side Appeal"],
+      "A": ["Application"],
+      "OMS": [],
+      "TOS": [],
+      "LTS": [],
+      "EP": ["Execution Petition"],
+      "IP": [],
+      "IA": [],
+      "IC": [],
+      "IN": [],
+      "CP": ["Company Petition"],
+      "COMPA": [],
+      "COMAPEL": [],
+      "REVAPLO": [],
+      "REVPET": [],
+      "TRCS": [],
+      "ELP": ["Election Petition"],
+      "SCP": [],
+      "SCMP": [],
+      "CSCOMMDIV": ["C.S. (COM.DIV.)"],
+      "OPCOMMDIV": ["O.P. (COM.DIV.)"],
+      "APPEALCAD": [],
+      "OSACAD": [],
+      "ARBAPPLN": ["Arb. Application"],
+      "ARBOP": ["Arbitration Original Petition"],
+      "ARBOPCOMDIV": ["Arb. O.P. (COMM DIV)"],
+      "ARBAPPEAL": [],
+      "ARBEP": [],
+      "TOPTM": [],
+      "TCMATM": [],
+      "TOPCR": [],
+      "TOPPT": [],
+      "TOPGI": [],
+      "TC": ["Tax Case"],
+      "TCA": [],
+      "TCP": [],
+      "TCR": [],
+      "TCMP": [],
+      "TMA": [],
+      "TMSA": [],
+      "WMP": ["Writ Miscellaneous Petition"],
+      "WPMP": [],
+      "WAMP": [],
+      "WVMP": [],
+      "VCMP": [],
+      "HCMP": [],
+      "CRLMP": ["Criminal Miscellaneous Petition"],
+      "CMP": ["Civil Miscellaneous Petition"],
+      "SUBA": [],
+      "SUBAPPL": [],
+      "APPL": [],
+      "RCMP": []
+    },
+    "seatSuffixes": ["MD"]
+  },
+  "listing": {
+    "hallHeading": "^COURT\\s+(?:HALL\\s+)?NO\\.?\\s*([0-9]+[A-Z]?)\\b",
+    "rowPattern": "^(\\d{1,4}[A-Z]?|\\d{1,4}\\([a-z]\\))(?:\\.|(?<=\\)))\\s*(.+)$"
+  },
+  "orderParser": {
+    "directionPhrases": [
+      "post on",
+      "call on",
+      "list on",
+      "list after",
+      "post the matter after",
+      "post after",
+      "within",
+      "issue notice",
+      "orders reserved",
+      "dispensed"
+    ]
+  },
+  "calendar": {
+    "timeZone": "Asia/Kolkata",
+    "dateOrder": "dmy"
+  },
+  "languageProfile": {
+    "scripts": ["Latn"],
+    "languages": ["en"]
+  },
+  "links": {
+    "cause_list": "cause_list",
+    "status": "case_status",
+    "orders": "orders",
+    "e_copy": "e_copy",
+    "aims": "aims"
+  },
+  "fixtures": {
+    "manifest": "fixtures/in.tn.madras-hc.principal/manifest.json",
+    "fictional": true
+  },
+  "health": {
+    "minAnchoredRatio": 0.9,
+    "maxUnmappedHeadings": 3
+  },
+  "stageMap": [
+    {
+      "pattern": "^(?:FOR\\s+)?ADMISSION\\b",
+      "flags": "i",
+      "key": "admission"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?ORDERS\\b",
+      "flags": "i",
+      "key": "orders"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?(?:FINAL\\s+)?HEARING\\b",
+      "flags": "i",
+      "key": "hearing"
+    },
+    {
+      "pattern": "^FRESH\\b|^NEW\\s+(?:CASES|ADMISSION)\\b",
+      "flags": "i",
+      "key": "fresh"
+    },
+    {
+      "pattern": "^AFTER\\s+NOTICE\\b",
+      "flags": "i",
+      "key": "after_notice"
+    },
+    {
+      "pattern": "^PART[\\s-]*HEARD\\b",
+      "flags": "i",
+      "key": "part_heard"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?MENTION(?:ING)?\\b",
+      "flags": "i",
+      "key": "mentioning"
+    },
+    {
+      "pattern": "^SUPPLEMENTARY\\b",
+      "flags": "i",
+      "key": "supplementary"
+    },
+    {
+      "pattern": "^ADVANCE\\b",
+      "flags": "i",
+      "key": "advance"
+    }
+  ],
+  "twoDigitYearPivot": 50
+}

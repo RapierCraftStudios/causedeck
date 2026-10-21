@@ -30,7 +30,7 @@ export const NCLT_ADAPTER_ID = 'in.nclt.bengaluru';
 export const NCLT_FORUM_CODE = 'in.nclt.bengaluru';
 export const NCLT_VERSION = '1.0.0';
 
-/** Recorded with the access-mode registry rows (migration 0045) until counsel reviews them. */
+/** Recorded with the access-mode registry rows (migration 0046) until counsel reviews them. */
 export const NCLT_ACCESS_NOTE = 'NCLT T&C not yet read, counsel review pending (#118)';
 
 export const NCLT_ACCESS_MODES: AccessModes = {
@@ -130,8 +130,11 @@ export function toParsedCauseList(
     adapterVersion: meta.adapterVersion,
     forumCode: meta.forumCode,
     listDate: parsed.listDate,
-    status: parsed.status,
+    status: parsed.status === 'needs_ocr' ? 'needs_ocr' : rows.length === 0 ? 'empty' : 'ok',
     rows,
+    unparsedRows: parsed.unparsedRows.flatMap(({ anchor, reason }) =>
+      anchor === null ? [] : [{ anchor, text: anchor.quote, reason }],
+    ),
     diagnostics: {
       unmappedHeadings,
       unknownCaseTypes: [...parsed.diagnostics.unknownPrefixes],

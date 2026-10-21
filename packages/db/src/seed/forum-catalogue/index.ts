@@ -19,7 +19,7 @@ import { KARNATAKA_HC } from './karnataka-hc.ts';
 import { MADRAS_HC } from './madras-hc.ts';
 import { TRIBUNALS } from './tribunals.ts';
 
-export const FORUM_CATALOGUE_VERSION = '2026-10-21.2';
+export const FORUM_CATALOGUE_VERSION = '2026-10-21.3';
 
 /** The `catalogue_meta` key holding FORUM_CATALOGUE_VERSION. */
 export const FORUM_CATALOGUE_META_KEY = 'forum_catalogue';

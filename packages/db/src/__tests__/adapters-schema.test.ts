@@ -84,6 +84,19 @@ describe('adapter_version (#372)', () => {
     });
   });
 
+  it('accepts dotted adapter ids such as the catalogue uses (#395, migration 0045)', async () => {
+    await withTestDb(async (tx) => {
+      const suffix = randomUUID().slice(0, 8);
+      await insertVersion(tx, { adapterId: `in.tn.madras-hc.principal-${suffix}` });
+      await insertVersion(tx, { adapterId: `${adapterSlug()}.a.b-c` });
+      for (const adapterId of ['Bad.Id', 'a..b', 'a.', '.a', 'a.1b']) {
+        expect(await attempt(tx, (sp) => insertVersion(sp, { adapterId })), adapterId).toBe(
+          '23514',
+        );
+      }
+    });
+  });
+
   it('is global, read and written by the app role only', async () => {
     const [row] = await owner.execute<{
       rls: boolean;

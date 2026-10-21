@@ -238,12 +238,8 @@ describe('coram and hearing metadata', () => {
 
 describe('counsel', () => {
   it('keeps counsel names raw with alias spellings, as advocates[]', async () => {
-    expect(counselAliases('Mr. K. S. Madeup')).toEqual([
-      'mr. k. s. madeup',
-      'k s madeup',
-      'ks madeup',
-      'madeup ks',
-    ]);
+    expect(counselAliases('Mr. K. S. Madeup')).toEqual(['K S MADEUP', 'MADEUP K S', 'KS MADEUP']);
+    expect(counselAliases('Ms. Pretend Iyer')).toEqual(['PRETEND IYER']);
     const parsed = parse((await generateNcltScenario('standard-10-row')).layout);
     const row = parsed.rows[0];
     expect(row?.advocates.map((a) => a.raw)).toEqual([

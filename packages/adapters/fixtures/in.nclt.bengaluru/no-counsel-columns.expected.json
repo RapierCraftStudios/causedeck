@@ -3,7 +3,7 @@
   "adapterVersion": "1.0.0",
   "forumCode": "in.nclt.bengaluru",
   "listDate": "2026-10-21",
-  "status": "parsed",
+  "status": "ok",
   "rows": [
     {
       "anchor": {
@@ -132,6 +132,7 @@
       "advocates": []
     }
   ],
+  "unparsedRows": [],
   "diagnostics": {
     "unmappedHeadings": [],
     "unknownCaseTypes": [],

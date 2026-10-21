@@ -15,6 +15,8 @@ export const FORUM_DEEP_LINK_KINDS = [
   'display_board',
   'e_copy',
   'sitting_arrangements',
+  // The Advocate Information Management System (cause-list email push, case tagging; #395).
+  'aims',
 ] as const;
 export type ForumDeepLinkKind = (typeof FORUM_DEEP_LINK_KINDS)[number];
 

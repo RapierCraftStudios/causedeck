@@ -3,8 +3,9 @@
   "adapterVersion": "1.0.0",
   "forumCode": "in.nclt.bengaluru",
   "listDate": "2026-10-21",
-  "status": "parsed",
+  "status": "empty",
   "rows": [],
+  "unparsedRows": [],
   "diagnostics": {
     "unmappedHeadings": [],
     "unknownCaseTypes": [],

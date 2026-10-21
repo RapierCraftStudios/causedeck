@@ -3,7 +3,7 @@
   "adapterVersion": "1.0.0",
   "forumCode": "in.nclt.bengaluru",
   "listDate": "2026-10-21",
-  "status": "parsed",
+  "status": "ok",
   "rows": [
     {
       "anchor": {
@@ -27,24 +27,12 @@
       "advocates": [
         {
           "raw": "Mr. A. B. Imaginary",
-          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "aliases": ["A B IMAGINARY", "IMAGINARY A B", "AB IMAGINARY"],
           "side": "petitioner"
         },
-        {
-          "raw": "Mr. Fictional Rao",
-          "aliases": ["mr. fictional rao", "fictional rao"],
-          "side": "petitioner"
-        },
-        {
-          "raw": "Ms. Notional Shetty",
-          "aliases": ["ms. notional shetty", "notional shetty"],
-          "side": "respondent"
-        },
-        {
-          "raw": "Mr. Fictional Rao",
-          "aliases": ["mr. fictional rao", "fictional rao"],
-          "side": "respondent"
-        }
+        { "raw": "Mr. Fictional Rao", "aliases": ["FICTIONAL RAO"], "side": "petitioner" },
+        { "raw": "Ms. Notional Shetty", "aliases": ["NOTIONAL SHETTY"], "side": "respondent" },
+        { "raw": "Mr. Fictional Rao", "aliases": ["FICTIONAL RAO"], "side": "respondent" }
       ]
     },
     {
@@ -67,21 +55,13 @@
       "stageRaw": "Reply",
       "stageNorm": "pleadings",
       "advocates": [
-        {
-          "raw": "Ms. Sample Nair",
-          "aliases": ["ms. sample nair", "sample nair"],
-          "side": "petitioner"
-        },
+        { "raw": "Ms. Sample Nair", "aliases": ["SAMPLE NAIR"], "side": "petitioner" },
         {
           "raw": "Mr. A. B. Imaginary",
-          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "aliases": ["A B IMAGINARY", "IMAGINARY A B", "AB IMAGINARY"],
           "side": "respondent"
         },
-        {
-          "raw": "Mr. Fictional Rao",
-          "aliases": ["mr. fictional rao", "fictional rao"],
-          "side": "respondent"
-        }
+        { "raw": "Mr. Fictional Rao", "aliases": ["FICTIONAL RAO"], "side": "respondent" }
       ]
     },
     {
@@ -106,17 +86,17 @@
       "advocates": [
         {
           "raw": "Mr. K. S. Madeup",
-          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "aliases": ["K S MADEUP", "MADEUP K S", "KS MADEUP"],
           "side": "petitioner"
         },
         {
           "raw": "Mr. K. S. Madeup",
-          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "aliases": ["K S MADEUP", "MADEUP K S", "KS MADEUP"],
           "side": "respondent"
         },
         {
           "raw": "Mr. A. B. Imaginary",
-          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "aliases": ["A B IMAGINARY", "IMAGINARY A B", "AB IMAGINARY"],
           "side": "respondent"
         }
       ]
@@ -143,14 +123,10 @@
       "advocates": [
         {
           "raw": "Mr. A. B. Imaginary",
-          "aliases": ["mr. a. b. imaginary", "a b imaginary", "ab imaginary", "imaginary ab"],
+          "aliases": ["A B IMAGINARY", "IMAGINARY A B", "AB IMAGINARY"],
           "side": "petitioner"
         },
-        {
-          "raw": "Mr. Fictional Rao",
-          "aliases": ["mr. fictional rao", "fictional rao"],
-          "side": "respondent"
-        }
+        { "raw": "Mr. Fictional Rao", "aliases": ["FICTIONAL RAO"], "side": "respondent" }
       ]
     },
     {
@@ -173,24 +149,17 @@
       "stageRaw": "Reply",
       "stageNorm": "pleadings",
       "advocates": [
-        {
-          "raw": "Ms. Pretend Iyer",
-          "aliases": ["ms. pretend iyer", "pretend iyer"],
-          "side": "petitioner"
-        },
+        { "raw": "Ms. Pretend Iyer", "aliases": ["PRETEND IYER"], "side": "petitioner" },
         {
           "raw": "Mr. K. S. Madeup",
-          "aliases": ["mr. k. s. madeup", "k s madeup", "ks madeup", "madeup ks"],
+          "aliases": ["K S MADEUP", "MADEUP K S", "KS MADEUP"],
           "side": "petitioner"
         },
-        {
-          "raw": "Ms. Sample Nair",
-          "aliases": ["ms. sample nair", "sample nair"],
-          "side": "respondent"
-        }
+        { "raw": "Ms. Sample Nair", "aliases": ["SAMPLE NAIR"], "side": "respondent" }
       ]
     }
   ],
+  "unparsedRows": [],
   "diagnostics": {
     "unmappedHeadings": [],
     "unknownCaseTypes": [],

@@ -10,6 +10,7 @@ import { adapterVersion } from '@causedeck/db/schema';
 import { and, eq } from 'drizzle-orm';
 
 import { ECHO_ADAPTER_ID, ECHO_BUNDLED } from '../example/echo-adapter.ts';
+import { MADRAS_HC_ADAPTER_ID, MADRAS_HC_BUNDLED } from '../madras-hc/index.ts';
 import { NCLT_ADAPTER_ID, NCLT_BUNDLED } from '../nclt-blr/index.ts';
 
 import { configChecksum } from './checksum.ts';
@@ -60,6 +61,7 @@ export class AdapterConfigError extends Error {
 /** The configs bundled with the code, by adapter id. */
 export const BUNDLED_ADAPTER_CONFIGS: Readonly<Record<string, BundledAdapterConfig>> = {
   [ECHO_ADAPTER_ID]: ECHO_BUNDLED,
+  [MADRAS_HC_ADAPTER_ID]: MADRAS_HC_BUNDLED,
   [NCLT_ADAPTER_ID]: NCLT_BUNDLED,
 };
 

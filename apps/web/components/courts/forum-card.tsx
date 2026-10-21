@@ -5,19 +5,18 @@
 // degraded or failed, a banner names the unreadable halls with "Open the official list" (a
 // new-window link to the court's page, never fetched) and "Share it again" (to the Inbox).
 import type { CourtsIndexForum } from '@causedeck/core/court';
-import { Alert, AlertTitle } from '@causedeck/ui/alert';
 import { Badge } from '@causedeck/ui/badge';
-import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { FocusEventHandler, KeyboardEventHandler, Ref } from 'react';
 
 import { AdapterLevelBadge } from './adapter-level-badge.tsx';
+import { ParseBanner } from './parse-banner.tsx';
 
 const cn = (...values: (string | false | undefined)[]) => values.filter(Boolean).join(' ');
 
 /** A forum's language, named in that language: the chip carries the matching `lang`. */
-const LANGUAGE_NAMES: Record<string, string> = {
+export const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
   ta: 'தமிழ்',
   kn: 'ಕನ್ನಡ',
@@ -34,9 +33,9 @@ export function scriptLang(text: string): 'ta' | 'kn' | undefined {
   return undefined;
 }
 
-type StatusKey = 'ok' | 'degraded' | 'failed' | 'none';
+export type StatusKey = 'ok' | 'degraded' | 'failed' | 'none';
 
-const DOT_TONE: Record<StatusKey, string> = {
+export const DOT_TONE: Record<StatusKey, string> = {
   ok: 'text-success',
   degraded: 'text-warning',
   failed: 'text-danger',
@@ -69,8 +68,6 @@ export function ForumCard({ forum, slug, tabIndex, linkRef, onKeyDown, onFocus }
     forum.languageProfile.primary,
     ...(forum.languageProfile.secondary ?? []),
   ].filter((lang, index, all): lang is string => lang !== undefined && all.indexOf(lang) === index);
-  const failing = status === 'degraded' || status === 'failed';
-  const halls = forum.latestParse?.hallsUnreadable ?? [];
 
   return (
     <div
@@ -127,39 +124,13 @@ export function ForumCard({ forum, slug, tabIndex, linkRef, onKeyDown, onFocus }
           <span className="text-ink-muted">{t(`status.${status}`)}</span>
         </span>
       </Link>
-      {failing ? (
-        <Alert tone={status === 'failed' ? 'danger' : 'warning'} data-forum-banner={status}>
-          <AlertTitle>
-            {halls.length > 0
-              ? t(halls.length === 1 ? 'banner.hall' : 'banner.halls', { halls: halls.join(', ') })
-              : t('banner.generic')}
-          </AlertTitle>
-          <span className="flex flex-wrap gap-x-4 gap-y-1">
-            {forum.officialList === null ? null : (
-              <a
-                href={forum.officialList.url}
-                target={forum.officialList.target}
-                rel={forum.officialList.rel}
-                tabIndex={tabIndex}
-                data-forum-official={forum.code}
-                className="text-accent inline-flex items-center gap-1 underline-offset-2 hover:underline"
-              >
-                {t('banner.openOfficial')}
-                <ExternalLink aria-hidden="true" className="size-3.5" />
-                <span className="sr-only">{t('banner.newWindow')}</span>
-              </a>
-            )}
-            <Link
-              href={`/w/${encodeURIComponent(slug)}/inbox`}
-              tabIndex={tabIndex}
-              data-forum-share={forum.code}
-              className="text-accent underline-offset-2 hover:underline"
-            >
-              {t('banner.shareAgain')}
-            </Link>
-          </span>
-        </Alert>
-      ) : null}
+      <ParseBanner
+        code={forum.code}
+        slug={slug}
+        latestParse={forum.latestParse}
+        officialList={forum.officialList}
+        tabIndex={tabIndex}
+      />
     </div>
   );
 }

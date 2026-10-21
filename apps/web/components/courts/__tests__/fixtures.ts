@@ -1,4 +1,12 @@
-import type { CourtsIndex, CourtsIndexForum, DisabledForum } from '@causedeck/core/court';
+import type {
+  AdapterStatus,
+  CourtsIndex,
+  CourtsIndexForum,
+  DisabledForum,
+  Forum,
+  ForumDetail,
+  HallSeen,
+} from '@causedeck/core/court';
 
 /** A Madras HC-like forum; override what a case needs. */
 export function forum(overrides: Partial<CourtsIndexForum> = {}): CourtsIndexForum {
@@ -103,4 +111,96 @@ export function sampleIndex(): CourtsIndex {
       }),
     ],
   };
+}
+
+const newWindow = (url: string) => ({
+  url,
+  fallbacks: [],
+  target: '_blank' as const,
+  rel: 'noopener noreferrer' as const,
+});
+
+/** The Madras HC appellate forum row as `getForum` returns it (#400). */
+export function forumRow(overrides: Partial<Forum> = {}): Forum {
+  return {
+    id: 'id-in.tn.madras-hc.principal.appellate',
+    workspaceId: null,
+    code: 'in.tn.madras-hc.principal.appellate',
+    court: 'Madras High Court',
+    establishment: 'Principal Seat, Appellate Side',
+    seat: 'Chennai',
+    side: 'appellate',
+    jurisdictionKind: 'high_court',
+    languageProfile: { primary: 'en', secondary: ['ta'] },
+    adapterId: 'in.tn.madras-hc.principal',
+    adapterLevel: 'A1',
+    config: {},
+    enabled: true,
+    createdAt: new Date('2026-01-01T00:00:00Z'),
+    updatedAt: new Date('2026-01-01T00:00:00Z'),
+    ...overrides,
+  };
+}
+
+/** Cause list (no captcha), case status (captcha-gated); a noted and an unreviewed access mode. */
+export function forumDetail(overrides: Partial<ForumDetail> = {}): ForumDetail {
+  return {
+    forum: forumRow(),
+    deepLinks: [
+      {
+        kind: 'cause_list',
+        link: newWindow('https://court.example/cause_list.php'),
+        captchaGated: false,
+      },
+      {
+        kind: 'case_status',
+        link: newWindow('https://court.example/case_status.php'),
+        captchaGated: true,
+      },
+    ],
+    accessModes: [
+      {
+        resource: 'case-status',
+        mode: 'user_supplied',
+        enabled: true,
+        counselNote: 'The lawyer shares the list; nothing is fetched.',
+        legalReviewPending: false,
+      },
+      {
+        resource: 'sanctioned-push',
+        mode: 'official',
+        enabled: false,
+        counselNote: null,
+        legalReviewPending: true,
+      },
+    ],
+    ...overrides,
+  };
+}
+
+export function adapterStatus(overrides: Partial<AdapterStatus> = {}): AdapterStatus {
+  return {
+    adapterId: 'in.tn.madras-hc.principal',
+    activeVersion: '1.2.0',
+    level: 'A1',
+    lastVerifiedAt: new Date('2026-10-01T06:30:00Z'),
+    health: 'degraded',
+    lastParse: {
+      at: new Date('2026-10-21T04:00:00Z'),
+      status: 'degraded',
+      rowsParsed: 120,
+      rowsAnchored: 14,
+      hallsUnreadable: ['7', '12A'],
+    },
+    ...overrides,
+  };
+}
+
+/** Halls 2 and 12A read, 7 unreadable in its newest list. */
+export function hallsSeen(): HallSeen[] {
+  return [
+    { hallNo: '2', lastListAt: new Date('2026-10-21T04:00:00Z'), unreadable: false },
+    { hallNo: '7', lastListAt: new Date('2026-10-21T04:00:00Z'), unreadable: true },
+    { hallNo: '12A', lastListAt: new Date('2026-10-20T04:00:00Z'), unreadable: false },
+  ];
 }

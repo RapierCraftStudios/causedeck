@@ -3,7 +3,8 @@
 // `getCourtsIndex` in its own workspace scope; a FORBIDDEN from core renders permission-denied; any
 // other failure shows `Could not load courts.` with `Try again`; no forums shows the empty state;
 // offline shows `Showing saved court information`; `?__state=loading` previews the skeleton in dev.
-// The route's loading.tsx and error.tsx boundaries are covered too.
+// The route's loading.tsx and error.tsx boundaries are covered too. `Add forum` (#402) shows for
+// owners and advocates only.
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
@@ -52,6 +53,9 @@ vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('../lib/report-error.ts', () => ({ reportError }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/court', () => court);
+vi.mock('../app/(app)/w/[slug]/courts/actions.ts', () => ({
+  createWorkspaceForumAction: vi.fn(),
+}));
 
 const { default: CourtsPage } = await import('../app/(app)/w/[slug]/courts/page.tsx');
 const { default: CourtsLoading } = await import('../app/(app)/w/[slug]/courts/loading.tsx');
@@ -112,6 +116,29 @@ describe('courts page (#399)', () => {
       expect(document.querySelector('[data-pattern-state="permission-denied"]')).toBeNull();
     },
   );
+
+  it.each([
+    ['owner', true],
+    ['advocate', true],
+    ['junior', false],
+    ['clerk', false],
+    ['viewer', false],
+  ] satisfies [Role, boolean][])('Add forum for a %s: %s (#402)', async (role, shown) => {
+    page.context = testWorkspaceContext('demo', role);
+    withIntl(await CourtsPage(props()));
+    expect(screen.queryByRole('button', { name: en.addForum.trigger }) !== null).toBe(shown);
+    expect(screen.getByRole('grid')).toBeTruthy();
+  });
+
+  it('offers Add forum on the empty state, but not when loading fails (#402)', async () => {
+    page.index = { cities: [], disabled: [] };
+    withIntl(await CourtsPage(props()));
+    expect(screen.getByRole('button', { name: en.addForum.trigger })).toBeTruthy();
+    cleanup();
+    page.error = new Error('db down');
+    withIntl(await CourtsPage(props()));
+    expect(screen.queryByRole('button', { name: en.addForum.trigger })).toBeNull();
+  });
 
   it('renders permission-denied when core refuses access', async () => {
     page.error = new WorkspaceError('FORBIDDEN');

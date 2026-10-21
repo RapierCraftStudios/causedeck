@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { id, workspaceId, workspaceIndex } from '../columns.ts';
 import {
   checkSchemaConventions,
+  GLOBAL_OR_WORKSPACE_TABLES,
   GLOBAL_TABLES,
   NULLABLE_WORKSPACE_TABLES,
   tablesOf,
@@ -83,6 +84,37 @@ describe('checkSchemaConventions', () => {
     expect(check([nullable])).toEqual([]);
     expect(check([unindexed])).toEqual(['nullable_unindexed:workspace-index']);
     expect(NULLABLE_WORKSPACE_TABLES).toEqual(['audit_event', 'deletion_job']);
+  });
+
+  it('allows a nullable workspace_id and single-column FKs into global-or-workspace tables (#344)', () => {
+    const court = pgTable('gw_court', { id: id(), workspaceId: uuid('workspace_id') }, (t) => [
+      index('gw_court_idx').on(t.workspaceId),
+    ]);
+    const unindexed = pgTable('gw_unindexed', { id: id(), workspaceId: uuid('workspace_id') });
+    const listing = pgTable(
+      'gw_listing',
+      {
+        id: id(),
+        workspaceId: workspaceId(),
+        courtId: uuid('court_id')
+          .notNull()
+          .references(() => court.id),
+      },
+      (t) => [workspaceIndex('gw_listing', t.workspaceId)],
+    );
+    const check = (tables: Parameters<typeof checkSchemaConventions>[0], listed: string[]) =>
+      checkSchemaConventions(tables, {
+        globalTables: globals,
+        globalOrWorkspaceTables: listed,
+      }).map((v) => `${v.table}:${v.rule}`);
+    expect(check([court, listing, unindexed], ['gw_court', 'gw_unindexed'])).toEqual([
+      'gw_unindexed:workspace-index',
+    ]);
+    expect(check([court, listing], [])).toEqual([
+      'gw_court:workspace-not-null',
+      'gw_listing:cross-workspace-fk',
+    ]);
+    expect(GLOBAL_OR_WORKSPACE_TABLES).toEqual(['forum', 'court_hall', 'bench']);
   });
 
   it('fails a single-column FK from a tenant table to another tenant table', () => {

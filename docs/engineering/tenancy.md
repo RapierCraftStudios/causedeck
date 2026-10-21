@@ -135,8 +135,38 @@ NOT NULL convention. `push_subscription` (a browser's Web Push endpoint, per use
 owner-checked by the push service) and `email_suppression` (per address) have no workspace (#194).
 The feature-flag tables `feature_flag` (staff-managed global flag rows) and `access_mode_registry`
 (court-adapter access modes) are global too (#22); per-workspace flag overrides are the tenant table
-`workspace_feature_flag` ([flags.md](flags.md)). The court layer will join this list. Adding a table here is a
+`workspace_feature_flag` ([flags.md](flags.md)). The court layer is not global: see
+[Global-or-workspace reference tables](#global-or-workspace-reference-tables). Adding a table here is a
 security decision: say why in the PR.
+
+## Global-or-workspace reference tables
+
+`forum`, `court_hall` and `bench` (#344, [ADR 0013](../adr/0013-matter-graph-schema.md)) are listed in
+`GLOBAL_OR_WORKSPACE_TABLES` (`packages/db/src/conventions.ts`) and declared with
+`globalOrWorkspaceTable()`. Their `workspace_id` is nullable: a null row is the system catalogue,
+a workspace id is that workspace's custom (A0) forum, hall or bench. The migration that creates such
+a table runs `globalOrWorkspacePolicy(name)`:
+
+| Policy            | Command | Role              | Predicate                                                                  |
+| ----------------- | ------- | ----------------- | -------------------------------------------------------------------------- |
+| `ws_isolation`    | ALL     | PUBLIC            | `workspace_id` = the pinned workspace (USING and WITH CHECK)               |
+| `global_read`     | SELECT  | PUBLIC            | `workspace_id IS NULL`                                                     |
+| `owner_catalogue` | ALL     | `causedeck_owner` | `workspace_id IS NULL` (USING and WITH CHECK; FORCE RLS binds the owner)   |
+
+So every workspace reads the catalogue, custom rows stay inside their workspace, and the app and
+clerk roles cannot insert, update or delete a catalogue row (a null `workspace_id` never passes
+`ws_isolation`'s WITH CHECK). Only the owner role (migrations, seeds, the operator CLI) writes it.
+
+A foreign key into one of these tables is single-column (a composite FK cannot say "global or the
+same workspace": MATCH SIMPLE skips it when `workspace_id` is null). Foreign-key checks bypass RLS,
+so each such FK gets the `app_reference_scope_guard` trigger from `scopeGuardTrigger(table, column,
+refTable, mode)`, named `<table>_<column>_scope_guard`. It looks the referenced row up as the
+invoker (under RLS) and rejects a missing, invisible or out-of-scope row with 23503, the same error in
+every case. Mode `same` requires the row's own scope (`court_hall`, `bench`); `same_or_global` also
+accepts a catalogue row (for tenant tables such as `proceeding`). `db:check` allows the nullable
+column and the single-column FK; `db:check-rls` requires the two extra policies and the trigger
+(`missing-global-or-workspace-policy`, `missing-scope-guard`). The cross-tenant suite covers the
+custom rows like any tenant table; `court-schema.test.ts` covers the catalogue rows.
 
 ## Adding a tenant table
 

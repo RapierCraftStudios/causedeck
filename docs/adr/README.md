@@ -20,6 +20,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0010](0010-feature-flags-db-backed-legal-gating-and-no-l5.md) | DB-backed feature flags, legal gating and no L5 actions | Accepted | 2026-10-18 | — |
 | [0011](0011-access-mode-registry-closed-enum.md) | Access-mode registry closed enum | Proposed | 2026-10-19 | — |
 | [0012](0012-core-package-split-threshold.md) | Split @causedeck/core into domain packages at a threshold | Proposed | 2026-10-20 | — |
+| [0013](0013-matter-graph-schema.md) | Matter-graph schema: composite tenant keys, global-or-workspace reference tables, case identity | Proposed | 2026-10-21 | — |
 
 ## Statuses
 

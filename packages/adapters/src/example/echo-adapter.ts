@@ -23,12 +23,12 @@ import type {
   CourtAdapter,
   DeepLink,
   DeepLinkParams,
+  DeepLinkTarget,
   DirectionCue,
   ParsedCauseList,
   ParsedListRow,
   ParsedOrderHeader,
   ParserInput,
-  Resource,
 } from '../types.ts';
 
 export const ECHO_ADAPTER_ID = 'echo';
@@ -289,8 +289,8 @@ export function createEchoAdapter(options: EchoAdapterOptions = {}): CourtAdapte
     parseCauseList: (input) => Promise.resolve(parseCauseListSync(config, version, input)),
     parseOrderHeader: (input) => parseOrderHeader(config, input),
     findDirectionCues: (input) => findDirectionCues(config, input),
-    buildDeepLink(resource: Resource, params: DeepLinkParams) {
-      const kind = config.links[resource];
+    buildDeepLink(target: DeepLinkTarget, params: DeepLinkParams) {
+      const kind = config.links[target];
       if (kind === undefined || options.resolveDeepLink === undefined) return null;
       return options.resolveDeepLink(kind, params);
     },

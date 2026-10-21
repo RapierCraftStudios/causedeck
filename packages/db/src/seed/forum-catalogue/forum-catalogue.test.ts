@@ -153,6 +153,7 @@ describe('forum catalogue data (#34)', () => {
       Object.keys(byCode('in.tn.madras-hc.principal.appellate').config.deepLinks).sort(),
     ).toEqual(
       [
+        'aims',
         'case_status',
         'cause_list',
         'display_board',

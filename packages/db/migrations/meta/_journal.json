@@ -316,6 +316,13 @@
       "when": 1792598903333,
       "tag": "0044_adapter_framework",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1792604806828,
+      "tag": "0045_adapter_id_dotted",
+      "breakpoints": true
     }
   ]
 }

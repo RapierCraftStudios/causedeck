@@ -21,6 +21,7 @@ const PRINCIPAL_SEAT_CONFIG: ForumSeed['config'] = {
     display_board: 'display_board_mhc.php',
     sitting_arrangements: 'sitting_arrangements.php',
     e_copy: 'https://mhc.tn.gov.in/eservices/copyapp/',
+    aims: 'https://madrashighcourt.tn.gov.in/aims/',
   },
   notes:
     'Cause list and case status searches sit behind a captcha: the lawyer opens them. Advocate Information Management System: https://madrashighcourt.tn.gov.in/aims/',

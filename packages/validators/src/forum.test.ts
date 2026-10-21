@@ -68,6 +68,15 @@ describe('forum schemas (#34)', () => {
     ).toBe(false);
   });
 
+  it('accepts an AIMS portal template (#395)', () => {
+    expect(
+      ForumConfigSchema.safeParse({
+        ...config,
+        deepLinks: { ...config.deepLinks, aims: 'https://primary.example.test/aims/' },
+      }).success,
+    ).toBe(true);
+  });
+
   it('needs a disabled reason on a disabled forum, and A0 or A1', () => {
     expect(ForumSeedSchema.safeParse(seed).success).toBe(true);
     expect(ForumSeedSchema.safeParse({ ...seed, enabled: false }).success).toBe(false);

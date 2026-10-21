@@ -56,6 +56,7 @@ describe('@causedeck/db root entry point', () => {
       'entitlement',
       'export_job',
       'feature_flag',
+      'flag_change_request',
       'invitation',
       'invoice_counter',
       'job_effect',

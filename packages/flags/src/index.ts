@@ -1,6 +1,7 @@
 // `@causedeck/flags` (#22): the typed flag registry, the cached evaluator, the access-mode registry
-// guard, staff flag writes and their audit events. Server code only; React lives in
-// `@causedeck/flags/react` and client-safe types in `@causedeck/flags/keys`.
+// guard, staff flag writes (with the two-person legal-gated enable, #311) and their audit events.
+// Server code only; React lives in `@causedeck/flags/react` and client-safe types in
+// `@causedeck/flags/keys`.
 export const packageName: string = '@causedeck/flags';
 
 export {
@@ -51,11 +52,23 @@ export {
 } from './access-mode.ts';
 export { ACCESS_MODE_SEED, LAUNCH_ADAPTERS, seedAccessModes } from './seed.ts';
 export {
+  approveLegalEnable,
   asStaff,
   FlagAdminError,
   isStaffActor,
+  listFlagChangeRequests,
+  listGlobalFlagRows,
+  rejectLegalEnable,
+  requestLegalEnable,
   setFlag,
   setWorkspaceFlag,
+  type FlagAdminErrorCode,
+  type FlagChangeRequestRef,
+  type FlagChangeRequestView,
+  type GlobalFlagRowView,
+  type RequestLegalEnableInput,
+  type SetFlagInput,
+  type SetWorkspaceFlagInput,
   type StaffActor,
 } from './admin.ts';
 export {
@@ -63,5 +76,7 @@ export {
   noopFlagAuditSink,
   setFlagAuditSink,
   type FlagAuditEvent,
+  type FlagChangedAuditEvent,
+  type FlagChangeRequestAuditEvent,
   type FlagAuditSink,
 } from './audit.ts';

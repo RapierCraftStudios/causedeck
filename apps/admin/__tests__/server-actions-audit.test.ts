@@ -8,12 +8,20 @@ import path from 'node:path';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as FlagKeys from '@causedeck/flags/keys';
+
 import type * as DataLayer from '../lib/data/index.ts';
 import type * as TwoFactor from '../lib/two-factor.ts';
+
+interface FlagSink {
+  write: (tx: unknown, event: { action: string; actorUserId: string }) => Promise<void>;
+}
 
 const mocks = vi.hoisted(() => ({
   record: vi.fn<(ctx: unknown, event: unknown) => Promise<void>>(() => Promise.resolve()),
   cookieSet: vi.fn(),
+  /** The flag audit sink the admin app installed (lib/flags.ts), if any. */
+  flagSink: { current: undefined as FlagSink | undefined },
 }));
 
 const STAFF_ID = '0192d3b0-0000-7000-8000-000000000310';
@@ -29,7 +37,17 @@ function auditedOverrideWrite(action: string) {
     mocks.record({ actor: { userId: input.staffUserId, kind: 'staff' } }, { action });
 }
 
-vi.mock('@causedeck/core/audit', () => ({ record: mocks.record }));
+vi.mock('@causedeck/core/audit', () => ({
+  record: mocks.record,
+  // As the real sink: every flag event is a record() with actor kind staff (security-events.ts).
+  flagChangeAuditSink: {
+    write: (_tx: unknown, event: { action: string; actorUserId: string }) =>
+      mocks.record(
+        { actor: { kind: 'staff', userId: event.actorUserId } },
+        { action: event.action },
+      ),
+  },
+}));
 // Core audits a support session's lifecycle (`support.session_*`) with the staff actor it is handed
 // (#314); the mocks below stand in for core and record the same staff-actor event.
 vi.mock('@causedeck/core/runtime', () => ({
@@ -62,7 +80,6 @@ vi.mock('../lib/two-factor.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof TwoFactor>()),
   verifyTwoFactorCookie: () => true,
 }));
-vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@causedeck/core/support', () => ({
   isActiveStaff: () => Promise.resolve(true),
   countActiveStaff: () => Promise.resolve(1),
@@ -81,7 +98,44 @@ vi.mock('@causedeck/db', () => ({
   withoutWorkspace: (_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) =>
     fn({}),
 }));
-vi.mock('@causedeck/flags', () => ({ listAccessModeRegistry: () => Promise.resolve([]) }));
+// Flag writes audit through the installed flag audit sink (packages/flags/src/admin.ts); these
+// fakes do the same, so an action whose module did not install the real sink fails here.
+vi.mock('@causedeck/flags', async () => {
+  const keys = await vi.importActual<typeof FlagKeys>('@causedeck/flags/keys');
+  const audited =
+    (action: string) =>
+    (_db: unknown, actor: { userId: string }): Promise<void> =>
+      mocks.flagSink.current
+        ? mocks.flagSink.current.write({}, { action, actorUserId: actor.userId })
+        : Promise.reject(new Error('flag audit sink not installed'));
+  class FlagAdminError extends Error {
+    constructor(
+      readonly code: string,
+      message: string,
+    ) {
+      super(message);
+    }
+  }
+  return {
+    ...keys,
+    listAccessModeRegistry: () => Promise.resolve([]),
+    asStaff: (userId: string) => ({ userId }),
+    FlagAdminError,
+    setFlagAuditSink: (sink: FlagSink | null) => {
+      mocks.flagSink.current = sink ?? undefined;
+    },
+    setFlag: audited('flag.changed'),
+    setWorkspaceFlag: audited('flag.changed'),
+    requestLegalEnable: audited('flag.change_requested'),
+    approveLegalEnable: audited('flag.change_approved'),
+    rejectLegalEnable: audited('flag.change_rejected'),
+  };
+});
+vi.mock('../lib/staff.ts', () => ({
+  requireStaff: () =>
+    Promise.resolve({ userId: STAFF_ID, email: 'admin@causedeck.test', role: 'admin' }),
+}));
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@causedeck/auth/rate-limit', () => ({ consumeRateLimit: () => Promise.resolve(true) }));
 vi.mock('next/headers', () => ({
   headers: () =>
@@ -115,20 +169,48 @@ const ADMIN_ROOT = path.resolve(import.meta.dirname, '..');
 const APP_DIR = path.join(ADMIN_ROOT, 'app');
 
 /** Each admin server action, `<file relative to apps/admin>#<export>`, and its success path. */
+const REQUEST_ID = '0192d3b0-0000-7000-8000-0000000003b1';
+
+function form(values: Record<string, string>): FormData {
+  const data = new FormData();
+  for (const [k, v] of Object.entries(values)) data.set(k, v);
+  return data;
+}
+
 const ACTIONS: Record<string, () => Promise<unknown>> = {
+  'app/(console)/flags/actions.ts#setFlagAction': async () => {
+    const { setFlagAction } = await import('../app/(console)/flags/actions.ts');
+    return setFlagAction({}, form({ key: 'pwa.offline', enabled: 'true' }));
+  },
+  'app/(console)/flags/actions.ts#requestLegalEnableAction': async () => {
+    const { requestLegalEnableAction } = await import('../app/(console)/flags/actions.ts');
+    return requestLegalEnableAction(
+      {},
+      form({ key: 'invoices.enabled', note: 'Counsel #120', acknowledged: 'on', code: '123456' }),
+    );
+  },
+  'app/(console)/flags/actions.ts#approveLegalEnableAction': async () => {
+    const { approveLegalEnableAction } = await import('../app/(console)/flags/actions.ts');
+    return approveLegalEnableAction({}, form({ requestId: REQUEST_ID, code: '123456' }));
+  },
+  'app/(console)/flags/actions.ts#rejectLegalEnableAction': async () => {
+    const { rejectLegalEnableAction } = await import('../app/(console)/flags/actions.ts');
+    return rejectLegalEnableAction({}, form({ requestId: REQUEST_ID }));
+  },
   'app/(console)/support/actions.ts#requestSupportSessionAction': async () => {
     const { requestSupportSessionAction } = await import('../app/(console)/support/actions.ts');
-    const form = new FormData();
-    form.set('workspaceId', SUPPORT_WORKSPACE_ID);
-    form.set('reason', 'Customer asked us to look at a failing import');
-    form.set('scope', 'view');
-    return requestSupportSessionAction({}, form);
+    return requestSupportSessionAction(
+      {},
+      form({
+        workspaceId: SUPPORT_WORKSPACE_ID,
+        reason: 'Customer asked us to look at a failing import',
+        scope: 'view',
+      }),
+    );
   },
   'app/(console)/support/actions.ts#endSupportSessionAction': async () => {
     const { endSupportSessionAction } = await import('../app/(console)/support/actions.ts');
-    const form = new FormData();
-    form.set('sessionId', SUPPORT_SESSION_ID);
-    return endSupportSessionAction(form);
+    return endSupportSessionAction(form({ sessionId: SUPPORT_SESSION_ID }));
   },
   'app/verify-2fa/actions.ts#verifyTwoFactor': async () => {
     const { verifyTwoFactor } = await import('../app/verify-2fa/actions.ts');

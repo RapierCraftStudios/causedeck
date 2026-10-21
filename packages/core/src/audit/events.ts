@@ -19,6 +19,19 @@ export const AUDIT_ACTIONS = {
   'member.removed': { security: true, description: 'A member was removed from the workspace' },
   'member.role_changed': { security: true, description: "A member's role was changed" },
   'flag.changed': { security: true, description: 'A feature flag was changed' },
+  // The two-person legal-gated flag enable in the staff console (#311).
+  'flag.change_requested': {
+    security: true,
+    description: 'Staff requested enabling a legal-gated feature flag',
+  },
+  'flag.change_approved': {
+    security: true,
+    description: 'A second admin approved enabling a legal-gated feature flag',
+  },
+  'flag.change_rejected': {
+    security: true,
+    description: 'A legal-gated feature flag enable request was rejected or withdrawn',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },

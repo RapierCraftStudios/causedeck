@@ -74,11 +74,12 @@ Each server process caches every workspace's flag rows in an LRU with a 15 s TTL
 
 1. The feature ships behind a legal-gated flag, which stays off everywhere.
 2. Counsel delivers the deliverable that unlocks it. These are tracked as `needs-human` issues, for example #120.
-3. A staff member runs `setFlag(db, asStaff(userId), { key, enabled: true, legalAckNote })`. Later this is done from the staff console (#27).
-   - Without a note, the call fails with `LEGAL_ACK_REQUIRED`.
-   - The row records `legal_ack_by` (the staff member) and `legal_ack_note`.
-   - To pilot the flag in one workspace, use `setWorkspaceFlag` with its own note. The global row must also be legally on.
-4. Every change writes a `flag.changed` audit event (actor, key, workspace, old value, new value, note) through the flag audit sink. #26 provides the real writer.
+3. In the staff console (`/flags`, #311), a staff member with the `flags` capability (ops or admin) requests the enable. They give the legal note, tick the acknowledgement and enter a fresh TOTP code. This is `requestLegalEnable(db, asStaff(userId), { key, workspaceId?, legalAckNote })`, which records a pending `flag_change_request`. Nothing turns on yet, and only one request per (key, workspace) can be pending.
+   - A different, enabled staff member with the `admin` role approves it, again with a fresh TOTP code (`approveLegalEnable`). Self-approval fails with `SELF_APPROVAL`, and a non-admin or disabled approver fails with `FORBIDDEN`. An admin may reject the request instead, or its requester may withdraw it (`rejectLegalEnable`).
+   - The approval writes the row in the same transaction: `legal_ack_by` is the requester, `legal_ack_note` is the request's note, and `updated_by` is the approver.
+   - Operators can still call `setFlag(db, asStaff(userId), { key, enabled: true, legalAckNote })` directly. Without a note it fails with `LEGAL_ACK_REQUIRED`. The console never uses it for a legal-gated enable.
+   - To pilot the flag in one workspace, request the enable for that workspace, with its own note. The global row must also be legally on.
+4. Every change writes a `flag.changed` audit event (actor, key, workspace, old value, new value, note) through the flag audit sink. Each request step also writes `flag.change_requested`, `flag.change_approved` or `flag.change_rejected`. #26 provides the real writer (`flagChangeAuditSink`), and the admin app installs it (`apps/admin/lib/flags.ts`).
 5. Turning a legal flag off clears its acknowledgement. Turning it back on needs a new note.
 
 ## Kill-switch runbook
@@ -113,5 +114,6 @@ A database change (staff toggling a row) needs no restart. It propagates within 
 | `feature_flag` | global (`GLOBAL_TABLES`) | One row per key. Only staff write it. |
 | `workspace_feature_flag` | tenant (FORCE RLS, `ws_isolation`) | One row per (workspace, key). Covered by the cross-tenant suite. |
 | `access_mode_registry` | global (`GLOBAL_TABLES`) | One row per (adapter, resource). |
+| `flag_change_request` | global (`GLOBAL_TABLES`) | Pending, approved or rejected legal-gated enables (#311). `workspace_id` is the target override, or null for the global row. Staff-only, with no RLS. The app role cannot delete rows. |
 
 The issue sketched a single `feature_flag` table with a nullable `workspace_id` and a partial policy. The tenancy checks (`db:check`, `db:check-rls`, [tenancy.md](tenancy.md)) require tenant tables to have a NOT NULL `workspace_id` and the standard policy, so the per-workspace rows live in their own tenant table instead.

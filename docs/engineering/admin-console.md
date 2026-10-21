@@ -3,15 +3,16 @@
 The staff-only ops console (#27; shell, gate, headers and image in #309). Staff see platform
 metadata only; workspace content is reachable only through a consented support session (#308,
 #313, #314; policy, flow and audit events in [support-sessions.md](support-sessions.md)). Workspaces
-and audit (#310), adapters (#312) and support sessions (#314) have arrived; flags (#311) follows.
+and audit (#310), adapters (#312), support sessions (#314) and flags (#311, [below](#flags)) have
+arrived.
 
-| | |
-|---|---|
-| App | `apps/admin`, Next.js 16, Node runtime, `output: 'standalone'` |
-| Port | 3200 (`pnpm --filter @causedeck/admin dev`) |
-| Deployment | its own container and subdomain (spike §3.1), `infra/docker/admin.Dockerfile` |
-| Sessions | its own Better Auth instance on `ADMIN_URL`: 8 h sessions, magic-link sign-in, sign-up closed |
-| Language | English only (staff tool) |
+|            |                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| App        | `apps/admin`, Next.js 16, Node runtime, `output: 'standalone'`                                |
+| Port       | 3200 (`pnpm --filter @causedeck/admin dev`)                                                   |
+| Deployment | its own container and subdomain (spike §3.1), `infra/docker/admin.Dockerfile`                 |
+| Sessions   | its own Better Auth instance on `ADMIN_URL`: 8 h sessions, magic-link sign-in, sign-up closed |
+| Language   | English only (staff tool)                                                                     |
 
 ## The staff gate
 
@@ -64,11 +65,11 @@ Staff accounts exist only through the operator CLI (#308):
 `pnpm --filter @causedeck/admin staff:add <email> --role support|ops|admin`. The matrix lives in
 `apps/admin/lib/roles.ts` and filters the nav and the pages:
 
-| Role | Overview | Adapters | Flags | Workspaces | Support sessions | Audit |
-|---|---|---|---|---|---|---|
-| `support` | yes | | | metadata | yes | yes |
-| `ops` | yes | yes | yes | | | yes |
-| `admin` | yes | yes | yes | yes | yes | yes |
+| Role      | Overview | Adapters | Flags | Workspaces | Support sessions | Audit |
+| --------- | -------- | -------- | ----- | ---------- | ---------------- | ----- |
+| `support` | yes      |          |       | metadata   | yes              | yes   |
+| `ops`     | yes      | yes      | yes   |            |                  | yes   |
+| `admin`   | yes      | yes      | yes   | yes        | yes              | yes   |
 
 Within Workspaces, setting or expiring an AI budget override is `admin` only
 (`canOverrideBudget`); `support` sees the usage section read-only.
@@ -88,6 +89,46 @@ Every response, the 404 included:
   `object-src 'none'` and `base-uri 'none'`. The 404 gets a static policy with `default-src 'none'`.
 
 `apps/admin/__tests__/headers.test.ts` covers all of these.
+
+## Flags
+
+`/flags` (`app/(console)/flags/`) is open to the `ops` and `admin` roles only (`requireStaff('flags')`
+on the page and on every action). Everyone else gets the generic 404. It shows:
+
+- **Global flags.** Every registered flag, with its global row, its effective value and a toggle.
+- **Workspace overrides.** The same table for one workspace, picked by workspace id (a UUID). This
+  lasts until the staff workspace lookup (#310) lands.
+- **Pending approvals.** Legal-gated enables waiting for a second admin.
+
+Every change opens a confirmation that restates the diff (`<key> · <Global|Workspace id> · Off →
+On`) before it is applied. A flag whose `KILL_<KEY>` env kill switch is set shows `Forced off by
+environment` with the variable name. Its toggle is disabled, since the kill switch wins over every
+row.
+
+Enabling a **legal-gated (⚖)** flag takes two people:
+
+1. A staff member with `flags` writes the legal note, ticks `I confirm counsel has approved enabling
+this flag` and enters a fresh TOTP code. That creates a pending `flag_change_request` (one per
+   key and workspace), and nothing turns on yet.
+2. A different, enabled `admin` approves it with their own fresh TOTP code. The flag row is written
+   with `legal_ack_by` = the requester and `updated_by` = the approver. An admin may reject the
+   request instead, or its requester may withdraw it.
+
+The TOTP re-verify (`reverifyTotp` in `lib/flags.ts`) asks Better Auth's `verifyTOTP` for the
+current session, under the same 5-per-15-minutes limit as the TOTP step. It does not change the
+`cd_admin_2fa` cookie. #304's step-up primitive may replace it later. The dev staff account skips
+it outside production, as it skips the TOTP step.
+
+All writes go through `@causedeck/flags`, which writes each audit event in the same transaction as
+the change:
+
+- `flag.changed` (actor, old and new value);
+- `flag.change_requested`, `flag.change_approved` and `flag.change_rejected`.
+
+`lib/flags.ts` installs `flagChangeAuditSink` from `@causedeck/core/audit` as the flag audit
+writer. Reads record a fail-closed `staff.read` (`flags.list`, `flags.workspace_overrides`)
+first. Rows, notes and actors stay on the server, apart from a pending request's note, which the
+approver needs to see.
 
 ## Data layer
 
@@ -167,7 +208,9 @@ pages and fails on any content field or another member's email.
 
 Every admin server action records an audit event with actor kind `staff` (`verifyTwoFactor`:
 `staff.two_factor_verified`; `setBudgetOverrideAction` / `expireBudgetOverrideAction`:
-`usage.budget_override_set` / `usage.budget_override_expired`); reads record `staff.read` in the data layer.
+`usage.budget_override_set` / `usage.budget_override_expired`; the flag actions (#311): `flag.changed`
+and `flag.change_*`, written through the flag audit sink that `lib/flags.ts` installs). Reads record
+`staff.read` in the data layer.
 `__tests__/server-actions-audit.test.ts` enumerates every `'use server'` export under
 `apps/admin/app` and every data-layer read, invokes each with mocks and asserts the event. A new
 action fails that test until it is registered there with its success path.

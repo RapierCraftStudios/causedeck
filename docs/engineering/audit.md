@@ -43,6 +43,9 @@ Each action is either **security** or **informational**:
 | `member.removed`                      | security      | `offboardMember` through the `AuditSink`                                                                                   |
 | `member.role_changed`                 | security      | `changeRole`, `transferOwnership` (both roles)                                                                             |
 | `flag.changed`                        | security      | `flagChangeAuditSink` for `setFlagAuditSink` (#22)                                                                         |
+| `flag.change_requested` | security | `flagChangeAuditSink`: `requestLegalEnable`, staff console legal-gated enable request (#311) |
+| `flag.change_approved` | security | `flagChangeAuditSink`: `approveLegalEnable`, a second admin applies it (#311) |
+| `flag.change_rejected` | security | `flagChangeAuditSink`: `rejectLegalEnable`, rejected by an admin or withdrawn (#311) |
 | `auth.sign_in`                        | security      | Better Auth `databaseHooks.session.create`                                                                                 |
 | `auth.sign_in_failed`                 | security      | `hooks.after`: magic-link, passkey, 2FA verify                                                                             |
 | `auth.magic_link_requested`           | security      | `hooks.after`: `/sign-in/magic-link`                                                                                       |
@@ -100,7 +103,9 @@ Security events (#228):
   Metadata names the refused action only (`deniedAction`). A failed write is logged; the refusal
   stands.
 - `flag.changed` stores the old and new values and whether a legal acknowledgement was given
-  (`legalAck`); the free-text legal note is never stored.
+  (`legalAck`); the free-text legal note is never stored. A change applied by approving a
+  legal-gated request (#311) also stores `approvedVia`, the `flag_change_request` id; the
+  `flag.change_*` events target that request and store only the flag key.
 
 Three errors are always thrown, whatever the action kind: an unknown action, content-bearing
 metadata (`AuditRedactionError`), and a tenancy violation (`TENANCY_VIOLATION`).

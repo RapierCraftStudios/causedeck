@@ -324,6 +324,61 @@ describe('domain events', () => {
     });
   });
 
+  it('flag.change_*: flagChangeAuditSink records the request steps and approvedVia (#311)', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId } = await newWorkspace(tx);
+      const staffId = await newUser(tx);
+      const requestId = '6f1b0d3e-6f8f-4d55-9d6a-2b8f0c1e7a11';
+      await inWorkspace(tx, workspaceId, async (s) => {
+        for (const action of [
+          'flag.change_requested',
+          'flag.change_approved',
+          'flag.change_rejected',
+        ] as const) {
+          await flagChangeAuditSink.write(s, {
+            action,
+            actorUserId: staffId,
+            key: 'invoices.enabled',
+            workspaceId,
+            requestId,
+          });
+        }
+        await flagChangeAuditSink.write(s, {
+          action: 'flag.changed',
+          actorUserId: staffId,
+          key: 'invoices.enabled',
+          workspaceId,
+          oldValue: null,
+          newValue: true,
+          legalAckNote: 'Counsel opinion on file',
+          requestId,
+        });
+      });
+      for (const action of [
+        'flag.change_requested',
+        'flag.change_approved',
+        'flag.change_rejected',
+      ]) {
+        expect(AUDIT_ACTIONS).toHaveProperty([action, 'security'], true);
+        expect(only(await workspaceRows(tx, workspaceId, action))).toMatchObject({
+          actorKind: 'staff',
+          actorUserId: staffId,
+          targetKind: 'flag_change_request',
+          targetId: requestId,
+          metadata: { key: 'invoices.enabled' },
+        });
+      }
+      const changed = only(await workspaceRows(tx, workspaceId, 'flag.changed'));
+      expect(changed.metadata).toEqual({
+        oldValue: null,
+        newValue: true,
+        legalAck: true,
+        approvedVia: requestId,
+      });
+      expect(JSON.stringify(changed)).not.toContain('Counsel opinion');
+    });
+  });
+
   it('audit.exported: recordExportRun records the format and range', async () => {
     await withTestDb(async (tx) => {
       const { ownerId, workspaceId } = await newWorkspace(tx);

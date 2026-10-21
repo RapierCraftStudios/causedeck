@@ -178,6 +178,8 @@ export interface FlagChangedEvent {
   newValue: boolean;
   /** Whether a legal acknowledgement was given; its free-text note is never stored. */
   legalAck: boolean;
+  /** The approved `flag_change_request` the change applied, when there was one (#311). */
+  approvedVia?: string;
 }
 
 /** `flag.changed` by staff, on `tx` (global flags go to the account-level chain). */
@@ -187,33 +189,65 @@ export function recordFlagChanged(tx: Queryable, event: FlagChangedEvent): Promi
     {
       action: 'flag.changed',
       target: { kind: 'flag', id: event.key },
-      metadata: { oldValue: event.oldValue, newValue: event.newValue, legalAck: event.legalAck },
+      metadata: {
+        oldValue: event.oldValue,
+        newValue: event.newValue,
+        legalAck: event.legalAck,
+        ...(event.approvedVia === undefined ? {} : { approvedVia: event.approvedVia }),
+      },
     },
   );
 }
 
 /** Structurally `@causedeck/flags` `FlagAuditEvent` (core does not depend on flags). */
-interface FlagAuditEventLike {
-  action: 'flag.changed';
-  actorUserId: string;
-  key: string;
-  workspaceId: string | null;
-  oldValue: boolean | null;
-  newValue: boolean;
-  legalAckNote?: string;
-}
+type FlagAuditEventLike =
+  | {
+      action: 'flag.changed';
+      actorUserId: string;
+      key: string;
+      workspaceId: string | null;
+      oldValue: boolean | null;
+      newValue: boolean;
+      legalAckNote?: string;
+      /** The approved `flag_change_request` this change applied (#311). */
+      requestId?: string;
+    }
+  | {
+      action: 'flag.change_requested' | 'flag.change_approved' | 'flag.change_rejected';
+      actorUserId: string;
+      key: string;
+      workspaceId: string | null;
+      requestId: string;
+    };
 
-/** A `FlagAuditSink` for `setFlagAuditSink` that writes `flag.changed` through `record()`. */
+/** A `FlagAuditSink` for `setFlagAuditSink` that writes the flag events through `record()`. */
 export const flagChangeAuditSink = {
-  write: (tx: Queryable, event: FlagAuditEventLike): Promise<void> =>
-    recordFlagChanged(tx, {
+  write: (tx: Queryable, event: FlagAuditEventLike): Promise<void> => {
+    if (event.action !== 'flag.changed') {
+      // Request steps (#311): ids and the key only; the note stays out of the audit log.
+      return record(
+        {
+          db: tx,
+          workspaceId: event.workspaceId,
+          actor: { userId: event.actorUserId, kind: 'staff' },
+        },
+        {
+          action: event.action,
+          target: { kind: 'flag_change_request', id: event.requestId },
+          metadata: { key: event.key },
+        },
+      );
+    }
+    return recordFlagChanged(tx, {
       actorUserId: event.actorUserId,
       key: event.key,
       workspaceId: event.workspaceId,
       oldValue: event.oldValue,
       newValue: event.newValue,
       legalAck: typeof event.legalAckNote === 'string' && event.legalAckNote.length > 0,
-    }),
+      ...(event.requestId === undefined ? {} : { approvedVia: event.requestId }),
+    });
+  },
 };
 
 export interface ExportRunEvent {

@@ -4,6 +4,7 @@ node_modules/
 out/
 dist/
 .turbo/
+.cache/
 coverage/
 playwright-report/
 test-results/

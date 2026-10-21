@@ -15,6 +15,26 @@
       "dependsOn": ["^typecheck"]
     },
     "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/**",
+        "$TURBO_ROOT$/packages/**",
+        "$TURBO_ROOT$/docs/adr/**",
+        "$TURBO_ROOT$/docs/engineering/**",
+        "$TURBO_ROOT$/infra/docker/**",
+        "!$TURBO_ROOT$/**/node_modules/**",
+        "!$TURBO_ROOT$/**/.next/**",
+        "!$TURBO_ROOT$/**/.next-e2e/**",
+        "!$TURBO_ROOT$/**/.turbo/**",
+        "!$TURBO_ROOT$/**/.cache/**",
+        "!$TURBO_ROOT$/**/dist/**",
+        "!$TURBO_ROOT$/**/coverage/**",
+        "!$TURBO_ROOT$/**/reports/**",
+        "!$TURBO_ROOT$/**/storybook-static/**",
+        "!$TURBO_ROOT$/**/test-results/**",
+        "!$TURBO_ROOT$/**/playwright-report/**",
+        "!$TURBO_ROOT$/**/*.tsbuildinfo"
+      ],
       "outputs": ["coverage/**", "reports/**"]
     },
     "test:tenancy": {

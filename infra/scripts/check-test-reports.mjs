@@ -3,7 +3,8 @@
 //   node infra/scripts/check-test-reports.mjs
 //
 // The package set is the one Turborepo ran for `test` with TURBO_FILTER (written by ci-affected.sh;
-// empty means every workspace). Each package with a `test` script must have produced
+// empty means every workspace; several filters are separated by spaces). CI_TEST_SHARD_EMPTY=1 means
+// the shard had nothing to run. Each package with a `test` script must have produced
 // `<dir>/reports/junit.xml` reporting at least one test.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -56,12 +57,17 @@ function defaultReadReport(file) {
 
 function turboDryRun(root, filter) {
   const args = ['run', 'test', '--dry=json'];
-  if (filter) args.push(`--filter=${filter}`);
+  // TURBO_FILTER holds one filter, or several separated by spaces (a CI test shard's packages).
+  for (const one of filter.split(/\s+/).filter(Boolean)) args.push(`--filter=${one}`);
   const turbo = path.join(root, 'node_modules', '.bin', 'turbo');
   return JSON.parse(execFileSync(turbo, args, { cwd: root, encoding: 'utf8' }));
 }
 
 function main() {
+  if (process.env.CI_TEST_SHARD_EMPTY === '1') {
+    console.log('Test discovery check skipped: this shard has no affected packages.');
+    return;
+  }
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
   const packages = testedPackages(turboDryRun(root, process.env.TURBO_FILTER ?? ''));
   const problems = findProblems(packages, root);

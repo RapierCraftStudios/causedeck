@@ -55,6 +55,8 @@ Exclusions (`EXPORT_EXCLUSIONS`), each with its reason:
 - `workspace_key`: wrapped data-encryption key. It is secret key material, not user data, and the
   files in the export are already decrypted.
 - `job_effect`: internal job idempotency ledger. It holds no user content.
+- `adapter_parse_run` (#372): operational parse-health metrics (counts, hall numbers, adapter
+  version). It holds no user content and no personal data.
 
 **Complete by construction.** `pnpm test:export-coverage` checks every tenant table in
 `TABLE_TESTS` (the cross-tenant registry, itself checked against the live catalog by
@@ -193,7 +195,7 @@ step (mid-table in step 4) and no step runs twice. Up to 6 attempts with exponen
    `hearing` before `listing`, `task` before `obligation` before `order`, and the docket before the
    proceedings, documents and matters it cites; `role_edge` before the persons, proceedings and
    matters it joins, `person` before the anchors it cites; `proceeding_state_change` and
-   `proceeding_link` before `proceeding`, and proceedings before the anchors, matters and forums they cite; `anchor` and
+   `proceeding_link` before `proceeding`, and proceedings before the anchors, matters and forums they cite; `adapter_parse_run` (#372), `anchor` and
    `document_page` before `document`, documents and restrictions before `matter`), plus the workspace's
    `api_idempotency_key` rows. `pnpm --filter @causedeck/core exec vitest run
    src/lifecycle/__tests__/purge-coverage.test.ts` fails when a tenant table is in neither

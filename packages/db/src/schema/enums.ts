@@ -119,3 +119,13 @@ export const documentKind = pgEnum('document_kind', DOCUMENT_KINDS);
 export const DOCUMENT_TEXT_STATUSES = ['pending', 'layer', 'ocr', 'failed', 'skipped'] as const;
 export type DocumentTextStatus = (typeof DOCUMENT_TEXT_STATUSES)[number];
 export const documentTextStatus = pgEnum('document_text_status', DOCUMENT_TEXT_STATUSES);
+
+/** Lifecycle of a versioned court-adapter config (#372): one `active` row per adapter. */
+export const ADAPTER_VERSION_STATUSES = ['draft', 'active', 'retired'] as const;
+export type AdapterVersionStatus = (typeof ADAPTER_VERSION_STATUSES)[number];
+export const adapterVersionStatus = pgEnum('adapter_version_status', ADAPTER_VERSION_STATUSES);
+
+/** Outcome of one parse-health evaluation (#372). */
+export const PARSE_HEALTH_STATUSES = ['ok', 'degraded', 'failed'] as const;
+export type ParseHealthStatus = (typeof PARSE_HEALTH_STATUSES)[number];
+export const parseHealthStatus = pgEnum('parse_health_status', PARSE_HEALTH_STATUSES);

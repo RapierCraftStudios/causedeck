@@ -1,12 +1,13 @@
 // No judge aggregation (#349; PX-9, ME-6; #32 "Judge handling"): `bench.judges` records the
 // court-published composition only, and no table, view or index may aggregate by judge across
-// matters or workspaces. Checked three ways: the Drizzle schema (no other judge column, no views),
+// matters or workspaces. Checked three ways: the Drizzle schema (no other judge column, no view but
+// the allow-listed ones, none of which has a judge column),
 // the migration SQL (no view, index or aggregate over judges) and the migrated database catalog.
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { Secret } from '@causedeck/config/env';
-import { getTableName, is, sql } from 'drizzle-orm';
+import { Column, getTableName, getViewSelectedFields, is, sql } from 'drizzle-orm';
 import { getTableConfig, PgMaterializedView, PgView } from 'drizzle-orm/pg-core';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -19,6 +20,11 @@ import { testDatabaseUrls } from '../testing/index.ts';
 const JUDGE = /judge/i;
 /** The only judge-bearing column: the composition the court publishes. */
 const ALLOWED_COLUMNS = ['bench.judges'];
+/**
+ * Views the schema may declare, each reviewed for judges: `adapterHealthSummary` (#372) counts parse
+ * runs per court adapter and version and reads only `adapter_parse_run`, which has no judge data.
+ */
+const ALLOWED_VIEWS = ['adapterHealthSummary'];
 
 const owner = createOwnerDb(new Secret(testDatabaseUrls().owner));
 afterAll(async () => {
@@ -37,17 +43,27 @@ function migrationStatements(): { file: string; statement: string }[] {
 }
 
 describe('no judge aggregation (PX-9, ME-6)', () => {
-  it('declares no judge column but bench.judges, and no views', () => {
+  it('declares no judge column but bench.judges, and no views but the allow-listed ones', () => {
     const columns = tablesOf(schema).flatMap((table) =>
       getTableConfig(table)
         .columns.filter((column) => JUDGE.test(column.name))
         .map((column) => `${getTableName(table)}.${column.name}`),
     );
     expect(columns).toEqual(ALLOWED_COLUMNS);
-    const views = Object.entries(schema)
-      .filter(([, value]) => is(value, PgView) || is(value, PgMaterializedView))
-      .map(([name]) => name);
-    expect(views).toEqual([]);
+    const views = Object.entries(schema).filter(
+      ([, value]) => is(value, PgView) || is(value, PgMaterializedView),
+    );
+    expect(views.map(([name]) => name)).toEqual(ALLOWED_VIEWS);
+    for (const [name, view] of views) {
+      const viewColumns = Object.values(getViewSelectedFields(view as PgView))
+        .filter((field) => is(field, Column))
+        .map((field) => field.name);
+      expect(viewColumns.length, name).toBeGreaterThan(0);
+      expect(
+        viewColumns.filter((column) => JUDGE.test(column)),
+        name,
+      ).toEqual([]);
+    }
   });
 
   it('creates no view, index or aggregate over judges in any migration', () => {

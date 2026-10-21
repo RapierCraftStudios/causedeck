@@ -81,6 +81,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   person: DB_TABLES_TEST,
   organisation: DB_TABLES_TEST,
   role_edge: DB_TABLES_TEST,
+  // Adapter parse health (#372).
+  adapter_parse_run: DB_TABLES_TEST,
 };
 
 /**
@@ -267,6 +269,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
     note: "opens withWorkspace on the given workspace id; another workspace's forum is NOT_FOUND",
+  },
+  // adapter health (#372): the tenant-free summary view
+  getAdapterHealthSummary: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads the tenant-free adapter_health_summary view (counts per adapter/version only), never a tenant row',
   },
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
   // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that

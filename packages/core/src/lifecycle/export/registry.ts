@@ -63,6 +63,8 @@ export const EXPORT_EXCLUSIONS: Readonly<Record<string, string>> = {
     'Wrapped data-encryption key: secret key material, not user data. Files in the export are already decrypted.',
   job_effect:
     'Internal job idempotency ledger (job name, key, time); holds no user content and no personal data.',
+  adapter_parse_run:
+    'Operational parse-health metrics (counts, hall numbers, adapter version, #372); holds no user content and no personal data.',
 };
 
 /** Tables that also get a human-readable `data/<table>.csv` next to the JSON Lines file. */

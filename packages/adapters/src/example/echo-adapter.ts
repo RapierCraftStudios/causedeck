@@ -63,9 +63,19 @@ const ECHO_ACCESS_MODES: AccessModes = {
   display_board: 'none',
 };
 
+/** The config the echo adapter ships with: the loader's fallback when no version is active (#372). */
+export const ECHO_BUNDLED: { version: string; config: AdapterConfig } = {
+  version: ECHO_VERSION,
+  config: ECHO_CONFIG,
+};
+
 export interface EchoAdapterOptions {
   /** Resolves a deep-link kind for the echo forum; without it `buildDeepLink` returns null. */
   resolveDeepLink?: (kind: string, params: DeepLinkParams) => DeepLink | null;
+  /** A versioned config (#372, `adapter_version`); defaults to `ECHO_CONFIG`. */
+  config?: AdapterConfig;
+  /** The version `config` belongs to; reported as `version` and in every parse. */
+  version?: string;
 }
 
 interface Page {
@@ -98,7 +108,11 @@ function anchorFor(page: Page, quote: string, rowIndex: number): Anchor | null {
 const round = (value: number) => Math.round(value * 100) / 100;
 const PARTIES_AFTER_NUMBER = /\d{1,7}\s*(?:\/|\bof\b|-)\s*(?:\d{4}|\d{2})\b\s*(.*)$/i;
 
-function parseCauseListSync(config: AdapterConfig, input: ParserInput): ParsedCauseList {
+function parseCauseListSync(
+  config: AdapterConfig,
+  version: string,
+  input: ParserInput,
+): ParsedCauseList {
   const hallHeading = new RegExp(config.listing.hallHeading ?? '(?!)', 'i');
   const rowPattern = new RegExp(config.listing.rowPattern ?? '(?!)');
   const knownTypes = new Set(Object.keys(config.nomenclature.caseTypes).map(compactCaseType));
@@ -189,7 +203,7 @@ function parseCauseListSync(config: AdapterConfig, input: ParserInput): ParsedCa
 
   return {
     adapterId: ECHO_ADAPTER_ID,
-    adapterVersion: ECHO_VERSION,
+    adapterVersion: version,
     forumCode: input.meta.forumCode,
     listDate,
     rows,
@@ -255,12 +269,13 @@ function findDirectionCues(config: AdapterConfig, input: ParserInput): Direction
   return cues;
 }
 
-/** A fresh echo adapter over `ECHO_CONFIG`. */
+/** A fresh echo adapter over `options.config` (default `ECHO_CONFIG`, version 1.0.0). */
 export function createEchoAdapter(options: EchoAdapterOptions = {}): CourtAdapter {
-  const config = ECHO_CONFIG;
+  const config = options.config ?? ECHO_CONFIG;
+  const version = options.version ?? ECHO_VERSION;
   return {
     id: ECHO_ADAPTER_ID,
-    version: ECHO_VERSION,
+    version,
     forumCodes: [ECHO_FORUM_CODE],
     accessModes: ECHO_ACCESS_MODES,
     nomenclature: config.nomenclature,
@@ -271,7 +286,7 @@ export function createEchoAdapter(options: EchoAdapterOptions = {}): CourtAdapte
     links: config.links,
     fixtures: config.fixtures,
     health: config.health,
-    parseCauseList: (input) => Promise.resolve(parseCauseListSync(config, input)),
+    parseCauseList: (input) => Promise.resolve(parseCauseListSync(config, version, input)),
     parseOrderHeader: (input) => parseOrderHeader(config, input),
     findDirectionCues: (input) => findDirectionCues(config, input),
     buildDeepLink(resource: Resource, params: DeepLinkParams) {

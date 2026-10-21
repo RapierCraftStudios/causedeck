@@ -95,6 +95,12 @@ async function aForums(f: Fixture) {
   );
 }
 
+async function aParseRuns(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.adapterParseRun).orderBy(schema.adapterParseRun.id),
+  );
+}
+
 async function aRestrictions(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.matterRestriction).orderBy(schema.matterRestriction.id),
@@ -1077,6 +1083,36 @@ const CASES: Record<string, Case> = {
     );
     await expectDenied(core.getForum(f.tx, f.b.id, aForum));
     expect((await aForums(f)).map((row) => row.id)).toContain(aForum);
+  },
+  // Adapter health (#372): the summary is tenant-free by design; B learns no id of A's.
+  getAdapterHealthSummary: async (f) => {
+    const aRun = f.a.rows.adapter_parse_run?.parseRunId ?? '';
+    const before = await aParseRuns(f);
+    expect(before.map((row) => row.id)).toContain(aRun);
+    const unscoped = await core.getAdapterHealthSummary(f.tx);
+    const fromB = await f.asB((s) => core.getAdapterHealthSummary(s));
+    const fromA = await inWorkspace(f.tx, f.a.id, (s) => core.getAdapterHealthSummary(s));
+    expect(fromB).toEqual(unscoped);
+    expect(fromA).toEqual(unscoped);
+    const keys = [
+      'adapterId',
+      'adapterVersion',
+      'runs',
+      'okRuns',
+      'degradedRuns',
+      'failedRuns',
+      'rowsParsed',
+      'rowsAnchored',
+    ];
+    for (const row of fromB) expect(Object.keys(row).sort()).toEqual([...keys].sort());
+    const text = JSON.stringify(fromB);
+    for (const id of [f.a.id, aRun, f.a.rows.adapter_parse_run?.documentId ?? '']) {
+      expect(text).not.toContain(id);
+    }
+    // Both workspaces' seeded echo runs are counted, without saying whose they are.
+    const echo = fromB.find((row) => row.adapterId === 'echo' && row.adapterVersion === '1.0.0');
+    expect(echo?.runs).toBeGreaterThanOrEqual(2);
+    expect(await aParseRuns(f)).toEqual(before);
   },
   // Matter graph (#362): A's matter, proceeding and document ids, as ub.
   createMatter: async (f) => {

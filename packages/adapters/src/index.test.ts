@@ -35,4 +35,30 @@ describe('@causedeck/adapters', () => {
       expect(adapters[name], name).toBeTypeOf('function');
     }
   });
+
+  it('exports the pure config checksums and parse-health monitor (#372)', () => {
+    for (const name of [
+      'canonicalJson',
+      'configChecksum',
+      'ECHO_BUNDLED',
+      'evaluateParseHealth',
+      'parseRunMetrics',
+      'PARSE_HEALTH_FLAGS',
+      'PARSE_HEALTH_THRESHOLDS',
+      'sha256Hex',
+    ] as const) {
+      expect(adapters[name], name).toBeDefined();
+    }
+  });
+
+  it('keeps the database and filesystem parts off the entry (#372)', () => {
+    for (const name of [
+      'activateAdapterVersion',
+      'createAdapterConfigLoader',
+      'fixturesDigest',
+      'recordParseRun',
+    ]) {
+      expect(name in adapters, name).toBe(false);
+    }
+  });
 });

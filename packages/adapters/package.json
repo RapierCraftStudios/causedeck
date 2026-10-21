@@ -5,7 +5,8 @@
   "description": "Court-adapter framework and adapters.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -14,14 +15,15 @@
     "test:golden": "vitest run --config vitest.golden.config.ts"
   },
   "dependencies": {
+    "@causedeck/config": "workspace:*",
+    "@causedeck/db": "workspace:*",
     "@causedeck/flags": "workspace:*",
+    "drizzle-orm": "catalog:",
     "parse5": "catalog:",
     "pdfjs-dist": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@causedeck/config": "workspace:*",
-    "@causedeck/db": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "pdf-lib": "catalog:",

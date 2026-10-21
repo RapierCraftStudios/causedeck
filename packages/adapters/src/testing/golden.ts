@@ -4,7 +4,9 @@
 // table. Lawyer-supplied fixtures are never committed; they are read from
 // `ADAPTER_PRIVATE_FIXTURES_DIR` (same layout) only when it is set, and reported as a separate set
 // so they never mix with the committed counts. CI never sets it (the real-fixture gate is #119).
-// Reads files only: no network, no clock. Test tooling: not exported from the package entry.
+// Reads files only: no network, no clock. Not exported from the package entry: tests use it, and
+// `activateAdapterVersion` (#372) gates activation on it with `privateFixturesDir: null` and the
+// candidate's `adapterVersion`.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -92,6 +94,11 @@ export interface RunGoldenOptions {
   fixturesRoot?: string;
   /** Defaults to `ADAPTER_PRIVATE_FIXTURES_DIR`; null skips the private set. */
   privateFixturesDir?: string | null;
+  /**
+   * The version under test (#372). Expected files pin the version they were written for; when set,
+   * their `adapterVersion` is read as this one, so a candidate is judged on its parse alone.
+   */
+  adapterVersion?: string;
 }
 
 /** The row fields scored for precision and recall, after the list-level `listDate`. */
@@ -205,6 +212,7 @@ async function runSet(
   adapter: CourtAdapter,
   dir: string,
   origin: GoldenSetReport['origin'],
+  adapterVersion: string | undefined,
 ): Promise<GoldenSetReport> {
   const counts = Object.fromEntries(
     SCORED_FIELDS.map((field) => [field, { tp: 0, fp: 0, fn: 0 }]),
@@ -250,7 +258,8 @@ async function runSet(
         });
         continue;
       }
-      const expected = ParsedCauseListSchema.parse(JSON.parse(readFileSync(expectedPath, 'utf8')));
+      const pinned = ParsedCauseListSchema.parse(JSON.parse(readFileSync(expectedPath, 'utf8')));
+      const expected = adapterVersion === undefined ? pinned : { ...pinned, adapterVersion };
       score(counts, expected, actual);
       const diff = diffJson(expected, actual);
       cases.push({
@@ -285,11 +294,16 @@ export async function runGolden(
       : options.privateFixturesDir;
   return {
     adapterId,
-    public: await runSet(adapter, path.join(root, adapterId), 'committed'),
+    public: await runSet(adapter, path.join(root, adapterId), 'committed', options.adapterVersion),
     private:
       privateDir === undefined || privateDir === null
         ? null
-        : await runSet(adapter, path.join(privateDir, adapterId), 'private'),
+        : await runSet(
+            adapter,
+            path.join(privateDir, adapterId),
+            'private',
+            options.adapterVersion,
+          ),
   };
 }
 

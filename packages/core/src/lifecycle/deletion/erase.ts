@@ -60,9 +60,9 @@ export const PURGE_ORDER = [
   // listings, orders and obligations before the proceedings, documents, anchors and matters they
   // cite; role edges before the persons, proceedings and matters they join, persons before the
   // anchors they cite; state history (#363) and links before their proceedings, proceedings
-  // before the anchors, matters and forums they cite; anchors and pages before their document,
-  // documents and restrictions before their matter, matters (and the docket) before the members
-  // their member columns name.
+  // before the anchors, matters and forums they cite; parse-health runs (#372), anchors and pages
+  // before their document, documents and restrictions before their matter, matters (and the
+  // docket) before the members their member columns name.
   'appearance',
   'hearing',
   'task',
@@ -75,6 +75,7 @@ export const PURGE_ORDER = [
   'proceeding_state_change',
   'proceeding_link',
   'proceeding',
+  'adapter_parse_run',
   'anchor',
   'document_page',
   'document',

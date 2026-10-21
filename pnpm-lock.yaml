@@ -802,9 +802,18 @@ importers:
 
   packages/adapters:
     dependencies:
+      '@causedeck/config':
+        specifier: workspace:*
+        version: link:../config
+      '@causedeck/db':
+        specifier: workspace:*
+        version: link:../db
       '@causedeck/flags':
         specifier: workspace:*
         version: link:../flags
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.4(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(kysely@0.29.6)(pg@8.23.1)(postgres@3.4.9)
       parse5:
         specifier: 'catalog:'
         version: 8.0.1
@@ -815,12 +824,6 @@ importers:
         specifier: 'catalog:'
         version: 4.6.7
     devDependencies:
-      '@causedeck/config':
-        specifier: workspace:*
-        version: link:../config
-      '@causedeck/db':
-        specifier: workspace:*
-        version: link:../db
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.5

@@ -130,6 +130,8 @@ describe('row-level security catalog', () => {
         'person',
         'organisation',
         'role_edge',
+        // Adapter parse health (#372).
+        'adapter_parse_run',
       ].sort(),
     );
     for (const row of rows)

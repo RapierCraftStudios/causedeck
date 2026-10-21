@@ -10,6 +10,7 @@ import { sql } from 'drizzle-orm';
 import type { Database, Transaction } from '../client.ts';
 import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
+import { adapterParseRun } from '../schema/adapters.ts';
 import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
@@ -496,6 +497,26 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
   document: async (tx, { workspaceId, tag }) => ({
     documentId: await seedDocument(tx, workspaceId, tag),
   }),
+  adapter_parse_run: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(adapterParseRun)
+      .values({
+        workspaceId,
+        documentId,
+        adapterId: 'echo',
+        adapterVersion: '1.0.0',
+        forumCode: 'test.echo.principal',
+        rowsParsed: 3,
+        rowsAnchored: 3,
+        unmappedHeadings: 0,
+        unknownCaseTypes: 0,
+        hallsSeen: ['1'],
+        status: 'ok',
+      })
+      .returning({ id: adapterParseRun.id });
+    return { documentId, parseRunId: first(rows, 'adapter_parse_run').id };
+  },
   document_page: async (tx, { workspaceId, tag }) => {
     const documentId = await seedDocument(tx, workspaceId, tag);
     const rows = await tx

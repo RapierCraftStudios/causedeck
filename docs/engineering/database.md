@@ -184,6 +184,26 @@ NULL is `ON DELETE SET NULL (<column>)`, so `workspace_id` stays. A closed oblig
 closer's member row is deleted (account deletion), so the obligation stays closed with
 `closed_by` null. `order` is a reserved word: quote it in raw SQL.
 
+## Adapter tables
+
+`adapter_version`, `adapter_parse_run` and the view `adapter_health_summary` in
+`packages/db/src/schema/adapters.ts`, migration `0044_adapter_framework` (#372,
+[ADR 0015](../adr/0015-court-adapter-framework.md)). Tested in
+`packages/db/src/__tests__/adapters-schema.test.ts`.
+
+- `adapter_version` is global (`GLOBAL_TABLES`): one row per `(adapter_id, version)` with the config,
+  its sha256 `checksum`, `fixtures_digest`, `status` (`adapter_version_status`), `activated_at`,
+  `activated_by` (-> `user`, SET NULL) and `last_verified_at`. The partial unique index
+  `adapter_version_one_active_uq` allows one `active` row per adapter. The app role may select,
+  insert and update it; the clerk role has no access.
+- `adapter_parse_run` is a tenant table under FORCE RLS: `document_id` (composite FK, ON DELETE
+  CASCADE), adapter id and version, `forum_code`, row and heading counts, `halls_seen`,
+  `halls_unreadable` and `status` (`parse_health_status`). Metrics only, never row text.
+- `adapter_health_summary` groups those runs by adapter and version (run counts per status, row
+  sums). It is owned by the owner role and reads every workspace through `owner_definer_read` on
+  `adapter_parse_run`; the app and clerk roles may only select it. It has no workspace, document or
+  hall column. drizzle declares it with `.existing()`, so `db:generate` leaves it alone.
+
 ## Audit tables
 
 `packages/db/src/schema/audit.ts`, migration `0008_audit` (#226, #26 part 1). Both tables are

@@ -309,6 +309,13 @@
       "when": 1792592466645,
       "tag": "0043_proceeding_state_change",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1792598903333,
+      "tag": "0044_adapter_framework",
+      "breakpoints": true
     }
   ]
 }

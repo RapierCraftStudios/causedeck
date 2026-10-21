@@ -1,8 +1,9 @@
 // Versioned adapter config (#369, ADR 0015): everything that differs between courts and changes
 // without a code change (case-type aliases, stage headings, the two-digit-year pivot, link kinds,
-// health thresholds) lives here; parsers stay generic code. Config versioning and hot deploy are
-// #372. Stage headings are an open enum: `stageMap` maps raw-heading regexes to normalised keys and
-// anything unmatched is kept verbatim.
+// health thresholds) lives here; parsers stay generic code. Versions of it are stored in
+// `adapter_version` and hot-deployed by `config/loader.ts` and `config/activate.ts` (#372). Stage
+// headings are an open enum: `stageMap` maps raw-heading regexes to normalised keys and anything
+// unmatched is kept verbatim.
 import { z } from 'zod';
 
 const compiles = (pattern: string, flags: string | undefined): boolean => {

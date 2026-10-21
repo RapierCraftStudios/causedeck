@@ -19,6 +19,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `audit` | `@causedeck/core/audit` | audit writer, chain verification, feed query and export ([audit.md](audit.md)) |
 | `workspaces` | `@causedeck/core/workspaces` | workspaces, members, invitations, offboarding ([workspaces.md](workspaces.md)) |
 | `matters` | `@causedeck/core/matters` | matter restrictions |
+| `court` | `@causedeck/core/court` | forum catalogue reads, custom workspace forums and official deep links (#34, [ADR 0014](../adr/0014-forum-catalogue-and-deep-links.md)) |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
@@ -58,6 +59,7 @@ graph LR
   workspaces --> audit
   matters --> workspaces
   matters --> audit
+  court --> workspaces
   billing --> workspaces
   billing --> audit
   usage --> audit
@@ -86,6 +88,7 @@ graph LR
 | `audit` | nothing (only `shared/`) |
 | `workspaces` | `audit` |
 | `matters` | `workspaces`, `audit` |
+| `court` | `workspaces` |
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
 | `lifecycle` | `audit`, `workspaces` |

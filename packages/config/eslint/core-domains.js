@@ -14,6 +14,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   audit: Object.freeze([]),
   workspaces: Object.freeze(['audit']),
   matters: Object.freeze(['workspaces', 'audit']),
+  // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
+  court: Object.freeze(['workspaces']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.

@@ -116,6 +116,25 @@ delete a version or merge chain in any order. `document.matter_id` is `NO ACTION
 documents is not deleted on its own. `matter_restriction.matter_id` references `matter` (ON DELETE
 CASCADE) since 0038, which deleted the restriction rows written before matters existed.
 
+## Proceeding tables
+
+`proceeding` and `proceeding_link` in `packages/db/src/schema/proceedings.ts`, migration
+`0039_proceedings` (#346, part 3 of #32, [ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant
+tables under FORCE RLS with `provenance()` and `provenanceCheck()`; tested in
+`packages/db/src/__tests__/proceeding-schema.test.ts`.
+
+| Table             | Columns and constraints                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proceeding`      | `matter_id` (-> `matter`, same workspace, NO ACTION; index `(workspace_id, matter_id)`), `forum_id` (-> `forum`, a catalogue or own forum: `same_or_global` scope guard), `kind` (`proceeding_kind`), `case_type_code` (CHECK upper-case, no dots or spaces), `case_type_raw`, `number` (text), `year`, `sr_no`, `fr_no`, `diary_no`, `filing_no`, `cnr` (CHECK `^[A-Z0-9]{16}$`), `filing_date`, `state` (`proceeding_state`, default `filed`; CHECK `number` and `year` set when `numbered` or `disposed`), `state_changed_at`, `parent_proceeding_id` (-> `proceeding`, not itself), `title_petitioner`, `title_respondent` |
+| `proceeding_link` | `from_proceeding_id`, `to_proceeding_id` (-> `proceeding`, ON DELETE CASCADE; CHECK not equal), `kind` (CHECK `parent_of`, `connected`, `appeal_from`, `lower_court`), unique `(workspace_id, from_proceeding_id, to_proceeding_id, kind)`                                                                                                                                                                                                                                                                                                         |
+
+Case identity: unique `(workspace_id, forum_id, case_type_code, number, year) WHERE number IS NOT
+NULL` and `(workspace_id, cnr) WHERE cnr IS NOT NULL`. The provenance `anchor_id` is a composite
+NO ACTION FK to `anchor` on both tables. `parent_proceeding_id` is `ON DELETE SET NULL
+(parent_proceeding_id)`. The `proceeding_link_parent_of_cycle_guard` trigger
+(`app_proceeding_link_cycle_guard()`) rejects, with 23514, an insert or update of a `parent_of` link
+that would close a cycle; it serializes per workspace with a transaction advisory lock.
+
 ## Audit tables
 
 `packages/db/src/schema/audit.ts`, migration `0008_audit` (#226, #26 part 1). Both tables are

@@ -163,7 +163,7 @@ so each such FK gets the `app_reference_scope_guard` trigger from `scopeGuardTri
 refTable, mode)`, named `<table>_<column>_scope_guard`. It looks the referenced row up as the
 invoker (under RLS) and rejects a missing, invisible or out-of-scope row with 23503, the same error in
 every case. Mode `same` requires the row's own scope (`court_hall`, `bench`); `same_or_global` also
-accepts a catalogue row (for tenant tables such as `proceeding`). `db:check` allows the nullable
+accepts a catalogue row (tenant tables: `proceeding.forum_id`, #346, migration 0039). `db:check` allows the nullable
 column and the single-column FK; `db:check-rls` requires the two extra policies and the trigger
 (`missing-global-or-workspace-policy`, `missing-scope-guard`). The cross-tenant suite covers the
 custom rows like any tenant table; `court-schema.test.ts` covers the catalogue rows.

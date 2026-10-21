@@ -219,10 +219,13 @@ export const lifecycleExporter = tablesExporter('lifecycle', [
 // not exported. Workspace-wide only: the rows name no user.
 export const courtExporter = tablesExporter('court', [ws('forum'), ws('court_hall'), ws('bench')]);
 
-// Matters and their documents (#345). A document's storage key is an internal object key (like
-// `blob.key`), so it is left out; the files themselves come with the blobs.
+// Matters, their proceedings and links (#346) and their documents (#345). A document's storage key
+// is an internal object key (like `blob.key`), so it is left out; the files themselves come with the
+// blobs.
 export const mattersExporter = tablesExporter('matters', [
   ws('matter'),
+  ws('proceeding'),
+  ws('proceeding_link'),
   ws('document', { exclude: ['storage_key'] }),
   ws('document_page'),
   ws('anchor'),

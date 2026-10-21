@@ -55,8 +55,11 @@ export const PURGE_ORDER = [
   'notification_setting',
   'invitation',
   'support_session',
-  // The matter graph (#345): anchors and pages before their document, documents and restrictions
-  // before their matter, matters before the members their owner_member_id names.
+  // The matter graph (#345, #346): links before their proceedings, proceedings before the anchors,
+  // matters and forums they cite; anchors and pages before their document, documents and
+  // restrictions before their matter, matters before the members their owner_member_id names.
+  'proceeding_link',
+  'proceeding',
   'anchor',
   'document_page',
   'document',

@@ -114,6 +114,9 @@ describe('row-level security catalog', () => {
         'document',
         'document_page',
         'anchor',
+        // Proceedings (#346).
+        'proceeding',
+        'proceeding_link',
       ].sort(),
     );
     for (const row of rows)

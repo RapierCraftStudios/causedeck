@@ -8,6 +8,9 @@
 // (an account deletion cascades its member rows; an erase deletes matters in 500-row batches). They
 // are `ON DELETE SET NULL (<column>)` in migration 0038 (Postgres 15+): a plain composite SET NULL
 // would also null `workspace_id`. Drizzle records them as `set null`.
+//
+// `proceeding` and `proceeding_link` (#346) hang off `matter` too; they live in proceedings.ts,
+// which also imports documents.ts (the provenance `anchor_id`), so no import cycle forms here.
 import { sql } from 'drizzle-orm';
 import { boolean, check, foreignKey, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 

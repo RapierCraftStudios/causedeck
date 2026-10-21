@@ -59,6 +59,29 @@ export type GraphEvent =
       type: 'proceeding.merge_undone';
       proceedingId: string;
       fromProceedingId: string;
+    })
+  // Next date (#364): a proposal, a conflict with the canonical date (never resolved here), and a
+  // confirmation by a member (`actorUserId`), which makes the listing canonical.
+  | (GraphEventBase & {
+      type: 'listing.next_date_proposed';
+      proceedingId: string;
+      listingId: string;
+      date: string;
+    })
+  | (GraphEventBase & {
+      type: 'listing.next_date_conflict';
+      proceedingId: string;
+      currentListingId: string;
+      proposedListingId: string;
+      currentDate: string;
+      proposedDate: string;
+    })
+  | (GraphEventBase & {
+      type: 'listing.next_date_confirmed';
+      proceedingId: string;
+      listingId: string;
+      previousListingId: string | null;
+      date: string;
     });
 
 export type GraphEventType = GraphEvent['type'];

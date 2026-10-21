@@ -38,6 +38,8 @@ export interface MatterGraphDeps {
   events: GraphEvents;
   /** Policy settings; the workspace's stored role settings apply when omitted. */
   settings?: PolicySettings;
+  /** The clock for date rules (e.g. no past next date); the system clock when omitted. */
+  now?: () => Date;
 }
 
 /** Who is asking: the caller's role, if any, is replaced by the active membership's role. */

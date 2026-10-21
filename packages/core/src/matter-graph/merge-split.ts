@@ -10,8 +10,9 @@
 // widen who sees a row; a split copies both onto the new matter. Rows moved into a matter are named
 // on the event with that matter's `sensitive` flag; nothing here enqueues AI or any other work.
 // Where two proceedings disagree (an identifier, the next date), the merge refuses: services never
-// choose between two sources. Identifier attribution travels in the result, the event and the
-// payload; it has no table of its own.
+// choose between two sources. The canonical flag changes only through next-date.ts (ADR 0016).
+// Identifier attribution travels in the result, the event and the payload; it has no table of its
+// own.
 import { schema, type Transaction } from '@causedeck/db';
 import {
   MergeMattersInput,
@@ -43,6 +44,7 @@ import {
 } from './context.ts';
 import { identityKey, normaliseCaseNumber, normaliseCaseType, rowIdentity } from './duplicates.ts';
 import { crossWorkspace } from './errors.ts';
+import { demoteDuplicateCanonical, restoreCanonical } from './next-date.ts';
 
 const { listing, matter, matterRestriction, proceeding, proceedingLink } = schema;
 
@@ -865,9 +867,8 @@ export async function mergeProceedings(
           throw conflict('Both proceedings have a different next date; resolve it first');
         }
         demotedListing = { id: theirNext.id, updatedAt: theirNext.updatedAt };
-        await tx.execute(
-          sql`update listing set canonical = false, updated_at = now() where workspace_id = ${ws} and id = ${theirNext.id}`,
-        );
+        // next-date.ts owns the canonical flag (ADR 0016); the dates are equal, so nothing is chosen.
+        await demoteDuplicateCanonical(tx, ws, theirNext.id, ourNext.listDate);
       }
       const to = sql`proceeding_id = ${a.id}`;
       const of = sql`proceeding_id = ${b.id}`;
@@ -1153,10 +1154,7 @@ export async function undoMergeProceedings(
           select * from jsonb_populate_record(null::proceeding_link, ${own(l)})`);
       }
       if (before.demotedListing !== null) {
-        await tx.execute(sql`
-          update listing set canonical = true,
-            updated_at = ${before.demotedListing.updatedAt}::timestamptz
-          where workspace_id = ${ws} and id = ${before.demotedListing.id}`);
+        await restoreCanonical(tx, ws, before.demotedListing.id, before.demotedListing.updatedAt);
       }
     });
     const restored = await loadProceeding(tx, ws, fromId);

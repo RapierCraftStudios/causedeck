@@ -25,6 +25,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   archiveMatter,
+  confirmNextDate,
   createDocument,
   createMatter,
   createProceeding,
@@ -35,6 +36,7 @@ import {
   undoMerge,
   undoMergeProceedings,
   undoSplit,
+  proposeNextDate,
   updateIdentifiers,
   updateMatter,
   type MatterGraphDeps,
@@ -42,6 +44,8 @@ import {
 import { newWorkspace } from '../../__tests__/fixtures.ts';
 
 const PROCEEDINGS = 50;
+/** Seeded proposed listings, one per confirmNextDate sample. */
+const LISTINGS = 120;
 const WARMUP = 20;
 const SAMPLES = 100;
 const BUDGET_MS = 100;
@@ -63,6 +67,7 @@ interface Seeded {
   forumId: string;
   matterId: string;
   proceedingIds: string[];
+  listingIds: string[];
 }
 
 async function seed(tx: Transaction): Promise<Seeded> {
@@ -75,14 +80,30 @@ async function seed(tx: Transaction): Promise<Seeded> {
       select ${workspaceId}::uuid, ${m.id}::uuid, ${graph.forumId}::uuid, 'WP', (20000 + g)::text, 2026, 'numbered', 'manual'
       from generate_series(1, ${PROCEEDINGS}) as g
       returning id`);
+    const proceedingIds = rows.map((r) => r.id);
+    const listings = await s.execute<{ id: string }>(sql`
+      insert into listing (workspace_id, proceeding_id, list_date, list_type, stage_raw, source_type)
+      select ${workspaceId}::uuid, p.id, date '2027-06-01' + g, 'daily', '', 'manual'
+      from generate_series(0, ${LISTINGS - 1}) as g
+      join (
+        select id, row_number() over (order by id) - 1 as n from proceeding
+        where workspace_id = ${workspaceId}::uuid and matter_id = ${m.id}::uuid
+      ) as p on p.n = g % ${PROCEEDINGS}
+      returning id`);
     return {
       workspaceId,
       ownerId,
       forumId: graph.forumId,
       matterId: m.id,
-      proceedingIds: rows.map((r) => r.id),
+      proceedingIds,
+      listingIds: listings.map((r) => r.id),
     };
   });
+}
+
+/** A day `i` days after 2027-01-01, as `YYYY-MM-DD`. */
+function futureDay(i: number): string {
+  return new Date(Date.UTC(2027, 0, 1 + i)).toISOString().slice(0, 10);
 }
 
 /** The `i`-th distinct ordered pair of proceedings (no self pairs). */
@@ -304,6 +325,32 @@ function services(deps: MatterGraphDeps, s: Transaction, d: Seeded): Record<stri
           sourceType: 'manual',
         });
       },
+    },
+    proposeNextDate: {
+      call: (i: number) =>
+        proposeNextDate(deps, actor, {
+          proceedingId: d.proceedingIds[i % PROCEEDINGS] ?? '',
+          date: futureDay(i),
+          provenance: MANUAL,
+        }),
+      statement: (i: number): SQLWrapper =>
+        s.insert(schema.listing).values({
+          workspaceId: d.workspaceId,
+          proceedingId: d.proceedingIds[i % PROCEEDINGS] ?? '',
+          listDate: futureDay(1000 + i),
+          listType: 'daily',
+          stageRaw: '',
+          sourceType: 'manual',
+        }),
+    },
+    confirmNextDate: {
+      call: (i: number) => confirmNextDate(deps, actor, { listingId: d.listingIds[i] ?? '' }),
+      // The swap's two updates touch one row each by primary key; the target's is representative.
+      statement: (i: number): SQLWrapper =>
+        s
+          .update(schema.listing)
+          .set({ confirmationState: 'confirmed', updatedAt: new Date() })
+          .where(eq(schema.listing.id, d.listingIds[i] ?? '')),
     },
     createDocument: {
       call: (i: number) => createDocument(deps, actor, { matterId: d.matterId, ...doc(i) }),

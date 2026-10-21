@@ -101,7 +101,11 @@ async function aRestrictions(f: Fixture) {
   );
 }
 
-/** A workspace's matter-graph rows, for before/after checks (A's unless `workspaceId`). */
+/**
+ * A workspace's matter-graph rows (A's unless `workspaceId`), for before/after checks: one key per
+ * table the services write (matters.ts, proceedings.ts and its links, documents.ts, next-date.ts,
+ * which writes listings, and merge-split.ts, which also moves orders, obligations, tasks and edges).
+ */
 async function aGraph(f: Fixture, workspaceId = f.a.id) {
   return inWorkspace(f.tx, workspaceId, async (s) => ({
     matters: await s.select().from(schema.matter).orderBy(schema.matter.id),
@@ -157,6 +161,19 @@ async function expectGraphDenied(
 }
 
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
+
+/** A's seeded listing (canonical) and its proceeding. */
+async function aListing(f: Fixture): Promise<{ listingId: string; proceedingId: string }> {
+  const listingId = f.a.rows.listing?.listingId ?? '';
+  const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ proceedingId: schema.listing.proceedingId })
+      .from(schema.listing)
+      .where(eq(schema.listing.id, listingId)),
+  );
+  if (!row) throw new Error("A's listing not found");
+  return { listingId, proceedingId: row.proceedingId };
+}
 
 async function aWorkspace(f: Fixture) {
   const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
@@ -1229,6 +1246,45 @@ const CASES: Record<string, Case> = {
       ),
     );
     expect(events).toEqual([]);
+  },
+  // Next date (#364): A's seeded canonical listing and its proceeding.
+  proposeNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.proposeNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId, date: '2027-01-04', provenance: PROBE_PROVENANCE },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  confirmNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { listingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.confirmNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { listingId, allowPast: true },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  getCanonicalNextDate: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    const { listingId, proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getCanonicalNextDate({ ...deps, db }, { userId: f.ub, workspaceId }, { proceedingId }),
+    );
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.getCanonicalNextDate(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { proceedingId },
+    );
+    expect(own?.id).toBe(listingId);
   },
   // Merges and splits (#365): A's ids from B, or ub claiming A, are denied; one id of each workspace
   // is the typed cross-workspace error.

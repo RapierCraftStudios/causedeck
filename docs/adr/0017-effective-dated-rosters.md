@@ -33,7 +33,7 @@ The court reference tables (`forum`, `court_hall`, `bench`, [ADR 0013](0013-matt
 
 ## Decision
 
-- **Tables** (`packages/db/src/schema/roster.ts`, migration `0045_bench_rosters`), all `tenantTable()`s under FORCE RLS with `ws_isolation`:
+- **Tables** (`packages/db/src/schema/roster.ts`, migration `0046_bench_rosters`), all `tenantTable()`s under FORCE RLS with `ws_isolation`:
   - `bench_roster`: `forum_id`, `effective_from`, `effective_to` (null: open-ended), `status` (`draft`, `active`, `superseded`; default `draft`), `version` (> 0, unique per workspace and forum), `source_document_id` (-> `document`), `imported_by` (-> `member`), `note`.
   - `bench_roster_entry`: `roster_id` (-> `bench_roster`, ON DELETE CASCADE), `hall_id` (-> `court_hall`, nullable), `hall_no` (as printed), `bench_id` (-> `bench`), `portfolio_text` (as printed), `portfolio_rule` (jsonb object `{ caseTypes?, yearFrom?, yearTo?, subjectTags? }`, nullable).
   - `bench_change_alert`: `proceeding_id`, `roster_id`, `old_bench_id` (nullable), `new_bench_id`, `reason` (`hall`, `portfolio`), `status` (`open`, `dismissed`); unique `(proceeding_id, roster_id)`, so one alert per proceeding per roster.

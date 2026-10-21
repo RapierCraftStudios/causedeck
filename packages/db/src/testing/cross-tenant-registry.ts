@@ -280,6 +280,27 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'reads the tenant-free adapter_health_summary view (counts per adapter/version only), never a tenant row',
   },
+  // court read models (#397)
+  getCourtsIndex: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
+  },
+  getForumDetail: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace; another workspace's forum code is NOT_FOUND",
+  },
+  getAdapterStatus: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
+  },
+  listHallsSeen: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
+  },
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
   // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that
   // name a row of another workspace, and undos handed a payload of A's ids

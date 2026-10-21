@@ -3,6 +3,7 @@
 // (#369); the launch seeds allow `user_supplied` for madras-hc.
 import { accessModeRegistry } from '@causedeck/db/schema';
 import { withTestDb } from '@causedeck/db/testing';
+import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -10,6 +11,7 @@ import {
   assertAccessMode,
   decideAccessMode,
   listAccessModeRegistry,
+  listAdapterAccessModes,
   type AccessMode,
 } from '../access-mode.ts';
 import { ACCESS_MODE_SEED, seedAccessModes } from '../seed.ts';
@@ -190,6 +192,37 @@ describe('listAccessModeRegistry', () => {
           reviewedAt: null,
         }));
       expect(rows).toEqual(expected);
+    });
+  });
+});
+
+describe('listAdapterAccessModes', () => {
+  it("lists one adapter's rows by resource, with counsel's note (#397)", async () => {
+    await withTestDb(async (tx) => {
+      await tx.delete(accessModeRegistry);
+      expect(await listAdapterAccessModes(tx, 'madras-hc')).toEqual([]);
+      await seedAccessModes(tx);
+      await tx
+        .update(accessModeRegistry)
+        .set({ counselNote: 'Cleared for lawyer-supplied lists.' })
+        .where(
+          and(
+            eq(accessModeRegistry.adapterId, 'madras-hc'),
+            eq(accessModeRegistry.resource, 'case-status'),
+          ),
+        );
+      const rows = await listAdapterAccessModes(tx, 'madras-hc');
+      const expected = ACCESS_MODE_SEED.filter((row) => row.adapterId === 'madras-hc')
+        .sort((a, b) => a.resource.localeCompare(b.resource))
+        .map(({ resource, mode, enabled }) => ({
+          resource,
+          mode,
+          enabled,
+          counselNote: resource === 'case-status' ? 'Cleared for lawyer-supplied lists.' : null,
+          reviewedAt: null,
+        }));
+      expect(rows).toEqual(expected);
+      expect(await listAdapterAccessModes(tx, 'in.tn.madras-hc.principal')).toEqual([]);
     });
   });
 });

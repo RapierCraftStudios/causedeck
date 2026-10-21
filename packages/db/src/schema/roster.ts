@@ -4,15 +4,15 @@
 // own; its entries map a court hall to a bench for the roster's period. At most one `active` roster
 // per workspace and forum covers any day: `bench_roster_active_period_excl` is a btree_gist
 // exclusion constraint over `daterange(effective_from, effective_to, '[)')` (null `effective_to` is
-// open-ended), hand-written in migration 0045 because Drizzle cannot declare EXCLUDE. Forum, hall
+// open-ended), hand-written in migration 0046 because Drizzle cannot declare EXCLUDE. Forum, hall
 // and bench references are single-column FKs guarded by `<table>_<column>_scope_guard` triggers
-// (mode `same_or_global`, migration 0045). An entry names a bench, never judges: the court-published
+// (mode `same_or_global`, migration 0046). An entry names a bench, never judges: the court-published
 // composition lives only in `bench.judges`, and nothing here aggregates by judge (PX-9, ME-6).
 // Immutability once active and supersede are the roster services' rules (#387).
 //
 // Delete actions: entries cascade with their roster; alerts keep the proceeding and roster they cite
 // (NO ACTION; the erase purges them first). `imported_by` and `source_document_id` are
-// `ON DELETE SET NULL (<column>)` in migration 0045 (a plain composite SET NULL would also null
+// `ON DELETE SET NULL (<column>)` in migration 0046 (a plain composite SET NULL would also null
 // `workspace_id`); Drizzle records them as `set null`.
 import { sql } from 'drizzle-orm';
 import {

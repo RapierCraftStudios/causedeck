@@ -207,7 +207,7 @@ closer's member row is deleted (account deletion), so the obligation stays close
 ## Bench roster tables
 
 `bench_roster`, `bench_roster_entry` and `bench_change_alert` in
-`packages/db/src/schema/roster.ts`, migration `0045_bench_rosters` (#384, part 1 of #39,
+`packages/db/src/schema/roster.ts`, migration `0046_bench_rosters` (#384, part 1 of #39,
 [ADR 0017](../adr/0017-effective-dated-rosters.md)). Tenant tables under FORCE RLS; no provenance.
 Tested in `packages/db/src/__tests__/roster-schema.test.ts`; zod schemas in
 `@causedeck/validators/roster`.
@@ -221,7 +221,7 @@ Tested in `packages/db/src/__tests__/roster-schema.test.ts`; zod schemas in
 `bench_roster_active_period_excl` (hand-written in the migration; Drizzle cannot declare EXCLUDE)
 is `EXCLUDE USING gist (workspace_id WITH =, forum_id WITH =, daterange(effective_from,
 effective_to, '[)') WITH &&) WHERE (status = 'active')`: no two active rosters of one workspace
-and forum share a day (23P01). Migration 0045 creates the `btree_gist` extension it needs. Entries
+and forum share a day (23P01). Migration 0046 creates the `btree_gist` extension it needs. Entries
 name a bench, never judges (the judge-aggregation guard covers these tables).
 
 ## Audit tables

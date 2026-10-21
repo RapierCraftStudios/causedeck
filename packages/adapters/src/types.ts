@@ -81,6 +81,50 @@ export type Anchor = z.infer<typeof AnchorSchema>;
 
 export const ConfidenceSchema = z.number().min(0).max(1);
 
+/** The match-key fields of one case reference; `children` are the references filed in it. */
+export interface CaseRef {
+  /** Normal form (`compactCaseType`) of the printed type; unknown types keep theirs. */
+  caseTypeCode: string | null;
+  caseTypeRaw: string;
+  number: string;
+  year: number;
+  seatSuffix?: string | undefined;
+  /** A miscellaneous petition (WMP, CRL MP, ...) filed within a main case. */
+  isMisc?: boolean | undefined;
+  matchKey: string | null;
+  /** The parent's match key when this reference is filed within another on the same line. */
+  parentProceedingKey?: string | null | undefined;
+  children?: CaseRef[] | undefined;
+}
+
+/**
+ * A case reference as printed on a list line or an order header (#36): `CRL OP No.4567 of 2026 and
+ * Crl.M.P.Nos.1 & 2 of 2026` is one main reference with two children.
+ */
+export const CaseRefSchema: z.ZodType<CaseRef> = z.lazy(() =>
+  z.object({
+    caseTypeCode: z.string().nullable(),
+    caseTypeRaw: z.string(),
+    number: z.string().min(1),
+    year: z.number().int(),
+    seatSuffix: z.string().optional(),
+    isMisc: z.boolean().optional(),
+    matchKey: z.string().nullable(),
+    parentProceedingKey: z.string().nullable().optional(),
+    children: z.array(CaseRefSchema).optional(),
+  }),
+);
+
+/** An advocate named on a row: the raw text, normalised aliases and the enrolment number if any. */
+export const AdvocateSchema = z.object({
+  raw: z.string().min(1),
+  /** Upper-case, title-stripped spellings; never transliterated. */
+  aliases: z.array(z.string().min(1)),
+  /** Bar enrolment number, e.g. `MS/123/1900`: the stable matching key when present. */
+  enrolmentNo: z.string().min(1).optional(),
+});
+export type Advocate = z.infer<typeof AdvocateSchema>;
+
 /**
  * One cause-list row. It is never emitted without an anchor. Rows are returned to the caller, which
  * keeps the ones matching a matter and discards the rest (docs/product/09 §8.4); nothing persists.
@@ -101,6 +145,15 @@ export const ParsedListRowSchema = z.object({
   stageRaw: z.string().nullable(),
   /** The `stageMap` key for `stageRaw`, or null when no pattern matched (open enum). */
   stageNorm: z.string().nullable(),
+  // #36 additions, all optional so earlier adapters and fixtures stay valid.
+  advocates: z.array(AdvocateSchema).optional(),
+  /** References filed within this row's main case (miscellaneous petitions, `X in Y`). */
+  children: z.array(CaseRefSchema).optional(),
+  /** The main case's match key when this row is itself a child reference. */
+  parentProceedingKey: z.string().nullable().optional(),
+  bench: z.string().optional(),
+  /** The row names a seat other than the parsed forum's (e.g. `(MD)` on a Principal Seat list). */
+  forumMismatch: z.boolean().optional(),
 });
 export type ParsedListRow = z.infer<typeof ParsedListRowSchema>;
 
@@ -115,6 +168,24 @@ export const ParseDiagnosticsSchema = z.object({
 });
 export type ParseDiagnostics = z.infer<typeof ParseDiagnosticsSchema>;
 
+/** A row whose case number could not be parsed: returned with its anchor, never dropped. */
+export const UnparsedRowSchema = z.object({
+  anchor: AnchorSchema,
+  text: z.string().min(1),
+  reason: z.string().min(1),
+});
+export type UnparsedRow = z.infer<typeof UnparsedRowSchema>;
+
+export const CauseListHallSchema = z.object({
+  hallNo: z.string().min(1),
+  bench: z.string().optional(),
+  lists: z.array(z.object({ listNo: z.string().optional(), rows: z.array(ParsedListRowSchema) })),
+});
+export type CauseListHall = z.infer<typeof CauseListHallSchema>;
+
+export const PARSE_STATUSES = ['ok', 'empty', 'failed'] as const;
+export const LIST_SOURCES = ['pdf', 'html', 'email', 'text'] as const;
+
 export const ParsedCauseListSchema = z.object({
   adapterId: z.string().min(1),
   adapterVersion: z.string().min(1),
@@ -123,6 +194,14 @@ export const ParsedCauseListSchema = z.object({
   listDate: z.string().nullable(),
   rows: z.array(ParsedListRowSchema),
   diagnostics: ParseDiagnosticsSchema,
+  // #36 additions, all optional.
+  halls: z.array(CauseListHallSchema).optional(),
+  unparsedRows: z.array(UnparsedRowSchema).optional(),
+  /** `empty` is a list with no cases; `failed` a document that could not be read. */
+  status: z.enum(PARSE_STATUSES).optional(),
+  /** Daily, advance, supplementary, special: the printed marker's key, or null. */
+  listType: z.string().nullable().optional(),
+  source: z.enum(LIST_SOURCES).optional(),
 });
 export type ParsedCauseList = z.infer<typeof ParsedCauseListSchema>;
 
@@ -136,6 +215,11 @@ export const ParsedOrderHeaderSchema = z.object({
   neutralCitation: z.string().nullable(),
   anchor: AnchorSchema.nullable(),
   confidence: ConfidenceSchema,
+  // #36 additions, all optional.
+  /** Every case the order is passed in (a common order names many). */
+  caseRefs: z.array(CaseRefSchema).optional(),
+  bench: z.string().nullable().optional(),
+  orderType: z.enum(['daily', 'interim', 'final', 'judgment']).nullable().optional(),
 });
 export type ParsedOrderHeader = z.infer<typeof ParsedOrderHeaderSchema>;
 
@@ -145,8 +229,40 @@ export const DirectionCueSchema = z.object({
   text: z.string().min(1),
   anchor: AnchorSchema,
   confidence: ConfidenceSchema,
+  /** The matched phrase, verbatim (`list after`, `post on`). */
+  phrase: z.string().min(1).optional(),
+  /** ISO date, only when the literal date is printed in the cue; relative cues stay unresolved. */
+  date: z.string().nullable().optional(),
 });
 export type DirectionCue = z.infer<typeof DirectionCueSchema>;
+
+export const REGISTRY_EVENT_KINDS = [
+  'sr_assigned',
+  'returned_for_defects',
+  'cure_deadline',
+  'numbered',
+] as const;
+
+/**
+ * A registry notice read from a supplied document (SR number, defect return, cure deadline,
+ * numbering). Always a proposal with an anchor, never a state change.
+ */
+export const RegistryEventSchema = z.object({
+  kind: z.enum(REGISTRY_EVENT_KINDS),
+  anchor: AnchorSchema,
+  confidence: ConfidenceSchema,
+  srNo: z.string().min(1).optional(),
+  caseRef: CaseRefSchema.optional(),
+  deadline: z
+    .object({
+      n: z.number().int().positive(),
+      unit: z.enum(['days', 'weeks', 'months']),
+      basisDate: z.string().nullable(),
+      derived: z.string().nullable(),
+    })
+    .optional(),
+});
+export type RegistryEvent = z.infer<typeof RegistryEventSchema>;
 
 /**
  * An official page the lawyer opens in a new window; structurally core's `OpenInNewWindow`
@@ -173,12 +289,23 @@ export const ListUnreadableSchema = z.object({
 });
 export type ListUnreadable = z.infer<typeof ListUnreadableSchema>;
 
+/**
+ * What `buildDeepLink` can open: the access-mode resources plus link-only pages (certified-copy
+ * portal, AIMS) that are never read, so they need no access mode.
+ */
+export const DEEP_LINK_TARGETS = [...RESOURCES, 'e_copy', 'aims'] as const;
+export const DeepLinkTargetSchema = z.enum(DEEP_LINK_TARGETS);
+export type DeepLinkTarget = z.infer<typeof DeepLinkTargetSchema>;
+
 export const DeepLinkParamsSchema = z.record(z.string(), z.string());
 export type DeepLinkParams = z.infer<typeof DeepLinkParamsSchema>;
 
+/** Adapter ids: dotted lower-case slugs, e.g. `echo` or `in.tn.madras-hc.principal`. */
+export const ADAPTER_ID_PATTERN = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$/;
+
 /** The data half of an adapter: identity, declared access modes and its versioned config. */
 export const CourtAdapterDescriptorSchema = z.object({
-  id: z.string().regex(/^[a-z][a-z0-9-]*$/, 'adapter id must be a lower-case slug'),
+  id: z.string().regex(ADAPTER_ID_PATTERN, 'adapter id must be dotted lower-case slugs'),
   version: z.string().regex(/^\d+\.\d+\.\d+$/, 'version must be semver'),
   forumCodes: z.array(z.string().min(1)).min(1),
   accessModes: AccessModesSchema,
@@ -187,7 +314,7 @@ export const CourtAdapterDescriptorSchema = z.object({
 /**
  * A court adapter: identity, declared access modes, the config sections it parses with, and pure
  * parsers. `parseCauseList` is async so later readers can await layout work; it still performs no
- * I/O. `buildDeepLink` returns null when the forum has no page for the resource.
+ * I/O. `buildDeepLink` returns null when the forum has no page for the target.
  */
 export interface CourtAdapter {
   readonly id: string;
@@ -205,5 +332,5 @@ export interface CourtAdapter {
   parseCauseList(input: ParserInput): Promise<ParsedCauseList>;
   parseOrderHeader(input: ParserInput): ParsedOrderHeader;
   findDirectionCues(input: ParserInput): DirectionCue[];
-  buildDeepLink(resource: Resource, params: DeepLinkParams): DeepLink | null;
+  buildDeepLink(target: DeepLinkTarget, params: DeepLinkParams): DeepLink | null;
 }

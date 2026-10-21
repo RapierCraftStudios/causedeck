@@ -1695,6 +1695,57 @@
       "hint": "Security and administrative events, with export."
     }
   },
+  "courts": {
+    "metaTitle": "Courts",
+    "title": "Courts",
+    "description": "The courts CauseDeck knows, what it can read for each, and the way to each court's official pages.",
+    "loading": "Loading courts",
+    "search": {
+      "label": "Search forums",
+      "placeholder": "Search courts and forums",
+      "noMatch": "No forum matches “{query}”."
+    },
+    "gridLabel": "Forums",
+    "cityOther": "Other forums",
+    "workspaceOwned": "Your forum",
+    "languagesLabel": "Languages",
+    "planned": {
+      "title": "Planned",
+      "hint": "Catalogued but not available yet. They have no links until they are ready.",
+      "reasonFallback": "Not available yet."
+    },
+    "side": {
+      "original": "Original side",
+      "appellate": "Appellate side"
+    },
+    "levels": {
+      "label": "Adapter level {level}",
+      "A0": "Known court. Share a list or order and we will read it with your confirmation.",
+      "A1": "Document-assisted. We read lists and orders you share and match them to your matters."
+    },
+    "status": {
+      "ok": "Lists read",
+      "degraded": "Partly read",
+      "failed": "Couldn't read",
+      "none": "No lists yet"
+    },
+    "banner": {
+      "hall": "Couldn't read today's list for {count, plural, one {Hall} other {Halls}} {halls}",
+      "generic": "Couldn't read today's list",
+      "openOfficial": "Open the official list",
+      "shareAgain": "Share it again",
+      "newWindow": "Opens the court's website in a new window"
+    },
+    "empty": {
+      "title": "Choose your courts to get started.",
+      "hint": "No forums are listed for this workspace yet. When they are, each shows what CauseDeck can read for it."
+    },
+    "error": {
+      "title": "Could not load courts.",
+      "retry": "Try again"
+    },
+    "offline": "Showing saved court information from {time}."
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",

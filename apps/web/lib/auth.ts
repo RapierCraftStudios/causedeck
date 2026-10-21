@@ -32,6 +32,8 @@ export function getAuth(): Auth {
 export const { getSession, requireSession, requireUser } = createSessionHelpers({
   auth: { api: { getSession: (args) => getAuth().api.getSession(args) } },
   headers,
+  // The owner 2FA policy (#290) reads `twoFactorEnabled` from the session user.
+  withTwoFactor: true,
 });
 
 export type AppSession = NonNullable<Awaited<ReturnType<typeof getSession>>>;

@@ -2,7 +2,7 @@ import { closeTestDb } from '@causedeck/db/testing';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { UnauthenticatedError as RootUnauthenticatedError } from '../index';
-import { createSessionHelpers, UnauthenticatedError } from '../session';
+import { createSessionHelpers, toSessionUser, UnauthenticatedError } from '../session';
 import { devSignInAs, makeAuth, uniqueEmail } from './helpers';
 
 afterAll(closeTestDb);
@@ -47,10 +47,24 @@ describe('getSession() / requireUser()', () => {
       name: null,
       image: null,
       locale: 'en',
-      twoFactorEnabled: false,
     });
     const session = await getSession();
     expect(session?.user.id).toBe(user.id);
     expect((await requireSession()).user.email).toBe(email);
+  });
+});
+
+describe('toSessionUser', () => {
+  const raw = { id: 'u1', email: 'a@b.test', twoFactorEnabled: true };
+
+  it('leaves twoFactorEnabled off the user by default (the public /v1/me shape)', () => {
+    expect(toSessionUser(raw)).not.toHaveProperty('twoFactorEnabled');
+  });
+
+  it('adds it when asked, for the owner 2FA policy', () => {
+    expect(toSessionUser(raw, { withTwoFactor: true }).twoFactorEnabled).toBe(true);
+    expect(toSessionUser({ id: 'u1', email: 'a@b.test' }, { withTwoFactor: true })).toMatchObject({
+      twoFactorEnabled: false,
+    });
   });
 });

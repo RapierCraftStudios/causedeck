@@ -158,6 +158,9 @@ test.describe('workspace deletion', () => {
       tag: '@a11y',
     },
     async ({ page, asUser, db }) => {
+      // The test waits out one TOTP window (31 s, below) so the second code is a new one; the
+      // default 30 s budget cannot hold that wait on its own.
+      test.setTimeout(90_000);
       await open(page, asUser, 'today');
       const secret = await enrollTotp(page);
       await openDanger(page);

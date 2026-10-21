@@ -23,7 +23,7 @@ import { toast } from '@causedeck/ui/sonner';
 import { Copy, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react';
+import { useEffect, useEffectEvent, useId, useRef, useState, type SyntheticEvent } from 'react';
 
 import type { Result } from '../../lib/safe-action.ts';
 
@@ -85,11 +85,17 @@ export function TwoFactorSetupDialog({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
 
+  // Verifying rotates the session cookie, which makes Next re-render the page and hand this
+  // component new server-action references. The effect below must not re-run for that (it would
+  // reset the dialog to step 1 and ask for a second secret), so it reads the action through an
+  // effect event and depends only on `open` and `attempt`.
+  const startSetup = useEffectEvent(() => enableTwoFactor({}));
+
   // A fresh secret each time the dialog opens; everything is dropped when it closes.
   useEffect(() => {
     if (!open) return;
     let live = true;
-    enableTwoFactor({})
+    startSetup()
       .then((result) => {
         if (!live) return;
         if (result.ok) setSetup(result.data);
@@ -106,7 +112,7 @@ export function TwoFactorSetupDialog({
       setCode('');
       setCodeError(undefined);
     };
-  }, [open, attempt, enableTwoFactor]);
+  }, [open, attempt]);
 
   // Focus follows the step: the code field to type into, otherwise the step heading.
   useEffect(() => {

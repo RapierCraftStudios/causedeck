@@ -174,9 +174,11 @@ test.describe('settings shell', () => {
     test(`offline: ${section} is read-only under one banner`, async ({ page, asUser }) => {
       await openSettings(page, asUser, 'owner', `settings/${section}`);
       await page.context().setOffline(true);
-      await expect(page.getByText('Settings can be changed when you are back online.')).toHaveCount(
-        1,
-      );
+      // One banner. Disabled actions also carry the same reason as screen-reader text, so count
+      // the banner element, not every occurrence of the sentence.
+      const banner = page.locator('[data-slot="settings-content"] [data-pattern-state="offline"]');
+      await expect(banner).toHaveCount(1);
+      await expect(banner).toHaveText('Settings can be changed when you are back online.');
       // The page-level shell banner would be a second one.
       await expect(page.getByText(/You are offline\. Showing saved data/)).toHaveCount(0);
       if (section === 'export') {

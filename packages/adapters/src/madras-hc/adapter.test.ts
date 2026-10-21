@@ -1,5 +1,5 @@
-// The Madras HC adapter skeleton (#395): identity, registration, access modes, config, deep links
-// and well-formed empty parses until parts 2 and 3 (#396, #398).
+// The Madras HC adapter skeleton (#395): identity, registration, access modes, config, deep links,
+// a well-formed empty cause list until part 2 (#396), and the order parsers wired in (#398).
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -116,7 +116,7 @@ describe('Madras HC adapter (#395)', () => {
     expect(resolveForumLink(config, 'aims', {})).toBeNull();
   });
 
-  it('returns well-formed empty parses until the parsers land', async () => {
+  it('returns a well-formed empty cause list until the list parser lands', async () => {
     const adapter = createMadrasHcAdapter();
     const list = await adapter.parseCauseList(input);
     expect(ParsedCauseListSchema.parse(list)).toMatchObject({
@@ -128,12 +128,27 @@ describe('Madras HC adapter (#395)', () => {
       halls: [],
       unparsedRows: [],
     });
-    expect(ParsedOrderHeaderSchema.parse(adapter.parseOrderHeader(input))).toMatchObject({
-      caseRefs: [],
-      confidence: 0,
+  });
+
+  it('parses order headers and direction cues (#398)', () => {
+    const adapter = createMadrasHcAdapter();
+    const order: ParserInput = {
+      ...input,
+      text: 'DATED: 21.10.2026\nTHE HONOURABLE MR.JUSTICE A. FICTIONAL\nW.P.No.1 of 2026\nORDER\nPost on 12.11.2026.',
+    };
+    expect(ParsedOrderHeaderSchema.parse(adapter.parseOrderHeader(order))).toMatchObject({
+      caseType: 'WP',
+      caseNumber: '1',
+      orderDate: '2026-10-21',
+      orderType: 'daily',
     });
-    expect(adapter.findDirectionCues(input).map((cue) => DirectionCueSchema.parse(cue))).toEqual(
-      [],
-    );
+    expect(
+      adapter.findDirectionCues(order).map((cue) => DirectionCueSchema.parse(cue)),
+    ).toMatchObject([{ kind: 'next_date', date: '2026-11-12' }]);
+    // The configured phrases drive the cues.
+    const quiet = createMadrasHcAdapter({
+      config: { ...MADRAS_HC_CONFIG, orderParser: { directionPhrases: ['list after'] } },
+    });
+    expect(quiet.findDirectionCues(order)).toEqual([]);
   });
 });

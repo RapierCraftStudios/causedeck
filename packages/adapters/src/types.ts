@@ -219,6 +219,10 @@ export const ParsedOrderHeaderSchema = z.object({
   /** Every case the order is passed in (a common order names many). */
   caseRefs: z.array(CaseRefSchema).optional(),
   bench: z.string().nullable().optional(),
+  /** The judges on the bench, verbatim, in printed order (#398). */
+  judges: z.array(z.string().min(1)).optional(),
+  /** The neutral citation as printed, with its separator (`2026/MHC/123`); `neutralCitation` is canonical. */
+  neutralCitationRaw: z.string().nullable().optional(),
   orderType: z.enum(['daily', 'interim', 'final', 'judgment']).nullable().optional(),
 });
 export type ParsedOrderHeader = z.infer<typeof ParsedOrderHeaderSchema>;

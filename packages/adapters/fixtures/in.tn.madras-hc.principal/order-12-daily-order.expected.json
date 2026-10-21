@@ -1,0 +1,43 @@
+{
+  "header": {
+    "caseTypeRaw": "H.C.P.",
+    "caseType": "HCP",
+    "caseNumber": "321",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": null,
+    "neutralCitationRaw": null,
+    "anchor": {
+      "page": 1,
+      "quote": "H.C.P.No.321 of 2026",
+      "rowIndex": 7
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "HCP",
+        "caseTypeRaw": "H.C.P.",
+        "number": "321",
+        "year": 2026,
+        "matchKey": "HCP/321/2026"
+      }
+    ],
+    "bench": "THE HONOURABLE MR.JUSTICE D. FICTIONAL AND THE HONOURABLE MS.JUSTICE E. FICTIONAL",
+    "judges": ["THE HONOURABLE MR.JUSTICE D. FICTIONAL", "THE HONOURABLE MS.JUSTICE E. FICTIONAL"],
+    "orderType": "daily"
+  },
+  "cues": [
+    {
+      "kind": "next_date",
+      "text": "Call on 28.10.2026.",
+      "phrase": "Call on",
+      "anchor": {
+        "page": 1,
+        "quote": "Call on 28.10.2026.",
+        "rowIndex": 13
+      },
+      "confidence": 0.95,
+      "date": "2026-10-28"
+    }
+  ]
+}

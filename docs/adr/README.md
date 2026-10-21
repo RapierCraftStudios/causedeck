@@ -26,6 +26,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0016](0016-proceeding-state-machine-and-next-date-rules.md) | Proceeding state machine and canonical next-date rules | Proposed | 2026-10-21 | — |
 | [0017](0017-effective-dated-rosters.md) | Effective-dated bench rosters | Proposed | 2026-10-21 | — |
 | [0018](0018-madras-hc-adapter-assumptions.md) | Madras HC adapter assumptions | Proposed | 2026-10-22 | — |
+| [0019](0019-karnataka-hc-adapter-assumptions.md) | Karnataka HC adapter: layout assumptions and how H13 retires them | Proposed | 2026-10-22 | — |
 
 ## Statuses
 

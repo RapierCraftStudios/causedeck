@@ -1288,6 +1288,21 @@ const CASES: Record<string, Case> = {
     );
     expect(own?.id).toBe(listingId);
   },
+  getMatterTimeline: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getMatterTimeline({ ...deps, db }, { userId: f.ub, workspaceId }, { matterId }),
+    );
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.getMatterTimeline(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { matterId },
+    );
+    expect(Array.isArray(own)).toBe(true);
+    expect(events).toEqual([]);
+  },
   enqueueNotificationDelivery: async (f) => {
     // enqueueNotificationDelivery sends the payload as given; the handler is scoped to it.
     const { seen } = await runProbe(f, f.a.id);

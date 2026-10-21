@@ -2,8 +2,8 @@
 // the graph tables. Services take zod-validated inputs, run in the actor's workspace scope and
 // emit `GraphEvent`s through the injected `GraphEvents` port; they never import audit or
 // notification code. The canonical next date (#364) changes only through next-date.ts, and the
-// proceeding state machine (#363, ADR 0016) is the only writer of `proceeding.state`. See
-// docs/engineering/core-domains.md.
+// proceeding state machine (#363, ADR 0016) is the only writer of `proceeding.state`. The matter
+// timeline (#366) reads them all across proceedings. See docs/engineering/core-domains.md.
 export type { GraphActor, MatterGraphDeps } from './context.ts';
 export * from './documents.ts';
 export {
@@ -33,3 +33,9 @@ export {
   type ProceedingStateChangeRow,
   type ProceedingTransition,
 } from './state-machine.ts';
+export {
+  getMatterTimeline,
+  type TimelineEvent,
+  type TimelineEventKind,
+  type TimelineProvenance,
+} from './timeline.ts';

@@ -285,6 +285,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   proposeNextDate: denies,
   confirmNextDate: denies,
   getCanonicalNextDate: denies,
+  // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
+  getMatterTimeline: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,

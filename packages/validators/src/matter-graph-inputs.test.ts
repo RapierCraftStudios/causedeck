@@ -12,6 +12,7 @@ import {
   CreateProceedingInput,
   FindDuplicateProceedingsInput,
   GetCanonicalNextDateInput,
+  GetMatterTimelineInput,
   LinkProceedingsInput,
   ListMattersInput,
   ProposeNextDateInput,
@@ -233,5 +234,30 @@ describe('next-date inputs', () => {
     expect(ConfirmNextDateInput.safeParse({ listingId, date: '2026-11-02' }).success).toBe(false);
     expect(GetCanonicalNextDateInput.safeParse({ proceedingId: id() }).success).toBe(true);
     expect(GetCanonicalNextDateInput.safeParse({}).success).toBe(false);
+  });
+});
+
+describe('GetMatterTimelineInput (#366)', () => {
+  it('accepts a matter id alone or with the full filter', () => {
+    const matterId = id();
+    expect(GetMatterTimelineInput.parse({ matterId })).toEqual({ matterId });
+    const full = {
+      matterId,
+      from: '2026-11-01',
+      to: '2026-11-01',
+      kinds: ['listing', 'bench_change'],
+    };
+    expect(GetMatterTimelineInput.parse(full)).toEqual(full);
+  });
+
+  it('rejects bad ids, dates, ranges, kinds and keys', () => {
+    const matterId = id();
+    const parses = (input: unknown) => GetMatterTimelineInput.safeParse(input).success;
+    expect(parses({ matterId: 'x' })).toBe(false);
+    expect(parses({ matterId, from: '01/11/2026' })).toBe(false);
+    expect(parses({ matterId, from: '2026-11-02', to: '2026-11-01' })).toBe(false);
+    expect(parses({ matterId, kinds: ['memo'] })).toBe(false);
+    expect(parses({ matterId, kinds: [] })).toBe(false);
+    expect(parses({ matterId, limit: 10 })).toBe(false);
   });
 });

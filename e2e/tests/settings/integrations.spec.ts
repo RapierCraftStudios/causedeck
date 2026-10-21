@@ -27,7 +27,7 @@ async function enableFlags(database: string): Promise<void> {
         insert into workspace_feature_flag (workspace_id, key, enabled, updated_by)
         select o.id, ${key}, true, m.user_id
           from organization o
-          join member m on m.organization_id = o.id and m.role = 'owner'
+          join member m on m.workspace_id = o.id and m.role = 'owner'
          where o.slug = ${SHELL_WORKSPACE}
          limit 1`;
     }
@@ -55,7 +55,7 @@ test.describe('settings integrations', () => {
     async ({ page, asUser }) => {
       await openIntegrations(page, asUser);
       for (const kind of ['email_intake', 'ics_feed'] as const) {
-        await expect(card(page, kind).getByText('Not enabled yet')).toBeVisible();
+        await expect(card(page, kind).getByText('Not enabled yet', { exact: true })).toBeVisible();
         await expect(card(page, kind).getByRole('button', { name: 'Create' })).toBeDisabled();
       }
       await expect(page.getByRole('textbox', { name: 'Intake address' })).toHaveValue(

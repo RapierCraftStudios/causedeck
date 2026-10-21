@@ -115,6 +115,13 @@ describe('decide: denials', () => {
     expect(await decide(request('/sign-in'), config(), deps(NON_STAFF))).toEqual({ kind: 'deny' });
   });
 
+  it('denies staff without 2FA enrolled on the sign-in page, and lets the dev account in', async () => {
+    expect(await decide(request('/sign-in'), config(), deps(NO_2FA))).toEqual({ kind: 'deny' });
+    expect(await decide(request('/sign-in'), config({ production: false }), deps(DEV))).toEqual({
+      kind: 'allow',
+    });
+  });
+
   it('denies closed Better Auth paths whoever asks', async () => {
     const cookie = verified(STAFF);
     expect(

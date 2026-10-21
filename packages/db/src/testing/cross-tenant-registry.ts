@@ -266,6 +266,17 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: "opens withWorkspace on the given workspace id; another workspace's forum is NOT_FOUND",
   },
+  // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
+  // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError)
+  createMatter: denies,
+  updateMatter: denies,
+  archiveMatter: denies,
+  listMatters: empty,
+  createProceeding: denies,
+  updateIdentifiers: denies,
+  linkProceedings: denies,
+  findDuplicateProceedings: empty,
+  createDocument: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -522,6 +533,15 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   resolveDeepLink: 'pure',
   buildDeepLink: 'pure',
   interpolateTemplate: 'pure',
+  // matter graph (#362): errors and pure proceeding-identity helpers
+  CrossWorkspaceError: 'error class',
+  crossWorkspace: 'error factory',
+  graphNotFound: 'error factory',
+  normaliseCaseType: 'pure',
+  normaliseCaseNumber: 'pure',
+  expandYear: 'pure',
+  identityKey: 'pure',
+  isSameProceeding: 'pure',
   // workspaces: extension points (process-wide wiring, no database access of their own)
   permissiveEntitlements: 'default entitlements implementation (allows everything, no queries)',
   setEntitlements: 'setter',

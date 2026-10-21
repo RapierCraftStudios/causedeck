@@ -237,7 +237,7 @@ describe('TwoFactorSetupDialog', () => {
 
     // Step 1: the QR code on a white surface, and the key to type.
     const qr = await within(dialog).findByRole('img', { name: en.twoFactor.dialog.qrAlt });
-    expect(qr.closest('[data-slot="two-factor-qr"]')?.className).toContain('bg-white');
+    expect(qr.closest('[data-slot="two-factor-qr"]')?.className).toContain('bg-[#ffffff]');
     expect(within(dialog).getByText(SETUP.secret)).toBeTruthy();
     expect(within(dialog).getByText('Step 1 of 3')).toBeTruthy();
     await waitFor(() => {

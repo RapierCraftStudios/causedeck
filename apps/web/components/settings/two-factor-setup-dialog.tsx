@@ -23,7 +23,7 @@ import { toast } from '@causedeck/ui/sonner';
 import { Copy, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react';
+import { useEffect, useEffectEvent, useId, useRef, useState, type SyntheticEvent } from 'react';
 
 import type { Result } from '../../lib/safe-action.ts';
 
@@ -85,11 +85,17 @@ export function TwoFactorSetupDialog({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
 
+  // Verifying rotates the session cookie, which makes Next re-render the page and hand this
+  // component new server-action references. The effect below must not re-run for that (it would
+  // reset the dialog to step 1 and ask for a second secret), so it reads the action through an
+  // effect event and depends only on `open` and `attempt`.
+  const startSetup = useEffectEvent(() => enableTwoFactor({}));
+
   // A fresh secret each time the dialog opens; everything is dropped when it closes.
   useEffect(() => {
     if (!open) return;
     let live = true;
-    enableTwoFactor({})
+    startSetup()
       .then((result) => {
         if (!live) return;
         if (result.ok) setSetup(result.data);
@@ -106,7 +112,7 @@ export function TwoFactorSetupDialog({
       setCode('');
       setCodeError(undefined);
     };
-  }, [open, attempt, enableTwoFactor]);
+  }, [open, attempt]);
 
   // Focus follows the step: the code field to type into, otherwise the step heading.
   useEffect(() => {
@@ -206,8 +212,8 @@ export function TwoFactorSetupDialog({
 
             {step === 'scan' ? (
               <div className="flex flex-col items-center gap-3">
-                {/* White surface and quiet zone in both themes, so every scanner can read it. */}
-                <div data-slot="two-factor-qr" className="rounded-lg bg-white p-2 shadow-sm">
+                {/* White surface and quiet zone in both themes, so every scanner can read it. A literal: the preset resets `--color-*`, so `bg-white` generates nothing. */}
+                <div data-slot="two-factor-qr" className="rounded-lg bg-[#ffffff] p-2 shadow-sm">
                   <img src={setup.qr} alt={t('qrAlt')} width={192} height={192} />
                 </div>
                 <div className="flex w-full flex-col gap-1">
@@ -321,12 +327,40 @@ export function TwoFactorSetupDialog({
   );
 }
 
-export interface TwoFactorSetupProps extends TwoFactorActions {
+export interface TwoFactorSetupProps {
   enabled: boolean;
+  enableTwoFactor: TwoFactorActions['enableTwoFactor'];
+  /** Defaults to the browser auth client (see `verifyInBrowser`). */
+  verifyTwoFactor?: TwoFactorActions['verifyTwoFactor'];
+}
+
+/**
+ * Verifies the first code through the browser auth client, not a server action. Verifying rotates
+ * the session cookie; a server action that sets a cookie makes Next re-render the page, and the
+ * page's Suspense boundary then swaps its content for the skeleton, which unmounts this dialog
+ * before the backup codes can be read. A client call sets the cookie in the browser instead.
+ */
+async function verifyInBrowser({ code }: { code: string }): Promise<Result<{ enabled: true }>> {
+  try {
+    const { authClient } = await import('../../lib/auth-client.ts');
+    const { error } = await authClient.twoFactor.verifyTotp({ code });
+    if (!error) return { ok: true, data: { enabled: true } };
+    const code4xx = error.status >= 400 && error.status < 500;
+    return {
+      ok: false,
+      error: { code: code4xx ? 'VALIDATION' : 'INTERNAL', message: '' },
+    };
+  } catch {
+    return { ok: false, error: { code: 'INTERNAL', message: '' } };
+  }
 }
 
 /** The 2FA status row control: `On`, or `Off` with `Set up` and the setup dialog. */
-export function TwoFactorSetup({ enabled, enableTwoFactor, verifyTwoFactor }: TwoFactorSetupProps) {
+export function TwoFactorSetup({
+  enabled,
+  enableTwoFactor,
+  verifyTwoFactor = verifyInBrowser,
+}: TwoFactorSetupProps) {
   const t = useTranslations('settings.account.twoFactor');
   const router = useRouter();
   const online = useOnline();

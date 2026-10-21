@@ -1,0 +1,118 @@
+{
+  "nomenclature": {
+    "caseTypes": {
+      "WP": ["Writ Petition"],
+      "WA": ["Writ Appeal"],
+      "RFA": ["Regular First Appeal"],
+      "RSA": ["Regular Second Appeal"],
+      "MFA": ["Miscellaneous First Appeal"],
+      "CRLP": ["Criminal Petition"],
+      "CRLRP": ["Criminal Revision Petition"],
+      "CRLA": ["Criminal Appeal"],
+      "CRP": ["Civil Revision Petition"],
+      "CCC": ["Civil Contempt Case"],
+      "CP": ["Company Petition"],
+      "WPCR": ["Writ Petition (Criminal)"],
+      "WPHC": ["Habeas Corpus Petition"],
+      "COMMAP": ["Commercial Appeal"],
+      "COMMOS": [],
+      "MSA": ["Miscellaneous Second Appeal"],
+      "RP": ["Review Petition"],
+      "STRP": ["Sales Tax Revision Petition"],
+      "ITA": ["Income Tax Appeal"],
+      "AC": ["Arbitration Case"],
+      "CRLCCC": [],
+      "IA": ["Interlocutory Application"]
+    },
+    "seatSuffixes": []
+  },
+  "listing": {
+    "hallHeading": "^COURT\\s+(?:HALL\\s+)?NO\\.?\\s*([0-9]+[A-Z]?)\\b",
+    "rowPattern": "^(\\d{1,4}[A-Z]?)(?:\\.|\\))?\\s+(.+)$"
+  },
+  "orderParser": {
+    "directionPhrases": [
+      "list on",
+      "post on",
+      "call on",
+      "list after",
+      "list the matter after",
+      "post after",
+      "adjourned to",
+      "within",
+      "issue notice",
+      "rule",
+      "orders reserved"
+    ]
+  },
+  "calendar": {
+    "timeZone": "Asia/Kolkata",
+    "dateOrder": "dmy"
+  },
+  "languageProfile": {
+    "scripts": ["Latn"],
+    "languages": ["en"]
+  },
+  "links": {
+    "cause_list": "cause_list",
+    "status": "case_status",
+    "orders": "orders"
+  },
+  "fixtures": {
+    "manifest": "fixtures/in.ka.karnataka-hc.bengaluru/manifest.json",
+    "fictional": true
+  },
+  "health": {
+    "minAnchoredRatio": 0.9,
+    "maxUnmappedHeadings": 3
+  },
+  "stageMap": [
+    {
+      "pattern": "^(?:FOR\\s+)?ADMISSION\\b",
+      "flags": "i",
+      "key": "admission"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?PRELIMINARY\\s+HEARING\\b",
+      "flags": "i",
+      "key": "preliminary_hearing"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?ORDERS\\b",
+      "flags": "i",
+      "key": "orders"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?FINAL\\s+HEARING\\b",
+      "flags": "i",
+      "key": "final_hearing"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?HEARING\\b",
+      "flags": "i",
+      "key": "hearing"
+    },
+    {
+      "pattern": "^FRESH\\b",
+      "flags": "i",
+      "key": "fresh"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?(?:JUDGMENT|PRONOUNCEMENT)\\b",
+      "flags": "i",
+      "key": "judgment"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?(?:OFFICE\\s+)?OBJECTIONS?\\b",
+      "flags": "i",
+      "key": "objections"
+    },
+    {
+      "pattern": "^(?:FOR\\s+)?DICTATION\\b",
+      "flags": "i",
+      "key": "dictation"
+    }
+  ],
+  "twoDigitYearPivot": 50,
+  "stageCodeLegend": {}
+}

@@ -95,7 +95,16 @@ export interface CaseRef {
   /** The parent's match key when this reference is filed within another on the same line. */
   parentProceedingKey?: string | null | undefined;
   children?: CaseRef[] | undefined;
+  /** A bracketed category printed after the reference, e.g. `GM-RES` on a Karnataka writ (#404). */
+  subCategory?: string | undefined;
+  /** A hint that the number is in a bench series (`100xxx`); never a sequence assumption. */
+  benchNumbering?: BenchNumbering | undefined;
 }
+
+/** Number-series hints: Karnataka HC numbers >= 100000 (Dharwad/Kalaburagi style, #404). */
+export const BENCH_NUMBERINGS = ['100xxx'] as const;
+export const BenchNumberingSchema = z.enum(BENCH_NUMBERINGS);
+export type BenchNumbering = z.infer<typeof BenchNumberingSchema>;
 
 /**
  * A case reference as printed on a list line or an order header (#36): `CRL OP No.4567 of 2026 and
@@ -112,6 +121,8 @@ export const CaseRefSchema: z.ZodType<CaseRef> = z.lazy(() =>
     matchKey: z.string().nullable(),
     parentProceedingKey: z.string().nullable().optional(),
     children: z.array(CaseRefSchema).optional(),
+    subCategory: z.string().min(1).optional(),
+    benchNumbering: BenchNumberingSchema.optional(),
   }),
 );
 
@@ -154,6 +165,17 @@ export const ParsedListRowSchema = z.object({
   bench: z.string().optional(),
   /** The row names a seat other than the parsed forum's (e.g. `(MD)` on a Principal Seat list). */
   forumMismatch: z.boolean().optional(),
+  // #37 additions (Karnataka HC, #404), all optional.
+  /** The list the row is printed in (`LIST NO. 2`), verbatim. */
+  listNo: z.string().min(1).optional(),
+  /** The list-type key of the row's list (daily, supplementary, ...), or null. */
+  listType: z.string().nullable().optional(),
+  /** The office-objection marker printed on the row, verbatim, or null. */
+  registryObjection: z.string().nullable().optional(),
+  /** The bracketed category after the case number, e.g. `GM-RES`. */
+  subCategory: z.string().min(1).optional(),
+  /** A number-series hint only (`100xxx`); never used to infer a sequence. */
+  benchNumbering: BenchNumberingSchema.optional(),
 });
 export type ParsedListRow = z.infer<typeof ParsedListRowSchema>;
 
@@ -183,7 +205,7 @@ export const CauseListHallSchema = z.object({
 });
 export type CauseListHall = z.infer<typeof CauseListHallSchema>;
 
-export const PARSE_STATUSES = ['ok', 'empty', 'failed'] as const;
+export const PARSE_STATUSES = ['ok', 'empty', 'not_a_cause_list', 'failed'] as const;
 export const LIST_SOURCES = ['pdf', 'html', 'email', 'text'] as const;
 
 export const ParsedCauseListSchema = z.object({
@@ -197,11 +219,16 @@ export const ParsedCauseListSchema = z.object({
   // #36 additions, all optional.
   halls: z.array(CauseListHallSchema).optional(),
   unparsedRows: z.array(UnparsedRowSchema).optional(),
-  /** `empty` is a list with no cases; `failed` a document that could not be read. */
+  /**
+   * `empty` is a list with no cases; `not_a_cause_list` a readable document that is not a list
+   * (#404); `failed` a document that could not be read.
+   */
   status: z.enum(PARSE_STATUSES).optional(),
   /** Daily, advance, supplementary, special: the printed marker's key, or null. */
   listType: z.string().nullable().optional(),
   source: z.enum(LIST_SOURCES).optional(),
+  /** ISO timestamp the list says it was published at, when printed (#404). */
+  publishedAt: z.string().nullable().optional(),
 });
 export type ParsedCauseList = z.infer<typeof ParsedCauseListSchema>;
 
@@ -224,6 +251,8 @@ export const ParsedOrderHeaderSchema = z.object({
   /** The neutral citation as printed, with its separator (`2026/MHC/123`); `neutralCitation` is canonical. */
   neutralCitationRaw: z.string().nullable().optional(),
   orderType: z.enum(['daily', 'interim', 'final', 'judgment']).nullable().optional(),
+  /** Reserved for a later authenticity check of the order copy (#404); always null for now. */
+  authenticityFlag: z.null().optional(),
 });
 export type ParsedOrderHeader = z.infer<typeof ParsedOrderHeaderSchema>;
 

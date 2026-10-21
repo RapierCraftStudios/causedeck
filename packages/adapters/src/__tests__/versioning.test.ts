@@ -5,7 +5,7 @@
 import { adapterVersion } from '@causedeck/db/schema';
 import { withTestDb } from '@causedeck/db/testing';
 import type { Transaction } from '@causedeck/db';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -74,7 +74,10 @@ const statusOf = async (tx: Transaction, version: string) =>
     await tx
       .select({ status: adapterVersion.status })
       .from(adapterVersion)
-      .where(eq(adapterVersion.version, version))
+      // Echo rows only: migrations hold other adapters' active 1.0.0 rows (0047, #404).
+      .where(
+        and(eq(adapterVersion.adapterId, ECHO_ADAPTER_ID), eq(adapterVersion.version, version)),
+      )
   ).map((row) => row.status);
 
 async function refusal(promise: Promise<unknown>): Promise<string | undefined> {

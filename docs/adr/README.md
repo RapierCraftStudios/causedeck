@@ -25,6 +25,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0015](0015-court-adapter-framework.md) | Court adapter framework: no network, registry-enforced access, config versus parser | Proposed | 2026-10-21 | — |
 | [0016](0016-proceeding-state-machine-and-next-date-rules.md) | Proceeding state machine and canonical next-date rules | Proposed | 2026-10-21 | — |
 | [0017](0017-effective-dated-rosters.md) | Effective-dated bench rosters | Proposed | 2026-10-21 | — |
+| [0018](0018-karnataka-hc-adapter-assumptions.md) | Karnataka HC adapter: layout assumptions and how H13 retires them | Proposed | 2026-10-22 | — |
 
 ## Statuses
 

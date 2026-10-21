@@ -330,6 +330,13 @@
       "when": 1792608174277,
       "tag": "0046_bench_rosters",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792611068694,
+      "tag": "0047_karnataka_hc_adapter_v1",
+      "breakpoints": true
     }
   ]
 }

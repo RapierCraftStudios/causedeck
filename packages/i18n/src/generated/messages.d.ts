@@ -1747,6 +1747,52 @@ export type Messages = {
       retry: string;
     };
     offline: string;
+    addForum: {
+      trigger: string;
+      title: string;
+      description: string;
+      name: {
+        label: string;
+      };
+      courtType: {
+        label: string;
+        high_court: string;
+        district: string;
+        tribunal: string;
+        commission: string;
+        other: string;
+      };
+      city: {
+        label: string;
+      };
+      primaryLanguage: string;
+      secondaryLanguages: string;
+      languages: {
+        en: string;
+        ta: string;
+        kn: string;
+        hi: string;
+      };
+      website: {
+        label: string;
+        hint: string;
+      };
+      code: {
+        label: string;
+        hint: string;
+      };
+      errors: {
+        required: string;
+        codeInvalid: string;
+        codeTaken: string;
+        websiteInvalid: string;
+        forbidden: string;
+        failed: string;
+      };
+      submit: string;
+      cancel: string;
+      created: string;
+    };
   };
   error: {
     title: string;

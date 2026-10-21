@@ -2,7 +2,8 @@
 // (`@causedeck/core/court`), which runs in this workspace's RLS scope, so other workspaces' parse
 // runs and custom forums never reach the page. Every role reads it (the nav item needs no
 // permission); a FORBIDDEN from core renders permission-denied. Deep links are plain new-window
-// anchors: nothing here fetches or frames a court page.
+// anchors: nothing here fetches or frames a court page. Owners and advocates (`workspace.manage`)
+// also get `Add forum` (#402), which adds a workspace-owned A0 forum through `./actions.ts`.
 //
 // States: loading (card skeletons), error (`Could not load courts.` with `Try again`), empty,
 // offline (`Showing saved court information`) and permission-denied. `?__state=loading|error`
@@ -14,15 +15,17 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { AddForumDialog } from '../../../../../components/courts/add-forum-dialog.tsx';
 import { CourtNav } from '../../../../../components/courts/court-nav.tsx';
 import { CourtsOfflineBanner } from '../../../../../components/courts/courts-offline-banner.tsx';
 import { CourtsLoadError, ForumList } from '../../../../../components/courts/forum-list.tsx';
 import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
 import { isDev } from '../../../../../lib/env.ts';
-import type { WorkspaceContext } from '../../../../../lib/workspace-context.ts';
+import { can, type WorkspaceContext } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
+import { createWorkspaceForumAction } from './actions.ts';
 import CourtsLoading from './loading.tsx';
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -42,6 +45,16 @@ function devState(searchParams: SearchParams): string | undefined {
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('courts');
   return { title: t('metaTitle') };
+}
+
+/** Every code in the index, so the add-forum dialog blocks a taken one before asking the server. */
+function indexCodes(index: CourtsIndex): string[] {
+  return [
+    ...index.cities.flatMap((city) =>
+      city.courts.flatMap((court) => court.forums.map((forum) => forum.code)),
+    ),
+    ...index.disabled.map((forum) => forum.code),
+  ];
 }
 
 type Loaded = { kind: 'index'; index: CourtsIndex } | { kind: 'denied' } | { kind: 'error' };
@@ -79,6 +92,15 @@ export default async function CourtsPage({ params, searchParams }: CourtsPagePro
   if (loaded.kind === 'denied') return <PermissionDeniedPage />;
   const t = await getTranslations('courts');
 
+  const addForum =
+    loaded.kind === 'index' && can(context.role, 'workspace.manage') ? (
+      <AddForumDialog
+        workspaceId={context.workspace.id}
+        takenCodes={indexCodes(loaded.index)}
+        action={createWorkspaceForumAction}
+      />
+    ) : null;
+
   let body;
   if (loaded.kind === 'error') {
     body = <CourtsLoadError />;
@@ -99,6 +121,7 @@ export default async function CourtsPage({ params, searchParams }: CourtsPagePro
     <div data-route="courts" className="flex flex-col gap-6">
       <CourtsOfflineBanner />
       <CourtNav />
+      {addForum}
       {body}
     </div>
   );

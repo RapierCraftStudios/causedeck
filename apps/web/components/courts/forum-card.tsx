@@ -131,7 +131,7 @@ export function ForumCard({ forum, slug, tabIndex, linkRef, onKeyDown, onFocus }
         <Alert tone={status === 'failed' ? 'danger' : 'warning'} data-forum-banner={status}>
           <AlertTitle>
             {halls.length > 0
-              ? t('banner.hall', { count: halls.length, halls: halls.join(', ') })
+              ? t(halls.length === 1 ? 'banner.hall' : 'banner.halls', { halls: halls.join(', ') })
               : t('banner.generic')}
           </AlertTitle>
           <span className="flex flex-wrap gap-x-4 gap-y-1">

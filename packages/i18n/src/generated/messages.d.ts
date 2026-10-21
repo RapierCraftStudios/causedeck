@@ -1732,6 +1732,7 @@ export type Messages = {
     };
     banner: {
       hall: string;
+      halls: string;
       generic: string;
       openOfficial: string;
       shareAgain: string;

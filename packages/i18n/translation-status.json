@@ -1237,7 +1237,8 @@
     "courts.empty.hint": "draft",
     "courts.error.title": "draft",
     "courts.error.retry": "draft",
-    "courts.offline": "draft"
+    "courts.offline": "draft",
+    "courts.banner.halls": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -2470,6 +2471,7 @@
     "courts.empty.hint": "draft",
     "courts.error.title": "draft",
     "courts.error.retry": "draft",
-    "courts.offline": "draft"
+    "courts.offline": "draft",
+    "courts.banner.halls": "draft"
   }
 }

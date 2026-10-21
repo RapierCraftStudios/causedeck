@@ -1730,7 +1730,8 @@
       "none": "No lists yet"
     },
     "banner": {
-      "hall": "Couldn't read today's list for {count, plural, one {Hall} other {Halls}} {halls}",
+      "hall": "Couldn't read today's list for Hall {halls}",
+      "halls": "Couldn't read today's list for Halls {halls}",
       "generic": "Couldn't read today's list",
       "openOfficial": "Open the official list",
       "shareAgain": "Share it again",

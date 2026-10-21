@@ -214,6 +214,11 @@ export const lifecycleExporter = tablesExporter('lifecycle', [
   ws('deletion_job', { userColumn: 'requested_by' }),
 ]);
 
+// A workspace's custom court reference rows (#344): the forums, halls and benches it added itself.
+// The system catalogue (null workspace_id) is public reference data, not the workspace's, so it is
+// not exported. Workspace-wide only: the rows name no user.
+export const courtExporter = tablesExporter('court', [ws('forum'), ws('court_hall'), ws('bench')]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -224,6 +229,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   billingExporter,
   blobsExporter,
   lifecycleExporter,
+  courtExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

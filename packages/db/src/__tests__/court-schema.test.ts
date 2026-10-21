@@ -24,7 +24,7 @@ import {
   withTestDb,
 } from '../testing/index.ts';
 import { seedTwoTenants } from '../testing/two-tenants.ts';
-import { sqlState } from './rls/fixtures.ts';
+import { newWorkspace, sqlState } from './rls/fixtures.ts';
 
 const owner = createOwnerDb(new Secret(testDatabaseUrls().owner));
 const TAG = randomUUID().slice(0, 8);
@@ -258,6 +258,37 @@ describe('global-or-workspace court reference tables (#344)', () => {
         },
         ua,
       );
+    });
+  });
+});
+
+describe('workspace deletion with custom court rows (#344)', () => {
+  it('deleting the workspace cascades through its forums, halls and benches', async () => {
+    await withTestDb(async (tx) => {
+      const { id } = await newWorkspace(tx);
+      await inWorkspace(tx, id, async (scoped) => {
+        const forumId = await insertForum(scoped, id);
+        await scoped.insert(courtHall).values({ workspaceId: id, forumId, hallNo: '3' });
+        await scoped.insert(bench).values({ workspaceId: id, forumId, benchKind: 'full' });
+        // The organization cascade must clear halls and benches as well as the forum they restrict.
+        await scoped.delete(organization).where(eq(organization.id, id));
+        for (const table of [forum, courtHall, bench]) {
+          expect(await scoped.select().from(table).where(eq(table.workspaceId, id))).toEqual([]);
+        }
+      });
+    });
+  });
+
+  it('a forum that still has halls cannot be deleted on its own', async () => {
+    await withTestDb(async (tx) => {
+      const { id } = await newWorkspace(tx);
+      await inWorkspace(tx, id, async (scoped) => {
+        const forumId = await insertForum(scoped, id);
+        await scoped.insert(courtHall).values({ workspaceId: id, forumId, hallNo: '4' });
+        expect(
+          await sqlState(scoped.transaction((sp) => sp.delete(forum).where(eq(forum.id, forumId)))),
+        ).toBe('23503');
+      });
     });
   });
 });

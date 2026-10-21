@@ -56,6 +56,11 @@ export const PURGE_ORDER = [
   'invitation',
   'support_session',
   'matter_restriction',
+  // Custom court reference rows (#344): halls and benches before their forum; the catalogue
+  // (null workspace_id) is never matched.
+  'court_hall',
+  'bench',
+  'forum',
   'export_job',
   'blob',
   'saas_invoice_line',

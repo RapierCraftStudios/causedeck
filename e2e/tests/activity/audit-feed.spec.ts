@@ -202,7 +202,10 @@ test.describe('activity security and audit tab', () => {
     await seedAudit(db.name, 'chennai-solo');
     await openActivity(page, asUser);
     await page.context().setOffline(true);
-    await expect(page.locator('[data-pattern-state="offline"]')).toBeVisible();
+    // The shell's offline banner and the feed's own note about what is paused (both carry the
+    // `offline` pattern state, so address each one).
+    await expect(page.locator('[data-slot="offline-banner"]')).toBeVisible();
+    await expect(page.getByText(/Showing the first page as saved/)).toBeVisible();
     await expect(eventRows(page)).toHaveCount(3);
     await expect(page.getByRole('button', { name: 'Export' })).toBeDisabled();
     await page.context().setOffline(false);
@@ -214,7 +217,9 @@ test.describe('activity security and audit tab', () => {
     await expect(page.getByText('Could not load activity.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
     await page.goto(page.url().replace('__state=error', '__state=loading'));
-    await expect(page.locator('[data-slot="audit-skeleton"]')).toBeVisible();
+    // The route's streaming fallback and the previewed loading state can both be on screen for a
+    // moment while the page swaps; either is the loading skeleton.
+    await expect(page.locator('[data-slot="audit-skeleton"]').first()).toBeVisible();
   });
 
   test('settings links to the audit log', async ({ page, asUser }) => {

@@ -6,6 +6,9 @@
 //   - `adminServer` (worker): the running admin server;
 //   - `adminAs(kind)`: a page signed in on the admin console as a seeded staff fixture, past the TOTP
 //     step for enrolled staff unless `{ verify: false }`.
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+
 import type { Page } from '@playwright/test';
 
 import {
@@ -40,6 +43,16 @@ export const test = dbTest.extend<AdminFixtures, AdminWorkerFixtures>({
       try {
         await use(server);
       } finally {
+        // Kept next to the other test artifacts: the admin server's output is the only place a
+        // server-side failure shows (the web server's log is attached per test, fixtures/db.ts).
+        mkdirSync(workerInfo.project.outputDir, { recursive: true });
+        writeFileSync(
+          path.join(
+            workerInfo.project.outputDir,
+            `admin-server-${String(workerInfo.parallelIndex)}.log`,
+          ),
+          server.logs(),
+        );
         await server.stop();
       }
     },

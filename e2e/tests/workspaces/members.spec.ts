@@ -23,8 +23,10 @@ const heading = (page: Page) => page.getByRole('heading', { level: 1, name: 'Mem
 async function openMembers(page: Page, asUser: AsUser, role: E2eRole = 'owner', query = '') {
   await asUser(role, { path: `${PATH}${query}` });
   await expect(heading(page)).toBeVisible();
-  // Viewers have no Settings nav item, so there is no active indicator to wait on.
+  // Viewers have no Settings nav item, so there is no active indicator to wait on; the tab list
+  // becomes keyboard-reachable (roving tabindex 0) once the page hydrates, which axe checks for.
   if (role !== 'viewer') await shellReady(page);
+  else await expect(page.locator('[data-slot="tabs-list"]')).toHaveAttribute('tabindex', '0');
 }
 
 /** The list for this viewport: cards on phones, the table from 768 px. */

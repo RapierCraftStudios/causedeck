@@ -169,7 +169,9 @@ test.describe('billing page', () => {
     await seedBilling(db.name, 'chennai-solo');
     await openBilling(page, asUser);
     await page.context().setOffline(true);
-    await expect(page.getByText(/You are offline/)).toBeVisible();
+    // Two notices: the shell's saved-data banner and the billing page's own "changes unavailable".
+    await expect(page.getByText(/You are offline\. Showing saved data from/)).toBeVisible();
+    await expect(page.getByText(/You are offline\. Billing changes are unavailable/)).toBeVisible();
     await expect(page.locator('[data-slot="billing-plan"]')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Change plan' })).toBeDisabled();
     await page.context().setOffline(false);

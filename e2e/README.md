@@ -52,7 +52,7 @@ magic-link token, and tests need the real link. `readMagicLink(email)` reads it 
 
 Environment knobs: `E2E_PORT` (3100), `E2E_DB_PREFIX` (`causedeck_e2e`, change it when two runs share
 one Postgres), `E2E_DB_SUPERUSER_URL`, `E2E_MAILPIT_URL`, `E2E_SMTP_URL`, `E2E_SKIP_BUILD=1`,
-`E2E_KEEP_DB=1` (keep the template after the run), `E2E_ASSERT_RESET_MS`.
+`E2E_KEEP_DB=1` (keep the template after the run), `E2E_ASSERT_RESET_MS`, `E2E_SCOPE=ship|full` (default `full`; `ship` is the PR gate: `chromium-1280-light` plus `@smoke` on 360 light and WebKit, no visual specs; D-046).
 
 ## Writing specs
 

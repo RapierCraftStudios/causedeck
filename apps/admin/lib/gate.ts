@@ -6,7 +6,8 @@
 //   4. An enabled `staff_user` row.
 //   5. 2FA: enrolled (`user.twoFactorEnabled`) and verified for this session (`cd_admin_2fa`).
 // Static assets need only 1-2. The sign-in pages and the Better Auth endpoints they call are open
-// to anyone signed out who passed 1-2; a signed-in non-staff user gets 404 there too. Outside
+// to anyone signed out who passed 1-2; a signed-in non-staff user, or staff without 2FA enrolled
+// (the sign-in page only), gets 404 there too. Outside
 // production, and only for the CLI-seeded dev staff account (DEV_STAFF_EMAIL), 2 and 5 are skipped.
 import type { CfAccessVerifier } from './cf-access.ts';
 import { CF_ACCESS_HEADER } from './cf-access.ts';
@@ -111,8 +112,11 @@ export async function decide(
 
   if (kind === 'public') {
     if (current === null) return ALLOW;
-    // A signed-in non-staff user learns nothing, not even that this is a sign-in page.
-    return (await deps.isActiveStaff(current.user.id)) ? ALLOW : DENY;
+    // A signed-in non-staff user learns nothing, not even that this is a sign-in page. Staff
+    // without 2FA enrolled get the generic 404 on the page too (the same as every other route).
+    if (!(await deps.isActiveStaff(current.user.id))) return DENY;
+    const enrolled = devStaff || current.user.twoFactorEnabled === true;
+    return request.pathname === SIGN_IN_PATH && !enrolled ? DENY : ALLOW;
   }
 
   if (current === null) return DENY;

@@ -39,18 +39,22 @@ export function seedAudit(
   const sql = postgres(databaseUrl(database, 'superuser'), { max: 1, onnotice: () => undefined });
   return (async () => {
     try {
-      for (const event of events) {
-        const system = event.actor === 'system';
-        const actorId = event.actor === 'system' ? null : e2eUser(event.actor, slug).id;
-        const targetId = event.target ? e2eUser(event.target.role, slug).id : null;
-        await sql`
+      // `app_audit_append()` only writes for the pinned workspace (migration 0031), as in the app.
+      await sql.begin(async (tx) => {
+        await tx`select set_config('app.workspace_id', ${workspaceId}, true)`;
+        for (const event of events) {
+          const system = event.actor === 'system';
+          const actorId = event.actor === 'system' ? null : e2eUser(event.actor, slug).id;
+          const targetId = event.target ? e2eUser(event.target.role, slug).id : null;
+          await tx`
           select id from app_audit_append(
             ${workspaceId}::uuid, ${actorId}::uuid,
             ${system ? 'system' : 'user'}::audit_actor_kind, ${event.action},
             ${event.target?.kind ?? null}, ${targetId},
             ${event.outcome}::audit_outcome, ${event.ip ?? null}::inet, ${null}, ${null},
             ${JSON.stringify(event.metadata ?? {})}::jsonb)`;
-      }
+        }
+      });
     } finally {
       await sql.end();
     }

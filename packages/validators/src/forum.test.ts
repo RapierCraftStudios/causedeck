@@ -50,6 +50,17 @@ describe('forum schemas (#34)', () => {
     expect(ForumConfigSchema.safeParse({ ...config, iframe: 'x' }).success).toBe(false);
   });
 
+  it("marks captcha-gated pages only among the forum's deep links (#397)", () => {
+    expect(ForumConfigSchema.safeParse({ ...config, captchaGated: ['cause_list'] }).success).toBe(
+      true,
+    );
+    expect(ForumConfigSchema.safeParse(config).success).toBe(true);
+    const missing = ForumConfigSchema.safeParse({ ...config, captchaGated: ['case_status'] });
+    expect(missing.success).toBe(false);
+    expect(missing.error?.issues[0]?.path).toEqual(['captchaGated', 0]);
+    expect(ForumConfigSchema.safeParse({ ...config, captchaGated: ['embed'] }).success).toBe(false);
+  });
+
   it('accepts path and https templates with {name} placeholders, on a listed host only', () => {
     expect(DeepLinkTemplateSchema.safeParse('status/{caseType}/{number}').success).toBe(true);
     expect(DeepLinkTemplateSchema.safeParse('cause-list-%E2%81%84-daily-board/').success).toBe(

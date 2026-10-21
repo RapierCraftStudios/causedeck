@@ -95,7 +95,7 @@ export const AdapterConfigSchema = z
       .strict()
       .default({ minAnchoredRatio: 0.9, maxUnmappedHeadings: 3 }),
     /**
-     * Table-format lists (ADR 0017): canonical column key -> header spellings, how many columns a
+     * Table-format lists (ADR 0018): canonical column key -> header spellings, how many columns a
      * header row must match, and how far (PDF points) a word may sit left of its column's header
      * and still belong to it. Optional with no default, so configs without it keep their checksum.
      */

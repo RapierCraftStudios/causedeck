@@ -62,13 +62,18 @@ export const PURGE_ORDER = [
   // anchors they cite; state history (#363) and links before their proceedings, proceedings
   // before the anchors, matters and forums they cite; parse-health runs (#372), anchors and pages
   // before their document, documents and restrictions before their matter, matters (and the
-  // docket) before the members their member columns name.
+  // docket) before the members their member columns name. Bench rosters (#384): alerts before
+  // the rosters and proceedings they cite, entries before their roster, rosters before the
+  // documents, members and court rows they cite.
   'appearance',
   'hearing',
   'task',
   'obligation',
   'order',
   'listing',
+  'bench_change_alert',
+  'bench_roster_entry',
+  'bench_roster',
   'role_edge',
   'person',
   'organisation',

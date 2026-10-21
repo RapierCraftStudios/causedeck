@@ -18,7 +18,7 @@ fixtures/<adapter-id>/
   (or the entry's `forumCode`).
 - `.txt` is read as text (pages split on form feeds), `.html` through `layoutFromHtml`, `.pdf`
   through `layoutFromPdf`, and `.json` is a `LayoutDocument` as a layout reader (or OCR, #45)
-  would produce it ([ADR 0017](../../../docs/adr/0017-nclt-bengaluru-table-parsing.md)).
+  would produce it ([ADR 0018](../../../docs/adr/0018-nclt-bengaluru-table-parsing.md)).
 - `manifest.json` lists every input file:
 
   ```json

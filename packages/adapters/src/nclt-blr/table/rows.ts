@@ -1,4 +1,4 @@
-// Table rows from assigned lines (#38, ADR 0017). A line whose case-number cell starts a matter
+// Table rows from assigned lines (#38, ADR 0018). A line whose case-number cell starts a matter
 // opens a row; every other body line continues the row before it: a wrapped cell's next line, or a
 // nested application (an IA/CA number with an empty CP cell). Rows may continue onto the next page.
 // A continuation line with no row before it is an orphan and is reported, not attached. Pure.

@@ -214,10 +214,18 @@ export const lifecycleExporter = tablesExporter('lifecycle', [
   ws('deletion_job', { userColumn: 'requested_by' }),
 ]);
 
-// A workspace's custom court reference rows (#344): the forums, halls and benches it added itself.
-// The system catalogue (null workspace_id) is public reference data, not the workspace's, so it is
-// not exported. Workspace-wide only: the rows name no user.
-export const courtExporter = tablesExporter('court', [ws('forum'), ws('court_hall'), ws('bench')]);
+// A workspace's custom court reference rows (#344): the forums, halls and benches it added itself,
+// and its own bench rosters, their entries and bench-change alerts (#384). The system catalogue
+// (null workspace_id) is public reference data, not the workspace's, so it is not exported.
+// Workspace-wide only: the rows name no user (`imported_by` is a member id).
+export const courtExporter = tablesExporter('court', [
+  ws('forum'),
+  ws('court_hall'),
+  ws('bench'),
+  ws('bench_roster'),
+  ws('bench_roster_entry'),
+  ws('bench_change_alert'),
+]);
 
 // Matters, their proceedings, links (#346) and state history (#363), their docket: listings, hearings, appearances,
 // orders, obligations and tasks (#347), the people and role edges around them (#348) and their

@@ -1,4 +1,4 @@
-// NCLT Bengaluru cause-list parser (#38, ADR 0017). The list is one PDF per bench per date with a
+// NCLT Bengaluru cause-list parser (#38, ADR 0018). The list is one PDF per bench per date with a
 // table (research/raw/09 §2.2): Sl. No., CP No., CA/IA No., Purpose, Section, Name of Parties,
 // counsel for each side, IRP/RP/Liquidator/MP and Remarks, under a coram and hearing-mode preamble.
 // `parseNcltCauseList` reads a `LayoutDocument` (the PDF text layer, or an OCR layout, #45):

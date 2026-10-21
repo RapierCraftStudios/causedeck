@@ -83,6 +83,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   role_edge: DB_TABLES_TEST,
   // Adapter parse health (#372).
   adapter_parse_run: DB_TABLES_TEST,
+  // Bench rosters (#384).
+  bench_roster: DB_TABLES_TEST,
+  bench_roster_entry: DB_TABLES_TEST,
+  bench_change_alert: DB_TABLES_TEST,
 };
 
 /**
@@ -275,6 +279,27 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
     note: 'reads the tenant-free adapter_health_summary view (counts per adapter/version only), never a tenant row',
+  },
+  // court read models (#397)
+  getCourtsIndex: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
+  },
+  getForumDetail: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace; another workspace's forum code is NOT_FOUND",
+  },
+  getAdapterStatus: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
+  },
+  listHallsSeen: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
   },
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
   // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that

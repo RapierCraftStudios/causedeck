@@ -26,6 +26,7 @@ const DISTRICT: Pick<
   config: {
     hosts: ['bengaluru.dcourts.gov.in'],
     deepLinks: { cause_list: 'cause-list-%E2%81%84-daily-board/' },
+    captchaGated: ['cause_list'],
     notes: 'The cause-list form asks for the court complex or establishment and two captchas.',
   },
 };

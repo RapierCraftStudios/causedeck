@@ -1,5 +1,5 @@
-// The NCLT config v1.0.0 as committed and as registered (#38, ADR 0017): adapter.config.json is
-// `NCLT_CONFIG`, migration 0046 stores exactly its canonical JSON with its checksum (the loader
+// The NCLT config v1.0.0 as committed and as registered (#38, ADR 0018): adapter.config.json is
+// `NCLT_CONFIG`, migration 0047 stores exactly its canonical JSON with its checksum (the loader
 // refuses a row whose checksum does not match), the access-mode rows carry the counsel note, and
 // the bundled config and activation factory know the adapter.
 import { readFileSync } from 'node:fs';
@@ -24,7 +24,7 @@ const adapterConfigJson: unknown = JSON.parse(
   readFileSync(path.join(import.meta.dirname, 'config/adapter.config.json'), 'utf8'),
 );
 const MIGRATION = readFileSync(
-  path.resolve(import.meta.dirname, '../../../db/migrations/0046_nclt_adapter_v1.sql'),
+  path.resolve(import.meta.dirname, '../../../db/migrations/0047_nclt_adapter_v1.sql'),
   'utf8',
 );
 
@@ -36,14 +36,14 @@ describe('NCLT config v1.0.0', () => {
     expect(NCLT_BUNDLED).toEqual({ version: '1.0.0', config: NCLT_CONFIG });
   });
 
-  it('migration 0046 registers exactly this config, with its checksum, as 1.0.0', async () => {
+  it('migration 0047 registers exactly this config, with its checksum, as 1.0.0', async () => {
     const checksum = await configChecksum(NCLT_CONFIG);
     expect(MIGRATION).toContain(`'${canonicalJson(NCLT_CONFIG)}'::jsonb`);
     expect(MIGRATION).toContain(`'${checksum}'`);
     expect(MIGRATION).toMatch(/'in\.nclt\.bengaluru',\s*'1\.0\.0',/);
   });
 
-  it('migration 0046 records the access modes with the counsel note and raises the forum to A1', () => {
+  it('migration 0047 records the access modes with the counsel note and raises the forum to A1', () => {
     const adapter = createNcltAdapter();
     for (const [resource, mode] of Object.entries(adapter.accessModes)) {
       expect(MIGRATION).toContain(

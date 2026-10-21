@@ -277,6 +277,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   linkProceedings: denies,
   findDuplicateProceedings: empty,
   createDocument: denies,
+  // canonical next date (#364): A's proceeding or listing from B, or ub claiming A, is NOT_FOUND
+  proposeNextDate: denies,
+  confirmNextDate: denies,
+  getCanonicalNextDate: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,

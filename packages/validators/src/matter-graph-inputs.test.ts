@@ -6,12 +6,15 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ArchiveMatterInput,
+  ConfirmNextDateInput,
   CreateDocumentInput,
   CreateMatterInput,
   CreateProceedingInput,
   FindDuplicateProceedingsInput,
+  GetCanonicalNextDateInput,
   LinkProceedingsInput,
   ListMattersInput,
+  ProposeNextDateInput,
   UpdateIdentifiersInput,
   UpdateMatterInput,
 } from './matter-graph-inputs';
@@ -115,5 +118,45 @@ describe('document input', () => {
     expect(CreateDocumentInput.safeParse(doc).success).toBe(true);
     expect(CreateDocumentInput.safeParse({ ...doc, sha256: 'A'.repeat(64) }).success).toBe(false);
     expect(CreateDocumentInput.safeParse({ ...doc, kind: 'memo' }).success).toBe(false);
+  });
+});
+
+describe('next-date inputs', () => {
+  it('accepts a minimal proposal with defaults and rejects bad dates, ids and keys', () => {
+    const proposal = { proceedingId: id(), date: '2026-11-02', provenance: manual };
+    expect(ProposeNextDateInput.parse(proposal)).toMatchObject({ listType: 'daily', stageRaw: '' });
+    expect(ProposeNextDateInput.safeParse({ ...proposal, date: '02/11/2026' }).success).toBe(false);
+    expect(ProposeNextDateInput.safeParse({ ...proposal, proceedingId: 'x' }).success).toBe(false);
+    expect(ProposeNextDateInput.safeParse({ ...proposal, canonical: true }).success).toBe(false);
+    expect(ProposeNextDateInput.safeParse({ ...proposal, listType: 'weekly' }).success).toBe(false);
+  });
+
+  it('refuses a proposal that claims to be confirmed', () => {
+    const proposal = { proceedingId: id(), date: '2026-11-02' };
+    expect(
+      ProposeNextDateInput.safeParse({
+        ...proposal,
+        provenance: { sourceType: 'manual', confirmationState: 'confirmed' },
+      }).success,
+    ).toBe(false);
+    expect(
+      ProposeNextDateInput.safeParse({
+        ...proposal,
+        provenance: { sourceType: 'manual', confirmationState: 'proposed' },
+      }).success,
+    ).toBe(true);
+    expect(
+      ProposeNextDateInput.safeParse({ ...proposal, provenance: { sourceType: 'adapter' } })
+        .success,
+    ).toBe(false);
+  });
+
+  it('defaults allowPast to false and needs a listing or proceeding id', () => {
+    const listingId = id();
+    expect(ConfirmNextDateInput.parse({ listingId })).toEqual({ listingId, allowPast: false });
+    expect(ConfirmNextDateInput.safeParse({ listingId: 'x' }).success).toBe(false);
+    expect(ConfirmNextDateInput.safeParse({ listingId, date: '2026-11-02' }).success).toBe(false);
+    expect(GetCanonicalNextDateInput.safeParse({ proceedingId: id() }).success).toBe(true);
+    expect(GetCanonicalNextDateInput.safeParse({}).success).toBe(false);
   });
 });

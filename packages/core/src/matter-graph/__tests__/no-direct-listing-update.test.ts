@@ -1,4 +1,4 @@
-// `no-direct-listing-update` (#364, part 3 of #33; ADR 0014): only matter-graph/next-date.ts may
+// `no-direct-listing-update` (#364, part 3 of #33; ADR 0015): only matter-graph/next-date.ts may
 // write a listing's date or its canonical flag in packages/core, so the canonical next date changes
 // through `confirmNextDate` alone. Every non-test module under packages/core/src is scanned for a
 // Drizzle update of `listing` whose `set` names `listDate` or `canonical`, a Drizzle insert into

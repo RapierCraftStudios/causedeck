@@ -249,6 +249,23 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   restrictMatter: denies,
   assertMatterReadable: denies,
   listMatterRestrictions: denies,
+  // court (#34): catalogue rows are global by design; custom forums stay in their workspace
+  createWorkspaceForum: denies,
+  listForums: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; RLS shows the catalogue and that workspace's own forums only",
+  },
+  listForumsByCity: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; RLS shows the catalogue and that workspace's own forums only",
+  },
+  getForum: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; another workspace's forum is NOT_FOUND",
+  },
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
   // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError)
   createMatter: denies,
@@ -516,6 +533,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   ACCEPT_RATE_LIMIT: 'constant',
   generateInvitationToken: 'pure (random bytes)',
   hashInvitationToken: 'pure',
+  // court: deep links (#34)
+  resolveDeepLink: 'pure',
+  buildDeepLink: 'pure',
+  interpolateTemplate: 'pure',
   // matter graph (#362): errors and pure proceeding-identity helpers
   CrossWorkspaceError: 'error class',
   crossWorkspace: 'error factory',

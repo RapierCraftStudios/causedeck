@@ -323,6 +323,13 @@
       "when": 1792604806828,
       "tag": "0045_adapter_id_dotted",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1792608174277,
+      "tag": "0046_bench_rosters",
+      "breakpoints": true
     }
   ]
 }

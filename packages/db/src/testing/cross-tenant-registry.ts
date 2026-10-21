@@ -83,6 +83,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   role_edge: DB_TABLES_TEST,
   // Adapter parse health (#372).
   adapter_parse_run: DB_TABLES_TEST,
+  // Bench rosters (#384).
+  bench_roster: DB_TABLES_TEST,
+  bench_roster_entry: DB_TABLES_TEST,
+  bench_change_alert: DB_TABLES_TEST,
 };
 
 /**

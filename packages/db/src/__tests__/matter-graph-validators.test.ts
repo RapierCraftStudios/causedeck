@@ -4,6 +4,7 @@
 // types, and rows the fixtures write parse with the select schemas. `@causedeck/db` depends on the
 // validators package, so the schemas cannot be derived from the tables (ADR 0013).
 import * as v from '@causedeck/validators/matter-graph';
+import * as r from '@causedeck/validators/roster';
 import { eq, getTableColumns, is, type InferSelectModel, type Table } from 'drizzle-orm';
 import { PgEnumColumn } from 'drizzle-orm/pg-core';
 import { describe, expect, expectTypeOf, it } from 'vitest';
@@ -37,6 +38,14 @@ import {
   proceedingStateChange,
   PROCEEDING_LINK_KINDS,
 } from '../schema/proceedings.ts';
+import {
+  BENCH_CHANGE_ALERT_STATUSES,
+  BENCH_CHANGE_REASONS,
+  BENCH_ROSTER_STATUSES,
+  benchChangeAlert,
+  benchRoster,
+  benchRosterEntry,
+} from '../schema/roster.ts';
 import { inWorkspace, withTestDb } from '../testing/index.ts';
 import {
   buildAnchor,
@@ -82,6 +91,20 @@ const PAIRS: [string, Table, ObjectParser, ObjectParser][] = [
   ['person', person, v.PersonSelectSchema, v.PersonInsertSchema],
   ['organisation', organisation, v.OrganisationSelectSchema, v.OrganisationInsertSchema],
   ['role_edge', roleEdge, v.RoleEdgeSelectSchema, v.RoleEdgeInsertSchema],
+  // Bench rosters (#384): `@causedeck/validators/roster`.
+  ['bench_roster', benchRoster, r.BenchRosterSelectSchema, r.BenchRosterInsertSchema],
+  [
+    'bench_roster_entry',
+    benchRosterEntry,
+    r.BenchRosterEntrySelectSchema,
+    r.BenchRosterEntryInsertSchema,
+  ],
+  [
+    'bench_change_alert',
+    benchChangeAlert,
+    r.BenchChangeAlertSelectSchema,
+    r.BenchChangeAlertInsertSchema,
+  ],
 ];
 
 describe('@causedeck/validators/matter-graph matches the tables', () => {
@@ -140,6 +163,9 @@ describe('@causedeck/validators/matter-graph matches the tables', () => {
     expect(v.TASK_STATUSES).toEqual(TASK_STATUSES);
     expect(v.ANCHOR_QUOTE_MAX).toBe(ANCHOR_QUOTE_MAX);
     expect(v.CNR_PATTERN.source).toBe(CNR_PATTERN);
+    expect(r.BENCH_ROSTER_STATUSES).toEqual(BENCH_ROSTER_STATUSES);
+    expect(r.BENCH_CHANGE_REASONS).toEqual(BENCH_CHANGE_REASONS);
+    expect(r.BENCH_CHANGE_ALERT_STATUSES).toEqual(BENCH_CHANGE_ALERT_STATUSES);
   });
 
   it('infers the select types of the tables', () => {
@@ -164,6 +190,9 @@ describe('@causedeck/validators/matter-graph matches the tables', () => {
     expectTypeOf<v.Person>().toEqualTypeOf<InferSelectModel<typeof person>>();
     expectTypeOf<v.Organisation>().toEqualTypeOf<InferSelectModel<typeof organisation>>();
     expectTypeOf<v.RoleEdge>().toEqualTypeOf<InferSelectModel<typeof roleEdge>>();
+    expectTypeOf<r.BenchRoster>().toEqualTypeOf<InferSelectModel<typeof benchRoster>>();
+    expectTypeOf<r.BenchRosterEntry>().toEqualTypeOf<InferSelectModel<typeof benchRosterEntry>>();
+    expectTypeOf<r.BenchChangeAlert>().toEqualTypeOf<InferSelectModel<typeof benchChangeAlert>>();
   });
 
   it('parses rows the fixtures write with the select schemas', async () => {

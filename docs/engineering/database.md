@@ -204,6 +204,26 @@ closer's member row is deleted (account deletion), so the obligation stays close
   `adapter_parse_run`; the app and clerk roles may only select it. It has no workspace, document or
   hall column. drizzle declares it with `.existing()`, so `db:generate` leaves it alone.
 
+## Bench roster tables
+
+`bench_roster`, `bench_roster_entry` and `bench_change_alert` in
+`packages/db/src/schema/roster.ts`, migration `0046_bench_rosters` (#384, part 1 of #39,
+[ADR 0017](../adr/0017-effective-dated-rosters.md)). Tenant tables under FORCE RLS; no provenance.
+Tested in `packages/db/src/__tests__/roster-schema.test.ts`; zod schemas in
+`@causedeck/validators/roster`.
+
+| Table                | Columns and constraints                                                                                                                                                                                                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bench_roster`       | `forum_id` (-> `forum`, `same_or_global` scope guard), `effective_from`, `effective_to` (null: open-ended; CHECK after `effective_from`), `status` (CHECK `draft`, `active`, `superseded`), `version` (CHECK > 0; unique `(workspace_id, forum_id, version)`), `source_document_id` (-> `document`, SET NULL), `imported_by` (-> `member`, SET NULL), `note` |
+| `bench_roster_entry` | `roster_id` (-> `bench_roster`, ON DELETE CASCADE), `hall_id` (-> `court_hall`, scope guard, nullable), `hall_no` (CHECK not blank), `bench_id` (-> `bench`, scope guard), `portfolio_text`, `portfolio_rule` (jsonb object or null)                                                                              |
+| `bench_change_alert` | `proceeding_id` (-> `proceeding`, NO ACTION), `roster_id` (-> `bench_roster`, NO ACTION), `old_bench_id` (nullable) / `new_bench_id` (-> `bench`, scope guards), `reason` (CHECK `hall`, `portfolio`), `status` (CHECK `open`, `dismissed`); unique `(proceeding_id, roster_id)`                                     |
+
+`bench_roster_active_period_excl` (hand-written in the migration; Drizzle cannot declare EXCLUDE)
+is `EXCLUDE USING gist (workspace_id WITH =, forum_id WITH =, daterange(effective_from,
+effective_to, '[)') WITH &&) WHERE (status = 'active')`: no two active rosters of one workspace
+and forum share a day (23P01). Migration 0046 creates the `btree_gist` extension it needs. Entries
+name a bench, never judges (the judge-aggregation guard covers these tables).
+
 ## Audit tables
 
 `packages/db/src/schema/audit.ts`, migration `0008_audit` (#226, #26 part 1). Both tables are

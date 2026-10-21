@@ -132,6 +132,10 @@ describe('row-level security catalog', () => {
         'role_edge',
         // Adapter parse health (#372).
         'adapter_parse_run',
+        // Bench rosters (#384).
+        'bench_roster',
+        'bench_roster_entry',
+        'bench_change_alert',
       ].sort(),
     );
     for (const row of rows)

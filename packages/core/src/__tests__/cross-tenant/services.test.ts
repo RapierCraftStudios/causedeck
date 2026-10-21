@@ -91,13 +91,17 @@ async function aRestrictions(f: Fixture) {
   );
 }
 
-/** A's matter-graph rows (matters, proceedings, links, documents, listings), for before/after checks. */
+/**
+ * A's matter-graph rows, for before/after checks: one key per table the services write (matters.ts,
+ * proceedings.ts and its links, documents.ts, and next-date.ts, which writes listings).
+ */
 async function aGraph(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, async (s) => ({
     matters: await s.select().from(schema.matter).orderBy(schema.matter.id),
     proceedings: await s.select().from(schema.proceeding).orderBy(schema.proceeding.id),
     links: await s.select().from(schema.proceedingLink).orderBy(schema.proceedingLink.id),
     documents: await s.select().from(schema.document).orderBy(schema.document.id),
+    // next-date.ts (#364): proposals and the canonical swap.
     listings: await s.select().from(schema.listing).orderBy(schema.listing.id),
   }));
 }

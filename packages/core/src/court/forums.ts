@@ -6,7 +6,14 @@
 // the catalogue (RLS rejects a null `workspace_id` for the app role anyway).
 import { isRole } from '@causedeck/auth';
 import { assertCan, ForbiddenError, type Actor } from '@causedeck/auth/policy';
-import { currentScope, isUuid, schema, withWorkspace, type Queryable } from '@causedeck/db';
+import {
+  currentScope,
+  isUuid,
+  schema,
+  withWorkspace,
+  type Queryable,
+  type Transaction,
+} from '@causedeck/db';
 import {
   FORUM_CODE_PATTERN,
   ForumConfigSchema,
@@ -40,19 +47,22 @@ function visible(options: ListForumsOptions, ...conditions: (SQL | undefined)[])
   return and(options.includeDisabled === true ? undefined : eq(forum.enabled, true), ...conditions);
 }
 
+/** The statement `listForums` runs (exported for the plan and budget test). */
+export function listForumsStatement(tx: Transaction, options: ListForumsOptions = {}) {
+  return tx
+    .select()
+    .from(forum)
+    .where(visible(options))
+    .orderBy(asc(forum.court), asc(forum.establishment), asc(forum.code));
+}
+
 /** The catalogue forums and the workspace's own, ordered by court and establishment. */
 export async function listForums(
   db: Queryable,
   workspaceId: string,
   options: ListForumsOptions = {},
 ): Promise<Forum[]> {
-  return withWorkspace(db, { workspaceId }, (tx) =>
-    tx
-      .select()
-      .from(forum)
-      .where(visible(options))
-      .orderBy(asc(forum.court), asc(forum.establishment), asc(forum.code)),
-  );
+  return withWorkspace(db, { workspaceId }, (tx) => listForumsStatement(tx, options));
 }
 
 /** The forums seated in `city` (case-insensitive), catalogue and the workspace's own. */
@@ -73,6 +83,17 @@ export async function listForumsByCity(
   );
 }
 
+/** The statement `getForum` runs (exported for the plan and budget test). */
+export function getForumStatement(tx: Transaction, idOrCode: string) {
+  const key = idOrCode.trim();
+  return tx
+    .select()
+    .from(forum)
+    .where(isUuid(key) ? eq(forum.id, key) : eq(forum.code, key))
+    .orderBy(sql`${forum.workspaceId} is not null`)
+    .limit(1);
+}
+
 /**
  * A forum by id or code, catalogue or the workspace's own (disabled ones included). By code, the
  * catalogue row wins over a workspace row with the same code. `NOT_FOUND` otherwise.
@@ -82,14 +103,8 @@ export async function getForum(
   workspaceId: string,
   idOrCode: string,
 ): Promise<Forum> {
-  const key = idOrCode.trim();
   return withWorkspace(db, { workspaceId }, async (tx) => {
-    const [row] = await tx
-      .select()
-      .from(forum)
-      .where(isUuid(key) ? eq(forum.id, key) : eq(forum.code, key))
-      .orderBy(sql`${forum.workspaceId} is not null`)
-      .limit(1);
+    const [row] = await getForumStatement(tx, idOrCode);
     if (row === undefined) throw forumNotFound();
     return row;
   });

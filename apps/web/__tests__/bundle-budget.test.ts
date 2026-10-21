@@ -19,6 +19,8 @@ interface BudgetModule {
     sizes: Record<string, number>,
     budget?: number,
   ) => { files: string[]; total: number; budget: number; ok: boolean };
+  ROUTE_CHUNK_BUDGET_BYTES: number;
+  COURTS_ROUTE_MANIFESTS: string[];
   GENERATED_MESSAGES: string;
   foreignValues: (en: unknown, others: unknown[]) => string[];
   localeLeak: (
@@ -110,6 +112,54 @@ describe('workspace shell budget (#155)', () => {
     const at = { 'shell.js': 40 * 1024 };
     expect(budget.shellDelta([], ['shell.js'], at).ok).toBe(true);
     expect(budget.shellDelta([], ['shell.js', 'extra.js'], { ...at, 'extra.js': 1 }).ok).toBe(
+      false,
+    );
+  });
+});
+
+describe('courts route budget (#427)', () => {
+  it('is 40 KB gzip per route, measured on the courts index and a forum halls tab', () => {
+    expect(budget.ROUTE_CHUNK_BUDGET_BYTES).toBe(40 * 1024);
+    expect(budget.COURTS_ROUTE_MANIFESTS).toEqual([
+      'server/app/(app)/w/[slug]/courts/page_client-reference-manifest.js',
+      'server/app/(app)/w/[slug]/courts/[code]/halls/page_client-reference-manifest.js',
+    ]);
+  });
+
+  it('counts only the chunks neither home nor the workspace shell loads, each once', () => {
+    const home = ['static/chunks/root.js'];
+    const today = ['static/chunks/root.js', 'static/chunks/shell.js', 'static/chunks/today.js'];
+    const courts = [
+      'static/chunks/root.js',
+      'static/chunks/shell.js',
+      'static/chunks/courts.js',
+      'static/chunks/courts.js',
+    ];
+    const delta = budget.shellDelta(
+      [...home, ...today],
+      courts,
+      {
+        'static/chunks/root.js': 90_000,
+        'static/chunks/shell.js': 28_000,
+        'static/chunks/today.js': 5000,
+        'static/chunks/courts.js': 2048,
+      },
+      budget.ROUTE_CHUNK_BUDGET_BYTES,
+    );
+    expect(delta).toEqual({
+      files: ['static/chunks/courts.js'],
+      total: 2048,
+      budget: 40 * 1024,
+      ok: true,
+    });
+  });
+
+  it('passes at 40 KB and fails one byte over', () => {
+    const shared = ['shell.js'];
+    const sizes = { 'shell.js': 28_000, 'courts.js': 40 * 1024, 'extra.js': 1 };
+    const limit = budget.ROUTE_CHUNK_BUDGET_BYTES;
+    expect(budget.shellDelta(shared, ['shell.js', 'courts.js'], sizes, limit).ok).toBe(true);
+    expect(budget.shellDelta(shared, ['shell.js', 'courts.js', 'extra.js'], sizes, limit).ok).toBe(
       false,
     );
   });

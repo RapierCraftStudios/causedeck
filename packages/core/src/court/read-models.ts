@@ -9,7 +9,7 @@
 // index also carries each forum's unreadable halls and official cause-list link for the courts
 // page's parse-failure banner (#399).
 import { listAdapterAccessModes, type AccessMode } from '@causedeck/flags/access-mode';
-import { schema, withWorkspace, type Queryable } from '@causedeck/db';
+import { schema, withWorkspace, type Queryable, type Transaction } from '@causedeck/db';
 import {
   FORUM_DEEP_LINK_KINDS,
   ForumConfigSchema,
@@ -68,23 +68,27 @@ export interface CourtsIndex {
   disabled: DisabledForum[];
 }
 
+/**
+ * The statement `getCourtsIndex` runs for each forum's newest parse run in the transaction's
+ * workspace (RLS); exported for the plan and budget test.
+ */
+export function latestParseRunsStatement(tx: Transaction) {
+  return tx
+    .selectDistinctOn([adapterParseRun.forumCode], {
+      forumCode: adapterParseRun.forumCode,
+      status: adapterParseRun.status,
+      at: adapterParseRun.createdAt,
+      hallsUnreadable: adapterParseRun.hallsUnreadable,
+    })
+    .from(adapterParseRun)
+    .orderBy(adapterParseRun.forumCode, desc(adapterParseRun.createdAt), desc(adapterParseRun.id));
+}
+
 /** Enabled forums by city then court, and the disabled ones apart with their reason and no links. */
 export async function getCourtsIndex(db: Queryable, workspaceId: string): Promise<CourtsIndex> {
   return withWorkspace(db, { workspaceId }, async (tx) => {
     const forums = await listForums(tx, workspaceId, { includeDisabled: true });
-    const runs = await tx
-      .selectDistinctOn([adapterParseRun.forumCode], {
-        forumCode: adapterParseRun.forumCode,
-        status: adapterParseRun.status,
-        at: adapterParseRun.createdAt,
-        hallsUnreadable: adapterParseRun.hallsUnreadable,
-      })
-      .from(adapterParseRun)
-      .orderBy(
-        adapterParseRun.forumCode,
-        desc(adapterParseRun.createdAt),
-        desc(adapterParseRun.id),
-      );
+    const runs = await latestParseRunsStatement(tx);
     const latest = new Map(
       runs.map((run) => [
         run.forumCode,
@@ -298,6 +302,19 @@ export interface HallSeen {
   unreadable: boolean;
 }
 
+/** The statement `listHallsSeen` runs (exported for the plan and budget test). */
+export function hallsSeenStatement(tx: Transaction, forumCode: string) {
+  return tx
+    .select({
+      at: adapterParseRun.createdAt,
+      hallsSeen: adapterParseRun.hallsSeen,
+      hallsUnreadable: adapterParseRun.hallsUnreadable,
+    })
+    .from(adapterParseRun)
+    .where(eq(adapterParseRun.forumCode, forumCode))
+    .orderBy(desc(adapterParseRun.createdAt), desc(adapterParseRun.id));
+}
+
 /** Halls named in this workspace's parse runs for the forum, in natural order ('2' before '12A'). */
 export async function listHallsSeen(
   db: Queryable,
@@ -305,15 +322,7 @@ export async function listHallsSeen(
   forumCode: string,
 ): Promise<HallSeen[]> {
   return withWorkspace(db, { workspaceId }, async (tx) => {
-    const runs = await tx
-      .select({
-        at: adapterParseRun.createdAt,
-        hallsSeen: adapterParseRun.hallsSeen,
-        hallsUnreadable: adapterParseRun.hallsUnreadable,
-      })
-      .from(adapterParseRun)
-      .where(eq(adapterParseRun.forumCode, forumCode))
-      .orderBy(desc(adapterParseRun.createdAt), desc(adapterParseRun.id));
+    const runs = await hallsSeenStatement(tx, forumCode);
     const halls = new Map<string, HallSeen>();
     for (const run of runs) {
       const unreadable = new Set(run.hallsUnreadable);

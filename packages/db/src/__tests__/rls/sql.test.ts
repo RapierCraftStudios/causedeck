@@ -83,10 +83,53 @@ describe('row-level security catalog', () => {
         and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'workspace_id')
         and not (c.relname = any(${sql.raw(`array[${GLOBAL_TABLES.map((t) => `'${t}'`).join(', ')}]`)}))
       order by 1`);
-    expect(rows.map((r) => r.name)).toEqual([...BASELINE_TENANT_TABLES, ...USAGE_TABLES].sort());
+    // Baseline tables plus the tenant tables created after 0006 (#226, #194, #218, #22, #216, #252, #233, #217, #301, #308).
+    expect(rows.map((r) => r.name)).toEqual(
+      [
+        ...BASELINE_TENANT_TABLES,
+        'audit_event',
+        'ai_call',
+        'notification',
+        'notification_pref',
+        'notification_setting',
+        ...USAGE_TABLES,
+        'workspace_feature_flag',
+        'workspace_key',
+        'saas_invoice',
+        'saas_invoice_line',
+        'matter_restriction',
+        'blob',
+        'export_job',
+        'deletion_job',
+        'support_session',
+        'workspace_integration',
+      ].sort(),
+    );
     for (const row of rows)
       expect(row, row.name).toMatchObject({ enabled: true, forced: true, policy: true });
     expect(await checkRls(owner)).toEqual([]);
+  });
+
+  it('keeps audit_actor_salt global and out of reach of the app and clerk roles (#303)', async () => {
+    const [row] = await owner.execute<{ enabled: boolean; app: boolean; clerk: boolean }>(sql`
+      select c.relrowsecurity as enabled,
+             has_table_privilege('causedeck_app', c.oid, 'select, insert, update, delete') as app,
+             has_table_privilege('causedeck_clerk', c.oid, 'select, insert, update, delete') as clerk
+      from pg_class c where c.relname = 'audit_actor_salt'`);
+    expect(row).toEqual({ enabled: false, app: false, clerk: false });
+    expect(GLOBAL_TABLES).toContain('audit_actor_salt');
+  });
+
+  it('lets account deletion jobs (no workspace) through account_self only (#303)', async () => {
+    const policies = await owner.execute<{ policyname: string; cmd: string }>(sql`
+      select policyname::text, cmd::text from pg_policies
+      where tablename = 'deletion_job' order by policyname`);
+    expect(policies).toEqual([
+      { policyname: 'account_self', cmd: 'ALL' },
+      // Owner role only: backs app_deletion_due_jobs (#302, 0032).
+      { policyname: 'owner_definer_read', cmd: 'SELECT' },
+      { policyname: 'ws_isolation', cmd: 'ALL' },
+    ]);
   });
 
   it('keeps api_idempotency_key global (allow-listed, no RLS)', async () => {
@@ -229,5 +272,7 @@ describe('db:check-rls CLI', () => {
     for (const statement of tenantPolicy('rls_fixture')) await scratch.execute(sql.raw(statement));
     const fixed = await run('--url', db.owner);
     expect(fixed.status, fixed.stderr).toBe(0);
-  });
+    // Three `pnpm exec tsx` spawns plus a migration: 24 s on a free host, over the 60 s default
+    // when turbo runs every package's tests at once on the CI runner.
+  }, 240_000);
 });

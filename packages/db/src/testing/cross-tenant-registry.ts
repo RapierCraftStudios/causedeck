@@ -1,14 +1,29 @@
 // The cross-tenant registry (#19, #209): every tenant table and every exported `@causedeck/core`
-// service names the test that proves workspace B cannot reach workspace A through it. The registry
-// tests (`packages/db/src/__tests__/cross-tenant/registry.test.ts` for tables, introspected from the
-// live catalog, and `packages/core/src/__tests__/cross-tenant/registry.test.ts` for core exports)
-// fail `pnpm test:tenancy` when something is added without an entry here. Data and pure helpers
+// and `@causedeck/notifications` service names the test that proves workspace B cannot reach
+// workspace A through it. The registry tests (`packages/db/src/__tests__/cross-tenant/registry.test.ts`
+// for tables, introspected from the live catalog, and `packages/core/src/__tests__/cross-tenant/
+// registry.test.ts` and `packages/notifications/src/__tests__/cross-tenant/registry.test.ts` for
+// package exports, including the `@causedeck/core/runtime` app seam, #298) fail `pnpm test:tenancy`
+// when something is added without an entry here. Data and pure helpers
 // only: `@causedeck/db` must not import `@causedeck/core`. See docs/engineering/tenancy.md.
 
 /** Paths are relative to the repository root. */
 const DB_TABLES_TEST = 'packages/db/src/__tests__/cross-tenant/tables.test.ts';
 const CORE_SERVICES_TEST = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const WEB_ACTIONS_TEST = 'apps/web/__tests__/cross-tenant-actions.test.ts';
+const BILLING_PROCESS_EVENT_TEST =
+  'packages/core/src/jobs/definitions/billing-process-event.test.ts';
+const BILLING_INVOICE_RENDER_TEST =
+  'packages/core/src/jobs/definitions/billing-invoice-render.test.ts';
+const BILLING_RECONCILE_TEST = 'packages/core/src/jobs/definitions/billing-reconcile.test.ts';
+const USAGE_ROLLUP_TEST = 'packages/core/src/jobs/definitions/usage-rollup.test.ts';
+const LIFECYCLE_TEST = 'packages/core/src/lifecycle/__tests__/cross-tenant.test.ts';
+const ACCOUNT_DELETION_TEST = 'packages/core/src/lifecycle/__tests__/account-deletion.test.ts';
+const MEMORY_ERASURE_TEST = 'packages/core/src/lifecycle/__tests__/memory-erasure.test.ts';
+const CORE_RUNTIME_TEST = 'packages/core/src/__tests__/cross-tenant/runtime.test.ts';
+const ADMIN_STAFF_CLI_TEST = 'apps/admin/src/cli/staff.test.ts';
+const NOTIFICATIONS_SERVICES_TEST =
+  'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
 /** Tenant table (and the tenant root `organization`) → its cross-tenant SQL test. */
 export const TABLE_TESTS: Readonly<Record<string, string>> = {
@@ -22,11 +37,32 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   entitlement: DB_TABLES_TEST,
   usage_counter: DB_TABLES_TEST,
   billing_event: DB_TABLES_TEST,
+  audit_event: DB_TABLES_TEST,
+  ai_call: DB_TABLES_TEST,
+  notification: DB_TABLES_TEST,
+  notification_pref: DB_TABLES_TEST,
+  notification_setting: DB_TABLES_TEST,
   usage_reservation: DB_TABLES_TEST,
   usage_event: DB_TABLES_TEST,
   budget_override: DB_TABLES_TEST,
   usage_period_summary: DB_TABLES_TEST,
+  workspace_feature_flag: DB_TABLES_TEST,
+  workspace_key: DB_TABLES_TEST,
+  blob: DB_TABLES_TEST,
+  saas_invoice: DB_TABLES_TEST,
+  saas_invoice_line: DB_TABLES_TEST,
+  matter_restriction: DB_TABLES_TEST,
+  export_job: DB_TABLES_TEST,
+  deletion_job: DB_TABLES_TEST,
+  support_session: DB_TABLES_TEST,
+  workspace_integration: DB_TABLES_TEST,
 };
+
+/**
+ * Append-only tenant tables (#226): the app role has no UPDATE or DELETE, so the cross-tenant suite
+ * expects a permission error (42501) where it would otherwise expect zero rows.
+ */
+export const APPEND_ONLY_TABLES: readonly string[] = ['audit_event', 'ai_call'];
 
 /**
  * How a service is proven safe when user B passes workspace A's ids:
@@ -47,13 +83,17 @@ export interface ServiceEntry {
 const denies = { test: CORE_SERVICES_TEST, kind: 'denies' } as const;
 const empty = { test: CORE_SERVICES_TEST, kind: 'rls-empty' } as const;
 const selfScoped = { test: CORE_SERVICES_TEST, kind: 'self-scoped' } as const;
+const lifecycleDenies = { test: LIFECYCLE_TEST, kind: 'denies' } as const;
+const lifecycleEmpty = { test: LIFECYCLE_TEST, kind: 'rls-empty' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listMemberships: empty,
   listWorkspacesForUser: empty,
   memberRole: empty,
+  ownerGrace: empty,
   requireOwner: denies,
+  requireCan: denies,
   listMembers: empty,
   changeRole: denies,
   removeMember: denies,
@@ -66,6 +106,18 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   reissueInvitation: denies,
   revokeInvitation: denies,
   listPendingInvitations: empty,
+  // workspace profile (#284)
+  getWorkspaceProfile: empty,
+  updateWorkspaceProfile: denies,
+  // role settings (#285)
+  getRoleSettings: empty,
+  updateRoleSettings: denies,
+  // privacy settings (#286)
+  getPrivacySettings: empty,
+  updateWorkspacePrivacy: denies,
+  // integration tokens (#287)
+  getIntegrations: empty,
+  rotateIntegrationToken: denies,
   acceptInvitation: denies,
   previewInvitation: selfScoped,
   generateUniqueSlug: selfScoped,
@@ -90,6 +142,315 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'sends the payload as given; runJob scopes the handler to the payload workspace',
   },
   retentionSweep: selfScoped,
+  runBillingProcessEvent: {
+    test: BILLING_PROCESS_EVENT_TEST,
+    kind: 'self-scoped',
+    note: 'reads and updates only the payload workspace inside withWorkspace',
+  },
+  runBillingInvoiceRender: {
+    test: BILLING_INVOICE_RENDER_TEST,
+    kind: 'self-scoped',
+    note: 'loads the payload invoice inside withWorkspace; another workspace’s invoice is never rendered',
+  },
+  runBillingReconcile: {
+    test: BILLING_RECONCILE_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists ids through a definer function, reads each row in its own workspace',
+  },
+  runUsageRollup: {
+    test: USAGE_ROLLUP_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids through a definer function, writes each workspace inside withWorkspace',
+  },
+  runNotificationDeliver: selfScoped,
+  runNotificationDigest: selfScoped,
+  runNotificationDigestSchedule: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids and timezones only through a definer function',
+  },
+  record: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'pins the event workspace; app_audit_append rejects any workspace but the pinned one',
+  },
+  recordRoleChanged: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordAccessDenied: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordFlagChanged: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordExportRun: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordSupportSessionStarted: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordSupportSessionEnded: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#228); pins the event workspace like record()',
+  },
+  recordSupportView: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'record() wrapper (#308); pins the event workspace like record()',
+  },
+  verifyChain: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads only the given workspace chain inside withWorkspace; RLS hides other workspaces',
+  },
+  // audit read and export (#229): the audit.read gate denies non-members and A's id from B's scope
+  authorizeAuditRead: denies,
+  queryAudit: denies,
+  exportAudit: denies,
+  recordAiCall: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'inserts under withWorkspace; ws_isolation rejects a row for another workspace',
+  },
+  restrictMatter: denies,
+  assertMatterReadable: denies,
+  listMatterRestrictions: denies,
+  // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
+  requestSession: denies,
+  grantSession: denies,
+  denySession: denies,
+  revokeSession: denies,
+  assertActiveSupportSession: denies,
+  withSupportSession: denies,
+  // the owner's support page and shell banner (#313)
+  listSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; nested in another workspace scope it throws TenancyError',
+  },
+  activeSupportSession: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; nested in another workspace scope it throws TenancyError',
+  },
+  isActiveStaff: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads the global staff_user table only; no tenant rows',
+  },
+  expireSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system sweep through app_expire_support_sessions(); touches only elapsed grants',
+  },
+  endStaffSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "sweep through app_end_staff_support_sessions(); touches only that staff member's sessions",
+  },
+  // the staff console (#314): a staff member's own sessions and the read-only workspace view
+  listStaffSupportSessions: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "withUser on the staff id; only the staff_self policy exposes rows: that staff member's own sessions",
+  },
+  staffSupportSession: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "withUser on the staff id; only the staff_self policy exposes rows: that staff member's own sessions",
+  },
+  readSupportWorkspaceView: denies,
+  // platform staff accounts (#309): the admin console's reads and the operator CLI's writes
+  staffMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads the global staff_user table only; no tenant rows',
+  },
+  countActiveStaff: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'counts the global staff_user table only; no tenant rows',
+  },
+  // staff console reads (#310): owner-defined functions that refuse anyone but enabled staff
+  staffWorkspaceSearch: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_workspace_search() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
+  staffWorkspaceMetadata: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_workspace_metadata() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
+  staffAuditEvents: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_audit_events() runs only for an enabled staff_user; others are FORBIDDEN',
+  },
+  // staff workspace usage (#224)
+  staffWorkspaceUsage: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'app_staff_workspace_usage() and app_staff_budget_overrides() run only for an enabled staff_user; others are FORBIDDEN',
+  },
+  addStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: 'owner-role write of the global staff_user table; only the operator CLI calls it',
+  },
+  disableStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: "owner-role write of staff_user, then ends only that staff member's support sessions",
+  },
+  seedDevStaff: {
+    test: ADMIN_STAFF_CLI_TEST,
+    kind: 'caller-checked',
+    note: 'creates the dev staff account; the CLI refuses it in production',
+  },
+  supportSessionExpire: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job; runs expireSupportSessions',
+  },
+  enqueueNotificationDelivery: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'notify() enqueues for its own checked workspace; the deliver job runs scoped to it',
+  },
+  increment: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  getUsage: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  reserve: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId under an advisory lock; nested in another workspace scope it throws TenancyError',
+  },
+  commit: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'rejects another workspace reservation (TypeError); scoped to ctx.workspaceId, other scope throws TenancyError',
+  },
+  release: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'rejects another workspace reservation (TypeError); deletes only ctx.workspaceId rows, other scope throws TenancyError',
+  },
+  reapExpiredReservations: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reaps only the context workspace (not a system-wide reaper); other scope throws TenancyError',
+  },
+  getAiBudget: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  reconcileAiCalls: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  setBudgetOverride: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'staff-only by caller contract; writes only ctx.workspaceId (override and audit row), other scope throws TenancyError',
+  },
+  expireBudgetOverride: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'staff-only by caller contract; updates only an active override of ctx.workspaceId (and its audit row), other scope throws TenancyError',
+  },
+  activeOverride: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'takes the caller transaction; filters by workspace id and RLS hides other workspaces rows',
+  },
+  assertWithinFairUse: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads entitlements and usage for ctx.workspaceId inside withWorkspace; other scope throws TenancyError',
+  },
+  checkAiBudgetThresholds: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads spend and owners of ctx.workspaceId only and notifies that workspace owners; other scope throws TenancyError',
+  },
+  getWorkspaceFairnessConcurrency: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id (worker fairness gate); other scope throws TenancyError',
+  },
+  // lifecycle: workspace export (#301)
+  requestExport: lifecycleDenies,
+  issueExportDownload: lifecycleDenies,
+  openExportDownload: lifecycleDenies,
+  getExportJob: lifecycleEmpty,
+  listExportJobs: lifecycleEmpty,
+  runExportBuild: {
+    test: LIFECYCLE_TEST,
+    kind: 'self-scoped',
+    note: 'export.build: reads and writes only the payload workspace, each page inside withWorkspace',
+  },
+  // lifecycle: workspace deletion (#302)
+  requestWorkspaceDeletion: lifecycleDenies,
+  cancelWorkspaceDeletion: lifecycleDenies,
+  getActiveWorkspaceDeletion: lifecycleEmpty,
+  runWorkspaceErase: {
+    test: LIFECYCLE_TEST,
+    kind: 'self-scoped',
+    note: 'deletion.erase: every read and write inside withWorkspace on the payload workspace; finalize refuses any other workspace',
+  },
+  runDeletionTick: {
+    test: LIFECYCLE_TEST,
+    kind: 'self-scoped',
+    note: 'system.deletion.tick: lists due ids through app_deletion_due_jobs, then updates each job in its own workspace scope',
+  },
+  // lifecycle: account deletion and memory erasure (#303)
+  requestAccountDeletion: {
+    test: ACCOUNT_DELETION_TEST,
+    kind: 'self-scoped',
+    note: "the caller's own account only (withUser); a deletion job is visible to its user alone (account_self)",
+  },
+  runAccountDeletion: {
+    test: ACCOUNT_DELETION_TEST,
+    kind: 'self-scoped',
+    note: "account.delete: loads the job for its own user only; another user's job id is missing and nothing of theirs changes",
+  },
+  soleOwnedWorkspaces: {
+    test: ACCOUNT_DELETION_TEST,
+    kind: 'self-scoped',
+    note: "the user's own memberships (member_self), each owner count inside that workspace's withWorkspace",
+  },
+  requestMemoryErasure: { test: MEMORY_ERASURE_TEST, kind: 'denies' },
+  runMemoryErasure: {
+    test: MEMORY_ERASURE_TEST,
+    kind: 'self-scoped',
+    note: "memory.erase: only the payload workspace; another workspace's job id is missing",
+  },
+  eraseMemory: {
+    test: MEMORY_ERASURE_TEST,
+    kind: 'self-scoped',
+    note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -124,8 +485,40 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   clearReassignProviders: 'setter',
   noopAuditSink: 'audit sink implementation (no queries)',
   consoleAuditSink: 'audit sink implementation (logs only)',
-  auditSink: 'delegating audit sink; writes inside the caller transaction',
+  auditSink: 'delegating audit sink; the default writes through record() in the caller transaction',
   setAuditSink: 'setter',
+  // audit: security event emitters (#228)
+  createSecurityEventRecorder:
+    'factory; its events are account-level record() writes (no workspace data)',
+  flagChangeAuditSink:
+    'flag audit sink implementation; writes through recordFlagChanged in the caller transaction',
+  hashEmail: 'pure',
+  // workspace profile (#284)
+  PROFILE_FIELDS: 'constant',
+  toProfileView: 'pure (drops the id)',
+  // role settings (#285)
+  ROLE_SETTING_FIELDS: 'constant',
+  DEFAULT_ROLE_SETTINGS: 'constant',
+  toPolicySettings: 'pure',
+  // privacy settings (#286)
+  PRIVACY_SETTING_FIELDS: 'constant',
+  DEFAULT_PRIVACY_SETTINGS: 'constant',
+  // integration tokens (#287)
+  INTEGRATION_KINDS: 'constant',
+  generateIntegrationToken: 'pure (random bytes)',
+  hashIntegrationToken: 'pure',
+  // audit: registry, guards and the default sink (#227)
+  recordAuditSink: 'audit sink implementation; writes through record() in the caller transaction',
+  AUDIT_ACTIONS: 'constant (audit action registry)',
+  AUDIT_EXPORT_COLUMNS: 'constant (audit export column order)',
+  AUDIT_BANNED_METADATA_KEYS: 'constant',
+  isAuditAction: 'pure',
+  isSecurityAction: 'pure',
+  assertRedacted: 'pure metadata guard',
+  AuditRedactionError: 'error class',
+  AiCallContractError: 'error class',
+  hashUserAgent: 'pure',
+  truncateIpForDisplay: 'pure',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',
@@ -143,6 +536,25 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   contentFieldViolations: 'pure payload lint',
   createRegistry: 'pure (builds a job map)',
   registry: 'job definition map',
+  // support sessions (#308): constants and error class
+  SUPPORT_GRANT_DEFAULT_MINUTES: 'constant',
+  SUPPORT_GRANT_MAX_MINUTES: 'constant',
+  SUPPORT_REASON_MAX_LENGTH: 'constant',
+  SUPPORT_ACTOR_ROLE: 'constant',
+  supportRequestCopy: 'pure (owner notice copy)',
+  supportRequestDedupeKey: 'pure',
+  SupportSessionInactiveError: 'error class',
+  STAFF_SUPPORT_LIST_LIMIT: 'constant',
+  supportSessionState: 'pure (session state at a time)',
+  // platform staff accounts (#309)
+  STAFF_ROLES: 'constant',
+  DEV_STAFF_EMAIL: 'constant',
+  StaffAdminError: 'error class',
+  STAFF_WORKSPACE_FIELDS: 'constant (staff console field list)',
+  STAFF_AUDIT_FIELDS: 'constant (staff console field list)',
+  STAFF_USAGE_COUNTER_FIELDS: 'constant (staff console field list)',
+  STAFF_BUDGET_OVERRIDE_FIELDS: 'constant (staff console field list)',
+  withOwnerDb: 'connection helper (owner-role handle for the operator CLI); reads nothing itself',
   systemPing: 'job definition with no database access',
   PermanentError: 'error class',
   RetryableError: 'error class',
@@ -150,6 +562,266 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   createProducer: 'pg-boss producer',
   getProducer: 'pg-boss producer',
   closeProducer: 'pg-boss producer',
+  // jobs: billing definitions (#204, #206)
+  billingProcessEvent: 'job definition (handler is runBillingProcessEvent)',
+  billingProcessEventSchema: 'zod schema',
+  billingReconcile: 'job definition (handler is runBillingReconcile)',
+  // jobs: invoice render helpers exported for the billing PDF test (#258, #293)
+  invoicePdfFilename: 'pure (file name)',
+  // jobs: usage rollup (#222)
+  usageRollup: 'job definition (handler is runUsageRollup)',
+  USAGE_SUMMARY_RETENTION_MONTHS: 'constant',
+  // jobs: notification definitions, schemas, helpers and constants (#196)
+  notificationDeliver: 'job definition (handler is runNotificationDeliver)',
+  notificationDeliverSchema: 'zod schema',
+  notificationDigest: 'job definition (handler is runNotificationDigest)',
+  notificationDigestSchedule: 'job definition (handler is runNotificationDigestSchedule)',
+  notificationDigestSchema: 'zod schema',
+  DELIVERY_CHANNELS: 'constant',
+  DIGEST_LOCAL_TIME: 'constant',
+  DIGEST_ITEM_LIMIT: 'constant',
+  DEFAULT_DIGEST_TIMEZONE: 'constant',
+  appLink: 'pure (URL)',
+  deliveryKey: 'pure (job key)',
+  digestDueAt: 'pure (time zone math)',
+  digestInstant: 'pure (time zone math)',
+  notificationJobDeps: 'transport wiring (no database access)',
+  setNotificationJobDeps: 'setter',
+  // usage: keys and periods (#219)
+  USAGE_KEYS: 'constant',
+  USAGE_KEY_KINDS: 'constant',
+  USAGE_TIME_ZONE: 'constant',
+  IST_OFFSET_MINUTES: 'constant',
+  isUsageKey: 'pure',
+  usagePeriod: 'pure',
+  periodStart: 'pure',
+  nextPeriodStart: 'pure',
+  incrementSql: 'pure (SQL builder; increment runs it inside withWorkspace)',
+  // usage: thresholds, fair-use caps and plan fairness (#221)
+  DEFAULT_USAGE_THRESHOLDS: 'constant',
+  SOFT_LIMIT_BPS: 'constant',
+  HARD_LIMIT_BPS: 'constant',
+  USAGE_WARNING_EVENT: 'constant',
+  FAIR_USE_KEYS: 'constant',
+  FAIR_USE_CAPS: 'constant (cap table)',
+  FAIRNESS_CONCURRENCY_BY_PLAN: 'constant (per-plan concurrency table)',
+  FairUseError: 'error class',
+  resolveThresholds: 'pure (validates ctx.thresholds)',
+  hardLimitPaise: 'pure (arithmetic)',
+  usageLevel: 'pure (arithmetic)',
+  fairnessConcurrencyForPlan: 'pure (table lookup by plan id)',
+  usageWarningDedupeKey: 'pure (string builder)',
+  usageWarningCopy: 'pure (static notice copy, no data)',
+  // usage: AI budget (#220)
+  AI_BUDGET_KEY: 'constant',
+  RESERVATION_TTL_MS: 'constant',
+  BudgetError: 'error class',
+  budgetLockSql: 'pure (SQL builder; reserve runs it inside withWorkspace)',
+  budgetReadSql: 'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
+  reservationInsertSql:
+    'pure (SQL builder, workspace id bound; reserve runs it inside withWorkspace)',
+  // usage: ai_call reconciliation (#225)
+  reconcileAiCallsSql: 'pure (SQL builder; reconcileAiCalls runs it inside withWorkspace)',
+  // lifecycle: export registry, plan, manifest and constants (#301)
+  CSV_TABLES: 'constant',
+  EXPORT_EXCLUSIONS: 'constant (documented exclusions)',
+  exportCoverage: 'pure (registry vs tenant tables)',
+  exporterFor: 'pure registry lookup',
+  registeredExporters: 'pure registry read',
+  registerExporter: 'extension point (process-wide registry, no database access)',
+  MANIFEST_PATH: 'constant',
+  MANIFEST_VERSION: 'constant',
+  README_PATH: 'constant',
+  verifyManifest: 'pure',
+  planExport: 'pure',
+  EXPORT_TTL_MS: 'constant',
+  exportFilename: 'pure',
+  EXPORT_HISTORY_LIMIT: 'constant',
+  EXPORT_TOKEN_NONCE_BYTES: 'constant',
+  readExportToken: 'pure (HMAC check)',
+  // lifecycle: workspace deletion constants, receipt and errors (#302)
+  DELETION_COOLOFF_MS: 'constant',
+  ACTIVE_DELETION_STATUSES: 'constant',
+  DeletionError: 'error class',
+  deletionNoticeCopy: 'pure (notice copy)',
+  ERASE_STEPS: 'constant',
+  FINALIZE_TABLES: 'constant (documented finalize-step tables)',
+  PURGE_BATCH: 'constant',
+  PURGE_ORDER: 'constant (purge order)',
+  purgeCoverage: 'pure (purge lists vs tenant tables)',
+  LEGAL_HOLD_RULE: 'constant (documented legal-hold rule)',
+  LEGAL_HOLD_STATUSES: 'constant',
+  LEGAL_HOLD_YEARS: 'constant',
+  legalHoldRetainUntil: 'pure (date arithmetic)',
+  retainInvoicesForLegalHold:
+    "internal erase helper: runs on the caller's transaction, which runWorkspaceErase pins to the payload workspace (RLS limits the read); covered by the runWorkspaceErase case",
+  buildDeletionReceipt: 'pure (builds and signs a receipt)',
+  canonicalJson: 'pure',
+  DELETION_RECEIPT_VERSION: 'constant',
+  receiptHash: 'pure (sha256)',
+  receiptWorkspaceIdHash: 'pure (sha256)',
+  verifyDeletionReceipt: 'pure (HMAC check)',
+  // lifecycle: account deletion and memory erasure constants (#303)
+  ACCOUNT_DELETION_ERRORS: 'constant',
+  ACCOUNT_DELETION_SOLE_OWNER_MESSAGE: 'constant',
+  ACCOUNT_DELETION_STAFF_MESSAGE: 'constant',
+  MEMORY_ERASE_BATCH: 'constant',
+  MEMORY_ERASE_PRIORITY: 'constant',
+  MEMORY_ERASURE_SLA_MS: 'constant',
+  MEMORY_TABLES: 'constant',
+};
+
+const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;
+
+/**
+ * Exported `@causedeck/notifications` services (#194) → their cross-tenant test. Each checks that
+ * the user is an active member of the context workspace (`FORBIDDEN`) and touches only their rows.
+ */
+export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  notify: notificationDenies,
+  listForUser: notificationDenies,
+  markRead: notificationDenies,
+  markAllRead: notificationDenies,
+  unreadCount: notificationDenies,
+  getPreferences: notificationDenies,
+  setPreference: notificationDenies,
+  getNotificationSetting: notificationDenies,
+  setLockScreenDetails: notificationDenies,
+  setCourtHoursQuiet: notificationDenies,
+  getDigest: notificationDenies,
+  setDigest: notificationDenies,
+};
+
+/** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */
+export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  packageName: 'constant',
+  CATEGORIES: 'constant (category registry)',
+  CATEGORY_KEYS: 'constant',
+  CHANNELS: 'constant',
+  DIGESTS: 'constant',
+  isCategoryKey: 'pure',
+  isLockedChannel: 'pure',
+  NotificationError: 'error class',
+  LIST_LIMIT_MAX: 'constant',
+  DEFAULT_NOTIFICATION_SETTINGS: 'constant',
+  COURT_HOURS: 'constant',
+  isQuietTime: 'pure',
+  localMinutes: 'pure',
+};
+
+const runtimeDenies = { test: CORE_RUNTIME_TEST, kind: 'denies' } as const;
+const runtimeEmpty = { test: CORE_RUNTIME_TEST, kind: 'rls-empty' } as const;
+const runtimeSelfScoped = { test: CORE_RUNTIME_TEST, kind: 'self-scoped' } as const;
+/** Scope-taking loaders: the web caller (workspace loader / `workspaceAction`) checks membership. */
+const runtimeScopeChecked = {
+  test: CORE_RUNTIME_TEST,
+  kind: 'caller-checked',
+  note: 'reads in the given scope (RLS pins it); callers pass a scope loadWorkspaceContext or workspaceAction checked',
+} as const;
+
+/**
+ * Exported `@causedeck/core/runtime` services (#298), the app's database seam → their cross-tenant
+ * test. Each binds the app-role `db` and delegates to a core or package service registered above.
+ */
+export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  inWorkspace: runtimeScopeChecked,
+  inWorkspaceOn: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: "inWorkspace on an injected handle; the api's requireWorkspace checks membership first",
+  },
+  memberRoleFor: runtimeEmpty,
+  ownerGraceFor: runtimeEmpty,
+  resolveSlugFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: 'resolveSlug on the app db; the web workspace loader checks membership',
+  },
+  listMembershipsFor: runtimeEmpty,
+  createWorkspaceFor: runtimeSelfScoped,
+  previewInvitationFor: runtimeSelfScoped,
+  acceptInvitationFor: runtimeDenies,
+  loadMembersPage: runtimeScopeChecked,
+  listMembersIn: runtimeScopeChecked,
+  loadBillingPage: runtimeScopeChecked,
+  loadUsagePage: runtimeScopeChecked,
+  openInvoicePdf: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'rls-empty',
+    note: 'finds the invoice in ctx.workspaceId only; the route guard checks membership and invoices.read',
+  },
+  authorizeAuditReadFor: runtimeDenies,
+  queryAuditFeed: runtimeDenies,
+  verifyAuditRange: runtimeDenies,
+  exportAuditFor: runtimeDenies,
+  recordAccessDeniedFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: "recordAccessDenied on the app db; guard sets member from memberRoleFor, a non-member's denial never lands in that workspace chain",
+  },
+  // support sessions (#313)
+  loadSupportPage: runtimeScopeChecked,
+  activeSupportSessionIn: runtimeScopeChecked,
+  requestSupportSessionFor: runtimeDenies,
+  grantSupportSessionFor: runtimeDenies,
+  denySupportSessionFor: runtimeDenies,
+  revokeSupportSessionFor: runtimeDenies,
+  // support sessions, staff side (#314)
+  listStaffSupportSessionsFor: runtimeSelfScoped,
+  staffSupportSessionFor: runtimeSelfScoped,
+  supportWorkspaceViewFor: runtimeDenies,
+  recordAccountProfileUpdatedFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: "account-level audit row (workspaceId null) for the caller's own profile; never lands in a workspace chain",
+  },
+  requestExportFor: runtimeDenies,
+  issueExportDownloadFor: runtimeDenies,
+  openExportDownloadFor: runtimeDenies,
+  listExportJobsFor: runtimeEmpty,
+  requestWorkspaceDeletionFor: runtimeDenies,
+  cancelWorkspaceDeletionFor: runtimeDenies,
+  activeWorkspaceDeletionIn: runtimeEmpty,
+  requestAccountDeletionFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: "requestAccountDeletion for the caller's own account; never writes into a workspace chain",
+  },
+  requestMemoryErasureFor: runtimeDenies,
+  loadNotificationPreferences: runtimeDenies,
+  subscribePush: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: 'push subscriptions belong to the user, not a workspace; stored for the given user only',
+  },
+  unsubscribePush: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: "revokes only the given user's subscription; another user's endpoint is untouched",
+  },
+  consumeRequestLimit: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: 'global rate-limit counter keyed by the caller (no tenant rows); one key never moves another',
+  },
+  startAppFlagListener: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'self-scoped',
+    note: 'LISTEN flag_changed on the app pool: only drops the process flag cache, reads no tenant rows',
+  },
+};
+
+/** Every other runtime export of `@causedeck/core/runtime`, with why it needs no test. */
+export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  db: 'the lazy app-role handle (Better Auth adapter); tenant reads go through the services above',
+  isUuid: 'pure',
+  closeAppDb: 'closes the app-role pool on shutdown; reads no rows',
+  createIdempotencyStore:
+    'api_idempotency_key is a global table keyed by (user, key) (GLOBAL_TABLES); every query filters by the caller user id',
+  IDEMPOTENCY_TTL_MS: 'constant',
+  IN_PROGRESS_STATUS: 'constant',
+  uploadContext:
+    'pure (binds the app db into a StorageCtx; the uploads route checks membership and authorize gates each storage call)',
 };
 
 /** The storage presign cross-tenant test (#21). */
@@ -163,10 +835,17 @@ export function unregisteredTables(liveTenantTables: readonly string[]): string[
   return [...new Set(liveTenantTables)].filter((t) => !(t in TABLE_TESTS)).sort();
 }
 
-/** Core runtime exports that are neither a registered service nor listed as not a service. */
-export function unregisteredServices(exportNames: readonly string[]): string[] {
+/**
+ * Runtime exports that are neither a registered service nor listed as not a service. Defaults to
+ * the core maps; pass the notifications maps for `@causedeck/notifications`.
+ */
+export function unregisteredServices(
+  exportNames: readonly string[],
+  services: Readonly<Record<string, ServiceEntry>> = SERVICE_TESTS,
+  notAService: Readonly<Record<string, string>> = NOT_A_SERVICE,
+): string[] {
   return [...new Set(exportNames)]
-    .filter((name) => !(name in SERVICE_TESTS) && !(name in NOT_A_SERVICE))
+    .filter((name) => !(name in services) && !(name in notAService))
     .sort();
 }
 
@@ -187,6 +866,8 @@ export function registeredTestFiles(): string[] {
     ...new Set([
       ...Object.values(TABLE_TESTS),
       ...Object.values(SERVICE_TESTS).map((entry) => entry.test),
+      ...Object.values(NOTIFICATION_SERVICE_TESTS).map((entry) => entry.test),
+      ...Object.values(RUNTIME_SERVICE_TESTS).map((entry) => entry.test),
       STORAGE_PRESIGN_TEST,
     ]),
   ].sort();

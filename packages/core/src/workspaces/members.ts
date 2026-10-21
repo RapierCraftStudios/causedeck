@@ -1,8 +1,12 @@
-// Members, roles, ownership transfer and seats (#177, #18). Role changes and removal are
-// owner-only, and a workspace always keeps at least one active owner.
+// Members, roles, ownership transfer and seats (#177, #18). Who may change roles, remove members or
+// transfer ownership is the central policy's call (`can()` from `@causedeck/auth/policy`, #234:
+// owner-only today), and a workspace always keeps at least one active owner.
+import { can, isRole, type Action } from '@causedeck/auth/policy';
 import { schema, type Database, type Transaction } from '@causedeck/db';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
+import { recordRoleChanged } from '../audit/index.ts';
+import { activeMember, liveWorkspace } from '../shared/membership.ts';
 import { conflict, forbidden, invalid, notFound } from './errors.ts';
 import { offboardMember } from './offboarding.ts';
 
@@ -14,11 +18,7 @@ const { member, organization, session, user } = schema;
 const ROLE_VALUES = ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const;
 type SeatRole = (typeof ROLE_VALUES)[number];
 
-/** The workspace is not soft-deleted. */
-export const liveWorkspace = isNull(organization.deletedAt);
-
-/** The membership is active (not suspended or removed). */
-export const activeMember = eq(member.status, 'active');
+export { activeMember, liveWorkspace } from '../shared/membership.ts';
 
 interface WorkspaceRow {
   id: string;
@@ -26,13 +26,14 @@ interface WorkspaceRow {
 }
 
 /**
- * Lock the live workspace row and check that `userId` is one of its active owners. A missing or
- * soft-deleted workspace is `NOT_FOUND`; anyone else is `FORBIDDEN`.
+ * Lock the live workspace row and check that `userId` is an active member whose role the policy
+ * allows `action`. A missing or soft-deleted workspace is `NOT_FOUND`; anyone else is `FORBIDDEN`.
  */
-export async function requireOwner(
+export async function requireCan(
   tx: Queryable,
   workspaceId: string,
   userId: string,
+  action: Action,
 ): Promise<WorkspaceRow> {
   const [workspace] = await tx
     .select({ id: organization.id, slug: organization.slug })
@@ -40,19 +41,27 @@ export async function requireOwner(
     .where(and(eq(organization.id, workspaceId), liveWorkspace))
     .for('update');
   if (!workspace) throw notFound();
-  const [owner] = await tx
-    .select({ id: member.id })
+  const [actor] = await tx
+    .select({ role: member.role })
     .from(member)
-    .where(
-      and(
-        eq(member.organizationId, workspaceId),
-        eq(member.userId, userId),
-        eq(member.role, 'owner'),
-        activeMember,
-      ),
-    );
-  if (!owner) throw forbidden();
+    .where(and(eq(member.organizationId, workspaceId), eq(member.userId, userId), activeMember));
+  if (
+    !actor ||
+    !isRole(actor.role) ||
+    !can({ userId, workspaceId, role: actor.role }, action).allow
+  ) {
+    throw forbidden();
+  }
   return workspace;
+}
+
+/** `requireCan` for role management (`member.role`), which only owners hold. */
+export async function requireOwner(
+  tx: Queryable,
+  workspaceId: string,
+  userId: string,
+): Promise<WorkspaceRow> {
+  return requireCan(tx, workspaceId, userId, 'member.role');
 }
 
 async function activeOwnerCount(tx: Queryable, workspaceId: string): Promise<number> {
@@ -114,19 +123,30 @@ export interface ChangeRoleRequest {
   role: WorkspaceRole;
 }
 
-/** Owner-only. Demoting the last active owner is a `CONFLICT`. */
+/** Needs `member.role` (owners). Demoting the last active owner is a `CONFLICT`. */
 export async function changeRole(db: Queryable, request: ChangeRoleRequest): Promise<void> {
   if (!(ROLE_VALUES as readonly string[]).includes(request.role)) {
     throw invalid(`Unknown role: ${request.role}`);
   }
   await db.transaction(async (tx) => {
-    await requireOwner(tx, request.workspaceId, request.actorUserId);
+    await requireCan(tx, request.workspaceId, request.actorUserId, 'member.role');
     const target = await activeMemberById(tx, request.workspaceId, request.memberId);
     if (target.role === request.role) return;
     if (target.role === 'owner' && (await activeOwnerCount(tx, request.workspaceId)) <= 1) {
       throw conflict('The last owner cannot be demoted; transfer ownership first');
     }
-    await tx.update(member).set({ role: request.role }).where(eq(member.id, target.id));
+    await tx
+      .update(member)
+      .set({ role: request.role, roleGrantedAt: sql`now()` })
+      .where(eq(member.id, target.id));
+    await recordRoleChanged(tx, {
+      workspaceId: request.workspaceId,
+      actorUserId: request.actorUserId,
+      targetUserId: target.userId,
+      memberId: target.id,
+      fromRole: target.role,
+      toRole: request.role,
+    });
   });
 }
 
@@ -144,7 +164,7 @@ export interface RemoveMemberRequest {
  */
 export async function removeMember(db: Queryable, request: RemoveMemberRequest): Promise<void> {
   await db.transaction(async (tx) => {
-    await requireOwner(tx, request.workspaceId, request.actorUserId);
+    await requireCan(tx, request.workspaceId, request.actorUserId, 'member.remove');
     const target = await activeMemberById(tx, request.workspaceId, request.memberId);
     if (target.role === 'owner' && (await activeOwnerCount(tx, request.workspaceId)) <= 1) {
       throw conflict('The last owner cannot be removed; transfer ownership first');
@@ -201,7 +221,7 @@ export async function prepareOwnershipTransfer(
   request: OwnershipTransferRequest,
 ): Promise<OwnershipTransferPlan> {
   return db.transaction(async (tx) => {
-    const workspace = await requireOwner(tx, request.workspaceId, request.actorUserId);
+    const workspace = await requireCan(tx, request.workspaceId, request.actorUserId, 'member.role');
     const { userId, name, email, role } = await transferTarget(tx, request);
     return { confirmation: workspace.slug, newOwner: { userId, name, email, role } };
   });
@@ -216,18 +236,39 @@ export async function transferOwnership(
   request: OwnershipTransferRequest & { confirmation: string | undefined },
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    const workspace = await requireOwner(tx, request.workspaceId, request.actorUserId);
+    const workspace = await requireCan(tx, request.workspaceId, request.actorUserId, 'member.role');
     if (request.confirmation !== workspace.slug) {
       throw invalid('Confirm the transfer by entering the workspace slug');
     }
     const target = await transferTarget(tx, request);
-    await tx.update(member).set({ role: 'owner' }).where(eq(member.id, target.memberId));
     await tx
       .update(member)
-      .set({ role: 'advocate' })
+      .set({ role: 'owner', roleGrantedAt: sql`now()` })
+      .where(eq(member.id, target.memberId));
+    const [previous] = await tx
+      .update(member)
+      .set({ role: 'advocate', roleGrantedAt: sql`now()` })
       .where(
         and(eq(member.organizationId, request.workspaceId), eq(member.userId, request.actorUserId)),
-      );
+      )
+      .returning({ id: member.id });
+    const change = { workspaceId: request.workspaceId, actorUserId: request.actorUserId };
+    await recordRoleChanged(tx, {
+      ...change,
+      targetUserId: target.userId,
+      memberId: target.memberId,
+      fromRole: target.role,
+      toRole: 'owner',
+    });
+    if (previous) {
+      await recordRoleChanged(tx, {
+        ...change,
+        targetUserId: request.actorUserId,
+        memberId: previous.id,
+        fromRole: 'owner',
+        toRole: 'advocate',
+      });
+    }
   });
 }
 

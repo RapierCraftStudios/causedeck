@@ -1,10 +1,19 @@
 // The `ObjectStore` seam (#21): one interface over MinIO, AWS S3 and an in-memory fake, so
 // callers never depend on a provider. Every method takes an `ObjectKey`, never a raw path.
 import { parseObjectKey, workspacePrefix, type ObjectKey } from './keys.ts';
-import { assertWithinLimit, isObjectKind, type ObjectKind } from './limits.ts';
+import {
+  assertWithinLimit,
+  isObjectKind,
+  MAX_OBJECT_BYTES,
+  ObjectTooLargeError,
+  type ObjectKind,
+} from './limits.ts';
 
-/** Lifetime of every signed upload and download URL: 5 minutes. */
+/** Lifetime of every signed upload URL, and the default for downloads: 5 minutes. */
 export const SIGNED_URL_TTL_SECONDS = 300;
+
+/** Lifetime of a document download URL (`createDownloadUrl`, #217): 60 seconds. */
+export const DOWNLOAD_URL_TTL_SECONDS = 60;
 
 export interface ObjectMeta {
   key: ObjectKey;
@@ -24,6 +33,24 @@ export interface StoredObject {
   meta: ObjectMeta;
 }
 
+/** A streamed upload (#301): the body is consumed once, in order, and never held whole. */
+export interface PutStreamInput {
+  key: ObjectKey;
+  body: AsyncIterable<Uint8Array>;
+  contentType: string;
+}
+
+export interface PutStreamResult {
+  /** Bytes written. */
+  size: number;
+}
+
+/** A streamed read (#301): `body` yields the object in chunks and can be iterated once. */
+export interface StoredObjectStream {
+  body: AsyncIterable<Uint8Array>;
+  meta: ObjectMeta;
+}
+
 export interface SignedUploadInput {
   key: ObjectKey;
   contentType: string;
@@ -39,6 +66,15 @@ export interface SignedUpload {
   expiresAt: Date;
 }
 
+export interface SignedDownloadOptions {
+  /** 1 to 300 seconds; defaults to `SIGNED_URL_TTL_SECONDS`. */
+  expiresInSeconds?: number;
+  /** Sent back as `Content-Disposition` (S3 `response-content-disposition`). */
+  contentDisposition?: string;
+  /** Sent back as `Content-Type` (S3 `response-content-type`), overriding the stored type. */
+  contentType?: string;
+}
+
 export interface SignedDownload {
   url: string;
   expiresAt: Date;
@@ -50,8 +86,16 @@ export interface ListOptions {
 
 export interface ObjectStore {
   put(input: PutObjectInput): Promise<void>;
+  /**
+   * Upload a body of unknown length in parts (S3 multipart), holding at most a few parts in
+   * memory. Fails with `ObjectTooLargeError` once the body passes the kind's cap; nothing is left
+   * behind on failure.
+   */
+  putStream(input: PutStreamInput): Promise<PutStreamResult>;
   /** Throws `ObjectNotFoundError` when the key does not exist. */
   get(key: ObjectKey): Promise<StoredObject>;
+  /** Like `get`, but the body streams. Throws `ObjectNotFoundError` when the key does not exist. */
+  getStream(key: ObjectKey): Promise<StoredObjectStream>;
   /** `null` when the key does not exist. */
   head(key: ObjectKey): Promise<ObjectMeta | null>;
   /** Idempotent: deleting a missing key succeeds. */
@@ -60,8 +104,8 @@ export interface ObjectStore {
   list(workspaceId: string, options?: ListOptions): Promise<ObjectMeta[]>;
   /** A PUT URL bound to the exact key, content type and length, valid for 5 minutes. */
   presignPut(input: SignedUploadInput): Promise<SignedUpload>;
-  /** A GET URL for the key, valid for 5 minutes. */
-  presignGet(key: ObjectKey): Promise<SignedDownload>;
+  /** A GET URL for the key, valid for 5 minutes unless `options` shortens it. */
+  presignGet(key: ObjectKey, options?: SignedDownloadOptions): Promise<SignedDownload>;
   /** Readiness probe: resolves when the bucket is reachable (head-bucket). */
   ping(): Promise<void>;
 }
@@ -101,6 +145,24 @@ export function checkUpload(key: ObjectKey, bytes: number): ReturnType<typeof pa
   return parsed;
 }
 
+/**
+ * Pass `source` through, counting bytes, and throw `ObjectTooLargeError` as soon as the total
+ * passes the cap for `kind`. `onDone` gets the total once the source ends.
+ */
+export async function* limitStream(
+  kind: ObjectKind,
+  source: AsyncIterable<Uint8Array>,
+  onDone: (size: number) => void,
+): AsyncGenerator<Uint8Array, void, undefined> {
+  let size = 0;
+  for await (const chunk of source) {
+    size += chunk.byteLength;
+    if (size > MAX_OBJECT_BYTES[kind]) throw new ObjectTooLargeError(kind, size);
+    yield chunk;
+  }
+  onDone(size);
+}
+
 export function listPrefix(workspaceId: string, options: ListOptions = {}): string {
   const prefix = workspacePrefix(workspaceId);
   if (options.kind !== undefined && !isObjectKind(options.kind)) {
@@ -109,8 +171,24 @@ export function listPrefix(workspaceId: string, options: ListOptions = {}): stri
   return options.kind === undefined ? prefix : `${prefix}${options.kind}/`;
 }
 
-export function expiry(now: Date): Date {
-  return new Date(now.getTime() + SIGNED_URL_TTL_SECONDS * 1000);
+export function expiry(now: Date, seconds: number = SIGNED_URL_TTL_SECONDS): Date {
+  return new Date(now.getTime() + seconds * 1000);
+}
+
+/** Validate download options; returns the TTL in seconds. */
+export function checkDownloadOptions(options: SignedDownloadOptions = {}): number {
+  const ttl = options.expiresInSeconds ?? SIGNED_URL_TTL_SECONDS;
+  if (!Number.isSafeInteger(ttl) || ttl < 1 || ttl > SIGNED_URL_TTL_SECONDS) {
+    throw new RangeError('download URL lifetime must be 1 to 300 seconds');
+  }
+  if (options.contentType !== undefined) requireContentType(options.contentType);
+  if (
+    options.contentDisposition !== undefined &&
+    !/^[\x20-\x7e]{1,4096}$/.test(options.contentDisposition)
+  ) {
+    throw new RangeError('invalid content disposition');
+  }
+  return ttl;
 }
 
 export function requireContentType(contentType: string): void {

@@ -5,8 +5,7 @@ import { randomInt, randomUUID } from 'node:crypto';
 import type { Mailer } from '@causedeck/auth/mailer';
 import { createAuth, type AuthEnv } from '@causedeck/auth/server';
 import { Secret } from '@causedeck/config/env';
-import { schema, withWorkspace } from '@causedeck/db';
-import { testAppDb } from '@causedeck/db/testing';
+import { schema, testAppDb, withWorkspace } from '@causedeck/db/testing';
 import { createLogger } from '@causedeck/observability';
 import { Writable } from 'node:stream';
 

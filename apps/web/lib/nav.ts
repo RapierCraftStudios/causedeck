@@ -113,7 +113,10 @@ export function getNavItem(id: WorkspaceRoute): NavItem {
   return found;
 }
 
-/** Legal-gated flags ship dark. TODO(#22): the real evaluator is injected from `@causedeck/flags`. */
+/**
+ * Every flag off: the default when no evaluator is injected. The shell injects the server-evaluated
+ * `@causedeck/flags` snapshot (`FlagsProvider` / `useIsEnabled`, #22).
+ */
 export const flagsOff: (flag: FlagKey) => boolean = () => false;
 
 export interface VisibleNavOptions {

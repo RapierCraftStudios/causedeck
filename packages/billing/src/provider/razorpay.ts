@@ -66,7 +66,7 @@ export interface RazorpayClientLike {
     create(params: RazorpaySubscriptionCreateParams): Promise<RazorpaySubscriptionResponse>;
     update(
       id: string,
-      params: { quantity: number; schedule_change_at?: 'now' | 'cycle_end' },
+      params: { plan_id?: string; quantity: number; schedule_change_at?: 'now' | 'cycle_end' },
     ): Promise<RazorpaySubscriptionResponse>;
     cancel(id: string, cancelAtCycleEnd: boolean): Promise<RazorpaySubscriptionResponse>;
     pause(id: string, params: { pause_at: 'now' }): Promise<RazorpaySubscriptionResponse>;
@@ -138,9 +138,31 @@ export function createRazorpayProvider(options: RazorpayProviderOptions): Billin
       );
     },
 
+    updateSubscriptionPlan(subscriptionId, input) {
+      return call(async () =>
+        toSubscription(
+          await client.subscriptions.update(subscriptionId, {
+            plan_id: input.planId,
+            quantity: input.quantity,
+            schedule_change_at: input.at,
+          }),
+        ),
+      );
+    },
+
     cancelSubscription(subscriptionId, cancelOptions) {
       return call(async () =>
         toSubscription(await client.subscriptions.cancel(subscriptionId, cancelOptions.atCycleEnd)),
+      );
+    },
+
+    withdrawCancellation() {
+      // Razorpay has no API to withdraw a scheduled cancel-at-cycle-end.
+      return Promise.reject(
+        new BillingProviderError(
+          'unsupported',
+          'Razorpay cannot withdraw a scheduled cancellation; subscribe again after it ends.',
+        ),
       );
     },
 
@@ -171,6 +193,16 @@ export function createRazorpayProvider(options: RazorpayProviderOptions): Billin
         }
         return { subscriptionId, url: subscription.shortUrl, status: subscription.mandate.state };
       });
+    },
+
+    retryPayment(subscriptionId) {
+      // Razorpay has no merchant API to retry a subscription charge: it retries a `pending`
+      // subscription itself and reports the result by webhook. So this makes no write call and
+      // never claims a charge; it only reads the current state.
+      return call(async () => ({
+        subscription: toSubscription(await client.subscriptions.fetch(subscriptionId)),
+        outcome: 'provider_scheduled' as const,
+      }));
     },
   };
 }

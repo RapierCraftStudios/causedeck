@@ -5,6 +5,7 @@ import { Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import type { WorkspaceContext } from '../../lib/workspace-context.ts';
+import { Bell } from '../notifications/bell.tsx';
 
 import { Breadcrumbs } from './breadcrumbs.tsx';
 import { useCommandPalette } from './use-command-palette.ts';
@@ -19,7 +20,8 @@ export interface TopbarProps {
 
 /**
  * 52 px on phones (current workspace opening the switcher, search, avatar); 56 px from 768 px
- * (breadcrumbs, the `Search or jump to...` field button, avatar).
+ * (breadcrumbs, the `Search or jump to...` field button, avatar). The notification bell sits
+ * before the avatar at every width.
  */
 export function Topbar({ context, onSearch }: TopbarProps) {
   const t = useTranslations('shell.topbar');
@@ -51,6 +53,7 @@ export function Topbar({ context, onSearch }: TopbarProps) {
         <span className="hidden flex-1 truncate text-left text-sm md:inline">{t('search')}</span>
         <Kbd hotkey="mod+k" className="hidden md:inline-flex" />
       </button>
+      <Bell workspaceId={context.workspace.id} userId={context.user.id} />
       <UserMenu user={context.user} role={context.role} slug={context.workspace.slug} />
       {Palette ? (
         <Palette

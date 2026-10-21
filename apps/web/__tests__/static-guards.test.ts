@@ -89,9 +89,49 @@ describe('apps/web static guards', () => {
     expect(config).toMatch(/reactStrictMode:\s*true/);
   });
 
-  it('has no API routes besides Better Auth (webhooks live in apps/api)', () => {
-    expect(readdirSync(path.join(appDir, 'app/api'))).toEqual(['auth']);
+  it('has no API routes besides Better Auth, Web Push, the audit and workspace exports and uploads (webhooks live in apps/api)', () => {
+    expect(readdirSync(path.join(appDir, 'app/api')).sort()).toEqual([
+      'audit',
+      'auth',
+      'exports',
+      'push',
+      'uploads',
+    ]);
+    // The workspace data export download (#301); tests sit beside it.
+    expect(readdirSync(path.join(appDir, 'app/api/exports')).sort()).toEqual(['[id]', '__tests__']);
     expect(readdirSync(path.join(appDir, 'app/api/auth'))).toEqual(['[...all]']);
+    // The browser's own push subscription endpoints (#197); tests sit beside them.
+    expect(readdirSync(path.join(appDir, 'app/api/push')).sort()).toEqual([
+      '__tests__',
+      'subscribe',
+      'unsubscribe',
+    ]);
+    // The streamed audit log download (#229), behind a short-lived signed token.
+    expect(readdirSync(path.join(appDir, 'app/api/audit')).sort()).toEqual(['__tests__', 'export']);
+    // Workspace-scoped upload intents, finalize and download URLs (#217, spike §1).
+    expect(readdirSync(path.join(appDir, 'app/api/uploads')).sort()).toEqual([
+      '__tests__',
+      'route.ts',
+    ]);
+  });
+
+  it('takes database values from @causedeck/core/runtime, never @causedeck/db (#298)', () => {
+    const runtime = code.filter(
+      (file) => /^(?:app|lib|src)\//.test(file.rel) && !/\.test\.tsx?$/.test(file.rel),
+    );
+    expect(runtime.map((file) => file.rel)).toContain('lib/workspace-action.ts');
+    const offenders = runtime.flatMap((file) =>
+      file.text
+        .split('\n')
+        .map((line, index) => ({ line, at: `${file.rel}:${String(index + 1)}` }))
+        .filter(
+          ({ line }) =>
+            /import\(\s*'@causedeck\/db'\s*\)/.test(line) ||
+            (/from '@causedeck\/db'/.test(line) && !/^\s*import type /.test(line)),
+        )
+        .map(({ at }) => at),
+    );
+    expect(offenders).toEqual([]);
   });
 
   it('keeps the proxy on Next.js 16 naming (no deprecated middleware.ts)', () => {

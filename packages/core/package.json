@@ -6,7 +6,14 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./audit": "./src/audit/index.ts",
+    "./billing": "./src/billing/index.ts",
     "./jobs": "./src/jobs/index.ts",
+    "./lifecycle": "./src/lifecycle/index.ts",
+    "./matters": "./src/matters/index.ts",
+    "./runtime": "./src/runtime/index.ts",
+    "./support": "./src/support/index.ts",
+    "./usage": "./src/usage/index.ts",
     "./workspaces": "./src/workspaces/index.ts"
   },
   "scripts": {
@@ -17,16 +24,22 @@
   },
   "dependencies": {
     "@causedeck/auth": "workspace:*",
+    "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/flags": "workspace:*",
+    "@causedeck/notifications": "workspace:*",
     "@causedeck/observability": "workspace:*",
+    "@causedeck/storage": "workspace:*",
     "@causedeck/validators": "workspace:*",
+    "archiver": "catalog:",
     "drizzle-orm": "catalog:",
     "pg-boss": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@opentelemetry/sdk-trace-base": "catalog:",
+    "@types/archiver": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",

@@ -18,6 +18,8 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0008](0008-design-system-tailwind4-shadcn-oklch-tokens.md) | Design system on Tailwind CSS v4, shadcn/ui and OKLCH tokens | Accepted | 2026-10-18 | — |
 | [0009](0009-offline-pwa-serwist-dexie-indexeddb.md) | Offline PWA with Serwist and Dexie on IndexedDB | Accepted | 2026-10-18 | — |
 | [0010](0010-feature-flags-db-backed-legal-gating-and-no-l5.md) | DB-backed feature flags, legal gating and no L5 actions | Accepted | 2026-10-18 | — |
+| [0011](0011-access-mode-registry-closed-enum.md) | Access-mode registry closed enum | Proposed | 2026-10-19 | — |
+| [0012](0012-core-package-split-threshold.md) | Split @causedeck/core into domain packages at a threshold | Proposed | 2026-10-20 | — |
 
 ## Statuses
 

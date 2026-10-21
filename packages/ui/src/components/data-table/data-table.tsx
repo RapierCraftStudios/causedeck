@@ -200,6 +200,15 @@ export interface DataTableProps<TData extends RowData> {
   mobileRender?: ((row: TData) => ReactNode) | undefined;
   /** `auto` (default) shows cards below 768 px when `mobileRender` is set; force either layout. */
   layout?: 'auto' | 'table' | 'cards' | undefined;
+  /**
+   * Opens a row: called on a row click and on Enter while the row has focus (table layout). Cards
+   * open from a control inside `mobileRender`. Leave out for rows that only select.
+   */
+  onRowActivate?: ((row: TData, index: number) => void) | undefined;
+  /** Called when the focused row changes (arrows, Home/End, Tab or click). */
+  onActiveRowChange?: ((row: TData, index: number) => void) | undefined;
+  /** Extra classes for a row or card, e.g. a warning tint for refused events. */
+  getRowClassName?: ((row: TData) => string | undefined) | undefined;
   /** Extra toolbar content (filters, actions), placed before the built-in controls. */
   toolbar?: ReactNode | undefined;
   labels?: Partial<DataTableLabels> | undefined;
@@ -242,7 +251,8 @@ const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const;
  * card list on phones.
  *
  * Keyboard (focus a row with Tab): Up/Down move between rows, Home/End jump, Space toggles the
- * row, Shift+Up/Down extends the selection from the last toggled row.
+ * row, Shift+Up/Down extends the selection from the last toggled row, Enter opens the row when
+ * `onRowActivate` is given.
  */
 export function DataTable<TData extends RowData>({
   label,
@@ -275,6 +285,9 @@ export function DataTable<TData extends RowData>({
   onRetry,
   mobileRender,
   layout = 'auto',
+  onRowActivate,
+  onActiveRowChange,
+  getRowClassName,
   toolbar,
   labels,
   className,
@@ -379,6 +392,14 @@ export function DataTable<TData extends RowData>({
 
   const onRowKeyDown = (event: KeyboardEvent<HTMLElement>, index: number) => {
     if (event.target !== event.currentTarget) return;
+    if (event.key === 'Enter' && onRowActivate) {
+      const row = rows[index];
+      if (row) {
+        event.preventDefault();
+        onRowActivate(row.original, index);
+      }
+      return;
+    }
     const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
     if (step !== undefined) {
       event.preventDefault();
@@ -543,6 +564,7 @@ export function DataTable<TData extends RowData>({
                 className={cn(
                   'border-line bg-surface-raised flex items-start gap-3 rounded-lg border border-s-2 border-s-transparent p-3',
                   'data-[state=selected]:border-s-accent data-[state=selected]:bg-accent-soft',
+                  getRowClassName?.(row.original),
                 )}
               >
                 {enableRowSelection ? (
@@ -685,8 +707,23 @@ export function DataTable<TData extends RowData>({
                   }}
                   onFocus={() => {
                     if (index !== activeIndex) setActiveIndex(index);
+                    onActiveRowChange?.(row.original, index);
                   }}
-                  className="focus-visible:outline-ring -outline-offset-2 focus-visible:outline-2"
+                  onClick={
+                    onRowActivate
+                      ? (event) => {
+                          // Clicks on controls inside the row (checkbox, links) keep their own action.
+                          const target = event.target as HTMLElement;
+                          if (target.closest('button, a, input, [role="checkbox"]')) return;
+                          onRowActivate(row.original, index);
+                        }
+                      : undefined
+                  }
+                  className={cn(
+                    'focus-visible:outline-ring -outline-offset-2 focus-visible:outline-2',
+                    onRowActivate && 'cursor-pointer',
+                    getRowClassName?.(row.original),
+                  )}
                 >
                   {enableRowSelection ? <TableCell>{rowCheckbox(row, index)}</TableCell> : null}
                   {row.getVisibleCells().map((cell) => (

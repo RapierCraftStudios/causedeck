@@ -18,12 +18,9 @@ const create = safeAction(
   CreateWorkspaceInput,
   async (input, ctx) => {
     const session = ctx.session as AppSession;
-    const [{ db }, { createWorkspace }] = await Promise.all([
-      import('@causedeck/db'),
-      import('@causedeck/core/workspaces'),
-    ]);
+    const { createWorkspaceFor } = await import('@causedeck/core/runtime');
     try {
-      const workspace = await createWorkspace(db, { userId: session.user.id, input });
+      const workspace = await createWorkspaceFor({ userId: session.user.id, input });
       return { slug: workspace.slug };
     } catch (error) {
       throw toActionError(error);
@@ -32,6 +29,8 @@ const create = safeAction(
   { getSession: requireSession },
 );
 
+// authz: public — any signed-in user may create a workspace (`requireSession` above); there is
+// no workspace to authorize against yet.
 export async function createWorkspaceAction(raw: unknown): Promise<Result<{ slug: string }>> {
   return create(raw);
 }

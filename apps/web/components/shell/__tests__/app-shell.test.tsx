@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import { defaultSnapshot } from '@causedeck/flags/keys';
 import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SidebarState } from '../../../lib/sidebar-state.ts';
 import { testWorkspaceContext } from '../../../__tests__/helpers/workspace.ts';
@@ -14,6 +15,7 @@ vi.mock('next/navigation', () => ({
 
 const { AppShell } = await import('../app-shell.tsx');
 const { useSidebar } = await import('../sidebar.tsx');
+const { loadShellOverlays } = await import('../use-shell-overlays.ts');
 
 const context = testWorkspaceContext();
 
@@ -44,7 +46,7 @@ const probeCollapsed = () =>
 
 const renderShell = (sidebarState: SidebarState = 'auto') =>
   renderWithIntl(
-    <AppShell context={context} sidebarState={sidebarState}>
+    <AppShell context={context} sidebarState={sidebarState} flags={defaultSnapshot()}>
       <ApiProbe />
       <p>content</p>
     </AppShell>,
@@ -61,6 +63,12 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   document.cookie = 'sidebar=; path=/; max-age=0';
+});
+
+// A slow test lets the shell's idle prefetch start the overlay chunk; let it settle while jsdom is
+// still up instead of after teardown (#323).
+afterAll(async () => {
+  await loadShellOverlays();
 });
 
 describe('app shell landmarks', () => {

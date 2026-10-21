@@ -1,14 +1,18 @@
 // The role-to-action matrix: the minimum role for each action (#231). This is the single source of
 // truth; `docs/engineering/permissions.md` is generated from it (`pnpm docs:permissions`).
-import { atLeast, ROLES, type Role } from '../roles';
+import { atLeast, ROLES, type Role } from '../role-rank';
 import type { Action } from './actions';
 
 export const MATRIX: Readonly<Record<Action, Role>> = {
   'workspace.manage': 'advocate',
+  // Slug rename stays owner-only (#177); `workspace.manage` is the advocate-level setting edit.
+  'workspace.rename': 'owner',
   'workspace.delete': 'owner',
   // Advocates may invite unless the workspace turns `advocatesCanInvite` off (see `can()`).
   'member.invite': 'advocate',
   'member.remove': 'owner',
+  // Role changes and ownership transfer.
+  'member.role': 'owner',
   'billing.manage': 'owner',
   'billing.read': 'owner',
   'invoices.read': 'owner',
@@ -26,6 +30,9 @@ export const MATRIX: Readonly<Record<Action, Role>> = {
   'draft.write': 'junior',
   'audit.read': 'advocate',
   'export.run': 'owner',
+  // Only the owner grants, denies or revokes support sessions (#313); staff never can, since
+  // `STAFF_READ_ONLY` denies every action that is not a `.read`.
+  'support.manage': 'owner',
   'limitation.read': 'junior',
   'insights.read': 'advocate',
   'settings.read': 'clerk',

@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
-import { schema, type Database, type Transaction } from '@causedeck/db';
+import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
@@ -52,6 +52,12 @@ async function expectDenied(promise: Promise<unknown>): Promise<void> {
   expect(['NOT_FOUND', 'FORBIDDEN']).toContain((error as core.WorkspaceError).code);
 }
 
+async function aWorkspaceRow(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
+  );
+}
+
 async function aMembers(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s
@@ -73,11 +79,37 @@ async function aInvitations(f: Fixture) {
   );
 }
 
+async function aSupportSessions(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.supportSession).orderBy(schema.supportSession.id),
+  );
+}
+
+async function aRestrictions(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.matterRestriction).orderBy(schema.matterRestriction.id),
+  );
+}
+
 async function aWorkspace(f: Fixture) {
   const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
   );
   return row;
+}
+
+/** A's usage counters and ledger. */
+async function aUsage(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => ({
+    counters: await s
+      .select({ key: schema.usageCounter.key, value: schema.usageCounter.value })
+      .from(schema.usageCounter)
+      .orderBy(schema.usageCounter.key),
+    events: await s
+      .select({ id: schema.usageEvent.id, amount: schema.usageEvent.amount })
+      .from(schema.usageEvent)
+      .orderBy(schema.usageEvent.id),
+  }));
 }
 
 async function sessionFor(tx: Transaction, userId: string, workspaceId: string): Promise<string> {
@@ -120,7 +152,256 @@ async function runProbe(f: Fixture, workspaceId: string) {
 
 type Case = (f: Fixture) => Promise<void>;
 
+// The seeded reservation expires 5 minutes after the real clock, so the usage clock is the real one.
+const USAGE_NOW = new Date();
+
+/** A request's owner email deliveries; never reached when the request is refused. */
+const enqueueDelivery = () => Promise.resolve();
+const aCtx = (f: Fixture) => ({ db: f.tx, workspaceId: f.a.id, now: () => USAGE_NOW });
+const bCtx = (f: Fixture) => ({ db: f.tx, workspaceId: f.b.id, now: () => USAGE_NOW });
+
+/** A's reservations, budget overrides, audit trail and usage counters. */
+async function aBudgetState(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => ({
+    reservations: await s
+      .select({ id: schema.usageReservation.id, amount: schema.usageReservation.amountPaise })
+      .from(schema.usageReservation)
+      .orderBy(schema.usageReservation.id),
+    overrides: await s
+      .select({ id: schema.budgetOverride.id, limit: schema.budgetOverride.limitValue })
+      .from(schema.budgetOverride)
+      .orderBy(schema.budgetOverride.id),
+    audit: await s.select({ id: schema.auditEvent.id }).from(schema.auditEvent),
+    usage: await s
+      .select({ key: schema.usageCounter.key, value: schema.usageCounter.value })
+      .from(schema.usageCounter),
+  }));
+}
+
+/** Gives A a 100_000 paise override so A can reserve without plan seeding. */
+async function budgetA(f: Fixture) {
+  await core.setBudgetOverride(aCtx(f), {
+    limitPaise: 100_000,
+    reason: 'xt fixture',
+    expiresAt: new Date(USAGE_NOW.getTime() + 86_400_000),
+    staffUserId: f.ua,
+  });
+}
+
+/** Rejects with TENANCY_VIOLATION: B's scope cannot be switched to A's workspace. */
+async function expectTenancyViolation(promise: Promise<unknown>): Promise<void> {
+  const error: unknown = await promise.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect((error as { code?: string } | undefined)?.code).toBe('TENANCY_VIOLATION');
+}
+
+async function auditIds(f: Fixture, workspaceId: string): Promise<string[]> {
+  const rows = await inWorkspace(f.tx, workspaceId, (s) =>
+    s.select({ id: schema.auditEvent.id }).from(schema.auditEvent),
+  );
+  return rows.map((r) => r.id).sort();
+}
+
+const aiCallInput: core.AiCallInput = {
+  purpose: 'xt.probe',
+  provider: 'mock',
+  model: 'mock-1',
+  region: 'ap-south-1',
+  inputTokens: 1,
+  outputTokens: 1,
+  costPaise: 0,
+  automationLevel: 1,
+};
+
+/** A recording email transport for the notification jobs. */
+function recordingDeps() {
+  const sent: { to: string; subject: string }[] = [];
+  const deps: core.NotificationJobDeps = {
+    appUrl: APP_URL,
+    // 13:00Z is 18:30 in Asia/Kolkata.
+    now: () => new Date('2026-10-19T13:00:00Z'),
+    email: {
+      provider: 'console',
+      send: (message) => {
+        sent.push({ to: message.to, subject: message.subject });
+        return Promise.resolve({});
+      },
+    },
+  };
+  return { sent, deps };
+}
+
+async function emailOf(f: Fixture, userId: string): Promise<string> {
+  const [row] = await f.tx
+    .select({ email: schema.user.email })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId));
+  if (!row) throw new Error('user missing');
+  return row.email;
+}
+
 const CASES: Record<string, Case> = {
+  record: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.record(
+          { db: s, workspaceId: f.a.id, actor: { userId: f.ub, kind: 'user' } },
+          { action: 'workspace.settings_viewed' },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordRoleChanged: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordRoleChanged(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          targetUserId: f.ua,
+          memberId: f.aMember.memberId,
+          fromRole: 'viewer',
+          toRole: 'owner',
+        }),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordAccessDenied: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    // The write into A's chain fails from B's scope and is swallowed, never landing in A.
+    await f.asB((s) =>
+      core.recordAccessDenied(s as unknown as Database, {
+        workspaceId: f.a.id,
+        member: true,
+        actorUserId: f.ub,
+      }),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordFlagChanged: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordFlagChanged(s, {
+          actorUserId: f.ub,
+          key: 'xt.flag',
+          workspaceId: f.a.id,
+          oldValue: false,
+          newValue: true,
+          legalAck: false,
+        }),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordExportRun: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordExportRun(
+          { db: s, workspaceId: f.a.id, actor: { userId: f.ub, kind: 'user' } },
+          { format: 'csv', from: '2026-01-01', to: '2026-01-31' },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordSupportSessionStarted: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordSupportSessionStarted(
+          { db: s },
+          { supportSessionId: randomUUID(), staffUserId: f.ub, workspaceId: f.a.id },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordSupportView: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordSupportView(
+          { db: s },
+          {
+            supportSessionId: randomUUID(),
+            staffUserId: f.ub,
+            workspaceId: f.a.id,
+            targets: [{ kind: 'matter', id: randomUUID() }],
+            action: 'matter.read',
+          },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordSupportSessionEnded: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.recordSupportSessionEnded(
+          { db: s },
+          { supportSessionId: randomUUID(), staffUserId: f.ub, workspaceId: f.a.id },
+        ),
+      ),
+    );
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  verifyChain: async (f) => {
+    await expectTenancyViolation(f.asB((s) => core.verifyChain(s, f.a.id)));
+    // B's own chain holds only B's seed event, never A's.
+    const own = await f.asB((s) => core.verifyChain(s, f.b.id));
+    expect(own).toEqual({ ok: true, checked: (await auditIds(f, f.b.id)).length });
+  },
+  authorizeAuditRead: async (f) => {
+    await expectTenancyViolation(
+      f.asB((s) => core.authorizeAuditRead({ db: s, workspaceId: f.a.id, userId: f.ub })),
+    );
+    // ub is not a member of A: denied even outside B's scope.
+    await expectDenied(core.authorizeAuditRead({ db: f.tx, workspaceId: f.a.id, userId: f.ub }));
+  },
+  queryAudit: async (f) => {
+    await expectTenancyViolation(
+      f.asB((s) => core.queryAudit({ db: s, workspaceId: f.a.id, userId: f.ub })),
+    );
+    await expectDenied(core.queryAudit({ db: f.tx, workspaceId: f.a.id, userId: f.ub }));
+    // B's feed holds only B's events.
+    const own = await core.queryAudit({ db: f.tx, workspaceId: f.b.id, userId: f.ub });
+    expect(own.events.map((e) => e.id).sort()).toEqual(await auditIds(f, f.b.id));
+  },
+  exportAudit: async (f) => {
+    const before = await auditIds(f, f.a.id);
+    const range = { from: new Date(0), to: new Date(Date.now() + 86_400_000) };
+    await expectTenancyViolation(
+      f.asB((s) =>
+        core.exportAudit(
+          { db: s, workspaceId: f.a.id, userId: f.ub },
+          { ...range, format: 'jsonl' },
+        ),
+      ),
+    );
+    await expectDenied(
+      core.exportAudit(
+        { db: f.tx, workspaceId: f.a.id, userId: f.ub },
+        { ...range, format: 'csv' },
+      ),
+    );
+    // No export event (or anything else) was written to A.
+    expect(await auditIds(f, f.a.id)).toEqual(before);
+  },
+  recordAiCall: async (f) => {
+    const count = () =>
+      inWorkspace(f.tx, f.a.id, (s) => s.select({ id: schema.aiCall.id }).from(schema.aiCall));
+    const before = await count();
+    await expectTenancyViolation(f.asB((s) => core.recordAiCall(s, f.a.id, aiCallInput)));
+    expect(await count()).toEqual(before);
+  },
   listMemberships: async (f) => {
     const mine = await core.listMemberships(f.tx, f.ub);
     expect(mine.map((m) => m.workspaceId)).toEqual([f.b.id]);
@@ -137,9 +418,24 @@ const CASES: Record<string, Case> = {
     // Even asking about A's owner from B's scope reveals nothing.
     expect(await f.asB((s) => core.memberRole(s, f.ua, f.a.id))).toBeNull();
   },
+  ownerGrace: async (f) => {
+    const before = await core.ownerGrace(f.tx, f.ua, f.a.id);
+    expect(before?.role).toBe('owner');
+    // B's member asks about A: nothing, from the plain scope and from B's scope.
+    expect(await core.ownerGrace(f.tx, f.ub, f.a.id)).toBeNull();
+    expect(await f.asB((s) => core.ownerGrace(s, f.ub, f.a.id))).toBeNull();
+    // Even asking about A's owner from B's scope reveals neither role nor grant time.
+    expect(await f.asB((s) => core.ownerGrace(s, f.ua, f.a.id))).toBeNull();
+    // A is unchanged by the attempts.
+    expect(await core.ownerGrace(f.tx, f.ua, f.a.id)).toEqual(before);
+  },
   requireOwner: async (f) => {
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ub)));
     await expectDenied(f.asB((s) => core.requireOwner(s, f.a.id, f.ua)));
+  },
+  requireCan: async (f) => {
+    await expectDenied(f.asB((s) => core.requireCan(s, f.a.id, f.ub, 'matter.read')));
+    await expectDenied(f.asB((s) => core.requireCan(s, f.a.id, f.ua, 'workspace.delete')));
   },
   listMembers: async (f) => {
     expect(await f.asB((s) => core.listMembers(s, f.a.id))).toEqual([]);
@@ -323,6 +619,105 @@ const CASES: Record<string, Case> = {
   listPendingInvitations: async (f) => {
     expect(await f.asB((s) => core.listPendingInvitations(s, f.a.id))).toEqual([]);
   },
+  getWorkspaceProfile: async (f) => {
+    expect(await f.asB((s) => core.getWorkspaceProfile(s, f.a.id))).toBeNull();
+  },
+  updateWorkspaceProfile: async (f) => {
+    const before = await core.getWorkspaceProfile(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.updateWorkspaceProfile(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          input: {
+            name: 'Cross-tenant probe',
+            kind: 'chamber',
+            timezone: 'Asia/Kolkata',
+            locale: 'en',
+            practiceCity: 'Probe City',
+          },
+        }),
+      ),
+    );
+    expect(await core.getWorkspaceProfile(f.tx, f.a.id)).toEqual(before);
+  },
+  getRoleSettings: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ advocatesCanInvite: false, ownersSeeRestricted: false })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the defaults, not A's values.
+    expect(await f.asB((s) => core.getRoleSettings(s, f.a.id))).toEqual(core.DEFAULT_ROLE_SETTINGS);
+  },
+  updateRoleSettings: async (f) => {
+    const before = await core.getRoleSettings(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.updateRoleSettings(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          input: { advocatesCanInvite: false, ownersSeeRestrictedMatters: false },
+        }),
+      ),
+    );
+    expect(await core.getRoleSettings(f.tx, f.a.id)).toEqual(before);
+  },
+  getPrivacySettings: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ sensitiveDefaultRestricted: false, retentionAudioDays: 7 })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the defaults, not A's values.
+    expect(await f.asB((s) => core.getPrivacySettings(s, f.a.id))).toEqual(
+      core.DEFAULT_PRIVACY_SETTINGS,
+    );
+  },
+  updateWorkspacePrivacy: async (f) => {
+    const before = await core.getPrivacySettings(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.updateWorkspacePrivacy(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          input: { sensitiveDefaultRestricted: false, retentionAudioDays: 7 },
+        }),
+      ),
+    );
+    expect(await core.getPrivacySettings(f.tx, f.a.id)).toEqual(before);
+  },
+  getIntegrations: async (f) => {
+    // A has a seeded ics_feed token; under B's scope it is invisible, so every kind reads as none.
+    const ofA = await inWorkspace(f.tx, f.a.id, (s) => core.getIntegrations(s, f.a.id));
+    expect(ofA.ics_feed).not.toBeNull();
+    expect(await f.asB((s) => core.getIntegrations(s, f.a.id))).toEqual({
+      email_intake: null,
+      ics_feed: null,
+    });
+  },
+  rotateIntegrationToken: async (f) => {
+    const hashesOfA = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({
+            kind: schema.workspaceIntegration.kind,
+            hash: schema.workspaceIntegration.tokenHash,
+          })
+          .from(schema.workspaceIntegration)
+          .where(eq(schema.workspaceIntegration.workspaceId, f.a.id)),
+      );
+    const before = await hashesOfA();
+    expect(before).toHaveLength(1);
+    await expectDenied(
+      f.asB((s) =>
+        core.rotateIntegrationToken(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          kind: 'ics_feed',
+        }),
+      ),
+    );
+    expect(await hashesOfA()).toEqual(before);
+  },
   acceptInvitation: async (f) => {
     const error: unknown = await core
       .acceptInvitation(f.tx, { userId: f.ub, token: f.aInvitation.token })
@@ -429,6 +824,285 @@ const CASES: Record<string, Case> = {
     expect(seen[0]).toEqual([f.a.id]);
     expect(seen[0]).not.toContain(f.b.id);
   },
+  runNotificationDeliver: async (f) => {
+    // A delivery job for B naming A's notification finds nothing, sends nothing, changes nothing.
+    const { sent, deps } = recordingDeps();
+    core.setNotificationJobDeps(deps);
+    const notificationId = f.a.rows.notification?.notificationId ?? '';
+    const before = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.notification).where(eq(schema.notification.id, notificationId)),
+    );
+    const outcome = await core.runJob(
+      core.notificationDeliver,
+      {
+        id: randomUUID(),
+        data: { workspaceId: f.b.id, notificationId, channel: 'email' },
+        retryCount: 0,
+      },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+    expect(sent).toEqual([]);
+    const after = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.notification).where(eq(schema.notification.id, notificationId)),
+    );
+    expect(after).toEqual(before);
+  },
+  runNotificationDigest: async (f) => {
+    // ua asked for daily email of system notices in A and has one pending; B's digest never
+    // includes or emails it.
+    const { sent, deps } = recordingDeps();
+    core.setNotificationJobDeps(deps);
+    await inWorkspace(f.tx, f.a.id, async (s) => {
+      await s
+        .insert(schema.notificationPref)
+        .values({
+          workspaceId: f.a.id,
+          userId: f.ua,
+          category: 'system.notice',
+          channel: 'email',
+          enabled: true,
+          digest: 'daily',
+        })
+        .onConflictDoUpdate({
+          target: [
+            schema.notificationPref.workspaceId,
+            schema.notificationPref.userId,
+            schema.notificationPref.category,
+            schema.notificationPref.channel,
+          ],
+          set: { enabled: true, digest: 'daily' },
+        });
+      await s.insert(schema.notification).values({
+        workspaceId: f.a.id,
+        userId: f.ua,
+        category: 'system.notice',
+        title: 'A only',
+        createdAt: new Date('2026-10-19T10:00:00Z'),
+      });
+    });
+    const outcome = await core.runJob(
+      core.notificationDigest,
+      { id: randomUUID(), data: { workspaceId: f.b.id, digestDate: '2026-10-19' }, retryCount: 0 },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+    expect(sent.map((m) => m.to)).not.toContain(await emailOf(f, f.ua));
+    expect(sent).toEqual([]);
+  },
+  runNotificationDigestSchedule: async (f) => {
+    // The scheduler lists every workspace, but hands on ids and dates only.
+    const targets: core.DigestTarget[] = [];
+    await core.runNotificationDigestSchedule(
+      { db: f.tx, log: logger },
+      {
+        now: () => new Date('2026-10-19T13:00:00Z'),
+        enqueue: (t) => {
+          targets.push(t);
+          return Promise.resolve();
+        },
+      },
+    );
+    const mine = targets.filter((t) => t.workspaceId === f.a.id || t.workspaceId === f.b.id);
+    expect(mine).toHaveLength(2);
+    for (const t of mine) expect(Object.keys(t).sort()).toEqual(['digestDate', 'workspaceId']);
+  },
+  restrictMatter: async (f) => {
+    const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
+    const before = await aRestrictions(f);
+    const input = { matterId: aMatter, allowedUserIds: [f.ub] };
+    // ub claiming workspace A, from no scope and from B's scope; and ub's own B scope cannot reach it.
+    await expectDenied(core.restrictMatter(f.tx, { userId: f.ub, workspaceId: f.a.id }, input));
+    await expectDenied(
+      f.asB((s) => core.restrictMatter(s, { userId: f.ub, workspaceId: f.a.id }, input)),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.restrictMatter(s, { userId: f.ua, workspaceId: f.a.id, role: 'owner' }, input),
+      ),
+    );
+    expect(await aRestrictions(f)).toEqual(before);
+  },
+  listMatterRestrictions: async (f) => {
+    await expectDenied(core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.a.id }));
+    await expectDenied(
+      f.asB((s) => core.listMatterRestrictions(s, { userId: f.ub, workspaceId: f.a.id })),
+    );
+    // B's own list never includes A's restriction.
+    const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
+    const own = await core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.b.id });
+    expect(own.map((r) => r.matterId)).not.toContain(aMatter);
+  },
+  assertMatterReadable: async (f) => {
+    const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
+    await expectDenied(
+      core.assertMatterReadable(f.tx, { userId: f.ub, workspaceId: f.a.id }, aMatter),
+    );
+    await expectDenied(
+      f.asB((s) => core.assertMatterReadable(s, { userId: f.ub, workspaceId: f.a.id }, aMatter)),
+    );
+    // In B's own workspace, A's restriction row does not exist: the matter reads as unrestricted.
+    expect(
+      await core.assertMatterReadable(f.tx, { userId: f.ub, workspaceId: f.b.id }, aMatter),
+    ).toBeNull();
+  },
+  enqueueNotificationDelivery: async (f) => {
+    // enqueueNotificationDelivery sends the payload as given; the handler is scoped to it.
+    const { seen } = await runProbe(f, f.a.id);
+    expect(seen[0]).toEqual([f.a.id]);
+    expect(seen[0]).not.toContain(f.b.id);
+  },
+  // Support sessions (#308): ub owns B and is not staff; A's seed session was requested by ua.
+  requestSession: async (f) => {
+    const before = await aSupportSessions(f);
+    const input = { workspaceId: f.a.id, reason: 'Probe' };
+    await expectDenied(
+      core.requestSession({ db: f.tx, staffUserId: f.ub, enqueueDelivery }, input),
+    );
+    await expectDenied(
+      f.asB((s) => core.requestSession({ db: s, staffUserId: f.ub, enqueueDelivery }, input)),
+    );
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  grantSession: async (f) => {
+    const before = await aSupportSessions(f);
+    const sessionId = f.a.rows.support_session?.id ?? '';
+    await expectDenied(
+      core.grantSession({ db: f.tx, userId: f.ub, workspaceId: f.a.id }, { sessionId }),
+    );
+    // As B's owner, A's session does not exist in B.
+    await expectDenied(
+      core.grantSession({ db: f.tx, userId: f.ub, workspaceId: f.b.id }, { sessionId }),
+    );
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  denySession: async (f) => {
+    const before = await aSupportSessions(f);
+    const sessionId = f.a.rows.support_session?.id ?? '';
+    await expectDenied(
+      core.denySession({ db: f.tx, userId: f.ub, workspaceId: f.a.id }, { sessionId }),
+    );
+    await expectDenied(
+      core.denySession({ db: f.tx, userId: f.ub, workspaceId: f.b.id }, { sessionId }),
+    );
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  revokeSession: async (f) => {
+    const before = await aSupportSessions(f);
+    const sessionId = f.a.rows.support_session?.id ?? '';
+    await expectDenied(
+      core.revokeSession({ db: f.tx, userId: f.ub, workspaceId: f.a.id }, { sessionId }),
+    );
+    await expectDenied(
+      core.revokeSession({ db: f.tx, userId: f.ub, workspaceId: f.b.id }, { sessionId }),
+    );
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  listSupportSessions: async (f) => {
+    await expect(f.asB((s) => core.listSupportSessions(s, f.a.id))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    const own = await f.asB((s) => core.listSupportSessions(s, f.b.id));
+    expect(own.filter((row) => row.workspaceId !== f.b.id)).toEqual([]);
+  },
+  activeSupportSession: async (f) => {
+    await expect(f.asB((s) => core.activeSupportSession(s, f.a.id))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    expect(await f.asB((s) => core.activeSupportSession(s, f.b.id))).toBeNull();
+  },
+  assertActiveSupportSession: async (f) => {
+    await expectDenied(core.assertActiveSupportSession(f.ub, f.a.id, { db: f.tx }));
+  },
+  withSupportSession: async (f) => {
+    await expectDenied(core.withSupportSession({ db: f.tx, staffUserId: f.ub }, f.a.id));
+  },
+  // the staff console (#314): ub is not staff, so it lists nothing, opens none of A's sessions
+  // and gets no view of A; A's sessions are unchanged.
+  listStaffSupportSessions: async (f) => {
+    const before = await aSupportSessions(f);
+    expect(await core.listStaffSupportSessions(f.tx, f.ub)).toEqual([]);
+    expect(await core.listStaffSupportSessions(f.tx, f.ua)).toEqual([]);
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  staffSupportSession: async (f) => {
+    const sessionId = f.a.rows.support_session?.id ?? '';
+    expect(await core.staffSupportSession(f.tx, f.ub, sessionId)).toBeNull();
+    expect(await core.staffSupportSession(f.tx, f.ua, sessionId)).toBeNull();
+  },
+  readSupportWorkspaceView: async (f) => {
+    const before = await aSupportSessions(f);
+    await expectDenied(core.readSupportWorkspaceView({ db: f.tx, staffUserId: f.ub }, f.a.id));
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  isActiveStaff: async (f) => {
+    expect(await core.isActiveStaff(f.tx, f.ub)).toBe(false);
+    expect(await f.asB((s) => core.isActiveStaff(s, f.ub))).toBe(false);
+  },
+  staffMember: async (f) => {
+    // ub is not staff; and staff_user is global, so B's scope reads A's user exactly as unscoped.
+    expect(await core.staffMember(f.tx, f.ub)).toBeNull();
+    const ua = await core.staffMember(f.tx, f.ua);
+    expect(await f.asB((s) => core.staffMember(s, f.ua))).toEqual(ua);
+  },
+  countActiveStaff: async (f) => {
+    // staff_user is global: B's scope sees the same count as the unscoped handle, no tenant rows.
+    const all = await core.countActiveStaff(f.tx);
+    expect(await f.asB((s) => core.countActiveStaff(s))).toBe(all);
+  },
+  staffWorkspaceSearch: async (f) => {
+    // ub is not staff: the definer function refuses, by slug and by A's owner email alike.
+    const before = await aWorkspaceRow(f);
+    const [owner] = await f.tx
+      .select({ email: schema.user.email })
+      .from(schema.user)
+      .where(eq(schema.user.id, f.ua));
+    await expectDenied(core.staffWorkspaceSearch(f.tx, f.ub, f.a.slug));
+    await expectDenied(core.staffWorkspaceSearch(f.tx, f.ub, owner?.email ?? 'x@example.test'));
+    expect(await aWorkspaceRow(f)).toEqual(before);
+  },
+  staffWorkspaceMetadata: async (f) => {
+    const before = await aWorkspaceRow(f);
+    await expectDenied(core.staffWorkspaceMetadata(f.tx, f.ub, f.a.id));
+    await expectDenied(core.staffWorkspaceMetadata(f.tx, f.ub, 'not-a-uuid'));
+    expect(await aWorkspaceRow(f)).toEqual(before);
+  },
+  staffWorkspaceUsage: async (f) => {
+    // ub is not staff: the definer functions refuse, for A's id and a malformed one alike.
+    await budgetA(f);
+    const before = await aBudgetState(f);
+    await expectDenied(core.staffWorkspaceUsage(f.tx, f.ub, f.a.id));
+    await expectDenied(core.staffWorkspaceUsage(f.tx, f.ub, 'not-a-uuid'));
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  staffAuditEvents: async (f) => {
+    const before = await aWorkspaceRow(f);
+    await expectDenied(core.staffAuditEvents(f.tx, f.ub));
+    await expectDenied(core.staffAuditEvents(f.tx, f.ua));
+    expect(await aWorkspaceRow(f)).toEqual(before);
+  },
+  expireSupportSessions: async (f) => {
+    const before = await aSupportSessions(f);
+    await core.expireSupportSessions(f.tx);
+    // A's pending request is not a grant, so the sweep leaves it alone.
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  endStaffSupportSessions: async (f) => {
+    const before = await aSupportSessions(f);
+    // Only ub's own request (B's seed row) ends; A's sessions, requested by ua, are untouched.
+    expect(await core.endStaffSupportSessions(f.tx, f.ub)).toBe(1);
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  supportSessionExpire: async (f) => {
+    const before = await aSupportSessions(f);
+    const outcome = await core.runJob(
+      core.supportSessionExpire,
+      { id: randomUUID(), data: {}, retryCount: 0 },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
   retentionSweep: async (f) => {
     const outcome = await core.runJob(
       core.retentionSweep,
@@ -452,6 +1126,239 @@ const CASES: Record<string, Case> = {
       expect(rows).toHaveLength(1);
     }
   },
+  increment: async (f) => {
+    // From inside B's scope, metering against A is a tenancy violation and writes nothing of A's.
+    await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ai.spend_paise', 5, {
+      idempotencyKey: 'xt-usage-key',
+    });
+    const before = await aUsage(f);
+    const error: unknown = await f
+      .asB((s) =>
+        core.increment({ db: s, workspaceId: f.a.id }, 'ai.spend_paise', 1, {
+          idempotencyKey: 'xt-usage-other',
+        }),
+      )
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(error).toBeInstanceOf(TenancyError);
+    expect(await aUsage(f)).toEqual(before);
+    // B reusing A's idempotency key is B's own claim: applied for B, A unchanged.
+    const asB = await core.increment({ db: f.tx, workspaceId: f.b.id }, 'ai.spend_paise', 2, {
+      idempotencyKey: 'xt-usage-key',
+    });
+    expect(asB).toEqual({ applied: true, value: 2 });
+    expect(await aUsage(f)).toEqual(before);
+  },
+  getUsage: async (f) => {
+    await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ocr.pages', 9, {
+      idempotencyKey: 'xt-usage-read',
+    });
+    expect(await f.asB((s) => core.getUsage({ db: s, workspaceId: f.b.id }, 'ocr.pages'))).toBe(0);
+    await expect(
+      f.asB((s) => core.getUsage({ db: s, workspaceId: f.a.id }, 'ocr.pages')),
+    ).rejects.toBeInstanceOf(TenancyError);
+  },
+  reserve: async (f) => {
+    await budgetA(f);
+    await core.reserve(aCtx(f), { estimatePaise: 100, purpose: 'xt.probe' });
+    const before = await aBudgetState(f);
+    await expect(
+      f.asB((s) =>
+        core.reserve(
+          { db: s, workspaceId: f.a.id, now: () => USAGE_NOW },
+          { estimatePaise: 1, purpose: 'xt.probe' },
+        ),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aBudgetState(f)).toEqual(before);
+    // B reserving for itself holds B's own budget and never counts A's reservation.
+    await core.setBudgetOverride(bCtx(f), {
+      limitPaise: 1_000,
+      reason: 'xt fixture',
+      expiresAt: new Date(USAGE_NOW.getTime() + 86_400_000),
+      staffUserId: f.ub,
+    });
+    // B holds its own seeded 100; 900 more fits exactly, so A's 200 reserved paise are not counted.
+    const own = await core.reserve(bCtx(f), { estimatePaise: 900, purpose: 'xt.probe' });
+    expect(own.workspaceId).toBe(f.b.id);
+    expect((await aBudgetState(f)).reservations).toEqual(before.reservations);
+  },
+  commit: async (f) => {
+    await budgetA(f);
+    const held = await core.reserve(aCtx(f), { estimatePaise: 100, purpose: 'xt.probe' });
+    const before = await aBudgetState(f);
+    // B's own context with A's reservation is refused; A's context inside B's scope is a violation.
+    await expect(core.commit(bCtx(f), held, 50)).rejects.toBeInstanceOf(TypeError);
+    await expect(
+      f.asB((s) => core.commit({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW }, held, 50)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  release: async (f) => {
+    await budgetA(f);
+    const held = await core.reserve(aCtx(f), { estimatePaise: 100, purpose: 'xt.probe' });
+    const before = await aBudgetState(f);
+    await expect(core.release(bCtx(f), held)).rejects.toBeInstanceOf(TypeError);
+    await expect(
+      f.asB((s) => core.release({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW }, held)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  reapExpiredReservations: async (f) => {
+    await budgetA(f);
+    const old = new Date(USAGE_NOW.getTime() - 3_600_000);
+    await core.reserve({ ...aCtx(f), now: () => old }, { estimatePaise: 100, purpose: 'xt.probe' });
+    const before = await aBudgetState(f);
+    expect(before.reservations.length).toBeGreaterThan(1);
+    await expect(
+      f.asB((s) =>
+        core.reapExpiredReservations({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW }),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    // B reaping its own workspace deletes none of A's expired rows.
+    expect(await core.reapExpiredReservations(bCtx(f))).toBe(0);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  getAiBudget: async (f) => {
+    await budgetA(f);
+    const asB = await f.asB((s) =>
+      core.getAiBudget({ db: s, workspaceId: f.b.id, now: () => USAGE_NOW }),
+    );
+    expect(asB).not.toEqual({ budgetPaise: 100_000, source: 'override' });
+    await expect(
+      f.asB((s) => core.getAiBudget({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW })),
+    ).rejects.toBeInstanceOf(TenancyError);
+  },
+  setBudgetOverride: async (f) => {
+    const before = await aBudgetState(f);
+    await expect(
+      f.asB((s) =>
+        core.setBudgetOverride(
+          { db: s, workspaceId: f.a.id, now: () => USAGE_NOW },
+          {
+            limitPaise: 1,
+            reason: 'xt attack',
+            expiresAt: new Date(USAGE_NOW.getTime() + 86_400_000),
+            staffUserId: f.ub,
+          },
+        ),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  expireBudgetOverride: async (f) => {
+    await budgetA(f);
+    const [target] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select({ id: schema.budgetOverride.id }).from(schema.budgetOverride),
+    );
+    if (!target) throw new Error('no override seeded for A');
+    const overrides = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({
+            id: schema.budgetOverride.id,
+            expiresAt: schema.budgetOverride.expiresAt,
+            expiredAt: schema.budgetOverride.expiredAt,
+          })
+          .from(schema.budgetOverride)
+          .orderBy(schema.budgetOverride.id),
+      );
+    const before = { state: await aBudgetState(f), overrides: await overrides() };
+    const input = { overrideId: target.id, reason: 'xt attack', staffUserId: f.ub };
+    // B's own context cannot reach A's override; A's context inside B's scope is a violation.
+    await expect(core.expireBudgetOverride(bCtx(f), input)).rejects.toBeInstanceOf(TypeError);
+    await expect(
+      f.asB((s) =>
+        core.expireBudgetOverride({ db: s, workspaceId: f.a.id, now: () => USAGE_NOW }, input),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect({ state: await aBudgetState(f), overrides: await overrides() }).toEqual(before);
+  },
+  activeOverride: async (f) => {
+    await budgetA(f);
+    // The query filters by workspace and RLS hides A's rows from B's scope, so B sees none.
+    expect(await f.asB((s) => core.activeOverride(s, f.a.id, USAGE_NOW))).toBeUndefined();
+    expect(await f.asB((s) => core.activeOverride(s, f.b.id, USAGE_NOW))).toBeUndefined();
+  },
+  assertWithinFairUse: async (f) => {
+    // A's metered OCR pages are A's own: B's fair-use check never counts them.
+    await core.increment(aCtx(f), 'ocr.pages', 1_000_000, { idempotencyKey: 'xt-fair-use' });
+    const before = await aBudgetState(f);
+    await expect(
+      f.asB((s) =>
+        core.assertWithinFairUse(
+          { db: s, workspaceId: f.a.id, now: () => USAGE_NOW },
+          'ocr.pages',
+          1,
+        ),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    await f.asB((s) =>
+      core.assertWithinFairUse(
+        { db: s, workspaceId: f.b.id, now: () => USAGE_NOW },
+        'ocr.pages',
+        1,
+      ),
+    );
+    expect((await aBudgetState(f)).usage).toEqual(before.usage);
+  },
+  checkAiBudgetThresholds: async (f) => {
+    await budgetA(f);
+    await core.increment(aCtx(f), 'ai.spend_paise', 100_000, { idempotencyKey: 'xt-threshold' });
+    const before = await aBudgetState(f);
+    const notifications = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s.select({ id: schema.notification.id }).from(schema.notification),
+      );
+    const notificationsBefore = await notifications();
+    const delivered: unknown[] = [];
+    const enqueueDelivery = (job: unknown) => {
+      delivered.push(job);
+      return Promise.resolve();
+    };
+    await expect(
+      f.asB((s) =>
+        core.checkAiBudgetThresholds({
+          db: s,
+          workspaceId: f.a.id,
+          now: () => USAGE_NOW,
+          enqueueDelivery,
+        }),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+    // B's own check sees B's spend (none), not A's exceeded budget, and notifies nobody.
+    const own = await core.checkAiBudgetThresholds({ ...bCtx(f), enqueueDelivery });
+    expect(own).toMatchObject({ level: 'ok', notified: 0 });
+    expect(delivered).toEqual([]);
+    expect(await notifications()).toEqual(notificationsBefore);
+    expect(await aBudgetState(f)).toEqual(before);
+  },
+  getWorkspaceFairnessConcurrency: async (f) => {
+    await expect(
+      f.asB((s) => core.getWorkspaceFairnessConcurrency(s, f.a.id, USAGE_NOW)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    const own = await f.asB((s) => core.getWorkspaceFairnessConcurrency(s, f.b.id, USAGE_NOW));
+    expect(own).toBeGreaterThanOrEqual(1);
+  },
+  reconcileAiCalls: async (f) => {
+    // A's seeded ai_call plus a ledger row for it; B's reconciliation sees neither.
+    const aiCallId = f.a.rows.ai_call?.aiCallId;
+    if (aiCallId === undefined) throw new Error('two-tenant ai_call seed missing');
+    await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ai.spend_paise', 3, {
+      idempotencyKey: 'xt-usage-reconcile',
+      metadata: { ai_call_id: aiCallId },
+    });
+    const before = await aUsage(f);
+    const own = await f.asB((s) => core.reconcileAiCalls({ db: s, workspaceId: f.b.id }));
+    expect(own.mismatches.map((m) => m.aiCallId)).not.toContain(aiCallId);
+    expect(own.matched).toBe(0);
+    await expect(
+      f.asB((s) => core.reconcileAiCalls({ db: s, workspaceId: f.a.id })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aUsage(f)).toEqual(before);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)
@@ -459,6 +1366,7 @@ const registered = Object.entries(SERVICE_TESTS)
   .map(([name]) => name);
 
 afterEach(() => {
+  core.setNotificationJobDeps(null);
   core.setAuditSink(null);
   core.setEntitlements(null);
   core.clearReassignProviders();

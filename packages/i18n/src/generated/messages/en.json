@@ -187,16 +187,14 @@
       "requestAccess": "Request access",
       "requestAccessSoon": "Access requests are coming soon."
     },
+    "permission": {
+      "ownersOnly": "Only owners can do this",
+      "ownersAndAdvocates": "Only owners and advocates can do this",
+      "roleTooLow": "Your role cannot do this"
+    },
     "notFound": {
       "title": "Page not found",
       "message": "We could not find this page in this workspace."
-    },
-    "account": {
-      "title": "Account",
-      "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
-      "empty": "Account settings are coming soon.",
-      "hint": "Passkeys, two-factor sign-in and sessions will be managed here.",
-      "action": "Back to your workspace"
     },
     "sidebar": {
       "label": "Sidebar",
@@ -253,6 +251,15 @@
     },
     "sheet": {
       "close": "Close"
+    },
+    "supportBanner": {
+      "message": "Support is viewing this workspace until {time}",
+      "end": "End session",
+      "error": "Could not end the session. Try again."
+    },
+    "ownerTwoFactor": {
+      "message": "Turn on two-factor authentication to keep owner access. Deleting, exporting and billing changes are blocked until you do.",
+      "action": "Set up two-factor"
     }
   },
   "auth": {
@@ -360,6 +367,10 @@
       "alreadyMember": {
         "title": "You are already a member",
         "body": "You already belong to {workspace}."
+      },
+      "seatLimit": {
+        "title": "No seats left in this workspace",
+        "body": "The workspace's plan has no free seat for you. Ask the person who invited you to add a seat."
       }
     },
     "accept": "Accept invitation",
@@ -461,6 +472,10 @@
         "invalid": "{email} could not be invited. Check the address.",
         "conflict": "{email} could not be invited: the workspace has no seat left for this role.",
         "failed": "Could not invite {email}. Please try again."
+      },
+      "seatLimit": {
+        "message": "Your plan includes {seats} seats. Add a seat to invite more people.",
+        "managePlan": "Manage plan"
       }
     },
     "changeRole": {
@@ -513,6 +528,1167 @@
       "signedOut": "Your session ended. Sign in again to continue.",
       "offline": "You are offline. Connect to make changes.",
       "generic": "Something went wrong. Please try again."
+    },
+    "rolesLink": "How roles work",
+    "tabs": {
+      "label": "Members and invitations",
+      "members": "Members ({count})",
+      "invitations": "Pending invitations ({count})"
+    },
+    "invitationsEmpty": "No pending invitations.",
+    "seats": {
+      "title": "Seats",
+      "used": "{used} of {granted} seats in use",
+      "clerk": "{used} of {granted} clerk seats in use",
+      "overLimit": "Over plan limit",
+      "note": "Invitations take a seat when they are accepted."
+    },
+    "aboutRoles": "About roles",
+    "transferPicker": {
+      "title": "Transfer ownership",
+      "description": "Choose the member who will become the owner of {workspace}.",
+      "label": "New owner",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "none": "Invite another member before you transfer ownership."
+    }
+  },
+  "notifications": {
+    "email": {
+      "layout": {
+        "brand": "CauseDeck",
+        "footer": "You received this email because of your CauseDeck account.",
+        "preferences": "Manage notification preferences or unsubscribe",
+        "mandatory": "This is a required account email and cannot be turned off."
+      },
+      "magicLink": {
+        "subject": "Your CauseDeck sign-in link",
+        "preview": "Sign in to CauseDeck",
+        "heading": "Sign in to CauseDeck",
+        "body": "Use the button below to sign in. The link expires in {minutes} minutes and works once.",
+        "cta": "Sign in",
+        "fallback": "If the button does not work, open this link:",
+        "ignore": "If you did not ask to sign in, you can ignore this email."
+      },
+      "invitation": {
+        "subject": "You are invited to a CauseDeck workspace",
+        "preview": "Join a CauseDeck workspace",
+        "heading": "You are invited to a workspace",
+        "body": "A colleague invited you to join their CauseDeck workspace. The invitation expires in {days, plural, one {# day} other {# days}}.",
+        "cta": "Accept invitation",
+        "fallback": "If the button does not work, open this link:",
+        "ignore": "If you were not expecting this invitation, you can ignore this email."
+      },
+      "securityAlert": {
+        "subject": "Security alert: {title}",
+        "preview": "Security activity on your CauseDeck account",
+        "intro": "We noticed security activity on your CauseDeck account.",
+        "cta": "Review activity",
+        "help": "If this was not you, sign out of other sessions and contact your workspace owner."
+      },
+      "dailyDigest": {
+        "subject": "Your CauseDeck daily digest",
+        "preview": "Your updates from today",
+        "heading": "Today in your workspace",
+        "summary": "{count, plural, one {# update} other {# updates}} since your last digest.",
+        "empty": "Nothing new since your last digest.",
+        "cta": "Open CauseDeck"
+      },
+      "billingNotice": {
+        "subject": "Billing: {title}",
+        "preview": "A billing update for your workspace",
+        "cta": "View billing"
+      },
+      "notice": {
+        "subject": "{title}",
+        "preview": "An update from your CauseDeck workspace",
+        "cta": "Open in CauseDeck"
+      }
+    },
+    "push": {
+      "card": {
+        "title": "Push notifications",
+        "body": "Get a nudge before your hearings. You can change this any time.",
+        "turnOn": "Turn on",
+        "notNow": "Not now",
+        "enabled": "Push notifications are on for this browser.",
+        "blocked": "Notifications are blocked for this site. Allow them in your browser settings to turn them on.",
+        "error": "Could not turn on push notifications. Try again."
+      }
+    },
+    "title": "Notifications",
+    "bell": {
+      "label": "Notifications",
+      "labelUnread": "Notifications, {count} unread"
+    },
+    "markAllRead": "Mark all read",
+    "groups": {
+      "today": "Today",
+      "earlier": "Earlier"
+    },
+    "empty": "You are all caught up.",
+    "error": "Could not load notifications.",
+    "retry": "Try again",
+    "offline": "Showing saved notifications",
+    "loading": "Loading notifications",
+    "unread": "Unread",
+    "unreadCount": "{count} unread",
+    "announce": "{count, plural, one {# new notification} other {# new notifications}}",
+    "close": "Close",
+    "shortcut": "Open notifications",
+    "preferences": {
+      "metaTitle": "Notification preferences",
+      "title": "Notification preferences",
+      "description": "Choose how CauseDeck tells you about activity in {workspace}.",
+      "link": "Notification preferences",
+      "linkHint": "Choose channels, the daily digest and quiet hours.",
+      "matrixCaption": "Channels for each kind of notification",
+      "categoryHeader": "Notification",
+      "channels": {
+        "inApp": "In-app",
+        "email": "Email",
+        "push": "Push"
+      },
+      "switchLabel": "{category}: {channel}",
+      "categories": {
+        "workspaceInvite": {
+          "label": "Workspace invitations",
+          "description": "When someone invites you to a workspace."
+        },
+        "memberJoined": {
+          "label": "New members",
+          "description": "When someone joins this workspace."
+        },
+        "securityAlert": {
+          "label": "Security alerts",
+          "description": "Sign-ins and changes to your account."
+        },
+        "billingNotice": {
+          "label": "Billing",
+          "description": "Payments, invoices and plan changes."
+        },
+        "reminderHearing": {
+          "label": "Hearing reminders",
+          "description": "Before your listed hearings."
+        },
+        "proposalNew": {
+          "label": "New proposals",
+          "description": "When CauseDeck prepares something for you to review."
+        },
+        "digestDaily": {
+          "label": "Daily digest",
+          "description": "One email at 6:30 pm with the day's updates."
+        },
+        "systemNotice": {
+          "label": "Service notices",
+          "description": "Updates about CauseDeck itself."
+        }
+      },
+      "mandatory": "Security alerts are always sent in the app and by email so you never miss a sign-in or account change.",
+      "lockedLabel": "Always on",
+      "digest": {
+        "label": "Email digest",
+        "hint": "Instant sends each email as it happens. Daily gathers them into one email at 6:30 pm. Off sends only required emails.",
+        "instant": "Instant",
+        "daily": "Daily at 6:30 pm",
+        "off": "Off"
+      },
+      "courtHours": {
+        "label": "Do not push during court hours",
+        "hint": "No push notifications from 10:30 am to 5:00 pm in your workspace time zone."
+      },
+      "lockScreen": {
+        "label": "Show details on lock screen",
+        "hint": "When off, push notifications show only a general title, never matter or party names."
+      },
+      "saved": "Saved",
+      "error": "Could not save your change. Try again.",
+      "loadError": "Could not load notification preferences.",
+      "retry": "Try again",
+      "loading": "Loading notification preferences",
+      "empty": "No notification settings are available for this workspace yet."
+    }
+  },
+  "billing": {
+    "mandate": {
+      "additionalAuth": {
+        "title": "Your bank will ask you to approve this charge",
+        "body": "UPI Autopay pays up to {amount} per charge on its own. This charge is larger, so you'll approve it in your UPI app each time it's due."
+      }
+    },
+    "metaTitle": "Billing",
+    "title": "Billing",
+    "description": "Your plan, seats, payment method and invoices for {workspace}.",
+    "loading": "Loading billing",
+    "comingSoon": "Available soon",
+    "permissionDenied": "Only workspace owners can manage billing.",
+    "error": {
+      "title": "Could not load billing.",
+      "retry": "Try again"
+    },
+    "plan": {
+      "title": "Plan",
+      "perMonth": "/ month",
+      "perYear": "/ year",
+      "seatBreakdown": "{seats, plural, one {# seat} other {# seats}} at {seatPrice} + {clerkSeats, plural, one {# clerk seat} other {# clerk seats}} at {clerkPrice}",
+      "renewal": "Renews on {date}",
+      "noRenewal": "No renewal scheduled",
+      "endsOn": "Ends on {date}",
+      "gstNote": "GST at 18% is added to this price.",
+      "change": "Change plan"
+    },
+    "status": {
+      "active": "Active",
+      "pending": "Awaiting payment setup",
+      "pastDue": "Past due",
+      "grace": "Past due: grace until {date}",
+      "paused": "Paused",
+      "cancelsOn": "Cancels on {date}",
+      "cancelled": "Cancelled"
+    },
+    "seats": {
+      "title": "Seats",
+      "members": "{used} of {total} seats",
+      "clerks": "{used} of {total} clerk seats",
+      "membersLabel": "Seats used",
+      "clerksLabel": "Clerk seats used",
+      "hint": "Clerk seats are billed separately from advocate seats."
+    },
+    "paymentMethod": {
+      "title": "Payment method",
+      "active": "UPI Autopay active",
+      "pending": "UPI Autopay pending",
+      "failed": "UPI Autopay failed",
+      "activeHint": "Each renewal is paid automatically from your UPI account.",
+      "pendingHint": "Approve the UPI Autopay mandate in your UPI app to start payments.",
+      "failedHint": "Your last payment did not go through.",
+      "update": "Update payment method"
+    },
+    "banner": {
+      "graceTitle": "Payment failed",
+      "grace": "Access continues until {date} ({days, plural, =0 {last day} one {# day left} other {# days left}}). Update your payment method to keep your plan.",
+      "paymentFailed": "Your last payment failed. Update your payment method to keep your plan.",
+      "cancels": "Your plan ends on {date}. Your data stays accessible read-only and can be exported."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "caption": "Tax invoices for your CauseDeck subscription",
+      "columns": {
+        "number": "Number",
+        "date": "Date",
+        "amount": "Amount",
+        "status": "Status",
+        "pdf": "PDF"
+      },
+      "status": {
+        "issued": "Issued",
+        "paid": "Paid",
+        "void": "Void"
+      },
+      "download": "Download invoice {number} (PDF)",
+      "preparing": "Preparing",
+      "empty": "No invoices yet. Your first invoice appears after your first payment."
+    },
+    "junior": {
+      "title": "You are on the free Junior plan",
+      "body": "Upgrade when you need unlimited matters or a chamber for your team.",
+      "advocate": "Advocate",
+      "advocateBody": "For an advocate practising on their own.",
+      "chamber": "Chamber",
+      "chamberBody": "For chambers, priced per seat (at least {minSeats} seats).",
+      "from": "From {price}",
+      "upgrade": "Upgrade to {plan}"
+    },
+    "quote": {
+      "base": "New price per period",
+      "gst": "GST at 18%",
+      "total": "Total per period (incl. GST)",
+      "proration": "Prorated charge for this period",
+      "prorationGst": "GST at 18% on the prorated charge",
+      "prorationTotal": "Due now (incl. GST)",
+      "effectiveNow": "Takes effect now ({date}).",
+      "effectivePeriodEnd": "Takes effect on {date}, at the end of this billing period."
+    },
+    "seatManager": {
+      "seats": "Seats",
+      "clerkSeats": "Clerk seats",
+      "increaseSeats": "Add a seat",
+      "decreaseSeats": "Remove a seat",
+      "increaseClerkSeats": "Add a clerk seat",
+      "decreaseClerkSeats": "Remove a clerk seat",
+      "announceSeats": "{count, plural, one {# seat} other {# seats}}",
+      "announceClerkSeats": "{count, plural, one {# clerk seat} other {# clerk seats}}",
+      "minHint": "At least {min} seats: {used} are in use.",
+      "review": "Review change",
+      "confirm": "Confirm change",
+      "back": "Back",
+      "done": "Seats updated."
+    },
+    "changePlan": {
+      "title": "Change plan",
+      "chooseBody": "Choose a plan. Moving to a more expensive plan takes effect now; a cheaper plan from the end of this period.",
+      "confirmTitle": "Move to {plan}?",
+      "confirmBody": "Check the amounts before you confirm.",
+      "perSeat": "{price} per seat",
+      "flat": "{price}",
+      "back": "Back",
+      "confirm": "Confirm change",
+      "close": "Close"
+    },
+    "gstin": {
+      "title": "GSTIN",
+      "label": "GSTIN",
+      "hint": "15 characters, for example 27AAPFU0939F1ZV. Leave empty to remove it.",
+      "clientInvalid": "This does not look like a valid GSTIN yet.",
+      "note": "Applies to future invoices only; issued invoices are not changed.",
+      "save": "Save GSTIN",
+      "saved": "GSTIN saved.",
+      "cleared": "GSTIN removed."
+    },
+    "cancel": {
+      "open": "Cancel plan",
+      "title": "Cancel at the end of this period?",
+      "body": "Your plan stays active until {date}.",
+      "bodyNoDate": "Your plan stays active until the end of this billing period.",
+      "readOnlyNote": "After your plan ends, your data remains accessible read-only and can be exported.",
+      "keep": "Keep plan",
+      "confirm": "Cancel at period end",
+      "resume": "Resume plan"
+    },
+    "errors": {
+      "invalidGstinFormat": "Enter a 15-character GSTIN: a 2-digit state code, a 10-character PAN, the entity number, Z and a check character.",
+      "invalidGstinChecksum": "The last character of this GSTIN does not match the rest. Check it for typos.",
+      "invalid": "This change is not possible on your plan.",
+      "notAllowed": "This change is not possible while the subscription is in its current state.",
+      "unsupported": "Your payment provider cannot undo a scheduled cancellation. Subscribe again after the plan ends.",
+      "forbidden": "Only workspace owners can manage billing.",
+      "offline": "You are offline. Billing changes are unavailable until you reconnect.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
+  "usage": {
+    "metaTitle": "Usage",
+    "title": "Usage",
+    "description": "This month's usage for {workspace}. Monthly meters reset at the start of each month (IST).",
+    "loading": "Loading usage",
+    "link": "Usage",
+    "linkHint": "AI processing, OCR pages, transcription and matters this month",
+    "billingLink": "View usage",
+    "permissionDenied": "Only workspace owners can see usage.",
+    "empty": {
+      "title": "No usage yet this month.",
+      "description": "The meters fill as you use AI processing, OCR and transcription."
+    },
+    "error": {
+      "title": "Could not load usage.",
+      "retry": "Try again"
+    },
+    "meters": {
+      "ai": "AI processing",
+      "ocr": "OCR pages",
+      "stt": "Transcription",
+      "matters": "Active matters"
+    },
+    "value": "{used} of {limit}",
+    "percentUsed": "{percent}% used",
+    "valueText": "{percent}% used, {used} of {limit}",
+    "unlimited": "No limit on your plan",
+    "aiResets": "AI processing budget resets on {date}",
+    "resets": "Resets on {date}",
+    "level": {
+      "warning": "Nearing the limit",
+      "exceeded": "Limit reached"
+    },
+    "aiWarning": "You have used {percent}% of this month's AI processing budget. Existing work is not affected.",
+    "aiExceeded": "You have used this month's AI processing budget. New AI processing resumes on {date}. Existing work is not affected.",
+    "limitWarning": "You have used {percent}% of this limit.",
+    "limitExceeded": "You have reached this limit. Existing work is not affected.",
+    "breakdown": {
+      "title": "This month in detail",
+      "caption": "Usage by resource this month",
+      "resource": "Resource",
+      "used": "Used",
+      "limit": "Limit",
+      "noLimit": "No limit",
+      "rows": {
+        "aiSpend": "AI processing spend",
+        "tokensIn": "AI tokens read",
+        "tokensOut": "AI tokens written",
+        "ocr": "OCR pages",
+        "stt": "Transcription",
+        "storage": "Storage",
+        "matters": "Active matters"
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "navLabel": "Settings sections",
+    "offline": "Settings can be changed when you are back online.",
+    "nav": {
+      "profile": "Profile",
+      "members": "Members",
+      "roles": "Roles",
+      "notifications": "Notifications",
+      "integrations": "Integrations",
+      "privacy": "Privacy",
+      "export": "Export",
+      "danger": "Danger zone",
+      "usage": "Usage",
+      "audit": "Audit log",
+      "support": "Support access",
+      "more": "More"
+    },
+    "placeholder": {
+      "export": "Download a copy of everything in this workspace.",
+      "danger": "Transfer ownership or delete this workspace."
+    },
+    "unsaved": {
+      "title": "Leave without saving?",
+      "description": "Your changes on this page have not been saved.",
+      "stay": "Stay on this page",
+      "leave": "Leave without saving"
+    },
+    "profile": {
+      "metaTitle": "Workspace profile",
+      "title": "Profile",
+      "description": "How this workspace is named and set up.",
+      "section": "Workspace",
+      "sectionHint": "Shown to everyone in this workspace.",
+      "readOnly": "Only owners and advocates can change the workspace profile.",
+      "name": "Workspace name",
+      "nameHint": "Your chamber or practice name.",
+      "kind": "Kind",
+      "kindHint": "A solo practice or a chamber with several members.",
+      "kinds": {
+        "solo": "Solo practice",
+        "chamber": "Chamber"
+      },
+      "timezone": "Time zone",
+      "timezoneHint": "Used for hearing dates, reminders and digests.",
+      "locale": "Default language",
+      "localeHint": "The language new members and emails start in.",
+      "practiceCity": "Practice city",
+      "practiceCityHint": "The city where you mostly appear.",
+      "practiceCityPlaceholder": "For example, Chennai",
+      "slug": "Web address",
+      "slugHint": "The part of the link after /w/.",
+      "ownerOnly": "Only workspace owners can change this.",
+      "rename": "Rename",
+      "renameTitle": "Rename the web address",
+      "renameBody": "The old address keeps working for 90 days and then becomes free for others.",
+      "newSlug": "New web address",
+      "newSlugHint": "Lowercase letters, digits and single hyphens, 3 to 48 characters.",
+      "renameConfirm": "Rename",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "saved": "Saved",
+      "loading": "Loading the workspace profile",
+      "toast": {
+        "saved": "Workspace profile saved.",
+        "renamed": "Web address changed to {slug}."
+      },
+      "error": {
+        "title": "Could not load the workspace profile.",
+        "retry": "Try again"
+      },
+      "errors": {
+        "name": "Enter a workspace name of up to 120 characters.",
+        "kind": "Choose solo practice or chamber.",
+        "timezone": "Choose a time zone from the list.",
+        "locale": "Choose a language from the list.",
+        "practiceCity": "Keep the practice city to 80 characters.",
+        "slug": "Use 3 to 48 lowercase letters, digits and single hyphens. Some words are reserved.",
+        "slugTaken": "This web address is taken. Try another.",
+        "forbidden": "You do not have permission to make this change.",
+        "invalid": "Some values are not valid. Check the form and try again.",
+        "rateLimited": "Too many changes in a short time. Try again in a minute.",
+        "offline": "You are offline. Settings can be changed when you are back online.",
+        "generic": "Could not save the profile. Your changes were undone. Try again."
+      }
+    },
+    "danger": {
+      "title": "Danger zone",
+      "description": "These actions affect everyone in the workspace.",
+      "transfer": {
+        "label": "Transfer ownership",
+        "description": "Make another member the owner of this workspace.",
+        "action": "Transfer ownership"
+      },
+      "transferHint": "Opens the members list, where you choose the new owner.",
+      "loading": "Loading danger zone",
+      "error": {
+        "title": "Could not load the danger zone.",
+        "retry": "Try again"
+      }
+    },
+    "export": {
+      "title": "Export workspace data",
+      "description": "A complete copy of this workspace, for your records or to move to another tool.",
+      "contentsTitle": "What the export includes",
+      "contents": {
+        "matters": "Matters, hearings and tasks",
+        "documents": "Documents and notes",
+        "people": "Clients, members and roles",
+        "audit": "The audit log"
+      },
+      "delivery": "Only owners can export. When the file is ready, we email you a download link that works for 24 hours.",
+      "actionLabel": "Download a copy",
+      "actionDescription": "Prepares a ZIP of everything in this workspace.",
+      "action": "Export workspace",
+      "comingSoon": "Coming from export service",
+      "loading": "Loading export",
+      "error": {
+        "title": "Could not load the export page.",
+        "retry": "Try again"
+      }
+    },
+    "roles": {
+      "metaTitle": "Roles and permissions",
+      "title": "Roles",
+      "description": "What each role can see and do in this workspace.",
+      "loading": "Loading the role settings",
+      "clerkLimits": "Clerks cannot see strategy notes or matter memory, even on matters they work on.",
+      "matrix": {
+        "title": "Permissions by role",
+        "description": "Set by CauseDeck for every workspace. A tick means the role can do it.",
+        "caption": "What each role can do",
+        "action": "Action",
+        "allowed": "Allowed",
+        "denied": "Not allowed",
+        "settingsNote": "Advocates invite members only while Advocates can invite members is on. Restricted matters are open only to the people listed on them, and to owners while Owners see restricted matters is on."
+      },
+      "domains": {
+        "workspace": "Workspace",
+        "member": "Members",
+        "billing": "Billing",
+        "matter": "Matters",
+        "strategy": "Strategy",
+        "memory": "Matter memory",
+        "document": "Documents",
+        "task": "Tasks",
+        "listing": "Cause list",
+        "draft": "Drafts",
+        "audit": "Audit log",
+        "export": "Export",
+        "support": "Support",
+        "shell": "Workspace areas"
+      },
+      "actions": {
+        "workspace": {
+          "manage": "Edit the workspace profile and settings",
+          "rename": "Rename the web address",
+          "delete": "Delete the workspace"
+        },
+        "member": {
+          "invite": "Invite members",
+          "remove": "Remove members",
+          "role": "Change roles and transfer ownership"
+        },
+        "billing": {
+          "manage": "Manage the plan and payment",
+          "read": "See billing and usage"
+        },
+        "matter": {
+          "read": "See matters",
+          "write": "Edit matters",
+          "restrict": "Restrict a matter"
+        },
+        "strategy": {
+          "read": "See strategy notes"
+        },
+        "memory": {
+          "read": "See matter memory",
+          "write": "Add to matter memory"
+        },
+        "document": {
+          "read": "See documents",
+          "write": "Upload and edit documents"
+        },
+        "task": {
+          "read": "See tasks",
+          "write": "Create and update tasks"
+        },
+        "listing": {
+          "read": "See the cause list"
+        },
+        "draft": {
+          "write": "Write drafts"
+        },
+        "audit": {
+          "read": "Read and export the audit log"
+        },
+        "export": {
+          "run": "Export all workspace data"
+        },
+        "support": {
+          "manage": "Allow and end support access"
+        },
+        "limitation": {
+          "read": "See limitation dates"
+        },
+        "insights": {
+          "read": "See practice insights"
+        },
+        "settings": {
+          "read": "Open workspace settings"
+        },
+        "invoices": {
+          "read": "Download invoices"
+        }
+      },
+      "settings": {
+        "title": "Role settings",
+        "description": "Two choices this workspace can make on top of the roles above.",
+        "readOnly": "Only workspace owners can change these settings.",
+        "advocatesCanInvite": {
+          "label": "Advocates can invite members",
+          "description": "When off, only owners can invite people to this workspace."
+        },
+        "ownersSeeRestrictedMatters": {
+          "label": "Owners see restricted matters",
+          "description": "When off, owners see a restricted matter only if they are listed on it."
+        }
+      },
+      "toast": {
+        "saved": "Role settings saved.",
+        "undo": "Undo",
+        "undone": "Change undone.",
+        "error": "Could not save the role settings. Try again.",
+        "forbidden": "Only workspace owners can change role settings.",
+        "offline": "Settings can be changed when you are back online."
+      },
+      "restricted": {
+        "title": "Restricted matters",
+        "description": "Matters open only to the people listed on them.",
+        "matter": "Matter {id}",
+        "allowed": "Open to {names}",
+        "ownersOnly": "Open to owners only",
+        "since": "Restricted on {date}",
+        "empty": "No restricted matters",
+        "emptyHint": "Restricted matters you can see will be listed here.",
+        "picker": "Restrict a matter",
+        "pickerUnavailable": "You can restrict matters once matters arrive in CauseDeck."
+      },
+      "error": {
+        "title": "Could not load the role settings.",
+        "retry": "Try again"
+      }
+    },
+    "integrations": {
+      "metaTitle": "Integrations",
+      "title": "Integrations",
+      "description": "The private email intake address and calendar feed for this workspace.",
+      "loading": "Loading the integrations",
+      "notEnabled": "Not enabled yet",
+      "notEnabledReason": "This is not enabled yet for this workspace.",
+      "offlineReason": "Settings can be changed when you are back online.",
+      "tokenLabel": "Private link",
+      "notCreated": "Not created yet.",
+      "createdOn": "Created on {date}.",
+      "rotatedOn": "Last rotated on {date}.",
+      "create": "Create",
+      "rotate": "Rotate",
+      "rotating": "Rotating...",
+      "rotateConfirm": "Rotate",
+      "rotateCancel": "Cancel",
+      "copy": "Copy",
+      "copied": "Copied",
+      "shownOnce": "This is shown only once. Copy it now and keep it private.",
+      "error": {
+        "title": "Could not load the integrations.",
+        "retry": "Try again"
+      },
+      "toast": {
+        "created": "Created. Copy it now: it is shown only once.",
+        "rotated": "Rotated. The old one no longer works.",
+        "error": "Could not change it. Nothing was changed.",
+        "forbidden": "You do not have permission to change this.",
+        "copyFailed": "Could not copy. Select the text and copy it instead."
+      },
+      "emailIntake": {
+        "title": "Email intake address",
+        "description": "A private address you can forward court and registry emails to. Anyone who knows it can send to it, so keep it private.",
+        "label": "Intake address",
+        "rotateTitle": "Rotate the intake address?",
+        "rotateBody": "A new address is created and the current one stops working at once. Emails sent to the old address will not arrive."
+      },
+      "icsFeed": {
+        "title": "Calendar feed",
+        "description": "A private link your calendar app can subscribe to. Anyone with this link can see your hearing dates. Keep it private.",
+        "label": "Feed URL",
+        "rotateTitle": "Rotate the calendar feed link?",
+        "rotateBody": "A new link is created and the current one stops working at once. Calendars subscribed to the old link stop updating."
+      }
+    },
+    "privacy": {
+      "metaTitle": "Privacy",
+      "title": "Privacy",
+      "description": "Where your data is processed, how sensitive matters start and how long raw audio is kept.",
+      "loading": "Loading the privacy settings",
+      "summary": "Your data stays in India. AI processing stays in India. We never train on your content.",
+      "indiaOnly": {
+        "title": "AI processing",
+        "label": "India-only AI processing",
+        "description": "AI features run only on providers that process data in India, under terms that forbid keeping or training on your content.",
+        "locked": "Locked on",
+        "note": "This stays on for every workspace. It protects client confidentiality and cannot be turned off here."
+      },
+      "settings": {
+        "title": "Sensitive matters and retention",
+        "description": "Two choices this workspace can make about how matters start and how long recordings are kept.",
+        "readOnly": "Only owners and advocates can change these settings.",
+        "sensitiveDefaultRestricted": {
+          "label": "Restrict sensitive matters by default",
+          "description": "New matters marked sensitive start open only to the people listed on them."
+        },
+        "retentionAudioDays": {
+          "label": "Keep raw audio for",
+          "description": "Voice recordings are deleted after this many days. Transcripts stay until you delete them.",
+          "option": "{days} days"
+        }
+      },
+      "subProcessors": {
+        "title": "Sub-processors",
+        "description": "The companies that help us run CauseDeck, what they do and where they process data.",
+        "link": "See the sub-processor list"
+      },
+      "neverDoes": {
+        "title": "What CauseDeck never does",
+        "items": {
+          "train": "Train AI models on your matters, documents or notes.",
+          "sell": "Sell or share your data for advertising.",
+          "abroad": "Send matter content to AI providers outside India.",
+          "access": "Let our staff open your workspace without your consent.",
+          "keep": "Keep raw audio longer than the window you choose."
+        }
+      },
+      "saving": "Saving...",
+      "saved": "Saved",
+      "toast": {
+        "saved": "Privacy settings saved.",
+        "undo": "Undo",
+        "undone": "Change undone.",
+        "error": "Could not save the privacy settings. Try again.",
+        "forbidden": "Only owners and advocates can change privacy settings.",
+        "offline": "Settings can be changed when you are back online."
+      },
+      "error": {
+        "title": "Could not load the privacy settings.",
+        "retry": "Try again"
+      }
+    },
+    "support": {
+      "title": "Support access",
+      "description": "CauseDeck support can see this workspace only when you allow it, and only for the time you choose.",
+      "scope": {
+        "title": "What support can see",
+        "view": "Read-only view: support can open the matters, documents and tasks an advocate could see. Restricted matters and billing stay hidden, and support cannot change anything.",
+        "metadata": "Details only: support sees your plan, seat count and usage, never your matters or documents.",
+        "audit": "Access ends when the time runs out or when you end it. Everything support opens is recorded in the audit log."
+      },
+      "scopeLabel": {
+        "view": "Read-only view",
+        "metadata": "Details only"
+      },
+      "pending": {
+        "title": "Pending requests",
+        "requestedAt": "Requested {time}",
+        "reason": "Reason: {reason}"
+      },
+      "active": {
+        "title": "Active sessions",
+        "until": "Until {time}"
+      },
+      "duration": {
+        "label": "Length",
+        "h1": "1 hour",
+        "h2": "2 hours",
+        "h4": "4 hours"
+      },
+      "grant": "Grant for {duration}",
+      "deny": "Deny",
+      "revoke": "Revoke now",
+      "empty": {
+        "title": "No support requests.",
+        "hint": "When CauseDeck support asks to see this workspace, the request appears here and you get a security alert."
+      },
+      "error": {
+        "title": "Could not load support sessions.",
+        "retry": "Try again"
+      },
+      "toast": {
+        "granted": "Support can view this workspace until {time}.",
+        "denied": "Request denied.",
+        "revoked": "Support session ended."
+      },
+      "errors": {
+        "conflict": "This request has changed. Refresh to see where it stands.",
+        "forbidden": "Only workspace owners can decide on support access.",
+        "notFound": "This support request no longer exists.",
+        "offline": "You are offline. Support access can be changed when you are back online.",
+        "generic": "Something went wrong. Try again."
+      },
+      "loading": "Loading support sessions"
+    },
+    "account": {
+      "metaTitle": "Account",
+      "title": "Account",
+      "description": "Your profile, sign-in methods and active sessions. These apply in every workspace.",
+      "navLabel": "Account sections",
+      "nav": {
+        "profile": "Profile",
+        "security": "Security",
+        "danger": "Danger zone"
+      },
+      "loading": "Loading your account",
+      "error": {
+        "title": "Could not load your account.",
+        "retry": "Try again"
+      },
+      "forbidden": "You can only manage your own account.",
+      "offline": "You are offline. Settings can be changed when you are back online.",
+      "cancel": "Cancel",
+      "profile": {
+        "title": "Profile",
+        "description": "How you appear to colleagues in every workspace.",
+        "name": "Name",
+        "nameHint": "Shown on matters, tasks and the activity log.",
+        "avatar": "Avatar",
+        "avatarHint": "Your initials for now. Photo upload comes later.",
+        "email": "Email",
+        "emailHint": "The address you sign in with.",
+        "language": "Language",
+        "languageHint": "The language CauseDeck uses for you on every device.",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "saved": "Saved",
+        "toast": {
+          "saved": "Profile saved."
+        },
+        "errors": {
+          "name": "Enter a name of up to 120 characters.",
+          "language": "Could not change the language. Try again.",
+          "generic": "Could not save your profile. Try again."
+        }
+      },
+      "security": {
+        "title": "Security",
+        "description": "Passkeys, two-factor authentication, sessions and connected accounts."
+      },
+      "passkeys": {
+        "title": "Passkeys",
+        "description": "Sign in with your fingerprint, face or screen lock instead of an email link.",
+        "listLabel": "Your passkeys",
+        "add": "Add passkey",
+        "empty": "No passkeys yet. Add one to sign in with your fingerprint or screen lock.",
+        "unnamed": "Passkey",
+        "added": "Added {date}",
+        "remove": "Remove",
+        "removeLabel": "Remove {name}",
+        "removeTitle": "Remove this passkey?",
+        "removeBody": "You will no longer be able to sign in with {name}. You can add it again later.",
+        "removeConfirm": "Remove passkey",
+        "unsupported": "This browser cannot create passkeys.",
+        "toast": {
+          "added": "Passkey added.",
+          "removed": "Passkey removed.",
+          "addFailed": "Could not add the passkey. Try again.",
+          "removeFailed": "Could not remove the passkey. Try again."
+        }
+      },
+      "twoFactor": {
+        "title": "Two-factor authentication",
+        "description": "Ask for a code from an authenticator app as a second step.",
+        "status": "Status",
+        "on": "On",
+        "off": "Off",
+        "onHint": "Your account is protected with an authenticator app.",
+        "offHint": "Add an authenticator app to protect your account if someone gets your email.",
+        "setUp": "Set up",
+        "toast": {
+          "enabled": "Two-factor authentication is on."
+        },
+        "dialog": {
+          "title": "Set up two-factor authentication",
+          "step": "Step {current} of {total}",
+          "preparing": "Preparing your QR code",
+          "scanTitle": "Scan the QR code",
+          "scanBody": "Open an authenticator app, such as Google Authenticator or Microsoft Authenticator, and scan this code.",
+          "qrAlt": "QR code for your authenticator app",
+          "manual": "Can't scan? Enter this key",
+          "next": "Next",
+          "back": "Back",
+          "verifyTitle": "Enter the 6-digit code",
+          "verifyBody": "Type the code your authenticator app shows for CauseDeck.",
+          "code": "Code",
+          "verify": "Verify",
+          "codesTitle": "Save your backup codes",
+          "codesBody": "Each code works once if you lose your phone. They are shown only now, so keep them somewhere safe.",
+          "codesLabel": "Backup codes",
+          "copy": "Copy",
+          "copied": "Backup codes copied.",
+          "download": "Download",
+          "done": "Done",
+          "retry": "Try again",
+          "errors": {
+            "code": "Enter the 6-digit code from your app.",
+            "wrongCode": "That code did not work. Check the time on your phone and try again.",
+            "copy": "Could not copy. Select the codes and copy them yourself.",
+            "generic": "Could not set up two-factor authentication. Try again."
+          }
+        }
+      },
+      "sessions": {
+        "title": "Active sessions",
+        "description": "Devices signed in to your account. Revoke any you don't recognise.",
+        "tableCaption": "Your active sessions",
+        "columns": {
+          "device": "Device",
+          "ip": "IP address",
+          "signedIn": "Signed in",
+          "actions": "Actions"
+        },
+        "device": "{browser} on {os}",
+        "unknownDevice": "Unknown device",
+        "unknownIp": "Unknown",
+        "current": "This device",
+        "empty": "No other active sessions.",
+        "revoke": "Revoke",
+        "revokeLabel": "Revoke the session on {device}",
+        "revokeTitle": "Revoke this session?",
+        "revokeBody": "{device} will be signed out on its next request.",
+        "revokeConfirm": "Revoke session",
+        "toast": {
+          "revoked": "Session revoked.",
+          "failed": "Could not revoke the session. Try again."
+        }
+      },
+      "connected": {
+        "title": "Connected accounts",
+        "description": "Services you can sign in with besides email links and passkeys.",
+        "listLabel": "Connected accounts",
+        "empty": "No connected accounts. You sign in with an email link or a passkey.",
+        "connectedOn": "Connected {date}",
+        "providers": {
+          "google": "Google"
+        }
+      }
+    }
+  },
+  "lifecycle": {
+    "offline": "Needs a connection",
+    "forbidden": "Only workspace owners can export or delete this workspace.",
+    "stepUp": {
+      "title": "Confirm it is you",
+      "body": "Use your passkey or the code from your authenticator app. It stays confirmed for 10 minutes.",
+      "passkey": "Use passkey",
+      "code": "Authenticator code",
+      "verify": "Verify code",
+      "verified": "Confirmed. You can continue.",
+      "wrongCode": "That code did not work.",
+      "codeFormat": "Enter the 6-digit code.",
+      "passkeyFailed": "The passkey check did not finish. Try again.",
+      "required": "Confirm it is you to continue."
+    },
+    "export": {
+      "title": "Export everything",
+      "action": "Request export",
+      "helper": "A ZIP containing your matters, documents, memory and activity. Ready within minutes for most workspaces.",
+      "leave": "You can leave this page; come back here to download it.",
+      "progressLabel": "Export progress",
+      "steps": {
+        "queued": "Waiting to start",
+        "collecting": "Collecting records",
+        "files": "Decrypting files",
+        "packaging": "Packaging"
+      },
+      "readyTitle": "Your export is ready",
+      "expires": "Expires in {hours, plural, =0 {less than an hour} one {# hour} other {# hours}}",
+      "download": "Download",
+      "copySha": "Copy SHA-256",
+      "copied": "SHA-256 copied",
+      "copyFailed": "Could not copy the SHA-256.",
+      "failed": "The export did not finish.",
+      "retry": "Try again",
+      "requestError": "Could not request the export. Try again.",
+      "downloadError": "Could not start the download. Try again."
+    },
+    "history": {
+      "title": "History",
+      "empty": "No exports yet.",
+      "requested": "Requested {date}",
+      "status": {
+        "queued": "Queued",
+        "running": "Building",
+        "ready": "Ready",
+        "failed": "Failed",
+        "expired": "Expired"
+      }
+    },
+    "danger": {
+      "title": "Delete this workspace",
+      "consequences": {
+        "data": "Every matter, document, member and setting in this workspace is deleted.",
+        "permanent": "Deletion becomes permanent after a 14-day cooling-off period.",
+        "export": "Export the workspace first if you need a copy.",
+        "cryptoErase": "We destroy the workspace's encryption key, so stored files can never be read again."
+      },
+      "action": "Delete workspace",
+      "scheduled": "Scheduled for deletion on {date}. Cancel any time before then.",
+      "cancel": "Cancel deletion",
+      "cancelled": "Deletion cancelled",
+      "cancelError": "Could not cancel the deletion. Try again.",
+      "requested": "Deletion scheduled",
+      "dialog": {
+        "title": "Delete this workspace",
+        "step": "Step {current} of {total}",
+        "exportTitle": "Export first",
+        "exportBody": "After deletion nothing can be recovered. Download an export if you need a copy.",
+        "exportLink": "Open export",
+        "exportAck": "I have exported what I need, or I do not need a copy",
+        "nameTitle": "Type the workspace name",
+        "nameLabel": "Workspace name",
+        "nameHint": "Type {name} to confirm.",
+        "nameMismatch": "The name does not match.",
+        "next": "Next",
+        "back": "Back",
+        "close": "Cancel",
+        "delete": "Delete",
+        "error": "Could not request deletion. Try again."
+      }
+    },
+    "account": {
+      "title": "Delete account",
+      "description": "Delete your CauseDeck account and sign out everywhere.",
+      "consequences": "Your name and email are removed and your activity in workspaces is anonymised. You must first transfer or delete any workspace you are the only owner of.",
+      "action": "Delete account",
+      "dialogTitle": "Delete your account",
+      "confirmLabel": "Type your email to confirm",
+      "confirmHint": "Type {email} to confirm.",
+      "mismatch": "The email does not match.",
+      "delete": "Delete account",
+      "close": "Cancel",
+      "requested": "Your account deletion has started.",
+      "error": "Could not delete your account. Try again."
+    }
+  },
+  "audit": {
+    "metaTitle": "Activity",
+    "title": "Activity",
+    "description": "Security and administrative events in {workspace}.",
+    "tabs": {
+      "label": "Activity views",
+      "security": "Security and audit"
+    },
+    "tableLabel": "Security events",
+    "loading": "Loading activity",
+    "empty": "No security events in this period.",
+    "error": {
+      "title": "Could not load activity.",
+      "retry": "Try again"
+    },
+    "offline": "You are offline. Showing the first page as saved; filters and export are paused.",
+    "denied": "Only owners and advocates can view the audit log.",
+    "loadMore": "Load more",
+    "loadMoreFailed": "Could not load more events.",
+    "columns": {
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "target": "Target",
+      "outcome": "Outcome",
+      "ip": "IP"
+    },
+    "outcome": {
+      "success": "Allowed",
+      "denied": "Denied",
+      "error": "Failed"
+    },
+    "actor": {
+      "system": "CauseDeck",
+      "staff": "CauseDeck support",
+      "api": "An API client",
+      "unknown": "A former member"
+    },
+    "sentence": {
+      "memberRemoved": "{actor} removed {target} from the workspace",
+      "memberRoleChanged": "{actor} changed {target}'s role to {role}",
+      "memberRoleChangedNoRole": "{actor} changed {target}'s role",
+      "flagChanged": "{actor} changed the feature flag {target}",
+      "budgetOverride": "{actor} set an AI budget override",
+      "retentionPurged": "{actor} purged audit events past the retention window",
+      "exported": "{actor} exported the audit log",
+      "settingsViewed": "{actor} opened the workspace settings",
+      "profileUpdated": "{actor} updated the workspace profile",
+      "slugRenamed": "{actor} changed the web address from {from} to {to}",
+      "slugRenamedNoSlugs": "{actor} changed the web address",
+      "generic": "{actor} recorded {action}"
+    },
+    "selected": "Selected: {event}",
+    "filters": {
+      "label": "Filters",
+      "date": "Date range",
+      "dateAll": "Any date",
+      "dateRange": "{from} to {to}",
+      "dateFrom": "From {from}",
+      "dateHint": "Pick the first and last day. Times are in IST.",
+      "actor": "Actor",
+      "actorAll": "Anyone",
+      "action": "Action",
+      "actionAll": "All actions",
+      "apply": "Apply",
+      "clear": "Clear filters",
+      "groups": {
+        "member": "Members",
+        "flag": "Feature flags",
+        "usage": "AI usage",
+        "audit": "Audit log",
+        "workspace": "Workspace"
+      }
+    },
+    "export": {
+      "button": "Export",
+      "title": "Export the audit log",
+      "description": "The file covers the selected range and is itself recorded in the audit log.",
+      "format": "Format",
+      "csv": "CSV",
+      "jsonl": "JSON Lines",
+      "bom": "Add a byte order mark for Excel",
+      "from": "From",
+      "to": "To",
+      "rangeInvalid": "The start date must be before the end date.",
+      "confirm": "Download",
+      "cancel": "Cancel",
+      "started": "Your download has started.",
+      "failed": "Could not start the export.",
+      "denied": "Only owners and advocates can export the audit log.",
+      "offline": "You are offline. Export needs a connection."
+    },
+    "drawer": {
+      "title": "Event details",
+      "who": "Who",
+      "when": "When",
+      "target": "Target",
+      "outcome": "Outcome",
+      "ip": "IP address",
+      "requestId": "Request id",
+      "eventId": "Event id",
+      "metadata": "Metadata",
+      "noMetadata": "No metadata recorded.",
+      "copyId": "Copy event id",
+      "copied": "Event id copied.",
+      "chain": "Chain",
+      "chainVerified": "Verified",
+      "chainUnverified": "Chain not yet verified",
+      "chainChecking": "Checking the chain",
+      "close": "Close"
+    },
+    "shortcuts": "J and K move between rows, Enter opens the details, E exports.",
+    "settingsLink": {
+      "title": "Audit log",
+      "hint": "Security and administrative events, with export."
     }
   },
   "error": {

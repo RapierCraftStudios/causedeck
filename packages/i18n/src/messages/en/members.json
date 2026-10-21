@@ -30,6 +30,10 @@
       "alreadyMember": {
         "title": "You are already a member",
         "body": "You already belong to {workspace}."
+      },
+      "seatLimit": {
+        "title": "No seats left in this workspace",
+        "body": "The workspace's plan has no free seat for you. Ask the person who invited you to add a seat."
       }
     },
     "accept": "Accept invitation",
@@ -131,6 +135,10 @@
         "invalid": "{email} could not be invited. Check the address.",
         "conflict": "{email} could not be invited: the workspace has no seat left for this role.",
         "failed": "Could not invite {email}. Please try again."
+      },
+      "seatLimit": {
+        "message": "Your plan includes {seats} seats. Add a seat to invite more people.",
+        "managePlan": "Manage plan"
       }
     },
     "changeRole": {
@@ -183,6 +191,29 @@
       "signedOut": "Your session ended. Sign in again to continue.",
       "offline": "You are offline. Connect to make changes.",
       "generic": "Something went wrong. Please try again."
+    },
+    "rolesLink": "How roles work",
+    "tabs": {
+      "label": "Members and invitations",
+      "members": "Members ({count})",
+      "invitations": "Pending invitations ({count})"
+    },
+    "invitationsEmpty": "No pending invitations.",
+    "seats": {
+      "title": "Seats",
+      "used": "{used} of {granted} seats in use",
+      "clerk": "{used} of {granted} clerk seats in use",
+      "overLimit": "Over plan limit",
+      "note": "Invitations take a seat when they are accepted."
+    },
+    "aboutRoles": "About roles",
+    "transferPicker": {
+      "title": "Transfer ownership",
+      "description": "Choose the member who will become the owner of {workspace}.",
+      "label": "New owner",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "none": "Invite another member before you transfer ownership."
     }
   }
 }

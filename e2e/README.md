@@ -95,6 +95,28 @@ has one user per role: `owner`, `advocate`, `junior`, `clerk` and `viewer`. Thei
 - Mask anything still dynamic: `toHaveScreenshot({ mask: [page.getByTestId('…')] })`.
 - No external network. If a feature calls out, stub it with `page.route`.
 
+## Admin console (#309)
+
+The `webServer` step also builds apps/admin (`E2E_BUILD=1 NODE_ENV=development`) into
+`apps/admin/.next-e2e`. Specs that use the `adminServer` or `adminAs(kind)` fixtures
+(`fixtures/admin.ts`) start one admin server per worker on `E2E_ADMIN_PORT + 1 + parallelIndex`
+(default `E2E_PORT + 200`, so 3301, 3302 ...). It runs against the worker's database, with
+`ADMIN_IP_ALLOWLIST=203.0.113.0/24`. Every fixture request sends `X-Forwarded-For: 203.0.113.10`,
+so a test probes the allowlist by sending another address.
+
+`support/db-reset.ts` seeds the staff fixtures into the template as the owner role, after the
+app-role `e2e` seed, because the app role cannot write `staff_user`. The fixtures
+(`fixtures/admin-data.ts`) are:
+
+- an `admin` staff member with TOTP enrolled;
+- a `support` staff member without 2FA;
+- a disabled staff member;
+- a non-staff user with TOTP enrolled.
+
+Enrolled fixtures share `ADMIN_TOTP_SECRET`, and `totpCode()` computes the current code.
+`adminAs(kind)` signs in through the admin dev sign-in and, for enrolled staff, completes the
+`/verify-2fa` step. Pass `{ verify: false }` to stop before it.
+
 ## Visual baselines
 
 Baselines live in `e2e/__screenshots__/<project>/<spec>/<name>.png`. They are only ever generated in

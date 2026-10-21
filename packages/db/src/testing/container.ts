@@ -24,6 +24,9 @@ export const ROLES = {
   app: { user: 'causedeck_app', password: 'causedeck_app' },
 } as const;
 
+/** The no-login role clerk members run as inside `withWorkspace({ dbRole: 'clerk' })` (#233). */
+export const CLERK_ROLE = 'causedeck_clerk';
+
 export const DATABASE_NAME = 'causedeck';
 /** Copy of `causedeck` taken after the init SQL and before migrations: the scratch-DB template. */
 export const PRISTINE_TEMPLATE = 'causedeck_pristine';

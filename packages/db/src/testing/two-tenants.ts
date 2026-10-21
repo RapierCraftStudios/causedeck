@@ -5,18 +5,29 @@
 // committed data (the api and web suites, whose users come from Better Auth).
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
+import { sql } from 'drizzle-orm';
+
 import type { Database, Transaction } from '../client.ts';
 import { registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
+import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
+import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { deletionJob, exportJob } from '../schema/lifecycle.ts';
+import { matterRestriction } from '../schema/matter-restriction.ts';
+import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
   usageEvent,
   usagePeriodSummary,
   usageReservation,
 } from '../schema/usage.ts';
+import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
+import { supportSession } from '../schema/staff.ts';
+import { blob, workspaceKey } from '../schema/storage.ts';
+import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -37,6 +48,23 @@ export type SeedRow = Record<string, string>;
 
 /** Writes one row into its table for `ctx.workspaceId`, on a transaction scoped to it. */
 export type TenantSeeder = (tx: Transaction, ctx: SeedContext) => Promise<SeedRow>;
+
+/** A draft SaaS invoice for the workspace (the seed for `saas_invoice` and `saas_invoice_line`). */
+async function seedDraftInvoice(tx: Transaction, workspaceId: string): Promise<string> {
+  const party = { legalName: 'XT Seed', address: 'Seed Road', gstin: null, stateCode: '29' };
+  const rows = await tx
+    .insert(saasInvoice)
+    .values({
+      workspaceId,
+      series: 'XT',
+      fy: '26-27',
+      supplier: party,
+      recipient: party,
+      placeOfSupplyStateCode: '29',
+    })
+    .returning({ id: saasInvoice.id });
+  return first(rows, 'saas_invoice').id;
+}
 
 function first<T>(rows: T[], table: string): T {
   const [row] = rows;
@@ -119,7 +147,8 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     return { key };
   },
   usage_counter: async (tx, { workspaceId }) => {
-    const key = `xt.seed.${randomUUID()}`;
+    // Usage keys are lowercase dotted segments (usage_*_key_chk): no hyphens, so strip the UUID's.
+    const key = `xt.seed.${randomUUID().replaceAll('-', '')}`;
     await tx.insert(usageCounter).values({ workspaceId, key, periodStart: new Date(), value: 1 });
     return { key };
   },
@@ -129,6 +158,50 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(billingEvent)
       .values({ providerEventId, workspaceId, type: 'xt.seed', payloadHash: randomUUID() });
     return { providerEventId };
+  },
+  audit_event: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx.execute<{ id: string }>(
+      sql`select id from app_audit_append(${workspaceId}::uuid, ${ownerId}::uuid, 'user', 'xt.seed')`,
+    );
+    return { auditEventId: first([...rows], 'audit_event').id };
+  },
+  ai_call: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(aiCall)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        purpose: 'xt.seed',
+        provider: 'mock',
+        model: 'mock-1',
+        region: 'ap-south-1',
+        automationLevel: 1,
+      })
+      .returning({ id: aiCall.id });
+    return { aiCallId: first(rows, 'ai_call').id };
+  },
+  notification: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(notification)
+      .values({ workspaceId, userId: ownerId, category: 'system.notice', title: 'Seed notice' })
+      .returning({ id: notification.id });
+    return { notificationId: first(rows, 'notification').id, userId: ownerId };
+  },
+  notification_pref: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(notificationPref).values({
+      workspaceId,
+      userId: ownerId,
+      category: 'system.notice',
+      channel: 'email',
+      enabled: false,
+    });
+    return { userId: ownerId, category: 'system.notice', channel: 'email' };
+  },
+  notification_setting: async (tx, { workspaceId, ownerId }) => {
+    await tx
+      .insert(notificationSetting)
+      .values({ workspaceId, userId: ownerId, courtHoursQuiet: true });
+    return { userId: ownerId };
   },
   usage_reservation: async (tx, { workspaceId }) => {
     const rows = await tx
@@ -175,6 +248,115 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(usagePeriodSummary)
       .values({ workspaceId, key, periodStart: new Date(), value: 1 });
     return { key };
+  },
+  workspace_feature_flag: async (tx, { workspaceId, ownerId }) => {
+    const key = `xt.seed.${randomUUID()}`;
+    await tx
+      .insert(workspaceFeatureFlag)
+      .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
+    return { key };
+  },
+  matter_restriction: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(matterRestriction)
+        .values({
+          workspaceId,
+          matterId: randomUUID(),
+          allowedUserIds: [ownerId],
+          createdBy: ownerId,
+        })
+        .returning({ id: matterRestriction.id, matterId: matterRestriction.matterId }),
+      'matter_restriction',
+    );
+    return { id: row.id, matterId: row.matterId };
+  },
+  support_session: async (tx, { workspaceId, ownerId }) => {
+    // A pending request; the requester's staff_user row is not needed at the SQL level.
+    const row = first(
+      await tx
+        .insert(supportSession)
+        .values({ workspaceId, requestedByStaff: ownerId, reason: 'Seed support request' })
+        .returning({ id: supportSession.id }),
+      'support_session',
+    );
+    return { id: row.id };
+  },
+  workspace_integration: async (tx, { workspaceId }) => {
+    // The hash of a random token: the plaintext is never stored.
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const row = first(
+      await tx
+        .insert(workspaceIntegration)
+        .values({ workspaceId, kind: 'ics_feed', tokenHash })
+        .returning({ id: workspaceIntegration.id }),
+      'workspace_integration',
+    );
+    return { id: row.id };
+  },
+  workspace_key: async (tx, { workspaceId }) => {
+    // Opaque bytes standing in for a wrapped DEK; the table never sees a plaintext key.
+    await tx
+      .insert(workspaceKey)
+      .values({ workspaceId, wrappedDek: randomBytes(60), kekId: 'kek-test' });
+    return { workspaceId };
+  },
+  blob: async (tx, { workspaceId, ownerId }) => {
+    // A finalized upload row; the object itself never exists in a SQL-only suite.
+    const id = randomUUID();
+    const year = new Date().getUTCFullYear();
+    await tx.insert(blob).values({
+      id,
+      workspaceId,
+      key: `ws/${workspaceId}/document/${String(year)}/${id}`,
+      kind: 'document',
+      filename: 'seed.pdf',
+      size: 8,
+      sha256: createHash('sha256').update(id).digest('hex'),
+      mime: 'application/pdf',
+      scanStatus: 'pending',
+      createdBy: ownerId,
+      finalizedAt: new Date(),
+    });
+    return { id };
+  },
+  saas_invoice: async (tx, { workspaceId }) => ({
+    invoiceId: await seedDraftInvoice(tx, workspaceId),
+  }),
+  saas_invoice_line: async (tx, { workspaceId }) => {
+    const invoiceId = await seedDraftInvoice(tx, workspaceId);
+    const rows = await tx
+      .insert(saasInvoiceLine)
+      .values({
+        workspaceId,
+        invoiceId,
+        description: 'Seed seat',
+        quantity: 1,
+        unitPricePaise: 100,
+        amountPaise: 100,
+      })
+      .returning({ id: saasInvoiceLine.id });
+    return { invoiceId, lineId: first(rows, 'saas_invoice_line').id };
+  },
+  export_job: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(exportJob)
+        .values({ workspaceId, requestedBy: ownerId, scope: 'workspace', status: 'failed' })
+        .returning({ id: exportJob.id }),
+      'export_job',
+    );
+    return { id: row.id };
+  },
+  deletion_job: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(deletionJob)
+        .values({ workspaceId, kind: 'workspace', requestedBy: ownerId, status: 'cancelled' })
+        .returning({ id: deletionJob.id }),
+      'deletion_job',
+    );
+    return { id: row.id };
   },
 };
 

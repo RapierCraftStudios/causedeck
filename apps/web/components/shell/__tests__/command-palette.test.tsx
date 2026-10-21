@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { defaultSnapshot } from '@causedeck/flags/keys';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -26,7 +27,7 @@ const context = testWorkspaceContext();
 
 const renderShell = () =>
   renderWithIntl(
-    <AppShell context={context} sidebarState="auto">
+    <AppShell context={context} sidebarState="auto" flags={defaultSnapshot()}>
       <p>content</p>
     </AppShell>,
   );

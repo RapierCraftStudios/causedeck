@@ -13,7 +13,7 @@ import { CreateWorkspaceInput } from '@causedeck/validators/workspace';
 import { eq } from 'drizzle-orm';
 
 import { invalid, isUniqueViolation } from './errors.ts';
-import { requireOwner } from './members.ts';
+import { requireCan } from './members.ts';
 import { generateUniqueSlug } from './slug.ts';
 
 type Queryable = Database | Transaction;
@@ -49,6 +49,7 @@ export async function createWorkspace(
           .values({ id, name, slug, kind, createdBy: userId })
           .returning();
         if (!workspace) throw new Error('workspace insert returned no row');
+        // `role_granted_at` defaults to now(): the creator's owner 2FA grace starts here (#290).
         await tx.insert(member).values({ organizationId: workspace.id, userId, role: 'owner' });
         await tx.insert(workspaceSettings).values({ workspaceId: workspace.id });
         return workspace;
@@ -70,7 +71,7 @@ export async function softDeleteWorkspace(
   request: SoftDeleteRequest,
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    await requireOwner(tx, request.workspaceId, request.actorUserId);
+    await requireCan(tx, request.workspaceId, request.actorUserId, 'workspace.delete');
     await tx
       .update(organization)
       .set({ deletedAt: new Date() })

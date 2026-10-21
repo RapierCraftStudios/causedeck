@@ -98,6 +98,8 @@ export const session = pgTable(
     activeOrganizationId: uuid('active_organization_id').references(() => organization.id, {
       onDelete: 'set null',
     }),
+    /** The session's last passkey or TOTP verification, for step-up checks (#304). */
+    stepUpAt: timestamp('step_up_at', { withTimezone: true }),
     ...timestamps(),
   },
   (t) => [index('session_user_id_idx').on(t.userId)],
@@ -202,6 +204,8 @@ export const member = pgTable(
     role: text('role').notNull(),
     status: text('status').notNull().default('active'),
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+    /** When the current `role` was granted; starts the owner 2FA grace (#290). */
+    roleGrantedAt: timestamp('role_granted_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: createdAt(),
   },
   (t) => [

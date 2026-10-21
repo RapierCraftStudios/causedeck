@@ -20,7 +20,7 @@ import {
 import { and, eq, sql, type SQL } from 'drizzle-orm';
 
 import { conflict, invalid, isUniqueViolation } from './errors.ts';
-import { liveWorkspace, requireOwner } from './members.ts';
+import { liveWorkspace, requireCan } from './members.ts';
 
 type Queryable = Database | Transaction;
 
@@ -93,7 +93,12 @@ export async function renameSlug(db: Queryable, request: RenameSlugRequest): Pro
 
   try {
     return await db.transaction(async (tx) => {
-      const workspace = await requireOwner(tx, request.workspaceId, request.actorUserId);
+      const workspace = await requireCan(
+        tx,
+        request.workspaceId,
+        request.actorUserId,
+        'workspace.rename',
+      );
       const oldSlug = workspace.slug;
       if (oldSlug.toLowerCase() === newSlug) return oldSlug;
 

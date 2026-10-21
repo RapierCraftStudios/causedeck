@@ -10,6 +10,7 @@ import {
   E2E_DELETED_WORKSPACE,
   E2E_EXTRA_MEMBERSHIPS,
   E2E_INVITATIONS,
+  E2E_SUBSCRIPTIONS,
   E2E_USERS,
   E2E_WORKSPACE_SLUGS,
   E2E_WORKSPACES,
@@ -37,7 +38,7 @@ async function seedAndDump(name: string, times = 1): Promise<Record<string, stri
   try {
     for (let i = 0; i < times; i++) await seed(db, { profile: 'e2e' });
     const dump: Record<string, string> = {};
-    for (const table of ['organization', 'user', 'member', 'invitation']) {
+    for (const table of ['organization', 'user', 'member', 'invitation', 'subscription']) {
       // Tenant rows are only visible inside their workspace (FORCE RLS, #19): read each one.
       const rows: { id: string; row: string }[] = [];
       for (const workspaceId of SEEDED_WORKSPACE_IDS) {
@@ -111,6 +112,30 @@ describe('e2e seed profile', () => {
     expect(deleted?.deleted_at).not.toBeNull();
     // E2E_USERS (one storage state each in global-setup) is unchanged: 2 workspaces x 5 roles.
     expect(E2E_USERS).toHaveLength(10);
+  });
+
+  it('gives each live workspace a paid subscription with spare seats (#203)', async () => {
+    const dump = await seedAndDump('e2e_seed_subscriptions');
+    const rows = (dump.subscription ?? '')
+      .split('\n')
+      .map((row) => JSON.parse(row) as Record<string, string | number | null>);
+    expect(rows).toHaveLength(Object.keys(E2E_SUBSCRIPTIONS).length);
+    const members = (dump.member ?? '')
+      .split('\n')
+      .map((row) => JSON.parse(row) as { workspace_id: string; role: string });
+    for (const seeded of Object.values(E2E_SUBSCRIPTIONS)) {
+      const workspaceId = E2E_WORKSPACES[seeded.workspace].id;
+      const row = rows.find((r) => r.id === seeded.id);
+      expect(row).toMatchObject({
+        workspace_id: workspaceId,
+        plan_id: 'chamber-seat-1',
+        status: 'active',
+      });
+      const own = members.filter((m) => m.workspace_id === workspaceId);
+      const clerks = own.filter((m) => m.role === 'clerk').length;
+      expect(seeded.clerkSeats).toBeGreaterThan(clerks);
+      expect(seeded.seats).toBeGreaterThan(own.length - clerks);
+    }
   });
 
   it('seeds one hashed invitation per /invite state for a non-member (#180)', async () => {

@@ -14,6 +14,7 @@
     "./seed/e2e": "./src/seed/e2e.ts",
     "./seed/plans": "./src/seed/plans.ts",
     "./testing": "./src/testing/index.ts",
+    "./testing/client": "./src/testing/client.ts",
     "./testing/cross-tenant-registry": "./src/testing/cross-tenant-registry.ts",
     "./testing/global-setup": "./src/testing/global-setup.ts",
     "./testing/two-tenants": "./src/testing/two-tenants.ts",
@@ -32,9 +33,9 @@
     "db:check-rls": "tsx scripts/check-rls.ts"
   },
   "dependencies": {
-    "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/i18n": "workspace:*",
+    "@causedeck/validators": "workspace:*",
     "drizzle-orm": "catalog:",
     "postgres": "catalog:"
   },

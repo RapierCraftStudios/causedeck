@@ -1,9 +1,10 @@
 'use server';
 // Members page server actions (#181). Each one goes through `workspaceAction`
 // (lib/workspace-action.ts): zod input, `requireSession`, then the caller's membership, with
-// non-members rejected as FORBIDDEN before the handler runs. The handlers call the domain service
-// (`@causedeck/core/workspaces`) on the workspace-scoped transaction `ctx.tx`; the service decides
-// who may do what (owners manage members, owners and advocates invite).
+// non-members rejected as FORBIDDEN before the handler runs, and each action's policy permission
+// (`member.invite`, `member.role`, `member.remove`; #234) asserted by `guard`. The handlers call the
+// domain service (`@causedeck/core/workspaces`) on the workspace-scoped transaction `ctx.tx`, which
+// checks the same policy again (which roles an inviter may grant, the last-owner rule).
 //
 // Invitation emails go through the auth `Mailer` (`createMailer`): the console transport in dev and
 // CI, Mailpit with EMAIL_PROVIDER=smtp. The plaintext invite link comes back to the client only for
@@ -40,7 +41,9 @@ export type InviteFailure = 'forbidden' | 'rateLimited' | 'invalid' | 'conflict'
 
 export type InviteOutcome =
   | { email: string; status: 'sent'; /** Dev/console mailer only. */ link?: string }
-  | { email: string; status: InviteFailure };
+  | { email: string; status: InviteFailure }
+  /** The plan has no seat left for the role (#203); `seats` is the plan's seat count. */
+  | { email: string; status: 'seatLimit'; seats: number };
 
 export interface OpenWork {
   /** Open tasks and obligations the member holds; removal needs a reassignment when above 0. */
@@ -67,6 +70,13 @@ function inviteFailure(error: unknown): InviteFailure {
   return 'failed';
 }
 
+/** The billing seat gate's `ENTITLEMENT_EXCEEDED`, matched by shape like `inviteFailure`. */
+function seatLimit(error: unknown): number | null {
+  if (!(error instanceof Error) || error.name !== 'EntitlementError') return null;
+  const { code, limit } = error as Error & { code?: unknown; limit?: unknown };
+  return code === 'ENTITLEMENT_EXCEEDED' && typeof limit === 'number' ? limit : null;
+}
+
 async function mailSettings() {
   const [{ createMailer }, { toAuthLocale }, { getLocale }, env, { logger }] = await Promise.all([
     import('@causedeck/auth/mailer'),
@@ -87,123 +97,170 @@ async function mailSettings() {
 
 const core = () => import('@causedeck/core/workspaces');
 
+/** The workspaces service with the billing seat gate (#203) installed. */
+async function gatedCore() {
+  const [workspaces, { installBillingEntitlements }] = await Promise.all([
+    core(),
+    import('@causedeck/core/billing'),
+  ]);
+  installBillingEntitlements();
+  return workspaces;
+}
+
 function refresh(): void {
   revalidatePath('/w/[slug]/settings/members', 'page');
 }
 
-const invite = workspaceAction(InviteMembers, async (input, ctx) => {
-  const [{ inviteMember }, mail] = await Promise.all([core(), mailSettings()]);
-  const results: InviteOutcome[] = [];
-  for (const email of new Set(input.emails)) {
-    try {
-      const issued = await inviteMember(ctx.tx, {
-        workspaceId: ctx.workspaceId,
-        actorUserId: ctx.userId,
-        input: { email, role: input.role },
-        mailer: mail.mailer,
-        appUrl: mail.appUrl,
-        locale: mail.locale,
-      });
-      results.push(
-        mail.exposeLink
-          ? {
-              email,
-              status: 'sent',
-              link: new URL(`/invite/${issued.token}`, mail.appUrl).toString(),
-            }
-          : { email, status: 'sent' },
-      );
-    } catch (error) {
-      results.push({ email, status: inviteFailure(error) });
+const invite = workspaceAction(
+  InviteMembers,
+  async (input, ctx) => {
+    const [{ inviteMember }, mail] = await Promise.all([gatedCore(), mailSettings()]);
+    const results: InviteOutcome[] = [];
+    for (const email of new Set(input.emails)) {
+      try {
+        const issued = await inviteMember(ctx.tx, {
+          workspaceId: ctx.workspaceId,
+          actorUserId: ctx.userId,
+          input: { email, role: input.role },
+          mailer: mail.mailer,
+          appUrl: mail.appUrl,
+          locale: mail.locale,
+        });
+        results.push(
+          mail.exposeLink
+            ? {
+                email,
+                status: 'sent',
+                link: new URL(`/invite/${issued.token}`, mail.appUrl).toString(),
+              }
+            : { email, status: 'sent' },
+        );
+      } catch (error) {
+        const seats = seatLimit(error);
+        results.push(
+          seats === null
+            ? { email, status: inviteFailure(error) }
+            : { email, status: 'seatLimit', seats },
+        );
+      }
     }
-  }
-  refresh();
-  return { results };
-});
+    refresh();
+    return { results };
+  },
+  { action: 'member.invite' },
+);
 
-const changeMemberRole = workspaceAction(ChangeRole, async (input, ctx) => {
-  const { changeRole } = await core();
-  await changeRole(ctx.tx, {
-    workspaceId: ctx.workspaceId,
-    actorUserId: ctx.userId,
-    memberId: input.memberId,
-    role: input.role,
-  });
-  refresh();
-  return { memberId: input.memberId, role: input.role };
-});
+const changeMemberRole = workspaceAction(
+  ChangeRole,
+  async (input, ctx) => {
+    const { changeRole } = await core();
+    await changeRole(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      memberId: input.memberId,
+      role: input.role,
+    });
+    refresh();
+    return { memberId: input.memberId, role: input.role };
+  },
+  { action: 'member.role' },
+);
 
-const openWork = workspaceAction(MemberTarget, async (input, ctx) => {
-  const { countOpenWork, listMembers } = await core();
-  const target = (await listMembers(ctx.tx, ctx.workspaceId)).find(
-    (m) => m.memberId === input.memberId,
-  );
-  const count = target ? await countOpenWork(ctx.tx, ctx.workspaceId, target.userId) : 0;
-  return { count } satisfies OpenWork;
-});
+const openWork = workspaceAction(
+  MemberTarget,
+  async (input, ctx) => {
+    const { countOpenWork, listMembers } = await core();
+    const target = (await listMembers(ctx.tx, ctx.workspaceId)).find(
+      (m) => m.memberId === input.memberId,
+    );
+    const count = target ? await countOpenWork(ctx.tx, ctx.workspaceId, target.userId) : 0;
+    return { count } satisfies OpenWork;
+  },
+  { action: 'member.remove' },
+);
 
-const remove = workspaceAction(RemoveMember, async (input, ctx) => {
-  const { removeMember } = await core();
-  await removeMember(ctx.tx, {
-    workspaceId: ctx.workspaceId,
-    actorUserId: ctx.userId,
-    memberId: input.memberId,
-    reassignTo: input.reassignTo,
-  });
-  refresh();
-  return { memberId: input.memberId };
-});
+const remove = workspaceAction(
+  RemoveMember,
+  async (input, ctx) => {
+    const { removeMember } = await core();
+    await removeMember(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      memberId: input.memberId,
+      reassignTo: input.reassignTo,
+    });
+    refresh();
+    return { memberId: input.memberId };
+  },
+  { action: 'member.remove' },
+);
 
-const resend = workspaceAction(InvitationTarget, async (input, ctx) => {
-  const [{ reissueInvitation }, mail] = await Promise.all([core(), mailSettings()]);
-  const issued = await reissueInvitation(ctx.tx, {
-    workspaceId: ctx.workspaceId,
-    actorUserId: ctx.userId,
-    invitationId: input.invitationId,
-    mailer: mail.mailer,
-    appUrl: mail.appUrl,
-    locale: mail.locale,
-  });
-  refresh();
-  const { email } = issued.invitation;
-  return mail.exposeLink
-    ? { email, link: new URL(`/invite/${issued.token}`, mail.appUrl).toString() }
-    : { email };
-});
+const resend = workspaceAction(
+  InvitationTarget,
+  async (input, ctx) => {
+    const [{ reissueInvitation }, mail] = await Promise.all([core(), mailSettings()]);
+    const issued = await reissueInvitation(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      invitationId: input.invitationId,
+      mailer: mail.mailer,
+      appUrl: mail.appUrl,
+      locale: mail.locale,
+    });
+    refresh();
+    const { email } = issued.invitation;
+    return mail.exposeLink
+      ? { email, link: new URL(`/invite/${issued.token}`, mail.appUrl).toString() }
+      : { email };
+  },
+  { action: 'member.invite' },
+);
 
-const revoke = workspaceAction(InvitationTarget, async (input, ctx) => {
-  const { revokeInvitation } = await core();
-  await revokeInvitation(ctx.tx, {
-    workspaceId: ctx.workspaceId,
-    actorUserId: ctx.userId,
-    invitationId: input.invitationId,
-  });
-  refresh();
-  return { invitationId: input.invitationId };
-});
+const revoke = workspaceAction(
+  InvitationTarget,
+  async (input, ctx) => {
+    const { revokeInvitation } = await core();
+    await revokeInvitation(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      invitationId: input.invitationId,
+    });
+    refresh();
+    return { invitationId: input.invitationId };
+  },
+  { action: 'member.invite' },
+);
 
-const prepareTransfer = workspaceAction(TransferTarget, async (input, ctx) => {
-  const { prepareOwnershipTransfer } = await core();
-  const plan = await prepareOwnershipTransfer(ctx.tx, {
-    workspaceId: ctx.workspaceId,
-    actorUserId: ctx.userId,
-    newOwnerUserId: input.newOwnerUserId,
-  });
-  const { userId, name, email } = plan.newOwner;
-  return { confirmation: plan.confirmation, newOwner: { userId, name, email } };
-});
+const prepareTransfer = workspaceAction(
+  TransferTarget,
+  async (input, ctx) => {
+    const { prepareOwnershipTransfer } = await core();
+    const plan = await prepareOwnershipTransfer(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      newOwnerUserId: input.newOwnerUserId,
+    });
+    const { userId, name, email } = plan.newOwner;
+    return { confirmation: plan.confirmation, newOwner: { userId, name, email } };
+  },
+  { action: 'member.role' },
+);
 
-const confirmTransfer = workspaceAction(ConfirmTransfer, async (input, ctx) => {
-  const { transferOwnership } = await core();
-  await transferOwnership(ctx.tx, {
-    workspaceId: ctx.workspaceId,
-    actorUserId: ctx.userId,
-    newOwnerUserId: input.newOwnerUserId,
-    confirmation: input.confirmation,
-  });
-  refresh();
-  return { newOwnerUserId: input.newOwnerUserId };
-});
+const confirmTransfer = workspaceAction(
+  ConfirmTransfer,
+  async (input, ctx) => {
+    const { transferOwnership } = await core();
+    await transferOwnership(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      newOwnerUserId: input.newOwnerUserId,
+      confirmation: input.confirmation,
+    });
+    refresh();
+    return { newOwnerUserId: input.newOwnerUserId };
+  },
+  { action: 'member.role' },
+);
 
 // A `'use server'` module may only export async functions, so each action is wrapped.
 

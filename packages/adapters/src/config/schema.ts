@@ -99,6 +99,11 @@ export const AdapterConfigSchema = z
      * Two-digit years at or below the pivot are 20YY, above it 19YY (`26` -> 2026 with pivot 50).
      */
     twoDigitYearPivot: z.number().int().min(0).max(99).default(50),
+    /**
+     * Display-board stage code -> stage key, reserved for the legally gated display-board work
+     * (#404). No default, so configs without it keep their checksum.
+     */
+    stageCodeLegend: z.record(z.string(), z.string()).optional(),
   })
   .strict();
 

@@ -348,8 +348,15 @@
     {
       "idx": 49,
       "version": "7",
-      "when": 1792618474895,
-      "tag": "0049_notification_bench_alert_party_names",
+      "when": 1792617752528,
+      "tag": "0049_karnataka_hc_adapter_v1",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792621119792,
+      "tag": "0050_notification_bench_alert_party_names",
       "breakpoints": true
     }
   ]

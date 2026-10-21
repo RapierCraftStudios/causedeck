@@ -3,6 +3,7 @@
 // Playwright worker then gets its own clone (`CREATE DATABASE … TEMPLATE …`), and `resetWorkerDb`
 // drops and re-clones it before every test, so tests never see each other's writes.
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,13 @@ import { symmetricEncrypt } from 'better-auth/crypto';
 import postgres from 'postgres';
 
 import { ADMIN_FIXTURES, ADMIN_TOTP_SECRET } from '../fixtures/admin-data.ts';
+import {
+  CATALOGUE_EXPECTATIONS,
+  COURT_PARSE_RUNS,
+  COURTS_ADAPTER_ID,
+  COURTS_ADAPTER_VERSION,
+  COURTS_WORKSPACE_ID,
+} from '../fixtures/courts-data.ts';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -148,7 +156,10 @@ function installPgBoss(): void {
   });
 }
 
-/** Build the template: fresh database, init SQL, migrations (owner) and the `e2e` seed (app). */
+/**
+ * Build the template: fresh database, init SQL, migrations (owner, with the forum catalogue), the
+ * `e2e` seed (app), then the admin console and courts fixtures (owner).
+ */
 export async function createTemplateDb(): Promise<void> {
   await dropDatabase(TEMPLATE_DB);
   await admin([`create database ${TEMPLATE_DB} template template0 owner ${ROLES.owner.user}`]);
@@ -157,6 +168,7 @@ export async function createTemplateDb(): Promise<void> {
   installPgBoss();
   runDbScript('seed.ts', { DATABASE_URL: databaseUrl(TEMPLATE_DB, 'app') }, ['--profile', 'e2e']);
   await seedAdminFixtures();
+  await seedCourtFixtures();
 }
 
 /**
@@ -188,6 +200,52 @@ async function seedAdminFixtures(): Promise<void> {
           values (${row.id}, ${fixture.role}, case when ${disabled} then now() else null end)`;
       }
     }
+  } finally {
+    await sql.end();
+  }
+}
+
+/**
+ * Courts fixtures (#425, fixtures/courts-data.ts): `chennai-solo`'s parse history for catalogue
+ * forums, one `cause_list` document per `adapter_parse_run`. Both tables force row-level security,
+ * so the owner writes them in one transaction scoped to the workspace (`app.workspace_id`, as
+ * `withWorkspace` sets it). The forums themselves come from the catalogue `migrate.ts` seeded; a
+ * catalogue change that breaks what the specs rely on fails here, not in a screenshot. No
+ * access-mode registry rows: tests/admin/adapters.spec.ts starts from an empty registry.
+ */
+async function seedCourtFixtures(): Promise<void> {
+  const sql = postgres(databaseUrl(TEMPLATE_DB, 'owner'), { max: 1, onnotice: () => undefined });
+  try {
+    for (const expected of CATALOGUE_EXPECTATIONS) {
+      const [row] = await sql<{ adapter_level: string; enabled: boolean }[]>`
+        select adapter_level, enabled from forum
+        where workspace_id is null and code = ${expected.code}`;
+      if (row?.adapter_level !== expected.adapterLevel || row.enabled !== expected.enabled) {
+        throw new Error(
+          `e2e: catalogue forum ${expected.code} is ${JSON.stringify(row ?? null)}, the courts ` +
+            `fixtures expect ${expected.adapterLevel} ${expected.enabled ? 'enabled' : 'disabled'}`,
+        );
+      }
+    }
+    await sql.begin(async (tx) => {
+      await tx`select set_config('app.workspace_id', ${COURTS_WORKSPACE_ID}, true)`;
+      for (const run of COURT_PARSE_RUNS) {
+        const sha256 = createHash('sha256').update(run.documentId).digest('hex');
+        await tx`
+          insert into document (id, workspace_id, kind, storage_key, sha256, created_at, updated_at)
+          values (${run.documentId}, ${COURTS_WORKSPACE_ID}, 'cause_list',
+                  ${`ws/${COURTS_WORKSPACE_ID}/document/${run.documentId}`}, ${sha256},
+                  ${run.createdAt}, ${run.createdAt})`;
+        await tx`
+          insert into adapter_parse_run (workspace_id, document_id, adapter_id, adapter_version,
+            forum_code, rows_parsed, rows_anchored, unmapped_headings, unknown_case_types,
+            halls_seen, halls_unreadable, status, created_at)
+          values (${COURTS_WORKSPACE_ID}, ${run.documentId}, ${COURTS_ADAPTER_ID},
+                  ${COURTS_ADAPTER_VERSION}, ${run.forumCode}, ${run.rowsParsed},
+                  ${run.rowsAnchored}, 0, 0, ${run.hallsSeen}::text[],
+                  ${run.hallsUnreadable}::text[], ${run.status}, ${run.createdAt})`;
+      }
+    });
   } finally {
     await sql.end();
   }

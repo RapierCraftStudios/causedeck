@@ -345,6 +345,6 @@ describe('migration 0037', () => {
     const before = await runMigrations({ url: new Secret(db.owner), migrationsFolder: dir });
     expect(before.latest).toBe('0036_flag_change_request');
     const after = await runMigrations({ url: new Secret(db.owner) });
-    expect(after.applied).toEqual(['0037_matter_graph_foundations']);
+    expect(after.applied[0]).toBe('0037_matter_graph_foundations');
   }, 240_000);
 });

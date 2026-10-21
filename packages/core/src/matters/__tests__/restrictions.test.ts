@@ -1,5 +1,6 @@
 // Per-matter restrictions (#233): creating one requires `matter.restrict`, and a restricted matter
 // is readable only by its listed users plus owners (configurable); everyone else gets NOT_FOUND.
+// Since #345 a restriction needs a real matter of the workspace (composite FK to `matter`).
 import { randomUUID } from 'node:crypto';
 
 import type { Role } from '@causedeck/auth';
@@ -23,6 +24,18 @@ async function newUser(tx: Transaction, label: string): Promise<string> {
     .values({ name: label, email: `${label}-${randomUUID()}@example.test` })
     .returning({ id: schema.user.id });
   if (!row) throw new Error('user insert failed');
+  return row.id;
+}
+
+/** A matter of the workspace. */
+async function newMatter(tx: Transaction, workspaceId: string): Promise<string> {
+  const [row] = await inWorkspace(tx, workspaceId, (s) =>
+    s
+      .insert(schema.matter)
+      .values({ workspaceId, title: 'Test v. State' })
+      .returning({ id: schema.matter.id }),
+  );
+  if (!row) throw new Error('matter insert failed');
   return row.id;
 }
 
@@ -67,20 +80,30 @@ describe('restrictMatter', () => {
       for (const role of ['clerk', 'viewer'] as const) {
         const actor = { userId: users[role], workspaceId };
         expect(
-          await codeOf(restrictMatter(tx, actor, { matterId: randomUUID(), allowedUserIds: [] })),
+          await codeOf(
+            restrictMatter(tx, actor, {
+              matterId: await newMatter(tx, workspaceId),
+              allowedUserIds: [],
+            }),
+          ),
         ).toBe('FORBIDDEN');
       }
       // A junior reads only assigned matters: an unassigned one is NOT_FOUND, an assigned one FORBIDDEN.
-      const assigned = randomUUID();
+      const assigned = await newMatter(tx, workspaceId);
       const junior = { userId: users.junior, workspaceId, assignedMatterIds: new Set([assigned]) };
       expect(
-        await codeOf(restrictMatter(tx, junior, { matterId: randomUUID(), allowedUserIds: [] })),
+        await codeOf(
+          restrictMatter(tx, junior, {
+            matterId: await newMatter(tx, workspaceId),
+            allowedUserIds: [],
+          }),
+        ),
       ).toBe('NOT_FOUND');
       expect(
         await codeOf(restrictMatter(tx, junior, { matterId: assigned, allowedUserIds: [] })),
       ).toBe('FORBIDDEN');
       for (const role of ['advocate', 'owner'] as const) {
-        const matterId = randomUUID();
+        const matterId = await newMatter(tx, workspaceId);
         const row = await restrictMatter(
           tx,
           { userId: users[role], workspaceId },
@@ -97,18 +120,44 @@ describe('restrictMatter', () => {
     });
   });
 
+  it('is NOT_FOUND for a matter the workspace does not have (#345)', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId, users } = await seed(tx);
+      const other = await seed(tx);
+      const otherMatter = await newMatter(tx, other.workspaceId);
+      const owner = { userId: users.owner, workspaceId };
+      for (const matterId of [randomUUID(), otherMatter]) {
+        expect(await codeOf(restrictMatter(tx, owner, { matterId, allowedUserIds: [] }))).toBe(
+          'NOT_FOUND',
+        );
+      }
+      const rows = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.matterRestriction),
+      );
+      expect(rows).toEqual([]);
+    });
+  });
+
   it('takes the role from the membership, not the caller', async () => {
     await withTestDb(async (tx) => {
       const { workspaceId, users } = await seed(tx);
       const claimsOwner = { userId: users.viewer, workspaceId, role: 'owner' as const };
       expect(
         await codeOf(
-          restrictMatter(tx, claimsOwner, { matterId: randomUUID(), allowedUserIds: [] }),
+          restrictMatter(tx, claimsOwner, {
+            matterId: await newMatter(tx, workspaceId),
+            allowedUserIds: [],
+          }),
         ),
       ).toBe('FORBIDDEN');
       const outsider = { userId: users.outsider, workspaceId, role: 'owner' as const };
       expect(
-        await codeOf(restrictMatter(tx, outsider, { matterId: randomUUID(), allowedUserIds: [] })),
+        await codeOf(
+          restrictMatter(tx, outsider, {
+            matterId: await newMatter(tx, workspaceId),
+            allowedUserIds: [],
+          }),
+        ),
       ).toBe('NOT_FOUND');
     });
   });
@@ -116,7 +165,7 @@ describe('restrictMatter', () => {
   it('keeps one row per (workspace, matter): restricting again replaces the allow list', async () => {
     await withTestDb(async (tx) => {
       const { workspaceId, users } = await seed(tx);
-      const matterId = randomUUID();
+      const matterId = await newMatter(tx, workspaceId);
       const owner = { userId: users.owner, workspaceId };
       const first = await restrictMatter(tx, owner, { matterId, allowedUserIds: [users.listed] });
       const second = await restrictMatter(tx, owner, {
@@ -140,7 +189,7 @@ describe('restrictMatter', () => {
           restrictMatter(
             tx,
             { userId: users.owner, workspaceId },
-            { matterId: randomUUID(), allowedUserIds: [users.outsider] },
+            { matterId: await newMatter(tx, workspaceId), allowedUserIds: [users.outsider] },
           ),
         ),
       ).toBe('VALIDATION');
@@ -150,7 +199,7 @@ describe('restrictMatter', () => {
   it('is NOT_FOUND for an advocate not listed on an already restricted matter', async () => {
     await withTestDb(async (tx) => {
       const { workspaceId, users } = await seed(tx);
-      const matterId = randomUUID();
+      const matterId = await newMatter(tx, workspaceId);
       await restrictMatter(
         tx,
         { userId: users.owner, workspaceId },
@@ -180,7 +229,7 @@ describe('assertMatterReadable', () => {
   it('lets only listed users and owners read a restricted matter; others get NOT_FOUND', async () => {
     await withTestDb(async (tx) => {
       const { workspaceId, users } = await seed(tx);
-      const matterId = randomUUID();
+      const matterId = await newMatter(tx, workspaceId);
       await restrictMatter(
         tx,
         { userId: users.owner, workspaceId },
@@ -236,7 +285,7 @@ describe('stored owners_see_restricted (#285)', () => {
   it('applies when the caller passes no settings; passed settings still win', async () => {
     await withTestDb(async (tx) => {
       const { workspaceId, users } = await seed(tx);
-      const matterId = randomUUID();
+      const matterId = await newMatter(tx, workspaceId);
       await restrictMatter(
         tx,
         { userId: users.advocate, workspaceId },
@@ -263,8 +312,8 @@ describe('listMatterRestrictions (#285)', () => {
   it('lists what the actor may read, newest first, with allowed members by name', async () => {
     await withTestDb(async (tx) => {
       const { workspaceId, users } = await seed(tx);
-      const first = randomUUID();
-      const second = randomUUID();
+      const first = await newMatter(tx, workspaceId);
+      const second = await newMatter(tx, workspaceId);
       const advocate = { userId: users.advocate, workspaceId };
       await restrictMatter(tx, advocate, {
         matterId: first,

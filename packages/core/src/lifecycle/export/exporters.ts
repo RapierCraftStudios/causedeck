@@ -219,6 +219,15 @@ export const lifecycleExporter = tablesExporter('lifecycle', [
 // not exported. Workspace-wide only: the rows name no user.
 export const courtExporter = tablesExporter('court', [ws('forum'), ws('court_hall'), ws('bench')]);
 
+// Matters and their documents (#345). A document's storage key is an internal object key (like
+// `blob.key`), so it is left out; the files themselves come with the blobs.
+export const mattersExporter = tablesExporter('matters', [
+  ws('matter'),
+  ws('document', { exclude: ['storage_key'] }),
+  ws('document_page'),
+  ws('anchor'),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -230,6 +239,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   blobsExporter,
   lifecycleExporter,
   courtExporter,
+  mattersExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

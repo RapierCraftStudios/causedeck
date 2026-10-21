@@ -95,6 +95,10 @@ describe('matterVisibilityPredicate', () => {
         await s
           .insert(schema.organization)
           .values({ id: workspaceId, name: 'Chambers', slug: `vis-${workspaceId}` });
+        // Restrictions reference real matters (#345).
+        await s
+          .insert(schema.matter)
+          .values(matters.map((x) => ({ id: x.id, workspaceId, title: 'Test v. State' })));
         await s.insert(schema.matterRestriction).values(
           matters
             .filter((x) => x.allow !== undefined)
@@ -106,14 +110,19 @@ describe('matterVisibilityPredicate', () => {
             })),
         );
       });
-      // The same matter id restricted in another workspace must not affect this one.
+      // Another workspace's restriction must not affect this one. (It cannot name this workspace's
+      // matter: the composite FK to matter, #345, keeps restrictions inside their workspace.)
       await inWorkspace(tx, otherWorkspace, async (s) => {
         await s
           .insert(schema.organization)
           .values({ id: otherWorkspace, name: 'Other', slug: `vis-${otherWorkspace}` });
+        const [otherMatter] = await s
+          .insert(schema.matter)
+          .values({ workspaceId: otherWorkspace, title: 'Other v. State' })
+          .returning({ id: schema.matter.id });
         await s.insert(schema.matterRestriction).values({
           workspaceId: otherWorkspace,
-          matterId: open.id,
+          matterId: otherMatter?.id ?? '',
           allowedUserIds: [other],
           createdBy: other,
         });
@@ -166,6 +175,7 @@ describe('matterVisibilityPredicate', () => {
         await s
           .insert(schema.organization)
           .values({ id: workspaceId, name: 'Chambers', slug: `vis-${workspaceId}` });
+        await s.insert(schema.matter).values({ id: listed, workspaceId, title: 'Test v. State' });
         await s
           .insert(schema.matterRestriction)
           .values({ workspaceId, matterId: listed, allowedUserIds: [me], createdBy: me });

@@ -14,9 +14,11 @@ import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
+import { anchor, document, documentPage } from '../schema/documents.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
+import { matter } from '../schema/matter-graph.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
@@ -98,6 +100,33 @@ async function seedForum(tx: Transaction, workspaceId: string, tag: string): Pro
     })
     .returning({ id: forum.id });
   return first(rows, 'forum').id;
+}
+
+/** A matter of the workspace (#345), for the matter graph and restriction seeds. */
+async function seedMatter(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(matter)
+    .values({ workspaceId, title: `XT Matter ${tag}`, practiceArea: 'civil' })
+    .returning({ id: matter.id });
+  return first(rows, 'matter').id;
+}
+
+/** A document of a fresh matter (#345). */
+async function seedDocument(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const id = randomUUID();
+  const rows = await tx
+    .insert(document)
+    .values({
+      id,
+      workspaceId,
+      matterId,
+      kind: 'pleading',
+      storageKey: `ws/${workspaceId}/document/${id}`,
+      sha256: createHash('sha256').update(id).digest('hex'),
+    })
+    .returning({ id: document.id });
+  return first(rows, 'document').id;
 }
 
 /** Tenant tables and global-or-workspace reference tables: every table the suite seeds. */
@@ -276,13 +305,14 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
     return { key };
   },
-  matter_restriction: async (tx, { workspaceId, ownerId }) => {
+  matter_restriction: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, tag);
     const row = first(
       await tx
         .insert(matterRestriction)
         .values({
           workspaceId,
-          matterId: randomUUID(),
+          matterId,
           allowedUserIds: [ownerId],
           createdBy: ownerId,
         })
@@ -384,6 +414,28 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, forumId, judges: ['Judge A'], benchKind: 'single' })
       .returning({ id: bench.id });
     return { forumId, benchId: first(rows, 'bench').id };
+  },
+  matter: async (tx, { workspaceId, tag }) => ({
+    matterId: await seedMatter(tx, workspaceId, tag),
+  }),
+  document: async (tx, { workspaceId, tag }) => ({
+    documentId: await seedDocument(tx, workspaceId, tag),
+  }),
+  document_page: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(documentPage)
+      .values({ workspaceId, documentId, pageNo: 1, text: 'Seed page', textSource: 'layer' })
+      .returning({ id: documentPage.id });
+    return { documentId, pageId: first(rows, 'document_page').id };
+  },
+  anchor: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(anchor)
+      .values({ workspaceId, documentId, pageNo: 1, quote: 'Seed quote', kind: 'document' })
+      .returning({ id: anchor.id });
+    return { documentId, anchorId: first(rows, 'anchor').id };
   },
   deletion_job: async (tx, { workspaceId, ownerId }) => {
     const row = first(

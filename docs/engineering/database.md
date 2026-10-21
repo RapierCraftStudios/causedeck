@@ -95,6 +95,27 @@ or a tenant-to-tenant FK without `workspace_id`. The one exemption from the null
 `NULLABLE_WORKSPACE_TABLES` (`audit_event`, whose account-level events have no workspace); it is
 still a tenant table under FORCE RLS and still needs the index.
 
+## Matter and document tables
+
+`packages/db/src/schema/matter-graph.ts` and `documents.ts`, migration `0038_matter_documents`
+(#345, part 2 of #32, [ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant tables under FORCE RLS
+with composite `(workspace_id, <parent>_id)` FKs; `matter`, `document` and `anchor` carry the unique
+`(workspace_id, id)` those FKs target.
+
+| Table           | Columns and constraints                                                                                                                                                                                                                                                                                          |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `matter`        | `title`, `practice_area`, `status` (CHECK `active`, `disposed`, `archived`), `sensitive boolean not null default false` (CA-10), `owner_member_id` (-> `member`, same workspace), `opened_at`, `synopsis`, `merged_into_matter_id` (-> `matter`, not itself)                                                       |
+| `document`      | `kind` (`document_kind`), `language`, `supersedes_document_id` (version chain, not itself), `storage_key`, `sha256` (64 lower-case hex), `text_status` (`document_text_status`, default `pending`), `source_capture_id` (no FK until #43), `matter_id` (index `(workspace_id, matter_id)`)                           |
+| `document_page` | `document_id` (ON DELETE CASCADE), `page_no` (>= 1, unique per document), `text`, `text_source`, `ocr_confidence numeric(4,3)` (0..1), `lang`                                                                                                                                                                       |
+| `anchor`        | `document_id` (ON DELETE CASCADE), `page_no` (>= 1), `quote` (CHECK at most 2,000 characters), `char_start`, `char_end` (`char_end >= char_start`), `bbox jsonb`, `kind` (CHECK `document`, `transcript`, `list_row`, `calendar_event`, `email`, `image_region`), `transcript_span jsonb`                            |
+
+`owner_member_id`, `merged_into_matter_id` and `supersedes_document_id` are `ON DELETE SET NULL
+(<column>)` (Postgres 15+), hand-written in the migration: a plain composite `SET NULL` would also
+null `workspace_id`. So a matter outlives its owner's account deletion, and the batched erase can
+delete a version or merge chain in any order. `document.matter_id` is `NO ACTION`: a matter with
+documents is not deleted on its own. `matter_restriction.matter_id` references `matter` (ON DELETE
+CASCADE) since 0038, which deleted the restriction rows written before matters existed.
+
 ## Audit tables
 
 `packages/db/src/schema/audit.ts`, migration `0008_audit` (#226, #26 part 1). Both tables are

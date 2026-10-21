@@ -4,8 +4,8 @@
 // enforce it, `@causedeck/core` `restrictMatter()` writes it. A tenant table under FORCE RLS via
 // `tenantTable()`, one row per (workspace, matter).
 //
-// `matter_id` has no foreign key yet: the matter table arrives with the Court Graph milestone, which
-// adds the FK (ON DELETE CASCADE) in the migration that creates it.
+// `matter_id` references the matter through the composite `(workspace_id, matter_id)` FK, ON DELETE
+// CASCADE (#345, migration 0038, which created `matter`): deleting a matter removes its restriction.
 import { sql } from 'drizzle-orm';
 import { foreignKey, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
@@ -13,6 +13,7 @@ import { id } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';
 
 import { organization, user } from './auth.ts';
+import { matter } from './matter-graph.ts';
 
 export const matterRestriction = tenantTable(
   'matter_restriction',
@@ -34,6 +35,11 @@ export const matterRestriction = tenantTable(
       name: 'matter_restriction_workspace_id_fk',
       columns: [t.workspaceId],
       foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'matter_restriction_matter_fk',
+      columns: [t.workspaceId, t.matterId],
+      foreignColumns: [matter.workspaceId, matter.id],
     }).onDelete('cascade'),
   ],
 );

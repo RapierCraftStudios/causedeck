@@ -60,6 +60,11 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   forum: DB_TABLES_TEST,
   court_hall: DB_TABLES_TEST,
   bench: DB_TABLES_TEST,
+  // Matter and documents (#345).
+  matter: DB_TABLES_TEST,
+  document: DB_TABLES_TEST,
+  document_page: DB_TABLES_TEST,
+  anchor: DB_TABLES_TEST,
 };
 
 /**

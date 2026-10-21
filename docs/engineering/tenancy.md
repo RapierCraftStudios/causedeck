@@ -217,9 +217,11 @@ Clerks see listings, tasks and documents but not strategy notes or matter memory
 
 `matter_restriction` (#233) holds one row per restricted (workspace, matter) with the
 `allowed_user_ids` who may read it besides owners (`ownersSeeRestrictedMatters`, default on).
-`matter_id` has no foreign key until the matter table exists (Court Graph milestone), whose
-migration adds it. Services use `restrictMatter()` / `assertMatterReadable()` from
-`@causedeck/core` (unreadable matters are `NOT_FOUND`) and list queries filter with
+`matter_id` references `matter` through the composite `(workspace_id, matter_id)` FK, ON DELETE
+CASCADE (#345, migration 0038), so a restriction always names a matter of its own workspace.
+Services use `restrictMatter()` / `assertMatterReadable()` from `@causedeck/core` (unreadable
+matters are `NOT_FOUND`; `restrictMatter()` is also `NOT_FOUND` for a matter the workspace does not
+have) and list queries filter with
 `matterVisibilityPredicate(actor, matterIdColumn)` from `@causedeck/auth/policy`.
 
 ## Incidents

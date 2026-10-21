@@ -54,6 +54,13 @@ export { legalHoldInvoice } from './legal-hold.ts';
 export { MATTER_STATUSES, matter, type MatterStatus } from './matter-graph.ts';
 export { matterRestriction } from './matter-restriction.ts';
 export {
+  CNR_PATTERN,
+  PROCEEDING_LINK_KINDS,
+  proceeding,
+  proceedingLink,
+  type ProceedingLinkKind,
+} from './proceedings.ts';
+export {
   emailSuppression,
   notification,
   notificationChannel,

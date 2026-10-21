@@ -19,6 +19,7 @@ import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { matter } from '../schema/matter-graph.ts';
+import { proceeding, proceedingLink } from '../schema/proceedings.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
@@ -109,6 +110,25 @@ async function seedMatter(tx: Transaction, workspaceId: string, tag: string): Pr
     .values({ workspaceId, title: `XT Matter ${tag}`, practiceArea: 'civil' })
     .returning({ id: matter.id });
   return first(rows, 'matter').id;
+}
+
+/** A proceeding of a fresh matter before a custom forum (#346), still at the filing stage. */
+async function seedProceeding(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const forumId = await seedForum(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(proceeding)
+    .values({
+      workspaceId,
+      matterId,
+      forumId,
+      caseTypeCode: 'WP',
+      caseTypeRaw: 'W.P.',
+      filingNo: `F-${tag}`,
+      sourceType: 'manual',
+    })
+    .returning({ id: proceeding.id });
+  return first(rows, 'proceeding').id;
 }
 
 /** A document of a fresh matter (#345). */
@@ -436,6 +456,24 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, documentId, pageNo: 1, quote: 'Seed quote', kind: 'document' })
       .returning({ id: anchor.id });
     return { documentId, anchorId: first(rows, 'anchor').id };
+  },
+  proceeding: async (tx, { workspaceId, tag }) => ({
+    proceedingId: await seedProceeding(tx, workspaceId, tag),
+  }),
+  proceeding_link: async (tx, { workspaceId, tag }) => {
+    const parentId = await seedProceeding(tx, workspaceId, `${tag}-main`);
+    const childId = await seedProceeding(tx, workspaceId, `${tag}-misc`);
+    const rows = await tx
+      .insert(proceedingLink)
+      .values({
+        workspaceId,
+        fromProceedingId: parentId,
+        toProceedingId: childId,
+        kind: 'parent_of',
+        sourceType: 'manual',
+      })
+      .returning({ id: proceedingLink.id });
+    return { parentId, childId, linkId: first(rows, 'proceeding_link').id };
   },
   deletion_job: async (tx, { workspaceId, ownerId }) => {
     const row = first(

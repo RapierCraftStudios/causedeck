@@ -371,7 +371,7 @@ describe('migration 0038', () => {
     });
 
     const after = await runMigrations({ url: new Secret(db.owner) });
-    expect(after.applied).toEqual(['0038_matter_documents']);
+    expect(after.applied[0]).toBe('0038_matter_documents');
     const [rls] = await scratch.execute<{ forced: boolean }>(
       sql`select relforcerowsecurity as forced from pg_class where relname = 'matter_restriction'`,
     );

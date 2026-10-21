@@ -65,6 +65,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   document: DB_TABLES_TEST,
   document_page: DB_TABLES_TEST,
   anchor: DB_TABLES_TEST,
+  // Proceedings (#346).
+  proceeding: DB_TABLES_TEST,
+  proceeding_link: DB_TABLES_TEST,
 };
 
 /**

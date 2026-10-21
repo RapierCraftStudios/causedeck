@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./api": "./src/api/index.ts",
     "./gstin": "./src/gstin.ts",
+    "./matter-graph": "./src/matter-graph.ts",
     "./plans": "./src/plans.ts",
     "./workspace": "./src/workspace.ts"
   },

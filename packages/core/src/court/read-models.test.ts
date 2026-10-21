@@ -255,7 +255,7 @@ describe('getAdapterStatus (#397)', () => {
     });
   });
 
-  it('takes the version from migration 0047 and the level from forums when no run exists', async () => {
+  it('takes the version from migration 0048 and the level from forums when no run exists', async () => {
     await withTestDb(async (tx) => {
       const { a } = await seedTwoTenants(tx);
       expect(await getAdapterStatus(tx, a.id, 'in.tn.madras-hc.principal')).toEqual({

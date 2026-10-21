@@ -1,4 +1,4 @@
-// The Madras HC adapter's first version (#401, migration 0047, ADR 0018): the migrated
+// The Madras HC adapter's first version (#401, migration 0048, ADR 0018): the migrated
 // `adapter_version` row is the one active version, `1.0.0`, with the bundled config's checksum, so
 // the loader serves it from the database instead of refusing it. A bundled-config change without a
 // new version fails here.
@@ -12,7 +12,7 @@ import { createAdapterConfigLoader } from '../server.ts';
 
 import { MADRAS_HC_ADAPTER_ID, MADRAS_HC_CONFIG, MADRAS_HC_VERSION } from './index.ts';
 
-describe('Madras HC adapter_version 1.0.0 (migration 0047)', () => {
+describe('Madras HC adapter_version 1.0.0 (migration 0048)', () => {
   it('is the single active version, with the bundled config checksum', async () => {
     await withTestDb(async (tx) => {
       const active = await tx

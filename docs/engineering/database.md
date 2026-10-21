@@ -208,13 +208,15 @@ closer's member row is deleted (account deletion), so the obligation stays close
 
 `bench_roster`, `bench_roster_entry` and `bench_change_alert` in
 `packages/db/src/schema/roster.ts`, migration `0046_bench_rosters` (#384, part 1 of #39,
-[ADR 0017](../adr/0017-effective-dated-rosters.md)). Tenant tables under FORCE RLS; no provenance.
+[ADR 0017](../adr/0017-effective-dated-rosters.md)), plus `bench_roster.confirmation_state` in
+migration `0047_bench_roster_confirmation` (#387). Tenant tables under FORCE RLS; no `provenance()`
+columns, but a roster records its source document, importing member and confirmation state.
 Tested in `packages/db/src/__tests__/roster-schema.test.ts`; zod schemas in
 `@causedeck/validators/roster`.
 
 | Table                | Columns and constraints                                                                                                                                                                                                                                                                                          |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bench_roster`       | `forum_id` (-> `forum`, `same_or_global` scope guard), `effective_from`, `effective_to` (null: open-ended; CHECK after `effective_from`), `status` (CHECK `draft`, `active`, `superseded`), `version` (CHECK > 0; unique `(workspace_id, forum_id, version)`), `source_document_id` (-> `document`, SET NULL), `imported_by` (-> `member`, SET NULL), `note` |
+| `bench_roster`       | `forum_id` (-> `forum`, `same_or_global` scope guard), `effective_from`, `effective_to` (null: open-ended; CHECK after `effective_from`), `status` (CHECK `draft`, `active`, `superseded`), `version` (CHECK > 0; unique `(workspace_id, forum_id, version)`), `source_document_id` (-> `document`, SET NULL), `imported_by` (-> `member`, SET NULL), `note`, `confirmation_state` (enum, default `proposed`; `bench_roster_confirmed_chk`: only a draft may stay `proposed`) |
 | `bench_roster_entry` | `roster_id` (-> `bench_roster`, ON DELETE CASCADE), `hall_id` (-> `court_hall`, scope guard, nullable), `hall_no` (CHECK not blank), `bench_id` (-> `bench`, scope guard), `portfolio_text`, `portfolio_rule` (jsonb object or null)                                                                              |
 | `bench_change_alert` | `proceeding_id` (-> `proceeding`, NO ACTION), `roster_id` (-> `bench_roster`, NO ACTION), `old_bench_id` (nullable) / `new_bench_id` (-> `bench`, scope guards), `reason` (CHECK `hall`, `portfolio`), `status` (CHECK `open`, `dismissed`); unique `(proceeding_id, roster_id)`                                     |
 
@@ -222,7 +224,9 @@ Tested in `packages/db/src/__tests__/roster-schema.test.ts`; zod schemas in
 is `EXCLUDE USING gist (workspace_id WITH =, forum_id WITH =, daterange(effective_from,
 effective_to, '[)') WITH &&) WHERE (status = 'active')`: no two active rosters of one workspace
 and forum share a day (23P01). Migration 0046 creates the `btree_gist` extension it needs. Entries
-name a bench, never judges (the judge-aggregation guard covers these tables).
+name a bench, never judges (the judge-aggregation guard covers these tables). The roster
+services in `@causedeck/core/court` (#387) are the only writers: `confirmRosterImport` writes a
+roster `active` and `confirmed`, and supersedes the previous version, in one transaction.
 
 ## Audit tables
 

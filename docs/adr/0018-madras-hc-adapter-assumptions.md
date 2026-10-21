@@ -60,7 +60,7 @@ CI runs `gen:fixtures` and `test:metrics` as the "Adapter golden metrics (genera
 
 ### First version
 
-Migration `0047_madras_adapter_v1` registers `adapter_version` `in.tn.madras-hc.principal` `1.0.0` as `active`. Its config is the canonical `MADRAS_HC_CONFIG` and its checksum is that config's sha256 (`configChecksum`). The insert is idempotent and skipped when an active version already exists. `packages/adapters/src/madras-hc/adapter-version.test.ts` pins the row to the bundled config, so the loader never refuses it. `fixtures_digest` and `last_verified_at` stay empty; `activateAdapterVersion` records them when a later version is activated. The Principal Seat forums are already A1 in the forum catalogue seed.
+Migration `0048_madras_adapter_v1` registers `adapter_version` `in.tn.madras-hc.principal` `1.0.0` as `active`. Its config is the canonical `MADRAS_HC_CONFIG` and its checksum is that config's sha256 (`configChecksum`). The insert is idempotent and skipped when an active version already exists. `packages/adapters/src/madras-hc/adapter-version.test.ts` pins the row to the bundled config, so the loader never refuses it. `fixtures_digest` and `last_verified_at` stay empty; `activateAdapterVersion` records them when a later version is activated. The Principal Seat forums are already A1 in the forum catalogue seed.
 
 ## Consequences
 

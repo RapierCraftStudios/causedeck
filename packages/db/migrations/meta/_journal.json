@@ -316,6 +316,13 @@
       "when": 1792598903333,
       "tag": "0044_adapter_framework",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1792604284039,
+      "tag": "0045_bench_rosters",
+      "breakpoints": true
     }
   ]
 }

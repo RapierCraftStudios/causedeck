@@ -12,7 +12,7 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test, type E2eRole } from '../../fixtures/index.ts';
-import { layoutOf, SHELL_WORKSPACE } from '../shell/helpers.ts';
+import { layoutOf, SHELL_WORKSPACE, shellReady } from '../shell/helpers.ts';
 
 const SECTIONS = [
   'Profile',
@@ -143,6 +143,8 @@ test.describe('settings shell', () => {
       const button = page.getByRole('button', { name: 'Export workspace' });
       await expect(button).toBeDisabled();
       await expect(button).toHaveAccessibleDescription(/Coming from export service/);
+      // A hover before the page hydrates never reaches the tooltip's handlers.
+      await shellReady(page);
       await page.locator('[data-slot="disabled-with-reason"]').hover();
       await expect(page.getByRole('tooltip')).toHaveText('Coming from export service');
     },

@@ -327,12 +327,40 @@ export function TwoFactorSetupDialog({
   );
 }
 
-export interface TwoFactorSetupProps extends TwoFactorActions {
+export interface TwoFactorSetupProps {
   enabled: boolean;
+  enableTwoFactor: TwoFactorActions['enableTwoFactor'];
+  /** Defaults to the browser auth client (see `verifyInBrowser`). */
+  verifyTwoFactor?: TwoFactorActions['verifyTwoFactor'];
+}
+
+/**
+ * Verifies the first code through the browser auth client, not a server action. Verifying rotates
+ * the session cookie; a server action that sets a cookie makes Next re-render the page, and the
+ * page's Suspense boundary then swaps its content for the skeleton, which unmounts this dialog
+ * before the backup codes can be read. A client call sets the cookie in the browser instead.
+ */
+async function verifyInBrowser({ code }: { code: string }): Promise<Result<{ enabled: true }>> {
+  try {
+    const { authClient } = await import('../../lib/auth-client.ts');
+    const { error } = await authClient.twoFactor.verifyTotp({ code });
+    if (!error) return { ok: true, data: { enabled: true } };
+    const code4xx = error.status >= 400 && error.status < 500;
+    return {
+      ok: false,
+      error: { code: code4xx ? 'VALIDATION' : 'INTERNAL', message: '' },
+    };
+  } catch {
+    return { ok: false, error: { code: 'INTERNAL', message: '' } };
+  }
 }
 
 /** The 2FA status row control: `On`, or `Off` with `Set up` and the setup dialog. */
-export function TwoFactorSetup({ enabled, enableTwoFactor, verifyTwoFactor }: TwoFactorSetupProps) {
+export function TwoFactorSetup({
+  enabled,
+  enableTwoFactor,
+  verifyTwoFactor = verifyInBrowser,
+}: TwoFactorSetupProps) {
   const t = useTranslations('settings.account.twoFactor');
   const router = useRouter();
   const online = useOnline();

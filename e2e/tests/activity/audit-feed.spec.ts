@@ -217,7 +217,9 @@ test.describe('activity security and audit tab', () => {
     await expect(page.getByText('Could not load activity.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
     await page.goto(page.url().replace('__state=error', '__state=loading'));
-    await expect(page.locator('[data-slot="audit-skeleton"]')).toBeVisible();
+    // The route's streaming fallback and the previewed loading state can both be on screen for a
+    // moment while the page swaps; either is the loading skeleton.
+    await expect(page.locator('[data-slot="audit-skeleton"]').first()).toBeVisible();
   });
 
   test('settings links to the audit log', async ({ page, asUser }) => {

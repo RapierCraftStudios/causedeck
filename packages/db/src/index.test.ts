@@ -37,7 +37,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302) and the court reference tables (#344)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) and the matter and document tables (#345)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -47,6 +47,7 @@ describe('@causedeck/db root entry point', () => {
       'access_mode_registry',
       'account',
       'ai_call',
+      'anchor',
       'api_idempotency_key',
       'audit_actor_salt',
       'audit_event',
@@ -57,6 +58,8 @@ describe('@causedeck/db root entry point', () => {
       'court_hall',
       'deletion_job',
       'deletion_tombstone',
+      'document',
+      'document_page',
       'email_suppression',
       'entitlement',
       'export_job',
@@ -67,6 +70,7 @@ describe('@causedeck/db root entry point', () => {
       'invoice_counter',
       'job_effect',
       'legal_hold_invoice',
+      'matter',
       'matter_restriction',
       'member',
       'notification',

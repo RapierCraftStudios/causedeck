@@ -55,7 +55,13 @@ export const PURGE_ORDER = [
   'notification_setting',
   'invitation',
   'support_session',
+  // The matter graph (#345): anchors and pages before their document, documents and restrictions
+  // before their matter, matters before the members their owner_member_id names.
+  'anchor',
+  'document_page',
+  'document',
   'matter_restriction',
+  'matter',
   // Custom court reference rows (#344): halls and benches before their forum; the catalogue
   // (null workspace_id) is never matched.
   'court_hall',

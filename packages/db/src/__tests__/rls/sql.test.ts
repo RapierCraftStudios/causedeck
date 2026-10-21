@@ -109,6 +109,11 @@ describe('row-level security catalog', () => {
         'forum',
         'court_hall',
         'bench',
+        // Matter and documents (#345).
+        'matter',
+        'document',
+        'document_page',
+        'anchor',
       ].sort(),
     );
     for (const row of rows)

@@ -26,6 +26,16 @@ export {
   type FlagChangeRequestStatus,
 } from './flags.ts';
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
+export {
+  ANCHOR_KINDS,
+  ANCHOR_QUOTE_MAX,
+  anchor,
+  document,
+  documentPage,
+  type AnchorBbox,
+  type AnchorKind,
+  type AnchorTranscriptSpan,
+} from './documents.ts';
 export { jobEffect } from './job-effect.ts';
 export {
   DELETION_KINDS,
@@ -41,6 +51,7 @@ export {
   type ExportStatus,
 } from './lifecycle.ts';
 export { legalHoldInvoice } from './legal-hold.ts';
+export { MATTER_STATUSES, matter, type MatterStatus } from './matter-graph.ts';
 export { matterRestriction } from './matter-restriction.ts';
 export {
   emailSuppression,

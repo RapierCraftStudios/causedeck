@@ -77,7 +77,9 @@ test.describe('shell nav crawl', () => {
     test.setTimeout(120_000);
     await openShell(page, asUser, { path: 'settings/profile' });
     const hrefs = await hrefsIn(page.locator('[data-slot="settings-nav"]'));
-    expect(hrefs).toHaveLength(10);
+    // Ten sections, plus Support access for owners (#313).
+    expect(hrefs).toHaveLength(11);
+    expect(hrefs).toContain(`/w/${SHELL_WORKSPACE}/settings/support`);
     for (const href of hrefs) {
       const response = await page.goto(href);
       expect(response?.status() ?? 0, href).toBeLessThan(400);

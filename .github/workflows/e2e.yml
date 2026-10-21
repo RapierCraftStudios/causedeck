@@ -10,8 +10,9 @@
 name: E2E
 
 on:
-  # Full tier (docs/engineering/ci.md): runs on ship PRs into staging/main, pushes to staging/main,
-  # nightly, manual dispatch, or a PR labelled `full-ci`. Lane PRs into milestone/* skip it.
+  # Ship tier (docs/engineering/ci.md, D-046): ship PRs into staging/main, pushes to main, or a PR
+  # labelled `full-ci` run the `ship` scope (the blocking gate). The nightly schedule and manual
+  # dispatch run the `full` matrix, report-only. Lane PRs into milestone/* skip it.
   pull_request:
     types: [opened, synchronize, reopened, labeled]
   push:
@@ -41,9 +42,14 @@ env:
 jobs:
   e2e:
     name: e2e (${{ matrix.shard }}/2)
-    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
+    if: ${{ !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Ship scope: about 340 browser tests over 2 shards, 12-25 min including the stack and the build (measured on PR #352).
+    # Full scope (nightly/dispatch): the 6-project matrix plus visual specs, 90 min and report-only.
+    timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 90 || 30 }}
+    continue-on-error: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    env:
+      E2E_SCOPE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'full' || 'ship' }}
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +69,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
         run: >-
           docker run --rm --network host --ipc host
-          -e CI=true -e E2E_ASSERT_RESET_MS=2000
+          -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE
           -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
           node support/playwright.mjs --shard="$SHARD/2"
       - name: Upload the HTML report

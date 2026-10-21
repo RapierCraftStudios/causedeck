@@ -38,16 +38,17 @@ A lane PR runs in about 6 minutes (it was about 16). Nothing is dropped; the wor
 - **Next.js cache.** `build` restores `apps/*/.next/cache` with `actions/cache`.
 - **Cross-tenant gate.** `tenancy` is unchanged and still runs in full on every PR. 
 
-## Tiers (D-044, loosened by D-045)
+## Tiers (D-044, loosened by D-045 and D-046)
 
 CI runs in tiers so lane PRs stay fast, ship PRs carry one heavy gate, and the slow suites only report.
 
 | Tier | When | Jobs |
 | --- | --- | --- |
 | **Fast** (every PR) | Every pull request, including lane PRs into `milestone/*` | `lint` (format, ADR, docs links, affected lint), `typecheck`, `test`, `build` — change-aware via `infra/scripts/ci-affected.sh`; `audit`, `gitleaks`; `storybook` build + interaction/axe tests when `packages/ui` changes (path filter); `actionlint` when `.github/` changes |
-| **Ship** | Ship PRs into `staging` or `main`, pushes to `main`, or any PR labelled `full-ci` | Everything in Fast, plus `e2e` (2 shards): the one heavy merge gate |
-| **Report-only** | Nightly schedule, manual dispatch, or a PR labelled `full-ci`; `continue-on-error`, never blocks a merge | `lighthouse` (perf/a11y budgets), `visual` (Storybook visual regression, 4 shards) |
+| **Ship** | Ship PRs into `staging` or `main`, pushes to `main`, or any PR labelled `full-ci` | Everything in Fast, plus `e2e` (2 shards, `E2E_SCOPE=ship`, 30 min timeout): the one heavy merge gate |
+| **Report-only** | Nightly schedule, manual dispatch, or a PR labelled `full-ci`; `continue-on-error`, never blocks a merge | `lighthouse` (perf/a11y budgets), `visual` (Storybook visual regression, 4 shards); nightly and dispatch also run `e2e` with `E2E_SCOPE=full` (90 min timeout) |
 
+- **e2e scope (D-046).** `E2E_SCOPE=ship` runs all non-visual specs on `chromium-1280-light`, `@smoke` on `chromium-360-light` and `webkit-360`, and skips `*.visual.spec.ts` (about 340 tests). `E2E_SCOPE=full` is the 6-project Chromium matrix (360/768/1280, light/dark) plus visual specs and the WebKit smoke; it is the default locally (`E2E_SCOPE=ship pnpm --filter @causedeck/e2e test` reproduces the gate) and what the nightly/dispatch run uses. The 6x matrix repeated functional coverage and could not finish inside the timeout.
 - Pushes to `milestone/**` no longer trigger workflows: every change there arrives through a PR that already ran CI (this removed the duplicate push + PR runs).
 - Pushes to `staging` no longer re-run e2e: the ship PR already ran it.
 - Visual baselines are regenerated on demand (`visual:update` label), not on every ship.

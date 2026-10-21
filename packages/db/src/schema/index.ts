@@ -53,6 +53,7 @@ export {
 export { legalHoldInvoice } from './legal-hold.ts';
 export { MATTER_STATUSES, matter, type MatterStatus } from './matter-graph.ts';
 export { matterRestriction } from './matter-restriction.ts';
+export { organisation, person, roleEdge, type PersonContact } from './people.ts';
 export {
   CNR_PATTERN,
   PROCEEDING_LINK_KINDS,

@@ -135,6 +135,20 @@ NO ACTION FK to `anchor` on both tables. `parent_proceeding_id` is `ON DELETE SE
 (`app_proceeding_link_cycle_guard()`) rejects, with 23514, an insert or update of a `parent_of` link
 that would close a cycle; it serializes per workspace with a transaction advisory lock.
 
+## People tables
+
+`person`, `organisation` and `role_edge` in `packages/db/src/schema/people.ts`, migration
+`0040_people` (#348, part 5 of #32, [ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant tables
+under FORCE RLS; `person` and `role_edge` carry `provenance()` and `provenanceCheck()`, with the
+provenance `anchor_id` a composite NO ACTION FK to `anchor`. Tested in
+`packages/db/src/__tests__/people-schema.test.ts`.
+
+| Table          | Columns and constraints                                                                                                                                                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `person`       | `name` (CHECK not blank), `aliases text[]` (default `{}`), `kind` (`person_kind`), `contact jsonb` (CHECK null unless `kind` is `client` or `professional`: PRD §9, no contact-book upload)                                                                                                             |
+| `organisation` | `name` (CHECK not blank), `aliases text[]` (default `{}`); no provenance                                                                                                                                                                                                                                 |
+| `role_edge`    | `kind` (`role_edge_kind`), `from_person_id` (-> `person`), exactly one of `to_person_id` (-> `person`, not `from_person_id`), `matter_id` (-> `matter`), `proceeding_id` (-> `proceeding`) (CHECK `num_nonnulls(...) = 1`); every FK composite and ON DELETE CASCADE; an index led by `workspace_id` on each |
+
 ## Audit tables
 
 `packages/db/src/schema/audit.ts`, migration `0008_audit` (#226, #26 part 1). Both tables are

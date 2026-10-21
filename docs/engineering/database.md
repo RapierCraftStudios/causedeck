@@ -13,6 +13,7 @@ pnpm db:generate   # schema diff -> new SQL migration in packages/db/migrations
 pnpm db:check      # conventions + migration lint + drizzle-kit snapshot check (also runs in CI)
 pnpm db:studio     # Drizzle Studio against DATABASE_URL_OWNER
 pnpm db:seed       # registered seeders, profile demo (`-- --profile test` for test)
+pnpm db:seed:demo  # the fictional `demo` workspace (#182), as the owner role; refuses in production
 pnpm db:check-rls  # live catalog: RLS on every tenant table, no cross-workspace FKs (tenancy.md)
 ```
 

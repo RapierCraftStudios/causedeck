@@ -5,6 +5,7 @@ import { createEnv } from '@causedeck/config/env';
 import { createDb } from '../src/client.ts';
 import { seed, SEED_PROFILES, type SeedProfile } from '../src/seed/index.ts';
 // Seeders register on import.
+import '../src/seed/demo/index.ts';
 import '../src/seed/e2e.ts';
 import '../src/seed/plans.ts';
 

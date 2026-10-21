@@ -31,6 +31,7 @@
     "db:check": "tsx scripts/check-schema-conventions.ts && tsx scripts/lint-migrations.ts && drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed.ts",
+    "db:seed:demo": "tsx scripts/seed-demo.ts",
     "db:check-rls": "tsx scripts/check-rls.ts"
   },
   "dependencies": {

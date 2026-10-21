@@ -98,6 +98,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `BILLING_SUPPLIER_GSTIN` | GSTIN | — | never (issuing an invoice in production refuses while unset) | #253 | — |
 | `BILLING_INVOICE_SERIES` | string (1-3 capitals) | `CD` | never (defaults to CD) | #253 | — |
 | `BILLING_SAC` | string (99xxxx) | `998314` | never (defaults to 998314) | #253 | — |
+| `ADAPTER_PRIVATE_FIXTURES_DIR` | path | — | never | #371 | — |
 | `EMAIL_PROVIDER` | enum(console\|ses\|smtp) | `console` | never (defaults to console) | #23 | — |
 | `SES_REGION` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SES_ACCESS_KEY_ID` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |

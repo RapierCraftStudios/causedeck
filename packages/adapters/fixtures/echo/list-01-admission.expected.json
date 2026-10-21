@@ -1,0 +1,70 @@
+{
+  "adapterId": "echo",
+  "adapterVersion": "1.0.0",
+  "forumCode": "test.echo.principal",
+  "listDate": "2026-10-21",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. W.P. No. 12345 of 2026  Arun Kavitham vs Fictional District Collector",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "12345",
+      "caseYear": 2026,
+      "matchKey": "WP/12345/2026",
+      "parties": "Arun Kavitham vs Fictional District Collector",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. W.P.(MD) No. 0042 of 26  Meera Solai vs Imaginary Town Panchayat",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "W.P.(MD)",
+      "caseType": "WP",
+      "seatSuffix": "MD",
+      "caseNumber": "42",
+      "caseYear": 2026,
+      "matchKey": "WP(MD)/42/2026",
+      "parties": "Meera Solai vs Imaginary Town Panchayat",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. CRL OP 77/2026  Ravi Nilavan vs State by Pretend Police Station",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "CRL OP",
+      "caseType": "CRLOP",
+      "caseNumber": "77",
+      "caseYear": 2026,
+      "matchKey": "CRLOP/77/2026",
+      "parties": "Ravi Nilavan vs State by Pretend Police Station",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1"],
+    "hallsUnreadable": []
+  }
+}

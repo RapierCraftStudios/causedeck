@@ -85,6 +85,16 @@ async function aSupportSessions(f: Fixture) {
   );
 }
 
+async function aForums(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ id: schema.forum.id, code: schema.forum.code, court: schema.forum.court })
+      .from(schema.forum)
+      .where(eq(schema.forum.workspaceId, f.a.id))
+      .orderBy(schema.forum.id),
+  );
+}
+
 async function aRestrictions(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.matterRestriction).orderBy(schema.matterRestriction.id),
@@ -975,6 +985,49 @@ const CASES: Record<string, Case> = {
     expect(
       await core.assertMatterReadable(f.tx, { userId: f.ub, workspaceId: f.b.id }, aMatter),
     ).toBeNull();
+  },
+  // Court (#34): A's custom forum (two-tenant seed row) never reaches B.
+  createWorkspaceForum: async (f) => {
+    const before = await aForums(f);
+    const input = {
+      code: `xt.probe.${randomUUID().slice(0, 8)}`,
+      court: 'Probe',
+      jurisdictionKind: 'other' as const,
+    };
+    await expectDenied(
+      core.createWorkspaceForum(f.tx, { userId: f.ub, workspaceId: f.a.id }, input),
+    );
+    await expectDenied(
+      f.asB((s) => core.createWorkspaceForum(s, { userId: f.ub, workspaceId: f.a.id }, input)),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.createWorkspaceForum(s, { userId: f.ua, workspaceId: f.a.id, role: 'owner' }, input),
+      ),
+    );
+    expect(await aForums(f)).toEqual(before);
+  },
+  listForums: async (f) => {
+    await expect(f.asB((s) => core.listForums(s, f.a.id))).rejects.toBeInstanceOf(TenancyError);
+    const aForum = f.a.rows.forum?.forumId ?? '';
+    const own = await f.asB((s) => core.listForums(s, f.b.id, { includeDisabled: true }));
+    expect(own.map((row) => row.id)).not.toContain(aForum);
+    expect(own.filter((row) => row.workspaceId !== null && row.workspaceId !== f.b.id)).toEqual([]);
+  },
+  listForumsByCity: async (f) => {
+    await expect(f.asB((s) => core.listForumsByCity(s, f.a.id, 'Chennai'))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    const own = await core.listForumsByCity(f.tx, f.b.id, 'Chennai', { includeDisabled: true });
+    expect(own.filter((row) => row.workspaceId !== null && row.workspaceId !== f.b.id)).toEqual([]);
+  },
+  getForum: async (f) => {
+    const aForum = f.a.rows.forum?.forumId ?? '';
+    await expect(f.asB((s) => core.getForum(s, f.a.id, aForum))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    await expectDenied(core.getForum(f.tx, f.b.id, aForum));
+    expect((await aForums(f)).map((row) => row.id)).toContain(aForum);
   },
   // Matter graph (#362): A's matter, proceeding and document ids, as ub.
   createMatter: async (f) => {

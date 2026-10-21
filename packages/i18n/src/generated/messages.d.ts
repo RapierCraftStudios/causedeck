@@ -1747,6 +1747,93 @@ export type Messages = {
       retry: string;
     };
     offline: string;
+    detail: {
+      back: string;
+      tabsLabel: string;
+      tabs: {
+        halls: string;
+        adapter: string;
+        links: string;
+        rosters: string;
+      };
+      halls: {
+        caption: string;
+        hall: string;
+        lastList: string;
+        state: string;
+        read: string;
+        unreadable: string;
+        emptyTitle: string;
+        emptyHint: string;
+      };
+      adapter: {
+        title: string;
+        noAdapter: string;
+        id: string;
+        version: string;
+        noVersion: string;
+        level: string;
+        levelHelp: string;
+        levelsTitle: string;
+        levelA0: string;
+        levelA1: string;
+        levelHigher: string;
+        lastVerified: string;
+        notVerified: string;
+        health: string;
+        healthStatus: {
+          ok: string;
+          degraded: string;
+          failed: string;
+          none: string;
+        };
+        lastParse: string;
+        lastParseNone: string;
+        rows: string;
+        unreadableHalls: string;
+      };
+      accessModes: {
+        title: string;
+        caption: string;
+        resource: string;
+        mode: string;
+        note: string;
+        legalReviewPending: string;
+        userSuppliedHelp: string;
+        empty: string;
+        modes: {
+          user_supplied: string;
+          device_user_triggered: string;
+          official: string;
+          licensed: string;
+          none: string;
+        };
+        resources: {
+          cause_list: string;
+          case_status: string;
+          orders: string;
+          display_board: string;
+          a2_retrieval: string;
+          live_tracking: string;
+          sanctioned_push: string;
+        };
+      };
+      links: {
+        title: string;
+        newWindow: string;
+        captcha: string;
+        empty: string;
+        kinds: {
+          cause_list: string;
+          case_status: string;
+          orders: string;
+          display_board: string;
+          e_copy: string;
+          sitting_arrangements: string;
+          aims: string;
+        };
+      };
+    };
   };
   error: {
     title: string;

@@ -1745,7 +1745,94 @@
       "title": "Could not load courts.",
       "retry": "Try again"
     },
-    "offline": "Showing saved court information from {time}."
+    "offline": "Showing saved court information from {time}.",
+    "detail": {
+      "back": "All courts",
+      "tabsLabel": "Forum sections",
+      "tabs": {
+        "halls": "Halls",
+        "adapter": "Adapter",
+        "links": "Links",
+        "rosters": "Rosters"
+      },
+      "halls": {
+        "caption": "Halls seen in your lists",
+        "hall": "Hall",
+        "lastList": "Last list",
+        "state": "Reading",
+        "read": "Read",
+        "unreadable": "Unreadable",
+        "emptyTitle": "No halls seen yet",
+        "emptyHint": "Halls appear here after you share a cause list for this forum. Each shows the date of its latest list and whether we could read it."
+      },
+      "adapter": {
+        "title": "Adapter status",
+        "noAdapter": "This forum has no adapter yet. You can still open the court's official pages from Links.",
+        "id": "Adapter",
+        "version": "Version",
+        "noVersion": "No active version",
+        "level": "Level",
+        "levelHelp": "What the levels mean",
+        "levelsTitle": "Adapter levels",
+        "levelA0": "A0, known court: we know the court and its official pages. Share a list or order and we read it with your confirmation.",
+        "levelA1": "A1, document-assisted: we read the lists and orders you share and match them to your matters.",
+        "levelHigher": "Higher levels, such as reading lists straight from the court, are not available yet.",
+        "lastVerified": "Last verified",
+        "notVerified": "Not yet verified with real lists",
+        "health": "Health across workspaces",
+        "healthStatus": {
+          "ok": "Working",
+          "degraded": "Some lists not read",
+          "failed": "Most lists failing",
+          "none": "No runs yet"
+        },
+        "lastParse": "Your last list",
+        "lastParseNone": "No lists shared yet",
+        "rows": "{parsed} rows read, {anchored} matched to matters",
+        "unreadableHalls": "Unreadable halls: {halls}"
+      },
+      "accessModes": {
+        "title": "Access modes",
+        "caption": "How CauseDeck may get each resource for this court",
+        "resource": "Resource",
+        "mode": "Mode",
+        "note": "Counsel note",
+        "legalReviewPending": "Legal review pending",
+        "userSuppliedHelp": "Share the list or forward the court email",
+        "empty": "No access modes are recorded for this court yet.",
+        "modes": {
+          "user_supplied": "You share it",
+          "device_user_triggered": "Your device, when you ask",
+          "official": "Official feed",
+          "licensed": "Licensed source",
+          "none": "Not available"
+        },
+        "resources": {
+          "cause_list": "Cause list",
+          "case_status": "Case status",
+          "orders": "Orders",
+          "display_board": "Display board",
+          "a2_retrieval": "Retrieval from the court",
+          "live_tracking": "Live tracking",
+          "sanctioned_push": "Court-sanctioned updates"
+        }
+      },
+      "links": {
+        "title": "Official pages",
+        "newWindow": "Opens the court's website in a new window",
+        "captcha": "The court's page may ask you to solve a captcha. That is the court's requirement; Lawyer OS never solves it for you.",
+        "empty": "No official pages are listed for this forum yet.",
+        "kinds": {
+          "cause_list": "Cause list",
+          "case_status": "Case status",
+          "orders": "Orders",
+          "display_board": "Display board",
+          "e_copy": "Certified e-copy",
+          "sitting_arrangements": "Sitting arrangements",
+          "aims": "Advocate Information Management System"
+        }
+      }
+    }
   },
   "error": {
     "title": "Something went wrong.",

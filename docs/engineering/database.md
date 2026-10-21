@@ -227,6 +227,11 @@ and forum share a day (23P01). Migration 0046 creates the `btree_gist` extension
 name a bench, never judges (the judge-aggregation guard covers these tables). The roster
 services in `@causedeck/core/court` (#387) are the only writers: `confirmRosterImport` writes a
 roster `active` and `confirmed`, and supersedes the previous version, in one transaction.
+`detectBenchChanges` (#389) is the only writer of `bench_change_alert`: it inserts with
+`ON CONFLICT (proceeding_id, roster_id) DO NOTHING`, so a re-run adds nothing, and `dismissAlert`
+only sets `status`. Migration `0050_notification_bench_alert_party_names` adds
+`notification_setting.bench_alert_party_names` (boolean, default false): the member's opt-in to party
+names in bench-change notifications.
 
 ## Audit tables
 

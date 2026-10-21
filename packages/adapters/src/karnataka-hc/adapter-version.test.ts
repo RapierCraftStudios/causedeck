@@ -1,5 +1,5 @@
 // The Karnataka HC `adapter_version` rows: 1.0.0 (#404, migration 0049) retired by 1.1.0 (#405,
-// migration 0050), which is active, accepted by the DB checks, and equal to the bundled config with
+// migration 0051), which is active, accepted by the DB checks, and equal to the bundled config with
 // a valid checksum, so the loader serves it.
 import { adapterVersion } from '@causedeck/db/schema';
 import { withTestDb } from '@causedeck/db/testing';

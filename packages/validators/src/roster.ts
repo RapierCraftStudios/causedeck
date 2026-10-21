@@ -211,6 +211,13 @@ export const DetectBenchChangesInputSchema = z.strictObject({ rosterId: uuid });
 
 export const DismissBenchChangeAlertInputSchema = z.strictObject({ alertId: uuid });
 
+/** The workspace's bench-change alerts, narrowed by status, roster or proceeding (#389). */
+export const ListBenchChangeAlertsInputSchema = z.strictObject({
+  status: z.enum(BENCH_CHANGE_ALERT_STATUSES).exactOptional(),
+  rosterId: uuid.exactOptional(),
+  proceedingId: uuid.exactOptional(),
+});
+
 export type BenchRosterStatus = (typeof BENCH_ROSTER_STATUSES)[number];
 export type BenchChangeReason = (typeof BENCH_CHANGE_REASONS)[number];
 export type BenchChangeAlertStatus = (typeof BENCH_CHANGE_ALERT_STATUSES)[number];
@@ -232,3 +239,4 @@ export type ListRostersInput = z.input<typeof ListRostersInputSchema>;
 export type SupersedeRosterInput = z.input<typeof SupersedeRosterInputSchema>;
 export type DetectBenchChangesInput = z.input<typeof DetectBenchChangesInputSchema>;
 export type DismissBenchChangeAlertInput = z.input<typeof DismissBenchChangeAlertInputSchema>;
+export type ListBenchChangeAlertsInput = z.input<typeof ListBenchChangeAlertsInputSchema>;

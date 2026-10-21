@@ -19,6 +19,7 @@ import {
   markRead,
   NotificationError,
   notify,
+  setBenchAlertPartyNames,
   setCourtHoursQuiet,
   setDigest,
   setLockScreenDetails,
@@ -492,6 +493,36 @@ describe('preferences page: digest selector and court hours (#199)', () => {
       expect((await getNotificationSetting(f.ctx, { userId: f.userId })).courtHoursQuiet).toBe(
         false,
       );
+    });
+  });
+
+  it('persists the bench-alert party-names opt-in without touching the other settings (#389)', async () => {
+    await run(async (f) => {
+      const stored = async () => {
+        const [row] = await inWorkspace(f.tx, f.workspaceId, (s) =>
+          s
+            .select({ on: schema.notificationSetting.benchAlertPartyNames })
+            .from(schema.notificationSetting)
+            .where(eq(schema.notificationSetting.userId, f.userId)),
+        );
+        return row?.on;
+      };
+      await setLockScreenDetails(f.ctx, { userId: f.userId, enabled: true });
+      expect(await stored()).toBe(false);
+      expect(await setBenchAlertPartyNames(f.ctx, { userId: f.userId, enabled: true })).toEqual({
+        benchAlertPartyNames: true,
+      });
+      expect(await stored()).toBe(true);
+      expect(await getNotificationSetting(f.ctx, { userId: f.userId })).toEqual({
+        courtHoursQuiet: false,
+        lockScreenDetails: true,
+      });
+      await setBenchAlertPartyNames(f.ctx, { userId: f.userId, enabled: false });
+      expect(await stored()).toBe(false);
+      const outsider = await f.addMember('suspended');
+      expect(
+        (await errorOf(setBenchAlertPartyNames(f.ctx, { userId: outsider, enabled: true }))).code,
+      ).toBe('FORBIDDEN');
     });
   });
 });

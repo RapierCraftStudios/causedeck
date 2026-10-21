@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { workspaceMetadata } from '../../../../lib/data/index.ts';
+import { workspaceMetadata, workspaceUsage } from '../../../../lib/data/index.ts';
 import { requireStaff } from '../../../../lib/staff.ts';
+
+import { WorkspaceUsage } from './usage.tsx';
 
 export const metadata: Metadata = { title: 'Workspace' };
 
@@ -24,14 +26,16 @@ function formatDate(date: Date | null): string {
 }
 
 /**
- * One workspace's metadata (#310): plan, seats, storage, dates and flags. No matter, document,
- * memory, party or draft content, and no member data beyond the owner's email.
+ * One workspace's metadata (#310): plan, seats, storage, dates and flags; then its usage counters
+ * and AI budget overrides (#224, `usage.tsx`). No matter, document, memory, party or draft
+ * content, and no member data beyond the owner's email.
  */
 export default async function WorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const staff = await requireStaff('workspaces');
   const { id } = await params;
   const workspace = await workspaceMetadata(staff, id);
   if (workspace === null) notFound();
+  const usage = await workspaceUsage(staff, workspace.workspaceId);
   const rows: [string, string][] = [
     ['Plan', workspace.planId ?? '—'],
     [
@@ -82,6 +86,7 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
           </ul>
         )}
       </section>
+      <WorkspaceUsage staff={staff} workspaceId={workspace.workspaceId} usage={usage} />
     </section>
   );
 }

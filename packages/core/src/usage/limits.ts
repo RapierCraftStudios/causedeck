@@ -2,9 +2,10 @@
 // newest unexpired staff `budget_override` for `ai.spend_paise`, else its `ai_budget_paise`
 // entitlement (#203: Junior Rs 10, paid plans Rs 175 per seat pooled). Overrides are staff-only,
 // always justified and always expiring, and every one is audited (`usage.budget_override_set`, a
-// security action: an override whose audit write fails is rolled back with it).
-import { schema, withWorkspace, type Transaction } from '@causedeck/db';
-import { and, desc, eq, gt } from 'drizzle-orm';
+// security action: an override whose audit write fails is rolled back with it). Staff may also end
+// an override early, again with a reason (`usage.budget_override_expired`, #224).
+import { isUuid, schema, withWorkspace, type Transaction } from '@causedeck/db';
+import { and, desc, eq, gt, isNull } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
 import { getWorkspaceEntitlements } from '../billing/index.ts';
@@ -113,6 +114,69 @@ export async function setBudgetOverride(
           limit_paise: limitPaise,
           expires_at: expiresAt.toISOString(),
         },
+      },
+    );
+    return { id: row.id };
+  });
+}
+
+export interface ExpireBudgetOverrideInput {
+  /** The active override to end. */
+  overrideId: string;
+  /** Why staff ended it; stored on the override (`expire_reason`), never in the audit metadata. */
+  reason: string;
+  /** The staff user ending it (`budget_override.expired_by`, the audit actor). */
+  staffUserId: string;
+  requestId?: string;
+}
+
+/**
+ * End an active staff override of the workspace's AI budget now and audit it, in one transaction.
+ * `expires_at` moves to now, so `activeOverride` falls back to the next active override or the
+ * entitlement. Throws for an override that is unknown, already ended, or another workspace's.
+ */
+export async function expireBudgetOverride(
+  ctx: UsageContext,
+  input: ExpireBudgetOverrideInput,
+): Promise<{ id: string }> {
+  const { overrideId, reason, staffUserId, requestId } = input;
+  if (typeof reason !== 'string' || reason.trim().length === 0) {
+    throw new TypeError('expireBudgetOverride: a reason is required');
+  }
+  if (!isUuid(overrideId)) throw new TypeError('expireBudgetOverride: no active override');
+  const now = nowOf(ctx);
+  const { workspaceId } = ctx;
+  return withWorkspace(ctx.db, { workspaceId }, async (tx) => {
+    const [row] = await tx
+      .update(budgetOverride)
+      .set({
+        expiresAt: now,
+        expiredAt: now,
+        expiredBy: staffUserId,
+        expireReason: reason.trim(),
+      })
+      .where(
+        and(
+          eq(budgetOverride.id, overrideId),
+          eq(budgetOverride.workspaceId, workspaceId),
+          eq(budgetOverride.key, AI_BUDGET_KEY),
+          gt(budgetOverride.expiresAt, now),
+          isNull(budgetOverride.expiredAt),
+        ),
+      )
+      .returning({ id: budgetOverride.id });
+    if (!row) throw new TypeError('expireBudgetOverride: no active override');
+    await record(
+      {
+        db: tx,
+        workspaceId,
+        actor: { userId: staffUserId, kind: 'staff' },
+        ...(requestId === undefined ? {} : { requestId }),
+      },
+      {
+        action: 'usage.budget_override_expired',
+        target: { kind: 'budget_override', id: row.id },
+        metadata: { key: AI_BUDGET_KEY, expired_at: now.toISOString() },
       },
     );
     return { id: row.id };

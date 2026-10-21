@@ -34,6 +34,7 @@ import {
   readAll,
   SECRET,
   seedWorkspaces,
+  stepUpSession,
   testKeys,
 } from './fixtures.ts';
 import { unzip } from './unzip.ts';
@@ -56,7 +57,11 @@ async function codeOf(promise: Promise<unknown>): Promise<string | undefined> {
 }
 
 async function buildAndRead(workspaceId: string, userId: string, scope: 'workspace' | 'user') {
-  const job = await requestExport({ db, workspaceId, userId }, { scope }, noEnqueue);
+  const job = await requestExport(
+    { db, workspaceId, userId, sessionId: await stepUpSession(db, userId) },
+    { scope },
+    noEnqueue,
+  );
   const { log } = captureLog();
   await runExportBuild({ db, log }, { workspaceId, jobId: job.id }, { store, keys });
   const link = await issueExportDownload({ db, workspaceId, userId }, job.id, { secret: SECRET });
@@ -89,7 +94,12 @@ describe('export services across workspaces', () => {
     expect(
       await codeOf(
         requestExport(
-          { db, workspaceId: seeded.a.id, userId: seeded.ub },
+          {
+            db,
+            workspaceId: seeded.a.id,
+            userId: seeded.ub,
+            sessionId: await stepUpSession(db, seeded.ub),
+          },
           { scope: 'workspace' },
           noEnqueue,
         ),
@@ -101,7 +111,12 @@ describe('export services across workspaces', () => {
     expect(
       await codeOf(
         requestExport(
-          { db, workspaceId: seeded.a.id, userId: seeded.uboth },
+          {
+            db,
+            workspaceId: seeded.a.id,
+            userId: seeded.uboth,
+            sessionId: await stepUpSession(db, seeded.uboth),
+          },
           { scope: 'workspace' },
           noEnqueue,
         ),
@@ -202,7 +217,13 @@ describe('deletion services across workspaces (#302)', () => {
 
   beforeAll(async () => {
     const job = await requestWorkspaceDeletion(
-      { db, workspaceId: seeded.a.id, userId: seeded.ua, now: () => T0 },
+      {
+        db,
+        workspaceId: seeded.a.id,
+        userId: seeded.ua,
+        sessionId: await stepUpSession(db, seeded.ua, { at: T0 }),
+        now: () => T0,
+      },
       { confirmName: seeded.a.name },
       noDelivery,
     );
@@ -216,7 +237,12 @@ describe('deletion services across workspaces (#302)', () => {
     expect(
       await codeOf(
         requestWorkspaceDeletion(
-          { db, workspaceId: seeded.a.id, userId: seeded.ub },
+          {
+            db,
+            workspaceId: seeded.a.id,
+            userId: seeded.ub,
+            sessionId: await stepUpSession(db, seeded.ub),
+          },
           { confirmName: seeded.a.name },
           noDelivery,
         ),
@@ -228,7 +254,12 @@ describe('deletion services across workspaces (#302)', () => {
     expect(
       await codeOf(
         cancelWorkspaceDeletion(
-          { db, workspaceId: seeded.a.id, userId: seeded.ub },
+          {
+            db,
+            workspaceId: seeded.a.id,
+            userId: seeded.ub,
+            sessionId: await stepUpSession(db, seeded.ub),
+          },
           deletionA,
           noDelivery,
         ),
@@ -237,7 +268,12 @@ describe('deletion services across workspaces (#302)', () => {
     expect(
       await codeOf(
         cancelWorkspaceDeletion(
-          { db, workspaceId: seeded.b.id, userId: seeded.ub },
+          {
+            db,
+            workspaceId: seeded.b.id,
+            userId: seeded.ub,
+            sessionId: await stepUpSession(db, seeded.ub),
+          },
           deletionA,
           noDelivery,
         ),

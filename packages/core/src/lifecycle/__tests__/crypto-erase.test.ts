@@ -31,6 +31,7 @@ import {
   newStore,
   readAll,
   seedWorkspaces,
+  stepUpSession,
   testKeys,
 } from './fixtures.ts';
 
@@ -79,7 +80,13 @@ describe('crypto-erase proof', () => {
     expect(before.session).toBe(1);
 
     const job = await requestWorkspaceDeletion(
-      { db, workspaceId: a, userId: seeded.ua, now: () => T0 },
+      {
+        db,
+        workspaceId: a,
+        userId: seeded.ua,
+        sessionId: await stepUpSession(db, seeded.ua, { at: T0 }),
+        now: () => T0,
+      },
       { confirmName: seeded.a.name },
       noDelivery,
     );

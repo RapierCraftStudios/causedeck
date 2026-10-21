@@ -1,5 +1,5 @@
 {
-  "id": "df94b3fd-7cd3-4a76-9f4c-8da33f0f0039",
+  "id": "e69b990a-a5e5-43dd-bce8-7ce2e6572e96",
   "prevId": "78141def-ede6-46e6-8010-a89b84998d78",
   "version": "7",
   "dialect": "postgresql",
@@ -1637,140 +1637,6 @@
         "feature_flag_legal_ack_chk": {
           "name": "feature_flag_legal_ack_chk",
           "value": "legal_ack_by is null or legal_ack_note is not null"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.flag_change_request": {
-      "name": "flag_change_request",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "legal_ack_note": {
-          "name": "legal_ack_note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "requested_by": {
-          "name": "requested_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "requested_at": {
-          "name": "requested_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "decided_by": {
-          "name": "decided_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "decided_at": {
-          "name": "decided_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "flag_change_request_pending_uq": {
-          "name": "flag_change_request_pending_uq",
-          "columns": [
-            {
-              "expression": "key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "coalesce(\"workspace_id\", '00000000-0000-0000-0000-000000000000'::uuid)",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"flag_change_request\".\"status\" = 'pending'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "flag_change_request_workspace_id_organization_id_fk": {
-          "name": "flag_change_request_workspace_id_organization_id_fk",
-          "tableFrom": "flag_change_request",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "flag_change_request_requested_by_user_id_fk": {
-          "name": "flag_change_request_requested_by_user_id_fk",
-          "tableFrom": "flag_change_request",
-          "tableTo": "user",
-          "columnsFrom": ["requested_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "flag_change_request_decided_by_user_id_fk": {
-          "name": "flag_change_request_decided_by_user_id_fk",
-          "tableFrom": "flag_change_request",
-          "tableTo": "user",
-          "columnsFrom": ["decided_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "flag_change_request_status_chk": {
-          "name": "flag_change_request_status_chk",
-          "value": "\"flag_change_request\".\"status\" in ('pending', 'approved', 'rejected')"
-        },
-        "flag_change_request_decided_chk": {
-          "name": "flag_change_request_decided_chk",
-          "value": "\"flag_change_request\".\"status\" = 'pending' or \"flag_change_request\".\"decided_at\" is not null"
-        },
-        "flag_change_request_not_self_chk": {
-          "name": "flag_change_request_not_self_chk",
-          "value": "\"flag_change_request\".\"decided_by\" is null or \"flag_change_request\".\"requested_by\" is null or \"flag_change_request\".\"decided_by\" <> \"flag_change_request\".\"requested_by\""
         }
       },
       "isRLSEnabled": false
@@ -3802,6 +3668,12 @@
         "active_organization_id": {
           "name": "active_organization_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "step_up_at": {
+          "name": "step_up_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

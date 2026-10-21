@@ -22,7 +22,14 @@ import {
   spyEmail,
   superuserDb,
 } from './deletion-fixtures.ts';
-import { captureLog, cleanup, lifecycleDb, newStore, seedWorkspaces } from './fixtures.ts';
+import {
+  captureLog,
+  cleanup,
+  lifecycleDb,
+  newStore,
+  seedWorkspaces,
+  stepUpSession,
+} from './fixtures.ts';
 
 const T0 = new Date('2026-12-01T00:00:00.000Z');
 
@@ -60,7 +67,13 @@ beforeAll(async () => {
   store = newStore();
   seeded = await seedWorkspaces(db, store);
   job = await requestWorkspaceDeletion(
-    { db, workspaceId: seeded.a.id, userId: seeded.ua, now: () => T0 },
+    {
+      db,
+      workspaceId: seeded.a.id,
+      userId: seeded.ua,
+      sessionId: await stepUpSession(db, seeded.ua, { at: T0 }),
+      now: () => T0,
+    },
     { confirmName: seeded.a.name },
     noDelivery,
   );

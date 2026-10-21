@@ -27,7 +27,15 @@ import {
   spyEmail,
   superuserDb,
 } from './deletion-fixtures.ts';
-import { captureLog, cleanup, lifecycleDb, newStore, SECRET, seedWorkspaces } from './fixtures.ts';
+import {
+  captureLog,
+  cleanup,
+  lifecycleDb,
+  newStore,
+  SECRET,
+  seedWorkspaces,
+  stepUpSession,
+} from './fixtures.ts';
 
 const T0 = new Date('2026-11-20T00:00:00.000Z');
 const step = { startedAt: '2026-12-04T00:00:01.000Z', doneAt: '2026-12-04T00:00:02.000Z' };
@@ -85,7 +93,13 @@ describe('deletion receipt (erase)', () => {
   it('is emailed before the final step, kept on the tombstone and holds no content', async () => {
     const ws = seeded.a;
     const job = await requestWorkspaceDeletion(
-      { db, workspaceId: ws.id, userId: seeded.ua, now: () => T0 },
+      {
+        db,
+        workspaceId: ws.id,
+        userId: seeded.ua,
+        sessionId: await stepUpSession(db, seeded.ua, { at: T0 }),
+        now: () => T0,
+      },
       { confirmName: ws.name },
       noDelivery,
     );

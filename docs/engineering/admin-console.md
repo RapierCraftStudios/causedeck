@@ -71,6 +71,9 @@ Staff accounts exist only through the operator CLI (#308):
 | `ops`     | yes      | yes      | yes   |            |                  | yes   |
 | `admin`   | yes      | yes      | yes   | yes        | yes              | yes   |
 
+Within Workspaces, setting or expiring an AI budget override is `admin` only
+(`canOverrideBudget`); `support` sees the usage section read-only.
+
 Sessions last 8 hours (`STAFF_SESSION_SECONDS`), then staff sign in and pass the TOTP step again.
 
 ## Response headers
@@ -156,7 +159,9 @@ owner-defined function names instead of tables), then `fn` runs a `@causedeck/co
 (`staffWorkspaceSearch`, `staffWorkspaceMetadata`, `staffAuditEvents`) on the root handle. Those
 reads go through the SECURITY DEFINER functions of migration `0033_staff_console_reads`, which
 refuse anyone but an enabled staff member ([tenancy](tenancy.md)). The data layer exports
-`searchWorkspaces`, `workspaceMetadata` and `staffAuditLog`.
+`searchWorkspaces`, `workspaceMetadata`, `staffAuditLog` and `workspaceUsage` (#224, purpose
+`workspaces.usage`, through `staffWorkspaceUsage` and the `0035_staff_workspace_usage` functions
+`app_staff_workspace_usage` and `app_staff_budget_overrides`).
 
 ## Adapters
 
@@ -179,6 +184,18 @@ checked. The page shows `No adapters registered yet.` when the registry is empty
   bytes (the `storage.bytes` usage gauge), created, last-active (newest audit event) and deleted
   dates, and per-workspace flag overrides. No matter, document, memory, party or draft content,
   and no member data beyond the owner's email.
+- **Usage** (on `/workspaces/[id]`, `usage.tsx`, #224): each metered key's newest counter (value
+  and period start; paise keys also in rupees), then the AI budget overrides, newest first (at
+  most 50): limit, status (active, expired, expired early), reason, who set it (staff id), when,
+  when it expires, and for an early expiry when, by whom and why. Empty states:
+  `No usage recorded yet.` and `No budget overrides.`. `admin` staff also get the forms: set an
+  override (limit in rupees, expiry as UTC date and time, reason) and expire an active one
+  (reason). The actions (`[id]/actions.ts`) re-check `requireStaff('workspaces')` and
+  `canOverrideBudget`, refuse a blank reason, a missing or past expiry and a limit that is not
+  whole paise, and call `setBudgetOverride` / `expireBudgetOverride` from
+  `@causedeck/core/usage`. These audit `usage.budget_override_set` / `usage.budget_override_expired`
+  (actor kind `staff`) in the write's transaction. The reasons stay on the override row, never in
+  audit metadata.
 - **Audit** (`/audit`, every role): staff actions (`actor_kind = 'staff'`) newest first, 50 per
   page with an "Older" cursor: time, staff id, action, workspace, session id (the support or auth
   session the event targets, else `metadata.supportSessionId`) and outcome. No metadata, IP or
@@ -189,10 +206,11 @@ pages and fails on any content field or another member's email.
 
 ## Server actions are audited
 
-Every admin server action records an audit event with actor kind `staff`: `verifyTwoFactor`
-(`staff.two_factor_verified`), and the flag actions (#311). The flag actions write `flag.changed` and
-`flag.change_*` through the flag audit sink that `lib/flags.ts` installs. Reads record `staff.read`
-in the data layer.
+Every admin server action records an audit event with actor kind `staff` (`verifyTwoFactor`:
+`staff.two_factor_verified`; `setBudgetOverrideAction` / `expireBudgetOverrideAction`:
+`usage.budget_override_set` / `usage.budget_override_expired`; the flag actions (#311): `flag.changed`
+and `flag.change_*`, written through the flag audit sink that `lib/flags.ts` installs). Reads record
+`staff.read` in the data layer.
 `__tests__/server-actions-audit.test.ts` enumerates every `'use server'` export under
 `apps/admin/app` and every data-layer read, invokes each with mocks and asserts the event. A new
 action fails that test until it is registered there with its success path.

@@ -107,17 +107,24 @@ describe('usage schema (#218)', () => {
         name,
         enabled: true,
         forced: true,
-        // 0018_usage_rollup adds owner-only policies for the rollup's definer functions (#222).
+        // 0018_usage_rollup adds owner-only policies for the rollup's definer functions (#222);
+        // 0035 adds owner_definer_read on budget_override for the staff console (#224).
         policies:
           name === 'usage_period_summary'
             ? ['owner_definer_purge', 'owner_definer_read', 'ws_isolation']
-            : ['ws_isolation'],
+            : name === 'budget_override'
+              ? ['owner_definer_read', 'ws_isolation']
+              : ['ws_isolation'],
       })),
     );
     const ownerOnly = await owner.execute<{ roles: string[] }>(sql`
       select roles::text[] as roles from pg_policies
       where tablename = 'usage_period_summary' and policyname like 'owner_definer_%'`);
     expect(ownerOnly.map((p) => p.roles)).toEqual([['causedeck_owner'], ['causedeck_owner']]);
+    const overrideOwnerOnly = await owner.execute<{ roles: string[] }>(sql`
+      select roles::text[] as roles from pg_policies
+      where tablename = 'budget_override' and policyname = 'owner_definer_read'`);
+    expect(overrideOwnerOnly.map((p) => p.roles)).toEqual([['causedeck_owner']]);
     expect(await checkRls(owner)).toEqual([]);
     expect(
       missingTenantPolicies('0010_usage', readFileSync(MIGRATION, 'utf8'), GLOBAL_TABLES),

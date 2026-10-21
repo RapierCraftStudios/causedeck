@@ -4,7 +4,13 @@
 // matter, document, memory, party or draft field, or another member's email, reaches a response.
 import { randomUUID } from 'node:crypto';
 
-import { STAFF_AUDIT_FIELDS, STAFF_WORKSPACE_FIELDS } from '@causedeck/core/support';
+import {
+  STAFF_AUDIT_FIELDS,
+  STAFF_BUDGET_OVERRIDE_FIELDS,
+  STAFF_USAGE_COUNTER_FIELDS,
+  STAFF_WORKSPACE_FIELDS,
+} from '@causedeck/core/support';
+import { setBudgetOverride } from '@causedeck/core/usage';
 import type { Transaction } from '@causedeck/db';
 import { closeTestDb, inWorkspace, schema, withTestDb } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
@@ -40,7 +46,8 @@ vi.mock('@causedeck/core/runtime', () => ({
 }));
 vi.mock('../lib/staff.ts', () => ({ requireStaff: () => Promise.resolve(state.staff) }));
 
-const { searchWorkspaces, staffAuditLog, workspaceMetadata } = await import('../lib/data/index.ts');
+const { searchWorkspaces, staffAuditLog, workspaceMetadata, workspaceUsage } =
+  await import('../lib/data/index.ts');
 const { default: WorkspacesPage } = await import('../app/(console)/workspaces/page.tsx');
 const { default: WorkspacePage } = await import('../app/(console)/workspaces/[id]/page.tsx');
 const { default: AuditPage } = await import('../app/(console)/audit/page.tsx');
@@ -89,6 +96,16 @@ async function seed(tx: Transaction): Promise<TwoTenants> {
       jsonb_build_object('supportSessionId', ${randomUUID()}::text, 'readAction', 'matter.read',
                          'targetKinds', 'matter,document'))`),
   );
+  // A staff AI budget override of A (#224); its reason is staff-written, neutral text.
+  await setBudgetOverride(
+    { db: tx, workspaceId: t.a.id },
+    {
+      limitPaise: 35_000,
+      reason: 'pilot extension',
+      expiresAt: new Date(Date.now() + 86_400_000),
+      staffUserId: staffFixture.userId,
+    },
+  );
   return t;
 }
 
@@ -114,6 +131,21 @@ describe('staff console responses carry metadata only', () => {
       expect(keys.filter((k) => CONTENT.test(k.replace(/([a-z])([A-Z])/g, '$1 $2')))).toEqual([]);
       // Nothing from audit metadata or the event target leaks into the entries.
       expect(JSON.stringify(audit)).not.toMatch(CONTENT);
+      // Usage (#224): counters and overrides carry exactly their metadata fields.
+      const usage = await workspaceUsage(state.staff as never, t.a.id);
+      expect(usage?.overrides.length).toBeGreaterThan(0);
+      expect(usage?.counters.length).toBeGreaterThan(0);
+      for (const c of usage?.counters ?? []) {
+        expect(Object.keys(c).sort()).toEqual([...STAFF_USAGE_COUNTER_FIELDS].sort());
+      }
+      for (const o of usage?.overrides ?? []) {
+        expect(Object.keys(o).sort()).toEqual([...STAFF_BUDGET_OVERRIDE_FIELDS].sort());
+      }
+      const usageKeys = keysDeep(usage);
+      expect(usageKeys.filter((k) => CONTENT.test(k.replace(/([a-z])([A-Z])/g, '$1 $2')))).toEqual(
+        [],
+      );
+      expect(JSON.stringify(usage)).not.toMatch(CONTENT);
     });
   });
 
@@ -129,6 +161,9 @@ describe('staff console responses carry metadata only', () => {
       ];
       expect(pages[0]).toContain(t.a.slug);
       expect(pages[1]).toContain(ownerEmail);
+      // The usage section (#224) renders on the workspace page, metadata only.
+      expect(pages[1]).toContain('AI budget overrides');
+      expect(pages[1]).toContain('pilot extension');
       expect(pages[2]).toContain('support.view');
       for (const page of pages) {
         const text = page.replace(/<[^>]+>/g, ' ');

@@ -17,7 +17,7 @@ pnpm --filter @causedeck/core exec vitest run src/usage
 | `@causedeck/core/usage` (`period.ts`) | `usagePeriod`, `periodStart`, `nextPeriodStart`, `USAGE_TIME_ZONE` |
 | `@causedeck/core/usage` (`meter.ts`) | `increment`, `incrementSql`, `getUsage`, `UsageContext` |
 | `@causedeck/core/usage` (`budget.ts`) | `reserve`, `commit`, `release`, `reapExpiredReservations`, `RESERVATION_TTL_MS`, `BudgetError` (`BUDGET_EXCEEDED`) |
-| `@causedeck/core/usage` (`limits.ts`) | `AI_BUDGET_KEY`, `getAiBudget`, `setBudgetOverride` |
+| `@causedeck/core/usage` (`limits.ts`) | `AI_BUDGET_KEY`, `getAiBudget`, `setBudgetOverride`, `expireBudgetOverride` |
 | `@causedeck/core/usage` (`thresholds.ts`) | `checkAiBudgetThresholds`, `SOFT_LIMIT_BPS`, `HARD_LIMIT_BPS` |
 | `@causedeck/core/usage` (`fair-use.ts`) | `assertWithinFairUse`, `FAIR_USE_KEYS`, `FAIR_USE_CAPS`, `FairUseError` (`FAIR_USE_EXCEEDED`) |
 | `@causedeck/core/usage` (`fairness.ts`) | `fairnessConcurrencyForPlan`, `getWorkspaceFairnessConcurrency` (per-plan job fairness) |
@@ -89,7 +89,12 @@ try {
   spend.
 - The budget is the newest unexpired staff override for `ai.spend_paise` (`setBudgetOverride`,
   `limits.ts`), or else the `ai_budget_paise` entitlement. Overrides are staff-only, justified,
-  always expiring and audited as `usage.budget_override_set` ([audit.md](audit.md)).
+  always expiring and audited as `usage.budget_override_set` ([audit.md](audit.md)). Staff can
+  end an active override early with a reason (`expireBudgetOverride`, #224): its `expires_at`
+  moves to now, `expired_at`, `expired_by` and `expire_reason` record who and why, and it is
+  audited as `usage.budget_override_expired`. The next active override, or else the entitlement,
+  applies from then on. The admin console's workspace page shows the counters and overrides
+  ([admin-console.md](admin-console.md)).
 - Soft limit: after a recorded spend, when the context has `enqueueDelivery`, `commit` runs
   `checkAiBudgetThresholds`. At 80% (`SOFT_LIMIT_BPS`) it sends the `usage.warning` notice to the
   workspace's active owners, at most once per period. A failure in this check never fails the

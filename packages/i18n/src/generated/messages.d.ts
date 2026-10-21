@@ -1012,18 +1012,11 @@ export type Messages = {
     danger: {
       title: string;
       description: string;
-      unavailable: string;
       transfer: {
         label: string;
         description: string;
         action: string;
       };
-      delete: {
-        label: string;
-        description: string;
-        action: string;
-      };
-      exportFirst: string;
       transferHint: string;
       loading: string;
       error: {
@@ -1348,6 +1341,7 @@ export type Messages = {
       nav: {
         profile: string;
         security: string;
+        danger: string;
       };
       loading: string;
       error: {
@@ -1482,6 +1476,103 @@ export type Messages = {
           google: string;
         };
       };
+    };
+  };
+  lifecycle: {
+    offline: string;
+    forbidden: string;
+    stepUp: {
+      title: string;
+      body: string;
+      passkey: string;
+      code: string;
+      verify: string;
+      verified: string;
+      wrongCode: string;
+      codeFormat: string;
+      passkeyFailed: string;
+      required: string;
+    };
+    export: {
+      title: string;
+      action: string;
+      helper: string;
+      leave: string;
+      progressLabel: string;
+      steps: {
+        queued: string;
+        collecting: string;
+        files: string;
+        packaging: string;
+      };
+      readyTitle: string;
+      expires: string;
+      download: string;
+      copySha: string;
+      copied: string;
+      copyFailed: string;
+      failed: string;
+      retry: string;
+      requestError: string;
+      downloadError: string;
+    };
+    history: {
+      title: string;
+      empty: string;
+      requested: string;
+      status: {
+        queued: string;
+        running: string;
+        ready: string;
+        failed: string;
+        expired: string;
+      };
+    };
+    danger: {
+      title: string;
+      consequences: {
+        data: string;
+        permanent: string;
+        export: string;
+        cryptoErase: string;
+      };
+      action: string;
+      scheduled: string;
+      cancel: string;
+      cancelled: string;
+      cancelError: string;
+      requested: string;
+      dialog: {
+        title: string;
+        step: string;
+        exportTitle: string;
+        exportBody: string;
+        exportLink: string;
+        exportAck: string;
+        nameTitle: string;
+        nameLabel: string;
+        nameHint: string;
+        nameMismatch: string;
+        next: string;
+        back: string;
+        close: string;
+        delete: string;
+        error: string;
+      };
+    };
+    account: {
+      title: string;
+      description: string;
+      consequences: string;
+      action: string;
+      dialogTitle: string;
+      confirmLabel: string;
+      confirmHint: string;
+      mismatch: string;
+      delete: string;
+      close: string;
+      requested: string;
+      error: string;
     };
   };
   audit: {

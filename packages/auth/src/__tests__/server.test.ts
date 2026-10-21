@@ -467,6 +467,56 @@ describe('two-factor without a password (#289)', () => {
   });
 });
 
+describe('step-up stamps (#304)', () => {
+  async function sessionsOf(userId: string) {
+    return testAppDb()
+      .select({ id: schema.session.id, stepUpAt: schema.session.stepUpAt })
+      .from(schema.session)
+      .where(eq(schema.session.userId, userId));
+  }
+
+  it('a TOTP verification stamps the session; a failed code and dev sign-in do not', async () => {
+    const { auth } = makeAuth();
+    const { user, cookie } = await devSignInAs(auth);
+    expect((await sessionsOf(user.id)).every((s) => s.stepUpAt === null)).toBe(true);
+
+    const enable = await authRequest(auth, '/two-factor/enable', { cookie, body: {} });
+    const { totpURI } = (await enable.json()) as { totpURI: string };
+    const secret = new URL(totpURI).searchParams.get('secret') ?? '';
+    // The first verification rotates the session: the new one starts with a step-up.
+    const before = Date.now();
+    const verify = await authRequest(auth, '/two-factor/verify-totp', {
+      cookie,
+      body: { code: totp(secret) },
+    });
+    expect(verify.status).toBe(200);
+    const stamped = (await sessionsOf(user.id)).filter((s) => s.stepUpAt !== null);
+    expect(stamped).toHaveLength(1);
+    expect(stamped[0]?.stepUpAt?.getTime()).toBeGreaterThanOrEqual(before - 1000);
+
+    // A wrong code on the rotated session changes nothing.
+    const rotated = cookieHeader(verify);
+    await testAppDb()
+      .update(schema.session)
+      .set({ stepUpAt: null })
+      .where(eq(schema.session.userId, user.id));
+    const wrong = await authRequest(auth, '/two-factor/verify-totp', {
+      cookie: rotated,
+      body: { code: totp(secret) === '000000' ? '111111' : '000000' },
+    });
+    expect(wrong.status).toBeGreaterThanOrEqual(400);
+    expect((await sessionsOf(user.id)).every((s) => s.stepUpAt === null)).toBe(true);
+
+    // A signed-in re-verification (2FA already on) stamps the current session.
+    const again = await authRequest(auth, '/two-factor/verify-totp', {
+      cookie: rotated,
+      body: { code: totp(secret) },
+    });
+    expect(again.status).toBe(200);
+    expect((await sessionsOf(user.id)).some((s) => s.stepUpAt !== null)).toBe(true);
+  });
+});
+
 async function findUserById(id: string) {
   const [row] = await testAppDb().select().from(schema.user).where(eq(schema.user.id, id));
   return row;

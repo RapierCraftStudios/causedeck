@@ -80,7 +80,11 @@ export const usageEvent = tenantTable(
   ],
 );
 
-/** A staff override of a workspace limit; always justified and always expiring. */
+/**
+ * A staff override of a workspace limit; always justified and always expiring. Staff may expire one
+ * early (#224, 0035): `expires_at` moves to that moment and who did it and why are kept on the row
+ * (`expired_at`, `expired_by`, `expire_reason`: all set or none).
+ */
 export const budgetOverride = tenantTable(
   'budget_override',
   {
@@ -93,12 +97,19 @@ export const budgetOverride = tenantTable(
     reason: text('reason').notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     createdAt: createdAt(),
+    expiredAt: timestamp('expired_at', { withTimezone: true }),
+    expiredBy: uuid('expired_by').references(() => user.id),
+    expireReason: text('expire_reason'),
   },
   (t) => [
     foreignKey({ columns: [t.workspaceId], foreignColumns: [organization.id] }).onDelete('cascade'),
     index('budget_override_workspace_key_idx').on(t.workspaceId, t.key),
     check('budget_override_limit_chk', sql`limit_value >= 0`),
     check('budget_override_reason_chk', sql`length(btrim(reason)) > 0`),
+    check(
+      'budget_override_expiry_chk',
+      sql`(expired_at is null and expired_by is null and expire_reason is null) or (expired_at is not null and expired_by is not null and expire_reason is not null and length(btrim(expire_reason)) > 0)`,
+    ),
     keyCheck('budget_override_key_chk', 'key'),
   ],
 );

@@ -13,6 +13,7 @@ export const NAMESPACES = [
   'members',
   'notifications',
   'settings',
+  'lifecycle',
   'audit',
   'errors',
 ] as const;

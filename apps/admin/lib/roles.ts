@@ -36,6 +36,14 @@ export function canStaff(role: StaffRole, capability: StaffCapability): boolean 
 }
 
 /**
+ * Whether `role` may set or expire a workspace's AI budget overrides (#224). Writes are admin only:
+ * `support` reaches Workspaces for metadata, `admin` reaches everything (docs/engineering/admin-console.md).
+ */
+export function canOverrideBudget(role: StaffRole): boolean {
+  return role === 'admin';
+}
+
+/**
  * Mirrors `DEV_STAFF_EMAIL` from `@causedeck/core/support` (a test keeps them equal). The local dev
  * staff account, created by `pnpm --filter @causedeck/admin staff:seed-dev`. Outside
  * production, and for this account only, the gate skips the IP allowlist and the 2FA step.

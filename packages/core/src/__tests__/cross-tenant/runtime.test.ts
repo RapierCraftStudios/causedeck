@@ -28,6 +28,7 @@ let t: TwoTenants;
 let aInvitationToken: string;
 let aInvoiceId: string;
 let aExportId: string;
+let aDeletionId: string;
 const SECRET = 'xt-runtime-export-secret-0123456789abcdef';
 
 /** Rejects with a NOT_FOUND or FORBIDDEN error (workspace, invitation or notification). */
@@ -45,6 +46,21 @@ const asB = () => ({ workspaceId: t.b.id, userId: t.ub });
 /** A's ids under `ub`: what a forged request would pass. */
 const forged = () => ({ workspaceId: t.a.id, userId: t.ub });
 
+/** A live session of `userId` with a fresh step-up (#304), so only the tenancy check can refuse. */
+async function steppedUp(userId: string): Promise<string> {
+  const [row] = await testAppDb()
+    .insert(schema.session)
+    .values({
+      token: randomUUID(),
+      userId,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      stepUpAt: new Date(),
+    })
+    .returning({ id: schema.session.id });
+  if (row === undefined) throw new Error('steppedUp: insert returned no row');
+  return row.id;
+}
+
 async function aMemberIds(): Promise<string[]> {
   const rows = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (s) =>
     s.select({ id: schema.member.id }).from(schema.member),
@@ -57,6 +73,16 @@ async function aAuditIds(): Promise<string[]> {
     s.select({ id: schema.auditEvent.id }).from(schema.auditEvent),
   );
   return rows.map((r) => r.id).sort();
+}
+
+/** A's deletion jobs as `id:status`, read as A's owner. */
+async function aDeletionStatus(): Promise<string[]> {
+  const rows = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (s) =>
+    s
+      .select({ id: schema.deletionJob.id, status: schema.deletionJob.status })
+      .from(schema.deletionJob),
+  );
+  return rows.map((r) => `${r.id}:${r.status}`).sort();
 }
 
 /** The caller gate every scope-taking loader relies on: `ub` is not a member of A. */
@@ -238,17 +264,24 @@ const CASES: Record<string, () => Promise<void>> = {
   requestExportFor: async () => {
     const before = await aAuditIds();
     // Refused before anything is written or enqueued: ub is not an owner of A.
-    await expectDenied(runtime.requestExportFor(forged(), { scope: 'workspace' }));
+    await expectDenied(
+      runtime.requestExportFor(
+        { ...forged(), sessionId: await steppedUp(t.ub) },
+        { scope: 'workspace' },
+      ),
+    );
     expect(await aAuditIds()).toEqual(before);
   },
   requestAccountDeletionFor: async () => {
     const before = { audit: await aAuditIds(), members: await aMemberIds() };
     // Acts on the caller's own account only: ub owns B alone, so it is refused, and A is unchanged.
     expect(
-      await runtime.requestAccountDeletionFor({ userId: t.ub }).then(
-        () => undefined,
-        (e: unknown) => (e as { code?: string }).code,
-      ),
+      await runtime
+        .requestAccountDeletionFor({ userId: t.ub, sessionId: await steppedUp(t.ub) })
+        .then(
+          () => undefined,
+          (e: unknown) => (e as { code?: string }).code,
+        ),
     ).toBe('CONFLICT');
     expect({ audit: await aAuditIds(), members: await aMemberIds() }).toEqual(before);
   },
@@ -257,6 +290,43 @@ const CASES: Record<string, () => Promise<void>> = {
     // Refused before anything is written or enqueued: ub is not an owner of A.
     await expectDenied(runtime.requestMemoryErasureFor(forged()));
     expect(await aAuditIds()).toEqual(before);
+  },
+  listExportJobsFor: async () => {
+    // Forged: A's ids under ub see none of A's exports (A's export was requested by ua).
+    expect(await runtime.listExportJobsFor(forged())).toEqual([]);
+    expect((await runtime.listExportJobsFor(asB())).map((job) => job.id)).not.toContain(aExportId);
+  },
+  requestWorkspaceDeletionFor: async () => {
+    const before = { audit: await aAuditIds(), deletion: await aDeletionStatus() };
+    // Refused before anything is written or enqueued: ub is not an owner of A.
+    await expectDenied(
+      runtime.requestWorkspaceDeletionFor(
+        { ...forged(), sessionId: await steppedUp(t.ub) },
+        { confirmName: 'anything' },
+      ),
+    );
+    expect({ audit: await aAuditIds(), deletion: await aDeletionStatus() }).toEqual(before);
+  },
+  cancelWorkspaceDeletionFor: async () => {
+    const before = await aDeletionStatus();
+    await expectDenied(
+      runtime.cancelWorkspaceDeletionFor(
+        { ...forged(), sessionId: await steppedUp(t.ub) },
+        aDeletionId,
+      ),
+    );
+    await expectDenied(
+      runtime.cancelWorkspaceDeletionFor(
+        { ...asB(), sessionId: await steppedUp(t.ub) },
+        aDeletionId,
+      ),
+    );
+    expect(await aDeletionStatus()).toEqual(before);
+  },
+  activeWorkspaceDeletionIn: async () => {
+    // A non-member sees no banner for A, whatever A's deletion state.
+    expect(await runtime.activeWorkspaceDeletionIn(forged())).toBeNull();
+    await expectCallerGateRefusesA();
   },
   issueExportDownloadFor: async () => {
     await expectDenied(runtime.issueExportDownloadFor(forged(), aExportId, { secret: SECRET }));
@@ -306,7 +376,9 @@ beforeAll(async () => {
   const token = t.a.rows.invitation?.token;
   const invoiceId = t.a.rows.saas_invoice?.invoiceId;
   const exportId = t.a.rows.export_job?.id;
-  if (!token || !invoiceId || !exportId) throw new Error('seed rows');
+  const deletionId = t.a.rows.deletion_job?.id;
+  if (!token || !invoiceId || !exportId || !deletionId) throw new Error('seed rows');
+  aDeletionId = deletionId;
   aExportId = exportId;
   aInvitationToken = token;
   aInvoiceId = invoiceId;

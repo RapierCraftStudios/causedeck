@@ -165,8 +165,9 @@ the workspace's exact name (surrounding spaces ignored). It creates the job with
 and notifies every active owner (`security.alert`, mandatory, in-app and email). A second request
 returns the pending job. `cancelWorkspaceDeletion(ctx, jobId, deps)` works for any owner while the
 job is pending or scheduled, records `workspace.deletion_cancelled` and notifies the owners.
-`getActiveWorkspaceDeletion(ctx)` returns the deletion in progress to active members only. Step-up
-authentication (#304) wraps these calls; the UI comes with #305.
+`getActiveWorkspaceDeletion(ctx)` returns the deletion in progress to active members only. Requesting
+and cancelling need a fresh step-up (see [Step-up authentication](#step-up-authentication-304)); the
+UI comes with #305.
 
 `system.deletion.tick` runs hourly at :45. Nothing is erased before `cooloff_until`: the erase
 itself also refuses (`too_early`) until then.
@@ -254,6 +255,34 @@ Everything else, including the workspace's own audit chain, is erased.
 | Proof and accountability                                | Signed, content-free receipt on the tombstone, emailed to the requester; audit events until the final step |
 | Right to access (s. 11)                                 | Workspace export (above), recommended before deletion (#305)                                            |
 
+## Step-up authentication (#304)
+
+`requestExport`, `requestWorkspaceDeletion`, `cancelWorkspaceDeletion` and `requestAccountDeletion`
+take the caller's Better Auth `sessionId` in their context. Each one needs a passkey or TOTP
+verification in that session within the last 10 minutes (`STEP_UP_MAX_AGE_MS`). The three workspace
+actions also need the owner role.
+
+- **Recorded in** `session.step_up_at` (migration `0034_session_step_up`). `createAuth` stamps it
+  in two cases: when a session is created by `/passkey/verify-authentication` or
+  `/two-factor/verify-totp`, and when a signed-in user verifies TOTP again on their current
+  session. Magic link, Google, backup codes and email OTP never stamp it. Signing out or revoking
+  the session drops it with the row.
+- **Checked by** `requireStepUp` (`@causedeck/auth/step-up`). It passes only for a live session
+  (`expires_at > now`) of the caller with `0 <= now - step_up_at < 10 min`. Otherwise it throws
+  `StepUpRequiredError`.
+- **Gate** (`packages/core/src/lifecycle/step-up.ts`). The owner check runs first, then the step-up,
+  both inside the service transaction and before any read or write. A refusal therefore creates no
+  job, enqueues nothing and sends no notification. After the rollback, the refusal is audited:
+  - A role refusal is recorded as `access.denied` (`reason: 'role'`). It goes to the workspace chain
+    for members and is account-level for anyone else.
+  - A stale or missing step-up is recorded as `auth.step_up_required` (`deniedAction`). It goes to
+    the workspace chain for the three workspace actions and is account-level for account deletion.
+
+  The caller gets `FORBIDDEN`. A step-up refusal also carries `reason: 'step_up_required'`, so the UI
+  (#305) can ask for a passkey or TOTP confirmation and retry.
+- **Not gated:** downloads (`issueExportDownload`, `openExportDownload`), the read paths and the
+  worker jobs.
+
 ## Account deletion (#303)
 
 ```sh
@@ -271,8 +300,9 @@ caller's own account only.
 - **Request.** One `deletion_job` (`kind` `account`, `workspace_id` null, `status` `scheduled`,
   `erase_after` = now) per user; a second request returns the pending one. `account.deletion_requested`
   is recorded on the account chain in the same transaction, then `account.delete` is enqueued with
-  ids only. There is no cool-off (that is workspace deletion, #302); step-up authentication gates
-  the entry point (#304).
+  ids only. There is no cool-off (that is workspace deletion, #302). The request first needs a
+  fresh step-up ([Step-up authentication](#step-up-authentication-304)); there is no owner check,
+  since the account is the caller's own.
 - **Job (`account.delete`).** It re-checks both blocks (ownership can change while the job waits;
   the job then ends `failed` with `steps.error` `sole_owner` or `staff_account`). It removes the user
   from `matter_restriction.allowed_user_ids` in each workspace. Then, in one transaction, it deletes
@@ -313,3 +343,46 @@ NFR Privacy: memory and embeddings are deleted within 24 h of a request.
 - **Fixtures until the real tables ship.** The tables arrive in a later milestone; until then a
   missing table is skipped. The tests create fixtures with `tenantPolicy()` in a rolled-back owner
   transaction.
+
+## Web UI (#305)
+
+The lifecycle entry points in `apps/web`. Each server action calls a `@causedeck/core/runtime`
+wrapper on the app db, not the action's own `ctx.tx`. The services run their own transaction, and
+they audit refusals after the rollback, which the action's transaction would undo. Strings live in
+the `lifecycle` i18n namespace.
+
+- **Step-up prompt.** A core step-up refusal reaches the browser as `FORBIDDEN` with
+  `fieldErrors.stepUp`. `StepUpVerify` (`components/settings/step-up-verify.tsx`) then asks
+  `Confirm it is you`, and the caller retries the action. The user can confirm two ways:
+  - A passkey (`authClient.signIn.passkey()`, which creates a new, stamped session).
+  - An authenticator code through `verifyTwoFactorAction`, which stamps the current session. This
+    option is offered only when two-factor is on.
+- **Export page** (`settings/export`, owners, `workspace.export` flag). The `Export everything`
+  card holds `Request export` and its helper text, next to the History card (the last 5 exports).
+  - **Building:** while an export is queued or building, the card polls `listExportsAction` every
+    3 s. It shows a progress bar and the build step: `Collecting records`, `Decrypting files` or
+    `Packaging`.
+  - **Ready:** the file name, size, the expiry countdown, `Download` (a POST to
+    `/api/exports/<id>/download` for a signed link) and `Copy SHA-256`.
+  - **Failed:** `Try again`.
+  - **Expired:** a ready export past `expires_at` is shown as expired.
+
+  No email is sent when an export is ready yet, so the copy only says the user can come back.
+- **Danger zone** (`settings/danger`, owners). The `Delete this workspace` card lists the
+  consequences. `Delete workspace` opens a 3-step dialog:
+  1. The export reminder.
+  2. Step-up.
+  3. The workspace name, typed exactly.
+
+  `Delete` stays disabled until all three are done. If the server finds the step-up stale, the
+  dialog returns to step 2. During the cool-off, the card shows the date and `Cancel deletion`,
+  which asks for step-up again.
+- **Cool-off banner.** The workspace layout reads `activeWorkspaceDeletionIn`, and the shell shows
+  `Scheduled for deletion on <date>. Cancel any time before then.` to every member under the
+  topbar. Owners also get a `Cancel deletion` link to the danger zone. The banner is
+  server-rendered and adds no client JS.
+- **Account** (`/account#danger`). `Delete account` asks for step-up and the account email, then
+  calls `requestAccountDeletionAction`. A sole owner or a staff account sees the core `CONFLICT`
+  message.
+- **Roles.** Other roles get the permission-denied page with `Only workspace owners can export or
+  delete this workspace.` Their actions return `FORBIDDEN` and are recorded as `access.denied`.

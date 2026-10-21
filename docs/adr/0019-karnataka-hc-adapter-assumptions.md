@@ -1,4 +1,4 @@
-# 0018. Karnataka HC adapter: layout assumptions and how H13 retires them
+# 0019. Karnataka HC adapter: layout assumptions and how H13 retires them
 
 ## Status
 
@@ -30,7 +30,7 @@ The research could not open an output cause list, the sitting lists or the offic
 
 ## Decision
 
-The adapter ships version 1.0.0 (`packages/adapters/src/karnataka-hc/`, `adapter_version` row in migration 0048) with these assumptions, each listed with the H13 check that retires it:
+The adapter ships version 1.0.0 (`packages/adapters/src/karnataka-hc/`, `adapter_version` row in migration 0049) with these assumptions, each listed with the H13 check that retires it:
 
 | #   | Assumption                                                                                                                                                                                                                                                                                      | Where                                             | H13 check that retires it                                                                                         |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |

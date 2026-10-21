@@ -1,4 +1,4 @@
-// The Karnataka HC `adapter_version` 1.0.0 row (#404, migration 0048): active, accepted by the DB
+// The Karnataka HC `adapter_version` 1.0.0 row (#404, migration 0049): active, accepted by the DB
 // checks, and equal to the bundled config with a valid checksum, so the loader serves it.
 import { adapterVersion } from '@causedeck/db/schema';
 import { withTestDb } from '@causedeck/db/testing';

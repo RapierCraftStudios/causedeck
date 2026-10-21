@@ -1,5 +1,5 @@
 // Karnataka HC cause-list columns (#404): assumed table header names, upper-case, mapped to the row
-// field they fill. Real column names are unverified (ADR 0018); the parsers (#405) match a header
+// field they fill. Real column names are unverified (ADR 0019); the parsers (#405) match a header
 // cell against these after trimming and collapsing spaces. A list without advocate columns is still
 // read (`advocates: []` with a diagnostic).
 

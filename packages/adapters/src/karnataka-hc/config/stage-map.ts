@@ -1,5 +1,5 @@
 // Karnataka HC list headings (#404): assumed stage headings. Official output lists could not be read
-// (research/raw/09 §1.2), so every pattern is an assumption the ADR (0018) retires with real lists
+// (research/raw/09 §1.2), so every pattern is an assumption the ADR (0019) retires with real lists
 // (#119); unmatched headings stay verbatim in `unmappedHeadings` (open enum).
 import type { StageMapEntry } from '../../config/schema.ts';
 

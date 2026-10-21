@@ -69,12 +69,12 @@ async function insertVersion(
   });
 }
 
+// The echo adapter's rows only: migrations register other adapters' versions too (0048, #401).
 const statusOf = async (tx: Transaction, version: string) =>
   (
     await tx
       .select({ status: adapterVersion.status })
       .from(adapterVersion)
-      // Echo rows only: migrations hold other adapters' active 1.0.0 rows (0048, #404).
       .where(
         and(eq(adapterVersion.adapterId, ECHO_ADAPTER_ID), eq(adapterVersion.version, version)),
       )

@@ -4,7 +4,7 @@
 // parts 2 to 4 (#405-#407): until then they return well-formed empty results. Everything the
 // adapter reads is a document the lawyer supplied; links open the court's own pages in a new window
 // and nothing here requests a URL. The Dharwad and Kalaburagi Benches are disabled forums (v2).
-// Every layout assumption is recorded in ADR 0018.
+// Every layout assumption is recorded in ADR 0019.
 import { defineAdapterConfig, type AdapterConfig } from '../config/schema.ts';
 import { resolveForumLink, type ForumLinkConfig } from '../madras-hc/links.ts';
 import type {

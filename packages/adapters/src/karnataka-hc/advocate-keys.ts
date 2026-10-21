@@ -1,6 +1,6 @@
 // Karnataka HC advocate keys (#404, part 1 of #37). The official dated cause-list search takes a
 // Bar Registration Number (research/raw/09 §1.2), so a BRN printed on a row is the stable key. Its
-// format is unverified (ADR 0018): the pattern is tolerant, `KAR/1234/2010`-like, case and spaces
+// format is unverified (ADR 0019): the pattern is tolerant, `KAR/1234/2010`-like, case and spaces
 // around the slashes ignored. Names are kept raw plus upper-case aliases with titles stripped and
 // initials split; they are never transliterated.
 import type { Advocate } from '../types.ts';

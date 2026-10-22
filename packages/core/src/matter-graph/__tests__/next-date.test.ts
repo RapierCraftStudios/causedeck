@@ -2,6 +2,7 @@
 // canonical listing (a different date is a conflict, the same date a no-op), only confirmNextDate
 // swaps the canonical flag (the old row stays as history), it needs a member who may write the
 // matter and refuses past dates unless allowPast, and events carry the matter's sensitive flag.
+// chooseNextDateSource (#390) resolves a conflict card the way a person chose, and only once.
 import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { buildForum } from '@causedeck/db/testing/matter-graph-fixtures';
@@ -9,10 +10,12 @@ import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import {
+  chooseNextDateSource,
   confirmNextDate,
   createMatter,
   createProceeding,
   getCanonicalNextDate,
+  getMatterOverview,
   proposeNextDate,
   WorkspaceError,
   type GraphEvent,
@@ -369,3 +372,203 @@ describe('getCanonicalNextDate', () => {
     });
   });
 });
+
+describe('chooseNextDateSource (#390)', () => {
+  /** A canonical (proposed) listing on 2026-11-02 and a conflicting proposal on 2026-11-09. */
+  async function conflictOf(w: World) {
+    const first = await proposeNextDate(w.deps, w.owner, {
+      proceedingId: w.proceedingId,
+      date: '2026-11-02',
+      provenance: MANUAL,
+    });
+    if (first.kind !== 'proposal') throw new Error('expected a proposal');
+    await confirmNextDate(w.deps, w.owner, { listingId: first.listingId });
+    const second = await proposeNextDate(w.deps, w.owner, {
+      proceedingId: w.proceedingId,
+      date: '2026-11-09',
+      provenance: { sourceType: 'adapter', sourceRef: 'cause-list:2026-10-21' },
+    });
+    if (second.kind !== 'conflict') throw new Error('expected a conflict');
+    w.events.length = 0;
+    return { currentListingId: first.listingId, proposedListingId: second.proposed.listingId };
+  }
+
+  async function conflictsLeft(w: World) {
+    const overview = await getMatterOverview(w.deps, w.owner, { matterId: w.matterId });
+    return overview.conflicts;
+  }
+
+  it('current keeps the canonical date, confirms it and marks the proposal corrected', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx);
+      const ids = await conflictOf(w);
+      expect(await conflictsLeft(w)).toHaveLength(1);
+      const row = await chooseNextDateSource(w.deps, w.owner, { ...ids, choice: 'current' });
+      expect(row).toMatchObject({
+        id: ids.currentListingId,
+        canonical: true,
+        confirmationState: 'confirmed',
+        listDate: '2026-11-02',
+      });
+      const rows = await w.listings();
+      expect(rows.map((r) => [r.id, r.canonical, r.confirmationState])).toEqual([
+        [ids.currentListingId, true, 'confirmed'],
+        [ids.proposedListingId, false, 'corrected'],
+      ]);
+      expect(await conflictsLeft(w)).toEqual([]);
+      expect(w.events).toEqual([
+        {
+          type: 'listing.next_date_confirmed',
+          workspaceId: w.workspaceId,
+          actorUserId: w.ownerId,
+          matterId: w.matterId,
+          sensitive: false,
+          proceedingId: w.proceedingId,
+          listingId: ids.currentListingId,
+          previousListingId: null,
+          date: '2026-11-02',
+        },
+      ]);
+      // The card is resolved: choosing again (either side) is CONFLICT and writes nothing.
+      expect(
+        await codeOf(chooseNextDateSource(w.deps, w.owner, { ...ids, choice: 'proposed' })),
+      ).toBe('CONFLICT');
+      expect(await w.listings()).toEqual(rows);
+    });
+  });
+
+  it('proposed makes the proposal canonical and confirmed; the old row stays as history', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx, true);
+      const ids = await conflictOf(w);
+      const row = await chooseNextDateSource(w.deps, w.owner, { ...ids, choice: 'proposed' });
+      expect(row).toMatchObject({
+        id: ids.proposedListingId,
+        canonical: true,
+        listDate: '2026-11-09',
+      });
+      const rows = await w.listings();
+      expect(rows.map((r) => [r.id, r.canonical, r.confirmationState])).toEqual([
+        [ids.currentListingId, false, 'confirmed'],
+        [ids.proposedListingId, true, 'confirmed'],
+      ]);
+      expect(await conflictsLeft(w)).toEqual([]);
+      expect(w.events.at(-1)).toMatchObject({
+        type: 'listing.next_date_confirmed',
+        sensitive: true,
+        listingId: ids.proposedListingId,
+        previousListingId: ids.currentListingId,
+        date: '2026-11-09',
+      });
+      expect(
+        await codeOf(chooseNextDateSource(w.deps, w.owner, { ...ids, choice: 'current' })),
+      ).toBe('CONFLICT');
+    });
+  });
+
+  it('manual stores the typed date as a confirmed manual canonical listing', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx);
+      const ids = await conflictOf(w);
+      expect(
+        await codeOf(
+          chooseNextDateSource(w.deps, w.owner, { ...ids, choice: 'manual', date: '2026-10-20' }),
+        ),
+      ).toBe('VALIDATION');
+      expect(
+        await codeOf(chooseNextDateSource(w.deps, w.owner, { ...ids, choice: 'manual' })),
+      ).toBe('VALIDATION');
+      const row = await chooseNextDateSource(w.deps, w.owner, {
+        ...ids,
+        choice: 'manual',
+        date: '2026-11-16',
+      });
+      expect(row).toMatchObject({
+        canonical: true,
+        confirmationState: 'confirmed',
+        sourceType: 'manual',
+        listDate: '2026-11-16',
+        stageRaw: '',
+      });
+      const rows = await w.listings();
+      expect(rows.map((r) => [r.id, r.canonical, r.confirmationState])).toEqual([
+        [ids.currentListingId, false, 'confirmed'],
+        [ids.proposedListingId, false, 'corrected'],
+        [row.id, true, 'confirmed'],
+      ]);
+      expect(await conflictsLeft(w)).toEqual([]);
+      expect(
+        await getCanonicalNextDate(w.deps, w.owner, { proceedingId: w.proceedingId }),
+      ).toMatchObject({ id: row.id });
+      expect(w.events.at(-1)).toMatchObject({
+        listingId: row.id,
+        previousListingId: ids.currentListingId,
+        date: '2026-11-16',
+      });
+    });
+  });
+
+  it('refuses listings of two proceedings, viewers, clerks and non-members, writing nothing', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx);
+      const ids = await conflictOf(w);
+      const before = await w.listings();
+      // Another proceeding's listing paired with this one's: NOT_FOUND.
+      const other = await createProceeding(w.deps, w.owner, {
+        matterId: w.matterId,
+        forumId: await forumOf(tx, w),
+        caseType: 'W.P.',
+        number: '202',
+        year: 2026,
+        provenance: MANUAL,
+      });
+      const elsewhere = await proposeNextDate(w.deps, w.owner, {
+        proceedingId: other.id,
+        date: '2026-11-30',
+        provenance: MANUAL,
+      });
+      if (elsewhere.kind !== 'proposal') throw new Error('expected a proposal');
+      w.events.length = 0;
+      expect(
+        await codeOf(
+          chooseNextDateSource(w.deps, w.owner, {
+            currentListingId: ids.currentListingId,
+            proposedListingId: elsewhere.listingId,
+            choice: 'current',
+          }),
+        ),
+      ).toBe('NOT_FOUND');
+      for (const role of ['viewer', 'clerk'] as const) {
+        const userId = await addMember(tx, w.workspaceId, role);
+        expect(
+          await codeOf(
+            chooseNextDateSource(w.deps, { ...w.owner, userId }, { ...ids, choice: 'current' }),
+          ),
+        ).toBe('FORBIDDEN');
+      }
+      const outsider = await newUser(tx);
+      expect(
+        await codeOf(
+          chooseNextDateSource(
+            w.deps,
+            { ...w.owner, userId: outsider },
+            { ...ids, choice: 'proposed' },
+          ),
+        ),
+      ).toBe('NOT_FOUND');
+      expect(await w.listings()).toEqual(before);
+      expect(w.events).toEqual([]);
+    });
+  });
+});
+
+async function forumOf(tx: Transaction, w: World): Promise<string> {
+  const [row] = await inWorkspace(tx, w.workspaceId, (s) =>
+    s
+      .select({ forumId: schema.proceeding.forumId })
+      .from(schema.proceeding)
+      .where(eq(schema.proceeding.id, w.proceedingId)),
+  );
+  if (!row) throw new Error('proceeding not found');
+  return row.forumId;
+}

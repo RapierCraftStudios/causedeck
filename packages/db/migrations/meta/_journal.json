@@ -372,6 +372,13 @@
       "when": 1792642209219,
       "tag": "0052_nclt_adapter_v1",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1792685685095,
+      "tag": "0053_capture_inbox",
+      "breakpoints": true
     }
   ]
 }

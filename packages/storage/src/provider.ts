@@ -12,6 +12,9 @@ import {
 /** Lifetime of every signed upload URL, and the default for downloads: 5 minutes. */
 export const SIGNED_URL_TTL_SECONDS = 300;
 
+/** The longest an upload URL may live when a caller asks for more than the default (#43): 10 minutes. */
+export const MAX_UPLOAD_URL_TTL_SECONDS = 600;
+
 /** Lifetime of a document download URL (`createDownloadUrl`, #217): 60 seconds. */
 export const DOWNLOAD_URL_TTL_SECONDS = 60;
 
@@ -56,6 +59,8 @@ export interface SignedUploadInput {
   contentType: string;
   /** Exact size in bytes; the upload must match it. */
   contentLength: number;
+  /** 1 to 600 seconds; defaults to `SIGNED_URL_TTL_SECONDS`. */
+  expiresInSeconds?: number;
 }
 
 export interface SignedUpload {
@@ -102,7 +107,7 @@ export interface ObjectStore {
   delete(key: ObjectKey): Promise<void>;
   /** Objects under `ws/<workspaceId>/` (optionally one kind); the prefix is built here. */
   list(workspaceId: string, options?: ListOptions): Promise<ObjectMeta[]>;
-  /** A PUT URL bound to the exact key, content type and length, valid for 5 minutes. */
+  /** A PUT URL bound to the exact key, content type and length, valid for 5 minutes by default. */
   presignPut(input: SignedUploadInput): Promise<SignedUpload>;
   /** A GET URL for the key, valid for 5 minutes unless `options` shortens it. */
   presignGet(key: ObjectKey, options?: SignedDownloadOptions): Promise<SignedDownload>;
@@ -169,6 +174,15 @@ export function listPrefix(workspaceId: string, options: ListOptions = {}): stri
     throw new RangeError('unknown object kind');
   }
   return options.kind === undefined ? prefix : `${prefix}${options.kind}/`;
+}
+
+/** Validate the requested lifetime of an upload URL; returns the TTL in seconds. */
+export function checkUploadTtl(expiresInSeconds: number | undefined): number {
+  const ttl = expiresInSeconds ?? SIGNED_URL_TTL_SECONDS;
+  if (!Number.isSafeInteger(ttl) || ttl < 1 || ttl > MAX_UPLOAD_URL_TTL_SECONDS) {
+    throw new RangeError('upload URL lifetime must be 1 to 600 seconds');
+  }
+  return ttl;
 }
 
 export function expiry(now: Date, seconds: number = SIGNED_URL_TTL_SECONDS): Date {

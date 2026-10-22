@@ -19,6 +19,7 @@ import type { ObjectKey, ObjectStore, StorageCtx } from '@causedeck/storage';
 import type { ConfirmRosterImportInput } from '@causedeck/validators/roster';
 import { and, eq, isNotNull, isNull, ne } from 'drizzle-orm';
 
+import type { CaptureCtx } from '../capture/index.ts';
 import type {
   AccessDeniedEvent,
   AuditExportContext,
@@ -644,6 +645,27 @@ export async function unsubscribePush(userId: string, endpoint: string): Promise
 /** A storage context on the app database for a checked member of `ctx.workspaceId`. */
 export function uploadContext(ctx: Omit<StorageCtx, 'db'>): StorageCtx {
   return { ...ctx, db };
+}
+
+/**
+ * A capture context (#43) on the app database (or `ctx.db`, e.g. an action's transaction) for a checked member of `ctx.workspaceId`: the
+ * config comes from `CAPTURE_*` env (`captureConfigFromEnv`) and `jobs` sends `capture.scan` and
+ * `capture.process` through the job producer. Imports load on first call, one after the other.
+ */
+export async function captureContext(
+  ctx: Omit<CaptureCtx, 'db' | 'jobs' | 'config'> & { db?: CaptureCtx['db'] },
+): Promise<CaptureCtx> {
+  const { captureConfigFromProcess } = await import('../capture/index.ts');
+  const { enqueue } = await import('../jobs/index.ts');
+  return {
+    ...ctx,
+    db: ctx.db ?? db,
+    config: captureConfigFromProcess(),
+    jobs: {
+      scan: (payload) => enqueue('capture.scan', payload),
+      process: (payload) => enqueue('capture.process', payload),
+    },
+  };
 }
 
 /** Count one request against `key`; `false` when over the limit. */

@@ -82,6 +82,7 @@ describe('upload allow-list and sniffing', () => {
         'txt',
         'wav',
         'webm',
+        'webp',
         'zip',
       ].sort(),
     );

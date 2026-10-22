@@ -1008,6 +1008,16 @@ importers:
         version: 3.2.7(@types/node@22.20.5)(@vitest/browser@3.2.7)(jiti@2.7.0)(jsdom@27.0.1)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
 
   packages/capture:
+    dependencies:
+      '@causedeck/db':
+        specifier: workspace:*
+        version: link:../db
+      '@causedeck/storage':
+        specifier: workspace:*
+        version: link:../storage
+      '@causedeck/validators':
+        specifier: workspace:*
+        version: link:../validators
     devDependencies:
       '@causedeck/config':
         specifier: workspace:*
@@ -1094,6 +1104,9 @@ importers:
       '@causedeck/billing':
         specifier: workspace:*
         version: link:../billing
+      '@causedeck/capture':
+        specifier: workspace:*
+        version: link:../capture
       '@causedeck/config':
         specifier: workspace:*
         version: link:../config

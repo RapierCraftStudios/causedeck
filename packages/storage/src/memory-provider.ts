@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import type { ObjectKey } from './keys.ts';
 import {
   checkDownloadOptions,
+  checkUploadTtl,
   checkedKey,
   checkUpload,
   expiry,
@@ -156,7 +157,7 @@ export function createMemoryObjectStore(options: MemoryObjectStoreOptions = {}):
       settle((): SignedUpload => {
         checkUpload(input.key, input.contentLength);
         requireContentType(input.contentType);
-        const expiresAt = expiry(now());
+        const expiresAt = expiry(now(), checkUploadTtl(input.expiresInSeconds));
         const url = sign({
           method: 'PUT',
           key: input.key,

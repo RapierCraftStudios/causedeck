@@ -24,6 +24,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
+| `capture` | `@causedeck/core/capture` | the capture inbox (#43, [ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)): `createCapture` / `completeUpload` / `createManualCapture`, per-channel opt-in, discard and pin, raw-object retention, and the bodies of `capture.scan`, `capture.process` and `capture.retention`; jobs arrive as the `CaptureJobs` port. Not re-exported from the package root |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
 | `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains. apps/web, apps/api and apps/worker use it (#299): the `db` handle, `closeAppDb`, `inWorkspaceOn` for an injected handle and the api idempotency store; the roster wrappers `previewRosterImportFor` and `confirmRosterImportFor` (#434) |
 | `shared` | none | helpers no domain owns |
@@ -71,11 +72,13 @@ graph LR
   lifecycle --> workspaces
   support --> workspaces
   support --> audit
+  capture --> audit
   jobs --> audit
   jobs --> billing
   jobs --> usage
   jobs --> lifecycle
   jobs --> support
+  jobs --> capture
   runtime --> audit
   runtime --> billing
   runtime --> usage
@@ -84,6 +87,7 @@ graph LR
   runtime --> lifecycle
   runtime --> support
   runtime --> court
+  runtime --> capture
 ```
 
 | Domain | May import |
@@ -98,8 +102,9 @@ graph LR
 | `usage` | `audit`, `billing` |
 | `lifecycle` | `audit`, `workspaces` |
 | `support` | `workspaces`, `audit` |
-| `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support` |
-| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court` |
+| `capture` | `audit` |
+| `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture` |
+| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,
 fair-use caps and job fairness read billing entitlements.

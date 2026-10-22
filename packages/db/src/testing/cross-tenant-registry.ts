@@ -397,6 +397,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   undoActivity: automationDenies,
   undoCapture: automationDenies,
   reassignCapture: automationDenies,
+  getInbox: automationDenies,
   getCanonicalNextDate: denies,
   // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
   getMatterTimeline: denies,

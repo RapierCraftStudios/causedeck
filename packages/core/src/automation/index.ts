@@ -72,3 +72,12 @@ export {
   type UndoPreview,
   type UndoResult,
 } from './undo.ts';
+export {
+  getInbox,
+  type CaptureProgress,
+  type Inbox,
+  type InboxAnchor,
+  type InboxCounts,
+  type InboxItem,
+  type InboxItemType,
+} from './read-models.ts';

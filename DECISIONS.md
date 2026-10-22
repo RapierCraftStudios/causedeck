@@ -370,10 +370,10 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
   1. **Official and licensed** (A3): data-sharing from NIC/eCommittee and the High Court Registries (the Madras HC AIMS email push is the model), and licensed feeds. causedeck#118 starts this.
   2. **Lawful public retrieval** (A2) of pages that need no captcha, one source at a time after its terms and counsel review. Fetching goes through one governed fetch layer, built on the AlterLab API, never through ad hoc scrapers.
   3. **Contributed data**: lists, orders and statuses that lawyers already share (A1), reused across workspaces only with opt-in consent and under the DPDP posture below.
-  4. **Device-side, user-driven lookups** (D-011) for portals behind a captcha. The user solves the captcha; the server never does.
+  4. **Delegated lookups** for portals behind a captcha (amended 2026-10-23, founder: "we need to solve those captchas, we are a convenience business too"). CauseDeck performs a signed-in advocate's own lookup on their behalf and solves the captcha automatically: on the device first, with a server fallback through the fetch layer (AlterLab `captcha` tier). It runs only for that advocate's own matters, on demand or on a watch, at a low fixed rate per advocate. **Solving at scale** (coverage for all users, or the API) is planned but stays off until counsel clears it (#118).
 - **The fetch layer** (one package, every external read goes through it):
   - a **source registry**, extending the access-mode registry of D-028: per source, the access mode, terms status, counsel status, rate limit, retention, residency, a kill switch and an AlterLab tier cap;
-  - AlterLab calls with `proxyCountry: 'IN'`, `failFast: true`, a per-source `maxTier` and `maxCostDollars`. **Court and government sources are capped below the `captcha` tier**, enforced in code and tested;
+  - AlterLab calls with `proxyCountry: 'IN'`, `failFast: true`, a per-source `maxTier` and `maxCostDollars`. **The `captcha` tier is off by default for every court and government source** and is allowed only for a delegated lookup (one advocate, their own matter, within the per-advocate rate), enforced in code and tested. Bulk use of the `captcha` tier needs a per-source counsel clearance in the registry;
   - provenance on every fetched fact (URL, time, content hash, source version), shown in the product like every other fact (D-026);
   - cost metered into usage and budgets.
 - **Notices and news**:
@@ -381,12 +381,12 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
   - **Legal news** is headlines, links and short summaries from sources that offer feeds or licences. No full-text republication of copyrighted reporting.
 - **Corpus:** raw judgments and orders from public sources are stored with provenance for citation verification (D-004) and later research. No editorial content, headnotes or citator (*EBC v. D.B. Modak*). **Amends D-001.**
 - **Bright lines, never relaxed:**
-  - no server-side captcha solving or bypassing on court or government portals;
+  - no captcha solving except delegated lookups for a signed-in advocate's own matters, at a low fixed rate; no solving at scale before counsel clears it;
   - no covert bulk crawling;
   - no framing of court pages;
   - no use of a source before its registry row says it is cleared.
 - **DPDP posture** ⚖: party names in court records are personal data. Purpose limitation (the lawyer's own matters, and the court's public listing), retention limits per source, erasure on request where the law allows, no resale of personal data, and a published policy on republishing before any API exposes court data.
-- **Amends:** D-001 (corpus), D-003 (bulk access: replaced by the tiered, governed model above; captcha and covert-crawl prohibitions kept), D-011 (device path kept for captcha portals), D-028 (access-mode registry generalised to a source registry).
+- **Amends:** D-001 (corpus), D-003 (bulk access replaced by the tiered, governed model above; captcha rule replaced by delegated lookups; covert-crawl prohibition kept), D-011 (the user no longer solves the captcha: delegated, automated lookups), D-028 (access-mode registry generalised to a source registry).
 - **Evidence:** No official eCourts API [R]. Portal terms are silent or contradictory and forbid framing [V] ([11](docs/strategy/11-launch-markets-madras-hc-bengaluru.md)). The Karnataka HC cause list is a public page with no captcha [V]. Madras HC Registry email push (Notification 230/2026) [V]. Aggregators' sourcing is undisclosed (D-003). AlterLab exposes tier caps, fail-fast, an India proxy and cost caps (`alterlab` SDK 2.4.0).
-- **Alternatives:** Buy a licensed reseller API (Surepass, eCourtsIndia): kept as a fallback, but sourcing is opaque and it is no moat. Competitor-style bulk scraping with captcha solving: rejected for legal, DPDP and trust risk.
+- **Alternatives:** Buy a licensed reseller API (Surepass, eCourtsIndia): kept as a fallback, but sourcing is opaque and it is no moat. Competitor-style bulk scraping with captcha solving: deferred until the counsel opinion (#118), for legal, DPDP and trust risk. User-solved captchas only (the original D-011): rejected as too much friction for a convenience product.
 - **Revisit if:** counsel advises against a source or mode; an official API appears (move that source to A3); a Registry objects (kill switch, then remove).

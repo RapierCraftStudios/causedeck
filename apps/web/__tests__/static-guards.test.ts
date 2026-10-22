@@ -89,10 +89,11 @@ describe('apps/web static guards', () => {
     expect(config).toMatch(/reactStrictMode:\s*true/);
   });
 
-  it('has no API routes besides Better Auth, Web Push, the audit and workspace exports and uploads (webhooks live in apps/api)', () => {
+  it('has no API routes besides Better Auth, Web Push, the audit and workspace exports, uploads and captures (webhooks live in apps/api)', () => {
     expect(readdirSync(path.join(appDir, 'app/api')).sort()).toEqual([
       'audit',
       'auth',
+      'captures',
       'exports',
       'push',
       'uploads',

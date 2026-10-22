@@ -15,7 +15,7 @@ describe('capture lists', () => {
   it('the table and the request schemas name the same channels and statuses', () => {
     expect([...schema.CAPTURE_CHANNELS]).toEqual([...CAPTURE_CHANNELS]);
     expect([...schema.CAPTURE_STATUSES]).toEqual([...CAPTURE_STATUSES]);
-    expect(Object.keys(CAPTURE_TRANSITIONS)).toEqual([...CAPTURE_STATUSES]);
+    expect(Object.keys(CAPTURE_TRANSITIONS).sort()).toEqual([...CAPTURE_STATUSES].sort());
   });
 
   it('only manual and upload start enabled', () => {

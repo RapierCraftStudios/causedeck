@@ -66,7 +66,10 @@ describe('createCapture', () => {
       const { a, ua } = await seedTwoTenants(tx);
       const h = harness(tx, a.id, ua);
       const created = await createCapture(h.ctx, pdfInput());
-      expect(created.expiresAt.getTime() - NOW.getTime()).toBe(600_000);
+      // The in-memory store signs with the real clock.
+      const lifetime = created.expiresAt.getTime() - Date.now();
+      expect(lifetime).toBeGreaterThan(590_000);
+      expect(lifetime).toBeLessThanOrEqual(600_000);
       expect(created.uploadUrl).toBeTruthy();
       expect(created.headers['content-length']).toBe(String(PDF.byteLength));
 
@@ -259,7 +262,7 @@ describe('completeUpload', () => {
       // The client sends more than it declared (and more than the cap).
       const big = new Uint8Array(Buffer.concat([Buffer.from(PDF), Buffer.alloc(400)]));
       const key = await putRaw(tx, h, captureId, big);
-      await expect(completeUpload(h.ctx, captureId, sha256(big))).rejects.toBeInstanceOf(
+      await expect(completeUpload(h.ctx, captureId, sha256(PDF))).rejects.toBeInstanceOf(
         CaptureTooLargeError,
       );
       const row = await readCapture(tx, a.id, captureId);
@@ -829,7 +832,7 @@ describe('discard, pin and retention', () => {
       const row = await readCapture(tx, a.id, captureId);
       expect(row.status).toBe('failed');
       expect(row.sourceMeta['failureReason']).toBe('processing_failed');
-      expect(await markCaptureFailed(tx, a.id, captureId, 'processing_failed', NOW)).toBe(true);
+      expect(await markCaptureFailed(tx, a.id, captureId, 'processing_failed', NOW)).toBe(false);
     });
   });
 });

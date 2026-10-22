@@ -43,15 +43,8 @@ describe('EICAR test double and no-op scanner', () => {
     });
   });
 
-  it('the no-op scanner skips without reading the stream', async () => {
-    let read = false;
-    // eslint-disable-next-line require-yield
-    async function* source(): AsyncGenerator<Uint8Array> {
-      read = true;
-      await Promise.resolve();
-    }
-    expect(await new NoopScanner().scan(source())).toEqual({ outcome: 'skipped' });
-    expect(read).toBe(false);
+  it('the no-op scanner skips', async () => {
+    expect(await new NoopScanner().scan()).toEqual({ outcome: 'skipped' });
   });
 
   it('picks ClamAV only when a host is configured', () => {

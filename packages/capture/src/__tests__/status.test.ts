@@ -9,13 +9,14 @@ import {
   TERMINAL_STATUSES,
   transition,
   type CaptureStatus,
+  type TransitionState,
 } from '../index.ts';
 
 const AT = new Date('2026-10-19T10:00:00Z');
 
 describe('status machine', () => {
   it('walks received -> scanning -> queued -> processing -> ready, recording each step', () => {
-    let state = { status: 'received' as CaptureStatus, sourceMeta: { channel: 'upload' } };
+    let state: TransitionState = { status: 'received', sourceMeta: { channel: 'upload' } };
     for (const next of ['scanning', 'queued', 'processing', 'ready'] as const) {
       state = transition(state, next, AT);
     }

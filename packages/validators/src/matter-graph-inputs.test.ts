@@ -21,6 +21,7 @@ import {
   MatterReadInput,
   MergeMattersInput,
   MergeProceedingsInput,
+  PreviewSplitMatterInput,
   SplitMatterInput,
   UndoMergeInput,
   UndoMergeProceedingsInput,
@@ -237,6 +238,19 @@ describe('merge and split inputs (#365)', () => {
       SplitMatterInput.safeParse({ ...split, proceedingIds: [p, p.toUpperCase()] }).success,
     ).toBe(false);
     expect(SplitMatterInput.safeParse({ ...split, newTitle: ' ' }).success).toBe(false);
+  });
+
+  it('previews a split without a title, with the same proceeding rules (#392)', () => {
+    const p = id();
+    const preview = { matterId: id(), proceedingIds: [p] };
+    expect(PreviewSplitMatterInput.safeParse(preview).success).toBe(true);
+    expect(PreviewSplitMatterInput.safeParse({ ...preview, proceedingIds: [] }).success).toBe(
+      false,
+    );
+    expect(PreviewSplitMatterInput.safeParse({ ...preview, proceedingIds: [p, p] }).success).toBe(
+      false,
+    );
+    expect(PreviewSplitMatterInput.safeParse({ ...preview, newTitle: 'x' }).success).toBe(false);
   });
 
   it('takes back only a payload of the matching operation and version', () => {

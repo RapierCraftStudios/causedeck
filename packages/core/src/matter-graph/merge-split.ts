@@ -259,10 +259,11 @@ async function guarded<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Matter checks.
+// Matter checks. Exported for move-preview.ts (#392), so a preview refuses exactly what the merge
+// refuses; index.ts does not re-export them.
 
 /** Both matters if the workspace has them (else `CrossWorkspaceError`) and the actor may write. */
-async function requireMatterPair(
+export async function requireMatterPair(
   scope: GraphScope,
   firstId: string,
   secondId: string,
@@ -280,12 +281,12 @@ async function requireMatterPair(
   ];
 }
 
-function assertOpen(row: MatterRow): void {
+export function assertOpen(row: MatterRow): void {
   if (row.mergedIntoMatterId !== null) throw conflict('This matter was merged');
   if (row.status === 'archived') throw conflict('This matter is archived');
 }
 
-async function restrictionOf(tx: Transaction, workspaceId: string, matterId: string) {
+export async function restrictionOf(tx: Transaction, workspaceId: string, matterId: string) {
   const [row] = await tx
     .select({ allowedUserIds: matterRestriction.allowedUserIds, reason: matterRestriction.reason })
     .from(matterRestriction)
@@ -297,7 +298,11 @@ async function restrictionOf(tx: Transaction, workspaceId: string, matterId: str
 }
 
 /** CONFLICT when rows of one matter would become visible to people the other hides them from. */
-async function assertCompatible(scope: GraphScope, a: MatterRow, b: MatterRow): Promise<void> {
+export async function assertCompatible(
+  scope: GraphScope,
+  a: MatterRow,
+  b: MatterRow,
+): Promise<void> {
   if (a.id === b.id) return;
   if (a.sensitive !== b.sensitive) {
     throw conflict('A sensitive matter can only be merged with another sensitive matter');

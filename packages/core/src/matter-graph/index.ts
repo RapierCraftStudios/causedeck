@@ -23,7 +23,32 @@ export {
 export * from './errors.ts';
 export type * from './events.ts';
 export * from './matters.ts';
-export * from './merge-split.ts';
+// Named, not `export *`: merge-split.ts also exports its matter checks to move-preview.ts (#392),
+// which stay inside the domain.
+export {
+  mergeMatters,
+  mergeProceedings,
+  splitMatter,
+  undoMerge,
+  undoMergeProceedings,
+  undoSplit,
+  type CrossingLink,
+  type MatterMergeUndoPayload,
+  type MatterSplitUndoPayload,
+  type MergeMattersResult,
+  type MergeProceedingsResult,
+  type ProceedingMergeUndoPayload,
+  type SplitMatterResult,
+  type UndoPayload,
+} from './merge-split.ts';
+export {
+  previewMergeMatters,
+  previewSplitMatter,
+  type MoveBlock,
+  type MovePreview,
+  type PreviewProceeding,
+  type SplitPreview,
+} from './move-preview.ts';
 // Named, not `export *`: next-date.ts also holds the merge's canonical-flag helpers (#365), which
 // stay inside the domain.
 export {

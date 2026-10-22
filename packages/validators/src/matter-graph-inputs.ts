@@ -245,6 +245,9 @@ export const SplitMatterInput = z.strictObject({
   newTitle: text,
 });
 
+/** What a split would move (#392): the split's proceedings, before a new title is chosen. */
+export const PreviewSplitMatterInput = SplitMatterInput.omit({ newTitle: true });
+
 export const MergeProceedingsInput = z
   .strictObject({ intoProceedingId: uuid, fromProceedingId: uuid })
   .refine((value) => value.intoProceedingId !== value.fromProceedingId, {
@@ -546,6 +549,7 @@ export type CreateDocumentInput = z.input<typeof CreateDocumentInput>;
 export type ParsedCreateDocument = z.output<typeof CreateDocumentInput>;
 export type MergeMattersInput = z.input<typeof MergeMattersInput>;
 export type SplitMatterInput = z.input<typeof SplitMatterInput>;
+export type PreviewSplitMatterInput = z.input<typeof PreviewSplitMatterInput>;
 export type MergeProceedingsInput = z.input<typeof MergeProceedingsInput>;
 export type IdentifierSource = z.output<typeof IdentifierSourceSchema>;
 export type MatterMergeUndoPayload = z.output<typeof MatterMergeUndoPayload>;

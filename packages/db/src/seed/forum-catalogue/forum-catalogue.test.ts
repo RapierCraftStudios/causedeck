@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
 import { ForumConfigSchema, LanguageProfileSchema } from '@causedeck/validators/forum';
-import { eq, inArray, isNull, TransactionRollbackError } from 'drizzle-orm';
+import { and, eq, inArray, isNull, TransactionRollbackError } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Transaction } from '../../client.ts';
@@ -250,12 +250,24 @@ describe('seedForumCatalogue (#34)', () => {
     await ownerRolledBack(async (tx) => {
       await seedForumCatalogue(tx);
       const first = await catalogueRows(tx);
-      const total = await tx.$count(forum, isNull(forum.workspaceId));
+      // Only the catalogue's own rows: other files commit system forums to the shared database.
+      const countCatalogue = () =>
+        tx.$count(
+          forum,
+          and(
+            isNull(forum.workspaceId),
+            inArray(
+              forum.code,
+              FORUM_CATALOGUE.map((f) => f.code),
+            ),
+          ),
+        );
+      const total = await countCatalogue();
       const again = await seedForumCatalogue(tx);
       expect(again).toMatchObject({ inserted: 0, updated: 0, disabled: 0 });
       expect(again.unchanged).toBe(FORUM_CATALOGUE.length);
       expect(await catalogueRows(tx)).toEqual(first);
-      expect(await tx.$count(forum, isNull(forum.workspaceId))).toBe(total);
+      expect(await countCatalogue()).toBe(total);
       expect(first).toHaveLength(FORUM_CATALOGUE.length);
     });
   });

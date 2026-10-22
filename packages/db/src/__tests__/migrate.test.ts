@@ -226,6 +226,7 @@ describe('runMigrations', () => {
         db.owner,
         sql`
         select exists (select 1 from pg_locks where locktype = 'advisory'
+          and database = (select oid from pg_database where datname = current_database())
           and ((classid::bigint << 32) | objid::bigint) = ${MIGRATION_LOCK_KEY}) as held`,
       );
       seen = row?.held === true;
@@ -236,7 +237,8 @@ describe('runMigrations', () => {
     const [after] = await query<{ held: boolean }>(
       db.owner,
       sql`
-      select exists (select 1 from pg_locks where locktype = 'advisory') as held`,
+      select exists (select 1 from pg_locks where locktype = 'advisory'
+        and database = (select oid from pg_database where datname = current_database())) as held`,
     );
     expect(after?.held).toBe(false);
   });

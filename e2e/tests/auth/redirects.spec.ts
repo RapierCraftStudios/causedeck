@@ -34,7 +34,8 @@ test.describe('auth redirects', () => {
   }
 
   test('a workspace the user does not belong to is not found', async ({ page, asUser }) => {
-    await asUser('owner', { workspace: 'chennai-solo' });
+    // The chennai-solo advocate belongs to chennai-solo only (the owner is also in bengaluru).
+    await asUser('advocate', { workspace: 'chennai-solo' });
     await page.goto('/w/bengaluru-chamber/today');
     // The layout streams, so `notFound()` renders the not-found UI rather than a 404 status.
     await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();

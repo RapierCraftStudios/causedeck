@@ -1,0 +1,75 @@
+{
+  "header": {
+    "caseTypeRaw": "Crl.O.P.",
+    "caseType": "CRLOP",
+    "caseNumber": "4567",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": null,
+    "neutralCitationRaw": null,
+    "anchor": {
+      "page": 1,
+      "quote": "Crl.O.P.No.4567 of 2026 and Crl.M.P.Nos.1 & 2 of 2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "CRLOP",
+        "caseTypeRaw": "Crl.O.P.",
+        "number": "4567",
+        "year": 2026,
+        "matchKey": "CRLOP/4567/2026",
+        "children": [
+          {
+            "caseTypeCode": "CRLMP",
+            "caseTypeRaw": "Crl.M.P.",
+            "number": "1",
+            "year": 2026,
+            "isMisc": true,
+            "matchKey": "CRLMP/1/2026",
+            "parentProceedingKey": "CRLOP/4567/2026"
+          },
+          {
+            "caseTypeCode": "CRLMP",
+            "caseTypeRaw": "Crl.M.P.",
+            "number": "2",
+            "year": 2026,
+            "isMisc": true,
+            "matchKey": "CRLMP/2/2026",
+            "parentProceedingKey": "CRLOP/4567/2026"
+          }
+        ]
+      }
+    ],
+    "bench": "THE HONOURABLE MR.JUSTICE A. FICTIONAL",
+    "judges": ["THE HONOURABLE MR.JUSTICE A. FICTIONAL"],
+    "orderType": "daily"
+  },
+  "cues": [
+    {
+      "kind": "time_bound",
+      "text": "Counter within three weeks.",
+      "phrase": "within",
+      "anchor": {
+        "page": 22,
+        "quote": "Counter within three weeks.",
+        "rowIndex": 2
+      },
+      "confidence": 0.85,
+      "date": null
+    },
+    {
+      "kind": "next_date",
+      "text": "Post on 03.12.2026.",
+      "phrase": "Post on",
+      "anchor": {
+        "page": 22,
+        "quote": "Post on 03.12.2026.",
+        "rowIndex": 3
+      },
+      "confidence": 0.95,
+      "date": "2026-12-03"
+    }
+  ]
+}

@@ -18,6 +18,9 @@ export const buttonVariants = cva(
     'pointer-coarse:hit',
     // Forced colours: the transparent border becomes a system-colour outline.
     'forced-colors:border-current',
+    // Tamil and Kannada labels run long: wrap to more lines at the size's height as a minimum,
+    // rather than overflowing (#176). English keeps one line at a fixed height.
+    '[&:is(:lang(ta),:lang(kn))]:h-auto [&:is(:lang(ta),:lang(kn))]:py-1.5 [&:is(:lang(ta),:lang(kn))]:text-center [&:is(:lang(ta),:lang(kn))]:text-balance [&:is(:lang(ta),:lang(kn))]:whitespace-normal',
   ],
   {
     variants: {
@@ -33,9 +36,9 @@ export const buttonVariants = cva(
         link: 'bg-transparent text-accent underline-offset-4 hover:underline active:text-ink',
       },
       size: {
-        sm: 'h-8 px-3 text-sm [&_svg]:size-3.5',
-        md: 'h-9 px-4 text-sm [&_svg]:size-4',
-        lg: 'h-11 px-5 text-base [&_svg]:size-5',
+        sm: 'h-8 [&:is(:lang(ta),:lang(kn))]:min-h-8 px-3 text-sm [&_svg]:size-3.5',
+        md: 'h-9 [&:is(:lang(ta),:lang(kn))]:min-h-9 px-4 text-sm [&_svg]:size-4',
+        lg: 'h-11 [&:is(:lang(ta),:lang(kn))]:min-h-11 px-5 text-base [&_svg]:size-5',
       },
     },
     compoundVariants: [{ variant: 'link', className: 'h-auto px-0' }],

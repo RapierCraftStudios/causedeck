@@ -1,6 +1,6 @@
 # End-to-end suites (#16): Playwright against a freshly built apps/web and the Compose dev stack,
-# plus Lighthouse CI on /sign-in. No secrets: every credential is a local dev default or generated
-# in the job. See e2e/README.md.
+# plus Lighthouse CI on /sign-in and the seeded courts pages. No secrets: every credential is a
+# local dev default or generated in the job. See e2e/README.md.
 #
 # Playwright runs inside the pinned Playwright image (`docker run --network host`), so browsers and
 # fonts are identical to the ones that generated the visual baselines; the job itself runs on the
@@ -10,12 +10,13 @@
 name: E2E
 
 on:
-  # Full tier (docs/engineering/ci.md): runs on ship PRs into staging/main, pushes to staging/main,
-  # nightly, manual dispatch, or a PR labelled `full-ci`. Lane PRs into milestone/* skip it.
+  # Ship tier (docs/engineering/ci.md, D-046): ship PRs into staging/main, pushes to main, or a PR
+  # labelled `full-ci` run the `ship` scope (the blocking gate). The nightly schedule and manual
+  # dispatch run the `full` matrix, report-only. Lane PRs into milestone/* skip it.
   pull_request:
     types: [opened, synchronize, reopened, labeled]
   push:
-    branches: [main, staging]
+    branches: [main]
   schedule:
     # 02:00 IST: the flake hunt (`@smoke` x5, no retries).
     - cron: '30 20 * * *'
@@ -41,9 +42,14 @@ env:
 jobs:
   e2e:
     name: e2e (${{ matrix.shard }}/2)
-    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
+    if: ${{ !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Ship scope: about 340 browser tests over 2 shards, 12-25 min including the stack and the build (measured on PR #352).
+    # Full scope (nightly/dispatch): the 6-project matrix plus visual specs, 90 min and report-only.
+    timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 90 || 30 }}
+    continue-on-error: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    env:
+      E2E_SCOPE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'full' || 'ship' }}
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +69,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
         run: >-
           docker run --rm --network host --ipc host
-          -e CI=true -e E2E_ASSERT_RESET_MS=2000
+          -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE
           -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
           node support/playwright.mjs --shard="$SHARD/2"
       - name: Upload the HTML report
@@ -86,19 +92,25 @@ jobs:
 
   lighthouse:
     name: lighthouse
-    if: ${{ github.event_name != 'schedule' && !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
+    # Report-only (D-045): nightly, manual dispatch, or a PR labelled full-ci. Not a ship gate.
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.update_snapshots) || (contains(github.event.pull_request.labels.*.name, 'full-ci') && github.event.label.name == 'full-ci') || (contains(github.event.pull_request.labels.*.name, 'full-ci') && github.event.action != 'labeled') }}
+    continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      # A real production build (the dev sign-in provider is compiled out). Throwaway values: the
-      # page under test (/sign-in, signed out) never uses them.
+      # A real production build (the dev sign-in provider is compiled out) against the Compose
+      # stack, migrated and seeded with the `e2e` profile (#427): /sign-in is audited signed out,
+      # the courts pages signed in as the seeded owner, through a magic link read from Mailpit.
+      # Local dev defaults and throwaway values only.
       NODE_ENV: production
       APP_URL: http://localhost:3100
       NEXT_PUBLIC_APP_URL: http://localhost:3100
       API_URL: http://localhost:3101
       DATABASE_URL: postgres://causedeck_app:causedeck_app@127.0.0.1:5432/causedeck
+      DATABASE_URL_OWNER: postgres://causedeck_owner:causedeck_owner@127.0.0.1:5432/causedeck
       ALLOW_MOCK_PROVIDERS: 'true'
-      EMAIL_PROVIDER: console
+      EMAIL_PROVIDER: smtp
+      SMTP_URL: smtp://127.0.0.1:1025
       AI_PROVIDER: mock
       BILLING_PROVIDER: mock
       S3_ENDPOINT: http://127.0.0.1:9000
@@ -116,6 +128,12 @@ jobs:
         run: |
           echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >>"$GITHUB_ENV"
           echo "KEK_BASE64=$(openssl rand -base64 32)" >>"$GITHUB_ENV"
+      - name: Start the Compose stack (Postgres, MinIO, Mailpit)
+        run: bash infra/scripts/dev-up.sh
+      - name: Migrate and seed (e2e profile)
+        run: |
+          pnpm --filter @causedeck/db db:migrate
+          pnpm --filter @causedeck/db db:seed --profile e2e
       - name: Build apps/web (production)
         run: pnpm --filter @causedeck/web build
       - name: Cache Playwright Chromium
@@ -132,6 +150,18 @@ jobs:
           CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
           export CHROME_PATH
           pnpm --filter @causedeck/e2e lhci
+      - name: Lighthouse CI (courts index and forum detail, signed in, seeded; performance and accessibility >= 0.95)
+        if: ${{ !cancelled() }}
+        run: |
+          CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
+          export CHROME_PATH
+          pnpm --filter @causedeck/e2e lhci:courts
+      - name: Lighthouse CI (matters list and overview, signed in, seeded; performance and accessibility >= 0.95)
+        if: ${{ !cancelled() }}
+        run: |
+          CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
+          export CHROME_PATH
+          pnpm --filter @causedeck/e2e lhci:matters
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

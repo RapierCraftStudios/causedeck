@@ -13,11 +13,16 @@ interface LayoutTestState {
   themeProps: Record<string, unknown> | undefined;
   theme: string;
   setTheme: (theme: string) => void;
+  /** `null` signed out; otherwise the signed-in user's membership slugs. */
+  memberships: string[] | null;
+  lastWorkspace: string | undefined;
 }
 
 const state = vi.hoisted((): LayoutTestState => ({
   locale: 'en',
   nonce: 'test-nonce',
+  memberships: null,
+  lastWorkspace: undefined,
   themeProps: undefined,
   theme: 'system',
   setTheme: () => undefined,
@@ -27,10 +32,32 @@ vi.mock('next/font/local', () => import('./helpers/font-mock.ts'));
 vi.mock('next/headers', () => ({
   headers: () =>
     Promise.resolve(new Headers(state.nonce === null ? {} : { 'x-nonce': state.nonce })),
+  cookies: () =>
+    Promise.resolve({
+      get: (name: string) =>
+        name === 'cd_last_ws' && state.lastWorkspace !== undefined
+          ? { value: state.lastWorkspace }
+          : undefined,
+    }),
+}));
+vi.mock('../lib/workspace-loader.ts', () => ({
+  loadMemberships: () =>
+    Promise.resolve(
+      state.memberships === null
+        ? null
+        : {
+            session: {},
+            memberships: state.memberships.map((slug, i) => ({
+              workspace: { id: `ws-${String(i)}`, slug, name: slug },
+              role: 'owner',
+            })),
+          },
+    ),
 }));
 vi.mock('next-intl/server', () => ({
   getLocale: () => Promise.resolve(state.locale),
   getMessages: () => Promise.resolve(catalogs[state.locale as TestLocale]),
+  getTimeZone: () => Promise.resolve('Asia/Kolkata'),
   getTranslations: (namespace?: string) =>
     fakeGetTranslations(state.locale as TestLocale)(namespace),
 }));
@@ -70,6 +97,8 @@ async function renderLayout(locale: string): Promise<Document> {
 beforeEach(() => {
   state.nonce = 'test-nonce';
   state.themeProps = undefined;
+  state.memberships = null;
+  state.lastWorkspace = undefined;
 });
 
 afterEach(() => {
@@ -204,9 +233,22 @@ describe('home route', () => {
     expect(document.querySelector('img, svg:not([aria-hidden])')).toBeNull();
   });
 
-  it('sends a signed-in user to their last workspace Today', () => {
+  it('sends a signed-in user to their last workspace Today, or onboarding with none', () => {
     expect(homeDestination({ lastWorkspaceSlug: 'chambers-1' })).toBe('/w/chambers-1/today');
-    expect(homeDestination({ lastWorkspaceSlug: null })).toBeNull();
+    expect(homeDestination({ lastWorkspaceSlug: null })).toBe('/onboarding');
     expect(homeDestination(null)).toBeNull();
+  });
+
+  it('lands on the cd_last_ws workspace while it is still a membership (#179)', async () => {
+    state.memberships = ['chennai-solo', 'bengaluru-chamber'];
+    state.lastWorkspace = 'bengaluru-chamber';
+    await expect(HomePage()).rejects.toThrow('NEXT_REDIRECT /w/bengaluru-chamber/today');
+    state.lastWorkspace = 'someone-elses';
+    await expect(HomePage()).rejects.toThrow('NEXT_REDIRECT /w/chennai-solo/today');
+  });
+
+  it('sends a signed-in user with no workspace to /onboarding', async () => {
+    state.memberships = [];
+    await expect(HomePage()).rejects.toThrow('NEXT_REDIRECT /onboarding');
   });
 });

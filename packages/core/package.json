@@ -6,26 +6,47 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./audit": "./src/audit/index.ts",
+    "./billing": "./src/billing/index.ts",
+    "./court": "./src/court/index.ts",
     "./jobs": "./src/jobs/index.ts",
+    "./lifecycle": "./src/lifecycle/index.ts",
+    "./matter-graph": "./src/matter-graph/index.ts",
+    "./matters": "./src/matters/index.ts",
+    "./runtime": "./src/runtime/index.ts",
+    "./support": "./src/support/index.ts",
+    "./usage": "./src/usage/index.ts",
     "./workspaces": "./src/workspaces/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {
+    "@causedeck/adapters": "workspace:*",
+    "@causedeck/auth": "workspace:*",
+    "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/flags": "workspace:*",
+    "@causedeck/notifications": "workspace:*",
     "@causedeck/observability": "workspace:*",
+    "@causedeck/storage": "workspace:*",
+    "@causedeck/validators": "workspace:*",
+    "archiver": "catalog:",
     "drizzle-orm": "catalog:",
     "pg-boss": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@opentelemetry/sdk-trace-base": "catalog:",
+    "@types/archiver": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "fast-check": "catalog:",
+    "pdf-lib": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

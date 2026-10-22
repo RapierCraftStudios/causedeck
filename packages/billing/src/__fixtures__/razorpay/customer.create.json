@@ -1,0 +1,12 @@
+{
+  "id": "cust_FIXTURE0000001",
+  "entity": "customer",
+  "name": "Asha Advocate",
+  "email": "advocate@example.com",
+  "contact": "+919000000001",
+  "gstin": null,
+  "notes": {
+    "workspace_ref": "ws_FIXTURE0000001"
+  },
+  "created_at": 1767225000
+}

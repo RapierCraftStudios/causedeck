@@ -3,8 +3,28 @@
 import type { SendOptions } from 'pg-boss';
 import type { z } from 'zod';
 
+import { accountDelete } from './definitions/account-delete.ts';
+import { auditRetention } from './definitions/audit-retention.ts';
+import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
+import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
+import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
+import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
+import { billingProcessEvent } from './definitions/billing-process-event.ts';
+import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { deletionErase } from './definitions/deletion-erase.ts';
+import { deletionTick } from './definitions/deletion-tick.ts';
+import { exportBuild } from './definitions/export-build.ts';
+import { exportExpire } from './definitions/export-expire.ts';
+import { memoryErase } from './definitions/memory-erase.ts';
+import { notificationDeliver } from './definitions/notification-deliver.ts';
+import {
+  notificationDigest,
+  notificationDigestSchedule,
+} from './definitions/notification-digest.ts';
 import { retentionSweep } from './definitions/retention-sweep.ts';
+import { supportSessionExpire } from './definitions/support-session-expire.ts';
 import { systemPing } from './definitions/system-ping.ts';
+import { usageRollup } from './definitions/usage-rollup.ts';
 import type { AnyJobDefinition, JobPayloadBase } from './define.ts';
 import { getProducer, type JobSender } from './producer.ts';
 
@@ -105,9 +125,55 @@ export function createRegistry<const D extends readonly AnyJobDefinition[]>(
 }
 
 /** Every job the platform runs. */
-export const registry = createRegistry([systemPing, retentionSweep] as const);
+export const registry = createRegistry([
+  systemPing,
+  retentionSweep,
+  billingReconcile,
+  billingDunningTick,
+  billingProcessEvent,
+  billingInvoiceRender,
+  billingInvoiceNotice,
+  notificationDeliver,
+  notificationDigestSchedule,
+  notificationDigest,
+  usageRollup,
+  systemAuditVerify,
+  auditVerify,
+  auditRetention,
+  exportBuild,
+  exportExpire,
+  supportSessionExpire,
+  deletionTick,
+  deletionErase,
+  accountDelete,
+  memoryErase,
+] as const);
 
-export type JobMap = RegistryMap<readonly [typeof systemPing, typeof retentionSweep]>;
+export type JobMap = RegistryMap<
+  readonly [
+    typeof systemPing,
+    typeof retentionSweep,
+    typeof billingReconcile,
+    typeof billingDunningTick,
+    typeof billingProcessEvent,
+    typeof billingInvoiceRender,
+    typeof billingInvoiceNotice,
+    typeof notificationDeliver,
+    typeof notificationDigestSchedule,
+    typeof notificationDigest,
+    typeof usageRollup,
+    typeof systemAuditVerify,
+    typeof auditVerify,
+    typeof auditRetention,
+    typeof exportBuild,
+    typeof exportExpire,
+    typeof supportSessionExpire,
+    typeof deletionTick,
+    typeof deletionErase,
+    typeof accountDelete,
+    typeof memoryErase,
+  ]
+>;
 export type JobName = keyof JobMap;
 export type PayloadOf<N extends JobName> = z.input<JobMap[N]['schema']>;
 
@@ -125,4 +191,15 @@ export async function enqueue<N extends JobName>(
   // Validate before connecting, so a bad payload fails fast even without a database.
   registry.get(name)?.schema.parse(payload);
   return registry.enqueue(sender ?? (await getProducer()), name, payload, options);
+}
+
+/**
+ * `NotifyContext.enqueueDelivery` for `notify()` (`@causedeck/notifications`): one
+ * `notification.deliver` job per notification and channel.
+ */
+export function enqueueNotificationDelivery(
+  job: PayloadOf<'notification.deliver'>,
+  options: ProducerEnqueueOptions = {},
+): Promise<string | null> {
+  return enqueue('notification.deliver', job, options);
 }

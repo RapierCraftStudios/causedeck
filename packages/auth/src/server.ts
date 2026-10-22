@@ -7,10 +7,10 @@ import { schema } from '@causedeck/db';
 import { passkey } from '@better-auth/passkey';
 import { betterAuth, type BetterAuthPlugin } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware, isAPIError } from 'better-auth/api';
 import { magicLink, organization, twoFactor } from 'better-auth/plugins';
 
-import { devSignIn } from './dev-provider';
+import { DEV_SIGN_IN_PATH, devSignIn } from './dev-provider';
 import { consoleLogger, type AuthLogger, type Mailer } from './mailer';
 import { AUTH_EMAIL_KEYS, toAuthLocale } from './messages';
 import {
@@ -21,6 +21,7 @@ import {
   RATE_LIMIT_MESSAGE,
 } from './rate-limit';
 import { ac, isRole, roles } from './roles';
+import { markStepUp } from './step-up';
 
 export const MAGIC_LINK_PATH = '/sign-in/magic-link';
 export const MAGIC_LINK_EXPIRES_IN_SECONDS = 10 * 60;
@@ -34,11 +35,131 @@ type GoogleEnv =
 /** The env keys auth reads. Secrets arrive only as #4 `Secret` values. */
 export type AuthEnv = Pick<ServerEnv, 'NODE_ENV' | 'APP_URL' | 'BETTER_AUTH_SECRET'> & GoogleEnv;
 
+export type SignInMethod = 'magic_link' | 'passkey' | 'google' | 'two_factor' | 'dev' | 'unknown';
+
+/** One auth security event as plain data; `@causedeck/core` turns it into an audit row (#228). */
+export interface SecurityEventInput {
+  userId?: string | null;
+  sessionId?: string;
+  passkeyId?: string;
+  /** Hashed by the recorder; never stored raw. */
+  email?: string;
+  method?: SignInMethod;
+  ip?: string;
+  userAgent?: string;
+  requestId?: string;
+}
+
+/**
+ * Where auth security events go. Injected by the composition roots (`@causedeck/core`
+ * `createSecurityEventRecorder`), because core depends on auth and auth may not import core.
+ */
+export interface SecurityEventRecorder {
+  signInSucceeded(event: SecurityEventInput): Promise<void>;
+  signInFailed(event: SecurityEventInput): Promise<void>;
+  magicLinkRequested(event: SecurityEventInput): Promise<void>;
+  passkeyAdded(event: SecurityEventInput): Promise<void>;
+  passkeyRemoved(event: SecurityEventInput): Promise<void>;
+  twoFactorEnabled(event: SecurityEventInput): Promise<void>;
+  twoFactorDisabled(event: SecurityEventInput): Promise<void>;
+  sessionRevoked(event: SecurityEventInput): Promise<void>;
+}
+
+const resolved = () => Promise.resolve();
+
+export const noopSecurityEventRecorder: SecurityEventRecorder = {
+  signInSucceeded: resolved,
+  signInFailed: resolved,
+  magicLinkRequested: resolved,
+  passkeyAdded: resolved,
+  passkeyRemoved: resolved,
+  twoFactorEnabled: resolved,
+  twoFactorDisabled: resolved,
+  sessionRevoked: resolved,
+};
+
 export interface CreateAuthDeps {
   db: Database;
   env: AuthEnv;
   mailer: Mailer;
   logger?: AuthLogger;
+  /** Defaults to `noopSecurityEventRecorder`. */
+  securityEvents?: SecurityEventRecorder;
+  /**
+   * Session lifetime; defaults to `SESSION_EXPIRES_IN_SECONDS` (30 days). The admin console passes
+   * 8 hours (#309). The refresh age shrinks with it, so a short session never slides to 30 days.
+   */
+  sessionExpiresInSeconds?: number;
+  /** When true, magic-link sign-in never creates a user (the admin console, #309). */
+  disableSignUp?: boolean;
+}
+
+/** Refresh age for a session lifetime: a day, or a quarter of a shorter lifetime. */
+export function sessionUpdateAgeFor(expiresInSeconds: number): number {
+  return Math.min(SESSION_UPDATE_AGE_SECONDS, Math.floor(expiresInSeconds / 4));
+}
+
+const MAGIC_LINK_VERIFY_PATH = '/magic-link/verify';
+const PASSKEY_SIGN_IN_PATH = '/passkey/verify-authentication';
+const TWO_FACTOR_VERIFY_PATHS: ReadonlySet<string> = new Set([
+  '/two-factor/verify-totp',
+  '/two-factor/verify-otp',
+  '/two-factor/verify-backup-code',
+]);
+/** The ceremonies that count as step-up (#304): a passkey or a TOTP code, nothing else. */
+const STEP_UP_PATHS: ReadonlySet<string> = new Set([
+  PASSKEY_SIGN_IN_PATH,
+  '/two-factor/verify-totp',
+]);
+const REVOKE_PATHS: ReadonlySet<string> = new Set([
+  '/revoke-session',
+  '/revoke-sessions',
+  '/revoke-other-sessions',
+]);
+
+/** The sign-in method behind the request that created a session. */
+export function signInMethod(path: string | undefined): SignInMethod {
+  if (path === MAGIC_LINK_VERIFY_PATH) return 'magic_link';
+  if (path === PASSKEY_SIGN_IN_PATH) return 'passkey';
+  if (path?.startsWith('/callback/')) return 'google';
+  if (path !== undefined && TWO_FACTOR_VERIFY_PATHS.has(path)) return 'two_factor';
+  // Literal `process.env.NODE_ENV` so production bundles drop the dev path string with the dev provider.
+  // eslint-disable-next-line no-process-env -- must stay a literal for bundler dead-code elimination.
+  if (process.env.NODE_ENV !== 'production' && path === DEV_SIGN_IN_PATH) return 'dev';
+  return 'unknown';
+}
+
+interface RequestLike {
+  path?: string;
+  headers?: Headers | undefined;
+  request?: Request | undefined;
+}
+
+/** Client IP (first `x-forwarded-for` hop, else `x-real-ip`), user agent and request id. */
+function requestInfo(ctx: RequestLike | null | undefined): Omit<SecurityEventInput, 'userId'> {
+  const headers = ctx?.headers ?? ctx?.request?.headers;
+  if (!headers) return {};
+  const info: Omit<SecurityEventInput, 'userId'> = {};
+  const ip =
+    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? headers.get('x-real-ip')?.trim();
+  if (ip) info.ip = ip;
+  const userAgent = headers.get('user-agent');
+  if (userAgent) info.userAgent = userAgent;
+  const requestId = headers.get('x-request-id');
+  if (requestId) info.requestId = requestId;
+  return info;
+}
+
+/**
+ * True when an endpoint's result is a failure: an API error, or a redirect carrying `?error=`
+ * (magic-link verify redirects to its error callback instead of throwing).
+ */
+function failed(returned: unknown): boolean {
+  if (!isAPIError(returned)) return false;
+  if (returned.statusCode >= 400) return true;
+  const headers = (returned as { headers?: Headers }).headers;
+  const location = headers instanceof Headers ? headers.get('location') : null;
+  return location !== null && /[?&]error=/.test(location);
 }
 
 function roleList(value: unknown): string[] {
@@ -58,7 +179,93 @@ function assertKnownRoles(value: unknown): void {
   }
 }
 
-export function createAuth({ db, env, mailer, logger = consoleLogger }: CreateAuthDeps) {
+/** The `hooks.after` view of a request that `securityEventHook` reads. */
+export interface SecurityHookContext extends RequestLike {
+  path: string;
+  body?: unknown;
+  context: { returned?: unknown; session?: { user: { id: string } } | null };
+}
+
+/**
+ * Security events from endpoint results (#228): magic link requested, passkey added/removed and
+ * failed sign-ins. Success paths are fail-closed (a recorder error fails the request); a failed
+ * sign-in is logged instead, so the original auth error still reaches the client.
+ */
+export function securityEventHook(securityEvents: SecurityEventRecorder, logger: AuthLogger) {
+  return async (ctx: SecurityHookContext): Promise<void> => {
+    const returned = ctx.context.returned;
+    const body = ctx.body as Record<string, unknown> | undefined;
+    const userId = ctx.context.session?.user.id ?? null;
+    const info = requestInfo(ctx);
+    if (failed(returned)) {
+      if (
+        ctx.path === MAGIC_LINK_VERIFY_PATH ||
+        ctx.path === PASSKEY_SIGN_IN_PATH ||
+        TWO_FACTOR_VERIFY_PATHS.has(ctx.path)
+      ) {
+        await securityEvents
+          .signInFailed({ ...info, userId, method: signInMethod(ctx.path) })
+          .catch((error: unknown) => {
+            logger.error(
+              { err: error instanceof Error ? { name: error.name } : {} },
+              'failed sign-in not recorded',
+            );
+          });
+      }
+      return;
+    }
+    if (ctx.path === MAGIC_LINK_PATH && typeof body?.email === 'string') {
+      await securityEvents.magicLinkRequested({ ...info, email: body.email });
+    } else if (ctx.path === '/passkey/verify-registration') {
+      const passkey = returned as { id?: unknown } | null | undefined;
+      await securityEvents.passkeyAdded({
+        ...info,
+        userId,
+        ...(typeof passkey?.id === 'string' ? { passkeyId: passkey.id } : {}),
+      });
+    } else if (ctx.path === '/passkey/delete-passkey') {
+      await securityEvents.passkeyRemoved({
+        ...info,
+        userId,
+        ...(typeof body?.id === 'string' ? { passkeyId: body.id } : {}),
+      });
+    }
+  };
+}
+
+/** The `hooks.after` view of a request that `stepUpHook` reads. */
+export interface StepUpHookContext {
+  path: string;
+  context: {
+    returned?: unknown;
+    session?: { session: { id: string } } | null;
+    newSession?: unknown;
+  };
+}
+
+/**
+ * Step-up for a signed-in user (#304): a successful `/two-factor/verify-totp` on an existing
+ * session that did not create a new one stamps that session. Sessions created by a passkey or TOTP
+ * ceremony are stamped on creation instead (`databaseHooks.session.create.before`).
+ */
+export function stepUpHook(db: Database) {
+  return async (ctx: StepUpHookContext): Promise<void> => {
+    if (ctx.path !== '/two-factor/verify-totp' || failed(ctx.context.returned)) return;
+    const current = ctx.context.session?.session.id;
+    if (current === undefined || ctx.context.newSession) return;
+    await markStepUp(db, current, new Date());
+  };
+}
+
+export function createAuth({
+  db,
+  env,
+  mailer,
+  logger = consoleLogger,
+  securityEvents = noopSecurityEventRecorder,
+  sessionExpiresInSeconds = SESSION_EXPIRES_IN_SECONDS,
+  disableSignUp = false,
+}: CreateAuthDeps) {
   const appUrl = new URL(env.APP_URL);
   const isProduction = env.NODE_ENV === 'production';
 
@@ -66,7 +273,7 @@ export function createAuth({ db, env, mailer, logger = consoleLogger }: CreateAu
     magicLink({
       expiresIn: MAGIC_LINK_EXPIRES_IN_SECONDS,
       storeToken: 'hashed',
-      disableSignUp: false,
+      disableSignUp,
       // Same path whether or not the address has an account (no enumeration), and the send is
       // not awaited so transport latency cannot reveal anything either.
       sendMagicLink: ({ email, url, metadata }) => {
@@ -108,7 +315,9 @@ export function createAuth({ db, env, mailer, logger = consoleLogger }: CreateAu
         },
       },
     }),
-    twoFactor({ issuer: 'CauseDeck' }),
+    // Accounts have no password (magic link, passkeys, Google), so enabling and disabling 2FA rely on
+    // the session alone (#289); a user who somehow has a credential password is still asked for it.
+    twoFactor({ issuer: 'CauseDeck', allowPasswordless: true }),
   ] satisfies BetterAuthPlugin[];
 
   // Literal `process.env.NODE_ENV` so production bundles drop the dev provider entirely.
@@ -137,8 +346,12 @@ export function createAuth({ db, env, mailer, logger = consoleLogger }: CreateAu
       },
     },
     session: {
-      expiresIn: SESSION_EXPIRES_IN_SECONDS,
-      updateAge: SESSION_UPDATE_AGE_SECONDS,
+      // The last passkey or TOTP verification in this session (#304, `step-up.ts`).
+      additionalFields: {
+        stepUpAt: { type: 'date', required: false, input: false },
+      },
+      expiresIn: sessionExpiresInSeconds,
+      updateAge: sessionUpdateAgeFor(sessionExpiresInSeconds),
     },
     advanced: {
       database: { generateId: 'uuid' },
@@ -174,6 +387,61 @@ export function createAuth({ db, env, mailer, logger = consoleLogger }: CreateAu
           if (!allowed) throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
         }
       }),
+      // Security events (#228); session, 2FA and revocation events come from `databaseHooks`.
+      // Then the step-up stamp for a signed-in TOTP re-verification (#304).
+      after: createAuthMiddleware(async (ctx) => {
+        await securityEventHook(securityEvents, logger)(ctx);
+        await stepUpHook(db)(ctx);
+      }),
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          // A session created by a passkey or TOTP ceremony starts with a fresh step-up (#304).
+          before: (session, ctx) =>
+            Promise.resolve(
+              ctx?.path !== undefined && STEP_UP_PATHS.has(ctx.path)
+                ? { data: { ...session, stepUpAt: new Date() } }
+                : undefined,
+            ),
+          after: async (session, ctx) => {
+            await securityEvents.signInSucceeded({
+              ...requestInfo(ctx),
+              userId: session.userId,
+              sessionId: session.id,
+              method: signInMethod(ctx?.path),
+            });
+          },
+        },
+        delete: {
+          // Only explicit revocations; sign-out and expiry cleanup are not security events.
+          after: async (session, ctx) => {
+            if (ctx?.path === undefined || !REVOKE_PATHS.has(ctx.path)) return;
+            await securityEvents.sessionRevoked({
+              ...requestInfo(ctx),
+              userId: ctx.context.session?.user.id ?? session.userId,
+              sessionId: session.id,
+            });
+          },
+        },
+      },
+      user: {
+        update: {
+          // The two-factor plugin flips `twoFactorEnabled` only when it changes (first verify or
+          // `enable` without verification, and `disable`).
+          after: async (user, ctx) => {
+            const path = ctx?.path;
+            if (path?.startsWith('/two-factor/') !== true) return;
+            const enabled = (user as { twoFactorEnabled?: unknown }).twoFactorEnabled;
+            const event = { ...requestInfo(ctx), userId: user.id };
+            if (path === '/two-factor/disable' && enabled === false) {
+              await securityEvents.twoFactorDisabled(event);
+            } else if (path !== '/two-factor/disable' && enabled === true) {
+              await securityEvents.twoFactorEnabled(event);
+            }
+          },
+        },
+      },
     },
     plugins: [...plugins, ...devPlugins],
   });

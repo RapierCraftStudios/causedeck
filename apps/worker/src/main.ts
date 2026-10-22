@@ -2,7 +2,7 @@
 // and a graceful SIGTERM that gives in-flight jobs up to 30 s before pg-boss requeues them.
 import { serverEnv } from '@causedeck/config/env';
 import { registry } from '@causedeck/core/jobs';
-import { db } from '@causedeck/db';
+import { closeAppDb, db } from '@causedeck/core/runtime';
 import { createLogger, initTelemetry } from '@causedeck/observability';
 
 import { closeServer, startHealthServer, workerChecks } from './health.ts';
@@ -32,7 +32,7 @@ handleShutdownSignals(
     await worker.stop(SHUTDOWN_TIMEOUT_MS);
     await closeServer(server);
     // Bounded: a handler interrupted by the timeout may still hold a transaction open.
-    await db.$client.end({ timeout: DB_CLOSE_TIMEOUT_SEC });
+    await closeAppDb({ timeoutSec: DB_CLOSE_TIMEOUT_SEC });
     await telemetry.shutdown();
   },
   { logger },

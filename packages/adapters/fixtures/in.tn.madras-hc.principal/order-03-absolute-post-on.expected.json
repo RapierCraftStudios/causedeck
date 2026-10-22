@@ -1,0 +1,55 @@
+{
+  "header": {
+    "caseTypeRaw": "WP",
+    "caseType": "WP",
+    "caseNumber": "12501",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": null,
+    "neutralCitationRaw": null,
+    "anchor": {
+      "page": 1,
+      "quote": "WP No. 12501/2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "WP",
+        "number": "12501",
+        "year": 2026,
+        "matchKey": "WP/12501/2026"
+      }
+    ],
+    "bench": "THE HONOURABLE MR.JUSTICE A. FICTIONAL",
+    "judges": ["THE HONOURABLE MR.JUSTICE A. FICTIONAL"],
+    "orderType": "daily"
+  },
+  "cues": [
+    {
+      "kind": "notice",
+      "text": "Issue notice to the respondent, returnable in two weeks.",
+      "phrase": "Issue notice",
+      "anchor": {
+        "page": 1,
+        "quote": "Issue notice to the respondent, returnable in two weeks.",
+        "rowIndex": 13
+      },
+      "confidence": 0.8,
+      "date": null
+    },
+    {
+      "kind": "next_date",
+      "text": "Post on 12.11.2026.",
+      "phrase": "Post on",
+      "anchor": {
+        "page": 1,
+        "quote": "Post on 12.11.2026.",
+        "rowIndex": 14
+      },
+      "confidence": 0.95,
+      "date": "2026-11-12"
+    }
+  ]
+}

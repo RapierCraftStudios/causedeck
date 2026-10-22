@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+/* The same design tokens as the product (packages/ui), fonts included: the console has no
+ * Lighthouse budget, so it uses the ui @font-face rules directly instead of next/font. */
+@import '@causedeck/ui/tokens.css';
+@import '@causedeck/config/tailwind/preset.css';
+
+/* Compile utilities used inside @causedeck/ui components. */
+@source '../../../packages/ui/src';

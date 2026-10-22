@@ -1,0 +1,44 @@
+{
+  "header": {
+    "caseTypeRaw": "MISCELLANEOUS FIRST APPEAL",
+    "caseType": "MFA",
+    "caseNumber": "2101",
+    "caseYear": 2025,
+    "orderDate": "2026-10-22",
+    "neutralCitation": null,
+    "anchor": {
+      "page": 1,
+      "quote": "MISCELLANEOUS FIRST APPEAL NO. 2101 OF 2025",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "MFA",
+        "caseTypeRaw": "MISCELLANEOUS FIRST APPEAL",
+        "number": "2101",
+        "year": 2025,
+        "matchKey": "MFA/2101/2025"
+      }
+    ],
+    "bench": "THE HON'BLE MRS JUSTICE B. EXAMPLE",
+    "judges": ["THE HON'BLE MRS JUSTICE B. EXAMPLE"],
+    "neutralCitationRaw": null,
+    "orderType": "daily",
+    "authenticityFlag": null
+  },
+  "cues": [
+    {
+      "kind": "next_date",
+      "text": "Call on 12.11.2026.",
+      "anchor": {
+        "page": 1,
+        "quote": "Call on 12.11.2026.",
+        "rowIndex": 14
+      },
+      "confidence": 0.95,
+      "phrase": "Call on",
+      "date": "2026-11-12"
+    }
+  ]
+}

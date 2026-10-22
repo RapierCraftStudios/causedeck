@@ -1,0 +1,366 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.original",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "4",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. O.A.Nos.1 and 2 of 2026 in C.S.No.9 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "4",
+              "itemNo": "1",
+              "caseTypeRaw": "C.S.",
+              "caseType": "CS",
+              "caseNumber": "9",
+              "caseYear": 2026,
+              "matchKey": "CS/9/2026",
+              "parties": "Example Textiles Pvt. Ltd. vs Made-up Traders",
+              "stageRaw": "FOR ORDERS",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+                  "aliases": ["K KALPITHAM", "KALPITHAM K"],
+                  "enrolmentNo": "MS/4567/2004"
+                },
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "OA",
+                  "caseTypeRaw": "O.A.",
+                  "number": "1",
+                  "year": 2026,
+                  "matchKey": "OA/1/2026",
+                  "parentProceedingKey": "CS/9/2026"
+                },
+                {
+                  "caseTypeCode": "OA",
+                  "caseTypeRaw": "O.A.",
+                  "number": "2",
+                  "year": 2026,
+                  "matchKey": "OA/2/2026",
+                  "parentProceedingKey": "CS/9/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. Appl.No.33 of 2026 in C.S.No.10 of 2026",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "4",
+              "itemNo": "2",
+              "caseTypeRaw": "C.S.",
+              "caseType": "CS",
+              "caseNumber": "10",
+              "caseYear": 2026,
+              "matchKey": "CS/10/2026",
+              "parties": "Fictional Mills Ltd. vs Pretend Weavers Co-operative Society",
+              "stageRaw": "FOR ORDERS",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "M/s Fictional & Example Associates",
+                  "aliases": ["FICTIONAL EXAMPLE ASSOCIATES"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "APPL",
+                  "caseTypeRaw": "Appl.",
+                  "number": "33",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "APPL/33/2026",
+                  "parentProceedingKey": "CS/10/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. O.S.A.No.15 of 2026",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "4",
+              "itemNo": "3",
+              "caseTypeRaw": "O.S.A.",
+              "caseType": "OSA",
+              "caseNumber": "15",
+              "caseYear": 2026,
+              "matchKey": "OSA/15/2026",
+              "parties": "Made-up Traders vs Example Textiles Pvt. Ltd.",
+              "stageRaw": "FOR ORDERS",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                }
+              ],
+              "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "4. Arb O.P.No.12 of 2026",
+                "rowIndex": 3
+              },
+              "confidence": 1,
+              "hallNo": "4",
+              "itemNo": "4",
+              "caseTypeRaw": "Arb O.P.",
+              "caseType": "ARBOP",
+              "caseNumber": "12",
+              "caseYear": 2026,
+              "matchKey": "ARBOP/12/2026",
+              "parties": "K. Imaginary Selvam vs Fictional Mills Ltd.",
+              "stageRaw": "FOR ORDERS",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "5. C.S.No.120 of 2024",
+                "rowIndex": 4
+              },
+              "confidence": 1,
+              "hallNo": "4",
+              "itemNo": "5",
+              "caseTypeRaw": "C.S.",
+              "caseType": "CS",
+              "caseNumber": "120",
+              "caseYear": 2024,
+              "matchKey": "CS/120/2024",
+              "parties": "R. Karpanai Murugan vs S. Fictional Lakshmi",
+              "stageRaw": "FOR HEARING",
+              "stageNorm": "hearing",
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                },
+                {
+                  "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+                  "aliases": ["K KALPITHAM", "KALPITHAM K"],
+                  "enrolmentNo": "MS/4567/2004"
+                }
+              ],
+              "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. O.A.Nos.1 and 2 of 2026 in C.S.No.9 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "4",
+      "itemNo": "1",
+      "caseTypeRaw": "C.S.",
+      "caseType": "CS",
+      "caseNumber": "9",
+      "caseYear": 2026,
+      "matchKey": "CS/9/2026",
+      "parties": "Example Textiles Pvt. Ltd. vs Made-up Traders",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+          "aliases": ["K KALPITHAM", "KALPITHAM K"],
+          "enrolmentNo": "MS/4567/2004"
+        },
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "OA",
+          "caseTypeRaw": "O.A.",
+          "number": "1",
+          "year": 2026,
+          "matchKey": "OA/1/2026",
+          "parentProceedingKey": "CS/9/2026"
+        },
+        {
+          "caseTypeCode": "OA",
+          "caseTypeRaw": "O.A.",
+          "number": "2",
+          "year": 2026,
+          "matchKey": "OA/2/2026",
+          "parentProceedingKey": "CS/9/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Appl.No.33 of 2026 in C.S.No.10 of 2026",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "4",
+      "itemNo": "2",
+      "caseTypeRaw": "C.S.",
+      "caseType": "CS",
+      "caseNumber": "10",
+      "caseYear": 2026,
+      "matchKey": "CS/10/2026",
+      "parties": "Fictional Mills Ltd. vs Pretend Weavers Co-operative Society",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "M/s Fictional & Example Associates",
+          "aliases": ["FICTIONAL EXAMPLE ASSOCIATES"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "APPL",
+          "caseTypeRaw": "Appl.",
+          "number": "33",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "APPL/33/2026",
+          "parentProceedingKey": "CS/10/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. O.S.A.No.15 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "4",
+      "itemNo": "3",
+      "caseTypeRaw": "O.S.A.",
+      "caseType": "OSA",
+      "caseNumber": "15",
+      "caseYear": 2026,
+      "matchKey": "OSA/15/2026",
+      "parties": "Made-up Traders vs Example Textiles Pvt. Ltd.",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. Arb O.P.No.12 of 2026",
+        "rowIndex": 3
+      },
+      "confidence": 1,
+      "hallNo": "4",
+      "itemNo": "4",
+      "caseTypeRaw": "Arb O.P.",
+      "caseType": "ARBOP",
+      "caseNumber": "12",
+      "caseYear": 2026,
+      "matchKey": "ARBOP/12/2026",
+      "parties": "K. Imaginary Selvam vs Fictional Mills Ltd.",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. C.S.No.120 of 2024",
+        "rowIndex": 4
+      },
+      "confidence": 1,
+      "hallNo": "4",
+      "itemNo": "5",
+      "caseTypeRaw": "C.S.",
+      "caseType": "CS",
+      "caseNumber": "120",
+      "caseYear": 2024,
+      "matchKey": "CS/120/2024",
+      "parties": "R. Karpanai Murugan vs S. Fictional Lakshmi",
+      "stageRaw": "FOR HEARING",
+      "stageNorm": "hearing",
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        },
+        {
+          "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+          "aliases": ["K KALPITHAM", "KALPITHAM K"],
+          "enrolmentNo": "MS/4567/2004"
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["4"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

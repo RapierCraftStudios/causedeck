@@ -1,3 +1,4 @@
+import { FORUM_CATALOGUE } from '@causedeck/db/seed/forum-catalogue';
 import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
 
@@ -17,6 +18,7 @@ describe('buildCsp', () => {
     "base-uri 'self'",
     "default-src 'self'",
     "font-src 'self'",
+    "worker-src 'self'",
   ])('contains %s', (directive) => {
     expect(csp.split('; ')).toContain(directive);
   });
@@ -30,6 +32,51 @@ describe('buildCsp', () => {
 
   it('never allows Google Fonts or other origins for fonts and styles', () => {
     expect(csp).not.toMatch(/googleapis|gstatic|https:/);
+  });
+});
+
+describe('court hosts are never framed (#399)', () => {
+  // Madras HC forbids framing its pages, and the courts area only links out to them (#42).
+  const courtHosts = [...new Set(FORUM_CATALOGUE.flatMap((forum) => forum.config.hosts))];
+
+  /** The sources that govern frames: `frame-src`, else `child-src`, else `default-src`. */
+  function frameSources(csp: string): string[] {
+    const directives = new Map(
+      csp.split('; ').map((directive) => {
+        const [name = '', ...sources] = directive.trim().split(/\s+/);
+        return [name, sources] as const;
+      }),
+    );
+    return (
+      directives.get('frame-src') ??
+      directives.get('child-src') ??
+      directives.get('default-src') ??
+      []
+    );
+  }
+
+  it('checks a real host list', () => {
+    expect(courtHosts.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ['production', buildCsp('n')],
+    ['development', buildCsp('n', { dev: true })],
+  ])('allows frames from this origin only in %s', (_mode, csp) => {
+    const sources = frameSources(csp);
+    expect(sources.length).toBeGreaterThan(0);
+    for (const source of sources) expect(["'self'", "'none'"]).toContain(source);
+    for (const host of courtHosts) {
+      const labels = host.split('.');
+      const wildcards = labels.slice(1).map((_, i) => `*.${labels.slice(i + 1).join('.')}`);
+      for (const source of sources) {
+        expect(source).not.toContain(host);
+        expect(wildcards).not.toContain(source.replace(/^https?:\/\//, ''));
+      }
+    }
+    expect(sources).not.toContain('*');
+    expect(sources.some((source) => /^(?:https?|data|blob):$/.test(source))).toBe(false);
+    expect(csp.split('; ')).toContain("object-src 'none'");
   });
 });
 

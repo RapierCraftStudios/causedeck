@@ -4,6 +4,9 @@
 # job (#134) screenshots every story in light and dark at 360/768/1280 inside the pinned Playwright
 # image and compares against packages/ui/visual/__screenshots__ (refresh them with the
 # `visual:update` label, see .github/workflows/visual-update.yml).
+# The `storybook-web` job (#426) builds the apps/web Storybook (app components such as the courts
+# area, with the real next-intl catalogs and mocked Next navigation and server actions) and runs
+# every story with its play function and axe in light and dark.
 name: Storybook
 
 on:
@@ -11,8 +14,13 @@ on:
     types: [opened, synchronize, reopened, labeled]
     paths:
       - 'packages/ui/**'
+      - 'packages/i18n/**'
       - 'packages/config/tailwind/**'
       - 'packages/config/eslint/**'
+      - 'apps/web/components/**'
+      - 'apps/web/.storybook/**'
+      - 'apps/web/vitest.storybook.config.ts'
+      - 'apps/web/package.json'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - '.github/workflows/storybook.yml'
@@ -20,11 +28,18 @@ on:
     branches: [main, staging]
     paths:
       - 'packages/ui/**'
+      - 'packages/i18n/**'
       - 'packages/config/tailwind/**'
       - 'packages/config/eslint/**'
+      - 'apps/web/components/**'
+      - 'apps/web/.storybook/**'
+      - 'apps/web/vitest.storybook.config.ts'
+      - 'apps/web/package.json'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - '.github/workflows/storybook.yml'
+  schedule:
+    - cron: '0 21 * * *' # nightly 02:30 IST: visual regression report
   workflow_dispatch:
 
 permissions:
@@ -64,10 +79,37 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  storybook-web:
+    name: storybook (web)
+    if: ${{ (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Install Chromium for Vitest browser mode
+        run: pnpm --filter @causedeck/web exec playwright install --with-deps chromium
+      - name: Build Storybook
+        run: pnpm --filter @causedeck/web build-storybook
+      - name: Interaction and axe (light and dark) tests
+        run: pnpm --filter @causedeck/web test:storybook
+      - name: Upload Storybook
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: storybook-static-web
+          path: apps/web/storybook-static
+          if-no-files-found: error
+          retention-days: 14
+
   visual:
     name: visual (${{ matrix.shard }}/4)
     # Full tier only (docs/engineering/ci.md): ship PRs, staging/main pushes, or the `full-ci` label.
-    if: ${{ (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
+    # Report-only (D-045): nightly, manual dispatch, or a PR labelled full-ci. Not a ship gate.
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'full-ci') && (github.event.action != 'labeled' || github.event.label.name == 'full-ci')) }}
+    continue-on-error: true
     runs-on: ubuntu-latest
     # ~4,500 screenshots (every story x light/dark x 360/768/1280): sharded 4 ways so a shard takes
     # ~10-12 min on a 2-vCPU runner instead of one 45-min job (D-044).

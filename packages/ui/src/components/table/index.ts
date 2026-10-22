@@ -7,6 +7,7 @@ export {
   TableHead,
   TableHeader,
   TableRow,
+  TABLE_FINE_POINTER_QUERY,
   TABLE_ROW_HEIGHT,
   tableRowClasses,
   useTableDensity,

@@ -1,11 +1,13 @@
-# Required status checks: the job names below (`lint`, `typecheck`, `test`, `build`).
+# Required status checks: the job names below (`lint`, `typecheck`, `test`, `build`, `tenancy`).
 # See docs/engineering/ci.md before renaming any of them.
 name: CI
 
 on:
   pull_request:
+  # Lane branches (forge.yaml verify.mode: ci): ForgeDock pushes the lane and waits on this run before
+  # review, so type-checks and tests run on GitHub runners instead of the shared lane host.
   push:
-    branches: [main, staging]
+    branches: [main, staging, 'feat/issue-*-lean']
   merge_group:
 
 permissions:
@@ -17,9 +19,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # Optional remote cache: both are empty when unset (forks, fresh clones), and turbo then uses .turbo.
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  # No TURBO_TOKEN / TURBO_TEAM here: the setup action starts a Turborepo cache server backed by the
+  # GitHub Actions cache (turbo-cache: github) and exports its own values (D-047).
   # Base branch for change-aware filtering (pull_request and merge_group only).
   CI_BASE_REF: ${{ github.base_ref || github.event.merge_group.base_ref }}
 
@@ -34,16 +35,56 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/setup
+        with:
+          turbo-cache: github
+      # Pull requests: the files this PR changes, so Prettier and the docs checks only run on what
+      # their inputs cover. Pushes, merge groups and schedules always run everything (D-047).
+      - name: Changed files
+        id: changed
+        if: github.event_name == 'pull_request'
+        run: bash infra/scripts/ci-changed-files.sh
+      # ESLint's content cache is only used on lane PRs (into milestone/**): typed linting can go stale
+      # when a type changes in a file that did not, so ship PRs and pushes lint from scratch (turbo's
+      # own cache is exact and stays on).
+      - name: Restore ESLint cache
+        if: github.event_name == 'pull_request' && startsWith(github.base_ref, 'milestone/')
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/eslint
+          key: eslint-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.js', 'packages/config/eslint/**') }}-${{ github.sha }}
+          restore-keys: |
+            eslint-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.js', 'packages/config/eslint/**') }}-
+      - name: Prettier (changed files)
+        if: steps.changed.outputs.prettier_full == 'false'
+        run: |
+          if [[ -s "$RUNNER_TEMP/changed-files.txt" ]]; then
+            xargs -d '\n' -a "$RUNNER_TEMP/changed-files.txt" \
+              pnpm exec prettier --check --ignore-unknown --no-error-on-unmatched-pattern
+          else
+            echo 'No changed files.'
+          fi
       - name: Prettier
+        if: steps.changed.outputs.prettier_full != 'false'
         run: pnpm format:check
       - name: ADR lint
+        if: steps.changed.outputs.docs_checks != 'false'
         run: pnpm adr:lint
       - name: ADR script tests
+        if: steps.changed.outputs.docs_checks != 'false'
         run: pnpm adr:test
       - name: Docs links
+        if: steps.changed.outputs.docs_checks != 'false'
         run: pnpm docs:links
+      - name: Permissions doc
+        if: steps.changed.outputs.docs_checks != 'false'
+        run: pnpm docs:permissions:check
       - name: ESLint
-        run: bash infra/scripts/ci-affected.sh lint
+        run: |
+          args=()
+          if [[ $GITHUB_EVENT_NAME == pull_request && $CI_BASE_REF == milestone/* ]]; then
+            args=(-- --cache --cache-strategy content --cache-location "$GITHUB_WORKSPACE/.cache/eslint/")
+          fi
+          bash infra/scripts/ci-affected.sh lint "${args[@]}"
       - name: Validate dev compose file
         run: docker compose -f infra/docker/compose.dev.yml config -q
 
@@ -57,25 +98,58 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/setup
+        with:
+          turbo-cache: github
       - name: Typecheck
         run: bash infra/scripts/ci-affected.sh typecheck
 
   # ubuntu-latest ships Docker, which Testcontainers integration tests (#6) use; no `services:` here.
-  test:
-    name: test
+  # The suite is split into package groups that run on their own runners (infra/scripts/ci-test-shard.mjs),
+  # balanced by measured Vitest duration. Each shard keeps the CI_TURBO_CONCURRENCY cap: a 4-vCPU runner
+  # starves vitest workers when too many Testcontainers suites run at once.
+  test-shard:
+    name: test-shard (${{ matrix.shard }})
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [db, core, web, services, rest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/setup
+        with:
+          turbo-cache: github
+      # Static checks, once per run (in `rest`, the lightest shard).
       # Schema conventions, the reviewed-SQL migration lint and drizzle-kit snapshot consistency.
-      # Static: no database needed.
       - name: DB conventions
+        if: matrix.shard == 'rest'
         run: pnpm db:check
+      # Message catalogs (#174): en/ta/kn key parity, ICU syntax, placeholders, generated files.
+      - name: i18n catalogs
+        if: matrix.shard == 'rest'
+        run: pnpm i18n:check
+      # Court-adapter golden fixtures (#371): committed synthetic fixtures only. CI never sets
+      # ADAPTER_PRIVATE_FIXTURES_DIR; the lawyer-supplied fixture gate is #119.
+      - name: Adapter golden fixtures
+        if: matrix.shard == 'rest'
+        run: pnpm --filter @causedeck/adapters test:golden
+      # Golden metrics on seeded generated data (#401, #408): row precision, recall, order-date
+      # accuracy and zero invented dates, gated in packages/adapters/src/madras-hc/ and
+      # packages/adapters/src/karnataka-hc/generated-metrics.test.ts.
+      - name: Adapter golden metrics (generated)
+        if: matrix.shard == 'rest'
+        run: >-
+          pnpm --filter @causedeck/adapters gen:fixtures --adapter madras --seed 7 &&
+          pnpm --filter @causedeck/adapters gen:fixtures --adapter karnataka --seed 7 &&
+          pnpm --filter @causedeck/adapters test:metrics
       - name: Test
+        env:
+          CI_TURBO_CONCURRENCY: 3
+          CI_TEST_SHARD: ${{ matrix.shard }}
         run: >-
           bash infra/scripts/ci-affected.sh test --
           --coverage --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
@@ -85,7 +159,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: test-reports
+          name: test-reports-${{ matrix.shard }}
           path: |
             apps/*/coverage/
             apps/*/reports/junit.xml
@@ -93,6 +167,21 @@ jobs:
             packages/*/reports/junit.xml
           if-no-files-found: ignore
           retention-days: 14
+
+  # The required check. Fails unless every shard succeeded (a failed, cancelled or skipped shard fails it).
+  test:
+    name: test
+    needs: test-shard
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: All test shards passed
+        env:
+          SHARDS_RESULT: ${{ needs.test-shard.result }}
+        run: |
+          echo "test-shard result: ${SHARDS_RESULT}"
+          [[ $SHARDS_RESULT == success ]]
 
   build:
     name: build
@@ -104,9 +193,72 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/setup
+        with:
+          turbo-cache: github
+      # Next.js incremental build cache (outside turbo's outputs); Next validates entries by content.
+      - name: Restore Next.js build cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            apps/web/.next/cache
+            apps/admin/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Build
         run: bash infra/scripts/ci-affected.sh build
       # Spike §10: home route initial JS <= 180 KB gzip. Runs when the build above included web.
       - name: Web bundle budget
         if: hashFiles('apps/web/.next/build-manifest.json') != ''
         run: pnpm --filter @causedeck/web bundle:budget
+
+  # Cross-tenant suite (#19, #209): always the full suite, never change-aware. Any failure is a
+  # release blocker (docs/engineering/tenancy.md). `db:check-rls` reads the catalog of a freshly
+  # migrated database; `test:tenancy` starts its own Testcontainers Postgres like `test`.
+  tenancy:
+    name: tenancy
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg17
+        env:
+          POSTGRES_USER: causedeck
+          POSTGRES_PASSWORD: causedeck
+          POSTGRES_DB: causedeck
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U causedeck -d causedeck"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://causedeck_app:causedeck_app@127.0.0.1:5432/causedeck
+      DATABASE_URL_OWNER: postgres://causedeck_owner:causedeck_owner@127.0.0.1:5432/causedeck
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          turbo-cache: none
+      # The dev stack's init SQL (extensions, causedeck_owner / causedeck_app), as the superuser.
+      - name: Create roles and extensions
+        env:
+          PGPASSWORD: causedeck
+        run: |
+          for file in infra/docker/postgres/init/*.sql; do
+            psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U causedeck -d causedeck -f "$file"
+          done
+      - name: Migrate
+        run: pnpm db:migrate
+      - name: RLS catalog check
+        run: pnpm db:check-rls
+      - name: Cross-tenant suite
+        timeout-minutes: 4
+        run: pnpm test:tenancy
+      # Export completeness (#301): every tenant table has an exporter or a documented exclusion.
+      - name: Export coverage
+        timeout-minutes: 3
+        run: pnpm test:export-coverage

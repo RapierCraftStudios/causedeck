@@ -59,9 +59,12 @@ describe('Table', () => {
     expect(screen.getByRole('table').className).toMatch(/\btabular-nums\b/);
   });
 
-  it('rows are 44 px comfortable by default and 32 px compact', () => {
+  it('rows are comfortable by default (40 px with a fine pointer, 44 px on touch) and 32 px compact', () => {
     const { unmount } = render(<Example />);
-    for (const row of screen.getAllByRole('row')) expect(row.className).toMatch(/\bh-11\b/);
+    for (const row of screen.getAllByRole('row')) {
+      expect(row.className).toMatch(/\bh-11\b/);
+      expect(row.className).toMatch(/\bpointer-fine:h-10\b/);
+    }
     expect(screen.getByRole('table')).toHaveAttribute('data-density', 'comfortable');
     unmount();
     render(<Example density="compact" />);

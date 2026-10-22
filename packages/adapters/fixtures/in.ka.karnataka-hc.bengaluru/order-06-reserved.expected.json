@@ -1,0 +1,44 @@
+{
+  "header": {
+    "caseTypeRaw": "REGULAR FIRST APPEAL",
+    "caseType": "RFA",
+    "caseNumber": "340",
+    "caseYear": 2022,
+    "orderDate": "2026-10-23",
+    "neutralCitation": null,
+    "anchor": {
+      "page": 1,
+      "quote": "REGULAR FIRST APPEAL NO. 340 OF 2022",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "RFA",
+        "caseTypeRaw": "REGULAR FIRST APPEAL",
+        "number": "340",
+        "year": 2022,
+        "matchKey": "RFA/340/2022"
+      }
+    ],
+    "bench": "THE HON'BLE MR JUSTICE C. KALPITA",
+    "judges": ["THE HON'BLE MR JUSTICE C. KALPITA"],
+    "neutralCitationRaw": null,
+    "orderType": "daily",
+    "authenticityFlag": null
+  },
+  "cues": [
+    {
+      "kind": "reserved",
+      "text": "Orders reserved.",
+      "anchor": {
+        "page": 1,
+        "quote": "Orders reserved.",
+        "rowIndex": 14
+      },
+      "confidence": 0.8,
+      "phrase": "Orders reserved",
+      "date": null
+    }
+  ]
+}

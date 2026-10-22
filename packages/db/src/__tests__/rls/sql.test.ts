@@ -106,6 +106,9 @@ describe('row-level security catalog', () => {
         'deletion_job',
         'support_session',
         'workspace_integration',
+        'intake_address',
+        'intake_allowlist',
+        'intake_message',
         // Global-or-workspace reference tables (#344): ws_isolation plus catalogue policies.
         'forum',
         'court_hall',

@@ -33,6 +33,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
   // arrive as a port (it never imports jobs).
   capture: Object.freeze(['audit']),
+  // Email forward-in intake (#54): per-user addresses and the sender allow-list; events through
+  // audit, the `email` channel is switched on through the capture domain's public index.
+  'email-intake': Object.freeze(['audit', 'capture']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   jobs: Object.freeze([
     'audit',
@@ -55,6 +58,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'support',
     'court',
     'capture',
+    'email-intake',
     'automation',
   ]),
 });

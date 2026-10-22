@@ -27,6 +27,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `ai` | `@causedeck/core/ai` | the AI gateway wiring (#44, [ADR 0022](../adr/0022-ai-gateway-implementation.md)): the ports `@causedeck/ai` declares, implemented on usage budgets, `workspace_settings.india_only_ai`, `matter.sensitive`, the `ai_call` writer and the 24 h `ai_call_result` store |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
 | `capture` | `@causedeck/core/capture` | the capture inbox (#43, [ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)): `createCapture` / `completeUpload` / `createManualCapture`, per-channel opt-in, discard and pin, raw-object retention, and the bodies of `capture.scan`, `capture.process` and `capture.retention`; jobs arrive as the `CaptureJobs` port. Not re-exported from the package root |
+| `email-intake` | `@causedeck/core/email-intake` | email forward-in intake (#54): the per-user intake address (`createAddress`, `rotateAddress`, `revokeAddress`, `getActiveAddress`, `resolveAddress` with no oracle), the sender allow-list (`addAllowlistEntry`, `removeAllowlistEntry`, `listAllowlist`) and `enableEmailChannel`. Not re-exported from the package root |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
 | `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains. apps/web, apps/api and apps/worker use it (#299): the `db` handle, `closeAppDb`, `inWorkspaceOn` for an injected handle and the api idempotency store; the roster wrappers `previewRosterImportFor` and `confirmRosterImportFor` (#434) |
 | `shared` | none | helpers no domain owns |
@@ -80,6 +81,8 @@ graph LR
   support --> workspaces
   support --> audit
   capture --> audit
+  email-intake --> audit
+  email-intake --> capture
   jobs --> audit
   jobs --> billing
   jobs --> usage
@@ -96,6 +99,7 @@ graph LR
   runtime --> support
   runtime --> court
   runtime --> capture
+  runtime --> email-intake
   runtime --> automation
 ```
 
@@ -114,8 +118,9 @@ graph LR
 | `lifecycle` | `audit`, `workspaces` |
 | `support` | `workspaces`, `audit` |
 | `capture` | `audit` |
+| `email-intake` | `audit`, `capture` |
 | `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation` |
-| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `automation` |
+| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,
 fair-use caps and job fairness read billing entitlements.

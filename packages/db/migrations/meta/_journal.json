@@ -400,6 +400,13 @@
       "when": 1792698350733,
       "tag": "0056_end_of_day_digest",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1792708311364,
+      "tag": "0057_email_intake",
+      "breakpoints": true
     }
   ]
 }

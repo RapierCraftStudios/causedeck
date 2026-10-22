@@ -146,6 +146,27 @@ const CASES: Record<string, () => Promise<void>> = {
     // A's grant is unchanged.
     expect(await runtime.ownerGraceFor(t.ua, t.a.id)).toEqual(before);
   },
+  resolveIntakeAddressFor: async () => {
+    // By design the lookup is workspace-free (the webhook sender is not a member), so it answers
+    // for an active address; a retired or unknown one is the same null, with no other signal.
+    const [row] = await withWorkspace(
+      testAppDb(),
+      { workspaceId: t.a.id, userId: t.ua },
+      (tx) =>
+        tx
+          .select()
+          .from(schema.intakeAddress)
+          .where(eq(schema.intakeAddress.workspaceId, t.a.id)),
+    );
+    expect(row, 'A has a seeded intake address').toBeDefined();
+    const address = `${row?.localPart ?? ''}@${row?.domain ?? ''}`;
+    expect(await runtime.resolveIntakeAddressFor(address)).toEqual({
+      workspaceId: t.a.id,
+      userId: row?.userId,
+    });
+    expect(await runtime.resolveIntakeAddressFor('u-aaaaaaaaaa@example.test')).toBeNull();
+    expect(await runtime.resolveIntakeAddressFor('not an address')).toBeNull();
+  },
   resolveSlugFor: async () => {
     // The slug resolves for anyone; the workspace loader refuses it because `ub` is not a member.
     const resolved = await runtime.resolveSlugFor(t.a.slug, t.ub);

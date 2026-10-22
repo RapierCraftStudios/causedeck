@@ -42,6 +42,7 @@ import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
 import { supportSession } from '../schema/staff.ts';
 import { capture, workspaceCaptureChannel } from '../schema/capture.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
+import { intakeAddress, intakeAllowlist, intakeMessage } from '../schema/email-intake.ts';
 import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
@@ -448,6 +449,48 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
         .values({ workspaceId, requestedByStaff: ownerId, reason: 'Seed support request' })
         .returning({ id: supportSession.id }),
       'support_session',
+    );
+    return { id: row.id };
+  },
+  intake_address: async (tx, { workspaceId, ownerId }) => {
+    // `u-` + 10 base32 characters (a-z, 2-7), as the core service generates them.
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+    const localPart = `u-${[...randomBytes(10)].map((byte) => alphabet[byte % 32]).join('')}`;
+    const row = first(
+      await tx
+        .insert(intakeAddress)
+        .values({ workspaceId, userId: ownerId, localPart, domain: 'intake.test' })
+        .returning({ id: intakeAddress.id }),
+      'intake_address',
+    );
+    return { id: row.id };
+  },
+  intake_allowlist: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(intakeAllowlist)
+        .values({
+          workspaceId,
+          pattern: `xt-${randomUUID().slice(0, 8)}.court.test`,
+          kind: 'court',
+          addedBy: ownerId,
+        })
+        .returning({ id: intakeAllowlist.id }),
+      'intake_allowlist',
+    );
+    return { id: row.id };
+  },
+  intake_message: async (tx, { workspaceId }) => {
+    const row = first(
+      await tx
+        .insert(intakeMessage)
+        .values({
+          workspaceId,
+          messageId: `<xt-${randomUUID()}@mail.test>`,
+          rawExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        })
+        .returning({ id: intakeMessage.id }),
+      'intake_message',
     );
     return { id: row.id };
   },

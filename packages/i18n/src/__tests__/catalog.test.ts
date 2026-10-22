@@ -91,6 +91,7 @@ describe('namespaced catalogs (#174)', () => {
         'common',
         'courts',
         'courtsRosters',
+        'emailIntake',
         'error',
         'home',
         'inbox',

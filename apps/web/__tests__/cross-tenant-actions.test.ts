@@ -95,6 +95,7 @@ const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts'
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
+const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
@@ -141,6 +142,12 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateRoleSettingsAction: roles,
   updateWorkspacePrivacyAction: privacy,
   rotateIntegrationTokenAction: integrations,
+  createIntakeAddressAction: emailIntake,
+  rotateIntakeAddressAction: emailIntake,
+  revokeIntakeAddressAction: emailIntake,
+  addIntakeAllowlistEntryAction: emailIntake,
+  removeIntakeAllowlistEntryAction: emailIntake,
+  enableEmailChannelAction: emailIntake,
   loadMoreAuditAction: activity,
   verifyAuditEventAction: activity,
   loadMoreActivitiesAction: activity,
@@ -262,6 +269,13 @@ function snapshotA() {
       })
       .from(schema.workspaceIntegration)
       .orderBy(schema.workspaceIntegration.kind),
+    // A's intake addresses, allow-list and messages (#54).
+    intakeAddresses: await tx.select().from(schema.intakeAddress).orderBy(schema.intakeAddress.id),
+    intakeAllowlist: await tx
+      .select()
+      .from(schema.intakeAllowlist)
+      .orderBy(schema.intakeAllowlist.id),
+    intakeMessages: await tx.select().from(schema.intakeMessage).orderBy(schema.intakeMessage.id),
     // The catalogue and A's own forums (#402).
     forums: await tx
       .select({
@@ -423,6 +437,19 @@ function inputs(workspaceId: string): Record<string, unknown> {
       retentionAudioDays: 7,
     },
     rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
+    // Email intake (#54): ub, owner of B, may not create, rotate or revoke an address, edit the
+    // allow-list or enable the email channel on A.
+    createIntakeAddressAction: { workspaceId },
+    rotateIntakeAddressAction: { workspaceId },
+    revokeIntakeAddressAction: { workspaceId, addressId: t.a.rows.intake_address?.id },
+    addIntakeAllowlistEntryAction: {
+      workspaceId,
+      pattern: 'probe.court.test',
+      kind: 'court',
+      label: 'Cross-tenant probe',
+    },
+    removeIntakeAllowlistEntryAction: { workspaceId, entryId: t.a.rows.intake_allowlist?.id },
+    enableEmailChannelAction: { workspaceId },
     // A page position past every row, so a leak would return A's real audit event.
     loadMoreAuditAction: {
       workspaceId,
@@ -807,6 +834,44 @@ describe('cross-tenant server actions', () => {
     expect(result.ok).toBe(true);
     expect(result.data.kind).toBe('ics_feed');
     expect(result.data.value).toMatch(/^http:\/\/localhost:3000\/api\/ics\/[\w-]{43}$/);
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('the email intake actions under B’s own workspace change only B (#54)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    const created = (await action('createIntakeAddressAction')(own.createIntakeAddressAction)) as {
+      ok: boolean;
+      data: { id: string; address: string };
+    };
+    expect(created.ok).toBe(true);
+    expect(created.data.address).toMatch(/^u-[a-z2-7]{10}@localhost$/);
+    const rotated = (await action('rotateIntakeAddressAction')(own.rotateIntakeAddressAction)) as {
+      ok: boolean;
+      data: { id: string; address: string };
+    };
+    expect(rotated.ok).toBe(true);
+    expect(rotated.data.address).not.toBe(created.data.address);
+    const entry = (await action('addIntakeAllowlistEntryAction')(
+      own.addIntakeAllowlistEntryAction,
+    )) as { ok: boolean; data: { id: string } };
+    expect(entry.ok).toBe(true);
+    expect(
+      await action('removeIntakeAllowlistEntryAction')({
+        workspaceId: t.b.id,
+        entryId: entry.data.id,
+      }),
+    ).toMatchObject({ ok: true });
+    expect(
+      await action('revokeIntakeAddressAction')({
+        workspaceId: t.b.id,
+        addressId: rotated.data.id,
+      }),
+    ).toMatchObject({ ok: true });
+    expect(await action('enableEmailChannelAction')(own.enableEmailChannelAction)).toMatchObject({
+      ok: true,
+      data: { enabled: true },
+    });
     expect(await snapshotA()).toEqual(before);
   });
 

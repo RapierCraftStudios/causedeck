@@ -390,3 +390,27 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Evidence:** No official eCourts API [R]. Portal terms are silent or contradictory and forbid framing [V] ([11](docs/strategy/11-launch-markets-madras-hc-bengaluru.md)). The Karnataka HC cause list is a public page with no captcha [V]. Madras HC Registry email push (Notification 230/2026) [V]. Aggregators' sourcing is undisclosed (D-003). AlterLab exposes tier caps, fail-fast, an India proxy and cost caps (`alterlab` SDK 2.4.0).
 - **Alternatives:** Buy a licensed reseller API (Surepass, eCourtsIndia): kept as a fallback, but sourcing is opaque and it is no moat. Competitor-style bulk scraping with captcha solving: deferred until the counsel opinion (#118), for legal, DPDP and trust risk. User-solved captchas only (the original D-011): rejected as too much friction for a convenience product.
 - **Revisit if:** counsel advises against a source or mode; an official API appears (move that source to A3); a Registry objects (kill switch, then remove).
+
+### D-049 — Vision: "Zerodha for law" in posture, "Bloomberg for law" in data
+- **Date:** 2026-10-23 · **Status:** Accepted (founder: "what if that is a vision?")
+- **Decision:** CauseDeck aims to be the operating system and data layer that every Indian advocate and legal institution runs on: **priced like Zerodha, as dependable as Bloomberg.**
+  - **Public posture (Zerodha):** simple, self-serve, cheap, India-scale; no dark patterns; profitable per user; trust is the brand; education drives growth; an open developer API builds an ecosystem.
+  - **Data ambition (Bloomberg):** the most reliable and complete legal data layer in India (case status, cause lists, display boards, orders and judgments, notices, news), inside the workflow advocates use all day, with a network that compounds (shared matters, referrals, contributed public documents). The premium price is only for institutions and the API.
+- **How the roadmap maps:**
+
+  | Element | CauseDeck |
+  | --- | --- |
+  | Daily workflow (Kite / the Terminal) | The practice OS (milestones 3–7) |
+  | Market data | Court Data Network (D-048) |
+  | News | Notices and news feeds |
+  | Free entry point (zero brokerage) | Free court-day alerts, zero-entry onboarding |
+  | Developer API (Kite Connect) | Public API |
+  | Institutional product | B2B portfolio tracking for banks, NBFCs and ARCs |
+  | Network | Referrals, shared briefs, contributed public documents |
+  | Education (Varsity) | The practice education program |
+- **Official rails are the strategic priority.** Zerodha exists because exchanges sell official feeds, and Bloomberg's premium is data that doesn't break. Delegated captcha lookups (D-048) give convenience now, but the durable layer must sit on official or licensed feeds (A3) from NIC/eCommittee and the High Court Registries. That makes official data partnerships a named workstream with an owner.
+- **Guardrails the vision keeps:** no judge analytics (court and process analytics only: listing delays, adjournment rates, disposal times by forum and case type, never by individual judge); no L5 autonomous action (D-017); verified citations only (D-004); India residency (D-009); the D-048 bright lines and DPDP posture.
+- **Moat:** data inside the daily workflow, plus a network. Data alone commoditises to other aggregators, and workflow alone to other practice tools.
+- **Evidence:** Roadmap, decisions D-026, D-028, D-030 and D-048; milestones Court Data Network and Instant GTM & Adoption.
+- **Alternatives:** A data-only aggregator (an eCourtsIndia-style API business): rejected, it's commoditised and fragile without official rails. A workflow-only practice tool: rejected, it's easy to copy and has no compounding data.
+- **Revisit if:** official rails stay closed after sustained outreach (the data ambition then rests on delegated and contributed data, at lower reliability), or unit economics at the Zerodha price point don't hold.

@@ -12,7 +12,8 @@
     "test:visual": "node support/playwright.mjs --grep @visual",
     "test:update-snapshots": "node support/playwright.mjs --grep @visual --update-snapshots",
     "lhci": "lhci autorun --config=lighthouserc.json",
-    "lhci:courts": "node support/lighthouse-courts.mjs"
+    "lhci:courts": "node support/lighthouse-courts.mjs",
+    "lhci:matters": "node --experimental-strip-types --no-warnings support/lighthouse-matters.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "catalog:",

@@ -24,6 +24,7 @@ import {
   ROSTER_MATTERS,
   ROSTERS,
 } from '../fixtures/courts-data.ts';
+import { matterForumId, seedMatterFixtures } from '../fixtures/matters-data.ts';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -220,7 +221,8 @@ async function seedAdminFixtures(): Promise<void> {
  *
  * Then the bench rosters (#437): a workspace forum with three benches, two matters with a
  * proceeding each before it, two confirmed roster versions (hall 5 changed bench in version 2) and
- * two open bench-change alerts citing version 2, in foreign-key order.
+ * two open bench-change alerts citing version 2, in foreign-key order. Last the matters fixtures
+ * (#394, fixtures/matters-data.ts): journey matters plus a 500-matter, 1,500-proceeding bulk.
  */
 async function seedCourtFixtures(): Promise<void> {
   const sql = postgres(databaseUrl(TEMPLATE_DB, 'owner'), { max: 1, onnotice: () => undefined });
@@ -236,6 +238,7 @@ async function seedCourtFixtures(): Promise<void> {
         );
       }
     }
+    const forumId = await matterForumId(sql);
     await sql.begin(async (tx) => {
       await tx`select set_config('app.workspace_id', ${COURTS_WORKSPACE_ID}, true)`;
       for (const run of COURT_PARSE_RUNS) {
@@ -255,6 +258,7 @@ async function seedCourtFixtures(): Promise<void> {
                   ${run.hallsUnreadable}::text[], ${run.status}, ${run.createdAt})`;
       }
       await seedRosterFixtures(tx);
+      await seedMatterFixtures(tx, forumId);
     });
   } finally {
     await sql.end();

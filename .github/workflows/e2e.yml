@@ -156,6 +156,12 @@ jobs:
           CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
           export CHROME_PATH
           pnpm --filter @causedeck/e2e lhci:courts
+      - name: Lighthouse CI (matters list and overview, signed in, seeded; performance and accessibility >= 0.95)
+        if: ${{ !cancelled() }}
+        run: |
+          CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
+          export CHROME_PATH
+          pnpm --filter @causedeck/e2e lhci:matters
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

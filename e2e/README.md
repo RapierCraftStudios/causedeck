@@ -177,6 +177,28 @@ for `owner@chennai-solo.e2e.test` and reads it from Mailpit (`E2E_MAILPIT_URL`).
 and passes the session cookie to Lighthouse as a `Cookie` header. Reports go to
 `.lighthouseci/courts`.
 
+`pnpm --filter @causedeck/e2e lhci:matters` (#394, `support/lighthouse-matters.mjs`) does the same on
+the matters list (`/w/chennai-solo/matters`) and the overview of the appeal-chain matter
+(`lighthouserc.matters.json`). The `e2e` seed profile has no matters, so the script first inserts the
+fixtures of `fixtures/matters-data.ts` as the owner role (`DATABASE_URL_OWNER`); the package script
+runs it with `--experimental-strip-types` for that. Reports go to `.lighthouseci/matters`.
+
+## Matters
+
+`tests/matters/` (#394, part 6 of #40) covers the matters area: `matters.spec.ts` (list, filters,
+search, keyboard map, tab bar, live region, conflict card), `matters.a11y.spec.ts` (`@a11y`, axe on
+every route), `matters.visual.spec.ts` (`@visual`, the baselines below) and `matters.perf.spec.ts`
+(`@perf`, list p95 server render under 300 ms). The data is `fixtures/matters-data.ts`, seeded into
+the template by `support/db-reset.ts` in `chennai-solo`: six journey matters (an appeal chain with
+W.M.P. children, a date conflict, a proposed next date, a sensitive matter, Tamil and Kannada party
+names) and a bulk of 500 matters with 1,500 proceedings and no next date, so the default sort lists
+the journey matters first. Next dates sit in 2099 and the relative "in N days" text is masked in
+screenshots, because the server reads the real clock. The 25 KB gzip route budget is the existing
+`pnpm --filter @causedeck/web bundle:budget`. Storybook stories for every component are in
+`apps/web/components/matters/*.stories.tsx` (guard: `apps/web/__tests__/matters-stories.test.ts`).
+Baselines for `matters.visual.spec.ts` are generated like every other one, by the `update_snapshots`
+dispatch; until they exist the specs skip.
+
 ## Debugging
 
 - HTML report: `pnpm --filter @causedeck/e2e exec playwright show-report`.

@@ -22,7 +22,7 @@ export const PLACEHOLDER_ROUTES = [
   'tomorrow',
   'calendar',
   'inbox',
-  'matters',
+  // `matters` is a real page since #388 (its own states are covered in tests/matters).
   'briefs',
   'obligations',
   'drafts',

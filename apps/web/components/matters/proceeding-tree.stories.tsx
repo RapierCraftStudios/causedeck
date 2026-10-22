@@ -149,6 +149,12 @@ const meta = {
     canWrite: true,
     actions,
   },
+  parameters: {
+    // Each treeitem carries its whole proceeding card (state, forum, next date, chips) and its
+    // child proceedings, so a name from content would read the entire subtree. It is named by its
+    // case number on purpose (WAI-ARIA tree pattern); axe's label-content-name-mismatch cannot hold.
+    a11y: { config: { rules: [{ id: 'label-content-name-mismatch', enabled: false }] } },
+  },
 } satisfies Meta<typeof ProceedingTree>;
 
 export default meta;

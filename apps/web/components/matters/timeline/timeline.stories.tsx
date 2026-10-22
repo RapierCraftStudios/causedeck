@@ -3,7 +3,7 @@
 // `To confirm` pill, and Tamil and Kannada party names inside event text (Noto fallback, line
 // height).
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { expect } from 'storybook/test';
+import { expect, waitFor } from 'storybook/test';
 
 import TimelineError from '../../../app/(app)/w/[slug]/matters/[id]/timeline/error.tsx';
 import TimelineLoading from '../../../app/(app)/w/[slug]/matters/[id]/timeline/loading.tsx';
@@ -166,7 +166,8 @@ export const Combined: Story = {
     await expect(
       canvas.getByRole('group', { name: 'Events across all proceedings' }),
     ).toBeVisible();
-    await expect(canvas.getByText('To confirm')).toBeVisible();
+    // The first six cards fade in (animate-fade-in, fill-mode both): wait until the pill is shown.
+    await waitFor(() => expect(canvas.getByText('To confirm')).toBeVisible());
     await expect(canvas.getByText('Jump to today')).toBeVisible();
   },
 };

@@ -481,33 +481,19 @@ function sameNumber(column: AnyColumn, value: string): SQL {
   return sql`regexp_replace(upper(${column}), '^0+(?=[0-9])', '') = ${value}`;
 }
 
-/** `matter.id in (...)` over the workspace's proceedings matching `where`, computed once. */
-function matterWithProceeding(workspaceId: string, where: SQL): SQL {
-  return sql`${matter.id} in (select ${proceeding.matterId} from ${proceeding} where ${proceeding.workspaceId} = ${workspaceId}::uuid and (${where}))`;
+/** A uuid array literal, bound as one parameter. */
+function uuidArray(ids: readonly string[]): SQL {
+  return sql`${`{${ids.join(',')}}`}::uuid[]`;
 }
 
-/**
- * The search predicate on `matter`: title, parties, people and case numbers. Each part is an
- * uncorrelated `in (...)`, evaluated once per query rather than once per matter.
- */
-function searchPredicate(workspaceId: string, q: string): SQL {
+/** The proceedings whose parties, CNR or case number match the search (one table). */
+export function searchProceedingsQuery(tx: Transaction, workspaceId: string, q: string) {
   const pattern = containsPattern(q);
   const conditions: SQL[] = [
-    sql`${matter.title} ilike ${pattern}`,
-    matterWithProceeding(
-      workspaceId,
-      sql`${proceeding.titlePetitioner} ilike ${pattern} or ${proceeding.titleRespondent} ilike ${pattern}`,
-    ),
-    sql`${matter.id} in (select coalesce(${roleEdge.matterId}, ${proceeding.matterId}) from ${roleEdge}
-      inner join ${person} on ${person.workspaceId} = ${roleEdge.workspaceId} and ${person.id} = ${roleEdge.fromPersonId}
-      left join ${proceeding} on ${proceeding.workspaceId} = ${roleEdge.workspaceId} and ${proceeding.id} = ${roleEdge.proceedingId}
-      where ${roleEdge.workspaceId} = ${workspaceId}::uuid
-        and (${person.name} ilike ${pattern} or exists (select 1 from unnest(${person.aliases}) as alias(value) where alias.value ilike ${pattern})))`,
+    sql`${proceeding.titlePetitioner} ilike ${pattern} or ${proceeding.titleRespondent} ilike ${pattern}`,
   ];
   const cnr = q.replace(/\s/g, '').toUpperCase();
-  if (/^[A-Z0-9]{16}$/.test(cnr)) {
-    conditions.push(matterWithProceeding(workspaceId, sql`${proceeding.cnr} = ${cnr}`));
-  }
+  if (/^[A-Z0-9]{16}$/.test(cnr)) conditions.push(sql`${proceeding.cnr} = ${cnr}`);
   const parsed = parseCaseNumberQuery(q);
   if (parsed !== null) {
     const parts: SQL[] = [sameNumber(proceeding.number, parsed.number)];
@@ -515,20 +501,117 @@ function searchPredicate(workspaceId: string, q: string): SQL {
       parts.push(eq(proceeding.caseTypeCode, parsed.caseTypeCode));
     }
     if (parsed.year !== undefined) parts.push(eq(proceeding.year, parsed.year));
-    const numbered = sql.join(parts, sql` and `);
+    conditions.push(sql`(${sql.join(parts, sql` and `)})`);
     // Without a case type or year, the number may also be the SR, FR, diary or filing number.
-    const other =
-      parsed.caseTypeCode === undefined && parsed.year === undefined
-        ? sql` or ${sql.join(
-            [proceeding.srNo, proceeding.frNo, proceeding.diaryNo, proceeding.filingNo].map((c) =>
-              sameNumber(c, parsed.number),
-            ),
-            sql` or `,
-          )}`
-        : sql``;
-    conditions.push(matterWithProceeding(workspaceId, sql`(${numbered})${other}`));
+    if (parsed.caseTypeCode === undefined && parsed.year === undefined) {
+      for (const column of [
+        proceeding.srNo,
+        proceeding.frNo,
+        proceeding.diaryNo,
+        proceeding.filingNo,
+      ]) {
+        conditions.push(sameNumber(column, parsed.number));
+      }
+    }
   }
-  return sql`(${sql.join(conditions, sql` or `)})`;
+  return tx
+    .select({ matterId: proceeding.matterId })
+    .from(proceeding)
+    .where(and(eq(proceeding.workspaceId, workspaceId), sql`(${sql.join(conditions, sql` or `)})`));
+}
+
+/** The persons whose name or an alias matches the search (one table). */
+export function searchPersonsQuery(tx: Transaction, workspaceId: string, q: string) {
+  const pattern = containsPattern(q);
+  return tx
+    .select({ id: person.id })
+    .from(person)
+    .where(
+      and(
+        eq(person.workspaceId, workspaceId),
+        sql`(${person.name} ilike ${pattern} or exists (select 1 from unnest(${person.aliases}) as alias(value) where alias.value ilike ${pattern}))`,
+      ),
+    );
+}
+
+/** The matter and proceeding targets of the role edges from the given persons (one table). */
+export function personTargetsQuery(
+  tx: Transaction,
+  workspaceId: string,
+  personIds: readonly string[],
+) {
+  return tx
+    .select({ matterId: roleEdge.matterId, proceedingId: roleEdge.proceedingId })
+    .from(roleEdge)
+    .where(
+      and(
+        eq(roleEdge.workspaceId, workspaceId),
+        sql`${roleEdge.fromPersonId} = any(${uuidArray(personIds)})`,
+      ),
+    );
+}
+
+/** The matters with a proceeding in the forum (one table). */
+export function forumMattersQuery(tx: Transaction, workspaceId: string, forumId: string) {
+  return tx
+    .selectDistinct({ matterId: proceeding.matterId })
+    .from(proceeding)
+    .where(and(eq(proceeding.workspaceId, workspaceId), eq(proceeding.forumId, forumId)));
+}
+
+/** The matter ids the forum filter and the search resolved to, before the page query. */
+export interface MatterMatches {
+  forum?: readonly string[];
+  search?: readonly string[];
+}
+
+/** Resolve the forum filter and the search of a list request to matter ids. */
+export async function matterMatches(
+  tx: Transaction,
+  workspaceId: string,
+  data: ParsedSearchMatters,
+): Promise<MatterMatches> {
+  return {
+    ...(data.forumId === undefined
+      ? {}
+      : {
+          forum: (await forumMattersQuery(tx, workspaceId, data.forumId)).map((r) => r.matterId),
+        }),
+    ...(data.q === undefined
+      ? {}
+      : { search: await searchMatchedMatterIds(tx, workspaceId, data.q) }),
+  };
+}
+
+/**
+ * The matters a search matches besides by title: through a proceeding's parties, CNR or case
+ * number, or through a person (name or alias) with a role edge to the matter or one of its
+ * proceedings. Single-table statements folded here, as `upcomingNextDates` does: as `in (...)`
+ * subqueries of the page query, a plan on tables with dead rows took 15 s.
+ */
+export async function searchMatchedMatterIds(
+  tx: Transaction,
+  workspaceId: string,
+  q: string,
+): Promise<string[]> {
+  const matched = new Set(
+    (await searchProceedingsQuery(tx, workspaceId, q)).map((r) => r.matterId),
+  );
+  const persons = (await searchPersonsQuery(tx, workspaceId, q)).map((r) => r.id);
+  if (persons.length > 0) {
+    const targets = await personTargetsQuery(tx, workspaceId, persons);
+    const proceedingIds: string[] = [];
+    for (const target of targets) {
+      if (target.matterId !== null) matched.add(target.matterId);
+      if (target.proceedingId !== null) proceedingIds.push(target.proceedingId);
+    }
+    if (proceedingIds.length > 0) {
+      for (const row of await proceedingMattersQuery(tx, workspaceId, proceedingIds)) {
+        matched.add(row.matterId);
+      }
+    }
+  }
+  return [...matched];
 }
 
 /** The sort key of a sort, its direction, and how its cursor text is cast back. */
@@ -549,22 +632,14 @@ export interface UpcomingDates {
   dates: string[];
 }
 
-/**
- * The workspace's matters with an upcoming next date (the earliest canonical listing dated `day`
- * or later): one grouped pass over its canonical listings.
- */
-export async function upcomingNextDates(
-  tx: Transaction,
-  workspaceId: string,
-  day: string,
-): Promise<UpcomingDates> {
-  const rows = await tx
-    .select({ matterId: proceeding.matterId, date: sql<string>`min(${listing.listDate})::text` })
+/** Each proceeding's earliest canonical listing dated `day` or later (one table, grouped). */
+export function upcomingListingsQuery(tx: Transaction, workspaceId: string, day: string) {
+  return tx
+    .select({
+      proceedingId: listing.proceedingId,
+      date: sql<string>`min(${listing.listDate})::text`,
+    })
     .from(listing)
-    .innerJoin(
-      proceeding,
-      and(eq(proceeding.workspaceId, listing.workspaceId), eq(proceeding.id, listing.proceedingId)),
-    )
     .where(
       and(
         eq(listing.workspaceId, workspaceId),
@@ -572,8 +647,55 @@ export async function upcomingNextDates(
         sql`${listing.listDate} >= ${day}::date`,
       ),
     )
-    .groupBy(proceeding.matterId);
-  return { matterIds: rows.map((r) => r.matterId), dates: rows.map((r) => r.date) };
+    .groupBy(listing.proceedingId);
+}
+
+/** The matter of each of the given proceedings, by primary key. */
+export function proceedingMattersQuery(
+  tx: Transaction,
+  workspaceId: string,
+  proceedingIds: readonly string[],
+) {
+  return tx
+    .select({ id: proceeding.id, matterId: proceeding.matterId })
+    .from(proceeding)
+    .where(
+      and(
+        eq(proceeding.workspaceId, workspaceId),
+        sql`${proceeding.id} = any(${uuidArray(proceedingIds)})`,
+      ),
+    );
+}
+
+/**
+ * The workspace's matters with an upcoming next date (the earliest canonical listing dated `day`
+ * or later). Two single-table statements folded here: joined in SQL, the planner re-scanned the
+ * listings once per proceeding on a table with dead rows (585 ms for 1,500 proceedings).
+ */
+export async function upcomingNextDates(
+  tx: Transaction,
+  workspaceId: string,
+  day: string,
+): Promise<UpcomingDates> {
+  const listed = await upcomingListingsQuery(tx, workspaceId, day);
+  if (listed.length === 0) return { matterIds: [], dates: [] };
+  const matterOf = new Map(
+    (
+      await proceedingMattersQuery(
+        tx,
+        workspaceId,
+        listed.map((r) => r.proceedingId),
+      )
+    ).map((r) => [r.id, r.matterId]),
+  );
+  const earliest = new Map<string, string>();
+  for (const { proceedingId, date } of listed) {
+    const matterId = matterOf.get(proceedingId);
+    if (matterId === undefined) continue;
+    const current = earliest.get(matterId);
+    if (current === undefined || date < current) earliest.set(matterId, date);
+  }
+  return { matterIds: [...earliest.keys()], dates: [...earliest.values()] };
 }
 
 /**
@@ -588,6 +710,7 @@ export function searchMattersQuery(
   settings: PolicySettings,
   data: ParsedSearchMatters,
   next: UpcomingDates,
+  matches: MatterMatches = {},
   after?: readonly string[],
 ) {
   const { workspaceId } = resolved;
@@ -614,14 +737,16 @@ export function searchMattersQuery(
   if (data.ownerMemberId !== undefined) {
     conditions.push(eq(matter.ownerMemberId, data.ownerMemberId));
   }
-  if (data.forumId !== undefined) {
-    conditions.push(
-      matterWithProceeding(workspaceId, sql`${proceeding.forumId} = ${data.forumId}::uuid`),
-    );
+  if (matches.forum !== undefined) {
+    conditions.push(sql`${matter.id} = any(${uuidArray(matches.forum)})`);
   }
   if (data.noNextDate === true) conditions.push(sql`${nextDate} is null`);
   if (data.noNextDate === false) conditions.push(sql`${nextDate} is not null`);
-  if (data.q !== undefined) conditions.push(searchPredicate(workspaceId, data.q));
+  if (data.q !== undefined) {
+    conditions.push(
+      sql`(${matter.title} ilike ${containsPattern(data.q)} or ${matter.id} = any(${uuidArray(matches.search ?? [])}))`,
+    );
+  }
 
   const { key, dir, cast } = sortKey(data.sort, nextDate);
   if (after !== undefined) {
@@ -670,7 +795,8 @@ export async function searchMatters(
     }
     const { workspaceId } = resolved;
     const upcoming = await upcomingNextDates(tx, workspaceId, day);
-    const rows = await searchMattersQuery(tx, resolved, settings, data, upcoming, after);
+    const matches = await matterMatches(tx, workspaceId, data);
+    const rows = await searchMattersQuery(tx, resolved, settings, data, upcoming, matches, after);
     const page = rows.slice(0, data.limit);
     const ids = page.map((r) => r.matter.id);
     const proceedings = groupBy(

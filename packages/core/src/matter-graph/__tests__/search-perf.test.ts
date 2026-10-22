@@ -3,13 +3,13 @@
 // Bengaluru chamber, @causedeck/db/seed/synthetic) at their defaults.
 //
 // As perf.test.ts does, the always-on gate is the Postgres execution time (`EXPLAIN (ANALYZE,
-// FORMAT JSON)`) of the list's first-page query (`searchMattersQuery`) for each sort and for a
-// case-number and a party search; wall-clock time on the shared, loaded build host measures the
-// host as much as the code. The service itself runs for every sample too, and its wall-clock p95
+// FORMAT JSON)`) of the list's first-page statements (next dates, search matches and
+// `searchMattersQuery`) for each sort and for a case-number and a party search; wall-clock time
+// on the shared, loaded build host measures the host as much as the code. The service itself runs for every sample too, and its wall-clock p95
 // is asserted with MATTER_GRAPH_PERF_GATE=1 on a quiet runner.
 import { performance } from 'node:perf_hooks';
 
-import { schema, type Transaction } from '@causedeck/db';
+import { type Transaction } from '@causedeck/db';
 import {
   insertSyntheticMatterSet,
   SYNTHETIC_MARKETS,
@@ -18,12 +18,21 @@ import {
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { buildForum } from '@causedeck/db/testing/matter-graph-fixtures';
 import { SearchMattersInput } from '@causedeck/validators/matter-graph-inputs';
-import { and, eq, sql, type SQLWrapper } from 'drizzle-orm';
+import { sql, type SQLWrapper } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { searchMatters, type MatterGraphDeps } from '../../index.ts';
 import { newWorkspace } from '../../__tests__/fixtures.ts';
-import { searchMattersQuery, upcomingNextDates } from '../read-models.ts';
+import {
+  matterMatches,
+  personTargetsQuery,
+  proceedingMattersQuery,
+  searchMattersQuery,
+  searchPersonsQuery,
+  searchProceedingsQuery,
+  upcomingListingsQuery,
+  upcomingNextDates,
+} from '../read-models.ts';
 
 const TODAY = '2026-10-21';
 const NOW = new Date(`${TODAY}T06:00:00Z`);
@@ -53,28 +62,6 @@ async function executionMs(s: Transaction, statement: SQLWrapper): Promise<numbe
     sql`explain (analyze, format json) ${statement.getSQL()}`,
   );
   return plan?.['QUERY PLAN'][0]['Execution Time'] ?? Number.POSITIVE_INFINITY;
-}
-
-/** The statement `upcomingNextDates` runs, for EXPLAIN. */
-function upcomingStatement(s: Transaction, workspaceId: string): SQLWrapper {
-  return s
-    .select({ matterId: schema.proceeding.matterId, date: sql<string>`min(${schema.listing.listDate})` })
-    .from(schema.listing)
-    .innerJoin(
-      schema.proceeding,
-      and(
-        eq(schema.proceeding.workspaceId, schema.listing.workspaceId),
-        eq(schema.proceeding.id, schema.listing.proceedingId),
-      ),
-    )
-    .where(
-      and(
-        eq(schema.listing.workspaceId, workspaceId),
-        eq(schema.listing.canonical, true),
-        sql`${schema.listing.listDate} >= ${TODAY}::date`,
-      ),
-    )
-    .groupBy(schema.proceeding.matterId);
 }
 
 describe(`matters list under ${String(BUDGET_MS)} ms p95 (500 matters, 1,500 proceedings)`, () => {
@@ -112,13 +99,44 @@ describe(`matters list under ${String(BUDGET_MS)} ms p95 (500 matters, 1,500 pro
             const started = performance.now();
             await searchMatters(deps, actor, input);
             const elapsed = performance.now() - started;
-            // Both statements of the page: the next dates, then the page itself.
-            const ms =
-              (await executionMs(s, upcomingStatement(s, workspaceId))) +
+            // Every statement of the page: the upcoming listings and their matters, the search's
+            // proceedings, persons and their edges (with q), then the page itself.
+            const listed = await upcomingListingsQuery(s, workspaceId, TODAY);
+            let ms =
+              (await executionMs(s, upcomingListingsQuery(s, workspaceId, TODAY))) +
               (await executionMs(
                 s,
-                searchMattersQuery(s, resolved, {}, data, await upcomingNextDates(s, workspaceId, TODAY)),
+                proceedingMattersQuery(
+                  s,
+                  workspaceId,
+                  listed.map((r) => r.proceedingId),
+                ),
               ));
+            if (data.q !== undefined) {
+              const persons = await searchPersonsQuery(s, workspaceId, data.q);
+              ms +=
+                (await executionMs(s, searchProceedingsQuery(s, workspaceId, data.q))) +
+                (await executionMs(s, searchPersonsQuery(s, workspaceId, data.q))) +
+                (await executionMs(
+                  s,
+                  personTargetsQuery(
+                    s,
+                    workspaceId,
+                    persons.map((r) => r.id),
+                  ),
+                ));
+            }
+            ms += await executionMs(
+              s,
+              searchMattersQuery(
+                s,
+                resolved,
+                {},
+                data,
+                await upcomingNextDates(s, workspaceId, TODAY),
+                await matterMatches(s, workspaceId, data),
+              ),
+            );
             if (i >= WARMUP) {
               wall.push(elapsed);
               execution.push(ms);

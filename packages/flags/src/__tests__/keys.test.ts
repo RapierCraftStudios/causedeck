@@ -19,6 +19,7 @@ const LEGAL = [
   'court.a2.retrieval',
   'court.live-tracking',
   'court.sanctioned-push',
+  'capture.whatsapp-import',
 ];
 
 describe('flag registry', () => {

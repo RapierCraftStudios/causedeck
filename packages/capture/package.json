@@ -5,7 +5,8 @@
   "description": "Capture inbox ingestion: files, ICS, email, WhatsApp export parser.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./whatsapp": "./src/whatsapp/index.ts"
   },
   "scripts": {
     "lint": "eslint .",

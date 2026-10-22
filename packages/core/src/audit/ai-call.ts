@@ -31,6 +31,21 @@ export interface AiCallInput {
   automationLevel: AutomationLevel;
   autoApplied?: boolean;
   userAction?: string | null;
+  // Gateway columns (#44). All optional so earlier callers keep working.
+  /** The gateway task id, e.g. `classify_document`. */
+  task?: string | null;
+  latencyMs?: number | null;
+  /** `ok` by default; the gateway also records `blocked_sensitive`, `error` and similar. */
+  status?: string;
+  errorCode?: string | null;
+  /** sha256 hex of the normalised input. The input itself is never stored. */
+  inputSha256?: string | null;
+  captureId?: string | null;
+  matterId?: string | null;
+  /** The input held instruction-like content. */
+  suspicious?: boolean;
+  /** Job id + task; unique per workspace. */
+  idempotencyKey?: string | null;
 }
 
 /** An input that breaks the contract (an L5 level or a source with more than id and anchor). */
@@ -91,6 +106,15 @@ export async function recordAiCall(
         automationLevel: input.automationLevel,
         autoApplied: input.autoApplied ?? false,
         userAction: input.userAction ?? null,
+        task: input.task ?? null,
+        latencyMs: input.latencyMs ?? null,
+        status: input.status ?? 'ok',
+        errorCode: input.errorCode ?? null,
+        inputSha256: input.inputSha256 ?? null,
+        captureId: input.captureId ?? null,
+        matterId: input.matterId ?? null,
+        suspicious: input.suspicious ?? false,
+        idempotencyKey: input.idempotencyKey ?? null,
       })
       .returning({ id: schema.aiCall.id }),
   );

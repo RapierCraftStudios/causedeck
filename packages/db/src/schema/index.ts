@@ -1,7 +1,14 @@
 // Every table and enum drizzle-kit migrates. Later issues add their tables here.
 export * from './enums.ts';
 export { adapterHealthSummary, adapterParseRun, adapterVersion } from './adapters.ts';
-export { aiCall, auditActorKind, auditActorSalt, auditEvent, auditOutcome } from './audit.ts';
+export {
+  aiCall,
+  aiCallResult,
+  auditActorKind,
+  auditActorSalt,
+  auditEvent,
+  auditOutcome,
+} from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export { catalogueMeta } from './catalogue-meta.ts';

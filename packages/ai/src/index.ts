@@ -1,2 +1,16 @@
-/** AI gateway: providers, routing, budgets, India-only mode, audit. Real code arrives in later issues. */
+/** AI gateway: providers, routing, budgets, India-only mode, audit. See ADR 0007 and ADR 0021. */
 export const packageName: string = '@causedeck/ai';
+
+export * from './errors.ts';
+export { createGateway, type AiGateway, type GatewayConfig } from './gateway.ts';
+export { inputHash, normalise } from './hash.ts';
+export type * from './ports.ts';
+export { costPaise, estimatePaise, estimateUsage, PRICES, priceFor } from './pricing.ts';
+export { detectInjection, wrapAsData } from './policy/injection.ts';
+export { allowedChain, INDIA_REGIONS, isIndiaRegion } from './policy/residency.ts';
+export { createBedrockProvider, type BedrockConfig } from './providers/bedrock.ts';
+export { createMockProvider, withRecording } from './providers/mock.ts';
+export { createSarvamProvider, type SarvamConfig } from './providers/sarvam.ts';
+export { CircuitBreaker, withRetry } from './retry.ts';
+export { getTask, TASKS } from './tasks/registry.ts';
+export * from './types.ts';

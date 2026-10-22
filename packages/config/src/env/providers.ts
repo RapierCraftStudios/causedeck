@@ -96,6 +96,32 @@ export const providerKeys = {
     ownerIssue: 44,
     credentialIssue: 112,
   },
+  BEDROCK_DRAFTING_MODEL_ID: {
+    domain: 'ai',
+    type: 'string',
+    description:
+      'AWS Bedrock Sonnet-class model id for drafting tasks. Defaults to BEDROCK_MODEL_ID.',
+    requiredWhen: 'never (optional with AI_PROVIDER=bedrock)',
+    ownerIssue: 44,
+    credentialIssue: 112,
+  },
+  AI_MAX_CONCURRENCY_PER_WORKSPACE: {
+    domain: 'ai',
+    type: 'integer (1-32)',
+    description: 'Maximum concurrent AI gateway calls per workspace.',
+    default: '4',
+    requiredWhen: 'never (defaults to 4)',
+    ownerIssue: 44,
+  },
+  SARVAM_NO_TRAINING_CONFIRMED: {
+    domain: 'ai',
+    type: 'literal(true)',
+    description:
+      'Set to true once the Sarvam contract confirms no training on customer data. Production refuses to boot with a real Sarvam key without it.',
+    requiredWhen: 'NODE_ENV=production and AI_PROVIDER=sarvam',
+    ownerIssue: 44,
+    credentialIssue: 113,
+  },
   SARVAM_API_KEY: {
     domain: 'ai',
     type: 'secret',
@@ -253,18 +279,35 @@ export const emailProvider = z.discriminatedUnion('EMAIL_PROVIDER', [
   }),
 ]);
 
+const aiCommon = {
+  AI_MAX_CONCURRENCY_PER_WORKSPACE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(32)
+    .describe(d('AI_MAX_CONCURRENCY_PER_WORKSPACE')),
+};
+
 export const aiProvider = z.discriminatedUnion('AI_PROVIDER', [
-  z.object({ AI_PROVIDER: z.literal('mock').describe(d('AI_PROVIDER')) }),
+  z.object({ AI_PROVIDER: z.literal('mock').describe(d('AI_PROVIDER')), ...aiCommon }),
   z.object({
+    ...aiCommon,
     AI_PROVIDER: z.literal('bedrock'),
     BEDROCK_REGION: required.describe(d('BEDROCK_REGION')),
     BEDROCK_ACCESS_KEY_ID: required.describe(d('BEDROCK_ACCESS_KEY_ID')),
     BEDROCK_SECRET_ACCESS_KEY: secret(required).describe(d('BEDROCK_SECRET_ACCESS_KEY')),
     BEDROCK_MODEL_ID: required.describe(d('BEDROCK_MODEL_ID')),
+    BEDROCK_DRAFTING_MODEL_ID: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(d('BEDROCK_DRAFTING_MODEL_ID')),
   }),
   z.object({
+    ...aiCommon,
     AI_PROVIDER: z.literal('sarvam'),
     SARVAM_API_KEY: secret(required).describe(d('SARVAM_API_KEY')),
+    SARVAM_NO_TRAINING_CONFIRMED: on.optional().describe(d('SARVAM_NO_TRAINING_CONFIRMED')),
   }),
 ]);
 

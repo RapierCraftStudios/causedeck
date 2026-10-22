@@ -12,6 +12,12 @@ import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rl
 import { withWorkspace } from '../rls.ts';
 import { adapterParseRun } from '../schema/adapters.ts';
 import { aiCall } from '../schema/audit.ts';
+import {
+  activity,
+  automationPreference,
+  automationThreshold,
+  proposal,
+} from '../schema/automation.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
@@ -546,6 +552,48 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, proceedingId, rosterId, newBenchId: benchId, reason: 'hall' })
       .returning({ id: benchChangeAlert.id });
     return { proceedingId, rosterId, alertId: first(rows, 'bench_change_alert').id };
+  },
+  proposal: async (tx, { workspaceId, tag }) => {
+    const rows = await tx
+      .insert(proposal)
+      .values({
+        workspaceId,
+        kind: 'task',
+        level: 'L2',
+        payload: { title: `Seed ${tag}` },
+        idempotencyKey: `seed-${tag}-${randomUUID()}`,
+      })
+      .returning({ id: proposal.id });
+    return { proposalId: first(rows, 'proposal').id };
+  },
+  activity: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(activity)
+      .values({
+        workspaceId,
+        kind: 'task',
+        level: 'L3',
+        actor: 'user',
+        actorUserId: ownerId,
+        summary: `Seed activity ${tag}`,
+        undoExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      })
+      .returning({ id: activity.id });
+    return { activityId: first(rows, 'activity').id };
+  },
+  automation_preference: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(automationPreference)
+      .values({ workspaceId, userId: ownerId, kind: 'task', askFirst: true })
+      .returning({ id: automationPreference.id });
+    return { preferenceId: first(rows, 'automation_preference').id, userId: ownerId };
+  },
+  automation_threshold: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(automationThreshold)
+      .values({ workspaceId, kind: 'task', patternKey: 'undated', threshold: '0.820' })
+      .returning({ id: automationThreshold.id });
+    return { thresholdId: first(rows, 'automation_threshold').id };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

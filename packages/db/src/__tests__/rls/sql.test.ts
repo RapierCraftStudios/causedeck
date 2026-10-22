@@ -136,6 +136,11 @@ describe('row-level security catalog', () => {
         'bench_roster',
         'bench_roster_entry',
         'bench_change_alert',
+        // Automation engine (#47).
+        'proposal',
+        'activity',
+        'automation_preference',
+        'automation_threshold',
       ].sort(),
     );
     for (const row of rows)

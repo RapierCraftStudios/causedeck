@@ -65,6 +65,11 @@ export const PURGE_ORDER = [
   // docket) before the members their member columns name. Bench rosters (#384): alerts before
   // the rosters and proceedings they cite, entries before their roster, rosters before the
   // documents, members and court rows they cite.
+  // The automation engine (#47): activities before the proposals they cite; neither cites the graph.
+  'activity',
+  'proposal',
+  'automation_preference',
+  'automation_threshold',
   'appearance',
   'hearing',
   'task',

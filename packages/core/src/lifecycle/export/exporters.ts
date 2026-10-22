@@ -250,6 +250,16 @@ export const mattersExporter = tablesExporter('matters', [
   ws('anchor'),
 ]);
 
+// What the automation engine did and proposed (#47): proposals, the activity feed with its undo
+// state, and the user's ask-first dials and learned thresholds. Ids, kinds and the short summaries
+// the person already sees; no document text.
+export const automationExporter = tablesExporter('automation', [
+  ws('proposal'),
+  ws('activity', { userColumn: 'actor_user_id' }),
+  ws('automation_preference', { userColumn: 'user_id' }),
+  ws('automation_threshold'),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -262,6 +272,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   lifecycleExporter,
   courtExporter,
   mattersExporter,
+  automationExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

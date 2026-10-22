@@ -2300,6 +2300,8 @@ export type Messages = {
         splitHint: string;
         splitContinue: string;
         splitCancel: string;
+        expand: string;
+        collapse: string;
         selectRow: string;
         empty: {
           title: string;

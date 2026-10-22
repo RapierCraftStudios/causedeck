@@ -264,7 +264,14 @@ describe('matter Proceedings tab (#392)', () => {
     expect(main.textContent).toContain(tab.noNextDate);
     expect(child.closest('[role="group"]')).not.toBeNull();
     expect(child.querySelector('[data-unnumbered]')?.textContent).toBe(tab.unnumbered);
-    expect(child.textContent).toContain('W.M.P. (unnumbered)');
+    // An unnumbered row shows its case type alone; the badge is the one `Unnumbered` marker.
+    expect(child.querySelector('[data-case-number]')?.textContent).toBe('W.M.P.');
+    expect(child.textContent).not.toContain('(unnumbered)');
+    // The state is a word on a neutral badge (accent is for the next date and primary actions).
+    expect(main.querySelector('[data-state-badge="numbered"]')?.getAttribute('data-tone')).toBe(
+      'neutral',
+    );
+    expect(main.getAttribute('aria-selected')).toBeNull();
     expect(child.textContent).toContain('SR 4521');
     expect(child.textContent).toContain(ws.proceedings.states.sr_fr);
     expect(document.body.textContent).not.toContain('₹');

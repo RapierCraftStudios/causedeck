@@ -9,7 +9,7 @@
 import { Badge } from '@causedeck/ui/badge';
 import { Button } from '@causedeck/ui/button';
 import { Checkbox } from '@causedeck/ui/checkbox';
-import { Copy, Pencil } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
@@ -37,6 +37,9 @@ export interface ProceedingRowProps {
   selecting?: boolean;
   selected?: boolean;
   onSelectedChange?: (selected: boolean) => void;
+  /** A row with children: whether they show, and the expand/collapse control's handler. */
+  expanded?: boolean | undefined;
+  onToggle?: (() => void) | undefined;
 }
 
 function useLinkLabel() {
@@ -70,15 +73,19 @@ export function ProceedingRow({
   selecting = false,
   selected = false,
   onSelectedChange,
+  expanded,
+  onToggle,
 }: ProceedingRowProps) {
   const t = useTranslations('matters.workspace');
   const announce = useMatterAnnounce();
   const linkLabel = useLinkLabel();
   const tabIndex = active ? 0 : -1;
+  // An unnumbered row shows its case type alone (muted); the `Unnumbered` badge says the rest.
   const title =
-    row.caseNumber === null
-      ? t('proceedings.unnumbered', { type: row.caseType })
-      : t('proceedings.caseNumber', { ...row.caseNumber });
+    row.caseNumber === null ? row.caseType : t('proceedings.caseNumber', { ...row.caseNumber });
+  // Accent is kept for the next date and primary actions; only the states that need the
+  // lawyer's attention (defects to cure, a re-presentation pending) are tinted, always with a word.
+  const stateTone = row.state === 'defects' || row.state === 're_presented' ? 'warning' : 'neutral';
   const chips = [
     row.srNo === null
       ? null
@@ -107,8 +114,36 @@ export function ProceedingRow({
     <div
       data-proceeding-row={row.id}
       data-state={row.state}
-      className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1.5"
+      data-selected={selecting && selected ? '' : undefined}
+      className={`flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1.5 rounded-md ${
+        selecting && selected ? 'bg-accent-soft' : ''
+      }`}
     >
+      {onToggle === undefined ? (
+        // Children-less rows keep their case numbers aligned with the ones that have a toggle.
+        <span aria-hidden="true" className="w-8 shrink-0" />
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          tabIndex={tabIndex}
+          data-toggle-children={row.id}
+          aria-label={
+            expanded === true
+              ? t('proceedingsTab.collapse', { label: row.label })
+              : t('proceedingsTab.expand', { label: row.label })
+          }
+          onClick={onToggle}
+          className="shrink-0 px-2"
+        >
+          {expanded === true ? (
+            <ChevronDown aria-hidden="true" className="size-4" />
+          ) : (
+            <ChevronRight aria-hidden="true" className="size-4 rtl:rotate-180" />
+          )}
+        </Button>
+      )}
       {selecting ? (
         <Checkbox
           data-split-select={row.id}
@@ -119,9 +154,12 @@ export function ProceedingRow({
           className="mt-1"
         />
       ) : null}
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1 max-md:basis-[calc(100%-3rem)]">
         <div className="flex flex-wrap items-center gap-2">
-          <span data-case-number="" className="font-medium tabular-nums">
+          <span
+            data-case-number=""
+            className={row.caseNumber === null ? 'text-ink-muted' : 'font-medium tabular-nums'}
+          >
             {title}
           </span>
           {row.unnumbered ? (
@@ -129,15 +167,24 @@ export function ProceedingRow({
               {t('proceedingsTab.unnumbered')}
             </Badge>
           ) : null}
-          <Badge
-            tone={row.state === 'disposed' ? 'neutral' : 'accent'}
-            data-state-badge={row.state}
-          >
+          <Badge tone={stateTone} data-state-badge={row.state}>
             {t(`proceedings.states.${row.state}`)}
           </Badge>
           <MatterStage stage={row.stage} />
         </div>
         <p className="text-ink-muted text-sm">{row.forum}</p>
+        <p
+          data-row-next-date=""
+          className={
+            row.nextDate === null ? 'text-ink-muted text-sm' : 'text-sm font-medium tabular-nums'
+          }
+        >
+          {row.nextDate === null
+            ? t('proceedingsTab.noNextDate')
+            : t('proceedingsTab.nextDate', {
+                date: `${row.nextDate.text} (${row.nextDate.relative})`,
+              })}
+        </p>
         {chips.length > 0 || row.cnr !== null ? (
           <ul className="flex flex-wrap items-center gap-1.5" data-chips="">
             {chips.map((chip) => (
@@ -167,24 +214,17 @@ export function ProceedingRow({
             )}
           </ul>
         ) : null}
-        <p className="text-sm tabular-nums" data-row-next-date="">
-          {row.nextDate === null
-            ? t('proceedingsTab.noNextDate')
-            : t('proceedingsTab.nextDate', {
-                date: `${row.nextDate.text} (${row.nextDate.relative})`,
-              })}
-        </p>
         {row.links.length > 0 ? (
           <ul className="flex flex-wrap gap-1.5" data-links="">
             {row.links.map((link) => (
               <li key={`${link.linkId}-${link.direction}`} data-link-kind={link.kind}>
                 {link.otherMatterId === null ? (
-                  <Badge tone="neutral">{linkLabel(link)}</Badge>
+                  <span className="text-ink-muted text-sm">{linkLabel(link)}</span>
                 ) : (
                   <Link
                     tabIndex={tabIndex}
                     href={`/w/${encodeURIComponent(slug)}/matters/${encodeURIComponent(link.otherMatterId)}/proceedings`}
-                    className="text-accent text-sm underline-offset-2 hover:underline"
+                    className="text-accent inline-flex items-center text-sm underline underline-offset-2 pointer-coarse:min-h-11"
                     aria-label={`${linkLabel(link)}. ${t('proceedingsTab.links.openMatter')}`}
                   >
                     {linkLabel(link)}
@@ -195,8 +235,8 @@ export function ProceedingRow({
           </ul>
         ) : null}
       </div>
-      {canWrite ? (
-        <div className="flex items-center gap-1" data-row-actions="">
+      {canWrite && !selecting ? (
+        <div className="flex items-center gap-1 max-md:ms-10" data-row-actions="">
           {onEdit === undefined ? null : (
             <Button
               type="button"

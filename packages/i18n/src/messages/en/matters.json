@@ -261,7 +261,7 @@
         "loading": "Loading proceedings",
         "toolbarLabel": "Proceeding actions",
         "add": "Add proceeding",
-        "mergeIn": "Merge another matter in",
+        "mergeIn": "Merge a matter into this one",
         "splitStart": "Split into a new matter",
         "split": {
           "title": "Move proceedings to a new matter",
@@ -277,8 +277,10 @@
           "failed": "Couldn't split. Try again."
         },
         "splitHint": "Select the proceedings to move, then continue.",
-        "splitContinue": "Continue",
+        "splitContinue": "{count, plural, =0 {Continue} one {Continue with # proceeding} other {Continue with # proceedings}}",
         "splitCancel": "Cancel split",
+        "expand": "Show the proceedings filed in {label}",
+        "collapse": "Hide the proceedings filed in {label}",
         "selectRow": "Move {label} to a new matter",
         "empty": {
           "title": "No proceedings recorded",

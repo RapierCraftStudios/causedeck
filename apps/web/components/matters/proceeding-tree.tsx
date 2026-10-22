@@ -166,6 +166,15 @@ export function ProceedingTree({
         if (last) focusRow(last.row.id);
         break;
       }
+      case 'Escape': {
+        // Split mode: Esc leaves it (dialogs handle their own Esc and never reach a row).
+        if (!selecting) {
+          handled = false;
+          break;
+        }
+        cancelSplit();
+        break;
+      }
       default:
         handled = false;
     }
@@ -173,6 +182,11 @@ export function ProceedingTree({
       event.preventDefault();
       event.stopPropagation();
     }
+  }
+
+  function cancelSplit() {
+    setSelecting(false);
+    setSelected(new Set());
   }
 
   function renderItems(list: ProceedingRowView[]) {
@@ -190,11 +204,12 @@ export function ProceedingTree({
           role="treeitem"
           aria-level={row.depth}
           aria-expanded={hasChildren ? isOpen : undefined}
-          aria-selected={selecting ? selected.has(row.id) : active}
+          aria-selected={selecting ? selected.has(row.id) : undefined}
           aria-label={row.label}
           tabIndex={active ? 0 : -1}
           data-treeitem={row.id}
-          className="focus-visible:outline-ring border-line rounded-md border-b py-3 outline-offset-2 last:border-b-0 focus-visible:outline-2"
+          // The ring goes round the row itself, not the whole subtree of its children.
+          className="border-line [&:focus-visible>[data-proceeding-row]]:outline-ring border-b py-3 last:border-b-0 focus-visible:outline-none [&:focus-visible>[data-proceeding-row]]:outline-2 [&:focus-visible>[data-proceeding-row]]:outline-offset-2"
           onFocus={(event) => {
             if (event.target === event.currentTarget) setActiveId(row.id);
           }}
@@ -219,6 +234,14 @@ export function ProceedingTree({
               : {})}
             selecting={selecting}
             selected={selected.has(row.id)}
+            {...(hasChildren
+              ? {
+                  expanded: isOpen,
+                  onToggle: () => {
+                    toggle(row.id, !isOpen);
+                  },
+                }
+              : {})}
             onSelectedChange={(value) => {
               setSelected((prev) => {
                 const next = new Set(prev);
@@ -239,7 +262,11 @@ export function ProceedingTree({
   }
 
   const toolbar = writer ? (
-    <div role="toolbar" aria-label={t('toolbarLabel')} className="flex flex-wrap gap-2">
+    <div
+      role="toolbar"
+      aria-label={t('toolbarLabel')}
+      className={`flex flex-wrap gap-2 ${selecting ? 'bg-surface sticky top-0 py-2' : ''}`}
+    >
       {selecting ? (
         <>
           <p className="text-ink-muted w-full text-sm">{t('splitHint')}</p>
@@ -251,35 +278,31 @@ export function ProceedingTree({
               open({ kind: 'split' }, event.currentTarget);
             }}
           >
-            {t('splitContinue')}
+            {t('splitContinue', { count: selected.size })}
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              setSelecting(false);
-              setSelected(new Set());
-            }}
-          >
+          <Button type="button" variant="secondary" onClick={cancelSplit}>
             {t('splitCancel')}
           </Button>
         </>
       ) : (
         <>
+          {/* On an empty tree the empty state carries the one primary `Add proceeding`. */}
+          {rows.length > 0 ? (
+            <Button
+              type="button"
+              data-add-proceeding=""
+              disabled={offline}
+              onClick={(event) => {
+                open({ kind: 'add' }, event.currentTarget);
+              }}
+            >
+              <Plus aria-hidden="true" />
+              {t('add')}
+            </Button>
+          ) : null}
           <Button
             type="button"
-            data-add-proceeding=""
-            disabled={offline}
-            onClick={(event) => {
-              open({ kind: 'add' }, event.currentTarget);
-            }}
-          >
-            <Plus aria-hidden="true" />
-            {t('add')}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
+            variant="ghost"
             data-merge-open=""
             disabled={offline}
             onClick={(event) => {
@@ -292,7 +315,7 @@ export function ProceedingTree({
           {all.length > 0 ? (
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               data-split-start=""
               disabled={offline}
               onClick={() => {
@@ -314,7 +337,7 @@ export function ProceedingTree({
       data-slot="proceedings-tab"
       className="flex flex-col gap-4"
     >
-      <h2 id="matter-proceedings-title" className="text-lg font-semibold">
+      <h2 id="matter-proceedings-title" className="text-ink-muted text-sm font-medium">
         {t('title')}
       </h2>
       {toolbar}

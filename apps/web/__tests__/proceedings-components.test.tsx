@@ -163,6 +163,88 @@ describe('ProceedingTree keyboard (#392)', () => {
     expect(item('a').getAttribute('aria-expanded')).toBe('true');
   });
 
+  it('expands and collapses children with a visible control too (#392 design critique)', () => {
+    withIntl(
+      <ProceedingTree
+        workspaceId={WS}
+        slug="demo"
+        matterId={MATTER}
+        rows={rows}
+        forums={FORUMS}
+        canWrite={false}
+      />,
+    );
+    const toggle = screen.getByRole('button', {
+      name: tab.collapse.replace('{label}', 'W.P. a'),
+    });
+    expect(document.querySelector('[data-toggle-children="b"]')).toBeNull();
+    fireEvent.click(toggle);
+    expect(document.querySelector('[data-treeitem="a"]')?.getAttribute('aria-expanded')).toBe(
+      'false',
+    );
+    expect(document.querySelector('[data-treeitem="a1"]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: tab.expand.replace('{label}', 'W.P. a') }));
+    expect(document.querySelector('[data-treeitem="a1"]')).not.toBeNull();
+  });
+
+  it('marks split selections, counts them, hides row actions and leaves split mode on Esc', () => {
+    const noop = vi.fn();
+    withIntl(
+      <ProceedingTree
+        workspaceId={WS}
+        slug="demo"
+        matterId={MATTER}
+        rows={[row('a', { transitions: ['disposed'] }), row('b')]}
+        forums={FORUMS}
+        canWrite
+        actions={{
+          form: { create: noop, update: noop, link: noop, findDuplicates: noop },
+          transition: noop,
+          merge: { search: noop, preview: noop, merge: noop, undo: noop },
+          split: { preview: noop, split: noop, undo: noop },
+        }}
+      />,
+    );
+    const item = (id: string) => document.querySelector(`[data-treeitem="${id}"]`) as HTMLElement;
+    expect(item('a').getAttribute('aria-selected')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: tab.splitStart }));
+    expect(document.querySelector('[data-row-actions]')).toBeNull();
+    expect(item('a').getAttribute('aria-selected')).toBe('false');
+    fireEvent.click(document.querySelector('[data-split-select="a"]') as HTMLElement);
+    expect(item('a').getAttribute('aria-selected')).toBe('true');
+    expect(document.querySelector('[data-proceeding-row="a"]')?.hasAttribute('data-selected')).toBe(
+      true,
+    );
+    expect(screen.getByRole('button', { name: 'Continue with 1 proceeding' })).toBeTruthy();
+    item('a').focus();
+    fireEvent.keyDown(item('a'), { key: 'Escape' });
+    expect(document.querySelector('[data-split-select]')).toBeNull();
+    expect(document.querySelector('[data-row-actions]')).not.toBeNull();
+  });
+
+  it('keeps one primary Add on an empty tree: the empty state’s', () => {
+    const noop = vi.fn();
+    withIntl(
+      <ProceedingTree
+        workspaceId={WS}
+        slug="demo"
+        matterId={MATTER}
+        rows={[]}
+        forums={FORUMS}
+        canWrite
+        actions={{
+          form: { create: noop, update: noop, link: noop, findDuplicates: noop },
+          transition: noop,
+          merge: { search: noop, preview: noop, merge: noop, undo: noop },
+          split: { preview: noop, split: noop, undo: noop },
+        }}
+      />,
+    );
+    expect(screen.getAllByRole('button', { name: tab.add })).toHaveLength(1);
+    expect(document.querySelector('[data-add-proceeding]')).toBeNull();
+    expect(document.querySelector('[data-empty-add]')).not.toBeNull();
+  });
+
   it('turns every mutation off while offline', () => {
     setOnline(false);
     const noop = vi.fn();

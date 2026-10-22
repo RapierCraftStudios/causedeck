@@ -1739,7 +1739,9 @@
     "matters.workspace.proceedingsTab.undo.done": "draft",
     "matters.workspace.proceedingsTab.undo.conflict": "draft",
     "matters.workspace.proceedingsTab.undo.failed": "draft",
-    "matters.workspace.proceedingsTab.splitStart": "draft"
+    "matters.workspace.proceedingsTab.splitStart": "draft",
+    "matters.workspace.proceedingsTab.expand": "draft",
+    "matters.workspace.proceedingsTab.collapse": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -3474,6 +3476,8 @@
     "matters.workspace.proceedingsTab.undo.done": "draft",
     "matters.workspace.proceedingsTab.undo.conflict": "draft",
     "matters.workspace.proceedingsTab.undo.failed": "draft",
-    "matters.workspace.proceedingsTab.splitStart": "draft"
+    "matters.workspace.proceedingsTab.splitStart": "draft",
+    "matters.workspace.proceedingsTab.expand": "draft",
+    "matters.workspace.proceedingsTab.collapse": "draft"
   }
 }

@@ -146,7 +146,7 @@ export function StateTransitionMenu({
             disabled={offline}
           >
             <ArrowRightLeft aria-hidden="true" className="size-4" />
-            <span className="max-md:sr-only">{stateLabel(state)}</span>
+            <span className="sr-only">{stateLabel(state)}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

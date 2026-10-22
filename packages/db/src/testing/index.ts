@@ -77,10 +77,10 @@ export function inWorkspace<T>(
 /**
  * Empty every table in `public` except `schema_info` (as the owner; the app role has no TRUNCATE). For suites that must
  * commit, such as tests of code that opens its own transactions. Not safe alongside parallel files
- * that commit to the same tables.
+ * that commit to the same tables: pass `ownerUrl` of a scratch database to keep it away from them.
  */
-export async function truncateAll(): Promise<void> {
-  const owner = createOwnerDb(new Secret(testDatabaseUrls().owner));
+export async function truncateAll(ownerUrl: string = testDatabaseUrls().owner): Promise<void> {
+  const owner = createOwnerDb(new Secret(ownerUrl));
   try {
     const rows = await owner.execute<{ name: string }>(
       sql`select quote_ident(tablename) as name from pg_tables where schemaname = 'public' and tablename <> 'schema_info'`,

@@ -213,6 +213,10 @@ export async function runNotificationDeliver(
     return 'skipped';
   };
 
+  // The end-of-day digest (#49) sends its own email (`activity.digest.member`); a generic notice
+  // of the same notification would be a second, content-less email.
+  if (row.category === 'digest.end_of_day') return skip('own_email');
+
   const enabled = await channelEnabled(
     { db: ctx.db, workspaceId },
     row.userId,

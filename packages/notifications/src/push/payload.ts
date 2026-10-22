@@ -22,6 +22,7 @@ export const GENERIC_PUSH_TITLES: Record<CategoryKey, string> = {
   'reminder.hearing': 'Hearing reminder',
   'proposal.new': 'New proposal to review',
   'digest.daily': 'Your daily digest is ready',
+  'digest.end_of_day': 'What CauseDeck did today',
   'system.notice': 'New notification',
 };
 

@@ -22,6 +22,7 @@ describe('registerSchedules', () => {
       'system.billing.reconcile',
       'system.billing.dunning-tick',
       'system.notification.digest',
+      'system.activity.digest',
       'system.usage.rollup',
       'system.audit.verify',
       'system.audit.retention',
@@ -68,6 +69,8 @@ describe('registerSchedules', () => {
     const others = [
       // Dunning tick: daily 04:30 IST.
       ['system.billing.dunning-tick', '30 4 * * *', '2026-10-18T23:00:00.000Z'],
+      // End-of-day digest scheduler (#49): every half hour from 18:00 to 23:30 IST; 18:00 IST is 12:30 UTC.
+      ['system.activity.digest', '0,30 18-23 * * *', '2026-10-18T12:30:00.000Z'],
       // Usage rollup: hourly at :15 IST, which is :45 UTC.
       ['system.usage.rollup', '15 * * * *', '2026-10-18T00:45:00.000Z'],
       // Audit chain verification: daily 02:00 IST.

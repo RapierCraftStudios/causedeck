@@ -95,6 +95,7 @@ function defaults(): PreferenceView[] {
     'reminder.hearing': ['in_app', 'email', 'push'],
     'proposal.new': ['in_app', 'push'],
     'digest.daily': ['email'],
+    'digest.end_of_day': ['in_app', 'email'],
     'system.notice': ['in_app'],
   };
   return CATEGORY_KEYS.flatMap((category) =>
@@ -278,8 +279,8 @@ describe('PreferencesForm', () => {
         .getAllByRole('columnheader')
         .map((h) => h.textContent),
     ).toEqual([en.categoryHeader, en.channels.inApp, en.channels.email, en.channels.push]);
-    expect(cards().querySelectorAll('li')).toHaveLength(7);
-    expect(within(cards()).getAllByRole('switch')).toHaveLength(21);
+    expect(cards().querySelectorAll('li')).toHaveLength(CATEGORY_KEYS.length - 1);
+    expect(within(cards()).getAllByRole('switch')).toHaveLength((CATEGORY_KEYS.length - 1) * 3);
     expect(matrix().textContent).not.toContain(en.categories.digestDaily.label);
   });
 

@@ -1031,6 +1031,54 @@ const CASES: Record<string, Case> = {
     expect(mine).toHaveLength(2);
     for (const t of mine) expect(Object.keys(t).sort()).toEqual(['digestDate', 'workspaceId']);
   },
+  runActivityDigestMember: async (f) => {
+    // ua is not a member of B: B's per-member digest finds no one, counts nothing and sends nothing.
+    const { sent, deps } = recordingDeps();
+    core.setNotificationJobDeps(deps);
+    const outcome = await core.runJob(
+      core.activityDigestMember,
+      {
+        id: randomUUID(),
+        data: { workspaceId: f.b.id, userId: f.ua, localDate: '2026-10-19' },
+        retryCount: 0,
+      },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+    expect(sent).toEqual([]);
+  },
+  runActivityDigest: async (f) => {
+    // B's fan-out lists B's members only; at a slot nobody chose it enqueues nothing.
+    const outcome = await core.runJob(
+      core.activityDigest,
+      {
+        id: randomUUID(),
+        data: { workspaceId: f.b.id, localDate: '2026-10-19', slot: '18:00' },
+        retryCount: 0,
+      },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+  },
+  runActivityDigestSchedule: async (f) => {
+    // The scheduler lists every workspace, but hands on ids, the local date and the slot only.
+    const targets: core.ActivityDigestTarget[] = [];
+    await core.runActivityDigestSchedule(
+      { db: f.tx, log: logger },
+      {
+        now: () => new Date('2026-10-19T15:00:00Z'),
+        enqueue: (t) => {
+          targets.push(t);
+          return Promise.resolve();
+        },
+      },
+    );
+    const mine = targets.filter((t) => t.workspaceId === f.a.id || t.workspaceId === f.b.id);
+    expect(mine).toHaveLength(2);
+    for (const t of mine)
+      expect(Object.keys(t).sort()).toEqual(['localDate', 'slot', 'workspaceId']);
+    expect(mine.every((t) => t.slot === '20:30')).toBe(true);
+  },
   restrictMatter: async (f) => {
     const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
     const before = await aRestrictions(f);

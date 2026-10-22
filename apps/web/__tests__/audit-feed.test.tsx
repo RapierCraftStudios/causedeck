@@ -58,6 +58,11 @@ vi.mock('@causedeck/core/workspaces', () => ({ listMembers }));
 vi.mock('../app/(app)/w/[slug]/activity/actions.ts', () => ({
   loadMoreAuditAction: vi.fn(),
   verifyAuditEventAction: vi.fn(),
+  loadMoreActivitiesAction: vi.fn(),
+  previewActivityUndoAction: vi.fn(),
+  undoFeedActivityAction: vi.fn(),
+  undoCaptureAction: vi.fn(),
+  reassignFeedCaptureAction: vi.fn(),
 }));
 
 const { AuditFeed } = await import('../app/(app)/w/[slug]/activity/audit-feed.tsx');
@@ -194,7 +199,8 @@ function nth<T>(items: readonly T[], index: number): T {
 async function renderPage(search: Record<string, string> = {}) {
   const tree = (await ActivityPage({
     params: Promise.resolve({ slug: WORKSPACE.slug }),
-    searchParams: Promise.resolve(search),
+    // The security and audit view is `?tab=security` beside the automation feed (#49).
+    searchParams: Promise.resolve({ tab: 'security', ...search }),
   })) as ReactElement<{ children: ReactElement[] }>;
   // Children: the offline banner (mocked out), the header, the tab nav, then the feed.
   const [, header, nav, body] = tree.props.children as [
@@ -271,7 +277,7 @@ describe('settings/audit', () => {
   it('redirects to the activity page', async () => {
     await expect(
       AuditSettingsPage({ params: Promise.resolve({ slug: WORKSPACE.slug }) }),
-    ).rejects.toThrow('NEXT_REDIRECT /w/chennai-solo/activity');
+    ).rejects.toThrow('NEXT_REDIRECT /w/chennai-solo/activity?tab=security');
   });
 });
 
@@ -419,7 +425,9 @@ describe('audit feed (client)', () => {
       expect(nth(chips, 0).getAttribute('aria-expanded')).toBe('false');
     });
     fireEvent.click(screen.getByRole('button', { name: en.filters.clear }));
-    expect(router.replace).toHaveBeenCalledWith('/w/chennai-solo/activity', { scroll: false });
+    expect(router.replace).toHaveBeenCalledWith('/w/chennai-solo/activity?tab=security', {
+      scroll: false,
+    });
   });
 
   it('E opens the export dialog, which posts the range and follows the signed link', async () => {

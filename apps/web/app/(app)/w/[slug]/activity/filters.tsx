@@ -1,7 +1,8 @@
 'use client';
 // Audit feed filters (#232): date range, actor and action group as chips. Each chip is a button
 // (`aria-expanded`) opening a sheet; applying writes the URL (`?from=&to=&actor=&action=`, days in
-// IST, `to` inclusive), so the server page re-reads the feed and a reload keeps the filters.
+// IST, `to` inclusive, beside `tab=security`), so the server page re-reads the feed and a reload
+// keeps the filters.
 import { Button } from '@causedeck/ui/button';
 import { Calendar, IST_TIME_ZONE, type DateRange } from '@causedeck/ui/calendar';
 import { useMediaQuery } from '@causedeck/ui/hooks';
@@ -100,8 +101,10 @@ export function AuditFilters({
   const [action, setAction] = useState(filters.action ?? ALL);
 
   const apply = (next: AuditFilterValues) => {
-    const query = auditFilterQuery(next);
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    // The security view is `?tab=security` beside the automation feed (#49): keep it.
+    const params = new URLSearchParams(auditFilterQuery(next));
+    params.set('tab', 'security');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     setOpen(null);
   };
 

@@ -19,6 +19,7 @@ import type { ObjectKey, ObjectStore, StorageCtx } from '@causedeck/storage';
 import type { ConfirmRosterImportInput } from '@causedeck/validators/roster';
 import { and, eq, isNotNull, isNull, ne } from 'drizzle-orm';
 
+import type { ActivityFilters } from '../automation/index.ts';
 import type { CaptureCtx } from '../capture/index.ts';
 import type {
   AccessDeniedEvent,
@@ -611,6 +612,67 @@ export async function confirmRosterImportFor(
   } catch {
     return { roster, alerts: [], detection: 'failed' };
   }
+}
+
+// automation activity feed and undo (#49)
+
+/** The matter-graph deps the engine takes: the app db, and a port no subscriber listens on yet. */
+function automationDeps() {
+  return { db, events: { emit() {} } };
+}
+
+/** One page of the activity feed (filters, search, keyset cursor), redacted for what the user may read. */
+export async function listActivitiesFor(scope: RuntimeScope, filters: ActivityFilters = {}) {
+  const { listActivities } = await import('../automation/index.ts');
+  return listActivities(automationDeps(), scope, filters);
+}
+
+/** One activity as the feed shows it, or `NOT_FOUND`. */
+export async function getActivityDetailFor(scope: RuntimeScope, activityId: string) {
+  const { getActivityDetail } = await import('../automation/index.ts');
+  return getActivityDetail(automationDeps(), scope, { activityId });
+}
+
+/** Activities per local day in a range, for the feed's day headings and the `?day=` link. */
+export async function countActivitiesByDayFor(
+  scope: RuntimeScope,
+  input: { from: Date; to: Date; timeZone?: string },
+) {
+  const { countByDay } = await import('../automation/index.ts');
+  return countByDay(automationDeps(), scope, input);
+}
+
+/** What undoing one auto-applied action would remove (the cascade), and why it cannot, if so. */
+export async function previewUndoFor(scope: RuntimeScope, activityId: string) {
+  const { previewUndo } = await import('../automation/index.ts');
+  return previewUndo(automationDeps(), scope, { activityId });
+}
+
+/** Undo one auto-applied action and what was derived from it (7-day window, `matter.write`). */
+export async function undoActivityFor(scope: RuntimeScope, activityId: string) {
+  const { undoActivity } = await import('../automation/index.ts');
+  return undoActivity(automationDeps(), scope, { activityId });
+}
+
+/** Undo everything the system applied from one capture. */
+export async function undoCaptureFor(scope: RuntimeScope, captureId: string) {
+  const { undoCapture } = await import('../automation/index.ts');
+  return undoCapture(automationDeps(), scope, { captureId });
+}
+
+/** Move what one capture produced to another matter ("Moved to wrong matter? Reassign"). */
+export async function reassignCaptureFor(scope: RuntimeScope, captureId: string, matterId: string) {
+  const { reassignCapture } = await import('../automation/index.ts');
+  return reassignCapture(automationDeps(), scope, { captureId, matterId });
+}
+
+/** The audited activity export (owners: the workspace; everyone else: their own activity). */
+export async function exportActivitiesFor(
+  scope: RuntimeScope,
+  input: { from?: Date; to?: Date; limit?: number } = {},
+) {
+  const { exportActivities } = await import('../automation/index.ts');
+  return exportActivities(automationDeps(), scope, input);
 }
 
 // notifications, push, uploads, flags

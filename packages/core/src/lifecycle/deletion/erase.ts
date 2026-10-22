@@ -106,6 +106,8 @@ export const PURGE_ORDER = [
   'workspace_integration',
   'workspace_slug_history',
   'workspace_settings',
+  // AI gateway retry cache (#44): holds model output, unlike the append-only ai_call it points at.
+  'ai_call_result',
   'job_effect',
   'member',
 ] as const;

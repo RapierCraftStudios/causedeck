@@ -101,6 +101,7 @@ const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts')
 const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
 const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
 const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
+const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -150,6 +151,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   previewRosterImportAction: rosters,
   confirmRosterImportAction: rosters,
   dismissBenchChangeAlertAction: rosters,
+  createMatterAction: matters,
+  searchMattersAction: matters,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -229,6 +232,11 @@ function snapshotA() {
       })
       .from(schema.forum)
       .orderBy(schema.forum.id),
+    // A's matters (#388).
+    matters: await tx
+      .select({ id: schema.matter.id, title: schema.matter.title })
+      .from(schema.matter)
+      .orderBy(schema.matter.id),
   }));
 }
 
@@ -364,6 +372,9 @@ function inputs(workspaceId: string): Record<string, unknown> {
       workspaceId,
       alertId: t.a.rows.bench_change_alert?.alertId,
     },
+    // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
+    createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
+    searchMattersAction: { workspaceId, q: 'XT Matter' },
   };
 }
 
@@ -585,6 +596,34 @@ describe('cross-tenant server actions', () => {
     expect(inB.filter((row) => row.code === code)).toEqual([
       { code, workspaceId: t.b.id, adapterLevel: 'A0' },
     ]);
+  });
+
+  it('matter actions under B’s own workspace create in B only and never find A’s matters (#388)', async () => {
+    const before = await snapshotA();
+    expect(before.matters.length).toBeGreaterThan(0);
+    const own = inputs(t.b.id);
+    const created = (await action('createMatterAction')(own.createMatterAction)) as {
+      ok: boolean;
+      data: { id: string; title: string };
+    };
+    expect(created).toMatchObject({ ok: true, data: { title: 'Cross-tenant probe matter' } });
+    const inB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx
+        .select({ id: schema.matter.id, workspaceId: schema.matter.workspaceId })
+        .from(schema.matter),
+    );
+    expect(inB.find((row) => row.id === created.data.id)).toEqual({
+      id: created.data.id,
+      workspaceId: t.b.id,
+    });
+    const found = (await action('searchMattersAction')(own.searchMattersAction)) as {
+      ok: boolean;
+      data: { id: string }[];
+    };
+    expect(found.ok).toBe(true);
+    const aIds = new Set(before.matters.map((row) => row.id));
+    expect(found.data.filter((hit) => aIds.has(hit.id))).toEqual([]);
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('roster actions under B’s own workspace find none of A’s upload, forum or alert (#434)', async () => {

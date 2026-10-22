@@ -4,6 +4,7 @@ import { useHotkey } from '@causedeck/ui/hooks';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { registerNavigationCommands } from '../../lib/commands/navigation-commands.ts';
+import { registerMatterCommands } from '../../lib/matters/command-palette.ts';
 
 import type * as PaletteModule from './command-palette.tsx';
 
@@ -65,6 +66,8 @@ export function useCommandPalette(): CommandPaletteState {
 
   useEffect(() => {
     registerNavigationCommands();
+    // Matter search and `New matter` (#388): ⌘K finds matters from every workspace route.
+    registerMatterCommands();
     return whenIdle(() => {
       void loadCommandPalette();
     });

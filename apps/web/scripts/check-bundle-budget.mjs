@@ -38,6 +38,13 @@ export const COURTS_ROUTE_MANIFESTS = [
   'server/app/(app)/w/[slug]/courts/[code]/halls/page_client-reference-manifest.js',
 ];
 
+/** What the matters list may add beyond shared code (#388, #40: "<= 25 KB gzip"). */
+export const MATTERS_ROUTE_BUDGET_BYTES = 25 * 1024;
+
+/** The matters list route measured for its budget (#388). */
+export const MATTERS_ROUTE_MANIFEST =
+  'server/app/(app)/w/[slug]/matters/page_client-reference-manifest.js';
+
 /** Unique `.js` chunk paths (relative to `.next/`) the home route loads initially. */
 export function initialChunks(buildManifest, clientReferenceManifest) {
   const files = [
@@ -129,11 +136,13 @@ function main() {
   const homeChunks = chunksOf('server/app/page_client-reference-manifest.js');
   const routeChunks = chunksOf(WORKSPACE_ROUTE_MANIFEST);
   const courtsChunks = COURTS_ROUTE_MANIFESTS.map((manifest) => [manifest, chunksOf(manifest)]);
+  const mattersChunks = chunksOf(MATTERS_ROUTE_MANIFEST);
   const gzipBytes = {};
   for (const file of new Set([
     ...homeChunks,
     ...routeChunks,
     ...courtsChunks.flatMap(([, c]) => c),
+    ...mattersChunks,
   ])) {
     gzipBytes[file] = gzipSync(readFileSync(path.join(nextDir, file))).length;
   }
@@ -157,6 +166,11 @@ function main() {
     console.log(`${kb(delta.total).padStart(10)}  route delta (budget ${kb(delta.budget)} gzip)`);
     return { manifest, delta };
   });
+
+  const matters = shellDelta(sharedChunks, mattersChunks, gzipBytes, MATTERS_ROUTE_BUDGET_BYTES);
+  console.log(`\nMatters route ${MATTERS_ROUTE_MANIFEST}, chunks beyond shared code:`);
+  for (const file of matters.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
+  console.log(`${kb(matters.total).padStart(10)}  route delta (budget ${kb(matters.budget)} gzip)`);
 
   const readCatalog = (locale) =>
     JSON.parse(readFileSync(path.join(appDir, GENERATED_MESSAGES, `${locale}.json`), 'utf8'));
@@ -187,6 +201,10 @@ function main() {
       console.error(`Courts route ${manifest} adds more initial JS than its budget.`);
       failed = true;
     }
+  }
+  if (!matters.ok) {
+    console.error(`Matters route ${MATTERS_ROUTE_MANIFEST} adds more initial JS than its budget.`);
+    failed = true;
   }
   if (failed) process.exit(1);
 }

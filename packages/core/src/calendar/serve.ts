@@ -59,14 +59,14 @@ export type ServeResult =
   | { status: 304; etag: string }
   | { status: 200; etag: string; body: string };
 
-interface Resolved {
+type Resolved = {
   workspace_id: string;
   feed_id: string;
   user_id: string;
   token_hash: string;
   scope: 'mine' | 'workspace';
   include_parties: boolean;
-}
+};
 
 const NOT_FOUND: ServeResult = { status: 404 };
 

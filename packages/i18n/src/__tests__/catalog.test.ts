@@ -87,6 +87,7 @@ describe('namespaced catalogs (#174)', () => {
         'audit',
         'auth',
         'billing',
+        'calendar',
         'common',
         'courts',
         'courtsRosters',

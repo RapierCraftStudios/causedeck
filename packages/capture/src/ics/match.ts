@@ -46,6 +46,8 @@ export function caseCandidatesIn(text: string): CaseCandidate[] {
     const ref = parseCaseReference(match[0]);
     if (ref === null) continue;
     const caseType = typeBefore(text.slice(Math.max(0, start - TYPE_WINDOW), start));
+    // A two-digit year (`5/12`) is a case number only next to a case type; otherwise it is a date.
+    if (caseType === null && !/\d{4}\s*$/.test(match[0])) continue;
     const key = `${caseType ?? ''}/${ref.number}/${String(ref.year)}`;
     if (seen.has(key)) continue;
     seen.add(key);

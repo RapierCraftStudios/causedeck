@@ -7,7 +7,7 @@
 // transaction as `workspace.integration_token_rotated` (kind `ics_feed`); the token is never logged.
 // Nothing here sends a message: the feed is read-only (see capture/ics/serialize.ts).
 import { can, isRole } from '@causedeck/auth/policy';
-import { schema, type Database, type Transaction } from '@causedeck/db';
+import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { and, eq, isNull } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
@@ -70,8 +70,24 @@ const COLUMNS = {
 const activeFor = (workspaceId: string, userId: string) =>
   and(eq(icsFeed.workspaceId, workspaceId), eq(icsFeed.userId, userId), isNull(icsFeed.revokedAt));
 
+/** Run in the actor's workspace scope (a savepoint when `db` is already inside it). */
+function inScope<T>(
+  db: Queryable,
+  request: FeedRequestBase,
+  fn: (tx: Transaction) => Promise<T>,
+): Promise<T> {
+  return withWorkspace(db, { workspaceId: request.workspaceId, userId: request.actorUserId }, fn);
+}
+
 /** The member's active feed, never its token or hash; null when there is none. */
 export async function getFeedStatus(
+  db: Queryable,
+  scope: { workspaceId: string; userId: string },
+): Promise<FeedStatus | null> {
+  return withWorkspace(db, scope, (tx) => readStatus(tx, scope));
+}
+
+async function readStatus(
   db: Queryable,
   scope: { workspaceId: string; userId: string },
 ): Promise<FeedStatus | null> {
@@ -124,7 +140,7 @@ export async function createFeed(
 ): Promise<FeedWithToken> {
   checkDisclosure(request.disclosureVersion);
   const scope = request.scope ?? 'mine';
-  return db.transaction(async (tx) => {
+  return inScope(db, request, async (tx) => {
     await checkScope(tx, request, scope);
     if (
       (await getFeedStatus(tx, {
@@ -154,7 +170,7 @@ export async function createFeed(
 
 /** Replace the active feed's token; the old URL stops working at once. */
 export async function rotateFeed(db: Queryable, request: FeedRequestBase): Promise<FeedWithToken> {
-  return db.transaction(async (tx) => {
+  return inScope(db, request, async (tx) => {
     const current = await getFeedStatus(tx, {
       workspaceId: request.workspaceId,
       userId: request.actorUserId,
@@ -175,7 +191,7 @@ export async function rotateFeed(db: Queryable, request: FeedRequestBase): Promi
 
 /** Revoke the active feed: its URL returns 404 from now on. */
 export async function revokeFeed(db: Queryable, request: FeedRequestBase): Promise<void> {
-  await db.transaction(async (tx) => {
+  await inScope(db, request, async (tx) => {
     await requireCan(tx, request.workspaceId, request.actorUserId, 'matter.read');
     const rows = await tx
       .update(icsFeed)
@@ -192,7 +208,7 @@ export async function setFeedIncludeParties(
   db: Queryable,
   request: FeedRequestBase & { includeParties: boolean },
 ): Promise<FeedStatus> {
-  return db.transaction(async (tx) => {
+  return inScope(db, request, async (tx) => {
     await requireCan(tx, request.workspaceId, request.actorUserId, 'matter.read');
     const [row] = await tx
       .update(icsFeed)

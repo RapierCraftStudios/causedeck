@@ -1881,6 +1881,65 @@ export type Messages = {
       };
     };
   };
+  courtsRosters: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    back: string;
+    importRoster: string;
+    importOffline: string;
+    readOnly: string;
+    forums: {
+      label: string;
+      rail: string;
+    };
+    roster: {
+      listLabel: string;
+      effectiveFrom: string;
+      effectiveTo: string;
+      openEnded: string;
+      version: string;
+      entries: string;
+      activeToday: string;
+      status: {
+        active: string;
+        superseded: string;
+        draft: string;
+      };
+    };
+    halls: {
+      caption: string;
+      hall: string;
+      bench: string;
+      portfolio: string;
+      benchNotRecorded: string;
+      noneInForce: {
+        title: string;
+        hint: string;
+      };
+    };
+    alerts: {
+      title: string;
+      warning: string;
+      changed: string;
+      previousBench: string;
+      noPreviousBench: string;
+      unknownBench: string;
+      none: string;
+    };
+    empty: {
+      title: string;
+      hint: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    import: {
+      parseError: string;
+    };
+  };
   error: {
     title: string;
     description: string;

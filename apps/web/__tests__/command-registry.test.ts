@@ -7,13 +7,16 @@ import {
 } from '../lib/commands/navigation-commands.ts';
 import { RECENT_LIMIT, pushRecent, readRecent, recentKey } from '../lib/commands/recent.ts';
 import {
+  commandSourcesSnapshot,
   commandsSnapshot,
+  getCommandSources,
   getCommands,
+  registerCommandSource,
   registerCommands,
   resetCommands,
   subscribeCommands,
 } from '../lib/commands/registry.ts';
-import { COMMAND_GROUPS } from '../lib/commands/types.ts';
+import { COMMAND_GROUPS, type CommandSource } from '../lib/commands/types.ts';
 import { NAV_ITEMS } from '../lib/nav.ts';
 
 const ids = (list: readonly { id: string }[]) => list.map((entry) => entry.id);
@@ -91,6 +94,60 @@ describe('command registry', () => {
   });
 });
 
+describe('command sources (#388)', () => {
+  const source = (id: string, extra: Partial<CommandSource> = {}): CommandSource => ({
+    id,
+    group: 'matters',
+    search: () => Promise.resolve([]),
+    ...extra,
+  });
+
+  it('adds sources in order, replaces one by id and removes exactly the one registered', () => {
+    registerCommandSource(source('a'));
+    const remove = registerCommandSource(source('b'));
+    expect(ids(commandSourcesSnapshot())).toEqual(['a', 'b']);
+    const replaced = source('a', { minQuery: 3 });
+    registerCommandSource(replaced);
+    expect(ids(commandSourcesSnapshot())).toEqual(['b', 'a']);
+    expect(commandSourcesSnapshot()[1]).toBe(replaced);
+    remove();
+    expect(ids(commandSourcesSnapshot())).toEqual(['a']);
+  });
+
+  it('hides sources the role may not use or whose flag is off', () => {
+    registerCommandSource(source('open'));
+    registerCommandSource(source('readers', { requires: 'matter.read' }));
+    registerCommandSource(source('writers', { requires: 'matter.write' }));
+    registerCommandSource(source('flagged', { flag: 'matters_ui' as never }));
+    expect(ids(getCommandSources({ role: 'viewer' }))).toEqual(['open', 'readers']);
+    expect(ids(getCommandSources({ role: 'owner' }))).toEqual(['open', 'readers', 'writers']);
+    expect(ids(getCommandSources({ role: 'owner', isEnabled: () => true }))).toEqual([
+      'open',
+      'readers',
+      'writers',
+      'flagged',
+    ]);
+  });
+
+  it('notifies subscribers, and reset clears sources as well as commands', () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeCommands(listener);
+    registerCommandSource(source('a'));
+    expect(listener).toHaveBeenCalledTimes(1);
+    unsubscribe();
+    registerCommands('create', [{ id: 'c', labelKey: 'x', perform: noop }]);
+    resetCommands();
+    expect(commandSourcesSnapshot()).toEqual([]);
+    expect(commandsSnapshot()).toEqual([]);
+  });
+
+  it('keeps literal labels on search results apart from message keys', () => {
+    registerCommands('matters', [{ id: 'matter.1', label: 'Rao v. State', perform: noop }]);
+    expect(commandsSnapshot()[0]).toMatchObject({ label: 'Rao v. State', group: 'matters' });
+    expect(commandsSnapshot()[0]?.labelKey).toBeUndefined();
+  });
+});
+
 describe('navigation commands', () => {
   it('cover every nav destination, settings under Settings, navigating to the item href', () => {
     const commands = navigationCommands();
@@ -100,7 +157,7 @@ describe('navigation commands', () => {
       expect(command.group).toBe(item?.id === 'settings' ? 'settings' : 'goTo');
       expect(command.labelKey).toBe(item?.labelKey);
       const navigate = vi.fn();
-      void command.perform({ slug: 'demo', navigate, close: noop });
+      void command.perform({ slug: 'demo', workspaceId: 'ws-1', navigate, close: noop });
       expect(navigate).toHaveBeenCalledWith(item?.href('demo'));
     }
   });

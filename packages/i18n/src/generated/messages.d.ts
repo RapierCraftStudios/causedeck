@@ -2020,6 +2020,107 @@ export type Messages = {
       failed: string;
     };
   };
+  matters: {
+    metaTitle: string;
+    title: string;
+    loading: string;
+    listLabel: string;
+    new: {
+      trigger: string;
+      title: string;
+      description: string;
+      titleLabel: string;
+      titleHint: string;
+      practiceArea: string;
+      sensitive: string;
+      sensitiveHint: string;
+      cancel: string;
+      submit: string;
+      created: string;
+      errors: {
+        required: string;
+        forbidden: string;
+        failed: string;
+        offline: string;
+      };
+    };
+    search: {
+      label: string;
+      placeholder: string;
+    };
+    filters: {
+      label: string;
+      open: string;
+      status: string;
+      statusAny: string;
+      statusValues: {
+        active: string;
+        disposed: string;
+        archived: string;
+      };
+      forum: string;
+      forumAny: string;
+      owner: string;
+      ownerAny: string;
+      noNextDate: string;
+      sensitive: string;
+      sort: string;
+      sortValues: {
+        next_date: string;
+        updated: string;
+        title: string;
+      };
+      clear: string;
+      done: string;
+    };
+    columns: {
+      matter: string;
+      nextDate: string;
+      forumStage: string;
+      proceedings: string;
+      owner: string;
+      updated: string;
+    };
+    row: {
+      open: string;
+      versus: string;
+      noOwner: string;
+      noForum: string;
+      updated: string;
+    };
+    nextDate: {
+      none: string;
+      confirmed: string;
+      toConfirm: string;
+    };
+    sensitive: string;
+    proceedings: string;
+    pagination: {
+      label: string;
+      next: string;
+      first: string;
+    };
+    empty: {
+      title: string;
+      body: string;
+      openInbox: string;
+    };
+    filteredEmpty: {
+      title: string;
+      clear: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+      reference: string;
+    };
+    offline: string;
+    denied: string;
+    palette: {
+      new: string;
+      noNextDate: string;
+    };
+  };
   error: {
     title: string;
     description: string;

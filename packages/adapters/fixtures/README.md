@@ -18,7 +18,7 @@ fixtures/<adapter-id>/
   (or the entry's `forumCode`).
 - `.txt` is read as text (pages split on form feeds), `.html` through `layoutFromHtml`, `.pdf`
   through `layoutFromPdf`, and `.json` is a `LayoutDocument` as a layout reader (or OCR, #45)
-  would produce it ([ADR 0019](../../../docs/adr/0019-nclt-bengaluru-table-parsing.md)). `.eml` is
+  would produce it ([ADR 0020](../../../docs/adr/0020-nclt-bengaluru-table-parsing.md)). `.eml` is
   a forwarded email (#396): the adapter gets the raw message as a `kind: 'email'` input, and
   anchors are checked against `layoutFromEmail`'s pages (one per message: `Subject:` and `Date:`
   lines, a blank line, then the decoded body).

@@ -2,7 +2,13 @@ import { FORUM_CATALOGUE } from '@causedeck/db/seed/forum-catalogue';
 import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
 
-import { buildCsp, createNonce, localeFromAcceptLanguage, negotiateLocale } from '../lib/csp.ts';
+import {
+  buildCsp,
+  createNonce,
+  localeFromAcceptLanguage,
+  negotiateLocale,
+  uploadOriginOf,
+} from '../lib/csp.ts';
 import { config, proxy } from '../proxy.ts';
 
 const request = (headers: Record<string, string> = {}) =>
@@ -28,6 +34,24 @@ describe('buildCsp', () => {
     expect(buildCsp('n', { dev: true })).toContain(
       "script-src 'self' 'nonce-n' 'strict-dynamic' 'unsafe-eval'",
     );
+  });
+
+  it("keeps connect-src to 'self' unless an upload origin is given (#459)", () => {
+    expect(csp.split('; ')).toContain("connect-src 'self'");
+    expect(buildCsp('n', { uploadOrigin: 'http://127.0.0.1:9000' }).split('; ')).toContain(
+      "connect-src 'self' http://127.0.0.1:9000",
+    );
+  });
+
+  it('derives the upload origin from the storage env (#459)', () => {
+    expect(uploadOriginOf({ S3_ENDPOINT: 'http://127.0.0.1:9000/', S3_BUCKET: 'b' })).toBe(
+      'http://127.0.0.1:9000',
+    );
+    expect(uploadOriginOf({ S3_BUCKET: 'docs', S3_REGION: 'ap-south-1' })).toBe(
+      'https://docs.s3.ap-south-1.amazonaws.com',
+    );
+    expect(uploadOriginOf({ S3_ENDPOINT: 'not a url' })).toBeUndefined();
+    expect(uploadOriginOf({})).toBeUndefined();
   });
 
   it('never allows Google Fonts or other origins for fonts and styles', () => {

@@ -6,8 +6,8 @@ import { getSessionCookie } from 'better-auth/cookies';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { LOCALE_COOKIE } from './i18n/routing.ts';
-import { buildCsp, createNonce, negotiateLocale } from './lib/csp.ts';
-import { isDev } from './lib/env.ts';
+import { buildCsp, createNonce, negotiateLocale, uploadOriginOf } from './lib/csp.ts';
+import { isDev, serverEnv } from './lib/env.ts';
 import { signInPathFor } from './lib/safe-next.ts';
 import { LAST_WORKSPACE_COOKIE } from './lib/workspace-context.ts';
 
@@ -31,9 +31,18 @@ function pathWithSearch(request: NextRequest): string {
   return `${request.nextUrl.pathname}${request.nextUrl.search}`;
 }
 
+/** Where the browser may PUT presigned uploads; `undefined` when the storage env is unavailable. */
+function uploadOrigin(): string | undefined {
+  try {
+    return uploadOriginOf(serverEnv());
+  } catch {
+    return undefined;
+  }
+}
+
 export function proxy(request: NextRequest): NextResponse {
   const nonce = createNonce();
-  const csp = buildCsp(nonce, { dev: isDev() });
+  const csp = buildCsp(nonce, { dev: isDev(), uploadOrigin: uploadOrigin() });
 
   let response: NextResponse;
   if (isProtectedPath(request.nextUrl.pathname) && !getSessionCookie(request)) {

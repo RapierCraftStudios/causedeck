@@ -65,11 +65,11 @@ describe('matter tab registry (#390)', () => {
     expect(ids('viewer')).toEqual([]);
   });
 
-  it('registers Overview, Proceedings, People and Documents from the manifest, idempotently, for every role that reads matters', () => {
+  it('registers Overview, Proceedings, Timeline, People and Documents from the manifest, idempotently, for every role that reads matters', () => {
     registerMatterTabs();
     registerMatterTabs();
     for (const role of ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const) {
-      expect(ids(role)).toEqual(['overview', 'proceedings', 'people', 'documents']);
+      expect(ids(role)).toEqual(['overview', 'proceedings', 'timeline', 'people', 'documents']);
     }
     expect(matterTabs('viewer')[0]).toMatchObject({ labelKey: 'overview', segment: '' });
     expect(matterTabs('viewer')[1]).toMatchObject({

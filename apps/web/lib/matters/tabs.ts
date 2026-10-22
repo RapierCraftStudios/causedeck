@@ -2,10 +2,11 @@
 // registered before `matterTabs()` runs. Each later tab adds its own `register…Tab()` call below
 // (its module owns the order, label and permission), so lib/matters/tab-registry.ts never changes.
 // Proceedings (#392) is registered below; People and Documents (#393) live in people-tab.ts and
-// documents-tab.ts.
+// documents-tab.ts, Timeline (#41) in timeline-tab.ts.
 import { registerDocumentsTab } from './documents-tab.ts';
 import { registerPeopleTab } from './people-tab.ts';
 import { registerMatterTab } from './tab-registry.ts';
+import { registerTimelineTab } from './timeline-tab.ts';
 
 /** Overview (#390): every member who may read the matter. */
 export function registerOverviewTab(): void {
@@ -33,6 +34,7 @@ export function registerProceedingsTab(): void {
 export function registerMatterTabs(): void {
   registerOverviewTab();
   registerProceedingsTab();
+  registerTimelineTab();
   registerPeopleTab();
   registerDocumentsTab();
 }

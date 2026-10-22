@@ -10,13 +10,25 @@
 import { isProd } from '@causedeck/config/env';
 
 import { withWorkspace } from '../../rls.ts';
-import { listing, obligation } from '../../schema/docket.ts';
+import { hearing, listing, obligation, order } from '../../schema/docket.ts';
+import { anchor, document } from '../../schema/documents.ts';
 import { matter } from '../../schema/matter-graph.ts';
 import { person, roleEdge } from '../../schema/people.ts';
-import { proceeding } from '../../schema/proceedings.ts';
+import { proceeding, proceedingLink, proceedingStateChange } from '../../schema/proceedings.ts';
 import type { SeedDb } from '../index.ts';
 
+import type { SyntheticMatterTimeline } from './matter-timeline.ts';
 import type { SyntheticMatterSet } from './matters.ts';
+
+export {
+  SYNTHETIC_TIMELINE_EVENTS,
+  SYNTHETIC_TIMELINE_MISC_CHILDREN,
+  SYNTHETIC_TIMELINE_PROCEEDINGS,
+  syntheticMatterTimeline,
+  syntheticTimelineEventCount,
+  type SyntheticMatterTimeline,
+  type SyntheticMatterTimelineOptions,
+} from './matter-timeline.ts';
 
 export {
   SYNTHETIC_DEFAULT_MATTERS,
@@ -63,5 +75,33 @@ export async function insertSyntheticMatterSet(db: SeedDb, set: SyntheticMatterS
     await insertChunks(set.obligations, (c) =>
       tx.insert(obligation).values(c).onConflictDoNothing(),
     );
+  });
+}
+
+/**
+ * Insert the synthetic timeline matter (#41) into its workspace, parents first. A second run
+ * writes nothing.
+ */
+export async function insertSyntheticMatterTimeline(
+  db: SeedDb,
+  set: SyntheticMatterTimeline,
+): Promise<void> {
+  if (isProd()) throw new SyntheticSeedInProductionError();
+  const mains = set.proceedings.filter((p) => p.parentProceedingId == null);
+  const children = set.proceedings.filter((p) => p.parentProceedingId != null);
+  await withWorkspace(db, { workspaceId: set.workspaceId }, async (tx) => {
+    await tx.insert(matter).values(set.matters).onConflictDoNothing();
+    await tx.insert(person).values(set.persons).onConflictDoNothing();
+    await tx.insert(proceeding).values(mains).onConflictDoNothing();
+    await tx.insert(proceeding).values(children).onConflictDoNothing();
+    await tx.insert(roleEdge).values(set.roleEdges).onConflictDoNothing();
+    await tx.insert(proceedingLink).values(set.proceedingLinks).onConflictDoNothing();
+    await tx.insert(document).values(set.documents).onConflictDoNothing();
+    await tx.insert(anchor).values(set.anchors).onConflictDoNothing();
+    await tx.insert(listing).values(set.listings).onConflictDoNothing();
+    await tx.insert(hearing).values(set.hearings).onConflictDoNothing();
+    await tx.insert(order).values(set.orders).onConflictDoNothing();
+    await tx.insert(obligation).values(set.obligations).onConflictDoNothing();
+    await tx.insert(proceedingStateChange).values(set.stateChanges).onConflictDoNothing();
   });
 }

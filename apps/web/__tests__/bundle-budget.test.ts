@@ -23,6 +23,8 @@ interface BudgetModule {
   COURTS_ROUTE_MANIFESTS: string[];
   MATTERS_ROUTE_BUDGET_BYTES: number;
   MATTERS_ROUTE_MANIFEST: string;
+  TIMELINE_ROUTE_BUDGET_BYTES: number;
+  TIMELINE_ROUTE_MANIFEST: string;
   GENERATED_MESSAGES: string;
   foreignValues: (en: unknown, others: unknown[]) => string[];
   localeLeak: (
@@ -186,6 +188,25 @@ describe('matters route budget (#388)', () => {
       ok: true,
     });
     expect(budget.shellDelta(shared, ['shell.js', 'matters.js', 'extra.js'], sizes, limit).ok).toBe(
+      false,
+    );
+  });
+});
+
+describe('timeline route budget (#41)', () => {
+  it('is 60 KB gzip, measured on the matter Timeline tab', () => {
+    expect(budget.TIMELINE_ROUTE_BUDGET_BYTES).toBe(60 * 1024);
+    expect(budget.TIMELINE_ROUTE_MANIFEST).toBe(
+      'server/app/(app)/w/[slug]/matters/[id]/timeline/page_client-reference-manifest.js',
+    );
+  });
+
+  it('counts only chunks beyond shared code, and fails one byte over 60 KB', () => {
+    const shared = ['root.js', 'shell.js'];
+    const limit = budget.TIMELINE_ROUTE_BUDGET_BYTES;
+    const sizes = { 'root.js': 90_000, 'shell.js': 28_000, 'tl.js': 60 * 1024, 'extra.js': 1 };
+    expect(budget.shellDelta(shared, ['root.js', 'tl.js'], sizes, limit).ok).toBe(true);
+    expect(budget.shellDelta(shared, ['shell.js', 'tl.js', 'extra.js'], sizes, limit).ok).toBe(
       false,
     );
   });

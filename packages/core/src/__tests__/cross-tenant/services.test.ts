@@ -1435,6 +1435,41 @@ const CASES: Record<string, Case> = {
     expect(Array.isArray(own)).toBe(true);
     expect(events).toEqual([]);
   },
+  getMatterGraph: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getMatterGraph({ ...deps, db }, { userId: f.ub, workspaceId }, { matterId }),
+    );
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.getMatterGraph(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { matterId },
+    );
+    expect(Array.isArray(own.nodes)).toBe(true);
+    expect(events).toEqual([]);
+  },
+  getTimelineAnchors: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    const anchorIds = [f.a.rows.anchor?.anchorId ?? randomUUID()];
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getTimelineAnchors(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { matterId, anchorIds },
+      ),
+    );
+    // A's owner may call it: the probe itself is sound, and an anchor of another matter is absent.
+    const own = await core.getTimelineAnchors(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { matterId, anchorIds: [randomUUID()] },
+    );
+    expect(own).toEqual([]);
+    expect(events).toEqual([]);
+  },
   // Matter read models and people (#386): A's matter from B, or ub claiming A, is NOT_FOUND; a
   // search from B finds none of A's matters, even by A's title; A's persons are never reached.
   searchMatters: async (f) => {

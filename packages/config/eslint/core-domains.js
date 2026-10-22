@@ -25,7 +25,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   lifecycle: Object.freeze(['audit', 'workspaces']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
-  jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle', 'support']),
+  // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
+  // arrive as a port (it never imports jobs).
+  capture: Object.freeze(['audit']),
+  jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle', 'support', 'capture']),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.
   runtime: Object.freeze([
@@ -37,6 +40,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'lifecycle',
     'support',
     'court',
+    'capture',
   ]),
 });
 

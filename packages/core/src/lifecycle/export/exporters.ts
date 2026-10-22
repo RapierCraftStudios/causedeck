@@ -207,6 +207,10 @@ export const billingExporter = tablesExporter('billing', [
 
 export const blobsExporter = tablesExporter('blobs', [
   ws('blob', { exclude: ['enc_header', 'key'], userColumn: 'created_by' }),
+  // The capture inbox (#43): the raw object's key is internal, like `blob.key`; the file itself
+  // comes with the blobs while retention has not deleted it.
+  ws('capture', { exclude: ['raw_storage_key'], userColumn: 'created_by' }),
+  ws('workspace_capture_channel', { keys: ['channel'], userColumn: 'enabled_by' }),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [

@@ -105,6 +105,7 @@ const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
+const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -173,6 +174,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoSplitAction: proceedingsTab,
   upsertPersonAction: matterPeople,
   setRoleEdgeAction: matterPeople,
+  enableChannelAction: inbox,
+  discardCaptureAction: inbox,
+  pinCaptureAction: inbox,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -454,6 +458,10 @@ function inputs(workspaceId: string): Record<string, unknown> {
       workspaceId,
       alertId: t.a.rows.bench_change_alert?.alertId,
     },
+    // Capture inbox (#43): ub, owner of B, may not enable a channel on A, nor discard or pin A's capture.
+    enableChannelAction: { workspaceId, channel: 'email', disclosureVersion: '2026-10-v1' },
+    discardCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id },
+    pinCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id, pinned: true },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
@@ -903,6 +911,35 @@ describe('cross-tenant server actions', () => {
     }
     expect(await snapshotA()).toEqual(before);
     expect(await aAlerts()).toEqual(alertsBefore);
+  });
+
+  it('capture actions under B’s own workspace find none of A’s captures and change only B (#43)', async () => {
+    const before = await snapshotA();
+    const aCaptures = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.capture).orderBy(schema.capture.id),
+      );
+    const capturesBefore = await aCaptures();
+    expect(capturesBefore.length).toBeGreaterThan(0);
+    const own = inputs(t.b.id);
+    for (const name of ['discardCaptureAction', 'pinCaptureAction'] as const) {
+      // A's capture id under B's workspace: not found, whatever B's role.
+      expect(await action(name)(own[name]), name).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    expect(await action('enableChannelAction')(own.enableChannelAction)).toMatchObject({
+      ok: true,
+      data: { channel: 'email', enabled: true },
+    });
+    const channelsOfA = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+      tx.select().from(schema.workspaceCaptureChannel),
+    );
+    // Only A's own seeded row; B's enable never reached A.
+    expect(channelsOfA).toHaveLength(1);
+    expect(await snapshotA()).toEqual(before);
+    expect(await aCaptures()).toEqual(capturesBefore);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

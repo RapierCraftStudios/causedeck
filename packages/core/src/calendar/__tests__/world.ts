@@ -1,8 +1,9 @@
 // A workspace with a matter and a proceeding for the calendar tests (#53), plus the deps the
 // matter-graph and automation services take. The clock is fixed so dates are stable.
-import { type Transaction } from '@causedeck/db';
+import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace } from '@causedeck/db/testing';
 import { buildForum } from '@causedeck/db/testing/matter-graph-fixtures';
+import { eq } from 'drizzle-orm';
 
 import { newWorkspace } from '../../__tests__/fixtures.ts';
 import {
@@ -39,7 +40,14 @@ export async function world(tx: Transaction): Promise<World> {
     now: () => clock.now,
   };
   const owner = { userId: ownerId, workspaceId };
-  const matter = await createMatter(deps, owner, { title: 'Ilango v. State (fictional)' });
+  // The owner owns the matter, so a `mine` feed of theirs includes it.
+  const [ownerMember] = await inWorkspace(tx, workspaceId, (s) =>
+    s.select({ id: schema.member.id }).from(schema.member).where(eq(schema.member.userId, ownerId)),
+  );
+  const matter = await createMatter(deps, owner, {
+    title: 'Ilango v. State (fictional)',
+    ownerMemberId: ownerMember?.id ?? null,
+  });
   const proceeding = await createProceeding(deps, owner, {
     matterId: matter.id,
     forumId: forum.id,

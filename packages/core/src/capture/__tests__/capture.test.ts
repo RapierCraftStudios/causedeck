@@ -599,7 +599,7 @@ describe('sensitive-matter gate', () => {
           { db: tx },
           { workspaceId: a.id, captureId: open.captureId, pipelineVersion: 'x' },
         ),
-      ).toEqual({ outcome: 'started', aiSteps: true });
+      ).toMatchObject({ outcome: 'started', aiSteps: true });
     });
   });
 

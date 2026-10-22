@@ -1,8 +1,8 @@
 // Karnataka High Court adapter, Principal Bench at Bengaluru (#404, part 1 of #37; A1). Identity,
 // versioned config, declared access modes, the case-type table, the case-line grammar, advocate
-// keys and official deep links; the order header, KHC neutral citation and direction cues (#406,
-// part 3). The list and registry parsers land in parts 2 and 4 (#405, #407): until then the list
-// parser returns a well-formed empty result. Everything the
+// keys and official deep links; cause lists from a saved HTML list page or the layout of a list
+// PDF (#405, part 2); the order header, KHC neutral citation and direction cues (#406, part 3). The
+// registry parser lands in part 4 (#407). Everything the
 // adapter reads is a document the lawyer supplied; links open the court's own pages in a new window
 // and nothing here requests a URL. The Dharwad and Kalaburagi Benches are disabled forums (v2).
 // Every layout assumption is recorded in ADR 0019.
@@ -26,6 +26,8 @@ import { KARNATAKA_HC_DIRECTION_PHRASES } from './config/order-cues.ts';
 import { KARNATAKA_HC_STAGE_MAP } from './config/stage-map.ts';
 import { findKarnatakaDirectionCues } from './direction-cues.ts';
 import { parseKarnatakaOrderHeader } from './order-header.ts';
+import { parseKarnatakaCauseListHtml } from './parse-cause-list-html.ts';
+import { parseKarnatakaCauseListPdf } from './parse-cause-list-pdf.ts';
 
 export * from './advocate-keys.ts';
 export * from './case-line.ts';
@@ -35,11 +37,15 @@ export * from './config/list-grammar.ts';
 export * from './config/order-cues.ts';
 export * from './config/stage-map.ts';
 export * from './direction-cues.ts';
+export { isKarnatakaListLine, karnatakaListTypeOf, karnatakaPublishedAt } from './list-reader.ts';
 export * from './neutral-citation.ts';
 export * from './order-header.ts';
+export { parseKarnatakaCauseListHtml } from './parse-cause-list-html.ts';
+export type { KarnatakaCauseListOptions } from './parse-cause-list-html.ts';
+export { parseKarnatakaCauseListPdf } from './parse-cause-list-pdf.ts';
 
 export const KARNATAKA_HC_ADAPTER_ID = 'in.ka.karnataka-hc.bengaluru';
-export const KARNATAKA_HC_VERSION = '1.0.0';
+export const KARNATAKA_HC_VERSION = '1.1.0';
 export const KARNATAKA_HC_FORUM_CODES = ['in.ka.karnataka-hc.bengaluru'] as const;
 
 /** Lists and orders only from the lawyer; case status and the display board are never read. */
@@ -121,7 +127,23 @@ function emptyCauseList(version: string, input: ParserInput): ParsedCauseList {
   };
 }
 
-/** A fresh Karnataka HC adapter over `options.config` (default `KARNATAKA_HC_CONFIG`, 1.0.0). */
+/**
+ * A supplied list: HTML through the HTML parser, a PDF layout through the PDF parser. An HTML or
+ * PDF input without its content cannot be read (`failed`); text and email lists are not read yet.
+ */
+export function parseKarnatakaCauseList(
+  input: ParserInput,
+  options: { config: AdapterConfig; version: string },
+): ParsedCauseList {
+  if (input.kind === 'html' && input.html !== undefined) {
+    return parseKarnatakaCauseListHtml(input, options);
+  }
+  if (input.layout !== undefined) return parseKarnatakaCauseListPdf(input, options);
+  const empty = emptyCauseList(options.version, input);
+  return input.kind === 'html' || input.kind === 'layout' ? { ...empty, status: 'failed' } : empty;
+}
+
+/** A fresh Karnataka HC adapter over `options.config` (default `KARNATAKA_HC_CONFIG`, 1.1.0). */
 export function createKarnatakaHcAdapter(
   options: KarnatakaHcAdapterOptions = {},
 ): KarnatakaHcAdapter {
@@ -146,7 +168,7 @@ export function createKarnatakaHcAdapter(
     links: config.links,
     fixtures: config.fixtures,
     health: config.health,
-    parseCauseList: (input) => Promise.resolve(emptyCauseList(version, input)),
+    parseCauseList: (input) => Promise.resolve(parseKarnatakaCauseList(input, { config, version })),
     parseOrderHeader: (input) => parseKarnatakaOrderHeader(input, orderOptions),
     findDirectionCues: (input) => findKarnatakaDirectionCues(input, orderOptions),
     buildDeepLink(target: DeepLinkTarget, params: DeepLinkParams) {

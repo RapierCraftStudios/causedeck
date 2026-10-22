@@ -245,6 +245,11 @@ describe('adapter contract', () => {
     expect(ParsedListRowSchema.safeParse(row).success).toBe(true);
     expect(ParsedListRowSchema.safeParse({ ...row, benchNumbering: '200xxx' }).success).toBe(false);
     expect(ParsedListRowSchema.safeParse({ ...row, subCategory: '' }).success).toBe(false);
+    // A row under the registry-objections heading carries `true` (#405); a marker stays a string.
+    expect(ParsedListRowSchema.safeParse({ ...row, registryObjection: true }).success).toBe(true);
+    expect(ParsedListRowSchema.safeParse({ ...row, registryObjection: null }).success).toBe(true);
+    expect(ParsedListRowSchema.safeParse({ ...row, registryObjection: false }).success).toBe(false);
+    expect(ParsedListRowSchema.safeParse({ ...row, registryObjection: '' }).success).toBe(false);
     expect(
       CaseRefSchema.safeParse({
         caseTypeCode: 'WP',

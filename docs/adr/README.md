@@ -29,7 +29,8 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0019](0019-karnataka-hc-adapter-assumptions.md) | Karnataka HC adapter: layout assumptions and how H13 retires them | Proposed | 2026-10-22 | — |
 | [0020](0020-nclt-bengaluru-table-parsing.md) | NCLT Bengaluru cause lists: table parsing from word coordinates | Proposed | 2026-10-21 | — |
 | [0021](0021-capture-inbox-and-upload-pipeline.md) | Capture inbox and upload pipeline | Proposed | 2026-10-22 | — |
-| [0022](0022-automation-ladder-and-undo.md) | Automation ladder, proposals and undo cascades | Proposed | 2026-10-22 | — |
+| [0022](0022-ai-gateway-implementation.md) | AI gateway implementation: ports, residency, audit and idempotent results | Proposed | 2026-10-22 | — |
+| [0023](0023-automation-ladder-and-undo.md) | Automation ladder, proposals and undo cascades | Proposed | 2026-10-22 | — |
 
 ## Statuses
 

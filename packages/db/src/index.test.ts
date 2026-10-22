@@ -50,6 +50,7 @@ describe('@causedeck/db root entry point', () => {
       'adapter_parse_run',
       'adapter_version',
       'ai_call',
+      'ai_call_result',
       'anchor',
       'api_idempotency_key',
       'appearance',

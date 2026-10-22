@@ -38,7 +38,8 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
   It rejects the mock providers (`console` email, `mock` AI, `mock` billing) unless
   `ALLOW_MOCK_PROVIDERS=true`.
 - **India-only AI**: `AI_INDIA_ONLY` defaults to `true`. Turning it off in production needs
-  `AI_INDIA_ONLY_OVERRIDE_ACK=I_UNDERSTAND`. While it is on, `BEDROCK_REGION` must be an India region.
+  `AI_INDIA_ONLY_OVERRIDE_ACK=I_UNDERSTAND`. While it is on, `BEDROCK_REGION` must be an India region. Production refuses to boot with a real
+  `SARVAM_API_KEY` unless `SARVAM_NO_TRAINING_CONFIRMED=true` (the contract's no-training term).
 - **Data residency**: `AWS_REGION` defaults to `ap-south-1` and `DATA_REGION` to `in`. A non-India
   value (anything except `ap-south-1`/`ap-south-2`, or a `DATA_REGION` other than `in`) is rejected
   unless `AWS_REGION_OVERRIDE_ACK=I_UNDERSTAND`.
@@ -109,6 +110,9 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `BEDROCK_ACCESS_KEY_ID` | string | — | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_SECRET_ACCESS_KEY` | secret | — | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_MODEL_ID` | string | — | AI_PROVIDER=bedrock | #44 | #112 |
+| `BEDROCK_DRAFTING_MODEL_ID` | string | — | never (optional with AI_PROVIDER=bedrock) | #44 | #112 |
+| `AI_MAX_CONCURRENCY_PER_WORKSPACE` | integer (1-32) | `4` | never (defaults to 4) | #44 | — |
+| `SARVAM_NO_TRAINING_CONFIRMED` | literal(true) | — | NODE_ENV=production and AI_PROVIDER=sarvam | #44 | #113 |
 | `SARVAM_API_KEY` | secret | — | AI_PROVIDER=sarvam | #44 | #113 |
 | `STORAGE_PROVIDER` | enum(minio\|s3) | `minio` | never (defaults to minio) | #21 | — |
 | `S3_ENDPOINT` | url | `http://localhost:9000` (non-prod only) | STORAGE_PROVIDER=minio | #21 | — |

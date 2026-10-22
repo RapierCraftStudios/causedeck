@@ -1,4 +1,4 @@
-# 0022. Automation ladder, proposals and undo cascades
+# 0023. Automation ladder, proposals and undo cascades
 
 ## Status
 

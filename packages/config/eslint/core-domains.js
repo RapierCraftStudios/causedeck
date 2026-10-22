@@ -24,6 +24,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   automation: Object.freeze(['workspaces', 'audit', 'matter-graph']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
+  // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.
+  ai: Object.freeze(['audit', 'usage']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.
   lifecycle: Object.freeze(['audit', 'workspaces']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.

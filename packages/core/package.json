@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ai": "./src/ai/index.ts",
     "./audit": "./src/audit/index.ts",
     "./automation": "./src/automation/index.ts",
     "./billing": "./src/billing/index.ts",
@@ -27,6 +28,7 @@
     "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {
+    "@causedeck/ai": "workspace:*",
     "@causedeck/adapters": "workspace:*",
     "@causedeck/auth": "workspace:*",
     "@causedeck/billing": "workspace:*",

@@ -1,4 +1,4 @@
-// The automation domain (#47, ADR 0022): the L1-L4 ladder, the approval matrix as data, proposals
+// The automation domain (#47, ADR 0023): the L1-L4 ladder, the approval matrix as data, proposals
 // that change nothing until accepted, auto-applied internal changes with a 7-day cascading undo,
 // the per-user "ask me first" dial and threshold learning. Every source hands it `ProposalDraft`s
 // (`@causedeck/validators/proposal-draft`); this is the only place "the system acted" is decided.

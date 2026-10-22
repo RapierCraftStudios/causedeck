@@ -1,4 +1,4 @@
-// The automation engine tables (#47, ADR 0022; docs/product/09 §4): `proposal` (a change that
+// The automation engine tables (#47, ADR 0023; docs/product/09 §4): `proposal` (a change that
 // waits for a person, or the record of one that was applied), `activity` (what the system or a
 // person did, with its 7-day undo), `automation_preference` (the per-user "ask me first" dial) and
 // `automation_threshold` (the auto-apply confidence per kind and pattern, raised on every undo).

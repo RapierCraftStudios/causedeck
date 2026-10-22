@@ -1,4 +1,4 @@
-// The automation ladder (#47, ADR 0022; docs/product/09 §4.1). L1 observes and suggests, L2
+// The automation ladder (#47, ADR 0023; docs/product/09 §4.1). L1 observes and suggests, L2
 // proposes and changes nothing until a person accepts, L3 applies an internal, reversible change
 // and logs it with a 7-day undo, L4 prepares an outward draft that a lawyer must send. The ladder
 // stops at L4: the type, the database CHECK and `scripts/check-no-l5.ts` all hold it there (PRD TR-1).

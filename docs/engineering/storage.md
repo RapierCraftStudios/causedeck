@@ -183,3 +183,25 @@ file, 413 over the size cap, 403 not permitted by role.
 cannot decrypt an envelope-encrypted object fetched through a presigned GET. Encrypting them needs
 a server-streamed decrypting download; `blob.enc_header` is already there (nullable) for it.
 
+
+## Capture uploads (#43)
+
+The capture inbox ([ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)) rides this pipeline:
+`createCapture` calls `createUploadIntent` and records `blob.key` as the capture's
+`raw_storage_key`; `completeUpload` calls `finalizeUpload` (sniff, sha256), then de-duplicates,
+scans and queues. Two storage options exist for it: an upload URL may live up to 10 minutes
+(`uploadTtlSeconds`, capped at `MAX_UPLOAD_URL_TTL_SECONDS` = 600; `/api/uploads` keeps 5 minutes),
+and the `quarantine` kind (server-written, 200 MB cap) holds raw objects a virus scan flagged.
+
+**Routes.** `POST /api/captures/presign` and `POST /api/captures/:id/complete` (same gates as
+`/api/uploads`; 415 type not allowed, 413 over the capture cap, 403 channel disabled or sensitive
+matter excluded) and `POST /api/captures`, a multipart fallback for share-target posts up to 10 MB.
+
+**Environment** (all optional, read when a capture is created or a job runs):
+
+| Variable                                  | Effect                                                                           |
+| ----------------------------------------- | -------------------------------------------------------------------------------- |
+| `CAPTURE_SCAN_REQUIRED`                   | `true` makes a skipped scan a failure (Stage B); default `false` (Stage A)       |
+| `CAPTURE_CLAMAV_HOST`, `CAPTURE_CLAMAV_PORT` | clamd address (port default 3310); without a host the no-op scanner runs      |
+| `CAPTURE_CLAMAV_TIMEOUT_MS`, `CAPTURE_CLAMAV_MAX_BYTES` | clamd timeout (30000) and the most bytes sent (25 MB)              |
+| `CAPTURE_MAX_BYTES_<TYPE>`                | size cap override per type: PDF, DOCX, ICS, TXT, PNG, JPEG, WEBP, HEIC, M4A, MP3, WAV, OGG, WEBM, ZIP |

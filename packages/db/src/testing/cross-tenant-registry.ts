@@ -99,6 +99,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   activity: DB_TABLES_TEST,
   automation_preference: DB_TABLES_TEST,
   automation_threshold: DB_TABLES_TEST,
+
+  // Capture inbox (#43).
+  capture: DB_TABLES_TEST,
+  workspace_capture_channel: DB_TABLES_TEST,
 };
 
 /**
@@ -1068,6 +1072,8 @@ export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   IN_PROGRESS_STATUS: 'constant',
   uploadContext:
     'pure (binds the app db into a StorageCtx; the uploads route checks membership and authorize gates each storage call)',
+  captureContext:
+    'pure (binds the app db, env config and job producer into a CaptureCtx; capture routes check membership and authorize gates each capture call, covered by packages/core/src/capture/__tests__/cross-tenant.test.ts)',
 };
 
 /** The storage presign cross-tenant test (#21). */

@@ -89,6 +89,9 @@ export const PURGE_ORDER = [
   'anchor',
   'document_page',
   'document',
+  // The capture inbox (#43): after the documents that cite a capture, before the matters it hints.
+  'capture',
+  'workspace_capture_channel',
   'matter_restriction',
   'matter',
   // Custom court reference rows (#344): halls and benches before their forum; the catalogue

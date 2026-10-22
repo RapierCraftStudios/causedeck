@@ -5,13 +5,14 @@ import { assertWithinLimit, MAX_OBJECT_BYTES, ObjectTooLargeError } from '../lim
 const MB = 1024 * 1024;
 
 describe('size limits', () => {
-  it('caps documents at 50 MB, audio 100 MB, images 25 MB and zips 200 MB, exports 20 GB', () => {
+  it('caps documents at 50 MB, audio 100 MB, images 25 MB and zips 200 MB, exports 20 GB, quarantine 200 MB', () => {
     expect(MAX_OBJECT_BYTES).toEqual({
       document: 50 * MB,
       audio: 100 * MB,
       image: 25 * MB,
       zip: 200 * MB,
       export: 20 * 1024 * MB,
+      quarantine: 200 * MB,
     });
   });
 

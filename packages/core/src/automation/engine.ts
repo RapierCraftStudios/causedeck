@@ -1,4 +1,4 @@
-// The automation engine (#47, ADR 0021): the only place where "the system acted" is decided. Every
+// The automation engine (#47, ADR 0022): the only place where "the system acted" is decided. Every
 // source hands it `ProposalDraft`s; `submitProposals` validates each one, routes it with
 // `decideLevel`, applies L3 drafts at once (in the same transaction, as an `activity` with a 7-day
 // undo) and leaves the rest as proposals that change nothing until a person accepts them. No draft

@@ -137,6 +137,10 @@ describe('enqueue', () => {
       'deletion.erase',
       'account.delete',
       'memory.erase',
+      'capture.scan',
+      'capture.process',
+      'system.capture.retention',
+      'capture.retention',
     ]);
   });
 });

@@ -11,6 +11,9 @@ import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
 import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { captureProcess } from './definitions/capture-process.ts';
+import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
+import { captureScan } from './definitions/capture-scan.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
 import { deletionTick } from './definitions/deletion-tick.ts';
 import { exportBuild } from './definitions/export-build.ts';
@@ -147,6 +150,10 @@ export const registry = createRegistry([
   deletionErase,
   accountDelete,
   memoryErase,
+  captureScan,
+  captureProcess,
+  systemCaptureRetention,
+  captureRetention,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -172,6 +179,10 @@ export type JobMap = RegistryMap<
     typeof deletionErase,
     typeof accountDelete,
     typeof memoryErase,
+    typeof captureScan,
+    typeof captureProcess,
+    typeof systemCaptureRetention,
+    typeof captureRetention,
   ]
 >;
 export type JobName = keyof JobMap;

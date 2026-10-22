@@ -40,6 +40,7 @@ import {
 } from '../schema/usage.ts';
 import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
 import { supportSession } from '../schema/staff.ts';
+import { capture, workspaceCaptureChannel } from '../schema/capture.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
 import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
@@ -594,6 +595,32 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, kind: 'task', patternKey: 'undated', threshold: '0.820' })
       .returning({ id: automationThreshold.id });
     return { thresholdId: first(rows, 'automation_threshold').id };
+  },
+  capture: async (tx, { workspaceId, ownerId, tag }) => {
+    // A received upload row; the raw object never exists in a SQL-only suite.
+    const rows = await tx
+      .insert(capture)
+      .values({
+        workspaceId,
+        channel: 'upload',
+        mime: 'application/pdf',
+        sizeBytes: 8,
+        originalFilename: `xt-${tag}.pdf`,
+        createdBy: ownerId,
+      })
+      .returning({ id: capture.id });
+    return { id: first(rows, 'capture').id };
+  },
+  workspace_capture_channel: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(workspaceCaptureChannel).values({
+      workspaceId,
+      channel: 'email',
+      enabled: true,
+      enabledBy: ownerId,
+      enabledAt: new Date(),
+      disclosureVersion: 'v1',
+    });
+    return { workspaceId };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

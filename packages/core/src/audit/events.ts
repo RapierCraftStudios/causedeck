@@ -175,6 +175,33 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "The workspace's memory and embeddings were erased",
   },
+  // Capture inbox (#43). Metadata holds the channel, MIME type, size and flags; never a filename or
+  // file content. Channel changes and quarantines are fail-closed: they change where a lawyer's
+  // data may flow or record a threat.
+  'capture.created': {
+    security: false,
+    description: 'A capture was created and an upload URL issued, or a typed note was captured',
+  },
+  'capture.completed': {
+    security: false,
+    description: 'A capture upload was verified and queued, or found to be a duplicate',
+  },
+  'capture.quarantined': {
+    security: true,
+    description: 'A capture failed the virus scan and its raw object was moved to quarantine',
+  },
+  'capture.discarded': {
+    security: false,
+    description: 'A capture was discarded; its raw object is deleted by the retention job',
+  },
+  'capture.channel_enabled': {
+    security: true,
+    description: 'A capture channel was enabled after the data-flow disclosure was shown',
+  },
+  'capture.channel_disabled': {
+    security: true,
+    description: 'A capture channel was disabled',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

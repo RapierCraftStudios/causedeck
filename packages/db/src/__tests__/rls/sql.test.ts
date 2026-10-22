@@ -141,6 +141,10 @@ describe('row-level security catalog', () => {
         'activity',
         'automation_preference',
         'automation_threshold',
+
+        // Capture inbox (#43).
+        'capture',
+        'workspace_capture_channel',
       ].sort(),
     );
     for (const row of rows)

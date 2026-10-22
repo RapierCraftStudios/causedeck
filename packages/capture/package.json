@@ -12,6 +12,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@causedeck/db": "workspace:*",
+    "@causedeck/storage": "workspace:*",
+    "@causedeck/validators": "workspace:*"
+  },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
     "@types/node": "catalog:",

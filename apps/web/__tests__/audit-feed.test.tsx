@@ -60,9 +60,9 @@ vi.mock('../app/(app)/w/[slug]/activity/actions.ts', () => ({
   verifyAuditEventAction: vi.fn(),
   loadMoreActivitiesAction: vi.fn(),
   previewActivityUndoAction: vi.fn(),
-  undoActivityAction: vi.fn(),
+  undoFeedActivityAction: vi.fn(),
   undoCaptureAction: vi.fn(),
-  reassignCaptureAction: vi.fn(),
+  reassignFeedCaptureAction: vi.fn(),
 }));
 
 const { AuditFeed } = await import('../app/(app)/w/[slug]/activity/audit-feed.tsx');

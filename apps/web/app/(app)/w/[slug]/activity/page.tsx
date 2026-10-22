@@ -28,8 +28,8 @@ import {
   loadMoreActivitiesAction,
   loadMoreAuditAction,
   previewActivityUndoAction,
-  reassignCaptureAction,
-  undoActivityAction,
+  reassignFeedCaptureAction,
+  undoFeedActivityAction,
   undoCaptureAction,
   verifyAuditEventAction,
 } from './actions.ts';
@@ -208,9 +208,9 @@ async function ActivitySection({
       actions={{
         loadMore: loadMoreActivitiesAction,
         preview: previewActivityUndoAction,
-        undo: undoActivityAction,
+        undo: undoFeedActivityAction,
         undoCapture: undoCaptureAction,
-        reassign: reassignCaptureAction,
+        reassign: reassignFeedCaptureAction,
         searchMatters: searchMattersAction,
       }}
     />

@@ -218,7 +218,7 @@ export async function previewActivityUndoAction(raw: unknown): Promise<Result<Un
   return previewUndo(raw);
 }
 
-export async function undoActivityAction(raw: unknown): Promise<Result<UndoOutcome>> {
+export async function undoFeedActivityAction(raw: unknown): Promise<Result<UndoOutcome>> {
   return undoActivity(raw);
 }
 
@@ -226,6 +226,6 @@ export async function undoCaptureAction(raw: unknown): Promise<Result<UndoOutcom
   return undoCapture(raw);
 }
 
-export async function reassignCaptureAction(raw: unknown) {
+export async function reassignFeedCaptureAction(raw: unknown) {
   return reassignCapture(raw);
 }

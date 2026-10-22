@@ -145,9 +145,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   verifyAuditEventAction: activity,
   loadMoreActivitiesAction: activity,
   previewActivityUndoAction: activity,
-  undoActivityAction: activity,
+  undoFeedActivityAction: activity,
   undoCaptureAction: activity,
-  reassignCaptureAction: activity,
+  reassignFeedCaptureAction: activity,
   grantSupportSessionAction: support,
   denySupportSessionAction: support,
   revokeSupportSessionAction: support,
@@ -438,9 +438,9 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Automation feed (#49): ub, owner of B, may not page, preview, undo or reassign A's activity.
     loadMoreActivitiesAction: { workspaceId },
     previewActivityUndoAction: { workspaceId, activityId: randomUUID() },
-    undoActivityAction: { workspaceId, activityId: randomUUID() },
+    undoFeedActivityAction: { workspaceId, activityId: randomUUID() },
     undoCaptureAction: { workspaceId, captureId: randomUUID() },
-    reassignCaptureAction: { workspaceId, captureId: randomUUID(), matterId: aOtherMatterId },
+    reassignFeedCaptureAction: { workspaceId, captureId: randomUUID(), matterId: aOtherMatterId },
     // A's pending support request (#313): ub, owner of B, may not grant, deny or end it.
     grantSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     denySupportSessionAction: { workspaceId, sessionId: aSupportSessionId },

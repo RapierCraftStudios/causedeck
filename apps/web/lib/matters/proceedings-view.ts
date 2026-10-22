@@ -234,8 +234,3 @@ export function toProceedingTreeView(
   });
   return appealOrder(nodes).map((node) => view(node, 1));
 }
-
-/** Every row of the tree, depth first (for pickers and the split selection). */
-export function flattenRows(rows: ProceedingRowView[]): ProceedingRowView[] {
-  return rows.flatMap((row) => [row, ...flattenRows(row.children)]);
-}

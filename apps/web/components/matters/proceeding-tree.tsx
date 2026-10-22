@@ -13,11 +13,9 @@ import { GitMerge, Plus, Scale, Split } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRef, useState, type KeyboardEvent } from 'react';
 
-import {
-  flattenRows,
-  type ForumOption,
-  type ProceedingRowView,
-} from '../../lib/matters/proceedings-view.ts';
+// Types only: proceedings-view.ts is server-only (logger, adapters, core); a value import would
+// pull Node modules into the browser bundle.
+import type { ForumOption, ProceedingRowView } from '../../lib/matters/proceedings-view.ts';
 
 import { useOnline } from './matters-offline-banner.tsx';
 import {
@@ -63,6 +61,11 @@ interface VisibleRow {
 }
 
 /** The rows a keyboard user can reach: collapsed rows hide their children. */
+/** Every row of the tree, depth first (for the pickers and the split selection). */
+export function flattenRows(rows: ProceedingRowView[]): ProceedingRowView[] {
+  return rows.flatMap((row) => [row, ...flattenRows(row.children)]);
+}
+
 export function visibleRows(
   rows: ProceedingRowView[],
   collapsed: ReadonlySet<string>,

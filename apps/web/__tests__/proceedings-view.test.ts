@@ -8,9 +8,10 @@ import type { ProceedingNode } from '@causedeck/core/matter-graph';
 import { normaliseCaseType, PROCEEDING_TRANSITIONS } from '@causedeck/core/matter-graph';
 import { describe, expect, it } from 'vitest';
 
+import { flattenRows } from '../components/matters/proceeding-tree.tsx';
 import { compactCaseTypeCode } from '../lib/matters/case-type-code.ts';
 import { caseTypeOptions } from '../lib/matters/case-types.ts';
-import { flattenRows, shortLabel, toProceedingTreeView } from '../lib/matters/proceedings-view.ts';
+import { shortLabel, toProceedingTreeView } from '../lib/matters/proceedings-view.ts';
 
 const FORUM = { id: 'f1', court: 'High Court of Madras', establishment: null, seat: 'Chennai' };
 const NOW = new Date('2026-10-22T06:00:00Z');

@@ -58,6 +58,11 @@ vi.mock('@causedeck/core/workspaces', () => ({ listMembers }));
 vi.mock('../app/(app)/w/[slug]/activity/actions.ts', () => ({
   loadMoreAuditAction: vi.fn(),
   verifyAuditEventAction: vi.fn(),
+  loadMoreActivitiesAction: vi.fn(),
+  previewActivityUndoAction: vi.fn(),
+  undoActivityAction: vi.fn(),
+  undoCaptureAction: vi.fn(),
+  reassignCaptureAction: vi.fn(),
 }));
 
 const { AuditFeed } = await import('../app/(app)/w/[slug]/activity/audit-feed.tsx');

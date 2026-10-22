@@ -36,6 +36,7 @@
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/flags": "workspace:*",
+    "@causedeck/intelligence": "workspace:*",
     "@causedeck/notifications": "workspace:*",
     "@causedeck/observability": "workspace:*",
     "@causedeck/storage": "workspace:*",

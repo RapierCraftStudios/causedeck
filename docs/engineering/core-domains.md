@@ -80,6 +80,7 @@ graph LR
   support --> workspaces
   support --> audit
   capture --> audit
+  jobs --> ai
   jobs --> audit
   jobs --> billing
   jobs --> usage
@@ -114,7 +115,7 @@ graph LR
 | `lifecycle` | `audit`, `workspaces` |
 | `support` | `workspaces`, `audit` |
 | `capture` | `audit` |
-| `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

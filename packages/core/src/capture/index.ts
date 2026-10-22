@@ -36,7 +36,14 @@ export {
   keepCaptureAsAttachment,
   pinCapture,
 } from './manage.ts';
-export { aiStepsAllowed, runCaptureProcess, type CaptureProcessOutcome } from './process.ts';
+export {
+  aiStepsAllowed,
+  runCapturePipeline,
+  runCaptureProcess,
+  type CapturePipelineDeps,
+  type CapturePipelineOutcome,
+  type CaptureProcessOutcome,
+} from './process.ts';
 export {
   markCaptureFailed,
   RETENTION_BATCH,

@@ -34,7 +34,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // arrive as a port (it never imports jobs).
   capture: Object.freeze(['audit']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
+  // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([
+    'ai',
     'audit',
     'billing',
     'usage',

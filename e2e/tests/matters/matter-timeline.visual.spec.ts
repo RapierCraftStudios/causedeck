@@ -101,10 +101,10 @@ test.describe('matter timeline visual baselines', () => {
         skipWithoutBaseline(testInfo, shot.name);
         const target = await shot.setUp(page, asUser);
         const options = {
-          animations: 'disabled',
-          caret: 'hide',
+          animations: 'disabled' as const,
+          caret: 'hide' as const,
           mask: [page.locator('[data-today-marker]')],
-        } as const;
+        };
         if (target === null) await expect(page).toHaveScreenshot(shot.name, options);
         else await expect(target).toHaveScreenshot(shot.name, options);
       },

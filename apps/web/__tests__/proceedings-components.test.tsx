@@ -541,10 +541,10 @@ describe('ProceedingForm (#392)', () => {
       tab.form.appealFrom,
       tab.form.lowerCourt,
     ]) {
-      expect(
-        within(dialog).getByRole('combobox', { name: new RegExp(`^${label}`) }),
-        label,
-      ).toBeTruthy();
+      // The label's `for` must resolve to the native select: found by label text, then by name.
+      const select = within(dialog).getByLabelText(new RegExp(`^${label}`), { selector: 'select' });
+      expect(select.tagName, label).toBe('SELECT');
+      expect(select.getAttribute('id'), label).toBeTruthy();
     }
   });
 

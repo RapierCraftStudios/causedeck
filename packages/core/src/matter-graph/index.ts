@@ -4,8 +4,14 @@
 // notification code. The canonical next date (#364) changes only through next-date.ts, and the
 // proceeding state machine (#363, ADR 0016) is the only writer of `proceeding.state`. The matter
 // timeline (#366) reads them all across proceedings; the read models (#386) serve the matters list
-// and workspace, and people.ts writes persons and role edges. See docs/engineering/core-domains.md.
+// and workspace, people.ts writes persons and role edges, and document-preview.ts reads one page of
+// a document for the preview sheet (#393). See docs/engineering/core-domains.md.
 export type { GraphActor, MatterGraphDeps } from './context.ts';
+export {
+  getDocumentPreview,
+  type DocumentPreview,
+  type DocumentPreviewPage,
+} from './document-preview.ts';
 export * from './documents.ts';
 export {
   expandYear,

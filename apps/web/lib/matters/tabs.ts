@@ -1,6 +1,9 @@
 // The matter workspace's tab manifest (#390): the layout imports it so that every tab is
 // registered before `matterTabs()` runs. Each later tab adds its own `register…Tab()` call below
 // (its module owns the order, label and permission), so lib/matters/tab-registry.ts never changes.
+// People and Documents (#393) live in people-tab.ts and documents-tab.ts.
+import { registerDocumentsTab } from './documents-tab.ts';
+import { registerPeopleTab } from './people-tab.ts';
 import { registerMatterTab } from './tab-registry.ts';
 
 /** Overview (#390): every member who may read the matter. */
@@ -17,6 +20,8 @@ export function registerOverviewTab(): void {
 /** Register every matter tab. Idempotent: a tab registered again replaces itself (same id). */
 export function registerMatterTabs(): void {
   registerOverviewTab();
+  registerPeopleTab();
+  registerDocumentsTab();
 }
 
 registerMatterTabs();

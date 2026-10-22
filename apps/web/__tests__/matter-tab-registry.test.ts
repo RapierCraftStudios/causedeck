@@ -1,7 +1,8 @@
 // The matter workspace's tab registry (#390): tabs sort by order then id, a second registration with
 // the same id replaces the first, the remover forgets only its own registration, `visible`
 // predicates decide per role (a tab needing `strategy.read` is hidden from clerks and viewers), the
-// manifest registers Overview idempotently for every role that may read matters, and hrefs are the
+// manifest registers Overview, People and Documents (#393) idempotently for every role that may
+// read matters, and hrefs are the
 // matter path plus the tab's segment.
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -59,11 +60,11 @@ describe('matter tab registry (#390)', () => {
     expect(ids('viewer')).toEqual([]);
   });
 
-  it('registers Overview from the manifest, idempotently, for every role that reads matters', () => {
+  it('registers Overview, People and Documents from the manifest, idempotently, for every role that reads matters', () => {
     registerMatterTabs();
     registerMatterTabs();
     for (const role of ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const) {
-      expect(ids(role)).toEqual(['overview']);
+      expect(ids(role)).toEqual(['overview', 'people', 'documents']);
     }
     expect(matterTabs('viewer')[0]).toMatchObject({ labelKey: 'overview', segment: '' });
   });

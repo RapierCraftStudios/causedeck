@@ -103,6 +103,7 @@ const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
 const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
 const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
+const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -158,6 +159,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
   chooseNextDateSourceAction: matterWorkspace,
+  upsertPersonAction: matterPeople,
+  setRoleEdgeAction: matterPeople,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -259,6 +262,18 @@ function snapshotA() {
       })
       .from(schema.listing)
       .orderBy(schema.listing.id),
+    // A's people and their roles (#393).
+    persons: await tx
+      .select({
+        id: schema.person.id,
+        name: schema.person.name,
+        kind: schema.person.kind,
+        aliases: schema.person.aliases,
+        contact: schema.person.contact,
+      })
+      .from(schema.person)
+      .orderBy(schema.person.id),
+    roleEdges: await tx.select().from(schema.roleEdge).orderBy(schema.roleEdge.id),
   }));
 }
 
@@ -410,6 +425,22 @@ function inputs(workspaceId: string): Record<string, unknown> {
       currentListingId: t.a.rows.listing?.listingId,
       proposedListingId: t.a.rows.listing?.listingId,
       choice: 'current',
+    },
+    upsertPersonAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      person: {
+        personId: t.a.rows.person?.personId,
+        name: 'Probe (fictional)',
+        kind: 'client',
+        contact: { phone: '0' },
+      },
+    },
+    setRoleEdgeAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      personId: t.a.rows.person?.personId,
+      kind: 'represents',
     },
   };
 }
@@ -670,6 +701,9 @@ describe('cross-tenant server actions', () => {
       'setSensitiveAction',
       'confirmNextDateAction',
       'chooseNextDateSourceAction',
+      // People tab (#393): A's matter and person
+      'upsertPersonAction',
+      'setRoleEdgeAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

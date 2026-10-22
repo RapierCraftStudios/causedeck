@@ -11,6 +11,7 @@ import {
   CreateDocumentInput,
   CreateMatterInput,
   CreateProceedingInput,
+  DocumentPreviewInput,
   FindDuplicateProceedingsInput,
   GetCanonicalNextDateInput,
   GetMatterTimelineInput,
@@ -439,6 +440,19 @@ describe('matter read model, people and sensitive inputs (#386)', () => {
     ).toBe(true);
     expect(MatterReadInput.safeParse({ matterId: 'nope' }).success).toBe(false);
     expect(ListMatterDocumentsInput.parse({ matterId: id() }).limit).toBe(50);
+  });
+
+  it('reads one page of a document for the preview sheet (#393)', () => {
+    const documentId = id();
+    expect(DocumentPreviewInput.parse({ documentId })).toEqual({ documentId, pageNo: 1 });
+    expect(DocumentPreviewInput.parse({ documentId, pageNo: 3 }).pageNo).toBe(3);
+    for (const pageNo of [0, -1, 1.5, 10_001]) {
+      expect(DocumentPreviewInput.safeParse({ documentId, pageNo }).success, String(pageNo)).toBe(
+        false,
+      );
+    }
+    expect(DocumentPreviewInput.safeParse({ documentId: 'nope' }).success).toBe(false);
+    expect(DocumentPreviewInput.safeParse({ documentId, extra: true }).success).toBe(false);
   });
 
   it('keeps contact details only for clients and professionals', () => {

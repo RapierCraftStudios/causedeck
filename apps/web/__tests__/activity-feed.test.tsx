@@ -76,7 +76,7 @@ function fakeActions() {
         ok: true as const,
         data: {
           activityId: input.activityId,
-          undoable: true as boolean,
+          undoable: true,
           blockedReason: null as string | null,
           willRemove: [
             {
@@ -291,8 +291,8 @@ describe('activity feed', () => {
         ok: true as const,
         data: {
           activityId: input.activityId,
-          undoable: false as boolean,
-          blockedReason: 'The 7-day undo window for this action has closed' as string | null,
+          undoable: false,
+          blockedReason: 'The 7-day undo window for this action has closed',
           willRemove: [] as { activityId: string; kind: string; summary: string }[],
           matterId: MATTER,
         },

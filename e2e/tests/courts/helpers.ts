@@ -141,5 +141,15 @@ export async function uploadRosterPdf(page: Page): Promise<void> {
     mimeType: 'application/pdf',
     buffer: rosterImportPdf(),
   });
-  await expect(page.locator('[data-roster-import-grid]')).toBeVisible({ timeout: 20_000 });
+  const grid = page.locator('[data-roster-import-grid]');
+  const failure = page.locator(
+    '[data-roster-import-error], [data-roster-import="unreadable"], [data-roster-import="upload"] [role="alert"]',
+  );
+  // Fail fast with the page's own message when the upload or the preview fails, instead of
+  // waiting out the grid's timeout blind.
+  await expect(grid.or(failure).first()).toBeVisible({ timeout: 20_000 });
+  if (!(await grid.isVisible())) {
+    const message = await failure.first().innerText();
+    throw new Error(`roster import did not reach the review grid: ${message}`);
+  }
 }

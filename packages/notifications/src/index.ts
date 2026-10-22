@@ -51,7 +51,7 @@ export {
   DEFAULT_END_OF_DAY_TIME,
   END_OF_DAY_ZONE,
   endOfDaySlot,
-  isEndOfDayTime,
+  isDigestTimeOfDay,
   localDateOf,
   localDayBounds,
   type EndOfDaySlot,

@@ -8,7 +8,7 @@ import { buildEndOfDayDigest } from './end-of-day.ts';
 import {
   DEFAULT_END_OF_DAY_TIME,
   endOfDaySlot,
-  isEndOfDayTime,
+  isDigestTimeOfDay,
   localDateOf,
   localDayBounds,
 } from './schedule.ts';
@@ -83,9 +83,9 @@ describe('end-of-day schedule', () => {
   it('defaults to 20:30 and accepts only :00 or :30 between 18:00 and 23:00', () => {
     expect(DEFAULT_END_OF_DAY_TIME).toBe('20:30');
     for (const ok of ['18:00', '18:30', '20:30', '23:00'])
-      expect(isEndOfDayTime(ok), ok).toBe(true);
+      expect(isDigestTimeOfDay(ok), ok).toBe(true);
     for (const bad of ['17:30', '23:30', '20:15', '8:30', '20:30:00', '24:00', ''])
-      expect(isEndOfDayTime(bad), bad).toBe(false);
+      expect(isDigestTimeOfDay(bad), bad).toBe(false);
   });
 
   it('finds the slot and the local day in Asia/Kolkata', () => {

@@ -25,10 +25,7 @@ export function MatterPicker({ workspaceId, search, selectedId, onSelect }: Matt
 
   useEffect(() => {
     const query = q.trim();
-    if (query === '') {
-      setHits(null);
-      return undefined;
-    }
+    if (query === '') return undefined;
     let cancelled = false;
     const timer = setTimeout(() => {
       void search({ workspaceId, q: query }).then((result) => {
@@ -53,7 +50,7 @@ export function MatterPicker({ workspaceId, search, selectedId, onSelect }: Matt
           setQ(event.target.value);
         }}
       />
-      {hits === null ? null : hits.length === 0 ? (
+      {q.trim() === '' || hits === null ? null : hits.length === 0 ? (
         <p className="text-ink-muted text-sm">{t('noResults')}</p>
       ) : (
         <ul role="listbox" aria-label={t('search')} className="flex flex-col gap-1">

@@ -982,7 +982,7 @@ export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   DEFAULT_END_OF_DAY_TIME: 'constant',
   END_OF_DAY_ZONE: 'constant',
   endOfDaySlot: 'pure (time zone math)',
-  isEndOfDayTime: 'pure',
+  isDigestTimeOfDay: 'pure',
   localDateOf: 'pure (time zone math)',
   localDayBounds: 'pure (time zone math)',
   isQuietTime: 'pure',

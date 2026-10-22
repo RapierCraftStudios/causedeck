@@ -291,9 +291,9 @@ describe('activity feed', () => {
         ok: true as const,
         data: {
           activityId: input.activityId,
-          undoable: false,
-          blockedReason: 'The 7-day undo window for this action has closed',
-          willRemove: [],
+          undoable: false as boolean,
+          blockedReason: 'The 7-day undo window for this action has closed' as string | null,
+          willRemove: [] as { activityId: string; kind: string; summary: string }[],
           matterId: MATTER,
         },
       }),

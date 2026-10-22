@@ -9,7 +9,7 @@ const LAST_MINUTE = 23 * 60;
 const SLOT_MINUTES = 30;
 
 /** `HH:MM` on :00 or :30 within 18:00-23:00 (the range that respects deploy-freeze windows). */
-export function isEndOfDayTime(value: string): boolean {
+export function isDigestTimeOfDay(value: string): boolean {
   if (!/^\d{2}:(00|30)$/.test(value)) return false;
   const minutes = Number(value.slice(0, 2)) * 60 + Number(value.slice(3));
   return minutes >= FIRST_MINUTE && minutes <= LAST_MINUTE;

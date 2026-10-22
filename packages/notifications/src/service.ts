@@ -27,7 +27,7 @@ import {
   type Channel,
   type Digest,
 } from './categories.ts';
-import { DEFAULT_END_OF_DAY_TIME, isEndOfDayTime } from './digest/schedule.ts';
+import { DEFAULT_END_OF_DAY_TIME, isDigestTimeOfDay } from './digest/schedule.ts';
 import { forbidden, invalid, notFound } from './errors.ts';
 
 const { member, notification, notificationPref, notificationSetting, organization } = schema;
@@ -582,7 +582,7 @@ const endOfDaySchema = z.strictObject({
   enabled: z.boolean().optional(),
   time: z
     .string()
-    .refine(isEndOfDayTime, 'time must be HH:00 or HH:30 between 18:00 and 23:00')
+    .refine(isDigestTimeOfDay, 'time must be HH:00 or HH:30 between 18:00 and 23:00')
     .optional(),
   includeNames: z.boolean().optional(),
 });

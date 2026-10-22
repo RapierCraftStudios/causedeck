@@ -98,7 +98,11 @@ test.describe('forum detail', () => {
     await expect(page).toHaveURL(new RegExp(`/courts/${HALLS_FORUM}/halls$`));
     const tabs = page.locator('[data-slot="forum-tabs"]');
     await expect(tabs.locator('[aria-current="page"]')).toHaveAttribute('data-forum-tab', 'halls');
-    await expect(tabs.locator('[data-forum-tab="rosters"]')).toHaveCount(0);
+    // The Rosters tab (#435) opens the workspace rosters page with this forum selected.
+    await expect(tabs.locator('[data-forum-tab="rosters"]')).toHaveAttribute(
+      'href',
+      new RegExp(`/courts/rosters\\?forum=${HALLS_FORUM.replaceAll('.', '\\.')}$`),
+    );
     await expect(page.locator('[data-hall]')).toHaveText([/^2/, /^5/, /^12A/]);
     await expect(page.locator('[data-hall-unreadable]')).toHaveCount(0);
 

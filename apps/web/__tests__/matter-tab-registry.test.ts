@@ -3,7 +3,7 @@
 // predicates decide per role (a tab needing `strategy.read` is hidden from clerks and viewers), the
 // manifest registers Overview idempotently for every role that may read matters, and hrefs are the
 // matter path plus the tab's segment.
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   matterTabHref,
@@ -14,6 +14,11 @@ import {
 import { registerMatterTabs } from '../lib/matters/tabs.ts';
 
 const ids = (role: Parameters<typeof matterTabs>[0]) => matterTabs(role).map((tab) => tab.id);
+
+// tabs.ts registers its tabs on import: start every case from an empty registry.
+beforeEach(() => {
+  resetMatterTabs();
+});
 
 afterEach(() => {
   resetMatterTabs();
@@ -59,13 +64,17 @@ describe('matter tab registry (#390)', () => {
     expect(ids('viewer')).toEqual([]);
   });
 
-  it('registers Overview from the manifest, idempotently, for every role that reads matters', () => {
+  it('registers Overview and Proceedings from the manifest, idempotently, for every role that reads matters', () => {
     registerMatterTabs();
     registerMatterTabs();
     for (const role of ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const) {
-      expect(ids(role)).toEqual(['overview']);
+      expect(ids(role)).toEqual(['overview', 'proceedings']);
     }
     expect(matterTabs('viewer')[0]).toMatchObject({ labelKey: 'overview', segment: '' });
+    expect(matterTabs('viewer')[1]).toMatchObject({
+      labelKey: 'proceedings',
+      segment: 'proceedings',
+    });
   });
 
   it('builds hrefs from the matter path and the segment', () => {

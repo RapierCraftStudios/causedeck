@@ -25,6 +25,7 @@ const ADMIN_STAFF_CLI_TEST = 'apps/admin/src/cli/staff.test.ts';
 const CORE_ROSTERS_TEST = 'packages/core/src/__tests__/cross-tenant/rosters.test.ts';
 const CORE_NEXT_DATE_CHOICE_TEST =
   'packages/core/src/__tests__/cross-tenant/next-date-choice.test.ts';
+const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-preview.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -126,6 +127,7 @@ const rosterSelfScoped = {
   note: 'opens withWorkspace on the given workspace id; RLS limits rosters and entries to that workspace',
 } as const;
 const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
+const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
@@ -343,6 +345,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   undoSplit: denies,
   mergeProceedings: denies,
   undoMergeProceedings: denies,
+  // merge and split previews (#392): A's matters or proceedings from B, or ub claiming A, are denied
+  previewMergeMatters: movePreviewDenies,
+  previewSplitMatter: movePreviewDenies,
   // canonical next date (#364): A's proceeding or listing from B, or ub claiming A, is NOT_FOUND
   proposeNextDate: denies,
   confirmNextDate: denies,

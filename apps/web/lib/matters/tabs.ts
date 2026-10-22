@@ -14,9 +14,21 @@ export function registerOverviewTab(): void {
   });
 }
 
+/** Proceedings (#392): the tree, state changes, the proceeding form, merges and splits. */
+export function registerProceedingsTab(): void {
+  registerMatterTab({
+    id: 'proceedings',
+    order: 10,
+    labelKey: 'proceedings',
+    segment: 'proceedings',
+    visible: ({ can }) => can('matter.read'),
+  });
+}
+
 /** Register every matter tab. Idempotent: a tab registered again replaces itself (same id). */
 export function registerMatterTabs(): void {
   registerOverviewTab();
+  registerProceedingsTab();
 }
 
 registerMatterTabs();

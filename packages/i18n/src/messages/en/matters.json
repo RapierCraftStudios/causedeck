@@ -105,7 +105,8 @@
       "breadcrumb": "Matters",
       "tabListLabel": "Matter sections",
       "tabs": {
-        "overview": "Overview"
+        "overview": "Overview",
+        "proceedings": "Proceedings"
       },
       "status": {
         "active": "Active",
@@ -253,6 +254,139 @@
         "edited": "Corrected by hand",
         "viewOnly": "View only",
         "offline": "You're offline."
+      },
+      "proceedingsTab": {
+        "title": "Proceedings",
+        "treeLabel": "Proceedings of this matter",
+        "loading": "Loading proceedings",
+        "toolbarLabel": "Proceeding actions",
+        "add": "Add proceeding",
+        "mergeIn": "Merge another matter in",
+        "splitStart": "Split into a new matter",
+        "split": {
+          "title": "Move proceedings to a new matter",
+          "description": "The selected proceedings and their obligations move to a new matter. You can undo for 10 seconds.",
+          "newTitle": "New matter title",
+          "titleRequired": "Give the new matter a title.",
+          "moves": "What moves",
+          "crossing": "{count, plural, =0 {No links cross the split} one {# link stays across the two matters} other {# links stay across the two matters}}",
+          "confirm": "Split matter",
+          "cancel": "Cancel",
+          "done": "Proceedings moved to a new matter.",
+          "openNew": "Open new matter",
+          "failed": "Couldn't split. Try again."
+        },
+        "splitHint": "Select the proceedings to move, then continue.",
+        "splitContinue": "Continue",
+        "splitCancel": "Cancel split",
+        "selectRow": "Move {label} to a new matter",
+        "empty": {
+          "title": "No proceedings recorded",
+          "body": "Add the case number you have, even before it is numbered (SR or FR number)."
+        },
+        "unnumbered": "Unnumbered",
+        "chips": {
+          "sr": "SR {value}",
+          "fr": "FR {value}",
+          "diary": "Diary {value}",
+          "filing": "Filing {value}",
+          "cnr": "CNR {value}",
+          "copyCnr": "Copy CNR {value}",
+          "copied": "CNR copied."
+        },
+        "nextDate": "Next date: {date}",
+        "noNextDate": "No next date",
+        "links": {
+          "appealFrom": "Appeal from {label}",
+          "appealedIn": "Appealed in {label}",
+          "connected": "Connected with {label}",
+          "lowerCourt": "Lower court: {label}",
+          "lowerCourtOf": "Lower court of {label}",
+          "parentOf": "Filed in {label}",
+          "anotherMatter": "a proceeding in another matter",
+          "openMatter": "Open linked matter"
+        },
+        "edit": "Edit {label}",
+        "transition": {
+          "menu": "Change state of {label}",
+          "to": "Move to {state}",
+          "title": "Move {label} to {state}?",
+          "number": "Number",
+          "year": "Year",
+          "numberRequired": "Enter the number and year the registry gave.",
+          "reason": "Reason for reopening",
+          "reasonRequired": "Give a reason for reopening a disposed proceeding.",
+          "cureDeadline": "Cure deadline (optional)",
+          "confirm": "Change state",
+          "cancel": "Cancel",
+          "announce": "{label} moved to {state}.",
+          "failed": "Couldn't change the state. Try again.",
+          "stale": "The state changed since. Showing the latest."
+        },
+        "form": {
+          "addTitle": "Add proceeding",
+          "editTitle": "Edit {label}",
+          "description": "Add what you have. An SR or FR number is enough before the case is numbered.",
+          "forum": "Forum",
+          "forumPlaceholder": "Choose a forum",
+          "noForums": "No forums yet. Add one in Courts.",
+          "caseType": "Case type",
+          "caseTypeHint": "Pick from the court's list or type it as printed.",
+          "caseTypeFreeText": "Not in the court's list. It will be saved as typed.",
+          "number": "Number",
+          "year": "Year",
+          "srNo": "SR number",
+          "frNo": "FR number",
+          "diaryNo": "Diary number",
+          "filingNo": "Filing number",
+          "cnr": "CNR",
+          "parent": "Filed in",
+          "noParent": "None (a main proceeding)",
+          "connected": "Connected with",
+          "appealFrom": "Appeal from",
+          "lowerCourt": "Lower court proceeding",
+          "none": "None",
+          "save": "Save proceeding",
+          "cancel": "Cancel",
+          "required": "Required",
+          "invalidYear": "Enter a year like 2026.",
+          "invalidCnr": "A CNR is 16 letters and digits.",
+          "duplicate": "Looks like {label} which is already here. Merge?",
+          "openIt": "Open it",
+          "merge": "Merge",
+          "announceAdded": "Proceeding added.",
+          "announceSaved": "Proceeding saved.",
+          "failed": "Couldn't save the proceeding. Try again.",
+          "conflict": "That proceeding is already recorded."
+        },
+        "merge": {
+          "title": "Merge another matter into this one",
+          "description": "Its proceedings, documents and obligations move here. You can undo for 10 seconds.",
+          "pick": "Matter to merge in",
+          "searchHint": "Type a title, party or case number.",
+          "noResults": "No matching matters",
+          "checking": "Checking what moves",
+          "moves": "What moves here",
+          "proceedingsCount": "{count, plural, =0 {No proceedings} one {# proceeding} other {# proceedings}}",
+          "documentsCount": "{count, plural, =0 {No documents} one {# document} other {# documents}}",
+          "obligationsCount": "{count, plural, =0 {No obligations} one {# obligation} other {# obligations}}",
+          "blocked": {
+            "sensitive": "A sensitive matter can only be merged with another sensitive matter. AI processing is off for sensitive matters, so merging would expose its documents.",
+            "restricted": "These matters are restricted to different people, so they can't be merged.",
+            "merged": "One of these matters was already merged.",
+            "archived": "An archived matter can't be merged or split."
+          },
+          "confirm": "Merge matters",
+          "cancel": "Cancel",
+          "done": "Matter merged.",
+          "failed": "Couldn't merge. Try again."
+        },
+        "undo": {
+          "action": "Undo",
+          "done": "Undone.",
+          "conflict": "Something changed since. Nothing was undone.",
+          "failed": "Couldn't undo. Try again."
+        }
       }
     }
   }

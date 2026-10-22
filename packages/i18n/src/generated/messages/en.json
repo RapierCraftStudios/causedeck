@@ -2019,6 +2019,107 @@
       "failed": "The roster was not saved. Try again."
     }
   },
+  "matters": {
+    "metaTitle": "Matters",
+    "title": "Matters",
+    "loading": "Loading matters",
+    "listLabel": "Matters",
+    "new": {
+      "trigger": "New matter",
+      "title": "New matter",
+      "description": "Add a matter by hand. You can add its proceedings and people next.",
+      "titleLabel": "Title",
+      "titleHint": "For example: Rao v. State of Tamil Nadu",
+      "practiceArea": "Practice area",
+      "sensitive": "Sensitive matter",
+      "sensitiveHint": "AI processing is turned off for this matter and it is excluded from bulk imports and shared briefs",
+      "cancel": "Cancel",
+      "submit": "Create matter",
+      "created": "Matter created: {title}",
+      "errors": {
+        "required": "Enter a title.",
+        "forbidden": "Your role can't add matters.",
+        "failed": "Couldn't create the matter. Try again.",
+        "offline": "You're offline. Changes will not save until you're back."
+      }
+    },
+    "search": {
+      "label": "Search matters",
+      "placeholder": "Title, party or case number"
+    },
+    "filters": {
+      "label": "Filters",
+      "open": "Filter",
+      "status": "Status",
+      "statusAny": "Any status",
+      "statusValues": {
+        "active": "Active",
+        "disposed": "Disposed",
+        "archived": "Archived"
+      },
+      "forum": "Forum",
+      "forumAny": "Any forum",
+      "owner": "Owner",
+      "ownerAny": "Anyone",
+      "noNextDate": "No next date",
+      "sensitive": "Sensitive",
+      "sort": "Sort by",
+      "sortValues": {
+        "next_date": "Next date",
+        "updated": "Recently updated",
+        "title": "Title"
+      },
+      "clear": "Clear filters",
+      "done": "Show matters"
+    },
+    "columns": {
+      "matter": "Matter",
+      "nextDate": "Next date",
+      "forumStage": "Forum and stage",
+      "proceedings": "Proceedings",
+      "owner": "Owner",
+      "updated": "Updated"
+    },
+    "row": {
+      "open": "Open matter {title}, next date {date}",
+      "versus": "{petitioner} v. {respondent}",
+      "noOwner": "No owner",
+      "noForum": "No forum",
+      "updated": "Updated {date}"
+    },
+    "nextDate": {
+      "none": "No next date",
+      "confirmed": "Confirmed",
+      "toConfirm": "To confirm"
+    },
+    "sensitive": "Sensitive",
+    "proceedings": "{count, plural, one {# proceeding} other {# proceedings}}",
+    "pagination": {
+      "label": "Pages",
+      "next": "Next 50",
+      "first": "First page"
+    },
+    "empty": {
+      "title": "No matters yet",
+      "body": "Share a cause list or an order to your Inbox, or add a matter by hand.",
+      "openInbox": "Open Inbox"
+    },
+    "filteredEmpty": {
+      "title": "No matters match these filters.",
+      "clear": "Clear filters"
+    },
+    "error": {
+      "title": "Couldn't load matters.",
+      "retry": "Retry",
+      "reference": "Reference: {digest}"
+    },
+    "offline": "You're offline. Showing the last saved matters. Changes will not save until you're back.",
+    "denied": "Your role can't see this. Ask the chamber owner.",
+    "palette": {
+      "new": "New matter",
+      "noNextDate": "No next date"
+    }
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",

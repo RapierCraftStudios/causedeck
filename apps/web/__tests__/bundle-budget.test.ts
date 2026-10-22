@@ -21,6 +21,8 @@ interface BudgetModule {
   ) => { files: string[]; total: number; budget: number; ok: boolean };
   ROUTE_CHUNK_BUDGET_BYTES: number;
   COURTS_ROUTE_MANIFESTS: string[];
+  MATTERS_ROUTE_BUDGET_BYTES: number;
+  MATTERS_ROUTE_MANIFEST: string;
   GENERATED_MESSAGES: string;
   foreignValues: (en: unknown, others: unknown[]) => string[];
   localeLeak: (
@@ -160,6 +162,30 @@ describe('courts route budget (#427)', () => {
     const limit = budget.ROUTE_CHUNK_BUDGET_BYTES;
     expect(budget.shellDelta(shared, ['shell.js', 'courts.js'], sizes, limit).ok).toBe(true);
     expect(budget.shellDelta(shared, ['shell.js', 'courts.js', 'extra.js'], sizes, limit).ok).toBe(
+      false,
+    );
+  });
+});
+
+describe('matters route budget (#388)', () => {
+  it('is 25 KB gzip, measured on the matters list', () => {
+    expect(budget.MATTERS_ROUTE_BUDGET_BYTES).toBe(25 * 1024);
+    expect(budget.MATTERS_ROUTE_MANIFEST).toBe(
+      'server/app/(app)/w/[slug]/matters/page_client-reference-manifest.js',
+    );
+  });
+
+  it('counts only chunks beyond home and the shell, and fails one byte over 25 KB', () => {
+    const shared = ['root.js', 'shell.js'];
+    const limit = budget.MATTERS_ROUTE_BUDGET_BYTES;
+    const sizes = { 'root.js': 90_000, 'shell.js': 28_000, 'matters.js': 25 * 1024, 'extra.js': 1 };
+    expect(budget.shellDelta(shared, ['root.js', 'shell.js', 'matters.js'], sizes, limit)).toEqual({
+      files: ['matters.js'],
+      total: 25 * 1024,
+      budget: 25 * 1024,
+      ok: true,
+    });
+    expect(budget.shellDelta(shared, ['shell.js', 'matters.js', 'extra.js'], sizes, limit).ok).toBe(
       false,
     );
   });

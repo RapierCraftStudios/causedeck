@@ -3,7 +3,9 @@
 // The command palette dialog. Only ever loaded with `import()` (use-command-palette.ts), on first
 // open or at idle, so cmdk stays out of the initial route JS (#11: the shell adds at most 40 KB
 // gzip). Motion comes from DialogContent's token durations, which are 0.01ms under
-// `prefers-reduced-motion`.
+// `prefers-reduced-motion`. Registered command sources (the matter search, #388) are asked 150 ms
+// after typing stops; their results join their group after its static commands, a stale answer is
+// dropped, and they are not kept as recent items.
 import {
   CommandDialog,
   CommandEmpty,
@@ -17,18 +19,34 @@ import { useIsEnabled } from '@causedeck/flags/react';
 import { Kbd } from '@causedeck/ui/kbd';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
-import { commandsSnapshot, getCommands, subscribeCommands } from '../../lib/commands/registry.ts';
+import {
+  commandSourcesSnapshot,
+  commandsSnapshot,
+  getCommandSources,
+  getCommands,
+  subscribeCommandSources,
+  subscribeCommands,
+} from '../../lib/commands/registry.ts';
 import { pushRecent, readRecent } from '../../lib/commands/recent.ts';
-import { rankCommands } from '../../lib/commands/search.ts';
-import type { Command, CommandGroupId } from '../../lib/commands/types.ts';
+import { parseQuery, rankCommands } from '../../lib/commands/search.ts';
+import type {
+  Command,
+  CommandGroupId,
+  CommandSource,
+  CommandSourceContext,
+} from '../../lib/commands/types.ts';
 import type { FlagKey, Role } from '../../lib/workspace-context.ts';
+
+/** How long typing pauses before command sources are asked. */
+export const SOURCE_DEBOUNCE_MS = 150;
 
 export interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   slug: string;
+  workspaceId: string;
   role: Role;
   isEnabled?: ((flag: FlagKey) => boolean) | undefined;
 }
@@ -39,7 +57,14 @@ interface Section {
   items: { value: string; command: Command }[];
 }
 
-export function CommandPalette({ open, onOpenChange, slug, role, isEnabled }: CommandPaletteProps) {
+export function CommandPalette({
+  open,
+  onOpenChange,
+  slug,
+  workspaceId,
+  role,
+  isEnabled,
+}: CommandPaletteProps) {
   const t = useTranslations();
   return (
     <CommandDialog
@@ -58,6 +83,7 @@ export function CommandPalette({ open, onOpenChange, slug, role, isEnabled }: Co
       {/* Unmounts on close, so every open starts with an empty query and fresh recents. */}
       <PaletteBody
         slug={slug}
+        workspaceId={workspaceId}
         role={role}
         isEnabled={isEnabled}
         close={() => {
@@ -68,12 +94,62 @@ export function CommandPalette({ open, onOpenChange, slug, role, isEnabled }: Co
   );
 }
 
+/** Results of the registered command sources for the current query (empty while waiting). */
+function useSourceResults(
+  search: string,
+  sources: readonly CommandSource[],
+  ctx: CommandSourceContext,
+): Command[] {
+  const [results, setResults] = useState<{ key: string; commands: Command[] }>({
+    key: '',
+    commands: [],
+  });
+  const request = useRef(0);
+  const { mode, query } = parseQuery(search);
+  const asked =
+    mode === 'navigation' ? [] : sources.filter((s) => query.length >= (s.minQuery ?? 1));
+  const key = asked.length === 0 ? '' : `${query}\u0000${asked.map((s) => s.id).join(',')}`;
+  const { slug, workspaceId } = ctx;
+  // The effect reads the latest sources and query without re-running for each render.
+  const latest = useRef({ asked, query });
+  useEffect(() => {
+    latest.current = { asked, query };
+  });
+
+  useEffect(() => {
+    const id = ++request.current;
+    if (key === '') return undefined;
+    const timer = setTimeout(() => {
+      const { asked: now, query: text } = latest.current;
+      void Promise.all(
+        now.map((source) =>
+          source.search(text, { slug, workspaceId }).then(
+            (items) => items.map((item): Command => ({ ...item, group: source.group })),
+            () => [] as Command[],
+          ),
+        ),
+      ).then((lists) => {
+        // A newer query has been typed since: drop this answer.
+        if (id === request.current) setResults({ key, commands: lists.flat() });
+      });
+    }, SOURCE_DEBOUNCE_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [key, slug, workspaceId]);
+
+  return results.key === key && key !== '' ? results.commands : [];
+}
+
 function PaletteBody({
   slug,
+  workspaceId,
   role,
   isEnabled,
   close,
-}: Pick<CommandPaletteProps, 'slug' | 'role' | 'isEnabled'> & { close: () => void }) {
+}: Pick<CommandPaletteProps, 'slug' | 'workspaceId' | 'role' | 'isEnabled'> & {
+  close: () => void;
+}) {
   const t = useTranslations();
   // Flag-gated commands follow the server-evaluated snapshot unless a caller overrides it.
   const fromFlags = useIsEnabled();
@@ -84,11 +160,23 @@ function PaletteBody({
     () => getCommands({ role, isEnabled: enabled }, registered),
     [registered, role, enabled],
   );
+  const registeredSources = useSyncExternalStore(
+    subscribeCommandSources,
+    commandSourcesSnapshot,
+    commandSourcesSnapshot,
+  );
+  const sources = useMemo(
+    () => getCommandSources({ role, isEnabled: enabled }, registeredSources),
+    [registeredSources, role, enabled],
+  );
   const [search, setSearch] = useState('');
   const [recent] = useState(() => readRecent(slug));
+  const found = useSourceResults(search, sources, { slug, workspaceId });
 
   // Registry keys are plain strings (commands register at runtime); the catalog has them all.
-  const labelOf = (command: Command) => t(command.labelKey as Parameters<typeof t>[0]);
+  // Search results carry their label as text (a matter's title).
+  const labelOf = (command: Command) =>
+    command.label ?? t(command.labelKey as Parameters<typeof t>[0]);
   const heading = (group: CommandGroupId) => t(`palette.groups.${group}`);
 
   const sections: Section[] = [];
@@ -111,12 +199,23 @@ function PaletteBody({
     }
     section.items.push({ value: command.id, command });
   }
+  // Search results follow the static commands of their group, in the source's order.
+  for (const command of found) {
+    let section = sections.find((entry) => entry.key === command.group);
+    if (!section) {
+      section = { key: command.group, heading: heading(command.group), items: [] };
+      sections.push(section);
+    }
+    section.items.push({ value: `found:${command.id}`, command });
+  }
+  const foundIds = new Set(found.map((command) => command.id));
 
   const run = (command: Command) => {
-    pushRecent(slug, command.id);
+    if (!foundIds.has(command.id)) pushRecent(slug, command.id);
     close();
     void command.perform({
       slug,
+      workspaceId,
       close,
       navigate: (href) => {
         router.push(href);
@@ -152,7 +251,19 @@ function PaletteBody({
                   className="min-h-11"
                 >
                   {Icon ? <Icon aria-hidden="true" /> : null}
-                  <span className="truncate">{labelOf(command)}</span>
+                  {command.detail === undefined ? (
+                    <span className="truncate">{labelOf(command)}</span>
+                  ) : (
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate">{labelOf(command)}</span>
+                      <span
+                        data-palette-detail=""
+                        className="text-ink-muted truncate text-xs tabular-nums"
+                      >
+                        {command.detail}
+                      </span>
+                    </span>
+                  )}
                   {command.shortcut ? (
                     <CommandShortcut>
                       <Kbd hotkey={command.shortcut} />

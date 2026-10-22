@@ -106,7 +106,9 @@
       "tabListLabel": "Matter sections",
       "tabs": {
         "overview": "Overview",
-        "proceedings": "Proceedings"
+        "proceedings": "Proceedings",
+        "people": "People",
+        "documents": "Documents"
       },
       "status": {
         "active": "Active",
@@ -211,7 +213,50 @@
           "registry_memo": "Registry memo",
           "other": "Other"
         },
-        "label": "{kind}, {status}"
+        "label": "{kind}, {status}",
+        "tabTitle": "Documents",
+        "listLabel": "Documents of this matter",
+        "loading": "Loading documents",
+        "inbox": "Share or drop files into your Inbox",
+        "emptyTitle": "No documents yet",
+        "open": "Open {kind}, added {date}",
+        "languages": {
+          "EN": "English",
+          "TA": "Tamil",
+          "KN": "Kannada"
+        },
+        "sources": {
+          "capture": "From your Inbox",
+          "manual": "Added by hand"
+        },
+        "replaces": "Replaces an earlier version",
+        "replacedBy": "Replaced by a newer version",
+        "loadMore": "Show older documents",
+        "newest": "Back to the newest",
+        "error": {
+          "title": "Couldn't load the documents of this matter.",
+          "retry": "Retry",
+          "reference": "Reference: {digest}"
+        },
+        "preview": {
+          "title": "{kind}, added {date}",
+          "description": "The page image and the text read from it.",
+          "pageOf": "Page {page} of {count}",
+          "pages": "Pages",
+          "previous": "Previous page",
+          "next": "Next page",
+          "goTo": "Go to page",
+          "go": "Go",
+          "image": "Page {page}",
+          "imagePending": "Page image not ready yet",
+          "imagePendingHint": "It appears here once the document has been processed.",
+          "text": "Text of this page",
+          "textPending": "Text not extracted yet",
+          "noPages": "No pages yet",
+          "unavailable": "This document is not available.",
+          "failed": "Couldn't load this document. Try again.",
+          "close": "Close"
+        }
       },
       "people": {
         "title": "People",
@@ -222,6 +267,62 @@
           "instructed_by": "Instructed by",
           "assigned_to": "Assigned to",
           "opposes": "Opposite side"
+        },
+        "listLabel": "People of this matter",
+        "loading": "Loading people",
+        "add": "Add person",
+        "edit": "Edit {name}",
+        "remove": "Remove {name} from this matter",
+        "removeTitle": "Remove {name} from this matter?",
+        "removeHint": "Their role here is removed. The person stays in your workspace.",
+        "removeConfirm": "Remove",
+        "removeFailed": "Couldn't remove. Try again.",
+        "cancel": "Cancel",
+        "aliases": "Also known as {aliases}",
+        "onProceeding": "On a proceeding",
+        "announceSaved": "{name} saved.",
+        "announceRemoved": "{name} removed from this matter.",
+        "personKinds": {
+          "party": "Party",
+          "advocate": "Advocate",
+          "judge_staff": "Court or government staff",
+          "client": "Client",
+          "professional": "Professional contact",
+          "other": "Other"
+        },
+        "contact": {
+          "email": "Email",
+          "phone": "Phone",
+          "address": "Address"
+        },
+        "form": {
+          "addTitle": "Add person",
+          "editTitle": "Edit person",
+          "description": "People you add stay in this workspace. Nothing is imported from your contacts.",
+          "name": "Name",
+          "aliases": "Other names",
+          "aliasesHint": "Spellings used in orders and cause lists.",
+          "alias": "Other name {n}",
+          "addAlias": "Add another name",
+          "removeAlias": "Remove other name {n}",
+          "kind": "Who they are",
+          "role": "Role on this matter",
+          "contactTitle": "Contact details",
+          "contactHint": "Kept only for clients and professional contacts.",
+          "save": "Save",
+          "cancel": "Cancel",
+          "errors": {
+            "name": "Enter a name.",
+            "email": "Enter a valid email.",
+            "failed": "Couldn't save. Try again.",
+            "forbidden": "Your role can't change the people of this matter.",
+            "notFound": "This person is no longer on this matter."
+          }
+        },
+        "error": {
+          "title": "Couldn't load the people of this matter.",
+          "retry": "Retry",
+          "reference": "Reference: {digest}"
         }
       },
       "synopsis": {

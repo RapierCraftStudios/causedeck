@@ -4,8 +4,10 @@ name: CI
 
 on:
   pull_request:
+  # Lane branches (forge.yaml verify.mode: ci): ForgeDock pushes the lane and waits on this run before
+  # review, so type-checks and tests run on GitHub runners instead of the shared lane host.
   push:
-    branches: [main, staging]
+    branches: [main, staging, 'feat/issue-*-lean']
   merge_group:
 
 permissions:

@@ -6,7 +6,7 @@ CI is GitHub Actions. It gates every pull request, and the ForgeDock pipeline me
 
 | Workflow | File | Triggers | Jobs |
 |---|---|---|---|
-| CI | `.github/workflows/ci.yml` | `pull_request`, `push` to `main`, `staging`, `milestone/**`, `merge_group` | `lint`, `typecheck`, `test`, `build`, `tenancy` |
+| CI | `.github/workflows/ci.yml` | `pull_request`, `push` to `main`, `staging` and ForgeDock lane branches `feat/issue-*-lean`, `merge_group` | `lint`, `typecheck`, `test`, `build`, `tenancy` |
 | Security | `.github/workflows/security.yml` | `pull_request`, `push` to `main`, `staging`, `milestone/**`, weekly cron (Mon 02:30 UTC), manual | `audit`, `gitleaks`, `codeql`, `dependency-review` (PRs only) |
 | Lint workflows | `.github/workflows/lint-workflows.yml` | `pull_request` and `push` touching `.github/**` | `actionlint` |
 | Dependabot | `.github/dependabot.yml` | weekly | npm (one grouped `catalog` PR), github-actions (workflows and `.github/actions/*`) |
@@ -51,6 +51,7 @@ CI runs in tiers so lane PRs stay fast, ship PRs carry one heavy gate, and the s
 - **e2e scope (D-046).** `E2E_SCOPE=ship` runs all non-visual specs on `chromium-1280-light`, `@smoke` on `chromium-360-light` and `webkit-360`, and skips `*.visual.spec.ts` (about 340 tests). `E2E_SCOPE=full` is the 6-project Chromium matrix (360/768/1280, light/dark) plus visual specs and the WebKit smoke; it is the default locally (`E2E_SCOPE=ship pnpm --filter @causedeck/e2e test` reproduces the gate) and what the nightly/dispatch run uses. The 6x matrix repeated functional coverage and could not finish inside the timeout.
 - Pushes to `milestone/**` no longer trigger workflows: every change there arrives through a PR that already ran CI (this removed the duplicate push + PR runs).
 - Pushes to `staging` no longer re-run e2e: the ship PR already ran it.
+- Pushes to ForgeDock lane branches (`feat/issue-*-lean`) run CI (full, not change-aware: a push has no base) so lanes verify on GitHub runners before review (`forge.yaml` `verify.mode: ci`) instead of type-checking and testing on the shared lane host. The lane PR then runs CI again; the repo is public, so standard runners cost nothing.
 - Visual baselines are regenerated on demand (`visual:update` label), not on every ship.
 - To run the full suite on a lane PR, add the `full-ci` label; other label events do not re-run anything.
 - `codeql` and `dependency-review` stay opt-in behind `ENABLE_GHAS` (D-043).

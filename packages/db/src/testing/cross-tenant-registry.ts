@@ -26,6 +26,8 @@ const CORE_ROSTERS_TEST = 'packages/core/src/__tests__/cross-tenant/rosters.test
 const CORE_NEXT_DATE_CHOICE_TEST =
   'packages/core/src/__tests__/cross-tenant/next-date-choice.test.ts';
 const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-preview.test.ts';
+const CORE_DOCUMENT_PREVIEW_TEST =
+  'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -128,6 +130,7 @@ const rosterSelfScoped = {
 } as const;
 const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
 const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
+const documentPreviewDenies = { test: CORE_DOCUMENT_PREVIEW_TEST, kind: 'denies' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
@@ -366,6 +369,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   upsertPerson: denies,
   setRoleEdge: denies,
   setSensitive: denies,
+  // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
+  getDocumentPreview: documentPreviewDenies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,

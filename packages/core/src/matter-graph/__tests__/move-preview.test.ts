@@ -111,7 +111,8 @@ describe('previewMergeMatters', () => {
         fromMatterId: from.matterId,
       });
       expect(preview.blocked).toBeNull();
-      expect(preview.proceedings.map((p) => p.id)).toEqual(from.proceedings);
+      // Seeded in one transaction (one `created_at`), so the order between them is the id's.
+      expect(sorted(preview.proceedings.map((p) => p.id))).toEqual(sorted(from.proceedings));
       expect(preview.proceedings[0]).toMatchObject({ year: 2026 });
       expect(preview.documentIds).toEqual([from.documentId]);
       expect(sorted(preview.obligationIds)).toEqual(sorted(from.obligations));

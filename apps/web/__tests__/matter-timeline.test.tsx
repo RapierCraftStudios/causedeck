@@ -396,7 +396,7 @@ describe('Timeline tab (#41)', () => {
     await renderPage();
     fireEvent.click(screen.getByRole('button', { name: tl.mode.lanes }));
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('lanes');
-    expect(screen.getByRole('table', { name: tl.lanes.label })).toBeTruthy();
+    expect(await screen.findByRole('table', { name: tl.lanes.label })).toBeTruthy();
     cleanup();
 
     window.history.replaceState(null, '', BASE);
@@ -408,7 +408,7 @@ describe('Timeline tab (#41)', () => {
     });
     await renderPage();
     fireEvent.click(screen.getByRole('button', { name: tl.mode.lanes }));
-    expect(screen.getByRole('table', { name: tl.lanes.label })).toBeTruthy();
+    expect(await screen.findByRole('table', { name: tl.lanes.label })).toBeTruthy();
   });
 
   it('virtualises a timeline of more than 150 events', async () => {

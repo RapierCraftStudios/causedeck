@@ -154,7 +154,7 @@ describe('PushPermissionCard', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Turn on' }));
     expect(await screen.findByText(copy.enabled)).not.toBeNull();
     expect(browser.requestPermission).toHaveBeenCalledTimes(1);
-    expect(browser.register).toHaveBeenCalledWith('/push-sw-handler.js', { scope: '/' });
+    expect(browser.register).toHaveBeenCalledWith('/sw.js', { scope: '/' });
     expect(browser.subscribe).toHaveBeenCalledWith({
       userVisibleOnly: true,
       applicationServerKey: vapidKeyBytes(KEY),

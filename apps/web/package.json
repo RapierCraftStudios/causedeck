@@ -33,6 +33,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitest/browser": "catalog:",
+    "esbuild": "catalog:",
     "eslint": "catalog:",
     "jsdom": "catalog:",
     "playwright": "catalog:",
@@ -65,6 +66,7 @@
     "better-auth": "catalog:",
     "d3-hierarchy": "catalog:",
     "d3-shape": "catalog:",
+    "dexie": "catalog:",
     "lucide-react": "catalog:",
     "motion": "catalog:",
     "next": "catalog:",
@@ -73,6 +75,7 @@
     "pdfjs-dist": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "serwist": "catalog:",
     "sonner": "catalog:",
     "uqr": "catalog:",
     "zod": "catalog:"

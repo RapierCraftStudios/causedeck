@@ -58,3 +58,15 @@ export const KARNATAKA_HC_ORDER_TYPE_CUES: readonly {
   { type: 'final', phrases: ['disposed of', 'dismissed', 'allowed'] },
   { type: 'interim', phrases: ['interim', 'till the next date of hearing', 'ad-interim'] },
 ];
+
+/**
+ * Registry scrutiny wording (#407), lower-case: an objection, defect or return raises
+ * `objection_raised`; a cure phrase followed by a period (`to be cured within 7 days`) is a
+ * `cure_deadline`. An objection phrase right after a decoy prefix (`file statement of objections`)
+ * is an order direction, never a registry objection.
+ */
+export const KARNATAKA_HC_REGISTRY_PHRASES = {
+  objection: ['office objections', 'objections', 'objection', 'defects', 'defect', 'returned'],
+  cure: ['to be cured within', 'cured within', 'cure within', 'comply within', 're-present within'],
+  decoyPrefixes: ['statement of objections', 'objections statement'],
+} as const;

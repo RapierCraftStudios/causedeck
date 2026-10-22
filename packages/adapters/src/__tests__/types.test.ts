@@ -220,6 +220,22 @@ describe('adapter contract', () => {
     expect(RegistryEventSchema.safeParse({ kind: 'listed', anchor, confidence: 1 }).success).toBe(
       false,
     );
+    // Karnataka FR numbers and scrutiny objections (#407).
+    expect(
+      RegistryEventSchema.safeParse({
+        kind: 'fr_assigned',
+        anchor,
+        confidence: 0.95,
+        frNo: '1234/2026',
+      }).success,
+    ).toBe(true);
+    expect(
+      RegistryEventSchema.safeParse({ kind: 'objection_raised', anchor, confidence: 0.8 }).success,
+    ).toBe(true);
+    expect(
+      RegistryEventSchema.safeParse({ kind: 'fr_assigned', anchor, confidence: 0.95, frNo: '' })
+        .success,
+    ).toBe(false);
     expect([...DEEP_LINK_TARGETS]).toEqual([...RESOURCES, 'e_copy', 'aims']);
   });
 

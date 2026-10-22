@@ -292,17 +292,22 @@ export const REGISTRY_EVENT_KINDS = [
   'returned_for_defects',
   'cure_deadline',
   'numbered',
+  'fr_assigned',
+  'objection_raised',
 ] as const;
 
 /**
  * A registry notice read from a supplied document (SR number, defect return, cure deadline,
- * numbering). Always a proposal with an anchor, never a state change.
+ * numbering; Karnataka FR numbers and scrutiny objections, #407). Always a proposal with an anchor,
+ * never a state change.
  */
 export const RegistryEventSchema = z.object({
   kind: z.enum(REGISTRY_EVENT_KINDS),
   anchor: AnchorSchema,
   confidence: ConfidenceSchema,
   srNo: z.string().min(1).optional(),
+  /** Filing Register number (`1234/2026`), on `fr_assigned` (#407). */
+  frNo: z.string().min(1).optional(),
   caseRef: CaseRefSchema.optional(),
   deadline: z
     .object({

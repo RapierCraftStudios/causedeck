@@ -9,8 +9,8 @@
 // index also carries each forum's unreadable halls and official cause-list link for the courts
 // page's parse-failure banner (#399).
 //
-// The rosters page read model (#434, part 1 of #391): each forum's roster versions with entry counts
-// and the roster in force on a day, and the open bench-change alerts on matters the actor may read
+// The rosters page read model (#434, part 1 of #391): each forum's roster versions with entry counts,
+// the roster in force on a day and its halls (#435: hall, bench, portfolio), and the open bench-change alerts on matters the actor may read
 // (matter title, the alert's roster start, and the old and new bench as the court publishes them).
 // It checks membership and `matter.read` as the roster services do. A bench's judges are shown for
 // that one bench only: nothing groups, counts or ranks by judge (PX-9, ME-6).
@@ -380,6 +380,16 @@ export interface RostersPageForum {
   rosters: RosterSummary[];
   /** The active or superseded roster in force on the asked day, or null when none covers it. */
   activeRosterId: string | null;
+  /** The halls of the roster in force, by hall number (numeric-aware); empty when none is. */
+  halls: RosterHall[];
+}
+
+/** One hall of the roster in force: the bench sitting there and the portfolio as printed. */
+export interface RosterHall {
+  entryId: string;
+  hallNo: string;
+  portfolioText: string;
+  bench: BenchSummary;
 }
 
 /** One bench as the court publishes it: never grouped, counted or ranked by judge. */
@@ -501,8 +511,8 @@ function inForce(rosters: readonly BenchRosterRow[], on: string): BenchRosterRow
 
 /**
  * The courts rosters page: every forum the workspace has rosters for, with their versions, entry
- * counts and the roster in force on `on`, and the open bench-change alerts on matters the actor may
- * read. Requires `matter.read`; NOT_FOUND for a malformed id, a non-member or a call from another
+ * counts, the roster in force on `on` and its halls, and the open bench-change alerts on matters the
+ * actor may read. Requires `matter.read`; NOT_FOUND for a malformed id, a non-member or a call from another
  * workspace's scope, VALIDATION for a malformed day.
  */
 export async function getRostersPage(
@@ -545,24 +555,45 @@ export async function getRostersPage(
             .from(forum)
             .where(inArray(forum.id, forumIds))
             .orderBy(asc(forum.court), asc(forum.code));
-    const pageForums = forums.map((f) => {
-      const own = rosters.filter((r) => r.forumId === f.id);
-      return {
-        forum: f,
-        rosters: own.map((r) => ({ ...r, entryCount: entryCount.get(r.id) ?? 0 })),
-        activeRosterId: inForce(own, input.on)?.id ?? null,
-      };
-    });
+    const activeRosterIds = new Map(
+      forums.map((f) => [
+        f.id,
+        inForce(
+          rosters.filter((r) => r.forumId === f.id),
+          input.on,
+        )?.id ?? null,
+      ]),
+    );
+    const inForceIds = [...activeRosterIds.values()].filter((id): id is string => id !== null);
+    const entries =
+      inForceIds.length === 0
+        ? []
+        : await tx
+            .select({
+              id: benchRosterEntry.id,
+              rosterId: benchRosterEntry.rosterId,
+              hallNo: benchRosterEntry.hallNo,
+              portfolioText: benchRosterEntry.portfolioText,
+              benchId: benchRosterEntry.benchId,
+            })
+            .from(benchRosterEntry)
+            .where(
+              and(
+                eq(benchRosterEntry.workspaceId, workspaceId),
+                inArray(benchRosterEntry.rosterId, inForceIds),
+              ),
+            );
 
     const rows = await openBenchAlertsStatement(tx, resolved, settings);
     const benchIds = [
-      ...new Set(
-        rows.flatMap((r) =>
+      ...new Set([
+        ...entries.map((e) => e.benchId),
+        ...rows.flatMap((r) =>
           r.alert.oldBenchId === null
             ? [r.alert.newBenchId]
             : [r.alert.oldBenchId, r.alert.newBenchId],
         ),
-      ),
+      ]),
     ];
     const benches =
       benchIds.length === 0
@@ -582,6 +613,28 @@ export async function getRostersPage(
       label: null,
       benchKind: 'other',
       judges: [],
+    });
+    const pageForums = forums.map((f): RostersPageForum => {
+      const own = rosters.filter((r) => r.forumId === f.id);
+      const activeRosterId = activeRosterIds.get(f.id) ?? null;
+      return {
+        forum: f,
+        rosters: own.map((r) => ({ ...r, entryCount: entryCount.get(r.id) ?? 0 })),
+        activeRosterId,
+        halls: entries
+          .filter((e) => e.rosterId === activeRosterId)
+          .map((e): RosterHall => ({
+            entryId: e.id,
+            hallNo: e.hallNo,
+            portfolioText: e.portfolioText,
+            bench: benchOf.get(e.benchId) ?? unknownBench(e.benchId),
+          }))
+          .sort(
+            (a, b) =>
+              a.hallNo.localeCompare(b.hallNo, 'en', { numeric: true }) ||
+              a.entryId.localeCompare(b.entryId),
+          ),
+      };
     });
     const alerts = rows.map((r): RostersPageAlert => ({
       alertId: r.alert.id,

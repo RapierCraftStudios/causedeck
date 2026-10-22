@@ -402,6 +402,34 @@ describe('getRostersPage (#434)', () => {
     });
   });
 
+  it('lists the halls of the roster in force with their bench and portfolio (#435)', async () => {
+    await withTestDb(async (tx) => {
+      const s = await rostersScenario(tx);
+      const actor = { userId: s.ownerId, workspaceId: s.workspaceId };
+      const october = await getRostersPage(tx, actor, { on: '2026-10-06' });
+      expect(october.forums[0]?.halls).toEqual([
+        {
+          entryId: expect.any(String) as string,
+          hallNo: '1',
+          portfolioText: '',
+          bench: {
+            id: s.b,
+            label: 'Justice B (fictional), Justice C (fictional)',
+            benchKind: 'division',
+            judges: ['Justice B (fictional)', 'Justice C (fictional)'],
+          },
+        },
+      ]);
+      const september = await getRostersPage(tx, actor, { on: '2026-09-15' });
+      expect(september.forums[0]?.halls.map((h) => [h.hallNo, h.bench.id, h.bench.label])).toEqual([
+        ['1', s.a, 'Justice A (fictional)'],
+        ['2', s.a, 'Justice A (fictional)'],
+      ]);
+      const august = await getRostersPage(tx, actor, { on: '2026-08-01' });
+      expect(august.forums[0]?.halls).toEqual([]);
+    });
+  });
+
   it('shows open alerts on readable matters with the matter and both benches', async () => {
     await withTestDb(async (tx) => {
       const s = await rostersScenario(tx);

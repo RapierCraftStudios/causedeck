@@ -256,6 +256,14 @@ const CASES: Record<string, Case> = {
     );
     expect(fromB).toEqual({ undone: [], skipped: [] });
   },
+  getInbox: async (f) => {
+    // ub claims A: denied, and B's own inbox never shows A's proposals.
+    await claimsAreDenied(f, (deps, actor) => core.getInbox(deps, actor));
+    const { deps } = graphDeps(f.tx);
+    const inbox = await core.getInbox(deps, { userId: f.ub, workspaceId: f.b.id });
+    const aProposal = f.proposalId;
+    expect(inbox.needsYou.map((item) => item.proposalId)).not.toContain(aProposal);
+  },
   reassignCapture: async (f) => {
     const matterId = f.a.rows.matter?.matterId ?? RANDOM_ID;
     await claimsAreDenied(f, (deps, actor) =>

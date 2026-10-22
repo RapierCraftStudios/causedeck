@@ -30,7 +30,12 @@ export {
   isCaptureDomainError,
   SensitiveMatterExcludedError,
 } from './errors.ts';
-export { discardCapture, pinCapture } from './manage.ts';
+export {
+  createKeyLineCapture,
+  discardCapture,
+  keepCaptureAsAttachment,
+  pinCapture,
+} from './manage.ts';
 export { aiStepsAllowed, runCaptureProcess, type CaptureProcessOutcome } from './process.ts';
 export {
   markCaptureFailed,

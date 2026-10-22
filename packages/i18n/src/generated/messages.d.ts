@@ -2678,6 +2678,187 @@ export type Messages = {
       selectMore: string;
     };
   };
+  inbox: {
+    metaTitle: string;
+    title: string;
+    sections: {
+      label: string;
+      needsYou: string;
+      ready: string;
+      processing: string;
+    };
+    empty: {
+      needsYou: {
+        title: string;
+        body: string;
+      };
+      ready: {
+        title: string;
+        body: string;
+      };
+    };
+    firstRun: {
+      title: string;
+      body: string;
+      share: string;
+      voice: string;
+      upload: string;
+      on: string;
+      off: string;
+    };
+    offline: {
+      banner: string;
+      decisions: string;
+      badge: string;
+    };
+    processing: {
+      label: string;
+      step: {
+        received: string;
+        scanning: string;
+        queued: string;
+        processing: string;
+      };
+      channel: {
+        share: string;
+        upload: string;
+        voice: string;
+        camera: string;
+        email: string;
+        ics: string;
+        whatsapp_export: string;
+        bulk_import: string;
+        manual: string;
+      };
+    };
+    card: {
+      kind: {
+        next_date: string;
+        new_matter: string;
+        new_proceeding: string;
+        listing_update: string;
+        task: string;
+        obligation_from_direction: string;
+        document_attach: string;
+        order_record: string;
+        party_detail: string;
+        duplicate_merge: string;
+        memory_item: string;
+        fee_entry: string;
+        outward_draft: string;
+      };
+      matter: string;
+      readNextDate: string;
+      read: string;
+      sensitive: string;
+      confidence: {
+        high: string;
+        check: string;
+        label: string;
+      };
+      reason: {
+        ambiguous: string;
+        low: string;
+        unanchored: string;
+        other: string;
+      };
+      confirmName: string;
+      dontSuggest: string;
+      save: string;
+      cancel: string;
+      field: {
+        date: string;
+        title: string;
+        description: string;
+        dueDate: string;
+        name: string;
+        number: string;
+        year: string;
+      };
+      noValue: string;
+      failed: string;
+      stale: string;
+    };
+    conflict: {
+      title: string;
+      current: string;
+      proposed: string;
+      keep: string;
+      use: string;
+      other: string;
+      otherLabel: string;
+      apply: string;
+      oneProceeding: string;
+    };
+    unreadable: {
+      title: string;
+      copy: string;
+      retake: string;
+      type: string;
+      keep: string;
+      keyLine: string;
+      submit: string;
+      saved: string;
+      kept: string;
+    };
+    reassign: {
+      prompt: string;
+      explain: string;
+      search: string;
+      move: string;
+      done: string;
+      none: string;
+    };
+    toast: {
+      undo: string;
+      nextDate: string;
+      done: string;
+      dismissed: string;
+      undone: string;
+      undoFailed: string;
+    };
+    announce: {
+      confirmedNextDate: string;
+      confirmed: string;
+      dismissed: string;
+      newItems: string;
+      section: string;
+    };
+    ready: {
+      copy: string;
+      markSent: string;
+      openIn: string;
+      reminder: string;
+      marked: string;
+    };
+    preview: {
+      title: string;
+      empty: string;
+      page: string;
+      openFull: string;
+      noSource: string;
+    };
+    readOnly: string;
+    denied: string;
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    loading: string;
+    shortcuts: {
+      title: string;
+      description: string;
+      move: string;
+      confirm: string;
+      edit: string;
+      dismiss: string;
+      undo: string;
+      sections: string;
+      help: string;
+      open: string;
+    };
+  };
   error: {
     title: string;
     description: string;

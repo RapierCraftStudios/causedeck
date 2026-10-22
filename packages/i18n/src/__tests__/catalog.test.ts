@@ -92,6 +92,7 @@ describe('namespaced catalogs (#174)', () => {
         'courtsRosters',
         'error',
         'home',
+        'inbox',
         'invite',
         'lifecycle',
         'locale',

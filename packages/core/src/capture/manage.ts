@@ -4,12 +4,13 @@
 // object past its TTL (a discarded capture is never kept: discarding clears the pin).
 import { discardTtl, historyOf } from '@causedeck/capture';
 import { schema, withWorkspace } from '@causedeck/db';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
-import { forbidden } from '../shared/errors.ts';
+import { conflict, forbidden } from '../shared/errors.ts';
 
 import { auditCapture } from './audit.ts';
 import type { CaptureCtx } from './context.ts';
+import { createManualCapture } from './create.ts';
 import { moveCapture, requireCapture, type CaptureRecord } from './state.ts';
 
 const { capture } = schema;
@@ -71,4 +72,58 @@ export function pinCapture(
       .returning();
     return updated ?? row;
   });
+}
+
+/**
+ * Keep an unreadable capture as an unprocessed document (#48): `needs_you -> ready`, nothing read
+ * or guessed from it. Any other status cannot be kept and throws a conflict.
+ */
+export function keepCaptureAsAttachment(
+  ctx: CaptureCtx,
+  captureId: string,
+): Promise<CaptureRecord> {
+  const now = ctx.now?.() ?? new Date();
+  return withWorkspace(ctx.db, scope(ctx), async (tx) => {
+    const row = await requireCapture(tx, ctx.workspaceId, captureId);
+    await ownOrManage(ctx, row);
+    if (row.status === 'ready') return row;
+    if (row.status !== 'needs_you') throw conflict('This capture cannot be kept as an attachment');
+    const updated = await moveCapture(tx, row, 'ready', now);
+    await auditCapture(
+      ctx,
+      tx,
+      'capture.completed',
+      { kind: 'capture', id: row.id },
+      { channel: row.channel, keptAsAttachment: true },
+    );
+    return updated;
+  });
+}
+
+/**
+ * Type the key line of an unreadable capture (#48): a manual (L0) capture linked to the original
+ * through `source_meta.linkedCaptureId`, with the original's matter hint. The typed text is stored
+ * as written; nothing is inferred from the unreadable file.
+ */
+export async function createKeyLineCapture(
+  ctx: CaptureCtx,
+  input: { captureId: string; text: string },
+): Promise<{ captureId: string; linkedCaptureId: string }> {
+  const original = await withWorkspace(ctx.db, scope(ctx), (tx) =>
+    requireCapture(tx, ctx.workspaceId, input.captureId),
+  );
+  await ownOrManage(ctx, original);
+  const created = await createManualCapture(ctx, {
+    text: input.text,
+    ...(original.matterHintId === null ? {} : { matterHintId: original.matterHintId }),
+  });
+  await withWorkspace(ctx.db, scope(ctx), (tx) =>
+    tx
+      .update(capture)
+      .set({
+        sourceMeta: sql`${capture.sourceMeta} || ${JSON.stringify({ linkedCaptureId: original.id })}::jsonb`,
+      })
+      .where(and(eq(capture.id, created.captureId), eq(capture.workspaceId, ctx.workspaceId))),
+  );
+  return { captureId: created.captureId, linkedCaptureId: original.id };
 }

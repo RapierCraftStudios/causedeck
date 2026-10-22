@@ -1880,6 +1880,65 @@
       }
     }
   },
+  "courtsRosters": {
+    "metaTitle": "Rosters",
+    "title": "Bench rosters",
+    "description": "The sitting arrangements you confirmed for each forum, and the matters whose bench changed.",
+    "loading": "Loading rosters",
+    "back": "All courts",
+    "importRoster": "Import roster",
+    "importOffline": "Importing a roster needs a connection.",
+    "readOnly": "Only owners and advocates can import rosters.",
+    "forums": {
+      "label": "Forum",
+      "rail": "Forums with rosters"
+    },
+    "roster": {
+      "listLabel": "Roster versions",
+      "effectiveFrom": "From {date}",
+      "effectiveTo": "until {date}",
+      "openEnded": "until replaced",
+      "version": "Version {version}",
+      "entries": "{count, plural, one {# hall} other {# halls}}",
+      "activeToday": "Active today",
+      "status": {
+        "active": "Active",
+        "superseded": "Superseded",
+        "draft": "Draft"
+      }
+    },
+    "halls": {
+      "caption": "Halls in the roster in force today",
+      "hall": "Hall",
+      "bench": "Bench",
+      "portfolio": "Portfolio",
+      "benchNotRecorded": "Bench not recorded",
+      "noneInForce": {
+        "title": "No roster in force today",
+        "hint": "None of this forum's rosters covers today. Import the current sitting arrangements to see who sits where."
+      }
+    },
+    "alerts": {
+      "title": "Bench changes",
+      "warning": "Bench changed",
+      "changed": "Bench changed from {date}: <link>{matter}</link> now sits with {bench}.",
+      "previousBench": "Previously {bench}.",
+      "noPreviousBench": "No bench was recorded for it before.",
+      "unknownBench": "a bench with no judges recorded",
+      "none": "No open bench changes."
+    },
+    "empty": {
+      "title": "No roster imported yet.",
+      "hint": "Share the court's sitting arrangements PDF to be told when your bench changes."
+    },
+    "error": {
+      "title": "Could not load rosters.",
+      "retry": "Try again"
+    },
+    "import": {
+      "parseError": "We couldn't read the dates in this PDF. Enter them yourself or try the original file."
+    }
+  },
   "matters": {
     "metaTitle": "Matters",
     "title": "Matters",

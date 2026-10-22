@@ -37,12 +37,12 @@ describe('ForumTabs (#400)', () => {
     expect(screen.getByRole('link', { name: 'Halls' }).getAttribute('aria-current')).toBeNull();
   });
 
-  it('renders the Rosters link when the rosters route exists', () => {
+  it('renders the Rosters link to the rosters page with the forum selected (#435)', () => {
     renderWithIntl(
-      <ForumTabs slug="demo" code={code} rostersHref={`/w/demo/courts/${code}/rosters`} />,
+      <ForumTabs slug="demo" code={code} rostersHref={`/w/demo/courts/rosters?forum=${code}`} />,
     );
-    expect(screen.getByRole('link', { name: 'Rosters' }).getAttribute('href')).toBe(
-      `/w/demo/courts/${code}/rosters`,
-    );
+    const rosters = screen.getByRole('link', { name: 'Rosters' });
+    expect(rosters.getAttribute('href')).toBe(`/w/demo/courts/rosters?forum=${code}`);
+    expect(rosters.getAttribute('aria-current')).toBeNull();
   });
 });

@@ -2,7 +2,8 @@
 // and this workspace's courts index (for the latest parse and the official cause-list link the
 // degraded banner uses) in the workspace's RLS scope, then renders the header, the Halls, Adapter
 // and Links tabs and the tab's page. Every role reads it. An unknown code, or another workspace's
-// custom forum, is a 404. The Rosters tab stays hidden: its route belongs to #39 (not planned).
+// custom forum, is a 404. The Rosters tab links to the workspace rosters page with this forum
+// selected (`/courts/rosters?forum=<code>`, #435).
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -85,7 +86,11 @@ export default async function ForumLayout({ children, params }: ForumLayoutProps
         latestParse={entry?.latestParse ?? null}
         officialList={entry?.officialList ?? null}
       />
-      <ForumTabs slug={slug} code={forum.code} />
+      <ForumTabs
+        slug={slug}
+        code={forum.code}
+        rostersHref={`/w/${encodeURIComponent(slug)}/courts/rosters?forum=${encodeURIComponent(forum.code)}`}
+      />
       <div data-slot="forum-tab-panel">{children}</div>
     </div>
   );

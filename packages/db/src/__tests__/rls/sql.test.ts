@@ -91,6 +91,7 @@ describe('row-level security catalog', () => {
         ...BASELINE_TENANT_TABLES,
         'audit_event',
         'ai_call',
+        'ai_call_result',
         'notification',
         'notification_pref',
         'notification_setting',

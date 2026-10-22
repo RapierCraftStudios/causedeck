@@ -512,6 +512,17 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
       `must be ${OVERRIDE_ACK} to set AI_INDIA_ONLY=false in production`,
     );
   }
+  if (
+    env.AI_PROVIDER === 'sarvam' &&
+    env.SARVAM_API_KEY !== undefined &&
+    env.SARVAM_API_KEY !== '' &&
+    env.SARVAM_NO_TRAINING_CONFIRMED !== 'true'
+  ) {
+    add(
+      'SARVAM_NO_TRAINING_CONFIRMED',
+      'must be true in production when a real Sarvam key is set (contract no-training term)',
+    );
+  }
   if (parsed.ALLOW_MOCK_PROVIDERS !== true) {
     for (const [key, mock] of Object.entries(MOCK_PROVIDERS)) {
       if (env[key] === mock) {

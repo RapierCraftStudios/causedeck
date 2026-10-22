@@ -45,6 +45,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   billing_event: DB_TABLES_TEST,
   audit_event: DB_TABLES_TEST,
   ai_call: DB_TABLES_TEST,
+  ai_call_result: DB_TABLES_TEST,
   notification: DB_TABLES_TEST,
   notification_pref: DB_TABLES_TEST,
   notification_setting: DB_TABLES_TEST,

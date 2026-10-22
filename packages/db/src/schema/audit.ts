@@ -35,6 +35,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -124,10 +125,47 @@ export const aiCall = tenantTable(
     autoApplied: boolean('auto_applied').notNull().default(false),
     userAction: text('user_action'),
     undoneAt: timestamp('undone_at', { withTimezone: true }),
+    // Gateway columns (#44, migration 0054). The row stores hashes and ids only, never content.
+    /** The gateway task id, e.g. `classify_document`; null on rows written before the gateway. */
+    task: text('task'),
+    latencyMs: integer('latency_ms'),
+    /** `ok`, `error`, `blocked_sensitive`, `residency_violation`, `budget_exceeded` or `output_invalid`. */
+    status: text('status').notNull().default('ok'),
+    errorCode: text('error_code'),
+    /** sha256 hex of the normalised input; the input itself is never stored. */
+    inputSha256: text('input_sha256'),
+    captureId: uuid('capture_id'),
+    matterId: uuid('matter_id'),
+    /** The policy flagged instruction-like content in the input. */
+    suspicious: boolean('suspicious').notNull().default(false),
+    /** Job id + task; a retry with the same key reuses the stored result (`ai_call_result`). */
+    idempotencyKey: text('idempotency_key'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  () => [
+  (t) => [
+    index('ai_call_capture_idx').on(t.workspaceId, t.captureId),
+    uniqueIndex('ai_call_idempotency_uq')
+      .on(t.workspaceId, t.idempotencyKey)
+      .where(sql`${t.idempotencyKey} is not null`),
     check('ai_call_automation_level_chk', sql`automation_level between 1 and 4`),
     check('ai_call_usage_chk', sql`input_tokens >= 0 and output_tokens >= 0 and cost_paise >= 0`),
   ],
+);
+
+/**
+ * The validated output of an idempotent gateway call (#44), so a job retry reuses it instead of
+ * paying twice. `ai_call` is append-only and holds no content, so the output lives here and
+ * expires after 24 hours; rows past `expires_at` are never read and are deleted on the next write.
+ */
+export const aiCallResult = tenantTable(
+  'ai_call_result',
+  {
+    id: idV7(),
+    idempotencyKey: text('idempotency_key').notNull(),
+    aiCallId: uuid('ai_call_id').notNull(),
+    output: jsonb('output').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('ai_call_result_key_uq').on(t.workspaceId, t.idempotencyKey)],
 );

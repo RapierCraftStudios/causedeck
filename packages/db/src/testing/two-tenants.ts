@@ -11,7 +11,7 @@ import type { Database, Transaction } from '../client.ts';
 import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
 import { adapterParseRun } from '../schema/adapters.ts';
-import { aiCall } from '../schema/audit.ts';
+import { aiCall, aiCallResult } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
@@ -328,6 +328,19 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: aiCall.id });
     return { aiCallId: first(rows, 'ai_call').id };
+  },
+  ai_call_result: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(aiCallResult)
+      .values({
+        workspaceId,
+        idempotencyKey: `xt-${randomUUID()}`,
+        aiCallId: randomUUID(),
+        output: {},
+        expiresAt: new Date(Date.now() + 86_400_000),
+      })
+      .returning({ id: aiCallResult.id });
+    return { aiCallResultId: first(rows, 'ai_call_result').id };
   },
   notification: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

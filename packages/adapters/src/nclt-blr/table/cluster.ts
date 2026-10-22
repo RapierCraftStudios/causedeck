@@ -1,4 +1,4 @@
-// Table columns from word coordinates (#38, ADR 0019). An NCLT list is a table in a PDF, so lines
+// Table columns from word coordinates (#38, ADR 0020). An NCLT list is a table in a PDF, so lines
 // are not a grammar: words are grouped into visual lines by their tops, the header row is the line
 // (or the two-line band, for wrapped header cells) whose x-gap clusters match at least
 // `minHeaderMatches` known column names, and every body word is assigned to the column whose header

@@ -3,11 +3,13 @@
 // runs and custom forums never reach the page. Every role reads it (the nav item needs no
 // permission); a FORBIDDEN from core renders permission-denied. Deep links are plain new-window
 // anchors: nothing here fetches or frames a court page. Owners and advocates (`workspace.manage`)
-// also get `Add forum` (#402), which adds a workspace-owned A0 forum through `./actions.ts`.
+// also get `Add forum` (#402), which adds a workspace-owned A0 forum through `./actions.ts`; its
+// dialog loads in its own chunk (`AddForum`, #427) to keep the route within its JS budget.
 //
 // States: loading (card skeletons), error (`Could not load courts.` with `Try again`), empty,
-// offline (`Showing saved court information`) and permission-denied. `?__state=loading|error`
-// previews the first two in development.
+// offline (`Showing saved court information`) and permission-denied. In development,
+// `?__state=loading|error|denied` previews the first two and permission-denied (no role reaches it
+// for real: every role reads courts), so the e2e suite (#425) can drive all five.
 import type { CourtsIndex } from '@causedeck/core/court';
 import { EmptyState } from '@causedeck/ui/empty-state';
 import { Landmark } from 'lucide-react';
@@ -15,7 +17,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import { AddForumDialog } from '../../../../../components/courts/add-forum-dialog.tsx';
+import { AddForum } from '../../../../../components/courts/add-forum.tsx';
 import { CourtNav } from '../../../../../components/courts/court-nav.tsx';
 import { CourtsOfflineBanner } from '../../../../../components/courts/courts-offline-banner.tsx';
 import { CourtsLoadError, ForumList } from '../../../../../components/courts/forum-list.tsx';
@@ -35,7 +37,7 @@ interface CourtsPageProps {
   searchParams: Promise<SearchParams>;
 }
 
-/** `?__state=loading|error` previews a state in development. Ignored in production. */
+/** `?__state=loading|error|denied` previews a state in development. Ignored in production. */
 function devState(searchParams: SearchParams): string | undefined {
   if (!isDev()) return undefined;
   const value = searchParams.__state;
@@ -87,6 +89,7 @@ export default async function CourtsPage({ params, searchParams }: CourtsPagePro
   const state = devState(query);
   if (state === 'loading') return <CourtsLoading />;
   if (state === 'error') throw new Error('Courts error state (dev toggle)');
+  if (state === 'denied') return <PermissionDeniedPage />;
 
   const loaded = await loadIndex(context);
   if (loaded.kind === 'denied') return <PermissionDeniedPage />;
@@ -94,7 +97,7 @@ export default async function CourtsPage({ params, searchParams }: CourtsPagePro
 
   const addForum =
     loaded.kind === 'index' && can(context.role, 'workspace.manage') ? (
-      <AddForumDialog
+      <AddForum
         workspaceId={context.workspace.id}
         takenCodes={indexCodes(loaded.index)}
         action={createWorkspaceForumAction}

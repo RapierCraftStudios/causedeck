@@ -137,8 +137,9 @@ async function aRestrictions(f: Fixture) {
 /**
  * A workspace's matter-graph rows (A's unless `workspaceId`), for before/after checks: one key per
  * table the services write (matters.ts, proceedings.ts and its links, documents.ts, state-machine.ts,
- * which writes state history, next-date.ts, which writes listings, and merge-split.ts, which also
- * moves orders, obligations, tasks and edges).
+ * which writes state history, next-date.ts, which writes listings, merge-split.ts, which also
+ * moves orders, obligations, tasks and edges, and people.ts, which writes persons and edges;
+ * read-models.ts writes nothing).
  */
 async function aGraph(f: Fixture, workspaceId = f.a.id) {
   return inWorkspace(f.tx, workspaceId, async (s) => ({
@@ -155,6 +156,7 @@ async function aGraph(f: Fixture, workspaceId = f.a.id) {
     obligations: await s.select().from(schema.obligation).orderBy(schema.obligation.id),
     tasks: await s.select().from(schema.task).orderBy(schema.task.id),
     roleEdges: await s.select().from(schema.roleEdge).orderBy(schema.roleEdge.id),
+    persons: await s.select().from(schema.person).orderBy(schema.person.id),
   }));
 }
 
@@ -1431,6 +1433,113 @@ const CASES: Record<string, Case> = {
       { matterId },
     );
     expect(Array.isArray(own)).toBe(true);
+    expect(events).toEqual([]);
+  },
+  // Matter read models and people (#386): A's matter from B, or ub claiming A, is NOT_FOUND; a
+  // search from B finds none of A's matters, even by A's title; A's persons are never reached.
+  searchMatters: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    const [aMatter] = (await aGraph(f)).matters;
+    const q = aMatter?.title ?? 'probe';
+    await expectDenied(core.searchMatters(deps, { userId: f.ub, workspaceId: f.a.id }, { q }));
+    await expectDenied(
+      f.asB((s) => core.searchMatters({ ...deps, db: s }, { userId: f.ub, workspaceId: f.a.id })),
+    );
+    const aIds = (await aGraph(f)).matters.map((m) => m.id);
+    for (const input of [{}, { q }, { q: 'W.P. 1/2026' }]) {
+      const own = await core.searchMatters(deps, { userId: f.ub, workspaceId: f.b.id }, input);
+      expect(own.items.filter((m) => aIds.includes(m.id))).toEqual([]);
+    }
+    const all = await core.searchMatters(deps, { userId: f.ub, workspaceId: f.b.id });
+    expect(all.items.length).toBeGreaterThan(0);
+  },
+  ...Object.fromEntries(
+    (
+      [
+        'getMatterOverview',
+        'listMatterProceedingsTree',
+        'listMatterPeople',
+        'listMatterDocuments',
+      ] as const
+    ).map((name): [string, Case] => [
+      name,
+      async (f) => {
+        const { deps, events } = graphDeps(f.tx);
+        for (const matterId of [f.a.rows.matter?.matterId ?? '', await aProceedingMatter(f)]) {
+          await expectGraphDenied(f, (db, workspaceId) =>
+            core[name]({ ...deps, db }, { userId: f.ub, workspaceId }, { matterId }),
+          );
+          // A's owner does read it: the probe itself is sound.
+          await core[name](deps, { userId: f.ua, workspaceId: f.a.id }, { matterId });
+        }
+        expect(events).toEqual([]);
+      },
+    ]),
+  ),
+  upsertPerson: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const personId = f.a.rows.person?.personId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.upsertPerson(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { personId, name: 'Probe (fictional)', kind: 'client', contact: { phone: '0' } },
+      ),
+    );
+    await expectDenied(
+      core.upsertPerson(deps, { userId: f.ub, workspaceId: f.a.id }, { name: 'P', kind: 'party' }),
+    );
+    expect(events).toEqual([]);
+  },
+  setRoleEdge: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aPerson = f.a.rows.person?.personId ?? '';
+    const bPerson = f.b.rows.person?.personId ?? '';
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const bMatter = f.b.rows.matter?.matterId ?? '';
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    for (const input of [
+      { fromPersonId: aPerson, matterId: aMatter },
+      { fromPersonId: aPerson, proceedingId: aProceeding },
+      { fromPersonId: aPerson, toPersonId: f.a.rows.role_edge?.partyId ?? '' },
+    ]) {
+      await expectGraphDenied(f, (db, workspaceId) =>
+        core.setRoleEdge(
+          { ...deps, db },
+          { userId: f.ub, workspaceId },
+          { kind: 'opposes', ...input },
+        ),
+      );
+    }
+    // One id of each workspace, as ub in B: NOT_FOUND, and B is unchanged.
+    const bBefore = await aGraph(f, f.b.id);
+    for (const input of [
+      { fromPersonId: aPerson, matterId: bMatter },
+      { fromPersonId: bPerson, matterId: aMatter },
+      { fromPersonId: bPerson, proceedingId: aProceeding },
+      { fromPersonId: bPerson, toPersonId: aPerson },
+    ]) {
+      await expectDenied(
+        core.setRoleEdge(
+          deps,
+          { userId: f.ub, workspaceId: f.b.id },
+          { kind: 'opposes', ...input },
+        ),
+      );
+    }
+    expect(await aGraph(f, f.b.id)).toEqual(bBefore);
+    expect(events).toEqual([]);
+  },
+  setSensitive: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.setSensitive(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { matterId, sensitive: true },
+      ),
+    );
     expect(events).toEqual([]);
   },
   // Merges and splits (#365): A's ids from B, or ub claiming A, are denied; one id of each workspace

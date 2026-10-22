@@ -1,4 +1,4 @@
-// NCLT case numbers (#38, ADR 0019): `CP(IB) No. 132/BB/2022` is prefix `CP(IB)`, number 132,
+// NCLT case numbers (#38, ADR 0020): `CP(IB) No. 132/BB/2022` is prefix `CP(IB)`, number 132,
 // bench `BB` (Bengaluru) and year 2022; applications read `IA No. 275/2021`, `IA 275/21` or
 // `IA(IB) No. 12/BB/2024`. A cell can hold several numbers, separated by commas, semicolons or
 // line breaks, and a bare `276/21` after `IA No. 275/21` takes the prefix before it. Pure.

@@ -95,7 +95,16 @@ export interface CaseRef {
   /** The parent's match key when this reference is filed within another on the same line. */
   parentProceedingKey?: string | null | undefined;
   children?: CaseRef[] | undefined;
+  /** A bracketed category printed after the reference, e.g. `GM-RES` on a Karnataka writ (#404). */
+  subCategory?: string | undefined;
+  /** A hint that the number is in a bench series (`100xxx`); never a sequence assumption. */
+  benchNumbering?: BenchNumbering | undefined;
 }
+
+/** Number-series hints: Karnataka HC numbers >= 100000 (Dharwad/Kalaburagi style, #404). */
+export const BENCH_NUMBERINGS = ['100xxx'] as const;
+export const BenchNumberingSchema = z.enum(BENCH_NUMBERINGS);
+export type BenchNumbering = z.infer<typeof BenchNumberingSchema>;
 
 /**
  * A case reference as printed on a list line or an order header (#36): `CRL OP No.4567 of 2026 and
@@ -112,6 +121,8 @@ export const CaseRefSchema: z.ZodType<CaseRef> = z.lazy(() =>
     matchKey: z.string().nullable(),
     parentProceedingKey: z.string().nullable().optional(),
     children: z.array(CaseRefSchema).optional(),
+    subCategory: z.string().min(1).optional(),
+    benchNumbering: BenchNumberingSchema.optional(),
   }),
 );
 
@@ -156,6 +167,23 @@ export const ParsedListRowSchema = z.object({
   bench: z.string().optional(),
   /** The row names a seat other than the parsed forum's (e.g. `(MD)` on a Principal Seat list). */
   forumMismatch: z.boolean().optional(),
+  // #37 additions (Karnataka HC, #404), all optional.
+  /** The list the row is printed in (`LIST NO. 2`), verbatim. */
+  listNo: z.string().min(1).optional(),
+  /** The list-type key of the row's list (daily, supplementary, ...), or null. */
+  listType: z.string().nullable().optional(),
+  /**
+   * The row sits under a registry-objections heading (`true`, #405), or the office-objection marker
+   * printed on the row, verbatim; null when neither.
+   */
+  registryObjection: z
+    .union([z.literal(true), z.string().min(1)])
+    .nullable()
+    .optional(),
+  /** The bracketed category after the case number, e.g. `GM-RES`. */
+  subCategory: z.string().min(1).optional(),
+  /** A number-series hint only (`100xxx`); never used to infer a sequence. */
+  benchNumbering: BenchNumberingSchema.optional(),
 });
 export type ParsedListRow = z.infer<typeof ParsedListRowSchema>;
 
@@ -195,9 +223,9 @@ export type ListAttachment = z.infer<typeof ListAttachmentSchema>;
 
 /**
  * `needs_ocr`: the document has no text layer (every page has `textCoverage` 0), so nothing is
- * guessed; the caller OCRs it (#45) and parses the OCR layout again (ADR 0019).
+ * guessed; the caller OCRs it (#45) and parses the OCR layout again (ADR 0020).
  */
-export const PARSE_STATUSES = ['ok', 'empty', 'failed', 'needs_ocr'] as const;
+export const PARSE_STATUSES = ['ok', 'empty', 'not_a_cause_list', 'failed', 'needs_ocr'] as const;
 export const LIST_SOURCES = ['pdf', 'html', 'email', 'text'] as const;
 
 export const ParsedCauseListSchema = z.object({
@@ -212,13 +240,15 @@ export const ParsedCauseListSchema = z.object({
   halls: z.array(CauseListHallSchema).optional(),
   unparsedRows: z.array(UnparsedRowSchema).optional(),
   /**
-   * `empty` is a list with no cases; `failed` a document that could not be read; `needs_ocr` one
-   * without a text layer.
+   * `empty` is a list with no cases; `not_a_cause_list` a readable document that is not a list
+   * (#404); `failed` a document that could not be read; `needs_ocr` one without a text layer.
    */
   status: z.enum(PARSE_STATUSES).optional(),
   /** Daily, advance, supplementary, special: the printed marker's key, or null. */
   listType: z.string().nullable().optional(),
   source: z.enum(LIST_SOURCES).optional(),
+  /** ISO timestamp the list says it was published at, when printed (#404). */
+  publishedAt: z.string().nullable().optional(),
   /** The phrase `listDate` was read from (#396). */
   listDateAnchor: AnchorSchema.nullable().optional(),
   /** Attachments the list may sit in (a PDF-only AIMS email, #396), for the caller's PDF path. */
@@ -245,6 +275,8 @@ export const ParsedOrderHeaderSchema = z.object({
   /** The neutral citation as printed, with its separator (`2026/MHC/123`); `neutralCitation` is canonical. */
   neutralCitationRaw: z.string().nullable().optional(),
   orderType: z.enum(['daily', 'interim', 'final', 'judgment']).nullable().optional(),
+  /** Reserved for a later authenticity check of the order copy (#404); always null for now. */
+  authenticityFlag: z.null().optional(),
 });
 export type ParsedOrderHeader = z.infer<typeof ParsedOrderHeaderSchema>;
 
@@ -266,17 +298,22 @@ export const REGISTRY_EVENT_KINDS = [
   'returned_for_defects',
   'cure_deadline',
   'numbered',
+  'fr_assigned',
+  'objection_raised',
 ] as const;
 
 /**
  * A registry notice read from a supplied document (SR number, defect return, cure deadline,
- * numbering). Always a proposal with an anchor, never a state change.
+ * numbering; Karnataka FR numbers and scrutiny objections, #407). Always a proposal with an anchor,
+ * never a state change.
  */
 export const RegistryEventSchema = z.object({
   kind: z.enum(REGISTRY_EVENT_KINDS),
   anchor: AnchorSchema,
   confidence: ConfidenceSchema,
   srNo: z.string().min(1).optional(),
+  /** Filing Register number (`1234/2026`), on `fr_assigned` (#407). */
+  frNo: z.string().min(1).optional(),
   caseRef: CaseRefSchema.optional(),
   deadline: z
     .object({

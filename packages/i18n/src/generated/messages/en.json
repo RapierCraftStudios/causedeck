@@ -1880,6 +1880,145 @@
       }
     }
   },
+  "courtsRosters": {
+    "metaTitle": "Rosters",
+    "title": "Bench rosters",
+    "description": "The sitting arrangements you confirmed for each forum, and the matters whose bench changed.",
+    "loading": "Loading rosters",
+    "back": "All courts",
+    "importRoster": "Import roster",
+    "importOffline": "Importing a roster needs a connection.",
+    "readOnly": "Only owners and advocates can import rosters.",
+    "forums": {
+      "label": "Forum",
+      "rail": "Forums with rosters"
+    },
+    "roster": {
+      "listLabel": "Roster versions",
+      "effectiveFrom": "From {date}",
+      "effectiveTo": "until {date}",
+      "openEnded": "until replaced",
+      "version": "Version {version}",
+      "entries": "{count, plural, one {# hall} other {# halls}}",
+      "activeToday": "Active today",
+      "status": {
+        "active": "Active",
+        "superseded": "Superseded",
+        "draft": "Draft"
+      }
+    },
+    "halls": {
+      "caption": "Halls in the roster in force today",
+      "hall": "Hall",
+      "bench": "Bench",
+      "portfolio": "Portfolio",
+      "benchNotRecorded": "Bench not recorded",
+      "noneInForce": {
+        "title": "No roster in force today",
+        "hint": "None of this forum's rosters covers today. Import the current sitting arrangements to see who sits where."
+      }
+    },
+    "alerts": {
+      "title": "Bench changes",
+      "warning": "Bench changed",
+      "changed": "Bench changed from {date}: <link>{matter}</link> now sits with {bench}.",
+      "previousBench": "Previously {bench}.",
+      "noPreviousBench": "No bench was recorded for it before.",
+      "unknownBench": "a bench with no judges recorded",
+      "none": "No open bench changes."
+    },
+    "empty": {
+      "title": "No roster imported yet.",
+      "hint": "Share the court's sitting arrangements PDF to be told when your bench changes."
+    },
+    "error": {
+      "title": "Could not load rosters.",
+      "retry": "Try again"
+    },
+    "import": {
+      "parseError": "We couldn't read the dates in this PDF. Enter them yourself or try the original file.",
+      "metaTitle": "Import roster",
+      "title": "Import a roster",
+      "back": "Back to rosters",
+      "forum": "Sitting arrangements for {court}",
+      "chooseForum": {
+        "label": "Forum",
+        "title": "Choose the forum",
+        "hint": "Pick the court whose sitting arrangements you are importing.",
+        "placeholder": "Choose a forum"
+      },
+      "upload": {
+        "label": "Roster PDF",
+        "hint": "The court's sitting arrangements as a PDF. Nothing is saved until you confirm.",
+        "uploading": "Uploading and reading the PDF",
+        "failed": "The upload did not finish. Try again.",
+        "tooLarge": "This file is too large to upload.",
+        "notPdf": "Choose a PDF file."
+      },
+      "parsing": "Reading the roster",
+      "unreadable": {
+        "title": "We could not read this PDF.",
+        "retry": "Choose another file"
+      },
+      "noRows": "No halls were found in this PDF. Try the original file from the court.",
+      "effectiveFrom": {
+        "label": "Effective from",
+        "fromPdf": "Read from the PDF. Check it before you confirm.",
+        "required": "Enter the date this roster takes effect."
+      },
+      "summary": {
+        "label": "Roster summary",
+        "rows": "{count, plural, one {# hall} other {# halls}}",
+        "lowConfidence": "{count, plural, =0 {No rows to check} one {# row to check} other {# rows to check}}"
+      },
+      "grid": {
+        "label": "Parsed roster rows",
+        "hint": "Arrow keys move between cells, Enter edits a cell, Escape cancels. Cmd or Ctrl+Enter confirms.",
+        "hall": "Hall",
+        "judges": "Judges",
+        "portfolio": "Portfolio",
+        "caseTypes": "Case types",
+        "years": "Years",
+        "confidence": "Confidence",
+        "remove": "Remove hall {hall}",
+        "removeColumn": "Remove",
+        "edit": "Edit {column} for hall {hall}",
+        "judgesHint": "Separate judges with a semicolon.",
+        "caseTypesHint": "Case types separated by commas, for example WP, CRL.A",
+        "yearsHint": "A year or a range, for example 2020-2024",
+        "none": "None",
+        "yearRange": "{from} to {to}",
+        "yearFrom": "From {year}",
+        "yearTo": "Up to {year}",
+        "announce": "{column} for hall {hall} changed to {value}.",
+        "cleared": "{column} for hall {hall} cleared.",
+        "removed": "Hall {hall} removed.",
+        "invalidYears": "Enter a year or a range such as 2020-2024."
+      },
+      "confidence": {
+        "low": "Check this row",
+        "ok": "Read clearly"
+      },
+      "validation": {
+        "hall": "Enter the hall number.",
+        "judges": "Enter at least one judge.",
+        "rows": "Keep at least one hall.",
+        "fix": "Fix the marked rows before you confirm."
+      },
+      "confirm": "Confirm roster",
+      "confirming": "Confirming the roster",
+      "supersede": {
+        "title": "Replace the current roster?",
+        "body": "This forum already has an active roster. Confirming makes this one active from {date}, and the current one stops applying from that day.",
+        "confirm": "Replace and confirm",
+        "cancel": "Keep reviewing"
+      },
+      "done": "Roster confirmed from {date}.",
+      "alerts": "{count, plural, =0 {No bench changes on your matters.} one {The bench changed on # matter.} other {The bench changed on # matters.}}",
+      "detectionFailed": "The roster is saved, but bench changes could not be checked yet.",
+      "failed": "The roster was not saved. Try again."
+    }
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",

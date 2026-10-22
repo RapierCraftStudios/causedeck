@@ -1,4 +1,4 @@
-// Seeded synthetic NCLT Bengaluru cause lists (#38, ADR 0019). The research read one real 2023 list
+// Seeded synthetic NCLT Bengaluru cause lists (#38, ADR 0020). The research read one real 2023 list
 // (research/raw/09 §2.2); everything else is synthetic until lawyer-supplied lists arrive (#119).
 // A list is laid out as drawn text runs on landscape A4 pages: preamble (date, coram, hearing mode),
 // a header row whose cells wrap like a real table, and body rows whose cells wrap, carry nested

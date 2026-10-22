@@ -1,4 +1,4 @@
-// The NCLT config v1.0.0 as committed and as registered (#38, ADR 0019): adapter.config.json is
+// The NCLT config v1.0.0 as committed and as registered (#38, ADR 0020): adapter.config.json is
 // `NCLT_CONFIG`, migration 0049 stores exactly its canonical JSON with its checksum (the loader
 // refuses a row whose checksum does not match), the access-mode rows carry the counsel note, and
 // the bundled config and activation factory know the adapter.
@@ -24,7 +24,7 @@ const adapterConfigJson: unknown = JSON.parse(
   readFileSync(path.join(import.meta.dirname, 'config/adapter.config.json'), 'utf8'),
 );
 const MIGRATION = readFileSync(
-  path.resolve(import.meta.dirname, '../../../db/migrations/0049_nclt_adapter_v1.sql'),
+  path.resolve(import.meta.dirname, '../../../db/migrations/0052_nclt_adapter_v1.sql'),
   'utf8',
 );
 

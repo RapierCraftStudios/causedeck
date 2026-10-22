@@ -3,16 +3,21 @@
 // and run the core (or package) service on it. apps/api and apps/worker use it too (#299). Importing this module opens nothing and reads no
 // env (`db` connects on first use), so `next build` never needs runtime secrets. Each service loads
 // its implementation on first call, so a page pulls in only what it uses.
+import { isRole } from '@causedeck/auth';
+import { assertCan, ForbiddenError } from '@causedeck/auth/policy';
 import {
   closeDb,
   db,
   isUuid as isUuidValue,
+  schema,
   withWorkspace,
   type Database,
   type Transaction,
 } from '@causedeck/db';
 import type { FlagListener } from '@causedeck/flags';
-import type { StorageCtx } from '@causedeck/storage';
+import type { ObjectKey, ObjectStore, StorageCtx } from '@causedeck/storage';
+import type { ConfirmRosterImportInput } from '@causedeck/validators/roster';
+import { and, eq, isNotNull, isNull, ne } from 'drizzle-orm';
 
 import type {
   AccessDeniedEvent,
@@ -23,6 +28,12 @@ import type {
   AuditReadContext,
 } from '../audit/index.ts';
 import type { InvoicePdfContext, SaasInvoicePdf } from '../billing/index.ts';
+import type {
+  BenchChangeAlertRow,
+  CourtEvents,
+  RosterPreview,
+  RosterWithEntries,
+} from '../court/index.ts';
 import type {
   AccountDeletionCtx,
   AccountDeletionJob,
@@ -483,6 +494,122 @@ export async function requestMemoryErasureFor(
     { db, ...ctx },
     { enqueue: (job) => enqueue('memory.erase', job, { priority: MEMORY_ERASE_PRIORITY }) },
   );
+}
+
+// court rosters (#434)
+
+/** `bench.changed` goes nowhere until the court-day reminders (#64) subscribe. */
+const noopCourtEvents: CourtEvents = { emit: () => undefined };
+
+/**
+ * Parse a finalized, not-infected PDF the member uploaded (`/api/uploads`) into the forum's roster
+ * preview. Checks membership (`NOT_FOUND`, so a forged scope reads nothing) and `workspace.manage`
+ * (`FORBIDDEN`); an unknown forum code or another workspace's blob is `NOT_FOUND`, an unreadable
+ * PDF `VALIDATION`. Nothing is written.
+ */
+export async function previewRosterImportFor(
+  ctx: RuntimeScope & { store: ObjectStore },
+  input: { blobId: string; forumCode: string },
+): Promise<RosterPreview> {
+  const [{ getForum, previewRosterImport }, workspaces] = await Promise.all([
+    import('../court/index.ts'),
+    import('../workspaces/index.ts'),
+  ]);
+  const { workspaceId, userId } = ctx;
+  const blobNotFound = () => workspaces.notFound('Upload not found');
+  if (!isUuid(workspaceId) || !isUuid(userId) || !isUuid(input.blobId)) throw blobNotFound();
+  const found = await inWorkspace({ workspaceId, userId }, async (tx) => {
+    const role = await workspaces.memberRole(tx, userId, workspaceId);
+    if (role === null || !isRole(role)) throw workspaces.notFound('Workspace not found');
+    const settings = workspaces.toPolicySettings(await workspaces.getRoleSettings(tx, workspaceId));
+    try {
+      assertCan({ userId, workspaceId, role }, 'workspace.manage', undefined, { settings });
+    } catch (error) {
+      if (error instanceof ForbiddenError) {
+        throw workspaces.forbidden('You cannot import a roster');
+      }
+      throw error;
+    }
+    const forum = await getForum(tx, workspaceId, input.forumCode.trim());
+    const { blob } = schema;
+    const [row] = await tx
+      .select({ key: blob.key })
+      .from(blob)
+      .where(
+        and(
+          eq(blob.workspaceId, workspaceId),
+          eq(blob.id, input.blobId),
+          eq(blob.kind, 'document'),
+          isNotNull(blob.finalizedAt),
+          ne(blob.scanStatus, 'infected'),
+          isNull(blob.encHeader),
+        ),
+      )
+      .limit(1);
+    if (row === undefined) throw blobNotFound();
+    return { key: row.key, code: forum.code };
+  });
+  const { body } = await ctx.store.get(found.key as ObjectKey);
+  try {
+    return await previewRosterImport(body, found.code);
+  } catch {
+    throw workspaces.invalid('We could not read this PDF');
+  }
+}
+
+/** What `confirmRosterImportFor` did: the roster, and the alerts detection created. */
+export interface ConfirmedRoster {
+  roster: RosterWithEntries;
+  alerts: BenchChangeAlertRow[];
+  /** `failed` when detection threw after the roster committed; it can be re-run. */
+  detection: 'ok' | 'failed';
+}
+
+/**
+ * Confirm a reviewed roster (`confirmRosterImport`, its own transaction), then run
+ * `detectBenchChanges` for it with the job queue's delivery enqueue once the roster has committed.
+ * `CONFLICT` when the forum has an active roster and `supersedeCurrent` is not set, so the lawyer
+ * confirms superseding it first.
+ */
+export async function confirmRosterImportFor(
+  actor: RuntimeScope,
+  input: ConfirmRosterImportInput & { supersedeCurrent?: boolean },
+): Promise<ConfirmedRoster> {
+  const [{ confirmRosterImport, detectBenchChanges, listRosters }, workspaces, jobs] =
+    await Promise.all([
+      import('../court/index.ts'),
+      import('../workspaces/index.ts'),
+      import('../jobs/index.ts'),
+    ]);
+  const { supersedeCurrent, ...rest } = input;
+  const { workspaceId, userId } = actor;
+  // Only a member learns whether the forum has an active roster; anyone else gets the service's
+  // own NOT_FOUND below, so the check is no oracle on another workspace's rosters.
+  if (supersedeCurrent !== true && isUuid(workspaceId) && isUuid(userId) && isUuid(rest.forumId)) {
+    const active = await inWorkspace({ workspaceId, userId }, async (tx) =>
+      (await workspaces.memberRole(tx, userId, workspaceId)) === null
+        ? []
+        : listRosters(tx, workspaceId, { forumId: rest.forumId, status: 'active' }),
+    );
+    if (active.length > 0) {
+      throw workspaces.conflict('This forum has an active roster: confirm superseding it');
+    }
+  }
+  const roster = await confirmRosterImport(db, actor, rest);
+  try {
+    const alerts = await detectBenchChanges(
+      db,
+      actor,
+      { rosterId: roster.roster.id },
+      {
+        events: noopCourtEvents,
+        enqueueDelivery: (job) => jobs.enqueueNotificationDelivery(job),
+      },
+    );
+    return { roster, alerts, detection: 'ok' };
+  } catch {
+    return { roster, alerts: [], detection: 'failed' };
+  }
 }
 
 // notifications, push, uploads, flags

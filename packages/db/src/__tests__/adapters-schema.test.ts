@@ -89,6 +89,8 @@ describe('adapter_version (#372)', () => {
       const suffix = randomUUID().slice(0, 8);
       await insertVersion(tx, { adapterId: `in.tn.madras-hc.principal-${suffix}` });
       await insertVersion(tx, { adapterId: `${adapterSlug()}.a.b-c` });
+      // The Karnataka HC id (#404); migration 0049 already holds its 1.0.0 row.
+      await insertVersion(tx, { adapterId: 'in.ka.karnataka-hc.bengaluru', version: '0.0.1' });
       for (const adapterId of ['Bad.Id', 'a..b', 'a.', '.a', 'a.1b']) {
         expect(await attempt(tx, (sp) => insertVersion(sp, { adapterId })), adapterId).toBe(
           '23514',

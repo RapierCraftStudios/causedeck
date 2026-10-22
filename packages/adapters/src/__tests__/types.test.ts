@@ -6,6 +6,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import {
   AccessModeSchema,
   AnchorSchema,
+  CaseRefSchema,
   CourtAdapterDescriptorSchema,
   createEchoAdapter,
   DEEP_LINK_TARGETS,
@@ -13,6 +14,7 @@ import {
   DirectionCueSchema,
   ParsedCauseListSchema,
   ParsedListRowSchema,
+  PARSE_STATUSES,
   ParsedOrderHeaderSchema,
   ParserInputSchema,
   RegistryEventSchema,
@@ -218,7 +220,102 @@ describe('adapter contract', () => {
     expect(RegistryEventSchema.safeParse({ kind: 'listed', anchor, confidence: 1 }).success).toBe(
       false,
     );
+    // Karnataka FR numbers and scrutiny objections (#407).
+    expect(
+      RegistryEventSchema.safeParse({
+        kind: 'fr_assigned',
+        anchor,
+        confidence: 0.95,
+        frNo: '1234/2026',
+      }).success,
+    ).toBe(true);
+    expect(
+      RegistryEventSchema.safeParse({ kind: 'objection_raised', anchor, confidence: 0.8 }).success,
+    ).toBe(true);
+    expect(
+      RegistryEventSchema.safeParse({ kind: 'fr_assigned', anchor, confidence: 0.95, frNo: '' })
+        .success,
+    ).toBe(false);
     expect([...DEEP_LINK_TARGETS]).toEqual([...RESOURCES, 'e_copy', 'aims']);
+  });
+
+  it('accepts the optional #37 additions and keeps them optional (#404)', () => {
+    const anchor = { page: 1, quote: 'x', rowIndex: 0 };
+    const row = {
+      anchor,
+      confidence: 1,
+      caseTypeRaw: 'W.P.',
+      caseType: 'WP',
+      caseNumber: '100150',
+      caseYear: 2024,
+      matchKey: 'WP/100150/2024',
+      stageRaw: null,
+      stageNorm: null,
+      advocates: [],
+      listNo: '2',
+      listType: 'supplementary',
+      registryObjection: 'OFFICE OBJECTIONS',
+      subCategory: 'GM-RES',
+      benchNumbering: '100xxx',
+    };
+    expect(ParsedListRowSchema.safeParse(row).success).toBe(true);
+    expect(ParsedListRowSchema.safeParse({ ...row, benchNumbering: '200xxx' }).success).toBe(false);
+    expect(ParsedListRowSchema.safeParse({ ...row, subCategory: '' }).success).toBe(false);
+    // A row under the registry-objections heading carries `true` (#405); a marker stays a string.
+    expect(ParsedListRowSchema.safeParse({ ...row, registryObjection: true }).success).toBe(true);
+    expect(ParsedListRowSchema.safeParse({ ...row, registryObjection: null }).success).toBe(true);
+    expect(ParsedListRowSchema.safeParse({ ...row, registryObjection: false }).success).toBe(false);
+    expect(ParsedListRowSchema.safeParse({ ...row, registryObjection: '' }).success).toBe(false);
+    expect(
+      CaseRefSchema.safeParse({
+        caseTypeCode: 'WP',
+        caseTypeRaw: 'WP',
+        number: '100150',
+        year: 2024,
+        matchKey: 'WP/100150/2024',
+        subCategory: 'GM-RES',
+        benchNumbering: '100xxx',
+      }).success,
+    ).toBe(true);
+    const list = {
+      adapterId: 'in.ka.karnataka-hc.bengaluru',
+      adapterVersion: '1.0.0',
+      forumCode: 'in.ka.karnataka-hc.bengaluru',
+      listDate: null,
+      rows: [row],
+      diagnostics: {
+        unmappedHeadings: [],
+        unknownCaseTypes: [],
+        rowsSkippedNoAnchor: 0,
+        hallsSeen: [],
+        hallsUnreadable: [],
+      },
+    };
+    expect([...PARSE_STATUSES]).toEqual(['ok', 'empty', 'not_a_cause_list', 'failed', 'needs_ocr']);
+    for (const status of PARSE_STATUSES) {
+      expect(ParsedCauseListSchema.safeParse({ ...list, status }).success, status).toBe(true);
+    }
+    expect(
+      ParsedCauseListSchema.safeParse({ ...list, publishedAt: '2026-10-21T18:00:00+05:30' })
+        .success,
+    ).toBe(true);
+    const header = {
+      caseTypeRaw: null,
+      caseType: null,
+      caseNumber: null,
+      caseYear: null,
+      orderDate: null,
+      neutralCitation: null,
+      anchor: null,
+      confidence: 0,
+    };
+    expect(ParsedOrderHeaderSchema.safeParse({ ...header, authenticityFlag: null }).success).toBe(
+      true,
+    );
+    expect(ParsedOrderHeaderSchema.safeParse({ ...header, authenticityFlag: true }).success).toBe(
+      false,
+    );
+    expect(ParsedOrderHeaderSchema.safeParse(header).success).toBe(true);
   });
 
   it('validates parser inputs and new-window https deep links', () => {

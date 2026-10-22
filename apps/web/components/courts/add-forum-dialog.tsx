@@ -52,6 +52,8 @@ export interface AddForumDialogProps {
   /** Every code in the courts index: catalogue forums and the workspace's own. */
   takenCodes: readonly string[];
   action: (input: AddForumInput) => Promise<Result<{ code: string; court: string }>>;
+  /** Open on mount: `Add forum` was clicked before this chunk loaded (`add-forum.tsx`, #427). */
+  defaultOpen?: boolean;
 }
 
 type FieldName = 'name' | 'city' | 'code' | 'website';
@@ -60,11 +62,16 @@ type Errors = Partial<Record<FieldName, string>>;
 const SELECT_CLASS =
   'border-line-control bg-surface h-9 w-full rounded-md border px-2 text-sm disabled:opacity-50';
 
-export function AddForumDialog({ workspaceId, takenCodes, action }: AddForumDialogProps) {
+export function AddForumDialog({
+  workspaceId,
+  takenCodes,
+  action,
+  defaultOpen = false,
+}: AddForumDialogProps) {
   const t = useTranslations('courts.addForum');
   const router = useRouter();
   const id = useId();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<JurisdictionKind>('district');
   const [city, setCity] = useState('');

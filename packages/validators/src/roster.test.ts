@@ -8,6 +8,7 @@ import {
   BenchRosterInsertSchema,
   ConfirmRosterImportInputSchema,
   DismissBenchChangeAlertInputSchema,
+  ListBenchChangeAlertsInputSchema,
   GetRosterAtInputSchema,
   ListRostersInputSchema,
   PortfolioRuleSchema,
@@ -160,6 +161,15 @@ describe('roster service inputs (#384)', () => {
       SupersedeRosterInputSchema.safeParse({ rosterId: id, effectiveFrom: '2027-01-01' }).success,
     ).toBe(true);
     expect(DismissBenchChangeAlertInputSchema.safeParse({ alertId: 'x' }).success).toBe(false);
+    expect(ListBenchChangeAlertsInputSchema.safeParse({}).success).toBe(true);
+    expect(
+      ListBenchChangeAlertsInputSchema.safeParse({ status: 'open', rosterId: randomUUID() })
+        .success,
+    ).toBe(true);
+    expect(ListBenchChangeAlertsInputSchema.safeParse({ status: 'closed' }).success).toBe(false);
+    expect(ListBenchChangeAlertsInputSchema.safeParse({ forumId: randomUUID() }).success).toBe(
+      false,
+    );
   });
 });
 

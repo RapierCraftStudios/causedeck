@@ -1,0 +1,31 @@
+{
+  "header": {
+    "caseTypeRaw": "WRIT PETITION",
+    "caseType": "WP",
+    "caseNumber": "12345",
+    "caseYear": 2026,
+    "orderDate": "2026-11-14",
+    "neutralCitation": "2026:KHC:1234",
+    "anchor": {
+      "page": 1,
+      "quote": "WRIT PETITION NO. 12345 OF 2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "WRIT PETITION",
+        "number": "12345",
+        "year": 2026,
+        "matchKey": "WP/12345/2026"
+      }
+    ],
+    "bench": "THE HON'BLE MR JUSTICE A. FICTIONAL",
+    "judges": ["THE HON'BLE MR JUSTICE A. FICTIONAL"],
+    "neutralCitationRaw": "2026:KHC:1234",
+    "orderType": "final",
+    "authenticityFlag": null
+  },
+  "cues": []
+}

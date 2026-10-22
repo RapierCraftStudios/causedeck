@@ -1881,6 +1881,145 @@ export type Messages = {
       };
     };
   };
+  courtsRosters: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    back: string;
+    importRoster: string;
+    importOffline: string;
+    readOnly: string;
+    forums: {
+      label: string;
+      rail: string;
+    };
+    roster: {
+      listLabel: string;
+      effectiveFrom: string;
+      effectiveTo: string;
+      openEnded: string;
+      version: string;
+      entries: string;
+      activeToday: string;
+      status: {
+        active: string;
+        superseded: string;
+        draft: string;
+      };
+    };
+    halls: {
+      caption: string;
+      hall: string;
+      bench: string;
+      portfolio: string;
+      benchNotRecorded: string;
+      noneInForce: {
+        title: string;
+        hint: string;
+      };
+    };
+    alerts: {
+      title: string;
+      warning: string;
+      changed: string;
+      previousBench: string;
+      noPreviousBench: string;
+      unknownBench: string;
+      none: string;
+    };
+    empty: {
+      title: string;
+      hint: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    import: {
+      parseError: string;
+      metaTitle: string;
+      title: string;
+      back: string;
+      forum: string;
+      chooseForum: {
+        label: string;
+        title: string;
+        hint: string;
+        placeholder: string;
+      };
+      upload: {
+        label: string;
+        hint: string;
+        uploading: string;
+        failed: string;
+        tooLarge: string;
+        notPdf: string;
+      };
+      parsing: string;
+      unreadable: {
+        title: string;
+        retry: string;
+      };
+      noRows: string;
+      effectiveFrom: {
+        label: string;
+        fromPdf: string;
+        required: string;
+      };
+      summary: {
+        label: string;
+        rows: string;
+        lowConfidence: string;
+      };
+      grid: {
+        label: string;
+        hint: string;
+        hall: string;
+        judges: string;
+        portfolio: string;
+        caseTypes: string;
+        years: string;
+        confidence: string;
+        remove: string;
+        removeColumn: string;
+        edit: string;
+        judgesHint: string;
+        caseTypesHint: string;
+        yearsHint: string;
+        none: string;
+        yearRange: string;
+        yearFrom: string;
+        yearTo: string;
+        announce: string;
+        cleared: string;
+        removed: string;
+        invalidYears: string;
+      };
+      confidence: {
+        low: string;
+        ok: string;
+      };
+      validation: {
+        hall: string;
+        judges: string;
+        rows: string;
+        fix: string;
+      };
+      confirm: string;
+      confirming: string;
+      supersede: {
+        title: string;
+        body: string;
+        confirm: string;
+        cancel: string;
+      };
+      done: string;
+      alerts: string;
+      detectionFailed: string;
+      failed: string;
+    };
+  };
   error: {
     title: string;
     description: string;

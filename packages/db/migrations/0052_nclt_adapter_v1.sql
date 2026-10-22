@@ -1,6 +1,6 @@
--- Migration 0046_nclt_adapter_v1: data only (drizzle-kit --custom), hand-written, reviewed before commit.
+-- Migration 0052_nclt_adapter_v1: data only (drizzle-kit --custom), hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #38)
--- The NCLT Bengaluru adapter, in.nclt.bengaluru (#38, ADR 0017). Dotted adapter ids are already
+-- The NCLT Bengaluru adapter, in.nclt.bengaluru (#38, ADR 0020). Dotted adapter ids are already
 -- allowed by adapter_version_adapter_id_chk since 0045_adapter_id_dotted (#395), so this
 -- migration changes no schema:
 --   * Registers adapter_version in.nclt.bengaluru 1.0.0 as the active config. config is

@@ -61,6 +61,12 @@ vi.mock('@causedeck/auth/mailer', () => ({
   createMailer: () => ({ send: () => Promise.resolve() }),
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+// The roster preview reads uploads from the app's object store (#434): an empty in-memory one.
+vi.mock('../lib/storage.ts', async () => {
+  const { createMemoryObjectStore } = await import('@causedeck/storage');
+  const store = createMemoryObjectStore();
+  return { objectStore: () => store };
+});
 vi.mock('next/headers', () => ({
   cookies: () => Promise.resolve({ set: vi.fn() }),
   headers: () => Promise.resolve(new Headers()),
@@ -94,6 +100,7 @@ const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts'
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
 const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
 const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
+const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -140,6 +147,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   cancelWorkspaceDeletionAction: danger,
   requestAccountDeletionAction: account,
   createWorkspaceForumAction: courts,
+  previewRosterImportAction: rosters,
+  confirmRosterImportAction: rosters,
+  dismissBenchChangeAlertAction: rosters,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -335,6 +345,24 @@ function inputs(workspaceId: string): Record<string, unknown> {
       jurisdictionKind: 'other',
       city: 'Probe City',
       primaryLanguage: 'en',
+    },
+    // Rosters (#434): ub, owner of B, may not parse A's upload, confirm a roster on A's forum or
+    // dismiss A's bench-change alert.
+    previewRosterImportAction: {
+      workspaceId,
+      blobId: t.a.rows.blob?.id,
+      forumCode: 'xt.probe-roster',
+    },
+    confirmRosterImportAction: {
+      workspaceId,
+      forumId: t.a.rows.bench_roster?.forumId,
+      effectiveFrom: '2027-03-01',
+      entries: [{ hallNo: '1', judges: ['Justice Probe'] }],
+      supersedeCurrent: true,
+    },
+    dismissBenchChangeAlertAction: {
+      workspaceId,
+      alertId: t.a.rows.bench_change_alert?.alertId,
     },
   };
 }
@@ -557,6 +585,35 @@ describe('cross-tenant server actions', () => {
     expect(inB.filter((row) => row.code === code)).toEqual([
       { code, workspaceId: t.b.id, adapterLevel: 'A0' },
     ]);
+  });
+
+  it('roster actions under B’s own workspace find none of A’s upload, forum or alert (#434)', async () => {
+    const before = await snapshotA();
+    const aAlerts = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.benchChangeAlert).orderBy(schema.benchChangeAlert.id),
+      );
+    const alertsBefore = await aAlerts();
+    const bForums = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx.select({ id: schema.forum.id, code: schema.forum.code }).from(schema.forum),
+    );
+    const bForum = bForums.find((f) => f.id === t.b.rows.bench_roster?.forumId);
+    const own = inputs(t.b.id);
+    for (const [name, input] of [
+      [
+        'previewRosterImportAction',
+        { ...(own.previewRosterImportAction as object), forumCode: bForum?.code },
+      ],
+      ['confirmRosterImportAction', own.confirmRosterImportAction],
+      ['dismissBenchChangeAlertAction', own.dismissBenchChangeAlertAction],
+    ] as const) {
+      expect(await action(name)(input), name).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    expect(await snapshotA()).toEqual(before);
+    expect(await aAlerts()).toEqual(alertsBefore);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

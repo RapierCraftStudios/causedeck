@@ -9,6 +9,7 @@ import type {
   ConfirmationState,
   ProceedingLinkKind,
   ProceedingState,
+  RoleEdgeKind,
   SourceType,
 } from '@causedeck/db/schema';
 import type { IdentifierSource } from '@causedeck/validators/matter-graph-inputs';
@@ -88,6 +89,15 @@ export type GraphEvent =
       listingId: string;
       previousListingId: string | null;
       date: string;
+    })
+  // People (#386): a role edge set on or removed from a matter or one of its proceedings. Edges
+  // between two persons name no matter and emit nothing, nor does `upsertPerson`.
+  | (GraphEventBase & {
+      type: 'role_edge.set' | 'role_edge.removed';
+      roleEdgeId: string;
+      kind: RoleEdgeKind;
+      personId: string;
+      proceedingId: string | null;
     });
 
 /** The provenance a state change was recorded with (#363). */

@@ -91,6 +91,24 @@ PDF-only), next to the 12 orders (`order-*`) and 5 registry notices (`registry-*
 list and email layouts are assumptions from parent #36, not observed documents; real lists and
 emails are checked with #119.
 
+## Karnataka HC fixtures
+
+`in.ka.karnataka-hc.bengaluru/` (#408) holds 12 synthetic cause lists (`list-*`): 11 saved HTML
+list pages (a daily Bengaluru list with 3 halls and 2 lists each, advance, supplementary,
+Dharwad-style 100xxx numbers, no advocate columns, heading variants, "Orders (registry
+objections)", reflowed multi-line headings, broken HTML, a sitting-list page read as
+`not_a_cause_list` with zero rows, an empty list) and one consolidated column PDF
+(`list-02-consolidated.input.pdf`). It also holds 12 orders (`order-*`: `KHC`, `KHC-D` and `-DB`
+citations, interim with a relative date, call-on date, reserved, common order, decoy date, no
+next date, writ category, RFA/RSA, 22 pages, scrutiny objections) and 4 FR / objection notices
+(`registry-*`). Their expected files are checked by `src/karnataka-hc/fixtures.test.ts`, in
+`test:golden`. The layouts are the ADR 0019 assumptions, not observed documents. The broken-HTML
+input is in `.prettierignore`, so it stays malformed.
+
+`pnpm --filter @causedeck/adapters gen:fixtures --adapter karnataka --seed 7` writes the seeded
+Karnataka set (HTML and PDF lists, orders, notices, with truth files) to the git-ignored
+`fixtures/generated/`, and `test:metrics` gates the adapter on it.
+
 ## Lawyer-supplied fixtures are never committed
 
 Real lists and orders stay on the machine of whoever holds them. Put them in a `fixtures-private/`

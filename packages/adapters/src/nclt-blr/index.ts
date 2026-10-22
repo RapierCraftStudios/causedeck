@@ -1,4 +1,4 @@
-// The NCLT Bengaluru adapter, `in.nclt.bengaluru` (#38, ADR 0019): cause lists from the bench's
+// The NCLT Bengaluru adapter, `in.nclt.bengaluru` (#38, ADR 0020): cause lists from the bench's
 // table-format PDFs, read as a `LayoutDocument` (`layoutFromPdf`, or an OCR layout from #45). NCLT's
 // terms of use have not been read, so every resource is `user_supplied` or `none`: the adapter
 // parses what the lawyer shares and never retrieves anything. NCLT orders stay with the A0 generic

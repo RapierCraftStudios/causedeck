@@ -309,6 +309,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getRosterAt: rosterSelfScoped,
   resolveBenchForHall: rosterSelfScoped,
   listRosters: rosterSelfScoped,
+  // court: bench-change alerts (#389)
+  detectBenchChanges: rosterDenies,
+  listAlerts: rosterDenies,
+  dismissAlert: rosterDenies,
+  // court: rosters page read model (#434)
+  getRostersPage: rosterDenies,
   listHallsSeen: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -340,6 +346,16 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getCanonicalNextDate: denies,
   // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
   getMatterTimeline: denies,
+  // matters read models and people (#386): A's matter or person from B, or ub claiming A, is
+  // NOT_FOUND; a search from B lists none of A's matters
+  searchMatters: empty,
+  getMatterOverview: denies,
+  listMatterProceedingsTree: denies,
+  listMatterPeople: denies,
+  listMatterDocuments: denies,
+  upsertPerson: denies,
+  setRoleEdge: denies,
+  setSensitive: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -599,11 +615,31 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // court: roster-PDF preview (#385)
   previewRosterImport: 'pure (parses supplied PDF bytes; reads and writes no tenant data)',
   normaliseJudgeName: 'pure',
+  // court: bench-change alerts (#389)
+  portfolioRuleMatches: 'pure (matches a portfolio rule against a case type and year)',
+  benchChangeDay: 'pure (formats an ISO date as "05 Oct")',
+  benchChangeTitle: 'pure (the counts-only notification title)',
   // court: roster lookup statements (#387), exported for the plan and budget test
   rosterAtStatement:
     'pure SQL builder; getRosterAt runs it inside withWorkspace on the given workspace',
   benchForHallStatement:
     'pure SQL builder; resolveBenchForHall runs it inside withWorkspace on the given workspace',
+  // court: read-model statements (#427), exported for the plan and budget test
+  listForumsStatement:
+    'pure SQL builder; listForums runs it inside withWorkspace on the given workspace',
+  getForumStatement:
+    'pure SQL builder; getForum runs it inside withWorkspace on the given workspace',
+  latestParseRunsStatement:
+    'pure SQL builder; getCourtsIndex runs it inside withWorkspace on the given workspace',
+  hallsSeenStatement:
+    'pure SQL builder; listHallsSeen runs it inside withWorkspace on the given workspace',
+  // court: rosters page statements (#434), exported for the budget test
+  rostersPageRostersStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace after the membership check',
+  rosterEntryCountsStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace after the membership check',
+  openBenchAlertsStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace with the resolved actor',
   // matter graph (#362): errors and pure proceeding-identity helpers
   CrossWorkspaceError: 'error class',
   crossWorkspace: 'error factory',
@@ -826,6 +862,7 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   setPreference: notificationDenies,
   getNotificationSetting: notificationDenies,
   setLockScreenDetails: notificationDenies,
+  setBenchAlertPartyNames: notificationDenies,
   setCourtHoursQuiet: notificationDenies,
   getDigest: notificationDenies,
   setDigest: notificationDenies,
@@ -927,6 +964,9 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: "requestAccountDeletion for the caller's own account; never writes into a workspace chain",
   },
   requestMemoryErasureFor: runtimeDenies,
+  // court rosters (#434)
+  previewRosterImportFor: runtimeDenies,
+  confirmRosterImportFor: runtimeDenies,
   loadNotificationPreferences: runtimeDenies,
   subscribePush: {
     test: CORE_RUNTIME_TEST,

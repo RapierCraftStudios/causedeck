@@ -992,7 +992,7 @@ function CellView({
   problems: readonly ('hall' | 'judges')[];
 }) {
   const t = useTranslations('courtsRosters.import');
-  const none = <span className="text-ink-subtle">{t('grid.none')}</span>;
+  const none = <span className="text-ink-muted">{t('grid.none')}</span>;
   switch (column) {
     case 'hall':
       return problems.includes('hall') ? (

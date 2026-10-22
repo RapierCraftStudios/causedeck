@@ -8,14 +8,18 @@ export function createNonce(): string {
 }
 
 /** Strict nonce-based CSP. Styles stay `'unsafe-inline'` because Sonner and next-themes inject them. */
-export function buildCsp(nonce: string, { dev = false }: { dev?: boolean } = {}): string {
+export function buildCsp(
+  nonce: string,
+  { dev = false, uploadOrigin }: { dev?: boolean; uploadOrigin?: string | undefined } = {},
+): string {
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self'",
+    // The browser PUTs uploads straight to the object store through a presigned URL (#217, #436).
+    `connect-src 'self'${uploadOrigin === undefined ? '' : ` ${uploadOrigin}`}`,
     // The push service worker (#197): `strict-dynamic` would otherwise ignore `'self'` for workers.
     "worker-src 'self'",
     "object-src 'none'",
@@ -24,6 +28,27 @@ export function buildCsp(nonce: string, { dev = false }: { dev?: boolean } = {})
     "form-action 'self'",
   ];
   return directives.join('; ');
+}
+
+/**
+ * The origin presigned upload URLs point at: the custom endpoint (MinIO, path-style) when
+ * `S3_ENDPOINT` is set, else the bucket's AWS virtual-hosted host. `undefined` when the storage env
+ * is absent or malformed, so the page falls back to `'self'` only.
+ */
+export function uploadOriginOf(env: {
+  S3_ENDPOINT?: string | undefined;
+  S3_BUCKET?: string | undefined;
+  S3_REGION?: string | undefined;
+}): string | undefined {
+  try {
+    if (env.S3_ENDPOINT !== undefined && env.S3_ENDPOINT !== '') {
+      return new URL(env.S3_ENDPOINT).origin;
+    }
+    if (env.S3_BUCKET === undefined || env.S3_REGION === undefined) return undefined;
+    return new URL(`https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com`).origin;
+  } catch {
+    return undefined;
+  }
 }
 
 /** First supported locale from an `Accept-Language` header, by quality; `en` when none match. */

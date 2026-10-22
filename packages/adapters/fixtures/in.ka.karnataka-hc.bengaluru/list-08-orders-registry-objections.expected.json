@@ -1,0 +1,206 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-10-27",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1\tWP No. 15501/2026\tFictional Silks Ltd. vs State of Fictionland\tSri. A. Fictional\tCourt fee not paid",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "15501",
+      "caseYear": 2026,
+      "matchKey": "WP/15501/2026",
+      "parties": "Fictional Silks Ltd. vs State of Fictionland",
+      "stageRaw": "ORDERS (REGISTRY OBJECTIONS)",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Sri. A. Fictional",
+          "aliases": ["A FICTIONAL", "FICTIONAL A"]
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+      "listNo": "3",
+      "listType": "daily",
+      "registryObjection": true
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2\tMFA No. 6100/2026\tMade-up Traders vs The Fictional Bank\tSmt. S. Pretend\tIndex not filed",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "MFA",
+      "caseType": "MFA",
+      "caseNumber": "6100",
+      "caseYear": 2026,
+      "matchKey": "MFA/6100/2026",
+      "parties": "Made-up Traders vs The Fictional Bank",
+      "stageRaw": "ORDERS (REGISTRY OBJECTIONS)",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Smt. S. Pretend",
+          "aliases": ["S PRETEND", "PRETEND S"]
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+      "listNo": "3",
+      "listType": "daily",
+      "registryObjection": true
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3\tCRL.P No. 9911 of 2026\tR. Fictional Naik vs State of Fictionland\tSri. K. Kalpita\tVakalath not signed",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "CRL.P",
+      "caseType": "CRLP",
+      "caseNumber": "9911",
+      "caseYear": 2026,
+      "matchKey": "CRLP/9911/2026",
+      "parties": "R. Fictional Naik vs State of Fictionland",
+      "stageRaw": "ORDERS (REGISTRY OBJECTIONS)",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Sri. K. Kalpita",
+          "aliases": ["K KALPITA", "KALPITA K"]
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+      "listNo": "3",
+      "listType": "daily",
+      "registryObjection": true
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "1",
+      "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+      "lists": [
+        {
+          "listNo": "3",
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1\tWP No. 15501/2026\tFictional Silks Ltd. vs State of Fictionland\tSri. A. Fictional\tCourt fee not paid",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "1",
+              "itemNo": "1",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "15501",
+              "caseYear": 2026,
+              "matchKey": "WP/15501/2026",
+              "parties": "Fictional Silks Ltd. vs State of Fictionland",
+              "stageRaw": "ORDERS (REGISTRY OBJECTIONS)",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Sri. A. Fictional",
+                  "aliases": ["A FICTIONAL", "FICTIONAL A"]
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+              "listNo": "3",
+              "listType": "daily",
+              "registryObjection": true
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2\tMFA No. 6100/2026\tMade-up Traders vs The Fictional Bank\tSmt. S. Pretend\tIndex not filed",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "1",
+              "itemNo": "2",
+              "caseTypeRaw": "MFA",
+              "caseType": "MFA",
+              "caseNumber": "6100",
+              "caseYear": 2026,
+              "matchKey": "MFA/6100/2026",
+              "parties": "Made-up Traders vs The Fictional Bank",
+              "stageRaw": "ORDERS (REGISTRY OBJECTIONS)",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Smt. S. Pretend",
+                  "aliases": ["S PRETEND", "PRETEND S"]
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+              "listNo": "3",
+              "listType": "daily",
+              "registryObjection": true
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3\tCRL.P No. 9911 of 2026\tR. Fictional Naik vs State of Fictionland\tSri. K. Kalpita\tVakalath not signed",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "1",
+              "itemNo": "3",
+              "caseTypeRaw": "CRL.P",
+              "caseType": "CRLP",
+              "caseNumber": "9911",
+              "caseYear": 2026,
+              "matchKey": "CRLP/9911/2026",
+              "parties": "R. Fictional Naik vs State of Fictionland",
+              "stageRaw": "ORDERS (REGISTRY OBJECTIONS)",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Sri. K. Kalpita",
+                  "aliases": ["K KALPITA", "KALPITA K"]
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+              "listNo": "3",
+              "listType": "daily",
+              "registryObjection": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "status": "ok",
+  "listType": "daily",
+  "source": "html",
+  "publishedAt": "2026-10-26T18:30:00+05:30",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 27-10-2026",
+    "rowIndex": 0
+  }
+}

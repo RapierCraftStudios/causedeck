@@ -1,0 +1,236 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-10-23",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1\tWP No. 100512/2026 (GM-RES)\tK. Kalpita Gowda vs Imaginary Panchayat\tSri. K. Kalpita\tSmt. S. Pretend",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "11",
+      "itemNo": "1",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "100512",
+      "caseYear": 2026,
+      "matchKey": "WP/100512/2026",
+      "parties": "K. Kalpita Gowda vs Imaginary Panchayat",
+      "stageRaw": "PRELIMINARY HEARING",
+      "stageNorm": "preliminary_hearing",
+      "advocates": [
+        {
+          "raw": "Sri. K. Kalpita",
+          "aliases": ["K KALPITA", "KALPITA K"]
+        },
+        {
+          "raw": "Smt. S. Pretend",
+          "aliases": ["S PRETEND", "PRETEND S"]
+        }
+      ],
+      "bench": "HON'BLE MRS. JUSTICE B. EXAMPLE",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null,
+      "benchNumbering": "100xxx"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2\tCRL.P No. 101137 of 2025\tM. Imaginary Shetty vs State of Fictionland\tSri. D. Imaginary\tHCGP (FICTIONAL)",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "11",
+      "itemNo": "2",
+      "caseTypeRaw": "CRL.P",
+      "caseType": "CRLP",
+      "caseNumber": "101137",
+      "caseYear": 2025,
+      "matchKey": "CRLP/101137/2025",
+      "parties": "M. Imaginary Shetty vs State of Fictionland",
+      "stageRaw": "PRELIMINARY HEARING",
+      "stageNorm": "preliminary_hearing",
+      "advocates": [
+        {
+          "raw": "Sri. D. Imaginary",
+          "aliases": ["D IMAGINARY", "IMAGINARY D"]
+        },
+        {
+          "raw": "HCGP (FICTIONAL)",
+          "aliases": ["HCGP FICTIONAL"]
+        }
+      ],
+      "bench": "HON'BLE MRS. JUSTICE B. EXAMPLE",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null,
+      "benchNumbering": "100xxx"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3\tRSA No. 100044/2024\tR. Fictional Naik vs S. Kalpita Rao\tSri. A. Fictional\tSri. R. Madeup",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "11",
+      "itemNo": "3",
+      "caseTypeRaw": "RSA",
+      "caseType": "RSA",
+      "caseNumber": "100044",
+      "caseYear": 2024,
+      "matchKey": "RSA/100044/2024",
+      "parties": "R. Fictional Naik vs S. Kalpita Rao",
+      "stageRaw": "PRELIMINARY HEARING",
+      "stageNorm": "preliminary_hearing",
+      "advocates": [
+        {
+          "raw": "Sri. A. Fictional",
+          "aliases": ["A FICTIONAL", "FICTIONAL A"]
+        },
+        {
+          "raw": "Sri. R. Madeup",
+          "aliases": ["R MADEUP", "MADEUP R"]
+        }
+      ],
+      "bench": "HON'BLE MRS. JUSTICE B. EXAMPLE",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null,
+      "benchNumbering": "100xxx"
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["11"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "11",
+      "bench": "HON'BLE MRS. JUSTICE B. EXAMPLE",
+      "lists": [
+        {
+          "listNo": "1",
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1\tWP No. 100512/2026 (GM-RES)\tK. Kalpita Gowda vs Imaginary Panchayat\tSri. K. Kalpita\tSmt. S. Pretend",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "11",
+              "itemNo": "1",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "100512",
+              "caseYear": 2026,
+              "matchKey": "WP/100512/2026",
+              "parties": "K. Kalpita Gowda vs Imaginary Panchayat",
+              "stageRaw": "PRELIMINARY HEARING",
+              "stageNorm": "preliminary_hearing",
+              "advocates": [
+                {
+                  "raw": "Sri. K. Kalpita",
+                  "aliases": ["K KALPITA", "KALPITA K"]
+                },
+                {
+                  "raw": "Smt. S. Pretend",
+                  "aliases": ["S PRETEND", "PRETEND S"]
+                }
+              ],
+              "bench": "HON'BLE MRS. JUSTICE B. EXAMPLE",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null,
+              "benchNumbering": "100xxx"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2\tCRL.P No. 101137 of 2025\tM. Imaginary Shetty vs State of Fictionland\tSri. D. Imaginary\tHCGP (FICTIONAL)",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "11",
+              "itemNo": "2",
+              "caseTypeRaw": "CRL.P",
+              "caseType": "CRLP",
+              "caseNumber": "101137",
+              "caseYear": 2025,
+              "matchKey": "CRLP/101137/2025",
+              "parties": "M. Imaginary Shetty vs State of Fictionland",
+              "stageRaw": "PRELIMINARY HEARING",
+              "stageNorm": "preliminary_hearing",
+              "advocates": [
+                {
+                  "raw": "Sri. D. Imaginary",
+                  "aliases": ["D IMAGINARY", "IMAGINARY D"]
+                },
+                {
+                  "raw": "HCGP (FICTIONAL)",
+                  "aliases": ["HCGP FICTIONAL"]
+                }
+              ],
+              "bench": "HON'BLE MRS. JUSTICE B. EXAMPLE",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null,
+              "benchNumbering": "100xxx"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3\tRSA No. 100044/2024\tR. Fictional Naik vs S. Kalpita Rao\tSri. A. Fictional\tSri. R. Madeup",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "11",
+              "itemNo": "3",
+              "caseTypeRaw": "RSA",
+              "caseType": "RSA",
+              "caseNumber": "100044",
+              "caseYear": 2024,
+              "matchKey": "RSA/100044/2024",
+              "parties": "R. Fictional Naik vs S. Kalpita Rao",
+              "stageRaw": "PRELIMINARY HEARING",
+              "stageNorm": "preliminary_hearing",
+              "advocates": [
+                {
+                  "raw": "Sri. A. Fictional",
+                  "aliases": ["A FICTIONAL", "FICTIONAL A"]
+                },
+                {
+                  "raw": "Sri. R. Madeup",
+                  "aliases": ["R MADEUP", "MADEUP R"]
+                }
+              ],
+              "bench": "HON'BLE MRS. JUSTICE B. EXAMPLE",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null,
+              "benchNumbering": "100xxx"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "status": "ok",
+  "listType": "daily",
+  "source": "html",
+  "publishedAt": "2026-10-22T18:30:00+05:30",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23-10-2026",
+    "rowIndex": 0
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "events": [
+    {
+      "kind": "fr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "FR No. 4600/2026",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "frNo": "4600/2026"
+    },
+    {
+      "kind": "objection_raised",
+      "anchor": {
+        "page": 1,
+        "quote": "defects",
+        "rowIndex": 5
+      },
+      "confidence": 0.8
+    },
+    {
+      "kind": "cure_deadline",
+      "anchor": {
+        "page": 1,
+        "quote": "to be cured within 7 days",
+        "rowIndex": 5
+      },
+      "confidence": 0.9,
+      "deadline": {
+        "n": 7,
+        "unit": "days",
+        "basisDate": "2026-10-21",
+        "derived": "2026-10-28"
+      }
+    }
+  ]
+}

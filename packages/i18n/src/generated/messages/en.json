@@ -2677,6 +2677,126 @@
       "selectMore": "Add to the selection"
     }
   },
+  "calendar": {
+    "metaTitle": "Calendar",
+    "title": "Calendar",
+    "description": "See your hearings in your phone calendar, and bring in your old diary without retyping.",
+    "link": {
+      "open": "Open calendar settings"
+    },
+    "loading": "Loading the calendar settings",
+    "offlineReason": "Settings can be changed when you are back online.",
+    "error": {
+      "title": "Could not load the calendar settings.",
+      "retry": "Try again"
+    },
+    "feed": {
+      "title": "Calendar feed",
+      "description": "A private link your calendar app subscribes to. It shows confirmed hearings and deadlines only.",
+      "empty": "No feed yet. Create one to see hearings in your phone calendar.",
+      "urlLabel": "Feed URL",
+      "maskedUrl": "The link is shown once, when you create or rotate it.",
+      "privacy": "Anyone with this link can see your hearing dates. Keep it private.",
+      "shownOnce": "Copy it now. It will not be shown again.",
+      "copy": "Copy URL",
+      "copied": "Copied",
+      "create": "Create feed",
+      "rotate": "Rotate",
+      "revoke": "Revoke",
+      "cancel": "Cancel",
+      "offline": "Settings can be changed when you are back online.",
+      "working": "Working",
+      "statusLabel": "Status",
+      "status": {
+        "created": "Created {date}",
+        "rotated": "Rotated {date}",
+        "lastFetched": "Last fetched {date}",
+        "neverFetched": "Not fetched yet"
+      },
+      "scope": {
+        "label": "Which matters",
+        "mine": "My matters",
+        "workspace": "Whole workspace",
+        "ownerOnly": "Only workspace owners can share the whole workspace."
+      },
+      "parties": {
+        "label": "Include party names",
+        "why": "Calendar providers fetch this feed on servers outside India. Party names stay out unless you turn this on."
+      },
+      "disclosure": {
+        "text": "Your calendar app may fetch this feed from servers outside India. We keep the content minimal.",
+        "ack": "I understand"
+      },
+      "rotateTitle": "Rotate the feed link?",
+      "rotateBody": "The current link stops working at once. Update the subscription in your calendar app with the new link.",
+      "rotateConfirm": "Rotate link",
+      "revokeTitle": "Revoke the feed?",
+      "revokeBody": "The link stops working at once and your calendar app stops updating. You can create a new feed later.",
+      "revokeConfirm": "Revoke feed",
+      "toast": {
+        "created": "Feed created",
+        "rotated": "Link rotated",
+        "revoked": "Feed revoked",
+        "saved": "Saved",
+        "error": "Something went wrong. Nothing changed.",
+        "forbidden": "You cannot do that.",
+        "copyFailed": "Could not copy. Select the link and copy it."
+      }
+    },
+    "import": {
+      "title": "Import a calendar file",
+      "description": "Bring in diary entries without retyping. Hearing-like events become proposals that you confirm one by one.",
+      "instructions": "Export your calendar as an .ics file (Google, Outlook and Apple all can), then choose it here. Importing the same calendar again only picks up what changed.",
+      "choose": "Choose an .ics file",
+      "uploading": "Sending the file",
+      "received": "File received. Reading it now.",
+      "duplicate": "You already imported this exact file.",
+      "channelOff": "Calendar files are switched off for this workspace. An owner can turn them on in the inbox settings.",
+      "tooLarge": "That file is too large. Calendar files can be up to 1 MB.",
+      "invalid": "That does not look like a calendar file.",
+      "forbidden": "You cannot import calendar files.",
+      "failed": "The file could not be sent. Try again."
+    },
+    "review": {
+      "title": "Calendar import",
+      "summary": "{new} new, {changed} changed, {unchanged} unchanged",
+      "ignored": "{count} other events were not hearings and were skipped.",
+      "processing": "Reading your calendar file. This page updates when it is ready.",
+      "failed": "This calendar file could not be read.",
+      "empty": "No hearing-like events were found in this file.",
+      "matchedHeading": "Matched to a matter",
+      "unmatchedHeading": "Not matched to a matter",
+      "when": "{date} {time}",
+      "allDay": "all day",
+      "preview": {
+        "next_date": "Proposes {date} as the next date.",
+        "conflict": "Differs from the confirmed next date. Confirming makes {date} the next date; you can undo it.",
+        "listing_update": "Updates the item number of the confirmed listing.",
+        "none": "Nothing to change.",
+        "unmatched": "No single matter has this case number."
+      },
+      "status": {
+        "applied": "Confirmed",
+        "skipped": "Skipped",
+        "noted": "Attached as a note",
+        "unchanged": "Already up to date"
+      },
+      "confirm": "Confirm",
+      "skip": "Skip",
+      "attach": "Attach to a matter as a note",
+      "attachMatter": "Matter",
+      "attachChoose": "Choose a matter",
+      "attachConfirm": "Attach note",
+      "attachHint": "A note has no date. It does not change any hearing date or create a matter.",
+      "toast": {
+        "confirmed": "Confirmed",
+        "skipped": "Skipped",
+        "noted": "Attached as a note",
+        "error": "Something went wrong. Nothing changed.",
+        "forbidden": "You cannot do that."
+      }
+    }
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",

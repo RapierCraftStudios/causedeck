@@ -281,9 +281,11 @@ describe('integrations page (server)', () => {
     expect(screen.getByRole('heading', { name: en.emailIntake.title })).toBeTruthy();
     expect(screen.getByRole('heading', { name: en.icsFeed.title })).toBeTruthy();
     expect(value('email_intake')?.value).toBe(MASKED_INTAKE);
-    expect(value('ics_feed')?.value).toBe(MASKED_FEED);
     expect(actionButton('email_intake')?.textContent).toBe(en.rotate);
-    expect(actionButton('ics_feed')?.textContent).toBe(en.create);
+    // The feed has its own page (#53): its card here is a link to it, not a token card.
+    expect(
+      document.querySelector('[data-slot="integration-calendar-link"]')?.getAttribute('href'),
+    ).toBe('/w/demo/settings/integrations/calendar');
     expect(document.querySelector('[data-slot="integration-not-enabled"]')).toBeNull();
   });
 
@@ -301,13 +303,14 @@ describe('integrations page (server)', () => {
       )?.textContent,
     ).toBe(en.notEnabled);
     expect(actionButton('email_intake')?.disabled).toBe(false);
-    expect(actionButton('ics_feed')?.disabled).toBe(true);
+    // No link to a page that is not there yet.
+    expect(document.querySelector('[data-slot="integration-calendar-link"]')).toBeNull();
   });
 
   it('lets an advocate rotate', async () => {
     page.context = testWorkspaceContext('demo', 'advocate');
     await renderPage();
-    expect(actionButton('ics_feed')?.disabled).toBe(false);
+    expect(actionButton('email_intake')?.disabled).toBe(false);
   });
 
   it('shows the error state with Try again when loading fails', async () => {

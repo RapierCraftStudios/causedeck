@@ -33,7 +33,11 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
   // arrive as a port (it never imports jobs).
   capture: Object.freeze(['audit']),
-  jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle', 'support', 'capture']),
+  // Calendar interop (#53): the ICS feed and import. Roles and role settings through workspaces,
+  // the importer's capture through capture, proposals through automation and every graph read or
+  // write through matter-graph (imports `index.ts` only); the feed token events go through audit.
+  calendar: Object.freeze(['audit', 'workspaces', 'capture', 'automation', 'matter-graph']),
+  jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle', 'support', 'capture', 'calendar']),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.
   runtime: Object.freeze([

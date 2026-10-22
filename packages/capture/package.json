@@ -13,9 +13,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@causedeck/adapters": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/storage": "workspace:*",
-    "@causedeck/validators": "workspace:*"
+    "@causedeck/validators": "workspace:*",
+    "ical.js": "catalog:"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",

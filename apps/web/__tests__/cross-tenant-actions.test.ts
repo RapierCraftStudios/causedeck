@@ -106,6 +106,7 @@ const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -177,6 +178,13 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
+  createCalendarFeedAction: calendar,
+  rotateCalendarFeedAction: calendar,
+  revokeCalendarFeedAction: calendar,
+  setCalendarFeedPartiesAction: calendar,
+  confirmCalendarEventAction: calendar,
+  skipCalendarEventAction: calendar,
+  noteCalendarEventAction: calendar,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -462,6 +470,24 @@ function inputs(workspaceId: string): Record<string, unknown> {
     enableChannelAction: { workspaceId, channel: 'email', disclosureVersion: '2026-10-v1' },
     discardCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id },
     pinCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id, pinned: true },
+    // Calendar (#53): ub, owner of B, may not touch A's feed or review A's imported events.
+    createCalendarFeedAction: {
+      workspaceId,
+      scope: 'mine',
+      includeParties: false,
+      disclosureVersion: '2026-10-v1',
+    },
+    rotateCalendarFeedAction: { workspaceId },
+    revokeCalendarFeedAction: { workspaceId },
+    setCalendarFeedPartiesAction: { workspaceId, includeParties: true },
+    confirmCalendarEventAction: { workspaceId, captureId: t.a.rows.capture?.id, uid: 'xt-a' },
+    skipCalendarEventAction: { workspaceId, captureId: t.a.rows.capture?.id, uid: 'xt-a' },
+    noteCalendarEventAction: {
+      workspaceId,
+      captureId: t.a.rows.capture?.id,
+      uid: 'xt-a',
+      matterId: t.a.rows.matter?.matterId,
+    },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
@@ -940,6 +966,39 @@ describe('cross-tenant server actions', () => {
     expect(channelsOfA).toHaveLength(1);
     expect(await snapshotA()).toEqual(before);
     expect(await aCaptures()).toEqual(capturesBefore);
+  });
+
+  it('calendar actions under B’s own workspace create B’s feed only and find none of A’s events (#53)', async () => {
+    const feedsOfA = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.icsFeed).orderBy(schema.icsFeed.id),
+      );
+    const before = await snapshotA();
+    const feedsBefore = await feedsOfA();
+    const own = inputs(t.b.id);
+    const created = (await action('createCalendarFeedAction')(own.createCalendarFeedAction)) as {
+      ok: boolean;
+      data: { url: string };
+    };
+    expect(created.ok).toBe(true);
+    expect(created.data.url).toMatch(/^http:\/\/localhost:3000\/api\/ics\/[\w-]{43}$/);
+    for (const name of [
+      'confirmCalendarEventAction',
+      'skipCalendarEventAction',
+      'noteCalendarEventAction',
+    ] as const) {
+      // A's capture and event under B's workspace: not found, whatever B's role.
+      expect(await action(name)(own[name]), name).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    const feedsOfB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx.select().from(schema.icsFeed),
+    );
+    expect(feedsOfB.filter((feed) => feed.revokedAt === null)).toHaveLength(1);
+    expect(await feedsOfA()).toEqual(feedsBefore);
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

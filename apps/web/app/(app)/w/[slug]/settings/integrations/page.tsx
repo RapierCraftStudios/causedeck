@@ -1,10 +1,11 @@
 // `/w/[slug]/settings/integrations` (#287): the workspace's private email intake address
-// (`intake+<token>@<domain>`) and private ICS feed URL. Only each token's hash is stored, so the
-// cards show a masked placeholder with the token's status; members with `workspace.manage` (owners
-// and advocates) create or rotate a token through `rotateIntegrationTokenAction`, which shows the
-// full value once and makes the old one stop working. Each card reads `Not enabled yet` and cannot
-// rotate until its flag is on (`capture.email-forward`, `capture.ics-feed`). What the address and
-// the feed do is the Capture milestone (#54, #53). Clerks and viewers get the permission-denied
+// (`intake+<token>@<domain>`) and the entry to the private calendar feed. Only each token's hash is
+// stored, so the intake card shows a masked placeholder with the token's status; members with
+// `workspace.manage` (owners and advocates) create or rotate it through
+// `rotateIntegrationTokenAction`, which shows the full value once and makes the old one stop
+// working. Each card reads `Not enabled yet` until its flag is on (`capture.email-forward`,
+// `capture.ics-feed`). The calendar feed has its own page (`./calendar`, #53); its card here only
+// links to it. What the intake address does is #54. Clerks and viewers get the permission-denied
 // page, the same `can()` check as the sub-nav. Read on the workspace-scoped transaction
 // (`inWorkspace`).
 //
@@ -12,11 +13,15 @@
 // (`Could not load the integrations.` with `Try again`), offline (the settings banner; the buttons
 // turn disabled with the reason) and permission-denied. `?__state=loading|error` previews the
 // loading and error states in development.
+import { Badge } from '@causedeck/ui/badge';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import { Suspense } from 'react';
 
+import { SettingSection } from '../../../../../../components/settings/setting-section.tsx';
 import { PermissionDeniedPage } from '../../../../../../components/shell/permission-denied-page.tsx';
 import { isDev, serverEnv } from '../../../../../../lib/env.ts';
 import { workspaceFlagCheck } from '../../../../../../lib/flags.ts';
@@ -28,7 +33,6 @@ import { logger } from '../../../../../../src/health.ts';
 import { rotateIntegrationTokenAction } from './actions.ts';
 import { EmailIntakeCard } from './email-intake-card.tsx';
 import { IntegrationsError } from './error.tsx';
-import { IcsFeedCard } from './ics-feed-card.tsx';
 import { IntegrationsSkeleton, type IntegrationTokenStatus } from './integration-card.tsx';
 import {
   INTEGRATION_FLAGS,
@@ -66,6 +70,41 @@ async function loadIntegrations(context: WorkspaceContext): Promise<Statuses> {
   );
 }
 
+/** The private calendar feed lives on its own page (#53); this card only points to it. */
+function CalendarLinkCard({ slug, enabled }: { slug: string; enabled: boolean }) {
+  const t = useTranslations('settings.integrations');
+  const tc = useTranslations('calendar');
+  return (
+    <SettingSection
+      id="integration-ics_feed-section"
+      title={
+        <span className="flex flex-wrap items-center gap-2">
+          {t('icsFeed.title')}
+          {enabled ? null : (
+            <Badge tone="neutral" data-slot="integration-not-enabled">
+              {t('notEnabled')}
+            </Badge>
+          )}
+        </span>
+      }
+      description={t('icsFeed.description')}
+      data-slot="integration-ics_feed"
+    >
+      {enabled ? (
+        <div className="py-3">
+          <Link
+            href={`/w/${slug}/settings/integrations/calendar`}
+            className="text-accent text-sm font-medium underline underline-offset-2"
+            data-slot="integration-calendar-link"
+          >
+            {tc('link.open')}
+          </Link>
+        </div>
+      ) : null}
+    </SettingSection>
+  );
+}
+
 async function IntegrationsSection({
   context,
   state,
@@ -95,12 +134,7 @@ async function IntegrationsSection({
         status={statuses.email_intake}
         enabled={flag(INTEGRATION_FLAGS.email_intake)}
       />
-      <IcsFeedCard
-        {...common}
-        masked={maskedIntegrationValue('ics_feed', appUrl)}
-        status={statuses.ics_feed}
-        enabled={flag(INTEGRATION_FLAGS.ics_feed)}
-      />
+      <CalendarLinkCard slug={context.workspace.slug} enabled={flag(INTEGRATION_FLAGS.ics_feed)} />
     </>
   );
 }

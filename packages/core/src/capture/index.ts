@@ -31,7 +31,13 @@ export {
   SensitiveMatterExcludedError,
 } from './errors.ts';
 export { discardCapture, pinCapture } from './manage.ts';
-export { aiStepsAllowed, runCaptureProcess, type CaptureProcessOutcome } from './process.ts';
+export {
+  aiStepsAllowed,
+  closeReviewedCapture,
+  finishCapture,
+  runCaptureProcess,
+  type CaptureProcessOutcome,
+} from './process.ts';
 export {
   markCaptureFailed,
   RETENTION_BATCH,

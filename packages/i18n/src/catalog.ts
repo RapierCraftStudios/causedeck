@@ -19,6 +19,7 @@ export const NAMESPACES = [
   'courts-rosters',
   'matters',
   'matter-timeline',
+  'calendar',
   'errors',
 ] as const;
 

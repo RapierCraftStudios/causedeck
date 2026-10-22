@@ -29,6 +29,12 @@ const meta = {
   title: 'Matters/MatterCard',
   component: MatterCard,
   args: { row: row(), index: 0 },
+  parameters: {
+    // The whole card is one link on purpose named `Open matter {title}, next date {date}` (a short
+    // summary, pinned by the matters page test); its visible text also lists parties, forum, stage,
+    // counts and owner, so axe's label-content-name-mismatch cannot hold.
+    a11y: { config: { rules: [{ id: 'label-content-name-mismatch', enabled: false }] } },
+  },
   decorators: [
     (Story) => (
       <ul className="max-w-sm">

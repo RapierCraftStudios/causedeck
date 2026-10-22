@@ -2294,6 +2294,7 @@ export type Messages = {
         loading: string;
         add: string;
         edit: string;
+        editShort: string;
         remove: string;
         removeTitle: string;
         removeHint: string;

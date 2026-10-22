@@ -1,5 +1,6 @@
 // Bengaluru tribunals and commissions (#34, docs/strategy/11 §2.1, research/raw/09 §2.2-§2.5), all
-// A0. NCLT Bengaluru keeps its adapter id at A0 until #38 ships and raises it. DRT, consumer
+// A0 except NCLT Bengaluru, which #38 raised to A1 with its table-format list adapter (migration
+// 0049 raises existing rows; this seed keeps the level on every deploy). DRT, consumer
 // commission and RERA publication was not verified, so they list their reported hosts without deep
 // links.
 import type { ForumSeed } from '@causedeck/validators/forum';
@@ -32,7 +33,7 @@ export const TRIBUNALS: readonly ForumSeed[] = [
     jurisdictionKind: 'tribunal',
     languageProfile: { primary: 'en' },
     adapterId: 'in.nclt.bengaluru',
-    adapterLevel: 'A0',
+    adapterLevel: 'A1',
     enabled: true,
     config: {
       hosts: ['nclt.gov.in'],

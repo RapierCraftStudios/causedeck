@@ -1,0 +1,106 @@
+{
+  "nomenclature": {
+    "caseTypes": {
+      "CPIB": ["CP(IB)"],
+      "CPCAA": ["CP(CAA)"],
+      "CACAA": ["CA(CAA)"],
+      "IAIB": ["IA(IB)"],
+      "IAPLAN": ["IA(Plan)"],
+      "TCP": ["TCP"],
+      "CP": ["CP"],
+      "CA": ["CA"],
+      "MA": ["MA"],
+      "IA": ["IA"]
+    },
+    "seatSuffixes": ["BB"]
+  },
+  "listing": {},
+  "orderParser": {
+    "directionPhrases": []
+  },
+  "calendar": {
+    "timeZone": "Asia/Kolkata",
+    "dateOrder": "dmy"
+  },
+  "languageProfile": {
+    "scripts": ["Latn"],
+    "languages": ["en"]
+  },
+  "links": {
+    "cause_list": "cause_list"
+  },
+  "fixtures": {
+    "manifest": "fixtures/in.nclt.bengaluru/manifest.json",
+    "fictional": true
+  },
+  "health": {
+    "minAnchoredRatio": 0.9,
+    "maxUnmappedHeadings": 3
+  },
+  "table": {
+    "columns": {
+      "slNo": ["Sl. No.", "S. No.", "Sr. No.", "Serial No.", "Item No."],
+      "cpNo": ["CP No.", "C.P. No.", "Company Petition No.", "Case No.", "TCP/CP No."],
+      "caIaNo": ["CA/IA No.", "IA/CA No.", "CA No./IA No.", "IA No.", "CA No.", "IA/CA/MA No."],
+      "purpose": ["Purpose", "Stage", "Purpose of Hearing"],
+      "section": ["Section", "Sec.", "Section of Law"],
+      "parties": ["Name of Parties", "Parties", "Name of the Parties", "Petitioner Vs Respondent"],
+      "counselPetitioner": [
+        "Counsel for Petitioner/Applicant",
+        "Counsel for Petitioner",
+        "Counsel for Applicant",
+        "Counsel for the Petitioner/Applicant",
+        "Advocate for Petitioner"
+      ],
+      "counselRespondent": [
+        "Counsel for Respondent",
+        "Counsel for the Respondent",
+        "Counsel for Respondents",
+        "Advocate for Respondent"
+      ],
+      "resolutionProfessional": [
+        "IRP/RP/Liquidator/MP",
+        "IRP/RP/Liquidator",
+        "IRP/RP",
+        "RP/Liquidator",
+        "Resolution Professional"
+      ],
+      "remarks": ["Remarks", "Remark"]
+    },
+    "minHeaderMatches": 5,
+    "columnTolerancePx": 6
+  },
+  "stageMap": [
+    {
+      "pattern": "^admission",
+      "flags": "i",
+      "key": "admission"
+    },
+    {
+      "pattern": "^pronouncement",
+      "flags": "i",
+      "key": "pronouncement"
+    },
+    {
+      "pattern": "^(?:for\\s+)?orders?$",
+      "flags": "i",
+      "key": "orders"
+    },
+    {
+      "pattern": "^(?:final\\s+)?hearing$",
+      "flags": "i",
+      "key": "hearing"
+    },
+    {
+      "pattern": "^compliance",
+      "flags": "i",
+      "key": "compliance"
+    },
+    {
+      "pattern": "^(?:reply|counter|rejoinder)",
+      "flags": "i",
+      "key": "pleadings"
+    }
+  ],
+  "twoDigitYearPivot": 50
+}

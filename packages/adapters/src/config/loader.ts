@@ -12,6 +12,7 @@ import { and, eq } from 'drizzle-orm';
 import { ECHO_ADAPTER_ID, ECHO_BUNDLED } from '../example/echo-adapter.ts';
 import { KARNATAKA_HC_ADAPTER_ID, KARNATAKA_HC_BUNDLED } from '../karnataka-hc/index.ts';
 import { MADRAS_HC_ADAPTER_ID, MADRAS_HC_BUNDLED } from '../madras-hc/index.ts';
+import { NCLT_ADAPTER_ID, NCLT_BUNDLED } from '../nclt-blr/index.ts';
 
 import { configChecksum } from './checksum.ts';
 import { AdapterConfigSchema, type AdapterConfig } from './schema.ts';
@@ -63,6 +64,7 @@ export const BUNDLED_ADAPTER_CONFIGS: Readonly<Record<string, BundledAdapterConf
   [ECHO_ADAPTER_ID]: ECHO_BUNDLED,
   [MADRAS_HC_ADAPTER_ID]: MADRAS_HC_BUNDLED,
   [KARNATAKA_HC_ADAPTER_ID]: KARNATAKA_HC_BUNDLED,
+  [NCLT_ADAPTER_ID]: NCLT_BUNDLED,
 };
 
 /** Validate a stored config and check it against its checksum. */

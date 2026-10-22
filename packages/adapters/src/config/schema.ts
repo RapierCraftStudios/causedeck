@@ -94,6 +94,22 @@ export const AdapterConfigSchema = z
       })
       .strict()
       .default({ minAnchoredRatio: 0.9, maxUnmappedHeadings: 3 }),
+    /**
+     * Table-format lists (ADR 0020): canonical column key -> header spellings, how many columns a
+     * header row must match, and how far (PDF points) a word may sit left of its column's header
+     * and still belong to it. Optional with no default, so configs without it keep their checksum.
+     */
+    table: z
+      .object({
+        columns: z.record(
+          z.string().regex(/^[a-z][a-zA-Z0-9]*$/, 'column keys are camelCase'),
+          z.array(z.string().min(1)).min(1),
+        ),
+        minHeaderMatches: z.number().int().min(1).default(5),
+        columnTolerancePx: z.number().min(0).default(6),
+      })
+      .strict()
+      .optional(),
     stageMap: z.array(StageMapEntrySchema).default([]),
     /**
      * Two-digit years at or below the pivot are 20YY, above it 19YY (`26` -> 2026 with pivot 50).

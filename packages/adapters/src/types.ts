@@ -133,6 +133,8 @@ export const AdvocateSchema = z.object({
   aliases: z.array(z.string().min(1)),
   /** Bar enrolment number, e.g. `MS/123/1900`: the stable matching key when present. */
   enrolmentNo: z.string().min(1).optional(),
+  /** The side the advocate appears for, when the list prints it per side (NCLT, ADR 0020). */
+  side: z.enum(['petitioner', 'respondent']).optional(),
 });
 export type Advocate = z.infer<typeof AdvocateSchema>;
 
@@ -219,7 +221,11 @@ export const ListAttachmentSchema = z.object({
 });
 export type ListAttachment = z.infer<typeof ListAttachmentSchema>;
 
-export const PARSE_STATUSES = ['ok', 'empty', 'not_a_cause_list', 'failed'] as const;
+/**
+ * `needs_ocr`: the document has no text layer (every page has `textCoverage` 0), so nothing is
+ * guessed; the caller OCRs it (#45) and parses the OCR layout again (ADR 0020).
+ */
+export const PARSE_STATUSES = ['ok', 'empty', 'not_a_cause_list', 'failed', 'needs_ocr'] as const;
 export const LIST_SOURCES = ['pdf', 'html', 'email', 'text'] as const;
 
 export const ParsedCauseListSchema = z.object({
@@ -235,7 +241,7 @@ export const ParsedCauseListSchema = z.object({
   unparsedRows: z.array(UnparsedRowSchema).optional(),
   /**
    * `empty` is a list with no cases; `not_a_cause_list` a readable document that is not a list
-   * (#404); `failed` a document that could not be read.
+   * (#404); `failed` a document that could not be read; `needs_ocr` one without a text layer.
    */
   status: z.enum(PARSE_STATUSES).optional(),
   /** Daily, advance, supplementary, special: the printed marker's key, or null. */

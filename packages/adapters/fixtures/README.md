@@ -9,17 +9,19 @@ compares the result with its expected file.
 ```
 fixtures/<adapter-id>/
   manifest.json
-  <name>.input.txt | <name>.input.html | <name>.input.pdf | <name>.input.eml
+  <name>.input.txt | <name>.input.html | <name>.input.pdf | <name>.input.json | <name>.input.eml
   <name>.expected.json
 ```
 
 - Every `<name>.input.*` has a `<name>.expected.json`: the adapter's `ParsedCauseList` for that
   input, read with `receivedAt` `2026-10-21T04:00:00.000Z` and the adapter's first forum code
   (or the entry's `forumCode`).
-- `.txt` is read as text (pages split on form feeds), `.html` through `layoutFromHtml` and `.pdf`
-  through `layoutFromPdf`. `.eml` is a forwarded email (#396): the adapter gets the raw message
-  as a `kind: 'email'` input, and anchors are checked against `layoutFromEmail`'s pages (one per
-  message: `Subject:` and `Date:` lines, a blank line, then the decoded body).
+- `.txt` is read as text (pages split on form feeds), `.html` through `layoutFromHtml`, `.pdf`
+  through `layoutFromPdf`, and `.json` is a `LayoutDocument` as a layout reader (or OCR, #45)
+  would produce it ([ADR 0020](../../../docs/adr/0020-nclt-bengaluru-table-parsing.md)). `.eml` is
+  a forwarded email (#396): the adapter gets the raw message as a `kind: 'email'` input, and
+  anchors are checked against `layoutFromEmail`'s pages (one per message: `Subject:` and `Date:`
+  lines, a blank line, then the decoded body).
 - `manifest.json` lists every input file:
 
   ```json
@@ -63,6 +65,17 @@ pnpm --filter @causedeck/adapters test:golden
 `src/testing/synthetic.ts` has seeded generators (`mulberry32`): the same seed always gives the
 same bytes. `writeSyntheticPdf` writes text-layer PDFs with `pdf-lib`. Court-faithful generators
 come with each adapter (#36, #37, #38).
+
+`in.nclt.bengaluru` (#38) has its own generator, `src/nclt-blr/synthetic/generate.ts`. It draws a
+table-format list as text runs and builds the `LayoutDocument`, a pdf-lib PDF and the ground truth
+from them. Its 12 `.input.json` layouts and 4 rendered `-pdf.input.pdf` files are what the generator
+produces for fixed seeds, and `src/nclt-blr/fixtures.test.ts` checks that. To regenerate them after
+a deliberate change, run this from `packages/adapters`, then run Prettier and review the diff:
+
+```sh
+node --experimental-strip-types -e \
+  "import('./src/nclt-blr/synthetic/generate.ts').then((m) => m.writeNcltFixtures())"
+```
 
 To regenerate an expected file after a deliberate parser change, write the adapter's output for
 the input to `<name>.expected.json`, then review the diff before committing.

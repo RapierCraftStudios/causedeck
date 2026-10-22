@@ -19,6 +19,7 @@ import { and, eq, ne } from 'drizzle-orm';
 import { createEchoAdapter, ECHO_ADAPTER_ID } from '../example/echo-adapter.ts';
 import { createKarnatakaHcAdapter, KARNATAKA_HC_ADAPTER_ID } from '../karnataka-hc/index.ts';
 import { createMadrasHcAdapter, MADRAS_HC_ADAPTER_ID } from '../madras-hc/index.ts';
+import { createNcltAdapter, NCLT_ADAPTER_ID } from '../nclt-blr/index.ts';
 import { FIXTURES_ROOT, runGolden, type GoldenReport } from '../testing/golden.ts';
 import type { CourtAdapter } from '../types.ts';
 
@@ -37,6 +38,7 @@ export const ADAPTER_FACTORIES: Readonly<Record<string, AdapterFactory>> = {
   [ECHO_ADAPTER_ID]: ({ version, config }) => createEchoAdapter({ version, config }),
   [MADRAS_HC_ADAPTER_ID]: ({ version, config }) => createMadrasHcAdapter({ version, config }),
   [KARNATAKA_HC_ADAPTER_ID]: ({ version, config }) => createKarnatakaHcAdapter({ version, config }),
+  [NCLT_ADAPTER_ID]: ({ version, config }) => createNcltAdapter({ version, config }),
 };
 
 export type AdapterActivationFailure =

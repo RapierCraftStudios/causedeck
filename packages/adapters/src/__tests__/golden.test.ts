@@ -16,6 +16,7 @@ import {
   KARNATAKA_HC_ADAPTER_ID,
   layoutFromEmail,
   layoutFromHtml,
+  LayoutDocumentSchema,
   MADRAS_HC_ADAPTER_ID,
   ParsedCauseListSchema,
 } from '../index.ts';
@@ -136,14 +137,17 @@ describe('committed fixtures', () => {
       )
         .fixtures.filter((entry) => entry.kind === 'cause_list')
         .map((entry) => entry.file);
-      for (const file of lists.filter((name) => /\.input\.(txt|html|eml)$/.test(name))) {
+      for (const file of lists.filter((name) => /\.input\.(txt|html|json|eml)$/.test(name))) {
         const content = readFileSync(path.join(dir, file), 'utf8');
-        // HTML and email anchors quote the text the layout readers produce, not the source bytes.
+        // HTML and email anchors quote the text the layout readers produce, not the source bytes;
+        // a `.json` input is a LayoutDocument (#38) and anchors quote its page texts.
         const pages = file.endsWith('.html')
           ? layoutFromHtml(content).pages.map((page) => page.text)
           : file.endsWith('.eml')
             ? layoutFromEmail(content).pages.map((page) => page.text)
-            : content.split('\f');
+            : file.endsWith('.json')
+              ? LayoutDocumentSchema.parse(JSON.parse(content)).pages.map((page) => page.text)
+              : content.split('\f');
         const expected = ParsedCauseListSchema.parse(
           JSON.parse(
             readFileSync(path.join(dir, file.replace(/\.input\.[^.]+$/, '.expected.json')), 'utf8'),

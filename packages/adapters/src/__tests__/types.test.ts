@@ -291,7 +291,7 @@ describe('adapter contract', () => {
         hallsUnreadable: [],
       },
     };
-    expect([...PARSE_STATUSES]).toEqual(['ok', 'empty', 'not_a_cause_list', 'failed']);
+    expect([...PARSE_STATUSES]).toEqual(['ok', 'empty', 'not_a_cause_list', 'failed', 'needs_ocr']);
     for (const status of PARSE_STATUSES) {
       expect(ParsedCauseListSchema.safeParse({ ...list, status }).success, status).toBe(true);
     }

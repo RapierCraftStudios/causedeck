@@ -1,7 +1,9 @@
 // Matter services (#362, part 1 of #33): create, update, archive and the keyset list. Writes need
 // `matter.write` (junior and above; a junior only on matters they may read); reads follow
 // `matter.read`, restricted matters included (#233). A merged matter (#365) is read-only and is
-// left out of the list.
+// left out of the list. Turning `sensitive` on or off (CA-10) needs `matter.restrict` (owner and
+// advocate, #386), through `setSensitive` or an `updateMatter` patch. `updateMatter` is the only
+// writer of `synopsis`, a note a member types, so its provenance is always `manual`.
 import { can } from '@causedeck/auth/policy';
 import { matterVisibilityPredicate } from '@causedeck/auth/policy/visibility';
 import { schema } from '@causedeck/db';
@@ -9,6 +11,7 @@ import {
   ArchiveMatterInput,
   CreateMatterInput,
   ListMattersInput,
+  SetSensitiveInput,
   UpdateMatterInput,
 } from '@causedeck/validators/matter-graph-inputs';
 import { and, desc, eq, isNull, sql, type SQL } from 'drizzle-orm';
@@ -99,6 +102,9 @@ export async function updateMatter(
     const current = await requireMatter(scope, matterId, 'matter.write');
     if (current.mergedIntoMatterId !== null) throw conflict('This matter was merged');
     if (current.status === 'archived') throw conflict('This matter is archived');
+    if (patch.sensitive !== undefined && patch.sensitive !== current.sensitive) {
+      await requireMatter(scope, matterId, 'matter.restrict');
+    }
     await checkOwner(scope, patch.ownerMemberId);
     const changes = Object.fromEntries(
       Object.entries(patch).filter(([, value]) => value !== undefined),
@@ -118,6 +124,40 @@ export async function updateMatter(
       matterId: row.id,
       sensitive: row.sensitive,
       changed: Object.keys(changes).sort(),
+    });
+    return row;
+  });
+}
+
+/**
+ * Turn the matter's `sensitive` flag on or off (CA-10: no AI processing, no bulk import, no shared
+ * brief). Needs `matter.restrict`; CONFLICT for an archived or merged matter, a no-op without an
+ * event when the flag already has that value. Emits `matter.updated` with the new flag.
+ */
+export async function setSensitive(
+  deps: MatterGraphDeps,
+  actor: GraphActor,
+  input: SetSensitiveInput,
+): Promise<MatterRow> {
+  const { matterId, sensitive } = parseInput(SetSensitiveInput, input);
+  return inGraphScope(deps, actor, async (scope) => {
+    const current = await requireMatter(scope, matterId, 'matter.restrict');
+    if (current.mergedIntoMatterId !== null) throw conflict('This matter was merged');
+    if (current.status === 'archived') throw conflict('This matter is archived');
+    if (current.sensitive === sensitive) return current;
+    const [row] = await scope.tx
+      .update(matter)
+      .set({ sensitive, updatedAt: new Date() })
+      .where(and(eq(matter.workspaceId, scope.actor.workspaceId), eq(matter.id, matterId)))
+      .returning();
+    if (!row) throw new Error('setSensitive: update returned no row');
+    scope.emit({
+      type: 'matter.updated',
+      workspaceId: row.workspaceId,
+      actorUserId: scope.actor.userId,
+      matterId: row.id,
+      sensitive: row.sensitive,
+      changed: ['sensitive'],
     });
     return row;
   });

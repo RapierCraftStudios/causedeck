@@ -38,9 +38,12 @@ import {
   undoMergeProceedings,
   undoSplit,
   proposeNextDate,
+  setRoleEdge,
+  setSensitive,
   transitionProceeding,
   updateIdentifiers,
   updateMatter,
+  upsertPerson,
   type MatterGraphDeps,
 } from '../../index.ts';
 import { newWorkspace } from '../../__tests__/fixtures.ts';
@@ -244,6 +247,7 @@ function mergeServices(deps: MatterGraphDeps, s: Transaction, d: Seeded) {
 function services(deps: MatterGraphDeps, s: Transaction, d: Seeded): Record<string, Service> {
   const actor = { userId: d.ownerId, workspaceId: d.workspaceId };
   const created: string[] = [];
+  const persons: string[] = [];
   const matterAt = (list: string[], i: number) => list[i % Math.max(list.length, 1)] ?? d.matterId;
   const doc = (i: number) => ({
     kind: 'pleading' as const,
@@ -379,6 +383,49 @@ function services(deps: MatterGraphDeps, s: Transaction, d: Seeded): Record<stri
           cureDeadline: '2026-11-02',
           sourceType: 'manual',
           confirmationState: 'confirmed',
+        }),
+    },
+    // People and the sensitive flag (#386). upsertPerson runs first: setRoleEdge uses its persons.
+    setSensitive: {
+      call: (i: number) =>
+        setSensitive(deps, actor, { matterId: d.matterId, sensitive: i % 2 === 0 }),
+      statement: (i: number): SQLWrapper =>
+        s
+          .update(schema.matter)
+          .set({ sensitive: i % 2 === 1, updatedAt: new Date() })
+          .where(eq(schema.matter.id, d.matterId)),
+    },
+    upsertPerson: {
+      call: async (i: number) => {
+        const row = await upsertPerson(deps, actor, {
+          name: `Perf party ${String(i)} (fictional)`,
+          kind: 'party',
+          aliases: [`Party ${String(i)} (fictional)`],
+        });
+        persons.push(row.id);
+      },
+      statement: (i: number): SQLWrapper =>
+        s.insert(schema.person).values({
+          workspaceId: d.workspaceId,
+          name: `Stmt party ${String(i)} (fictional)`,
+          kind: 'party',
+          sourceType: 'manual',
+        }),
+    },
+    setRoleEdge: {
+      call: (i: number) =>
+        setRoleEdge(deps, actor, {
+          kind: 'appears_for',
+          fromPersonId: persons[i] ?? '',
+          proceedingId: d.proceedingIds[i % PROCEEDINGS] ?? '',
+        }),
+      statement: (i: number): SQLWrapper =>
+        s.insert(schema.roleEdge).values({
+          workspaceId: d.workspaceId,
+          kind: 'opposes',
+          fromPersonId: persons[i] ?? '',
+          matterId: d.matterId,
+          sourceType: 'manual',
         }),
     },
     createDocument: {

@@ -3,7 +3,8 @@
 // emit `GraphEvent`s through the injected `GraphEvents` port; they never import audit or
 // notification code. The canonical next date (#364) changes only through next-date.ts, and the
 // proceeding state machine (#363, ADR 0016) is the only writer of `proceeding.state`. The matter
-// timeline (#366) reads them all across proceedings. See docs/engineering/core-domains.md.
+// timeline (#366) reads them all across proceedings; the read models (#386) serve the matters list
+// and workspace, and people.ts writes persons and role edges. See docs/engineering/core-domains.md.
 export type { GraphActor, MatterGraphDeps } from './context.ts';
 export * from './documents.ts';
 export {
@@ -28,6 +29,7 @@ export {
   type NextDateConflict,
   type NextDateResult,
 } from './next-date.ts';
+export { setRoleEdge, upsertPerson, type PersonRow, type RoleEdgeRow } from './people.ts';
 export {
   createProceeding,
   findDuplicateProceedings,
@@ -37,6 +39,30 @@ export {
   type ProceedingLinkRow,
   type ProceedingRow,
 } from './proceedings.ts';
+export {
+  getMatterOverview,
+  listMatterDocuments,
+  listMatterPeople,
+  listMatterProceedingsTree,
+  searchMatters,
+  type DocumentSource,
+  type ForumSummary,
+  type ListingDetail,
+  type ListingProvenance,
+  type MatterDocumentPage,
+  type MatterDocumentRow,
+  type MatterListPage,
+  type MatterListRow,
+  type MatterOverview,
+  type MatterPeopleGroup,
+  type NextDateConflictView,
+  type NextDateSummary,
+  type OwnerSummary,
+  type PersonView,
+  type ProceedingLinkView,
+  type ProceedingNode,
+  type RoleEdgeView,
+} from './read-models.ts';
 export {
   assertTransition,
   PROCEEDING_TRANSITIONS,

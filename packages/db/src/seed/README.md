@@ -26,6 +26,15 @@ Rules:
 - Never in production: the script and `seedDemo` refuse when `NODE_ENV=production`.
 - Not yet seeded: the PDF objects themselves (the document rows carry the generated PDF's key and sha256; `@causedeck/db` cannot depend on `@causedeck/storage`), notes and activity items (no tables yet). The screens that read this data arrive with their own issues; the full demo mode is #93.
 
+## Synthetic matter sets (`@causedeck/db/seed/synthetic`)
+
+`syntheticMatterSet({ market, workspaceId, forumIds, ownerMemberIds?, matters?, proceedingsPerMatter?, today })` returns the rows of a fictional **Chennai solo** (`chennai-solo`, Madras HC nomenclature: W.P., O.S., Crl.O.P. with W.M.P. children) or **Bengaluru chamber** (`bengaluru-chamber`, Karnataka HC: W.P., R.F.A., O.S. with I.A. children) practice. `insertSyntheticMatterSet(db, set)` writes them into the set's workspace. At the defaults (250 matters, 3 proceedings each) the two sets make the 500 matters / 1,500 proceedings the matters-list perf check runs on (`packages/core/src/matter-graph/__tests__/search-perf.test.ts`, #386).
+
+- Each matter has a client (with a `.test` email), an opposing party and opposite counsel as role edges, a numbered main proceeding with SR-stage children, and, by turns, no next date, only a past one, an upcoming one, or an upcoming one with a conflicting proposed date; every third matter has an open obligation.
+- Fictional only: names end in "(fictional)", case numbers are `SYN-NNNN` (Chennai from 0001, Bengaluru from 5001), no CNR or neutral citation.
+- Deterministic and idempotent: ids derive from the market, the workspace and a running number, and the insert uses `onConflictDoNothing`. Dates are offsets from `today`.
+- Not registered in the seed registry, so `pnpm db:seed` does not load 500 matters; stories, e2e and perf tests call it with a workspace, forums and members of their own. Refused when `NODE_ENV=production`.
+
 The system forum catalogue (`forum-catalogue/`, #34, ADR 0014) is **not** in this registry: catalogue rows (`forum` with a null `workspace_id`) are writable by the owner role only, and `pnpm db:seed` runs as the app role. `pnpm db:migrate` runs `seedForumCatalogue()` as the owner after the migrations, so every deploy re-applies it:
 
 - the entries are typed `ForumSeed[]` per market (`madras-hc.ts`, `karnataka-hc.ts`, `chennai-district.ts`, `bengaluru-district.ts`, `tribunals.ts`), parsed with `ForumSeedSchema` from `@causedeck/validators/forum`; hosts and deep-link templates are data, never constants in code;

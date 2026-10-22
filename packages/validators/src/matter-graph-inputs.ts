@@ -14,10 +14,12 @@ import {
   DOCUMENT_KINDS,
   LIST_TYPES,
   MATTER_STATUSES,
+  PERSON_KINDS,
   PROCEEDING_KINDS,
   PROCEEDING_LINK_KINDS,
   PROCEEDING_STATES,
   ProvenanceSchema,
+  ROLE_EDGE_KINDS,
 } from './matter-graph';
 
 const uuid = z.uuid();
@@ -401,6 +403,92 @@ export const GetMatterTimelineInput = z
   });
 
 // ---------------------------------------------------------------------------------------------
+// Matter read models, people and the sensitive flag (#386, part 1 of #40). `searchMatters` sorts
+// by the canonical next date (nulls last), the last update or the title; its cursor is opaque and
+// tied to the sort it came from. A person keeps contact details only as a client or professional
+// contact (PRD §9, `person_contact_chk`); a role edge names exactly one target.
+
+export const MATTER_SORTS = ['next_date', 'updated', 'title'] as const;
+export type MatterSort = (typeof MATTER_SORTS)[number];
+
+export const SearchMattersInput = z.strictObject({
+  status: z.enum(MATTER_STATUSES).optional(),
+  /** Matters with any proceeding before this forum. */
+  forumId: uuid.optional(),
+  ownerMemberId: uuid.optional(),
+  /** `true`: only matters without an upcoming canonical next date. */
+  noNextDate: z.boolean().optional(),
+  sensitive: z.boolean().optional(),
+  /** A title, a party or a case number in any punctuation (`W.P. No. 45 of 2026`, `wp 45/26`). */
+  q: z.string().trim().min(1, 'Must not be blank').max(200).optional(),
+  sort: z.enum(MATTER_SORTS).default('next_date'),
+  limit,
+  cursor: z.string().min(1).optional(),
+});
+
+/** A read model of one matter. */
+export const MatterReadInput = z.strictObject({ matterId: uuid });
+
+export const ListMatterDocumentsInput = z.strictObject({
+  matterId: uuid,
+  limit,
+  cursor: z.string().min(1).optional(),
+});
+
+/** Contact kinds: the only person kinds that may carry contact details. */
+export const CONTACT_PERSON_KINDS = ['client', 'professional'] as const;
+
+const PersonContactInput = z
+  .strictObject({
+    email: z.email().max(320).exactOptional(),
+    phone: text.max(40).exactOptional(),
+    address: text.max(500).exactOptional(),
+  })
+  .refine(nonEmpty, 'Give at least one contact detail');
+
+export const UpsertPersonInput = z
+  .strictObject({
+    /** Absent: a new person. Present: the person of the workspace to update. */
+    personId: uuid.optional(),
+    name: text.max(300),
+    /** Replaces the stored aliases when given; a new person defaults to none. */
+    aliases: z.array(text.max(300)).max(20).optional(),
+    kind: z.enum(PERSON_KINDS),
+    /** `undefined` keeps the stored contact, `null` clears it. */
+    contact: PersonContactInput.nullable().optional(),
+    provenance: ProvenanceSchema.optional(),
+  })
+  .refine(
+    (value) =>
+      value.contact == null || (CONTACT_PERSON_KINDS as readonly string[]).includes(value.kind),
+    { path: ['contact'], message: 'Contact details are kept only for clients and professionals' },
+  );
+
+export const SetRoleEdgeInput = z
+  .strictObject({
+    kind: z.enum(ROLE_EDGE_KINDS),
+    fromPersonId: uuid,
+    toPersonId: uuid.optional(),
+    matterId: uuid.optional(),
+    proceedingId: uuid.optional(),
+    /** Delete the edge instead of setting it. */
+    remove: z.boolean().default(false),
+    provenance: ProvenanceSchema.optional(),
+  })
+  .refine(
+    (value) =>
+      [value.toPersonId, value.matterId, value.proceedingId].filter((v) => v !== undefined)
+        .length === 1,
+    { path: ['matterId'], message: 'Name exactly one of toPersonId, matterId or proceedingId' },
+  )
+  .refine((value) => value.toPersonId === undefined || value.toPersonId !== value.fromPersonId, {
+    path: ['toPersonId'],
+    message: 'A person cannot have a role towards themselves',
+  });
+
+export const SetSensitiveInput = z.strictObject({ matterId: uuid, sensitive: z.boolean() });
+
+// ---------------------------------------------------------------------------------------------
 // Types: `…Input` is what a caller passes, `Parsed…` what a service works with.
 
 export type CreateMatterInput = z.input<typeof CreateMatterInput>;
@@ -440,3 +528,12 @@ export type ParsedConfirmNextDate = z.output<typeof ConfirmNextDateInput>;
 export type GetCanonicalNextDateInput = z.input<typeof GetCanonicalNextDateInput>;
 export type GetMatterTimelineInput = z.input<typeof GetMatterTimelineInput>;
 export type ParsedGetMatterTimeline = z.output<typeof GetMatterTimelineInput>;
+export type SearchMattersInput = z.input<typeof SearchMattersInput>;
+export type ParsedSearchMatters = z.output<typeof SearchMattersInput>;
+export type MatterReadInput = z.input<typeof MatterReadInput>;
+export type ListMatterDocumentsInput = z.input<typeof ListMatterDocumentsInput>;
+export type UpsertPersonInput = z.input<typeof UpsertPersonInput>;
+export type ParsedUpsertPerson = z.output<typeof UpsertPersonInput>;
+export type SetRoleEdgeInput = z.input<typeof SetRoleEdgeInput>;
+export type ParsedSetRoleEdge = z.output<typeof SetRoleEdgeInput>;
+export type SetSensitiveInput = z.input<typeof SetSensitiveInput>;

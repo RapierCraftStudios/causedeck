@@ -73,8 +73,8 @@ export const Failed: Story = {
 export const Offline: Story = {
   args: { offline: true },
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'Edit synopsis' }));
-    await expect(canvas.getByRole('button', { name: 'Save synopsis' })).toBeDisabled();
+    // Offline turns Edit off, so the editor (and its Save) cannot be reached.
+    await expect(canvas.getByRole('button', { name: 'Edit synopsis' })).toBeDisabled();
   },
 };
 

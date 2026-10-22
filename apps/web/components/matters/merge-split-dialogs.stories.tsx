@@ -95,7 +95,8 @@ export const MergeBlocked: Story = {
         "These matters are restricted to different people, so they can't be merged.",
       ),
     ).toBeVisible();
-    await expect(screen.getByRole('button', { name: 'Merge matters' })).toBeDisabled();
+    // A blocked merge offers no Merge button at all, not a disabled one.
+    await expect(screen.queryByRole('button', { name: 'Merge matters' })).toBeNull();
   },
 };
 

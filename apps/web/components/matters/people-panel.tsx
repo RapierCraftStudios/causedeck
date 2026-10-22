@@ -142,7 +142,7 @@ function PersonRow({
               onEdit(event.currentTarget);
             }}
           >
-            {t('form.editTitle')}
+            {t('editShort')}
           </Button>
           {person.onMatter ? (
             <Button

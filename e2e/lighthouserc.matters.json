@@ -3,7 +3,8 @@
     "collect": {
       "url": [
         "http://localhost:3100/w/chennai-solo/matters",
-        "http://localhost:3100/w/chennai-solo/matters/00000000-0000-4000-8000-0000000b0001"
+        "http://localhost:3100/w/chennai-solo/matters/00000000-0000-4000-8000-0000000b0001",
+        "http://localhost:3100/w/chennai-solo/matters/00000000-0000-4000-8000-0000000b0001/timeline"
       ],
       "numberOfRuns": 3,
       "settings": {

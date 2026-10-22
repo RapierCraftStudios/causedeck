@@ -72,6 +72,18 @@ export {
   type ProceedingRow,
 } from './proceedings.ts';
 export {
+  getMatterGraph,
+  getTimelineAnchors,
+  GRAPH_GROUP_THRESHOLD,
+  TIMELINE_ANCHORS_MAX,
+  type CollapsedGroup,
+  type GraphEdge,
+  type GraphEdgeKind,
+  type GraphNode,
+  type MatterGraph,
+  type TimelineAnchor,
+} from './graph-read-model.ts';
+export {
   getMatterOverview,
   listMatterDocuments,
   listMatterPeople,

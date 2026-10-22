@@ -95,6 +95,7 @@ describe('namespaced catalogs (#174)', () => {
         'invite',
         'lifecycle',
         'locale',
+        'matterTimeline',
         'matters',
         'members',
         'nav',

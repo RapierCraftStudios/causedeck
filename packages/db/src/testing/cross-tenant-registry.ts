@@ -359,6 +359,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getCanonicalNextDate: denies,
   // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
   getMatterTimeline: denies,
+  // matter graph and timeline anchors (#41): A's matter from B, or ub claiming A, is NOT_FOUND
+  getMatterGraph: denies,
+  getTimelineAnchors: denies,
   // matters read models and people (#386): A's matter or person from B, or ub claiming A, is
   // NOT_FOUND; a search from B lists none of A's matters
   searchMatters: empty,
@@ -668,6 +671,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   InvalidTransitionError: 'error class',
   assertTransition: 'pure',
   PROCEEDING_TRANSITIONS: 'constant',
+  // matter graph (#41): the collapse threshold and the anchor cap
+  GRAPH_GROUP_THRESHOLD: 'constant',
+  TIMELINE_ANCHORS_MAX: 'constant',
   // workspaces: extension points (process-wide wiring, no database access of their own)
   permissiveEntitlements: 'default entitlements implementation (allows everything, no queries)',
   setEntitlements: 'setter',

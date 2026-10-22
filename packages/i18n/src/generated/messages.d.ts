@@ -2128,6 +2128,7 @@ export type Messages = {
       tabs: {
         overview: string;
         proceedings: string;
+        timeline: string;
         people: string;
         documents: string;
       };
@@ -2512,6 +2513,168 @@ export type Messages = {
           failed: string;
         };
       };
+    };
+  };
+  matterTimeline: {
+    title: string;
+    loading: string;
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    offline: string;
+    count: string;
+    empty: {
+      title: string;
+      body: string;
+    };
+    filteredEmpty: {
+      title: string;
+      body: string;
+    };
+    announce: {
+      shown: string;
+    };
+    today: {
+      label: string;
+      jump: string;
+    };
+    mode: {
+      label: string;
+      combined: string;
+      lanes: string;
+    };
+    pane: {
+      label: string;
+      timeline: string;
+      tree: string;
+      openTree: string;
+    };
+    list: {
+      label: string;
+    };
+    event: {
+      toConfirm: string;
+      openSource: string;
+    };
+    filters: {
+      title: string;
+      description: string;
+      open: string;
+      search: string;
+      kinds: string;
+      proceedings: string;
+      removeProceeding: string;
+      dates: string;
+      from: string;
+      to: string;
+      showProposed: string;
+      clear: string;
+    };
+    kinds: {
+      listing: string;
+      hearing: string;
+      order: string;
+      obligation_due: string;
+      obligation_closed: string;
+      state_change: string;
+      document_added: string;
+      bench_change: string;
+    };
+    states: {
+      filed: string;
+      sr_fr: string;
+      defects: string;
+      re_presented: string;
+      numbered: string;
+      disposed: string;
+    };
+    sources: {
+      manual: string;
+      document: string;
+      capture: string;
+      adapter: string;
+      ai: string;
+      import: string;
+      system: string;
+    };
+    qualifier: {
+      daily: string;
+      advance: string;
+      supplementary: string;
+      special: string;
+      interim: string;
+      final: string;
+      procedural: string;
+      pleading: string;
+      ia: string;
+      annexure: string;
+      order: string;
+      judgment: string;
+      cause_list: string;
+      correspondence: string;
+      note: string;
+      draft: string;
+      registry_memo: string;
+      other: string;
+    };
+    summary: {
+      listing: string;
+      hearing: string;
+      order: string;
+      obligationDue: string;
+      obligationClosed: string;
+      stateChange: string;
+      documentAdded: string;
+      benchChange: string;
+    };
+    graph: {
+      title: string;
+      treeLabel: string;
+      chipsLabel: string;
+      allProceedings: string;
+      showAll: string;
+      appeal: string;
+      unnumbered: string;
+      srFrNo: string;
+      group: string;
+      groupLabel: string;
+      relations: {
+        appealFrom: string;
+        appealedIn: string;
+        connected: string;
+        lowerCourt: string;
+        lowerCourtOf: string;
+      };
+    };
+    legend: {
+      title: string;
+      parentOf: string;
+      appeal: string;
+      connected: string;
+      lowerCourt: string;
+    };
+    lanes: {
+      label: string;
+      date: string;
+      matter: string;
+      menu: string;
+      menuHint: string;
+    };
+    keys: {
+      title: string;
+      description: string;
+      open: string;
+      month: string;
+      today: string;
+      rows: string;
+      ends: string;
+      help: string;
+      tree: string;
+      expandAll: string;
+      select: string;
+      selectMore: string;
     };
   };
   error: {

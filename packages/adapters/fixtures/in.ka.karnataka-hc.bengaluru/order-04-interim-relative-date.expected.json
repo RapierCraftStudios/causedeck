@@ -1,0 +1,57 @@
+{
+  "header": {
+    "caseTypeRaw": "WRIT PETITION",
+    "caseType": "WP",
+    "caseNumber": "20011",
+    "caseYear": 2026,
+    "orderDate": "2026-10-22",
+    "neutralCitation": null,
+    "anchor": {
+      "page": 1,
+      "quote": "WRIT PETITION NO. 20011 OF 2026 (T-RES)",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "WRIT PETITION",
+        "number": "20011",
+        "year": 2026,
+        "matchKey": "WP/20011/2026",
+        "subCategory": "T-RES"
+      }
+    ],
+    "bench": "THE HON'BLE MR JUSTICE A. FICTIONAL",
+    "judges": ["THE HON'BLE MR JUSTICE A. FICTIONAL"],
+    "neutralCitationRaw": null,
+    "orderType": "interim",
+    "authenticityFlag": null
+  },
+  "cues": [
+    {
+      "kind": "notice",
+      "text": "Issue notice to the respondents.",
+      "anchor": {
+        "page": 1,
+        "quote": "Issue notice to the respondents.",
+        "rowIndex": 13
+      },
+      "confidence": 0.8,
+      "phrase": "Issue notice",
+      "date": null
+    },
+    {
+      "kind": "next_date_relative",
+      "text": "List after two weeks.",
+      "anchor": {
+        "page": 1,
+        "quote": "List after two weeks.",
+        "rowIndex": 15
+      },
+      "confidence": 0.85,
+      "phrase": "List after",
+      "date": null
+    }
+  ]
+}

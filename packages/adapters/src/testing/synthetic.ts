@@ -95,3 +95,35 @@ export async function writeSyntheticPdf(
   }
   return doc.save({ useObjectStreams: false });
 }
+
+/** A run of text at a position: `x` from the left edge, `y` its baseline from the top edge. */
+export interface SyntheticPdfRun {
+  x: number;
+  y: number;
+  text: string;
+  /** Font size in points (default 10). */
+  size?: number;
+}
+
+/**
+ * A text-layer PDF with one A4 page per entry of `pages`, one `drawText` per positioned run, so a
+ * table's cells start at their column's x (#408: the Karnataka HC PDF parser clusters columns from
+ * the header positions). Same fixed dates as `writeSyntheticPdf`: the same runs give the same bytes.
+ */
+export async function writeSyntheticColumnPdf(
+  pages: readonly (readonly SyntheticPdfRun[])[],
+): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  doc.setCreationDate(FIXED_DATE);
+  doc.setModificationDate(FIXED_DATE);
+  doc.setProducer('causedeck synthetic fixtures (FICTIONAL)');
+  doc.setCreator('causedeck synthetic fixtures (FICTIONAL)');
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  for (const runs of pages) {
+    const page = doc.addPage(A4);
+    for (const run of runs) {
+      page.drawText(run.text, { x: run.x, y: A4[1] - run.y, size: run.size ?? FONT_SIZE, font });
+    }
+  }
+  return doc.save({ useObjectStreams: false });
+}

@@ -50,7 +50,13 @@ The adapter shipped version 1.0.0 (`packages/adapters/src/karnataka-hc/`, `adapt
 
 Real-fixture results (`ADAPTER_PRIVATE_FIXTURES_DIR`) are reported separately and are not required for merge. The committed fixtures are FICTIONAL and synthetic (#408). Deep links open the court's cause-list, case-status and judgment pages in a new window from the forum catalogue; the adapter reads none of them.
 
-The 1.0.0 row, and the 1.1.0 row that retires it, are inserted active by migrations with `fixtures_digest` null, because no KHC golden fixtures are committed yet (#408). Once they are, every later version goes through `activateAdapterVersion` and its golden gate.
+The 1.0.0 row, and the 1.1.0 row that retires it, were inserted active by migrations with `fixtures_digest` null, before any KHC golden fixtures were committed. The fixtures came with #408 and leave the 1.1.0 row as it is; every later version goes through `activateAdapterVersion` and its golden gate.
+
+### Synthetic fixtures and golden metrics (#408)
+
+`packages/adapters/fixtures/in.ka.karnataka-hc.bengaluru/` holds 12 committed cause lists, 12 orders and 4 FR / scrutiny-objection notices, all FICTIONAL. The lists are 11 saved HTML pages and one consolidated column PDF: a daily Bengaluru list with 3 halls and 2 lists each, advance, supplementary, Dharwad-style 100xxx numbers, no advocate columns, heading variants, an "Orders (registry objections)" list, header cells and stage headings reflowed over two lines, broken HTML, a sitting-list page (`not_a_cause_list`, zero rows) and an empty list. The orders cover the `KHC`, `KHC-D` and `-DB` citations, an interim order with a relative date, an absolute call-on date, a reserved order, a common order, a decoy date, no next date, a writ category, RFA and RSA, a 22-page order and a scrutiny-objection order. `test:golden` checks every one against its expected file. The broken-HTML input is excluded from Prettier, so its bytes stay malformed.
+
+`packages/adapters/src/karnataka-hc/synthetic/generate.ts` builds seeded documents in the grammar above: HTML list pages, column PDFs (`writeSyntheticColumnPdf`, each cell at its column's x with up to 3 pt of jitter, wrapped cells on continuation lines), orders and notices, each with its truth. `pnpm --filter @causedeck/adapters gen:fixtures --adapter karnataka --seed 7` writes 32 lists (8 PDFs), 50 orders and 10 notices to the git-ignored `packages/adapters/fixtures/generated/`. `src/karnataka-hc/generated-metrics.test.ts` gates them in `test:metrics`, run by the CI "Adapter golden metrics (generated)" step: row precision >= 99.5%, recall >= 95%, order-date accuracy >= 98% and zero invented dates. A decoy earlier-order date is printed but left out of the truth, so emitting it counts as invented. A wrapped case-number cell in an HTML row has no verbatim anchor (A12), so the generator and fixtures keep case numbers on one line there.
 
 ## Consequences
 

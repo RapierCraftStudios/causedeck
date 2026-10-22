@@ -1,0 +1,176 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-10-23",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1\tWP No. 3101/2026\tFictional Silks Ltd. vs State of Fictionland",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "14",
+      "itemNo": "1",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "3101",
+      "caseYear": 2026,
+      "matchKey": "WP/3101/2026",
+      "parties": "Fictional Silks Ltd. vs State of Fictionland",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2\tWA No. 77 of 2026\tPretend Growers Society vs Union of Fictionland",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "14",
+      "itemNo": "2",
+      "caseTypeRaw": "WA",
+      "caseType": "WA",
+      "caseNumber": "77",
+      "caseYear": 2026,
+      "matchKey": "WA/77/2026",
+      "parties": "Pretend Growers Society vs Union of Fictionland",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3\tIA No. 2/2026 in MFA No. 4410/2024\tThe Fictional Bank vs Made-up Traders",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "14",
+      "itemNo": "3",
+      "caseTypeRaw": "MFA",
+      "caseType": "MFA",
+      "caseNumber": "4410",
+      "caseYear": 2024,
+      "matchKey": "MFA/4410/2024",
+      "parties": "The Fictional Bank vs Made-up Traders",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["14"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "14",
+      "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+      "lists": [
+        {
+          "listNo": "1",
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1\tWP No. 3101/2026\tFictional Silks Ltd. vs State of Fictionland",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "14",
+              "itemNo": "1",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "3101",
+              "caseYear": 2026,
+              "matchKey": "WP/3101/2026",
+              "parties": "Fictional Silks Ltd. vs State of Fictionland",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2\tWA No. 77 of 2026\tPretend Growers Society vs Union of Fictionland",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "14",
+              "itemNo": "2",
+              "caseTypeRaw": "WA",
+              "caseType": "WA",
+              "caseNumber": "77",
+              "caseYear": 2026,
+              "matchKey": "WA/77/2026",
+              "parties": "Pretend Growers Society vs Union of Fictionland",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3\tIA No. 2/2026 in MFA No. 4410/2024\tThe Fictional Bank vs Made-up Traders",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "14",
+              "itemNo": "3",
+              "caseTypeRaw": "MFA",
+              "caseType": "MFA",
+              "caseNumber": "4410",
+              "caseYear": 2024,
+              "matchKey": "MFA/4410/2024",
+              "parties": "The Fictional Bank vs Made-up Traders",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "HON'BLE MR. JUSTICE A. FICTIONAL",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "status": "ok",
+  "listType": "daily",
+  "source": "html",
+  "publishedAt": "2026-10-22T18:30:00+05:30",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23-10-2026",
+    "rowIndex": 0
+  }
+}

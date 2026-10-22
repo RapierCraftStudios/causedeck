@@ -230,6 +230,15 @@ describe('People tab (#393)', () => {
     expect(document.querySelector('[data-people-import]')).toBeNull();
   });
 
+  it('keeps the visible text of every Edit button inside its accessible name', async () => {
+    await renderPage();
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-person-edit]');
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const button of buttons) {
+      expect(button.getAttribute('aria-label')).toContain(button.textContent);
+    }
+  });
+
   it.each(['viewer', 'clerk'] as const)('gives a %s no mutation controls at all', async (role) => {
     as(role);
     await renderPage();

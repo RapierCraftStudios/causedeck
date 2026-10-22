@@ -194,10 +194,13 @@ export function GraphView({
                 aria-label={
                   group === undefined
                     ? undefined
-                    : t('graph.groupLabel', {
+                    : `${t('graph.group', {
                         caseType: group.caseType,
                         count: group.memberIds.length,
-                      })
+                      })}, ${t('graph.groupLabel', {
+                        caseType: group.caseType,
+                        count: group.memberIds.length,
+                      })}`
                 }
                 tabIndex={item.id === tabStop ? 0 : -1}
                 data-item-id={item.id}

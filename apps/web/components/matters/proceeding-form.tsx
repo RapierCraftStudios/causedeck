@@ -20,11 +20,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@causedeck/ui/dialog';
+import { useFieldControl } from '@causedeck/ui/field';
 import { Form, FormField, useZodForm } from '@causedeck/ui/form';
 import { controlClasses, controlHeight, Input } from '@causedeck/ui/input';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { z } from 'zod';
 
 import { compactCaseTypeCode } from '../../lib/matters/case-type-code.ts';
@@ -288,6 +289,12 @@ function duplicateLabel(hit: DuplicateHit): string {
 
 const selectClasses = `${controlClasses} ${controlHeight} w-full`;
 
+/** A native select wired to its `Field`: the id its label points at, and the aria state. */
+function FieldSelect({ disabled, ...props }: ComponentProps<'select'>) {
+  const control = useFieldControl({ disabled });
+  return <select {...props} id={control.id} disabled={control.disabled} {...control.ariaProps} />;
+}
+
 export function ProceedingForm({
   workspaceId,
   matterId,
@@ -429,7 +436,7 @@ export function ProceedingForm({
             disabled={editing !== undefined}
             hint={forums.length === 0 ? t('noForums') : undefined}
             render={({ field }) => (
-              <select
+              <FieldSelect
                 {...field}
                 data-forum-select=""
                 className={selectClasses}
@@ -441,7 +448,7 @@ export function ProceedingForm({
                     {option.name}
                   </option>
                 ))}
-              </select>
+              </FieldSelect>
             )}
           />
           <FormField
@@ -561,14 +568,14 @@ export function ProceedingForm({
                   name="parentId"
                   label={t('parent')}
                   render={({ field }) => (
-                    <select {...field} data-picker="parent" className={selectClasses}>
+                    <FieldSelect {...field} data-picker="parent" className={selectClasses}>
                       <option value="">{t('noParent')}</option>
                       {others.map((row) => (
                         <option key={row.id} value={row.id}>
                           {row.label}
                         </option>
                       ))}
-                    </select>
+                    </FieldSelect>
                   )}
                 />
               ) : null}
@@ -578,14 +585,14 @@ export function ProceedingForm({
                   name={name}
                   label={t(name)}
                   render={({ field }) => (
-                    <select {...field} data-picker={name} className={selectClasses}>
+                    <FieldSelect {...field} data-picker={name} className={selectClasses}>
                       <option value="">{t('none')}</option>
                       {others.map((row) => (
                         <option key={row.id} value={row.id}>
                           {row.label}
                         </option>
                       ))}
-                    </select>
+                    </FieldSelect>
                   )}
                 />
               ))}

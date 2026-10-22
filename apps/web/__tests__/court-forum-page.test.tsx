@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // Forum detail routes (#400): the forum card's `/w/<slug>/courts/<code>` link resolves to a detail
-// shell (header with the parse banner, Halls/Adapter/Links tabs, no Rosters tab) read in the
+// shell (header with the parse banner, Halls/Adapter/Links tabs and a Rosters tab linking to the
+// workspace rosters page with the forum selected, #435) read in the
 // workspace's own scope by every role; the bare forum URL opens Halls; each tab page reads its read
 // model; NOT_FOUND is a 404, FORBIDDEN permission-denied, anything else the load error. No page
 // frames, embeds or fetches a court page.
@@ -162,8 +163,12 @@ describe('forum detail layout (#400)', () => {
         'Halls',
         'Adapter',
         'Links',
+        'Rosters',
       ]);
       expect(tabs.getByRole('link', { name: 'Halls' }).getAttribute('aria-current')).toBe('page');
+      const rosters = tabs.getByRole('link', { name: 'Rosters' });
+      expect(rosters.getAttribute('href')).toBe(`/w/demo/courts/rosters?forum=${CODE}`);
+      expect(rosters.getAttribute('aria-current')).toBeNull();
       expect(screen.getByText('tab body')).toBeTruthy();
       noCourtFrames();
     },

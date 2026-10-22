@@ -8,6 +8,10 @@ import type {
   HallSeen,
 } from '@causedeck/core/court';
 
+import type { BenchChangeItem } from '../bench-change-banner.tsx';
+import type { RosterForumOption } from '../roster-forum-picker.tsx';
+import type { RosterCardData, RosterHallRow } from '../roster-table.tsx';
+
 /** A Madras HC-like forum; override what a case needs. */
 export function forum(overrides: Partial<CourtsIndexForum> = {}): CourtsIndexForum {
   const code = overrides.code ?? 'in.tn.madras-hc.principal.appellate';
@@ -202,5 +206,76 @@ export function hallsSeen(): HallSeen[] {
     { hallNo: '2', lastListAt: new Date('2026-10-21T04:00:00Z'), unreadable: false },
     { hallNo: '7', lastListAt: new Date('2026-10-21T04:00:00Z'), unreadable: true },
     { hallNo: '12A', lastListAt: new Date('2026-10-20T04:00:00Z'), unreadable: false },
+  ];
+}
+
+/** Two roster versions of a forum: the active one from 5 Oct (in force) and September's. */
+export function rosterCards(): RosterCardData[] {
+  return [
+    {
+      id: 'roster-oct',
+      version: 2,
+      status: 'active',
+      effectiveFrom: '2026-10-05',
+      effectiveTo: null,
+      entryCount: 3,
+    },
+    {
+      id: 'roster-sep',
+      version: 1,
+      status: 'superseded',
+      effectiveFrom: '2026-09-01',
+      effectiveTo: '2026-10-05',
+      entryCount: 2,
+    },
+  ];
+}
+
+/** The halls of the October roster, by hall number; hall 12A has no judge recorded. */
+export function rosterHalls(): RosterHallRow[] {
+  return [
+    {
+      entryId: 'entry-2',
+      hallNo: '2',
+      portfolioText: 'Writ petitions (2019 onwards)',
+      benchLabel: 'Justice A. Venpa (fictional)',
+    },
+    {
+      entryId: 'entry-7',
+      hallNo: '7',
+      portfolioText: 'Civil revision petitions; second appeals',
+      benchLabel: 'Justice B. Kural (fictional), Justice C. Ilai (fictional)',
+    },
+    { entryId: 'entry-12a', hallNo: '12A', portfolioText: '', benchLabel: null },
+  ];
+}
+
+/** Two open bench-change alerts; the second matter had no bench under the previous roster. */
+export function benchChanges(): BenchChangeItem[] {
+  return [
+    {
+      alertId: 'alert-1',
+      matterId: 'matter-1',
+      matterTitle: 'Raman v. State (fictional)',
+      effectiveFrom: '2026-10-05',
+      oldBench: { label: 'Justice A. Venpa (fictional)' },
+      newBench: { label: 'Justice B. Kural (fictional), Justice C. Ilai (fictional)' },
+    },
+    {
+      alertId: 'alert-2',
+      matterId: 'matter-2',
+      matterTitle: 'Lakshmi Traders v. Kumar (fictional)',
+      effectiveFrom: '2026-10-05',
+      oldBench: null,
+      newBench: { label: null },
+    },
+  ];
+}
+
+/** Forums with rosters, for the forum picker. */
+export function rosterForums(): RosterForumOption[] {
+  return [
+    { code: 'in.tn.madras-hc.principal.appellate', court: 'Madras High Court', seat: 'Chennai' },
+    { code: 'in.ka.karnataka-hc.bengaluru', court: 'High Court of Karnataka', seat: 'Bengaluru' },
   ];
 }

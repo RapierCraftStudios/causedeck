@@ -200,28 +200,31 @@ const CASES: Record<string, Case> = {
     const range = { from: new Date('2000-01-01'), to: new Date('2100-01-01') };
     await claimsAreDenied(f, (deps, actor) => core.countByDay(deps, actor, range));
     const { deps } = graphDeps(f.tx);
-    const fromB = await core.countByDay(deps, { userId: f.ub, workspaceId: f.b.id }, range);
-    const fromA = await core.countByDay(deps, { userId: f.ua, workspaceId: f.a.id }, range);
-    expect(fromA.reduce((n, d) => n + d.total, 0)).toBeGreaterThan(
-      fromB.reduce((n, d) => n + d.total, 0),
-    );
+    // Each tenant is seeded with activities of its own: the counts are its own list, not the sum.
+    for (const [userId, workspaceId] of [
+      [f.ub, f.b.id],
+      [f.ua, f.a.id],
+    ] as const) {
+      const actor = { userId, workspaceId };
+      const days = await core.countByDay(deps, actor, range);
+      const listed = await core.listActivities(deps, actor);
+      expect(days.reduce((n, d) => n + d.total, 0)).toBe(listed.items.length);
+    }
   },
   countDigestActivities: async (f) => {
     const input = { from: new Date('2000-01-01'), to: new Date('2100-01-01') };
     await claimsAreDenied(f, (deps, actor) => core.countDigestActivities(deps, actor, input));
     const { deps } = graphDeps(f.tx);
-    const fromB = await core.countDigestActivities(
-      deps,
-      { userId: f.ub, workspaceId: f.b.id },
-      input,
-    );
-    const fromA = await core.countDigestActivities(
-      deps,
-      { userId: f.ua, workspaceId: f.a.id },
-      input,
-    );
-    // A's open proposal is counted for A only.
-    expect(fromA.pendingL2Count).toBeGreaterThan(fromB.pendingL2Count);
+    for (const [userId, workspaceId] of [
+      [f.ub, f.b.id],
+      [f.ua, f.a.id],
+    ] as const) {
+      const actor = { userId, workspaceId };
+      const counts = await core.countDigestActivities(deps, actor, input);
+      const proposals = await core.listProposalsForDigest(deps, actor);
+      // Only this workspace's open proposals are counted.
+      expect(counts.pendingL2Count).toBe(proposals.length);
+    }
   },
   exportActivities: async (f) => {
     await claimsAreDenied(f, (deps, actor) => core.exportActivities(deps, actor));

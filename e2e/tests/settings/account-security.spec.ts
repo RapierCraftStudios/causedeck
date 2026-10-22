@@ -16,6 +16,8 @@ async function openAccount(page: Page, asUser: AsUser, query = '') {
   await asUser('owner');
   await page.goto(`/account${query}`);
   await expect(page.getByRole('heading', { level: 1, name: 'Account' })).toBeVisible();
+  // The title streams in after the page body; axe's document-title rule needs it present.
+  await expect.poll(() => page.title()).not.toBe('');
 }
 
 /** RFC 6238 TOTP (SHA-1, 30 s, 6 digits) from a base32 secret. */

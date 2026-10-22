@@ -69,9 +69,10 @@ export async function expectNoRatingCopy(page: Page): Promise<void> {
 }
 
 /**
- * Drop every catalogue forum from the worker database: the courts index has nothing to list. Rows
- * that point at a forum (proceedings from the matter graph, rosters, ...) go first, since their
- * foreign keys restrict the delete; the worker database is reset from the template per test.
+ * Drop every forum (catalogue and workspace-owned, the seed has both) from the worker database: the
+ * courts index has nothing to list. Rows that point at a forum (proceedings from the matter graph,
+ * rosters, ...) go first, since their foreign keys restrict the delete; the worker database is
+ * reset from the template per test.
  */
 export function emptyCatalogue(database: string): Promise<void> {
   return withSql(database, async (sql) => {
@@ -86,7 +87,7 @@ export function emptyCatalogue(database: string): Promise<void> {
           execute format('truncate %s cascade', r.t);
         end loop;
       end $$`);
-    await sql`delete from forum where workspace_id is null`;
+    await sql`delete from forum`;
   });
 }
 

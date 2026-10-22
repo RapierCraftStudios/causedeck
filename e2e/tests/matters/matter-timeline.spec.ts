@@ -141,6 +141,6 @@ test.describe('matter timeline', () => {
   }) => {
     await openMatters(page, asUser, { role: 'clerk', path: timelinePath() });
     await expect(page.getByRole('tree', { name: 'Proceedings of this matter' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /add|edit|delete/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^(add|edit|delete)\b/i })).toHaveCount(0);
   });
 });

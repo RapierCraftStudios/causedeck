@@ -71,7 +71,7 @@ for (const { name, viewport } of WIDTHS) {
       await expect(page.locator('[data-route="today"] [data-pattern-state="empty"]')).toBeVisible();
       await shot(page, testInfo, `${name}-today`);
       await openShell(page, asUser, { path: 'matters' });
-      await expect(page.locator('[data-route="matters"] [data-empty-action]')).toBeVisible();
+      await expect(page.locator('[data-route="matters"]')).toBeVisible(); // a real list since #388
       await shot(page, testInfo, `${name}-matters`);
     });
 

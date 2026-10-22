@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./ai": "./src/ai/index.ts",
     "./audit": "./src/audit/index.ts",
+    "./automation": "./src/automation/index.ts",
     "./billing": "./src/billing/index.ts",
     "./court": "./src/court/index.ts",
     "./jobs": "./src/jobs/index.ts",

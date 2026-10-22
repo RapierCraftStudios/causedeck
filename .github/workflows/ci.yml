@@ -66,6 +66,8 @@ jobs:
       - name: Prettier
         if: steps.changed.outputs.prettier_full != 'false'
         run: pnpm format:check
+      - name: No fifth automation level or send path
+        run: pnpm check:no-l5
       - name: ADR lint
         if: steps.changed.outputs.docs_checks != 'false'
         run: pnpm adr:lint

@@ -56,6 +56,18 @@ export {
   type AnchorKind,
   type AnchorTranscriptSpan,
 } from './documents.ts';
+export {
+  ACTIVITY_ACTORS,
+  activity,
+  AUTOMATION_LEVELS,
+  automationPreference,
+  automationThreshold,
+  PROPOSAL_STATUSES,
+  proposal,
+  type ActivityActor,
+  type AutomationLevelValue,
+  type ProposalStatus,
+} from './automation.ts';
 export { jobEffect } from './job-effect.ts';
 export {
   DELETION_KINDS,

@@ -21,6 +21,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `matters` | `@causedeck/core/matters` | matter restrictions |
 | `court` | `@causedeck/core/court` | forum catalogue reads, custom workspace forums and official deep links (#34, [ADR 0014](../adr/0014-forum-catalogue-and-deep-links.md)), the tenant-free adapter parse-health summary (#372), and the courts read models `getCourtsIndex`, `getForumDetail`, `getAdapterStatus` and `listHallsSeen` (#397; access-mode rows with counsel notes via `@causedeck/flags/access-mode`), the roster services (#385, #387), and bench-change detection and alerts `detectBenchChanges`, `listAlerts`, `dismissAlert` with the `CourtEvents` port (`bench.changed`) and `notify()` delivery (#389), and the rosters page read model `getRostersPage` (#434) |
 | `matter-graph` | `@causedeck/core/matter-graph` | matter-graph services (#362): matters, proceedings, documents, the duplicate finder, the proceeding state machine (#363, ADR 0016), the canonical next date (#364: propose, confirm, read; the only writer of `listing.list_date` and `canonical`), merges and splits with `UndoPayload` (#365) and their read-only previews (#392), the cross-proceeding matter timeline (#366, read-only), the matters read models (#386) and the document preview read model `getDocumentPreview` (#393: one page's text and the version chain, for `DocumentPreviewSheet`), and the `GraphEvents` port they emit through |
+| `automation` | `@causedeck/core/automation` | the automation engine (#47, [ADR 0023](../adr/0023-automation-ladder-and-undo.md)): the L1-L4 ladder, the approval matrix as data and `decideLevel`, proposals (`submitProposals`, `acceptProposal`, `editAndAccept`, `dismissProposal`, `applyAutomatically`, `expireProposals`), the kind handlers that write through the matter-graph services, the 7-day cascading undo (`undoActivity`, `undoCapture`, `reassignCapture`), the ask-first dial, threshold learning and the activity export. It has no send, file, pay or advise path (`scripts/check-no-l5.ts`) |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `ai` | `@causedeck/core/ai` | the AI gateway wiring (#44, [ADR 0022](../adr/0022-ai-gateway-implementation.md)): the ports `@causedeck/ai` declares, implemented on usage budgets, `workspace_settings.india_only_ai`, `matter.sensitive`, the `ai_call` writer and the 24 h `ai_call_result` store |
@@ -65,6 +66,9 @@ graph LR
   court --> workspaces
   matter-graph --> workspaces
   matter-graph --> matters
+  automation --> workspaces
+  automation --> audit
+  automation --> matter-graph
   billing --> workspaces
   billing --> audit
   usage --> audit
@@ -101,6 +105,7 @@ graph LR
 | `matters` | `workspaces`, `audit` |
 | `court` | `workspaces` |
 | `matter-graph` | `workspaces`, `matters` |
+| `automation` | `workspaces`, `audit`, `matter-graph` |
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
 | `ai` | `audit`, `usage` |

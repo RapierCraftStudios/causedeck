@@ -60,7 +60,7 @@ export class AiCallContractError extends Error {
 
 function assertContract(input: AiCallInput): void {
   if (![1, 2, 3, 4].includes(input.automationLevel)) {
-    throw new AiCallContractError('ai_call automationLevel must be 1-4 (there is no L5)');
+    throw new AiCallContractError('ai_call automationLevel must be 1-4 (the ladder stops at L4)');
   }
   for (const source of input.sources ?? []) {
     const extra = Object.keys(source).filter((key) => key !== 'id' && key !== 'anchor');

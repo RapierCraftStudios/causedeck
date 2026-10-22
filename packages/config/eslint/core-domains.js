@@ -19,6 +19,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),
+  // The automation engine (#47): membership roles through workspaces, its audit events through
+  // audit, and every graph write through the matter-graph services (imports `index.ts` only).
+  automation: Object.freeze(['workspaces', 'audit', 'matter-graph']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.

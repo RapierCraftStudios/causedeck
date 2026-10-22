@@ -206,6 +206,30 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'Workspace settings were opened',
   },
+  // Automation engine (#47). Fail-closed where the system acted or was reversed: an action that
+  // cannot be audited does not happen. Metadata holds ids, kind, level and counts, never content.
+  'automation.submitted': {
+    security: false,
+    description: 'Drafts were submitted to the automation engine',
+  },
+  'automation.applied': {
+    security: true,
+    description: 'The automation engine applied a change without asking (L3)',
+  },
+  'automation.accepted': {
+    security: true,
+    description: 'A person accepted (or edited and accepted) a proposal',
+  },
+  'automation.dismissed': { security: false, description: 'A person dismissed a proposal' },
+  'automation.expired': { security: false, description: 'Proposals expired unanswered' },
+  'automation.undone': {
+    security: true,
+    description: 'An auto-applied change, or a whole capture, was undone',
+  },
+  'automation.reassigned': {
+    security: true,
+    description: "A capture's results were moved to another matter",
+  },
 } as const satisfies Record<string, AuditActionSpec>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -36,7 +36,9 @@ const meta = {
   args: {
     message: 'Merged 2 proceedings into the matter.',
     labels,
-    undo: fn(() => Promise.resolve({ ok: true as const, data: null })),
+    undo: fn((): ReturnType<ShowUndoToastOptions['undo']> =>
+      Promise.resolve({ ok: true as const, data: null }),
+    ),
   },
 } satisfies Meta<typeof UndoToastDemo>;
 
@@ -65,7 +67,7 @@ export const Undone: Story = {
 
 export const Conflict: Story = {
   args: {
-    undo: fn(() =>
+    undo: fn((): ReturnType<ShowUndoToastOptions['undo']> =>
       Promise.resolve({
         ok: false as const,
         error: { code: 'CONFLICT' as const, message: '' },

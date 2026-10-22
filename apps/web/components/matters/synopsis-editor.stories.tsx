@@ -3,7 +3,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent } from 'storybook/test';
 
-import { SynopsisEditor } from './synopsis-editor.tsx';
+import { SynopsisEditor, type UpdateMatterAction } from './synopsis-editor.tsx';
 
 const meta = {
   title: 'Matters/SynopsisEditor',
@@ -14,7 +14,7 @@ const meta = {
     synopsis: 'Writ against the Housing Board for the allotment order dated 4 March 2025.',
     denied: false,
     canWrite: true,
-    action: fn(() =>
+    action: fn((): ReturnType<UpdateMatterAction> =>
       Promise.resolve({
         ok: true as const,
         data: { id: '00000000-0000-4000-8000-0000000a1001', title: 'Matter', synopsis: 'Saved' },
@@ -56,7 +56,7 @@ export const Editing: Story = {
 
 export const Failed: Story = {
   args: {
-    action: fn(() =>
+    action: fn((): ReturnType<UpdateMatterAction> =>
       Promise.resolve({
         ok: false as const,
         error: { code: 'INTERNAL' as const, message: '' },

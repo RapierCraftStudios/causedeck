@@ -2,7 +2,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, screen, userEvent } from 'storybook/test';
 
-import { SensitiveDialog } from './sensitive-toggle.tsx';
+import { SensitiveDialog, type SetSensitiveAction } from './sensitive-toggle.tsx';
 
 const meta = {
   title: 'Matters/SensitiveDialog',
@@ -11,7 +11,7 @@ const meta = {
     workspaceId: '00000000-0000-4000-8000-00000000a001',
     matterId: '00000000-0000-4000-8000-0000000a1001',
     sensitive: false,
-    action: fn(() =>
+    action: fn((): ReturnType<SetSensitiveAction> =>
       Promise.resolve({
         ok: true as const,
         data: { id: '00000000-0000-4000-8000-0000000a1001', sensitive: true },
@@ -49,7 +49,7 @@ export const Offline: Story = {
 
 export const Failed: Story = {
   args: {
-    action: fn(() =>
+    action: fn((): ReturnType<SetSensitiveAction> =>
       Promise.resolve({
         ok: false as const,
         error: { code: 'INTERNAL' as const, message: '' },

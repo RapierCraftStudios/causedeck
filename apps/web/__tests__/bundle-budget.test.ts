@@ -25,6 +25,7 @@ interface BudgetModule {
   MATTERS_ROUTE_MANIFEST: string;
   TIMELINE_ROUTE_BUDGET_BYTES: number;
   TIMELINE_ROUTE_MANIFEST: string;
+  MATTER_WORKSPACE_MANIFEST: string;
   GENERATED_MESSAGES: string;
   foreignValues: (en: unknown, others: unknown[]) => string[];
   localeLeak: (
@@ -198,6 +199,12 @@ describe('timeline route budget (#41)', () => {
     expect(budget.TIMELINE_ROUTE_BUDGET_BYTES).toBe(60 * 1024);
     expect(budget.TIMELINE_ROUTE_MANIFEST).toBe(
       'server/app/(app)/w/[slug]/matters/[id]/timeline/page_client-reference-manifest.js',
+    );
+  });
+
+  it('treats the matter workspace (Overview route) as shared code', () => {
+    expect(budget.MATTER_WORKSPACE_MANIFEST).toBe(
+      'server/app/(app)/w/[slug]/matters/[id]/page_client-reference-manifest.js',
     );
   });
 

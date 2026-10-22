@@ -48,6 +48,13 @@ export const MATTERS_ROUTE_MANIFEST =
 /** What the matter Timeline tab may add beyond shared code (#41: "<= 60 KB gzip"). */
 export const TIMELINE_ROUTE_BUDGET_BYTES = 60 * 1024;
 
+/**
+ * The matter Overview route: its chunks (the matter workspace layout, header and tab bar every tab
+ * shares) count as shared code for the Timeline tab (#41), so the budget measures the tab itself.
+ */
+export const MATTER_WORKSPACE_MANIFEST =
+  'server/app/(app)/w/[slug]/matters/[id]/page_client-reference-manifest.js';
+
 /** The matter Timeline route measured for its budget (#41). */
 export const TIMELINE_ROUTE_MANIFEST =
   'server/app/(app)/w/[slug]/matters/[id]/timeline/page_client-reference-manifest.js';
@@ -145,6 +152,7 @@ function main() {
   const courtsChunks = COURTS_ROUTE_MANIFESTS.map((manifest) => [manifest, chunksOf(manifest)]);
   const mattersChunks = chunksOf(MATTERS_ROUTE_MANIFEST);
   const timelineChunks = chunksOf(TIMELINE_ROUTE_MANIFEST);
+  const workspaceChunks = chunksOf(MATTER_WORKSPACE_MANIFEST);
   const gzipBytes = {};
   for (const file of new Set([
     ...homeChunks,
@@ -152,6 +160,7 @@ function main() {
     ...courtsChunks.flatMap(([, c]) => c),
     ...mattersChunks,
     ...timelineChunks,
+    ...workspaceChunks,
   ])) {
     gzipBytes[file] = gzipSync(readFileSync(path.join(nextDir, file))).length;
   }
@@ -181,8 +190,15 @@ function main() {
   for (const file of matters.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
   console.log(`${kb(matters.total).padStart(10)}  route delta (budget ${kb(matters.budget)} gzip)`);
 
-  const timeline = shellDelta(sharedChunks, timelineChunks, gzipBytes, TIMELINE_ROUTE_BUDGET_BYTES);
-  console.log(`\nTimeline route ${TIMELINE_ROUTE_MANIFEST}, chunks beyond shared code:`);
+  const timeline = shellDelta(
+    [...sharedChunks, ...workspaceChunks],
+    timelineChunks,
+    gzipBytes,
+    TIMELINE_ROUTE_BUDGET_BYTES,
+  );
+  console.log(
+    `\nTimeline route ${TIMELINE_ROUTE_MANIFEST}, chunks beyond shared code and the matter workspace:`,
+  );
   for (const file of timeline.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
   console.log(
     `${kb(timeline.total).padStart(10)}  route delta (budget ${kb(timeline.budget)} gzip)`,

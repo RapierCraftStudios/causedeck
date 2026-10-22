@@ -18,6 +18,7 @@ import { Kbd } from '@causedeck/ui/kbd';
 import { OfflineBanner } from '@causedeck/ui/patterns';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@causedeck/ui/sheet';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import dynamic from 'next/dynamic';
 import { CalendarClock, Filter, Keyboard, ListTree } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -40,7 +41,6 @@ import { useOfflineSince } from '../matters-offline-banner.tsx';
 
 import { ProceedingChips, TimelineFilters } from './timeline-filters.tsx';
 import { TimelineEventCard } from './timeline-event.tsx';
-import { TimelineLanes } from './timeline-lanes.tsx';
 import { TodayMarker } from './today-marker.tsx';
 import {
   filterEvents,
@@ -48,6 +48,9 @@ import {
   useTimelineState,
   type TimelineMode,
 } from './use-timeline-state.ts';
+
+/** Lanes mode is a 1280 px and up option: its code loads only when it is chosen. */
+const TimelineLanes = dynamic(() => import('./timeline-lanes.tsx').then((m) => m.TimelineLanes));
 
 /** Timelines longer than this render only the rows in view. */
 export const VIRTUALISE_ABOVE = 150;

@@ -101,12 +101,6 @@ vi.mock('../app/(app)/w/[slug]/matters/actions.ts', () => ({
   searchMattersAction: vi.fn(),
 }));
 
-// The page loads the list and the filter options at once, so their dynamic imports of core run
-// concurrently; warm the mocked modules one after another first, or the second import bypasses
-// vi.mock (it resolves the real core module).
-await import('@causedeck/core/runtime');
-await import('@causedeck/core/matter-graph');
-await import('@causedeck/core/court');
 const { default: MattersPage } = await import('../app/(app)/w/[slug]/matters/page.tsx');
 const { default: MattersLoading } = await import('../app/(app)/w/[slug]/matters/loading.tsx');
 const { default: MattersError } = await import('../app/(app)/w/[slug]/matters/error.tsx');

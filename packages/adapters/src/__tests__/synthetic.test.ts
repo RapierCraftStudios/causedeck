@@ -1,9 +1,15 @@
 // Seeded synthetic generators (#371): reproducible per seed, flagged FICTIONAL, and a pdf-lib
-// list that round-trips through the PDF layout reader into rows anchored verbatim on their page.
+// list that round-trips through the PDF layout reader into rows anchored verbatim on their page;
+// positioned runs (#408) keep their x, so table cells start at their column.
 import { describe, expect, it } from 'vitest';
 
 import { createEchoAdapter, ECHO_FORUM_CODE, layoutFromPdf } from '../index.ts';
-import { mulberry32, syntheticEchoList, writeSyntheticPdf } from '../testing/synthetic.ts';
+import {
+  mulberry32,
+  syntheticEchoList,
+  writeSyntheticColumnPdf,
+  writeSyntheticPdf,
+} from '../testing/synthetic.ts';
 
 const take = (next: () => number, count: number) => Array.from({ length: count }, () => next());
 
@@ -75,5 +81,41 @@ describe('writeSyntheticPdf', () => {
       expect(layout.pages[row.anchor.page - 1]?.text).toContain(row.anchor.quote);
       expect(row.anchor.bbox).toBeDefined();
     }
+  });
+});
+
+describe('writeSyntheticColumnPdf (#408)', () => {
+  const pages = [
+    [
+      { x: 40, y: 60, text: 'COURT HALL NO. 1 (FICTIONAL)' },
+      { x: 40, y: 80, text: 'Sl. No.' },
+      { x: 80, y: 80, text: 'Case No.' },
+      { x: 220, y: 80, text: 'Petitioner / Respondent' },
+    ],
+    [
+      { x: 44, y: 100, text: '1' },
+      { x: 78, y: 100, text: 'WP No. 101/2026', size: 8 },
+      { x: 220, y: 100, text: 'Fictional Party vs Pretend State' },
+    ],
+  ];
+
+  it('writes the same bytes for the same runs', async () => {
+    expect(await writeSyntheticColumnPdf(pages)).toEqual(await writeSyntheticColumnPdf(pages));
+  });
+
+  it('keeps every run at its x on its page, one line per baseline', async () => {
+    const layout = await layoutFromPdf(await writeSyntheticColumnPdf(pages));
+    expect(layout.pages).toHaveLength(2);
+    expect(layout.pages[0]?.text.split('\n')).toEqual([
+      'COURT HALL NO. 1 (FICTIONAL)',
+      'Sl. No. Case No. Petitioner / Respondent',
+    ]);
+    pages.forEach((runs, index) => {
+      const words = layout.pages[index]?.words ?? [];
+      for (const run of runs) {
+        const first = words.find((word) => word.text === run.text.split(' ')[0]);
+        expect(Math.abs((first?.bbox.x ?? -10) - run.x), run.text).toBeLessThanOrEqual(1);
+      }
+    });
   });
 });

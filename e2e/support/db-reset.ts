@@ -13,11 +13,16 @@ import postgres from 'postgres';
 
 import { ADMIN_FIXTURES, ADMIN_TOTP_SECRET } from '../fixtures/admin-data.ts';
 import {
+  BENCH_ALERTS,
   CATALOGUE_EXPECTATIONS,
   COURT_PARSE_RUNS,
   COURTS_ADAPTER_ID,
   COURTS_ADAPTER_VERSION,
   COURTS_WORKSPACE_ID,
+  ROSTER_BENCHES,
+  ROSTER_FORUM,
+  ROSTER_MATTERS,
+  ROSTERS,
 } from '../fixtures/courts-data.ts';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
@@ -212,6 +217,10 @@ async function seedAdminFixtures(): Promise<void> {
  * `withWorkspace` sets it). The forums themselves come from the catalogue `migrate.ts` seeded; a
  * catalogue change that breaks what the specs rely on fails here, not in a screenshot. No
  * access-mode registry rows: tests/admin/adapters.spec.ts starts from an empty registry.
+ *
+ * Then the bench rosters (#437): a workspace forum with three benches, two matters with a
+ * proceeding each before it, two confirmed roster versions (hall 5 changed bench in version 2) and
+ * two open bench-change alerts citing version 2, in foreign-key order.
  */
 async function seedCourtFixtures(): Promise<void> {
   const sql = postgres(databaseUrl(TEMPLATE_DB, 'owner'), { max: 1, onnotice: () => undefined });
@@ -245,9 +254,53 @@ async function seedCourtFixtures(): Promise<void> {
                   ${run.rowsAnchored}, 0, 0, ${run.hallsSeen}::text[],
                   ${run.hallsUnreadable}::text[], ${run.status}, ${run.createdAt})`;
       }
+      await seedRosterFixtures(tx);
     });
   } finally {
     await sql.end();
+  }
+}
+
+/** The roster rows of `seedCourtFixtures`, inside its workspace-scoped transaction. */
+async function seedRosterFixtures(tx: postgres.TransactionSql): Promise<void> {
+  const ws = COURTS_WORKSPACE_ID;
+  await tx`
+    insert into forum (id, workspace_id, code, court, seat, jurisdiction_kind, adapter_level)
+    values (${ROSTER_FORUM.id}, ${ws}, ${ROSTER_FORUM.code}, ${ROSTER_FORUM.court},
+            ${ROSTER_FORUM.seat}, ${ROSTER_FORUM.jurisdictionKind}, 'A0')`;
+  for (const bench of Object.values(ROSTER_BENCHES)) {
+    await tx`
+      insert into bench (id, workspace_id, forum_id, judges, bench_kind)
+      values (${bench.id}, ${ws}, ${ROSTER_FORUM.id}, ${bench.judges}::text[], ${bench.kind})`;
+  }
+  for (const m of Object.values(ROSTER_MATTERS)) {
+    await tx`insert into matter (id, workspace_id, title) values (${m.matterId}, ${ws}, ${m.title})`;
+    await tx`
+      insert into proceeding (id, workspace_id, matter_id, forum_id, case_type_code, number, year,
+        source_type, confirmation_state)
+      values (${m.proceedingId}, ${ws}, ${m.matterId}, ${ROSTER_FORUM.id}, ${m.caseTypeCode},
+              ${m.number}, ${m.year}, 'manual', 'confirmed')`;
+  }
+  for (const roster of ROSTERS) {
+    await tx`
+      insert into bench_roster (id, workspace_id, forum_id, effective_from, effective_to, status,
+        version, confirmation_state)
+      values (${roster.id}, ${ws}, ${ROSTER_FORUM.id}, ${roster.effectiveFrom},
+              ${roster.effectiveTo}, ${roster.status}, ${roster.version}, 'confirmed')`;
+    for (const entry of roster.entries) {
+      await tx`
+        insert into bench_roster_entry (workspace_id, roster_id, hall_no, bench_id, portfolio_text)
+        values (${ws}, ${roster.id}, ${entry.hallNo}, ${entry.benchId}, ${entry.portfolioText})`;
+    }
+  }
+  const active = ROSTERS.find((r) => r.status === 'active');
+  if (!active) throw new Error('e2e: the roster fixtures need an active version');
+  for (const alert of BENCH_ALERTS) {
+    await tx`
+      insert into bench_change_alert (id, workspace_id, proceeding_id, roster_id, old_bench_id,
+        new_bench_id, reason, status, created_at, updated_at)
+      values (${alert.id}, ${ws}, ${alert.proceedingId}, ${active.id}, ${alert.oldBenchId},
+              ${alert.newBenchId}, ${alert.reason}, 'open', ${alert.createdAt}, ${alert.createdAt})`;
   }
 }
 

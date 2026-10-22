@@ -11,7 +11,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createEchoAdapter,
+  createKarnatakaHcAdapter,
   createMadrasHcAdapter,
+  KARNATAKA_HC_ADAPTER_ID,
   layoutFromEmail,
   layoutFromHtml,
   MADRAS_HC_ADAPTER_ID,
@@ -88,6 +90,24 @@ describe('runGolden on the committed Madras HC fixtures (#396)', () => {
   });
 });
 
+describe('runGolden on the committed Karnataka HC fixtures (#408)', () => {
+  it('passes all 12 lists (HTML and a consolidated PDF) with precision and recall 1', async () => {
+    const report = await runGolden(KARNATAKA_HC_ADAPTER_ID, {
+      adapter: createKarnatakaHcAdapter(),
+      privateFixturesDir: null,
+    });
+    expect(report.public.cases).toHaveLength(12);
+    expect(report.public.cases.filter((c) => c.file.endsWith('.pdf'))).toHaveLength(1);
+    for (const c of report.public.cases) {
+      expect(c, c.file).toMatchObject({ passed: true, diff: [], anchorViolations: [] });
+    }
+    for (const field of report.public.fields) {
+      expect(field.precision, field.field).toBe(1);
+      expect(field.recall, field.field).toBe(1);
+    }
+  });
+});
+
 describe('committed fixtures', () => {
   it.each(adapterDirs)('%s: every input has an expected file and a manifest origin', (adapter) => {
     const dir = path.join(FIXTURES_ROOT, adapter);
@@ -129,8 +149,11 @@ describe('committed fixtures', () => {
             readFileSync(path.join(dir, file.replace(/\.input\.[^.]+$/, '.expected.json')), 'utf8'),
           ),
         );
-        // Only a list read as empty ("no cases", a PDF-only email) may have no rows.
-        if (expected.status !== 'empty') expect(expected.rows.length, file).toBeGreaterThan(0);
+        // Only a list read as empty ("no cases", a PDF-only email) or a page that is not a list
+        // (#408, a sitting-list page) may have no rows.
+        if (expected.status !== 'empty' && expected.status !== 'not_a_cause_list') {
+          expect(expected.rows.length, file).toBeGreaterThan(0);
+        }
         for (const row of expected.unparsedRows ?? []) {
           expect(pages[row.anchor.page - 1], `${file}: ${row.anchor.quote}`).toContain(
             row.anchor.quote,

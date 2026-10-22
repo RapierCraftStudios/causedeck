@@ -1,0 +1,175 @@
+{
+  "adapter": "in.ka.karnataka-hc.bengaluru",
+  "classification": "FICTIONAL",
+  "note": "Synthetic Karnataka HC cause lists (saved HTML list pages and a consolidated column PDF), orders and FR / scrutiny-objection notices (#408). Every party, advocate and judge is fictional; the list, order and notice layouts are unverified assumptions (ADR 0019) until real fixtures are checked with #119.",
+  "fixtures": [
+    {
+      "file": "list-01-daily-three-halls-two-lists.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-02-consolidated.input.pdf",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-03-advance.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-04-supplementary.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-05-dharwad-style-100xxx.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-06-no-advocate-columns.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-07-heading-variants.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-08-orders-registry-objections.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-09-reflowed-multiline-headings.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-10-broken-html.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-11-sitting-list-noise.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-12-empty.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-01-final-khc-citation.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-02-final-khc-d-rsa.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-03-final-db-writ-appeal.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-04-interim-relative-date.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-05-absolute-call-on.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-06-reserved.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-07-multi-case-common-order.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-08-decoy-earlier-order-date.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-09-no-next-date-rfa.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-10-writ-category-in-brackets.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-11-long-over-20-pages.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "order-12-scrutiny-objection-order.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-01-fr-assigned.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-02-objections-raised.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-03-cure-deadline.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "registry-04-returned-re-present.input.txt",
+      "kind": "registry_notice",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    }
+  ]
+}

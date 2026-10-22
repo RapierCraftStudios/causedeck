@@ -1,11 +1,20 @@
 // Roster table (#435): a forum's roster versions as cards (the one in force badged "Active today")
 // and the halls of the roster in force; a forum with no roster covering today; a roster with no
-// halls; a long portfolio; dark mode; the offline Import button.
+// halls; a long portfolio; dark mode; the Import button online and offline; the load error.
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { expect } from 'storybook/test';
+import { expect, waitFor } from 'storybook/test';
 
 import { rosterCards, rosterHalls } from './__tests__/fixtures.ts';
-import { RosterImportLink, RosterTable } from './roster-table.tsx';
+import { RosterImportLink, RostersLoadError, RosterTable } from './roster-table.tsx';
+
+/** Answer `navigator.onLine` with `online` until the returned cleanup runs. */
+function stubOnline(online: boolean) {
+  Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => online });
+  return () => {
+    // The own property shadows the prototype getter; removing it restores the real value.
+    Reflect.deleteProperty(navigator, 'onLine');
+  };
+}
 
 const meta = {
   title: 'Courts/RosterTable',
@@ -59,6 +68,28 @@ export const ImportButton: Story = {
   render: () => <RosterImportLink href="/w/demo/courts/rosters/import?forum=demo.forum" />,
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('link', { name: 'Import roster' })).toBeVisible();
+  },
+};
+
+/** Offline: Import roster is disabled, with the note that importing needs a connection. */
+export const ImportButtonOffline: Story = {
+  beforeEach: () => stubOnline(false),
+  render: () => <RosterImportLink href="/w/demo/courts/rosters/import?forum=demo.forum" />,
+  play: async ({ canvas, canvasElement }) => {
+    await waitFor(() =>
+      expect(canvasElement.querySelector('[data-roster-import="offline"]')).not.toBeNull(),
+    );
+    await expect(canvas.getByRole('button', { name: 'Import roster' })).toBeDisabled();
+    await expect(canvas.getByText('Importing a roster needs a connection.')).toBeVisible();
+    await expect(canvas.queryByRole('link')).toBeNull();
+  },
+};
+
+export const LoadError: Story = {
+  render: () => <RostersLoadError />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Could not load rosters.')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Try again' })).toBeVisible();
   },
 };
 

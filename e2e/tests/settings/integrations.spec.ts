@@ -97,7 +97,7 @@ test.describe('settings integrations', () => {
       expect(await feedValue(page).inputValue()).not.toBe(first);
       await expect(card(page, 'ics_feed').getByText(/^Last rotated on /)).toBeVisible();
 
-      await page.goto(`/w/${SHELL_WORKSPACE}/activity`);
+      await page.goto(`/w/${SHELL_WORKSPACE}/activity?tab=security`);
       await expect(page.getByText('workspace.integration_token_rotated').first()).toBeVisible();
     },
   );

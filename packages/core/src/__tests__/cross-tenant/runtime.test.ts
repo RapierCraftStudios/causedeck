@@ -43,6 +43,9 @@ async function expectDenied(promise: Promise<unknown>): Promise<void> {
   expect(['NOT_FOUND', 'FORBIDDEN']).toContain((error as { code?: string }).code);
 }
 
+/** A's seeded activity id (a random one when the seed has none): B must never find it. */
+const A_ACTIVITY = () => t.a.rows.activity?.id ?? randomUUID();
+
 /** B's scope, as the web caller passes it after checking `ub` is a member of B. */
 const asB = () => ({ workspaceId: t.b.id, userId: t.ub });
 /** A's ids under `ub`: what a forged request would pass. */
@@ -223,6 +226,48 @@ const CASES: Record<string, () => Promise<void>> = {
     await expectDenied(runtime.exportAuditFor(forged(), { ...RANGE, format: 'jsonl' }));
     // A denied export records nothing in A's chain.
     expect(await aAuditIds()).toEqual(before);
+  },
+  listActivitiesFor: async () => {
+    await expectDenied(runtime.listActivitiesFor(forged()));
+    const own = await runtime.listActivitiesFor(asB());
+    expect(own.items.map((i) => i.id)).not.toContain(t.a.rows.activity?.id);
+  },
+  getActivityDetailFor: async () => {
+    await expectDenied(runtime.getActivityDetailFor(forged(), A_ACTIVITY()));
+    await expectDenied(runtime.getActivityDetailFor(asB(), A_ACTIVITY()));
+  },
+  countActivitiesByDayFor: async () => {
+    await expectDenied(runtime.countActivitiesByDayFor(forged(), RANGE));
+    // B's count is B's own: A's seeded activity is not in it.
+    const own = await runtime.countActivitiesByDayFor(asB(), RANGE);
+    expect(own.every((day) => day.total > 0)).toBe(true);
+  },
+  previewUndoFor: async () => {
+    await expectDenied(runtime.previewUndoFor(forged(), A_ACTIVITY()));
+    await expectDenied(runtime.previewUndoFor(asB(), A_ACTIVITY()));
+  },
+  undoActivityFor: async () => {
+    await expectDenied(runtime.undoActivityFor(forged(), A_ACTIVITY()));
+    await expectDenied(runtime.undoActivityFor(asB(), A_ACTIVITY()));
+  },
+  undoCaptureFor: async () => {
+    await expectDenied(runtime.undoCaptureFor(forged(), randomUUID()));
+  },
+  reassignCaptureFor: async () => {
+    await expectDenied(runtime.reassignCaptureFor(forged(), randomUUID(), randomUUID()));
+    // B's scope cannot move anything onto A's matter: it is not found from B.
+    await expectDenied(
+      runtime.reassignCaptureFor(
+        asB(),
+        randomUUID(),
+        t.a.rows.matter_restriction?.matterId ?? randomUUID(),
+      ),
+    );
+  },
+  exportActivitiesFor: async () => {
+    await expectDenied(runtime.exportActivitiesFor(forged()));
+    const own = await runtime.exportActivitiesFor(asB());
+    expect(own.map((r) => r.id)).not.toContain(t.a.rows.activity?.id);
   },
   recordAccessDeniedFor: async () => {
     const before = await aAuditIds();

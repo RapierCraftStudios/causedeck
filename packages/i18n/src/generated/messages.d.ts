@@ -599,6 +599,17 @@ export type Messages = {
         empty: string;
         cta: string;
       };
+      endOfDayDigest: {
+        subject: string;
+        preview: string;
+        heading: string;
+        applied: string;
+        pending: string;
+        matters: string;
+        activityCta: string;
+        inboxCta: string;
+        note: string;
+      };
       billingNotice: {
         subject: string;
         preview: string;
@@ -681,6 +692,10 @@ export type Messages = {
           description: string;
         };
         digestDaily: {
+          label: string;
+          description: string;
+        };
+        digestEndOfDay: {
           label: string;
           description: string;
         };
@@ -1694,6 +1709,189 @@ export type Messages = {
     settingsLink: {
       title: string;
       hint: string;
+    };
+  };
+  activity: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    tabs: {
+      label: string;
+      feed: string;
+      security: string;
+    };
+    feed: {
+      label: string;
+      today: string;
+      yesterday: string;
+      loadMore: string;
+      loadingMore: string;
+      loaded: string;
+      viewOnly: string;
+      clerkNote: string;
+      captureBanner: string;
+      captureClear: string;
+      shortcutsButton: string;
+    };
+    item: {
+      level: {
+        L1: string;
+        L2: string;
+        L3: string;
+        L4: string;
+      };
+      levelShort: {
+        L1: string;
+        L2: string;
+        L3: string;
+        L4: string;
+      };
+      source: {
+        document: string;
+        voice: string;
+        email: string;
+        list: string;
+        form: string;
+        calendar: string;
+        capture: string;
+        unknown: string;
+      };
+      sourceLabel: string;
+      matter: string;
+      confidence: string;
+      redacted: string;
+      redactedHint: string;
+      expand: string;
+      collapse: string;
+      details: {
+        model: string;
+        version: string;
+        region: string;
+        noModel: string;
+        confirmedBy: string;
+        notConfirmed: string;
+        system: string;
+        capture: string;
+        time: string;
+      };
+      undone: string;
+      undoneUnknown: string;
+      undoLabel: string;
+      undo: string;
+      undoAvailable: string;
+      undoLessThanDay: string;
+      undoEnded: string;
+      viewOnly: string;
+      offlineUndo: string;
+      confirmedNoUndo: string;
+      bulkUndo: string;
+      reassign: string;
+    };
+    undoDialog: {
+      title: string;
+      titleCapture: string;
+      description: string;
+      loading: string;
+      cascade: string;
+      cascadeNone: string;
+      confirm: string;
+      confirmCapture: string;
+      working: string;
+      cancel: string;
+      refusedTitle: string;
+      expiredTitle: string;
+      openMatter: string;
+      close: string;
+      error: string;
+      previewError: string;
+      skipped: string;
+    };
+    reassign: {
+      title: string;
+      description: string;
+      search: string;
+      placeholder: string;
+      noResults: string;
+      confirm: string;
+      working: string;
+      cancel: string;
+      error: string;
+      select: string;
+    };
+    filters: {
+      label: string;
+      toggle: string;
+      autoOnly: string;
+      level: string;
+      levelAll: string;
+      kind: string;
+      kindAll: string;
+      kinds: {
+        next_date: string;
+        new_matter: string;
+        new_proceeding: string;
+        listing_update: string;
+        task: string;
+        obligation_from_direction: string;
+        document_attach: string;
+        order_record: string;
+        party_detail: string;
+        duplicate_merge: string;
+        memory_item: string;
+        fee_entry: string;
+        outward_draft: string;
+      };
+      matter: string;
+      matterAll: string;
+      matterPick: string;
+      capture: string;
+      captureOne: string;
+      from: string;
+      to: string;
+      day: string;
+      search: string;
+      searchPlaceholder: string;
+      searchHint: string;
+      apply: string;
+      clear: string;
+    };
+    export: {
+      button: string;
+      label: string;
+      description: string;
+      from: string;
+      to: string;
+      csv: string;
+      json: string;
+      own: string;
+      offline: string;
+      invalidRange: string;
+    };
+    states: {
+      empty: string;
+      filteredEmpty: string;
+      clear: string;
+      error: string;
+      errorHint: string;
+      retry: string;
+      offline: string;
+      denied: string;
+      loading: string;
+    };
+    shortcuts: {
+      title: string;
+      next: string;
+      prev: string;
+      expand: string;
+      undo: string;
+      search: string;
+      help: string;
+      close: string;
+    };
+    announce: {
+      undone: string;
+      reassigned: string;
+      refused: string;
     };
   };
   courts: {

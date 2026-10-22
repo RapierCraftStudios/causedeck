@@ -24,7 +24,9 @@ const EXPORT_DENIED = `${JUNIOR} exported the audit log`;
 const PURGE_FAILED = 'CauseDeck purged audit events past the retention window';
 
 async function openActivity(page: Page, asUser: AsUser, role: E2eRole = 'owner', query = '') {
-  await asUser(role, { path: `activity${query}` });
+  // The security and audit view is `?tab=security` beside the automation feed (#49).
+  const tab = query === '' ? '?tab=security' : `${query}&tab=security`;
+  await asUser(role, { path: `activity${tab}` });
   await expect(page.getByRole('heading', { level: 1, name: 'Activity' })).toBeVisible();
   await shellReady(page);
 }
@@ -225,7 +227,7 @@ test.describe('activity security and audit tab', () => {
   test('settings links to the audit log', async ({ page, asUser }) => {
     await asUser('owner', { path: 'settings' });
     await page.getByRole('link', { name: /Audit log/ }).click();
-    await expect(page).toHaveURL(/\/w\/chennai-solo\/activity$/);
+    await expect(page).toHaveURL(/\/w\/chennai-solo\/activity\?tab=security$/);
   });
 });
 

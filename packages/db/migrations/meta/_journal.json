@@ -393,6 +393,13 @@
       "when": 1792697218476,
       "tag": "0055_automation_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1792698350733,
+      "tag": "0056_end_of_day_digest",
+      "breakpoints": true
     }
   ]
 }

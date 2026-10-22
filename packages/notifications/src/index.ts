@@ -18,6 +18,7 @@ export { COURT_HOURS, isQuietTime, localMinutes, type QuietSetting } from './qui
 export {
   DEFAULT_NOTIFICATION_SETTINGS,
   getDigest,
+  getEndOfDayPreference,
   getNotificationSetting,
   getPreferences,
   LIST_LIMIT_MAX,
@@ -28,10 +29,12 @@ export {
   setBenchAlertPartyNames,
   setCourtHoursQuiet,
   setDigest,
+  setEndOfDayPreference,
   setLockScreenDetails,
   setPreference,
   unreadCount,
   type DeliveryJob,
+  type EndOfDayPreference,
   type NotificationContext,
   type NotificationItem,
   type NotificationSettings,
@@ -39,3 +42,17 @@ export {
   type NotifyInput,
   type ResolvedPreference,
 } from './service.ts';
+export {
+  buildEndOfDayDigest,
+  type EndOfDayDigestInput,
+  type EndOfDayDigestPayload,
+} from './digest/end-of-day.ts';
+export {
+  DEFAULT_END_OF_DAY_TIME,
+  END_OF_DAY_ZONE,
+  endOfDaySlot,
+  isEndOfDayTime,
+  localDateOf,
+  localDayBounds,
+  type EndOfDaySlot,
+} from './digest/schedule.ts';

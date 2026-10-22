@@ -169,6 +169,60 @@ const CASES: Record<string, Case> = {
     const [row] = (await aRows(f)).proposals.filter((p) => p.id === f.proposalId);
     expect(row?.status).toBe('proposed');
   },
+  listActivities: async (f) => {
+    await claimsAreDenied(f, (deps, actor) => core.listActivities(deps, actor));
+    const { deps } = graphDeps(f.tx);
+    const fromB = await core.listActivities(deps, { userId: f.ub, workspaceId: f.b.id });
+    expect(fromB.items.map((r) => r.id)).not.toContain(f.activityId);
+    const fromA = await core.listActivities(deps, { userId: f.ua, workspaceId: f.a.id });
+    expect(fromA.items.map((r) => r.id)).toContain(f.activityId);
+  },
+  getActivityDetail: async (f) => {
+    await claimsAreDenied(f, (deps, actor) =>
+      core.getActivityDetail(deps, actor, { activityId: f.activityId }),
+    );
+    const { deps } = graphDeps(f.tx);
+    await expectDenied(
+      core.getActivityDetail(
+        deps,
+        { userId: f.ub, workspaceId: f.b.id },
+        { activityId: f.activityId },
+      ),
+    );
+    const own = await core.getActivityDetail(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { activityId: f.activityId },
+    );
+    expect(own.id).toBe(f.activityId);
+  },
+  countByDay: async (f) => {
+    const range = { from: new Date('2000-01-01'), to: new Date('2100-01-01') };
+    await claimsAreDenied(f, (deps, actor) => core.countByDay(deps, actor, range));
+    const { deps } = graphDeps(f.tx);
+    const fromB = await core.countByDay(deps, { userId: f.ub, workspaceId: f.b.id }, range);
+    const fromA = await core.countByDay(deps, { userId: f.ua, workspaceId: f.a.id }, range);
+    expect(fromA.reduce((n, d) => n + d.total, 0)).toBeGreaterThan(
+      fromB.reduce((n, d) => n + d.total, 0),
+    );
+  },
+  countDigestActivities: async (f) => {
+    const input = { from: new Date('2000-01-01'), to: new Date('2100-01-01') };
+    await claimsAreDenied(f, (deps, actor) => core.countDigestActivities(deps, actor, input));
+    const { deps } = graphDeps(f.tx);
+    const fromB = await core.countDigestActivities(
+      deps,
+      { userId: f.ub, workspaceId: f.b.id },
+      input,
+    );
+    const fromA = await core.countDigestActivities(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      input,
+    );
+    // A's open proposal is counted for A only.
+    expect(fromA.pendingL2Count).toBeGreaterThan(fromB.pendingL2Count);
+  },
   exportActivities: async (f) => {
     await claimsAreDenied(f, (deps, actor) => core.exportActivities(deps, actor));
     const { deps } = graphDeps(f.tx);

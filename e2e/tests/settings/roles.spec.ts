@@ -55,7 +55,7 @@ test.describe('settings roles', () => {
       await page.reload();
       await expect(inviteSwitch(page)).toHaveAttribute('aria-checked', 'false');
 
-      await page.goto(`/w/${SHELL_WORKSPACE}/activity`);
+      await page.goto(`/w/${SHELL_WORKSPACE}/activity?tab=security`);
       await expect(page.getByText('workspace.role_settings_updated').first()).toBeVisible();
     },
   );

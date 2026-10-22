@@ -1,12 +1,16 @@
-// `/w/[slug]/activity` (#232, #26 part 6): the workspace Activity page. This issue provides the
-// security and audit tab; the automation feed with Undo (#49, Capture milestone) mounts beside it
-// as the default tab later. The feed reads `queryAudit` (`@causedeck/core/audit`), which checks
-// `audit.read` (owners; advocates unless the workspace turned it off) and keeps other workspaces'
-// events out through `withWorkspace`; members are loaded only to name actors and targets.
+// `/w/[slug]/activity` (#232, #26 part 6, #49): the workspace Activity page, with two views. The
+// default is the automation feed (#49): what CauseDeck did, newest first, with a 7-day Undo
+// (`listActivities`, `@causedeck/core/automation`; undo and reassign are the engine's). The second,
+// `?tab=security`, is the security and audit feed (#26): it reads `queryAudit`
+// (`@causedeck/core/audit`), which checks `audit.read` (owners; advocates unless the workspace
+// turned it off) and keeps other workspaces' events out through `withWorkspace`; members are
+// loaded only to name actors and targets. Both only read through core, which scopes to the
+// signed-in workspace.
 //
 // States: loading (skeleton rows while the feed streams in), error (`Could not load activity.` with
 // `Try again`), permission-denied, empty and offline (in the client view). `?__state=loading|error`
 // previews the first two in development, like the members page.
+import type { ActivityPage } from '@causedeck/core/automation';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -18,7 +22,17 @@ import type { WorkspaceContext } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
-import { loadMoreAuditAction, verifyAuditEventAction } from './actions.ts';
+import { searchMattersAction } from '../matters/actions.ts';
+
+import {
+  loadMoreActivitiesAction,
+  loadMoreAuditAction,
+  previewActivityUndoAction,
+  reassignCaptureAction,
+  undoActivityAction,
+  undoCaptureAction,
+  verifyAuditEventAction,
+} from './actions.ts';
 import {
   AuditDenied,
   AuditError,
@@ -26,6 +40,18 @@ import {
   AuditSkeleton,
   type AuditFeedPage,
 } from './audit-feed.tsx';
+import {
+  ActivityDenied,
+  ActivityError,
+  ActivityFeed,
+  ActivitySkeleton,
+} from '../../../../../components/activity/activity-feed.tsx';
+import {
+  feedBounds,
+  parseFeedFilters,
+  type FeedFilters,
+} from '../../../../../components/activity/feed-params.ts';
+
 import { filterBounds, parseAuditFilters, type AuditFilterValues } from './filter-params.ts';
 import type { AuditMember } from './filters.tsx';
 
@@ -46,7 +72,7 @@ function devState(searchParams: SearchParams): string | undefined {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('audit');
+  const t = await getTranslations('activity');
   return { title: t('metaTitle') };
 }
 
@@ -118,17 +144,93 @@ async function FeedSection({
   );
 }
 
+type LoadedActivities =
+  | {
+      kind: 'feed';
+      page: ActivityPage;
+      members: { userId: string; name: string }[];
+    }
+  | { kind: 'denied' };
+
+async function loadActivities(
+  context: WorkspaceContext,
+  filters: FeedFilters,
+): Promise<LoadedActivities> {
+  const { listActivitiesFor, listMembersIn } = await import('@causedeck/core/runtime');
+  const scope = { workspaceId: context.workspace.id, userId: context.user.id };
+  const { from, to, ...rest } = feedBounds(filters);
+  let page: ActivityPage;
+  try {
+    page = await listActivitiesFor(scope, {
+      ...rest,
+      ...(from === undefined ? {} : { from: new Date(from) }),
+      ...(to === undefined ? {} : { to: new Date(to) }),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'WorkspaceError' && 'code' in error) {
+      if (error.code === 'FORBIDDEN') return { kind: 'denied' };
+    }
+    throw error;
+  }
+  const members = await listMembersIn(scope);
+  return { kind: 'feed', page, members: members.map(({ userId, name }) => ({ userId, name })) };
+}
+
+async function ActivitySection({
+  context,
+  filters,
+  failOnPurpose,
+}: {
+  context: WorkspaceContext;
+  filters: FeedFilters;
+  failOnPurpose: boolean;
+}) {
+  let loaded: LoadedActivities;
+  try {
+    if (failOnPurpose) throw new Error('Activity error state (dev toggle)');
+    loaded = await loadActivities(context, filters);
+  } catch (error) {
+    if (!failOnPurpose) logger.error({ err: error }, 'activity page: could not load activities');
+    return <ActivityError />;
+  }
+  if (loaded.kind === 'denied') return <ActivityDenied />;
+  return (
+    <ActivityFeed
+      // A new filter set is a new feed: the client state starts from the page it was given.
+      key={JSON.stringify(filters)}
+      workspace={{ id: context.workspace.id, slug: context.workspace.slug }}
+      initialPage={loaded.page}
+      members={loaded.members}
+      currentUserId={context.user.id}
+      role={context.role}
+      filters={filters}
+      nowIso={new Date().toISOString()}
+      actions={{
+        loadMore: loadMoreActivitiesAction,
+        preview: previewActivityUndoAction,
+        undo: undoActivityAction,
+        undoCapture: undoCaptureAction,
+        reassign: reassignCaptureAction,
+        searchMatters: searchMattersAction,
+      }}
+    />
+  );
+}
+
 export default async function ActivityPage({ params, searchParams }: ActivityPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   // The layout already checks membership; checking again keeps the page safe on its own.
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
-  const t = await getTranslations('audit');
+  const t = await getTranslations('activity');
   const state = devState(query);
-  const filters = parseAuditFilters(query);
+  const tab =
+    (Array.isArray(query.tab) ? query.tab[0] : query.tab) === 'security' ? 'security' : 'feed';
   const event = Array.isArray(query.event) ? query.event[0] : query.event;
   const eventId = event && UUID.test(event) ? event : undefined;
   const href = `/w/${encodeURIComponent(slug)}/activity`;
+  const tabClass =
+    'focus-visible:outline-ring -mb-px border-b-2 pb-2 text-sm font-medium outline-offset-2 focus-visible:outline-2';
 
   return (
     <div data-route="activity" className="flex flex-col gap-6">
@@ -139,24 +241,42 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
           {t('description', { workspace: context.workspace.name })}
         </p>
       </header>
-      {/* One view for now; the automation feed (#49) becomes the first, default one. */}
       <nav aria-label={t('tabs.label')} className="border-line flex gap-4 border-b">
         <a
           href={href}
-          aria-current="page"
-          className="border-accent focus-visible:outline-ring -mb-px border-b-2 pb-2 text-sm font-medium outline-offset-2 focus-visible:outline-2"
+          aria-current={tab === 'feed' ? 'page' : undefined}
+          className={`${tabClass} ${tab === 'feed' ? 'border-accent' : 'text-ink-muted border-transparent'}`}
+        >
+          {t('tabs.feed')}
+        </a>
+        <a
+          href={`${href}?tab=security`}
+          aria-current={tab === 'security' ? 'page' : undefined}
+          className={`${tabClass} ${tab === 'security' ? 'border-accent' : 'text-ink-muted border-transparent'}`}
         >
           {t('tabs.security')}
         </a>
       </nav>
-      {state === 'loading' ? (
-        <AuditSkeleton />
+      {tab === 'security' ? (
+        state === 'loading' ? (
+          <AuditSkeleton />
+        ) : (
+          <Suspense fallback={<AuditSkeleton />}>
+            <FeedSection
+              context={context}
+              filters={parseAuditFilters(query)}
+              eventId={eventId}
+              failOnPurpose={state === 'error'}
+            />
+          </Suspense>
+        )
+      ) : state === 'loading' ? (
+        <ActivitySkeleton />
       ) : (
-        <Suspense fallback={<AuditSkeleton />}>
-          <FeedSection
+        <Suspense fallback={<ActivitySkeleton />}>
+          <ActivitySection
             context={context}
-            filters={filters}
-            eventId={eventId}
+            filters={parseFeedFilters(query)}
             failOnPurpose={state === 'error'}
           />
         </Suspense>

@@ -531,7 +531,7 @@ describe('private feed', () => {
       const a = await world(tx);
       const b = await world(tx);
       await confirmDate(a, '2026-12-15');
-      await confirmDate(b, '2026-12-16');
+      await confirmDate(b, '2026-12-20');
       const feedA = await createFeed(tx, {
         workspaceId: a.workspaceId,
         actorUserId: a.ownerId,
@@ -546,8 +546,8 @@ describe('private feed', () => {
       const servedB = await serveFeed(serveDeps(a), { token: feedB.token });
       if (servedA.status !== 200 || servedB.status !== 200) throw new Error('expected 200');
       expect(servedA.body).toContain('20261215');
-      expect(servedA.body).not.toContain('20261216');
-      expect(servedB.body).toContain('20261216');
+      expect(servedA.body).not.toContain('20261220');
+      expect(servedB.body).toContain('20261220');
       expect(servedB.body).not.toContain('20261215');
     });
   });

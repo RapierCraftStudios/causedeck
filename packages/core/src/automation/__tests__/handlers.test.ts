@@ -24,9 +24,9 @@ const PROVENANCE: HandlerProvenance = {
 /** Rows without `updatedAt`, which every write bumps (an undo restores values, not the clock). */
 const bare = <T extends object>(list: T[]): Omit<T, 'updatedAt'>[] =>
   list.map((row) => {
-    const copy: Record<string, unknown> = { ...row };
+    const copy: Record<string, unknown> = Object.fromEntries(Object.entries(row));
     delete copy['updatedAt'];
-    return copy as Omit<T, 'updatedAt'>;
+    return copy as unknown as Omit<T, 'updatedAt'>;
   });
 
 /** The graph rows the handlers touch, for before/after comparison. */

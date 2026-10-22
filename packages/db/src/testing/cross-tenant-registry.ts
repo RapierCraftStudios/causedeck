@@ -227,6 +227,14 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   runNotificationDeliver: selfScoped,
   runNotificationDigest: selfScoped,
+  // End-of-day digest (#49): B's digest never counts, names or emails A's activity.
+  runActivityDigest: selfScoped,
+  runActivityDigestMember: selfScoped,
+  runActivityDigestSchedule: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids and timezones only through a definer function',
+  },
   runNotificationDigestSchedule: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -380,6 +388,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   dismissProposal: automationDenies,
   applyAutomatically: automationDenies,
   expireProposals: automationDenies,
+  // Activity feed read model (#49): B reads, counts and digests only B's own activities.
+  listActivities: automationDenies,
+  getActivityDetail: automationDenies,
+  countByDay: automationDenies,
+  countDigestActivities: automationDenies,
   exportActivities: automationDenies,
   listProposalsForDigest: automationDenies,
   getAskFirst: automationDenies,
@@ -389,6 +402,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   undoActivity: automationDenies,
   undoCapture: automationDenies,
   reassignCapture: automationDenies,
+  getInbox: automationDenies,
   getCanonicalNextDate: denies,
   // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
   getMatterTimeline: denies,
@@ -648,6 +662,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   UndoExpiredError: 'error class',
   UndoRefusedError: 'error class',
   ACTIVITY_EXPORT_FIELDS: 'constant',
+  ACTIVITY_PAGE_SIZE: 'constant',
+  CLERK_ACTIVITY_KINDS: 'constant',
   buildHandlerRegistry: 'pure (checks handler kinds; touches no data)',
   FORBIDDEN_KIND_PATTERN: 'constant',
   HANDLERS: 'constant (handler registry; handlers run only inside an engine call)',
@@ -829,6 +845,12 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   notificationDigest: 'job definition (handler is runNotificationDigest)',
   notificationDigestSchedule: 'job definition (handler is runNotificationDigestSchedule)',
   notificationDigestSchema: 'zod schema',
+  // jobs: end-of-day digest definitions and schemas (#49)
+  activityDigest: 'job definition (handler is runActivityDigest)',
+  activityDigestMember: 'job definition (handler is runActivityDigestMember)',
+  activityDigestSchedule: 'job definition (handler is runActivityDigestSchedule)',
+  activityDigestSchema: 'zod schema',
+  activityDigestMemberSchema: 'zod schema',
   DELIVERY_CHANNELS: 'constant',
   DIGEST_LOCAL_TIME: 'constant',
   DIGEST_ITEM_LIMIT: 'constant',
@@ -943,6 +965,9 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   setCourtHoursQuiet: notificationDenies,
   getDigest: notificationDenies,
   setDigest: notificationDenies,
+  // End-of-day digest preference (#49)
+  getEndOfDayPreference: notificationDenies,
+  setEndOfDayPreference: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */
@@ -958,6 +983,14 @@ export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   LIST_LIMIT_MAX: 'constant',
   DEFAULT_NOTIFICATION_SETTINGS: 'constant',
   COURT_HOURS: 'constant',
+  // End-of-day digest (#49): pure builders and schedule maths, no database access
+  buildEndOfDayDigest: 'pure (builds the digest payload from counts)',
+  DEFAULT_END_OF_DAY_TIME: 'constant',
+  END_OF_DAY_ZONE: 'constant',
+  endOfDaySlot: 'pure (time zone math)',
+  isDigestTimeOfDay: 'pure',
+  localDateOf: 'pure (time zone math)',
+  localDayBounds: 'pure (time zone math)',
   isQuietTime: 'pure',
   localMinutes: 'pure',
 };
@@ -1007,6 +1040,15 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   queryAuditFeed: runtimeDenies,
   verifyAuditRange: runtimeDenies,
   exportAuditFor: runtimeDenies,
+  // automation activity feed and undo (#49)
+  listActivitiesFor: runtimeDenies,
+  getActivityDetailFor: runtimeDenies,
+  countActivitiesByDayFor: runtimeDenies,
+  previewUndoFor: runtimeDenies,
+  undoActivityFor: runtimeDenies,
+  undoCaptureFor: runtimeDenies,
+  reassignCaptureFor: runtimeDenies,
+  exportActivitiesFor: runtimeDenies,
   recordAccessDeniedFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',

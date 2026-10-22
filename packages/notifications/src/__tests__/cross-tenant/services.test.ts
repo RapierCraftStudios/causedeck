@@ -135,6 +135,26 @@ const CASES: Record<string, Case> = {
     await expectDenied(notifications.setDigest(f.inA, { userId: f.ub, digest: 'daily' }));
     await expectDenied(notifications.setDigest(f.inB, { userId: f.ua, digest: 'off' }));
   },
+  getEndOfDayPreference: async (f) => {
+    await expectDenied(notifications.getEndOfDayPreference(f.inA, { userId: f.ub }));
+    await expectDenied(notifications.getEndOfDayPreference(f.inB, { userId: f.ua }));
+  },
+  setEndOfDayPreference: async (f) => {
+    await expectDenied(
+      notifications.setEndOfDayPreference(f.inA, {
+        userId: f.ub,
+        time: '19:00',
+        includeNames: true,
+      }),
+    );
+    await expectDenied(
+      notifications.setEndOfDayPreference(f.inB, { userId: f.ua, enabled: false }),
+    );
+    const settings = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.notificationSetting),
+    );
+    expect(settings.filter((r) => r.userId === f.ub)).toEqual([]);
+  },
 };
 
 const registered = Object.entries(NOTIFICATION_SERVICE_TESTS)

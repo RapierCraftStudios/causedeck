@@ -15,11 +15,13 @@ export const NAMESPACES = [
   'settings',
   'lifecycle',
   'audit',
+  'activity',
   'courts',
   'courts-rosters',
   'matters',
   'matter-timeline',
   'calendar',
+  'inbox',
   'errors',
 ] as const;
 

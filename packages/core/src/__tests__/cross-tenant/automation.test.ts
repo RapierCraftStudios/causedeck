@@ -169,6 +169,63 @@ const CASES: Record<string, Case> = {
     const [row] = (await aRows(f)).proposals.filter((p) => p.id === f.proposalId);
     expect(row?.status).toBe('proposed');
   },
+  listActivities: async (f) => {
+    await claimsAreDenied(f, (deps, actor) => core.listActivities(deps, actor));
+    const { deps } = graphDeps(f.tx);
+    const fromB = await core.listActivities(deps, { userId: f.ub, workspaceId: f.b.id });
+    expect(fromB.items.map((r) => r.id)).not.toContain(f.activityId);
+    const fromA = await core.listActivities(deps, { userId: f.ua, workspaceId: f.a.id });
+    expect(fromA.items.map((r) => r.id)).toContain(f.activityId);
+  },
+  getActivityDetail: async (f) => {
+    await claimsAreDenied(f, (deps, actor) =>
+      core.getActivityDetail(deps, actor, { activityId: f.activityId }),
+    );
+    const { deps } = graphDeps(f.tx);
+    await expectDenied(
+      core.getActivityDetail(
+        deps,
+        { userId: f.ub, workspaceId: f.b.id },
+        { activityId: f.activityId },
+      ),
+    );
+    const own = await core.getActivityDetail(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { activityId: f.activityId },
+    );
+    expect(own.id).toBe(f.activityId);
+  },
+  countByDay: async (f) => {
+    const range = { from: new Date('2000-01-01'), to: new Date('2100-01-01') };
+    await claimsAreDenied(f, (deps, actor) => core.countByDay(deps, actor, range));
+    const { deps } = graphDeps(f.tx);
+    // Each tenant is seeded with activities of its own: the counts are its own list, not the sum.
+    for (const [userId, workspaceId] of [
+      [f.ub, f.b.id],
+      [f.ua, f.a.id],
+    ] as const) {
+      const actor = { userId, workspaceId };
+      const days = await core.countByDay(deps, actor, range);
+      const listed = await core.listActivities(deps, actor);
+      expect(days.reduce((n, d) => n + d.total, 0)).toBe(listed.items.length);
+    }
+  },
+  countDigestActivities: async (f) => {
+    const input = { from: new Date('2000-01-01'), to: new Date('2100-01-01') };
+    await claimsAreDenied(f, (deps, actor) => core.countDigestActivities(deps, actor, input));
+    const { deps } = graphDeps(f.tx);
+    for (const [userId, workspaceId] of [
+      [f.ub, f.b.id],
+      [f.ua, f.a.id],
+    ] as const) {
+      const actor = { userId, workspaceId };
+      const counts = await core.countDigestActivities(deps, actor, input);
+      const proposals = await core.listProposalsForDigest(deps, actor);
+      // Only this workspace's open proposals are counted.
+      expect(counts.pendingL2Count).toBe(proposals.length);
+    }
+  },
   exportActivities: async (f) => {
     await claimsAreDenied(f, (deps, actor) => core.exportActivities(deps, actor));
     const { deps } = graphDeps(f.tx);
@@ -255,6 +312,14 @@ const CASES: Record<string, Case> = {
       { captureId: CAPTURE },
     );
     expect(fromB).toEqual({ undone: [], skipped: [] });
+  },
+  getInbox: async (f) => {
+    // ub claims A: denied, and B's own inbox never shows A's proposals.
+    await claimsAreDenied(f, (deps, actor) => core.getInbox(deps, actor));
+    const { deps } = graphDeps(f.tx);
+    const inbox = await core.getInbox(deps, { userId: f.ub, workspaceId: f.b.id });
+    const aProposal = f.proposalId;
+    expect(inbox.needsYou.map((item) => item.proposalId)).not.toContain(aProposal);
   },
   reassignCapture: async (f) => {
     const matterId = f.a.rows.matter?.matterId ?? RANDOM_ID;

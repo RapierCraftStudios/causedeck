@@ -98,8 +98,9 @@ describe('apps/web static guards', () => {
     expect(pkg.dependencies).toHaveProperty('pdfjs-dist');
   });
 
-  it('has no API routes besides Better Auth, Web Push, the audit and workspace exports, uploads, captures and the private calendar feed (webhooks live in apps/api)', () => {
+  it('has no API routes besides Better Auth, Web Push, the activity, audit and workspace exports, uploads, captures and the private calendar feed (webhooks live in apps/api)', () => {
     expect(readdirSync(path.join(appDir, 'app/api')).sort()).toEqual([
+      'activity',
       'audit',
       'auth',
       'captures',
@@ -108,6 +109,8 @@ describe('apps/web static guards', () => {
       'push',
       'uploads',
     ]);
+    // The activity feed CSV/JSON export download (#49).
+    expect(readdirSync(path.join(appDir, 'app/api/activity'))).toEqual(['export']);
     // The workspace data export download (#301); tests sit beside it.
     expect(readdirSync(path.join(appDir, 'app/api/exports')).sort()).toEqual(['[id]', '__tests__']);
     expect(readdirSync(path.join(appDir, 'app/api/auth'))).toEqual(['[...all]']);

@@ -144,6 +144,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   rotateIntegrationTokenAction: integrations,
   loadMoreAuditAction: activity,
   verifyAuditEventAction: activity,
+  loadMoreActivitiesAction: activity,
+  previewActivityUndoAction: activity,
+  undoFeedActivityAction: activity,
+  undoCaptureAction: activity,
+  reassignFeedCaptureAction: activity,
   grantSupportSessionAction: support,
   denySupportSessionAction: support,
   revokeSupportSessionAction: support,
@@ -185,6 +190,14 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   confirmCalendarEventAction: calendar,
   skipCalendarEventAction: calendar,
   noteCalendarEventAction: calendar,
+  acceptProposalAction: inbox,
+  editAcceptProposalAction: inbox,
+  dismissProposalAction: inbox,
+  undoActivityAction: inbox,
+  reassignCaptureAction: inbox,
+  keepAsAttachmentAction: inbox,
+  typeKeyLineAction: inbox,
+  markSentAction: inbox,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -430,6 +443,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
       eventId: aAuditEvent.id,
       createdAt: aAuditEvent.createdAt,
     },
+    // Automation feed (#49): ub, owner of B, may not page, preview, undo or reassign A's activity.
+    loadMoreActivitiesAction: { workspaceId },
+    previewActivityUndoAction: { workspaceId, activityId: randomUUID() },
+    undoFeedActivityAction: { workspaceId, activityId: randomUUID() },
+    undoCaptureAction: { workspaceId, captureId: randomUUID() },
+    reassignFeedCaptureAction: { workspaceId, captureId: randomUUID(), matterId: aOtherMatterId },
     // A's pending support request (#313): ub, owner of B, may not grant, deny or end it.
     grantSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     denySupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
@@ -488,6 +507,24 @@ function inputs(workspaceId: string): Record<string, unknown> {
       uid: 'xt-a',
       matterId: t.a.rows.matter?.matterId,
     },
+    // Capture inbox decisions (#48): ub may not accept, edit, dismiss or undo A's proposals and
+    // activities, move or keep or annotate A's captures, nor mark A's draft as sent.
+    acceptProposalAction: { workspaceId, proposalId: t.a.rows.proposal?.proposalId },
+    editAcceptProposalAction: {
+      workspaceId,
+      proposalId: t.a.rows.proposal?.proposalId,
+      payload: { title: 'Cross-tenant probe' },
+    },
+    dismissProposalAction: { workspaceId, proposalId: t.a.rows.proposal?.proposalId },
+    undoActivityAction: { workspaceId, activityId: t.a.rows.activity?.activityId },
+    reassignCaptureAction: {
+      workspaceId,
+      captureId: t.a.rows.capture?.id,
+      matterId: t.a.rows.matter?.matterId,
+    },
+    keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
+    typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
+    markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },

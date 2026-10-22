@@ -4,6 +4,11 @@ import type { SendOptions } from 'pg-boss';
 import type { z } from 'zod';
 
 import { accountDelete } from './definitions/account-delete.ts';
+import {
+  activityDigest,
+  activityDigestMember,
+  activityDigestSchedule,
+} from './definitions/activity-digest.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
@@ -139,6 +144,9 @@ export const registry = createRegistry([
   notificationDeliver,
   notificationDigestSchedule,
   notificationDigest,
+  activityDigestSchedule,
+  activityDigest,
+  activityDigestMember,
   usageRollup,
   systemAuditVerify,
   auditVerify,
@@ -168,6 +176,9 @@ export type JobMap = RegistryMap<
     typeof notificationDeliver,
     typeof notificationDigestSchedule,
     typeof notificationDigest,
+    typeof activityDigestSchedule,
+    typeof activityDigest,
+    typeof activityDigestMember,
     typeof usageRollup,
     typeof systemAuditVerify,
     typeof auditVerify,

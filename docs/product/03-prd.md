@@ -58,7 +58,7 @@ Free court apps show raw status. Research tools show law. Generic AI invents cit
 - Unverified or generated citations (D-004).
 - Unsupervised filing, or any L5 action (D-017).
 - Unauthorised court scraping (D-003, D-028).
-- Judge analytics or bench profiling (D-027).
+- Judge ratings, rankings, outcome predictions or bench profiling (D-027, as amended by D-050: judge-level data is internal only; factual bench facts only after counsel).
 - Training on customer content.
 
 ## 3. Users, roles, tenants
@@ -275,7 +275,7 @@ Priority is MoSCoW within each release. The full automation-level rules are in [
 | ME-3 | Matter memory is scoped to its matter. Chamber-shared memory only when explicitly marked | M | Must |
 | ME-4 | Monthly memory review | M | Should |
 | ME-5 | M5 playbooks and precedent bank | v1 | Should |
-| ME-6 | No judge analytics and no AI profiling of benches | — | **Prohibited** |
+| ME-6 | No judge ratings, rankings, outcome predictions or AI profiling of benches (D-050) | — | **Prohibited** |
 
 ### 7.10 Continuity and chamber (CO)
 | ID | Requirement | Rel. | Pri |
@@ -316,7 +316,7 @@ Priority is MoSCoW within each release. The full automation-level rules are in [
 - **PX-6** Consumer-facing legal Q&A, or any suggestion that the platform provides legal services.
 - **PX-7** Reading SMS, notifications or contacts; silent capture.
 - **PX-8** Unauthorised server-side court scraping; framing court pages.
-- **PX-9** Judge analytics or bench profiling.
+- **PX-9** Judge ratings, rankings, outcome predictions or bench profiling. Judge-level data is internal only; factual bench facts need counsel clearance (D-050).
 
 ## 8. Non-functional requirements
 

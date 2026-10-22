@@ -3,6 +3,19 @@
 // the per-user "ask me first" dial and threshold learning. Every source hands it `ProposalDraft`s
 // (`@causedeck/validators/proposal-draft`); this is the only place "the system acted" is decided.
 // There is no send, file, pay, advise, accept-engagement or citation action and no fifth level.
+export {
+  ACTIVITY_PAGE_SIZE,
+  CLERK_ACTIVITY_KINDS,
+  countByDay,
+  countDigestActivities,
+  getActivityDetail,
+  listActivities,
+  type ActivityDayCount,
+  type ActivityFilters,
+  type ActivityPage,
+  type ActivityView,
+  type DigestCounts,
+} from './activity-queries.ts';
 export { decideLevel, needsYouReason, thresholdKey, type Decision } from './decide.ts';
 export {
   acceptProposal,
@@ -59,3 +72,12 @@ export {
   type UndoPreview,
   type UndoResult,
 } from './undo.ts';
+export {
+  getInbox,
+  type CaptureProgress,
+  type Inbox,
+  type InboxAnchor,
+  type InboxCounts,
+  type InboxItem,
+  type InboxItemType,
+} from './read-models.ts';

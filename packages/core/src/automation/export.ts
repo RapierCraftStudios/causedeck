@@ -3,6 +3,11 @@
 // activity carries its input source, model, version and region (from the linked `ai_call`),
 // confidence, level, who confirmed it, when, and its undo state. Proposals and activities about a
 // sensitive matter never go into a digest that leaves the workspace (CA-10).
+//
+// The export (#49) is for owners (`export.run`: the whole workspace) and for each person about
+// their own activity (the ones they confirmed, undid or made). It is audited (`audit.exported`,
+// counts and range only) before any row is returned.
+import { can } from '@causedeck/auth/policy';
 import { schema } from '@causedeck/db';
 import { and, desc, eq, gte, inArray, isNull, lt, notInArray, or } from 'drizzle-orm';
 import { z } from 'zod';
@@ -10,6 +15,7 @@ import { z } from 'zod';
 import type { GraphActor, MatterGraphDeps } from '../matter-graph/index.ts';
 import { invalid } from '../shared/errors.ts';
 
+import { auditAutomation } from './audit.ts';
 import { inAutomationScope } from './context.ts';
 import type { AutomationLevel } from './levels.ts';
 
@@ -76,7 +82,10 @@ function str(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
 }
 
-/** The workspace's activities, newest first, in the shape of the user-visible export. */
+/**
+ * The activities the caller may export, newest first, in the shape of the user-visible export: the
+ * whole workspace for an owner, otherwise the caller's own. Writes an `audit.exported` event.
+ */
 export async function exportActivities(
   deps: MatterGraphDeps,
   actor: GraphActor,
@@ -86,19 +95,35 @@ export async function exportActivities(
   if (!parsed.success) throw invalid(parsed.error.issues[0]?.message ?? 'Invalid input');
   const { from, to, limit } = parsed.data;
   if (from !== undefined && to !== undefined && from >= to) throw invalid('from must be before to');
-  return inAutomationScope(deps, actor, async ({ tx }) => {
+  return inAutomationScope(deps, actor, async (scope) => {
+    const { tx } = scope;
+    const all = can(scope.member, 'export.run', undefined, scope.deps.settings).allow;
     const rows = await tx
       .select()
       .from(activity)
       .where(
         and(
           eq(activity.workspaceId, actor.workspaceId),
+          all
+            ? undefined
+            : or(
+                eq(activity.actorUserId, actor.userId),
+                eq(activity.confirmedBy, actor.userId),
+                eq(activity.undoneBy, actor.userId),
+              ),
           from === undefined ? undefined : gte(activity.createdAt, from),
           to === undefined ? undefined : lt(activity.createdAt, to),
         ),
       )
       .orderBy(desc(activity.createdAt), desc(activity.id))
       .limit(limit);
+    await auditAutomation(scope, 'audit.exported', undefined, {
+      scope: 'activity',
+      rows: rows.length,
+      whole_workspace: all,
+      from: from?.toISOString() ?? '',
+      to: to?.toISOString() ?? '',
+    });
     return rows.map((row): ActivityExportRow => {
       const source = row.source as { input?: unknown; aiCall?: Record<string, unknown> };
       return {

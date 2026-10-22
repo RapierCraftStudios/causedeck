@@ -71,7 +71,7 @@ test.describe('settings privacy', () => {
       await expect(retentionSelect(page)).toHaveText('14 days');
       await expect(indiaOnlySwitch(page)).toHaveAttribute('aria-checked', 'true');
 
-      await page.goto(`/w/${SHELL_WORKSPACE}/activity`);
+      await page.goto(`/w/${SHELL_WORKSPACE}/activity?tab=security`);
       await expect(page.getByText('workspace.privacy_updated').first()).toBeVisible();
     },
   );

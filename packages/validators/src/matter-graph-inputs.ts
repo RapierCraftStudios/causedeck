@@ -462,6 +462,12 @@ export const ListMatterDocumentsInput = z.strictObject({
   cursor: z.string().min(1).optional(),
 });
 
+/** One page of a document for the preview sheet (#393); the service clamps to the last page. */
+export const DocumentPreviewInput = z.strictObject({
+  documentId: uuid,
+  pageNo: z.int().min(1).max(10_000).default(1),
+});
+
 /** Contact kinds: the only person kinds that may carry contact details. */
 export const CONTACT_PERSON_KINDS = ['client', 'professional'] as const;
 
@@ -562,6 +568,7 @@ export type SearchMattersInput = z.input<typeof SearchMattersInput>;
 export type ParsedSearchMatters = z.output<typeof SearchMattersInput>;
 export type MatterReadInput = z.input<typeof MatterReadInput>;
 export type ListMatterDocumentsInput = z.input<typeof ListMatterDocumentsInput>;
+export type DocumentPreviewInput = z.input<typeof DocumentPreviewInput>;
 export type UpsertPersonInput = z.input<typeof UpsertPersonInput>;
 export type ParsedUpsertPerson = z.output<typeof UpsertPersonInput>;
 export type SetRoleEdgeInput = z.input<typeof SetRoleEdgeInput>;

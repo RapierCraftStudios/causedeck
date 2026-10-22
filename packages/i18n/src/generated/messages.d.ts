@@ -2127,6 +2127,8 @@ export type Messages = {
       tabListLabel: string;
       tabs: {
         overview: string;
+        people: string;
+        documents: string;
       };
       status: {
         active: string;
@@ -2232,6 +2234,49 @@ export type Messages = {
           other: string;
         };
         label: string;
+        tabTitle: string;
+        listLabel: string;
+        loading: string;
+        inbox: string;
+        emptyTitle: string;
+        open: string;
+        languages: {
+          EN: string;
+          TA: string;
+          KN: string;
+        };
+        sources: {
+          capture: string;
+          manual: string;
+        };
+        replaces: string;
+        replacedBy: string;
+        loadMore: string;
+        newest: string;
+        error: {
+          title: string;
+          retry: string;
+          reference: string;
+        };
+        preview: {
+          title: string;
+          description: string;
+          pageOf: string;
+          pages: string;
+          previous: string;
+          next: string;
+          goTo: string;
+          go: string;
+          image: string;
+          imagePending: string;
+          imagePendingHint: string;
+          text: string;
+          textPending: string;
+          noPages: string;
+          unavailable: string;
+          failed: string;
+          close: string;
+        };
       };
       people: {
         title: string;
@@ -2242,6 +2287,62 @@ export type Messages = {
           instructed_by: string;
           assigned_to: string;
           opposes: string;
+        };
+        listLabel: string;
+        loading: string;
+        add: string;
+        edit: string;
+        remove: string;
+        removeTitle: string;
+        removeHint: string;
+        removeConfirm: string;
+        removeFailed: string;
+        cancel: string;
+        aliases: string;
+        onProceeding: string;
+        announceSaved: string;
+        announceRemoved: string;
+        personKinds: {
+          party: string;
+          advocate: string;
+          judge_staff: string;
+          client: string;
+          professional: string;
+          other: string;
+        };
+        contact: {
+          email: string;
+          phone: string;
+          address: string;
+        };
+        form: {
+          addTitle: string;
+          editTitle: string;
+          description: string;
+          name: string;
+          aliases: string;
+          aliasesHint: string;
+          alias: string;
+          addAlias: string;
+          removeAlias: string;
+          kind: string;
+          role: string;
+          contactTitle: string;
+          contactHint: string;
+          save: string;
+          cancel: string;
+          errors: {
+            name: string;
+            email: string;
+            failed: string;
+            forbidden: string;
+            notFound: string;
+          };
+        };
+        error: {
+          title: string;
+          retry: string;
+          reference: string;
         };
       };
       synopsis: {

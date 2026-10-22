@@ -26,6 +26,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   archiveMatter,
+  chooseNextDateSource,
   confirmNextDate,
   createDocument,
   createMatter,
@@ -364,6 +365,36 @@ function services(deps: MatterGraphDeps, s: Transaction, d: Seeded): Record<stri
         s
           .update(schema.listing)
           .set({ confirmationState: 'confirmed', updatedAt: new Date() })
+          .where(eq(schema.listing.id, d.listingIds[i] ?? '')),
+    },
+    // Conflict cards (#390): each sample resolves a conflict of its own proceeding, built untimed
+    // (a canonical listing and a differing proposal), keeping the canonical date.
+    chooseNextDateSource: {
+      setup: async (i: number) => {
+        const p = await buildProceeding(s, d.workspaceId, {
+          matterId: d.matterId,
+          forumId: d.forumId,
+          number: String(800000 + i),
+          year: 2026,
+        });
+        const current = await buildListing(s, d.workspaceId, {
+          proceedingId: p.id,
+          listDate: futureDay(i),
+          canonical: true,
+        });
+        const proposed = await buildListing(s, d.workspaceId, {
+          proceedingId: p.id,
+          listDate: futureDay(i + 7),
+        });
+        return { currentListingId: current.id, proposedListingId: proposed.id };
+      },
+      call: (_i: number, ids: { currentListingId: string; proposedListingId: string }) =>
+        chooseNextDateSource(deps, actor, { ...ids, choice: 'current' }),
+      // Both updates touch one listing by primary key; marking the proposal is representative.
+      statement: (i: number): SQLWrapper =>
+        s
+          .update(schema.listing)
+          .set({ confirmationState: 'corrected', updatedAt: new Date() })
           .where(eq(schema.listing.id, d.listingIds[i] ?? '')),
     },
     transitionProceeding: {

@@ -12,12 +12,13 @@
 // composition of one event: nothing here counts, ranks or summarises per judge.
 import type {
   GraphEdge,
+  GraphNode,
   MatterGraph,
   TimelineAnchor,
   TimelineEvent,
 } from '@causedeck/core/matter-graph';
 import { formatDate, type Locale } from '@causedeck/i18n';
-import type { Anchor, ProvenanceSource, Stage } from '@causedeck/ui/patterns';
+import type { Anchor, ProvenanceSource } from '@causedeck/ui/patterns';
 
 import { logger } from '../../src/health.ts';
 import { can, type WorkspaceContext } from '../workspace-context.ts';
@@ -121,7 +122,7 @@ export interface GraphNodeView {
   /** The SR or FR number of an unnumbered proceeding. */
   srFrNo: string | null;
   forum: string;
-  state: Stage;
+  state: GraphNode['state'];
   /** `appeal from W.P. 678/2026`: the node's links as text, for its accessible description. */
   relations: { kind: GraphEdge['kind']; direction: 'from' | 'to'; label: string }[];
 }
@@ -276,16 +277,15 @@ export function toTimelineView(
   });
 
   const nodes = load.graph.nodes.map((node): GraphNodeView => {
-    const relations = load.graph.edges.flatMap((edge) => {
-      if (edge.kind === 'parent_of') return [];
+    const relations: GraphNodeView['relations'] = [];
+    for (const edge of load.graph.edges) {
+      if (edge.kind === 'parent_of') continue;
       if (edge.from === node.id) {
-        return [{ kind: edge.kind, direction: 'from' as const, label: labels.get(edge.to) ?? '' }];
+        relations.push({ kind: edge.kind, direction: 'from', label: labels.get(edge.to) ?? '' });
+      } else if (edge.to === node.id) {
+        relations.push({ kind: edge.kind, direction: 'to', label: labels.get(edge.from) ?? '' });
       }
-      if (edge.to === node.id) {
-        return [{ kind: edge.kind, direction: 'to' as const, label: labels.get(edge.from) ?? '' }];
-      }
-      return [];
-    });
+    }
     return {
       id: node.id,
       parentId: node.parentId,

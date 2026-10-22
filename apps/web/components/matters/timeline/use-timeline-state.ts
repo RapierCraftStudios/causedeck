@@ -6,7 +6,7 @@
 // from the URL on first render only. The Combined/Lanes choice is also remembered per viewer in
 // localStorage; storage that throws (private mode, blocked) is ignored and the default stands.
 // The parse, serialise and filter functions are pure and tested without React.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 
 // Types only: lib/matters/timeline.ts is server-only (logger, core).
 import type { GraphNodeView, TimelineEventView } from '../../../lib/matters/timeline.ts';
@@ -148,12 +148,31 @@ function readStoredMode(): TimelineMode | null {
   }
 }
 
+const modeListeners = new Set<() => void>();
+/** The mode chosen while storage was unavailable: it lasts for this page view only. */
+let sessionMode: TimelineMode | null = null;
+
 function writeStoredMode(mode: TimelineMode): void {
+  sessionMode = mode;
   try {
     window.localStorage.setItem(MODE_STORAGE_KEY, mode);
   } catch {
-    // Storage unavailable: the choice lasts for this page view only.
+    // Storage unavailable: the session value above stands.
   }
+  for (const listener of modeListeners) listener();
+}
+
+function subscribeMode(notify: () => void): () => void {
+  modeListeners.add(notify);
+  window.addEventListener('storage', notify);
+  return () => {
+    modeListeners.delete(notify);
+    window.removeEventListener('storage', notify);
+  };
+}
+
+function modeSnapshot(): TimelineMode | null {
+  return sessionMode ?? readStoredMode();
 }
 
 export interface TimelineState {
@@ -173,11 +192,8 @@ export function useTimelineState(search: string): TimelineState {
   const [query, setQuery] = useState<TimelineQuery>(() =>
     parseTimelineQuery(new URLSearchParams(search)),
   );
-  const [stored, setStored] = useState<TimelineMode | null>(null);
-
-  useEffect(() => {
-    setStored(readStoredMode());
-  }, []);
+  // Storage is read after hydration (the server snapshot is null), so first paint matches the server.
+  const stored = useSyncExternalStore(subscribeMode, modeSnapshot, () => null);
 
   const apply = useCallback((next: TimelineQuery) => {
     setQuery(next);
@@ -211,7 +227,6 @@ export function useTimelineState(search: string): TimelineState {
   const setMode = useCallback(
     (mode: TimelineMode) => {
       writeStoredMode(mode);
-      setStored(mode);
       apply({ ...query, mode });
     },
     [apply, query],

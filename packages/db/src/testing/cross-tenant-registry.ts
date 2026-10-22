@@ -671,10 +671,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   InvalidTransitionError: 'error class',
   assertTransition: 'pure',
   PROCEEDING_TRANSITIONS: 'constant',
-  // matter graph (#41): the collapse threshold, the anchor cap and the pure forest-to-graph step
+  // matter graph (#41): the collapse threshold and the anchor cap
   GRAPH_GROUP_THRESHOLD: 'constant',
   TIMELINE_ANCHORS_MAX: 'constant',
-  graphOf: 'pure',
   // workspaces: extension points (process-wide wiring, no database access of their own)
   permissiveEntitlements: 'default entitlements implementation (allows everything, no queries)',
   setEntitlements: 'setter',

@@ -80,10 +80,10 @@ export function useEventSummary(event: TimelineEventView): string {
 export interface TimelineEventCardProps {
   event: TimelineEventView;
   /** Offline: the source still opens, nothing else changes. */
-  offline?: boolean;
+  offline?: boolean | undefined;
   /** Lanes: the proceeding chip is redundant under a lane heading. */
-  hideProceeding?: boolean;
-  className?: string;
+  hideProceeding?: boolean | undefined;
+  className?: string | undefined;
 }
 
 export function TimelineEventCard({

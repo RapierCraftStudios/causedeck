@@ -47,8 +47,12 @@ export function TimelineLanes({ events, nodes, todayText, offline }: TimelineLan
   const t = useTranslations('matterTimeline');
   const lanes = useMemo(() => lanesOf(events, nodes, t('lanes.matter')), [events, nodes, t]);
   const [chosen, setChosen] = useState<string[] | null>(null);
-  const shown = (chosen ?? lanes.slice(0, MAX_LANES).map((l) => l.id)).filter((id) =>
-    lanes.some((l) => l.id === id),
+  const shown = useMemo(
+    () =>
+      (chosen ?? lanes.slice(0, MAX_LANES).map((l) => l.id)).filter((id) =>
+        lanes.some((l) => l.id === id),
+      ),
+    [chosen, lanes],
   );
   const visible = lanes.filter((l) => shown.includes(l.id));
   const rows = useMemo(() => {

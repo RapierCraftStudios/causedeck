@@ -586,7 +586,7 @@ export function TimelineWorkspace({
         </SheetContent>
       </Sheet>
       <Sheet open={treeOpen} onOpenChange={setTreeOpen}>
-        <SheetContent side="right">
+        <SheetContent side="end">
           <SheetTitle>{t('graph.title')}</SheetTitle>
           <SheetDescription className="sr-only">{t('graph.treeLabel')}</SheetDescription>
           {treeOpen ? graph : null}

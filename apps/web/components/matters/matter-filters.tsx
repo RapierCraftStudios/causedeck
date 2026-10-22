@@ -80,10 +80,13 @@ export function MatterFilters({ state, slug, owners, forums }: MatterFiltersProp
   const [sheetLoaded, setSheetLoaded] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // The URL changed elsewhere (Back, Clear filters): show its query.
-  useEffect(() => {
+  // The URL changed elsewhere (Back, Clear filters): show its query. Adjusted while rendering,
+  // not in an effect, so the field never shows the old query for a frame.
+  const [shownQ, setShownQ] = useState(state.q);
+  if (shownQ !== state.q) {
+    setShownQ(state.q);
     setQuery(state.q ?? '');
-  }, [state.q]);
+  }
 
   useEffect(
     () => () => {

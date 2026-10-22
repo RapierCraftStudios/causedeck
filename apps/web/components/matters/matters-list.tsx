@@ -135,10 +135,12 @@ export function MattersList({
     return whenIdle(prefetch);
   }, [canWrite, openNew]);
 
-  // A new page of rows starts without an active row.
-  useEffect(() => {
+  // A new page of rows starts without an active row (reset while rendering, not in an effect).
+  const [activeRows, setActiveRows] = useState(rows);
+  if (activeRows !== rows) {
+    setActiveRows(rows);
     setActive(-1);
-  }, [rows]);
+  }
 
   const openDialog = (from: HTMLElement | null) => {
     if (!canCreate) return;

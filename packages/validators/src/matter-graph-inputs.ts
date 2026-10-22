@@ -374,6 +374,33 @@ export const ConfirmNextDateInput = z.strictObject({
 
 export const GetCanonicalNextDateInput = z.strictObject({ proceedingId: uuid });
 
+/** How a person resolves a next-date conflict card (#390): keep A, take B, or type a date. */
+export const NEXT_DATE_CHOICES = ['current', 'proposed', 'manual'] as const;
+
+/**
+ * Resolve one conflict: the proceeding's canonical listing (`current`) against a differing
+ * proposal (`proposed`). `date` is the typed date, required for `manual` and refused otherwise.
+ */
+export const ChooseNextDateSourceInput = z
+  .strictObject({
+    currentListingId: uuid,
+    proposedListingId: uuid,
+    choice: z.enum(NEXT_DATE_CHOICES),
+    date: day.optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.choice === 'manual' && value.date === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['date'], message: 'Enter the next date' });
+    }
+    if (value.choice !== 'manual' && value.date !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['date'],
+        message: 'Only a manual choice takes a date',
+      });
+    }
+  });
+
 // ---------------------------------------------------------------------------------------------
 // Timeline (#366, part 5 of #33). `from` and `to` are inclusive court days (Asia/Kolkata);
 // `bench_change` is reserved for #39 and matches nothing yet.
@@ -526,6 +553,9 @@ export type ParsedProposeNextDate = z.output<typeof ProposeNextDateInput>;
 export type ConfirmNextDateInput = z.input<typeof ConfirmNextDateInput>;
 export type ParsedConfirmNextDate = z.output<typeof ConfirmNextDateInput>;
 export type GetCanonicalNextDateInput = z.input<typeof GetCanonicalNextDateInput>;
+export type NextDateChoice = (typeof NEXT_DATE_CHOICES)[number];
+export type ChooseNextDateSourceInput = z.input<typeof ChooseNextDateSourceInput>;
+export type ParsedChooseNextDateSource = z.output<typeof ChooseNextDateSourceInput>;
 export type GetMatterTimelineInput = z.input<typeof GetMatterTimelineInput>;
 export type ParsedGetMatterTimeline = z.output<typeof GetMatterTimelineInput>;
 export type SearchMattersInput = z.input<typeof SearchMattersInput>;

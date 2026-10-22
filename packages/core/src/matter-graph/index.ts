@@ -21,6 +21,7 @@ export * from './merge-split.ts';
 // Named, not `export *`: next-date.ts also holds the merge's canonical-flag helpers (#365), which
 // stay inside the domain.
 export {
+  chooseNextDateSource,
   confirmNextDate,
   getCanonicalNextDate,
   proposeNextDate,

@@ -11,6 +11,10 @@
 //   clears the old canonical row (which stays, as history) and then sets the new one: the index is
 //   immediate. It needs a member who may write the matter, and refuses a date before today in
 //   Asia/Kolkata unless `allowPast` is passed.
+// - `chooseNextDateSource` resolves one conflict card (#390) as a person chose: keep the canonical
+//   date (`current`), take the proposal (`proposed`) or type a date (`manual`). It never chooses a
+//   side itself. The losing proposal stays as history, marked `corrected` (fixed by a person), so it
+//   no longer shows as a conflict; a card that was already resolved is CONFLICT.
 // - `getCanonicalNextDate` reads the canonical listing, if any.
 // - `demoteDuplicateCanonical` and `restoreCanonical` serve `mergeProceedings` and its undo
 //   (#365, merge-split.ts) inside their transaction, which has already checked `matter.write`.
@@ -19,11 +23,12 @@
 //   internal to the domain (index.ts does not export them).
 import { schema, type Transaction } from '@causedeck/db';
 import {
+  ChooseNextDateSourceInput,
   ConfirmNextDateInput,
   GetCanonicalNextDateInput,
   ProposeNextDateInput,
 } from '@causedeck/validators/matter-graph-inputs';
-import { and, eq, ne, sql } from 'drizzle-orm';
+import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 
 import { conflict, invalid, notFound } from '../shared/errors.ts';
 
@@ -280,6 +285,118 @@ export async function confirmNextDate(
       proceedingId: row.proceedingId,
       listingId: row.id,
       previousListingId: previous?.id ?? null,
+      date: row.listDate,
+    });
+    return row;
+  });
+}
+
+/**
+ * Resolve a next-date conflict as a person chose (#390): `current` keeps the canonical listing and
+ * confirms it, `proposed` makes the proposal the canonical, confirmed listing, `manual` stores the
+ * typed date as a new confirmed, canonical `manual` listing (today or later in Asia/Kolkata). The
+ * proposal that lost is marked `corrected`; a demoted canonical listing stays as history. Both
+ * listings must belong to one proceeding (else NOT_FOUND); CONFLICT when the card was already
+ * resolved (`current` no longer canonical, or the proposal no longer a proposal). Needs
+ * `matter.write`. Returns the canonical listing afterwards.
+ */
+export async function chooseNextDateSource(
+  deps: MatterGraphDeps,
+  actor: GraphActor,
+  input: ChooseNextDateSourceInput,
+): Promise<ListingRow> {
+  const data = parseInput(ChooseNextDateSourceInput, input);
+  const today = courtDay((deps.now ?? (() => new Date()))());
+  return inGraphScope(deps, actor, async (scope) => {
+    const { tx } = scope;
+    const { workspaceId, userId } = scope.actor;
+    const locked = await tx
+      .select()
+      .from(listing)
+      .where(
+        and(
+          eq(listing.workspaceId, workspaceId),
+          inArray(listing.id, [data.currentListingId, data.proposedListingId]),
+        ),
+      )
+      .orderBy(listing.id)
+      .for('update');
+    const current = locked.find((row) => row.id === data.currentListingId);
+    const proposed = locked.find((row) => row.id === data.proposedListingId);
+    if (
+      current === undefined ||
+      proposed === undefined ||
+      current.id === proposed.id ||
+      current.proceedingId !== proposed.proceedingId
+    ) {
+      throw notFound('Listing not found');
+    }
+    const matterId = await matterOfProceeding(tx, workspaceId, current.proceedingId);
+    const owning = await requireMatter(scope, matterId, 'matter.write');
+    if (!current.canonical || proposed.canonical || proposed.confirmationState !== 'proposed') {
+      throw conflict('This date conflict was already resolved');
+    }
+    if (data.choice === 'manual' && (data.date ?? '') < today) {
+      throw invalid('date: The next date is in the past');
+    }
+    const now = new Date();
+    const byId = (id: string) => and(eq(listing.workspaceId, workspaceId), eq(listing.id, id));
+    let row: ListingRow | undefined;
+    try {
+      if (data.choice === 'proposed') {
+        await tx.update(listing).set({ canonical: false, updatedAt: now }).where(byId(current.id));
+        [row] = await tx
+          .update(listing)
+          .set({ canonical: true, confirmationState: 'confirmed', updatedAt: now })
+          .where(byId(proposed.id))
+          .returning();
+      } else {
+        await tx
+          .update(listing)
+          .set({ confirmationState: 'corrected', updatedAt: now })
+          .where(byId(proposed.id));
+        if (data.choice === 'current') {
+          [row] = await tx
+            .update(listing)
+            .set({ confirmationState: 'confirmed', updatedAt: now })
+            .where(byId(current.id))
+            .returning();
+        } else {
+          await tx
+            .update(listing)
+            .set({ canonical: false, updatedAt: now })
+            .where(byId(current.id));
+          [row] = await tx
+            .insert(listing)
+            .values({
+              workspaceId,
+              proceedingId: current.proceedingId,
+              listDate: data.date ?? today,
+              listType: current.listType,
+              stageRaw: '',
+              canonical: true,
+              sourceType: 'manual',
+              confirmationState: 'confirmed',
+            })
+            .returning();
+        }
+      }
+    } catch (error) {
+      if (pgError(error).code === '23505') {
+        throw conflict('The next date of this proceeding changed meanwhile');
+      }
+      throw error;
+    }
+    if (!row) throw new Error('chooseNextDateSource: write returned no row');
+    scope.emit({
+      type: 'listing.next_date_confirmed',
+      workspaceId,
+      actorUserId: userId,
+      matterId,
+      sensitive: owning.sensitive,
+      proceedingId: row.proceedingId,
+      listingId: row.id,
+      previousListingId: row.id === current.id ? null : current.id,
       date: row.listDate,
     });
     return row;

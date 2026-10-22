@@ -102,6 +102,7 @@ const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
 const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
 const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
 const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
+const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -153,6 +154,10 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   dismissBenchChangeAlertAction: rosters,
   createMatterAction: matters,
   searchMattersAction: matters,
+  updateMatterAction: matterWorkspace,
+  setSensitiveAction: matterWorkspace,
+  confirmNextDateAction: matterWorkspace,
+  chooseNextDateSourceAction: matterWorkspace,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -234,9 +239,26 @@ function snapshotA() {
       .orderBy(schema.forum.id),
     // A's matters (#388).
     matters: await tx
-      .select({ id: schema.matter.id, title: schema.matter.title })
+      .select({
+        id: schema.matter.id,
+        title: schema.matter.title,
+        // The matter workspace (#390): synopsis, sensitive flag and last change.
+        sensitive: schema.matter.sensitive,
+        synopsis: schema.matter.synopsis,
+        updatedAt: schema.matter.updatedAt,
+      })
       .from(schema.matter)
       .orderBy(schema.matter.id),
+    // A's listings: the next date and its confirmation (#390).
+    listings: await tx
+      .select({
+        id: schema.listing.id,
+        canonical: schema.listing.canonical,
+        confirmationState: schema.listing.confirmationState,
+        listDate: schema.listing.listDate,
+      })
+      .from(schema.listing)
+      .orderBy(schema.listing.id),
   }));
 }
 
@@ -375,6 +397,20 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
+    // Matter workspace (#390): ub may not change A's matter or resolve A's next dates.
+    updateMatterAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      patch: { synopsis: 'Cross-tenant probe synopsis' },
+    },
+    setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
+    confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    chooseNextDateSourceAction: {
+      workspaceId,
+      currentListingId: t.a.rows.listing?.listingId,
+      proposedListingId: t.a.rows.listing?.listingId,
+      choice: 'current',
+    },
   };
 }
 
@@ -623,6 +659,22 @@ describe('cross-tenant server actions', () => {
     expect(found.ok).toBe(true);
     const aIds = new Set(before.matters.map((row) => row.id));
     expect(found.data.filter((hit) => aIds.has(hit.id))).toEqual([]);
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('matter workspace actions under B’s own workspace find none of A’s matter or listings (#390)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of [
+      'updateMatterAction',
+      'setSensitiveAction',
+      'confirmNextDateAction',
+      'chooseNextDateSourceAction',
+    ]) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
     expect(await snapshotA()).toEqual(before);
   });
 

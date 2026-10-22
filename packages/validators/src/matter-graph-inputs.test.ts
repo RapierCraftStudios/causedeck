@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ArchiveMatterInput,
+  ChooseNextDateSourceInput,
   ConfirmNextDateInput,
   CreateDocumentInput,
   CreateMatterInput,
@@ -349,6 +350,47 @@ describe('next-date inputs', () => {
     expect(ConfirmNextDateInput.safeParse({ listingId, date: '2026-11-02' }).success).toBe(false);
     expect(GetCanonicalNextDateInput.safeParse({ proceedingId: id() }).success).toBe(true);
     expect(GetCanonicalNextDateInput.safeParse({}).success).toBe(false);
+  });
+});
+
+describe('ChooseNextDateSourceInput (#390)', () => {
+  it('parses each choice; only manual takes a date', () => {
+    const currentListingId = id();
+    const proposedListingId = id();
+    const base = { currentListingId, proposedListingId };
+    expect(ChooseNextDateSourceInput.parse({ ...base, choice: 'current' })).toEqual({
+      ...base,
+      choice: 'current',
+    });
+    expect(ChooseNextDateSourceInput.safeParse({ ...base, choice: 'proposed' }).success).toBe(true);
+    expect(
+      ChooseNextDateSourceInput.parse({ ...base, choice: 'manual', date: '2026-11-20' }),
+    ).toEqual({ ...base, choice: 'manual', date: '2026-11-20' });
+  });
+
+  it('rejects a manual choice without a date, a date on another choice, bad ids and keys', () => {
+    const base = { currentListingId: id(), proposedListingId: id() };
+    const manual = ChooseNextDateSourceInput.safeParse({ ...base, choice: 'manual' });
+    expect(manual.success).toBe(false);
+    expect(manual.error?.issues.map((i) => i.path)).toEqual([['date']]);
+    const current = ChooseNextDateSourceInput.safeParse({
+      ...base,
+      choice: 'current',
+      date: '2026-11-20',
+    });
+    expect(current.error?.issues.map((i) => i.path)).toEqual([['date']]);
+    expect(ChooseNextDateSourceInput.safeParse({ ...base, choice: 'other' }).success).toBe(false);
+    expect(
+      ChooseNextDateSourceInput.safeParse({ ...base, currentListingId: 'x', choice: 'current' })
+        .success,
+    ).toBe(false);
+    expect(
+      ChooseNextDateSourceInput.safeParse({ ...base, choice: 'current', extra: 1 }).success,
+    ).toBe(false);
+    expect(
+      ChooseNextDateSourceInput.safeParse({ ...base, choice: 'manual', date: '20-11-2026' })
+        .success,
+    ).toBe(false);
   });
 });
 

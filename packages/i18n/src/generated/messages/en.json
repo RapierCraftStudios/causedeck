@@ -2118,6 +2118,162 @@
     "palette": {
       "new": "New matter",
       "noNextDate": "No next date"
+    },
+    "workspace": {
+      "metaTitle": "Matter",
+      "loading": "Loading matter",
+      "breadcrumb": "Matters",
+      "tabListLabel": "Matter sections",
+      "tabs": {
+        "overview": "Overview"
+      },
+      "status": {
+        "active": "Active",
+        "disposed": "Disposed",
+        "archived": "Archived"
+      },
+      "owner": "Owner: {name}",
+      "noOwner": "No owner",
+      "clients": "Clients",
+      "menu": {
+        "label": "Matter actions",
+        "markSensitive": "Mark as sensitive",
+        "removeSensitive": "Remove sensitive",
+        "markTitle": "Mark this matter as sensitive?",
+        "removeTitle": "Remove the sensitive mark?",
+        "removeHint": "AI processing, bulk imports and shared briefs will be available for this matter again.",
+        "confirmMark": "Mark as sensitive",
+        "confirmRemove": "Remove sensitive",
+        "cancel": "Cancel",
+        "failed": "Couldn't change this. Try again.",
+        "announceOn": "This matter is now sensitive.",
+        "announceOff": "This matter is no longer sensitive."
+      },
+      "source": {
+        "document": "From a document",
+        "capture": "From a capture",
+        "adapter": "From the court list",
+        "ai": "Proposed by assistant",
+        "import": "From an import",
+        "manual": "Entered by hand",
+        "system": "From CauseDeck"
+      },
+      "nextDate": {
+        "title": "Next date",
+        "confirm": "Confirm",
+        "none": "No next date",
+        "noneBody": "Add a proceeding and its next listing to see the next date here.",
+        "stage": "Stage: {stage}",
+        "announceConfirmed": "Next date confirmed.",
+        "failed": "Couldn't confirm the date. Try again."
+      },
+      "conflict": {
+        "title": "Two dates for one proceeding",
+        "body": "The sources disagree. Choose the date to keep, or enter the right one.",
+        "current": "Current: {date}",
+        "proposed": "Proposed: {date}",
+        "chooseA": "Choose A",
+        "chooseB": "Choose B",
+        "sideA": "A",
+        "sideB": "B",
+        "manual": "Enter manually",
+        "manualDate": "Next date",
+        "save": "Save date",
+        "cancel": "Cancel",
+        "dateRequired": "Enter a date from today onwards.",
+        "announce": "Next date set to {date}.",
+        "failed": "Couldn't save the date. Try again.",
+        "stale": "This conflict was already resolved. Showing the latest dates."
+      },
+      "proceedings": {
+        "title": "Proceedings",
+        "count": "{count, plural, one {# proceeding} other {# proceedings}}",
+        "caseNumber": "{type} No. {number} of {year}",
+        "unnumbered": "{type} (unnumbered)",
+        "lead": "Lead",
+        "empty": "No proceedings recorded. Add the case number you have, even before it is numbered (SR or FR number).",
+        "states": {
+          "filed": "Filed",
+          "sr_fr": "SR/FR",
+          "defects": "Defects",
+          "re_presented": "Re-presented",
+          "numbered": "Numbered",
+          "disposed": "Disposed"
+        }
+      },
+      "obligations": {
+        "title": "Open obligations",
+        "count": "{count, plural, =0 {No open obligations} one {# open obligation} other {# open obligations}}"
+      },
+      "documents": {
+        "title": "Recent documents",
+        "empty": "Share or drop files into your Inbox",
+        "openInbox": "Open Inbox",
+        "added": "Added {date}",
+        "textStatus": {
+          "pending": "Text pending",
+          "layer": "Text ready",
+          "ocr": "Text read by OCR",
+          "failed": "Text failed",
+          "skipped": "No text"
+        },
+        "kinds": {
+          "pleading": "Pleading",
+          "ia": "I.A.",
+          "annexure": "Annexure",
+          "order": "Order",
+          "judgment": "Judgment",
+          "cause_list": "Cause list",
+          "correspondence": "Correspondence",
+          "note": "Note",
+          "draft": "Draft",
+          "registry_memo": "Registry memo",
+          "other": "Other"
+        },
+        "label": "{kind}, {status}"
+      },
+      "people": {
+        "title": "People",
+        "empty": "No people recorded for this matter yet.",
+        "kinds": {
+          "represents": "We represent",
+          "appears_for": "Appears for",
+          "instructed_by": "Instructed by",
+          "assigned_to": "Assigned to",
+          "opposes": "Opposite side"
+        }
+      },
+      "synopsis": {
+        "title": "Synopsis",
+        "manual": "Written by hand",
+        "edit": "Edit synopsis",
+        "write": "Write synopsis",
+        "save": "Save synopsis",
+        "cancel": "Cancel",
+        "label": "Synopsis",
+        "empty": "No synopsis yet",
+        "emptyBody": "A few lines on what this matter is about and where it stands.",
+        "denied": "Your role can't see the synopsis. Ask the chamber owner.",
+        "announceSaved": "Synopsis saved.",
+        "failed": "Couldn't save the synopsis. Try again."
+      },
+      "offlineAction": "You're offline. Changes will not save until you're back.",
+      "error": {
+        "title": "Couldn't load this matter.",
+        "retry": "Retry",
+        "reference": "Reference: {digest}"
+      },
+      "notFound": {
+        "title": "This matter doesn't exist or you can't open it.",
+        "back": "Back to matters"
+      },
+      "provenance": {
+        "confirmed": "Confirmed",
+        "proposed": "Proposed",
+        "edited": "Corrected by hand",
+        "viewOnly": "View only",
+        "offline": "You're offline."
+      }
     }
   },
   "error": {

@@ -23,6 +23,8 @@ const MEMORY_ERASURE_TEST = 'packages/core/src/lifecycle/__tests__/memory-erasur
 const CORE_RUNTIME_TEST = 'packages/core/src/__tests__/cross-tenant/runtime.test.ts';
 const ADMIN_STAFF_CLI_TEST = 'apps/admin/src/cli/staff.test.ts';
 const CORE_ROSTERS_TEST = 'packages/core/src/__tests__/cross-tenant/rosters.test.ts';
+const CORE_NEXT_DATE_CHOICE_TEST =
+  'packages/core/src/__tests__/cross-tenant/next-date-choice.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -123,6 +125,7 @@ const rosterSelfScoped = {
   kind: 'self-scoped',
   note: 'opens withWorkspace on the given workspace id; RLS limits rosters and entries to that workspace',
 } as const;
+const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
@@ -343,6 +346,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // canonical next date (#364): A's proceeding or listing from B, or ub claiming A, is NOT_FOUND
   proposeNextDate: denies,
   confirmNextDate: denies,
+  // conflict card resolution (#390): A's listings from B, or ub claiming A, are NOT_FOUND
+  chooseNextDateSource: nextDateChoiceDenies,
   getCanonicalNextDate: denies,
   // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
   getMatterTimeline: denies,

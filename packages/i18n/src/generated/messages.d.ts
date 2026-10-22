@@ -2120,6 +2120,162 @@ export type Messages = {
       new: string;
       noNextDate: string;
     };
+    workspace: {
+      metaTitle: string;
+      loading: string;
+      breadcrumb: string;
+      tabListLabel: string;
+      tabs: {
+        overview: string;
+      };
+      status: {
+        active: string;
+        disposed: string;
+        archived: string;
+      };
+      owner: string;
+      noOwner: string;
+      clients: string;
+      menu: {
+        label: string;
+        markSensitive: string;
+        removeSensitive: string;
+        markTitle: string;
+        removeTitle: string;
+        removeHint: string;
+        confirmMark: string;
+        confirmRemove: string;
+        cancel: string;
+        failed: string;
+        announceOn: string;
+        announceOff: string;
+      };
+      source: {
+        document: string;
+        capture: string;
+        adapter: string;
+        ai: string;
+        import: string;
+        manual: string;
+        system: string;
+      };
+      nextDate: {
+        title: string;
+        confirm: string;
+        none: string;
+        noneBody: string;
+        stage: string;
+        announceConfirmed: string;
+        failed: string;
+      };
+      conflict: {
+        title: string;
+        body: string;
+        current: string;
+        proposed: string;
+        chooseA: string;
+        chooseB: string;
+        sideA: string;
+        sideB: string;
+        manual: string;
+        manualDate: string;
+        save: string;
+        cancel: string;
+        dateRequired: string;
+        announce: string;
+        failed: string;
+        stale: string;
+      };
+      proceedings: {
+        title: string;
+        count: string;
+        caseNumber: string;
+        unnumbered: string;
+        lead: string;
+        empty: string;
+        states: {
+          filed: string;
+          sr_fr: string;
+          defects: string;
+          re_presented: string;
+          numbered: string;
+          disposed: string;
+        };
+      };
+      obligations: {
+        title: string;
+        count: string;
+      };
+      documents: {
+        title: string;
+        empty: string;
+        openInbox: string;
+        added: string;
+        textStatus: {
+          pending: string;
+          layer: string;
+          ocr: string;
+          failed: string;
+          skipped: string;
+        };
+        kinds: {
+          pleading: string;
+          ia: string;
+          annexure: string;
+          order: string;
+          judgment: string;
+          cause_list: string;
+          correspondence: string;
+          note: string;
+          draft: string;
+          registry_memo: string;
+          other: string;
+        };
+        label: string;
+      };
+      people: {
+        title: string;
+        empty: string;
+        kinds: {
+          represents: string;
+          appears_for: string;
+          instructed_by: string;
+          assigned_to: string;
+          opposes: string;
+        };
+      };
+      synopsis: {
+        title: string;
+        manual: string;
+        edit: string;
+        write: string;
+        save: string;
+        cancel: string;
+        label: string;
+        empty: string;
+        emptyBody: string;
+        denied: string;
+        announceSaved: string;
+        failed: string;
+      };
+      offlineAction: string;
+      error: {
+        title: string;
+        retry: string;
+        reference: string;
+      };
+      notFound: {
+        title: string;
+        back: string;
+      };
+      provenance: {
+        confirmed: string;
+        proposed: string;
+        edited: string;
+        viewOnly: string;
+        offline: string;
+      };
+    };
   };
   error: {
     title: string;

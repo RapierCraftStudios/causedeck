@@ -27,6 +27,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   support: Object.freeze(['workspaces', 'audit']),
   jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle', 'support']),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
+  // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.
   runtime: Object.freeze([
     'audit',
     'billing',
@@ -35,6 +36,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'jobs',
     'lifecycle',
     'support',
+    'court',
   ]),
 });
 

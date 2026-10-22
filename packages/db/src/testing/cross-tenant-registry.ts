@@ -313,6 +313,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   detectBenchChanges: rosterDenies,
   listAlerts: rosterDenies,
   dismissAlert: rosterDenies,
+  // court: rosters page read model (#434)
+  getRostersPage: rosterDenies,
   listHallsSeen: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -621,6 +623,13 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'pure SQL builder; getCourtsIndex runs it inside withWorkspace on the given workspace',
   hallsSeenStatement:
     'pure SQL builder; listHallsSeen runs it inside withWorkspace on the given workspace',
+  // court: rosters page statements (#434), exported for the budget test
+  rostersPageRostersStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace after the membership check',
+  rosterEntryCountsStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace after the membership check',
+  openBenchAlertsStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace with the resolved actor',
   // matter graph (#362): errors and pure proceeding-identity helpers
   CrossWorkspaceError: 'error class',
   crossWorkspace: 'error factory',
@@ -945,6 +954,9 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: "requestAccountDeletion for the caller's own account; never writes into a workspace chain",
   },
   requestMemoryErasureFor: runtimeDenies,
+  // court rosters (#434)
+  previewRosterImportFor: runtimeDenies,
+  confirmRosterImportFor: runtimeDenies,
   loadNotificationPreferences: runtimeDenies,
   subscribePush: {
     test: CORE_RUNTIME_TEST,

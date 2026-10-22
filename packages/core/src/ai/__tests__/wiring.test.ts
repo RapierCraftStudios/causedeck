@@ -13,8 +13,9 @@ import { newWorkspace } from '../../__tests__/fixtures.ts';
 import { getUsage, reconcileAiCalls } from '../../usage/index.ts';
 import { createAiPorts, createCoreAiGateway, getCaptureCostPaise } from '../wiring.ts';
 
-const NOW = new Date('2026-03-10T06:30:00.000Z');
-const now = () => NOW;
+// The real clock: `ai_call.created_at` is the database's now(), and reconciliation matches calls and
+// ledger rows by period, so a fixed clock would put them in different months.
+const now = () => new Date();
 
 /** An in-region provider that reports `inputTokens` of Haiku-class usage (8400 paise per 1M). */
 function bedrock(inputTokens: number): Provider {

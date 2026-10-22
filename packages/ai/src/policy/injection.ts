@@ -44,11 +44,12 @@ export const DATA_CLOSE = 'DOCUMENT_DATA>>>';
 
 /** Wrap untrusted text in a delimited data block; delimiters inside the text are defused. */
 export function wrapAsData(label: string, text: string): string {
+  // The replacements must not contain the delimiter they defuse.
   const safe = text
     .split(DATA_OPEN)
-    .join('<<<DOCUMENT_DATA_')
+    .join('<<< DOCUMENT_DATA')
     .split(DATA_CLOSE)
-    .join('_DOCUMENT_DATA>>>');
+    .join('DOCUMENT_DATA >>>');
   return `${DATA_OPEN} ${label}\n${safe}\n${DATA_CLOSE}`;
 }
 

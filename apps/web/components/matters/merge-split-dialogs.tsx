@@ -408,17 +408,24 @@ export function SplitMatterDialog({
   const [pending, setPending] = useState(false);
   const [splitFailed, setSplitFailed] = useState(false);
 
-  // The selection is fixed while the dialog is open: one preview, on open.
-  const fetchPreview = useEffectEvent(async (isLive: () => boolean) => {
+  const previewSeq = useRef(0);
+
+  // The selection is fixed while the dialog is open: one preview, on open. Closing (unmount) bumps
+  // the sequence so a late answer is dropped.
+  async function fetchPreview() {
+    const seq = ++previewSeq.current;
     const result = await run(() => actions.preview({ workspaceId, matterId, proceedingIds }));
-    if (isLive())
-      setPreview(result.ok ? { kind: 'ready', preview: result.data } : { kind: 'failed' });
+    if (seq !== previewSeq.current) return;
+    setPreview(result.ok ? { kind: 'ready', preview: result.data } : { kind: 'failed' });
+  }
+  const previewOnOpen = useEffectEvent(() => {
+    void fetchPreview();
   });
   useEffect(() => {
-    let live = true;
-    void fetchPreview(() => live);
+    previewOnOpen();
+    const seqRef = previewSeq;
     return () => {
-      live = false;
+      seqRef.current += 1;
     };
   }, []);
 

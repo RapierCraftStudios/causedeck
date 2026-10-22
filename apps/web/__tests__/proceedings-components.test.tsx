@@ -721,4 +721,47 @@ describe('MergeMatterDialog and SplitMatterDialog (#392)', () => {
     });
     expect(acts.undo).toHaveBeenCalledWith({ workspaceId: WS, payload });
   });
+
+  it('previews a split once on open and drops a preview that answers after the dialog closed', async () => {
+    let answer: (value: { ok: true; data: MovePreviewView }) => void = () => undefined;
+    const acts = {
+      preview: vi.fn(
+        () =>
+          new Promise<{ ok: true; data: MovePreviewView }>((resolve) => {
+            answer = resolve;
+          }),
+      ),
+      split: vi.fn(),
+      undo: vi.fn(),
+    };
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { unmount } = withIntl(
+      <SplitMatterDialog
+        workspaceId={WS}
+        slug="demo"
+        matterId={MATTER}
+        proceedingIds={['p9', 'p10']}
+        actions={acts}
+        onClose={vi.fn()}
+        onDone={vi.fn()}
+      />,
+    );
+    await screen.findByRole('dialog');
+    await waitFor(() => {
+      expect(acts.preview).toHaveBeenCalledTimes(1);
+    });
+    expect(acts.preview).toHaveBeenCalledWith({
+      workspaceId: WS,
+      matterId: MATTER,
+      proceedingIds: ['p9', 'p10'],
+    });
+    unmount();
+    await act(async () => {
+      answer({ ok: true, data: preview({ obligations: 2 }) });
+      await Promise.resolve();
+    });
+    expect(screen.queryByText('2 obligations')).toBeNull();
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
 });

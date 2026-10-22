@@ -127,9 +127,7 @@ test.describe('matter timeline', () => {
       'Showing saved timeline from',
     );
     await page.goto(`/w/${MATTERS_WORKSPACE}/${timelinePath('__state=denied')}`);
-    await expect(
-      page.locator('main [data-pattern-state="permission-denied"]'),
-    ).toBeVisible();
+    await expect(page.locator('main [data-pattern-state="permission-denied"]')).toBeVisible();
     await page.goto(`/w/${MATTERS_WORKSPACE}/${timelinePath('__state=error')}`);
     await expect(page.locator('main').getByRole('button', { name: 'Retry' })).toBeVisible({
       timeout: 15_000,

@@ -1,8 +1,8 @@
 // Karnataka High Court adapter, Principal Bench at Bengaluru (#404, part 1 of #37; A1). Identity,
 // versioned config, declared access modes, the case-type table, the case-line grammar, advocate
 // keys and official deep links; cause lists from a saved HTML list page or the layout of a list
-// PDF (#405, part 2); the order header, KHC neutral citation and direction cues (#406, part 3). The
-// registry parser lands in part 4 (#407). Everything the
+// PDF (#405, part 2); the order header, KHC neutral citation and direction cues (#406, part 3); FR
+// numbers, scrutiny objections and cure deadlines from registry notices (#407, part 4). Everything the
 // adapter reads is a document the lawyer supplied; links open the court's own pages in a new window
 // and nothing here requests a URL. The Dharwad and Kalaburagi Benches are disabled forums (v2).
 // Every layout assumption is recorded in ADR 0019.
@@ -40,6 +40,7 @@ export * from './direction-cues.ts';
 export { isKarnatakaListLine, karnatakaListTypeOf, karnatakaPublishedAt } from './list-reader.ts';
 export * from './neutral-citation.ts';
 export * from './order-header.ts';
+export * from './registry-events.ts';
 export { parseKarnatakaCauseListHtml } from './parse-cause-list-html.ts';
 export type { KarnatakaCauseListOptions } from './parse-cause-list-html.ts';
 export { parseKarnatakaCauseListPdf } from './parse-cause-list-pdf.ts';

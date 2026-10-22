@@ -84,8 +84,10 @@ export async function loadMatterFilterOptions(
     const { getCourtsIndex } = await import('@causedeck/core/court');
     const workspaceId = context.workspace.id;
     const scope = { workspaceId, userId: context.user.id };
-    const members = await listMembersIn(scope);
-    const index = await inWorkspace(scope, (tx) => getCourtsIndex(tx, workspaceId));
+    const [members, index] = await Promise.all([
+      listMembersIn(scope),
+      inWorkspace(scope, (tx) => getCourtsIndex(tx, workspaceId)),
+    ]);
     const forums = index.cities.flatMap((city) =>
       city.courts.flatMap((court) =>
         court.forums.map((forum) => ({

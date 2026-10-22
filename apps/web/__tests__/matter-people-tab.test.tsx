@@ -209,6 +209,14 @@ describe('People tab (#393)', () => {
     );
   });
 
+  it('marks the populated list with [data-people]', async () => {
+    await renderPage();
+    const list = document.querySelector('[data-people]') as HTMLElement;
+    expect(list.getAttribute('data-people')).toBe('list');
+    expect(list.querySelectorAll('[data-person]').length).toBeGreaterThan(0);
+    expect(document.querySelector('[data-people="empty"]')).toBeNull();
+  });
+
   it('shows contact details only for clients and professional contacts', async () => {
     await renderPage();
     const contacts = [...document.querySelectorAll('[data-person-contact]')];

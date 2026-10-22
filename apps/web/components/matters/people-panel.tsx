@@ -254,7 +254,12 @@ export function PeoplePanel({
           action={addButton}
         />
       ) : (
-        <div aria-label={t('listLabel')} className="flex flex-col gap-4" role="group">
+        <div
+          aria-label={t('listLabel')}
+          className="flex flex-col gap-4"
+          data-people="list"
+          role="group"
+        >
           {shown.map((group) => (
             <section
               key={group.kind}

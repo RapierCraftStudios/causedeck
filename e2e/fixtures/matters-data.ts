@@ -141,7 +141,7 @@ export const MATTERS = {
       },
     ],
   },
-  /** A proposed next date with no canonical one: the Confirm button. */
+  /** A canonical next date still waiting for a person (`proposed`): the badge and the Confirm button. */
   proposed: {
     id: uuid(0xb0003),
     title: 'Abdul Rahman v. Fictional Municipality',
@@ -164,7 +164,7 @@ export const MATTERS = {
         id: uuid(0xd0021),
         proceeding: 0,
         date: '2099-06-01',
-        canonical: false,
+        canonical: true,
         confirmationState: 'proposed',
       },
     ],

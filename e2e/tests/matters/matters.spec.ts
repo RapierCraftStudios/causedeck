@@ -224,8 +224,8 @@ test.describe('matter workspace', () => {
     const card = page.locator('[data-slot="date-conflict-card"]');
     await expect(card).toBeVisible();
     await expect(card.locator('[data-conflict-side]')).toHaveCount(2);
-    await expect(card.locator('[data-conflict-choose="a"]')).toBeVisible();
-    await expect(card.locator('[data-conflict-choose="b"]')).toBeVisible();
+    await expect(card.locator('[data-conflict-choose="A"]')).toBeVisible();
+    await expect(card.locator('[data-conflict-choose="B"]')).toBeVisible();
   });
 
   test('a proposed next date shows Confirm; the confirmation is announced', async ({

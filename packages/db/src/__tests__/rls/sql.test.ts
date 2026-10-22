@@ -137,6 +137,9 @@ describe('row-level security catalog', () => {
         'bench_roster',
         'bench_roster_entry',
         'bench_change_alert',
+        // Capture inbox (#43).
+        'capture',
+        'workspace_capture_channel',
       ].sort(),
     );
     for (const row of rows)

@@ -11,6 +11,17 @@ export {
 } from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
+export {
+  CAPTURE_CHANNELS,
+  CAPTURE_SCAN_STATUSES,
+  CAPTURE_STATUSES,
+  capture,
+  workspaceCaptureChannel,
+  type CaptureChannel,
+  type CaptureRow,
+  type CaptureScanStatus,
+  type CaptureStatus,
+} from './capture.ts';
 export { catalogueMeta } from './catalogue-meta.ts';
 export {
   account,

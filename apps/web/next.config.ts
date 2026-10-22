@@ -57,6 +57,9 @@ const nextConfig: NextConfig = {
     '@sentry/node',
     '@opentelemetry/sdk-node',
     '@opentelemetry/auto-instrumentations-node',
+    // The roster import preview parses PDFs with pdfjs (adapters' layoutFromPdf), which loads its
+    // worker module by a runtime path the server bundle breaks (#459).
+    'pdfjs-dist',
   ],
   images: { remotePatterns: [] },
   experimental: {

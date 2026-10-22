@@ -1,4 +1,4 @@
-# 0021. AI gateway implementation: ports, residency, audit and idempotent results
+# 0022. AI gateway implementation: ports, residency, audit and idempotent results
 
 ## Status
 

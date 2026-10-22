@@ -6,7 +6,7 @@
 //   -> commit budget -> store idempotent result
 //
 // Failures release the reservation and write an `ai_call` row with the failure status (never with
-// input content). See ADR 0007 and ADR 0021.
+// input content). See ADR 0007 and ADR 0022.
 import {
   AiGatewayError,
   BudgetExceededError,

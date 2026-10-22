@@ -1,4 +1,4 @@
-/** AI gateway: providers, routing, budgets, India-only mode, audit. See ADR 0007 and ADR 0021. */
+/** AI gateway: providers, routing, budgets, India-only mode, audit. See ADR 0007 and ADR 0022. */
 export const packageName: string = '@causedeck/ai';
 
 export * from './errors.ts';

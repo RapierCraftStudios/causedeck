@@ -28,6 +28,7 @@ describe('registerSchedules', () => {
       'system.export.expire',
       'system.support.session-expire',
       'system.deletion.tick',
+      'system.capture.retention',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -73,6 +74,8 @@ describe('registerSchedules', () => {
       ['system.audit.verify', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // Audit retention: daily 03:00 IST.
       ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
+      // Capture raw-object retention: daily 02:00 IST.
+      ['system.capture.retention', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
     ] as const;
     for (const [name, cron, firstRun] of others) {
       const row = await worker.boss.getSchedule(name);

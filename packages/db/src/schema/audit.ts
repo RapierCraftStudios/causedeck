@@ -125,7 +125,7 @@ export const aiCall = tenantTable(
     autoApplied: boolean('auto_applied').notNull().default(false),
     userAction: text('user_action'),
     undoneAt: timestamp('undone_at', { withTimezone: true }),
-    // Gateway columns (#44, migration 0053). The row stores hashes and ids only, never content.
+    // Gateway columns (#44, migration 0054). The row stores hashes and ids only, never content.
     /** The gateway task id, e.g. `classify_document`; null on rows written before the gateway. */
     task: text('task'),
     latencyMs: integer('latency_ms'),

@@ -6,8 +6,8 @@
 //
 // `document.matter_id` is NO ACTION: a matter with documents cannot be deleted on its own (the erase
 // purges documents first). `supersedes_document_id` is `ON DELETE SET NULL (supersedes_document_id)`
-// in migration 0038, like the nullable matter FKs (see matter-graph.ts). `source_capture_id` has no
-// FK until the capture table exists (#43).
+// in migration 0038, like the nullable matter FKs (see matter-graph.ts). `source_capture_id` is
+// `ON DELETE SET NULL (source_capture_id)` in migration 0053 (the capture table, #43).
 import { sql } from 'drizzle-orm';
 import {
   check,
@@ -25,6 +25,7 @@ import { id, timestamps } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';
 
 import { inList, organization } from './auth.ts';
+import { capture } from './capture.ts';
 import { documentKind, documentTextStatus } from './enums.ts';
 import { matter } from './matter-graph.ts';
 
@@ -84,6 +85,11 @@ export const document = tenantTable(
       columns: [t.workspaceId, t.matterId],
       foreignColumns: [matter.workspaceId, matter.id],
     }),
+    foreignKey({
+      name: 'document_source_capture_fk',
+      columns: [t.workspaceId, t.sourceCaptureId],
+      foreignColumns: [capture.workspaceId, capture.id],
+    }).onDelete('set null'),
     foreignKey({
       name: 'document_supersedes_fk',
       columns: [t.workspaceId, t.supersedesDocumentId],

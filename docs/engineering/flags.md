@@ -17,7 +17,7 @@ Every flag is off by default and ships dark. ⚖ marks a legal-gated flag. A leg
 | `ai.sarvam` | no | `KILL_AI_SARVAM` | #44 AI gateway, #51 voice capture, #113 Sarvam key |
 | `capture.whatsapp-import` | no | `KILL_CAPTURE_WHATSAPP_IMPORT` | #55 WhatsApp export importer |
 | `capture.email-forward` | no | `KILL_CAPTURE_EMAIL_FORWARD` | #54 email forward-in intake, #287 intake address card in settings integrations |
-| `capture.ics-feed` | no | `KILL_CAPTURE_ICS_FEED` | #53 private ICS feed, #287 feed URL card in settings integrations |
+| `capture.ics-feed` | no | `KILL_CAPTURE_ICS_FEED` | #53 private ICS feed (`/api/ics/[token]`, the calendar settings page and its actions), #287 card in settings integrations (links to the calendar page) |
 | `pwa.offline` | no | `KILL_PWA_OFFLINE` | #50 offline outbox, #65 offline cache |
 | `billing.razorpay` | no | `KILL_BILLING_RAZORPAY` | #28 Razorpay subscriptions, #111 Razorpay account |
 | `insights.enabled` | no | `KILL_INSIGHTS_ENABLED` | #85 insights dashboard |

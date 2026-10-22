@@ -3,6 +3,7 @@ export const packageName: string = '@causedeck/capture';
 
 export * from './allow-list.ts';
 export * from './config.ts';
+export * from './ics/index.ts';
 export * from './jobs.ts';
 export * from './retention.ts';
 export * from './scan/index.ts';

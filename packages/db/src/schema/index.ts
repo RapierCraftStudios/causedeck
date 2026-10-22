@@ -155,6 +155,16 @@ export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';
 export {
+  ICS_FEED_SCOPES,
+  ICS_IMPORT_STATUSES,
+  icsFeed,
+  icsFeedEvent,
+  icsImportEvent,
+  type IcsFeedScope,
+  type IcsFeedSnapshot,
+  type IcsImportStatus,
+} from './ics.ts';
+export {
   INTEGRATION_KINDS,
   workspaceIntegration,
   type IntegrationKind,

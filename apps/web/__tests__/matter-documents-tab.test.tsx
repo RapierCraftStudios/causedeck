@@ -229,6 +229,14 @@ describe('Documents tab (#393)', () => {
     expect(screen.getByRole('link', { name: docs.newest }).getAttribute('href')).toBe(BASE);
   });
 
+  it('marks the populated list with [data-documents="list"], never "empty"', async () => {
+    await renderPage();
+    const list = document.querySelector('[data-documents]') as HTMLElement;
+    expect(list.getAttribute('data-documents')).toBe('list');
+    expect(list.querySelectorAll('li').length).toBeGreaterThan(0);
+    expect(document.querySelector('[data-documents="empty"]')).toBeNull();
+  });
+
   it('has an empty state with Open Inbox as its one action', async () => {
     page.documents = { items: [], nextCursor: null };
     await renderPage();

@@ -4,6 +4,9 @@ import path from 'node:path';
 
 import type { StorybookConfig } from '@storybook/nextjs-vite';
 import tailwindcss from '@tailwindcss/vite';
+import type { Alias, AliasOptions } from 'vite';
+
+const isAliasList = (aliases: AliasOptions): aliases is readonly Alias[] => Array.isArray(aliases);
 
 const config: StorybookConfig = {
   framework: { name: '@storybook/nextjs-vite', options: {} },
@@ -12,24 +15,23 @@ const config: StorybookConfig = {
   // next/font (app/fonts.ts) does not run here: serve the ui faces that storybook.css loads.
   staticDirs: [{ from: '../../../packages/ui/fonts', to: '/fonts' }],
   core: { disableTelemetry: true },
-  viteFinal: (viteConfig) => {
+  viteFinal: (viteConfig, { configDir }) => {
     viteConfig.plugins = [...(viteConfig.plugins ?? []), tailwindcss()];
     // The framework's App Router mock predates Next 16.4's LayoutRouterContext shape: wrap its
     // RedirectBoundary so `useRouter()` works (see redirect-boundary.ts). Exact match only; the
     // shim itself imports Next's boundary through the `.js` path.
-    const aliases = viteConfig.resolve?.alias;
+    // Vite's alias option is an array of { find, replacement } or a find -> replacement record.
+    const aliases: AliasOptions = viteConfig.resolve?.alias ?? [];
     viteConfig.resolve = {
       ...viteConfig.resolve,
       alias: [
         {
           find: /^next\/dist\/client\/components\/redirect-boundary$/,
-          replacement: path.join(import.meta.dirname, 'redirect-boundary.ts'),
+          replacement: path.resolve(configDir, 'redirect-boundary.ts'),
         },
-        ...(aliases === undefined
-          ? []
-          : 'map' in aliases
-            ? aliases
-            : Object.entries(aliases).map(([find, replacement]) => ({ find, replacement }))),
+        ...(isAliasList(aliases)
+          ? aliases
+          : Object.entries(aliases).map(([find, replacement]) => ({ find, replacement }))),
       ],
     };
     return viteConfig;

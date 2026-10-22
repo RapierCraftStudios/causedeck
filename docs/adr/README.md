@@ -20,6 +20,14 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0010](0010-feature-flags-db-backed-legal-gating-and-no-l5.md) | DB-backed feature flags, legal gating and no L5 actions | Accepted | 2026-10-18 | — |
 | [0011](0011-access-mode-registry-closed-enum.md) | Access-mode registry closed enum | Proposed | 2026-10-19 | — |
 | [0012](0012-core-package-split-threshold.md) | Split @causedeck/core into domain packages at a threshold | Proposed | 2026-10-20 | — |
+| [0013](0013-matter-graph-schema.md) | Matter-graph schema: composite tenant keys, global-or-workspace reference tables, case identity | Proposed | 2026-10-21 | — |
+| [0014](0014-forum-catalogue-and-deep-links.md) | Forum catalogue: hosts as data, new-window deep links, owner-role versioned seed | Proposed | 2026-10-21 | — |
+| [0015](0015-court-adapter-framework.md) | Court adapter framework: no network, registry-enforced access, config versus parser | Proposed | 2026-10-21 | — |
+| [0016](0016-proceeding-state-machine-and-next-date-rules.md) | Proceeding state machine and canonical next-date rules | Proposed | 2026-10-21 | — |
+| [0017](0017-effective-dated-rosters.md) | Effective-dated bench rosters | Proposed | 2026-10-21 | — |
+| [0018](0018-madras-hc-adapter-assumptions.md) | Madras HC adapter assumptions | Proposed | 2026-10-22 | — |
+| [0019](0019-karnataka-hc-adapter-assumptions.md) | Karnataka HC adapter: layout assumptions and how H13 retires them | Proposed | 2026-10-22 | — |
+| [0020](0020-nclt-bengaluru-table-parsing.md) | NCLT Bengaluru cause lists: table parsing from word coordinates | Proposed | 2026-10-21 | — |
 
 ## Statuses
 

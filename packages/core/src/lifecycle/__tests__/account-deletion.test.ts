@@ -104,11 +104,15 @@ async function joinWithData(tx: Transaction, ws: string, userId: string, role: s
       mime: 'application/pdf',
       createdBy: userId,
     });
+    const [matter] = await s
+      .insert(schema.matter)
+      .values({ workspaceId: ws, title: 'Test v. State' })
+      .returning({ id: schema.matter.id });
     const [restriction] = await s
       .insert(matterRestriction)
       .values({
         workspaceId: ws,
-        matterId: randomUUID(),
+        matterId: matter?.id ?? '',
         allowedUserIds: [userId],
         createdBy: userId,
       })

@@ -91,7 +91,7 @@ reads back the mode those email rows share, or `instant` when they differ.
 
 ### Settings
 
-`notification_setting` holds one row per member and workspace. No row means both settings are off.
+`notification_setting` holds one row per member and workspace. No row means every setting is off.
 
 - **`court_hours_quiet`** (`Do not push during court hours`) makes 10:30-17:00 in the
   workspace time zone quiet (`COURT_HOURS`, `isQuietTime`). Inside that window:
@@ -101,6 +101,11 @@ reads back the mode those email rows share, or `instant` when they differ.
 - **`lock_screen_details`** (`Show details on lock screen`): when off, a push carries only a generic
   title (`GENERIC_PUSH_TITLES`) and a link, never matter names, party names or document text. When
   on, it carries the notification's title and body. Setter: `setLockScreenDetails`.
+- **`bench_alert_party_names`** (#389): bench-change alerts (`detectBenchChanges`,
+  `@causedeck/core/court`, category `reminder.hearing`) say only how many matters changed bench and
+  from when ("2 matters have a bench change from 05 Oct"). When on, the body also lists the
+  proceedings' parties (`petitioner v respondent`). Setter: `setBenchAlertPartyNames`. It is not
+  part of `NotificationSettings`; the core service reads the column directly.
 
 The time zone is the workspace's (`workspace_settings.timezone`, default `Asia/Kolkata`). Members
 have no time zone of their own.

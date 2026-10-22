@@ -19,11 +19,13 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `audit` | `@causedeck/core/audit` | audit writer, chain verification, feed query and export ([audit.md](audit.md)) |
 | `workspaces` | `@causedeck/core/workspaces` | workspaces, members, invitations, offboarding ([workspaces.md](workspaces.md)) |
 | `matters` | `@causedeck/core/matters` | matter restrictions |
+| `court` | `@causedeck/core/court` | forum catalogue reads, custom workspace forums and official deep links (#34, [ADR 0014](../adr/0014-forum-catalogue-and-deep-links.md)), the tenant-free adapter parse-health summary (#372), and the courts read models `getCourtsIndex`, `getForumDetail`, `getAdapterStatus` and `listHallsSeen` (#397; access-mode rows with counsel notes via `@causedeck/flags/access-mode`), the roster services (#385, #387), and bench-change detection and alerts `detectBenchChanges`, `listAlerts`, `dismissAlert` with the `CourtEvents` port (`bench.changed`) and `notify()` delivery (#389), and the rosters page read model `getRostersPage` (#434) |
+| `matter-graph` | `@causedeck/core/matter-graph` | matter-graph services (#362): matters, proceedings, documents, the duplicate finder, the proceeding state machine (#363, ADR 0016), the canonical next date (#364: propose, confirm, read; the only writer of `listing.list_date` and `canonical`), merges and splits with `UndoPayload` (#365) and their read-only previews (#392), the cross-proceeding matter timeline (#366, read-only), the matters read models (#386) and the document preview read model `getDocumentPreview` (#393: one page's text and the version chain, for `DocumentPreviewSheet`), and the `GraphEvents` port they emit through |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
-| `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains. apps/web, apps/api and apps/worker use it (#299): the `db` handle, `closeAppDb`, `inWorkspaceOn` for an injected handle and the api idempotency store |
+| `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains. apps/web, apps/api and apps/worker use it (#299): the `db` handle, `closeAppDb`, `inWorkspaceOn` for an injected handle and the api idempotency store; the roster wrappers `previewRosterImportFor` and `confirmRosterImportFor` (#434) |
 | `shared` | none | helpers no domain owns |
 
 `packages/core/src/index.ts` re-exports only domain entry points (`./<domain>/index.ts`). It does
@@ -58,6 +60,9 @@ graph LR
   workspaces --> audit
   matters --> workspaces
   matters --> audit
+  court --> workspaces
+  matter-graph --> workspaces
+  matter-graph --> matters
   billing --> workspaces
   billing --> audit
   usage --> audit
@@ -78,6 +83,7 @@ graph LR
   runtime --> jobs
   runtime --> lifecycle
   runtime --> support
+  runtime --> court
 ```
 
 | Domain | May import |
@@ -86,12 +92,14 @@ graph LR
 | `audit` | nothing (only `shared/`) |
 | `workspaces` | `audit` |
 | `matters` | `workspaces`, `audit` |
+| `court` | `workspaces` |
+| `matter-graph` | `workspaces`, `matters` |
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
 | `lifecycle` | `audit`, `workspaces` |
 | `support` | `workspaces`, `audit` |
 | `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support` |
-| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support` |
+| `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,
 fair-use caps and job fairness read billing entitlements.

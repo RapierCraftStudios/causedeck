@@ -47,12 +47,16 @@ and memory stays bounded.
 | `billing`       | `subscription`, `entitlement`, `billing_event` (no raw payload), `saas_invoice`, `saas_invoice_line`, `usage_counter`, `usage_event`, `usage_reservation`, `budget_override`, `usage_period_summary` |
 | `blobs`         | `blob` (no envelope header or storage key) and the files themselves                                                                                                                                  |
 | `lifecycle`     | `export_job` (no token hash), `deletion_job`                                                                                                                                                         |
+| `court`         | `forum`, `court_hall`, `bench`: the workspace's own custom rows only; `bench_roster`, `bench_roster_entry`, `bench_change_alert` (#384) (the system catalogue, with a null `workspace_id`, is public reference data and is not exported)                                  |
+| `matters`       | `matter`, `proceeding`, `proceeding_link` (#346), `proceeding_state_change` (#363), `listing`, `hearing`, `appearance`, `order`, `obligation`, `task` (#347), `person`, `organisation`, `role_edge` (#348), `document` (no storage key; the files come with `blobs`), `document_page`, `anchor` (#345) |
 
 Exclusions (`EXPORT_EXCLUSIONS`), each with its reason:
 
 - `workspace_key`: wrapped data-encryption key. It is secret key material, not user data, and the
   files in the export are already decrypted.
 - `job_effect`: internal job idempotency ledger. It holds no user content.
+- `adapter_parse_run` (#372): operational parse-health metrics (counts, hall numbers, adapter
+  version). It holds no user content and no personal data.
 
 **Complete by construction.** `pnpm test:export-coverage` checks every tenant table in
 `TABLE_TESTS` (the cross-tenant registry, itself checked against the live catalog by
@@ -186,7 +190,15 @@ step (mid-table in step 4) and no step runs twice. Up to 6 attempts with exponen
    field is now unreadable, the KEK notwithstanding (`KEY_DESTROYED`).
 3. **Delete blobs.** List and delete every object under `ws/<workspace id>/`.
 4. **Purge rows.** Copy tax invoices to `legal_hold_invoice` (below), then delete the rows of every
-   table in `PURGE_ORDER`, 500 per transaction, children before parents, plus the workspace's
+   table in `PURGE_ORDER`, 500 per transaction, children before parents (the custom `court_hall`
+   and `bench` rows before their `forum`; catalogue rows are never matched; `appearance` before
+   `hearing` before `listing`, `task` before `obligation` before `order`, and the docket before the
+   proceedings, documents and matters it cites; `bench_change_alert` before `bench_roster_entry`
+   before `bench_roster`, and rosters before the proceedings, documents, members and court rows they
+   cite (#384); `role_edge` before the persons, proceedings and
+   matters it joins, `person` before the anchors it cites; `proceeding_state_change` and
+   `proceeding_link` before `proceeding`, and proceedings before the anchors, matters and forums they cite; `adapter_parse_run` (#372), `anchor` and
+   `document_page` before `document`, documents and restrictions before `matter`), plus the workspace's
    `api_idempotency_key` rows. `pnpm --filter @causedeck/core exec vitest run
    src/lifecycle/__tests__/purge-coverage.test.ts` fails when a tenant table is in neither
    `PURGE_ORDER` nor `FINALIZE_TABLES`, the same way export coverage works.

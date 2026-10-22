@@ -55,7 +55,42 @@ export const PURGE_ORDER = [
   'notification_setting',
   'invitation',
   'support_session',
+  // The matter graph (#345-#348): appearances before their hearing, hearings before their
+  // listing; tasks before the obligations they fulfil, obligations before their source order;
+  // listings, orders and obligations before the proceedings, documents, anchors and matters they
+  // cite; role edges before the persons, proceedings and matters they join, persons before the
+  // anchors they cite; state history (#363) and links before their proceedings, proceedings
+  // before the anchors, matters and forums they cite; parse-health runs (#372), anchors and pages
+  // before their document, documents and restrictions before their matter, matters (and the
+  // docket) before the members their member columns name. Bench rosters (#384): alerts before
+  // the rosters and proceedings they cite, entries before their roster, rosters before the
+  // documents, members and court rows they cite.
+  'appearance',
+  'hearing',
+  'task',
+  'obligation',
+  'order',
+  'listing',
+  'bench_change_alert',
+  'bench_roster_entry',
+  'bench_roster',
+  'role_edge',
+  'person',
+  'organisation',
+  'proceeding_state_change',
+  'proceeding_link',
+  'proceeding',
+  'adapter_parse_run',
+  'anchor',
+  'document_page',
+  'document',
   'matter_restriction',
+  'matter',
+  // Custom court reference rows (#344): halls and benches before their forum; the catalogue
+  // (null workspace_id) is never matched.
+  'court_hall',
+  'bench',
+  'forum',
   'export_job',
   'blob',
   'saas_invoice_line',

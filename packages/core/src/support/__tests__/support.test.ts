@@ -610,7 +610,14 @@ describe('the read-only support context', () => {
         { db: tx, staffUserId: staffId },
         w.workspaceId,
       );
-      const matterId = randomUUID();
+      // A real matter, so only the read-only session (not the FK to matter) can refuse the write.
+      const [matter] = await inWorkspace(tx, w.workspaceId, (q) =>
+        q
+          .insert(schema.matter)
+          .values({ workspaceId: w.workspaceId, title: 'Test v. State' })
+          .returning({ id: schema.matter.id }),
+      );
+      const matterId = matter?.id ?? '';
       await supportSession.read('matter.read', [{ kind: 'matter', id: matterId }], async (q) => {
         await q
           .insert(schema.matterRestriction)

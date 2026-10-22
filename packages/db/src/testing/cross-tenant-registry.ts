@@ -22,6 +22,12 @@ const ACCOUNT_DELETION_TEST = 'packages/core/src/lifecycle/__tests__/account-del
 const MEMORY_ERASURE_TEST = 'packages/core/src/lifecycle/__tests__/memory-erasure.test.ts';
 const CORE_RUNTIME_TEST = 'packages/core/src/__tests__/cross-tenant/runtime.test.ts';
 const ADMIN_STAFF_CLI_TEST = 'apps/admin/src/cli/staff.test.ts';
+const CORE_ROSTERS_TEST = 'packages/core/src/__tests__/cross-tenant/rosters.test.ts';
+const CORE_NEXT_DATE_CHOICE_TEST =
+  'packages/core/src/__tests__/cross-tenant/next-date-choice.test.ts';
+const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-preview.test.ts';
+const CORE_DOCUMENT_PREVIEW_TEST =
+  'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -56,6 +62,37 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
   workspace_integration: DB_TABLES_TEST,
+  // Global-or-workspace reference tables (#344): catalogue rows are covered by court-schema.test.ts.
+  forum: DB_TABLES_TEST,
+  court_hall: DB_TABLES_TEST,
+  bench: DB_TABLES_TEST,
+  // Matter and documents (#345).
+  matter: DB_TABLES_TEST,
+  document: DB_TABLES_TEST,
+  document_page: DB_TABLES_TEST,
+  anchor: DB_TABLES_TEST,
+  // Proceedings (#346).
+  proceeding: DB_TABLES_TEST,
+  proceeding_link: DB_TABLES_TEST,
+  // Proceeding state history (#363).
+  proceeding_state_change: DB_TABLES_TEST,
+  // Docket (#347).
+  listing: DB_TABLES_TEST,
+  hearing: DB_TABLES_TEST,
+  appearance: DB_TABLES_TEST,
+  order: DB_TABLES_TEST,
+  obligation: DB_TABLES_TEST,
+  task: DB_TABLES_TEST,
+  // People (#348).
+  person: DB_TABLES_TEST,
+  organisation: DB_TABLES_TEST,
+  role_edge: DB_TABLES_TEST,
+  // Adapter parse health (#372).
+  adapter_parse_run: DB_TABLES_TEST,
+  // Bench rosters (#384).
+  bench_roster: DB_TABLES_TEST,
+  bench_roster_entry: DB_TABLES_TEST,
+  bench_change_alert: DB_TABLES_TEST,
 };
 
 /**
@@ -85,6 +122,15 @@ const empty = { test: CORE_SERVICES_TEST, kind: 'rls-empty' } as const;
 const selfScoped = { test: CORE_SERVICES_TEST, kind: 'self-scoped' } as const;
 const lifecycleDenies = { test: LIFECYCLE_TEST, kind: 'denies' } as const;
 const lifecycleEmpty = { test: LIFECYCLE_TEST, kind: 'rls-empty' } as const;
+const rosterDenies = { test: CORE_ROSTERS_TEST, kind: 'denies' } as const;
+const rosterSelfScoped = {
+  test: CORE_ROSTERS_TEST,
+  kind: 'self-scoped',
+  note: 'opens withWorkspace on the given workspace id; RLS limits rosters and entries to that workspace',
+} as const;
+const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
+const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
+const documentPreviewDenies = { test: CORE_DOCUMENT_PREVIEW_TEST, kind: 'denies' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
@@ -226,6 +272,108 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   restrictMatter: denies,
   assertMatterReadable: denies,
   listMatterRestrictions: denies,
+  // court (#34): catalogue rows are global by design; custom forums stay in their workspace
+  createWorkspaceForum: denies,
+  listForums: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; RLS shows the catalogue and that workspace's own forums only",
+  },
+  listForumsByCity: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; RLS shows the catalogue and that workspace's own forums only",
+  },
+  getForum: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; another workspace's forum is NOT_FOUND",
+  },
+  // adapter health (#372): the tenant-free summary view
+  getAdapterHealthSummary: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'reads the tenant-free adapter_health_summary view (counts per adapter/version only), never a tenant row',
+  },
+  // court read models (#397)
+  getCourtsIndex: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
+  },
+  getForumDetail: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace; another workspace's forum code is NOT_FOUND",
+  },
+  getAdapterStatus: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
+  },
+  // court: roster services (#387), cases in their own file beside services.test.ts
+  confirmRosterImport: rosterDenies,
+  supersede: rosterDenies,
+  getRosterAt: rosterSelfScoped,
+  resolveBenchForHall: rosterSelfScoped,
+  listRosters: rosterSelfScoped,
+  // court: bench-change alerts (#389)
+  detectBenchChanges: rosterDenies,
+  listAlerts: rosterDenies,
+  dismissAlert: rosterDenies,
+  // court: rosters page read model (#434)
+  getRostersPage: rosterDenies,
+  listHallsSeen: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS limits parse runs and custom forums to that workspace',
+  },
+  // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
+  // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that
+  // name a row of another workspace, and undos handed a payload of A's ids
+  createMatter: denies,
+  updateMatter: denies,
+  archiveMatter: denies,
+  listMatters: empty,
+  createProceeding: denies,
+  updateIdentifiers: denies,
+  linkProceedings: denies,
+  // proceeding state machine (#363): A's proceeding from B, or ub claiming A, is NOT_FOUND
+  transitionProceeding: denies,
+  findDuplicateProceedings: empty,
+  createDocument: denies,
+  mergeMatters: denies,
+  undoMerge: denies,
+  splitMatter: denies,
+  undoSplit: denies,
+  mergeProceedings: denies,
+  undoMergeProceedings: denies,
+  // merge and split previews (#392): A's matters or proceedings from B, or ub claiming A, are denied
+  previewMergeMatters: movePreviewDenies,
+  previewSplitMatter: movePreviewDenies,
+  // canonical next date (#364): A's proceeding or listing from B, or ub claiming A, is NOT_FOUND
+  proposeNextDate: denies,
+  confirmNextDate: denies,
+  // conflict card resolution (#390): A's listings from B, or ub claiming A, are NOT_FOUND
+  chooseNextDateSource: nextDateChoiceDenies,
+  getCanonicalNextDate: denies,
+  // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
+  getMatterTimeline: denies,
+  // matter graph and timeline anchors (#41): A's matter from B, or ub claiming A, is NOT_FOUND
+  getMatterGraph: denies,
+  getTimelineAnchors: denies,
+  // matters read models and people (#386): A's matter or person from B, or ub claiming A, is
+  // NOT_FOUND; a search from B lists none of A's matters
+  searchMatters: empty,
+  getMatterOverview: denies,
+  listMatterProceedingsTree: denies,
+  listMatterPeople: denies,
+  listMatterDocuments: denies,
+  upsertPerson: denies,
+  setRoleEdge: denies,
+  setSensitive: denies,
+  // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
+  getDocumentPreview: documentPreviewDenies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -478,6 +626,54 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   ACCEPT_RATE_LIMIT: 'constant',
   generateInvitationToken: 'pure (random bytes)',
   hashInvitationToken: 'pure',
+  // court: deep links (#34)
+  resolveDeepLink: 'pure',
+  buildDeepLink: 'pure',
+  interpolateTemplate: 'pure',
+  // court: roster-PDF preview (#385)
+  previewRosterImport: 'pure (parses supplied PDF bytes; reads and writes no tenant data)',
+  normaliseJudgeName: 'pure',
+  // court: bench-change alerts (#389)
+  portfolioRuleMatches: 'pure (matches a portfolio rule against a case type and year)',
+  benchChangeDay: 'pure (formats an ISO date as "05 Oct")',
+  benchChangeTitle: 'pure (the counts-only notification title)',
+  // court: roster lookup statements (#387), exported for the plan and budget test
+  rosterAtStatement:
+    'pure SQL builder; getRosterAt runs it inside withWorkspace on the given workspace',
+  benchForHallStatement:
+    'pure SQL builder; resolveBenchForHall runs it inside withWorkspace on the given workspace',
+  // court: read-model statements (#427), exported for the plan and budget test
+  listForumsStatement:
+    'pure SQL builder; listForums runs it inside withWorkspace on the given workspace',
+  getForumStatement:
+    'pure SQL builder; getForum runs it inside withWorkspace on the given workspace',
+  latestParseRunsStatement:
+    'pure SQL builder; getCourtsIndex runs it inside withWorkspace on the given workspace',
+  hallsSeenStatement:
+    'pure SQL builder; listHallsSeen runs it inside withWorkspace on the given workspace',
+  // court: rosters page statements (#434), exported for the budget test
+  rostersPageRostersStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace after the membership check',
+  rosterEntryCountsStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace after the membership check',
+  openBenchAlertsStatement:
+    'pure SQL builder; getRostersPage runs it inside withWorkspace with the resolved actor',
+  // matter graph (#362): errors and pure proceeding-identity helpers
+  CrossWorkspaceError: 'error class',
+  crossWorkspace: 'error factory',
+  graphNotFound: 'error factory',
+  normaliseCaseType: 'pure',
+  normaliseCaseNumber: 'pure',
+  expandYear: 'pure',
+  identityKey: 'pure',
+  isSameProceeding: 'pure',
+  // proceeding state machine (#363): the error and the pure transition table
+  InvalidTransitionError: 'error class',
+  assertTransition: 'pure',
+  PROCEEDING_TRANSITIONS: 'constant',
+  // matter graph (#41): the collapse threshold and the anchor cap
+  GRAPH_GROUP_THRESHOLD: 'constant',
+  TIMELINE_ANCHORS_MAX: 'constant',
   // workspaces: extension points (process-wide wiring, no database access of their own)
   permissiveEntitlements: 'default entitlements implementation (allows everything, no queries)',
   setEntitlements: 'setter',
@@ -687,6 +883,7 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   setPreference: notificationDenies,
   getNotificationSetting: notificationDenies,
   setLockScreenDetails: notificationDenies,
+  setBenchAlertPartyNames: notificationDenies,
   setCourtHoursQuiet: notificationDenies,
   getDigest: notificationDenies,
   setDigest: notificationDenies,
@@ -788,6 +985,9 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: "requestAccountDeletion for the caller's own account; never writes into a workspace chain",
   },
   requestMemoryErasureFor: runtimeDenies,
+  // court rosters (#434)
+  previewRosterImportFor: runtimeDenies,
+  confirmRosterImportFor: runtimeDenies,
   loadNotificationPreferences: runtimeDenies,
   subscribePush: {
     test: CORE_RUNTIME_TEST,

@@ -8,14 +8,22 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 
 import type { Database, Transaction } from '../client.ts';
-import { registeredTenantTables } from '../rls-policies.ts';
+import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
+import { adapterParseRun } from '../schema/adapters.ts';
 import { aiCall } from '../schema/audit.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
+import { bench, courtHall, forum } from '../schema/court.ts';
+import { anchor, document, documentPage } from '../schema/documents.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
+import { matter } from '../schema/matter-graph.ts';
+import { organisation, person, roleEdge } from '../schema/people.ts';
+import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
+import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
+import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
@@ -83,6 +91,146 @@ async function newUser(q: Queryable, label: string): Promise<string> {
 /** The invite-token hash `@causedeck/core` stores (sha256 hex of the plaintext token). */
 export function invitationTokenHash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+/** A custom (workspace-owned) forum, as an A0 forum a workspace adds itself (#344). */
+async function seedForum(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(forum)
+    .values({
+      workspaceId,
+      code: `xt.${tag}.${randomUUID().slice(0, 8)}`,
+      court: 'Seed District Court',
+      jurisdictionKind: 'district',
+    })
+    .returning({ id: forum.id });
+  return first(rows, 'forum').id;
+}
+
+/** A matter of the workspace (#345), for the matter graph and restriction seeds. */
+async function seedMatter(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(matter)
+    .values({ workspaceId, title: `XT Matter ${tag}`, practiceArea: 'civil' })
+    .returning({ id: matter.id });
+  return first(rows, 'matter').id;
+}
+
+/** A proceeding of a fresh matter before a custom forum (#346), still at the filing stage. */
+async function seedProceeding(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const forumId = await seedForum(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(proceeding)
+    .values({
+      workspaceId,
+      matterId,
+      forumId,
+      caseTypeCode: 'WP',
+      caseTypeRaw: 'W.P.',
+      filingNo: `F-${tag}`,
+      sourceType: 'manual',
+    })
+    .returning({ id: proceeding.id });
+  return first(rows, 'proceeding').id;
+}
+
+/** A fictional party (#348). */
+async function seedPerson(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(person)
+    .values({ workspaceId, name: `Party ${tag}`, kind: 'party', sourceType: 'manual' })
+    .returning({ id: person.id });
+  return first(rows, 'person').id;
+}
+
+/** A document of a fresh matter (#345). */
+async function seedDocument(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const id = randomUUID();
+  const rows = await tx
+    .insert(document)
+    .values({
+      id,
+      workspaceId,
+      matterId,
+      kind: 'pleading',
+      storageKey: `ws/${workspaceId}/document/${id}`,
+      sha256: createHash('sha256').update(id).digest('hex'),
+    })
+    .returning({ id: document.id });
+  return first(rows, 'document').id;
+}
+
+/** A listing of a fresh proceeding (#347), on the daily list. */
+async function seedListing(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const proceedingId = await seedProceeding(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(listing)
+    .values({
+      workspaceId,
+      proceedingId,
+      listDate: '2026-11-02',
+      listType: 'daily',
+      stageRaw: 'FOR ADMISSION',
+      canonical: true,
+      sourceType: 'manual',
+    })
+    .returning({ id: listing.id });
+  return first(rows, 'listing').id;
+}
+
+/** A draft roster of a fresh custom forum (#384), and a bench of that forum. */
+async function seedBenchRoster(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<{ forumId: string; rosterId: string; benchId: string }> {
+  const forumId = await seedForum(tx, workspaceId, `${tag}-roster`);
+  const rosters = await tx
+    .insert(benchRoster)
+    .values({ workspaceId, forumId, effectiveFrom: '2026-11-01', version: 1 })
+    .returning({ id: benchRoster.id });
+  const benches = await tx
+    .insert(bench)
+    .values({ workspaceId, forumId, judges: ['Judge B'], benchKind: 'single' })
+    .returning({ id: bench.id });
+  return {
+    forumId,
+    rosterId: first(rosters, 'bench_roster').id,
+    benchId: first(benches, 'bench').id,
+  };
+}
+
+/** A hearing of a fresh listing (#347). */
+async function seedHearing(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const listingId = await seedListing(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(hearing)
+    .values({ workspaceId, listingId, heldOn: '2026-11-02', sourceType: 'manual' })
+    .returning({ id: hearing.id });
+  return first(rows, 'hearing').id;
+}
+
+/** An open obligation of a fresh matter (#347). */
+async function seedObligation(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(obligation)
+    .values({
+      workspaceId,
+      matterId,
+      source: 'internal',
+      description: 'File the counter affidavit',
+      sourceType: 'manual',
+    })
+    .returning({ id: obligation.id });
+  return first(rows, 'obligation').id;
+}
+
+/** Tenant tables and global-or-workspace reference tables: every table the suite seeds. */
+function seededTables(): string[] {
+  return [...registeredTenantTables(), ...registeredGlobalOrWorkspaceTables()];
 }
 
 /**
@@ -256,13 +404,14 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
     return { key };
   },
-  matter_restriction: async (tx, { workspaceId, ownerId }) => {
+  matter_restriction: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, tag);
     const row = first(
       await tx
         .insert(matterRestriction)
         .values({
           workspaceId,
-          matterId: randomUUID(),
+          matterId,
           allowedUserIds: [ownerId],
           createdBy: ownerId,
         })
@@ -348,6 +497,202 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     );
     return { id: row.id };
   },
+  forum: async (tx, { workspaceId, tag }) => ({ forumId: await seedForum(tx, workspaceId, tag) }),
+  court_hall: async (tx, { workspaceId, tag }) => {
+    const forumId = await seedForum(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(courtHall)
+      .values({ workspaceId, forumId, hallNo: '12A', label: 'Court Hall 12A' })
+      .returning({ id: courtHall.id });
+    return { forumId, hallId: first(rows, 'court_hall').id };
+  },
+  bench: async (tx, { workspaceId, tag }) => {
+    const forumId = await seedForum(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(bench)
+      .values({ workspaceId, forumId, judges: ['Judge A'], benchKind: 'single' })
+      .returning({ id: bench.id });
+    return { forumId, benchId: first(rows, 'bench').id };
+  },
+  bench_roster: async (tx, { workspaceId, tag }) => {
+    const { forumId, rosterId } = await seedBenchRoster(tx, workspaceId, tag);
+    return { forumId, rosterId };
+  },
+  bench_roster_entry: async (tx, { workspaceId, tag }) => {
+    const { forumId, rosterId, benchId } = await seedBenchRoster(tx, workspaceId, tag);
+    const halls = await tx
+      .insert(courtHall)
+      .values({ workspaceId, forumId, hallNo: '12A' })
+      .returning({ id: courtHall.id });
+    const rows = await tx
+      .insert(benchRosterEntry)
+      .values({
+        workspaceId,
+        rosterId,
+        hallId: first(halls, 'court_hall').id,
+        hallNo: '12A',
+        benchId,
+        portfolioText: 'Writ petitions',
+        portfolioRule: { caseTypes: ['WP'] },
+      })
+      .returning({ id: benchRosterEntry.id });
+    return { rosterId, entryId: first(rows, 'bench_roster_entry').id };
+  },
+  bench_change_alert: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const { rosterId, benchId } = await seedBenchRoster(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(benchChangeAlert)
+      .values({ workspaceId, proceedingId, rosterId, newBenchId: benchId, reason: 'hall' })
+      .returning({ id: benchChangeAlert.id });
+    return { proceedingId, rosterId, alertId: first(rows, 'bench_change_alert').id };
+  },
+  matter: async (tx, { workspaceId, tag }) => ({
+    matterId: await seedMatter(tx, workspaceId, tag),
+  }),
+  document: async (tx, { workspaceId, tag }) => ({
+    documentId: await seedDocument(tx, workspaceId, tag),
+  }),
+  adapter_parse_run: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(adapterParseRun)
+      .values({
+        workspaceId,
+        documentId,
+        adapterId: 'echo',
+        adapterVersion: '1.0.0',
+        forumCode: 'test.echo.principal',
+        rowsParsed: 3,
+        rowsAnchored: 3,
+        unmappedHeadings: 0,
+        unknownCaseTypes: 0,
+        hallsSeen: ['1'],
+        status: 'ok',
+      })
+      .returning({ id: adapterParseRun.id });
+    return { documentId, parseRunId: first(rows, 'adapter_parse_run').id };
+  },
+  document_page: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(documentPage)
+      .values({ workspaceId, documentId, pageNo: 1, text: 'Seed page', textSource: 'layer' })
+      .returning({ id: documentPage.id });
+    return { documentId, pageId: first(rows, 'document_page').id };
+  },
+  anchor: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(anchor)
+      .values({ workspaceId, documentId, pageNo: 1, quote: 'Seed quote', kind: 'document' })
+      .returning({ id: anchor.id });
+    return { documentId, anchorId: first(rows, 'anchor').id };
+  },
+  proceeding: async (tx, { workspaceId, tag }) => ({
+    proceedingId: await seedProceeding(tx, workspaceId, tag),
+  }),
+  proceeding_link: async (tx, { workspaceId, tag }) => {
+    const parentId = await seedProceeding(tx, workspaceId, `${tag}-main`);
+    const childId = await seedProceeding(tx, workspaceId, `${tag}-misc`);
+    const rows = await tx
+      .insert(proceedingLink)
+      .values({
+        workspaceId,
+        fromProceedingId: parentId,
+        toProceedingId: childId,
+        kind: 'parent_of',
+        sourceType: 'manual',
+      })
+      .returning({ id: proceedingLink.id });
+    return { parentId, childId, linkId: first(rows, 'proceeding_link').id };
+  },
+  proceeding_state_change: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(proceedingStateChange)
+      .values({
+        workspaceId,
+        proceedingId,
+        fromState: 'filed',
+        toState: 'sr_fr',
+        sourceType: 'manual',
+        confirmationState: 'confirmed',
+      })
+      .returning({ id: proceedingStateChange.id });
+    return { proceedingId, stateChangeId: first(rows, 'proceeding_state_change').id };
+  },
+  listing: async (tx, { workspaceId, tag }) => ({
+    listingId: await seedListing(tx, workspaceId, tag),
+  }),
+  hearing: async (tx, { workspaceId, tag }) => ({
+    hearingId: await seedHearing(tx, workspaceId, tag),
+  }),
+  appearance: async (tx, { workspaceId, tag }) => {
+    const hearingId = await seedHearing(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(appearance)
+      .values({ workspaceId, hearingId, capacity: 'arguing' })
+      .returning({ id: appearance.id });
+    return { hearingId, appearanceId: first(rows, 'appearance').id };
+  },
+  order: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(order)
+      .values({
+        workspaceId,
+        proceedingId,
+        documentId,
+        orderDate: '2026-11-02',
+        orderType: 'procedural',
+        sourceType: 'manual',
+      })
+      .returning({ id: order.id });
+    return { proceedingId, documentId, orderId: first(rows, 'order').id };
+  },
+  obligation: async (tx, { workspaceId, tag }) => ({
+    obligationId: await seedObligation(tx, workspaceId, tag),
+  }),
+  task: async (tx, { workspaceId, tag }) => {
+    const obligationId = await seedObligation(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(task)
+      .values({
+        workspaceId,
+        title: 'Draft the counter affidavit',
+        fulfilsObligationId: obligationId,
+        sourceType: 'manual',
+      })
+      .returning({ id: task.id });
+    return { obligationId, taskId: first(rows, 'task').id };
+  },
+  person: async (tx, { workspaceId, tag }) => ({
+    personId: await seedPerson(tx, workspaceId, tag),
+  }),
+  organisation: async (tx, { workspaceId, tag }) => {
+    const rows = await tx
+      .insert(organisation)
+      .values({ workspaceId, name: `Firm ${tag}` })
+      .returning({ id: organisation.id });
+    return { organisationId: first(rows, 'organisation').id };
+  },
+  role_edge: async (tx, { workspaceId, tag }) => {
+    const advocateId = await seedPerson(tx, workspaceId, `${tag}-advocate`);
+    const partyId = await seedPerson(tx, workspaceId, `${tag}-party`);
+    const rows = await tx
+      .insert(roleEdge)
+      .values({
+        workspaceId,
+        kind: 'represents',
+        fromPersonId: advocateId,
+        toPersonId: partyId,
+        sourceType: 'manual',
+      })
+      .returning({ id: roleEdge.id });
+    return { advocateId, partyId, roleEdgeId: first(rows, 'role_edge').id };
+  },
   deletion_job: async (tx, { workspaceId, ownerId }) => {
     const row = first(
       await tx
@@ -362,7 +707,7 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
 
 /** Registered tenant tables with no seeder (the registry test expects none). */
 export function unseededTenantTables(): string[] {
-  return registeredTenantTables().filter((table) => !(table in TENANT_SEEDERS));
+  return seededTables().filter((table) => !(table in TENANT_SEEDERS));
 }
 
 export interface TenantFixture {
@@ -403,7 +748,7 @@ async function seedWorkspace(
       { organizationId: id, userId: ownerId, role: 'owner' },
       { organizationId: id, userId: uboth, role: 'advocate' },
     ]);
-    for (const table of registeredTenantTables()) {
+    for (const table of seededTables()) {
       const seeder = TENANT_SEEDERS[table];
       if (seeder === undefined) throw new Error(`two-tenants: no seeder for tenant table ${table}`);
       rows[table] = await seeder(tx, { workspaceId: id, ownerId, tag });

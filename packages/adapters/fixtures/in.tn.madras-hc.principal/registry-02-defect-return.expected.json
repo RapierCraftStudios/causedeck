@@ -1,0 +1,23 @@
+{
+  "events": [
+    {
+      "kind": "sr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "S.R. No. 12346/2026",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "srNo": "12346/2026"
+    },
+    {
+      "kind": "returned_for_defects",
+      "anchor": {
+        "page": 1,
+        "quote": "returned for rectification",
+        "rowIndex": 4
+      },
+      "confidence": 0.8
+    }
+  ]
+}

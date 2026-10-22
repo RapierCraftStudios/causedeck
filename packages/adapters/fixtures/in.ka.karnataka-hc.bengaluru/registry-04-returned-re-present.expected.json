@@ -1,0 +1,56 @@
+{
+  "events": [
+    {
+      "kind": "objection_raised",
+      "anchor": {
+        "page": 1,
+        "quote": "Returned",
+        "rowIndex": 3
+      },
+      "confidence": 0.8
+    },
+    {
+      "kind": "fr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "Filing Register No. 4521/2026",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "frNo": "4521/2026"
+    },
+    {
+      "kind": "objection_raised",
+      "anchor": {
+        "page": 1,
+        "quote": "returned",
+        "rowIndex": 4
+      },
+      "confidence": 0.8
+    },
+    {
+      "kind": "cure_deadline",
+      "anchor": {
+        "page": 1,
+        "quote": "re-present within two weeks",
+        "rowIndex": 5
+      },
+      "confidence": 0.9,
+      "deadline": {
+        "n": 2,
+        "unit": "weeks",
+        "basisDate": "2026-10-24",
+        "derived": "2026-11-07"
+      }
+    },
+    {
+      "kind": "objection_raised",
+      "anchor": {
+        "page": 1,
+        "quote": "defects",
+        "rowIndex": 5
+      },
+      "confidence": 0.8
+    }
+  ]
+}

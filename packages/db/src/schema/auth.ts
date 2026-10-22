@@ -24,6 +24,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -211,6 +212,8 @@ export const member = pgTable(
   (t) => [
     workspaceIndex('member', t.organizationId),
     uniqueIndex('member_workspace_user_uq').on(t.organizationId, t.userId),
+    // Target of composite `(workspace_id, *_member_id)` FKs from the matter graph (#344).
+    unique('member_workspace_id_id_uq').on(t.organizationId, t.id),
     index('member_user_id_idx').on(t.userId),
     check('member_role_chk', sql`role in ${inList(WORKSPACE_ROLES)}`),
     check('member_status_chk', sql`status in ${inList(MEMBER_STATUSES)}`),

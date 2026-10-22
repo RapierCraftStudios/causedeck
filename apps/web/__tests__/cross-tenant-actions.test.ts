@@ -4,6 +4,7 @@
 // FORBIDDEN for A's workspace and NOT_FOUND (or nothing) for A's member and invitation ids under B,
 // and A's rows never change. The workspace loader shows A's slug to `ub` as not-found, which covers
 // `resolveSlug` (caller-checked in the registry). Every exported action is listed in ACTIONS.
+import { randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -60,6 +61,12 @@ vi.mock('@causedeck/auth/mailer', () => ({
   createMailer: () => ({ send: () => Promise.resolve() }),
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+// The roster preview reads uploads from the app's object store (#434): an empty in-memory one.
+vi.mock('../lib/storage.ts', async () => {
+  const { createMemoryObjectStore } = await import('@causedeck/storage');
+  const store = createMemoryObjectStore();
+  return { objectStore: () => store };
+});
 vi.mock('next/headers', () => ({
   cookies: () => Promise.resolve({ set: vi.fn() }),
   headers: () => Promise.resolve(new Headers()),
@@ -92,6 +99,12 @@ const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
 const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
+const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
+const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
+const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
+const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
+const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
+const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -137,6 +150,29 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   requestWorkspaceDeletionAction: danger,
   cancelWorkspaceDeletionAction: danger,
   requestAccountDeletionAction: account,
+  createWorkspaceForumAction: courts,
+  previewRosterImportAction: rosters,
+  confirmRosterImportAction: rosters,
+  dismissBenchChangeAlertAction: rosters,
+  createMatterAction: matters,
+  searchMattersAction: matters,
+  updateMatterAction: matterWorkspace,
+  setSensitiveAction: matterWorkspace,
+  confirmNextDateAction: matterWorkspace,
+  chooseNextDateSourceAction: matterWorkspace,
+  createProceedingAction: proceedingsTab,
+  updateProceedingAction: proceedingsTab,
+  transitionProceedingAction: proceedingsTab,
+  linkProceedingsAction: proceedingsTab,
+  findDuplicateProceedingsAction: proceedingsTab,
+  previewMergeAction: proceedingsTab,
+  previewSplitAction: proceedingsTab,
+  mergeMattersAction: proceedingsTab,
+  undoMergeAction: proceedingsTab,
+  splitMatterAction: proceedingsTab,
+  undoSplitAction: proceedingsTab,
+  upsertPersonAction: matterPeople,
+  setRoleEdgeAction: matterPeople,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -149,6 +185,8 @@ let aNotificationId: string;
 let aAuditEvent: { id: string; createdAt: string };
 let aSupportSessionId: string;
 let aDeletionId: string;
+/** The matter of A's seeded proceeding: a second matter of A, besides `rows.matter`. */
+let aOtherMatterId: string;
 
 function signInAs(userId: string): void {
   state.session = {
@@ -207,6 +245,70 @@ function snapshotA() {
       })
       .from(schema.workspaceIntegration)
       .orderBy(schema.workspaceIntegration.kind),
+    // The catalogue and A's own forums (#402).
+    forums: await tx
+      .select({
+        id: schema.forum.id,
+        code: schema.forum.code,
+        workspaceId: schema.forum.workspaceId,
+      })
+      .from(schema.forum)
+      .orderBy(schema.forum.id),
+    // A's matters (#388).
+    matters: await tx
+      .select({
+        id: schema.matter.id,
+        title: schema.matter.title,
+        // The matter workspace (#390): synopsis, sensitive flag and last change.
+        sensitive: schema.matter.sensitive,
+        synopsis: schema.matter.synopsis,
+        updatedAt: schema.matter.updatedAt,
+      })
+      .from(schema.matter)
+      .orderBy(schema.matter.id),
+    // A's listings: the next date and its confirmation (#390).
+    listings: await tx
+      .select({
+        id: schema.listing.id,
+        canonical: schema.listing.canonical,
+        confirmationState: schema.listing.confirmationState,
+        listDate: schema.listing.listDate,
+      })
+      .from(schema.listing)
+      .orderBy(schema.listing.id),
+    // A's proceedings and their links (#392): identifiers, state, matter and last change.
+    proceedings: await tx
+      .select({
+        id: schema.proceeding.id,
+        matterId: schema.proceeding.matterId,
+        state: schema.proceeding.state,
+        number: schema.proceeding.number,
+        year: schema.proceeding.year,
+        updatedAt: schema.proceeding.updatedAt,
+      })
+      .from(schema.proceeding)
+      .orderBy(schema.proceeding.id),
+    proceedingLinks: await tx
+      .select({
+        id: schema.proceedingLink.id,
+        kind: schema.proceedingLink.kind,
+        fromProceedingId: schema.proceedingLink.fromProceedingId,
+        toProceedingId: schema.proceedingLink.toProceedingId,
+      })
+      .from(schema.proceedingLink)
+      .orderBy(schema.proceedingLink.id),
+    // A's people and their roles (#393).
+    persons: await tx
+      .select({
+        id: schema.person.id,
+        name: schema.person.name,
+        kind: schema.person.kind,
+        aliases: schema.person.aliases,
+        contact: schema.person.contact,
+      })
+      .from(schema.person)
+      .orderBy(schema.person.id),
+    roleEdges: await tx.select().from(schema.roleEdge).orderBy(schema.roleEdge.id),
   }));
 }
 
@@ -238,6 +340,16 @@ beforeAll(async () => {
   const dj = t.a.rows.deletion_job;
   if (!dj?.id) throw new Error('seed rows');
   aDeletionId = dj.id;
+  const proceedingId = t.a.rows.proceeding?.proceedingId;
+  if (!proceedingId) throw new Error('seed rows');
+  const rows = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+    tx
+      .select({ id: schema.proceeding.id, matterId: schema.proceeding.matterId })
+      .from(schema.proceeding),
+  );
+  const row = rows.find((r) => r.id === proceedingId);
+  if (!row) throw new Error('seed rows');
+  aOtherMatterId = row.matterId;
 });
 
 beforeEach(() => {
@@ -315,6 +427,145 @@ function inputs(workspaceId: string): Record<string, unknown> {
     listExportsAction: { workspaceId },
     requestWorkspaceDeletionAction: { workspaceId, confirmName: t.a.name },
     cancelWorkspaceDeletionAction: { workspaceId, jobId: aDeletionId },
+    // Courts (#402): ub, owner of B, may not add a forum to A.
+    createWorkspaceForumAction: {
+      workspaceId,
+      code: `xt.probe-${workspaceId.slice(0, 8)}`,
+      name: 'Cross-tenant probe forum',
+      jurisdictionKind: 'other',
+      city: 'Probe City',
+      primaryLanguage: 'en',
+    },
+    // Rosters (#434): ub, owner of B, may not parse A's upload, confirm a roster on A's forum or
+    // dismiss A's bench-change alert.
+    previewRosterImportAction: {
+      workspaceId,
+      blobId: t.a.rows.blob?.id,
+      forumCode: 'xt.probe-roster',
+    },
+    confirmRosterImportAction: {
+      workspaceId,
+      forumId: t.a.rows.bench_roster?.forumId,
+      effectiveFrom: '2027-03-01',
+      entries: [{ hallNo: '1', judges: ['Justice Probe'] }],
+      supersedeCurrent: true,
+    },
+    dismissBenchChangeAlertAction: {
+      workspaceId,
+      alertId: t.a.rows.bench_change_alert?.alertId,
+    },
+    // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
+    createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
+    searchMattersAction: { workspaceId, q: 'XT Matter' },
+    // Matter workspace (#390): ub may not change A's matter or resolve A's next dates.
+    updateMatterAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      patch: { synopsis: 'Cross-tenant probe synopsis' },
+    },
+    setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
+    confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    chooseNextDateSourceAction: {
+      workspaceId,
+      currentListingId: t.a.rows.listing?.listingId,
+      proposedListingId: t.a.rows.listing?.listingId,
+      choice: 'current',
+    },
+    upsertPersonAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      person: {
+        personId: t.a.rows.person?.personId,
+        name: 'Probe (fictional)',
+        kind: 'client',
+        contact: { phone: '0' },
+      },
+    },
+    setRoleEdgeAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      personId: t.a.rows.person?.personId,
+      kind: 'represents',
+    },
+    // Proceedings tab (#392): ub may not add to, change, link, move, merge or split A's matters and
+    // proceedings, nor undo a merge or split naming them.
+    ...proceedingsInputs(workspaceId),
+  };
+}
+
+/** A fixed `updated_at` for the probe undo payloads. */
+const AT = '2026-01-01 00:00:00+00';
+
+function proceedingsInputs(workspaceId: string): Record<string, unknown> {
+  const aMatter = t.a.rows.matter?.matterId;
+  const aProceeding = t.a.rows.proceeding?.proceedingId ?? '';
+  const link = t.a.rows.proceeding_link;
+  return {
+    createProceedingAction: {
+      workspaceId,
+      matterId: aMatter,
+      forumId: t.a.rows.forum?.forumId,
+      caseType: 'W.P.',
+      number: '4242',
+      year: 2026,
+    },
+    updateProceedingAction: { workspaceId, proceedingId: aProceeding, number: '4343' },
+    transitionProceedingAction: { workspaceId, proceedingId: aProceeding, to: 'sr_fr' },
+    linkProceedingsAction: {
+      workspaceId,
+      fromProceedingId: aProceeding,
+      toProceedingId: link?.childId ?? aProceeding,
+      kind: 'connected',
+    },
+    findDuplicateProceedingsAction: {
+      workspaceId,
+      matterId: aMatter,
+      identity: { caseType: 'XT', number: '1', year: 2026 },
+    },
+    previewMergeAction: { workspaceId, intoMatterId: aMatter, fromMatterId: aOtherMatterId },
+    previewSplitAction: { workspaceId, matterId: aOtherMatterId, proceedingIds: [aProceeding] },
+    mergeMattersAction: { workspaceId, intoMatterId: aMatter, fromMatterId: aOtherMatterId },
+    undoMergeAction: {
+      workspaceId,
+      payload: {
+        op: 'matter.merge',
+        version: 1,
+        before: {
+          intoMatterId: aMatter,
+          fromMatterId: aOtherMatterId,
+          fromMatter: { mergedIntoMatterId: null, updatedAt: AT },
+          rows: {
+            proceeding: [{ id: aProceeding, updatedAt: AT }],
+            document: [],
+            roleEdge: [],
+            obligation: [],
+            task: [],
+            mergedMatter: [],
+          },
+          links: [],
+        },
+        after: { intoMatterId: aMatter },
+      },
+    },
+    splitMatterAction: {
+      workspaceId,
+      slug: workspaceId === t.b.id ? t.b.slug : t.a.slug,
+      matterId: aOtherMatterId,
+      proceedingIds: [aProceeding],
+      newTitle: 'Cross-tenant probe split',
+    },
+    undoSplitAction: {
+      workspaceId,
+      payload: {
+        op: 'matter.split',
+        version: 1,
+        before: {
+          matterId: aOtherMatterId,
+          rows: { proceeding: [{ id: aProceeding, updatedAt: AT }], obligation: [], task: [] },
+        },
+        after: { newMatterId: aMatter },
+      },
+    },
   };
 }
 
@@ -512,6 +763,146 @@ describe('cross-tenant server actions', () => {
     expect(result.data.kind).toBe('ics_feed');
     expect(result.data.value).toMatch(/^http:\/\/localhost:3000\/api\/ics\/[\w-]{43}$/);
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('createWorkspaceForumAction under B’s own workspace adds the forum to B only (#402)', async () => {
+    const before = await snapshotA();
+    const code = `xt.probe-${randomUUID().slice(0, 8)}`;
+    const input = { ...(inputs(t.b.id).createWorkspaceForumAction as object), code };
+    expect(await action('createWorkspaceForumAction')(input)).toMatchObject({
+      ok: true,
+      data: { code, court: 'Cross-tenant probe forum', seat: 'Probe City' },
+    });
+    expect(await snapshotA()).toEqual(before);
+    expect(before.forums.map((row) => row.code)).not.toContain(code);
+    const inB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx
+        .select({
+          code: schema.forum.code,
+          workspaceId: schema.forum.workspaceId,
+          adapterLevel: schema.forum.adapterLevel,
+        })
+        .from(schema.forum),
+    );
+    expect(inB.filter((row) => row.code === code)).toEqual([
+      { code, workspaceId: t.b.id, adapterLevel: 'A0' },
+    ]);
+  });
+
+  it('matter actions under B’s own workspace create in B only and never find A’s matters (#388)', async () => {
+    const before = await snapshotA();
+    expect(before.matters.length).toBeGreaterThan(0);
+    const own = inputs(t.b.id);
+    const created = (await action('createMatterAction')(own.createMatterAction)) as {
+      ok: boolean;
+      data: { id: string; title: string };
+    };
+    expect(created).toMatchObject({ ok: true, data: { title: 'Cross-tenant probe matter' } });
+    const inB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx
+        .select({ id: schema.matter.id, workspaceId: schema.matter.workspaceId })
+        .from(schema.matter),
+    );
+    expect(inB.find((row) => row.id === created.data.id)).toEqual({
+      id: created.data.id,
+      workspaceId: t.b.id,
+    });
+    const found = (await action('searchMattersAction')(own.searchMattersAction)) as {
+      ok: boolean;
+      data: { id: string }[];
+    };
+    expect(found.ok).toBe(true);
+    const aIds = new Set(before.matters.map((row) => row.id));
+    expect(found.data.filter((hit) => aIds.has(hit.id))).toEqual([]);
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('matter workspace actions under B’s own workspace find none of A’s matter or listings (#390)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of [
+      'updateMatterAction',
+      'setSensitiveAction',
+      'confirmNextDateAction',
+      'chooseNextDateSourceAction',
+      // People tab (#393): A's matter and person
+      'upsertPersonAction',
+      'setRoleEdgeAction',
+    ]) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('proceedings tab actions under B’s own workspace find none of A’s matter or proceedings (#392)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of [
+      'createProceedingAction',
+      'updateProceedingAction',
+      'transitionProceedingAction',
+      'linkProceedingsAction',
+      'previewMergeAction',
+      'previewSplitAction',
+      'mergeMattersAction',
+      'undoMergeAction',
+      'splitMatterAction',
+      'undoSplitAction',
+    ]) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    // The duplicate finder is scoped: under B it sees none of A's proceedings.
+    const aIds = new Set(before.proceedings.map((row) => row.id));
+    const aProceeding = before.proceedings.find(
+      (row) => row.id === t.a.rows.proceeding?.proceedingId,
+    );
+    for (const identity of [
+      { caseType: 'XT', number: '1', year: 2026 },
+      ...(aProceeding?.number && aProceeding.year
+        ? [{ caseType: 'WP', number: aProceeding.number, year: aProceeding.year }]
+        : []),
+    ]) {
+      const found = (await action('findDuplicateProceedingsAction')({
+        ...(own.findDuplicateProceedingsAction as object),
+        identity,
+      })) as { ok: boolean; data: { id: string }[] };
+      expect(found.ok).toBe(true);
+      expect(found.data.filter((hit) => aIds.has(hit.id))).toEqual([]);
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('roster actions under B’s own workspace find none of A’s upload, forum or alert (#434)', async () => {
+    const before = await snapshotA();
+    const aAlerts = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.benchChangeAlert).orderBy(schema.benchChangeAlert.id),
+      );
+    const alertsBefore = await aAlerts();
+    const bForums = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx.select({ id: schema.forum.id, code: schema.forum.code }).from(schema.forum),
+    );
+    const bForum = bForums.find((f) => f.id === t.b.rows.bench_roster?.forumId);
+    const own = inputs(t.b.id);
+    for (const [name, input] of [
+      [
+        'previewRosterImportAction',
+        { ...(own.previewRosterImportAction as object), forumCode: bForum?.code },
+      ],
+      ['confirmRosterImportAction', own.confirmRosterImportAction],
+      ['dismissBenchChangeAlertAction', own.dismissBenchChangeAlertAction],
+    ] as const) {
+      expect(await action(name)(input), name).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    expect(await snapshotA()).toEqual(before);
+    expect(await aAlerts()).toEqual(alertsBefore);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

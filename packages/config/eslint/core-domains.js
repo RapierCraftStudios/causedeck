@@ -14,6 +14,11 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   audit: Object.freeze([]),
   workspaces: Object.freeze(['audit']),
   matters: Object.freeze(['workspaces', 'audit']),
+  // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
+  court: Object.freeze(['workspaces']),
+  // The matter graph (#362): roles and role settings through workspaces, the matter actor through
+  // matters. It emits events through its own port and never imports audit or notifications.
+  'matter-graph': Object.freeze(['workspaces', 'matters']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.
@@ -22,6 +27,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   support: Object.freeze(['workspaces', 'audit']),
   jobs: Object.freeze(['audit', 'billing', 'usage', 'lifecycle', 'support']),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
+  // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.
   runtime: Object.freeze([
     'audit',
     'billing',
@@ -30,6 +36,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'jobs',
     'lifecycle',
     'support',
+    'court',
   ]),
 });
 

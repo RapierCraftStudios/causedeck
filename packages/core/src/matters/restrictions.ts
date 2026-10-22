@@ -3,7 +3,9 @@
 // else it does not exist, so these services answer `NOT_FOUND`, never `FORBIDDEN`, for it. The
 // decision is `can()` from `@causedeck/auth/policy`; the role comes from the membership row, never
 // from the caller, and every query runs in the actor's workspace scope under RLS. Settings a
-// caller passes win; otherwise the workspace's stored role settings apply (#285).
+// caller passes win; otherwise the workspace's stored role settings apply (#285). A restriction
+// needs its matter: `restrictMatter()` answers `NOT_FOUND` for a matter the workspace does not have
+// (the composite FK to `matter`, #345, would otherwise reject it with a raw 23503).
 import { isRole } from '@causedeck/auth';
 import {
   assertCan,
@@ -29,7 +31,7 @@ import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/ind
 
 type Queryable = Database | Transaction;
 
-const { matterRestriction, member, user } = schema;
+const { matter, matterRestriction, member, user } = schema;
 
 export type MatterRestriction = typeof matterRestriction.$inferSelect;
 
@@ -171,6 +173,12 @@ export async function restrictMatter(
   const { workspaceId, userId } = actor;
   return withWorkspace(db, { workspaceId, userId }, async (tx) => {
     const resolved = await resolveActor(tx, actor);
+    const [existing] = await tx
+      .select({ id: matter.id })
+      .from(matter)
+      .where(and(eq(matter.workspaceId, workspaceId), eq(matter.id, input.matterId)))
+      .limit(1);
+    if (existing === undefined) throw matterNotFound();
     const { resource, settings } = await readableMatter(
       tx,
       resolved,

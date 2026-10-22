@@ -6,7 +6,7 @@ CI is GitHub Actions. It gates every pull request, and the ForgeDock pipeline me
 
 | Workflow | File | Triggers | Jobs |
 |---|---|---|---|
-| CI | `.github/workflows/ci.yml` | `pull_request`, `push` to `main`, `staging`, `milestone/**`, `merge_group` | `lint`, `typecheck`, `test`, `build`, `tenancy` |
+| CI | `.github/workflows/ci.yml` | `pull_request`, `push` to `main`, `staging` and ForgeDock lane branches `feat/issue-*-lean`, `merge_group` | `lint`, `typecheck`, `test`, `build`, `tenancy` |
 | Security | `.github/workflows/security.yml` | `pull_request`, `push` to `main`, `staging`, `milestone/**`, weekly cron (Mon 02:30 UTC), manual | `audit`, `gitleaks`, `codeql`, `dependency-review` (PRs only) |
 | Lint workflows | `.github/workflows/lint-workflows.yml` | `pull_request` and `push` touching `.github/**` | `actionlint` |
 | Dependabot | `.github/dependabot.yml` | weekly | npm (one grouped `catalog` PR), github-actions (workflows and `.github/actions/*`) |
@@ -22,7 +22,7 @@ All jobs run on `ubuntu-latest`. `lint`, `typecheck` and `build` have `timeout-m
 | `lint` | Prettier (changed files only on pull requests, else `pnpm format:check`), then the docs checks (`pnpm adr:lint`, `pnpm adr:test`, `pnpm docs:links`, `pnpm docs:permissions:check`; see [docs/adr](../adr/README.md)), then ESLint (`turbo run lint`), then `docker compose -f infra/docker/compose.dev.yml config -q` (dev stack definition, #5) |
 | `typecheck` | `tsc --noEmit` (`turbo run typecheck`) |
 | `test` | The required check: an aggregating job that `needs` every `test-shard` and fails unless all of them succeeded. It runs no tests itself |
-| `test-shard (<group>)` | One per package group: Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports-<group>` artifact (`coverage/` and `reports/junit.xml` per package). `rest` also runs `pnpm db:check` and `pnpm i18n:check` |
+| `test-shard (<group>)` | One per package group: Vitest with coverage and JUnit reports, then the zero-test guard, then uploads the `test-reports-<group>` artifact (`coverage/` and `reports/junit.xml` per package). `rest` also runs `pnpm db:check`, `pnpm i18n:check` and `pnpm --filter @causedeck/adapters test:golden` (committed synthetic fixtures only) |
 | `build` | `turbo run build` |
 | `tenancy` | The cross-tenant suite (#19, #209), always in full: a `pgvector/pgvector:0.8.7-pg17` service gets the dev init SQL (`infra/docker/postgres/init/*.sql`) and `pnpm db:migrate`, then `pnpm db:check-rls` and `pnpm test:tenancy` (Testcontainers, a 4-minute step timeout). Any failure is a release blocker; see [tenancy.md](tenancy.md#cross-tenant-suite) |
 
@@ -44,13 +44,14 @@ CI runs in tiers so lane PRs stay fast, ship PRs carry one heavy gate, and the s
 
 | Tier | When | Jobs |
 | --- | --- | --- |
-| **Fast** (every PR) | Every pull request, including lane PRs into `milestone/*` | `lint` (format, ADR, docs links, affected lint), `typecheck`, `test`, `build` — change-aware via `infra/scripts/ci-affected.sh`; `audit`, `gitleaks`; `storybook` build + interaction/axe tests when `packages/ui` changes (path filter); `actionlint` when `.github/` changes |
+| **Fast** (every PR) | Every pull request, including lane PRs into `milestone/*` | `lint` (format, ADR, docs links, affected lint), `typecheck`, `test`, `build` — change-aware via `infra/scripts/ci-affected.sh`; `audit`, `gitleaks`; `storybook` build + interaction/axe tests (light and dark) for `packages/ui` and, in the `storybook-web` job, for the `apps/web` Storybook (courts components, #426) when `packages/ui`, `packages/i18n`, `apps/web/components` or the web Storybook config change (path filter); `actionlint` when `.github/` changes |
 | **Ship** | Ship PRs into `staging` or `main`, pushes to `main`, or any PR labelled `full-ci` | Everything in Fast, plus `e2e` (2 shards, `E2E_SCOPE=ship`, 30 min timeout): the one heavy merge gate |
 | **Report-only** | Nightly schedule, manual dispatch, or a PR labelled `full-ci`; `continue-on-error`, never blocks a merge | `lighthouse` (perf/a11y budgets), `visual` (Storybook visual regression, 4 shards); nightly and dispatch also run `e2e` with `E2E_SCOPE=full` (90 min timeout) |
 
 - **e2e scope (D-046).** `E2E_SCOPE=ship` runs all non-visual specs on `chromium-1280-light`, `@smoke` on `chromium-360-light` and `webkit-360`, and skips `*.visual.spec.ts` (about 340 tests). `E2E_SCOPE=full` is the 6-project Chromium matrix (360/768/1280, light/dark) plus visual specs and the WebKit smoke; it is the default locally (`E2E_SCOPE=ship pnpm --filter @causedeck/e2e test` reproduces the gate) and what the nightly/dispatch run uses. The 6x matrix repeated functional coverage and could not finish inside the timeout.
 - Pushes to `milestone/**` no longer trigger workflows: every change there arrives through a PR that already ran CI (this removed the duplicate push + PR runs).
 - Pushes to `staging` no longer re-run e2e: the ship PR already ran it.
+- Pushes to ForgeDock lane branches (`feat/issue-*-lean`) run CI (full, not change-aware: a push has no base) so lanes verify on GitHub runners before review (`forge.yaml` `verify.mode: ci`) instead of type-checking and testing on the shared lane host. The lane PR then runs CI again; the repo is public, so standard runners cost nothing.
 - Visual baselines are regenerated on demand (`visual:update` label), not on every ship.
 - To run the full suite on a lane PR, add the `full-ci` label; other label events do not re-run anything.
 - `codeql` and `dependency-review` stay opt-in behind `ENABLE_GHAS` (D-043).

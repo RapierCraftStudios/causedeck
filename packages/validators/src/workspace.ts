@@ -4,7 +4,16 @@ import { z } from 'zod';
 
 import { WORKSPACE_ROLE_VALUES } from './api/me';
 
-/** Slugs that would shadow an app route (`/admin`, `/api`, `/sign-in`, ...). */
+/**
+ * The slug of the fictional demo workspace (#182). Only the demo seed (`pnpm db:seed:demo`) writes
+ * it; the shell shows the "Demo data — fictional" banner for it, so no real workspace may take it.
+ */
+export const DEMO_WORKSPACE_SLUG = 'demo';
+
+/**
+ * Slugs that would shadow an app route (`/admin`, `/api`, `/sign-in`, ...), plus the demo
+ * workspace's slug.
+ */
 export const RESERVED_SLUGS = [
   'admin',
   'api',
@@ -13,6 +22,7 @@ export const RESERVED_SLUGS = [
   'onboarding',
   'sign-in',
   'settings',
+  DEMO_WORKSPACE_SLUG,
 ] as const;
 
 export const SLUG_MIN_LENGTH = 3;
@@ -25,6 +35,11 @@ export const INVITE_ROLE_VALUES = ['advocate', 'junior', 'clerk', 'viewer'] as c
 
 export function isReservedSlug(value: string): boolean {
   return (RESERVED_SLUGS as readonly string[]).includes(value.toLowerCase());
+}
+
+/** True for the fictional demo workspace's slug (case-insensitive, like slug lookup). */
+export function isDemoWorkspaceSlug(value: string): boolean {
+  return value.toLowerCase() === DEMO_WORKSPACE_SLUG;
 }
 
 /** A URL-safe workspace slug: lowercase words joined by single hyphens. */

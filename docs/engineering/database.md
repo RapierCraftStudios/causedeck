@@ -13,6 +13,7 @@ pnpm db:generate   # schema diff -> new SQL migration in packages/db/migrations
 pnpm db:check      # conventions + migration lint + drizzle-kit snapshot check (also runs in CI)
 pnpm db:studio     # Drizzle Studio against DATABASE_URL_OWNER
 pnpm db:seed       # registered seeders, profile demo (`-- --profile test` for test)
+pnpm db:seed:demo  # the fictional `demo` workspace (#182), as the owner role; refuses in production
 pnpm db:check-rls  # live catalog: RLS on every tenant table, no cross-workspace FKs (tenancy.md)
 ```
 
@@ -82,15 +83,155 @@ for the owner, and a 20 s `idle_timeout`.
   New tenant tables use `tenantTable()` and get `tenantPolicy()` in the migration that creates them.
 - **Provenance on every fact:** `...provenance()` adds `source_type` (enum `manual | document |
 capture | adapter | ai | import | system`, not null), `source_ref text`, `anchor_id uuid`,
-  `confidence numeric(4,3)` and `confirmation_state` (enum `proposed | confirmed | edited |
-rejected`, default `proposed`). Pair it with `provenanceCheck('<table>')`, which enforces
-  `source_type = 'manual' or anchor_id is not null or source_ref is not null`.
+  `confidence numeric(4,3)`, `confirmation_state` (enum `proposed | confirmed | auto_applied |
+corrected`, default `proposed`; #344 renamed `edited`/`rejected`) and `captured_at timestamptz not
+  null default now()`. Pair it with `provenanceCheck('<table>')`, which enforces
+  `source_type = 'manual' or anchor_id is not null or source_ref is not null` and keeps
+  `confidence` within 0..1. The matter-graph pg enums live in `packages/db/src/schema/enums.ts`
+  ([ADR 0013](../adr/0013-matter-graph-schema.md)).
 - **Vectors:** `embedding()` columns use `EMBEDDING_DIMENSIONS`; never hard-code a width.
 
 `pnpm db:check` fails when a table with `workspace_id` has a nullable column, no index led by it,
 or a tenant-to-tenant FK without `workspace_id`. The one exemption from the nullable rule is
 `NULLABLE_WORKSPACE_TABLES` (`audit_event`, whose account-level events have no workspace); it is
 still a tenant table under FORCE RLS and still needs the index.
+
+## Matter and document tables
+
+`packages/db/src/schema/matter-graph.ts` and `documents.ts`, migration `0038_matter_documents`
+(#345, part 2 of #32, [ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant tables under FORCE RLS
+with composite `(workspace_id, <parent>_id)` FKs; `matter`, `document` and `anchor` carry the unique
+`(workspace_id, id)` those FKs target.
+
+| Table           | Columns and constraints                                                                                                                                                                                                                                                                                          |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `matter`        | `title`, `practice_area`, `status` (CHECK `active`, `disposed`, `archived`), `sensitive boolean not null default false` (CA-10), `owner_member_id` (-> `member`, same workspace), `opened_at`, `synopsis`, `merged_into_matter_id` (-> `matter`, not itself)                                                       |
+| `document`      | `kind` (`document_kind`), `language`, `supersedes_document_id` (version chain, not itself), `storage_key`, `sha256` (64 lower-case hex), `text_status` (`document_text_status`, default `pending`), `source_capture_id` (no FK until #43), `matter_id` (index `(workspace_id, matter_id)`)                           |
+| `document_page` | `document_id` (ON DELETE CASCADE), `page_no` (>= 1, unique per document), `text`, `text_source`, `ocr_confidence numeric(4,3)` (0..1), `lang`                                                                                                                                                                       |
+| `anchor`        | `document_id` (ON DELETE CASCADE), `page_no` (>= 1), `quote` (CHECK at most 2,000 characters), `char_start`, `char_end` (`char_end >= char_start`), `bbox jsonb`, `kind` (CHECK `document`, `transcript`, `list_row`, `calendar_event`, `email`, `image_region`), `transcript_span jsonb`                            |
+
+`owner_member_id`, `merged_into_matter_id` and `supersedes_document_id` are `ON DELETE SET NULL
+(<column>)` (Postgres 15+), hand-written in the migration: a plain composite `SET NULL` would also
+null `workspace_id`. So a matter outlives its owner's account deletion, and the batched erase can
+delete a version or merge chain in any order. `document.matter_id` is `NO ACTION`: a matter with
+documents is not deleted on its own. `matter_restriction.matter_id` references `matter` (ON DELETE
+CASCADE) since 0038, which deleted the restriction rows written before matters existed.
+
+## Proceeding tables
+
+`proceeding` and `proceeding_link` in `packages/db/src/schema/proceedings.ts`, migration
+`0039_proceedings` (#346, part 3 of #32, [ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant
+tables under FORCE RLS with `provenance()` and `provenanceCheck()`; tested in
+`packages/db/src/__tests__/proceeding-schema.test.ts`.
+
+| Table             | Columns and constraints                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proceeding`      | `matter_id` (-> `matter`, same workspace, NO ACTION; index `(workspace_id, matter_id)`), `forum_id` (-> `forum`, a catalogue or own forum: `same_or_global` scope guard), `kind` (`proceeding_kind`), `case_type_code` (CHECK upper-case, no dots or spaces), `case_type_raw`, `number` (text), `year`, `sr_no`, `fr_no`, `diary_no`, `filing_no`, `cnr` (CHECK `^[A-Z0-9]{16}$`), `filing_date`, `state` (`proceeding_state`, default `filed`; CHECK `number` and `year` set when `numbered` or `disposed`), `state_changed_at`, `parent_proceeding_id` (-> `proceeding`, not itself), `title_petitioner`, `title_respondent` |
+| `proceeding_link` | `from_proceeding_id`, `to_proceeding_id` (-> `proceeding`, ON DELETE CASCADE; CHECK not equal), `kind` (CHECK `parent_of`, `connected`, `appeal_from`, `lower_court`), unique `(workspace_id, from_proceeding_id, to_proceeding_id, kind)`                                                                                                                                                                                                                                                                                                         |
+
+Case identity: unique `(workspace_id, forum_id, case_type_code, number, year) WHERE number IS NOT
+NULL` and `(workspace_id, cnr) WHERE cnr IS NOT NULL`. The provenance `anchor_id` is a composite
+NO ACTION FK to `anchor` on both tables. `parent_proceeding_id` is `ON DELETE SET NULL
+(parent_proceeding_id)`. The `proceeding_link_parent_of_cycle_guard` trigger
+(`app_proceeding_link_cycle_guard()`) rejects, with 23514, an insert or update of a `parent_of` link
+that would close a cycle; it serializes per workspace with a transaction advisory lock.
+
+`proceeding_state_change` (same file, migration `0043_proceeding_state_change`, #363,
+[ADR 0016](../adr/0016-proceeding-state-machine-and-next-date-rules.md)) is the append-only
+history of proceeding state transitions, written only by the matter-graph state machine
+(`transitionProceeding`). It is a tenant table under FORCE RLS with `provenance()` and
+`provenanceCheck()`. Columns: `proceeding_id` (-> `proceeding`, ON DELETE CASCADE), `from_state`
+and `to_state` (`proceeding_state`; CHECK not equal), `reason` (CHECK not blank; required by CHECK
+when `disposed` -> `numbered`), `actor_member_id` (-> `member`, `ON DELETE SET NULL
+(actor_member_id)`), `cure_deadline` (date; CHECK only when `to_state = 'defects'`), `changed_at`.
+Index `(workspace_id, proceeding_id, changed_at)`.
+
+## People tables
+
+`person`, `organisation` and `role_edge` in `packages/db/src/schema/people.ts`, migration
+`0040_people` (#348, part 5 of #32, [ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant tables
+under FORCE RLS; `person` and `role_edge` carry `provenance()` and `provenanceCheck()`, with the
+provenance `anchor_id` a composite NO ACTION FK to `anchor`. Tested in
+`packages/db/src/__tests__/people-schema.test.ts`.
+
+| Table          | Columns and constraints                                                                                                                                                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `person`       | `name` (CHECK not blank), `aliases text[]` (default `{}`), `kind` (`person_kind`), `contact jsonb` (CHECK null unless `kind` is `client` or `professional`: PRD §9, no contact-book upload)                                                                                                             |
+| `organisation` | `name` (CHECK not blank), `aliases text[]` (default `{}`); no provenance                                                                                                                                                                                                                                 |
+| `role_edge`    | `kind` (`role_edge_kind`), `from_person_id` (-> `person`), exactly one of `to_person_id` (-> `person`, not `from_person_id`), `matter_id` (-> `matter`), `proceeding_id` (-> `proceeding`) (CHECK `num_nonnulls(...) = 1`); every FK composite and ON DELETE CASCADE; an index led by `workspace_id` on each |
+
+## Docket tables
+
+`listing`, `hearing`, `appearance`, `order`, `obligation` and `task` in
+`packages/db/src/schema/docket.ts`, migration `0041_docket` (#347, part 4 of #32,
+[ADR 0013](../adr/0013-matter-graph-schema.md)). Tenant tables under FORCE RLS; all but `appearance`
+carry `provenance()` and `provenanceCheck()`. Tested in
+`packages/db/src/__tests__/docket-schema.test.ts`.
+
+| Table        | Columns and constraints                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `listing`    | `proceeding_id` (-> `proceeding`, NO ACTION), `list_date`, `list_type` (`list_type`), `list_no`, `item_no`, `stage_raw`, `stage_norm`, `hall_id` / `bench_id` (-> `court_hall` / `bench`, `same_or_global` scope guards), `canonical` (unique `(workspace_id, proceeding_id) WHERE canonical`: one next date per proceeding), `source_document_id` (-> `document`, SET NULL); indexes `(workspace_id, proceeding_id, list_date)`, `(workspace_id, list_date, hall_id)` |
+| `hearing`    | `listing_id` (-> `listing`, NO ACTION), `held_on`, `outcome`, `adjournment_reason`, `next_date_proposed`, `next_date_confirmed`, `stage_after_raw`                                                                                                                                                                                                                                                                                                                     |
+| `appearance` | `hearing_id` (-> `hearing`, ON DELETE CASCADE), `member_id` (-> `member`, SET NULL), `capacity` (`appearance_capacity`), `appearing_for_person_id` (no FK yet; a follow-up adds the composite FK to `person`)                                                                                                                                                                                                                                                                                                  |
+| `order`      | `proceeding_id`, `document_id` (NO ACTION), `order_date`, `bench_id` (-> `bench`, scope guard), `order_type` (`order_type`), `neutral_citation`, `operative_directions` (jsonb array of `{text, anchorId}`), `next_date`                                                                                                                                                                                                                                               |
+| `obligation` | `matter_id` (NOT NULL), `proceeding_id`, `source` (`obligation_source`), `description`, `due_date`, `basis`, `owner_member_id` (SET NULL), `status` (`obligation_status`), `closed_reason_type`, `closed_by` (-> `member`, SET NULL), `closed_at`, `closed_note`, `source_order_id` (-> `order`, SET NULL); closure: `obligation_closure_chk` plus the `obligation_closed_by_guard` trigger                                                                            |
+| `task`       | `matter_id`, `proceeding_id`, `title`, `due_date`, `owner_member_id` (SET NULL), `status` (CHECK `open`, `done`, `cancelled`), `fulfils_obligation_id` (-> `obligation`, SET NULL)                                                                                                                                                                                                                                                                                     |
+
+All references are composite `(workspace_id, <parent>_id)` except the hall and bench FKs; every SET
+NULL is `ON DELETE SET NULL (<column>)`, so `workspace_id` stays. A closed obligation needs
+`closed_reason_type` and `closed_at` (CHECK), a non-blank `closed_note` for `not_applicable`
+(CHECK), and `closed_by` (trigger, 23514). The trigger exempts only the FK's own SET NULL when the
+closer's member row is deleted (account deletion), so the obligation stays closed with
+`closed_by` null. `order` is a reserved word: quote it in raw SQL.
+
+## Adapter tables
+
+`adapter_version`, `adapter_parse_run` and the view `adapter_health_summary` in
+`packages/db/src/schema/adapters.ts`, migration `0044_adapter_framework` (#372,
+[ADR 0015](../adr/0015-court-adapter-framework.md)). Tested in
+`packages/db/src/__tests__/adapters-schema.test.ts`.
+
+- `adapter_version` is global (`GLOBAL_TABLES`): one row per `(adapter_id, version)` with the config,
+  its sha256 `checksum`, `fixtures_digest`, `status` (`adapter_version_status`), `activated_at`,
+  `activated_by` (-> `user`, SET NULL) and `last_verified_at`. The partial unique index
+  `adapter_version_one_active_uq` allows one `active` row per adapter. The app role may select,
+  insert and update it; the clerk role has no access.
+- `adapter_parse_run` is a tenant table under FORCE RLS: `document_id` (composite FK, ON DELETE
+  CASCADE), adapter id and version, `forum_code`, row and heading counts, `halls_seen`,
+  `halls_unreadable` and `status` (`parse_health_status`). Metrics only, never row text.
+- `adapter_health_summary` groups those runs by adapter and version (run counts per status, row
+  sums). It is owned by the owner role and reads every workspace through `owner_definer_read` on
+  `adapter_parse_run`; the app and clerk roles may only select it. It has no workspace, document or
+  hall column. drizzle declares it with `.existing()`, so `db:generate` leaves it alone.
+
+## Bench roster tables
+
+`bench_roster`, `bench_roster_entry` and `bench_change_alert` in
+`packages/db/src/schema/roster.ts`, migration `0046_bench_rosters` (#384, part 1 of #39,
+[ADR 0017](../adr/0017-effective-dated-rosters.md)), plus `bench_roster.confirmation_state` in
+migration `0047_bench_roster_confirmation` (#387). Tenant tables under FORCE RLS; no `provenance()`
+columns, but a roster records its source document, importing member and confirmation state.
+Tested in `packages/db/src/__tests__/roster-schema.test.ts`; zod schemas in
+`@causedeck/validators/roster`.
+
+| Table                | Columns and constraints                                                                                                                                                                                                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bench_roster`       | `forum_id` (-> `forum`, `same_or_global` scope guard), `effective_from`, `effective_to` (null: open-ended; CHECK after `effective_from`), `status` (CHECK `draft`, `active`, `superseded`), `version` (CHECK > 0; unique `(workspace_id, forum_id, version)`), `source_document_id` (-> `document`, SET NULL), `imported_by` (-> `member`, SET NULL), `note`, `confirmation_state` (enum, default `proposed`; `bench_roster_confirmed_chk`: only a draft may stay `proposed`) |
+| `bench_roster_entry` | `roster_id` (-> `bench_roster`, ON DELETE CASCADE), `hall_id` (-> `court_hall`, scope guard, nullable), `hall_no` (CHECK not blank), `bench_id` (-> `bench`, scope guard), `portfolio_text`, `portfolio_rule` (jsonb object or null)                                                                              |
+| `bench_change_alert` | `proceeding_id` (-> `proceeding`, NO ACTION), `roster_id` (-> `bench_roster`, NO ACTION), `old_bench_id` (nullable) / `new_bench_id` (-> `bench`, scope guards), `reason` (CHECK `hall`, `portfolio`), `status` (CHECK `open`, `dismissed`); unique `(proceeding_id, roster_id)`                                     |
+
+`bench_roster_active_period_excl` (hand-written in the migration; Drizzle cannot declare EXCLUDE)
+is `EXCLUDE USING gist (workspace_id WITH =, forum_id WITH =, daterange(effective_from,
+effective_to, '[)') WITH &&) WHERE (status = 'active')`: no two active rosters of one workspace
+and forum share a day (23P01). Migration 0046 creates the `btree_gist` extension it needs. Entries
+name a bench, never judges (the judge-aggregation guard covers these tables). The roster
+services in `@causedeck/core/court` (#387) are the only writers: `confirmRosterImport` writes a
+roster `active` and `confirmed`, and supersedes the previous version, in one transaction.
+`detectBenchChanges` (#389) is the only writer of `bench_change_alert`: it inserts with
+`ON CONFLICT (proceeding_id, roster_id) DO NOTHING`, so a re-run adds nothing, and `dismissAlert`
+only sets `status`. Migration `0050_notification_bench_alert_party_names` adds
+`notification_setting.bench_alert_party_names` (boolean, default false): the member's opt-in to party
+names in bench-change notifications.
 
 ## Audit tables
 

@@ -4,8 +4,10 @@ name: CI
 
 on:
   pull_request:
+  # Lane branches (forge.yaml verify.mode: ci): ForgeDock pushes the lane and waits on this run before
+  # review, so type-checks and tests run on GitHub runners instead of the shared lane host.
   push:
-    branches: [main, staging]
+    branches: [main, staging, 'feat/issue-*-lean']
   merge_group:
 
 permissions:
@@ -130,6 +132,20 @@ jobs:
       - name: i18n catalogs
         if: matrix.shard == 'rest'
         run: pnpm i18n:check
+      # Court-adapter golden fixtures (#371): committed synthetic fixtures only. CI never sets
+      # ADAPTER_PRIVATE_FIXTURES_DIR; the lawyer-supplied fixture gate is #119.
+      - name: Adapter golden fixtures
+        if: matrix.shard == 'rest'
+        run: pnpm --filter @causedeck/adapters test:golden
+      # Golden metrics on seeded generated data (#401, #408): row precision, recall, order-date
+      # accuracy and zero invented dates, gated in packages/adapters/src/madras-hc/ and
+      # packages/adapters/src/karnataka-hc/generated-metrics.test.ts.
+      - name: Adapter golden metrics (generated)
+        if: matrix.shard == 'rest'
+        run: >-
+          pnpm --filter @causedeck/adapters gen:fixtures --adapter madras --seed 7 &&
+          pnpm --filter @causedeck/adapters gen:fixtures --adapter karnataka --seed 7 &&
+          pnpm --filter @causedeck/adapters test:metrics
       - name: Test
         env:
           CI_TURBO_CONCURRENCY: 3

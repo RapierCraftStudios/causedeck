@@ -2,7 +2,9 @@
 //   1. `workspace_id` is NOT NULL (outside NULLABLE_WORKSPACE_TABLES) and leads at least one index.
 //   2. No cross-workspace foreign keys: a FK from a tenant table to another tenant table must be
 //      composite and pair `workspace_id` with `workspace_id`.
-// Tables in GLOBAL_TABLES (not workspace-scoped) are exempt.
+// Tables in GLOBAL_TABLES (not workspace-scoped) are exempt. Tables in GLOBAL_OR_WORKSPACE_TABLES
+// may have a null `workspace_id`, and a single-column FK into them is allowed (a scope-guard
+// trigger checks it; `db:check-rls` requires the trigger).
 import { getTableName, is, SQL } from 'drizzle-orm';
 import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
@@ -25,7 +27,10 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `audit_event.actor_ref`; the app role has no privileges on it, only the audit functions do.
  * `flag_change_request` (#311) holds staff requests for a legal-gated flag enable awaiting a second
  * admin; its nullable `workspace_id` names the override it targets, but the table is staff-only and
- * has no RLS.
+ * has no RLS. `catalogue_meta` (#34) records the version of each owner-seeded system catalogue (the
+ * forum catalogue); the app role may only read it. `adapter_version` (#372) holds the versioned
+ * court-adapter configs, one `active` row per adapter; staff manage it through the app role like
+ * `access_mode_registry`.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -48,6 +53,8 @@ export const GLOBAL_TABLES: readonly string[] = [
   'legal_hold_invoice',
   'audit_actor_salt',
   'flag_change_request',
+  'catalogue_meta',
+  'adapter_version',
 ];
 
 /**
@@ -58,6 +65,15 @@ export const GLOBAL_TABLES: readonly string[] = [
  * account deletions (a check constraint enforces that). Adding a table here is a security decision.
  */
 export const NULLABLE_WORKSPACE_TABLES: readonly string[] = ['audit_event', 'deletion_job'];
+
+/**
+ * Global-or-workspace reference tables (#344, ADR 0013): a null `workspace_id` is a system catalogue
+ * row, readable by every workspace and writable only by the owner (migration) role; a non-null one
+ * is a workspace's custom row, visible and writable only inside that workspace. Their policies come
+ * from `globalOrWorkspacePolicy()`. A foreign key into them is single-column (a composite FK cannot
+ * express "global or same workspace") and guarded by the `app_reference_scope_guard` trigger.
+ */
+export const GLOBAL_OR_WORKSPACE_TABLES: readonly string[] = ['forum', 'court_hall', 'bench'];
 
 export const WORKSPACE_COLUMN = 'workspace_id';
 
@@ -70,6 +86,7 @@ export interface ConventionViolation {
 export interface CheckOptions {
   globalTables?: readonly string[];
   nullableWorkspaceTables?: readonly string[];
+  globalOrWorkspaceTables?: readonly string[];
 }
 
 function toSnakeCase(name: string): string {
@@ -98,10 +115,12 @@ export function checkSchemaConventions(
   {
     globalTables = GLOBAL_TABLES,
     nullableWorkspaceTables = NULLABLE_WORKSPACE_TABLES,
+    globalOrWorkspaceTables = GLOBAL_OR_WORKSPACE_TABLES,
   }: CheckOptions = {},
 ): ConventionViolation[] {
   const globals = new Set(globalTables);
-  const nullable = new Set(nullableWorkspaceTables);
+  const references = new Set(globalOrWorkspaceTables);
+  const nullable = new Set([...nullableWorkspaceTables, ...globalOrWorkspaceTables]);
   const violations: ConventionViolation[] = [];
 
   for (const table of tables) {
@@ -141,6 +160,7 @@ export function checkSchemaConventions(
       const ref = fk.reference();
       if (!isTenant(ref.foreignTable, globals)) continue;
       const target = getTableName(ref.foreignTable);
+      if (references.has(target)) continue;
       const pairsWorkspace = ref.columns.some(
         (col, i) =>
           columnName(col) === WORKSPACE_COLUMN &&

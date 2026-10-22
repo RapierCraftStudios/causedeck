@@ -1,6 +1,8 @@
 // Access-mode registry enforcement (#22, PRD CL-6, ADR 0011). A court-adapter capability runs only
 // when `access_mode_registry` has an enabled row for (adapter, resource) whose mode is exactly the
-// one requested. The mode names are a closed, static allow-list: none of them permits automated
+// one requested. Every mode other than `user_supplied` also needs the row's counsel note (#369,
+// ADR 0015): `device_user_triggered`, `official` and `licensed` stay unusable until counsel has
+// cleared them. The mode names are a closed, static allow-list: none of them permits automated
 // server-side retrieval from court sites without authorisation, scraping or captcha circumvention,
 // and adding one needs a superseding ADR (enforced by `__tests__/access-mode-guard.test.ts`).
 import { db as appDb, type Queryable } from '@causedeck/db';
@@ -24,7 +26,12 @@ export function isAccessMode(value: unknown): value is AccessMode {
 export const ACCESS_MODE_DENIED = 'ACCESS_MODE_DENIED' as const;
 
 export type AccessModeDenial =
-  'unknown-mode' | 'no-registry-row' | 'disabled' | 'mode-none' | 'mode-mismatch';
+  | 'unknown-mode'
+  | 'no-registry-row'
+  | 'disabled'
+  | 'mode-none'
+  | 'mode-mismatch'
+  | 'no-counsel-note';
 
 export class AccessModeError extends Error {
   readonly code = ACCESS_MODE_DENIED;
@@ -40,6 +47,8 @@ export class AccessModeError extends Error {
 export interface AccessModeRow {
   mode: AccessMode;
   enabled: boolean;
+  /** Counsel's note clearing the row; required for every mode other than `user_supplied`. */
+  counselNote?: string | null;
 }
 
 export type AccessModeDecision = { allowed: true } | { allowed: false; reason: AccessModeDenial };
@@ -55,6 +64,9 @@ export function decideAccessMode(
   if (!row.enabled) return { allowed: false, reason: 'disabled' };
   if (row.mode === 'none') return { allowed: false, reason: 'mode-none' };
   if (row.mode !== requestedMode) return { allowed: false, reason: 'mode-mismatch' };
+  if (requestedMode !== 'user_supplied' && (row.counselNote ?? '').trim() === '') {
+    return { allowed: false, reason: 'no-counsel-note' };
+  }
   return { allowed: true };
 }
 
@@ -66,14 +78,18 @@ export interface AssertAccessModeInput {
 
 /**
  * Throw `AccessModeError` (`ACCESS_MODE_DENIED`) unless the registry allows `requestedMode` for the
- * adapter's resource. `access_mode_registry` is a global table, readable in any scope.
+ * adapter's resource (with a counsel note for any mode but `user_supplied`). `access_mode_registry` is a global table, readable in any scope.
  */
 export async function assertAccessMode(
   { adapterId, resource, requestedMode }: AssertAccessModeInput,
   { db = appDb }: { db?: Queryable } = {},
 ): Promise<void> {
   const [row] = await db
-    .select({ mode: accessModeRegistry.mode, enabled: accessModeRegistry.enabled })
+    .select({
+      mode: accessModeRegistry.mode,
+      enabled: accessModeRegistry.enabled,
+      counselNote: accessModeRegistry.counselNote,
+    })
     .from(accessModeRegistry)
     .where(
       and(eq(accessModeRegistry.adapterId, adapterId), eq(accessModeRegistry.resource, resource)),
@@ -108,4 +124,35 @@ export async function listAccessModeRegistry(db: Queryable): Promise<AccessModeR
     })
     .from(accessModeRegistry)
     .orderBy(asc(accessModeRegistry.adapterId), asc(accessModeRegistry.resource));
+}
+
+/** One registry row of an adapter with counsel's note, as the courts area shows it (#397). */
+export interface AdapterAccessMode {
+  resource: string;
+  mode: AccessMode;
+  enabled: boolean;
+  /** Null (or blank) while legal review is pending. */
+  counselNote: string | null;
+  reviewedAt: Date | null;
+}
+
+/**
+ * The registry rows of one adapter (exact id), ordered by resource. Read-only;
+ * `access_mode_registry` is a global table, readable in any scope.
+ */
+export async function listAdapterAccessModes(
+  db: Queryable,
+  adapterId: string,
+): Promise<AdapterAccessMode[]> {
+  return db
+    .select({
+      resource: accessModeRegistry.resource,
+      mode: accessModeRegistry.mode,
+      enabled: accessModeRegistry.enabled,
+      counselNote: accessModeRegistry.counselNote,
+      reviewedAt: accessModeRegistry.reviewedAt,
+    })
+    .from(accessModeRegistry)
+    .where(eq(accessModeRegistry.adapterId, adapterId))
+    .orderBy(asc(accessModeRegistry.resource));
 }

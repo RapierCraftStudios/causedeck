@@ -14,13 +14,15 @@ import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { checkMigrationPolicies, checkRls } from '../../check-rls.ts';
 import type { Transaction } from '../../client.ts';
 import { id } from '../../columns.ts';
-import { GLOBAL_TABLES } from '../../conventions.ts';
+import { GLOBAL_OR_WORKSPACE_TABLES, GLOBAL_TABLES } from '../../conventions.ts';
 import { runMigrations } from '../../migrate.ts';
 import { createOwnerDb } from '../../owner.ts';
 import {
   BASELINE_TENANT_TABLES,
+  globalOrWorkspacePolicy,
   missingTenantPolicies,
   registeredTenantTables,
+  scopeGuardTrigger,
   tenantPolicy,
 } from '../../rls-policies.ts';
 import { tenantTable } from '../../schema-helpers/tenant-table.ts';
@@ -103,6 +105,37 @@ describe('row-level security catalog', () => {
         'deletion_job',
         'support_session',
         'workspace_integration',
+        // Global-or-workspace reference tables (#344): ws_isolation plus catalogue policies.
+        'forum',
+        'court_hall',
+        'bench',
+        // Matter and documents (#345).
+        'matter',
+        'document',
+        'document_page',
+        'anchor',
+        // Proceedings (#346).
+        'proceeding',
+        'proceeding_link',
+        // Proceeding state history (#363).
+        'proceeding_state_change',
+        // Docket (#347).
+        'listing',
+        'hearing',
+        'appearance',
+        'order',
+        'obligation',
+        'task',
+        // People (#348).
+        'person',
+        'organisation',
+        'role_edge',
+        // Adapter parse health (#372).
+        'adapter_parse_run',
+        // Bench rosters (#384).
+        'bench_roster',
+        'bench_roster_entry',
+        'bench_change_alert',
       ].sort(),
     );
     for (const row of rows)
@@ -182,6 +215,67 @@ describe('row-level security catalog', () => {
         /^rls_fixture_child\.\S+ \(parent_id\) -> rls_fixture_parent must be a composite FK/,
       ),
     ]);
+  });
+});
+
+describe('global-or-workspace reference tables (#344)', () => {
+  it('forum, court_hall and bench have exactly ws_isolation, global_read and owner_catalogue', async () => {
+    const rows = await owner.execute<{ tablename: string; policyname: string; cmd: string }>(sql`
+      select tablename::text, policyname::text, cmd::text from pg_policies
+      where tablename in ('forum', 'court_hall', 'bench') order by 1, 2`);
+    expect(rows).toEqual(
+      ['bench', 'court_hall', 'forum'].flatMap((t) => [
+        { tablename: t, policyname: 'global_read', cmd: 'SELECT' },
+        { tablename: t, policyname: 'owner_catalogue', cmd: 'ALL' },
+        { tablename: t, policyname: 'ws_isolation', cmd: 'ALL' },
+      ]),
+    );
+  });
+
+  it('flags missing catalogue policies and a FK into the table without a scope guard', async () => {
+    const options = {
+      globalOrWorkspaceTables: [...GLOBAL_OR_WORKSPACE_TABLES, 'gw_fixture_ref', 'gw_fixture_bare'],
+    };
+    const found = await rolledBack(async (tx) => {
+      for (const t of ['gw_fixture_ref', 'gw_fixture_bare']) {
+        await tx.execute(sql.raw(`create table ${t} (id uuid primary key, workspace_id uuid)`));
+      }
+      await tx.execute(sql`create table gw_fixture_child (
+        id uuid primary key, workspace_id uuid not null,
+        ref_id uuid references gw_fixture_ref (id),
+        guarded_id uuid references gw_fixture_ref (id))`);
+      for (const statement of [
+        ...globalOrWorkspacePolicy('gw_fixture_ref'),
+        ...tenantPolicy('gw_fixture_bare'),
+        ...tenantPolicy('gw_fixture_child'),
+        scopeGuardTrigger('gw_fixture_child', 'guarded_id', 'gw_fixture_ref', 'same_or_global'),
+      ])
+        await tx.execute(sql.raw(statement));
+      return checkRls(tx, options);
+    });
+    expect(rules(found)).toEqual([
+      'gw_fixture_bare:missing-global-or-workspace-policy',
+      'gw_fixture_child:missing-scope-guard',
+    ]);
+    expect(found.find((v) => v.rule === 'missing-scope-guard')?.message).toContain(
+      'gw_fixture_child_ref_id_scope_guard',
+    );
+  });
+
+  it('requires globalOrWorkspacePolicy() in the migration that creates a listed table', () => {
+    const create = 'CREATE TABLE "gw_ref" (\n\t"id" uuid PRIMARY KEY,\n\t"workspace_id" uuid\n);\n';
+    const tenantOnly =
+      create +
+      tenantPolicy('gw_ref')
+        .map((s) => `${s};\n`)
+        .join('');
+    const full =
+      create +
+      globalOrWorkspacePolicy('gw_ref')
+        .map((s) => `${s};\n`)
+        .join('');
+    expect(missingTenantPolicies('x.sql', tenantOnly, GLOBAL_TABLES, ['gw_ref'])).toHaveLength(1);
+    expect(missingTenantPolicies('x.sql', full, GLOBAL_TABLES, ['gw_ref'])).toEqual([]);
   });
 });
 

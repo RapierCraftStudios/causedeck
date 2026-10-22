@@ -301,6 +301,14 @@ export const serverKeys = {
     requiredWhen: 'never (defaults to 998314)',
     ownerIssue: 253,
   },
+  ADAPTER_PRIVATE_FIXTURES_DIR: {
+    domain: 'server',
+    type: 'path',
+    description:
+      'Directory of lawyer-supplied adapter fixtures (<adapter-id>/manifest.json layout) for the golden runner. Never committed; unset in CI.',
+    requiredWhen: 'never',
+    ownerIssue: 371,
+  },
 } satisfies KeyMetaRecord;
 
 export const killSwitchKeys = {
@@ -417,6 +425,12 @@ export const serverShape = {
     .string()
     .regex(/^99[0-9]{4}$/, 'must be a six-digit SAC starting 99')
     .describe(d(serverKeys.BILLING_SAC)),
+  // Lawyer-supplied golden fixtures (#371); the golden runner skips the private set when unset.
+  ADAPTER_PRIVATE_FIXTURES_DIR: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(d(serverKeys.ADAPTER_PRIVATE_FIXTURES_DIR)),
 };
 
 const baseSchema = z.object({ ...sharedShape, ...serverShape, ...clientShape });

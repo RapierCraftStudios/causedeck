@@ -214,6 +214,42 @@ export const lifecycleExporter = tablesExporter('lifecycle', [
   ws('deletion_job', { userColumn: 'requested_by' }),
 ]);
 
+// A workspace's custom court reference rows (#344): the forums, halls and benches it added itself,
+// and its own bench rosters, their entries and bench-change alerts (#384). The system catalogue
+// (null workspace_id) is public reference data, not the workspace's, so it is not exported.
+// Workspace-wide only: the rows name no user (`imported_by` is a member id).
+export const courtExporter = tablesExporter('court', [
+  ws('forum'),
+  ws('court_hall'),
+  ws('bench'),
+  ws('bench_roster'),
+  ws('bench_roster_entry'),
+  ws('bench_change_alert'),
+]);
+
+// Matters, their proceedings, links (#346) and state history (#363), their docket: listings, hearings, appearances,
+// orders, obligations and tasks (#347), the people and role edges around them (#348) and their
+// documents (#345). A document's storage key is an internal object key (like `blob.key`), so it is
+// left out; the files themselves come with the blobs.
+export const mattersExporter = tablesExporter('matters', [
+  ws('matter'),
+  ws('proceeding'),
+  ws('proceeding_link'),
+  ws('proceeding_state_change'),
+  ws('listing'),
+  ws('hearing'),
+  ws('appearance'),
+  ws('order'),
+  ws('obligation'),
+  ws('task'),
+  ws('person'),
+  ws('organisation'),
+  ws('role_edge'),
+  ws('document', { exclude: ['storage_key'] }),
+  ws('document_page'),
+  ws('anchor'),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -224,6 +260,8 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   billingExporter,
   blobsExporter,
   lifecycleExporter,
+  courtExporter,
+  mattersExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

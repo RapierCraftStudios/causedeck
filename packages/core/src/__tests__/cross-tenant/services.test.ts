@@ -85,10 +85,134 @@ async function aSupportSessions(f: Fixture) {
   );
 }
 
+async function aForums(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ id: schema.forum.id, code: schema.forum.code, court: schema.forum.court })
+      .from(schema.forum)
+      .where(eq(schema.forum.workspaceId, f.a.id))
+      .orderBy(schema.forum.id),
+  );
+}
+
+/** A later parse run of A's on the two-tenant echo forum, naming a hall only A has. */
+async function aProbeRun(f: Fixture) {
+  const documentId = f.a.rows.adapter_parse_run?.documentId ?? '';
+  const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .insert(schema.adapterParseRun)
+      .values({
+        workspaceId: f.a.id,
+        documentId,
+        adapterId: 'echo',
+        adapterVersion: '1.0.0',
+        forumCode: 'test.echo.principal',
+        rowsParsed: 9,
+        rowsAnchored: 7,
+        unmappedHeadings: 0,
+        unknownCaseTypes: 0,
+        hallsSeen: ['xt-a-hall'],
+        hallsUnreadable: ['xt-a-hall'],
+        status: 'degraded',
+        createdAt: new Date(Date.now() + 60_000),
+      })
+      .returning(),
+  );
+  if (row === undefined) throw new Error('probe parse run not inserted');
+  return { run: row, before: await aParseRuns(f), forums: await aForums(f) };
+}
+
+async function aParseRuns(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.adapterParseRun).orderBy(schema.adapterParseRun.id),
+  );
+}
+
 async function aRestrictions(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.matterRestriction).orderBy(schema.matterRestriction.id),
   );
+}
+
+/**
+ * A workspace's matter-graph rows (A's unless `workspaceId`), for before/after checks: one key per
+ * table the services write (matters.ts, proceedings.ts and its links, documents.ts, state-machine.ts,
+ * which writes state history, next-date.ts, which writes listings, merge-split.ts, which also
+ * moves orders, obligations, tasks and edges, and people.ts, which writes persons and edges;
+ * read-models.ts writes nothing).
+ */
+async function aGraph(f: Fixture, workspaceId = f.a.id) {
+  return inWorkspace(f.tx, workspaceId, async (s) => ({
+    matters: await s.select().from(schema.matter).orderBy(schema.matter.id),
+    proceedings: await s.select().from(schema.proceeding).orderBy(schema.proceeding.id),
+    links: await s.select().from(schema.proceedingLink).orderBy(schema.proceedingLink.id),
+    stateChanges: await s
+      .select()
+      .from(schema.proceedingStateChange)
+      .orderBy(schema.proceedingStateChange.id),
+    documents: await s.select().from(schema.document).orderBy(schema.document.id),
+    listings: await s.select().from(schema.listing).orderBy(schema.listing.id),
+    orders: await s.select().from(schema.order).orderBy(schema.order.id),
+    obligations: await s.select().from(schema.obligation).orderBy(schema.obligation.id),
+    tasks: await s.select().from(schema.task).orderBy(schema.task.id),
+    roleEdges: await s.select().from(schema.roleEdge).orderBy(schema.roleEdge.id),
+    persons: await s.select().from(schema.person).orderBy(schema.person.id),
+  }));
+}
+
+/** The matter of A's seeded proceeding (a second matter of A, besides the seeded one). */
+async function aProceedingMatter(f: Fixture): Promise<string> {
+  const proceedingId = f.a.rows.proceeding?.proceedingId ?? '';
+  const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ matterId: schema.proceeding.matterId })
+      .from(schema.proceeding)
+      .where(eq(schema.proceeding.id, proceedingId)),
+  );
+  return row?.matterId ?? '';
+}
+
+const AT = '2026-01-01 00:00:00+00';
+const none = { proceeding: [], obligation: [], task: [] };
+
+/** Runs a mixed call (one id of B, one of A) as ub in B: CrossWorkspaceError, B unchanged. */
+async function expectCrossWorkspace(f: Fixture, call: () => Promise<unknown>): Promise<void> {
+  const before = await aGraph(f, f.b.id);
+  await expect(call()).rejects.toBeInstanceOf(core.CrossWorkspaceError);
+  expect(await aGraph(f, f.b.id)).toEqual(before);
+}
+
+/** Matter-graph deps that record every emitted event. */
+function graphDeps(db: Database | Transaction) {
+  const events: core.GraphEvent[] = [];
+  return { deps: { db, events: { emit: (e: core.GraphEvent) => events.push(e) } }, events };
+}
+
+/** Runs `call` as ub claiming A (no scope and from B's scope) and as ub in B with A's ids. */
+async function expectGraphDenied(
+  f: Fixture,
+  call: (db: Database | Transaction, workspaceId: string) => Promise<unknown>,
+): Promise<void> {
+  const before = await aGraph(f);
+  await expectDenied(call(f.tx, f.a.id));
+  await expectDenied(f.asB((s) => call(s, f.a.id)));
+  await expectDenied(call(f.tx, f.b.id));
+  expect(await aGraph(f)).toEqual(before);
+}
+
+const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
+
+/** A's seeded listing (canonical) and its proceeding. */
+async function aListing(f: Fixture): Promise<{ listingId: string; proceedingId: string }> {
+  const listingId = f.a.rows.listing?.listingId ?? '';
+  const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ proceedingId: schema.listing.proceedingId })
+      .from(schema.listing)
+      .where(eq(schema.listing.id, listingId)),
+  );
+  if (!row) throw new Error("A's listing not found");
+  return { listingId, proceedingId: row.proceedingId };
 }
 
 async function aWorkspace(f: Fixture) {
@@ -945,6 +1069,665 @@ const CASES: Record<string, Case> = {
     expect(
       await core.assertMatterReadable(f.tx, { userId: f.ub, workspaceId: f.b.id }, aMatter),
     ).toBeNull();
+  },
+  // Court (#34): A's custom forum (two-tenant seed row) never reaches B.
+  createWorkspaceForum: async (f) => {
+    const before = await aForums(f);
+    const input = {
+      code: `xt.probe.${randomUUID().slice(0, 8)}`,
+      court: 'Probe',
+      jurisdictionKind: 'other' as const,
+    };
+    await expectDenied(
+      core.createWorkspaceForum(f.tx, { userId: f.ub, workspaceId: f.a.id }, input),
+    );
+    await expectDenied(
+      f.asB((s) => core.createWorkspaceForum(s, { userId: f.ub, workspaceId: f.a.id }, input)),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.createWorkspaceForum(s, { userId: f.ua, workspaceId: f.a.id, role: 'owner' }, input),
+      ),
+    );
+    expect(await aForums(f)).toEqual(before);
+  },
+  listForums: async (f) => {
+    await expect(f.asB((s) => core.listForums(s, f.a.id))).rejects.toBeInstanceOf(TenancyError);
+    const aForum = f.a.rows.forum?.forumId ?? '';
+    const own = await f.asB((s) => core.listForums(s, f.b.id, { includeDisabled: true }));
+    expect(own.map((row) => row.id)).not.toContain(aForum);
+    expect(own.filter((row) => row.workspaceId !== null && row.workspaceId !== f.b.id)).toEqual([]);
+  },
+  listForumsByCity: async (f) => {
+    await expect(f.asB((s) => core.listForumsByCity(s, f.a.id, 'Chennai'))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    const own = await core.listForumsByCity(f.tx, f.b.id, 'Chennai', { includeDisabled: true });
+    expect(own.filter((row) => row.workspaceId !== null && row.workspaceId !== f.b.id)).toEqual([]);
+  },
+  getForum: async (f) => {
+    const aForum = f.a.rows.forum?.forumId ?? '';
+    await expect(f.asB((s) => core.getForum(s, f.a.id, aForum))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    await expectDenied(core.getForum(f.tx, f.b.id, aForum));
+    expect((await aForums(f)).map((row) => row.id)).toContain(aForum);
+  },
+  // Adapter health (#372): the summary is tenant-free by design; B learns no id of A's.
+  getAdapterHealthSummary: async (f) => {
+    const aRun = f.a.rows.adapter_parse_run?.parseRunId ?? '';
+    const before = await aParseRuns(f);
+    expect(before.map((row) => row.id)).toContain(aRun);
+    const unscoped = await core.getAdapterHealthSummary(f.tx);
+    const fromB = await f.asB((s) => core.getAdapterHealthSummary(s));
+    const fromA = await inWorkspace(f.tx, f.a.id, (s) => core.getAdapterHealthSummary(s));
+    expect(fromB).toEqual(unscoped);
+    expect(fromA).toEqual(unscoped);
+    const keys = [
+      'adapterId',
+      'adapterVersion',
+      'runs',
+      'okRuns',
+      'degradedRuns',
+      'failedRuns',
+      'rowsParsed',
+      'rowsAnchored',
+    ];
+    for (const row of fromB) expect(Object.keys(row).sort()).toEqual([...keys].sort());
+    const text = JSON.stringify(fromB);
+    for (const id of [f.a.id, aRun, f.a.rows.adapter_parse_run?.documentId ?? '']) {
+      expect(text).not.toContain(id);
+    }
+    // Both workspaces' seeded echo runs are counted, without saying whose they are.
+    const echo = fromB.find((row) => row.adapterId === 'echo' && row.adapterVersion === '1.0.0');
+    expect(echo?.runs).toBeGreaterThanOrEqual(2);
+    expect(await aParseRuns(f)).toEqual(before);
+  },
+  // Courts read models (#397): B sees none of A's parse runs, halls or custom forum.
+  getCourtsIndex: async (f) => {
+    const probe = await aProbeRun(f);
+    await expect(f.asB((s) => core.getCourtsIndex(s, f.a.id))).rejects.toBeInstanceOf(TenancyError);
+    const own = JSON.stringify(await f.asB((s) => core.getCourtsIndex(s, f.b.id)));
+    for (const forum of probe.forums) {
+      expect(own).not.toContain(forum.id);
+      expect(own).not.toContain(`"${forum.code}"`);
+    }
+    expect(await aParseRuns(f)).toEqual(probe.before);
+  },
+  getForumDetail: async (f) => {
+    const probe = await aProbeRun(f);
+    const aCode = probe.forums[0]?.code ?? '';
+    await expect(f.asB((s) => core.getForumDetail(s, f.a.id, aCode))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    await expectDenied(core.getForumDetail(f.tx, f.b.id, aCode));
+    await expectDenied(f.asB((s) => core.getForumDetail(s, f.b.id, aCode)));
+    expect(await aForums(f)).toEqual(probe.forums);
+  },
+  getAdapterStatus: async (f) => {
+    const probe = await aProbeRun(f);
+    await expect(f.asB((s) => core.getAdapterStatus(s, f.a.id, 'echo'))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    const own = await f.asB((s) => core.getAdapterStatus(s, f.b.id, 'echo'));
+    expect(own.lastParse?.hallsUnreadable).not.toContain('xt-a-hall');
+    expect(own.lastParse?.at.getTime()).toBeLessThan(probe.run.createdAt.getTime());
+    expect(await aParseRuns(f)).toEqual(probe.before);
+  },
+  listHallsSeen: async (f) => {
+    const probe = await aProbeRun(f);
+    await expect(
+      f.asB((s) => core.listHallsSeen(s, f.a.id, 'test.echo.principal')),
+    ).rejects.toBeInstanceOf(TenancyError);
+    const own = await f.asB((s) => core.listHallsSeen(s, f.b.id, 'test.echo.principal'));
+    expect(own.map((hall) => hall.hallNo)).not.toContain('xt-a-hall');
+    expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
+    expect(await aParseRuns(f)).toEqual(probe.before);
+  },
+  // Matter graph (#362): A's matter, proceeding and document ids, as ub.
+  createMatter: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const before = await aGraph(f);
+    const ub = (workspaceId: string) => ({ userId: f.ub, workspaceId });
+    await expectDenied(core.createMatter(deps, ub(f.a.id), { title: 'Probe' }));
+    await expectDenied(
+      f.asB((s) => core.createMatter({ ...deps, db: s }, ub(f.a.id), { title: 'Probe' })),
+    );
+    // A's owner member cannot own a matter of B.
+    const aOwner = f.a.rows.member?.memberId ?? '';
+    await expect(
+      core.createMatter(deps, ub(f.b.id), { title: 'Probe', ownerMemberId: aOwner }),
+    ).rejects.toMatchObject({ code: 'VALIDATION' });
+    expect(await aGraph(f)).toEqual(before);
+    expect(events).toEqual([]);
+  },
+  updateMatter: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.updateMatter(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { matterId, patch: { title: 'Probe' } },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  archiveMatter: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.archiveMatter({ ...deps, db }, { userId: f.ub, workspaceId }, { matterId }),
+    );
+    expect(events).toEqual([]);
+  },
+  listMatters: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    await expectDenied(core.listMatters(deps, { userId: f.ub, workspaceId: f.a.id }));
+    await expectDenied(
+      f.asB((s) => core.listMatters({ ...deps, db: s }, { userId: f.ub, workspaceId: f.a.id })),
+    );
+    const own = await core.listMatters(deps, { userId: f.ub, workspaceId: f.b.id }, { limit: 100 });
+    const aMatters = (await aGraph(f)).matters.map((m) => m.id);
+    expect(own.items.length).toBeGreaterThan(0);
+    expect(own.items.map((m) => m.id).filter((id) => aMatters.includes(id))).toEqual([]);
+    expect(own.items.every((m) => m.workspaceId === f.b.id)).toBe(true);
+  },
+  createProceeding: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const aForum = f.a.rows.forum?.forumId ?? '';
+    const bMatter = f.b.rows.matter?.matterId ?? '';
+    const bForum = f.b.rows.forum?.forumId ?? '';
+    const input = (matterId: string, forumId: string) => ({
+      matterId,
+      forumId,
+      caseType: 'W.P.',
+      provenance: PROBE_PROVENANCE,
+    });
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.createProceeding(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        input(aMatter, workspaceId === f.a.id ? aForum : bForum),
+      ),
+    );
+    // B's own matter before A's workspace forum: the forum does not exist for B.
+    await expectDenied(
+      core.createProceeding(deps, { userId: f.ub, workspaceId: f.b.id }, input(bMatter, aForum)),
+    );
+    expect(events).toEqual([]);
+  },
+  updateIdentifiers: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const proceedingId = f.a.rows.proceeding?.proceedingId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.updateIdentifiers(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId, number: '1', year: 2026 },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  linkProceedings: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aFrom = f.a.rows.proceeding?.proceedingId ?? '';
+    const aTo = f.a.rows.proceeding_link?.childId ?? '';
+    const bProceeding = f.b.rows.proceeding?.proceedingId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.linkProceedings(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        {
+          fromProceedingId: aFrom,
+          toProceedingId: aTo,
+          kind: 'connected',
+          provenance: PROBE_PROVENANCE,
+        },
+      ),
+    );
+    // One end in B and one in A: the typed cross-workspace error, and nothing is linked in B.
+    const bLinks = () => inWorkspace(f.tx, f.b.id, (s) => s.select().from(schema.proceedingLink));
+    const bBefore = await bLinks();
+    for (const [from, to] of [
+      [bProceeding, aFrom],
+      [aFrom, bProceeding],
+    ] as const) {
+      await expect(
+        core.linkProceedings(
+          deps,
+          { userId: f.ub, workspaceId: f.b.id },
+          {
+            fromProceedingId: from,
+            toProceedingId: to,
+            kind: 'connected',
+            provenance: PROBE_PROVENANCE,
+          },
+        ),
+      ).rejects.toBeInstanceOf(core.CrossWorkspaceError);
+    }
+    expect(await bLinks()).toEqual(bBefore);
+    expect(events).toEqual([]);
+  },
+  transitionProceeding: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const bProceeding = f.b.rows.proceeding?.proceedingId ?? '';
+    // A legal transition for A's filed proceeding: only the workspace boundary can refuse it.
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.transitionProceeding(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId: aProceeding, to: 'sr_fr' },
+      ),
+    );
+    expect(events).toEqual([]);
+    // ub moves B's own proceeding; A's graph, history included, is unchanged.
+    const before = await aGraph(f);
+    const { stateChange } = await core.transitionProceeding(
+      deps,
+      { userId: f.ub, workspaceId: f.b.id },
+      { proceedingId: bProceeding, to: 'sr_fr' },
+    );
+    expect(stateChange.workspaceId).toBe(f.b.id);
+    expect(await aGraph(f)).toEqual(before);
+  },
+  findDuplicateProceedings: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    const proceedingId = f.a.rows.proceeding?.proceedingId ?? '';
+    const cnr = 'TNMH010012342026';
+    await inWorkspace(f.tx, f.a.id, (s) =>
+      s.update(schema.proceeding).set({ cnr }).where(eq(schema.proceeding.id, proceedingId)),
+    );
+    const input = { identity: { cnr } };
+    await expectDenied(
+      core.findDuplicateProceedings(deps, { userId: f.ub, workspaceId: f.a.id }, input),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.findDuplicateProceedings(
+          { ...deps, db: s },
+          { userId: f.ub, workspaceId: f.a.id },
+          input,
+        ),
+      ),
+    );
+    expect(
+      await core.findDuplicateProceedings(deps, { userId: f.ub, workspaceId: f.b.id }, input),
+    ).toEqual([]);
+    // A's owner does find it: the probe itself is sound.
+    const own = await core.findDuplicateProceedings(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      input,
+    );
+    expect(own.map((p) => p.id)).toEqual([proceedingId]);
+  },
+  createDocument: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.createDocument(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        {
+          matterId,
+          kind: 'other',
+          storageKey: `ws/${workspaceId}/document/${randomUUID()}`,
+          sha256: 'a'.repeat(64),
+        },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  // Next date (#364): A's seeded canonical listing and its proceeding.
+  proposeNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.proposeNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId, date: '2027-01-04', provenance: PROBE_PROVENANCE },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  confirmNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { listingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.confirmNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { listingId, allowPast: true },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  getCanonicalNextDate: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    const { listingId, proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getCanonicalNextDate({ ...deps, db }, { userId: f.ub, workspaceId }, { proceedingId }),
+    );
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.getCanonicalNextDate(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { proceedingId },
+    );
+    expect(own?.id).toBe(listingId);
+  },
+  getMatterTimeline: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getMatterTimeline({ ...deps, db }, { userId: f.ub, workspaceId }, { matterId }),
+    );
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.getMatterTimeline(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { matterId },
+    );
+    expect(Array.isArray(own)).toBe(true);
+    expect(events).toEqual([]);
+  },
+  getMatterGraph: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getMatterGraph({ ...deps, db }, { userId: f.ub, workspaceId }, { matterId }),
+    );
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.getMatterGraph(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { matterId },
+    );
+    expect(Array.isArray(own.nodes)).toBe(true);
+    expect(events).toEqual([]);
+  },
+  getTimelineAnchors: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    const anchorIds = [f.a.rows.anchor?.anchorId ?? randomUUID()];
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.getTimelineAnchors(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { matterId, anchorIds },
+      ),
+    );
+    // A's owner may call it: the probe itself is sound, and an anchor of another matter is absent.
+    const own = await core.getTimelineAnchors(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { matterId, anchorIds: [randomUUID()] },
+    );
+    expect(own).toEqual([]);
+    expect(events).toEqual([]);
+  },
+  // Matter read models and people (#386): A's matter from B, or ub claiming A, is NOT_FOUND; a
+  // search from B finds none of A's matters, even by A's title; A's persons are never reached.
+  searchMatters: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    const [aMatter] = (await aGraph(f)).matters;
+    const q = aMatter?.title ?? 'probe';
+    await expectDenied(core.searchMatters(deps, { userId: f.ub, workspaceId: f.a.id }, { q }));
+    await expectDenied(
+      f.asB((s) => core.searchMatters({ ...deps, db: s }, { userId: f.ub, workspaceId: f.a.id })),
+    );
+    const aIds = (await aGraph(f)).matters.map((m) => m.id);
+    for (const input of [{}, { q }, { q: 'W.P. 1/2026' }]) {
+      const own = await core.searchMatters(deps, { userId: f.ub, workspaceId: f.b.id }, input);
+      expect(own.items.filter((m) => aIds.includes(m.id))).toEqual([]);
+    }
+    const all = await core.searchMatters(deps, { userId: f.ub, workspaceId: f.b.id });
+    expect(all.items.length).toBeGreaterThan(0);
+  },
+  ...Object.fromEntries(
+    (
+      [
+        'getMatterOverview',
+        'listMatterProceedingsTree',
+        'listMatterPeople',
+        'listMatterDocuments',
+      ] as const
+    ).map((name): [string, Case] => [
+      name,
+      async (f) => {
+        const { deps, events } = graphDeps(f.tx);
+        for (const matterId of [f.a.rows.matter?.matterId ?? '', await aProceedingMatter(f)]) {
+          await expectGraphDenied(f, (db, workspaceId) =>
+            core[name]({ ...deps, db }, { userId: f.ub, workspaceId }, { matterId }),
+          );
+          // A's owner does read it: the probe itself is sound.
+          await core[name](deps, { userId: f.ua, workspaceId: f.a.id }, { matterId });
+        }
+        expect(events).toEqual([]);
+      },
+    ]),
+  ),
+  upsertPerson: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const personId = f.a.rows.person?.personId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.upsertPerson(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { personId, name: 'Probe (fictional)', kind: 'client', contact: { phone: '0' } },
+      ),
+    );
+    await expectDenied(
+      core.upsertPerson(deps, { userId: f.ub, workspaceId: f.a.id }, { name: 'P', kind: 'party' }),
+    );
+    expect(events).toEqual([]);
+  },
+  setRoleEdge: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aPerson = f.a.rows.person?.personId ?? '';
+    const bPerson = f.b.rows.person?.personId ?? '';
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const bMatter = f.b.rows.matter?.matterId ?? '';
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    for (const input of [
+      { fromPersonId: aPerson, matterId: aMatter },
+      { fromPersonId: aPerson, proceedingId: aProceeding },
+      { fromPersonId: aPerson, toPersonId: f.a.rows.role_edge?.partyId ?? '' },
+    ]) {
+      await expectGraphDenied(f, (db, workspaceId) =>
+        core.setRoleEdge(
+          { ...deps, db },
+          { userId: f.ub, workspaceId },
+          { kind: 'opposes', ...input },
+        ),
+      );
+    }
+    // One id of each workspace, as ub in B: NOT_FOUND, and B is unchanged.
+    const bBefore = await aGraph(f, f.b.id);
+    for (const input of [
+      { fromPersonId: aPerson, matterId: bMatter },
+      { fromPersonId: bPerson, matterId: aMatter },
+      { fromPersonId: bPerson, proceedingId: aProceeding },
+      { fromPersonId: bPerson, toPersonId: aPerson },
+    ]) {
+      await expectDenied(
+        core.setRoleEdge(
+          deps,
+          { userId: f.ub, workspaceId: f.b.id },
+          { kind: 'opposes', ...input },
+        ),
+      );
+    }
+    expect(await aGraph(f, f.b.id)).toEqual(bBefore);
+    expect(events).toEqual([]);
+  },
+  setSensitive: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const matterId = f.a.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.setSensitive(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { matterId, sensitive: true },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  // Merges and splits (#365): A's ids from B, or ub claiming A, are denied; one id of each workspace
+  // is the typed cross-workspace error.
+  mergeMatters: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const aOther = await aProceedingMatter(f);
+    const bMatter = f.b.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.mergeMatters(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { intoMatterId: aMatter, fromMatterId: aOther },
+      ),
+    );
+    const asB = { userId: f.ub, workspaceId: f.b.id };
+    await expectCrossWorkspace(f, () =>
+      core.mergeMatters(deps, asB, { intoMatterId: bMatter, fromMatterId: aMatter }),
+    );
+    await expectCrossWorkspace(f, () =>
+      core.mergeMatters(deps, asB, { intoMatterId: aMatter, fromMatterId: bMatter }),
+    );
+    expect(events).toEqual([]);
+  },
+  undoMerge: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const aOther = await aProceedingMatter(f);
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const payload = {
+      op: 'matter.merge' as const,
+      version: 1 as const,
+      before: {
+        intoMatterId: aMatter,
+        fromMatterId: aOther,
+        fromMatter: { mergedIntoMatterId: null, updatedAt: AT },
+        rows: {
+          proceeding: [{ id: aProceeding, updatedAt: AT }],
+          document: [],
+          roleEdge: [],
+          obligation: [],
+          task: [],
+          mergedMatter: [],
+        },
+        links: [],
+      },
+      after: { intoMatterId: aMatter },
+    };
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.undoMerge({ ...deps, db }, { userId: f.ub, workspaceId }, { payload }),
+    );
+    expect(events).toEqual([]);
+  },
+  splitMatter: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aOther = await aProceedingMatter(f);
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const bMatter = f.b.rows.matter?.matterId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.splitMatter(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { matterId: aOther, proceedingIds: [aProceeding], newTitle: 'Probe' },
+      ),
+    );
+    await expectCrossWorkspace(f, () =>
+      core.splitMatter(
+        deps,
+        { userId: f.ub, workspaceId: f.b.id },
+        { matterId: bMatter, proceedingIds: [aProceeding], newTitle: 'Probe' },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  undoSplit: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const aOther = await aProceedingMatter(f);
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const payload = {
+      op: 'matter.split' as const,
+      version: 1 as const,
+      before: {
+        matterId: aOther,
+        rows: { ...none, proceeding: [{ id: aProceeding, updatedAt: AT }] },
+      },
+      after: { newMatterId: aMatter },
+    };
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.undoSplit({ ...deps, db }, { userId: f.ub, workspaceId }, { payload }),
+    );
+    expect(events).toEqual([]);
+  },
+  mergeProceedings: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aParent = f.a.rows.proceeding_link?.parentId ?? '';
+    const aChild = f.a.rows.proceeding_link?.childId ?? '';
+    const bProceeding = f.b.rows.proceeding?.proceedingId ?? '';
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.mergeProceedings(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { intoProceedingId: aParent, fromProceedingId: aChild },
+      ),
+    );
+    for (const [intoProceedingId, fromProceedingId] of [
+      [bProceeding, aParent],
+      [aParent, bProceeding],
+    ] as const) {
+      await expectCrossWorkspace(f, () =>
+        core.mergeProceedings(
+          deps,
+          { userId: f.ub, workspaceId: f.b.id },
+          { intoProceedingId, fromProceedingId },
+        ),
+      );
+    }
+    expect(events).toEqual([]);
+  },
+  undoMergeProceedings: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const aParent = f.a.rows.proceeding_link?.parentId ?? '';
+    const aChild = f.a.rows.proceeding_link?.childId ?? '';
+    const aOther = await aProceedingMatter(f);
+    const rows = {
+      listing: [],
+      order: [],
+      obligation: [],
+      task: [],
+      roleEdge: [],
+      stateChange: [],
+      child: [],
+      link: [],
+    };
+    const payload = {
+      op: 'proceeding.merge' as const,
+      version: 1 as const,
+      before: {
+        intoProceedingId: aParent,
+        fromProceedingId: aChild,
+        into: { id: aParent },
+        from: { id: aChild, matter_id: aOther },
+        rows,
+        demotedListing: null,
+        deletedLinks: [],
+      },
+      after: { intoProceedingId: aParent, identifierSources: {} },
+    };
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.undoMergeProceedings({ ...deps, db }, { userId: f.ub, workspaceId }, { payload }),
+    );
+    expect(events).toEqual([]);
   },
   enqueueNotificationDelivery: async (f) => {
     // enqueueNotificationDelivery sends the payload as given; the handler is scoped to it.

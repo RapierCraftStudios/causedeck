@@ -29,7 +29,7 @@ describe('purge coverage', () => {
   });
 
   it('reports a new tenant table that nothing purges', () => {
-    expect(purgeCoverage([...tenantTables, 'matter']).uncovered).toEqual(['matter']);
+    expect(purgeCoverage([...tenantTables, 'xt_new_table']).uncovered).toEqual(['xt_new_table']);
     expect(purgeCoverage(tenantTables.filter((t) => t !== 'blob')).stale).toEqual(['blob']);
   });
 });

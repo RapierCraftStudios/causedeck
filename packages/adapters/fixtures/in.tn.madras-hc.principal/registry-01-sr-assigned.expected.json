@@ -1,0 +1,14 @@
+{
+  "events": [
+    {
+      "kind": "sr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "SR.No.12345 of 2026",
+        "rowIndex": 5
+      },
+      "confidence": 0.95,
+      "srNo": "12345/2026"
+    }
+  ]
+}

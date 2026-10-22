@@ -60,6 +60,7 @@ export function Topbar({ context, onSearch }: TopbarProps) {
           open={open}
           onOpenChange={setOpen}
           slug={context.workspace.slug}
+          workspaceId={context.workspace.id}
           role={context.role}
         />
       ) : null}

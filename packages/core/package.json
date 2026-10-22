@@ -8,8 +8,10 @@
     ".": "./src/index.ts",
     "./audit": "./src/audit/index.ts",
     "./billing": "./src/billing/index.ts",
+    "./court": "./src/court/index.ts",
     "./jobs": "./src/jobs/index.ts",
     "./lifecycle": "./src/lifecycle/index.ts",
+    "./matter-graph": "./src/matter-graph/index.ts",
     "./matters": "./src/matters/index.ts",
     "./runtime": "./src/runtime/index.ts",
     "./support": "./src/support/index.ts",
@@ -23,6 +25,7 @@
     "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {
+    "@causedeck/adapters": "workspace:*",
     "@causedeck/auth": "workspace:*",
     "@causedeck/billing": "workspace:*",
     "@causedeck/config": "workspace:*",
@@ -42,6 +45,8 @@
     "@types/archiver": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "fast-check": "catalog:",
+    "pdf-lib": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

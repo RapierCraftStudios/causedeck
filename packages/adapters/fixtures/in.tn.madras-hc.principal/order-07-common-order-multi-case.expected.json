@@ -1,0 +1,73 @@
+{
+  "header": {
+    "caseTypeRaw": "W.P.",
+    "caseType": "WP",
+    "caseNumber": "101",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": "2026:MHC:789",
+    "neutralCitationRaw": "2026 / MHC / 0789",
+    "anchor": {
+      "page": 1,
+      "quote": "W.P.Nos.101, 102 and 103 of 2026",
+      "rowIndex": 8
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "101",
+        "year": 2026,
+        "matchKey": "WP/101/2026"
+      },
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "102",
+        "year": 2026,
+        "matchKey": "WP/102/2026"
+      },
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "103",
+        "year": 2026,
+        "matchKey": "WP/103/2026",
+        "children": [
+          {
+            "caseTypeCode": "WMP",
+            "caseTypeRaw": "W.M.P.",
+            "number": "201",
+            "year": 2026,
+            "isMisc": true,
+            "matchKey": "WMP/201/2026",
+            "parentProceedingKey": "WP/103/2026"
+          },
+          {
+            "caseTypeCode": "WMP",
+            "caseTypeRaw": "W.M.P.",
+            "number": "202",
+            "year": 2026,
+            "isMisc": true,
+            "matchKey": "WMP/202/2026",
+            "parentProceedingKey": "WP/103/2026"
+          },
+          {
+            "caseTypeCode": "WMP",
+            "caseTypeRaw": "W.M.P.",
+            "number": "203",
+            "year": 2026,
+            "isMisc": true,
+            "matchKey": "WMP/203/2026",
+            "parentProceedingKey": "WP/103/2026"
+          }
+        ]
+      }
+    ],
+    "bench": "THE HONOURABLE THE CHIEF JUSTICE AND THE HONOURABLE MR.JUSTICE F. FICTIONAL",
+    "judges": ["THE HONOURABLE THE CHIEF JUSTICE", "THE HONOURABLE MR.JUSTICE F. FICTIONAL"],
+    "orderType": "final"
+  },
+  "cues": []
+}

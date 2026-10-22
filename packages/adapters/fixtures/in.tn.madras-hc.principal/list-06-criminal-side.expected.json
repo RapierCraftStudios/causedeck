@@ -1,0 +1,318 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "9",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. CRL OP No.4570 of 2026 and Crl.M.P.No.3 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "9",
+              "itemNo": "1",
+              "caseTypeRaw": "CRL OP",
+              "caseType": "CRLOP",
+              "caseNumber": "4570",
+              "caseYear": 2026,
+              "matchKey": "CRLOP/4570/2026",
+              "parties": "R. Karpanai Murugan vs State rep. by the Public Prosecutor",
+              "stageRaw": "FRESH CASES",
+              "stageNorm": "fresh",
+              "advocates": [
+                {
+                  "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+                  "aliases": ["K KALPITHAM", "KALPITHAM K"],
+                  "enrolmentNo": "MS/4567/2004"
+                },
+                {
+                  "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+                  "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "CRLMP",
+                  "caseTypeRaw": "Crl.M.P.",
+                  "number": "3",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "CRLMP/3/2026",
+                  "parentProceedingKey": "CRLOP/4570/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. Crl.R.C.No.88 of 2026",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "9",
+              "itemNo": "2",
+              "caseTypeRaw": "Crl.R.C.",
+              "caseType": "CRLRC",
+              "caseNumber": "88",
+              "caseYear": 2026,
+              "matchKey": "CRLRC/88/2026",
+              "parties": "M. Kalpitha Devi vs The Inspector of Police, Imaginary Nagar",
+              "stageRaw": "FRESH CASES",
+              "stageNorm": "fresh",
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                },
+                {
+                  "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+                  "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+                }
+              ],
+              "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+    },
+    {
+      "hallNo": "10",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. H.C.P.No.1200 of 2026 and H.C.M.P.No.1 of 2026",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "10",
+              "itemNo": "1",
+              "caseTypeRaw": "H.C.P.",
+              "caseType": "HCP",
+              "caseNumber": "1200",
+              "caseYear": 2026,
+              "matchKey": "HCP/1200/2026",
+              "parties": "S. Fictional Lakshmi vs The Inspector of Police, Imaginary Nagar",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                },
+                {
+                  "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+                  "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "HCMP",
+                  "caseTypeRaw": "H.C.M.P.",
+                  "number": "1",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "HCMP/1/2026",
+                  "parentProceedingKey": "HCP/1200/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL AND THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. CRL A No.300 of 2025",
+                "rowIndex": 3
+              },
+              "confidence": 1,
+              "hallNo": "10",
+              "itemNo": "2",
+              "caseTypeRaw": "CRL A",
+              "caseType": "CRLA",
+              "caseNumber": "300",
+              "caseYear": 2025,
+              "matchKey": "CRLA/300/2025",
+              "parties": "K. Imaginary Selvam vs State rep. by the Public Prosecutor",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL AND THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL AND THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. CRL OP No.4570 of 2026 and Crl.M.P.No.3 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "9",
+      "itemNo": "1",
+      "caseTypeRaw": "CRL OP",
+      "caseType": "CRLOP",
+      "caseNumber": "4570",
+      "caseYear": 2026,
+      "matchKey": "CRLOP/4570/2026",
+      "parties": "R. Karpanai Murugan vs State rep. by the Public Prosecutor",
+      "stageRaw": "FRESH CASES",
+      "stageNorm": "fresh",
+      "advocates": [
+        {
+          "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+          "aliases": ["K KALPITHAM", "KALPITHAM K"],
+          "enrolmentNo": "MS/4567/2004"
+        },
+        {
+          "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+          "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "CRLMP",
+          "caseTypeRaw": "Crl.M.P.",
+          "number": "3",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "CRLMP/3/2026",
+          "parentProceedingKey": "CRLOP/4570/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Crl.R.C.No.88 of 2026",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "9",
+      "itemNo": "2",
+      "caseTypeRaw": "Crl.R.C.",
+      "caseType": "CRLRC",
+      "caseNumber": "88",
+      "caseYear": 2026,
+      "matchKey": "CRLRC/88/2026",
+      "parties": "M. Kalpitha Devi vs The Inspector of Police, Imaginary Nagar",
+      "stageRaw": "FRESH CASES",
+      "stageNorm": "fresh",
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        },
+        {
+          "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+          "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+        }
+      ],
+      "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. H.C.P.No.1200 of 2026 and H.C.M.P.No.1 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "10",
+      "itemNo": "1",
+      "caseTypeRaw": "H.C.P.",
+      "caseType": "HCP",
+      "caseNumber": "1200",
+      "caseYear": 2026,
+      "matchKey": "HCP/1200/2026",
+      "parties": "S. Fictional Lakshmi vs The Inspector of Police, Imaginary Nagar",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        },
+        {
+          "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+          "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "HCMP",
+          "caseTypeRaw": "H.C.M.P.",
+          "number": "1",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "HCMP/1/2026",
+          "parentProceedingKey": "HCP/1200/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL AND THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. CRL A No.300 of 2025",
+        "rowIndex": 3
+      },
+      "confidence": 1,
+      "hallNo": "10",
+      "itemNo": "2",
+      "caseTypeRaw": "CRL A",
+      "caseType": "CRLA",
+      "caseNumber": "300",
+      "caseYear": 2025,
+      "matchKey": "CRLA/300/2025",
+      "parties": "K. Imaginary Selvam vs State rep. by the Public Prosecutor",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL AND THE HONOURABLE MRS. JUSTICE B. EXAMPLE"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["9", "10"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

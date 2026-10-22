@@ -1,0 +1,30 @@
+{
+  "header": {
+    "caseTypeRaw": "W.P.",
+    "caseType": "WP",
+    "caseNumber": "9001",
+    "caseYear": 2025,
+    "orderDate": "2026-10-21",
+    "neutralCitation": "2026:MHC:4321",
+    "neutralCitationRaw": "2026:MHC:04321",
+    "anchor": {
+      "page": 1,
+      "quote": "W.P.No.9001 of 2025",
+      "rowIndex": 6
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "9001",
+        "year": 2025,
+        "matchKey": "WP/9001/2025"
+      }
+    ],
+    "bench": "THE HONOURABLE MS.JUSTICE G. FICTIONAL",
+    "judges": ["THE HONOURABLE MS.JUSTICE G. FICTIONAL"],
+    "orderType": "judgment"
+  },
+  "cues": []
+}

@@ -139,6 +139,7 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
   drafts: (await import('../app/(app)/w/[slug]/drafts/page.tsx')).default,
   memory: (await import('../app/(app)/w/[slug]/memory/page.tsx')).default,
   people: (await import('../app/(app)/w/[slug]/people/page.tsx')).default,
+  // The courts index since #399, not a placeholder.
   courts: (await import('../app/(app)/w/[slug]/courts/page.tsx')).default,
   activity: (await import('../app/(app)/w/[slug]/activity/page.tsx')).default,
   billing: (await import('../app/(app)/w/[slug]/billing/page.tsx')).default,
@@ -156,6 +157,10 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'billing',
   'activity',
   'settings',
+  // Its own page test since #399 (courts-page.test.tsx).
+  'courts',
+  // Its own page test since #388 (matters-page.test.tsx).
+  'matters',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
@@ -412,6 +417,22 @@ describe('workspace layout', () => {
     deletion.active = null;
   });
 
+  it('shows the demo-data banner in the demo workspace only, to every member (#182)', async () => {
+    const banner = async (slug: string) => {
+      cleanup();
+      withIntl(
+        await WorkspaceLayout({ children: <p>content</p>, params: Promise.resolve({ slug }) }),
+      );
+      return document.querySelector('[data-slot="demo-banner"]');
+    };
+    const demo = await banner('demo');
+    expect(demo?.textContent).toContain('Demo data — fictional');
+    expect(demo?.getAttribute('role')).toBe('status');
+    // Above the page content, outside main#main.
+    expect(document.getElementById('main')?.contains(demo ?? null)).toBe(false);
+    expect(await banner('clerk-desk')).toBeNull();
+  });
+
   it('paints the sidebar state from the cookie', async () => {
     state.cookies = { sidebar: { value: 'collapsed' } };
     withIntl(
@@ -493,9 +514,7 @@ describe('placeholder pages', () => {
     const spec: Partial<Record<PlaceholderId, string>> = {
       today: 'No hearings today. Forward a cause list to see your court day.',
       inbox: 'Your inbox is clear.',
-      matters: 'No matters yet. Import or add your first matter.',
       obligations: 'No open obligations.',
-      courts: 'Choose your courts to get started.',
     };
     for (const [route, copy] of Object.entries(spec)) {
       withIntl(await pageFor(route as PlaceholderId)(props('demo')));

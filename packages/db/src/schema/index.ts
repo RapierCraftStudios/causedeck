@@ -1,8 +1,10 @@
 // Every table and enum drizzle-kit migrates. Later issues add their tables here.
-export { confirmationState, sourceType } from '../columns.ts';
+export * from './enums.ts';
+export { adapterHealthSummary, adapterParseRun, adapterVersion } from './adapters.ts';
 export { aiCall, auditActorKind, auditActorSalt, auditEvent, auditOutcome } from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
+export { catalogueMeta } from './catalogue-meta.ts';
 export {
   account,
   invitation,
@@ -25,6 +27,17 @@ export {
   workspaceFeatureFlag,
   type FlagChangeRequestStatus,
 } from './flags.ts';
+export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
+export {
+  ANCHOR_KINDS,
+  ANCHOR_QUOTE_MAX,
+  anchor,
+  document,
+  documentPage,
+  type AnchorBbox,
+  type AnchorKind,
+  type AnchorTranscriptSpan,
+} from './documents.ts';
 export { jobEffect } from './job-effect.ts';
 export {
   DELETION_KINDS,
@@ -40,7 +53,42 @@ export {
   type ExportStatus,
 } from './lifecycle.ts';
 export { legalHoldInvoice } from './legal-hold.ts';
+export { MATTER_STATUSES, matter, type MatterStatus } from './matter-graph.ts';
 export { matterRestriction } from './matter-restriction.ts';
+export { organisation, person, roleEdge, type PersonContact } from './people.ts';
+export {
+  CNR_PATTERN,
+  PROCEEDING_LINK_KINDS,
+  proceeding,
+  proceedingLink,
+  proceedingStateChange,
+  type ProceedingLinkKind,
+} from './proceedings.ts';
+export {
+  OBLIGATION_CLOSED_REASON_TYPES,
+  TASK_STATUSES,
+  appearance,
+  hearing,
+  listing,
+  obligation,
+  order,
+  task,
+  type ObligationClosedReasonType,
+  type OperativeDirection,
+  type TaskStatus,
+} from './docket.ts';
+export {
+  BENCH_CHANGE_ALERT_STATUSES,
+  BENCH_CHANGE_REASONS,
+  BENCH_ROSTER_STATUSES,
+  benchChangeAlert,
+  benchRoster,
+  benchRosterEntry,
+  type BenchChangeAlertStatus,
+  type BenchChangeReason,
+  type BenchRosterStatus,
+  type PortfolioRule,
+} from './roster.ts';
 export {
   emailSuppression,
   notification,

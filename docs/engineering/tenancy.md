@@ -103,7 +103,7 @@ organization, owner membership and settings inside `withWorkspace(newId)`.
 | `member`, `invitation`, `workspace_settings`, `workspace_slug_history`, `job_effect`, and the billing tables `subscription`, `entitlement`, `usage_counter`, `billing_event` (#200), and the usage tables `usage_reservation`, `usage_event`, `budget_override`, `usage_period_summary` (#218, `0010_usage`), `workspace_feature_flag` (#22, `0012_flags`, built with `tenantTable()`), and `workspace_key` (#216, `0016_storage`, [storage.md](storage.md)) | `ws_isolation` FOR ALL, USING and WITH CHECK `workspace_id = app.workspace_id`                                                                                                                                                                                                                |
 | `member`                                                                                                                                                                            | `member_self` FOR SELECT: `user_id = app.user_id`, only while no workspace is pinned (so a user scope never widens a workspace scope)                                                                                                                                                         |
 | `organization` (the tenant root, no `workspace_id`)                                                                                                                                 | `ws_isolation` FOR ALL on `id = app.workspace_id`; `member_read` FOR SELECT while no workspace is pinned, for workspaces the user is a member of                                                                                                                                              |
-| owner-only                                                                                                                                                                          | `owner_definer_read` (SELECT) on `organization`, `invitation`, `workspace_slug_history`, `job_effect`, `subscription` (`0007_billing_reconcile`), `workspace_key` (`0016_storage`), `member` and `workspace_feature_flag` (`0033_staff_console_reads`, #310), `budget_override` (`0035_staff_workspace_usage`, #224); `owner_definer_release` (DELETE expired redirects) on `workspace_slug_history`; `owner_definer_purge` (DELETE) on `job_effect`              |
+| owner-only                                                                                                                                                                          | `owner_definer_read` (SELECT) on `organization`, `invitation`, `workspace_slug_history`, `job_effect`, `subscription` (`0007_billing_reconcile`), `workspace_key` (`0016_storage`), `member` and `workspace_feature_flag` (`0033_staff_console_reads`, #310), `budget_override` (`0035_staff_workspace_usage`, #224), `adapter_parse_run` (`0044_adapter_framework`, #372: backs the tenant-free `adapter_health_summary` view); `owner_definer_release` (DELETE expired redirects) on `workspace_slug_history`; `owner_definer_purge` (DELETE) on `job_effect`              |
 | `audit_event`, `ai_call` (#226, `0008_audit`)                                                                                                                                       | `ws_isolation` as above. Append-only: the app role has SELECT and INSERT only, and a trigger rejects UPDATE, DELETE and TRUNCATE outside the retention functions ([database.md](database.md#audit-tables))                                                                                    |
 | `audit_event`                                                                                                                                                                       | `account_self` FOR SELECT: account-level events (`workspace_id` null) whose `actor_user_id = app.user_id`, only while no workspace is pinned; `owner_definer_read` (SELECT), `owner_definer_append` (INSERT) and `owner_definer_purge` (DELETE) back `app_audit_append` and `app_purge_audit` |
 | `ai_call`                                                                                                                                                                           | `owner_definer_read` (SELECT) and `owner_definer_purge` (DELETE) back `app_purge_ai_calls`                                                                                                                                                                                                    |
@@ -134,9 +134,40 @@ keyed by user, so it stays global. `audit_event` also has a nullable `workspace_
 NOT NULL convention. `push_subscription` (a browser's Web Push endpoint, per user and
 owner-checked by the push service) and `email_suppression` (per address) have no workspace (#194).
 The feature-flag tables `feature_flag` (staff-managed global flag rows) and `access_mode_registry`
-(court-adapter access modes) are global too (#22); per-workspace flag overrides are the tenant table
-`workspace_feature_flag` ([flags.md](flags.md)). The court layer will join this list. Adding a table here is a
+(court-adapter access modes) are global too (#22), as is `adapter_version` (versioned court-adapter
+configs, #372); per-workspace flag overrides are the tenant table
+`workspace_feature_flag` ([flags.md](flags.md)). The court layer is not global: see
+[Global-or-workspace reference tables](#global-or-workspace-reference-tables). Adding a table here is a
 security decision: say why in the PR.
+
+## Global-or-workspace reference tables
+
+`forum`, `court_hall` and `bench` (#344, [ADR 0013](../adr/0013-matter-graph-schema.md)) are listed in
+`GLOBAL_OR_WORKSPACE_TABLES` (`packages/db/src/conventions.ts`) and declared with
+`globalOrWorkspaceTable()`. Their `workspace_id` is nullable: a null row is the system catalogue,
+a workspace id is that workspace's custom (A0) forum, hall or bench. The migration that creates such
+a table runs `globalOrWorkspacePolicy(name)`:
+
+| Policy            | Command | Role              | Predicate                                                                  |
+| ----------------- | ------- | ----------------- | -------------------------------------------------------------------------- |
+| `ws_isolation`    | ALL     | PUBLIC            | `workspace_id` = the pinned workspace (USING and WITH CHECK)               |
+| `global_read`     | SELECT  | PUBLIC            | `workspace_id IS NULL`                                                     |
+| `owner_catalogue` | ALL     | `causedeck_owner` | `workspace_id IS NULL` (USING and WITH CHECK; FORCE RLS binds the owner)   |
+
+So every workspace reads the catalogue, custom rows stay inside their workspace, and the app and
+clerk roles cannot insert, update or delete a catalogue row (a null `workspace_id` never passes
+`ws_isolation`'s WITH CHECK). Only the owner role (migrations, seeds, the operator CLI) writes it.
+
+A foreign key into one of these tables is single-column (a composite FK cannot say "global or the
+same workspace": MATCH SIMPLE skips it when `workspace_id` is null). Foreign-key checks bypass RLS,
+so each such FK gets the `app_reference_scope_guard` trigger from `scopeGuardTrigger(table, column,
+refTable, mode)`, named `<table>_<column>_scope_guard`. It looks the referenced row up as the
+invoker (under RLS) and rejects a missing, invisible or out-of-scope row with 23503, the same error in
+every case. Mode `same` requires the row's own scope (`court_hall`, `bench`); `same_or_global` also
+accepts a catalogue row (tenant tables: `proceeding.forum_id`, #346, migration 0039; `listing.hall_id`, `listing.bench_id` and `order.bench_id`, #347, migration 0041). `db:check` allows the nullable
+column and the single-column FK; `db:check-rls` requires the two extra policies and the trigger
+(`missing-global-or-workspace-policy`, `missing-scope-guard`). The cross-tenant suite covers the
+custom rows like any tenant table; `court-schema.test.ts` covers the catalogue rows.
 
 ## Adding a tenant table
 
@@ -187,9 +218,11 @@ Clerks see listings, tasks and documents but not strategy notes or matter memory
 
 `matter_restriction` (#233) holds one row per restricted (workspace, matter) with the
 `allowed_user_ids` who may read it besides owners (`ownersSeeRestrictedMatters`, default on).
-`matter_id` has no foreign key until the matter table exists (Court Graph milestone), whose
-migration adds it. Services use `restrictMatter()` / `assertMatterReadable()` from
-`@causedeck/core` (unreadable matters are `NOT_FOUND`) and list queries filter with
+`matter_id` references `matter` through the composite `(workspace_id, matter_id)` FK, ON DELETE
+CASCADE (#345, migration 0038), so a restriction always names a matter of its own workspace.
+Services use `restrictMatter()` / `assertMatterReadable()` from `@causedeck/core` (unreadable
+matters are `NOT_FOUND`; `restrictMatter()` is also `NOT_FOUND` for a matter the workspace does not
+have) and list queries filter with
 `matterVisibilityPredicate(actor, matterIdColumn)` from `@causedeck/auth/policy`.
 
 ## Incidents

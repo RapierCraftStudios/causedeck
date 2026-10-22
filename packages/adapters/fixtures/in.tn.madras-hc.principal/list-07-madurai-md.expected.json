@@ -1,0 +1,178 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "3",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. W.P.(MD)No.678 of 2026 and W.M.P.(MD)No.900 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "3",
+              "itemNo": "1",
+              "caseTypeRaw": "W.P.(MD)",
+              "caseType": "WP",
+              "seatSuffix": "MD",
+              "caseNumber": "678",
+              "caseYear": 2026,
+              "matchKey": "WP(MD)/678/2026",
+              "parties": "R. Karpanai Murugan vs The District Collector, Example District",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+                  "aliases": ["K KALPITHAM", "KALPITHAM K"],
+                  "enrolmentNo": "MS/4567/2004"
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "WMP",
+                  "caseTypeRaw": "W.M.P.(MD)",
+                  "number": "900",
+                  "year": 2026,
+                  "seatSuffix": "MD",
+                  "isMisc": true,
+                  "matchKey": "WMP(MD)/900/2026",
+                  "parentProceedingKey": "WP(MD)/678/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY",
+              "forumMismatch": true
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. Crl.O.P.(MD)No.4321 of 2026",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "3",
+              "itemNo": "2",
+              "caseTypeRaw": "Crl.O.P.(MD)",
+              "caseType": "CRLOP",
+              "seatSuffix": "MD",
+              "caseNumber": "4321",
+              "caseYear": 2026,
+              "matchKey": "CRLOP(MD)/4321/2026",
+              "parties": "M. Kalpitha Devi vs State rep. by the Public Prosecutor",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                },
+                {
+                  "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+                  "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY",
+              "forumMismatch": true
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. W.P.(MD)No.678 of 2026 and W.M.P.(MD)No.900 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "3",
+      "itemNo": "1",
+      "caseTypeRaw": "W.P.(MD)",
+      "caseType": "WP",
+      "seatSuffix": "MD",
+      "caseNumber": "678",
+      "caseYear": 2026,
+      "matchKey": "WP(MD)/678/2026",
+      "parties": "R. Karpanai Murugan vs The District Collector, Example District",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+          "aliases": ["K KALPITHAM", "KALPITHAM K"],
+          "enrolmentNo": "MS/4567/2004"
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "WMP",
+          "caseTypeRaw": "W.M.P.(MD)",
+          "number": "900",
+          "year": 2026,
+          "seatSuffix": "MD",
+          "isMisc": true,
+          "matchKey": "WMP(MD)/900/2026",
+          "parentProceedingKey": "WP(MD)/678/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY",
+      "forumMismatch": true
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Crl.O.P.(MD)No.4321 of 2026",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "3",
+      "itemNo": "2",
+      "caseTypeRaw": "Crl.O.P.(MD)",
+      "caseType": "CRLOP",
+      "seatSuffix": "MD",
+      "caseNumber": "4321",
+      "caseYear": 2026,
+      "matchKey": "CRLOP(MD)/4321/2026",
+      "parties": "M. Kalpitha Devi vs State rep. by the Public Prosecutor",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        },
+        {
+          "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+          "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY",
+      "forumMismatch": true
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["3"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

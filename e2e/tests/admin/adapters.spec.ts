@@ -1,10 +1,20 @@
 // The Adapters page (#312): registry rows through the AdapterHealthSource with a status chip and the
-// last-checked time. The e2e template seeds no `access_mode_registry` rows, so the page starts on
-// its empty state; rows inserted into the worker database then show as unknown, never checked.
+// last-checked time. The adapter data migrations (Madras, Karnataka, NCLT) seed `access_mode_registry`
+// rows, so the test clears the registry first to see the empty state; rows inserted into the worker
+// database then show as unknown, never checked.
 import postgres from 'postgres';
 
 import { expect, test } from '../../fixtures/index.ts';
 import { databaseUrl } from '../../support/db-reset.ts';
+
+async function clearRegistry(database: string) {
+  const sql = postgres(databaseUrl(database, 'superuser'), { max: 1, onnotice: () => undefined });
+  try {
+    await sql`delete from access_mode_registry`;
+  } finally {
+    await sql.end();
+  }
+}
 
 async function registerAdapters(database: string) {
   const sql = postgres(databaseUrl(database, 'superuser'), { max: 1, onnotice: () => undefined });
@@ -20,6 +30,7 @@ async function registerAdapters(database: string) {
 
 test.describe('admin adapters page', () => {
   test('shows the empty state, then registry rows with status chips', async ({ adminAs, db }) => {
+    await clearRegistry(db.name);
     const page = await adminAs('staff');
     await page.goto('/adapters');
     await expect(page.getByRole('heading', { level: 1, name: 'Adapters' })).toBeVisible();

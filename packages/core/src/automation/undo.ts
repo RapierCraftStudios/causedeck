@@ -19,8 +19,18 @@ import { handlerFor } from './handlers/index.ts';
 import { raiseThreshold } from './thresholds.ts';
 import type { ActivityRow, HandlerScope } from './types.ts';
 
-const { activity, document, matter, matterRestriction, member, obligation, proposal, task } =
-  schema;
+const {
+  activity,
+  document,
+  listing,
+  matter,
+  matterRestriction,
+  member,
+  obligation,
+  proceeding,
+  proposal,
+  task,
+} = schema;
 
 export interface UndoPreviewItem {
   activityId: string;
@@ -295,9 +305,15 @@ export async function undoCapture(
   });
 }
 
+interface ListingFields {
+  itemNo: string | null;
+  hallId: string | null;
+  benchId: string | null;
+}
+
 export interface ReassignResult {
   activityId: string | null;
-  moved: { documents: number; tasks: number; obligations: number };
+  moved: { documents: number; tasks: number; obligations: number; listings: number };
 }
 
 function idsOf(rows: ActivityRow[], key: string): string[] {
@@ -426,6 +442,74 @@ export async function reassignCapture(
         })
         .where(and(eq(obligation.workspaceId, workspaceId), inArray(obligation.id, obligationIds)));
     }
+    // List data (item number, hall, bench read from a cause list) went onto a listing of the wrong
+    // matter: put the old listing back, and give the same values to the listing of the same date
+    // and type in a proceeding of the target matter, when there is exactly one.
+    let listingsMoved = 0;
+    for (const row of rows) {
+      const undoData = row.undoPayload as {
+        listingId?: string;
+        before?: ListingFields;
+        after?: ListingFields;
+      } | null;
+      if (row.kind !== 'listing_update' || undoData?.listingId === undefined) continue;
+      const { before, after } = undoData;
+      if (before === undefined || after === undefined) continue;
+      const [source] = await scope.tx
+        .select({
+          id: listing.id,
+          listDate: listing.listDate,
+          listType: listing.listType,
+          proceedingId: listing.proceedingId,
+        })
+        .from(listing)
+        .where(and(eq(listing.workspaceId, workspaceId), eq(listing.id, undoData.listingId)));
+      if (source === undefined) continue;
+      const [owner] = await scope.tx
+        .select({ matterId: proceeding.matterId })
+        .from(proceeding)
+        .where(
+          and(eq(proceeding.workspaceId, workspaceId), eq(proceeding.id, source.proceedingId)),
+        );
+      if (owner === undefined || owner.matterId === target.id) continue;
+      const targetProceedings = await scope.tx
+        .select({ id: proceeding.id })
+        .from(proceeding)
+        .where(and(eq(proceeding.workspaceId, workspaceId), eq(proceeding.matterId, target.id)));
+      const candidates =
+        targetProceedings.length === 0
+          ? []
+          : await scope.tx
+              .select({ id: listing.id })
+              .from(listing)
+              .where(
+                and(
+                  eq(listing.workspaceId, workspaceId),
+                  inArray(
+                    listing.proceedingId,
+                    targetProceedings.map((p) => p.id),
+                  ),
+                  eq(listing.listDate, source.listDate),
+                  eq(listing.listType, source.listType),
+                ),
+              );
+      const [match] = candidates;
+      if (candidates.length !== 1 || match === undefined) continue;
+      previous['listings'] = [
+        ...((previous['listings'] as unknown[] | undefined) ?? []),
+        { id: source.id, after },
+        { id: match.id },
+      ];
+      await scope.tx
+        .update(listing)
+        .set({ ...before, updatedAt: now })
+        .where(and(eq(listing.workspaceId, workspaceId), eq(listing.id, source.id)));
+      await scope.tx
+        .update(listing)
+        .set({ ...after, confirmationState: 'corrected', updatedAt: now })
+        .where(and(eq(listing.workspaceId, workspaceId), eq(listing.id, match.id)));
+      listingsMoved += 1;
+    }
     await scope.tx
       .update(proposal)
       .set({ matterId: target.id })
@@ -475,6 +559,7 @@ export async function reassignCapture(
         documents: documentIds.length,
         tasks: taskIds.length,
         obligations: obligationIds.length,
+        listings: listingsMoved,
       },
     );
     return {
@@ -483,6 +568,7 @@ export async function reassignCapture(
         documents: documentIds.length,
         tasks: taskIds.length,
         obligations: obligationIds.length,
+        listings: listingsMoved,
       },
     };
   });

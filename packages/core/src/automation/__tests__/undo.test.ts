@@ -1,11 +1,15 @@
 // Undo (#47): the 7-day window, the cascade through a capture's derived activities, the refusals,
 // the threshold raised by each undo, and the bulk undo and reassign of a capture.
-import { withTestDb } from '@causedeck/db/testing';
+import { schema } from '@causedeck/db';
+import { inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import {
   acceptProposal,
   confirmActivity,
+  createProceeding,
+  proposeNextDate,
   previewUndo,
   reassignCapture,
   submitProposals,
@@ -212,7 +216,7 @@ describe('undoCapture and reassignCapture', () => {
         captureId: CAPTURE,
         matterId: w.matterId,
       });
-      expect(result.moved).toEqual({ documents: 1, tasks: 2, obligations: 0 });
+      expect(result.moved).toEqual({ documents: 1, tasks: 2, obligations: 0, listings: 0 });
       expect((await rows.document(w, w.documentId))?.matterId).toBe(w.matterId);
       const tasks = await rows.tasks(w);
       expect(tasks.map((t) => t.matterId)).toEqual([w.matterId, w.matterId]);
@@ -235,6 +239,54 @@ describe('undoCapture and reassignCapture', () => {
       await expect(
         reassignCapture(w.deps, w.owner, { captureId: CAPTURE, matterId: other.matterId }),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    });
+  });
+
+  it('moves list data to the matching listing of the new matter and puts the old one back', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx);
+      const mine = { sourceType: 'manual' } as const;
+      const other = await createProceeding(w.deps, w.owner, {
+        matterId: w.otherMatterId,
+        forumId: w.forumId,
+        caseType: 'W.P.',
+        number: '202',
+        year: 2026,
+        provenance: mine,
+      });
+      const propose = async (proceedingId: string) => {
+        const result = await proposeNextDate(w.deps, w.owner, {
+          proceedingId,
+          date: '2026-11-11',
+          provenance: mine,
+        });
+        if (result.kind !== 'proposal') throw new Error('expected a proposal');
+        return result.listingId;
+      };
+      const wrong = await propose(w.proceedingId);
+      const right = await propose(other.id);
+      const { items } = await submitProposals(w.deps, w.owner, [
+        draft({
+          kind: 'listing_update',
+          captureId: CAPTURE,
+          match: { score: 1, exact: 'case_number' },
+          payload: { listingId: wrong, itemNo: '14' },
+        }),
+      ]);
+      expect(items[0]?.status).toBe('applied');
+      const itemNo = async (id: string) =>
+        inWorkspace(w.tx, w.workspaceId, async (s) => {
+          const [row] = await s.select().from(schema.listing).where(eq(schema.listing.id, id));
+          return row?.itemNo ?? null;
+        });
+      expect(await itemNo(wrong)).toBe('14');
+      const result = await reassignCapture(w.deps, w.owner, {
+        captureId: CAPTURE,
+        matterId: w.otherMatterId,
+      });
+      expect(result.moved.listings).toBe(1);
+      expect(await itemNo(wrong)).toBeNull();
+      expect(await itemNo(right)).toBe('14');
     });
   });
 });

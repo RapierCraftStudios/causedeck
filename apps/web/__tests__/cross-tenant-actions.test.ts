@@ -177,6 +177,14 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
+  acceptProposalAction: inbox,
+  editAcceptProposalAction: inbox,
+  dismissProposalAction: inbox,
+  undoActivityAction: inbox,
+  reassignCaptureAction: inbox,
+  keepAsAttachmentAction: inbox,
+  typeKeyLineAction: inbox,
+  markSentAction: inbox,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -462,6 +470,24 @@ function inputs(workspaceId: string): Record<string, unknown> {
     enableChannelAction: { workspaceId, channel: 'email', disclosureVersion: '2026-10-v1' },
     discardCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id },
     pinCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id, pinned: true },
+    // Capture inbox decisions (#48): ub may not accept, edit, dismiss or undo A's proposals and
+    // activities, move or keep or annotate A's captures, nor mark A's draft as sent.
+    acceptProposalAction: { workspaceId, proposalId: t.a.rows.proposal?.proposalId },
+    editAcceptProposalAction: {
+      workspaceId,
+      proposalId: t.a.rows.proposal?.proposalId,
+      payload: { title: 'Cross-tenant probe' },
+    },
+    dismissProposalAction: { workspaceId, proposalId: t.a.rows.proposal?.proposalId },
+    undoActivityAction: { workspaceId, activityId: t.a.rows.activity?.activityId },
+    reassignCaptureAction: {
+      workspaceId,
+      captureId: t.a.rows.capture?.id,
+      matterId: t.a.rows.matter?.matterId,
+    },
+    keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
+    typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
+    markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },

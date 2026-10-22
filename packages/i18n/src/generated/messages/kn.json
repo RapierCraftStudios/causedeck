@@ -1921,7 +1921,7 @@
     "alerts": {
       "title": "ಪೀಠ ಬದಲಾವಣೆಗಳು",
       "warning": "ಪೀಠ ಬದಲಾಗಿದೆ",
-      "changed": "{date} ರಿಂದ ಪೀಠ ಬದಲಾಗಿದೆ: {matter} ಈಗ {bench} ಮುಂದೆ ಬರುತ್ತದೆ.",
+      "changed": "{date} ರಿಂದ ಪೀಠ ಬದಲಾಗಿದೆ: <link>{matter}</link> ಈಗ {bench} ಮುಂದೆ ಬರುತ್ತದೆ.",
       "previousBench": "ಹಿಂದೆ {bench}.",
       "noPreviousBench": "ಇದಕ್ಕೆ ಹಿಂದೆ ಯಾವುದೇ ಪೀಠ ದಾಖಲಾಗಿರಲಿಲ್ಲ.",
       "unknownBench": "ನ್ಯಾಯಾಧೀಶರು ದಾಖಲಾಗದ ಒಂದು ಪೀಠ",

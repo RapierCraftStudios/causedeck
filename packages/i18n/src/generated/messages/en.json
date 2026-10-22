@@ -1921,7 +1921,7 @@
     "alerts": {
       "title": "Bench changes",
       "warning": "Bench changed",
-      "changed": "Bench changed from {date}: {matter} now sits with {bench}.",
+      "changed": "Bench changed from {date}: <link>{matter}</link> now sits with {bench}.",
       "previousBench": "Previously {bench}.",
       "noPreviousBench": "No bench was recorded for it before.",
       "unknownBench": "a bench with no judges recorded",

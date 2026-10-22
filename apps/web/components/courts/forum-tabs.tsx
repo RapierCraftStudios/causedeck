@@ -2,8 +2,9 @@
 
 // The forum detail tabs (#400, #42): Halls, Adapter and Links, each its own route, as a nav of links
 // with the current one marked `aria-current="page"` (the settings sub-nav pattern). The bar scrolls
-// sideways at 360 px. A Rosters link renders only when the rosters route exists: #39 owns it and is
-// not planned, so the layout passes no `rostersHref` and the slot stays hidden.
+// sideways at 360 px. A Rosters link renders when the caller passes `rostersHref`: the forum layout
+// links it to the workspace rosters page with the forum selected (`/courts/rosters?forum=<code>`,
+// #435). Without it the slot stays hidden.
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -34,7 +35,7 @@ function isCurrent(pathname: string | null, href: string): boolean {
 export interface ForumTabsProps {
   slug: string;
   code: string;
-  /** The rosters route of the forum, when it exists (#39); no Rosters tab otherwise. */
+  /** The rosters page with this forum selected (#435); no Rosters tab when omitted. */
   rostersHref?: string | undefined;
 }
 

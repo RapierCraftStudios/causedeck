@@ -47,7 +47,11 @@ export function buildSarvamRequest(
   if (task.id === 'transcribe') {
     const form = new FormData();
     const bytes = Buffer.from(String(input.audioBase64), 'base64');
-    form.append('file', new Blob([bytes], { type: String(input.mimeType) }), 'audio');
+    form.append(
+      'file',
+      new Blob([new Uint8Array(bytes)], { type: String(input.mimeType) }),
+      'audio',
+    );
     form.append('model', 'saarika:v2.5');
     form.append('language_code', input.language === undefined ? 'unknown' : locale(input.language));
     return { path: '/speech-to-text', body: form, json: false };
@@ -55,7 +59,11 @@ export function buildSarvamRequest(
   if (task.id === 'ocr') {
     const form = new FormData();
     const bytes = Buffer.from(String(input.contentBase64), 'base64');
-    form.append('file', new Blob([bytes], { type: String(input.mimeType) }), 'document');
+    form.append(
+      'file',
+      new Blob([new Uint8Array(bytes)], { type: String(input.mimeType) }),
+      'document',
+    );
     form.append('language', input.language === undefined ? 'en-IN' : locale(input.language));
     return { path: '/doc-digitization', body: form, json: false };
   }

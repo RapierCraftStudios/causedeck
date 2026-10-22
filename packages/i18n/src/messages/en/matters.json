@@ -378,7 +378,7 @@
           "failed": "Couldn't split. Try again."
         },
         "splitHint": "Select the proceedings to move, then continue.",
-        "splitContinue": "{count, plural, =0 {Continue} one {Continue with # proceeding} other {Continue with # proceedings}}",
+        "splitContinue": "{count, plural, =0 {Choose proceedings first} one {Continue with # proceeding} other {Continue with # proceedings}}",
         "splitCancel": "Cancel split",
         "expand": "Show the proceedings filed in {label}",
         "collapse": "Hide the proceedings filed in {label}",

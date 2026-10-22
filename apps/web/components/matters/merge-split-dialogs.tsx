@@ -92,8 +92,13 @@ function caseLabel(p: MovePreviewView['proceedings'][number]): string {
 }
 
 function useUndoLabels() {
-  const t = useTranslations('matters.workspace.proceedingsTab.undo');
-  return { action: t('action'), done: t('done'), conflict: t('conflict'), failed: t('failed') };
+  const t = useTranslations('matters.workspace.proceedingsTab');
+  return {
+    action: t('undo.action'),
+    done: t('undo.done'),
+    conflict: t('undo.conflict'),
+    failed: t('undo.failed'),
+  };
 }
 
 function failed<T>(): Result<T> {

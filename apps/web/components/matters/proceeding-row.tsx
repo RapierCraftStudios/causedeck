@@ -43,20 +43,22 @@ export interface ProceedingRowProps {
 }
 
 function useLinkLabel() {
-  const t = useTranslations('matters.workspace.proceedingsTab.links');
+  const t = useTranslations('matters.workspace');
   return (link: ProceedingLinkRowView) => {
-    const label = link.otherLabel ?? t('anotherMatter');
+    const label = link.otherLabel ?? t('proceedingsTab.links.anotherMatter');
     switch (link.kind) {
       case 'appeal_from':
-        return link.direction === 'from' ? t('appealFrom', { label }) : t('appealedIn', { label });
+        return link.direction === 'from'
+          ? t('proceedingsTab.links.appealFrom', { label })
+          : t('proceedingsTab.links.appealedIn', { label });
       case 'lower_court':
         return link.direction === 'from'
-          ? t('lowerCourt', { label })
-          : t('lowerCourtOf', { label });
+          ? t('proceedingsTab.links.lowerCourt', { label })
+          : t('proceedingsTab.links.lowerCourtOf', { label });
       case 'parent_of':
-        return t('parentOf', { label });
+        return t('proceedingsTab.links.parentOf', { label });
       default:
-        return t('connected', { label });
+        return t('proceedingsTab.links.connected', { label });
     }
   };
 }

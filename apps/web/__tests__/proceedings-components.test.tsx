@@ -516,7 +516,10 @@ describe('ProceedingForm (#392)', () => {
     await waitFor(() => {
       expect(onClose).toHaveBeenCalled();
     });
-    expect(announcer().textContent).toBe(tab.form.announceAdded);
+    // The announcer clears and then sets its text on the next frame.
+    await waitFor(() => {
+      expect(announcer().textContent).toBe(tab.form.announceAdded);
+    });
   });
 
   it('shows the duplicate prompt with Merge for a proceeding of another matter', async () => {

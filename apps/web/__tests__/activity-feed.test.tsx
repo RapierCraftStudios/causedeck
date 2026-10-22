@@ -76,8 +76,8 @@ function fakeActions() {
         ok: true as const,
         data: {
           activityId: input.activityId,
-          undoable: true,
-          blockedReason: null,
+          undoable: true as boolean,
+          blockedReason: null as string | null,
           willRemove: [
             {
               activityId: input.activityId,

@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { upsertPerson } from '../../matter-graph/index.ts';
 import { conflict, invalid, notFound } from '../../shared/errors.ts';
-import type { ProposalHandler } from '../types.ts';
+import type { HandlerProvenance, ProposalHandler } from '../types.ts';
 
 import { parsePayload, pgCode, uuid } from './common.ts';
 
@@ -35,6 +35,8 @@ interface PersonBefore {
   kind: (typeof PERSON_KINDS)[number];
   aliases: string[];
   contact: Record<string, string> | null;
+  /** The provenance the person had before: an undo puts it back with the details. */
+  provenance: HandlerProvenance;
 }
 
 export const partyDetailHandler: ProposalHandler<Payload> = {
@@ -65,6 +67,13 @@ export const partyDetailHandler: ProposalHandler<Payload> = {
         kind: current.kind,
         aliases: current.aliases,
         contact: current.contact as Record<string, string> | null,
+        provenance: {
+          sourceType: current.sourceType,
+          sourceRef: current.sourceRef,
+          anchorId: current.anchorId,
+          confidence: current.confidence,
+          confirmationState: current.confirmationState,
+        },
       };
     }
     const name = p.name ?? before?.name;
@@ -115,6 +124,7 @@ export const partyDetailHandler: ProposalHandler<Payload> = {
       kind: payload.before.kind,
       aliases: payload.before.aliases,
       contact: payload.before.contact,
+      provenance: payload.before.provenance,
     });
   },
 };

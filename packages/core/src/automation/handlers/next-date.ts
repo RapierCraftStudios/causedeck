@@ -44,9 +44,9 @@ export const nextDateHandler: ProposalHandler<Payload> = {
     }
     return {
       entityRefs: {
-        listingId: result.proposed.id,
+        listingId: result.proposed.listingId,
         date: payload.date,
-        currentListingId: result.current.id,
+        currentListingId: result.current.listingId,
         conflict: true,
       },
     };
@@ -61,7 +61,7 @@ export const nextDateHandler: ProposalHandler<Payload> = {
         provenance: { ...ctx.provenance, confirmationState: 'proposed' },
       });
       if (staged.kind === 'noop') throw conflict('That is already the confirmed next date');
-      listingId = staged.kind === 'proposal' ? staged.listingId : staged.proposed.id;
+      listingId = staged.kind === 'proposal' ? staged.listingId : staged.proposed.listingId;
     }
     if (typeof listingId !== 'string') throw conflict('The proposed date was not staged');
     const previous = await getCanonicalNextDate(scope.deps, scope.actor, {

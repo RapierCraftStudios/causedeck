@@ -160,10 +160,9 @@ export const activity = tenantTable(
       name: 'activity_parent_fk',
       columns: [t.workspaceId, t.parentActivityId],
       foreignColumns: [t.workspaceId, t.id],
-    }),
+    }).onDelete('cascade'),
     check('activity_level_chk', sql`level in ${inList(AUTOMATION_LEVELS)}`),
     check('activity_actor_chk', sql`actor in ${inList(ACTIVITY_ACTORS)}`),
-    check('activity_actor_user_chk', sql`actor = 'system' or actor_user_id is not null`),
     check('activity_summary_chk', sql`btrim(summary) <> ''`),
     check(
       'activity_confidence_chk',

@@ -471,7 +471,7 @@
           "tableTo": "activity",
           "columnsFrom": ["workspace_id", "parent_activity_id"],
           "columnsTo": ["workspace_id", "id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -492,10 +492,6 @@
         "activity_actor_chk": {
           "name": "activity_actor_chk",
           "value": "actor in ('system', 'user')"
-        },
-        "activity_actor_user_chk": {
-          "name": "activity_actor_user_chk",
-          "value": "actor = 'system' or actor_user_id is not null"
         },
         "activity_summary_chk": {
           "name": "activity_summary_chk",

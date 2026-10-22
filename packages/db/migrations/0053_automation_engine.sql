@@ -63,7 +63,6 @@ CREATE TABLE "activity" (
 	CONSTRAINT "activity_workspace_id_id_uq" UNIQUE("workspace_id","id"),
 	CONSTRAINT "activity_level_chk" CHECK (level in ('L1', 'L2', 'L3', 'L4')),
 	CONSTRAINT "activity_actor_chk" CHECK (actor in ('system', 'user')),
-	CONSTRAINT "activity_actor_user_chk" CHECK (actor = 'system' or actor_user_id is not null),
 	CONSTRAINT "activity_summary_chk" CHECK (btrim(summary) <> ''),
 	CONSTRAINT "activity_confidence_chk" CHECK (confidence is null or (confidence >= 0 and confidence <= 1)),
 	CONSTRAINT "activity_undo_window_chk" CHECK (undo_expires_at >= created_at)
@@ -96,7 +95,7 @@ ALTER TABLE "activity" ADD CONSTRAINT "activity_undone_by_user_id_fk" FOREIGN KE
 ALTER TABLE "activity" ADD CONSTRAINT "activity_confirmed_by_user_id_fk" FOREIGN KEY ("confirmed_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "activity" ADD CONSTRAINT "activity_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "activity" ADD CONSTRAINT "activity_proposal_fk" FOREIGN KEY ("workspace_id","proposal_id") REFERENCES "public"."proposal"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "activity" ADD CONSTRAINT "activity_parent_fk" FOREIGN KEY ("workspace_id","parent_activity_id") REFERENCES "public"."activity"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "activity" ADD CONSTRAINT "activity_parent_fk" FOREIGN KEY ("workspace_id","parent_activity_id") REFERENCES "public"."activity"("workspace_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "automation_preference" ADD CONSTRAINT "automation_preference_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "automation_preference" ADD CONSTRAINT "automation_preference_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "automation_threshold" ADD CONSTRAINT "automation_threshold_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

@@ -338,15 +338,15 @@ describe('next_date', () => {
       const second = await submitProposals(w.deps, w.owner, [
         draft({
           kind: 'next_date',
-          source: { type: 'ai', input: 'document' },
-          anchors: ['00000000-0000-4000-8000-000000000001'],
           confidence: 0.99,
           payload: { proceedingId: w.proceedingId, date: '2026-12-15' },
           match: { score: 1, exact: 'case_number' },
         }),
       ]);
       expect(second.items[0]).toMatchObject({ status: 'proposed', level: 'L2' });
-      const [, conflictRow] = await rows.proposals(w);
+      const conflictRow = (await rows.proposals(w)).find(
+        (p) => p.id === second.items[0]?.proposalId,
+      );
       expect(conflictRow?.entityRefs).toMatchObject({ conflict: true });
       // Both sources are kept, and the confirmed date has not moved.
       const listings = await inWorkspace(w.tx, w.workspaceId, (s) =>

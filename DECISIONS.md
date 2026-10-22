@@ -363,3 +363,30 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Evidence:** 23 lane PR runs: `test` 15.2 min median (p90 17.2), `lint` 8.8 (p90 10.7), workflow wall time 15.6. `test` was one runner running about 11 Vitest suites 3 at a time; `lint` ran `prettier --check .` over the whole repo plus an uncached ESLint. No turbo cache was shared between runs (`TURBO_TOKEN` and `TURBO_TEAM` are empty).
 - **Alternatives:** Vercel remote cache (paid, rejected by the "no paid service" constraint); per-package `test` inputs (fragile: several suites scan other packages, `docs/` or the migrations); a larger runner (paid); caching ESLint results on ship PRs (typed rules can go stale when a type changes in an unchanged file).
 - **Revisit:** If the 10 GB Actions cache budget evicts useful entries, if cold runs on a fresh lane stay slow (the GitHub cache only reads the PR's own ref, its base branch and the default branch), or if a shard becomes the long pole: rebalance `infra/scripts/ci-test-shard.mjs`.
+
+### D-048 — Legal data infrastructure: court data, notices and news through a governed fetch layer
+- **Date:** 2026-10-23 · **Status:** Accepted for direction (founder: "we want to be a superior replacement for eCourtsIndia and all modern and future age requirements for legal infra in india"); every new source and access mode stays **Proposed** until its ⚖ review clears · **⚖**
+- **Decision:** CauseDeck adds a legal data layer next to the practice OS: case status, cause lists, orders and judgments, official notices, and legal news, served in the app and later through a developer API. Sources come in this order of preference:
+  1. **Official and licensed** (A3): data-sharing from NIC/eCommittee and the High Court Registries (the Madras HC AIMS email push is the model), and licensed feeds. causedeck#118 starts this.
+  2. **Lawful public retrieval** (A2) of pages that need no captcha, one source at a time after its terms and counsel review. Fetching goes through one governed fetch layer, built on the AlterLab API, never through ad hoc scrapers.
+  3. **Contributed data**: lists, orders and statuses that lawyers already share (A1), reused across workspaces only with opt-in consent and under the DPDP posture below.
+  4. **Device-side, user-driven lookups** (D-011) for portals behind a captcha. The user solves the captcha; the server never does.
+- **The fetch layer** (one package, every external read goes through it):
+  - a **source registry**, extending the access-mode registry of D-028: per source, the access mode, terms status, counsel status, rate limit, retention, residency, a kill switch and an AlterLab tier cap;
+  - AlterLab calls with `proxyCountry: 'IN'`, `failFast: true`, a per-source `maxTier` and `maxCostDollars`. **Court and government sources are capped below the `captcha` tier**, enforced in code and tested;
+  - provenance on every fetched fact (URL, time, content hash, source version), shown in the product like every other fact (D-026);
+  - cost metered into usage and budgets.
+- **Notices and news**:
+  - **Official notices** (circulars, practice directions, roster and bench notifications, holiday lists, registry notices, Bar Council and Gazette notices) are ingested from registered sources, typed, matched to the lawyer's forums and matters, and alerted through `packages/notifications`.
+  - **Legal news** is headlines, links and short summaries from sources that offer feeds or licences. No full-text republication of copyrighted reporting.
+- **Corpus:** raw judgments and orders from public sources are stored with provenance for citation verification (D-004) and later research. No editorial content, headnotes or citator (*EBC v. D.B. Modak*). **Amends D-001.**
+- **Bright lines, never relaxed:**
+  - no server-side captcha solving or bypassing on court or government portals;
+  - no covert bulk crawling;
+  - no framing of court pages;
+  - no use of a source before its registry row says it is cleared.
+- **DPDP posture** ⚖: party names in court records are personal data. Purpose limitation (the lawyer's own matters, and the court's public listing), retention limits per source, erasure on request where the law allows, no resale of personal data, and a published policy on republishing before any API exposes court data.
+- **Amends:** D-001 (corpus), D-003 (bulk access: replaced by the tiered, governed model above; captcha and covert-crawl prohibitions kept), D-011 (device path kept for captcha portals), D-028 (access-mode registry generalised to a source registry).
+- **Evidence:** No official eCourts API [R]. Portal terms are silent or contradictory and forbid framing [V] ([11](docs/strategy/11-launch-markets-madras-hc-bengaluru.md)). The Karnataka HC cause list is a public page with no captcha [V]. Madras HC Registry email push (Notification 230/2026) [V]. Aggregators' sourcing is undisclosed (D-003). AlterLab exposes tier caps, fail-fast, an India proxy and cost caps (`alterlab` SDK 2.4.0).
+- **Alternatives:** Buy a licensed reseller API (Surepass, eCourtsIndia): kept as a fallback, but sourcing is opaque and it is no moat. Competitor-style bulk scraping with captcha solving: rejected for legal, DPDP and trust risk.
+- **Revisit if:** counsel advises against a source or mode; an official API appears (move that source to A3); a Registry objects (kill switch, then remove).

@@ -60,6 +60,8 @@ export const source = pgTable(
     residency: text('residency').notNull().default('in'),
     maxTier: sourceMaxTier('max_tier').notNull().default('http'),
     maxCostDollars: numeric('max_cost_dollars', { precision: 10, scale: 4 }).notNull().default('0'),
+    /** Counsel has cleared bulk captcha solving for this source (D-048); the raised tier is computed in code, never stored. */
+    captchaBulkCleared: boolean('captcha_bulk_cleared').notNull().default(false),
     killSwitch: boolean('kill_switch').notNull().default(false),
     notes: text('notes'),
     updatedBy: uuid('updated_by').references(() => user.id),

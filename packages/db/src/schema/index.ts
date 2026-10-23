@@ -45,6 +45,7 @@ export {
   workspaceFeatureFlag,
   type FlagChangeRequestStatus,
 } from './flags.ts';
+export { fetchLog } from './fetch-log.ts';
 export {
   NO_CAPTCHA_KINDS,
   SOURCE_ACCESS_MODES,

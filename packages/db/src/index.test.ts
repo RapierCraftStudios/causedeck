@@ -80,6 +80,7 @@ describe('@causedeck/db root entry point', () => {
       'export_job',
       'extraction',
       'feature_flag',
+      'fetch_log',
       'flag_change_request',
       'forum',
       'hearing',

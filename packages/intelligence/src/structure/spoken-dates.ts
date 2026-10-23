@@ -375,7 +375,7 @@ function englishPatterns(): Pattern[] {
   const day = `(?<d>\\d{1,2}(?:st|nd|rd|th)?|${ordinals}|${cardinals})`;
   const year = `(?:,?\\s+(?<y>${YEAR}))?`;
   const dayN = (g: Record<string, string | undefined>): number | null =>
-    dayOf(numberOf(g['d']?.replace(/(?:st|nd|rd|th)$/i, ''), enOrdinal, enCardinal));
+    dayOf(numberOf(g['d']?.replace(/^(\d+)(?:st|nd|rd|th)$/i, '$1'), enOrdinal, enCardinal));
   const monthN = (g: Record<string, string | undefined>): number | null =>
     numberOf(g['mo']?.toLowerCase(), enMonth);
   const count = `(?<n>\\d{1,2}|${cardinals}|a)`;

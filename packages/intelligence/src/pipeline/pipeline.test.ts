@@ -23,7 +23,7 @@ import {
   textPdf,
   PARTY_ENGLISH,
 } from '../synthetic/make-docs.ts';
-import { processCapture, type PipelineDeps, type PipelineInput } from './run.ts';
+import { cameraRoute, processCapture, type PipelineDeps, type PipelineInput } from './run.ts';
 import { PIPELINE_VERSION } from './version.ts';
 
 const WS = '11111111-1111-4111-8111-111111111111';
@@ -179,6 +179,37 @@ describe('OCR fallback', () => {
     expect(ocr.calls).toEqual([1]);
     expect(outcome).toMatchObject({ status: 'ready', textStatus: 'ocr' });
     expect(persister.inputs[0]?.pages[0]?.text).toBe(LEGACY_KANNADA_REAL_TEXT);
+  });
+});
+
+describe('camera captures (#52)', () => {
+  it('persists the OCR line boxes of an OCR-read page', async () => {
+    const lines = [
+      {
+        text: 'Next date 12 Oct 2026',
+        bbox: [0.1, 0.1, 0.9, 0.2] as [number, number, number, number],
+        conf: 0.9,
+      },
+    ];
+    const ocr = createSidecarOcr({
+      pages: [
+        {
+          page: 1,
+          text: 'Next date 12 Oct 2026 and some more diary words',
+          confidence: 0.9,
+          lines,
+        },
+      ],
+    });
+    const { deps, persister } = setup({ ocr });
+    await processCapture(deps, input(await scannedPdf(1), { channel: 'camera' }));
+    expect(persister.inputs[0]?.pages[0]?.ocrLines).toEqual(lines);
+  });
+
+  it('keeps a printed cause list in Needs you for list import, and a receipt as an attachment', () => {
+    expect(cameraRoute('cause_list', 'anything')).toBe('cause_list');
+    expect(cameraRoute('other', 'Payment successful. UPI transaction id 123')).toBe('receipt');
+    expect(cameraRoute('note', 'diary page')).toBeNull();
   });
 });
 

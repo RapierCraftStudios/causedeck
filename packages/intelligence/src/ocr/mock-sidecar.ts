@@ -2,10 +2,11 @@
 // the text each page "reads" as, so the pipeline runs without a provider.
 import { readFileSync } from 'node:fs';
 
+import type { OcrLine } from './line-boxes.ts';
 import type { OcrPageInput, OcrPageResult, OcrPort } from './ocr.ts';
 
 export interface OcrSidecar {
-  pages: { page: number; text: string; confidence?: number }[];
+  pages: { page: number; text: string; confidence?: number; lines?: OcrLine[] }[];
 }
 
 /** The sidecar of `file` (`<file>.ocr.json`). */
@@ -29,7 +30,11 @@ export function createSidecarOcr(sidecar: OcrSidecar, defaultConfidence = 0.9): 
       return Promise.resolve(
         page === undefined
           ? { text: '', confidence: 0 }
-          : { text: page.text, confidence: page.confidence ?? defaultConfidence },
+          : {
+              text: page.text,
+              confidence: page.confidence ?? defaultConfidence,
+              ...(page.lines === undefined ? {} : { lines: page.lines }),
+            },
       );
     },
   };

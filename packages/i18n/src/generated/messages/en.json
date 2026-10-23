@@ -3471,6 +3471,80 @@
       "retry": "Try again"
     }
   },
+  "camera": {
+    "command": "Photograph a diary page",
+    "title": "Photograph a diary page",
+    "description": "Tomorrow's page? Hold steady, we will read it.",
+    "guide": "Place the diary page flat in good light.",
+    "privacy": "Photos stay in India and are deleted per your retention settings.",
+    "loading": "Opening the camera",
+    "close": "Close",
+    "flash": "Flash",
+    "shutter": "Take photo",
+    "done": "Done ({count})",
+    "choose": "Choose photos",
+    "captured": "{count, plural, one {# page captured} other {# pages captured}}",
+    "offline": "Saved on this device. Will read when you're back online.",
+    "hints": {
+      "blurry": "Move closer and hold steady",
+      "glare": "Glare on the page. Tilt it away from the light."
+    },
+    "errors": {
+      "open": "Couldn't open the camera. Choose photos instead.",
+      "process": "Couldn't prepare this photo. Try again.",
+      "save": "Couldn't save this page on the device."
+    },
+    "denied": {
+      "title": "Camera access is off",
+      "body": "You can still add photos from your gallery.",
+      "steps": "To use the camera, allow camera access for this site in your browser settings, then open this again."
+    },
+    "strip": {
+      "label": "Pages in this batch",
+      "empty": "No pages yet",
+      "page": "Page {n}",
+      "earlier": "Move page {n} earlier",
+      "later": "Move page {n} later",
+      "retake": "Retake page {n}",
+      "delete": "Delete page {n}"
+    },
+    "crop": {
+      "title": "Adjust the page edges",
+      "hint": "Drag the four corners to the page edges. Arrow keys move a corner 4 px, Shift moves 16 px.",
+      "handle": "{corner} corner",
+      "corner": {
+        "tl": "Top left",
+        "tr": "Top right",
+        "br": "Bottom right",
+        "bl": "Bottom left"
+      },
+      "reset": "Reset corners",
+      "apply": "Use this crop",
+      "original": "Also upload the original photo",
+      "enhance": "Brighten the writing"
+    },
+    "review": {
+      "title": "Review pages",
+      "upload": "Upload {count, plural, one {# page} other {# pages}}",
+      "discard": "Discard all"
+    },
+    "recover": {
+      "title": "Pick up where you left off",
+      "body": "{count, plural, one {# page} other {# pages}} from an earlier session are saved on this device.",
+      "resume": "Resume",
+      "discard": "Discard"
+    },
+    "causeList": {
+      "title": "This looks like a cause list",
+      "copy": "Printed cause lists are read by list import, not as a diary page.",
+      "action": "Hand to list import",
+      "soon": "List import arrives soon"
+    },
+    "receipt": {
+      "title": "Kept as an attachment",
+      "copy": "Kept as an attachment. Fee tracking arrives later."
+    }
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",

@@ -4,6 +4,8 @@
 // only passes the language hint (en/ta/kn).
 import type { AiGateway, RunContext } from '@causedeck/ai';
 
+import { normaliseLines, type OcrLine } from './line-boxes.ts';
+
 export type OcrLanguage = 'en' | 'ta' | 'kn';
 
 export interface OcrPageInput {
@@ -16,6 +18,8 @@ export interface OcrPageResult {
   text: string;
   /** 0-1. */
   confidence: number;
+  /** Line boxes when the provider reports them (#52). */
+  lines?: OcrLine[] | undefined;
 }
 
 /** Reads one page image. The gateway-backed port is the product; tests use the sidecar port. */
@@ -31,7 +35,12 @@ export interface GatewayOcrOptions {
 }
 
 interface OcrOutput {
-  pages: { page: number; text: string; confidence?: number | undefined }[];
+  pages: {
+    page: number;
+    text: string;
+    confidence?: number | undefined;
+    lines?: OcrLine[] | undefined;
+  }[];
   confidence: number;
 }
 
@@ -54,9 +63,11 @@ export function createGatewayOcr(options: GatewayOcrOptions): OcrPort {
         },
       );
       const [page] = result.output.pages;
+      const lines = normaliseLines(page?.lines);
       return {
         text: page?.text ?? '',
         confidence: page?.confidence ?? result.output.confidence,
+        ...(lines.length === 0 ? {} : { lines }),
       };
     },
   };

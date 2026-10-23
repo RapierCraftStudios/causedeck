@@ -58,6 +58,13 @@ export interface AnchorTranscriptSpan {
   speaker?: string;
 }
 
+/** One OCR line of a page: its text, box and confidence; `bbox` is `[x0, y0, x1, y1]` normalised 0..1 (#52). */
+export interface OcrLine {
+  text: string;
+  bbox: [number, number, number, number];
+  conf: number;
+}
+
 /** Postgres `tsvector`; only ever a generated column, so it is read, never written. */
 const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });
 
@@ -148,6 +155,8 @@ export const documentPage = tenantTable(
     /** Rendered thumbnail size in pixels. */
     width: integer('width'),
     height: integer('height'),
+    /** OCR line boxes `[{text, bbox, conf}]` of an OCR-read page; null when none were reported (#52). */
+    ocrLines: jsonb('ocr_lines').$type<OcrLine[]>(),
     /** `simple`-config full-text vector of `text`: no stemming, so Tamil and Kannada match whole words. */
     searchTsv: tsvector('search_tsv').generatedAlwaysAs(
       sql`to_tsvector('simple', coalesce(text, ''))`,

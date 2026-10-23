@@ -4,6 +4,7 @@ import { Kbd } from '@causedeck/ui/kbd';
 import { Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
+import { Suspense } from 'react';
 
 import type { WorkspaceContext } from '../../lib/workspace-context.ts';
 import { Bell } from '../notifications/bell.tsx';
@@ -21,6 +22,12 @@ const InstallBanner = dynamic(
 );
 const UpdateToast = dynamic(
   () => import('../pwa/update-toast.tsx').then((m) => ({ default: m.UpdateToast })),
+  { ssr: false },
+);
+
+// The camera sheet (#52) opens on `?capture=camera` and is a chunk of its own.
+const CameraHost = dynamic(
+  () => import('../capture/camera/camera-sheet.tsx').then((m) => ({ default: m.CameraHost })),
   { ssr: false },
 );
 
@@ -79,6 +86,9 @@ export function Topbar({ context, onSearch }: TopbarProps) {
       ) : null}
       <div className="fixed inset-x-4 bottom-20 z-50 flex flex-col gap-2 md:inset-x-auto md:right-6 md:bottom-6 md:w-96">
         <UpdateToast />
+        <Suspense fallback={null}>
+          <CameraHost workspaceId={context.workspace.id} />
+        </Suspense>
         <InstallBanner viewerId={context.user.id} workspaceId={context.workspace.id} />
       </div>
     </header>

@@ -48,3 +48,49 @@ export {
 export { mupdfRenderer } from './render/mupdf.ts';
 export { noRenderer, type PageRenderer } from './render/renderer.ts';
 export { DEFAULT_MIN_PAGE_CHARS, isGarbled, normaliseText } from './text/quality.ts';
+export { datePresence, writtenDates, asciiDigits } from './diary/dates.ts';
+export {
+  anchorKey,
+  anchorOf,
+  anchorRow,
+  numberLines,
+  type DiaryPage,
+  type NumberedLine,
+} from './diary/line-anchors.ts';
+export {
+  DiaryAnchorSchema,
+  DiaryEntrySchema,
+  DiaryStructuredSchema,
+  DIARY_ENTRY_KINDS,
+  type DiaryAnchor,
+  type DiaryEntry,
+  type DiaryStructured,
+} from './diary/schema.ts';
+export {
+  DEFAULT_DIARY_READ_FLOOR,
+  DIARY_UNREADABLE_COPY,
+  structureDiaryPage,
+  verifyDiaryEntries,
+  type RawDiaryEntry,
+  type StructureDiaryDeps,
+  type StructureDiaryInput,
+  type StructureDiaryOutcome,
+} from './diary/structure.ts';
+export {
+  diaryToProposalDrafts,
+  matchCaseRef,
+  normaliseCaseRef,
+  NOTE_CONFIDENCE_CAP,
+  type CaseMatch,
+  type DiaryDraftContext,
+  type DiaryProceeding,
+} from './diary/to-proposals.ts';
+export {
+  isValidBox,
+  meanConfidence,
+  normaliseLines,
+  toAnchorBbox,
+  type LineBox,
+  type OcrLine,
+} from './ocr/line-boxes.ts';
+export { cameraRoute, type CameraRoute } from './pipeline/run.ts';

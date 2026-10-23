@@ -42,3 +42,8 @@ PRD CA-6 and CA-1 (docs/product/09 §3, §4.4, §5, §8) let a lawyer photograph
 - One PDF per batch means a single page cannot be retried alone after upload; Retake works before it.
 - Real handwriting accuracy is not a merge gate; the synthetic eval (30 pages per language) guards date accuracy, zero hallucinated dates and anchor validity, and lawyer-supplied diary photos are a later human check.
 - The camera channel stays opt-in per workspace (CA-9).
+
+## Revisit when
+
+- Lawyer-supplied diary photos show handwriting accuracy too low for the proposals to be useful, which would call for a different recognition provider.
+- Single-page retry after upload is wanted, which would replace the one-PDF-per-batch upload.

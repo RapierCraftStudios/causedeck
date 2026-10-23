@@ -94,6 +94,11 @@ vi.mock('@causedeck/core/usage', () => ({
   setBudgetOverride: auditedOverrideWrite('usage.budget_override_set'),
   expireBudgetOverride: auditedOverrideWrite('usage.budget_override_expired'),
 }));
+vi.mock('@causedeck/core/activation', () => ({
+  ACTIVATION_CHANNELS: [],
+  ACTIVATION_STEPS: [],
+  activationFunnel: () => Promise.resolve({ cohorts: [], timeToFirstCourtDay: [] }),
+}));
 vi.mock('@causedeck/db', () => ({
   withoutWorkspace: (_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) =>
     fn({}),

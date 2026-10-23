@@ -1186,6 +1186,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
+      '@causedeck/fetch':
+        specifier: workspace:*
+        version: link:../fetch
       '@causedeck/flags':
         specifier: workspace:*
         version: link:../flags

@@ -510,7 +510,9 @@ export async function setCourtHoursQuiet(
 
 /** Categories the digest selector drives: email, not locked, not the digest email itself. */
 const DIGEST_CATEGORIES = CATEGORY_KEYS.filter(
-  (key) => key !== 'digest.daily' && key !== 'digest.end_of_day' && !isLockedChannel(key, 'email'),
+  (key) => key !== 'digest.daily' && key !== 'digest.end_of_day' &&
+    key !== 'digest.news' &&
+    !isLockedChannel(key, 'email'),
 );
 
 /**

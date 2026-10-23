@@ -42,6 +42,7 @@
     "@causedeck/capture": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/fetch": "workspace:*",
     "@causedeck/flags": "workspace:*",
     "@causedeck/intelligence": "workspace:*",
     "@causedeck/notifications": "workspace:*",

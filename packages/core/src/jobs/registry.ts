@@ -9,6 +9,8 @@ import {
   activityDigestMember,
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
+import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
+import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
@@ -153,6 +155,11 @@ export const registry = createRegistry([
   activityDigestSchedule,
   activityDigest,
   activityDigestMember,
+  newsDigestSchedule,
+  newsDigest,
+  newsDigestMember,
+  systemNewsPoll,
+  newsPoll,
   usageRollup,
   systemAuditVerify,
   auditVerify,
@@ -192,6 +199,11 @@ export type JobMap = RegistryMap<
     typeof activityDigestSchedule,
     typeof activityDigest,
     typeof activityDigestMember,
+    typeof newsDigestSchedule,
+    typeof newsDigest,
+    typeof newsDigestMember,
+    typeof systemNewsPoll,
+    typeof newsPoll,
     typeof usageRollup,
     typeof systemAuditVerify,
     typeof auditVerify,

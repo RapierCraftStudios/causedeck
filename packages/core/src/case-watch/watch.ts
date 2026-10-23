@@ -5,7 +5,11 @@
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { and, asc, eq } from 'drizzle-orm';
 
-import { getCanonicalNextDate, type GraphActor, type MatterGraphDeps } from '../matter-graph/index.ts';
+import {
+  getCanonicalNextDate,
+  type GraphActor,
+  type MatterGraphDeps,
+} from '../matter-graph/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
 
 const { caseWatch } = schema;
@@ -90,7 +94,10 @@ export async function addCaseWatch(
 }
 
 /** The actor's own watches, oldest first. */
-export async function listCaseWatches(deps: { db: Db }, actor: GraphActor): Promise<CaseWatchRow[]> {
+export async function listCaseWatches(
+  deps: { db: Db },
+  actor: GraphActor,
+): Promise<CaseWatchRow[]> {
   return withWorkspace(deps.db, actor, (tx) =>
     tx
       .select()

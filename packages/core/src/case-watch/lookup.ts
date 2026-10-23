@@ -17,7 +17,11 @@ import { schema, withWorkspace, type Database, type Transaction } from '@causede
 import { and, desc, eq, ne } from 'drizzle-orm';
 
 import { submitProposals } from '../automation/index.ts';
-import { getCanonicalNextDate, type GraphActor, type MatterGraphDeps } from '../matter-graph/index.ts';
+import {
+  getCanonicalNextDate,
+  type GraphActor,
+  type MatterGraphDeps,
+} from '../matter-graph/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
 import { policyFor } from '../sources/index.ts';
 
@@ -90,7 +94,7 @@ const canonical = (value: unknown): string => {
     const entries = Object.entries(value).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
     return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(',')}}`;
   }
-  return JSON.stringify(value) ?? 'null';
+  return JSON.stringify(value === undefined ? null : value);
 };
 
 /** sha256 hex of the canonical (key-sorted) JSON of `fields`. */
@@ -195,7 +199,8 @@ async function storeAndDiff(
       .limit(1);
     return { id: inserted.id, previous: previous ? (previous.fields as ParsedCaseStatus) : null };
   });
-  if (stored === null) return { outcome: 'unchanged', snapshotId: null, changes: null, proposals: 0 };
+  if (stored === null)
+    return { outcome: 'unchanged', snapshotId: null, changes: null, proposals: 0 };
 
   const changes = diffStatus(stored.previous, parsed);
   const draft = statusChangeDraft(
@@ -234,9 +239,13 @@ export async function runCaseStatusLookup(
   if (source === undefined) throw invalid('This source has no status lookup');
   const policy = deps.policy ?? ((id: string) => policyFor(id, { db: deps.db }));
   const { baseUrl } = await policy(watch.sourceId);
-  const fetched = await deps.fetcher.fetchSource(watch.sourceId, lookupUrl(baseUrl, source, watch), {
-    delegatedFor: { advocateId: actor.userId, matterId: ctx.matterId },
-  });
+  const fetched = await deps.fetcher.fetchSource(
+    watch.sourceId,
+    lookupUrl(baseUrl, source, watch),
+    {
+      delegatedFor: { advocateId: actor.userId, matterId: ctx.matterId },
+    },
+  );
   const parsed = parseCaseStatus(source.template, fetched.body);
   // `fetched.body` goes out of scope here: only the parsed fields are stored.
   if (parsed.status !== 'ok') {

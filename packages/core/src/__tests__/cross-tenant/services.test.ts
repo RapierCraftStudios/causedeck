@@ -391,6 +391,23 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
   return row.email;
 }
 
+/** A's own case-status watch (the fixture seeds none), added through the service as A's owner. */
+async function addAWatch(f: Fixture) {
+  await f.tx
+    .insert(schema.source)
+    .values({ id: 'xt.case-watch', kind: 'court', baseUrl: 'https://xt.example.test', owner: 'xt' })
+    .onConflictDoNothing();
+  return core.addCaseWatch(
+    { db: f.tx },
+    { userId: f.ua, workspaceId: f.a.id, role: 'owner' },
+    {
+      proceedingId: f.a.rows.proceeding?.proceedingId ?? '',
+      sourceId: 'xt.case-watch',
+      cnr: 'TNCH010012342024',
+    },
+  );
+}
+
 const CASES: Record<string, Case> = {
   addCauseListWatch: async (f) => {
     // ub's watch lands in B; A has no watch from it.
@@ -431,6 +448,40 @@ const CASES: Record<string, Case> = {
     );
     const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
     expect(after).toHaveLength(1);
+  },
+  addCaseWatch: async (f) => {
+    // ub cannot watch A's proceeding; A gains no watch.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    await expectDenied(
+      core.addCaseWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+        { proceedingId: aProceeding, sourceId: 'xt.case-watch', cnr: 'TNCH010012342024' },
+      ),
+    );
+    const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
+    expect(aWatches).toEqual([]);
+  },
+  listCaseWatches: async (f) => {
+    // ub lists nothing of A's: A's own watch is not in B's list.
+    const aWatch = await addAWatch(f);
+    const own = await core.listCaseWatches(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+    );
+    expect(own.some((w) => w.id === aWatch.id)).toBe(false);
+  },
+  removeCaseWatch: async (f) => {
+    const aWatch = await addAWatch(f);
+    await expectDenied(
+      core.removeCaseWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+        aWatch.id,
+      ),
+    );
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
+    expect(after.map((w) => w.id)).toEqual([aWatch.id]);
   },
   record: async (f) => {
     const before = await auditIds(f, f.a.id);

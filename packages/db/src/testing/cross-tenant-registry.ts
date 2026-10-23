@@ -884,9 +884,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   hasChanges: 'pure',
   statusChangeDraft: 'pure (builds a draft; submitting it goes through submitProposals)',
   runCaseStatusLookup:
-    'actor-scoped in withWorkspace: loads only the actor\'s own watch (advocate_user_id = actor) and proceeds as delegatedFor that advocate on that matter; another advocate or workspace gets NOT_FOUND before any fetch; covered by case-watch.test.ts',
+    "actor-scoped in withWorkspace: loads only the actor's own watch (advocate_user_id = actor) and proceeds as delegatedFor that advocate on that matter; another advocate or workspace gets NOT_FOUND before any fetch; covered by case-watch.test.ts",
   recordDeviceSnapshot:
-    'actor-scoped in withWorkspace: stores a snapshot only on the actor\'s own watch; covered by case-watch.test.ts',
+    "actor-scoped in withWorkspace: stores a snapshot only on the actor's own watch; covered by case-watch.test.ts",
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',

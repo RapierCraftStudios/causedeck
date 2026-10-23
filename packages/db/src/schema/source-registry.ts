@@ -63,6 +63,10 @@ export const source = pgTable(
     /** Counsel has cleared bulk captcha solving for this source (D-048); the raised tier is computed in code, never stored. */
     captchaBulkCleared: boolean('captcha_bulk_cleared').notNull().default(false),
     killSwitch: boolean('kill_switch').notNull().default(false),
+    /** SLOs (#515); null means no objective, so the detector for it skips this source. */
+    sloFreshnessMinutes: integer('slo_freshness_minutes'),
+    sloSuccessRate: numeric('slo_success_rate', { precision: 5, scale: 4 }),
+    sloParseYieldFloor: numeric('slo_parse_yield_floor', { precision: 5, scale: 4 }),
     notes: text('notes'),
     updatedBy: uuid('updated_by').references(() => user.id),
     ...timestamps(),
@@ -75,6 +79,10 @@ export const source = pgTable(
     check('source_rate_limit_chk', sql`${t.rateLimitPerMinute} > 0`),
     check('source_retention_chk', sql`${t.retentionDays} >= 0`),
     check('source_max_cost_chk', sql`${t.maxCostDollars} >= 0`),
+    check(
+      'source_slo_chk',
+      sql`(${t.sloFreshnessMinutes} is null or ${t.sloFreshnessMinutes} > 0) and (${t.sloSuccessRate} is null or ${t.sloSuccessRate} between 0 and 1) and (${t.sloParseYieldFloor} is null or ${t.sloParseYieldFloor} between 0 and 1)`,
+    ),
     check(
       'source_cleared_chk',
       sql`${t.clearedAt} is null or (${t.termsStatus} = 'cleared' and ${t.counselStatus} = 'cleared')`,

@@ -33,6 +33,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `access_mode_registry`. `source` (#478, D-048) is the global source registry that generalises
  * `access_mode_registry` to every external source; staff write it through the app role (no DELETE).
  * `fetch_log` (#479) is the global, content-free log of governed fetches: the app role may only SELECT and INSERT.
+ * `source_health`, `source_parse_run`, `data_ops_alert` and `data_ops_oncall` (#515) are the global, content-free
+ * data-operations tables: per-source health and backoff, parse yield, the alert ledger and the on-call rotation.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -59,6 +61,10 @@ export const GLOBAL_TABLES: readonly string[] = [
   'adapter_version',
   'source',
   'fetch_log',
+  'source_health',
+  'source_parse_run',
+  'data_ops_alert',
+  'data_ops_oncall',
 ];
 
 /**

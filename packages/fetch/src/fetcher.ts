@@ -4,6 +4,7 @@
 // only then is the provider called with India routing, fail-fast and the source's caps.
 import { createHash } from 'node:crypto';
 
+import { detectBlockSignature } from './block-signature.ts';
 import { createRateLimiter } from './rate-limit.ts';
 import {
   CAPTCHA_RESTRICTED_KINDS,
@@ -11,6 +12,7 @@ import {
   FetchDenied,
   FetchError,
   type FetchClock,
+  type FetchHealth,
   type FetchOptions,
   type FetchPolicy,
   type FetchProvider,
@@ -32,6 +34,8 @@ export interface FetcherDeps extends FetchSinks {
   alterlab: FetchProvider;
   clock: FetchClock;
   delegatedCaptchaPerHour?: number;
+  /** Backoff and block reporting from the data-ops evaluator (#515); absent means neither. */
+  health?: FetchHealth;
 }
 
 export interface Fetcher {
@@ -79,6 +83,12 @@ export function createFetcher(deps: FetcherDeps): Fetcher {
     // The registry first, on every call: also the kill-switch check.
     const policy = await deps.registry.policyFor(sourceId);
     checkUrl(policy, url);
+
+    // A backed-off source (block signature, #515) is refused before any rate-limit slot or network call.
+    const backoffUntil = (await deps.health?.backoffUntil(sourceId)) ?? null;
+    if (backoffUntil !== null && backoffUntil.getTime() > deps.clock.now().getTime()) {
+      throw new FetchDenied('source_backed_off', sourceId);
+    }
 
     const { delegatedFor } = opts;
     if (
@@ -143,6 +153,12 @@ export function createFetcher(deps: FetcherDeps): Fetcher {
       costDollars: response.costDollars,
       ...(delegatedFor === undefined ? {} : { delegatedFor }),
     });
+
+    // A block signature backs the source off and alerts once (#515); reporting never fails a fetch.
+    const signature = detectBlockSignature(response.status, response.body, response.contentType);
+    if (signature !== null && deps.health?.reportBlock !== undefined) {
+      await deps.health.reportBlock({ sourceId, signature, at: fetchedAt }).catch(() => undefined);
+    }
 
     // Defence in depth: a provider that overshoots a cap is an error, and the body is dropped.
     if (rank(response.tierUsed) > rank(maxTier)) throw new FetchError('tier_exceeded', sourceId);

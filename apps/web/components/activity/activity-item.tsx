@@ -77,11 +77,11 @@ export const ActivityItem = forwardRef<HTMLLIElement, ActivityItemProps>(functio
     });
   const summary = item.summary ?? t('redacted');
   const undoable = item.undoable && !isUndone && undone === undefined;
-  const windowEnded =
-    item.level === 'L3' &&
-    !isUndone &&
-    item.confirmedAt === null &&
-    Date.parse(item.undoExpiresAt) < now.getTime();
+  // L3, not undone, not confirmed: the undo window is what decides the rest.
+  const windowCandidate = item.level === 'L3' && !isUndone && item.confirmedAt === null;
+  const windowEnded = windowCandidate && Date.parse(item.undoExpiresAt) < now.getTime();
+  // Core clears `undoable` for a viewer, so "View only" is read from the window, not from `undoable`.
+  const viewOnlyNote = !canUndo && windowCandidate && !windowEnded && undone === undefined;
   const confidence = item.confidence === null ? null : Math.round(Number(item.confidence) * 100);
   const source = sourceName(item.inputSource);
 
@@ -234,7 +234,7 @@ export const ActivityItem = forwardRef<HTMLLIElement, ActivityItemProps>(functio
               <UndoCountdown undoExpiresAt={item.undoExpiresAt} now={now} />
             )}
           </>
-        ) : undoable && !canUndo ? (
+        ) : viewOnlyNote ? (
           <span className="text-ink-subtle text-xs">{t('viewOnly')}</span>
         ) : windowEnded ? (
           <span className="text-ink-muted text-xs">{t('undoEnded')}</span>

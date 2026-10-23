@@ -730,6 +730,16 @@ export async function captureContext(
   };
 }
 
+/**
+ * The workspace and member an inbound intake address (#54) belongs to, or null for an unknown,
+ * rotated or revoked one (the same answer, no oracle). Runs on the app database with no workspace
+ * scope: the sender is not a member. The inbound webhook (#530) calls it before anything else.
+ */
+export async function resolveIntakeAddressFor(address: string) {
+  const { resolveAddress } = await import('../email-intake/index.ts');
+  return resolveAddress(db, address);
+}
+
 /** Count one request against `key`; `false` when over the limit. */
 export async function consumeRequestLimit(
   key: string,

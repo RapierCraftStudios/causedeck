@@ -15,7 +15,7 @@ import {
 } from './workspace';
 
 describe('RotateIntegrationTokenInput', () => {
-  it.each(['email_intake', 'ics_feed'] as const)('accepts %s', (kind) => {
+  it.each(['ics_feed'] as const)('accepts %s', (kind) => {
     expect(RotateIntegrationTokenInput.parse({ kind })).toEqual({ kind });
   });
 

@@ -75,6 +75,11 @@ Each action is either **security** or **informational**:
 | `capture.discarded`                   | informational | `discardCapture` (#43; metadata channel and previous status)                                                               |
 | `capture.channel_enabled`             | security      | `enableChannel` (#43; metadata channel and the disclosure version shown)                                                   |
 | `capture.channel_disabled`            | security      | `disableChannel` (#43; metadata channel)                                                                                   |
+| `email_intake.address_created`        | security      | `createAddress` (#54; metadata `addressId`, `domain`; never the local part)                                                |
+| `email_intake.address_rotated`        | security      | `rotateAddress` (#54; metadata `addressId`, `replacedAddressId`)                                                           |
+| `email_intake.address_revoked`        | security      | `revokeAddress` (#54; metadata `addressId`)                                                                                |
+| `email_intake.allowlist_added`        | security      | `addAllowlistEntry` (#54; metadata `entryId`, `kind`, `isDomain`; never the pattern)                                       |
+| `email_intake.allowlist_removed`      | security      | `removeAllowlistEntry` (#54; metadata `entryId`)                                                                           |
 | `workspace.deletion_requested` | security | `requestWorkspaceDeletion` (#302); metadata: job id, cool-off end |
 | `workspace.deletion_cancelled` | security | `cancelWorkspaceDeletion` (#302); metadata: job id |
 | `workspace.deletion_started` | security | `runWorkspaceErase`, before step 1 (system actor, #302) |

@@ -202,6 +202,29 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A capture channel was disabled',
   },
+  // Email forward-in intake (#54 part 2). Fail-closed: they change who can put mail into the
+  // workspace. Metadata holds ids, the allow-list kind and the domain; never an address' local part
+  // and never a sender address.
+  'email_intake.address_created': {
+    security: true,
+    description: 'A private email intake address was created for a member',
+  },
+  'email_intake.address_rotated': {
+    security: true,
+    description: 'A private email intake address was replaced; the old address stopped working',
+  },
+  'email_intake.address_revoked': {
+    security: true,
+    description: 'A private email intake address was revoked',
+  },
+  'email_intake.allowlist_added': {
+    security: true,
+    description: 'A sender was added to the email intake allow-list',
+  },
+  'email_intake.allowlist_removed': {
+    security: true,
+    description: 'A sender was removed from the email intake allow-list',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',

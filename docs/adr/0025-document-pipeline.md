@@ -48,3 +48,10 @@ Issue #45 turns a stored capture into a `document` with per-page text, a languag
 - Positive: text PDFs never reach a model; cost is bounded by the weak-page count.
 - Negative: a rendered page costs memory; pages are rendered once and reused for OCR and the stored thumbnails.
 - Follow-ups: merge or chain of near duplicates at L3 (automation engine), extraction (#46) and cause-list ingestion (#57) subscribe to the events.
+
+## Revisit when
+
+- Real Sarvam OCR quality on Tamil and Kannada scans (checked with the #113 credentials) falls under the confidence floor often enough that "Needs you" becomes the common path.
+- The `simple` full-text configuration misses matches advocates expect (for example, inflected Tamil or Kannada forms), which would call for a language-aware search configuration.
+- The near-duplicate simhash threshold flags distinct orders as duplicates, or misses re-uploads.
+- Page rendering or OCR moves out of the capture job (for example, to a separate worker queue) for throughput.

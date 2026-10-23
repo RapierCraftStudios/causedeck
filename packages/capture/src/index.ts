@@ -9,3 +9,5 @@ export * from './retention.ts';
 export * from './scan/index.ts';
 export * from './status.ts';
 export * from './types.ts';
+export * from './whatsapp/index.ts';
+export * from './whatsapp/validate-selection.ts';

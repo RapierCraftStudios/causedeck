@@ -76,9 +76,11 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
 
   const state = parseMatterListState(query);
   // The filter options do not depend on the list: load both at once.
-  const [loaded, options] = await Promise.all([
+  const [loaded, options, t, locale] = await Promise.all([
     loadMatterList(context, toSearchMattersInput(state)),
     loadMatterFilterOptions(context),
+    getTranslations('matters'),
+    pageLocale(),
   ]);
   if (loaded.kind === 'denied') return <MattersPermissionDenied />;
   if (loaded.kind === 'invalid' && state.cursor !== undefined) {
@@ -87,8 +89,6 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
   }
   if (loaded.kind !== 'page') throw new Error('Matters could not be loaded');
 
-  const t = await getTranslations('matters');
-  const locale = await pageLocale();
   const now = new Date();
   const rows = loaded.page.items.map((row) => toMatterRowView(row, { slug, locale, now }));
   const filtered = hasMatterFilters(state);

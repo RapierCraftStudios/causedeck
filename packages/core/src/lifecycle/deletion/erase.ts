@@ -100,6 +100,8 @@ export const PURGE_ORDER = [
   'import_plan',
   'import_batch_file',
   'import_batch',
+  // The importing member's identifiers (#550): cites no capture, only the user.
+  'advocate_profile',
   // The capture inbox (#43): after the documents that cite a capture, before the matters it hints.
   'capture',
   'workspace_capture_channel',

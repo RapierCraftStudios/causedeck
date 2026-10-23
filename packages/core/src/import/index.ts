@@ -1,6 +1,37 @@
 // The bootstrap import domain (#57, #548): the plan engine behind the confirm grid. Matched-only
 // filtering of list rows, clustering of proceedings into matters, date rules and `buildImportPlan`.
-// Apply and undo (#549) write through matter-graph. Not re-exported from the package root.
+// Apply and undo (#549) write through matter-graph. The batch (#550) takes uploaded captures through
+// the capture pipeline and the court adapters to a plan; the advocate's identifiers live in
+// `profile`. Reached as `@causedeck/core/import`; not re-exported from the package root.
+export {
+  addImportFiles,
+  createImportBatch,
+  createListParser,
+  finishImportBatch,
+  getImportProgress,
+  listRowPayloads,
+  markImportFileFailed,
+  markImportFilesOverCap,
+  NEEDS_ADAPTER_NOTE,
+  NEEDS_DEDICATED_ADAPTER,
+  OVER_OCR_CAP,
+  processImportFile,
+  startImportProcessing,
+  type FinishImportOutcome,
+  type ImportBatchDeps,
+  type ImportFileOutcome,
+  type ImportProgress,
+  type ListParseInput,
+  type ListParseResult,
+  type ListParser,
+  type PendingImportFile,
+} from './batch.ts';
+export {
+  getAdvocateProfile,
+  saveAdvocateProfile,
+  type ProfileScope,
+  type SaveProfileResult,
+} from './profile.ts';
 export {
   buildImportPlan,
   buildPlanFromDrafts,

@@ -162,6 +162,9 @@ describe('row-level security catalog', () => {
         'import_batch',
         'import_batch_file',
         'import_plan',
+
+        // Advocate identifiers for the bootstrap import (#57, #550).
+        'advocate_profile',
       ].sort(),
     );
     for (const row of rows)

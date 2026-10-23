@@ -20,6 +20,7 @@ import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
+import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
 import { whatsappImport } from './definitions/whatsapp-import.ts';
 import { emailIntake } from './definitions/email-intake.ts';
@@ -172,6 +173,8 @@ export const registry = createRegistry([
   emailIntake,
   emailRawExpire,
   extractOrder,
+  importBatch,
+  importFile,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -209,6 +212,8 @@ export type JobMap = RegistryMap<
     typeof emailIntake,
     typeof emailRawExpire,
     typeof extractOrder,
+    typeof importBatch,
+    typeof importFile,
   ]
 >;
 export type JobName = keyof JobMap;

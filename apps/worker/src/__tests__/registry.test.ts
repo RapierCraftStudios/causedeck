@@ -149,6 +149,8 @@ describe('enqueue', () => {
       'email.intake',
       'email.raw-expire',
       'extraction.extract-order',
+      'import.batch',
+      'import.file',
     ]);
   });
 });

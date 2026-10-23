@@ -13,6 +13,7 @@
     "./calendar": "./src/calendar/index.ts",
     "./court": "./src/court/index.ts",
     "./email-intake": "./src/email-intake/index.ts",
+    "./import": "./src/import/index.ts",
     "./jobs": "./src/jobs/index.ts",
     "./lifecycle": "./src/lifecycle/index.ts",
     "./capture": "./src/capture/index.ts",

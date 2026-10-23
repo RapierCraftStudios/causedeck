@@ -23,7 +23,7 @@ CREATE TABLE "contributed_document" (
 	CONSTRAINT "contributed_document_kind_chk" CHECK ("contributed_document"."kind" in ('cause_list', 'order')),
 	CONSTRAINT "contributed_document_provenance_chk" CHECK ("contributed_document"."provenance" = 'contributed'),
 	CONSTRAINT "contributed_document_sha256_chk" CHECK ("contributed_document"."sha256" ~ '^[0-9a-f]{64}$'),
-	CONSTRAINT "contributed_document_withdrawn_chk" CHECK (("contributed_document"."withdrawn_at" is null) = ("contributed_document"."content" is null))
+	CONSTRAINT "contributed_document_withdrawn_chk" CHECK (("contributed_document"."withdrawn_at" is null) = ("contributed_document"."content" is not null))
 );
 --> statement-breakpoint
 CREATE TABLE "contribution_ledger" (

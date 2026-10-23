@@ -44,7 +44,7 @@ export const contributedDocument = pgTable(
     check('contributed_document_sha256_chk', sql`${t.sha256} ~ '^[0-9a-f]{64}$'`),
     check(
       'contributed_document_withdrawn_chk',
-      sql`(${t.withdrawnAt} is null) = (${t.content} is null)`,
+      sql`(${t.withdrawnAt} is null) = (${t.content} is not null)`,
     ),
     index('contributed_document_lookup_idx').on(t.sourceId, t.kind, t.listingDate),
   ],

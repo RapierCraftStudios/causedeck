@@ -32,8 +32,13 @@ export interface CaptureRetentionPayload {
 export const CAPTURE_JOB_RETRIES = 4;
 export const CAPTURE_JOB_RETRY_DELAY_SEC = 10;
 
-/** The pipeline version `capture.process` is queued with until #45 sets its own. */
-export const CAPTURE_PIPELINE_VERSION = 'l1';
+/**
+ * The pipeline version `capture.process` is queued with: the document pipeline's own version
+ * (`PIPELINE_VERSION` in `@causedeck/intelligence`, #45), written out here because the capture
+ * package imports no domain package. packages/core/src/capture/__tests__/pipeline.test.ts keeps
+ * the two in step. Bump both to re-process captures on demand.
+ */
+export const CAPTURE_PIPELINE_VERSION = 'di-1';
 
 /** The user-safe reasons a capture ends `failed` (`source_meta.failureReason`). */
 export const CAPTURE_FAILURE_REASONS = [

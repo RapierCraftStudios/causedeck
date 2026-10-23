@@ -84,6 +84,7 @@ graph LR
   capture --> audit
   email-intake --> audit
   email-intake --> capture
+  jobs --> ai
   jobs --> audit
   jobs --> billing
   jobs --> usage
@@ -127,7 +128,7 @@ graph LR
 | `capture` | `audit` |
 | `calendar` | `audit`, `workspaces`, `capture`, `automation`, `matter-graph` |
 | `email-intake` | `audit`, `capture` |
-| `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

@@ -5,7 +5,7 @@
 // from the user. A rotated or revoked row keeps its `(local_part, domain)` forever (the unique
 // constraint is not partial) so a retired address can never be handed out again; only one row per
 // (workspace, user) is `active`. Inbound mail resolves an address to a workspace through the
-// SECURITY DEFINER function `app_resolve_intake_address` (migration 0058), which returns a row
+// SECURITY DEFINER function `app_resolve_intake_address` (migration 0059), which returns a row
 // only for active addresses, so an unknown and a revoked address look the same.
 //
 // `intake_allowlist`: an exact address or a domain the workspace accepts forwards from.

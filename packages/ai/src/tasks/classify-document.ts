@@ -7,8 +7,11 @@ export const DOCUMENT_TYPES = [
   'order',
   'judgment',
   'cause_list',
-  'notice',
   'pleading',
+  'ia',
+  'annexure',
+  'correspondence',
+  'registry_memo',
   'other',
 ] as const;
 

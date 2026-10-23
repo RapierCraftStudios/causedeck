@@ -40,6 +40,11 @@ const nextConfig: NextConfig = {
     '@sentry/node',
     '@opentelemetry/sdk-node',
     '@opentelemetry/auto-instrumentations-node',
+    // Core's capture domain reaches the document pipeline (#45), which loads these on first use.
+    'pdfjs-dist',
+    'mupdf',
+    'sharp',
+    'mammoth',
   ],
   images: { remotePatterns: [] },
   experimental: {

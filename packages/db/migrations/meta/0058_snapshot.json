@@ -1,5 +1,5 @@
 {
-  "id": "65e64931-52bb-43a0-a3be-a60c7def6e2c",
+  "id": "c1d46e4c-babf-42e2-9776-35587b07fcff",
   "prevId": "9da8a83a-2878-4ca2-9ffd-2b908934b2c6",
   "version": "7",
   "dialect": "postgresql",
@@ -3753,6 +3753,37 @@
           "primaryKey": false,
           "notNull": false
         },
+        "pipeline_version": {
+          "name": "pipeline_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "classification_confidence": {
+          "name": "classification_confidence",
+          "type": "numeric(4, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "low_confidence_pages": {
+          "name": "low_confidence_pages",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "text_skipped_reason": {
+          "name": "text_skipped_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "text_simhash": {
+          "name": "text_simhash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -3856,6 +3887,11 @@
           "name": "document_workspace_id_id_uq",
           "nullsNotDistinct": false,
           "columns": ["workspace_id", "id"]
+        },
+        "document_capture_pipeline_uq": {
+          "name": "document_capture_pipeline_uq",
+          "nullsNotDistinct": false,
+          "columns": ["workspace_id", "source_capture_id", "pipeline_version"]
         }
       },
       "policies": {},
@@ -3863,6 +3899,14 @@
         "document_sha256_chk": {
           "name": "document_sha256_chk",
           "value": "sha256 ~ '^[0-9a-f]{64}$'"
+        },
+        "document_classification_confidence_chk": {
+          "name": "document_classification_confidence_chk",
+          "value": "classification_confidence is null or (classification_confidence >= 0 and classification_confidence <= 1)"
+        },
+        "document_text_simhash_chk": {
+          "name": "document_text_simhash_chk",
+          "value": "text_simhash is null or text_simhash ~ '^[0-9a-f]{16}$'"
         },
         "document_not_superseding_self_chk": {
           "name": "document_not_superseding_self_chk",
@@ -3918,6 +3962,40 @@
           "primaryKey": false,
           "notNull": false
         },
+        "image_key": {
+          "name": "image_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preview_key": {
+          "name": "preview_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "width": {
+          "name": "width",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "height": {
+          "name": "height",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "search_tsv": {
+          "name": "search_tsv",
+          "type": "tsvector",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "to_tsvector('simple', coalesce(text, ''))",
+            "type": "stored"
+          }
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -3953,6 +4031,21 @@
           "isUnique": false,
           "concurrently": false,
           "method": "btree",
+          "with": {}
+        },
+        "document_page_search_tsv_idx": {
+          "name": "document_page_search_tsv_idx",
+          "columns": [
+            {
+              "expression": "search_tsv",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
           "with": {}
         }
       },
@@ -5366,382 +5459,6 @@
         "ics_import_event_sequence_chk": {
           "name": "ics_import_event_sequence_chk",
           "value": "sequence >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.intake_address": {
-      "name": "intake_address",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "local_part": {
-          "name": "local_part",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "domain": {
-          "name": "domain",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "intake_address_workspace_id_idx": {
-          "name": "intake_address_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "intake_address_active_user_uq": {
-          "name": "intake_address_active_user_uq",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "status = 'active'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "intake_address_user_id_user_id_fk": {
-          "name": "intake_address_user_id_user_id_fk",
-          "tableFrom": "intake_address",
-          "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "intake_address_workspace_id_fk": {
-          "name": "intake_address_workspace_id_fk",
-          "tableFrom": "intake_address",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "intake_address_local_part_domain_uq": {
-          "name": "intake_address_local_part_domain_uq",
-          "nullsNotDistinct": false,
-          "columns": ["local_part", "domain"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "intake_address_status_chk": {
-          "name": "intake_address_status_chk",
-          "value": "status in ('active', 'revoked')"
-        },
-        "intake_address_local_part_chk": {
-          "name": "intake_address_local_part_chk",
-          "value": "local_part ~ '^u-[a-z2-7]{10}$'"
-        },
-        "intake_address_revoked_at_chk": {
-          "name": "intake_address_revoked_at_chk",
-          "value": "(status = 'revoked') = (revoked_at is not null)"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.intake_allowlist": {
-      "name": "intake_allowlist",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "pattern": {
-          "name": "pattern",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "label": {
-          "name": "label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "added_by": {
-          "name": "added_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "intake_allowlist_workspace_id_idx": {
-          "name": "intake_allowlist_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "intake_allowlist_added_by_user_id_fk": {
-          "name": "intake_allowlist_added_by_user_id_fk",
-          "tableFrom": "intake_allowlist",
-          "tableTo": "user",
-          "columnsFrom": ["added_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "intake_allowlist_workspace_id_fk": {
-          "name": "intake_allowlist_workspace_id_fk",
-          "tableFrom": "intake_allowlist",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "intake_allowlist_workspace_pattern_uq": {
-          "name": "intake_allowlist_workspace_pattern_uq",
-          "nullsNotDistinct": false,
-          "columns": ["workspace_id", "pattern"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "intake_allowlist_kind_chk": {
-          "name": "intake_allowlist_kind_chk",
-          "value": "kind in ('court', 'efiling', 'self', 'briefing_counsel')"
-        },
-        "intake_allowlist_pattern_chk": {
-          "name": "intake_allowlist_pattern_chk",
-          "value": "pattern = lower(pattern) and length(pattern) <= 254"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.intake_message": {
-      "name": "intake_message",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "message_id": {
-          "name": "message_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'received'"
-        },
-        "raw_mime_ref": {
-          "name": "raw_mime_ref",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "raw_expires_at": {
-          "name": "raw_expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "pinned": {
-          "name": "pinned",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "received_at": {
-          "name": "received_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "intake_message_workspace_id_idx": {
-          "name": "intake_message_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "intake_message_workspace_status_received_idx": {
-          "name": "intake_message_workspace_status_received_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "received_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "intake_message_workspace_id_fk": {
-          "name": "intake_message_workspace_id_fk",
-          "tableFrom": "intake_message",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "intake_message_workspace_message_id_uq": {
-          "name": "intake_message_workspace_message_id_uq",
-          "nullsNotDistinct": false,
-          "columns": ["workspace_id", "message_id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "intake_message_status_chk": {
-          "name": "intake_message_status_chk",
-          "value": "status in ('received', 'processed', 'quarantined', 'dropped')"
         }
       },
       "isRLSEnabled": false
@@ -12139,7 +11856,7 @@
       "checkConstraints": {
         "workspace_integration_kind_chk": {
           "name": "workspace_integration_kind_chk",
-          "value": "kind in ('ics_feed')"
+          "value": "kind in ('email_intake', 'ics_feed')"
         }
       },
       "isRLSEnabled": false

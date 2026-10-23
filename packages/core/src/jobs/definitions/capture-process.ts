@@ -8,12 +8,20 @@ import {
   CAPTURE_JOB_RETRIES,
   CAPTURE_JOB_RETRY_DELAY_SEC,
 } from '@causedeck/capture';
+import { serverEnv } from '@causedeck/config/env';
 import { db as rootDb } from '@causedeck/db';
-import type { ObjectStore } from '@causedeck/storage';
+import { createObjectStoreFromEnv, EnvKeyProvider, type ObjectStore } from '@causedeck/storage';
 import { z } from 'zod';
 
+import { createCoreAiGateway } from '../../ai/index.ts';
 import { runIcsImport } from '../../calendar/index.ts';
-import { markCaptureFailed, runCaptureProcess } from '../../capture/index.ts';
+import {
+  aiStepsAllowed,
+  markCaptureFailed,
+  runCapturePipeline,
+  runCaptureProcess,
+  type CapturePipelineDeps,
+} from '../../capture/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
@@ -37,14 +45,44 @@ export async function enqueueCaptureProcess(payload: CaptureProcessJobPayload): 
   });
 }
 
+let defaultStorage: Pick<CapturePipelineDeps, 'store' | 'keys'> | undefined;
+
+/** The pipeline's storage and gateway from the environment: S3 or MinIO, the env KEK, mock AI. */
+function defaultPipelineDeps(ctx: Pick<JobContext, 'db'>): CapturePipelineDeps {
+  const env = serverEnv();
+  defaultStorage ??= {
+    store: createObjectStoreFromEnv(env),
+    keys: EnvKeyProvider.fromEnv(env),
+  };
+  return {
+    db: ctx.db,
+    ...defaultStorage,
+    gateway: createCoreAiGateway(ctx.db, {
+      isCaptureAiBlocked: async (workspaceId, captureId) =>
+        !(await aiStepsAllowed(ctx.db, workspaceId, captureId)),
+    }),
+  };
+}
+
 /** The job body. Exported for tests. */
 export async function runCaptureProcessJob(
   ctx: Pick<JobContext, 'db' | 'log' | 'attempt'>,
   payload: CaptureProcessJobPayload,
-  deps: { now?: () => Date; store?: ObjectStore } = {},
+  deps: { now?: () => Date; store?: ObjectStore; pipeline?: CapturePipelineDeps } = {},
 ): Promise<void> {
+  const { pipeline, ...rest } = deps;
   try {
-    const result = await runCaptureProcess({ db: ctx.db, ...deps }, payload);
+    if (pipeline !== undefined) {
+      const done = await runCapturePipeline(pipeline, payload);
+      if (done.outcome === 'missing') {
+        throw new RetryableError('CAPTURE_NOT_VISIBLE', 'capture not visible yet');
+      }
+      if (done.outcome !== 'not_document') {
+        ctx.log.info({ captureId: payload.captureId, outcome: done.outcome }, 'capture processed');
+        return;
+      }
+    }
+    const result = await runCaptureProcess({ db: ctx.db, ...rest }, payload);
     if (result.outcome === 'missing') {
       throw new RetryableError('CAPTURE_NOT_VISIBLE', 'capture not visible yet');
     }
@@ -60,7 +98,7 @@ export async function runCaptureProcessJob(
     // matter and a sensitive-matter hint cannot be bypassed (events of sensitive matters are dropped).
     if (result.outcome === 'started' && result.channel === 'ics') {
       const imported = await runIcsImport(
-        { db: ctx.db, ...deps },
+        { db: ctx.db, ...rest },
         { workspaceId: payload.workspaceId, captureId: payload.captureId },
       );
       ctx.log.info(
@@ -90,6 +128,6 @@ export const captureProcess = defineJob({
   concurrency: 2,
   retry: { limit: CAPTURE_JOB_RETRIES, delaySec: CAPTURE_JOB_RETRY_DELAY_SEC, backoff: true },
   handler: async (ctx, payload) => {
-    await runCaptureProcessJob(ctx, payload);
+    await runCaptureProcessJob(ctx, payload, { pipeline: defaultPipelineDeps(ctx) });
   },
 });

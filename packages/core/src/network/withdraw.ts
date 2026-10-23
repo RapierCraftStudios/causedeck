@@ -1,4 +1,4 @@
-// Withdraw a workspace's contributions (#485). `app_withdraw_contributions` (migration 0066) drops
+// Withdraw a workspace's contributions (#485). `app_withdraw_contributions` (migration 0067) drops
 // the workspace's ledger rows and blanks every copy no other workspace still stands behind: it
 // needs to see other workspaces' ledger rows, which row-level security hides from the app role.
 import { sql } from 'drizzle-orm';

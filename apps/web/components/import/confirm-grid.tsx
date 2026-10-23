@@ -96,9 +96,10 @@ export function ConfirmGrid({
 
   const focusMatter = (id: string) => {
     setActiveId(id);
-    document
-      .querySelector(`[data-matter-id="${CSS.escape(id)}"]`)
-      ?.scrollIntoView({ block: 'center' });
+    // Real focus follows the active row, so arrows keep working and a screen reader follows along.
+    const row = document.querySelector<HTMLElement>(`[data-matter-id="${CSS.escape(id)}"]`);
+    row?.focus({ preventScroll: true });
+    row?.scrollIntoView({ block: 'center' });
   };
   const merge = (fromId: string) => {
     const at = rows.findIndex((m) => m.tempId === fromId);
@@ -189,6 +190,9 @@ export function ConfirmGrid({
         }
         break;
       case '?':
+        // The grid has its own list; stop the app shell's `?` so two dialogs do not stack.
+        event.preventDefault();
+        event.nativeEvent.stopImmediatePropagation();
         setHelp(true);
         break;
     }
@@ -247,6 +251,7 @@ export function ConfirmGrid({
                   index={index}
                   total={rows.length}
                   active={m.tempId === activeId}
+                  tabStop={active === null ? index === 0 : m.tempId === activeId}
                   included={!excluded.has(m.tempId)}
                   expanded={expanded.has(m.tempId)}
                   resolved={resolved}

@@ -19,6 +19,8 @@ export interface MatterGroupRowProps {
   index: number;
   total: number;
   active: boolean;
+  /** The one row in the tab order (roving tabindex): the active row, else the first. */
+  tabStop: boolean;
   included: boolean;
   expanded: boolean;
   /** Dates picked for conflicting proceedings, by proceeding key. */
@@ -43,6 +45,7 @@ export function MatterGroupRow({
   index,
   total,
   active,
+  tabStop,
   included,
   expanded,
   resolved,
@@ -83,10 +86,11 @@ export function MatterGroupRow({
       data-active={active ? '' : undefined}
       data-blocked={blocked ? '' : undefined}
       aria-current={active ? 'true' : undefined}
+      tabIndex={tabStop ? 0 : -1}
       aria-label={t('grid.active', { title: matter.title, index: index + 1, total })}
       onFocusCapture={onActivate}
       onClick={onActivate}
-      className="border-line bg-surface data-[active]:border-seal data-[blocked]:border-danger rounded-md border p-3 transition-colors duration-(--dur-fast) motion-reduce:transition-none"
+      className="border-line bg-surface focus-visible:outline-ring data-[active]:border-seal data-[blocked]:border-danger rounded-md border p-3 outline-offset-2 transition-colors duration-(--dur-fast) focus-visible:outline-2 motion-reduce:transition-none"
     >
       <div className="flex flex-wrap items-center gap-3">
         <Checkbox
@@ -127,28 +131,32 @@ export function MatterGroupRow({
           <Chevron aria-hidden />
         </Button>
       </div>
-      <dl className="text-ink-muted mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-        <div className="flex gap-1">
-          <dt className="sr-only">{t('grid.forum')}</dt>
-          <dd>{first?.forumCode ?? t('grid.noForum')}</dd>
-        </div>
-        <div className="flex gap-1">
-          <dt className="sr-only">{t('grid.stage')}</dt>
-          <dd>{first?.stage ?? t('grid.noStage')}</dd>
-        </div>
-        <div className="flex items-center gap-2">
-          <dt className="sr-only">{t('grid.nextDate')}</dt>
-          <dd className="flex items-center gap-2">
-            {matter.nextDate === null ? (
-              t('grid.noNextDate')
-            ) : (
-              <>
-                <time dateTime={matter.nextDate.date}>{day(matter.nextDate.date)}</time>
-                <ProvenanceChip source={source} viewOnly />
-              </>
-            )}
-          </dd>
-        </div>
+      <div className="text-ink-muted mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        {/* `contents`: the facts stay one flex row with the plain badges after them, and the list
+            holds only dt/dd groups. */}
+        <dl className="contents">
+          <div className="flex gap-1">
+            <dt className="sr-only">{t('grid.forum')}</dt>
+            <dd>{first?.forumCode ?? t('grid.noForum')}</dd>
+          </div>
+          <div className="flex gap-1">
+            <dt className="sr-only">{t('grid.stage')}</dt>
+            <dd>{first?.stage ?? t('grid.noStage')}</dd>
+          </div>
+          <div className="flex items-center gap-2">
+            <dt className="sr-only">{t('grid.nextDate')}</dt>
+            <dd className="flex items-center gap-2">
+              {matter.nextDate === null ? (
+                t('grid.noNextDate')
+              ) : (
+                <>
+                  <time dateTime={matter.nextDate.date}>{day(matter.nextDate.date)}</time>
+                  <ProvenanceChip source={source} viewOnly />
+                </>
+              )}
+            </dd>
+          </div>
+        </dl>
         <span>{t('grid.sources', { count: matter.sources.length })}</span>
         <span>{t('grid.confidence', { percent: Math.round(matter.confidence * 100) })}</span>
         {lowConfidence ? (
@@ -161,7 +169,7 @@ export function MatterGroupRow({
         {hasConflict ? (
           <GitCompare aria-label={t('grid.conflict')} role="img" className="text-danger size-4" />
         ) : null}
-      </dl>
+      </div>
       {matter.issues.some((i) => i.blocking) ? (
         <ConflictPicker matter={matter} resolved={resolved} day={day} onPick={onPickDate} />
       ) : null}

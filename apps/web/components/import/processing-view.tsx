@@ -50,9 +50,9 @@ export function ProcessingView({
           {t('processing.kept', { n: progress.keptAsAttachments })}
         </Alert>
       ) : null}
-      {failedFiles > 0 ? (
+      {failedFiles > 0 || progress.status === 'failed' ? (
         <Alert tone="warning" data-pattern-state="partial-failure">
-          <p>{t('processing.failed', { n: failedFiles })}</p>
+          <p>{t('processing.failed', { n: failedFiles > 0 ? failedFiles : Math.max(total, 1) })}</p>
           <Button
             type="button"
             size="sm"
@@ -69,7 +69,7 @@ export function ProcessingView({
           {t('processing.nothing')}
         </Alert>
       ) : null}
-      {finished && !nothing ? (
+      {progress.status === 'ready' && !nothing ? (
         <Alert tone="success" data-pattern-state="plan-ready">
           <p>{t('processing.ready', { n: progress.matchedRows })}</p>
           {onReview === undefined ? null : (

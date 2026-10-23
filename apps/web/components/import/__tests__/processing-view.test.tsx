@@ -41,6 +41,12 @@ describe('ProcessingView', () => {
     expect(screen.getByRole('button', { name: 'Retry the failed files' })).toBeTruthy();
   });
 
+  it('a failed batch offers a retry and never says the plan is ready', () => {
+    show(progress({ status: 'failed', matchedRows: 2, files: { ...progress().files, failed: 0 } }));
+    expect(screen.getByRole('button', { name: 'Retry the failed files' })).toBeTruthy();
+    expect(screen.queryByText(/Your plan is ready/)).toBeNull();
+  });
+
   it('says so when nothing was recognised', () => {
     show(progress({ status: 'ready', files: { ...progress().files, failed: 0 } }));
     expect(screen.getByText(/Nothing recognised/)).toBeTruthy();

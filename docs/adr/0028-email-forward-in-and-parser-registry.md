@@ -40,3 +40,8 @@ Proposed
 - Production SES needs the S3 reader and certificate fetch wired in once #110 supplies credentials; until then `ses` yields no provider.
 - The lawyer's enrolment numbers and aliases have no stored source yet, so the parsers' "own unmatched rows" path stays empty until they do; exact case-number and CNR matches work today.
 - A message pinned after its delayed job ran is not re-scheduled; unpinning does not delete the raw object.
+
+## Revisit when
+
+- #110 supplies SES credentials and the S3 reader, or the heuristics for sender trust prove too strict.
+- Pinned messages need their raw MIME expiry re-scheduled on unpin.

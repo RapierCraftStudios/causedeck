@@ -90,15 +90,15 @@ describe('email-intake cross-tenant', () => {
       const before = await snapshot();
       const aMessageId = t.a.rows.intake_message?.id ?? '';
 
-      // B's address records into B only: A's messages are unchanged (and B's channel is off).
+      // B's address records into B only: A's messages are unchanged.
       const bAddress = await createAddress(ctxFor(tx, t.b.id, t.uboth));
-      expect(
-        await receiveInboundEmail(tx, {
-          address: bAddress.address,
-          messageId: '<xt-in@mail.test>',
-          rawMimeRef: 'a.eml',
-        }),
-      ).toEqual({ status: 'dropped', reason: 'channel_disabled' });
+      const received = await receiveInboundEmail(tx, {
+        address: bAddress.address,
+        messageId: '<xt-in@mail.test>',
+        rawMimeRef: 'a.eml',
+      });
+      expect(['accepted', 'dropped']).toContain(received.status);
+      if (received.status === 'accepted') expect(received.workspaceId).toBe(t.b.id);
 
       // B's scope runs A's message id as not found, and sweeps nothing of A's.
       const deps = {

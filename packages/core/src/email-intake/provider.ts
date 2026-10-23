@@ -9,5 +9,12 @@ export type { InboundEmailProvider } from '@causedeck/capture';
 
 export function inboundProviderFromProcess(): InboundEmailProvider | null {
   // eslint-disable-next-line no-process-env -- optional INBOUND_EMAIL_* toggles, outside the typed env schema.
-  return inboundProviderFromEnv(process.env);
+  const env = process.env;
+  return inboundProviderFromEnv({
+    INBOUND_EMAIL_PROVIDER: env['INBOUND_EMAIL_PROVIDER'],
+    INBOUND_EMAIL_SECRET: env['INBOUND_EMAIL_SECRET'],
+    INBOUND_EMAIL_DIR: env['INBOUND_EMAIL_DIR'],
+    MAILPIT_URL: env['MAILPIT_URL'],
+    SES_INBOUND_TOPIC_ARNS: env['SES_INBOUND_TOPIC_ARNS'],
+  });
 }

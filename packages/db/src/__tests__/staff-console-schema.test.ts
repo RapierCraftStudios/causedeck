@@ -99,16 +99,19 @@ function as<T>(tx: Transaction, userId: string, fn: (s: Transaction) => Promise<
   return withUser(tx, { userId }, fn);
 }
 
-describe('staff parse yield (0069)', () => {
+describe('staff parse yield (0072)', () => {
   it('returns per-adapter counts only, summed across workspaces, to an enabled staff member', async () => {
     await withTestDb(async (tx) => {
       const t = await seedTwoTenants(tx);
       const adapterId = `parse-yield-${t.a.id.slice(0, 8)}`;
+      // adapter_parse_run references a real document (FK since 0044): use each tenant's seeded one.
+      const docOf = (ws: string): string =>
+        (ws === t.a.id ? t.a.rows.document?.documentId : t.b.rows.document?.documentId) ?? '';
       for (const ws of [t.a.id, t.b.id]) {
         await inWorkspace(tx, ws, (s) =>
           s.execute(
             sql`insert into adapter_parse_run (workspace_id, document_id, adapter_id, adapter_version, forum_code, rows_parsed, rows_anchored, unmapped_headings, unknown_case_types, status)
-                values (${ws}::uuid, gen_random_uuid(), ${adapterId}, '1', 'f', 10, 8, 0, 0, 'ok')`,
+                values (${ws}::uuid, ${docOf(ws)}::uuid, ${adapterId}, '1', 'f', 10, 8, 0, 0, 'ok')`,
           ),
         );
       }

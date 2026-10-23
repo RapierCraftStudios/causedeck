@@ -93,11 +93,14 @@ async function seed(tx: Transaction) {
       delegatedAdvocateId: ADVOCATE,
     });
   }
+  // adapter_parse_run references a real document (FK since 0044): use each tenant's seeded one.
+  const docOf = (ws: string): string =>
+    (ws === t.a.id ? t.a.rows.document?.documentId : t.b.rows.document?.documentId) ?? '';
   for (const ws of [t.a.id, t.b.id]) {
     await inWorkspace(tx, ws, (s) =>
       s.execute(
         sql`insert into adapter_parse_run (workspace_id, document_id, adapter_id, adapter_version, forum_code, rows_parsed, rows_anchored, unmapped_headings, unknown_case_types, status)
-            values (${ws}::uuid, gen_random_uuid(), ${active}, '1', ${FORUM}, 10, 9, 0, 0, 'ok')`,
+            values (${ws}::uuid, ${docOf(ws)}::uuid, ${active}, '1', ${FORUM}, 10, 9, 0, 0, 'ok')`,
       ),
     );
   }

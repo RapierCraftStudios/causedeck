@@ -1,8 +1,15 @@
 // Intake parsers on synthetic .eml fixtures (#528): AIMS, registry memo, e-filing ack, briefing
 // counsel and generic; each fixture parses in under a second.
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { CONTEXT, MATTER_ID, parsed } from './helpers.ts';
+
+// Module load and JIT warm-up are not parser cost: the first message would otherwise pay for them
+// inside its one-second budget, which a loaded or coverage-instrumented CI runner can exceed.
+beforeAll(async () => {
+  await parsed('aims-plain');
+  await parsed('defect-memo');
+}, 30_000);
 
 const kinds = (drafts: { kind: string }[]) => drafts.map((draft) => draft.kind);
 

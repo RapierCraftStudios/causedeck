@@ -363,6 +363,10 @@ test.describe('members page', () => {
     await page.getByRole('button', { name: 'Create workspace' }).click();
     await expect(page).toHaveURL(/\/w\/solo-members-check\/today$/);
     await page.goto(`/w/solo-members-check/${PATH}`);
+    // The creator owns the workspace, so the Settings nav has an active indicator to wait on. Before
+    // hydration settles, the streamed list and its client render can both be in the DOM for a
+    // moment, which trips the strict-mode text match below.
+    await shellReady(page);
     await expect(
       page.getByText(
         'It is just you for now. Invite juniors, clerks or co-counsel when you are ready.',

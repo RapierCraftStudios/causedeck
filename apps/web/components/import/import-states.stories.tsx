@@ -155,7 +155,7 @@ export const GridWpWithWmp: Story = {
       ],
     }),
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('Rao v State')).toBeVisible();
+    await expect(canvas.getByDisplayValue('Rao v State')).toBeVisible();
   },
 };
 

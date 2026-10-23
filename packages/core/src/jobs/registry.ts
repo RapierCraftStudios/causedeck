@@ -19,6 +19,7 @@ import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
+import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { whatsappImport } from './definitions/whatsapp-import.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
 import { deletionTick } from './definitions/deletion-tick.ts';
@@ -164,6 +165,7 @@ export const registry = createRegistry([
   systemCaptureRetention,
   captureRetention,
   whatsappImport,
+  extractOrder,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -197,6 +199,7 @@ export type JobMap = RegistryMap<
     typeof systemCaptureRetention,
     typeof captureRetention,
     typeof whatsappImport,
+    typeof extractOrder,
   ]
 >;
 export type JobName = keyof JobMap;

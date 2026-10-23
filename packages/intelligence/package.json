@@ -11,7 +11,8 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "vitest run src/extract/eval.test.ts"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
@@ -35,6 +36,7 @@
     "mammoth": "catalog:",
     "mupdf": "catalog:",
     "pdfjs-dist": "catalog:",
-    "sharp": "catalog:"
+    "sharp": "catalog:",
+    "zod": "catalog:"
   }
 }

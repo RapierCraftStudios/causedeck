@@ -48,3 +48,4 @@ export {
 export { mupdfRenderer } from './render/mupdf.ts';
 export { noRenderer, type PageRenderer } from './render/renderer.ts';
 export { DEFAULT_MIN_PAGE_CHARS, isGarbled, normaliseText } from './text/quality.ts';
+export * from './extract/index.ts';

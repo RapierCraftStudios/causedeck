@@ -180,3 +180,4 @@ export {
   type IntakeAllowlistKind,
   type IntakeMessageStatus,
 } from './email-intake.ts';
+export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';

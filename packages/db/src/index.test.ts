@@ -75,6 +75,7 @@ describe('@causedeck/db root entry point', () => {
       'email_suppression',
       'entitlement',
       'export_job',
+      'extraction',
       'feature_flag',
       'flag_change_request',
       'forum',

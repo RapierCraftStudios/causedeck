@@ -7,13 +7,16 @@ import { Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
-import { searchMattersAction } from '../../../app/(app)/w/[slug]/matters/actions.ts';
+import type { searchMattersAction } from '../../../app/(app)/w/[slug]/matters/actions.ts';
 import { dateHint, formatElapsed } from '../../../lib/capture/voice/recorder.ts';
 
 export interface RecordingReviewProps {
   url: string;
   durationMs: number;
   workspaceId: string;
+  /** The matter search (the sheet passes `searchMattersAction`; a prop keeps server code out of
+   *  stories). */
+  searchMatters: typeof searchMattersAction;
   /** The linked matter: the one the sheet was opened from or the one picked here. */
   matterId?: string | undefined;
   /** Its title when it was picked here; a prefilled matter has none. */
@@ -29,6 +32,7 @@ export function RecordingReview({
   url,
   durationMs,
   workspaceId,
+  searchMatters,
   matterId,
   matterTitle,
   onPickMatter,
@@ -50,7 +54,7 @@ export function RecordingReview({
     if (term.length < 2) return;
     let live = true;
     const timer = setTimeout(() => {
-      searchMattersAction({ workspaceId, q: term })
+      searchMatters({ workspaceId, q: term })
         .then((result) => {
           if (live) setFound(result.ok ? result.data : []);
         })
@@ -63,7 +67,7 @@ export function RecordingReview({
       live = false;
       clearTimeout(timer);
     };
-  }, [term, workspaceId]);
+  }, [term, workspaceId, searchMatters]);
 
   useEffect(() => {
     const element = audio.current;

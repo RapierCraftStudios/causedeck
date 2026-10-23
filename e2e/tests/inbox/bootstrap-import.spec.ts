@@ -3,7 +3,7 @@
 // with a clear message. Files are only selected, never uploaded (the channel is off and the e2e
 // stack has no job worker). Fictional data only.
 import { expect, test } from '../../fixtures/index.ts';
-import { shellReady } from '../shell/helpers.ts';
+import { contentReady } from '../shell/helpers.ts';
 
 const IMPORT_PATH = 'import';
 
@@ -20,7 +20,7 @@ test.describe('bootstrap import', () => {
     { tag: '@a11y' },
     async ({ page, asUser }) => {
       await asUser('owner', { path: IMPORT_PATH });
-      await shellReady(page);
+      await contentReady(page);
       await expect(page.getByText('Bring your existing cases in')).toBeVisible();
       await expect(page.getByText('Turn on bulk import first')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Turn on bulk import' })).toBeVisible();
@@ -29,7 +29,7 @@ test.describe('bootstrap import', () => {
 
   test('refuses the 201st file with a message', async ({ page, asUser }) => {
     await asUser('owner', { path: IMPORT_PATH });
-    await shellReady(page);
+    await contentReady(page);
     const files = Array.from({ length: 201 }, (_, n) => ({
       name: `list-${String(n)}.txt`,
       mimeType: 'text/plain',

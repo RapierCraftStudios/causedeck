@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 
 import { expect, test } from '../../fixtures/index.ts';
-import { shellReady } from '../shell/helpers.ts';
+import { contentReady } from '../shell/helpers.ts';
 
 import { IMPORT_PATH, seedBatch, type SeedKind } from './import-helpers.ts';
 
@@ -40,7 +40,7 @@ for (const shot of SHOTS) {
       await asUser('owner', {
         path: batch === null ? IMPORT_PATH : `${IMPORT_PATH}?batch=${batch}`,
       });
-      await shellReady(page);
+      await contentReady(page);
       if (shot.review === true) {
         await page.getByRole('button', { name: 'Review the plan' }).click();
         await expect(page.getByRole('heading', { name: 'Confirm what we found' })).toBeVisible();

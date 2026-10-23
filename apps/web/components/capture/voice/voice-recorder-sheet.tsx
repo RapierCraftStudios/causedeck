@@ -37,6 +37,7 @@ import {
   type Recording,
   type VoiceRecorder,
 } from '../../../lib/capture/voice/recorder.ts';
+import { searchMattersAction } from '../../../app/(app)/w/[slug]/matters/actions.ts';
 import { saveRecording } from '../../../lib/capture/voice/queue.ts';
 import { getDeviceKey } from '../../../lib/pwa/outbox/crypto.ts';
 import { dexieKeyStore, dexieOutboxStore } from '../../../lib/pwa/outbox/db.ts';
@@ -292,6 +293,7 @@ export function VoiceRecorderSheet({
             url={url}
             durationMs={recording.durationMs}
             workspaceId={workspaceId}
+            searchMatters={searchMattersAction}
             matterId={matterId}
             matterTitle={matterPick?.title}
             onPickMatter={setMatterPick}

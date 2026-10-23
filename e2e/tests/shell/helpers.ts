@@ -60,6 +60,18 @@ export async function shellReady(page: Page): Promise<void> {
   await page.locator('[data-active-indicator="animated"]').waitFor({ state: 'attached' });
 }
 
+/**
+ * Wait until React has hydrated the page's `main`, for routes that have no nav item (so no animated
+ * active indicator to wait on, see `shellReady`), such as `/import`. Interactions that rely on event
+ * handlers (file inputs, key presses) need it; assertions on visible text do not.
+ */
+export async function contentReady(page: Page): Promise<void> {
+  await page.waitForFunction(() => {
+    const main = document.querySelector('main');
+    return main !== null && Object.keys(main).some((key) => key.startsWith('__reactFiber$'));
+  });
+}
+
 export interface OpenShellOptions {
   workspace?: string;
   path?: string;

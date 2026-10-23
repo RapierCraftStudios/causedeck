@@ -33,6 +33,12 @@ export function UnreadableCapture({
   onKeyLine,
 }: UnreadableCaptureProps) {
   const t = useTranslations('inbox');
+  const tc = useTranslations('camera');
+  // A photographed printed cause list or receipt is not unreadable: say what it is (#52).
+  const route =
+    item.needsYouReason === 'cause_list' || item.needsYouReason === 'receipt'
+      ? item.needsYouReason
+      : null;
   const titleId = useId();
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState('');
@@ -54,9 +60,19 @@ export function UnreadableCapture({
     >
       <h3 id={titleId} className="text-ink flex items-center gap-2 font-serif text-lg">
         <FileQuestion aria-hidden="true" className="text-ink-muted size-4 shrink-0" />
-        {t('unreadable.title')}
+        {route === 'cause_list'
+          ? tc('causeList.title')
+          : route === 'receipt'
+            ? tc('receipt.title')
+            : t('unreadable.title')}
       </h3>
-      <p className="text-ink text-sm">{t('unreadable.copy')}</p>
+      <p className="text-ink text-sm">
+        {route === 'cause_list'
+          ? tc('causeList.copy')
+          : route === 'receipt'
+            ? tc('receipt.copy')
+            : t('unreadable.copy')}
+      </p>
       {error ? (
         <p role="alert" className="text-danger bg-danger-soft rounded-md px-3 py-2 text-sm">
           {error}
@@ -64,6 +80,24 @@ export function UnreadableCapture({
       ) : null}
       {readOnly ? (
         <p className="text-ink-muted text-xs">{t('readOnly')}</p>
+      ) : route === 'cause_list' ? (
+        <div className="flex flex-wrap gap-2">
+          {/* The hand-off to list import arrives with #57. */}
+          <Button variant="secondary" disabled title={tc('causeList.soon')}>
+            {tc('causeList.action')}
+          </Button>
+          {item.canKeep ? (
+            <Button variant="ghost" disabled={disabled} title={disabledReason} onClick={onKeep}>
+              {t('unreadable.keep')}
+            </Button>
+          ) : null}
+        </div>
+      ) : route === 'receipt' ? (
+        item.canKeep ? (
+          <Button variant="secondary" disabled={disabled} title={disabledReason} onClick={onKeep}>
+            {t('unreadable.keep')}
+          </Button>
+        ) : null
       ) : typing ? (
         <form onSubmit={submit} className="grid gap-2">
           <label className="grid gap-1 text-sm">

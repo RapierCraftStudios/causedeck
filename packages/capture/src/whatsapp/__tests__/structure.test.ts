@@ -8,11 +8,22 @@ import {
   verifyChatItems,
   type ChatMessage,
   type RawChatItem,
+  type VerifiedChatItem,
 } from '../structure.ts';
 
 const messages: ChatMessage[] = [
-  { id: 'm1', ts: '2026-10-12T10:01:00', sender: 'Asha', text: 'Please file the reply by 15/10/2026' },
-  { id: 'm2', ts: '2026-10-12T10:02:00', sender: 'Ravi', text: 'Call the registry about the order' },
+  {
+    id: 'm1',
+    ts: '2026-10-12T10:01:00',
+    sender: 'Asha',
+    text: 'Please file the reply by 15/10/2026',
+  },
+  {
+    id: 'm2',
+    ts: '2026-10-12T10:02:00',
+    sender: 'Ravi',
+    text: 'Call the registry about the order',
+  },
   { id: 'm3', ts: '2026-10-12T10:03:00', sender: null, text: 'Messages are end-to-end encrypted' },
 ];
 
@@ -80,6 +91,11 @@ describe('verifyChatItems', () => {
 
 describe('chatItemsToDrafts', () => {
   const verified = verifyChatItems([item()], messages);
+  const first = (): VerifiedChatItem => {
+    const [one] = verified;
+    if (one === undefined) throw new Error('no verified item');
+    return one;
+  };
 
   it('makes an anchored task draft with the message as its source ref', () => {
     const [draft] = chatItemsToDrafts(verified, {
@@ -98,10 +114,10 @@ describe('chatItemsToDrafts', () => {
 
   it('marks a client instruction ambiguous so it is never auto-actioned', () => {
     expect(isClientInstruction({ clientInstruction: true, quote: 'x' })).toBe(true);
-    expect(isClientInstruction({ clientInstruction: false, quote: 'the client wants it filed' })).toBe(
-      true,
-    );
-    const [draft] = chatItemsToDrafts([{ ...verified[0]!, clientInstruction: true }], {
+    expect(
+      isClientInstruction({ clientInstruction: false, quote: 'the client wants it filed' }),
+    ).toBe(true);
+    const [draft] = chatItemsToDrafts([{ ...first(), clientInstruction: true }], {
       captureId: 'c1',
       aiCallId: null,
     });
@@ -109,7 +125,7 @@ describe('chatItemsToDrafts', () => {
   });
 
   it('omits dueDate for an undated item', () => {
-    const [draft] = chatItemsToDrafts([{ ...verified[0]!, dueDate: null }], {
+    const [draft] = chatItemsToDrafts([{ ...first(), dueDate: null }], {
       captureId: 'c1',
       aiCallId: null,
     });

@@ -96,8 +96,14 @@ export function dateAppearsInText(
   const names = (MONTHS[month - 1] ?? []).join('|');
   if (names === '') return false;
   const named = [
-    new RegExp(`(?<!\\d)0?${String(day)}(?:st|nd|rd|th)?\\s+(?:of\\s+)?(?:${names})\\.?,?\\s+(\\d{2,4})(?!\\d)`, 'i'),
-    new RegExp(`\\b(?:${names})\\.?\\s+0?${String(day)}(?:st|nd|rd|th)?,?\\s+(\\d{2,4})(?!\\d)`, 'i'),
+    new RegExp(
+      `(?<!\\d)0?${String(day)}(?:st|nd|rd|th)?\\s+(?:of\\s+)?(?:${names})\\.?,?\\s+(\\d{2,4})(?!\\d)`,
+      'i',
+    ),
+    new RegExp(
+      `\\b(?:${names})\\.?\\s+0?${String(day)}(?:st|nd|rd|th)?,?\\s+(\\d{2,4})(?!\\d)`,
+      'i',
+    ),
   ];
   return named.some((re) => {
     const hit = re.exec(text);

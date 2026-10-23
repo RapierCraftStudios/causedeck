@@ -19,7 +19,9 @@ const CLIENT_INSTRUCTION =
   /\b(?:client|party|petitioner|respondent|complainant)\b.{0,40}\b(?:says?|said|wants?|wanted|asked|asks|told|tells|instructed?|insists?|requests?|requested)\b/i;
 
 /** Whether the item relays a client's instruction: the model's flag, or the wording of the quote. */
-export function isClientInstruction(item: Pick<VerifiedChatItem, 'clientInstruction' | 'quote'>): boolean {
+export function isClientInstruction(
+  item: Pick<VerifiedChatItem, 'clientInstruction' | 'quote'>,
+): boolean {
   return item.clientInstruction || CLIENT_INSTRUCTION.test(item.quote);
 }
 

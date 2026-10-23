@@ -17,6 +17,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | Folder | Public entry point | What |
 |---|---|---|
 | `audit` | `@causedeck/core/audit` | audit writer, chain verification, feed query and export ([audit.md](audit.md)) |
+| `activation` | `@causedeck/core/activation` | product activation events and the funnel and time-to-value reads behind the admin Growth page (#509); not re-exported from the root |
 | `workspaces` | `@causedeck/core/workspaces` | workspaces, members, invitations, offboarding ([workspaces.md](workspaces.md)) |
 | `matters` | `@causedeck/core/matters` | matter restrictions |
 | `court` | `@causedeck/core/court` | forum catalogue reads, custom workspace forums and official deep links (#34, [ADR 0014](../adr/0014-forum-catalogue-and-deep-links.md)), the tenant-free adapter parse-health summary (#372), and the courts read models `getCourtsIndex`, `getForumDetail`, `getAdapterStatus` and `listHallsSeen` (#397; access-mode rows with counsel notes via `@causedeck/flags/access-mode`), the roster services (#385, #387), and bench-change detection and alerts `detectBenchChanges`, `listAlerts`, `dismissAlert` with the `CourtEvents` port (`bench.changed`) and `notify()` delivery (#389), and the rosters page read model `getRostersPage` (#434) |
@@ -58,6 +59,7 @@ The single source of truth is `CORE_DOMAIN_DEPENDENCIES` in
 ```mermaid
 graph LR
   workspaces --> audit
+  workspaces --> activation
   matters --> workspaces
   matters --> audit
   court --> workspaces
@@ -90,7 +92,8 @@ graph LR
 |---|---|
 | `shared` | nothing |
 | `audit` | nothing (only `shared/`) |
-| `workspaces` | `audit` |
+| `activation` | nothing |
+| `workspaces` | `audit`, `activation` |
 | `matters` | `workspaces`, `audit` |
 | `court` | `workspaces` |
 | `matter-graph` | `workspaces`, `matters` |

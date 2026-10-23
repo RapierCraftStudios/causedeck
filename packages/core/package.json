@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./audit": "./src/audit/index.ts",
+    "./activation": "./src/activation/index.ts",
     "./billing": "./src/billing/index.ts",
     "./court": "./src/court/index.ts",
     "./jobs": "./src/jobs/index.ts",

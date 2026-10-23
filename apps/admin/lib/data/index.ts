@@ -3,6 +3,14 @@
 // the global table (`@causedeck/flags` for `access_mode_registry`); apps never value-import
 // `@causedeck/db` (#299). This layer only scopes and audits them.
 import {
+  ACTIVATION_CHANNELS,
+  ACTIVATION_STEPS,
+  activationFunnel,
+  type ActivationChannel,
+  type ActivationStep,
+  type Funnel,
+} from '@causedeck/core/activation';
+import {
   countActiveStaff,
   staffAuditEvents,
   staffWorkspaceMetadata,
@@ -28,7 +36,11 @@ export {
   type StaffCall,
   type StaffQuery,
 } from './scope.ts';
+export { ACTIVATION_CHANNELS, ACTIVATION_STEPS };
 export type {
+  ActivationChannel,
+  ActivationStep,
+  Funnel,
   StaffAuditCursor,
   StaffAuditEntry,
   StaffBudgetOverride,
@@ -115,6 +127,23 @@ export function adapterRegistry(
     staff,
     { purpose: 'adapters.registry', capability: 'adapters', tables: ['access_mode_registry'] },
     (tx) => listAccessModeRegistry(tx),
+    db,
+  );
+}
+
+/**
+ * The activation funnel by weekly sign-up cohort, optionally for one channel, with time to first
+ * court-day view (#509). Counts and durations only: no user id leaves the core read.
+ */
+export function growthFunnel(
+  staff: StaffActor,
+  options: { channel?: ActivationChannel; since?: Date } = {},
+  db?: Database,
+): Promise<Funnel> {
+  return staffQuery(
+    staff,
+    { purpose: 'growth.funnel', capability: 'growth', tables: ['activation_event'] },
+    (tx) => activationFunnel(tx, options),
     db,
   );
 }

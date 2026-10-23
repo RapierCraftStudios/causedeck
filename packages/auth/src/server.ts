@@ -426,6 +426,23 @@ export function createAuth({
         },
       },
       user: {
+        create: {
+          // The funnel's first step and cohort anchor (#509): the user id only, never the email.
+          // Measurement must not fail a sign-up.
+          after: async (user) => {
+            try {
+              await db
+                .insert(schema.activationEvent)
+                .values({ userId: user.id, step: 'signed_up' })
+                .onConflictDoNothing();
+            } catch (error) {
+              logger.warn(
+                { err: error instanceof Error ? { name: error.name } : {} },
+                'signed_up activation event not recorded',
+              );
+            }
+          },
+        },
         update: {
           // The two-factor plugin flips `twoFactorEnabled` only when it changes (first verify or
           // `enable` without verification, and `disable`).

@@ -1,4 +1,4 @@
-// Console navigation (#309): Overview, Adapters, Flags, Workspaces, Support sessions, Audit,
+// Console navigation (#309): Overview, Adapters, Flags, Workspaces, Support sessions, Audit, Growth,
 // filtered by the staff role matrix. 240 px left nav at desktop widths, an icon rail at 768, a
 // wrapping row on phones (360).
 import {
@@ -8,6 +8,7 @@ import {
   LifeBuoy,
   ScrollText,
   ToggleLeft,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -16,7 +17,7 @@ import { canStaff, type StaffCapability, type StaffRole } from '../lib/roles.ts'
 
 export interface ConsoleNavItem {
   capability: StaffCapability;
-  href: '/' | '/adapters' | '/flags' | '/workspaces' | '/support' | '/audit';
+  href: '/' | '/adapters' | '/flags' | '/workspaces' | '/support' | '/audit' | '/growth';
   label: string;
   icon: LucideIcon;
 }
@@ -28,6 +29,7 @@ export const CONSOLE_NAV: readonly ConsoleNavItem[] = [
   { capability: 'workspaces', href: '/workspaces', label: 'Workspaces', icon: Building2 },
   { capability: 'support', href: '/support', label: 'Support sessions', icon: LifeBuoy },
   { capability: 'audit', href: '/audit', label: 'Audit', icon: ScrollText },
+  { capability: 'growth', href: '/growth', label: 'Growth', icon: TrendingUp },
 ];
 
 export function navItemsFor(role: StaffRole): readonly ConsoleNavItem[] {

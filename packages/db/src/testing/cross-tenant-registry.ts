@@ -115,6 +115,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   ics_feed_event: DB_TABLES_TEST,
   ics_import_event: DB_TABLES_TEST,
 
+  // Case-status watch (#589).
+  case_watch: DB_TABLES_TEST,
+  case_status_snapshot: DB_TABLES_TEST,
+
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
 
@@ -128,6 +132,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
+  // Official notices feed (#584).
+  notice_match: DB_TABLES_TEST,
 };
 
 /**
@@ -672,6 +678,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: MEMORY_ERASURE_TEST,
     kind: 'self-scoped',
     note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
+  },
+  // citations (#484): the global corpus, one answer for every workspace
+  verifyCitation: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments, the same answer in every workspace; reads nothing tenant-scoped',
   },
 };
 

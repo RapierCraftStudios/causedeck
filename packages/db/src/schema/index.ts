@@ -46,6 +46,7 @@ export {
   type FlagChangeRequestStatus,
 } from './flags.ts';
 export { fetchLog } from './fetch-log.ts';
+export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
 export {
   NO_CAPTCHA_KINDS,
   SOURCE_ACCESS_MODES,
@@ -221,3 +222,18 @@ export {
   type ImportBatchFileStatus,
   type ImportBatchStatus,
 } from './import-batch.ts';
+export {
+  NOTICE_KINDS,
+  NOTICE_MATCH_REASONS,
+  notice,
+  noticeKind,
+  noticeMatch,
+  type NoticeKind,
+  type NoticeMatchReason,
+} from './notices.ts';
+export {
+  CASE_STATUS_VIA,
+  caseStatusSnapshot,
+  caseWatch,
+  type CaseStatusVia,
+} from './case-watch.ts';

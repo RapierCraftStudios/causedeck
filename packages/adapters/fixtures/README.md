@@ -109,6 +109,25 @@ input is in `.prettierignore`, so it stays malformed.
 Karnataka set (HTML and PDF lists, orders, notices, with truth files) to the git-ignored
 `fixtures/generated/`, and `test:metrics` gates the adapter on it.
 
+## Workbench fixtures and the accuracy baseline
+
+The staff console's fixture workbench (`/fixtures`, #516) builds a redacted bundle from a contributed
+document: party names are replaced with synthetic ones, emails, phone, Aadhaar and PAN numbers with
+placeholders, and the manifest entry is `origin: lawyer-supplied`, `classification: REDACTED`. Write
+the downloaded bundle into this directory, then commit it and open a PR:
+
+```sh
+pnpm --filter @causedeck/adapters fixtures:export bundle.json
+```
+
+The export refuses to overwrite a fixture or write one that still holds personal data.
+
+`accuracy-baseline.json` holds each source's floor for `caseRate` (share of fixtures that match
+exactly) and mean field `precision` and `recall`. `fixture-regression.test.ts` (part of
+`test:golden`) prints the per-source table and fails when a source falls below its entry or has none,
+so a parser change that lowers accuracy blocks the merge. A new adapter adds its entry in the same PR;
+changing a floor is a reviewed edit.
+
 ## Lawyer-supplied fixtures are never committed
 
 Real lists and orders stay on the machine of whoever holds them. Put them in a `fixtures-private/`

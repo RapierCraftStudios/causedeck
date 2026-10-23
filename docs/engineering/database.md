@@ -233,6 +233,21 @@ only sets `status`. Migration `0050_notification_bench_alert_party_names` adds
 `notification_setting.bench_alert_party_names` (boolean, default false): the member's opt-in to party
 names in bench-change notifications.
 
+## Notices tables
+
+`notice` and `notice_match` in `packages/db/src/schema/notices.ts`, migration `0068_notices` (#584,
+part 1 of #480, D-048). `notice` is a global table (GLOBAL_TABLES, no RLS; the app role may SELECT,
+INSERT and UPDATE, never DELETE) holding official court, bar and Gazette notices read from a cleared
+`source`: `source_id`, `forum_codes text[]`, `kind` (`notice_kind`), `title`, `issued_on`,
+`effective_on`, `url`, the document as `document_key` / `document_sha256` / `document_mime` (all set
+or all null; not a `blob` FK, since `blob` is a tenant table) and `provenance()` columns. One row per
+`(source_id, url)`. `notice_match` is a tenant table under FORCE RLS: `notice_id`, a nullable
+composite `(workspace_id, matter_id)` FK, a nullable `forum_id` (scope-guarded `same_or_global`), a
+`reason` (`forum` or `matter_forum`) and a check that a matter or forum is named. The migration also
+seeds uncleared `notice` sources (Supreme Court, Madras HC, Karnataka HC, the Chennai and Bengaluru
+district courts, BCTNP, KSBC, eGazette) with terms URLs in `notes`. Tested in
+`packages/db/src/__tests__/notices-schema.test.ts`.
+
 ## Audit tables
 
 `packages/db/src/schema/audit.ts`, migration `0008_audit` (#226, #26 part 1). Both tables are

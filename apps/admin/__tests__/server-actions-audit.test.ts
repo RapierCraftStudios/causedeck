@@ -197,7 +197,22 @@ function form(values: Record<string, string>): FormData {
   return data;
 }
 
+const FIXTURE_FIELDS = {
+  adapterId: 'echo',
+  format: 'text',
+  name: 'list-80-audit',
+  document: 'ECHO TEST COURT (FICTIONAL)\nCAUSE LIST FOR 21.10.2026\nCOURT HALL 1\nFOR ADMISSION\n',
+};
+
 const ACTIONS: Record<string, () => Promise<unknown>> = {
+  'app/(console)/fixtures/actions.ts#previewFixtureAction': async () => {
+    const { previewFixtureAction } = await import('../app/(console)/fixtures/actions.ts');
+    return previewFixtureAction({}, form(FIXTURE_FIELDS));
+  },
+  'app/(console)/fixtures/actions.ts#buildFixtureAction': async () => {
+    const { buildFixtureAction } = await import('../app/(console)/fixtures/actions.ts');
+    return buildFixtureAction({}, form(FIXTURE_FIELDS));
+  },
   'app/(console)/flags/actions.ts#setFlagAction': async () => {
     const { setFlagAction } = await import('../app/(console)/flags/actions.ts');
     return setFlagAction({}, form({ key: 'pwa.offline', enabled: 'true' }));

@@ -155,6 +155,10 @@ describe('row-level security catalog', () => {
         'ics_feed_event',
         'ics_import_event',
 
+        // Case-status watch (#589).
+        'case_watch',
+        'case_status_snapshot',
+
         // Anchored order extraction (#46).
         'extraction',
 
@@ -170,6 +174,9 @@ describe('row-level security catalog', () => {
         'cause_list_watch',
         // Court document network (#485).
         'contribution_ledger',
+
+        // Official notices feed (#584).
+        'notice_match',
       ].sort(),
     );
     for (const row of rows)

@@ -10,6 +10,8 @@ export type { InboxAnchor };
 export interface InboxItemView extends Omit<InboxItem, 'createdAt' | 'reassignUntil'> {
   createdAt: string;
   reassignUntil: string | null;
+  /** When the public cause list this proposal was matched in was fetched (#482); null for other sources. */
+  sourceFetchedAt?: string | null;
 }
 
 export interface ProcessingItemView {

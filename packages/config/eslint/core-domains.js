@@ -15,7 +15,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   workspaces: Object.freeze(['audit']),
   matters: Object.freeze(['workspaces', 'audit']),
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
-  court: Object.freeze(['workspaces']),
+  // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
+  court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),
@@ -85,6 +86,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'email-intake',
     'extraction',
     'import',
+    'court',
+    'sources',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

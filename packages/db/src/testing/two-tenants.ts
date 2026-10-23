@@ -24,6 +24,7 @@ import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
+import { causeListWatch } from '../schema/cause-list-watch.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
@@ -843,6 +844,19 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: advocateProfile.id });
     return { id: first(rows, 'advocate_profile').id };
+  },
+  cause_list_watch: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(causeListWatch)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        sourceId: 'in.ka.karnataka-hc.bengaluru:cause_list',
+        kind: 'brn',
+        value: 'KAR/1/1900',
+      })
+      .returning({ id: causeListWatch.id });
+    return { id: first(rows, 'cause_list_watch').id };
   },
   import_plan: async (tx, { workspaceId, ownerId }) => {
     const batchId = await seedImportBatch(tx, workspaceId, ownerId);

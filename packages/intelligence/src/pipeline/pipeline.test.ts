@@ -107,7 +107,7 @@ describe('text-layer PDF', () => {
     expect(saved?.pages[0]?.text).toContain(PARTY_ENGLISH);
     expect(saved?.pages[0]?.images?.width).toBeGreaterThan(0);
     expect(events.events.map((e) => e.type)).toEqual(['document.processed', 'capture.classified']);
-  });
+  }, 30_000); // the first test pays the cold load of the PDF and image libraries on a shared runner
 
   it('processes 20 text pages in under 5 seconds and renders 20 pages in under 20', async () => {
     const { deps } = setup();

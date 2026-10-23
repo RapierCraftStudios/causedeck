@@ -14,19 +14,10 @@ import { useCommandPalette } from './use-command-palette.ts';
 import { UserMenu } from './user-menu.tsx';
 import { WorkspaceSwitcher } from './workspace-switcher.tsx';
 
-// Install banner and update toast (#50) load after first paint: the shell's initial JS stays put.
-const InstallBanner = dynamic(
-  () => import('../pwa/install-banner.tsx').then((m) => ({ default: m.InstallBanner })),
-  { ssr: false },
-);
-const UpdateToast = dynamic(
-  () => import('../pwa/update-toast.tsx').then((m) => ({ default: m.UpdateToast })),
-  { ssr: false },
-);
-
-// The camera sheet (#52) opens on `?capture=camera` and is a chunk of its own.
-const CameraHost = dynamic(
-  () => import('../capture/camera/camera-sheet.tsx').then((m) => m.CameraHost),
+// The floating overlays (#50 install banner and update toast, #52 camera sheet) load after first
+// paint behind one dynamic import, so the shell's initial JS stays put.
+const ShellOverlays = dynamic(
+  () => import('./overlays.tsx').then((m) => ({ default: m.ShellOverlays })),
   { ssr: false },
 );
 
@@ -84,9 +75,7 @@ export function Topbar({ context, onSearch }: TopbarProps) {
         />
       ) : null}
       <div className="fixed inset-x-4 bottom-20 z-50 flex flex-col gap-2 md:inset-x-auto md:right-6 md:bottom-6 md:w-96">
-        <UpdateToast />
-        <CameraHost workspaceId={context.workspace.id} />
-        <InstallBanner viewerId={context.user.id} workspaceId={context.workspace.id} />
+        <ShellOverlays viewerId={context.user.id} workspaceId={context.workspace.id} />
       </div>
     </header>
   );

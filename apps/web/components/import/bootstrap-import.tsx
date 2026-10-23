@@ -20,7 +20,7 @@ import {
 } from '../../app/(app)/w/[slug]/import/actions.ts';
 import {
   admitFiles,
-  sha256Hex,
+  fileSha256Hex,
   type Candidate,
   type ImportEntry,
 } from '../../lib/import/file-rules.ts';
@@ -93,7 +93,7 @@ export function BootstrapImport({
         id,
         name: file.name,
         sizeBytes: file.size,
-        sha256: file.size > 0 ? await sha256Hex(file) : null,
+        sha256: file.size > 0 ? await fileSha256Hex(file) : null,
       });
     });
     // Back in drop order.

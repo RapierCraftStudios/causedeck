@@ -76,7 +76,10 @@ export function matchJudgmentToTags(
     for (const line of page.text.split('\n')) {
       for (const ref of line.matchAll(SECTION_REF)) {
         const cited = normaliseSection(ref[1] ?? '');
-        const window = line.slice((ref.index ?? 0) + ref[0].length, (ref.index ?? 0) + ref[0].length + STATUTE_WINDOW);
+        const window = line.slice(
+          ref.index + ref[0].length,
+          ref.index + ref[0].length + STATUTE_WINDOW,
+        );
         for (const tag of candidates) {
           if (found.has(tag.id) || !sectionCovers(tag.section, cited)) continue;
           if (!citesStatute(window, tag.statute)) continue;

@@ -7,7 +7,7 @@ const scope = { workspaceId: 'w1', matterId: 'm1', userId: 'u1' };
 
 function gatewayReturning(output: unknown): { gateway: AiGateway; run: ReturnType<typeof vi.fn> } {
   const run = vi.fn().mockResolvedValue({ output });
-  return { gateway: { run } as unknown as AiGateway, run };
+  return { gateway: { run }, run };
 }
 
 describe('normaliseStatute', () => {
@@ -40,7 +40,12 @@ describe('extractIssueTags', () => {
   it('returns normalised proposals, never confirmed', async () => {
     const { gateway, run } = gatewayReturning({
       tags: [
-        { statute: 'The Arbitration and Conciliation Act, 1996', section: 'Section 34', issue: ' Setting aside ', confidence: 0.9 },
+        {
+          statute: 'The Arbitration and Conciliation Act, 1996',
+          section: 'Section 34',
+          issue: ' Setting aside ',
+          confidence: 0.9,
+        },
         { statute: 'Limitation Act', section: null, issue: null, confidence: 0.7 },
       ],
     });
@@ -75,7 +80,12 @@ describe('extractIssueTags', () => {
       tags: [
         { statute: 'CPC', section: 'Order 7', issue: null, confidence: 0.2 },
         { statute: 'Arbitration Act', section: 's. 34', issue: null, confidence: 0.6 },
-        { statute: 'Arbitration and Conciliation Act, 1996', section: '34', issue: 'x', confidence: 0.8 },
+        {
+          statute: 'Arbitration and Conciliation Act, 1996',
+          section: '34',
+          issue: 'x',
+          confidence: 0.8,
+        },
       ],
     });
     const tags = await extractIssueTags(gateway, scope, 'text');
@@ -98,8 +108,6 @@ describe('extractIssueTags', () => {
 
   it('lets a sensitive-matter refusal from the gateway through, with no tags', async () => {
     const run = vi.fn().mockRejectedValue(new Error('sensitive'));
-    await expect(
-      extractIssueTags({ run } as unknown as AiGateway, scope, 'text'),
-    ).rejects.toThrow('sensitive');
+    await expect(extractIssueTags({ run }, scope, 'text')).rejects.toThrow('sensitive');
   });
 });

@@ -2,7 +2,7 @@
 // The issue tags of a matter with the add form and confirm / dismiss for proposed tags (#497).
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition, type FormEvent } from 'react';
+import { useState, useTransition, type SyntheticEvent } from 'react';
 
 import { addTagAction, confirmTagAction, dismissTagAction } from './actions.ts';
 
@@ -33,7 +33,7 @@ export function ResearchTags(props: {
     });
   }
 
-  function onAdd(event: FormEvent<HTMLFormElement>): void {
+  function onAdd(event: SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const text = (key: string) => {
@@ -68,14 +68,18 @@ export function ResearchTags(props: {
                   <button
                     type="button"
                     disabled={pending}
-                    onClick={() => run(() => confirmTagAction({ ...base, tagId: tag.id }))}
+                    onClick={() => {
+                      run(() => confirmTagAction({ ...base, tagId: tag.id }));
+                    }}
                   >
                     {t('confirm')}
                   </button>
                   <button
                     type="button"
                     disabled={pending}
-                    onClick={() => run(() => dismissTagAction({ ...base, tagId: tag.id }))}
+                    onClick={() => {
+                      run(() => dismissTagAction({ ...base, tagId: tag.id }));
+                    }}
                   >
                     {t('dismiss')}
                   </button>

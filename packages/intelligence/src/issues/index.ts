@@ -24,7 +24,7 @@ const STATUTE_ALIASES: Readonly<Record<string, string>> = {
   bns: 'bharatiya nyaya sanhita',
   bnss: 'bharatiya nagarik suraksha sanhita',
   'ni act': 'negotiable instruments act',
-  'nia': 'negotiable instruments act',
+  nia: 'negotiable instruments act',
   'a&c act': 'arbitration and conciliation act',
   'a and c act': 'arbitration and conciliation act',
   'arbitration act': 'arbitration and conciliation act',
@@ -110,7 +110,7 @@ export async function extractIssueTags(
   if (scope.matterId === undefined || scope.matterId === '') {
     throw new Error('extractIssueTags needs a matterId in scope');
   }
-  const result = await gateway.run<unknown>(
+  const result = await gateway.run(
     'extract_issue_tags',
     { text: text.slice(0, ISSUE_TEXT_CHARS) },
     {

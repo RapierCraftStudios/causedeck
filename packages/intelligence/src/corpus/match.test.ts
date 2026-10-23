@@ -18,7 +18,8 @@ describe('matchJudgmentToTags', () => {
       {
         tagId: 't1',
         pageNo: 3,
-        quote: 'The petition is filed under Section 34 of the Arbitration and Conciliation Act, 1996.',
+        quote:
+          'The petition is filed under Section 34 of the Arbitration and Conciliation Act, 1996.',
       },
     ]);
   });
@@ -34,7 +35,9 @@ describe('matchJudgmentToTags', () => {
   });
 
   it('matches a sub-section of the tagged section, not the reverse', () => {
-    const pages = [{ pageNo: 1, text: 'under Section 34(2)(a) of the Arbitration and Conciliation Act' }];
+    const pages = [
+      { pageNo: 1, text: 'under Section 34(2)(a) of the Arbitration and Conciliation Act' },
+    ];
     expect(matchJudgmentToTags(pages, [arb34])).toHaveLength(1);
     expect(matchJudgmentToTags(pages, [tag('t2', arb34.statute, '34(3)')])).toEqual([]);
     expect(

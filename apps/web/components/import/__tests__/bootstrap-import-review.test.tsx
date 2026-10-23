@@ -33,6 +33,7 @@ vi.mock('../../../app/(app)/w/[slug]/import/actions.ts', () => ({
   undoImportBatchAction: vi.fn(),
 }));
 
+const { mockMatchMedia, stubResizeObserver } = await import('../../shell/__tests__/helpers.tsx');
 const { BootstrapImport } = await import('../bootstrap-import.tsx');
 
 const ready = {
@@ -66,11 +67,14 @@ describe('BootstrapImport review', () => {
 
   it('opens the confirm grid from a resumed ready batch', async () => {
     state.search = `batch=${BATCH}`;
+    mockMatchMedia();
+    stubResizeObserver();
+    Element.prototype.scrollIntoView = vi.fn();
     actions.importProgressAction.mockResolvedValue({ ok: true, data: ready });
     actions.getImportPlanAction.mockResolvedValue({ ok: true, data: PLAN });
     show();
     fireEvent.click(await screen.findByRole('button', { name: 'Review the plan' }));
-    expect(await screen.findByText('Clash v State')).toBeTruthy();
+    expect(await screen.findByDisplayValue('Clash v State')).toBeTruthy();
     expect(actions.getImportPlanAction).toHaveBeenCalledWith({ workspaceId: 'w', batchId: BATCH });
   });
 

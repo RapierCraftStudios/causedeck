@@ -3585,6 +3585,10 @@ export type Messages = {
       save: string;
       matter: string;
       matterClear: string;
+      matterSearch: string;
+      matterSearchPlaceholder: string;
+      matterNone: string;
+      matterPicked: string;
       dateHint: string;
       dateHintNote: string;
       note: string;

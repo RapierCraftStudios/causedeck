@@ -7,13 +7,18 @@ import { Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
+import { searchMattersAction } from '../../../app/(app)/w/[slug]/matters/actions.ts';
 import { dateHint, formatElapsed } from '../../../lib/capture/voice/recorder.ts';
 
 export interface RecordingReviewProps {
   url: string;
   durationMs: number;
-  /** The matter the sheet was opened from; shown with a way to drop it. */
+  workspaceId: string;
+  /** The linked matter: the one the sheet was opened from or the one picked here. */
   matterId?: string | undefined;
+  /** Its title when it was picked here; a prefilled matter has none. */
+  matterTitle?: string | undefined;
+  onPickMatter: (matter: { id: string; title: string }) => void;
   onClearMatter: () => void;
   busy: boolean;
   onAgain: () => void;
@@ -23,7 +28,10 @@ export interface RecordingReviewProps {
 export function RecordingReview({
   url,
   durationMs,
+  workspaceId,
   matterId,
+  matterTitle,
+  onPickMatter,
   onClearMatter,
   busy,
   onAgain,
@@ -34,6 +42,28 @@ export function RecordingReview({
   const [playing, setPlaying] = useState(false);
   const [note, setNote] = useState('');
   const hint = dateHint(note);
+  const [query, setQuery] = useState('');
+  const [found, setFound] = useState<{ id: string; title: string; forum: string | null }[]>([]);
+  const term = query.trim();
+
+  useEffect(() => {
+    if (term.length < 2) return;
+    let live = true;
+    const timer = setTimeout(() => {
+      searchMattersAction({ workspaceId, q: term })
+        .then((result) => {
+          if (live) setFound(result.ok ? result.data : []);
+        })
+        .catch(() => {
+          // Offline or denied: the picker stays empty; the recording saves without a matter.
+          if (live) setFound([]);
+        });
+    }, 250);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [term, workspaceId]);
 
   useEffect(() => {
     const element = audio.current;
@@ -80,9 +110,51 @@ export function RecordingReview({
         </Button>
         <span className="text-ink-muted text-sm tabular-nums">{formatElapsed(durationMs)}</span>
       </div>
-      {matterId === undefined ? null : (
+      {matterId === undefined ? (
+        <div className="flex flex-col gap-1 text-sm" data-slot="voice-matter-picker">
+          <label className="text-ink flex flex-col gap-1">
+            {t('review.matterSearch')}
+            <input
+              type="search"
+              value={query}
+              placeholder={t('review.matterSearchPlaceholder')}
+              onChange={(event) => {
+                setQuery(event.target.value);
+              }}
+              className="border-line bg-surface min-h-11 rounded-md border px-3 text-sm"
+            />
+          </label>
+          {term.length < 2 ? null : found.length === 0 ? (
+            <p className="text-ink-muted text-xs" role="status">
+              {t('review.matterNone')}
+            </p>
+          ) : (
+            <ul className="flex flex-col" aria-label={t('review.matterSearch')}>
+              {found.map((hit) => (
+                <li key={hit.id}>
+                  <Button
+                    variant="ghost"
+                    className="min-h-11 w-full justify-start"
+                    data-matter-option={hit.id}
+                    onClick={() => {
+                      onPickMatter({ id: hit.id, title: hit.title });
+                      setQuery('');
+                    }}
+                  >
+                    {hit.title}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
         <div className="flex items-center justify-between gap-2 text-sm" data-slot="voice-matter">
-          <span className="text-ink">{t('review.matter')}</span>
+          <span className="text-ink">
+            {matterTitle === undefined
+              ? t('review.matter')
+              : t('review.matterPicked', { title: matterTitle })}
+          </span>
           <Button variant="ghost" className="min-h-11" onClick={onClearMatter}>
             {t('review.matterClear')}
           </Button>

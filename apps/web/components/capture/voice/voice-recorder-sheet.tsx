@@ -81,8 +81,9 @@ export function VoiceRecorderSheet({
   const [announce, setAnnounce] = useState('');
   const [recording, setRecording] = useState<Recording | null>(null);
   const [url, setUrl] = useState<string | null>(null);
-  const [matterCleared, setMatterCleared] = useState(false);
-  const matterId = matterCleared ? undefined : matterHintId;
+  // undefined: keep the opened-from matter; null: none; otherwise the one picked in the review.
+  const [matterPick, setMatterPick] = useState<{ id: string; title: string } | null | undefined>();
+  const matterId = matterPick === undefined ? matterHintId : matterPick?.id;
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
@@ -290,9 +291,12 @@ export function VoiceRecorderSheet({
           <RecordingReview
             url={url}
             durationMs={recording.durationMs}
+            workspaceId={workspaceId}
             matterId={matterId}
+            matterTitle={matterPick?.title}
+            onPickMatter={setMatterPick}
             onClearMatter={() => {
-              setMatterCleared(true);
+              setMatterPick(null);
             }}
             busy={busy}
             onAgain={reset}

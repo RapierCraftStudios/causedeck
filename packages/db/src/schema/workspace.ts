@@ -41,6 +41,10 @@ export const workspaceSettings = pgTable(
     // Privacy settings on the settings privacy page (#286). `india_only_ai` above has no write path.
     /** New sensitive matters start restricted unless a member with `workspace.manage` turns this off. */
     sensitiveDefaultRestricted: boolean('sensitive_default_restricted').notNull().default(true),
+    /** Share public court documents (cause lists, published orders) with every workspace (#485); off by default. */
+    contributePublicCourtDocuments: boolean('contribute_public_court_documents')
+      .notNull()
+      .default(false),
     /** Days raw audio is kept before deletion: 7, 14 or 30 (the PRD maximum, and the default). */
     retentionAudioDays: integer('retention_audio_days').notNull().default(30),
     ...timestamps(),

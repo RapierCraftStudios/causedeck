@@ -27,6 +27,7 @@ import { destroyWorkspaceKey, type ObjectStore } from '@causedeck/storage';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { record } from '../../audit/index.ts';
+import { withdrawContributions } from '../../network/index.ts';
 
 import { retainInvoicesForLegalHold } from './legal-hold.ts';
 import { buildDeletionReceipt, receiptHash, type DeletionReceipt } from './receipt.ts';
@@ -55,6 +56,8 @@ export const PURGE_ORDER = [
   'notification_setting',
   'invitation',
   'support_session',
+  // Court document network (#485): the link to a shared public copy; the rows step withdraws first.
+  'contribution_ledger',
   // The matter graph (#345-#348): appearances before their hearing, hearings before their
   // listing; tasks before the obligations they fulfil, obligations before their source order;
   // listings, orders and obligations before the proceedings, documents, anchors and matters they
@@ -363,6 +366,8 @@ export async function runWorkspaceErase(
         ? state.legalHoldInvoices
         : await withWorkspace(ctx.db, scope, (tx) => retainInvoicesForLegalHold(tx, workspaceId));
     await save('rows', { ...state, tables, legalHoldInvoices });
+    // Withdraw this workspace's contributed court documents (#485) before its ledger rows go.
+    await withdrawContributions(ctx.db, workspaceId);
     for (const table of PURGE_ORDER) {
       for (;;) {
         const name = sql.identifier(table);

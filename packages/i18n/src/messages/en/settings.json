@@ -531,6 +531,10 @@
           "label": "Restrict sensitive matters by default",
           "description": "New matters marked sensitive start open only to the people listed on them."
         },
+        "contributePublicCourtDocuments": {
+          "label": "Share public court documents",
+          "description": "Share public court documents (cause lists and published orders) so every workspace can use them. Only the public text is shared, with no workspace, matter or client information and nothing that identifies you. Sensitive and restricted matters are never shared. Your contributions are withdrawn when you delete the workspace."
+        },
         "retentionAudioDays": {
           "label": "Keep raw audio for",
           "description": "Voice recordings are deleted after this many days. Transcripts stay until you delete them.",

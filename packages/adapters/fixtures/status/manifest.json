@@ -1,0 +1,59 @@
+{
+  "classification": "FICTIONAL",
+  "fixtures": [
+    {
+      "template": "ecourts-district",
+      "file": "status-01-evidence.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "status-02-not-found.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "status-03-disposed.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "madras-hc",
+      "file": "status-01-admitted.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "madras-hc",
+      "file": "status-02-not-found.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "madras-hc",
+      "file": "status-03-partial-fields.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "karnataka-hc",
+      "file": "status-01-preliminary.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "karnataka-hc",
+      "file": "status-02-disposed-no-orders.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "karnataka-hc",
+      "file": "status-03-unrecognised.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    }
+  ]
+}

@@ -60,6 +60,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   saas_invoice: DB_TABLES_TEST,
   saas_invoice_line: DB_TABLES_TEST,
   matter_restriction: DB_TABLES_TEST,
+  contribution_ledger: DB_TABLES_TEST,
   export_job: DB_TABLES_TEST,
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
@@ -310,6 +311,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'inserts under withWorkspace; ws_isolation rejects a row for another workspace',
   },
   restrictMatter: denies,
+  // court document network (#485): a contribution reads the caller's own document under RLS
+  checkEligibility: denies,
+  contributeDocument: denies,
+  withdrawContributions: denies,
   assertMatterReadable: denies,
   listMatterRestrictions: denies,
   // court (#34): catalogue rows are global by design; custom forums stay in their workspace
@@ -695,6 +700,13 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
   setSourceKillSwitch:
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  // court document network (#485): `findContributed` reads the global `contributed_document` table (no
+  // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
+  findContributed:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): public text only, no contributor field; the tenant link is `contribution_ledger`',
+  CONTRIBUTABLE_DOCUMENT_KINDS: 'constant',
+  isContributableKind: 'pure',
+  ContributionRefused: 'error class',
   recordFetchLog:
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
   createFetchLogSink:

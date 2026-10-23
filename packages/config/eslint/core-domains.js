@@ -27,12 +27,16 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.
   ai: Object.freeze(['audit', 'usage']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.
-  lifecycle: Object.freeze(['audit', 'workspaces']),
+  // Workspace erase also withdraws the workspace's contributed court documents (#485) through network.
+  lifecycle: Object.freeze(['audit', 'workspaces', 'network']),
   // The source registry (#478, D-048): staff changes record `source.changed` through audit.
   sources: Object.freeze(['audit']),
   // Citation verification (#484, D-004): resolves a neutral citation against the global `judgment`
   // corpus; reads tables and `@causedeck/intelligence` only, no other domain.
   citations: Object.freeze([]),
+  // The court document network (#485, D-048): contributions need a cleared source through sources and
+  // record their events through audit; opt-in, matter and document reads go to the tables directly.
+  network: Object.freeze(['audit', 'sources']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs

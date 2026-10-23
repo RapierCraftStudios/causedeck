@@ -2,6 +2,7 @@
 // `withoutWorkspace` itself. The queries come from `@causedeck/core`, or from the package that owns
 // the global table (`@causedeck/flags` for `access_mode_registry`); apps never value-import
 // `@causedeck/db` (#299). This layer only scopes and audits them.
+import { listSources, type SourceRecord } from '@causedeck/core/sources';
 import {
   countActiveStaff,
   staffAuditEvents,
@@ -115,6 +116,16 @@ export function adapterRegistry(
     staff,
     { purpose: 'adapters.registry', capability: 'adapters', tables: ['access_mode_registry'] },
     (tx) => listAccessModeRegistry(tx),
+    db,
+  );
+}
+
+/** Every external data source in the registry, for the Sources page (#478). */
+export function sourceRegistry(staff: StaffActor, db?: Database): Promise<SourceRecord[]> {
+  return staffQuery(
+    staff,
+    { purpose: 'sources.registry', capability: 'sources', tables: ['source'] },
+    (tx) => listSources(tx),
     db,
   );
 }

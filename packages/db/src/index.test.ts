@@ -119,6 +119,7 @@ describe('@causedeck/db root entry point', () => {
       'saas_invoice_line',
       'schema_info',
       'session',
+      'source',
       'staff_user',
       'subscription',
       'support_session',

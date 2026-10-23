@@ -30,7 +30,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * has no RLS. `catalogue_meta` (#34) records the version of each owner-seeded system catalogue (the
  * forum catalogue); the app role may only read it. `adapter_version` (#372) holds the versioned
  * court-adapter configs, one `active` row per adapter; staff manage it through the app role like
- * `access_mode_registry`.
+ * `access_mode_registry`. `source` (#478, D-048) is the global source registry that generalises
+ * `access_mode_registry` to every external source; staff write it through the app role (no DELETE).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -55,6 +56,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'flag_change_request',
   'catalogue_meta',
   'adapter_version',
+  'source',
 ];
 
 /**

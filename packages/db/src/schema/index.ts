@@ -45,6 +45,22 @@ export {
   workspaceFeatureFlag,
   type FlagChangeRequestStatus,
 } from './flags.ts';
+export {
+  NO_CAPTCHA_KINDS,
+  SOURCE_ACCESS_MODES,
+  SOURCE_KINDS,
+  SOURCE_MAX_TIERS,
+  SOURCE_REVIEW_STATUSES,
+  source,
+  sourceAccessMode,
+  sourceKind,
+  sourceMaxTier,
+  sourceReviewStatus,
+  type SourceAccessMode,
+  type SourceKind,
+  type SourceMaxTier,
+  type SourceReviewStatus,
+} from './source-registry.ts';
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export {
   ANCHOR_KINDS,

@@ -22,6 +22,7 @@
     "./runtime": "./src/runtime/index.ts",
     "./voice": "./src/voice/index.ts",
     "./whatsapp": "./src/whatsapp/index.ts",
+    "./sources": "./src/sources/index.ts",
     "./support": "./src/support/index.ts",
     "./usage": "./src/usage/index.ts",
     "./workspaces": "./src/workspaces/index.ts"

@@ -82,10 +82,10 @@ describe('voice outbox writes (#543)', () => {
     const retried = (await store.get(item.id)) as OutboxItem;
     expect(retried.state).toBe('queued');
 
-    const calls: { url: string; body?: string }[] = [];
+    const presignBodies: string[] = [];
     const online = vi.fn((url: string, init?: RequestInit) => {
-      calls.push({ url, body: typeof init?.body === 'string' ? init.body : undefined });
       if (url === '/api/captures/presign') {
+        presignBodies.push(typeof init?.body === 'string' ? init.body : '');
         return Promise.resolve(
           Response.json({
             captureId: 'cap-1',
@@ -102,7 +102,7 @@ describe('voice outbox writes (#543)', () => {
       fetch: online as unknown as typeof fetch,
     });
     expect(outcome).toBe('sent');
-    const presign = JSON.parse(calls[0]?.body ?? '{}') as Record<string, unknown>;
+    const presign = JSON.parse(presignBodies[0] ?? '{}') as Record<string, unknown>;
     expect(presign).toMatchObject({ channel: 'voice', mime: 'audio/webm', workspaceId: 'ws-1' });
   });
 

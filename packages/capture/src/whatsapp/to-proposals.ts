@@ -2,9 +2,24 @@
 // message it came from. A dated task is a proposal (L2) and an undated one reaches L3 only at
 // confidence >= 0.8, both decided by the engine's matrix, not here. An instruction that came from
 // the client is `ambiguous`, so it is always a card for the lawyer and never applied unasked.
-import type { ProposalDraft } from '@causedeck/validators/proposal-draft';
-
 import type { VerifiedChatItem } from './structure.ts';
+
+/**
+ * The `task` `ProposalDraft` (`@causedeck/validators`) this module emits. Declared here, not imported,
+ * because `whatsapp/` stays free of workspace imports so it runs in a browser Web Worker; the engine
+ * validates every draft with `ProposalDraftSchema` on submit.
+ */
+export interface ChatTaskDraft {
+  kind: 'task';
+  captureId: string;
+  source: { type: 'ai'; input: 'whatsapp'; aiCallId: string | null; ref: string };
+  payload: { title: string; dueDate?: string; matterId?: string };
+  anchors: string[];
+  confidence: number;
+  matterId?: string;
+  patternKey: 'whatsapp:task';
+  ambiguous?: boolean;
+}
 
 export interface ChatDraftContext {
   captureId: string;
@@ -28,8 +43,8 @@ export function isClientInstruction(
 export function chatItemsToDrafts(
   items: readonly VerifiedChatItem[],
   ctx: ChatDraftContext,
-): ProposalDraft[] {
-  return items.map((item) => {
+): ChatTaskDraft[] {
+  return items.map((item): ChatTaskDraft => {
     const anchor = ctx.anchorIds?.get(item.ref);
     return {
       kind: 'task',
@@ -45,6 +60,6 @@ export function chatItemsToDrafts(
       ...(ctx.matterId == null ? {} : { matterId: ctx.matterId }),
       patternKey: 'whatsapp:task',
       ...(isClientInstruction(item) ? { ambiguous: true } : {}),
-    } satisfies ProposalDraft;
+    };
   });
 }

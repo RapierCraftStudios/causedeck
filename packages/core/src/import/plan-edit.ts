@@ -95,6 +95,7 @@ export function regroupPlan(plan: ImportPlan, groups: readonly PlanGroupEdit[]):
       issues.push({ code: 'low_confidence', blocking: false });
     }
     const dates = proceedings.flatMap((p) => (p.nextDate === null ? [] : [p.nextDate]));
+    const only = origins.length === 1 ? origins[0] : undefined;
     matters.push({
       tempId,
       title,
@@ -103,8 +104,8 @@ export function regroupPlan(plan: ImportPlan, groups: readonly PlanGroupEdit[]):
       issues,
       confidence: Math.min(...origins.map((o) => o.confidence)),
       reason:
-        origins.length === 1 && origins[0].proceedings.length === proceedings.length
-          ? origins[0].reason
+        only !== undefined && only.proceedings.length === proceedings.length
+          ? only.reason
           : 'grouped by you',
       sources: mergeSources(proceedings.flatMap((p) => p.sources)),
     });

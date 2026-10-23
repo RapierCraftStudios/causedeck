@@ -113,6 +113,7 @@ describe('namespaced catalogs (#174)', () => {
         'shortcuts',
         'theme',
         'usage',
+        'whatsappImport',
         'workspace',
       ].sort(),
     );

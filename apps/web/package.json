@@ -67,6 +67,7 @@
     "d3-hierarchy": "catalog:",
     "d3-shape": "catalog:",
     "dexie": "catalog:",
+    "fflate": "catalog:",
     "lucide-react": "catalog:",
     "motion": "catalog:",
     "next": "catalog:",

@@ -261,6 +261,45 @@ describe('applyImportPlan', () => {
   });
 });
 
+describe('batch cost', () => {
+  it('sums the AI calls of the batch captures and records one usage event', async () => {
+    await withTestDb(async (tx) => {
+      const captureId = randomUUID();
+      const w = await world(tx, (code) => {
+        const plan = planOf(code);
+        const [first] = plan.matters;
+        if (first) first.sources = [{ ...source, captureId }];
+        return plan;
+      });
+      await inWorkspace(tx, w.workspaceId, async (s) => {
+        for (const costPaise of [30, 12]) {
+          await s.insert(schema.aiCall).values({
+            workspaceId: w.workspaceId,
+            purpose: 'import.test',
+            provider: 'mock',
+            model: 'mock-1',
+            region: 'ap-south-1',
+            automationLevel: 2,
+            costPaise,
+            captureId,
+          });
+        }
+      });
+      const result = await applyImportPlan(w.deps, w.actor, { batchId: w.batchId });
+      expect(result.costPaise).toBe(42);
+      await applyImportPlan(w.deps, w.actor, { batchId: w.batchId });
+      const events = await inWorkspace(tx, w.workspaceId, (s) =>
+        s
+          .select()
+          .from(schema.usageEvent)
+          .where(eq(schema.usageEvent.idempotencyKey, `import.batch.${w.batchId}`)),
+      );
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ key: 'ai.spend_paise', amount: 0 });
+    });
+  });
+});
+
 describe('splitByOcrAllowance', () => {
   it('keeps files past the OCR cap as attachments without reading them', async () => {
     await withTestDb(async (tx) => {

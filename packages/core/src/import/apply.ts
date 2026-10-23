@@ -24,7 +24,12 @@ import {
 } from '../matter-graph/index.ts';
 import { conflict, invalid, notFound } from '../shared/errors.ts';
 
-import { batchCostPaise, splitByOcrAllowance } from './entitlements.ts';
+import {
+  batchCostPaise,
+  documentPageCounts,
+  recordBatchUsage,
+  splitByOcrAllowance,
+} from './entitlements.ts';
 import type {
   ApplyDecisions,
   ApplyDuplicate,
@@ -190,9 +195,14 @@ export async function applyImportPlan(
       ...new Set(docs.flatMap((d) => d.matterId ?? [])),
     ]);
     const unread = docs.filter((d) => d.textStatus === 'pending' && d.matterId === null);
+    const pages = await documentPageCounts(
+      tx,
+      workspaceId,
+      unread.map((d) => d.id),
+    );
     const allowance = await splitByOcrAllowance(
       { db: tx, workspaceId, now: () => now },
-      unread.map((d) => ({ id: d.id, pages: 1 })),
+      unread.map((d) => ({ id: d.id, pages: pages.get(d.id) ?? 1 })),
     );
     const attachOnly = new Set(allowance.attachOnly);
 
@@ -280,6 +290,7 @@ export async function applyImportPlan(
       prepared.some((p) => docs.some((d) => d.id === id && inMatter(p.matter)(d))),
     );
     out.costPaise = await batchCostPaise(tx, workspaceId, captureIds);
+    await recordBatchUsage({ db: tx, workspaceId, now: () => now }, batchId);
     await tx
       .update(activity)
       .set({

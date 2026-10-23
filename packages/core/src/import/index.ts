@@ -19,6 +19,8 @@ export {
 export { clusterProceedings, type ClusterGroup, type ClusterNode } from './cluster.ts';
 export {
   batchCostPaise,
+  documentPageCounts,
+  recordBatchUsage,
   splitByOcrAllowance,
   type FileAllowance,
   type ImportFile,

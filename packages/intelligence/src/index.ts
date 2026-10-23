@@ -72,7 +72,7 @@ export {
   type FlaggedSpan,
   type HearingStructured,
   type NeedsYouReason,
-  type Rejected,
+  type Rejected as HearingRejected,
   type RejectReason,
   type Span,
   type StructuredResult,

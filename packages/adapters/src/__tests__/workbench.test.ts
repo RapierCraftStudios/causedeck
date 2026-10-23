@@ -19,7 +19,10 @@ import {
   WorkbenchError,
 } from '../workbench/index.ts';
 
-const DOCUMENT = readFileSync(path.join(FIXTURES_ROOT, 'echo/list-02-multi-page.input.txt'), 'utf8');
+const DOCUMENT = readFileSync(
+  path.join(FIXTURES_ROOT, 'echo/list-02-multi-page.input.txt'),
+  'utf8',
+);
 const adapter = createEchoAdapter();
 
 describe('corrections', () => {
@@ -46,7 +49,9 @@ describe('corrections', () => {
     const parsed = await previewDocument(adapter, 'text', DOCUMENT);
     const same = parsed.rows.map((row) => ({ caseNumber: row.caseNumber ?? '' }));
     expect(correctionsFromEdits(parsed, { rows: same }).rows).toEqual([]);
-    const edited = same.map((cells, i) => (i === 0 ? { ...cells, caseNumber: '4242', caseYear: '1999' } : cells));
+    const edited = same.map((cells, i) =>
+      i === 0 ? { ...cells, caseNumber: '4242', caseYear: '1999' } : cells,
+    );
     const { rows } = correctionsFromEdits(parsed, { rows: edited });
     expect(rows).toHaveLength(1);
     expect(rows?.[0]?.patch).toEqual({ caseNumber: '4242', caseYear: 1999 });
@@ -96,17 +101,30 @@ describe('buildFixture', () => {
     expect(report.public.cases).toHaveLength(1);
     expect(report.public.cases[0]?.diff.join('\n')).toMatch(/hallNo: expected "9"/);
     // Without corrections the fixture passes as written.
-    const clean = await buildFixture({ adapter, name: 'list-91-clean', format: 'text', content: DOCUMENT });
+    const clean = await buildFixture({
+      adapter,
+      name: 'list-91-clean',
+      format: 'text',
+      content: DOCUMENT,
+    });
     expect(clean.reparseMatches).toBe(true);
   });
 
   it('exportBundle refuses to overwrite a fixture and to write one with personal data', async () => {
-    const { bundle } = await buildFixture({ adapter, name: 'list-92-x', format: 'text', content: DOCUMENT });
+    const { bundle } = await buildFixture({
+      adapter,
+      name: 'list-92-x',
+      format: 'text',
+      content: DOCUMENT,
+    });
     const root = mkdtempSync(path.join(os.tmpdir(), 'workbench-'));
     exportBundle(bundle, root);
     expect(() => exportBundle(bundle, root)).toThrow(/already exists/);
     expect(() =>
-      exportBundle({ ...bundle, inputFile: 'list-93.input.txt', inputContent: 'call 9876543210' }, root),
+      exportBundle(
+        { ...bundle, inputFile: 'list-93.input.txt', inputContent: 'call 9876543210' },
+        root,
+      ),
     ).toThrow(/personal data/);
   });
 });

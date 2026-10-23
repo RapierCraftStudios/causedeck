@@ -67,7 +67,8 @@ export function partyNames(parties: string | undefined): string[] {
   return [...new Set(names)];
 }
 
-const hash = (value: string) => createHash('sha256').update(value.toLowerCase()).digest().readUInt32BE(0);
+const hash = (value: string) =>
+  createHash('sha256').update(value.toLowerCase()).digest().readUInt32BE(0);
 
 /** Upper-case or lower-case the replacement when the original was. */
 function matchCase(original: string, replacement: string): string {

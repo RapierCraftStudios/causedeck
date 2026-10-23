@@ -89,7 +89,8 @@ export function applyCorrections(
   const patches = new Map(rows.map((r) => [rowKey(r.anchor), r.patch]));
   const removed = new Set(removeRows.map(rowKey));
   for (const key of [...patches.keys(), ...removed]) {
-    if (!known.has(key)) throw new WorkbenchError('A correction names a row the parser did not emit');
+    if (!known.has(key))
+      throw new WorkbenchError('A correction names a row the parser did not emit');
   }
   const keep = (row: ParsedListRow) => !removed.has(rowKey(row.anchor));
   const next = (row: ParsedListRow) => patchRow(row, patches);
@@ -143,7 +144,7 @@ export function correctionsFromEdits(
     if (Object.keys(patch).length > 0) {
       rows.push({
         anchor: { page: row.anchor.page, quote: row.anchor.quote },
-        patch: patch as z.infer<typeof RowPatchSchema>,
+        patch,
       });
     }
   });
@@ -164,7 +165,8 @@ export function toParserInput(
   forumCode: string = adapter.forumCodes[0] ?? '',
 ): ParserInput {
   const meta = { receivedAt: WORKBENCH_RECEIVED_AT, forumCode };
-  if (format === 'html') return { kind: 'html', html: content, layout: layoutFromHtml(content), meta };
+  if (format === 'html')
+    return { kind: 'html', html: content, layout: layoutFromHtml(content), meta };
   if (format === 'email') {
     return { kind: 'email', text: content, layout: layoutFromEmail(content), meta };
   }
@@ -278,7 +280,6 @@ export async function buildFixture(options: BuildFixtureInput): Promise<BuiltFix
     },
     redactions: redactor.counts(),
     reparseMatches:
-      options.corrections === undefined &&
-      JSON.stringify(reparsed) === JSON.stringify(expected),
+      options.corrections === undefined && JSON.stringify(reparsed) === JSON.stringify(expected),
   };
 }

@@ -39,7 +39,11 @@ export function FixtureWorkbenchForm({ adapterIds }: { adapterIds: readonly stri
       <form action={preview} className="grid gap-3">
         <div className="grid gap-1">
           <Label htmlFor="adapterId">Adapter</Label>
-          <select id="adapterId" name="adapterId" className="border-line rounded border p-2 text-sm">
+          <select
+            id="adapterId"
+            name="adapterId"
+            className="border-line rounded border p-2 text-sm"
+          >
             {adapterIds.map((id) => (
               <option key={id} value={id}>
                 {id}
@@ -88,7 +92,12 @@ export function FixtureWorkbenchForm({ adapterIds }: { adapterIds: readonly stri
           <h2 className="text-base font-semibold">Parser output</h2>
           <div className="grid gap-1">
             <Label htmlFor="listDate">List date</Label>
-            <Input id="listDate" name="listDate" defaultValue={rows.listDate} placeholder="YYYY-MM-DD" />
+            <Input
+              id="listDate"
+              name="listDate"
+              defaultValue={rows.listDate}
+              placeholder="YYYY-MM-DD"
+            />
           </div>
           {rows.rows.length === 0 ? <p className="text-sm">The parser found no rows.</p> : null}
           {rows.rows.map((row, index) => (

@@ -166,7 +166,10 @@ export async function buildFixtureAction(
       name: input.name,
       format: input.format,
       content: document,
-      corrections: correctionsFromEdits(parsed, { listDate: text(formData, 'listDate'), rows: edits }),
+      corrections: correctionsFromEdits(parsed, {
+        listDate: text(formData, 'listDate'),
+        rows: edits,
+      }),
       extraNames: input.extraNames
         .split('\n')
         .map((line) => line.trim())

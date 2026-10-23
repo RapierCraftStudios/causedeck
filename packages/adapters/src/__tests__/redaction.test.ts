@@ -72,7 +72,10 @@ describe('buildFixture', () => {
     for (const row of bundle.expected.rows) {
       expect(bundle.inputContent.split('\f')[row.anchor.page - 1]).toContain(row.anchor.quote);
     }
-    expect(bundle.manifestEntry).toMatchObject({ origin: 'lawyer-supplied', classification: 'REDACTED' });
+    expect(bundle.manifestEntry).toMatchObject({
+      origin: 'lawyer-supplied',
+      classification: 'REDACTED',
+    });
   });
 
   it('replaces the same name the same way every time', async () => {

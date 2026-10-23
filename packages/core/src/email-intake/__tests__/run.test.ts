@@ -121,7 +121,11 @@ describe('receiveInboundEmail', () => {
       });
       expect(unknown).toEqual({ status: 'dropped', reason: 'unknown_address' });
 
-      // B has an address but never enabled the channel.
+      // B has an address but its email channel is off (the seeder enables it, so turn it off).
+      await tx
+        .update(schema.workspaceCaptureChannel)
+        .set({ enabled: false })
+        .where(eq(schema.workspaceCaptureChannel.workspaceId, b.id));
       const { address } = await createAddress(ctxFor(tx, b.id, uboth));
       const off = await receiveInboundEmail(tx, {
         address,

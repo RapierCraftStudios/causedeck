@@ -3,6 +3,7 @@
 // network, no mail transport.
 import { randomUUID } from 'node:crypto';
 
+import { CAPTURE_DISCLOSURE_VERSION } from '@causedeck/core/capture';
 import { createAddress, type InboundEmailProvider } from '@causedeck/core/email-intake';
 import type { JobSender } from '@causedeck/core/jobs';
 import { schema, testAppDb, withWorkspace } from '@causedeck/db/testing';
@@ -64,13 +65,15 @@ async function intakeWorkspace(enabled: boolean) {
     domain: 'intake.test',
     authorize: () => undefined,
   });
-  if (enabled) {
-    await withWorkspace(testAppDb(), { workspaceId: workspace.id }, (tx) =>
-      tx
-        .insert(schema.workspaceCaptureChannel)
-        .values({ workspaceId: workspace.id, channel: 'email', enabled: true }),
-    );
-  }
+  // The email channel is on by default, so an off workspace needs an explicit disabled row.
+  await withWorkspace(testAppDb(), { workspaceId: workspace.id }, (tx) =>
+    tx.insert(schema.workspaceCaptureChannel).values({
+      workspaceId: workspace.id,
+      channel: 'email',
+      enabled,
+      disclosureVersion: enabled ? CAPTURE_DISCLOSURE_VERSION : null,
+    }),
+  );
   return { owner, workspace, address: view.address };
 }
 

@@ -40,6 +40,7 @@ export const Default: Story = {
 export const Opens: Story = {
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(canvas.getByRole('button', { name: t.trigger }));
-    await waitFor(() => expect(screen.getByRole('dialog')).toBeVisible());
+    // The dialog chunk loads lazily; a cold dark-theme run can exceed waitFor's 1 s default.
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeVisible(), { timeout: 5000 });
   },
 };

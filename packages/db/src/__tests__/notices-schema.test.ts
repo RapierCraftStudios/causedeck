@@ -50,13 +50,19 @@ describe('notice and notice_match', () => {
       const u = url();
       await tx.insert(notice).values({ ...base, url: u });
       const state = (values: Partial<typeof notice.$inferInsert>) =>
-        sqlState(tx.transaction((sp) => sp.insert(notice).values({ ...base, url: url(), ...values })));
-      expect(await sqlState(tx.transaction((sp) => sp.insert(notice).values({ ...base, url: u })))).toBe(
-        '23505',
-      );
+        sqlState(
+          tx.transaction((sp) => sp.insert(notice).values({ ...base, url: url(), ...values })),
+        );
+      expect(
+        await sqlState(tx.transaction((sp) => sp.insert(notice).values({ ...base, url: u }))),
+      ).toBe('23505');
       expect(await state({ documentKey: 'k' })).toBe('23514');
       expect(
-        await state({ documentKey: 'k', documentSha256: 'nothex', documentMime: 'application/pdf' }),
+        await state({
+          documentKey: 'k',
+          documentSha256: 'nothex',
+          documentMime: 'application/pdf',
+        }),
       ).toBe('23514');
       expect(await state({ sourceRef: null })).toBe('23514');
       expect(await state({ title: '  ' })).toBe('23514');
@@ -84,7 +90,10 @@ describe('notice and notice_match', () => {
     await withTestDb(async (tx) => {
       const a = await newWorkspace(tx);
       const b = await newWorkspace(tx);
-      const [n] = await tx.insert(notice).values({ ...base, url: url() }).returning();
+      const [n] = await tx
+        .insert(notice)
+        .values({ ...base, url: url() })
+        .returning();
       const noticeId = n?.id ?? '';
       const [matterB] = await inWorkspace(tx, b.id, (s) =>
         s
@@ -113,7 +122,9 @@ describe('notice and notice_match', () => {
         const attempt = (values: Partial<typeof noticeMatch.$inferInsert>) =>
           sqlState(
             s.transaction((sp) =>
-              sp.insert(noticeMatch).values({ workspaceId: a.id, noticeId, reason: 'forum', ...values }),
+              sp
+                .insert(noticeMatch)
+                .values({ workspaceId: a.id, noticeId, reason: 'forum', ...values }),
             ),
           );
         expect(await attempt({})).toBe('23514');
@@ -122,10 +133,15 @@ describe('notice and notice_match', () => {
         expect(await attempt({ matterId: matterA?.id ?? '', reason: 'bogus' as never })).toBe(
           '23514',
         );
-        await s
-          .insert(noticeMatch)
-          .values({ workspaceId: a.id, noticeId, matterId: matterA?.id ?? '', reason: 'matter_forum' });
-        expect(await attempt({ matterId: matterA?.id ?? '', reason: 'matter_forum' })).toBe('23505');
+        await s.insert(noticeMatch).values({
+          workspaceId: a.id,
+          noticeId,
+          matterId: matterA?.id ?? '',
+          reason: 'matter_forum',
+        });
+        expect(await attempt({ matterId: matterA?.id ?? '', reason: 'matter_forum' })).toBe(
+          '23505',
+        );
       });
     });
   });

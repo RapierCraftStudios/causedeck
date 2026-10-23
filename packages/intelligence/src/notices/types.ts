@@ -120,7 +120,7 @@ const textOf = (html: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const ANCHOR = /<a\b[^>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')[^>]*>([\s\S]*?)<\/a>/i;
+const ANCHOR = /<a\b[^>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')[^>]*>([\s\S]*?)<\/a\s*>/i;
 
 /**
  * Parse a notice table: one notice per `<tr>` that has a link; the link text is the title, the

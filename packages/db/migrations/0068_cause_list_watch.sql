@@ -1,4 +1,4 @@
--- Migration 0067_cause_list_watch: generated shape (two tables, keys, indexes), RLS, grants, function and source seed hand-written, reviewed before commit.
+-- Migration 0068_cause_list_watch: generated shape (two tables, keys, indexes), RLS, grants, function and source seed hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #482)
 -- Karnataka HC cause-list watch (#482, D-048 tier 2, D-028 A2). cause_list_watch is a tenant table
 -- under FORCE RLS (the advocate name or BRN a member watches). cause_list_publication is global and

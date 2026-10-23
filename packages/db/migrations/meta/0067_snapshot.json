@@ -1,5 +1,5 @@
 {
-  "id": "2dea22a7-53d4-4513-af03-a298bafb13cc",
+  "id": "5b6ef717-f878-490d-8d6a-c342efdfa03b",
   "prevId": "85ac600e-14e2-4d0c-abdb-c72343561698",
   "version": "7",
   "dialect": "postgresql",
@@ -3490,8 +3490,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.cause_list_publication": {
-      "name": "cause_list_publication",
+    "public.contributed_document": {
+      "name": "contributed_document",
       "schema": "",
       "columns": {
         "id": {
@@ -3500,110 +3500,6 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
-        },
-        "source_id": {
-          "name": "source_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "list_key": {
-          "name": "list_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sha256": {
-          "name": "sha256",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fetched_at": {
-          "name": "fetched_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "row_count": {
-          "name": "row_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "0"
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "cause_list_publication_list_idx": {
-          "name": "cause_list_publication_list_idx",
-          "columns": [
-            {
-              "expression": "source_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "list_key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "fetched_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "cause_list_publication_sha_uq": {
-          "name": "cause_list_publication_sha_uq",
-          "nullsNotDistinct": false,
-          "columns": ["source_id", "sha256"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.cause_list_watch": {
-      "name": "cause_list_watch",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
         },
         "source_id": {
           "name": "source_id",
@@ -3617,21 +3513,151 @@
           "primaryKey": false,
           "notNull": true
         },
-        "value": {
-          "name": "value",
+        "forum_label": {
+          "name": "forum_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "listing_date": {
+          "name": "listing_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sha256": {
+          "name": "sha256",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "provenance": {
+          "name": "provenance",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'contributed'"
+        },
+        "contributed_at": {
+          "name": "contributed_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "retention_until": {
+          "name": "retention_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "withdrawn_at": {
+          "name": "withdrawn_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "contributed_document_lookup_idx": {
+          "name": "contributed_document_lookup_idx",
+          "columns": [
+            {
+              "expression": "source_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "listing_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "contributed_document_source_id_source_id_fk": {
+          "name": "contributed_document_source_id_source_id_fk",
+          "tableFrom": "contributed_document",
+          "tableTo": "source",
+          "columnsFrom": ["source_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "contributed_document_sha256_uq": {
+          "name": "contributed_document_sha256_uq",
+          "nullsNotDistinct": false,
+          "columns": ["sha256"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "contributed_document_kind_chk": {
+          "name": "contributed_document_kind_chk",
+          "value": "\"contributed_document\".\"kind\" in ('cause_list', 'order')"
+        },
+        "contributed_document_provenance_chk": {
+          "name": "contributed_document_provenance_chk",
+          "value": "\"contributed_document\".\"provenance\" = 'contributed'"
+        },
+        "contributed_document_sha256_chk": {
+          "name": "contributed_document_sha256_chk",
+          "value": "\"contributed_document\".\"sha256\" ~ '^[0-9a-f]{64}$'"
+        },
+        "contributed_document_withdrawn_chk": {
+          "name": "contributed_document_withdrawn_chk",
+          "value": "(\"contributed_document\".\"withdrawn_at\" is null) = (\"contributed_document\".\"content\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.contribution_ledger": {
+      "name": "contribution_ledger",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "contributed_document_id": {
+          "name": "contributed_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -3645,8 +3671,8 @@
         }
       },
       "indexes": {
-        "cause_list_watch_workspace_id_idx": {
-          "name": "cause_list_watch_workspace_id_idx",
+        "contribution_ledger_workspace_id_idx": {
+          "name": "contribution_ledger_workspace_id_idx",
           "columns": [
             {
               "expression": "workspace_id",
@@ -3662,44 +3688,26 @@
         }
       },
       "foreignKeys": {
-        "cause_list_watch_user_id_user_id_fk": {
-          "name": "cause_list_watch_user_id_user_id_fk",
-          "tableFrom": "cause_list_watch",
-          "tableTo": "user",
-          "columnsFrom": ["user_id"],
+        "contribution_ledger_contributed_document_id_contributed_document_id_fk": {
+          "name": "contribution_ledger_contributed_document_id_contributed_document_id_fk",
+          "tableFrom": "contribution_ledger",
+          "tableTo": "contributed_document",
+          "columnsFrom": ["contributed_document_id"],
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "cause_list_watch_workspace_id_fk": {
-          "name": "cause_list_watch_workspace_id_fk",
-          "tableFrom": "cause_list_watch",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "cause_list_watch_uq": {
-          "name": "cause_list_watch_uq",
+        "contribution_ledger_workspace_doc_uq": {
+          "name": "contribution_ledger_workspace_doc_uq",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "user_id", "source_id", "kind", "value"]
+          "columns": ["workspace_id", "contributed_document_id"]
         }
       },
       "policies": {},
-      "checkConstraints": {
-        "cause_list_watch_kind_chk": {
-          "name": "cause_list_watch_kind_chk",
-          "value": "kind in ('name', 'brn')"
-        },
-        "cause_list_watch_value_chk": {
-          "name": "cause_list_watch_value_chk",
-          "value": "char_length(value) between 1 and 200"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.court_hall": {
@@ -13601,6 +13609,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "contribute_public_court_documents": {
+          "name": "contribute_public_court_documents",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "retention_audio_days": {
           "name": "retention_audio_days",

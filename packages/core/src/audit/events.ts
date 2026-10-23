@@ -38,6 +38,15 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Staff created or changed an external data source or flipped its kill switch',
   },
+  // The court document network (#485, D-048). Metadata holds ids and counts only, never content.
+  'network.contributed': {
+    security: false,
+    description: 'A public court document was contributed to the shared court document network',
+  },
+  'network.withdrawn': {
+    security: false,
+    description: "A workspace's contributions to the court document network were withdrawn",
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },

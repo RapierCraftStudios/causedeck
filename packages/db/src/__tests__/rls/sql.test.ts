@@ -168,6 +168,8 @@ describe('row-level security catalog', () => {
 
         // Karnataka HC cause-list watches (#482).
         'cause_list_watch',
+        // Court document network (#485).
+        'contribution_ledger',
       ].sort(),
     );
     for (const row of rows)

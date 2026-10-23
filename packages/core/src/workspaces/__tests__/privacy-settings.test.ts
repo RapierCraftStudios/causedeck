@@ -88,6 +88,7 @@ describe('privacy settings', () => {
         indiaOnlyAi: true,
         sensitiveDefaultRestricted: true,
         retentionAudioDays: 30,
+        contributePublicCourtDocuments: false,
       });
     });
   });
@@ -97,10 +98,14 @@ describe('privacy settings', () => {
       const { ownerId, workspaceId } = await setup(tx);
       const result = await update(tx, { workspaceId, actorUserId: ownerId, input: CHANGED });
       expect(result).toEqual({
-        settings: { indiaOnlyAi: true, ...CHANGED },
+        settings: { indiaOnlyAi: true, contributePublicCourtDocuments: false, ...CHANGED },
         changed: ['sensitiveDefaultRestricted', 'retentionAudioDays'],
       });
-      expect(await settingsOf(tx, workspaceId)).toEqual({ indiaOnlyAi: true, ...CHANGED });
+      expect(await settingsOf(tx, workspaceId)).toEqual({
+        indiaOnlyAi: true,
+        contributePublicCourtDocuments: false,
+        ...CHANGED,
+      });
       expect(await audits(tx, workspaceId)).toEqual([
         {
           actorUserId: ownerId,
@@ -118,6 +123,27 @@ describe('privacy settings', () => {
         (await update(tx, { workspaceId, actorUserId: ownerId, input: CHANGED })).changed,
       ).toEqual([]);
       expect(await audits(tx, workspaceId)).toHaveLength(1);
+    });
+  });
+
+  it('opts in to court document contribution, audited, and an omitted field keeps it (#485)', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await setup(tx);
+      const input = { sensitiveDefaultRestricted: true, retentionAudioDays: 30 } as const;
+      const on = await update(tx, {
+        workspaceId,
+        actorUserId: ownerId,
+        input: { ...input, contributePublicCourtDocuments: true },
+      });
+      expect(on.changed).toEqual(['contributePublicCourtDocuments']);
+      expect((await settingsOf(tx, workspaceId)).contributePublicCourtDocuments).toBe(true);
+      expect((await audits(tx, workspaceId))[0]?.metadata).toEqual({
+        fields: 'contributePublicCourtDocuments',
+        contributePublicCourtDocuments: 'true',
+      });
+      const kept = await update(tx, { workspaceId, actorUserId: ownerId, input });
+      expect(kept.changed).toEqual([]);
+      expect((await settingsOf(tx, workspaceId)).contributePublicCourtDocuments).toBe(true);
     });
   });
 

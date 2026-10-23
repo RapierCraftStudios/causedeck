@@ -4,7 +4,7 @@
 import { Button } from '@causedeck/ui/button';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition, type FormEvent } from 'react';
+import { useState, useTransition, type SyntheticEvent } from 'react';
 
 import type { Result } from '../../../../../../lib/safe-action.ts';
 
@@ -29,7 +29,7 @@ export function WatchForm({ workspaceId, watches, add, remove }: WatchFormProps)
     setMessage(ok ? success : t('failed'));
     if (ok) router.refresh();
   };
-  const onSubmit = (event: FormEvent) => {
+  const onSubmit = (event: SyntheticEvent) => {
     event.preventDefault();
     start(async () => {
       const result = await add({ workspaceId, kind, value });

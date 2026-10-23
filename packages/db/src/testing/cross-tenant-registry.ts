@@ -689,6 +689,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
   setSourceKillSwitch:
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  recordFetchLog:
+    'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
+  createFetchLogSink:
+    'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

@@ -180,6 +180,9 @@ catalogs:
     '@vitest/coverage-v8':
       specifier: 3.2.7
       version: 3.2.7
+    alterlab:
+      specifier: 2.4.0
+      version: 2.4.0
     apca-w3:
       specifier: 0.1.9
       version: 0.1.9
@@ -1283,6 +1286,28 @@ importers:
         version: 3.2.7(@types/node@22.20.5)(@vitest/browser@3.2.7)(jiti@2.7.0)(jsdom@27.0.1)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
 
   packages/drafting:
+    devDependencies:
+      '@causedeck/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.5
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.7(@types/node@22.20.5)(@vitest/browser@3.2.7)(jiti@2.7.0)(jsdom@27.0.1)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
+
+  packages/fetch:
+    dependencies:
+      alterlab:
+        specifier: 'catalog:'
+        version: 2.4.0
     devDependencies:
       '@causedeck/config':
         specifier: workspace:*
@@ -6339,6 +6364,9 @@ packages:
 
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
+
+  alterlab@2.4.0:
+    resolution: {integrity: sha512-2LQa4fM4IUAfrwrY0H4+VLuloFKQetslVvrPo5tk637Gzu3MSWFdxQOBMIXNMrXkBVbmUjvoMybny0loFdiIhQ==}
 
   ansi-colors@4.1.3:
     resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
@@ -15027,6 +15055,13 @@ snapshots:
       fast-uri: 3.1.8
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
+
+  alterlab@2.4.0:
+    dependencies:
+      axios: 1.20.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
 
   ansi-colors@4.1.3: {}
 

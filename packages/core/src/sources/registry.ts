@@ -61,10 +61,14 @@ export interface SourcePolicy {
   /** The costliest AlterLab tier the fetch layer may use. */
   maxTier: SourceMaxTier;
   maxCostDollars: number;
+  /** Counsel has cleared bulk captcha solving for this source (D-048); read-only here, set by staff in SQL. */
+  captchaBulkCleared: boolean;
+  /** The registry row's version (`updated_at`, ISO), recorded in fetch provenance. */
+  version: string;
 }
 
 /** One `source` row, as the admin console lists and edits it. */
-export interface SourceRecord extends Omit<SourcePolicy, 'sourceId'> {
+export interface SourceRecord extends Omit<SourcePolicy, 'sourceId' | 'version'> {
   id: string;
   owner: string;
   termsStatus: SourceReviewStatus;
@@ -124,6 +128,8 @@ export async function policyFor(
     residency: row.residency,
     maxTier: row.maxTier,
     maxCostDollars: Number(row.maxCostDollars),
+    captchaBulkCleared: row.captchaBulkCleared,
+    version: row.updatedAt.toISOString(),
   };
 }
 
@@ -152,6 +158,7 @@ function toRecord(row: typeof source.$inferSelect): SourceRecord {
     residency: row.residency,
     maxTier: row.maxTier,
     maxCostDollars: Number(row.maxCostDollars),
+    captchaBulkCleared: row.captchaBulkCleared,
     killSwitch: row.killSwitch,
     notes: row.notes,
     updatedAt: row.updatedAt,

@@ -46,3 +46,10 @@ Issue #51 (split into #541, #542, #543) lets a lawyer dictate what happened at a
 - `@causedeck/intelligence` depends on `@causedeck/adapters` for the normalisers (adapters does not depend on intelligence).
 - Callers of the gateway `structure_hearing` task see a new output shape; there were none.
 - Real STT quality, accents and noisy rooms are not measured until recorded samples exist.
+
+## Revisit when
+
+- Lawyer-recorded real speech (the later human gate) shows next-date accuracy or directions recall under the synthetic eval's gates.
+- The #113 Sarvam credentials show timestamps or language tags that the single-segment mapping hides.
+- Counsel or users need dates the parser does not read (for example, Hindi, or "the Monday after" phrases).
+- The `hearing` table gains outcome columns and #542 enables the `hearing_outcome` handler.

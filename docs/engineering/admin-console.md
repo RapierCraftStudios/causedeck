@@ -65,11 +65,11 @@ Staff accounts exist only through the operator CLI (#308):
 `pnpm --filter @causedeck/admin staff:add <email> --role support|ops|admin`. The matrix lives in
 `apps/admin/lib/roles.ts` and filters the nav and the pages:
 
-| Role      | Overview | Adapters | Flags | Workspaces | Support sessions | Audit |
-| --------- | -------- | -------- | ----- | ---------- | ---------------- | ----- |
-| `support` | yes      |          |       | metadata   | yes              | yes   |
-| `ops`     | yes      | yes      | yes   |            |                  | yes   |
-| `admin`   | yes      | yes      | yes   | yes        | yes              | yes   |
+| Role      | Overview | Adapters | Data Ops | Flags | Workspaces | Support sessions | Audit |
+| --------- | -------- | -------- | -------- | ----- | ---------- | ---------------- | ----- |
+| `support` | yes      |          |          |       | metadata   | yes              | yes   |
+| `ops`     | yes      | yes      | yes      | yes   |            |                  | yes   |
+| `admin`   | yes      | yes      | yes      | yes   | yes        | yes              | yes   |
 
 Within Workspaces, setting or expiring an AI budget override is `admin` only
 (`canOverrideBudget`); `support` sees the usage section read-only.
@@ -195,6 +195,25 @@ actions record `staff.read` (purpose `adapters.fixture_workbench`, actor kind `s
 Export to a PR: `pnpm --filter @causedeck/adapters fixtures:export <bundle.json>` writes the files
 into `packages/adapters/fixtures/<adapter>/`, a person commits them and opens a PR. Fetched
 documents are not offered: `fetch_log` keeps no bodies.
+
+## Data Ops
+
+`/data-ops` (#514, `data-ops` capability: `ops` and `admin`) shows, per registered source, its
+kind, access mode, status, last success, freshness against an SLA, fetches, error rate, parse yield,
+cost and tier mix for the last 24 hours and 7 days, the captcha solve rate (captcha-tier calls that
+succeeded), the top failing sources, and daily volume and cost bars. `/data-ops/<source id>` lists
+the newest `fetch_log` rows: time, status, tier and cost only. Source ids are court ids for
+`court` sources, so the per-source charts are the per-court charts. Kill switch and rate-limit
+edits stay on `/sources` (audited as `source.changed`).
+
+- Read model: `sourceOpsOverview` and `sourceFetchLogs` in `packages/core/src/sources/ops.ts`, read
+  through the data layer (`dataOpsOverview`, `dataOpsFetchLogs`; purposes `data_ops.*`).
+- Freshness SLA: `FRESHNESS_SLA_HOURS` per source kind (court and notice 24h, news 6h, licensed 24h,
+  corpus 168h) since the last successful fetch. A source that never succeeded is stale.
+- Parse yield (rows anchored / rows parsed) comes from `app_staff_parse_yield` (migration 0072), a
+  staff-only definer function over `adapter_parse_run` returning per-adapter counts; the adapter id
+  is the source id. Conflict rate is not shown yet (#499).
+- Errors are status 0 or >= 400. No URL, URL hash, advocate, document or party data is read.
 
 ## Workspaces and audit pages
 

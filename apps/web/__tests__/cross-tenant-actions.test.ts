@@ -107,6 +107,7 @@ const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
+const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
@@ -178,6 +179,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
+  addTagAction: research,
+  confirmTagAction: research,
+  dismissTagAction: research,
   chooseNextDateSourceAction: matterWorkspace,
   createProceedingAction: proceedingsTab,
   updateProceedingAction: proceedingsTab,
@@ -603,6 +607,18 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Research tab (#497): ub may not tag A's matter or confirm A's tag.
+    addTagAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId, statute: 'ipc' },
+    confirmTagAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      tagId: t.a.rows.matter_issue_tag?.id,
+    },
+    dismissTagAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      tagId: t.a.rows.matter_issue_tag?.id,
+    },
     chooseNextDateSourceAction: {
       workspaceId,
       currentListingId: t.a.rows.listing?.listingId,
@@ -1008,6 +1024,9 @@ describe('cross-tenant server actions', () => {
       'setSensitiveAction',
       'confirmNextDateAction',
       'chooseNextDateSourceAction',
+      'addTagAction',
+      'confirmTagAction',
+      'dismissTagAction',
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',

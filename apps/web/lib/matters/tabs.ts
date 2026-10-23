@@ -30,6 +30,17 @@ export function registerProceedingsTab(): void {
   });
 }
 
+/** Research (#497): issue tags and the judgments that cite them, after Documents (30). */
+export function registerResearchTab(): void {
+  registerMatterTab({
+    id: 'research',
+    order: 40,
+    labelKey: 'research',
+    segment: 'research',
+    visible: ({ can }) => can('matter.read'),
+  });
+}
+
 /** Register every matter tab. Idempotent: a tab registered again replaces itself (same id). */
 export function registerMatterTabs(): void {
   registerOverviewTab();
@@ -37,6 +48,7 @@ export function registerMatterTabs(): void {
   registerTimelineTab();
   registerPeopleTab();
   registerDocumentsTab();
+  registerResearchTab();
 }
 
 registerMatterTabs();

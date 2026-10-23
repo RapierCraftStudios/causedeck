@@ -3,6 +3,7 @@
 import { UnknownTaskError } from '../errors.ts';
 import { TASK_IDS, type TaskDef, type TaskId } from '../types.ts';
 import { classifyDocument } from './classify-document.ts';
+import { extractIssueTags } from './extract-issue-tags.ts';
 import { extractOrder } from './extract-order.ts';
 import { ocr } from './ocr.ts';
 import { parseListA0 } from './parse-list-a0.ts';
@@ -28,6 +29,7 @@ export const TASKS: Readonly<Record<TaskId, TaskDef>> = {
   translate: translate,
   summarise: summarise,
   tag_notice: tagNotice,
+  extract_issue_tags: extractIssueTags,
 };
 
 export function getTask(id: string): TaskDef {

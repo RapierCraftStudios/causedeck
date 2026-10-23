@@ -132,6 +132,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
+  // Judgment alerts (#497).
+  matter_issue_tag: DB_TABLES_TEST,
+  judgment_alert: DB_TABLES_TEST,
   // Official notices feed (#584).
   notice_match: DB_TABLES_TEST,
 };
@@ -679,6 +682,18 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
   },
+  // judgment alerts (#497)
+  listTags: denies,
+  addTag: denies,
+  proposeTags: denies,
+  confirmTag: denies,
+  dismissTag: denies,
+  listRelevantJudgments: denies,
+  scanJudgments: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
+  },
   // citations (#484): the global corpus, one answer for every workspace
   verifyCitation: {
     test: CORE_SERVICES_TEST,
@@ -724,6 +739,15 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
   createFetchLogSink:
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
+  sourceOpsOverview:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  sourceFetchLogs:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  topFailingSources: 'pure',
+  isFetchError: 'pure',
+  FRESHNESS_SLA_HOURS: 'constant',
+  staffParseYield:
+    'app_staff_parse_yield() returns per-adapter counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

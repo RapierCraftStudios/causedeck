@@ -14,8 +14,6 @@ import {
   type SetStateAction,
 } from 'react';
 
-import { voiceHref } from '../../lib/capture/voice/command-registration.ts';
-
 import { loadShellOverlays, useShellOverlays } from './use-shell-overlays.ts';
 
 export interface CaptureApi {
@@ -138,7 +136,10 @@ export function CaptureFab() {
                   id === 'voice'
                     ? () => {
                         setOpen(false);
-                        router.push(voiceHref(`${pathname}${window.location.search}`));
+                        // Same address as voiceHref(); inlined so the shell does not pull the command registry in.
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('capture', 'voice');
+                        router.push(`${pathname}?${params.toString()}`);
                       }
                     : undefined
                 }

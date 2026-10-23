@@ -5,6 +5,7 @@ import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 import { analyzeBundle, buildTimeAppUrl, e2eBuild } from './lib/env.ts';
+import { buildServiceWorker } from './lib/pwa/build-sw.ts';
 
 const repoRoot = path.join(import.meta.dirname, '../..');
 
@@ -74,7 +75,19 @@ const nextConfig: NextConfig = {
     // e2e harness only (#16): a compiled build that keeps `NODE_ENV=development`.
     ...(e2eBuild() ? { allowDevelopmentBuild: true as const } : {}),
   },
-  headers: () => Promise.resolve([{ source: '/:path*', headers: securityHeaders }]),
+  headers: () =>
+    Promise.resolve([
+      { source: '/:path*', headers: securityHeaders },
+      // The worker must always revalidate so updates are found; its scope stays the default `/`
+      // (no `Service-Worker-Allowed`).
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Content-Type', value: 'text/javascript; charset=utf-8' },
+        ],
+      },
+    ]),
 };
 
 const withNextIntl = createNextIntlPlugin({
@@ -92,4 +105,11 @@ const withNextIntl = createNextIntlPlugin({
 });
 const withBundleAnalyzer = bundleAnalyzer({ enabled: analyzeBundle() });
 
-export default withBundleAnalyzer(withNextIntl(nextConfig));
+// The PWA service worker (#50) is bundled to public/sw.js when the dev server or a build starts.
+// Next.js passes the phase to a function config; `NEXT_PHASE` is not set while the config loads.
+export default function config(phase: string): NextConfig {
+  if (phase === 'phase-development-server' || phase === 'phase-production-build') {
+    buildServiceWorker(import.meta.dirname, { minify: phase === 'phase-production-build' });
+  }
+  return withBundleAnalyzer(withNextIntl(nextConfig));
+}

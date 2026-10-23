@@ -2,6 +2,7 @@
 
 import { ClipboardPaste, Mic, Paperclip, Plus, type LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   createContext,
   useContext,
@@ -12,6 +13,8 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react';
+
+import { voiceHref } from '../../lib/capture/voice/command-registration.ts';
 
 import { loadShellOverlays, useShellOverlays } from './use-shell-overlays.ts';
 
@@ -72,6 +75,8 @@ const ACTIONS: readonly CaptureAction[] = [
 export function CaptureFab() {
   const t = useTranslations('shell');
   const overlays = useShellOverlays();
+  const router = useRouter();
+  const pathname = usePathname();
   const shared = useContext(CaptureContext);
   // Standalone (outside the provider) the button keeps its own state.
   const local = useCaptureState();
@@ -124,11 +129,19 @@ export function CaptureFab() {
         <ul className="flex flex-col gap-1">
           {ACTIONS.map(({ id, icon: Icon }) => (
             <li key={id}>
-              {/* TODO(capture): voice, file and paste capture arrive with the Capture milestone. */}
+              {/* TODO(capture): file and paste capture arrive with the Capture milestone. */}
               <button
                 type="button"
-                disabled
+                disabled={id !== 'voice'}
                 data-capture-action={id}
+                onClick={
+                  id === 'voice'
+                    ? () => {
+                        setOpen(false);
+                        router.push(voiceHref(`${pathname}${window.location.search}`));
+                      }
+                    : undefined
+                }
                 className="text-ink flex min-h-11 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium disabled:opacity-60"
               >
                 <Icon aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.5} />

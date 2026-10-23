@@ -1,0 +1,62 @@
+{
+  "voice": {
+    "command": "Record a voice note",
+    "title": "Record a voice note",
+    "description": "Say the hearing, the next date or what to do. We will turn it into drafts for you to confirm.",
+    "privacy": "Audio stays in India and is deleted after 30 days. The transcript stays.",
+    "close": "Close",
+    "cancel": "Cancel",
+    "onboarding": {
+      "title": "Why we need your microphone",
+      "why": "To record the voice notes you make here. Nothing is recorded in the background.",
+      "india": "Audio is stored in India.",
+      "retention": "The audio file is deleted after 30 days. You can delete a recording at any time.",
+      "allow": "Allow microphone"
+    },
+    "record": {
+      "hold": "Hold to record",
+      "tap": "Tap to start or stop",
+      "stop": "Stop recording",
+      "start": "Start recording",
+      "hint": "Hold, speak, release. Slide left to cancel.",
+      "slideCancel": "Slide to cancel",
+      "waveform": "Sound level",
+      "elapsed": "Recording, {time}",
+      "stopped": "Recording stopped, {time}",
+      "cancelled": "Recording cancelled",
+      "limit": "Reached the {minutes}-minute limit. Recording stopped."
+    },
+    "review": {
+      "title": "Review your note",
+      "play": "Play",
+      "pause": "Pause",
+      "audio": "Your recording, {time}",
+      "again": "Re-record",
+      "save": "Save",
+      "matter": "Linked to this matter",
+      "matterClear": "Don't link to a matter",
+      "dateHint": "date mentioned: {date}?",
+      "dateHintNote": "A hint from this device only. Nothing is created from it.",
+      "note": "Key line (optional)",
+      "notePlaceholder": "Type the date or key line, if you want a hint"
+    },
+    "saved": {
+      "online": "Saved. We will transcribe it now.",
+      "offline": "Saved on this device. Will transcribe when you're back online."
+    },
+    "denied": {
+      "title": "Microphone access is off",
+      "steps": "Allow microphone access for this site in your browser settings, then open this again.",
+      "body": "You can still add an audio file from the capture menu."
+    },
+    "unavailable": {
+      "title": "This device can't record here",
+      "body": "Open CauseDeck in a current browser over a secure connection to record."
+    },
+    "errors": {
+      "record": "Couldn't record. Try again.",
+      "save": "Couldn't save this recording on the device.",
+      "full": "The device outbox is full. Let uploads finish, then try again."
+    }
+  }
+}

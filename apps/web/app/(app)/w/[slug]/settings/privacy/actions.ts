@@ -20,13 +20,13 @@ export type PrivacySettingsView = PrivacySettings;
 
 const update = workspaceAction(
   UpdatePrivacy,
-  async ({ sensitiveDefaultRestricted, retentionAudioDays }, ctx) => {
+  async ({ sensitiveDefaultRestricted, retentionAudioDays, contributePublicCourtDocuments }, ctx) => {
     assertCan(ctx.actor, 'workspace.manage');
     const { updateWorkspacePrivacy } = await import('@causedeck/core/workspaces');
     const { settings } = await updateWorkspacePrivacy(ctx.tx, {
       workspaceId: ctx.workspaceId,
       actorUserId: ctx.userId,
-      input: { sensitiveDefaultRestricted, retentionAudioDays },
+      input: { sensitiveDefaultRestricted, retentionAudioDays, contributePublicCourtDocuments },
       requestId: ctx.requestId,
     });
     revalidatePath('/w/[slug]/settings', 'layout');

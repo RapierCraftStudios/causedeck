@@ -25,10 +25,16 @@ export interface PrivacySettings {
   indiaOnlyAi: boolean;
   sensitiveDefaultRestricted: boolean;
   retentionAudioDays: RetentionAudioDays;
+  /** Share public court documents (cause lists, published orders) with every workspace (#485). */
+  contributePublicCourtDocuments: boolean;
 }
 
 /** The privacy settings a member can change, in display order (audit metadata uses these names). */
-export const PRIVACY_SETTING_FIELDS = ['sensitiveDefaultRestricted', 'retentionAudioDays'] as const;
+export const PRIVACY_SETTING_FIELDS = [
+  'sensitiveDefaultRestricted',
+  'retentionAudioDays',
+  'contributePublicCourtDocuments',
+] as const;
 
 export type PrivacySettingField = (typeof PRIVACY_SETTING_FIELDS)[number];
 
@@ -36,6 +42,7 @@ export const DEFAULT_PRIVACY_SETTINGS: Readonly<PrivacySettings> = Object.freeze
   indiaOnlyAi: true,
   sensitiveDefaultRestricted: true,
   retentionAudioDays: 30,
+  contributePublicCourtDocuments: false,
 });
 
 /** The workspace's privacy settings; the defaults when it has no settings row (or is not visible). */
@@ -47,6 +54,7 @@ export async function getPrivacySettings(
     .select({
       indiaOnlyAi: workspaceSettings.indiaOnlyAi,
       sensitiveDefaultRestricted: workspaceSettings.sensitiveDefaultRestricted,
+      contributePublicCourtDocuments: workspaceSettings.contributePublicCourtDocuments,
       retentionAudioDays: workspaceSettings.retentionAudioDays,
     })
     .from(workspaceSettings)
@@ -55,6 +63,7 @@ export async function getPrivacySettings(
   return {
     indiaOnlyAi: row.indiaOnlyAi,
     sensitiveDefaultRestricted: row.sensitiveDefaultRestricted,
+    contributePublicCourtDocuments: row.contributePublicCourtDocuments,
     // The column's check constraint allows only the offered windows.
     retentionAudioDays: row.retentionAudioDays as RetentionAudioDays,
   };
@@ -77,7 +86,8 @@ export interface UpdateWorkspacePrivacyResult {
 }
 
 /**
- * Save the sensitive-matter default and the raw audio retention window. Needs `workspace.manage`;
+ * Save the sensitive-matter default, the raw audio retention window and the court document
+ * contribution opt-in (#485). Needs `workspace.manage`;
  * runs in one transaction (a savepoint when `db` is already one), so the change and its audit event
  * commit together. India-only AI is not an input and is never written. Saving the current values
  * changes nothing and records nothing.
@@ -94,13 +104,16 @@ export async function updateWorkspacePrivacy(
   return db.transaction(async (tx) => {
     await requireCan(tx, workspaceId, actorUserId, 'workspace.manage');
     const before = await getPrivacySettings(tx, workspaceId);
-    const changed = PRIVACY_SETTING_FIELDS.filter((field) => before[field] !== next[field]);
-    if (changed.length === 0) return { settings: before, changed };
-
-    const values = {
+    const wanted: Omit<PrivacySettings, 'indiaOnlyAi'> = {
       sensitiveDefaultRestricted: next.sensitiveDefaultRestricted,
       retentionAudioDays: next.retentionAudioDays,
+      contributePublicCourtDocuments:
+        next.contributePublicCourtDocuments ?? before.contributePublicCourtDocuments,
     };
+    const changed = PRIVACY_SETTING_FIELDS.filter((field) => before[field] !== wanted[field]);
+    if (changed.length === 0) return { settings: before, changed };
+
+    const values = wanted;
     await tx
       .insert(workspaceSettings)
       .values({ workspaceId, ...values })
@@ -120,7 +133,7 @@ export async function updateWorkspacePrivacy(
         target: { kind: 'workspace', id: workspaceId },
         metadata: {
           fields: changed.join(','),
-          ...Object.fromEntries(changed.map((field) => [field, String(next[field])])),
+          ...Object.fromEntries(changed.map((field) => [field, String(wanted[field])])),
         },
       },
     );

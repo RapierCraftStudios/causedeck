@@ -67,6 +67,28 @@ async function aMembers(f: Fixture) {
   );
 }
 
+async function aLedger(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ id: schema.contributionLedger.id, copy: schema.contributionLedger.contributedDocumentId })
+      .from(schema.contributionLedger)
+      .orderBy(schema.contributionLedger.id),
+  );
+}
+
+/** B opts in to contribution, so only the document's owner (A) stands between B and the row. */
+async function bOptsIn(f: Fixture) {
+  await inWorkspace(f.tx, f.b.id, (s) =>
+    s
+      .insert(schema.workspaceSettings)
+      .values({ workspaceId: f.b.id, contributePublicCourtDocuments: true })
+      .onConflictDoUpdate({
+        target: schema.workspaceSettings.workspaceId,
+        set: { contributePublicCourtDocuments: true },
+      }),
+  );
+}
+
 async function aInvitations(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s
@@ -1093,6 +1115,49 @@ const CASES: Record<string, Case> = {
       ),
     );
     expect(await aRestrictions(f)).toEqual(before);
+  },
+  checkEligibility: async (f) => {
+    await bOptsIn(f);
+    const sourceId = 'xt.none';
+    const before = await aLedger(f);
+    // B is opted in but A's document is not B's: it is not found, never contributable.
+    const outcome = await core.checkEligibility(f.tx, {
+      workspaceId: f.b.id,
+      documentId: f.a.rows.document?.documentId ?? '',
+      sourceId,
+    });
+    expect(outcome).toBe('not_found');
+    expect(await aLedger(f)).toEqual(before);
+  },
+  contributeDocument: async (f) => {
+    await bOptsIn(f);
+    const before = await aLedger(f);
+    const error: unknown = await core
+      .contributeDocument(f.tx, {
+        workspaceId: f.b.id,
+        documentId: f.a.rows.document?.documentId ?? '',
+        sourceId: 'xt.none',
+        actorUserId: f.ub,
+      })
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(error).toBeInstanceOf(core.ContributionRefused);
+    expect((error as core.ContributionRefused).reason).toBe('not_found');
+    expect(await aLedger(f)).toEqual(before);
+  },
+  withdrawContributions: async (f) => {
+    const before = await aLedger(f);
+    expect(before.length).toBeGreaterThan(0);
+    // B withdrawing its own (none) contributions leaves A's link and A's shared copy untouched.
+    await core.withdrawContributions(f.tx, f.b.id);
+    expect(await aLedger(f)).toEqual(before);
+    const [copy] = await f.tx
+      .select({ withdrawnAt: schema.contributedDocument.withdrawnAt })
+      .from(schema.contributedDocument)
+      .where(eq(schema.contributedDocument.id, before[0]?.copy ?? ''));
+    expect(copy?.withdrawnAt).toBeNull();
   },
   listMatterRestrictions: async (f) => {
     await expectDenied(core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.a.id }));

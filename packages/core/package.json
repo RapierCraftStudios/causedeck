@@ -19,6 +19,7 @@
     "./capture": "./src/capture/index.ts",
     "./matter-graph": "./src/matter-graph/index.ts",
     "./matters": "./src/matters/index.ts",
+    "./network": "./src/network/index.ts",
     "./runtime": "./src/runtime/index.ts",
     "./voice": "./src/voice/index.ts",
     "./whatsapp": "./src/whatsapp/index.ts",

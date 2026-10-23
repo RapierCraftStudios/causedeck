@@ -311,6 +311,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'inserts under withWorkspace; ws_isolation rejects a row for another workspace',
   },
   restrictMatter: denies,
+  // court document network (#485): a contribution reads the caller's own document under RLS
+  checkEligibility: denies,
+  contributeDocument: denies,
+  withdrawContributions: denies,
   assertMatterReadable: denies,
   listMatterRestrictions: denies,
   // court (#34): catalogue rows are global by design; custom forums stay in their workspace
@@ -690,6 +694,13 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
   setSourceKillSwitch:
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  // court document network (#485): `findContributed` reads the global `contributed_document` table (no
+  // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
+  findContributed:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): public text only, no contributor field; the tenant link is `contribution_ledger`',
+  CONTRIBUTABLE_DOCUMENT_KINDS: 'constant',
+  isContributableKind: 'pure',
+  ContributionRefused: 'error class',
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

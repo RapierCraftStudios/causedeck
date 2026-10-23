@@ -44,4 +44,30 @@ REVOKE ALL ON "contributed_document" FROM PUBLIC, causedeck_app, causedeck_clerk
 GRANT SELECT, INSERT, UPDATE ON "contributed_document" TO causedeck_app;--> statement-breakpoint
 ALTER TABLE "contribution_ledger" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "contribution_ledger" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
-CREATE POLICY "ws_isolation" ON "contribution_ledger" AS PERMISSIVE FOR ALL TO PUBLIC USING (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid) WITH CHECK (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid);
+CREATE POLICY "ws_isolation" ON "contribution_ledger" AS PERMISSIVE FOR ALL TO PUBLIC USING (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid) WITH CHECK (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid);--> statement-breakpoint
+CREATE POLICY "owner_definer_read" ON "contribution_ledger" AS PERMISSIVE FOR SELECT TO causedeck_owner USING (true);--> statement-breakpoint
+CREATE FUNCTION app_withdraw_contributions(p_workspace uuid)
+  RETURNS integer
+  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp
+  AS $$
+    DECLARE
+      withdrawn integer;
+      mine uuid[];
+    BEGIN
+      IF p_workspace IS NULL OR p_workspace IS DISTINCT FROM app_current_workspace() THEN
+        RAISE EXCEPTION 'withdraw is only allowed for the pinned workspace'
+          USING ERRCODE = 'insufficient_privilege';
+      END IF;
+      SELECT array_agg(l.contributed_document_id) INTO mine FROM contribution_ledger l
+        WHERE l.workspace_id = p_workspace;
+      DELETE FROM contribution_ledger l WHERE l.workspace_id = p_workspace;
+      UPDATE contributed_document c SET content = NULL, withdrawn_at = now()
+        WHERE c.id = ANY (coalesce(mine, '{}'::uuid[]))
+          AND c.withdrawn_at IS NULL
+          AND NOT EXISTS (SELECT 1 FROM contribution_ledger l WHERE l.contributed_document_id = c.id);
+      GET DIAGNOSTICS withdrawn = ROW_COUNT;
+      RETURN withdrawn;
+    END
+  $$;--> statement-breakpoint
+REVOKE ALL ON FUNCTION app_withdraw_contributions(uuid) FROM PUBLIC;--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION app_withdraw_contributions(uuid) TO causedeck_app;

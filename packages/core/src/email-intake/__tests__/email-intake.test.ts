@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 
 import { captureConfigFromEnv } from '@causedeck/capture';
 import { schema } from '@causedeck/db';
-import { withTestDb } from '@causedeck/db/testing';
+import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { seedTwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createMemoryObjectStore } from '@causedeck/storage';
 import { INTEGRATION_KIND_VALUES } from '@causedeck/validators/workspace';
@@ -135,7 +135,8 @@ describe('allow-list', () => {
         label: 'Registry',
       });
       expect(exact).toMatchObject({ isDomain: false, label: 'Registry' });
-      expect((await listAllowlist(tx, a.id)).map((e) => e.pattern)).toContain('court.gov.in');
+      const listed = await inWorkspace(tx, a.id, (scope) => listAllowlist(scope, a.id));
+      expect(listed.map((e) => e.pattern)).toContain('court.gov.in');
       await expect(
         addAllowlistEntry(ctx, { pattern: 'court.gov.in', kind: 'court' }),
       ).rejects.toMatchObject({ code: 'CONFLICT' });

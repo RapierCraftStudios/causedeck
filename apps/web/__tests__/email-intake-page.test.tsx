@@ -142,7 +142,9 @@ describe('email intake page (server)', () => {
       },
     ];
     await renderPage();
-    expect(document.body.textContent).toContain('u-k3j9x2mq4a@intake.test');
+    expect(
+      document.querySelector<HTMLInputElement>('[data-slot="email-address-value"]')?.value,
+    ).toBe('u-k3j9x2mq4a@intake.test');
     expect(document.body.textContent).toContain('court.gov.in');
   });
 

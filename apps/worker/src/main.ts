@@ -1,7 +1,11 @@
 // Worker entry point (spike §1, §3.2): env, telemetry, logger, pg-boss, schedules, health server,
 // and a graceful SIGTERM that gives in-flight jobs up to 30 s before pg-boss requeues them.
 import { serverEnv } from '@causedeck/config/env';
-import { registry, setCauseListFetcherFactory } from '@causedeck/core/jobs';
+import {
+  registry,
+  setCauseListFetcherFactory,
+  setStatusFetcherFactory,
+} from '@causedeck/core/jobs';
 import { closeAppDb, db } from '@causedeck/core/runtime';
 import { createFetchLogSink, policyFor } from '@causedeck/core/sources';
 import { createFetcher, createProvider } from '@causedeck/fetch';
@@ -30,6 +34,17 @@ if (ownerUrl === undefined) {
 // shape and never imports `@causedeck/fetch` (spike §2). Per-workspace usage stays with callers that
 // know a workspace; this system job records none.
 setCauseListFetcherFactory((jobDb) =>
+  createFetcher({
+    registry: { policyFor: (id) => policyFor(id, { db: jobDb }) },
+    alterlab: createProvider({ apiKey: env.ALTERLAB_API_KEY?.reveal() }),
+    clock: { now: () => new Date() },
+    usage: { record: () => Promise.resolve() },
+    log: createFetchLogSink(jobDb),
+  }),
+);
+
+// The same governed fetcher for `system.status.poll` (#592): delegated case-status lookups only.
+setStatusFetcherFactory((jobDb) =>
   createFetcher({
     registry: { policyFor: (id) => policyFor(id, { db: jobDb }) },
     alterlab: createProvider({ apiKey: env.ALTERLAB_API_KEY?.reveal() }),

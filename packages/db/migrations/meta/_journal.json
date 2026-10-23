@@ -526,6 +526,13 @@
       "when": 1792796249532,
       "tag": "0074_staff_business_metrics",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1792797370620,
+      "tag": "0075_status_poll",
+      "breakpoints": true
     }
   ]
 }

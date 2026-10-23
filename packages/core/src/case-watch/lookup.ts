@@ -80,6 +80,10 @@ export interface CaseStatusLookupReport {
   changes: StatusChanges | null;
   /** Proposals staged for the changes. */
   proposals: number;
+  /** True when the stored snapshot is the watch's first, so every field counts as new (no alert). */
+  firstSnapshot: boolean;
+  /** The matter of the watched proceeding. */
+  matterId: string | null;
 }
 
 const NO_EVENTS: MatterGraphDeps['events'] = {
@@ -200,7 +204,14 @@ async function storeAndDiff(
     return { id: inserted.id, previous: previous ? (previous.fields as ParsedCaseStatus) : null };
   });
   if (stored === null)
-    return { outcome: 'unchanged', snapshotId: null, changes: null, proposals: 0 };
+    return {
+      outcome: 'unchanged',
+      snapshotId: null,
+      changes: null,
+      proposals: 0,
+      firstSnapshot: false,
+      matterId: input.matterId,
+    };
 
   const changes = diffStatus(stored.previous, parsed);
   const draft = statusChangeDraft(
@@ -220,7 +231,14 @@ async function storeAndDiff(
       [draft],
     );
   }
-  return { outcome: 'changed', snapshotId: stored.id, changes, proposals: draft === null ? 0 : 1 };
+  return {
+    outcome: 'changed',
+    snapshotId: stored.id,
+    changes,
+    proposals: draft === null ? 0 : 1,
+    firstSnapshot: stored.previous === null,
+    matterId: input.matterId,
+  };
 }
 
 /**
@@ -249,7 +267,14 @@ export async function runCaseStatusLookup(
   const parsed = parseCaseStatus(source.template, fetched.body);
   // `fetched.body` goes out of scope here: only the parsed fields are stored.
   if (parsed.status !== 'ok') {
-    return { outcome: parsed.status, snapshotId: null, changes: null, proposals: 0 };
+    return {
+      outcome: parsed.status,
+      snapshotId: null,
+      changes: null,
+      proposals: 0,
+      firstSnapshot: false,
+      matterId: ctx.matterId,
+    };
   }
   return storeAndDiff(deps, actor, {
     watch,
@@ -271,7 +296,14 @@ export async function recordDeviceSnapshot(
 ): Promise<CaseStatusLookupReport> {
   const ctx = await loadWatch(deps.db, actor, input.watchId);
   if (input.status.status !== 'ok') {
-    return { outcome: input.status.status, snapshotId: null, changes: null, proposals: 0 };
+    return {
+      outcome: input.status.status,
+      snapshotId: null,
+      changes: null,
+      proposals: 0,
+      firstSnapshot: false,
+      matterId: ctx.matterId,
+    };
   }
   return storeAndDiff(deps, actor, {
     watch: ctx.watch,
@@ -282,5 +314,26 @@ export async function recordDeviceSnapshot(
     costDollars: 0,
     fetchedAt: (deps.now ?? (() => new Date()))(),
     sourceRef: 'device',
+  });
+}
+
+/** Mark the actor's own watch as polled at `at` (a lookup that stored nothing still honours the cadence). */
+export async function touchWatchPolled(
+  db: Db,
+  actor: GraphActor,
+  watchId: string,
+  at: Date,
+): Promise<void> {
+  await withWorkspace(db, actor, async (tx) => {
+    await tx
+      .update(caseWatch)
+      .set({ lastPolledAt: at })
+      .where(
+        and(
+          eq(caseWatch.workspaceId, actor.workspaceId),
+          eq(caseWatch.advocateUserId, actor.userId),
+          eq(caseWatch.id, watchId),
+        ),
+      );
   });
 }

@@ -2258,6 +2258,41 @@ export type Messages = {
       failed: string;
     };
   };
+  caseWatch: {
+    title: string;
+    description: string;
+    flagOff: string;
+    empty: string;
+    panelTitle: string;
+    proceeding: string;
+    sourceLabel: string;
+    watch: string;
+    source: {
+      'in.tn.chennai-district:case_status': string;
+      'in.tn.madras-hc.chennai:case_status': string;
+      'in.ka.karnataka-hc.bengaluru:case_status': string;
+    };
+    remove: string;
+    added: string;
+    removed: string;
+    failed: string;
+    loading: string;
+    refresh: {
+      label: string;
+      running: string;
+      failed: string;
+      via: {
+        device: string;
+        server: string;
+      };
+      outcome: {
+        changed: string;
+        unchanged: string;
+        not_found: string;
+        unrecognised: string;
+      };
+    };
+  };
   matters: {
     metaTitle: string;
     title: string;

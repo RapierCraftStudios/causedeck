@@ -67,6 +67,12 @@ export const FLAGS = {
     true,
     [482, 118],
   ),
+  'court.case-status': flag(
+    'court.case-status',
+    'Delegated case-status watch, refresh and on-device captcha solver (D-048 tier 4).',
+    true,
+    [483, 118],
+  ),
   'court.sanctioned-push': flag(
     'court.sanctioned-push',
     'Sanctioned push ingestion from courts.',

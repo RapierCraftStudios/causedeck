@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({ growthFunnel: vi.fn() }));
 
-vi.mock('../lib/data/index.ts', async () => {
+vi.mock('../lib/data/index.ts', () => {
   const steps = [
     'signed_up',
     'workspace_created',

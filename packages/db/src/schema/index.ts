@@ -239,3 +239,11 @@ export {
   caseWatch,
   type CaseStatusVia,
 } from './case-watch.ts';
+export {
+  ISSUE_TAG_SOURCES,
+  ISSUE_TAG_STATUSES,
+  judgmentAlert,
+  matterIssueTag,
+  type IssueTagSource,
+  type IssueTagStatus,
+} from './matter-issue.ts';

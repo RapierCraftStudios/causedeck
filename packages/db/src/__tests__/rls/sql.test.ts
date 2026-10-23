@@ -172,6 +172,9 @@ describe('row-level security catalog', () => {
 
         // Karnataka HC cause-list watches (#482).
         'cause_list_watch',
+        // Judgment alerts (#497).
+        'matter_issue_tag',
+        'judgment_alert',
         // Court document network (#485).
         'contribution_ledger',
 

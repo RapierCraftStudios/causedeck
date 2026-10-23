@@ -2327,6 +2327,80 @@ const CASES: Record<string, Case> = {
     ).rejects.toBeInstanceOf(TenancyError);
     expect(await aUsage(f)).toEqual(before);
   },
+  // judgment alerts (#497): B on A's matter is denied; A's tags are unchanged.
+  listTags: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    await expectDenied(
+      f.asB((s) => core.listTags(s, { workspaceId: f.a.id, userId: f.ub }, matterId)),
+    );
+    await expectDenied(
+      f.asB((s) => core.listTags(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
+    );
+  },
+  addTag: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    await expectDenied(
+      f.asB((s) =>
+        core.addTag(
+          s,
+          { workspaceId: f.b.id, userId: f.ub },
+          { matterId, statute: 'IPC', section: '420' },
+        ),
+      ),
+    );
+    const tags = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.matterIssueTag).where(eq(schema.matterIssueTag.matterId, matterId)),
+    );
+    expect(tags).toHaveLength(1);
+  },
+  proposeTags: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    const tag = {
+      statute: 'IPC',
+      section: '420',
+      issue: null,
+      confidence: 0.9,
+      status: 'proposed' as const,
+      source: 'ai' as const,
+    };
+    await expectDenied(
+      f.asB((s) => core.proposeTags(s, { workspaceId: f.b.id, userId: f.ub }, matterId, [tag])),
+    );
+  },
+  confirmTag: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    const tagId = f.a.rows.matter_issue_tag?.id ?? '';
+    await expectDenied(
+      f.asB((s) => core.confirmTag(s, { workspaceId: f.b.id, userId: f.ub }, { matterId, tagId })),
+    );
+  },
+  dismissTag: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    const tagId = f.a.rows.matter_issue_tag?.id ?? '';
+    await expectDenied(
+      f.asB((s) => core.dismissTag(s, { workspaceId: f.b.id, userId: f.ub }, { matterId, tagId })),
+    );
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.matterIssueTag).where(eq(schema.matterIssueTag.id, tagId)),
+    );
+    expect(row?.status).toBe('confirmed');
+  },
+  listRelevantJudgments: async (f) => {
+    const matterId = f.a.rows.judgment_alert?.matterId ?? '';
+    await expectDenied(
+      f.asB((s) => core.listRelevantJudgments(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
+    );
+  },
+  scanJudgments: async (f) => {
+    const deps = { db: f.tx, enqueueDelivery: () => Promise.resolve() };
+    // B's scan sees none of A's tags; a malformed workspace id finds nothing.
+    const report = await core.scanJudgments(deps, 'not-a-uuid');
+    expect(report).toEqual({ judgments: 0, alerts: 0, notified: 0 });
+    const asB = await core.scanJudgments(deps, f.b.id);
+    expect(asB.notified).toBe(0);
+    const alerts = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.judgmentAlert));
+    expect(alerts.every((a) => a.notifiedAt === null)).toBe(true);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)

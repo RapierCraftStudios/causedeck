@@ -38,6 +38,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The court document network (#485, D-048): contributions need a cleared source through sources and
   // record their events through audit; opt-in, matter and document reads go to the tables directly.
   network: Object.freeze(['audit', 'sources']),
+  // Judgment alerts (#497, D-048): member roles and role settings through workspaces; an alert is
+  // shown only if `verifyCitation` resolves its judgment (D-004), through citations.
+  research: Object.freeze(['workspaces', 'citations']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
@@ -91,6 +94,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'import',
     'court',
     'sources',
+    'research',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

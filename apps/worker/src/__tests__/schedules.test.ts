@@ -31,6 +31,7 @@ describe('registerSchedules', () => {
       'system.deletion.tick',
       'system.capture.retention',
       'system.corpus.poll',
+      'system.causelist.poll',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -80,6 +81,8 @@ describe('registerSchedules', () => {
       ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
       // Capture raw-object retention: daily 02:00 IST.
       ['system.capture.retention', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
+      // KHC cause-list poll (#482): 07:30 and 18:30 IST; 07:30 IST is 02:00 UTC.
+      ['system.causelist.poll', '30 7,18 * * *', '2026-10-18T02:00:00.000Z'],
     ] as const;
     for (const [name, cron, firstRun] of others) {
       const row = await worker.boss.getSchedule(name);

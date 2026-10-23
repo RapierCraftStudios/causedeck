@@ -180,6 +180,9 @@
       "sections": "Switch section",
       "help": "Show this sheet",
       "open": "Shortcuts"
+    },
+    "sourceChip": {
+      "khcList": "Fetched from the KHC public list at {time}"
     }
   }
 }

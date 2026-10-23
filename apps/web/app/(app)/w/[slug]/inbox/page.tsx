@@ -56,11 +56,16 @@ export default async function InboxPage({ params }: InboxPageProps) {
     listReadyItems(scope),
     loadChannels(scope),
   ]);
-  return (
-    <InboxShell
-      view={toInboxView(inbox, ready, channels)}
-      workspaceId={context.workspace.id}
-      slug={slug}
-    />
+  // The source chip of a proposal matched in a public cause list (#482): the publication's fetch time.
+  const { getPublicationForRef } = await import('@causedeck/core/court');
+  const view = toInboxView(inbox, ready, channels);
+  const needsYou = await Promise.all(
+    view.needsYou.map(async (item) => {
+      const publication = await getPublicationForRef({ db: runtime.db }, item.sourceRef);
+      return publication === null
+        ? item
+        : { ...item, sourceFetchedAt: publication.fetchedAt.toISOString() };
+    }),
   );
+  return <InboxShell view={{ ...view, needsYou }} workspaceId={context.workspace.id} slug={slug} />;
 }

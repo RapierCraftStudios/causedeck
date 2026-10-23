@@ -152,6 +152,7 @@ describe('enqueue', () => {
       'import.batch',
       'import.file',
       'system.corpus.poll',
+      'system.causelist.poll',
     ]);
   });
 });

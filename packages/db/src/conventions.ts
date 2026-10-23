@@ -35,6 +35,7 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `contributed_document` (#485, D-048) holds the public court documents workspaces opted in to share;
  * it has no workspace column by design, the link to a contributor is the tenant table `contribution_ledger`.
  * `fetch_log` (#479) is the global, content-free log of governed fetches: the app role may only SELECT and INSERT.
+ * `cause_list_publication` (#482) is the global, content-free cache of fetched list publications (no body).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -63,6 +64,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'contributed_document',
   'fetch_log',
   'judgment',
+  'cause_list_publication',
 ];
 
 /**

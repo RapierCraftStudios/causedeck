@@ -958,6 +958,7 @@ export type Messages = {
       audit: string;
       support: string;
       more: string;
+      'court-watch': string;
     };
     placeholder: {
       export: string;
@@ -1497,6 +1498,25 @@ export type Messages = {
           google: string;
         };
       };
+    };
+    courtWatch: {
+      title: string;
+      description: string;
+      kind: {
+        name: string;
+        brn: string;
+      };
+      value: string;
+      add: string;
+      remove: string;
+      empty: string;
+      flagOff: string;
+      uncleared: string;
+      cleared: string;
+      added: string;
+      removed: string;
+      failed: string;
+      loading: string;
     };
   };
   lifecycle: {
@@ -3180,6 +3200,9 @@ export type Messages = {
       sections: string;
       help: string;
       open: string;
+    };
+    sourceChip: {
+      khcList: string;
     };
   };
   pwa: {

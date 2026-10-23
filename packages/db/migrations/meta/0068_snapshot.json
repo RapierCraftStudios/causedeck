@@ -1,5 +1,5 @@
 {
-  "id": "da5a422c-bee3-4bbd-8264-30f03ea09f0c",
+  "id": "653383a7-3176-47c9-809a-2e61e9cf0dfd",
   "prevId": "5b6ef717-f878-490d-8d6a-c342efdfa03b",
   "version": "7",
   "dialect": "postgresql",
@@ -3488,6 +3488,218 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cause_list_publication": {
+      "name": "cause_list_publication",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "source_id": {
+          "name": "source_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "list_key": {
+          "name": "list_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "row_count": {
+          "name": "row_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "cause_list_publication_list_idx": {
+          "name": "cause_list_publication_list_idx",
+          "columns": [
+            {
+              "expression": "source_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "list_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "fetched_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cause_list_publication_sha_uq": {
+          "name": "cause_list_publication_sha_uq",
+          "nullsNotDistinct": false,
+          "columns": ["source_id", "sha256"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cause_list_watch": {
+      "name": "cause_list_watch",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_id": {
+          "name": "source_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "cause_list_watch_workspace_id_idx": {
+          "name": "cause_list_watch_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cause_list_watch_user_id_user_id_fk": {
+          "name": "cause_list_watch_user_id_user_id_fk",
+          "tableFrom": "cause_list_watch",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "cause_list_watch_workspace_id_fk": {
+          "name": "cause_list_watch_workspace_id_fk",
+          "tableFrom": "cause_list_watch",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cause_list_watch_uq": {
+          "name": "cause_list_watch_uq",
+          "nullsNotDistinct": false,
+          "columns": ["workspace_id", "user_id", "source_id", "kind", "value"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "cause_list_watch_kind_chk": {
+          "name": "cause_list_watch_kind_chk",
+          "value": "kind in ('name', 'brn')"
+        },
+        "cause_list_watch_value_chk": {
+          "name": "cause_list_watch_value_chk",
+          "value": "char_length(value) between 1 and 200"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.contributed_document": {
@@ -7178,148 +7390,6 @@
           "isUnique": false,
           "concurrently": false,
           "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.judgment": {
-      "name": "judgment",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "source_id": {
-          "name": "source_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "court": {
-          "name": "court",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "neutral_citation": {
-          "name": "neutral_citation",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "case_numbers": {
-          "name": "case_numbers",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
-        "bench": {
-          "name": "bench",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
-        "judgment_date": {
-          "name": "judgment_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "blob_key": {
-          "name": "blob_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sha256": {
-          "name": "sha256",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provenance": {
-          "name": "provenance",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "page_text": {
-          "name": "page_text",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "embedding": {
-          "name": "embedding",
-          "type": "vector(1024)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "judgment_sha256_uq": {
-          "name": "judgment_sha256_uq",
-          "columns": [
-            {
-              "expression": "sha256",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "judgment_neutral_citation_idx": {
-          "name": "judgment_neutral_citation_idx",
-          "columns": [
-            {
-              "expression": "neutral_citation",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "judgment_embedding_hnsw_idx": {
-          "name": "judgment_embedding_hnsw_idx",
-          "columns": [
-            {
-              "expression": "embedding",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "vector_cosine_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "hnsw",
           "with": {}
         }
       },

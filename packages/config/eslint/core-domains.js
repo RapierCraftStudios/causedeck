@@ -37,6 +37,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // the importer's capture through capture, proposals through automation and every graph read or
   // write through matter-graph (imports `index.ts` only); the feed token events go through audit.
   calendar: Object.freeze(['audit', 'workspaces', 'capture', 'automation', 'matter-graph']),
+  // Email forward-in intake (#54): per-user addresses and the sender allow-list; events through
+  // audit, the `email` channel is switched on through the capture domain's public index.
+  'email-intake': Object.freeze(['audit', 'capture']),
   // WhatsApp chat import (#526): intake and the structuring job body. The capture row and its
   // retention through capture, the `structure_chat` call through ai, proposals through automation,
   // evidence documents through matter-graph, member roles through workspaces.
@@ -67,6 +70,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'support',
     'court',
     'capture',
+    'email-intake',
     'automation',
   ]),
 });

@@ -1,5 +1,5 @@
 'use client';
-// One integrations card (#287, #25 design spec): the private email intake address or the private
+// One integrations card (#287, #25 design spec): the private
 // ICS feed URL. The value is a read-only field that shows the masked placeholder, because only the
 // token's hash is stored. Below it, the token's status (`Not created yet`, or when it was created
 // and last rotated) and the action:
@@ -63,7 +63,7 @@ export interface IntegrationCardProps {
 }
 
 /** `emailIntake` / `icsFeed`: the card's keys under `settings.integrations`. */
-const SECTION = { email_intake: 'emailIntake', ics_feed: 'icsFeed' } as const;
+const SECTION = { ics_feed: 'icsFeed' } as const;
 
 export function IntegrationCard({
   workspaceId,

@@ -48,7 +48,7 @@ describe('workspace_integration', () => {
             s.transaction((sp) =>
               sp
                 .insert(workspaceIntegration)
-                .values({ workspaceId: ws.id, kind: 'email_intake', tokenHash }),
+                .values({ workspaceId: ws.id, kind: 'ics_feed', tokenHash }),
             ),
           ),
         ).toBe('23505');
@@ -74,7 +74,7 @@ describe('workspace_integration', () => {
       await inWorkspace(tx, a.id, (s) =>
         s
           .insert(workspaceIntegration)
-          .values({ workspaceId: a.id, kind: 'email_intake', tokenHash: hash() }),
+          .values({ workspaceId: a.id, kind: 'ics_feed', tokenHash: hash() }),
       );
       await inWorkspace(tx, b.id, async (s) => {
         expect(await s.select().from(workspaceIntegration)).toEqual([]);

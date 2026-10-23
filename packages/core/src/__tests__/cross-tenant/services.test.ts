@@ -814,7 +814,6 @@ const CASES: Record<string, Case> = {
     const ofA = await inWorkspace(f.tx, f.a.id, (s) => core.getIntegrations(s, f.a.id));
     expect(ofA.ics_feed).not.toBeNull();
     expect(await f.asB((s) => core.getIntegrations(s, f.a.id))).toEqual({
-      email_intake: null,
       ics_feed: null,
     });
   },

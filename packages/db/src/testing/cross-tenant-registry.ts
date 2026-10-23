@@ -64,6 +64,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
   workspace_integration: DB_TABLES_TEST,
+  // Email forward-in intake (#54 part 2).
+  intake_address: DB_TABLES_TEST,
+  intake_allowlist: DB_TABLES_TEST,
+  intake_message: DB_TABLES_TEST,
   // Global-or-workspace reference tables (#344): catalogue rows are covered by court-schema.test.ts.
   forum: DB_TABLES_TEST,
   court_hall: DB_TABLES_TEST,
@@ -1018,6 +1022,11 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   memberRoleFor: runtimeEmpty,
   ownerGraceFor: runtimeEmpty,
+  resolveIntakeAddressFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: 'looks an inbound address up on the app db with no workspace scope (the sender is not a member); only an active address resolves, unknown and revoked ones are the same null',
+  },
   resolveSlugFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',

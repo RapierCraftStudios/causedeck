@@ -414,6 +414,13 @@
       "when": 1792716723327,
       "tag": "0058_document_search",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1792719553637,
+      "tag": "0059_email_intake",
+      "breakpoints": true
     }
   ]
 }

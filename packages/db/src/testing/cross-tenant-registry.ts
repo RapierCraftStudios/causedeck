@@ -736,6 +736,15 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   MIN_ERASURE_SUBJECT_LENGTH: 'constant',
   SOURCE_DATA_CLASSES: 'constant',
   exposableThroughApi: 'pure',
+  sourceOpsOverview:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  sourceFetchLogs:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  topFailingSources: 'pure',
+  isFetchError: 'pure',
+  FRESHNESS_SLA_HOURS: 'constant',
+  staffParseYield:
+    'app_staff_parse_yield() returns per-adapter counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

@@ -24,6 +24,7 @@ export const NAMESPACES = [
   'inbox',
   'pwa',
   'whatsapp-import',
+  'bootstrap-import',
   'email-intake',
   'camera',
   'voice',

@@ -133,7 +133,7 @@ describe('enqueue', () => {
       'news.digest',
       'news.digest.member',
       'system.news.poll',
-      'news.poll',
+      'system.news.poll-source',
       'system.usage.rollup',
       'system.audit.verify',
       'audit.verify',

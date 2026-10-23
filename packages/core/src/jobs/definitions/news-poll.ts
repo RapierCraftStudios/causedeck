@@ -1,7 +1,7 @@
 // Legal news polling (#481, D-048). Two jobs:
-// - `system.news.poll` runs hourly and enqueues `news.poll` for every cleared, not killed `news` or
+// - `system.news.poll` runs hourly and enqueues `system.news.poll-source` for every cleared, not killed `news` or
 //   `licensed` source. It has no workspace; `source` and `news_item` are global tables.
-// - `news.poll` (one source) reads the source's feed through the governed fetch layer: the registry
+// - `system.news.poll-source` (one source) reads the source's feed through the governed fetch layer: the registry
 //   decides on every call (`policyFor` fails closed), so an uncleared or killed source is skipped
 //   and nothing is fetched. The feed URL is the source's `base_url`. Only feed-provided fields are
 //   stored (headline, link, date, capped excerpt) with the fetch's provenance; tags come from the
@@ -83,17 +83,26 @@ export async function runNewsPoll(
       return { outcome: 'skipped', items: 0 };
     }
     if (error instanceof FeedFetchFailed) {
-      throw new RetryableError('NEWS_POLL_RETRY', `news feed of ${sourceId} answered ${error.status}`);
+      throw new RetryableError(
+        'NEWS_POLL_RETRY',
+        `news feed of ${sourceId} answered ${String(error.status)}`,
+      );
     }
-    if (error instanceof Error && ['FETCH_DENIED', 'FETCH_ERROR'].includes((error as { code?: string }).code ?? '')) {
-      throw new RetryableError('NEWS_POLL_RETRY', `news feed of ${sourceId} failed: ${error.message}`);
+    if (
+      error instanceof Error &&
+      ['FETCH_DENIED', 'FETCH_ERROR'].includes((error as { code?: string }).code ?? '')
+    ) {
+      throw new RetryableError(
+        'NEWS_POLL_RETRY',
+        `news feed of ${sourceId} failed: ${error.message}`,
+      );
     }
     throw error;
   }
 }
 
 export const newsPoll = defineJob({
-  name: 'news.poll',
+  name: 'system.news.poll-source',
   schema: newsPollSchema,
   concurrency: 2,
   retry: { limit: 2, delaySec: 120, backoff: true, delayMaxSec: 1800 },
@@ -110,10 +119,10 @@ export interface NewsPollScheduleDeps {
 async function enqueueSource(payload: NewsPollPayload): Promise<unknown> {
   const data = newsPollSchema.parse(payload);
   const sender = await getProducer();
-  return sender.send('news.poll', data, { singletonKey: pollKey(data) });
+  return sender.send('system.news.poll-source', data, { singletonKey: pollKey(data) });
 }
 
-/** Enqueue `news.poll` for every cleared news or licensed source. Exported for tests. */
+/** Enqueue `system.news.poll-source` for every cleared news or licensed source. Exported for tests. */
 export async function runNewsPollSchedule(
   ctx: Pick<JobContext, 'db' | 'log'>,
   deps: NewsPollScheduleDeps = {},

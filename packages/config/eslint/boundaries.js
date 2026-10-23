@@ -26,6 +26,7 @@ export const CORE_DEPENDENCIES = [
   'ai',
   'adapters',
   'intelligence',
+  'fetch',
   'drafting',
   'notifications',
   'billing',

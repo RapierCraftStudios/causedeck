@@ -172,7 +172,7 @@ describe('activity feed', () => {
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
     expect(headings.slice(0, 2)).toEqual([en.feed.today, en.feed.yesterday]);
     expect(headings[2]).toContain('2026');
-    expect(screen.getByRole('list', { name: en.feed.label })).toBeTruthy();
+    expect(screen.getByRole('group', { name: en.feed.label })).toBeTruthy();
     const order = [...document.querySelectorAll('[data-slot="activity-summary"]')].map(
       (el) => el.textContent,
     );

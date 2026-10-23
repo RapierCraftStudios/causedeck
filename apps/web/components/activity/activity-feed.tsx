@@ -384,7 +384,7 @@ export function ActivityFeed({
             <EmptyState icon={<History />} title={t('states.empty')} />
           )
         ) : (
-          <div role="list" aria-label={t('feed.label')} className="flex flex-col gap-4">
+          <div role="group" aria-label={t('feed.label')} className="flex flex-col gap-4">
             {groups.map((group) => (
               <ActivityDayGroup key={group.day} day={group.day} today={today} yesterday={yesterday}>
                 {group.items.map((item) => (

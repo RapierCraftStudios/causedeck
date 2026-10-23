@@ -484,6 +484,13 @@
       "when": 1792780959604,
       "tag": "0068_cause_list_watch",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1792786596012,
+      "tag": "0069_case_watch",
+      "breakpoints": true
     }
   ]
 }

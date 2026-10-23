@@ -221,3 +221,9 @@ export {
   type ImportBatchFileStatus,
   type ImportBatchStatus,
 } from './import-batch.ts';
+export {
+  CASE_STATUS_VIA,
+  caseStatusSnapshot,
+  caseWatch,
+  type CaseStatusVia,
+} from './case-watch.ts';

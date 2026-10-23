@@ -22,6 +22,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
+import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
@@ -83,6 +84,36 @@ async function seedImportBatch(
     .values({ workspaceId, createdBy: ownerId })
     .returning({ id: importBatch.id });
   return first(rows, 'import_batch').id;
+}
+
+/** A watch of a fresh proceeding at the shared `xt.case-watch` source (#589), owned by the advocate. */
+async function seedCaseWatch(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<string> {
+  const proceedingId = await seedProceeding(tx, workspaceId, tag);
+  await tx
+    .insert(source)
+    .values({
+      id: 'xt.case-watch',
+      kind: 'court',
+      baseUrl: 'https://xt.example.test',
+      owner: 'xt',
+    })
+    .onConflictDoNothing();
+  const rows = await tx
+    .insert(caseWatch)
+    .values({
+      workspaceId,
+      proceedingId,
+      sourceId: 'xt.case-watch',
+      cnr: 'TNCH010012342024',
+      advocateUserId: ownerId,
+    })
+    .returning({ id: caseWatch.id });
+  return first(rows, 'case_watch').id;
 }
 
 /** A draft SaaS invoice for the workspace (the seed for `saas_invoice` and `saas_invoice_line`). */
@@ -832,6 +863,24 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, batchId, captureId })
       .returning({ id: importBatchFile.id });
     return { batchId, captureId, id: first(rows, 'import_batch_file').id };
+  },
+  case_watch: async (tx, { workspaceId, ownerId, tag }) => ({
+    id: await seedCaseWatch(tx, workspaceId, ownerId, tag),
+  }),
+  case_status_snapshot: async (tx, { workspaceId, ownerId, tag }) => {
+    const watchId = await seedCaseWatch(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(caseStatusSnapshot)
+      .values({
+        workspaceId,
+        watchId,
+        fields: { nextDate: '2026-11-02' },
+        contentHash: 'a'.repeat(64),
+        via: 'device',
+        sourceType: 'manual',
+      })
+      .returning({ id: caseStatusSnapshot.id });
+    return { watchId, id: first(rows, 'case_status_snapshot').id };
   },
   advocate_profile: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

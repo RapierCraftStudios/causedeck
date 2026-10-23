@@ -32,6 +32,8 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * court-adapter configs, one `active` row per adapter; staff manage it through the app role like
  * `access_mode_registry`. `source` (#478, D-048) is the global source registry that generalises
  * `access_mode_registry` to every external source; staff write it through the app role (no DELETE).
+ * `contributed_document` (#485, D-048) holds the public court documents workspaces opted in to share;
+ * it has no workspace column by design, the link to a contributor is the tenant table `contribution_ledger`.
  * `fetch_log` (#479) is the global, content-free log of governed fetches: the app role may only SELECT and INSERT.
  */
 export const GLOBAL_TABLES: readonly string[] = [
@@ -58,6 +60,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'catalogue_meta',
   'adapter_version',
   'source',
+  'contributed_document',
   'fetch_log',
 ];
 

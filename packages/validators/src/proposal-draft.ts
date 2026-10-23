@@ -22,6 +22,7 @@ export const PROPOSAL_KINDS = [
   'memory_item',
   'fee_entry',
   'outward_draft',
+  'case_status_change',
 ] as const;
 export type ProposalKind = (typeof PROPOSAL_KINDS)[number];
 

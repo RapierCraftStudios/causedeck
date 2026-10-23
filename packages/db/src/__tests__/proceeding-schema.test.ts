@@ -159,7 +159,8 @@ describe('proceeding tables in the catalog (#346)', () => {
       expect(row, table).toEqual({
         enabled: true,
         forced: true,
-        policies: ['ws_isolation'],
+        policies:
+          table === 'proceeding' ? ['owner_definer_read', 'ws_isolation'] : ['ws_isolation'],
         app: true,
         clerk: true,
       });

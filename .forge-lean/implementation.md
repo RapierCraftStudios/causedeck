@@ -32,3 +32,5 @@ NOTICES_POLL_CRON, noticesPoll, runNoticesPoll and setNoticeFetcherFactory are n
 - The cross-tenant services test lists only `SERVICE_TESTS` members. `NOTICES_POLL_CRON`, `noticesPoll`, `runNoticesPoll` and `setNoticeFetcherFactory` are in `NOT_A_SERVICE` (`cross-tenant-registry.ts:909-912`), so they are recorded as `not_members` in `result.json`.
 
 - Recovery: merged origin/milestone/court-data-network again; the base took 0075 (status_poll), so the notice match migration is now 0076_notice_match_targets (same SQL, snapshot chained after 0075, journal idx 76). Jobs exports, worker main, and core-domains docs keep both sides (status.poll and notices.poll).
+
+- CI fix: migration 0076 adds the owner_definer_read policy on proceeding (backs app_notice_match_targets), so proceeding-schema.test.ts now expects policies owner_definer_read + ws_isolation for proceeding (ws_isolation only for proceeding_link). Not run locally (db tests need a database; CI re-verifies).

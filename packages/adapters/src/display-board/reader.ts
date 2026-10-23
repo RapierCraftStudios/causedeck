@@ -73,7 +73,9 @@ export function readDisplayBoard(html: string, columns: BoardColumns): ParsedDis
       hallNo,
       itemNow: itemOf(cells[index.item] ?? ''),
       status: normaliseStatus(statusText),
-      passedOver: [...new Set([...passedItems(statusText, false), ...passedItems(passedCell, true)])],
+      passedOver: [
+        ...new Set([...passedItems(statusText, false), ...passedItems(passedCell, true)]),
+      ],
     });
   }
   if (index === null) return { status: 'failed', rows: [] };

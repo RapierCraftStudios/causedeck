@@ -2,4 +2,9 @@
 export { parseKarnatakaDisplayBoard } from './karnataka.ts';
 export { parseMadrasDisplayBoard } from './madras.ts';
 export { normaliseHall } from './reader.ts';
-export { BOARD_STATUSES, type BoardStatus, type DisplayBoardRow, type ParsedDisplayBoard } from './types.ts';
+export {
+  BOARD_STATUSES,
+  type BoardStatus,
+  type DisplayBoardRow,
+  type ParsedDisplayBoard,
+} from './types.ts';

@@ -1369,6 +1369,12 @@ const CASES: Record<string, Case> = {
     expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
     expect(await aParseRuns(f)).toEqual(probe.before);
   },
+  getLiveHalls: async (f) => {
+    const deps = { flagEnabled: () => Promise.resolve(true) };
+    const asA = { workspaceId: f.a.id, userId: f.ub };
+    await expectDenied(core.getLiveHalls({ ...deps, db: f.tx }, asA));
+    await expectDenied(f.asB((s) => core.getLiveHalls({ ...deps, db: s }, asA)));
+  },
   // Matter graph (#362): A's matter, proceeding and document ids, as ub.
   createMatter: async (f) => {
     const { deps, events } = graphDeps(f.tx);

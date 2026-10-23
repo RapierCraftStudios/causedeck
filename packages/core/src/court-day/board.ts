@@ -118,7 +118,7 @@ export function planBoardAlert(
   const crossed = [...thresholds].sort((a, b) => a - b).find((t) => away <= t);
   return crossed === undefined
     ? null
-    : { kind: String(crossed), title: `Your ${label} is ${away} away` };
+    : { kind: String(crossed), title: `Your ${label} is ${String(away)} away` };
 }
 
 /** Structurally the `Fetcher` of `@causedeck/fetch`, which this module does not import. */
@@ -183,7 +183,8 @@ export async function pollBoards(deps: PollBoardsDeps): Promise<PollBoardsReport
   );
   if (rows.length === 0) return { ...report, outcome: 'no_targets' };
 
-  const flag = deps.flagEnabled ?? ((workspaceId) => isEnabled(COURT_LIVE_TRACKING_FLAG, { workspaceId }));
+  const flag =
+    deps.flagEnabled ?? ((workspaceId) => isEnabled(COURT_LIVE_TRACKING_FLAG, { workspaceId }));
   const enabled = new Map<string, boolean>();
   const targets: TargetRow[] = [];
   for (const row of rows) {
@@ -227,7 +228,9 @@ export async function pollBoards(deps: PollBoardsDeps): Promise<PollBoardsReport
       continue;
     }
     const wanted = new Set(mine.map((t) => t.hall_no));
-    const byHall = new Map(parsed.rows.filter((r) => wanted.has(r.hallNo)).map((r) => [r.hallNo, r]));
+    const byHall = new Map(
+      parsed.rows.filter((r) => wanted.has(r.hallNo)).map((r) => [r.hallNo, r]),
+    );
 
     const recent = await deps.db
       .select()
@@ -324,7 +327,8 @@ export async function getLiveHalls(
   actor: { workspaceId: string; userId: string },
 ): Promise<LiveHall[]> {
   const now = deps.clock?.now() ?? new Date();
-  const flag = deps.flagEnabled ?? ((id) => isEnabled(COURT_LIVE_TRACKING_FLAG, { workspaceId: id }));
+  const flag =
+    deps.flagEnabled ?? ((id) => isEnabled(COURT_LIVE_TRACKING_FLAG, { workspaceId: id }));
   if (!(await flag(actor.workspaceId))) return [];
 
   const mine = await withWorkspace(deps.db, actor, (tx) =>
@@ -341,7 +345,10 @@ export async function getLiveHalls(
       .innerJoin(forum, eq(forum.id, courtHall.forumId))
       .innerJoin(
         proceeding,
-        and(eq(proceeding.workspaceId, listing.workspaceId), eq(proceeding.id, listing.proceedingId)),
+        and(
+          eq(proceeding.workspaceId, listing.workspaceId),
+          eq(proceeding.id, listing.proceedingId),
+        ),
       )
       .innerJoin(
         matter,

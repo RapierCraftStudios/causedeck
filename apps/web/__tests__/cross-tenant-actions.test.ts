@@ -196,6 +196,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   addImportFilesAction: importer,
   importProgressAction: importer,
   buildImportPlanAction: importer,
+  getImportPlanAction: importer,
+  saveImportPlanEditsAction: importer,
   applyImportPlanAction: importer,
   undoImportBatchAction: importer,
   createCalendarFeedAction: calendar,
@@ -533,6 +535,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
       captureIds: [t.a.rows.capture?.id],
     },
     importProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    getImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    saveImportPlanEditsAction: {
+      workspaceId,
+      batchId: t.a.rows.import_batch?.id,
+      groups: [{ tempId: 'm_a', title: 'Hijacked', proceedingKeys: ['k1'] }],
+    },
     buildImportPlanAction: {
       workspaceId,
       batchId: t.a.rows.import_batch?.id,

@@ -97,6 +97,7 @@ describe('namespaced catalogs (#174)', () => {
         'emailIntake',
         'error',
         'home',
+        'importReview',
         'inbox',
         'invite',
         'lifecycle',
@@ -150,5 +151,15 @@ describe('document pipeline recovery copy (#45, consumed by #48)', () => {
     );
     expect(ta.inbox.unreadable.copy.length).toBeGreaterThan(0);
     expect(kn.inbox.unreadable.copy.length).toBeGreaterThan(0);
+  });
+});
+
+describe('import review recovery copy (#551)', () => {
+  it.each([
+    ['en', en],
+    ['ta', ta],
+    ['kn', kn],
+  ] as const)('%s reuses the standard unreadable-file sentence', (_locale, messages) => {
+    expect(messages.importReview.issues.unreadableCopy).toBe(messages.inbox.unreadable.copy);
   });
 });

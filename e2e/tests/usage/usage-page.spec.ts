@@ -76,7 +76,11 @@ test.describe('usage page', () => {
     // The e2e build serves the dev previews (as the billing spec relies on); without them the
     // page renders normally and these locators would not appear.
     await asUser('owner', { path: 'settings/usage?__state=loading' });
-    await expect(page.locator('[data-slot="usage-skeleton"]')).toBeVisible();
+    // While the route streams, the segment's `loading.tsx` fallback and the page's own skeleton
+    // are in the DOM together for a moment: wait for the fallback to be swapped out.
+    const skeleton = page.locator('[data-slot="usage-skeleton"]');
+    await expect(skeleton).toHaveCount(1);
+    await expect(skeleton).toBeVisible();
     await page.goto('/w/chennai-solo/settings/usage?__state=error');
     const error = page.locator('[data-pattern-state="error"]');
     await expect(error).toContainText('Could not load usage.');

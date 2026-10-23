@@ -147,6 +147,7 @@ describe('enqueue', () => {
       'whatsapp.import',
       'email.intake',
       'email.raw-expire',
+      'extraction.extract-order',
     ]);
   });
 });

@@ -56,13 +56,17 @@ test.describe('pwa', { tag: '@a11y' }, () => {
     }
   });
 
-  test('a share made offline is saved on the device', async ({ page, context }) => {
-    await page.goto('/offline');
+  test('a share made offline is saved on the device', async ({ page, context, asUser }) => {
+    // The worker is registered by the app shell (topbar and install banner), not by `/offline`,
+    // where `serviceWorker.ready` never resolves.
+    await openShell(page, asUser, { path: 'matters' });
     await page.evaluate(async () => {
       await navigator.serviceWorker.ready;
     });
     await context.setOffline(true);
     await page.goto('/share-target?batch=00000000-0000-4000-8000-000000000001');
-    await expect(page.getByRole('status').or(page.getByRole('main'))).toBeVisible();
+    // The shell's own offline page is served from the worker's cache, and the share screen's
+    // outbox status is inside it: `main` alone, the `or()` of both is two elements.
+    await expect(page.getByRole('main')).toBeVisible();
   });
 });

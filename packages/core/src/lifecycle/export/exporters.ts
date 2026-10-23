@@ -262,6 +262,8 @@ export const mattersExporter = tablesExporter('matters', [
   ws('document', { exclude: ['storage_key'] }),
   ws('document_page'),
   ws('anchor'),
+  // Anchored order extractions (#46): the validated result and what was rejected, with quotes.
+  ws('extraction'),
 ]);
 
 // What the automation engine did and proposed (#47): proposals, the activity feed with its undo

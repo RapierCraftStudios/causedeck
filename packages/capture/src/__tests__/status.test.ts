@@ -36,6 +36,12 @@ describe('status machine', () => {
     expect(canTransition('received', 'queued')).toBe(true);
   });
 
+  it('lets a ready capture go back to needs_you when extraction needs a person (#46)', () => {
+    expect(canTransition('ready', 'needs_you')).toBe(true);
+    expect(canTransition('ready', 'processing')).toBe(false);
+    expect(canTransition('applied', 'needs_you')).toBe(false);
+  });
+
   it('records the reason of a transition', () => {
     const next = transition({ status: 'received', sourceMeta: {} }, 'failed', AT, 'too_large');
     expect(historyOf(next.sourceMeta)[0]).toMatchObject({ to: 'failed', reason: 'too_large' });

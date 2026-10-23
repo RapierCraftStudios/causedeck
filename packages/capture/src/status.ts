@@ -11,7 +11,8 @@ export const CAPTURE_TRANSITIONS: Readonly<Record<CaptureStatus, readonly Captur
     queued: ['processing', 'failed', 'discarded'],
     processing: ['ready', 'needs_you', 'failed', 'discarded'],
     needs_you: ['ready', 'applied', 'failed', 'discarded'],
-    ready: ['applied', 'discarded'],
+    // `ready -> needs_you`: order extraction (#46) found a date or field the lawyer must check.
+    ready: ['needs_you', 'applied', 'discarded'],
     applied: [],
     failed: ['discarded'],
     duplicate: [],

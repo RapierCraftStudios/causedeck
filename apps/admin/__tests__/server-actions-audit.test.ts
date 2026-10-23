@@ -81,6 +81,9 @@ vi.mock('@causedeck/core/sources', () => {
     SourceAdminError: class SourceAdminError extends Error {},
     asSourceStaff: (userId: string) => ({ userId }),
     listSources: () => Promise.resolve([]),
+    sourceFetchLogs: () => Promise.resolve([]),
+    sourceOpsOverview: () => Promise.resolve([]),
+    staffParseYield: () => Promise.resolve([]),
     createSource: audited,
     updateSource: audited,
     setSourceKillSwitch: audited,
@@ -364,7 +367,11 @@ describe('admin data layer reads', () => {
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),
     workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
+    dataOpsOverview: (d) => d.dataOpsOverview(staff),
+    dataOpsFetchLogs: (d) => d.dataOpsFetchLogs(staff, 'court.test'),
   };
+  // Reads made of more than one audited step: parse yield (definer function), then the tables.
+  const READ_EVENTS: Record<string, number> = { dataOpsOverview: 2 };
   // The building blocks every read goes through, not reads themselves.
   const PRIMITIVES = ['staffCall', 'staffQuery', 'StaffQueryDeniedError'];
 
@@ -377,8 +384,11 @@ describe('admin data layer reads', () => {
   it.each(Object.keys(READS))('%s records staff.read with actor kind staff', async (name) => {
     const data = await import('../lib/data/index.ts');
     await READS[name]?.(data);
-    expect(staffEvents()).toEqual([
-      { actor: { kind: 'staff', userId: STAFF_ID }, action: 'staff.read' },
-    ]);
+    expect(staffEvents()).toEqual(
+      Array.from({ length: READ_EVENTS[name] ?? 1 }, () => ({
+        actor: { kind: 'staff', userId: STAFF_ID },
+        action: 'staff.read',
+      })),
+    );
   });
 });

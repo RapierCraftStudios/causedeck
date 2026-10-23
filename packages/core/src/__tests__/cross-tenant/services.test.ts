@@ -2355,7 +2355,14 @@ const CASES: Record<string, Case> = {
   },
   proposeTags: async (f) => {
     const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
-    const tag = { statute: 'IPC', section: '420', issue: null, confidence: 0.9 };
+    const tag = {
+      statute: 'IPC',
+      section: '420',
+      issue: null,
+      confidence: 0.9,
+      status: 'proposed' as const,
+      source: 'ai' as const,
+    };
     await expectDenied(
       f.asB((s) => core.proposeTags(s, { workspaceId: f.b.id, userId: f.ub }, matterId, [tag])),
     );

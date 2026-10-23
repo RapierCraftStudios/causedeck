@@ -2740,29 +2740,29 @@ export type Messages = {
           failed: string;
         };
       };
-    };
-    research: {
-      title: string;
-      metaTitle: string;
-      intro: string;
-      tagsHeading: string;
-      tagsEmpty: string;
-      statute: string;
-      section: string;
-      issue: string;
-      add: string;
-      confirm: string;
-      dismiss: string;
-      status: {
-        proposed: string;
-        confirmed: string;
-        dismissed: string;
+      research: {
+        title: string;
+        metaTitle: string;
+        intro: string;
+        tagsHeading: string;
+        tagsEmpty: string;
+        statute: string;
+        section: string;
+        issue: string;
+        add: string;
+        confirm: string;
+        dismiss: string;
+        status: {
+          proposed: string;
+          confirmed: string;
+          dismissed: string;
+        };
+        judgmentsHeading: string;
+        judgmentsEmpty: string;
+        cites: string;
+        open: string;
+        saveError: string;
       };
-      judgmentsHeading: string;
-      judgmentsEmpty: string;
-      cites: string;
-      open: string;
-      saveError: string;
     };
   };
   matterTimeline: {

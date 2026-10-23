@@ -108,6 +108,8 @@ describe('@causedeck/db root entry point', () => {
       'matter_issue_tag',
       'matter_restriction',
       'member',
+      'notice',
+      'notice_match',
       'notification',
       'notification_pref',
       'notification_setting',

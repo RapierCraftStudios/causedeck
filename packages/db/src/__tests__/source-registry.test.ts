@@ -44,4 +44,27 @@ describe('source', () => {
       expect(cleared.length).toBe(0);
     });
   });
+
+  it('seeds the notice sources uncleared with a terms URL in the notes (#584)', async () => {
+    await withTestDb(async (tx) => {
+      const rows = await tx.execute<{ id: string }>(sql`
+        select id from source
+         where kind = 'notice' and id like '%.notices'
+           and cleared_at is null and terms_status = 'pending' and counsel_status = 'pending'
+           and max_tier <> 'captcha' and notes like '%http%'
+         order by id`);
+      const ids = rows.map((r) => r.id);
+      for (const id of [
+        'in.sc.notices',
+        'in.tn.madras-hc.notices',
+        'in.ka.karnataka-hc.notices',
+        'in.tn.chennai-district.notices',
+        'in.ka.bengaluru-district.notices',
+        'in.tn.bctnp.notices',
+        'in.ka.ksbc.notices',
+        'in.gov.egazette.notices',
+      ])
+        expect(ids).toContain(id);
+    });
+  });
 });

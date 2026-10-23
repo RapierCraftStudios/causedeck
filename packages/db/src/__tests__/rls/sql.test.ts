@@ -177,6 +177,9 @@ describe('row-level security catalog', () => {
         'judgment_alert',
         // Court document network (#485).
         'contribution_ledger',
+
+        // Official notices feed (#584).
+        'notice_match',
       ].sort(),
     );
     for (const row of rows)

@@ -223,6 +223,15 @@ export {
   type ImportBatchStatus,
 } from './import-batch.ts';
 export {
+  NOTICE_KINDS,
+  NOTICE_MATCH_REASONS,
+  notice,
+  noticeKind,
+  noticeMatch,
+  type NoticeKind,
+  type NoticeMatchReason,
+} from './notices.ts';
+export {
   CASE_STATUS_VIA,
   caseStatusSnapshot,
   caseWatch,

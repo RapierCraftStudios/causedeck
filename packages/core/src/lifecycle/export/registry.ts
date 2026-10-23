@@ -67,6 +67,8 @@ export const EXPORT_EXCLUSIONS: Readonly<Record<string, string>> = {
     'Operational parse-health metrics (counts, hall numbers, adapter version, #372); holds no user content and no personal data.',
   contribution_ledger:
     'Link from the workspace to a shared public court document it contributed (#485); holds no user content, and is withdrawn and erased with the workspace.',
+  notice_match:
+    'Derived link from a global official notice to a matter or forum of the workspace (#584); holds no user content, is recomputed from the public feed, and is erased with the workspace.',
   ai_call_result:
     'Short-lived (24 h) retry cache of validated AI gateway outputs (#44); derived from records that are exported themselves, and erased with the workspace.',
 };

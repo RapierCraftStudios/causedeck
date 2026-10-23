@@ -135,6 +135,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Judgment alerts (#497).
   matter_issue_tag: DB_TABLES_TEST,
   judgment_alert: DB_TABLES_TEST,
+  // Official notices feed (#584).
+  notice_match: DB_TABLES_TEST,
 };
 
 /**

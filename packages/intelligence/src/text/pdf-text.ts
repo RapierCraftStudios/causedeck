@@ -56,7 +56,7 @@ export async function readPdfText(data: Uint8Array): Promise<PdfPageText[]> {
       pages.push({ pageNo, text });
       page.cleanup();
     }
-    await doc.destroy();
+    await task.destroy();
     return pages;
   } catch (error) {
     if (error instanceof PdfReadError) throw error;

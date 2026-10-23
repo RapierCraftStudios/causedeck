@@ -72,7 +72,7 @@ function isLatin1High(cp: number): boolean {
  * outside that script's block while the page image is non-empty and the text is not English.
  */
 export function isGarbled(text: string, options: GarbledOptions = {}): boolean {
-  const chars = [...text.replace(/\s+/g, '')];
+  const chars = Array.from(text.replace(/\s+/g, ''));
   if (chars.length < MIN_LETTERS) return false;
   let broken = 0;
   let latin1 = 0;

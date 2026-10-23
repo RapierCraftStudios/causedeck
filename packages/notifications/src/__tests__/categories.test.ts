@@ -17,6 +17,7 @@ describe('category registry', () => {
         'billing.notice',
         'digest.daily',
         'digest.end_of_day',
+        'judgment.alert',
         'member.joined',
         'proposal.new',
         'reminder.hearing',

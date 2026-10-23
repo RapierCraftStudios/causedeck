@@ -94,6 +94,7 @@ function defaults(): PreferenceView[] {
     'billing.notice': ['in_app', 'email'],
     'reminder.hearing': ['in_app', 'email', 'push'],
     'proposal.new': ['in_app', 'push'],
+    'judgment.alert': ['in_app', 'push'],
     'digest.daily': ['email'],
     'digest.end_of_day': ['in_app', 'email'],
     'system.notice': ['in_app'],

@@ -116,6 +116,9 @@ export const PURGE_ORDER = [
   'capture',
   'workspace_capture_channel',
   'matter_restriction',
+  // Judgment alerts (#497): alerts before the tag they cite, both before their matter.
+  'judgment_alert',
+  'matter_issue_tag',
   'matter',
   // Custom court reference rows (#344): halls and benches before their forum; the catalogue
   // (null workspace_id) is never matched.

@@ -117,9 +117,9 @@ describe('pollNotices', () => {
 
       const again = await pollNotices(deps(tx, fakeFetcher()));
       expect(again).toMatchObject({ inserted: 0, duplicates: 2, matches: 0 });
-      expect(await tx.select().from(schema.notice).where(eq(schema.notice.sourceId, SOURCE))).toHaveLength(
-        2,
-      );
+      expect(
+        await tx.select().from(schema.notice).where(eq(schema.notice.sourceId, SOURCE)),
+      ).toHaveLength(2);
     });
   });
 

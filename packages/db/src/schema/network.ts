@@ -61,5 +61,7 @@ export const contributionLedger = tenantTable(
     documentId: uuid('document_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique('contribution_ledger_workspace_doc_uq').on(t.workspaceId, t.contributedDocumentId)],
+  (t) => [
+    unique('contribution_ledger_workspace_doc_uq').on(t.workspaceId, t.contributedDocumentId),
+  ],
 );

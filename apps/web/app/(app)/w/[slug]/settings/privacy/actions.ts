@@ -20,7 +20,10 @@ export type PrivacySettingsView = PrivacySettings;
 
 const update = workspaceAction(
   UpdatePrivacy,
-  async ({ sensitiveDefaultRestricted, retentionAudioDays, contributePublicCourtDocuments }, ctx) => {
+  async (
+    { sensitiveDefaultRestricted, retentionAudioDays, contributePublicCourtDocuments },
+    ctx,
+  ) => {
     assertCan(ctx.actor, 'workspace.manage');
     const { updateWorkspacePrivacy } = await import('@causedeck/core/workspaces');
     const { settings } = await updateWorkspacePrivacy(ctx.tx, {

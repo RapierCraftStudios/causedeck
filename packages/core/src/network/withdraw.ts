@@ -12,7 +12,7 @@ export async function withdrawContributions(db: Queryable, workspaceId: string):
     const rows = await tx.execute<{ n: number }>(
       sql`select app_withdraw_contributions(${workspaceId}::uuid) as n`,
     );
-    const blanked = Number(rows[0]?.n ?? 0);
+    const blanked = rows[0]?.n ?? 0;
     await record(
       { db: tx, workspaceId, actor: { userId: null, kind: 'system' } },
       {

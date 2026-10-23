@@ -100,7 +100,10 @@ export async function contributeDocument(
       {
         db: tx,
         workspaceId,
-        actor: { userId: request.actorUserId ?? null, kind: request.actorUserId ? 'user' : 'system' },
+        actor: {
+          userId: request.actorUserId ?? null,
+          kind: request.actorUserId ? 'user' : 'system',
+        },
       },
       {
         action: 'network.contributed',

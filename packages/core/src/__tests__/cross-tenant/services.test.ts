@@ -70,7 +70,10 @@ async function aMembers(f: Fixture) {
 async function aLedger(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s
-      .select({ id: schema.contributionLedger.id, copy: schema.contributionLedger.contributedDocumentId })
+      .select({
+        id: schema.contributionLedger.id,
+        copy: schema.contributionLedger.contributedDocumentId,
+      })
       .from(schema.contributionLedger)
       .orderBy(schema.contributionLedger.id),
   );

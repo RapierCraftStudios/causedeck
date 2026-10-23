@@ -49,7 +49,7 @@ async function runOnce(options: SyncOptions): Promise<SyncResult> {
   const outcomes: UploadOutcome[] = [];
   let nextAt: number | null = null;
   for (const item of await listItems(store, now())) {
-    if (item.state !== 'queued' || item.workspaceId === null) continue;
+    if (item.state !== 'queued' || item.hold === true || item.workspaceId === null) continue;
     const wait = item.nextAttemptAt ?? 0;
     if (options.manual !== true && wait > now()) {
       nextAt = nextAt === null ? wait : Math.min(nextAt, wait);

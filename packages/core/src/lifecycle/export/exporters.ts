@@ -227,6 +227,7 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('import_plan', { keys: ['batch_id'] }),
   // The importing member's own identifiers (#550).
   ws('advocate_profile', { userColumn: 'user_id' }),
+  ws('cause_list_watch', { userColumn: 'user_id' }),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [

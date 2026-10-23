@@ -61,6 +61,12 @@ export {
   type SourceMaxTier,
   type SourceReviewStatus,
 } from './source-registry.ts';
+export {
+  CONTRIBUTABLE_KINDS,
+  contributedDocument,
+  contributionLedger,
+  type ContributableKind,
+} from './network.ts';
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export {
   ANCHOR_KINDS,

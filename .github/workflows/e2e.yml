@@ -69,9 +69,19 @@ jobs:
           SHARD: ${{ matrix.shard }}
         run: >-
           docker run --rm --network host --ipc host
-          -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE
+          -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE -e E2E_PERF=skip
           -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
           node support/playwright.mjs --shard="$SHARD/2"
+      # The `@perf` timing specs run here, alone, once the shard's tests are done: beside a second
+      # worker the matters list p95 roughly doubles (e2e/playwright.config.ts). They reuse the build
+      # above, and write to their own results folder so the shard's artifacts are kept.
+      - name: Playwright perf budgets (alone)
+        if: ${{ !cancelled() && matrix.shard == 1 }}
+        run: >-
+          docker run --rm --network host --ipc host
+          -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE -e E2E_PERF=only -e E2E_SKIP_BUILD=1
+          -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
+          node support/playwright.mjs --workers=1 --reporter=list,github --output=test-results-perf
       - name: Upload the HTML report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -86,7 +96,9 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-test-results-${{ matrix.shard }}
-          path: e2e/test-results
+          path: |
+            e2e/test-results
+            e2e/test-results-perf
           if-no-files-found: ignore
           retention-days: 14
 

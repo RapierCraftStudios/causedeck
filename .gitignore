@@ -19,6 +19,7 @@ coverage/
 reports/
 playwright-report/
 test-results/
+test-results-perf/
 blob-report/
 .lighthouseci/
 e2e/.auth/

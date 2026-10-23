@@ -29,6 +29,20 @@ const VIEWPORTS = {
 } as const;
 const THEMES = ['light', 'dark'] as const;
 
+// `@perf` timing specs live in their own project so CI can run them alone. They measure wall-clock
+// time on a shared runner, and with `fullyParallel` and 2 workers the neighbouring worker's browser,
+// Next server and database resets roughly doubled the matters list p95 (570 ms median beside another
+// worker against 355 ms alone, same build). `E2E_PERF=skip` leaves the project out (the sharded CI
+// step), `E2E_PERF=only` runs just that project (the CI step after the shards), unset runs both.
+// Project `dependencies` are not used: Playwright then shards the whole graph as one group, and
+// shard 1 got 490 tests against 7.
+const PERF_PROJECT = 'perf-1280-light';
+// eslint-disable-next-line no-process-env -- the perf switch is read before Playwright loads projects.
+const perfMode = process.env.E2E_PERF ?? 'with';
+if (perfMode !== 'with' && perfMode !== 'skip' && perfMode !== 'only') {
+  throw new Error(`e2e: E2E_PERF must be "with", "skip" or "only", got "${perfMode}"`);
+}
+
 const chromiumProjects: Project[] = Object.entries(VIEWPORTS).flatMap(([width, viewport]) =>
   THEMES.map((colorScheme) => ({
     name: `chromium-${width}-${colorScheme}`,
@@ -41,6 +55,37 @@ const chromiumProjects: Project[] = Object.entries(VIEWPORTS).flatMap(([width, v
     },
   })),
 );
+
+const functionalProjects: Project[] = [
+  ...(isShip
+    ? chromiumProjects
+        .filter(({ name }) => name === 'chromium-1280-light' || name === 'chromium-360-light')
+        .map((project) =>
+          // The 360 project only carries the smoke subset; 1280 runs everything.
+          project.name === 'chromium-360-light' ? { ...project, grep: /@smoke/ } : project,
+        )
+    : chromiumProjects
+  ).map((project) =>
+    // Timing specs run in the perf project, not beside other tests.
+    project.name?.startsWith('chromium-') ? { ...project, grepInvert: /@perf/ } : project,
+  ),
+  {
+    name: 'webkit-360',
+    grep: /@smoke/,
+    use: { ...devices['iPhone 13'], viewport: VIEWPORTS[360], colorScheme: 'light' },
+  },
+];
+
+const perfProject: Project = {
+  name: PERF_PROJECT,
+  grep: /@perf/,
+  use: {
+    ...devices['Desktop Chrome'],
+    viewport: VIEWPORTS[1280],
+    colorScheme: 'light',
+    contextOptions: { reducedMotion: 'reduce' },
+  },
+};
 
 export default defineConfig({
   testDir: './tests',
@@ -71,21 +116,10 @@ export default defineConfig({
     timezoneId: 'Asia/Kolkata',
   },
   testIgnore: isShip ? ['**/*.visual.spec.ts'] : [],
-  projects: [
-    ...(isShip
-      ? chromiumProjects
-          .filter(({ name }) => name === 'chromium-1280-light' || name === 'chromium-360-light')
-          .map((project) =>
-            // The 360 project only carries the smoke subset; 1280 runs everything.
-            project.name === 'chromium-360-light' ? { ...project, grep: /@smoke/ } : project,
-          )
-      : chromiumProjects),
-    {
-      name: 'webkit-360',
-      grep: /@smoke/,
-      use: { ...devices['iPhone 13'], viewport: VIEWPORTS[360], colorScheme: 'light' },
-    },
-  ],
+  projects:
+    perfMode === 'only'
+      ? [perfProject]
+      : [...functionalProjects, ...(perfMode === 'skip' ? [] : [perfProject])],
   webServer: {
     command: 'node --experimental-strip-types --no-warnings support/server-pool.ts serve',
     url: `${originFor(BASE_PORT)}/healthz`,

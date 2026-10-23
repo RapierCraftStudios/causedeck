@@ -1825,6 +1825,7 @@
       "kindAll": "அனைத்து வகைகள்",
       "kinds": {
         "next_date": "அடுத்த தேதி",
+        "hearing_outcome": "விசாரணை முடிவு",
         "new_matter": "புதிய வழக்கு",
         "new_proceeding": "புதிய நடவடிக்கை",
         "listing_update": "பட்டியல் புதுப்பிப்பு",

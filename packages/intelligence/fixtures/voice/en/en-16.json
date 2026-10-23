@@ -1,0 +1,19 @@
+{
+  "id": "en-16",
+  "language": "en",
+  "hearingDate": "2025-11-15",
+  "text": "In case 8469 of 2025 today. Arguments were heard and the matter stands adjourned. Next hearing on eighth of January. The court directed both sides to exchange written submissions after eight weeks. Remind me to update the junior on the listing.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-01-08",
+      "phrase": "eighth of January"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions after eight weeks.",
+        "dueDate": "2026-01-10"
+      }
+    ],
+    "tasks": ["update the junior on the listing"]
+  }
+}

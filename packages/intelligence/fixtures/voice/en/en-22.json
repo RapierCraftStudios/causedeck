@@ -1,0 +1,23 @@
+{
+  "id": "en-22",
+  "language": "en",
+  "hearingDate": "2025-08-09",
+  "text": "In case 57171 of 2024 today. The court heard both sides and the matter was adjourned again. The opposite counsel sought time. Next hearing after two weeks. The court directed the State to produce the original records next saturday. The court directed the State to produce the original records. Remind me to call the client about the vakalatnama.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-08-23",
+      "phrase": "after two weeks"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records next saturday.",
+        "dueDate": "2025-08-16"
+      },
+      {
+        "text": "The court directed the State to produce the original records.",
+        "dueDate": null
+      }
+    ],
+    "tasks": ["call the client about the vakalatnama"]
+  }
+}

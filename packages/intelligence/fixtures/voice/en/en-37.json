@@ -1,0 +1,23 @@
+{
+  "id": "en-37",
+  "language": "en",
+  "hearingDate": "2025-02-22",
+  "text": "In case 33577 of 2021 today. Arguments were heard and the matter stands adjourned. Next hearing next wednesday. The court directed both sides to exchange written submissions after three weeks. The court directed the petitioner to file the rejoinder by twenty ninth of March. Remind me to call the client about the vakalatnama.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-02-26",
+      "phrase": "next wednesday"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions after three weeks.",
+        "dueDate": "2025-03-15"
+      },
+      {
+        "text": "The court directed the petitioner to file the rejoinder by twenty ninth of March.",
+        "dueDate": "2025-03-29"
+      }
+    ],
+    "tasks": ["call the client about the vakalatnama"]
+  }
+}

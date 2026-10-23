@@ -5,6 +5,7 @@ export const packageName: string = '@causedeck/intelligence';
 
 export * from './classify/index.ts';
 export * from './events.ts';
+export * from './news/index.ts';
 export {
   detectDocumentLanguage,
   detectLanguage,

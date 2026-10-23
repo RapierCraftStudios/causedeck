@@ -33,6 +33,7 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `access_mode_registry`. `source` (#478, D-048) is the global source registry that generalises
  * `access_mode_registry` to every external source; staff write it through the app role (no DELETE).
  * `fetch_log` (#479) is the global, content-free log of governed fetches: the app role may only SELECT and INSERT.
+ * `news_item` (#481) holds feed-provided news headlines, links and excerpts, never article bodies; staff-cleared sources only.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -59,6 +60,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'adapter_version',
   'source',
   'fetch_log',
+  'news_item',
 ];
 
 /**

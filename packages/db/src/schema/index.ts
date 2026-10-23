@@ -47,6 +47,16 @@ export {
 } from './flags.ts';
 export { fetchLog } from './fetch-log.ts';
 export {
+  NEWS_EXCERPT_MAX,
+  NEWS_FORUMS,
+  NEWS_PRACTICE_AREAS,
+  newsItem,
+  newsPref,
+  type NewsForum,
+  type NewsPracticeArea,
+  type NewsTags,
+} from './news.ts';
+export {
   NO_CAPTCHA_KINDS,
   SOURCE_ACCESS_MODES,
   SOURCE_KINDS,

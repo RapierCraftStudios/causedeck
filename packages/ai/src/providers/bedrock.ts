@@ -21,6 +21,7 @@ export const BEDROCK_TASKS: readonly TaskId[] = [
   'parse_order_a0',
   'translate',
   'summarise',
+  'tag_news',
 ];
 
 export interface BedrockConfig {

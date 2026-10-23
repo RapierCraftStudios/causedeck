@@ -11,6 +11,7 @@ import { structureChat } from './structure-chat.ts';
 import { structureDiary } from './structure-diary.ts';
 import { structureHearing } from './structure-hearing.ts';
 import { summarise } from './summarise.ts';
+import { tagNews } from './tag-news.ts';
 import { transcribe } from './transcribe.ts';
 import { translate } from './translate.ts';
 
@@ -26,6 +27,7 @@ export const TASKS: Readonly<Record<TaskId, TaskDef>> = {
   parse_order_a0: parseOrderA0,
   translate: translate,
   summarise: summarise,
+  tag_news: tagNews,
 };
 
 export function getTask(id: string): TaskDef {

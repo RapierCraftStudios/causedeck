@@ -35,6 +35,7 @@ import { proceeding, proceedingLink, proceedingStateChange } from '../schema/pro
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
 import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
+import { newsPref } from '../schema/news.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
@@ -382,6 +383,10 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       enabled: false,
     });
     return { userId: ownerId, category: 'system.notice', channel: 'email' };
+  },
+  news_pref: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(newsPref).values({ workspaceId, userId: ownerId, practiceAreas: ['tax'] });
+    return { userId: ownerId };
   },
   notification_setting: async (tx, { workspaceId, ownerId }) => {
     await tx

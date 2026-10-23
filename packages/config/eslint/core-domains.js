@@ -28,6 +28,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   ai: Object.freeze(['audit', 'usage']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.
   lifecycle: Object.freeze(['audit', 'workspaces']),
+  // The source registry (#478, D-048): staff changes record `source.changed` through audit.
+  sources: Object.freeze(['audit']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs

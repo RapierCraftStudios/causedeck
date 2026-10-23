@@ -32,6 +32,12 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A legal-gated feature flag enable request was rejected or withdrawn',
   },
+  // The source registry in the staff console (#478, D-048). Metadata holds the old and new value of
+  // every changed field (`old_<field>`, `new_<field>`).
+  'source.changed': {
+    security: true,
+    description: 'Staff created or changed an external data source or flipped its kill switch',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },

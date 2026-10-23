@@ -666,6 +666,23 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // source registry (#478): a global table of external-source policy, no tenant rows to leak
+  SOURCE_KINDS: 'constant',
+  SOURCE_ACCESS_MODES: 'constant',
+  SOURCE_REVIEW_STATUSES: 'constant',
+  SOURCE_MAX_TIERS: 'constant',
+  SourceNotCleared: 'error class',
+  SourceAdminError: 'error class',
+  validateSourceTier: 'pure',
+  validateSourceInput: 'pure',
+  decideSourceClearance: 'pure',
+  asSourceStaff: 'pure',
+  policyFor: 'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  isCleared: 'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  listSources: 'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  createSource: 'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  updateSource: 'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  setSourceKillSwitch: 'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

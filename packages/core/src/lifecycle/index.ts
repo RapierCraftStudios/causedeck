@@ -129,3 +129,14 @@ export {
   type MemoryErasureRunCtx,
   type RequestMemoryErasureDeps,
 } from './deletion/memory.ts';
+export {
+  CourtDataErasureError,
+  eraseCourtDataSubject,
+  expireCourtData,
+  MASKED_NAME,
+  MIN_ERASURE_SUBJECT_LENGTH,
+  type CourtDataErasureErrorCode,
+  type CourtDataErasureReport,
+  type CourtDataErasureRequest,
+  type CourtDataExpiryReport,
+} from './court-data.ts';

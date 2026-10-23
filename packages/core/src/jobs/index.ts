@@ -110,6 +110,7 @@ export {
   type DigestTarget,
   type NotificationDigestPayload,
 } from './definitions/notification-digest.ts';
+export { courtDataRetention } from './definitions/court-data-retention.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { supportSessionExpire } from './definitions/support-session-expire.ts';
 export { systemPing } from './definitions/system-ping.ts';

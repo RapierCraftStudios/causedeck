@@ -40,6 +40,10 @@ export const SOURCE_MAX_TIERS = ['http', 'headless', 'proxy', 'captcha'] as cons
 export type SourceMaxTier = (typeof SOURCE_MAX_TIERS)[number];
 export const sourceMaxTier = pgEnum('source_max_tier', SOURCE_MAX_TIERS);
 
+/** What a source's records hold: party names and the like (`personal`), none (`non-personal`) or both (`mixed`). */
+export const SOURCE_DATA_CLASSES = ['personal', 'non-personal', 'mixed'] as const;
+export type SourceDataClass = (typeof SOURCE_DATA_CLASSES)[number];
+
 /** Kinds that are courts or government pages: they may never be fetched through a captcha tier. */
 export const NO_CAPTCHA_KINDS = ['court', 'notice'] as const satisfies readonly SourceKind[];
 
@@ -58,6 +62,8 @@ export const source = pgTable(
     rateLimitPerMinute: integer('rate_limit_per_minute').notNull().default(1),
     retentionDays: integer('retention_days').notNull().default(30),
     residency: text('residency').notNull().default('in'),
+    /** DPDP data class (D-048); an untagged source is `personal`, so it is never exposed through the API. */
+    dataClass: text('data_class').$type<SourceDataClass>().notNull().default('personal'),
     maxTier: sourceMaxTier('max_tier').notNull().default('http'),
     maxCostDollars: numeric('max_cost_dollars', { precision: 10, scale: 4 }).notNull().default('0'),
     /** Counsel has cleared bulk captcha solving for this source (D-048); the raised tier is computed in code, never stored. */
@@ -73,6 +79,7 @@ export const source = pgTable(
       sql`not (${t.kind} in ('court', 'notice') and ${t.maxTier} = 'captcha')`,
     ),
     check('source_rate_limit_chk', sql`${t.rateLimitPerMinute} > 0`),
+    check('source_data_class_chk', sql`${t.dataClass} in ('personal', 'non-personal', 'mixed')`),
     check('source_retention_chk', sql`${t.retentionDays} >= 0`),
     check('source_max_cost_chk', sql`${t.maxCostDollars} >= 0`),
     check(

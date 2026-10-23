@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { LANGUAGES, loadFixtures, ruleStructurer, scoreLanguage } from './eval.ts';
-import { validateHearing } from '../../src/structure/hearing.ts';
+import { validateHearing, type RawHearing } from '../../src/structure/hearing.ts';
 
 describe.each(LANGUAGES)('voice eval: %s', (language) => {
   it('has at least 40 synthetic transcripts', () => {
@@ -21,7 +21,7 @@ describe.each(LANGUAGES)('voice eval: %s', (language) => {
     for (const fixture of loadFixtures(language)) {
       const raw = ruleStructurer(fixture.text, fixture.hearingDate);
       if (raw.nextDate === undefined) continue;
-      const forged = { ...raw, nextDate: { ...raw.nextDate, date: '2031-01-01' } };
+      const forged: RawHearing = { ...raw, nextDate: { ...raw.nextDate, date: '2031-01-01' } };
       const result = validateHearing(forged, {
         transcript: fixture.text,
         hearingDate: fixture.hearingDate,

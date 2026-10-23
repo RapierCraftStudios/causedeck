@@ -13,6 +13,9 @@ const H = '2026-10-23'; // a Friday
 describe('English', () => {
   it.each([
     ['fourteenth of November', '2026-11-14'],
+    ['on the fourteenth of November', '2026-11-14'],
+    ['on 14th November', '2026-11-14'],
+    ['on November 14th', '2026-11-14'],
     ['14/11', '2026-11-14'],
     ['14/11/2027', '2027-11-14'],
     ['14th November', '2026-11-14'],

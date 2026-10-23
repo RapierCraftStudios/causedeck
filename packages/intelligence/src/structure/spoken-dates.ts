@@ -391,10 +391,12 @@ function englishPatterns(): Pattern[] {
     return addMonths(h, n);
   };
   return [
-    pattern('absolute', `(?:the\\s+)?${day}\\s+(?:of\\s+)?(?<mo>${months})${year}`, (g, h) =>
-      absolute(g, h, monthN(g), dayN(g)),
+    pattern(
+      'absolute',
+      `(?:on\\s+)?(?:the\\s+)?${day}\\s+(?:of\\s+)?(?<mo>${months})${year}`,
+      (g, h) => absolute(g, h, monthN(g), dayN(g)),
     ),
-    pattern('absolute', `(?<mo>${months})\\s+(?:the\\s+)?${day}${year}`, (g, h) =>
+    pattern('absolute', `(?:on\\s+)?(?<mo>${months})\\s+(?:the\\s+)?${day}${year}`, (g, h) =>
       absolute(g, h, monthN(g), dayN(g)),
     ),
     pattern('absolute', String.raw`(?<d>\d{1,2})/(?<mo>\d{1,2})(?:/(?<y>\d{4}|\d{2}))?`, (g, h) => {

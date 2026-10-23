@@ -59,11 +59,9 @@ const has = (sentence: Sentence, cues: readonly string[]): boolean =>
 
 /** A cue-word reading of a transcript, shaped like the gateway's `structure_hearing` output. */
 export function ruleStructurer(text: string, hearingDate: string): RawHearing {
-  const raw: Required<Pick<RawHearing, 'directions' | 'tasks'>> & RawHearing = {
-    directions: [],
-    tasks: [],
-    confidence: 0.9,
-  };
+  const directions: NonNullable<RawHearing['directions']> = [];
+  const tasks: NonNullable<RawHearing['tasks']> = [];
+  const raw: RawHearing = { directions, tasks, confidence: 0.9 };
   for (const sentence of sentences(text)) {
     const span = { start: sentence.start, end: sentence.start + sentence.text.length };
     const [date] = findSpokenDates(sentence.text, hearingDate);
@@ -75,9 +73,9 @@ export function ruleStructurer(text: string, hearingDate: string): RawHearing {
         span: { start, end: start + date.phrase.length },
       };
     } else if (has(sentence, CUES.direction)) {
-      raw.directions.push({ text: sentence.text, dueExpression: date?.phrase ?? null, span });
+      directions.push({ text: sentence.text, dueExpression: date?.phrase ?? null, span });
     } else if (has(sentence, CUES.task)) {
-      raw.tasks.push({ title: sentence.text, span });
+      tasks.push({ title: sentence.text, span });
     } else if (has(sentence, CUES.outcome) && raw.outcome === undefined) {
       raw.outcome = { text: sentence.text, span };
     }

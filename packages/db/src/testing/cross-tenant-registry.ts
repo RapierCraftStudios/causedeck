@@ -680,6 +680,18 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
   },
+  // judgment alerts (#497)
+  listTags: denies,
+  addTag: denies,
+  proposeTags: denies,
+  confirmTag: denies,
+  dismissTag: denies,
+  listRelevantJudgments: denies,
+  scanJudgments: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
+  },
   // citations (#484): the global corpus, one answer for every workspace
   verifyCitation: {
     test: CORE_SERVICES_TEST,
@@ -691,6 +703,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  SCAN_MAX_JUDGMENTS: 'constant',
+  SCAN_LOOKBACK_DAYS: 'constant',
   // source registry (#478): a global table of external-source policy, no tenant rows to leak
   SOURCE_KINDS: 'constant',
   SOURCE_ACCESS_MODES: 'constant',

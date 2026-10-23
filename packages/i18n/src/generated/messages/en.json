@@ -3176,6 +3176,106 @@
       "open": "Shortcuts"
     }
   },
+  "whatsappImport": {
+    "metaTitle": "Import a WhatsApp chat",
+    "title": "Import a WhatsApp chat",
+    "back": "Back to inbox",
+    "disclosure": {
+      "title": "What happens to the chat",
+      "parsed": "The export is read and checked in this browser. Nothing is uploaded until you press Import.",
+      "selected": "Only the messages you keep are uploaded. The chat name and the zip file stay on this device.",
+      "held": "Messages with ID numbers, bank details, passwords or sensitive keywords are held back.",
+      "voice": "Voice notes are kept as files and are not transcribed.",
+      "access": "CauseDeck never reads your contacts or notifications, and never connects to WhatsApp.",
+      "retention": "The chat text is deleted 30 days after its tasks are extracted, unless you pin it."
+    },
+    "chatType": {
+      "legend": "What kind of chat is this?",
+      "internal": "Internal",
+      "internalHint": "Chambers, juniors, clerks or co-counsel. No clients in it.",
+      "client": "A client conversation",
+      "clientHint": "A client is in the chat.",
+      "unsure": "Not sure",
+      "unsureHint": "I can't tell who is in it.",
+      "continue": "Continue",
+      "stopTitle": "Client conversations stay out of CauseDeck imports for now",
+      "stopBody": "Nothing was read or uploaded. Your file never left this device.",
+      "startOver": "Choose again"
+    },
+    "warning": {
+      "clientTitle": "This looks like a client conversation",
+      "clientBody": "These participants look like clients: {names}. Client conversations stay out of CauseDeck imports for now. Nothing was uploaded.",
+      "twoTitle": "Only two people, and neither is you",
+      "twoBody": "A chat between two people who are not you is often a client's. Is every participant part of your chambers?",
+      "confirmInternal": "Yes, it is internal",
+      "stop": "No, stop the import"
+    },
+    "file": {
+      "label": "WhatsApp export",
+      "hint": "Export the chat from WhatsApp without media (or with it), then choose the .zip or .txt file here.",
+      "choose": "Choose file",
+      "parsing": "Reading the export",
+      "progress": "Reading the export, {percent}% done"
+    },
+    "preview": {
+      "title": "Choose the messages to import",
+      "summary": "{kept, plural, one {# message} other {# messages}} selected of {total}",
+      "limit": "{max} messages is the most one import can hold. Unselect some to continue.",
+      "list": "Messages in the chat",
+      "search": "Search messages",
+      "searchPlaceholder": "Search text or sender",
+      "noMatches": "No messages match your search.",
+      "selectShown": "Select shown",
+      "clearShown": "Clear shown",
+      "excludeHeld": "Unselect all held",
+      "select": "Include message from {sender} at {time}",
+      "attachment": "Attachment: {name}",
+      "keys": "Arrow keys move, Space includes or excludes, C confirms a held message.",
+      "dateOrder": "Dates read as day/month. Flip if they look wrong.",
+      "dateOrderAmbiguous": "These dates could be day/month or month/day.",
+      "flip": "Flip day and month"
+    },
+    "pii": {
+      "aadhaar": "Aadhaar number",
+      "pan": "PAN",
+      "bank_account": "Bank account",
+      "ifsc": "IFSC code",
+      "credential_phrase": "Password or OTP",
+      "sensitive_keyword": "Sensitive keyword",
+      "sensitive_matter": "Sensitive matter",
+      "held": "Held back",
+      "confirm": "Include anyway",
+      "confirmed": "Included",
+      "locked": "Can never be imported"
+    },
+    "upload": {
+      "submit": "Import {count, plural, one {# message} other {# messages}}",
+      "uploading": "Uploading",
+      "done": "Imported. CauseDeck is reading the chat. Proposals will appear in your inbox.",
+      "openInbox": "Open inbox",
+      "failed": {
+        "forbidden": "You are not allowed to import chats in this workspace.",
+        "not_found": "This import is not available.",
+        "too_large": "The chat is too large to import. Unselect some messages.",
+        "invalid": "The server did not accept these messages. Check the selection and try again.",
+        "rate_limited": "Too many imports just now. Try again in a minute.",
+        "failed": "The upload failed. Nothing was imported. Try again."
+      }
+    },
+    "states": {
+      "empty": "No messages to import yet. Choose an export file to begin.",
+      "offline": "You're offline. You can read and choose messages, but importing needs a connection.",
+      "denied": "Only owners and advocates can import chats.",
+      "error": {
+        "not_zip": "That file is not a valid zip export.",
+        "no_chat": "No chat text was found in the zip.",
+        "too_large": "That export is too large. Export without media and try again.",
+        "empty": "No importable messages were found in that file.",
+        "failed": "The export could not be read. Try exporting it again."
+      },
+      "retry": "Choose another file"
+    }
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",

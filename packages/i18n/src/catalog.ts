@@ -22,6 +22,7 @@ export const NAMESPACES = [
   'matter-timeline',
   'calendar',
   'inbox',
+  'whatsapp-import',
   'errors',
 ] as const;
 

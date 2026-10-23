@@ -11,6 +11,7 @@
     "app",
     "components",
     "lib",
+    "workers",
     "i18n",
     "messages",
     "__tests__",

@@ -3177,6 +3177,106 @@ export type Messages = {
       open: string;
     };
   };
+  whatsappImport: {
+    metaTitle: string;
+    title: string;
+    back: string;
+    disclosure: {
+      title: string;
+      parsed: string;
+      selected: string;
+      held: string;
+      voice: string;
+      access: string;
+      retention: string;
+    };
+    chatType: {
+      legend: string;
+      internal: string;
+      internalHint: string;
+      client: string;
+      clientHint: string;
+      unsure: string;
+      unsureHint: string;
+      continue: string;
+      stopTitle: string;
+      stopBody: string;
+      startOver: string;
+    };
+    warning: {
+      clientTitle: string;
+      clientBody: string;
+      twoTitle: string;
+      twoBody: string;
+      confirmInternal: string;
+      stop: string;
+    };
+    file: {
+      label: string;
+      hint: string;
+      choose: string;
+      parsing: string;
+      progress: string;
+    };
+    preview: {
+      title: string;
+      summary: string;
+      limit: string;
+      list: string;
+      search: string;
+      searchPlaceholder: string;
+      noMatches: string;
+      selectShown: string;
+      clearShown: string;
+      excludeHeld: string;
+      select: string;
+      attachment: string;
+      keys: string;
+      dateOrder: string;
+      dateOrderAmbiguous: string;
+      flip: string;
+    };
+    pii: {
+      aadhaar: string;
+      pan: string;
+      bank_account: string;
+      ifsc: string;
+      credential_phrase: string;
+      sensitive_keyword: string;
+      sensitive_matter: string;
+      held: string;
+      confirm: string;
+      confirmed: string;
+      locked: string;
+    };
+    upload: {
+      submit: string;
+      uploading: string;
+      done: string;
+      openInbox: string;
+      failed: {
+        forbidden: string;
+        not_found: string;
+        too_large: string;
+        invalid: string;
+        rate_limited: string;
+        failed: string;
+      };
+    };
+    states: {
+      empty: string;
+      offline: string;
+      denied: string;
+      error: {
+        not_zip: string;
+        no_chat: string;
+        too_large: string;
+        empty: string;
+        failed: string;
+      };
+      retry: string;
+    };
+  };
   error: {
     title: string;
     description: string;

@@ -243,6 +243,9 @@ catalogs:
     fast-check:
       specifier: 4.10.2
       version: 4.10.2
+    fflate:
+      specifier: 0.8.3
+      version: 0.8.3
     file-type:
       specifier: 22.2.0
       version: 22.2.0
@@ -704,6 +707,9 @@ importers:
       d3-shape:
         specifier: 'catalog:'
         version: 3.2.0
+      fflate:
+        specifier: 'catalog:'
+        version: 0.8.3
       lucide-react:
         specifier: 'catalog:'
         version: 1.57.0(@types/react@19.3.0)(react@19.3.1)

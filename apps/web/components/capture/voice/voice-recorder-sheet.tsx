@@ -81,22 +81,20 @@ export function VoiceRecorderSheet({
   const [announce, setAnnounce] = useState('');
   const [recording, setRecording] = useState<Recording | null>(null);
   const [url, setUrl] = useState<string | null>(null);
-  const [matterId, setMatterId] = useState(matterHintId);
+  const [matterCleared, setMatterCleared] = useState(false);
+  const matterId = matterCleared ? undefined : matterHintId;
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
-  const [onboarded, setOnboarded] = useState(true);
+  // The sheet only mounts in the browser (a `ssr: false` chunk), so storage can be read directly.
+  const [onboarded, setOnboarded] = useState(
+    () => window.localStorage.getItem(ONBOARDED_KEY) === '1',
+  );
+  const lastAnnounced = useRef(-1);
   const recorder = useRef<VoiceRecorder | null>(null);
   const starting = useRef(false);
   const stopWhenReady = useRef(false);
   const releasedEarly = () => stopWhenReady.current;
-
-  useEffect(() => {
-    setOnboarded(window.localStorage.getItem(ONBOARDED_KEY) === '1');
-  }, []);
-  useEffect(() => {
-    setMatterId(matterHintId);
-  }, [matterHintId]);
 
   const release = useCallback(() => {
     recorder.current?.cancel();
@@ -108,15 +106,6 @@ export function VoiceRecorderSheet({
   useEffect(() => {
     if (!open) release();
   }, [open, release]);
-  useEffect(() => {
-    const hidden = () => {
-      if (document.visibilityState === 'hidden' && recorder.current !== null) void finish();
-    };
-    document.addEventListener('visibilitychange', hidden);
-    return () => {
-      document.removeEventListener('visibilitychange', hidden);
-    };
-  }, []);
   useEffect(
     () => () => {
       if (url !== null) URL.revokeObjectURL(url);
@@ -149,10 +138,20 @@ export function VoiceRecorderSheet({
     setPhase('review');
   };
 
+  useEffect(() => {
+    const hidden = () => {
+      if (document.visibilityState === 'hidden' && recorder.current !== null) void finish();
+    };
+    document.addEventListener('visibilitychange', hidden);
+    return () => {
+      document.removeEventListener('visibilitychange', hidden);
+    };
+  }, []);
   const begin = async () => {
     if (starting.current || recorder.current !== null) return;
     starting.current = true;
     stopWhenReady.current = false;
+    lastAnnounced.current = -1;
     setError(null);
     const began = Date.now();
     let started: MicrophoneStart;
@@ -172,6 +171,11 @@ export function VoiceRecorderSheet({
         maxMs,
         onTick: (ms, level) => {
           setElapsed(ms);
+          const second = Math.floor(ms / 1000);
+          if (second > 0 && second % 10 === 0 && second !== lastAnnounced.current) {
+            lastAnnounced.current = second;
+            setAnnounce(t('record.elapsed', { time: formatElapsed(ms) }));
+          }
           setLevels((previous) => [...previous.slice(1), level]);
         },
         onLimit: () => {
@@ -192,13 +196,6 @@ export function VoiceRecorderSheet({
     // prompt it does not: the person is left in tap-to-stop mode.
     if (releasedEarly() && Date.now() - began < PROMPT_MS) void finish();
   };
-
-  // "Recording, 00:12", read out about every 10 s (not every tick).
-  useEffect(() => {
-    if (phase === 'recording' && elapsed > 0 && Math.floor(elapsed / 1000) % 10 === 0) {
-      setAnnounce(t('record.elapsed', { time: formatElapsed(elapsed) }));
-    }
-  }, [phase, elapsed, t]);
 
   const save = async () => {
     if (recording === null) return;
@@ -295,7 +292,7 @@ export function VoiceRecorderSheet({
             durationMs={recording.durationMs}
             matterId={matterId}
             onClearMatter={() => {
-              setMatterId(undefined);
+              setMatterCleared(true);
             }}
             busy={busy}
             onAgain={reset}

@@ -470,6 +470,13 @@
       "when": 1792767725630,
       "tag": "0066_fetch_log",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1792771325630,
+      "tag": "0067_staff_parse_yield",
+      "breakpoints": true
     }
   ]
 }

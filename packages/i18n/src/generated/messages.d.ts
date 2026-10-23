@@ -1870,6 +1870,7 @@ export type Messages = {
         duplicate_merge: string;
         memory_item: string;
         fee_entry: string;
+        case_status_change: string;
         outward_draft: string;
       };
       matter: string;
@@ -3142,6 +3143,7 @@ export type Messages = {
         duplicate_merge: string;
         memory_item: string;
         fee_entry: string;
+        case_status_change: string;
         outward_draft: string;
       };
       matter: string;

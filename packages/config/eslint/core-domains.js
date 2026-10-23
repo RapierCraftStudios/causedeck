@@ -25,6 +25,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The automation engine (#47): membership roles through workspaces, its audit events through
   // audit, and every graph write through the matter-graph services (imports `index.ts` only).
   automation: Object.freeze(['workspaces', 'audit', 'matter-graph']),
+  // Case-status watches (#591, D-048): a lookup needs a cleared source through sources, the next-date
+  // proposal goes through automation and every proceeding read through matter-graph.
+  'case-watch': Object.freeze(['workspaces', 'automation', 'matter-graph', 'sources']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.

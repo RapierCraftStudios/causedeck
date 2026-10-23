@@ -1,0 +1,41 @@
+{
+  "skipped": 2,
+  "notices": [
+    {
+      "title": "Circular regarding e-filing of appeals w.e.f. 01/04/2026",
+      "issuedOn": "2026-03-12",
+      "effectiveOn": "2026-04-01",
+      "url": "https://www.mhc.example/circulars/mhc-2026-014.pdf",
+      "kindHint": "registry",
+      "forumCodes": [
+        "in.tn.madras-hc.principal.original",
+        "in.tn.madras-hc.principal.appellate",
+        "in.tn.madras-hc.madurai"
+      ]
+    },
+    {
+      "title": "Holiday list for Madurai Bench for the year 2026",
+      "issuedOn": "2026-03-05",
+      "effectiveOn": null,
+      "url": "https://www.mhc.example/holidays-2026.pdf",
+      "kindHint": "holiday",
+      "forumCodes": ["in.tn.madras-hc.madurai"]
+    },
+    {
+      "title": "Practice Direction on listing of Original Side matters",
+      "issuedOn": "2026-02-20",
+      "effectiveOn": null,
+      "url": "https://www.mhc.example/pd/listing.pdf",
+      "kindHint": "practice_direction",
+      "forumCodes": ["in.tn.madras-hc.principal.original"]
+    },
+    {
+      "title": "Roster of Division Benches & Single Judges (Appellate Side)",
+      "issuedOn": "2026-02-11",
+      "effectiveOn": null,
+      "url": "https://www.mhc.example/roster/feb.pdf",
+      "kindHint": "roster",
+      "forumCodes": ["in.tn.madras-hc.principal.appellate"]
+    }
+  ]
+}

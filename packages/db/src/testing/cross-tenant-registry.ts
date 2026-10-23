@@ -237,6 +237,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   addCauseListWatch: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
+  // Case-status watches (#591)
+  addCaseWatch: selfScoped,
+  listCaseWatches: selfScoped,
+  removeCaseWatch: selfScoped,
   runBillingProcessEvent: {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
@@ -915,6 +919,16 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   boardPoll: 'job definition (handler is runBoardPoll)',
   runBoardPoll: 'system job body: see pollBoards',
   setBoardFetcherFactory: 'wiring point for the governed fetcher (worker startup)',
+  // case-watch: delegated status lookups (#591)
+  STATUS_SOURCES: 'constant',
+  hashStatusFields: 'pure',
+  diffStatus: 'pure',
+  hasChanges: 'pure',
+  statusChangeDraft: 'pure (builds a draft; submitting it goes through submitProposals)',
+  runCaseStatusLookup:
+    "actor-scoped in withWorkspace: loads only the actor's own watch (advocate_user_id = actor) and proceeds as delegatedFor that advocate on that matter; another advocate or workspace gets NOT_FOUND before any fetch; covered by case-watch.test.ts",
+  recordDeviceSnapshot:
+    "actor-scoped in withWorkspace: stores a snapshot only on the actor's own watch; covered by case-watch.test.ts",
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',

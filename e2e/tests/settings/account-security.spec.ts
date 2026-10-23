@@ -89,6 +89,9 @@ test.describe('account security', () => {
       await expect(
         page.getByText('No passkeys yet. Add one to sign in with your fingerprint or screen lock.'),
       ).toBeVisible();
+      // Adding and removing a passkey refreshes the route, and the streamed `<title>` is briefly
+      // absent while it re-renders; the `@a11y` axe pass at the end of the test needs it back.
+      await expect.poll(() => page.title()).not.toBe('');
     },
   );
 

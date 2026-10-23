@@ -35,7 +35,7 @@ test.describe('matters list budget', { tag: '@perf' }, () => {
     asUser,
     db,
   }, testInfo) => {
-    test.skip(testInfo.project.name !== 'chromium-1280-light', 'timing runs once, on desktop');
+    test.skip(testInfo.project.name !== 'perf-1280-light', 'timing runs once, on desktop, alone');
     await openMatters(page, asUser);
     const counts = await withSql(db.name, async (sql) => {
       const [row] = await sql<{ matters: string; proceedings: string }[]>`

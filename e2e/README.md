@@ -188,7 +188,7 @@ runs it with `--experimental-strip-types` for that. Reports go to `.lighthouseci
 `tests/matters/` (#394, part 6 of #40) covers the matters area: `matters.spec.ts` (list, filters,
 search, keyboard map, tab bar, live region, conflict card), `matters.a11y.spec.ts` (`@a11y`, axe on
 every route), `matters.visual.spec.ts` (`@visual`, the baselines below) and `matters.perf.spec.ts`
-(`@perf`, list p95 server render under 300 ms). The data is `fixtures/matters-data.ts`, seeded into
+(`@perf`, list p95 server render under 300 ms, run alone in the `perf-1280-light` project after the other tests). The data is `fixtures/matters-data.ts`, seeded into
 the template by `support/db-reset.ts` in `chennai-solo`: six journey matters (an appeal chain with
 W.M.P. children, a date conflict, a proposed next date, a sensitive matter, Tamil and Kannada party
 names) and a bulk of 500 matters with 1,500 proceedings and no next date, so the default sort lists

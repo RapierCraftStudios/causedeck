@@ -15,6 +15,18 @@ import { shellReady } from '../shell/helpers.ts';
 
 const INBOX = '/w/chennai-solo/inbox';
 
+/**
+ * What the engine writes into `proposal.meta` (the draft's source and pattern). Accepting a card
+ * applies it through the engine, which refuses a proposal without a `source`.
+ */
+const PROPOSAL_META = {
+  source: { type: 'deterministic', input: 'form' },
+  patternKey: 'task',
+  match: null,
+  duplicate: null,
+  ambiguous: false,
+} as const;
+
 /** Drop what an earlier test seeded, then insert `tasks` proposals and the given captures. */
 async function seedInbox(
   database: string,
@@ -25,9 +37,10 @@ async function seedInbox(
     await sql`delete from capture where workspace_id = ${WORKSPACE_ID} and source_meta ->> 'e2eInbox' = '1'`;
     for (let n = 0; n < tasks; n += 1) {
       await sql`
-        insert into proposal (id, workspace_id, kind, level, status, payload, idempotency_key, confidence)
+        insert into proposal (id, workspace_id, kind, level, status, payload, meta, idempotency_key, confidence)
         values (${randomUUID()}, ${WORKSPACE_ID}, 'task', 'L2', 'proposed',
           ${sql.json({ title: `File the counter ${String(n + 1)} (fictional)` })},
+          ${sql.json(PROPOSAL_META)},
           ${`e2e-inbox-${String(n)}`}, 0.930)`;
     }
     for (const status of captures) {

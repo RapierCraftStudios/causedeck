@@ -11,6 +11,8 @@
 // are logged.
 import {
   createKarnatakaHcAdapter,
+  extractBarRegistrationNo,
+  extractEnrolmentNo,
   KARNATAKA_HC_FORUM_CODES,
   type ParsedCauseList,
 } from '@causedeck/adapters';
@@ -50,8 +52,9 @@ function normalizeWatch(kind: schema.CauseListWatchKind, raw: string): string {
   const value = raw.trim().replace(/\s+/g, ' ');
   if (value === '' || value.length > 200) throw invalid('Enter a name or BRN of up to 200 characters');
   if (kind === 'brn') {
-    const [key] = getAdvocateIdentifiers({ enrolmentNumbers: [value] }).enrolmentNumbers;
-    if (key === undefined) throw invalid('Enter a valid BRN');
+    // Only a printed enrolment number or BRN: the identifier helper would accept any text.
+    const key = extractEnrolmentNo(value) ?? extractBarRegistrationNo(value);
+    if (key === null) throw invalid('Enter a valid BRN');
     return key;
   }
   if (getAdvocateIdentifiers({ aliases: [value] }).aliases.length === 0) {

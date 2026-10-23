@@ -75,7 +75,18 @@ describe('validateHearing', () => {
     };
     expect(validateHearing(wrongQuote, input).rejected[0]?.reason).toBe('phrase_mismatch');
 
-    const past = validateHearing(good(), { ...input, hearingDate: '2026-12-01' });
+    const pastText = 'Next hearing on 14/11/2025.';
+    const past = validateHearing(
+      {
+        nextDate: {
+          date: '2025-11-14',
+          phrase: '14/11/2025',
+          span: at('14/11/2025', pastText),
+        },
+        confidence: 0.9,
+      },
+      { transcript: pastText, hearingDate: HEARING },
+    );
     expect(past.rejected).toContainEqual(expect.objectContaining({ reason: 'not_after_hearing' }));
   });
 

@@ -20,7 +20,7 @@ describe.each(LANGUAGES)('voice eval: %s', (language) => {
   it('rejects a date the model invents for every transcript', () => {
     for (const fixture of loadFixtures(language)) {
       const raw = ruleStructurer(fixture.text, fixture.hearingDate);
-      if (raw.nextDate === undefined) continue;
+      if (raw.nextDate === undefined || raw.nextDate === null) continue;
       const forged: RawHearing = { ...raw, nextDate: { ...raw.nextDate, date: '2031-01-01' } };
       const result = validateHearing(forged, {
         transcript: fixture.text,

@@ -54,7 +54,7 @@ export function ConfirmGrid({
   onRetryFile,
   onKeepFile,
 }: ConfirmGridProps) {
-  const t = useTranslations('bootstrapImport');
+  const t = useTranslations('importReview');
   const [groups, setGroups] = useState<EditGroup[]>(() => groupsOf(plan));
   const [resolved, setResolved] = useState<Record<string, string>>({});
   const [excluded, setExcluded] = useState<ReadonlySet<string>>(new Set());

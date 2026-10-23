@@ -20,7 +20,7 @@ const { renderWithIntl, mockMatchMedia, stubResizeObserver } =
   await import('../../shell/__tests__/helpers.tsx');
 const { ConfirmGrid } = await import('../confirm-grid.tsx');
 
-const en = catalogs.en.bootstrapImport;
+const en = catalogs.en.importReview;
 
 const APPLIED = {
   ok: true as const,

@@ -3389,6 +3389,88 @@ export type Messages = {
       };
     };
   };
+  bootstrapImport: {
+    metaTitle: string;
+    title: string;
+    loading: string;
+    denied: string;
+    empty: {
+      title: string;
+      body: string;
+    };
+    channel: {
+      title: string;
+      body: string;
+      enable: string;
+      ownerOnly: string;
+      failed: string;
+    };
+    sensitive: string;
+    drop: {
+      label: string;
+      hint: string;
+      choose: string;
+      folder: string;
+      refused: string;
+      offline: string;
+    };
+    list: {
+      title: string;
+      summary: string;
+      retry: string;
+      status: {
+        hashing: string;
+        queued: string;
+        uploading: string;
+        uploaded: string;
+        failed: string;
+        rejected: string;
+        duplicate: string;
+      };
+      reason: {
+        type: string;
+        size: string;
+        empty: string;
+        channel_disabled: string;
+        sensitive: string;
+        too_large: string;
+        unsupported: string;
+        rate_limited: string;
+        forbidden: string;
+        offline: string;
+        failed: string;
+      };
+    };
+    start: string;
+    starting: string;
+    identifiers: {
+      title: string;
+      body: string;
+      enrolment: string;
+      aliases: string;
+      propose: string;
+      confirmTitle: string;
+      confirmBody: string;
+      confirm: string;
+      edit: string;
+    };
+    processing: {
+      title: string;
+      progress: string;
+      failed: string;
+      retry: string;
+      nothing: string;
+      ready: string;
+      review: string;
+      kept: string;
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+      action: string;
+    };
+  };
   emailIntake: {
     metaTitle: string;
     title: string;
@@ -3475,7 +3557,7 @@ export type Messages = {
       retry: string;
     };
   };
-  bootstrapImport: {
+  importReview: {
     title: string;
     intro: string;
     summary: string;
@@ -3642,6 +3724,70 @@ export type Messages = {
     receipt: {
       title: string;
       copy: string;
+    };
+  };
+  voice: {
+    command: string;
+    title: string;
+    description: string;
+    privacy: string;
+    close: string;
+    cancel: string;
+    onboarding: {
+      title: string;
+      why: string;
+      india: string;
+      retention: string;
+      allow: string;
+    };
+    record: {
+      hold: string;
+      tap: string;
+      stop: string;
+      start: string;
+      hint: string;
+      slideCancel: string;
+      waveform: string;
+      elapsed: string;
+      stopped: string;
+      cancelled: string;
+      limit: string;
+    };
+    review: {
+      title: string;
+      play: string;
+      pause: string;
+      audio: string;
+      again: string;
+      save: string;
+      matter: string;
+      matterClear: string;
+      matterSearch: string;
+      matterSearchPlaceholder: string;
+      matterNone: string;
+      matterPicked: string;
+      dateHint: string;
+      dateHintNote: string;
+      note: string;
+      notePlaceholder: string;
+    };
+    saved: {
+      online: string;
+      offline: string;
+    };
+    denied: {
+      title: string;
+      steps: string;
+      body: string;
+    };
+    unavailable: {
+      title: string;
+      body: string;
+    };
+    errors: {
+      record: string;
+      save: string;
+      full: string;
     };
   };
   error: {

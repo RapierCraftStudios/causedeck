@@ -9,7 +9,7 @@ import en from '@causedeck/i18n/messages/en.json';
 import { PLAN } from './__tests__/fixtures.ts';
 import { ConfirmGrid } from './confirm-grid.tsx';
 
-const t = en.bootstrapImport;
+const t = en.importReview;
 
 const applied = () =>
   Promise.resolve({

@@ -24,9 +24,11 @@ export const NAMESPACES = [
   'inbox',
   'pwa',
   'whatsapp-import',
+  'bootstrap-import',
   'email-intake',
   'import',
   'camera',
+  'voice',
   'errors',
 ] as const;
 

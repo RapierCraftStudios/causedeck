@@ -19,7 +19,7 @@ export function MergeSplitControls({
   onMerge,
   onSplit,
 }: MergeSplitControlsProps) {
-  const t = useTranslations('bootstrapImport');
+  const t = useTranslations('importReview');
   return (
     <div data-slot="merge-split-controls" className="flex flex-wrap gap-2">
       <Button type="button" variant="ghost" size="sm" onClick={onRename}>

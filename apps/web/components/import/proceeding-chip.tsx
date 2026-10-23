@@ -20,7 +20,7 @@ export interface ProceedingChipProps {
 export const proceedingName = (p: PlanProceeding): string => p.label ?? p.cnr ?? p.key;
 
 export function ProceedingChip({ proceeding, targets, onMove }: ProceedingChipProps) {
-  const t = useTranslations('bootstrapImport');
+  const t = useTranslations('importReview');
   const name = proceedingName(proceeding);
   return (
     <li

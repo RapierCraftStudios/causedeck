@@ -27,7 +27,7 @@ export function ResultSummary({
   undoFailed,
   onUndo,
 }: ResultSummaryProps) {
-  const t = useTranslations('bootstrapImport');
+  const t = useTranslations('importReview');
   return (
     <section
       aria-labelledby="import-result-title"

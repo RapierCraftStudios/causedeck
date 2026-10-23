@@ -38,7 +38,7 @@ export function IssuesPanel({
   onRetryFile,
   onKeepFile,
 }: IssuesPanelProps) {
-  const t = useTranslations('bootstrapImport');
+  const t = useTranslations('importReview');
   return (
     <section
       aria-labelledby="import-issues-title"

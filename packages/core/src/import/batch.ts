@@ -238,6 +238,8 @@ export interface ImportProgress {
   total: number;
   files: Record<ImportBatchFileStatus, number>;
   matchedRows: number;
+  /** Files past the free-plan OCR allowance: kept as attachments, not read (`over_ocr_cap`). */
+  keptAsAttachments: number;
   /** The importing member has no saved identifiers: no list row can be imported. */
   needsIdentifiers: boolean;
 }
@@ -250,7 +252,7 @@ export async function getImportProgress(
 ): Promise<ImportProgress> {
   const { importBatch, importBatchFile } = schema;
   const { workspaceId } = actor;
-  const [counts, batch] = await withWorkspace(deps.db, actor, async (tx) => {
+  const [counts, batch, keptAsAttachments] = await withWorkspace(deps.db, actor, async (tx) => {
     const [row] = await tx
       .select({
         status: importBatch.status,
@@ -265,7 +267,11 @@ export async function getImportProgress(
       .from(importBatchFile)
       .where(fileWhere(workspaceId, batchId))
       .groupBy(importBatchFile.status);
-    return [grouped, row] as const;
+    const [kept] = await tx
+      .select({ n: count() })
+      .from(importBatchFile)
+      .where(and(fileWhere(workspaceId, batchId), eq(importBatchFile.adapterId, OVER_OCR_CAP)));
+    return [grouped, row, kept?.n ?? 0] as const;
   });
   const files: Record<ImportBatchFileStatus, number> = {
     pending: 0,
@@ -285,6 +291,7 @@ export async function getImportProgress(
     total: Object.values(files).reduce((sum, n) => sum + n, 0),
     files,
     matchedRows: batch.matchedRows,
+    keptAsAttachments,
     needsIdentifiers: !hasIdentifiers(identifiers),
   };
 }

@@ -112,6 +112,8 @@ export interface ImportProgressView {
   total: number;
   files: Record<string, number>;
   matchedRows: number;
+  /** Files kept as attachments without reading (free-plan cap). */
+  keptAsAttachments: number;
   needsIdentifiers: boolean;
 }
 

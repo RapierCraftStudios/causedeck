@@ -60,7 +60,7 @@ export function MatterGroupRow({
   onSplit,
   onFocusTitle,
 }: MatterGroupRowProps) {
-  const t = useTranslations('bootstrapImport');
+  const t = useTranslations('importReview');
   const format = useFormatter();
   const day = (date: string) =>
     format.dateTime(new Date(`${date}T00:00:00Z`), { dateStyle: 'medium', timeZone: 'UTC' });
@@ -196,7 +196,7 @@ function ConflictPicker({
   day: (date: string) => string;
   onPick: (key: string, date: string) => void;
 }) {
-  const t = useTranslations('bootstrapImport');
+  const t = useTranslations('importReview');
   return (
     <div role="group" aria-label={t('conflict.title')} className="mt-2 flex flex-col gap-2">
       {matter.issues

@@ -12,7 +12,7 @@ export interface OutboxItem {
   batchId: string;
   /** `null` until the person picks one (several workspaces) or signs in. */
   workspaceId: string | null;
-  channel: 'share' | 'upload' | 'camera';
+  channel: 'share' | 'upload' | 'camera' | 'voice';
   name: string;
   mime: string;
   size: number;

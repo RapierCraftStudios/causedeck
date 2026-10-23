@@ -1,5 +1,5 @@
 {
-  "bootstrapImport": {
+  "importReview": {
     "title": "Confirm what we found",
     "intro": "Each row is a matter we propose to create. Check it, fix it, then confirm. Nothing is created until you confirm.",
     "summary": "{included} of {total} matters included",

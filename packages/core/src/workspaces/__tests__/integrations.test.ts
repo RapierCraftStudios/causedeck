@@ -95,32 +95,31 @@ async function expectCode(promise: Promise<unknown>, code: string) {
 }
 
 describe('integration tokens', () => {
-  it('starts with no token of either kind', async () => {
+  it('starts with no token', async () => {
     await withTestDb(async (tx) => {
       const { workspaceId } = await setup(tx);
-      expect(await statusesOf(tx, workspaceId)).toEqual({ email_intake: null, ics_feed: null });
+      expect(await statusesOf(tx, workspaceId)).toEqual({ ics_feed: null });
     });
   });
 
   it('creates a token, stores only its hash and audits the kind only', async () => {
     await withTestDb(async (tx) => {
       const { ownerId, workspaceId } = await setup(tx);
-      const result = await rotate(tx, { workspaceId, actorUserId: ownerId, kind: 'email_intake' });
-      expect(result.kind).toBe('email_intake');
+      const result = await rotate(tx, { workspaceId, actorUserId: ownerId, kind: 'ics_feed' });
+      expect(result.kind).toBe('ics_feed');
       expect(result.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
       expect(result.rotatedAt).toBeNull();
 
-      expect(await hashesOf(tx, workspaceId, 'email_intake')).toEqual([
+      expect(await hashesOf(tx, workspaceId, 'ics_feed')).toEqual([
         hashIntegrationToken(result.token),
       ]);
       const statuses = await statusesOf(tx, workspaceId);
-      expect(statuses.ics_feed).toBeNull();
-      expect(statuses.email_intake).toEqual({ createdAt: result.createdAt, rotatedAt: null });
+      expect(statuses.ics_feed).toEqual({ createdAt: result.createdAt, rotatedAt: null });
       expect(JSON.stringify(statuses)).not.toContain(hashIntegrationToken(result.token));
 
       const events = await audits(tx, workspaceId);
       expect(events).toEqual([
-        { actorUserId: ownerId, targetId: workspaceId, metadata: { kind: 'email_intake' } },
+        { actorUserId: ownerId, targetId: workspaceId, metadata: { kind: 'ics_feed' } },
       ]);
       expect(JSON.stringify(events)).not.toContain(result.token);
     });

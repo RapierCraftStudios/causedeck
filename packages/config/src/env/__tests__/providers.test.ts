@@ -140,4 +140,34 @@ describe('provider switches', () => {
     expect(String(env.S3_ACCESS_KEY)).toBe('[REDACTED]');
     expect(env.S3_ACCESS_KEY.reveal()).toBe(productionEnv.S3_ACCESS_KEY);
   });
+
+  it('AI gateway env (#44): boots in dev and CI without secrets and caps concurrency', () => {
+    const env = createEnv({ NODE_ENV: 'test' });
+
+    expect(env.AI_PROVIDER).toBe('mock');
+    expect(env.AI_MAX_CONCURRENCY_PER_WORKSPACE).toBe(4);
+    expect(envError({ NODE_ENV: 'test', AI_MAX_CONCURRENCY_PER_WORKSPACE: '0' }).message).toContain(
+      'AI_MAX_CONCURRENCY_PER_WORKSPACE',
+    );
+  });
+
+  it('a real Sarvam key in production needs SARVAM_NO_TRAINING_CONFIRMED=true (#44)', () => {
+    const without = { ...productionEnv, SARVAM_NO_TRAINING_CONFIRMED: undefined };
+
+    expect(envError(without).message).toContain('SARVAM_NO_TRAINING_CONFIRMED');
+    expect(() => createEnv(productionEnv)).not.toThrow();
+    expect(() => createEnv({ ...without, NODE_ENV: 'test' })).not.toThrow();
+  });
+
+  it('the Sarvam key and Bedrock secret never appear in the serialised env (#44)', () => {
+    const env = createEnv({
+      NODE_ENV: 'test',
+      AI_PROVIDER: 'bedrock',
+      BEDROCK_ACCESS_KEY_ID: 'AKIABEDROCKVISIBLE',
+      BEDROCK_SECRET_ACCESS_KEY: 'bedrock-secret-value',
+      BEDROCK_MODEL_ID: 'apac.anthropic.claude-haiku',
+    });
+
+    expect(JSON.stringify(env)).not.toContain('bedrock-secret-value');
+  });
 });

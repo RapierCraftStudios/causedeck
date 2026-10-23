@@ -77,7 +77,7 @@ export const FLAGS = {
   'capture.whatsapp-import': flag(
     'capture.whatsapp-import',
     'WhatsApp chat-export importer.',
-    false,
+    true,
     [55],
   ),
   'capture.email-forward': flag(

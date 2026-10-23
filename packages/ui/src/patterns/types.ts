@@ -40,6 +40,17 @@ export type Anchor = {
   highlight?: { start: number; end: number };
   page: number;
   pageCount?: number;
+  /** A photographed page: the line to show cropped out of the image (#52). */
+  imageRegion?: AnchorImageRegion;
+};
+
+/** `bbox` is `[x0, y0, x1, y1]` normalised 0..1 over the page image at `src`. */
+export type AnchorImageRegion = {
+  src: string;
+  bbox: [number, number, number, number];
+  /** Width over height of the whole image; defaults to an A4 page. */
+  aspect?: number;
+  alt?: string;
 };
 
 /** Proceeding stages, in filing order. Names match the `--stage-*` tokens. */

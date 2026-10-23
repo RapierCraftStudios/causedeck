@@ -174,7 +174,7 @@ test.describe('forum detail', () => {
     await expect(causeList.locator('[data-captcha-notice]')).toBeVisible();
   });
 
-  test('the A0 forum: no adapter version, and an empty Halls tab that explains', async ({
+  test('the A0 forum: the generic adapter version, and an empty Halls tab that explains', async ({
     page,
     asUser,
   }) => {
@@ -185,7 +185,9 @@ test.describe('forum detail', () => {
     const empty = page.locator('[data-halls-empty]');
     await expect(empty).toContainText('No halls seen yet');
     await page.locator('[data-forum-tab="adapter"]').click();
-    await expect(page.locator('[data-adapter-field="version"]')).toContainText('No active version');
+    // The A0 generic adapters (#56, migration 0063) are active at 1.0.0 for the district forums: an A0
+    // forum has a version but still no parse history or halls.
+    await expect(page.locator('[data-adapter-field="version"]')).toContainText('1.0.0');
   });
 
   test('an unknown forum code is not found', async ({ page, asUser }) => {

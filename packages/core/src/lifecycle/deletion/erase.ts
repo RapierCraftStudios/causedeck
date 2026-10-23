@@ -1,7 +1,7 @@
 // Workspace erase (#302, part 2 of #31; docs/engineering/data-lifecycle.md). Runs as the
 // `deletion.erase` job once the 14-day cool-off has ended, in this order:
 //   1. revoke   mark `organization.deleted_at`, delete the workspace's sessions and its
-//               integration tokens (`workspace_integration`: email intake and ICS feed, the
+//               integration tokens (`workspace_integration`: the ICS feed, the
 //               workspace's API tokens), cancel pending invitations and end support sessions.
 //   2. dek      `destroyWorkspaceKey`: without the DEK no stored ciphertext can be decrypted.
 //   3. blobs    delete every object under the workspace's storage prefix (`ws/<id>/`).
@@ -65,6 +65,11 @@ export const PURGE_ORDER = [
   // docket) before the members their member columns name. Bench rosters (#384): alerts before
   // the rosters and proceedings they cite, entries before their roster, rosters before the
   // documents, members and court rows they cite.
+  // The automation engine (#47): activities before the proposals they cite; neither cites the graph.
+  'activity',
+  'proposal',
+  'automation_preference',
+  'automation_threshold',
   'appearance',
   'hearing',
   'task',
@@ -81,9 +86,25 @@ export const PURGE_ORDER = [
   'proceeding_link',
   'proceeding',
   'adapter_parse_run',
+  // Anchored order extractions (#46) cite their document; before it.
+  'extraction',
   'anchor',
   'document_page',
   'document',
+  // Calendar interop (#53): the import ledger cites captures, so it goes before them; feed events
+  // before their feed.
+  'ics_import_event',
+  'ics_feed_event',
+  'ics_feed',
+  // Bootstrap import (#546): plan and files before their batch, all before the captures they cite.
+  'import_plan',
+  'import_batch_file',
+  'import_batch',
+  // The importing member's identifiers (#550): cites no capture, only the user.
+  'advocate_profile',
+  // The capture inbox (#43): after the documents that cite a capture, before the matters it hints.
+  'capture',
+  'workspace_capture_channel',
   'matter_restriction',
   'matter',
   // Custom court reference rows (#344): halls and benches before their forum; the catalogue
@@ -104,8 +125,14 @@ export const PURGE_ORDER = [
   'subscription',
   'workspace_feature_flag',
   'workspace_integration',
+  // Email intake (#54): the ledger, then the allow-list and the members' addresses.
+  'intake_message',
+  'intake_allowlist',
+  'intake_address',
   'workspace_slug_history',
   'workspace_settings',
+  // AI gateway retry cache (#44): holds model output, unlike the append-only ai_call it points at.
+  'ai_call_result',
   'job_effect',
   'member',
 ] as const;

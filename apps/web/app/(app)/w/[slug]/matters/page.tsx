@@ -75,7 +75,13 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
   if (dev === 'denied' || !can(context.role, 'matter.read')) return <MattersPermissionDenied />;
 
   const state = parseMatterListState(query);
-  const loaded = await loadMatterList(context, toSearchMattersInput(state));
+  // The filter options do not depend on the list: load both at once.
+  const [loaded, options, t, locale] = await Promise.all([
+    loadMatterList(context, toSearchMattersInput(state)),
+    loadMatterFilterOptions(context),
+    getTranslations('matters'),
+    pageLocale(),
+  ]);
   if (loaded.kind === 'denied') return <MattersPermissionDenied />;
   if (loaded.kind === 'invalid' && state.cursor !== undefined) {
     // A cursor from another sort or filter set: back to the first page of this one.
@@ -83,9 +89,6 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
   }
   if (loaded.kind !== 'page') throw new Error('Matters could not be loaded');
 
-  const options = await loadMatterFilterOptions(context);
-  const t = await getTranslations('matters');
-  const locale = await pageLocale();
   const now = new Date();
   const rows = loaded.page.items.map((row) => toMatterRowView(row, { slug, locale, now }));
   const filtered = hasMatterFilters(state);

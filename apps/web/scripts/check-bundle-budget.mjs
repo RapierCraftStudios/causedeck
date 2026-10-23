@@ -26,6 +26,10 @@ export const BUDGET_BYTES = 180 * 1024;
 
 export const WORKSPACE_SHELL_BUDGET_BYTES = 40 * 1024;
 
+/** The PWA service worker (#50: "<= 60 KB gzip"), bundled to `public/sw.js` by next.config.ts. */
+export const SW_BUDGET_BYTES = 60 * 1024;
+export const SW_FILE = 'public/sw.js';
+
 /** The workspace route measured for the shell budget. */
 export const WORKSPACE_ROUTE_MANIFEST =
   'server/app/(app)/w/[slug]/today/page_client-reference-manifest.js';
@@ -68,6 +72,12 @@ export function initialChunks(buildManifest, clientReferenceManifest) {
   return [...new Set(files.map((file) => file.replace(/^\/?_next\//, '').replace(/^\//, '')))]
     .filter((file) => file.endsWith('.js'))
     .sort();
+}
+
+/** Gzip size of the service worker bundle against its budget. */
+export function swBudget(source, budget = SW_BUDGET_BYTES) {
+  const gzipBytes = gzipSync(source).length;
+  return { gzipBytes, budget, ok: gzipBytes <= budget };
 }
 
 /** Sum gzip sizes and compare with the budget. */
@@ -214,7 +224,14 @@ function main() {
   );
   console.log(`\nta/kn catalog strings in the home route's initial JS: ${leaks.length}`);
 
+  const sw = swBudget(readFileSync(path.join(appDir, SW_FILE)));
+  console.log(`\nService worker ${SW_FILE}: ${kb(sw.gzipBytes)} (budget ${kb(sw.budget)} gzip)`);
+
   let failed = false;
+  if (!sw.ok) {
+    console.error('The service worker bundle is over budget.');
+    failed = true;
+  }
   if (leaks.length > 0) {
     for (const leak of leaks.slice(0, 10)) console.error(`  ${leak.file}: "${leak.value}"`);
     console.error('Non-active locale messages are bundled into the en home route.');

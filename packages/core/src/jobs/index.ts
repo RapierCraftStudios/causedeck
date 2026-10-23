@@ -52,6 +52,20 @@ export {
   type RegistryMap,
 } from './registry.ts';
 export {
+  activityDigest,
+  activityDigestMember,
+  activityDigestMemberSchema,
+  activityDigestSchedule,
+  activityDigestSchema,
+  runActivityDigest,
+  runActivityDigestMember,
+  runActivityDigestSchedule,
+  type ActivityDigestMemberPayload,
+  type ActivityDigestPayload,
+  type ActivityDigestTarget,
+  type MemberDigestOutcome,
+} from './definitions/activity-digest.ts';
+export {
   billingProcessEvent,
   billingProcessEventSchema,
   runBillingProcessEvent,

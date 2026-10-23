@@ -4,9 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { mockMatchMedia, nextFrame, renderWithIntl, stubResizeObserver } from './helpers.tsx';
 
+const push = vi.hoisted(() => vi.fn());
+
 vi.mock('next/navigation', () => ({
   usePathname: () => '/w/demo/today',
-  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push, refresh: vi.fn() }),
 }));
 
 const { CaptureFab, CaptureProvider, useCapture } = await import('../capture-fab.tsx');
@@ -63,10 +65,19 @@ describe('capture button', () => {
     expect(sheet.getAttribute('data-side')).toBe('bottom');
     expect(actions(sheet)).toEqual(['Voice note', 'Photo or file', 'Paste text']);
     for (const action of sheet.querySelectorAll<HTMLElement>('[data-capture-action]')) {
-      expect(action.hasAttribute('disabled')).toBe(true);
+      // Voice note (#543) is live; the other two stay stubs.
+      expect(action.hasAttribute('disabled')).toBe(action.dataset['captureAction'] !== 'voice');
       expect(action.className).toMatch(/\bmin-h-11\b/);
     }
     expect(button.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('opens the voice recorder from the Voice note action', () => {
+    push.mockClear();
+    renderWithIntl(<CaptureFab />);
+    fireEvent.click(trigger());
+    fireEvent.click(screen.getByRole('button', { name: 'Voice note' }));
+    expect(push).toHaveBeenCalledWith('/w/demo/today?capture=voice');
   });
 
   it('opens from useCapture().openCapture() inside the provider', () => {

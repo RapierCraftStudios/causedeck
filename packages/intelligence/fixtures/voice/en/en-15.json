@@ -1,0 +1,23 @@
+{
+  "id": "en-15",
+  "language": "en",
+  "hearingDate": "2026-02-07",
+  "text": "In case 72598 of 2025 today. Arguments were heard and the matter stands adjourned. Next hearing on the 26th. The court directed the State to produce the original records. The court directed the respondent to file a counter affidavit after eight weeks.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-02-26",
+      "phrase": "on the 26th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records.",
+        "dueDate": null
+      },
+      {
+        "text": "The court directed the respondent to file a counter affidavit after eight weeks.",
+        "dueDate": "2026-04-04"
+      }
+    ],
+    "tasks": []
+  }
+}

@@ -28,6 +28,7 @@ const CORE_NEXT_DATE_CHOICE_TEST =
 const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-preview.test.ts';
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
+const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -45,6 +46,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   billing_event: DB_TABLES_TEST,
   audit_event: DB_TABLES_TEST,
   ai_call: DB_TABLES_TEST,
+  ai_call_result: DB_TABLES_TEST,
   notification: DB_TABLES_TEST,
   notification_pref: DB_TABLES_TEST,
   notification_setting: DB_TABLES_TEST,
@@ -62,6 +64,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
   workspace_integration: DB_TABLES_TEST,
+  // Email forward-in intake (#54 part 2).
+  intake_address: DB_TABLES_TEST,
+  intake_allowlist: DB_TABLES_TEST,
+  intake_message: DB_TABLES_TEST,
   // Global-or-workspace reference tables (#344): catalogue rows are covered by court-schema.test.ts.
   forum: DB_TABLES_TEST,
   court_hall: DB_TABLES_TEST,
@@ -93,6 +99,31 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   bench_roster: DB_TABLES_TEST,
   bench_roster_entry: DB_TABLES_TEST,
   bench_change_alert: DB_TABLES_TEST,
+  // Automation engine (#47).
+  proposal: DB_TABLES_TEST,
+  activity: DB_TABLES_TEST,
+  automation_preference: DB_TABLES_TEST,
+  automation_threshold: DB_TABLES_TEST,
+
+  // Capture inbox (#43).
+  capture: DB_TABLES_TEST,
+  workspace_capture_channel: DB_TABLES_TEST,
+
+  // Calendar interop (#53).
+  ics_feed: DB_TABLES_TEST,
+  ics_feed_event: DB_TABLES_TEST,
+  ics_import_event: DB_TABLES_TEST,
+
+  // Anchored order extraction (#46).
+  extraction: DB_TABLES_TEST,
+
+  // Bootstrap import (#57, #546).
+  import_batch: DB_TABLES_TEST,
+  import_batch_file: DB_TABLES_TEST,
+  import_plan: DB_TABLES_TEST,
+
+  // Advocate identifiers for the bootstrap import (#57, #550).
+  advocate_profile: DB_TABLES_TEST,
 };
 
 /**
@@ -131,6 +162,7 @@ const rosterSelfScoped = {
 const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
 const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
 const documentPreviewDenies = { test: CORE_DOCUMENT_PREVIEW_TEST, kind: 'denies' } as const;
+const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
@@ -210,6 +242,14 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   runNotificationDeliver: selfScoped,
   runNotificationDigest: selfScoped,
+  // End-of-day digest (#49): B's digest never counts, names or emails A's activity.
+  runActivityDigest: selfScoped,
+  runActivityDigestMember: selfScoped,
+  runActivityDigestSchedule: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids and timezones only through a definer function',
+  },
   runNotificationDigestSchedule: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -356,6 +396,28 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmNextDate: denies,
   // conflict card resolution (#390): A's listings from B, or ub claiming A, are NOT_FOUND
   chooseNextDateSource: nextDateChoiceDenies,
+  // Automation engine (#47): B cannot submit, resolve, undo, read or export A's proposals and activity.
+  submitProposals: automationDenies,
+  acceptProposal: automationDenies,
+  editAndAccept: automationDenies,
+  dismissProposal: automationDenies,
+  applyAutomatically: automationDenies,
+  expireProposals: automationDenies,
+  // Activity feed read model (#49): B reads, counts and digests only B's own activities.
+  listActivities: automationDenies,
+  getActivityDetail: automationDenies,
+  countByDay: automationDenies,
+  countDigestActivities: automationDenies,
+  exportActivities: automationDenies,
+  listProposalsForDigest: automationDenies,
+  getAskFirst: automationDenies,
+  setAskFirst: automationDenies,
+  confirmActivity: automationDenies,
+  previewUndo: automationDenies,
+  undoActivity: automationDenies,
+  undoCapture: automationDenies,
+  reassignCapture: automationDenies,
+  getInbox: automationDenies,
   getCanonicalNextDate: denies,
   // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
   getMatterTimeline: denies,
@@ -604,6 +666,31 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // automation: pure helpers, constants and error classes (#47)
+  decideLevel: 'pure (reads only the draft and the context it is given)',
+  needsYouReason: 'pure',
+  thresholdKey: 'pure',
+  idempotencyKey: 'pure (sha256 of its arguments)',
+  PROPOSAL_EXPIRY_DAYS: 'constant',
+  KindNotEnabled: 'error class',
+  SensitiveAiRefusedError: 'error class',
+  UndoExpiredError: 'error class',
+  UndoRefusedError: 'error class',
+  ACTIVITY_EXPORT_FIELDS: 'constant',
+  ACTIVITY_PAGE_SIZE: 'constant',
+  CLERK_ACTIVITY_KINDS: 'constant',
+  buildHandlerRegistry: 'pure (checks handler kinds; touches no data)',
+  FORBIDDEN_KIND_PATTERN: 'constant',
+  HANDLERS: 'constant (handler registry; handlers run only inside an engine call)',
+  HandlerRegistrationError: 'error class',
+  AUTOMATION_LEVELS: 'constant',
+  fromNumericLevel: 'pure',
+  isAutomationLevel: 'pure',
+  toNumericLevel: 'pure',
+  UNDO_WINDOW_DAYS: 'constant',
+  APPROVAL_MATRIX: 'constant (the approval matrix as data)',
+  THRESHOLD_CAP: 'constant',
+  THRESHOLD_STEP: 'constant',
   // workspaces: errors
   WorkspaceError: 'error class',
   InvitationError: 'error class',
@@ -773,6 +860,12 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   notificationDigest: 'job definition (handler is runNotificationDigest)',
   notificationDigestSchedule: 'job definition (handler is runNotificationDigestSchedule)',
   notificationDigestSchema: 'zod schema',
+  // jobs: end-of-day digest definitions and schemas (#49)
+  activityDigest: 'job definition (handler is runActivityDigest)',
+  activityDigestMember: 'job definition (handler is runActivityDigestMember)',
+  activityDigestSchedule: 'job definition (handler is runActivityDigestSchedule)',
+  activityDigestSchema: 'zod schema',
+  activityDigestMemberSchema: 'zod schema',
   DELIVERY_CHANNELS: 'constant',
   DIGEST_LOCAL_TIME: 'constant',
   DIGEST_ITEM_LIMIT: 'constant',
@@ -887,6 +980,9 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   setCourtHoursQuiet: notificationDenies,
   getDigest: notificationDenies,
   setDigest: notificationDenies,
+  // End-of-day digest preference (#49)
+  getEndOfDayPreference: notificationDenies,
+  setEndOfDayPreference: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */
@@ -902,6 +998,14 @@ export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   LIST_LIMIT_MAX: 'constant',
   DEFAULT_NOTIFICATION_SETTINGS: 'constant',
   COURT_HOURS: 'constant',
+  // End-of-day digest (#49): pure builders and schedule maths, no database access
+  buildEndOfDayDigest: 'pure (builds the digest payload from counts)',
+  DEFAULT_END_OF_DAY_TIME: 'constant',
+  END_OF_DAY_ZONE: 'constant',
+  endOfDaySlot: 'pure (time zone math)',
+  isDigestTimeOfDay: 'pure',
+  localDateOf: 'pure (time zone math)',
+  localDayBounds: 'pure (time zone math)',
   isQuietTime: 'pure',
   localMinutes: 'pure',
 };
@@ -929,6 +1033,11 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   memberRoleFor: runtimeEmpty,
   ownerGraceFor: runtimeEmpty,
+  resolveIntakeAddressFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: 'looks an inbound address up on the app db with no workspace scope (the sender is not a member); only an active address resolves, unknown and revoked ones are the same null',
+  },
   resolveSlugFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',
@@ -951,6 +1060,15 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   queryAuditFeed: runtimeDenies,
   verifyAuditRange: runtimeDenies,
   exportAuditFor: runtimeDenies,
+  // automation activity feed and undo (#49)
+  listActivitiesFor: runtimeDenies,
+  getActivityDetailFor: runtimeDenies,
+  countActivitiesByDayFor: runtimeDenies,
+  previewUndoFor: runtimeDenies,
+  undoActivityFor: runtimeDenies,
+  undoCaptureFor: runtimeDenies,
+  reassignCaptureFor: runtimeDenies,
+  exportActivitiesFor: runtimeDenies,
   recordAccessDeniedFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',
@@ -1022,6 +1140,8 @@ export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   IN_PROGRESS_STATUS: 'constant',
   uploadContext:
     'pure (binds the app db into a StorageCtx; the uploads route checks membership and authorize gates each storage call)',
+  captureContext:
+    'pure (binds the app db, env config and job producer into a CaptureCtx; capture routes check membership and authorize gates each capture call, covered by packages/core/src/capture/__tests__/cross-tenant.test.ts)',
 };
 
 /** The storage presign cross-tenant test (#21). */

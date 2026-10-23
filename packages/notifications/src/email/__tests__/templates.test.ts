@@ -34,6 +34,13 @@ const FIXTURES: { [K in TemplateName]: TemplateProps[K] } = {
     appUrl: APP,
     preferencesUrl: PREFS,
   },
+  'end-of-day-digest': {
+    l3Count: 3,
+    pendingL2Count: 2,
+    activityUrl: `${APP}/w/iyer/activity?day=2026-10-20`,
+    inboxUrl: `${APP}/w/iyer/inbox`,
+    preferencesUrl: PREFS,
+  },
   'billing-notice': {
     title: 'Payment received',
     body: 'Your subscription renewed.',
@@ -89,7 +96,8 @@ describe.each(TEMPLATE_NAMES)('template %s', (name) => {
     }
   });
 
-  it('matches the English snapshot', async () => {
+  // The end-of-day digest has its own preview test (digest/end-of-day.test.ts).
+  it.skipIf(name === 'end-of-day-digest')('matches the English snapshot', async () => {
     const email = await renderEmail(name, FIXTURES[name] as never, 'en');
     expect(email.subject).toMatchSnapshot('subject');
     expect(email.text).toMatchSnapshot('text');

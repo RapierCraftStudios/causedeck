@@ -273,6 +273,7 @@
         "loading": "Loading people",
         "add": "Add person",
         "edit": "Edit {name}",
+        "editShort": "Edit",
         "remove": "Remove {name} from this matter",
         "removeTitle": "Remove {name} from this matter?",
         "removeHint": "Their role here is removed. The person stays in your workspace.",

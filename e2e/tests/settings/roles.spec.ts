@@ -55,7 +55,7 @@ test.describe('settings roles', () => {
       await page.reload();
       await expect(inviteSwitch(page)).toHaveAttribute('aria-checked', 'false');
 
-      await page.goto(`/w/${SHELL_WORKSPACE}/activity`);
+      await page.goto(`/w/${SHELL_WORKSPACE}/activity?tab=security`);
       await expect(page.getByText('workspace.role_settings_updated').first()).toBeVisible();
     },
   );
@@ -104,8 +104,12 @@ test.describe('settings roles', () => {
     await page.goto(`/w/${SHELL_WORKSPACE}/settings/roles?__state=loading`);
     await expect(page.locator('main [data-pattern-state="loading"]')).toBeVisible();
     await page.goto(`/w/${SHELL_WORKSPACE}/settings/roles?__state=error`);
-    await expect(page.getByText('Could not load the role settings.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+    // Scoped to `main`: while the page streams, React keeps the resolved boundary in a hidden node
+    // outside `#main` until it swaps it in, so an unscoped text locator can match both (CI: two
+    // `alert-body` elements, one of them hidden) and a strict locator throws instead of waiting.
+    const main = page.locator('main');
+    await expect(main.getByText('Could not load the role settings.')).toBeVisible();
+    await expect(main.getByRole('button', { name: 'Try again' })).toBeVisible();
   });
 
   test('never scrolls sideways; the matrix scrolls in its own region', async ({ page, asUser }) => {

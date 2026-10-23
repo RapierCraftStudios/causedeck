@@ -278,6 +278,16 @@
           }
         },
         "required": ["received"]
+      },
+      "InboundEmailAck": {
+        "type": "object",
+        "properties": {
+          "received": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["received"]
       }
     },
     "parameters": {}
@@ -538,6 +548,57 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RazorpayWebhookAck"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inbound/email": {
+      "post": {
+        "operationId": "receiveInboundEmail",
+        "tags": ["Inbound"],
+        "summary": "Inbound email notifications (SNS-signed for SES, shared secret in dev)",
+        "security": [],
+        "x-public": true,
+        "responses": {
+          "200": {
+            "description": "Accepted (also for duplicates, unknown addresses and disabled channels)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundEmailAck"
                 }
               }
             }

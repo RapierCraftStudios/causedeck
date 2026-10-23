@@ -22,6 +22,7 @@ import { isObjectKey, type ObjectKey } from './keys.ts';
 import { ObjectTooLargeError } from './limits.ts';
 import {
   checkDownloadOptions,
+  checkUploadTtl,
   checkedKey,
   checkUpload,
   expiry,
@@ -29,7 +30,6 @@ import {
   listPrefix,
   ObjectNotFoundError,
   requireContentType,
-  SIGNED_URL_TTL_SECONDS,
   StorageError,
   type ObjectMeta,
   type ObjectStore,
@@ -268,6 +268,7 @@ export function createS3ObjectStore(options: S3ObjectStoreOptions): ObjectStore 
     async presignPut(input) {
       checkUpload(input.key, input.contentLength);
       requireContentType(input.contentType);
+      const ttl = checkUploadTtl(input.expiresInSeconds);
       const signingDate = now();
       const url = await call('presignPut', () =>
         getSignedUrl(
@@ -278,7 +279,7 @@ export function createS3ObjectStore(options: S3ObjectStoreOptions): ObjectStore 
             ContentType: input.contentType,
             ContentLength: input.contentLength,
           }),
-          { expiresIn: SIGNED_URL_TTL_SECONDS, signingDate, signableHeaders: SIGNED_HEADERS },
+          { expiresIn: ttl, signingDate, signableHeaders: SIGNED_HEADERS },
         ),
       );
       return {
@@ -288,7 +289,7 @@ export function createS3ObjectStore(options: S3ObjectStoreOptions): ObjectStore 
           'content-type': input.contentType,
           'content-length': String(input.contentLength),
         },
-        expiresAt: expiry(signingDate),
+        expiresAt: expiry(signingDate, ttl),
       };
     },
 

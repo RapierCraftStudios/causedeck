@@ -33,6 +33,8 @@ const ROUTES: Record<string, string> = {
   'GET /v1/billing/subscription': 'B gets 403 for A’s id and only its own subscription',
   'POST /v1/webhooks/razorpay':
     'signature-gated; workspace from the stored provider id only (razorpay-webhook.test.ts)',
+  'POST /v1/inbound/email':
+    'provider-verified; the workspace comes only from the resolved intake address (inbound-email.test.ts)',
 };
 
 const PROBE_PATHS = new Set(['/v1/xt-probe', '/v1/workspaces/:workspaceId/xt-probe']);

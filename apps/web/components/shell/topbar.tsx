@@ -2,15 +2,24 @@
 
 import { Kbd } from '@causedeck/ui/kbd';
 import { Search } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 
 import type { WorkspaceContext } from '../../lib/workspace-context.ts';
 import { Bell } from '../notifications/bell.tsx';
+import { OutboxIndicator } from '../pwa/outbox-indicator.tsx';
 
 import { Breadcrumbs } from './breadcrumbs.tsx';
 import { useCommandPalette } from './use-command-palette.ts';
 import { UserMenu } from './user-menu.tsx';
 import { WorkspaceSwitcher } from './workspace-switcher.tsx';
+
+// The floating overlays (#50 install banner and update toast, #52 camera sheet) load after first
+// paint behind one dynamic import, so the shell's initial JS stays put.
+const ShellOverlays = dynamic(
+  () => import('./overlays.tsx').then((m) => ({ default: m.ShellOverlays })),
+  { ssr: false },
+);
 
 export interface TopbarProps {
   context: WorkspaceContext;
@@ -53,6 +62,7 @@ export function Topbar({ context, onSearch }: TopbarProps) {
         <span className="hidden flex-1 truncate text-left text-sm md:inline">{t('search')}</span>
         <Kbd hotkey="mod+k" className="hidden md:inline-flex" />
       </button>
+      <OutboxIndicator />
       <Bell workspaceId={context.workspace.id} userId={context.user.id} />
       <UserMenu user={context.user} role={context.role} slug={context.workspace.slug} />
       {Palette ? (
@@ -64,6 +74,9 @@ export function Topbar({ context, onSearch }: TopbarProps) {
           role={context.role}
         />
       ) : null}
+      <div className="fixed inset-x-4 bottom-20 z-50 flex flex-col gap-2 md:inset-x-auto md:right-6 md:bottom-6 md:w-96">
+        <ShellOverlays viewerId={context.user.id} workspaceId={context.workspace.id} />
+      </div>
     </header>
   );
 }

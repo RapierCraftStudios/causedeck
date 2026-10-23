@@ -4,6 +4,11 @@ import type { SendOptions } from 'pg-boss';
 import type { z } from 'zod';
 
 import { accountDelete } from './definitions/account-delete.ts';
+import {
+  activityDigest,
+  activityDigestMember,
+  activityDigestSchedule,
+} from './definitions/activity-digest.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
@@ -11,6 +16,15 @@ import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
 import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { captureProcess } from './definitions/capture-process.ts';
+import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
+import { captureScan } from './definitions/capture-scan.ts';
+import { extractOrder } from './definitions/extraction-extract-order.ts';
+import { importBatch, importFile } from './definitions/import-batch.ts';
+import { voiceProcess } from './definitions/voice-process.ts';
+import { whatsappImport } from './definitions/whatsapp-import.ts';
+import { emailIntake } from './definitions/email-intake.ts';
+import { emailRawExpire } from './definitions/email-raw-expire.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
 import { deletionTick } from './definitions/deletion-tick.ts';
 import { exportBuild } from './definitions/export-build.ts';
@@ -136,6 +150,9 @@ export const registry = createRegistry([
   notificationDeliver,
   notificationDigestSchedule,
   notificationDigest,
+  activityDigestSchedule,
+  activityDigest,
+  activityDigestMember,
   usageRollup,
   systemAuditVerify,
   auditVerify,
@@ -147,6 +164,17 @@ export const registry = createRegistry([
   deletionErase,
   accountDelete,
   memoryErase,
+  captureScan,
+  captureProcess,
+  systemCaptureRetention,
+  captureRetention,
+  whatsappImport,
+  voiceProcess,
+  emailIntake,
+  emailRawExpire,
+  extractOrder,
+  importBatch,
+  importFile,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -161,6 +189,9 @@ export type JobMap = RegistryMap<
     typeof notificationDeliver,
     typeof notificationDigestSchedule,
     typeof notificationDigest,
+    typeof activityDigestSchedule,
+    typeof activityDigest,
+    typeof activityDigestMember,
     typeof usageRollup,
     typeof systemAuditVerify,
     typeof auditVerify,
@@ -172,6 +203,17 @@ export type JobMap = RegistryMap<
     typeof deletionErase,
     typeof accountDelete,
     typeof memoryErase,
+    typeof captureScan,
+    typeof captureProcess,
+    typeof systemCaptureRetention,
+    typeof captureRetention,
+    typeof whatsappImport,
+    typeof voiceProcess,
+    typeof emailIntake,
+    typeof emailRawExpire,
+    typeof extractOrder,
+    typeof importBatch,
+    typeof importFile,
   ]
 >;
 export type JobName = keyof JobMap;

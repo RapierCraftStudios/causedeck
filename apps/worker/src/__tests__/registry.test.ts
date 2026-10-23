@@ -126,6 +126,9 @@ describe('enqueue', () => {
       'notification.deliver',
       'system.notification.digest',
       'notification.digest',
+      'system.activity.digest',
+      'activity.digest',
+      'activity.digest.member',
       'system.usage.rollup',
       'system.audit.verify',
       'audit.verify',
@@ -137,6 +140,17 @@ describe('enqueue', () => {
       'deletion.erase',
       'account.delete',
       'memory.erase',
+      'capture.scan',
+      'capture.process',
+      'system.capture.retention',
+      'capture.retention',
+      'whatsapp.import',
+      'voice.process',
+      'email.intake',
+      'email.raw-expire',
+      'extraction.extract-order',
+      'import.batch',
+      'import.file',
     ]);
   });
 });

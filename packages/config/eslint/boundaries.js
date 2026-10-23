@@ -22,6 +22,7 @@ export const CORE_DEPENDENCIES = [
   'auth',
   'flags',
   'storage',
+  'capture',
   'ai',
   'adapters',
   'intelligence',

@@ -19,11 +19,14 @@ coverage/
 reports/
 playwright-report/
 test-results/
+test-results-perf/
 blob-report/
 .lighthouseci/
 e2e/.auth/
 storybook-static/
 *.tsbuildinfo
+# Bundled by apps/web/lib/pwa/build-sw.ts when the dev server or a build starts (#50).
+apps/web/public/sw.js
 
 # Lawyer-supplied court fixtures: never committed (#371, #119).
 fixtures-private/

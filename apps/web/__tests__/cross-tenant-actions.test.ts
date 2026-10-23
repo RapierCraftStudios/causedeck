@@ -95,6 +95,7 @@ const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts'
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
+const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
@@ -105,6 +106,9 @@ const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
+const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
+const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -140,8 +144,19 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateRoleSettingsAction: roles,
   updateWorkspacePrivacyAction: privacy,
   rotateIntegrationTokenAction: integrations,
+  createIntakeAddressAction: emailIntake,
+  rotateIntakeAddressAction: emailIntake,
+  revokeIntakeAddressAction: emailIntake,
+  addIntakeAllowlistEntryAction: emailIntake,
+  removeIntakeAllowlistEntryAction: emailIntake,
+  enableEmailChannelAction: emailIntake,
   loadMoreAuditAction: activity,
   verifyAuditEventAction: activity,
+  loadMoreActivitiesAction: activity,
+  previewActivityUndoAction: activity,
+  undoFeedActivityAction: activity,
+  undoCaptureAction: activity,
+  reassignFeedCaptureAction: activity,
   grantSupportSessionAction: support,
   denySupportSessionAction: support,
   revokeSupportSessionAction: support,
@@ -173,6 +188,33 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoSplitAction: proceedingsTab,
   upsertPersonAction: matterPeople,
   setRoleEdgeAction: matterPeople,
+  enableChannelAction: inbox,
+  discardCaptureAction: inbox,
+  pinCaptureAction: inbox,
+  deleteRecordingAction: inbox,
+  startImportBatchAction: importer,
+  addImportFilesAction: importer,
+  importProgressAction: importer,
+  buildImportPlanAction: importer,
+  getImportPlanAction: importer,
+  saveImportPlanEditsAction: importer,
+  applyImportPlanAction: importer,
+  undoImportBatchAction: importer,
+  createCalendarFeedAction: calendar,
+  rotateCalendarFeedAction: calendar,
+  revokeCalendarFeedAction: calendar,
+  setCalendarFeedPartiesAction: calendar,
+  confirmCalendarEventAction: calendar,
+  skipCalendarEventAction: calendar,
+  noteCalendarEventAction: calendar,
+  acceptProposalAction: inbox,
+  editAcceptProposalAction: inbox,
+  dismissProposalAction: inbox,
+  undoActivityAction: inbox,
+  reassignCaptureAction: inbox,
+  keepAsAttachmentAction: inbox,
+  typeKeyLineAction: inbox,
+  markSentAction: inbox,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -245,6 +287,13 @@ function snapshotA() {
       })
       .from(schema.workspaceIntegration)
       .orderBy(schema.workspaceIntegration.kind),
+    // A's intake addresses, allow-list and messages (#54).
+    intakeAddresses: await tx.select().from(schema.intakeAddress).orderBy(schema.intakeAddress.id),
+    intakeAllowlist: await tx
+      .select()
+      .from(schema.intakeAllowlist)
+      .orderBy(schema.intakeAllowlist.id),
+    intakeMessages: await tx.select().from(schema.intakeMessage).orderBy(schema.intakeMessage.id),
     // The catalogue and A's own forums (#402).
     forums: await tx
       .select({
@@ -406,6 +455,19 @@ function inputs(workspaceId: string): Record<string, unknown> {
       retentionAudioDays: 7,
     },
     rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
+    // Email intake (#54): ub, owner of B, may not create, rotate or revoke an address, edit the
+    // allow-list or enable the email channel on A.
+    createIntakeAddressAction: { workspaceId },
+    rotateIntakeAddressAction: { workspaceId },
+    revokeIntakeAddressAction: { workspaceId, addressId: t.a.rows.intake_address?.id },
+    addIntakeAllowlistEntryAction: {
+      workspaceId,
+      pattern: 'probe.court.test',
+      kind: 'court',
+      label: 'Cross-tenant probe',
+    },
+    removeIntakeAllowlistEntryAction: { workspaceId, entryId: t.a.rows.intake_allowlist?.id },
+    enableEmailChannelAction: { workspaceId },
     // A page position past every row, so a leak would return A's real audit event.
     loadMoreAuditAction: {
       workspaceId,
@@ -418,6 +480,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
       eventId: aAuditEvent.id,
       createdAt: aAuditEvent.createdAt,
     },
+    // Automation feed (#49): ub, owner of B, may not page, preview, undo or reassign A's activity.
+    loadMoreActivitiesAction: { workspaceId },
+    previewActivityUndoAction: { workspaceId, activityId: randomUUID() },
+    undoFeedActivityAction: { workspaceId, activityId: randomUUID() },
+    undoCaptureAction: { workspaceId, captureId: randomUUID() },
+    reassignFeedCaptureAction: { workspaceId, captureId: randomUUID(), matterId: aOtherMatterId },
     // A's pending support request (#313): ub, owner of B, may not grant, deny or end it.
     grantSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     denySupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
@@ -454,6 +522,69 @@ function inputs(workspaceId: string): Record<string, unknown> {
       workspaceId,
       alertId: t.a.rows.bench_change_alert?.alertId,
     },
+    // Capture inbox (#43): ub, owner of B, may not enable a channel on A, nor discard or pin A's capture.
+    enableChannelAction: { workspaceId, channel: 'email', disclosureVersion: '2026-10-v1' },
+    discardCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id },
+    pinCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id, pinned: true },
+    deleteRecordingAction: { workspaceId, captureId: t.a.rows.capture?.id },
+    // Bootstrap import (#550): ub may not start a batch in A, nor add files to, build, apply, undo or read A's batch.
+    startImportBatchAction: { workspaceId },
+    addImportFilesAction: {
+      workspaceId,
+      batchId: t.a.rows.import_batch?.id,
+      captureIds: [t.a.rows.capture?.id],
+    },
+    importProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    getImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    saveImportPlanEditsAction: {
+      workspaceId,
+      batchId: t.a.rows.import_batch?.id,
+      groups: [{ tempId: 'm_a', title: 'Hijacked', proceedingKeys: ['k1'] }],
+    },
+    buildImportPlanAction: {
+      workspaceId,
+      batchId: t.a.rows.import_batch?.id,
+      identifiers: { enrolmentNumbers: ['MS/9/1900'], aliases: [] },
+      confirmIdentifiers: true,
+    },
+    applyImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    undoImportBatchAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    // Calendar (#53): ub, owner of B, may not touch A's feed or review A's imported events.
+    createCalendarFeedAction: {
+      workspaceId,
+      scope: 'mine',
+      includeParties: false,
+      disclosureVersion: '2026-10-v1',
+    },
+    rotateCalendarFeedAction: { workspaceId },
+    revokeCalendarFeedAction: { workspaceId },
+    setCalendarFeedPartiesAction: { workspaceId, includeParties: true },
+    confirmCalendarEventAction: { workspaceId, captureId: t.a.rows.capture?.id, uid: 'xt-a' },
+    skipCalendarEventAction: { workspaceId, captureId: t.a.rows.capture?.id, uid: 'xt-a' },
+    noteCalendarEventAction: {
+      workspaceId,
+      captureId: t.a.rows.capture?.id,
+      uid: 'xt-a',
+      matterId: t.a.rows.matter?.matterId,
+    },
+    // Capture inbox decisions (#48): ub may not accept, edit, dismiss or undo A's proposals and
+    // activities, move or keep or annotate A's captures, nor mark A's draft as sent.
+    acceptProposalAction: { workspaceId, proposalId: t.a.rows.proposal?.proposalId },
+    editAcceptProposalAction: {
+      workspaceId,
+      proposalId: t.a.rows.proposal?.proposalId,
+      payload: { title: 'Cross-tenant probe' },
+    },
+    dismissProposalAction: { workspaceId, proposalId: t.a.rows.proposal?.proposalId },
+    undoActivityAction: { workspaceId, activityId: t.a.rows.activity?.activityId },
+    reassignCaptureAction: {
+      workspaceId,
+      captureId: t.a.rows.capture?.id,
+      matterId: t.a.rows.matter?.matterId,
+    },
+    keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
+    typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
+    markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
@@ -765,6 +896,51 @@ describe('cross-tenant server actions', () => {
     expect(await snapshotA()).toEqual(before);
   });
 
+  it('the email intake actions under B’s own workspace change only B (#54)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    // B's owner already holds the seeded active address: retire it, then create a fresh one.
+    expect(
+      await action('revokeIntakeAddressAction')({
+        workspaceId: t.b.id,
+        addressId: t.b.rows.intake_address?.id,
+      }),
+    ).toMatchObject({ ok: true });
+    const created = (await action('createIntakeAddressAction')(own.createIntakeAddressAction)) as {
+      ok: boolean;
+      data: { id: string; address: string };
+    };
+    expect(created.ok).toBe(true);
+    expect(created.data.address).toMatch(/^u-[a-z2-7]{10}@localhost$/);
+    const rotated = (await action('rotateIntakeAddressAction')(own.rotateIntakeAddressAction)) as {
+      ok: boolean;
+      data: { id: string; address: string };
+    };
+    expect(rotated.ok).toBe(true);
+    expect(rotated.data.address).not.toBe(created.data.address);
+    const entry = (await action('addIntakeAllowlistEntryAction')(
+      own.addIntakeAllowlistEntryAction,
+    )) as { ok: boolean; data: { id: string } };
+    expect(entry.ok).toBe(true);
+    expect(
+      await action('removeIntakeAllowlistEntryAction')({
+        workspaceId: t.b.id,
+        entryId: entry.data.id,
+      }),
+    ).toMatchObject({ ok: true });
+    expect(
+      await action('revokeIntakeAddressAction')({
+        workspaceId: t.b.id,
+        addressId: rotated.data.id,
+      }),
+    ).toMatchObject({ ok: true });
+    expect(await action('enableEmailChannelAction')(own.enableEmailChannelAction)).toMatchObject({
+      ok: true,
+      data: { enabled: true },
+    });
+    expect(await snapshotA()).toEqual(before);
+  });
+
   it('createWorkspaceForumAction under B’s own workspace adds the forum to B only (#402)', async () => {
     const before = await snapshotA();
     const code = `xt.probe-${randomUUID().slice(0, 8)}`;
@@ -903,6 +1079,72 @@ describe('cross-tenant server actions', () => {
     }
     expect(await snapshotA()).toEqual(before);
     expect(await aAlerts()).toEqual(alertsBefore);
+  });
+
+  it('capture actions under B’s own workspace find none of A’s captures and change only B (#43)', async () => {
+    const before = await snapshotA();
+    const aCaptures = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.capture).orderBy(schema.capture.id),
+      );
+    const capturesBefore = await aCaptures();
+    expect(capturesBefore.length).toBeGreaterThan(0);
+    const own = inputs(t.b.id);
+    for (const name of [
+      'discardCaptureAction',
+      'pinCaptureAction',
+      'deleteRecordingAction',
+    ] as const) {
+      // A's capture id under B's workspace: not found, whatever B's role.
+      expect(await action(name)(own[name]), name).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    expect(await action('enableChannelAction')(own.enableChannelAction)).toMatchObject({
+      ok: true,
+      data: { channel: 'email', enabled: true },
+    });
+    const channelsOfA = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+      tx.select().from(schema.workspaceCaptureChannel),
+    );
+    // Only A's own seeded row; B's enable never reached A.
+    expect(channelsOfA).toHaveLength(1);
+    expect(await snapshotA()).toEqual(before);
+    expect(await aCaptures()).toEqual(capturesBefore);
+  });
+
+  it('calendar actions under B’s own workspace create B’s feed only and find none of A’s events (#53)', async () => {
+    const feedsOfA = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.icsFeed).orderBy(schema.icsFeed.id),
+      );
+    const before = await snapshotA();
+    const feedsBefore = await feedsOfA();
+    const own = inputs(t.b.id);
+    const created = (await action('createCalendarFeedAction')(own.createCalendarFeedAction)) as {
+      ok: boolean;
+      data: { url: string };
+    };
+    expect(created.ok).toBe(true);
+    expect(created.data.url).toMatch(/^http:\/\/localhost:3000\/api\/ics\/[\w-]{43}$/);
+    for (const name of [
+      'confirmCalendarEventAction',
+      'skipCalendarEventAction',
+      'noteCalendarEventAction',
+    ] as const) {
+      // A's capture and event under B's workspace: not found, whatever B's role.
+      expect(await action(name)(own[name]), name).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    const feedsOfB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx.select().from(schema.icsFeed),
+    );
+    expect(feedsOfB.filter((feed) => feed.revokedAt === null)).toHaveLength(1);
+    expect(await feedsOfA()).toEqual(feedsBefore);
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('acceptInvitationAction with A’s token does not let ub into A', async () => {

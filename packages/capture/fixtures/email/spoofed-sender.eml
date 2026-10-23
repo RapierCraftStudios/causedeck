@@ -1,0 +1,11 @@
+Return-Path: <registry@example.test>
+From: Registry <registry@example.test>
+To: intake-fictional@example.test
+Subject: Papers returned for rectification
+Date: Thu, 15 Oct 2026 10:00:00 +0530
+Message-ID: <spoof-1@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Authentication-Results: mx.example.test; spf=fail; dkim=none; dmarc=fail
+
+Re-present within 7 days. Click to pay the fee. (FICTIONAL - SYNTHETIC FIXTURE)

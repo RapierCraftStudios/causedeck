@@ -40,6 +40,17 @@
         "empty": "Nothing new since your last digest.",
         "cta": "Open CauseDeck"
       },
+      "endOfDayDigest": {
+        "subject": "What CauseDeck did today",
+        "preview": "A count of what CauseDeck did and what waits for you",
+        "heading": "What CauseDeck did today",
+        "applied": "{count, plural, =0 {CauseDeck applied nothing on its own today.} one {CauseDeck applied # change on its own today. You can undo it for 7 days.} other {CauseDeck applied # changes on its own today. You can undo them for 7 days.}}",
+        "pending": "{count, plural, =0 {Nothing is waiting for your confirmation.} one {# proposal is waiting for your confirmation.} other {# proposals are waiting for your confirmation.}}",
+        "matters": "Matters touched today",
+        "activityCta": "Review today's activity",
+        "inboxCta": "Open your inbox",
+        "note": "This summary only opens the app. It never changes anything and it is not sent to anyone else."
+      },
       "billingNotice": {
         "subject": "Billing: {title}",
         "preview": "A billing update for your workspace",
@@ -124,6 +135,10 @@
         "digestDaily": {
           "label": "Daily digest",
           "description": "One email at 6:30 pm with the day's updates."
+        },
+        "digestEndOfDay": {
+          "label": "What CauseDeck did today",
+          "description": "One summary each evening: what CauseDeck applied and what waits for you."
         },
         "systemNotice": {
           "label": "Service notices",

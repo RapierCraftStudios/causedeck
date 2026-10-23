@@ -11,12 +11,22 @@ import type { Database, Transaction } from '../client.ts';
 import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
 import { adapterParseRun } from '../schema/adapters.ts';
-import { aiCall } from '../schema/audit.ts';
+import { aiCall, aiCallResult } from '../schema/audit.ts';
+import {
+  activity,
+  automationPreference,
+  automationThreshold,
+  proposal,
+} from '../schema/automation.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
+import { extraction } from '../schema/extraction.ts';
+import { advocateProfile } from '../schema/advocate-profile.ts';
+import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
+import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { matter } from '../schema/matter-graph.ts';
@@ -34,7 +44,9 @@ import {
 } from '../schema/usage.ts';
 import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
 import { supportSession } from '../schema/staff.ts';
+import { capture, workspaceCaptureChannel } from '../schema/capture.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
+import { intakeAddress, intakeAllowlist, intakeMessage } from '../schema/email-intake.ts';
 import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
@@ -56,6 +68,19 @@ export type SeedRow = Record<string, string>;
 
 /** Writes one row into its table for `ctx.workspaceId`, on a transaction scoped to it. */
 export type TenantSeeder = (tx: Transaction, ctx: SeedContext) => Promise<SeedRow>;
+
+/** A pending import batch (#546), the parent of `import_batch_file` and `import_plan` seeds. */
+async function seedImportBatch(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+): Promise<string> {
+  const rows = await tx
+    .insert(importBatch)
+    .values({ workspaceId, createdBy: ownerId })
+    .returning({ id: importBatch.id });
+  return first(rows, 'import_batch').id;
+}
 
 /** A draft SaaS invoice for the workspace (the seed for `saas_invoice` and `saas_invoice_line`). */
 async function seedDraftInvoice(tx: Transaction, workspaceId: string): Promise<string> {
@@ -328,6 +353,19 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: aiCall.id });
     return { aiCallId: first(rows, 'ai_call').id };
   },
+  ai_call_result: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(aiCallResult)
+      .values({
+        workspaceId,
+        idempotencyKey: `xt-${randomUUID()}`,
+        aiCallId: randomUUID(),
+        output: {},
+        expiresAt: new Date(Date.now() + 86_400_000),
+      })
+      .returning({ id: aiCallResult.id });
+    return { aiCallResultId: first(rows, 'ai_call_result').id };
+  },
   notification: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx
       .insert(notification)
@@ -428,6 +466,48 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
         .values({ workspaceId, requestedByStaff: ownerId, reason: 'Seed support request' })
         .returning({ id: supportSession.id }),
       'support_session',
+    );
+    return { id: row.id };
+  },
+  intake_address: async (tx, { workspaceId, ownerId }) => {
+    // `u-` + 10 base32 characters (a-z, 2-7), as the core service generates them.
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+    const localPart = `u-${[...randomBytes(10)].map((byte) => alphabet[byte % 32]).join('')}`;
+    const row = first(
+      await tx
+        .insert(intakeAddress)
+        .values({ workspaceId, userId: ownerId, localPart, domain: 'intake.test' })
+        .returning({ id: intakeAddress.id }),
+      'intake_address',
+    );
+    return { id: row.id };
+  },
+  intake_allowlist: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(intakeAllowlist)
+        .values({
+          workspaceId,
+          pattern: `xt-${randomUUID().slice(0, 8)}.court.test`,
+          kind: 'court',
+          addedBy: ownerId,
+        })
+        .returning({ id: intakeAllowlist.id }),
+      'intake_allowlist',
+    );
+    return { id: row.id };
+  },
+  intake_message: async (tx, { workspaceId }) => {
+    const row = first(
+      await tx
+        .insert(intakeMessage)
+        .values({
+          workspaceId,
+          messageId: `<xt-${randomUUID()}@mail.test>`,
+          rawExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        })
+        .returning({ id: intakeMessage.id }),
+      'intake_message',
     );
     return { id: row.id };
   },
@@ -546,6 +626,197 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, proceedingId, rosterId, newBenchId: benchId, reason: 'hall' })
       .returning({ id: benchChangeAlert.id });
     return { proceedingId, rosterId, alertId: first(rows, 'bench_change_alert').id };
+  },
+  proposal: async (tx, { workspaceId, tag }) => {
+    const rows = await tx
+      .insert(proposal)
+      .values({
+        workspaceId,
+        kind: 'task',
+        level: 'L2',
+        payload: { title: `Seed ${tag}` },
+        idempotencyKey: `seed-${tag}-${randomUUID()}`,
+      })
+      .returning({ id: proposal.id });
+    return { proposalId: first(rows, 'proposal').id };
+  },
+  activity: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(activity)
+      .values({
+        workspaceId,
+        kind: 'task',
+        level: 'L3',
+        actor: 'user',
+        actorUserId: ownerId,
+        summary: `Seed activity ${tag}`,
+        undoExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      })
+      .returning({ id: activity.id });
+    return { activityId: first(rows, 'activity').id };
+  },
+  automation_preference: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(automationPreference)
+      .values({ workspaceId, userId: ownerId, kind: 'task', askFirst: true })
+      .returning({ id: automationPreference.id });
+    return { preferenceId: first(rows, 'automation_preference').id, userId: ownerId };
+  },
+  automation_threshold: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(automationThreshold)
+      .values({ workspaceId, kind: 'task', patternKey: 'undated', threshold: '0.820' })
+      .returning({ id: automationThreshold.id });
+    return { thresholdId: first(rows, 'automation_threshold').id };
+  },
+  capture: async (tx, { workspaceId, ownerId, tag }) => {
+    // A received upload row; the raw object never exists in a SQL-only suite.
+    const rows = await tx
+      .insert(capture)
+      .values({
+        workspaceId,
+        channel: 'upload',
+        mime: 'application/pdf',
+        sizeBytes: 8,
+        originalFilename: `xt-${tag}.pdf`,
+        createdBy: ownerId,
+      })
+      .returning({ id: capture.id });
+    return { id: first(rows, 'capture').id };
+  },
+  workspace_capture_channel: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(workspaceCaptureChannel).values({
+      workspaceId,
+      channel: 'email',
+      enabled: true,
+      enabledBy: ownerId,
+      enabledAt: new Date(),
+      disclosureVersion: 'v1',
+    });
+    return { workspaceId };
+  },
+  ics_feed: async (tx, { workspaceId, ownerId }) => {
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const row = first(
+      await tx
+        .insert(icsFeed)
+        // Revoked, so the owner can still create an active feed in the action suites.
+        .values({
+          workspaceId,
+          userId: ownerId,
+          tokenHash,
+          disclosureVersion: 'v1',
+          revokedAt: new Date(),
+        })
+        .returning({ id: icsFeed.id }),
+      'ics_feed',
+    );
+    return { id: row.id };
+  },
+  ics_feed_event: async (tx, { workspaceId, ownerId, tag }) => {
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const feed = first(
+      await tx
+        .insert(icsFeed)
+        .values({
+          workspaceId,
+          userId: ownerId,
+          tokenHash,
+          disclosureVersion: 'v1',
+          revokedAt: new Date(),
+        })
+        .returning({ id: icsFeed.id }),
+      'ics_feed',
+    );
+    await tx.insert(icsFeedEvent).values({
+      workspaceId,
+      feedId: feed.id,
+      uid: `listing-${tag}@causedeck`,
+      contentHash: 'h',
+      changedAt: new Date(),
+      snapshot: { date: '2026-12-01', summary: 'Hearing', location: null, description: null },
+    });
+    return { feedId: feed.id };
+  },
+  ics_import_event: async (tx, { workspaceId, ownerId, tag }) => {
+    const cap = first(
+      await tx
+        .insert(capture)
+        .values({
+          workspaceId,
+          channel: 'ics',
+          mime: 'text/calendar',
+          sizeBytes: 8,
+          originalFilename: `xt-${tag}.ics`,
+          createdBy: ownerId,
+        })
+        .returning({ id: capture.id }),
+      'capture',
+    );
+    const row = first(
+      await tx
+        .insert(icsImportEvent)
+        .values({
+          workspaceId,
+          uid: `xt-${tag}`,
+          captureId: cap.id,
+          status: 'unmatched',
+          summary: 'Hearing',
+          eventDate: '2026-12-01',
+          score: '0.800',
+        })
+        .returning({ id: icsImportEvent.id }),
+      'ics_import_event',
+    );
+    return { id: row.id };
+  },
+  extraction: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(extraction)
+      .values({ workspaceId, documentId, pipelineVersion: 'xt', result: { seeded: true } })
+      .returning({ id: extraction.id });
+    return { documentId, extractionId: first(rows, 'extraction').id };
+  },
+  import_batch: async (tx, { workspaceId, ownerId }) => ({
+    id: await seedImportBatch(tx, workspaceId, ownerId),
+  }),
+  import_batch_file: async (tx, { workspaceId, ownerId, tag }) => {
+    const batchId = await seedImportBatch(tx, workspaceId, ownerId);
+    const captures = await tx
+      .insert(capture)
+      .values({
+        workspaceId,
+        channel: 'upload',
+        mime: 'application/pdf',
+        sizeBytes: 8,
+        originalFilename: `xt-${tag}.pdf`,
+        createdBy: ownerId,
+      })
+      .returning({ id: capture.id });
+    const captureId = first(captures, 'capture').id;
+    const rows = await tx
+      .insert(importBatchFile)
+      .values({ workspaceId, batchId, captureId })
+      .returning({ id: importBatchFile.id });
+    return { batchId, captureId, id: first(rows, 'import_batch_file').id };
+  },
+  advocate_profile: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(advocateProfile)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        enrolmentNumbers: ['MS/1/1900'],
+        aliases: ['XT, ADV.'],
+      })
+      .returning({ id: advocateProfile.id });
+    return { id: first(rows, 'advocate_profile').id };
+  },
+  import_plan: async (tx, { workspaceId, ownerId }) => {
+    const batchId = await seedImportBatch(tx, workspaceId, ownerId);
+    await tx.insert(importPlan).values({ workspaceId, batchId, plan: { rows: [] } });
+    return { batchId };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

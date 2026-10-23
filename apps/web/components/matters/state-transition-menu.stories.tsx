@@ -49,8 +49,8 @@ export const NumberRequired: Story = {
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Change state of WP 1234/2025' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Move to Numbered' }));
-    await expect(await screen.findByLabelText('Number')).toBeVisible();
-    await expect(screen.getByLabelText('Year')).toBeVisible();
+    await expect(await screen.findByLabelText(/^Number/)).toBeVisible();
+    await expect(screen.getByLabelText(/^Year/)).toBeVisible();
   },
 };
 

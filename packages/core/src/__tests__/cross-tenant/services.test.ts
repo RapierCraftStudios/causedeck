@@ -391,7 +391,7 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
   return row.email;
 }
 
-/** A's own case-status watch (the fixture seeds none), added through the service as A's owner. */
+/** A's own case-status watch (on top of any the fixture seeds), added through the service as A's owner. */
 async function addAWatch(f: Fixture) {
   await f.tx
     .insert(schema.source)
@@ -460,7 +460,7 @@ const CASES: Record<string, Case> = {
       ),
     );
     const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
-    expect(aWatches).toEqual([]);
+    expect(aWatches.some((w) => w.advocateUserId === f.ub)).toBe(false);
   },
   listCaseWatches: async (f) => {
     // ub lists nothing of A's: A's own watch is not in B's list.
@@ -473,6 +473,7 @@ const CASES: Record<string, Case> = {
   },
   removeCaseWatch: async (f) => {
     const aWatch = await addAWatch(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
     await expectDenied(
       core.removeCaseWatch(
         { db: f.tx },
@@ -481,7 +482,8 @@ const CASES: Record<string, Case> = {
       ),
     );
     const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
-    expect(after.map((w) => w.id)).toEqual([aWatch.id]);
+    expect(after.map((w) => w.id).sort()).toEqual(before.map((w) => w.id).sort());
+    expect(after.some((w) => w.id === aWatch.id)).toBe(true);
   },
   record: async (f) => {
     const before = await auditIds(f, f.a.id);

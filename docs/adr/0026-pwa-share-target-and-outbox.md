@@ -34,7 +34,7 @@ Proposed
 - The uploader runs presign, PUT and complete against `/api/captures` with the sha256 as the idempotency key, backs off with jitter up to 8 attempts, and deletes the blob when `complete` succeeds. A 200 MB cap (configurable) warns at 80% and blocks at 100%.
 - Sync runs on Background Sync where available and on `online`, app open and `visibilitychange`. Data saver mode waits for an explicit "Upload now".
 - Updates install in the background. During court-day windows (07:00 to 10:30 and 18:00 to 23:00 IST) the update never forces a reload and "Update now" is not offered.
-- The manifest asks for no permissions; the Permissions-Policy still denies camera, microphone and geolocation.
+- The manifest asks for no permissions; the Permissions-Policy still denies camera and geolocation. It allows the microphone for the app's own origin only (`microphone=(self)`), because the voice recorder (#543) asks for it when the person opens it; nothing records in the background.
 
 ## Consequences
 

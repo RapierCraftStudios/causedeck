@@ -3549,6 +3549,70 @@ export type Messages = {
       copy: string;
     };
   };
+  voice: {
+    command: string;
+    title: string;
+    description: string;
+    privacy: string;
+    close: string;
+    cancel: string;
+    onboarding: {
+      title: string;
+      why: string;
+      india: string;
+      retention: string;
+      allow: string;
+    };
+    record: {
+      hold: string;
+      tap: string;
+      stop: string;
+      start: string;
+      hint: string;
+      slideCancel: string;
+      waveform: string;
+      elapsed: string;
+      stopped: string;
+      cancelled: string;
+      limit: string;
+    };
+    review: {
+      title: string;
+      play: string;
+      pause: string;
+      audio: string;
+      again: string;
+      save: string;
+      matter: string;
+      matterClear: string;
+      matterSearch: string;
+      matterSearchPlaceholder: string;
+      matterNone: string;
+      matterPicked: string;
+      dateHint: string;
+      dateHintNote: string;
+      note: string;
+      notePlaceholder: string;
+    };
+    saved: {
+      online: string;
+      offline: string;
+    };
+    denied: {
+      title: string;
+      steps: string;
+      body: string;
+    };
+    unavailable: {
+      title: string;
+      body: string;
+    };
+    errors: {
+      record: string;
+      save: string;
+      full: string;
+    };
+  };
   error: {
     title: string;
     description: string;

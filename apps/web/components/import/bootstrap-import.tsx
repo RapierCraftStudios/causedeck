@@ -339,7 +339,11 @@ export function BootstrapImport({
           retrying={busy}
           onRetryFailed={() => void retryFailedFiles()}
           onReview={
-            onPlanReady === undefined || batchId === null ? undefined : () => onPlanReady(batchId)
+            onPlanReady === undefined || batchId === null
+              ? undefined
+              : () => {
+                  onPlanReady(batchId);
+                }
           }
         />
       ) : null}

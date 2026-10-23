@@ -452,6 +452,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setSensitive: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
+  // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
+  staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -682,6 +684,15 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // business dashboard (#519): pure maths and rendering over aggregates
+  parseBusinessSnapshot: 'pure',
+  buildBusinessReport: 'pure',
+  businessConfigFromEnv: 'pure',
+  evaluateCostThresholds: 'pure',
+  renderBusinessDigest: 'pure',
+  renderCostAlert: 'pure',
+  readBusinessSnapshot:
+    'system read of app_business_snapshot (job use, no staff user): plan ids and counts, sums and dollar totals only, never a workspace id, email or content',
   // source registry (#478): a global table of external-source policy, no tenant rows to leak
   SOURCE_KINDS: 'constant',
   SOURCE_ACCESS_MODES: 'constant',

@@ -17,7 +17,7 @@ import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { staffUser } from '../schema/staff.ts';
 import { budgetOverride } from '../schema/usage.ts';
 import { inWorkspace, testDatabaseUrls, withTestDb } from '../testing/index.ts';
-import { seedTwoTenants } from '../testing/two-tenants.ts';
+import { seedTwoTenants, TWO_TENANTS_PLAN_ID } from '../testing/two-tenants.ts';
 import { sqlState } from './rls/fixtures.ts';
 
 const WORKSPACE_COLUMNS = [
@@ -51,6 +51,7 @@ const FUNCTIONS = [
   'app_staff_audit_events(timestamp with time zone,uuid,integer)',
   'app_staff_workspace_usage(uuid)',
   'app_staff_budget_overrides(uuid,integer)',
+  'app_staff_business_snapshot(timestamp with time zone,timestamp with time zone)',
 ];
 const COUNTER_COLUMNS = ['key', 'period_start', 'value'];
 const OVERRIDE_COLUMNS = [
@@ -108,6 +109,7 @@ describe('staff console functions (0033)', () => {
         sql`select * from app_staff_audit_events(null, null, 10)`,
         sql`select * from app_staff_workspace_usage(${t.a.id}::uuid)`,
         sql`select * from app_staff_budget_overrides(${t.a.id}::uuid, 10)`,
+        sql`select app_staff_business_snapshot(now(), now())`,
       ];
       for (const call of calls) {
         for (const userId of [t.ua, disabledStaffId]) {
@@ -359,6 +361,76 @@ describe('staff workspace usage functions (0035, #224)', () => {
           .insert(budgetOverride)
           .values({ ...base, expiredAt: now, expiredBy: t.ua, expireReason: 'pilot ended' }),
       );
+    });
+  });
+});
+
+const PLAN_FIELDS = [
+  'aiSpendPaise',
+  'captchaDollars',
+  'churned30d',
+  'dau',
+  'fetchDollars',
+  'mau',
+  'mrrPaise',
+  'name',
+  'new30d',
+  'planId',
+  'pricePaise',
+  'seats',
+  'subscribers',
+  'wau',
+];
+
+interface Snapshot {
+  plans: Record<string, unknown>[];
+  shared: Record<string, unknown>;
+}
+
+describe('staff business snapshot functions (0070, #519)', () => {
+  it('app_business_snapshot is callable by the app role only, not PUBLIC or the clerk role', async () => {
+    await withTestDb(async (tx) => {
+      const [grant] = await tx.execute<{ pub: boolean; app: boolean; clerk: boolean }>(
+        sql`select has_function_privilege('public', p.oid, 'execute') as pub,
+                   has_function_privilege('causedeck_app', p.oid, 'execute') as app,
+                   has_function_privilege('causedeck_clerk', p.oid, 'execute') as clerk
+              from pg_proc p where p.proname = 'app_business_snapshot'`,
+      );
+      expect(grant).toEqual({ pub: false, app: true, clerk: false });
+    });
+  });
+
+  it("sums the period's AI spend per plan across workspaces, with aggregate fields only", async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      // A period no other row uses, so only these counters match.
+      const period = new Date('2031-01-01T00:00:00+05:30');
+      await inWorkspace(tx, t.a.id, (s) =>
+        s
+          .insert(usageCounter)
+          .values({ workspaceId: t.a.id, key: 'ai.spend_paise', periodStart: period, value: 120 }),
+      );
+      await inWorkspace(tx, t.b.id, (s) =>
+        s
+          .insert(usageCounter)
+          .values({ workspaceId: t.b.id, key: 'ai.spend_paise', periodStart: period, value: 7 }),
+      );
+      const [row] = await as(tx, staffId, (s) =>
+        s.execute<{ snapshot: Snapshot | string }>(
+          sql`select app_staff_business_snapshot(${period.toISOString()}::timestamptz, ${period.toISOString()}::timestamptz) as snapshot`,
+        ),
+      );
+      const doc = (typeof row?.snapshot === 'string' ? JSON.parse(row.snapshot) : row?.snapshot) as Snapshot;
+      const seeded = doc.plans.find((p) => p.planId === TWO_TENANTS_PLAN_ID);
+      expect(seeded).toBeDefined();
+      expect(Number(seeded?.aiSpendPaise)).toBe(127);
+      expect(Number(seeded?.subscribers)).toBeGreaterThanOrEqual(2);
+      // Numbers and plan ids only: no email, workspace id or content.
+      for (const plan of doc.plans) expect(Object.keys(plan).sort()).toEqual(PLAN_FIELDS);
+      expect(Object.keys(doc.shared).sort()).toEqual(['captchaDollars', 'fetchDollars']);
+      const text = JSON.stringify(doc);
+      expect(text).not.toContain(t.a.id);
+      expect(text).not.toContain(t.b.id);
     });
   });
 });

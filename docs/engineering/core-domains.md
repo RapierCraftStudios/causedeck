@@ -28,6 +28,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `sources` | `@causedeck/core/sources` | the source registry (D-048): `policyFor` / `isCleared` fail closed, and audited staff changes to every external data source |
 | `network` | `@causedeck/core/network` | the court document network (#485, D-048 tier 3): opt-in contribution of public court documents (cause lists, published orders) stored once globally, `findContributed` reads, and withdrawal on workspace erase |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
+| `business` | `@causedeck/core/business` | the internal business dashboard (#519, D-049): `staffBusinessSnapshot` / `readBusinessSnapshot` (aggregates from the owner-defined `app_business_snapshot` functions), the pure MRR, ARR, churn, conversion, cost-per-user and margin maths, the cost-per-user threshold and the founders' digest and alert emails |
 | `capture` | `@causedeck/core/capture` | the capture inbox (#43, [ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)): `createCapture` / `completeUpload` / `createManualCapture`, per-channel opt-in, discard and pin, raw-object retention, `deleteRecording` (a voice recording and its transcript, #542), the diary-photo step of `capture.process` for channel `camera` (#52, [ADR 0030](../adr/0030-diary-photo-capture-and-image-anchors.md)), and the bodies of `capture.scan`, `capture.process` and `capture.retention`; jobs arrive as the `CaptureJobs` port. Not re-exported from the package root |
 | `calendar` | `@causedeck/core/calendar` | calendar interop (#53, [ADR 0024](../adr/0024-ics-import-and-private-feed.md)): the private ICS feed (`createFeed` / `rotateFeed` / `revokeFeed`, the unauthenticated `serveFeed`) and the ICS import (`runIcsImport`, the `capture.process` body for channel `ics`, and its review). Pure parsing and rendering is `@causedeck/capture` `ics/`. Not re-exported from the package root |
 | `email-intake` | `@causedeck/core/email-intake` | email forward-in intake (#54): the per-user intake address (`createAddress`, `rotateAddress`, `revokeAddress`, `getActiveAddress`, `resolveAddress` with no oracle), the sender allow-list (`addAllowlistEntry`, `removeAllowlistEntry`, `listAllowlist`) and `enableEmailChannel`, and the inbound side (#530): `receiveInboundEmail` (record once per message id, enqueue `email.intake`), `runEmailIntake` (the job body: sender trust, parser registry, captures, proposals) and `sweepExpiredRawMime`. Not re-exported from the package root |
@@ -98,6 +99,8 @@ graph LR
   network --> sources
   support --> workspaces
   support --> audit
+  business --> usage
+  business --> workspaces
   capture --> audit
   capture --> workspaces
   capture --> ai
@@ -114,6 +117,7 @@ graph LR
   jobs --> usage
   jobs --> lifecycle
   jobs --> support
+  jobs --> business
   jobs --> capture
   jobs --> calendar
   jobs --> automation
@@ -173,6 +177,7 @@ graph LR
 | `sources` | `audit` |
 | `network` | `audit`, `sources` |
 | `support` | `workspaces`, `audit` |
+| `business` | `usage`, `workspaces` |
 | `capture` | `audit`, `workspaces`, `ai`, `automation`, `matter-graph` |
 | `calendar` | `audit`, `workspaces`, `capture`, `automation`, `matter-graph` |
 | `email-intake` | `audit`, `capture`, `automation`, `matter-graph`, `workspaces` |
@@ -180,7 +185,7 @@ graph LR
 | `voice` | `workspaces`, `capture`, `ai`, `automation`, `matter-graph` |
 | `extraction` | `workspaces`, `ai`, `automation`, `matter-graph` |
 | `import` | `matter-graph`, `usage`, `automation` |
-| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `court`, `sources` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `court`, `sources`, `business` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

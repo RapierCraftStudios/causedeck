@@ -24,6 +24,8 @@ describe('registerSchedules', () => {
       'system.notification.digest',
       'system.activity.digest',
       'system.usage.rollup',
+      'system.business.cost-alert',
+      'system.business.digest',
       'system.audit.verify',
       'system.audit.retention',
       'system.export.expire',
@@ -74,6 +76,9 @@ describe('registerSchedules', () => {
       ['system.activity.digest', '0,30 18-23 * * *', '2026-10-18T12:30:00.000Z'],
       // Usage rollup: hourly at :15 IST, which is :45 UTC.
       ['system.usage.rollup', '15 * * * *', '2026-10-18T00:45:00.000Z'],
+      // Business cost alert (#519): daily 08:00 IST; digest: Mondays 09:00 IST (2026-10-19 is a Monday).
+      ['system.business.cost-alert', '0 8 * * *', '2026-10-18T02:30:00.000Z'],
+      ['system.business.digest', '0 9 * * 1', '2026-10-19T03:30:00.000Z'],
       // Audit chain verification: daily 02:00 IST.
       ['system.audit.verify', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // Audit retention: daily 03:00 IST.

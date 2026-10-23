@@ -18,6 +18,7 @@ export const STAFF_CAPABILITIES = [
   'workspaces',
   'support',
   'audit',
+  'business',
 ] as const;
 export type StaffCapability = (typeof STAFF_CAPABILITIES)[number];
 

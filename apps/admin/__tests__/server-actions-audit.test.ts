@@ -69,6 +69,23 @@ vi.mock('@causedeck/core/runtime', () => ({
     return { id: SUPPORT_SESSION_ID };
   },
 }));
+// The source registry audits `source.changed` in its own transaction with the staff actor (#478).
+vi.mock('@causedeck/core/sources', () => {
+  const audited = (_db: unknown, actor: { userId: string }) =>
+    mocks.record({ actor: { userId: actor.userId, kind: 'staff' } }, { action: 'source.changed' });
+  return {
+    SOURCE_KINDS: ['court', 'notice', 'news', 'licensed', 'corpus'],
+    SOURCE_ACCESS_MODES: ['A0', 'A1', 'A2', 'A3'],
+    SOURCE_MAX_TIERS: ['http', 'headless', 'proxy', 'captcha'],
+    SOURCE_REVIEW_STATUSES: ['pending', 'cleared', 'rejected'],
+    SourceAdminError: class SourceAdminError extends Error {},
+    asSourceStaff: (userId: string) => ({ userId }),
+    listSources: () => Promise.resolve([]),
+    createSource: audited,
+    updateSource: audited,
+    setSourceKillSwitch: audited,
+  };
+});
 vi.mock('@causedeck/core/workspaces', () => ({
   WorkspaceError: class WorkspaceError extends Error {
     constructor(readonly code: string) {
@@ -212,6 +229,32 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
     const { endSupportSessionAction } = await import('../app/(console)/support/actions.ts');
     return endSupportSessionAction(form({ sessionId: SUPPORT_SESSION_ID }));
   },
+  'app/(console)/sources/actions.ts#saveSourceAction': async () => {
+    const { saveSourceAction } = await import('../app/(console)/sources/actions.ts');
+    return saveSourceAction(
+      form({
+        mode: 'update',
+        id: 'in.nclt.bengaluru',
+        kind: 'court',
+        baseUrl: 'https://nclt.gov.in',
+        owner: 'NCLT',
+        accessMode: 'A1',
+        termsStatus: 'pending',
+        counselStatus: 'pending',
+        rateLimitPerMinute: '2',
+        retentionDays: '30',
+        residency: 'in',
+        maxTier: 'http',
+        maxCostDollars: '0',
+        killSwitch: 'false',
+        notes: '',
+      }),
+    );
+  },
+  'app/(console)/sources/actions.ts#setSourceKillSwitchAction': async () => {
+    const { setSourceKillSwitchAction } = await import('../app/(console)/sources/actions.ts');
+    return setSourceKillSwitchAction(form({ id: 'in.nclt.bengaluru', killSwitch: 'true' }));
+  },
   'app/verify-2fa/actions.ts#verifyTwoFactor': async () => {
     const { verifyTwoFactor } = await import('../app/verify-2fa/actions.ts');
     const form = new FormData();
@@ -316,6 +359,7 @@ describe('admin data layer reads', () => {
   const READS: Record<string, (data: typeof DataLayer) => Promise<unknown>> = {
     activeStaffCount: (d) => d.activeStaffCount(staff),
     adapterRegistry: (d) => d.adapterRegistry(staff),
+    sourceRegistry: (d) => d.sourceRegistry(staff),
     searchWorkspaces: (d) => d.searchWorkspaces(staff, 'chambers'),
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),

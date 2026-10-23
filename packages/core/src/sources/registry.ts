@@ -112,7 +112,8 @@ export async function policyFor(
 ): Promise<SourcePolicy> {
   const [row] = await db.select().from(source).where(eq(source.id, sourceId)).limit(1);
   const denial = decideSourceClearance(row);
-  if (denial !== null || row === undefined) throw new SourceNotCleared(denial ?? 'unknown', sourceId);
+  if (denial !== null || row === undefined)
+    throw new SourceNotCleared(denial ?? 'unknown', sourceId);
   return {
     sourceId: row.id,
     kind: row.kind,
@@ -127,10 +128,7 @@ export async function policyFor(
 }
 
 /** Whether `sourceId` may be fetched. Fails closed: any error (not just `SourceNotCleared`) is `false`. */
-export async function isCleared(
-  sourceId: string,
-  deps: { db?: Queryable } = {},
-): Promise<boolean> {
+export async function isCleared(sourceId: string, deps: { db?: Queryable } = {}): Promise<boolean> {
   try {
     await policyFor(sourceId, deps);
     return true;
@@ -263,7 +261,7 @@ function auditValue(value: unknown): AuditMetadataValue {
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return value;
   }
-  return String(value);
+  return JSON.stringify(value);
 }
 
 function inputOf(row: SourceRecord): SourceInput {
@@ -325,7 +323,10 @@ export async function createSource(
   validateSourceInput(input);
   return withUser(db, { userId: actor.userId }, async (tx) => {
     await assertSourceStaff(tx, actor);
-    const [existing] = await tx.select({ id: source.id }).from(source).where(eq(source.id, sourceId));
+    const [existing] = await tx
+      .select({ id: source.id })
+      .from(source)
+      .where(eq(source.id, sourceId));
     if (existing) throw new SourceAdminError('ALREADY_EXISTS', `Source ${sourceId} already exists`);
     const [row] = await tx
       .insert(source)

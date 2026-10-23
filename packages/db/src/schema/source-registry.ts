@@ -59,16 +59,17 @@ export const source = pgTable(
     retentionDays: integer('retention_days').notNull().default(30),
     residency: text('residency').notNull().default('in'),
     maxTier: sourceMaxTier('max_tier').notNull().default('http'),
-    maxCostDollars: numeric('max_cost_dollars', { precision: 10, scale: 4 })
-      .notNull()
-      .default('0'),
+    maxCostDollars: numeric('max_cost_dollars', { precision: 10, scale: 4 }).notNull().default('0'),
     killSwitch: boolean('kill_switch').notNull().default(false),
     notes: text('notes'),
     updatedBy: uuid('updated_by').references(() => user.id),
     ...timestamps(),
   },
   (t) => [
-    check('source_no_captcha_chk', sql`not (${t.kind} in ('court', 'notice') and ${t.maxTier} = 'captcha')`),
+    check(
+      'source_no_captcha_chk',
+      sql`not (${t.kind} in ('court', 'notice') and ${t.maxTier} = 'captcha')`,
+    ),
     check('source_rate_limit_chk', sql`${t.rateLimitPerMinute} > 0`),
     check('source_retention_chk', sql`${t.retentionDays} >= 0`),
     check('source_max_cost_chk', sql`${t.maxCostDollars} >= 0`),

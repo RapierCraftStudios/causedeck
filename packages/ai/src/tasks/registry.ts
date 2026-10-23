@@ -6,6 +6,7 @@ import { classifyDocument } from './classify-document.ts';
 import { extractOrder } from './extract-order.ts';
 import { ocr } from './ocr.ts';
 import { parseListA0 } from './parse-list-a0.ts';
+import { structureChat } from './structure-chat.ts';
 import { structureDiary } from './structure-diary.ts';
 import { structureHearing } from './structure-hearing.ts';
 import { summarise } from './summarise.ts';
@@ -19,6 +20,7 @@ export const TASKS: Readonly<Record<TaskId, TaskDef>> = {
   transcribe: transcribe,
   structure_hearing: structureHearing,
   structure_diary: structureDiary,
+  structure_chat: structureChat,
   parse_list_a0: parseListA0,
   translate: translate,
   summarise: summarise,

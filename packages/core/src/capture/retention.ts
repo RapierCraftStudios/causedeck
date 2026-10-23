@@ -46,8 +46,8 @@ export async function sweepExpiredCaptures(
 }
 
 /**
- * Forwarded raw text expires 30 days after extraction unless pinned: set `ttl_at` for an email
- * capture whose text was just extracted. Returns the new `ttl_at`, or null when nothing applies.
+ * Raw text expires 30 days after extraction unless pinned: set `ttl_at` for an email or WhatsApp
+ * export capture (#526) whose text was just extracted. Returns the new `ttl_at`, or null when nothing applies.
  */
 export async function setExtractionTtl(
   db: Queryable,
@@ -57,7 +57,12 @@ export async function setExtractionTtl(
 ): Promise<Date | null> {
   return withWorkspace(db, { workspaceId }, async (tx) => {
     const row = await loadCapture(tx, workspaceId, captureId);
-    if (row === null || row.channel !== 'email' || row.pinned || row.rawStorageKey === null) {
+    if (
+      row === null ||
+      (row.channel !== 'email' && row.channel !== 'whatsapp_export') ||
+      row.pinned ||
+      row.rawStorageKey === null
+    ) {
       return null;
     }
     const ttlAt = forwardedTextTtl(extractedAt);

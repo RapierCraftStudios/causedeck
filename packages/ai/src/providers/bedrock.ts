@@ -16,6 +16,7 @@ export const BEDROCK_TASKS: readonly TaskId[] = [
   'extract_order',
   'structure_hearing',
   'structure_diary',
+  'structure_chat',
   'parse_list_a0',
   'translate',
   'summarise',

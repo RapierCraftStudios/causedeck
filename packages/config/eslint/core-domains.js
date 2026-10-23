@@ -40,6 +40,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Email forward-in intake (#54): per-user addresses and the sender allow-list; events through
   // audit, the `email` channel is switched on through the capture domain's public index.
   'email-intake': Object.freeze(['audit', 'capture']),
+  // WhatsApp chat import (#526): intake and the structuring job body. The capture row and its
+  // retention through capture, the `structure_chat` call through ai, proposals through automation,
+  // evidence documents through matter-graph, member roles through workspaces.
+  whatsapp: Object.freeze(['audit', 'workspaces', 'capture', 'ai', 'automation', 'matter-graph']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([
@@ -52,6 +56,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'capture',
     'automation',
     'calendar',
+    'whatsapp',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

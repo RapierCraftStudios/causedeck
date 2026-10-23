@@ -24,7 +24,7 @@ export interface JudgmentHeader {
 export const HEADER_PAGES = 2;
 
 const DATE_LABEL =
-  /(?:DATED|DATE OF (?:ORDER|JUDGMENT)|PRONOUNCED ON|RESERVED ON|JUDGMENT DELIVERED ON)\s*[:-]?\s*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]+\s*,?\s+[0-9]{4})/i;
+  /^[ \t]*(?:DATED|DATE OF (?:ORDER|JUDGMENT)|PRONOUNCED ON|RESERVED ON|JUDGMENT DELIVERED ON)[ \t]*[:-]?[ \t]*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4}|[0-9]{1,2}[ \t]+[A-Za-z]+[ \t]*,?[ \t]+[0-9]{4})/im;
 const JUSTICE = /JUSTICE\s+(?:MR\.?|MRS\.?|MS\.?|DR\.?|SMT\.?)?\s*([A-Z][A-Z .'-]{2,60})/g;
 const CASE_NUMBER = /\b[A-Z][A-Za-z.()]{0,14}\s*No\.?\s*\d{1,7}\s*(?:of|\/)\s*\d{4}\b/g;
 

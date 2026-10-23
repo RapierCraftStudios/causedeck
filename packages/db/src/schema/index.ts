@@ -169,3 +169,14 @@ export {
   workspaceIntegration,
   type IntegrationKind,
 } from './workspace-integration.ts';
+export {
+  INTAKE_ADDRESS_STATUSES,
+  INTAKE_ALLOWLIST_KINDS,
+  INTAKE_MESSAGE_STATUSES,
+  intakeAddress,
+  intakeAllowlist,
+  intakeMessage,
+  type IntakeAddressStatus,
+  type IntakeAllowlistKind,
+  type IntakeMessageStatus,
+} from './email-intake.ts';

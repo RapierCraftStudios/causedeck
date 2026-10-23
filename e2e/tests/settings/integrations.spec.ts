@@ -1,12 +1,10 @@
-// Settings integrations page (#287): `/w/<slug>/settings/integrations` shows the private email
-// intake address card with a masked placeholder and the calendar feed card, which only links to the
-// calendar page (#53, e2e/tests/settings/calendar.spec.ts). With a card's flag off it reads
-// `Not enabled yet` and cannot rotate. With the flags on, an owner creates a token (the full value
-// is shown once and gone after a reload) and rotates it through a confirm dialog that names the
-// effect; the rotation lands in the audit log. Clerks and viewers get the permission-denied page.
-// States: loading and error (dev previews), offline (disabled with the reason). `@a11y` tests run
-// axe on the page they end on, including the open rotate dialog. Every test starts from the reset
-// e2e seed, where every flag is off.
+// Settings integrations page (#287): `/w/<slug>/settings/integrations` shows two entry cards, one
+// that links to the per-member email intake page (#54) and
+// the calendar feed card, which only links to the calendar page (#53,
+// e2e/tests/settings/calendar.spec.ts). The calendar card reads `Not enabled yet` until its flag is
+// on. Clerks and viewers get the permission-denied page. States: loading and error (dev previews).
+// `@a11y` tests run axe on the page they end on. Every test starts from the reset e2e seed, where
+// every flag is off.
 import type { Page } from '@playwright/test';
 import postgres from 'postgres';
 
@@ -15,7 +13,7 @@ import type { AsUser } from '../../fixtures/auth.ts';
 import { databaseUrl } from '../../support/db-reset.ts';
 import { SHELL_WORKSPACE, shellReady } from '../shell/helpers.ts';
 
-const FLAGS = ['capture.email-forward', 'capture.ics-feed'] as const;
+const FLAGS = ['capture.ics-feed'] as const;
 
 /** Turn the integration flags on for the shell workspace (a workspace override row each). */
 async function enableFlags(database: string): Promise<void> {
@@ -45,25 +43,22 @@ async function openIntegrations(page: Page, asUser: AsUser, role: E2eRole = 'own
   await shellReady(page);
 }
 
-const card = (page: Page, kind: 'email_intake' | 'ics_feed') =>
-  page.locator(`[data-slot="integration-${kind}"]`);
+const card = (page: Page, kind: 'ics_feed') => page.locator(`[data-slot="integration-${kind}"]`);
 
 test.describe('settings integrations', () => {
   test(
-    'flags off: both cards read Not enabled yet and the intake card cannot rotate',
+    'flag off: the calendar card reads Not enabled yet and the email card links on',
     { tag: '@a11y' },
     async ({ page, asUser }) => {
       await openIntegrations(page, asUser);
-      for (const kind of ['email_intake', 'ics_feed'] as const) {
-        await expect(card(page, kind).getByText('Not enabled yet', { exact: true })).toBeVisible();
-      }
       await expect(
-        card(page, 'email_intake').getByRole('button', { name: 'Create' }),
-      ).toBeDisabled();
-      await expect(page.getByRole('textbox', { name: 'Intake address' })).toHaveValue(
-        /^intake\+••••••••@/,
-      );
+        card(page, 'ics_feed').getByText('Not enabled yet', { exact: true }),
+      ).toBeVisible();
       await expect(page.getByRole('link', { name: 'Open calendar settings' })).toHaveCount(0);
+      await expect(page.getByRole('link', { name: 'Open', exact: true })).toHaveAttribute(
+        'href',
+        /\/settings\/integrations\/email$/,
+      );
     },
   );
 
@@ -75,31 +70,10 @@ test.describe('settings integrations', () => {
     await expect(page).toHaveURL(/\/settings\/integrations\/calendar$/);
   });
 
-  test(
-    'the rotate dialog has no serious axe violations',
-    { tag: '@a11y' },
-    async ({ page, asUser, db }) => {
-      await enableFlags(db.name);
-      await openIntegrations(page, asUser);
-      await card(page, 'email_intake').getByRole('button', { name: 'Create' }).click();
-      await expect(page.getByRole('textbox', { name: 'Intake address' })).toHaveValue(
-        /^intake\+[\w-]{43}@/,
-      );
-      await card(page, 'email_intake').getByRole('button', { name: 'Rotate' }).click();
-      // The test ends with the dialog open, so the axe pass covers it.
-      await expect(
-        page.getByRole('alertdialog', { name: 'Rotate the intake address?' }),
-      ).toBeVisible();
-    },
-  );
-
-  test('an advocate can create a token', async ({ page, asUser, db }) => {
-    await enableFlags(db.name);
-    await openIntegrations(page, asUser, 'advocate');
-    await card(page, 'email_intake').getByRole('button', { name: 'Create' }).click();
-    await expect(page.getByRole('textbox', { name: 'Intake address' })).toHaveValue(
-      /^intake\+[\w-]{43}@/,
-    );
+  test('the email card opens the email intake page', async ({ page, asUser }) => {
+    await openIntegrations(page, asUser);
+    await page.getByRole('link', { name: 'Open', exact: true }).click();
+    await expect(page).toHaveURL(/\/settings\/integrations\/email$/);
   });
 
   for (const role of ['clerk', 'viewer'] as const) {
@@ -115,18 +89,6 @@ test.describe('settings integrations', () => {
     );
   }
 
-  test('offline: the buttons are disabled with the banner', async ({ page, asUser, db }) => {
-    await enableFlags(db.name);
-    await openIntegrations(page, asUser);
-    await page.context().setOffline(true);
-    await expect(
-      page.getByText('Settings can be changed when you are back online.').first(),
-    ).toBeVisible();
-    await expect(card(page, 'email_intake').getByRole('button', { name: 'Create' })).toBeDisabled();
-    await page.context().setOffline(false);
-    await expect(card(page, 'email_intake').getByRole('button', { name: 'Create' })).toBeEnabled();
-  });
-
   test('loading and error states (dev previews)', async ({ page, asUser }) => {
     await openIntegrations(page, asUser, 'owner', '?__state=loading');
     await expect(page.locator('main [data-pattern-state="loading"]')).toBeVisible();
@@ -138,10 +100,6 @@ test.describe('settings integrations', () => {
   test('never scrolls sideways', async ({ page, asUser, db }) => {
     await enableFlags(db.name);
     await openIntegrations(page, asUser);
-    await card(page, 'email_intake').getByRole('button', { name: 'Create' }).click();
-    await expect(page.getByRole('textbox', { name: 'Intake address' })).toHaveValue(
-      /^intake\+[\w-]{43}@/,
-    );
     const overflow = await page.evaluate(() => {
       const root = document.documentElement;
       return root.scrollWidth - root.clientWidth;

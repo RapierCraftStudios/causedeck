@@ -500,9 +500,7 @@
       "emailIntake": {
         "title": "Email intake address",
         "description": "A private address you can forward court and registry emails to. Anyone who knows it can send to it, so keep it private.",
-        "label": "Intake address",
-        "rotateTitle": "Rotate the intake address?",
-        "rotateBody": "A new address is created and the current one stops working at once. Emails sent to the old address will not arrive."
+        "open": "Open"
       },
       "icsFeed": {
         "title": "Calendar feed",

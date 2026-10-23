@@ -60,6 +60,12 @@ const nextConfig: NextConfig = {
     // The roster import preview parses PDFs with pdfjs (adapters' layoutFromPdf), which loads its
     // worker module by a runtime path the server bundle breaks (#459).
     'pdfjs-dist',
+    // The document pipeline (#45, `@causedeck/intelligence`, reached through core's capture domain)
+    // loads a WASM renderer, a native image encoder and a DOCX reader on first use; none of them
+    // belongs in a server bundle.
+    'mupdf',
+    'sharp',
+    'mammoth',
   ],
   images: { remotePatterns: [] },
   experimental: {

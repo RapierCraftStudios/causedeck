@@ -42,7 +42,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // evidence documents through matter-graph, member roles through workspaces.
   whatsapp: Object.freeze(['audit', 'workspaces', 'capture', 'ai', 'automation', 'matter-graph']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
+  // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([
+    'ai',
     'audit',
     'billing',
     'usage',

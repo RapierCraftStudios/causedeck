@@ -10,7 +10,14 @@ const input = z.object({
   language: language.optional(),
 });
 const output = z.object({
-  pages: z.array(z.object({ page: z.number().int().min(1), text: z.string() })),
+  pages: z.array(
+    z.object({
+      page: z.number().int().min(1),
+      text: z.string(),
+      /** Per-page 0-1 confidence when the provider reports one; else the overall `confidence`. */
+      confidence: confidence.optional(),
+    }),
+  ),
   confidence,
 });
 

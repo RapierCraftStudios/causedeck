@@ -82,6 +82,7 @@ graph LR
   support --> workspaces
   support --> audit
   capture --> audit
+  jobs --> ai
   jobs --> audit
   jobs --> billing
   jobs --> usage
@@ -90,6 +91,7 @@ graph LR
   jobs --> capture
   jobs --> calendar
   jobs --> automation
+  jobs --> whatsapp
   calendar --> audit
   calendar --> workspaces
   calendar --> capture
@@ -101,7 +103,6 @@ graph LR
   whatsapp --> ai
   whatsapp --> automation
   whatsapp --> matter-graph
-  jobs --> whatsapp
   runtime --> audit
   runtime --> billing
   runtime --> usage
@@ -131,7 +132,7 @@ graph LR
 | `capture` | `audit` |
 | `calendar` | `audit`, `workspaces`, `capture`, `automation`, `matter-graph` |
 | `whatsapp` | `audit`, `workspaces`, `capture`, `ai`, `automation`, `matter-graph` |
-| `jobs` | `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

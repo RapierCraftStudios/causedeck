@@ -182,6 +182,7 @@ export {
   type IntakeMessageStatus,
 } from './email-intake.ts';
 export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';
+export { advocateProfile } from './advocate-profile.ts';
 export {
   IMPORT_BATCH_FILE_STATUSES,
   IMPORT_BATCH_STATUSES,

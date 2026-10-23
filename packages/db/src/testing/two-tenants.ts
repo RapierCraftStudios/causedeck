@@ -23,6 +23,7 @@ import { billingEvent, entitlement, plan, subscription, usageCounter } from '../
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { extraction } from '../schema/extraction.ts';
+import { advocateProfile } from '../schema/advocate-profile.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
@@ -799,6 +800,18 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, batchId, captureId })
       .returning({ id: importBatchFile.id });
     return { batchId, captureId, id: first(rows, 'import_batch_file').id };
+  },
+  advocate_profile: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(advocateProfile)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        enrolmentNumbers: ['MS/1/1900'],
+        aliases: ['XT, ADV.'],
+      })
+      .returning({ id: advocateProfile.id });
+    return { id: first(rows, 'advocate_profile').id };
   },
   import_plan: async (tx, { workspaceId, ownerId }) => {
     const batchId = await seedImportBatch(tx, workspaceId, ownerId);

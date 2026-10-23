@@ -49,6 +49,7 @@ describe('@causedeck/db root entry point', () => {
       'activity',
       'adapter_parse_run',
       'adapter_version',
+      'advocate_profile',
       'ai_call',
       'ai_call_result',
       'anchor',

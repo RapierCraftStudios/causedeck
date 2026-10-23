@@ -59,6 +59,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'adapter_version',
   'source',
   'fetch_log',
+  'judgment',
 ];
 
 /**

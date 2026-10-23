@@ -33,7 +33,6 @@ describe('flag registry', () => {
         ...LEGAL,
         'ai.bedrock',
         'ai.sarvam',
-        'capture.whatsapp-import',
         'capture.email-forward',
         'capture.ics-feed',
         'pwa.offline',

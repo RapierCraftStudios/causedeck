@@ -60,7 +60,7 @@ function timestamp(h: Header, order: DateOrder): string | null {
 
 /** Strips direction marks and BOM, and turns narrow/no-break spaces into plain spaces. */
 export function normalizeExport(text: string): string {
-  return text.replace(/[‎‏‪-‮﻿]/g, '').replace(/[  ]/g, ' ');
+  return text.replace(/[\u200E\u200F\u202A-\u202E\uFEFF]/g, '').replace(/[\u202F\u00A0]/g, ' ');
 }
 
 const EDITED = /\s*<This message was edited>\s*$/i;

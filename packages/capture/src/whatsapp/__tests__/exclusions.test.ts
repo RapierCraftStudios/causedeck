@@ -82,9 +82,9 @@ describe('applyExclusions', () => {
   });
 
   it('checks attachment file names too', () => {
-    const [m] = parseWhatsAppExport(
+    const { messages } = parseWhatsAppExport(
       '12/10/2026, 10:01 - Asha: ABCDE1234F.pdf (file attached)',
-    ).messages;
-    expect(applyExclusions([m!]).excluded).toHaveLength(1);
+    );
+    expect(applyExclusions(messages).excluded).toHaveLength(1);
   });
 });

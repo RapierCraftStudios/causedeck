@@ -19,6 +19,22 @@ describe('type-safety and import rules', () => {
     expect(ruleIds(result)).toContain('no-restricted-imports');
   });
 
+  it('forbids importing the alterlab SDK outside packages/fetch (#479)', async () => {
+    const result = await lintFixture('rules', 'packages/core/imports-alterlab.ts');
+    const restricted = result.messages.filter((m) => m.ruleId === 'no-restricted-imports');
+
+    expect(restricted.map((m) => m.line)).toEqual([1]);
+    expect(restricted[0]?.message).toContain('only packages/fetch imports `alterlab`');
+  });
+
+  it('forbids fetch of a literal external host, but not a relative path (#479)', async () => {
+    const result = await lintFixture('rules', 'packages/core/external-fetch.ts');
+    const restricted = result.messages.filter((m) => m.ruleId === 'no-restricted-syntax');
+
+    expect(restricted.map((m) => m.line)).toEqual([2, 3]);
+    expect(restricted[0]?.message).toContain('@causedeck/fetch');
+  });
+
   it('forbids packages from importing apps by workspace name', async () => {
     const result = await lintFixture('rules', 'packages/core/imports-app-by-name.ts');
 

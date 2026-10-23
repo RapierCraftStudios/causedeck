@@ -309,6 +309,24 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 371,
   },
+  ALTERLAB_API_KEY: {
+    domain: 'server',
+    type: 'secret',
+    description:
+      'AlterLab API key for the governed fetch layer. Unset means the offline mock provider serves fixtures.',
+    requiredWhen: 'never (the mock provider is used when unset)',
+    ownerIssue: 479,
+    secret: true,
+  },
+  FETCH_DELEGATED_CAPTCHA_PER_HOUR: {
+    domain: 'server',
+    type: 'integer (1-1000)',
+    description:
+      'Per-advocate hourly allowance for delegated captcha-tier lookups in the governed fetch layer.',
+    default: '10',
+    requiredWhen: 'never (defaults to 10)',
+    ownerIssue: 479,
+  },
 } satisfies KeyMetaRecord;
 
 export const killSwitchKeys = {
@@ -431,6 +449,14 @@ export const serverShape = {
     .min(1)
     .optional()
     .describe(d(serverKeys.ADAPTER_PRIVATE_FIXTURES_DIR)),
+  // The governed fetch layer (#479, D-048): no key means the mock provider.
+  ALTERLAB_API_KEY: secret(z.string().min(1)).optional().describe(d(serverKeys.ALTERLAB_API_KEY)),
+  FETCH_DELEGATED_CAPTCHA_PER_HOUR: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1000)
+    .describe(d(serverKeys.FETCH_DELEGATED_CAPTCHA_PER_HOUR)),
 };
 
 const baseSchema = z.object({ ...sharedShape, ...serverShape, ...clientShape });

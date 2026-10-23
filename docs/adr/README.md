@@ -41,6 +41,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0031](0031-email-forward-in-and-parser-registry.md) | Email forward-in: inbound webhook, providers and the `email.intake` job | Proposed | 2026-10-23 | — |
 | [0032](0032-generic-a0-adapter.md) | A0 generic adapter: skeleton first, anchored model pass, always L2 | Proposed | 2026-10-23 | — |
 | [0033](0033-bootstrap-import-plan-and-apply.md) | Bootstrap import: a stored plan, a confirm grid, one apply and an undo | Proposed | 2026-10-23 | — |
+| [0034](0034-governed-fetch-layer.md) | Governed fetch layer | Proposed | 2026-10-23 | — |
 
 ## Statuses
 

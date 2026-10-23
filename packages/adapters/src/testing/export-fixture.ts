@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { findPii } from '../workbench/detect.ts';
+import { FixtureManifestSchema, type FixtureManifest } from './golden.ts';
 import { FixtureBundleSchema, type FixtureBundle } from '../workbench/build-fixture.ts';
 
 const DEFAULT_ROOT = path.resolve(import.meta.dirname, '../../fixtures');
@@ -29,10 +30,8 @@ export function exportBundle(bundle: FixtureBundle, root: string = DEFAULT_ROOT)
     throw new Error(`${parsed.adapterId}/${parsed.inputFile} already exists`);
   }
   mkdirSync(dir, { recursive: true });
-  const manifest = existsSync(manifestPath)
-    ? (JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-        fixtures: FixtureBundle['manifestEntry'][];
-      })
+  const manifest: FixtureManifest = existsSync(manifestPath)
+    ? FixtureManifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf8')))
     : { adapter: parsed.adapterId, classification: 'REDACTED', fixtures: [] };
   manifest.fixtures.push(parsed.manifestEntry);
   writeFileSync(inputPath, parsed.inputContent);

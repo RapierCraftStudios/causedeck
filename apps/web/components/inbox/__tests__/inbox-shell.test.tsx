@@ -16,6 +16,7 @@ const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.
 vi.mock('next/navigation', () => ({ useRouter: () => router }));
 vi.mock('../../../app/(app)/w/[slug]/inbox/actions.ts', () => ({
   acceptProposalAction: vi.fn(),
+  deleteRecordingAction: vi.fn(),
   dismissProposalAction: vi.fn(),
   editAcceptProposalAction: vi.fn(),
   keepAsAttachmentAction: vi.fn(),

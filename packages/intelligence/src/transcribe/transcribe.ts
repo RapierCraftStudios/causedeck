@@ -22,6 +22,8 @@ export interface Transcript {
   text: string;
   language: TranscriptLanguage;
   segments: TranscriptSegment[];
+  /** The provider's 0-1 confidence in the transcript, when it gives one (#542). */
+  confidence?: number | undefined;
 }
 
 export interface TranscribeInput {
@@ -65,7 +67,9 @@ export function buildTranscript(
   language: TranscriptLanguage,
   raw: readonly RawSegment[] | undefined,
   durationMs: number,
+  confidence?: number,
 ): Transcript {
+  const extra = confidence === undefined ? {} : { confidence };
   if (raw === undefined || raw.length === 0) {
     return {
       text,
@@ -73,6 +77,7 @@ export function buildTranscript(
       segments: [
         { startMs: 0, endMs: durationMs, language, text, charStart: 0, charEnd: text.length },
       ],
+      ...extra,
     };
   }
   let cursor = 0;
@@ -83,13 +88,14 @@ export function buildTranscript(
     cursor = charEnd;
     return { ...segment, charStart, charEnd };
   });
-  return { text, language, segments };
+  return { text, language, segments, ...extra };
 }
 
 interface TranscribeOutput {
   text: string;
   language: TranscriptLanguage;
   segments?: RawSegment[] | undefined;
+  confidence?: number | undefined;
 }
 
 export interface GatewayTranscribeOptions {
@@ -119,8 +125,14 @@ export function createGatewayTranscribe(options: GatewayTranscribeOptions): Tran
           idempotencyKey: `capture-transcribe:${scope.captureId ?? 'none'}:${pipelineVersion}`,
         },
       );
-      const { text, language, segments } = result.output;
-      return buildTranscript(text, language, segments, Math.round(durationSeconds * 1000));
+      const { text, language, segments, confidence } = result.output;
+      return buildTranscript(
+        text,
+        language,
+        segments,
+        Math.round(durationSeconds * 1000),
+        confidence,
+      );
     },
   };
 }

@@ -91,6 +91,10 @@ export const CAPTURE_NEEDS_YOU_REASONS = [
   'extraction_ambiguous',
   'extraction_suspicious',
   'extraction_low_confidence',
+  // Voice capture (#542): the recording could not be read, its matter is unknown, or its next date was dropped.
+  'voice_unreadable',
+  'voice_unmatched',
+  'voice_next_date_dropped',
 ] as const;
 export const CaptureNeedsYouReasonSchema = z.enum(CAPTURE_NEEDS_YOU_REASONS);
 export type CaptureNeedsYouReason = z.infer<typeof CaptureNeedsYouReasonSchema>;
@@ -131,8 +135,32 @@ export const DocumentNearDuplicateEventSchema = z.object({
 });
 export type DocumentNearDuplicateEvent = z.infer<typeof DocumentNearDuplicateEventSchema>;
 
+/** A voice recording was transcribed (#542). Ids and counts only, never text. */
+export const CaptureTranscribedEventSchema = z.object({
+  type: z.literal('capture.transcribed'),
+  workspaceId: z.uuid(),
+  captureId: z.uuid(),
+  documentId: z.uuid(),
+  language: z.string(),
+  segments: z.number().int().min(0),
+});
+export type CaptureTranscribedEvent = z.infer<typeof CaptureTranscribedEventSchema>;
+
+/** A transcript was structured into proposals (#542). Ids and counts only. */
+export const CaptureStructuredEventSchema = z.object({
+  type: z.literal('capture.structured'),
+  workspaceId: z.uuid(),
+  captureId: z.uuid(),
+  proposals: z.number().int().min(0),
+  rejected: z.number().int().min(0),
+  needsYou: z.boolean(),
+});
+export type CaptureStructuredEvent = z.infer<typeof CaptureStructuredEventSchema>;
+
 export const DocumentPipelineEventSchema = z.discriminatedUnion('type', [
   DocumentProcessedEventSchema,
+  CaptureTranscribedEventSchema,
+  CaptureStructuredEventSchema,
   CaptureClassifiedEventSchema,
   DocumentNearDuplicateEventSchema,
 ]);

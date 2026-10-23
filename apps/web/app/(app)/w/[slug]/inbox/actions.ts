@@ -84,6 +84,17 @@ const discard = workspaceAction(
   { action: 'document.write' },
 );
 
+const deleteRecording = workspaceAction(
+  CaptureTarget,
+  async ({ captureId }, ctx) => {
+    const { deleteRecording: remove } = await import('@causedeck/core/capture');
+    const row = await remove(await captureCtx(ctx), captureId);
+    revalidatePath('/w/[slug]/inbox', 'page');
+    return { captureId: row.id, status: row.status, pinned: row.pinned };
+  },
+  { action: 'document.write' },
+);
+
 const pin = workspaceAction(
   PinCapture,
   async ({ captureId, pinned }, ctx) => {
@@ -101,6 +112,11 @@ export async function enableChannelAction(raw: unknown): Promise<Result<ChannelV
 
 export async function discardCaptureAction(raw: unknown): Promise<Result<CaptureView>> {
   return discard(raw);
+}
+
+/** Delete a voice recording and its transcript now (#542); proposals made from it stay. */
+export async function deleteRecordingAction(raw: unknown): Promise<Result<CaptureView>> {
+  return deleteRecording(raw);
 }
 
 export async function pinCaptureAction(raw: unknown): Promise<Result<CaptureView>> {

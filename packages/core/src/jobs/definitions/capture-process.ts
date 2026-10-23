@@ -28,6 +28,7 @@ import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
 import { getProducer } from '../producer.ts';
 import { enqueueExtractOrder } from './extraction-extract-order.ts';
+import { enqueueVoiceProcess } from './voice-process.ts';
 import { enqueueWhatsAppImport } from './whatsapp-import.ts';
 
 export const captureProcessSchema = z.object({
@@ -133,6 +134,11 @@ export async function runCaptureProcessJob(
         workspaceId: payload.workspaceId,
         captureId: payload.captureId,
       });
+    }
+    // A voice recording (#542) is transcribed and structured by its own job (the model calls and
+    // their retries); nothing is read from the audio here.
+    if (result.outcome === 'started' && result.channel === 'voice') {
+      await enqueueVoiceProcess({ workspaceId: payload.workspaceId, captureId: payload.captureId });
     }
   } catch (error) {
     if (ctx.attempt > CAPTURE_JOB_RETRIES) {

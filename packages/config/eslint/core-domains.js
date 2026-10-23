@@ -48,6 +48,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // retention through capture, the `structure_chat` call through ai, proposals through automation,
   // evidence documents through matter-graph, member roles through workspaces.
   whatsapp: Object.freeze(['audit', 'workspaces', 'capture', 'ai', 'automation', 'matter-graph']),
+  // Voice capture (#542): the `voice.process` job body. The capture row through capture, the
+  // `transcribe` and `structure_hearing` calls through ai, proposals through automation, the
+  // transcript document through matter-graph, member roles through workspaces.
+  voice: Object.freeze(['workspaces', 'capture', 'ai', 'automation', 'matter-graph']),
   // Anchored order extraction (#46): the `extract_order` call through ai, proposals through
   // automation, graph reads through matter-graph (imports `index.ts` only), member roles through
   // workspaces.
@@ -69,6 +73,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'automation',
     'calendar',
     'whatsapp',
+    'voice',
     'email-intake',
     'extraction',
   ]),

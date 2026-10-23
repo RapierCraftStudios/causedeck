@@ -194,6 +194,10 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A capture was discarded; its raw object is deleted by the retention job',
   },
+  'capture.recording_deleted': {
+    security: false,
+    description: 'A voice recording and its transcript were deleted by a member; proposals stay',
+  },
   'capture.channel_enabled': {
     security: true,
     description: 'A capture channel was enabled after the data-flow disclosure was shown',

@@ -32,6 +32,7 @@ export {
 } from './errors.ts';
 export {
   createKeyLineCapture,
+  deleteRecording,
   discardCapture,
   keepCaptureAsAttachment,
   pinCapture,

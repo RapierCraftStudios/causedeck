@@ -122,7 +122,7 @@ export type CapturePipelineOutcome =
   | { outcome: 'missing' }
   | { outcome: 'skipped' }
   | { outcome: 'failed' }
-  /** Not a document (an ICS file is read by its own channel handler): the caller takes over. */
+  /** Not a document (an ICS file or a recording is read by its own channel handler): the caller takes over. */
   | { outcome: 'not_document' }
   /** AI is paused or over budget: the capture stays `queued` and is marked "processing later". */
   | { outcome: 'deferred' }
@@ -201,7 +201,8 @@ export async function runCapturePipeline(
   );
   if (row === null) return { outcome: 'missing' };
   if (row.status !== 'queued') return { outcome: 'skipped' };
-  if (row.channel === 'ics') return { outcome: 'not_document' };
+  // An ICS file and a voice recording (#542) are read by their own channel handlers.
+  if (row.channel === 'ics' || row.channel === 'voice') return { outcome: 'not_document' };
   const key = row.rawStorageKey as ObjectKey | null;
   if (key === null || row.sha256 === null) {
     await markCaptureFailed(deps.db, workspaceId, captureId, 'upload_missing', now);

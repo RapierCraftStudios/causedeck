@@ -22,6 +22,8 @@ const output = z.object({
   text: z.string(),
   language,
   segments: z.array(transcriptSegment).optional(),
+  /** The provider's 0-1 confidence in the transcript; low scores route to Needs you (#542). */
+  confidence: z.number().min(0).max(1).optional(),
 });
 
 export const transcribe: TaskDef<z.infer<typeof input>, z.infer<typeof output>> = {

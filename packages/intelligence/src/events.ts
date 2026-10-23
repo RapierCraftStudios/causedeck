@@ -4,6 +4,8 @@
 // live in `@causedeck/validators`.
 import type {
   CaptureClassifiedEvent,
+  CaptureStructuredEvent,
+  CaptureTranscribedEvent,
   DocumentNearDuplicateEvent,
   DocumentPipelineEvent,
   DocumentProcessedEvent,
@@ -11,6 +13,8 @@ import type {
 
 export type {
   CaptureClassifiedEvent,
+  CaptureStructuredEvent,
+  CaptureTranscribedEvent,
   DocumentNearDuplicateEvent,
   DocumentPipelineEvent,
   DocumentProcessedEvent,

@@ -8,6 +8,7 @@ import {
   CAPTURE_FAILURE_REASONS,
   CAPTURE_JOB_NAMES,
   CAPTURE_TRANSITIONS,
+  isUnreadableAudio,
   DEFAULT_ENABLED_CHANNELS,
 } from '../index.ts';
 
@@ -32,9 +33,19 @@ describe('capture lists', () => {
       scan: 'capture.scan',
       process: 'capture.process',
       retention: 'capture.retention',
+      voiceProcess: 'voice.process',
       emailIntake: 'email.intake',
       emailRawExpire: 'email.raw-expire',
     });
     expect(CAPTURE_FAILURE_REASONS).toContain('too_large');
+  });
+
+  it('reads audio as unreadable when short, silent or low confidence (#542)', () => {
+    const ok = { durationSeconds: 5, text: 'adjourned to fourteenth November' };
+    expect(isUnreadableAudio(ok)).toBe(false);
+    expect(isUnreadableAudio({ ...ok, durationSeconds: 1.9 })).toBe(true);
+    expect(isUnreadableAudio({ ...ok, text: '   ' })).toBe(true);
+    expect(isUnreadableAudio({ ...ok, confidence: 0.2 })).toBe(true);
+    expect(isUnreadableAudio({ ...ok, confidence: 0.9 })).toBe(false);
   });
 });

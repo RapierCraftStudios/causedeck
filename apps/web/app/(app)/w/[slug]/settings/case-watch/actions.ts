@@ -75,7 +75,10 @@ async function guarded<T>(call: () => Promise<T>): Promise<T> {
     if (code !== undefined && (DOMAIN_CODES as readonly string[]).includes(code)) {
       throw new ActionError(code as (typeof DOMAIN_CODES)[number], (error as Error).message);
     }
-    if (error instanceof Error && (error.name === 'SourceNotCleared' || error.name === 'FetchDenied')) {
+    if (
+      error instanceof Error &&
+      (error.name === 'SourceNotCleared' || error.name === 'FetchDenied')
+    ) {
       throw new ActionError('FORBIDDEN', 'This status source cannot be read right now');
     }
     throw error;
@@ -224,6 +227,8 @@ const recordDevice = workspaceAction(
 
 // authz: requireSession + workspace membership + `matter.write` in workspaceAction; the status body
 // is validated against the parsed-status schema and core stores it only on the caller's own watch.
-export async function recordDeviceStatusAction(raw: unknown): Promise<Result<DeviceStatusRecorded>> {
+export async function recordDeviceStatusAction(
+  raw: unknown,
+): Promise<Result<DeviceStatusRecorded>> {
   return recordDevice(raw);
 }

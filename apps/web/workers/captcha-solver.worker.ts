@@ -14,7 +14,10 @@ interface Engine {
 
 const scope = self as unknown as {
   postMessage: (message: SolveResponse) => void;
-  addEventListener: (type: 'message', listener: (event: MessageEvent<SolveRequest>) => void) => void;
+  addEventListener: (
+    type: 'message',
+    listener: (event: MessageEvent<SolveRequest>) => void,
+  ) => void;
 };
 
 let engine: Promise<Engine> | undefined;

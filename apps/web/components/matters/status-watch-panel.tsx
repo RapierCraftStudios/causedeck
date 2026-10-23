@@ -87,7 +87,11 @@ export function StatusWatchPanel({
               <Button
                 type="button"
                 variant="ghost"
-                disabled={disabled === true || pending || (target.cnr === null && target.caseNumber === null)}
+                disabled={
+                  disabled === true ||
+                  pending ||
+                  (target.cnr === null && target.caseNumber === null)
+                }
                 onClick={() => {
                   start(async () => {
                     const result = await actions.add({

@@ -34,7 +34,10 @@ export function WatchForm({ workspaceId, watches, remove, refresh, device }: Wat
       ) : (
         <ul className="flex flex-col gap-2">
           {watches.map((watch) => (
-            <li key={watch.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <li
+              key={watch.id}
+              className="flex flex-wrap items-center justify-between gap-2 text-sm"
+            >
               <span>
                 {watch.cnr ?? watch.caseNumber}
                 <span className="text-ink-muted">

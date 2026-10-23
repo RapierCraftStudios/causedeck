@@ -7,7 +7,9 @@
 import type { Result } from '../safe-action.ts';
 
 /** A parsed status as the device read it (validated again by the server action). */
-export type DeviceStatus = Record<string, unknown> & { status: 'ok' | 'not_found' | 'unrecognised' };
+export type DeviceStatus = Record<string, unknown> & {
+  status: 'ok' | 'not_found' | 'unrecognised';
+};
 
 /** Reads the watch's status page on the device, or null when it cannot. Never throws to the caller. */
 export type DeviceLookup = (watchId: string) => Promise<DeviceStatus | null>;
@@ -32,9 +34,7 @@ export interface RefreshActions {
 
 /** Where a refresh was served and what it cost: the provenance of a fallback is visible. */
 export type RefreshResult =
-  | ({ via: 'device' } & RefreshOutcome)
-  | ({ via: 'server' } & ServerRefreshed)
-  | { via: 'failed' };
+  ({ via: 'device' } & RefreshOutcome) | ({ via: 'server' } & ServerRefreshed) | { via: 'failed' };
 
 export async function refreshStatus(
   input: { workspaceId: string; watchId: string },

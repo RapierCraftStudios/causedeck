@@ -59,7 +59,10 @@ export default async function GrowthPage({
 }) {
   const staff = await requireStaff('growth');
   const channel = channelOf((await searchParams).channel);
-  const { cohorts, timeToFirstCourtDay } = await growthFunnel(staff, { channel });
+  const { cohorts, timeToFirstCourtDay } = await growthFunnel(
+    staff,
+    channel === undefined ? {} : { channel },
+  );
   const ttv = new Map(timeToFirstCourtDay.map((t) => [t.week, t]));
   return (
     <section aria-labelledby="page-title" className="grid gap-4">

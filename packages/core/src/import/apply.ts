@@ -52,8 +52,6 @@ export interface MatterUndoPayload {
   hearingIds: string[];
   orderIds: string[];
   obligationIds: string[];
-  /** Canonical listings a confirmed next date displaced; restored on undo. */
-  restoreCanonical: string[];
   documents: { id: string; unreadBySystem: boolean }[];
 }
 
@@ -219,6 +217,9 @@ export async function applyImportPlan(
         if (dup !== undefined) existing.set(p.key, dup);
       }
       const dupMatters = new Set([...existing.values()].map((row) => row.matterId));
+      for (const id of await sensitiveMatters(tx, workspaceId, [...dupMatters])) {
+        sensitiveIds.add(id);
+      }
       const touched = [...dupMatters, ...docs.filter(inMatter(m)).flatMap((d) => d.matterId ?? [])];
       const sensitive = touched.some((id) => sensitiveIds.has(id));
       for (const d of docs.filter(inMatter(m))) {
@@ -421,7 +422,6 @@ async function writeMatter(c: WriteContext, item: Prepared): Promise<void> {
     hearingIds: [],
     orderIds: [],
     obligationIds: [],
-    restoreCanonical: [],
     documents: [],
   };
   if (item.targetMatterId === null) {
@@ -472,17 +472,6 @@ async function writeMatter(c: WriteContext, item: Prepared): Promise<void> {
       undo.listingIds.push(proposed.proposed.listingId);
       out.created.listings += 1;
     } else if (proposed.kind === 'proposal') {
-      const [before] = await sp
-        .select({ id: listing.id })
-        .from(listing)
-        .where(
-          and(
-            eq(listing.workspaceId, workspaceId),
-            eq(listing.proceedingId, proceedingId),
-            eq(listing.canonical, true),
-          ),
-        );
-      if (before !== undefined) undo.restoreCanonical.push(before.id);
       await confirmNextDate(cdeps, actor, { listingId: proposed.listingId });
       undo.listingIds.push(proposed.listingId);
       out.created.listings += 1;
@@ -548,7 +537,6 @@ async function writeMatter(c: WriteContext, item: Prepared): Promise<void> {
         listDate: h.date,
         listType: 'daily',
         stageRaw: '',
-        canonical: false,
         ...provenance,
       })
       .returning({ id: listing.id });

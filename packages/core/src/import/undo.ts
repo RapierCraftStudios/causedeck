@@ -1,6 +1,6 @@
 // Undo a bootstrap import (#57 part 3, #549): within 7 days of the apply, every matter activity of
 // the batch's cascade group is reversed newest first: orders, hearings, obligations and listings
-// are deleted, a canonical date a confirmed next date displaced is restored, created proceedings
+// are deleted, created proceedings
 // are deleted children first, documents go back to where they were and a matter the import created
 // is archived (a matter is never deleted by an undo). The batch ends `undone`.
 import { schema, withWorkspace } from '@causedeck/db';
@@ -84,12 +84,6 @@ export async function undoImportBatch(
             await sp.delete(obligation).where(where(obligation, p.obligationIds));
           }
           if (p.listingIds.length > 0) await sp.delete(listing).where(where(listing, p.listingIds));
-          if (p.restoreCanonical.length > 0) {
-            await sp
-              .update(listing)
-              .set({ canonical: true, updatedAt: now })
-              .where(where(listing, p.restoreCanonical));
-          }
           for (const id of [...p.proceedingIds].reverse()) {
             await sp
               .delete(proceeding)

@@ -1,0 +1,19 @@
+{
+  "id": "en-33",
+  "language": "en",
+  "hearingDate": "2025-12-11",
+  "text": "In case 21292 of 2026 today. Arguments were heard and the matter stands adjourned. The opposite counsel sought time. Next hearing on the 1st. The court directed the respondent to file a counter affidavit.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-01-01",
+      "phrase": "on the 1st"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit.",
+        "dueDate": null
+      }
+    ],
+    "tasks": []
+  }
+}

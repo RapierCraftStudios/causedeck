@@ -1,0 +1,19 @@
+{
+  "id": "en-34",
+  "language": "en",
+  "hearingDate": "2025-11-13",
+  "text": "In case 14853 of 2022 today. The court heard both sides and the matter was adjourned again. Next hearing on the 20th. The court directed the petitioner to file the rejoinder by 14/11. Remind me to collect the certified copy.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-11-20",
+      "phrase": "on the 20th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the petitioner to file the rejoinder by 14/11.",
+        "dueDate": "2025-11-14"
+      }
+    ],
+    "tasks": ["collect the certified copy"]
+  }
+}

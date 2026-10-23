@@ -1,0 +1,23 @@
+{
+  "id": "en-44",
+  "language": "en",
+  "hearingDate": "2026-06-08",
+  "text": "In case 33780 of 2024 today. The matter was adjourned. Pleadings are incomplete. Next hearing after two weeks. The court directed the respondent to file a counter affidavit next saturday. The court directed the petitioner to file the rejoinder by 23/7. Remind me to collect the certified copy.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-06-22",
+      "phrase": "after two weeks"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit next saturday.",
+        "dueDate": "2026-06-13"
+      },
+      {
+        "text": "The court directed the petitioner to file the rejoinder by 23/7.",
+        "dueDate": "2026-07-23"
+      }
+    ],
+    "tasks": ["collect the certified copy"]
+  }
+}

@@ -56,7 +56,7 @@ export const A0_ACCESS_MODES: AccessModes = {
   display_board: 'none',
 };
 
-/** Recorded with the access-mode registry rows (migration 0061) until counsel reviews them. */
+/** Recorded with the access-mode registry rows (migration 0062) until counsel reviews them. */
 export const A0_ACCESS_NOTE =
   'A0 generic: documents the lawyer shares only; district cause-list pages (verification-challenge gated) are never accessed';
 

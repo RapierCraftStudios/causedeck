@@ -46,8 +46,12 @@ export async function uploadCalendarFile(workspaceId: string, file: File): Promi
 
 export interface ImportCardProps {
   workspaceId: string;
-  /** Where the review of a capture lives. */
-  reviewHref: (captureId: string) => string;
+  /**
+   * Where the review of a capture lives, as a path prefix: the review of capture `id` is
+   * `${reviewHrefBase}?capture=${id}`. A string, not a function: a server page cannot pass a function
+   * to this client component.
+   */
+  reviewHrefBase: string;
   upload?: (workspaceId: string, file: File) => Promise<CalendarUpload>;
 }
 
@@ -61,7 +65,7 @@ const ERROR_KEY = {
 
 export function ImportCard({
   workspaceId,
-  reviewHref,
+  reviewHrefBase,
   upload = uploadCalendarFile,
 }: ImportCardProps) {
   const t = useTranslations('calendar.import');
@@ -83,7 +87,7 @@ export function ImportCard({
       return;
     }
     toast(t(result.duplicate ? 'duplicate' : 'received'));
-    router.push(reviewHref(result.captureId));
+    router.push(`${reviewHrefBase}?capture=${result.captureId}`);
   }
 
   return (

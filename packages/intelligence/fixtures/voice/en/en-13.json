@@ -1,0 +1,19 @@
+{
+  "id": "en-13",
+  "language": "en",
+  "hearingDate": "2025-04-02",
+  "text": "In case 70629 of 2022 today. The court heard both sides and the matter was adjourned again. The bench was not available. Next hearing on 14/6. The court directed the State to produce the original records next saturday. Remind me to update the junior on the listing.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-06-14",
+      "phrase": "14/6"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records next saturday.",
+        "dueDate": "2025-04-05"
+      }
+    ],
+    "tasks": ["update the junior on the listing"]
+  }
+}

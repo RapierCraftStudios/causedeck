@@ -1,0 +1,23 @@
+{
+  "id": "en-17",
+  "language": "en",
+  "hearingDate": "2026-05-07",
+  "text": "In case 29900 of 2020 today. Arguments were heard and the matter stands adjourned. The opposite counsel sought time. Next hearing on May 20th. The court directed the respondent to file a counter affidavit by 21/6. The court directed both sides to exchange written submissions by second of September.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-05-20",
+      "phrase": "May 20th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit by 21/6.",
+        "dueDate": "2026-06-21"
+      },
+      {
+        "text": "The court directed both sides to exchange written submissions by second of September.",
+        "dueDate": "2026-09-02"
+      }
+    ],
+    "tasks": []
+  }
+}

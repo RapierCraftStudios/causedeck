@@ -85,12 +85,13 @@ test.describe('web push subscription', () => {
     });
     expect(prompts).toEqual({ prompts: 1, keyBytes: 65 });
 
-    // The push service worker registered standalone at `/`.
+    // The PWA service worker (#50) registered at `/`; it loads the push handlers.
     const script = await page.evaluate(async () => {
       const registration = await navigator.serviceWorker.getRegistration('/');
       return (registration?.active ?? registration?.installing ?? registration?.waiting)?.scriptURL;
     });
-    expect(script).toMatch(/\/push-sw-handler\.js$/);
+    expect(script).toMatch(/\/sw\.js$/);
+    expect((await page.request.get('/push-sw-handler.js')).ok()).toBe(true);
 
     const [stored] = await subscriptionRows(db.name);
     expect(stored).toMatchObject({ endpoint: ENDPOINT, revoked_at: null });

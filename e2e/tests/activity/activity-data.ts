@@ -2,10 +2,12 @@
 // (RLS does not apply), the way the engine would leave them after an auto-apply: an `activity` row
 // with its `undo_payload`, and the task it created, so Undo really removes something. Every test
 // starts from the reset seed, so nothing leaks between tests.
+import { randomBytes, randomUUID } from 'node:crypto';
+
 import postgres from 'postgres';
 
 import { E2E_WORKSPACES, e2eUser, type E2eWorkspaceSlug } from '../../fixtures/index.ts';
-import { MATTERS } from '../../fixtures/matters-data.ts';
+import { MATTER_DOCUMENT, MATTERS } from '../../fixtures/matters-data.ts';
 import { databaseUrl } from '../../support/db-reset.ts';
 
 export const CAPTURE_ID = '00000000-0000-4000-8000-0000000000c1';
@@ -21,6 +23,8 @@ export interface SeedActivity {
   daysAgo?: number;
   /** Create a task and point the undo payload at it (an undoable `task`). */
   withTask?: boolean;
+  /** Create a document attached to the matter and point the undo payload at it (an undoable `document_attach`). */
+  withDocument?: boolean;
   matterId?: string;
   captureId?: string;
   confirmed?: boolean;
@@ -56,6 +60,7 @@ export const FEED: readonly SeedActivity[] = [
     kind: 'document_attach',
     level: 'L3',
     daysAgo: 0.2,
+    withDocument: true,
     matterId: MATTERS.appeal.id,
     captureId: CAPTURE_ID,
     source: { input: 'document' },
@@ -101,10 +106,28 @@ export async function seedActivities(
           returning id`;
         taskId = task?.id ?? null;
       }
+      // The engine's `document_attach` undo reads `{ documentId, previousMatterId }`; without a real
+      // document and that payload, undoing the capture's attach fails in the handler.
+      let documentId: string | null = null;
+      if (item.withDocument === true) {
+        const [document] = await sql<{ id: string }[]>`
+          insert into document (workspace_id, kind, storage_key, sha256, text_status, matter_id)
+          values (${workspaceId}, ${MATTER_DOCUMENT.kind}, ${`ws/${workspaceId}/document/e2e-${randomUUID()}`},
+                  ${randomBytes(32).toString('hex')}, 'skipped', ${item.matterId ?? null})
+          returning id`;
+        documentId = document?.id ?? null;
+      }
       const refs: Record<string, unknown> = {
         ...(item.matterId === undefined ? {} : { matterId: item.matterId }),
         ...(taskId === null ? {} : { taskIds: [taskId] }),
+        ...(documentId === null ? {} : { documentIds: [documentId] }),
       };
+      const undoPayload =
+        taskId !== null
+          ? { taskId }
+          : documentId !== null
+            ? { documentId, previousMatterId: null }
+            : null;
       const [row] = await sql<{ id: string }[]>`
         insert into activity (
           workspace_id, capture_id, kind, level, actor, actor_user_id, summary, entity_refs,
@@ -113,7 +136,7 @@ export async function seedActivities(
           ${workspaceId}, ${item.captureId ?? null}, ${item.kind ?? 'task'}, ${item.level ?? 'L3'},
           ${item.confirmed === true ? 'user' : 'system'}, ${item.confirmed === true ? owner : null},
           ${item.summary}, ${sql.json(refs as never)},
-          ${taskId === null ? null : sql.json({ taskId })}, ${expires},
+          ${undoPayload === null ? null : sql.json(undoPayload)}, ${expires},
           ${item.confirmed === true ? created : null}, ${item.confirmed === true ? owner : null},
           ${item.confidence ?? null}, ${sql.json((item.source ?? {}) as never)}, ${created}
         ) returning id`;

@@ -1,5 +1,5 @@
 // The A0 configs v1.0.0 as committed and as registered (#56): the `*.config.json` files are the
-// bundled configs, migration 0061 stores exactly their canonical JSON with their checksums (the
+// bundled configs, migration 0062 stores exactly their canonical JSON with their checksums (the
 // loader refuses a row whose checksum does not match), the access-mode rows are user_supplied for
 // lists and orders and none otherwise, and the district forums stay at adapter level A0.
 import { readFileSync } from 'node:fs';
@@ -20,7 +20,7 @@ import {
 } from '../index.ts';
 
 const MIGRATION = readFileSync(
-  path.resolve(import.meta.dirname, '../../../../db/migrations/0061_generic_a0_v1.sql'),
+  path.resolve(import.meta.dirname, '../../../../db/migrations/0062_generic_a0_v1.sql'),
   'utf8',
 );
 const SEED_DIR = path.resolve(import.meta.dirname, '../../../../db/src/seed/forum-catalogue');
@@ -34,7 +34,7 @@ describe('A0 config v1.0.0', () => {
   });
 
   it.each(A0_ADAPTER_IDS)(
-    '%s: migration 0061 registers exactly this config, with its checksum',
+    '%s: migration 0062 registers exactly this config, with its checksum',
     async (id) => {
       const config = A0_CONFIGS[id];
       expect(config).toBeDefined();
@@ -45,7 +45,7 @@ describe('A0 config v1.0.0', () => {
     },
   );
 
-  it('migration 0061 records the access modes of every id', () => {
+  it('migration 0062 records the access modes of every id', () => {
     for (const id of A0_ADAPTER_IDS) {
       for (const [resource, mode] of Object.entries(createA0Adapter({ id }).accessModes)) {
         expect(MIGRATION).toContain(`('${id}', '${resource}', '${mode}', `);
@@ -60,7 +60,7 @@ describe('A0 config v1.0.0', () => {
     });
   });
 
-  it('migration 0061 is idempotent data and touches no schema or forum row', () => {
+  it('migration 0062 is idempotent data and touches no schema or forum row', () => {
     expect(MIGRATION).toContain('ON CONFLICT ("adapter_id", "version") DO NOTHING');
     expect(MIGRATION).toContain('ON CONFLICT ("adapter_id", "resource") DO NOTHING');
     expect(MIGRATION).not.toMatch(/\b(CREATE|ALTER|DROP)\b/);

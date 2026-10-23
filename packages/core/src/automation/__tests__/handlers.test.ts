@@ -273,7 +273,7 @@ describe('handler round trips restore the graph', () => {
 });
 
 describe('kinds that are registered but not enabled', () => {
-  it.each(['memory_item', 'fee_entry', 'outward_draft'] as const)(
+  it.each(['memory_item', 'fee_entry', 'outward_draft', 'hearing_outcome'] as const)(
     '%s throws KindNotEnabled',
     (kind) => {
       const handler = HANDLERS[kind];

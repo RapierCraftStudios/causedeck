@@ -1,0 +1,19 @@
+{
+  "id": "mixed-46",
+  "language": "mixed",
+  "hearingDate": "2026-05-04",
+  "text": "வழக்கு 37628/2021 இன்று. வழக்கு ஒத்திவைக்கப்பட்டது. பதில் மனு தாக்கல் செய்யப்படவில்லை. அடுத்த விசாரணை first of September. அரசு அசல் ஆவணங்களை சமர்ப்பிக்க twelfth of May உத்தரவிட்டது.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-09-01",
+      "phrase": "first of September"
+    },
+    "directions": [
+      {
+        "text": "அரசு அசல் ஆவணங்களை சமர்ப்பிக்க twelfth of May உத்தரவிட்டது.",
+        "dueDate": "2026-05-12"
+      }
+    ],
+    "tasks": []
+  }
+}

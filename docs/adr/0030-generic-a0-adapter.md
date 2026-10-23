@@ -1,4 +1,4 @@
-# 0029. A0 generic adapter: skeleton first, anchored model pass, always L2
+# 0030. A0 generic adapter: skeleton first, anchored model pass, always L2
 
 ## Status
 
@@ -41,7 +41,7 @@ Issue #56 builds the A0 tier of the adapter ladder for forums with no dedicated 
 - **Identity**: the CNR when present, else forum plus normalised case type, number and year; types no official source confirms are `verified: false`. District lists carry no advocate; rows are proposed only when they match a workspace CNR, case number or party alias, and the rest go back to the caller for discard.
 - **Language**: Tamil and Kannada documents keep their script, rows and documents carry language tags, party names keep the original script with spelling-tolerant aliases, and OCR is hinted with the forum language profile. Nothing is machine-translated or transliterated.
 - **Proposals** (`to-proposals.ts`): `{ proposedLevel: 'L2', draft }`. Orders reuse `toProposalDrafts` and drop `task` drafts.
-- **Registry**: the three ids are registered with `cause_list` and `orders` `user_supplied`, `status` and `display_board` `none`, no deep link (migration 0061); the district forums stay at adapter level A0.
+- **Registry**: the three ids are registered with `cause_list` and `orders` `user_supplied`, `status` and `display_board` `none`, no deep link (migration 0062); the district forums stay at adapter level A0.
 
 ## Consequences
 

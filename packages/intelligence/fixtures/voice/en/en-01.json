@@ -1,0 +1,19 @@
+{
+  "id": "en-01",
+  "language": "en",
+  "hearingDate": "2025-11-06",
+  "text": "In case 97200 of 2024 today. Arguments were heard and the matter stands adjourned. Pleadings are incomplete. Next hearing on February 12th. The court directed both sides to exchange written submissions. Remind me to call the client about the vakalatnama.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-02-12",
+      "phrase": "February 12th"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions.",
+        "dueDate": null
+      }
+    ],
+    "tasks": ["call the client about the vakalatnama"]
+  }
+}

@@ -27,10 +27,16 @@ test.describe('matters list', () => {
     const rows = listLayout(page).locator('[data-matter-row]');
     await expect(rows.first()).toBeVisible();
     const ids = await rows.evaluateAll((nodes) =>
-      nodes.slice(0, 6).map((node) => node.getAttribute('data-matter-row')),
+      nodes.slice(0, 10).map((node) => node.getAttribute('data-matter-row') ?? ''),
     );
-    // The sensitive matter has no next date and an id below the bulk's: the first of the nulls.
-    expect(ids).toEqual([...JOURNEY_ORDER, MATTERS.sensitive].map((m) => m.id));
+    // The journey matters have next dates: they come first, earliest date first.
+    expect(ids.slice(0, JOURNEY_ORDER.length)).toEqual(JOURNEY_ORDER.map((m) => m.id));
+    // Matters without a next date follow, ordered by id: the sensitive matter, locked but listed,
+    // is among them (the courts roster matters seeded below it share that tail, so it is not the
+    // first of the nulls), ahead of the 500-matter bulk whose ids are higher.
+    const tail = ids.slice(JOURNEY_ORDER.length);
+    expect(tail).toEqual([...tail].sort());
+    expect(tail).toContain(MATTERS.sensitive.id);
     await expect(matterRow(page, MATTERS.sensitive)).toBeVisible();
   });
 

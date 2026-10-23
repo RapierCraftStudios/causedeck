@@ -8,8 +8,21 @@ const input = z.object({
   mimeType: z.string().min(1),
   durationSeconds: z.number().min(0),
   language: language.optional(),
+  /** Languages the speaker may use (profile languages plus the forum's language profile). */
+  languageHints: z.array(language).max(9).optional(),
 });
-const output = z.object({ text: z.string(), language });
+/** One stretch of speech: millisecond bounds in the audio, with its own language tag. */
+export const transcriptSegment = z.object({
+  startMs: z.number().int().min(0),
+  endMs: z.number().int().min(0),
+  language,
+  text: z.string(),
+});
+const output = z.object({
+  text: z.string(),
+  language,
+  segments: z.array(transcriptSegment).optional(),
+});
 
 export const transcribe: TaskDef<z.infer<typeof input>, z.infer<typeof output>> = {
   id: 'transcribe',

@@ -7,7 +7,7 @@ import { schema, type Queryable } from '@causedeck/db';
 import { eq, isNotNull, or } from 'drizzle-orm';
 
 import { reconcileDetection, type ReconcileDeps } from './alerts.ts';
-import { detectBlockSignature, type SourceMetrics } from './detectors.ts';
+import type { SourceMetrics } from './detectors.ts';
 
 const { sourceHealth } = schema;
 
@@ -220,5 +220,3 @@ export async function applyResponses(
     }
   }
 }
-
-export { detectBlockSignature };

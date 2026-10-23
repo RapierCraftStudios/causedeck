@@ -192,10 +192,14 @@ export function readStatusPage(html: string, spec: PageSpec): ParsedCaseStatus {
     caseCell === null ? null : collapse(caseCell.text),
   );
   const stageCell = scalar(spec.labels.stage);
+  const normalisedStage =
+    stageCell === null ? null : normaliseStage(stageCell.text, STATUS_STAGE_MAP);
   const stage = keep(
     'stage',
     stageCell,
-    stageCell === null ? null : normaliseStage(stageCell.text, STATUS_STAGE_MAP),
+    normalisedStage === null
+      ? null
+      : { raw: normalisedStage.stageRaw, norm: normalisedStage.stageNorm },
   );
   const benchCell = scalar(spec.labels.bench);
   const bench = keep('bench', benchCell, benchCell?.text ?? null);

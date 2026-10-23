@@ -29,6 +29,7 @@ vi.mock('@causedeck/core/sources', () => ({
   SOURCE_MAX_TIERS: ['http', 'headless', 'proxy', 'captcha'],
   SOURCE_REVIEW_STATUSES: ['pending', 'cleared', 'rejected'],
   SOURCE_DATA_CLASSES: ['personal', 'non-personal', 'mixed'],
+  exposableThroughApi: (dataClass: string) => dataClass === 'non-personal',
   SourceAdminError: mocks.SourceAdminError,
   asSourceStaff: (userId: string) => ({ userId }),
   createSource: mocks.createSource,

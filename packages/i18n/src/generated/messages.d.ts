@@ -3475,6 +3475,101 @@ export type Messages = {
       retry: string;
     };
   };
+  bootstrapImport: {
+    title: string;
+    intro: string;
+    summary: string;
+    empty: string;
+    confirm: string;
+    confirming: string;
+    blockedNote: string;
+    failed: string;
+    saveFailed: string;
+    grid: {
+      label: string;
+      include: string;
+      expand: string;
+      collapse: string;
+      title: string;
+      forum: string;
+      stage: string;
+      noForum: string;
+      noStage: string;
+      nextDate: string;
+      noNextDate: string;
+      sources: string;
+      confidence: string;
+      lowConfidence: string;
+      conflict: string;
+      proceedings: string;
+      unnumbered: string;
+      moveTo: string;
+      moveLabel: string;
+      moved: string;
+      renamed: string;
+      merged: string;
+      split: string;
+      mergeNext: string;
+      splitLast: string;
+      edit: string;
+      active: string;
+    };
+    conflict: {
+      title: string;
+      pick: string;
+      picked: string;
+      blocked: string;
+    };
+    provenance: {
+      label: string;
+    };
+    preview: {
+      title: string;
+      empty: string;
+      proceeding: string;
+      sources: string;
+      kind: string;
+    };
+    issues: {
+      title: string;
+      none: string;
+      lowConfidence: string;
+      conflictingDates: string;
+      missingIdentifiers: string;
+      unreadable: string;
+      unreadableCopy: string;
+      a0Only: string;
+      review: string;
+      pickDate: string;
+      addIdentifiers: string;
+      retry: string;
+      keep: string;
+    };
+    shortcuts: {
+      title: string;
+      open: string;
+      move: string;
+      toggle: string;
+      expand: string;
+      merge: string;
+      split: string;
+      edit: string;
+      confirm: string;
+      help: string;
+      close: string;
+    };
+    result: {
+      title: string;
+      created: string;
+      duplicates: string;
+      unresolved: string;
+      undo: string;
+      undoing: string;
+      undone: string;
+      undoFailed: string;
+      next: string;
+    };
+  };
   camera: {
     command: string;
     title: string;

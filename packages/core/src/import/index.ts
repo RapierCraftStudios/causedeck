@@ -47,6 +47,13 @@ export {
   type ApplyDeps,
   type MatterUndoPayload,
 } from './apply.ts';
+export {
+  getImportPlan,
+  regroupPlan,
+  saveEditedImportPlan,
+  type PlanEditDeps,
+  type PlanGroupEdit,
+} from './plan-edit.ts';
 export { clusterProceedings, type ClusterGroup, type ClusterNode } from './cluster.ts';
 export {
   batchCostPaise,

@@ -7,7 +7,7 @@
 // `matter.write`. Building the plan reads only rows that match the member's own identifiers: without
 // a saved enrolment number or name spelling the action asks for them and saves them only once the
 // member confirmed what was proposed. Nothing is sent, filed or paid.
-import type { ApplyDecisions } from '@causedeck/core/import';
+import type { ApplyDecisions, ImportPlan } from '@causedeck/core/import';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -52,6 +52,20 @@ const Decisions = z
     includeSensitive: z.array(z.string().max(40)).max(500).optional(),
   })
   .strict();
+const PlanEdits = BatchTarget.extend({
+  groups: z
+    .array(
+      z
+        .object({
+          tempId: z.string().min(1).max(40),
+          title: z.string().trim().min(1).max(200),
+          proceedingKeys: z.array(z.string().min(1).max(200)).min(1).max(200),
+        })
+        .strict(),
+    )
+    .min(1)
+    .max(500),
+}).strict();
 const ApplyPlan = BatchTarget.extend({ decisions: Decisions.optional() }).strict();
 
 /** The decisions without `undefined` members (`exactOptionalPropertyTypes`). */
@@ -186,6 +200,26 @@ const buildPlan = workspaceAction(
   { action: 'matter.write' },
 );
 
+const readPlan = workspaceAction(
+  BatchTarget,
+  async ({ batchId }, ctx): Promise<ImportPlan> => {
+    const { getImportPlan } = await import('@causedeck/core/import');
+    return getImportPlan(depsOf(ctx), actorOf(ctx), batchId);
+  },
+  { action: 'matter.read' },
+);
+
+const savePlanEdits = workspaceAction(
+  PlanEdits,
+  async ({ batchId, groups }, ctx): Promise<ImportPlan> => {
+    const { saveEditedImportPlan } = await import('@causedeck/core/import');
+    const plan = await saveEditedImportPlan(depsOf(ctx), actorOf(ctx), { batchId, groups });
+    revalidatePath('/w/[slug]/import', 'page');
+    return plan;
+  },
+  { action: 'matter.write' },
+);
+
 const applyPlan = workspaceAction(
   ApplyPlan,
   async ({ batchId, decisions }, ctx): Promise<ApplyView> => {
@@ -235,6 +269,14 @@ export async function importProgressAction(raw: unknown): Promise<Result<ImportP
 
 export async function buildImportPlanAction(raw: unknown): Promise<Result<BuildPlanView>> {
   return buildPlan(raw);
+}
+
+export async function getImportPlanAction(raw: unknown): Promise<Result<ImportPlan>> {
+  return readPlan(raw);
+}
+
+export async function saveImportPlanEditsAction(raw: unknown): Promise<Result<ImportPlan>> {
+  return savePlanEdits(raw);
 }
 
 export async function applyImportPlanAction(raw: unknown): Promise<Result<ApplyView>> {

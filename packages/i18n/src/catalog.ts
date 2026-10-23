@@ -25,6 +25,7 @@ export const NAMESPACES = [
   'pwa',
   'whatsapp-import',
   'email-intake',
+  'import',
   'camera',
   'errors',
 ] as const;

@@ -2,10 +2,11 @@
 // captcha tier, and every staff change records old and new values in the same transaction.
 import { randomUUID } from 'node:crypto';
 
-import { schema } from '@causedeck/db';
-import { closeTestDb, withTestDb } from '@causedeck/db/testing';
+import { Secret } from '@causedeck/config/env';
+import { createDb, schema, type Database } from '@causedeck/db';
+import { closeTestDb, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   asSourceStaff,
@@ -21,7 +22,24 @@ import {
   type SourceInput,
 } from '../index.ts';
 
-afterAll(closeTestDb);
+// The app role cannot write `staff_user`, so the staff member is committed through the owner role.
+let owner: Database;
+let staffId: string;
+
+beforeAll(async () => {
+  owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
+  staffId = randomUUID();
+  await owner
+    .insert(schema.user)
+    .values({ id: staffId, name: 'ops', email: `ops-${staffId}@causedeck.test` });
+  await owner.insert(schema.staffUser).values({ userId: staffId, role: 'ops' });
+});
+
+afterAll(async () => {
+  await owner.delete(schema.user).where(eq(schema.user.id, staffId));
+  await owner.$client.end();
+  await closeTestDb();
+});
 
 const input: SourceInput = {
   kind: 'news',
@@ -71,20 +89,15 @@ describe('validateSourceTier', () => {
   });
 });
 
-async function staffTx(tx: Parameters<Parameters<typeof withTestDb>[0]>[0]) {
-  const userId = randomUUID();
-  await tx
-    .insert(schema.user)
-    .values({ id: userId, name: 'ops', email: `ops-${userId}@causedeck.test` });
-  await tx.insert(schema.staffUser).values({ userId, role: 'ops' });
-  return asSourceStaff(userId);
+function staffTx() {
+  return Promise.resolve(asSourceStaff(staffId));
 }
 
 describe('policyFor and staff changes', () => {
   it('throws SourceNotCleared for unknown, uncleared and killed sources', async () => {
     await withTestDb(async (tx) => {
       const db = tx as never;
-      const actor = await staffTx(tx);
+      const actor = await staffTx();
       await expect(policyFor('nope.unknown', { db })).rejects.toBeInstanceOf(SourceNotCleared);
       await createSource(db, actor, 'test.pending', { ...input, counselStatus: 'pending' });
       await expect(policyFor('test.pending', { db })).rejects.toMatchObject({
@@ -105,7 +118,7 @@ describe('policyFor and staff changes', () => {
   it('refuses a captcha court source and records old and new values on change', async () => {
     await withTestDb(async (tx) => {
       const db = tx as never;
-      const actor = await staffTx(tx);
+      const actor = await staffTx();
       await expect(
         createSource(db, actor, 'test.court', { ...input, kind: 'court', maxTier: 'captcha' }),
       ).rejects.toMatchObject({ code: 'INVALID' });

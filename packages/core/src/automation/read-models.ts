@@ -105,6 +105,8 @@ interface CaptureInput {
   status: string;
   matterHintId: string | null;
   createdAt: Date;
+  /** `source_meta.needsYouReason`: why a channel handler (email intake, #530) put it in Needs you. */
+  needsYouReason?: string | null;
 }
 
 export interface InboxFacts {
@@ -192,11 +194,11 @@ export function groupInbox(facts: InboxFacts): Inbox {
       payload: null,
       currentDate: null,
       confidence: null,
-      needsYouReason: 'unreadable',
+      needsYouReason: row.needsYouReason ?? 'unreadable',
       anchors: [],
       createdAt: row.createdAt,
       reassignUntil: null,
-      canKeep: row.status === 'needs_you',
+      canKeep: row.status === 'needs_you' && row.needsYouReason == null,
     });
   }
   items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -296,6 +298,7 @@ export async function getInbox(
         status: capture.status,
         matterHintId: capture.matterHintId,
         createdAt: capture.createdAt,
+        needsYouReason: sql<string | null>`${capture.sourceMeta}->>'needsYouReason'`,
       })
       .from(capture)
       .where(

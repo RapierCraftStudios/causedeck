@@ -3114,7 +3114,9 @@
       "keyLine": "Key line",
       "submit": "Save key line",
       "saved": "Saved. We will read what you typed.",
-      "kept": "Kept as an attachment, unread."
+      "kept": "Kept as an attachment, unread.",
+      "unrecognisedSender": "Unrecognised sender: review",
+      "unrecognisedSenderCopy": "This email came from a sender you have not allowed, so nothing in it was read. Review it, then add the sender to your allow-list if you trust it."
     },
     "reassign": {
       "prompt": "Moved to wrong matter? Reassign",

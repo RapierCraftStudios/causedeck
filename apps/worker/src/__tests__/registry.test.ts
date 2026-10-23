@@ -145,6 +145,8 @@ describe('enqueue', () => {
       'system.capture.retention',
       'capture.retention',
       'whatsapp.import',
+      'email.intake',
+      'email.raw-expire',
     ]);
   });
 });

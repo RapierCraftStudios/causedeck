@@ -12,7 +12,7 @@ import {
   SheetTitle,
 } from '@causedeck/ui/sheet';
 import { FileText } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useFormatter, useNow, useTranslations } from 'next-intl';
 
 import type { OutboxItem } from '../../lib/pwa/outbox/db.ts';
 import { capStatus, usedBytes } from '../../lib/pwa/outbox/queue.ts';
@@ -113,12 +113,14 @@ export function OutboxSheetView({
   onOpenChange,
   items,
   capBytes,
-  now = Date.now(),
+  now: nowProp,
   onRetry,
   onRemove,
   onUploadNow,
 }: OutboxSheetViewProps) {
   const t = useTranslations('pwa.outbox.sheet');
+  const current = useNow();
+  const now = nowProp ?? current.getTime();
   const live = items.filter((item) => item.state !== 'sent');
   const used = usedBytes(items);
   const cap = capStatus(used, 0, capBytes);

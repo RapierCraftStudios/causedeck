@@ -227,7 +227,8 @@
       "usage": "Usage",
       "audit": "Audit log",
       "support": "Support access",
-      "more": "More"
+      "more": "More",
+      "court-watch": "Court watch"
     },
     "placeholder": {
       "export": "Download a copy of everything in this workspace.",
@@ -767,6 +768,25 @@
           "google": "Google"
         }
       }
+    },
+    "courtWatch": {
+      "title": "Court watch",
+      "description": "Watch your name or Bar Registration Number on the Karnataka High Court public cause list. Matches arrive in your Inbox as proposals; nothing is confirmed for you.",
+      "kind": {
+        "name": "Advocate name",
+        "brn": "BRN"
+      },
+      "value": "Name or BRN",
+      "add": "Add watch",
+      "remove": "Remove",
+      "empty": "You are not watching anything yet.",
+      "flagOff": "Court watch is not switched on for this workspace.",
+      "uncleared": "The Karnataka HC list source is not cleared yet, so nothing is fetched.",
+      "cleared": "The Karnataka HC list source is cleared.",
+      "added": "Watch added.",
+      "removed": "Watch removed.",
+      "failed": "Could not save. Try again.",
+      "loading": "Loading court watch"
     }
   }
 }

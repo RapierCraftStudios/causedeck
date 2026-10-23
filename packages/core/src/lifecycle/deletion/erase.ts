@@ -58,6 +58,8 @@ export const PURGE_ORDER = [
   'support_session',
   // Court document network (#485): the link to a shared public copy; the rows step withdraws first.
   'contribution_ledger',
+  // Official notices feed (#584): matches cite a matter or forum; before both.
+  'notice_match',
   // The matter graph (#345-#348): appearances before their hearing, hearings before their
   // listing; tasks before the obligations they fulfil, obligations before their source order;
   // listings, orders and obligations before the proceedings, documents, anchors and matters they
@@ -85,6 +87,9 @@ export const PURGE_ORDER = [
   'role_edge',
   'person',
   'organisation',
+  // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
+  'case_status_snapshot',
+  'case_watch',
   'proceeding_state_change',
   'proceeding_link',
   'proceeding',
@@ -105,6 +110,8 @@ export const PURGE_ORDER = [
   'import_batch',
   // The importing member's identifiers (#550): cites no capture, only the user.
   'advocate_profile',
+  // Court watches (#482): cite the member's user and the organization only.
+  'cause_list_watch',
   // The capture inbox (#43): after the documents that cite a capture, before the matters it hints.
   'capture',
   'workspace_capture_channel',

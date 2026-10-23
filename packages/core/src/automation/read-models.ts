@@ -60,6 +60,8 @@ export interface InboxItem {
   reassignUntil: Date | null;
   /** Unreadable only: "keep as attachment" is a legal move from the capture's status. */
   canKeep: boolean;
+  /** `source.ref` of the proposal's draft (e.g. `cause_list_publication:<id>`, #482); null when none. */
+  sourceRef?: string | null;
 }
 
 export interface CaptureProgress {
@@ -96,6 +98,8 @@ interface ProposalInput {
   confidence: string | null;
   needsYouReason: string | null;
   entityRefs: Record<string, unknown>;
+  /** The draft's source, pattern key and match (`proposal.meta`). */
+  meta?: Record<string, unknown>;
   createdAt: Date;
 }
 
@@ -129,6 +133,12 @@ export interface InboxFacts {
 
 const isProcessing = (status: string): status is CaptureProgress['status'] =>
   (PROCESSING_STATUSES as readonly string[]).includes(status);
+
+function sourceRefOf(row: ProposalInput): string | null {
+  const source = row.meta?.['source'];
+  const ref = (source as { ref?: unknown } | null | undefined)?.ref;
+  return typeof ref === 'string' ? ref : null;
+}
 
 function conflictOf(row: ProposalInput): boolean {
   return row.kind === 'next_date' && row.entityRefs['conflict'] === true;
@@ -178,6 +188,7 @@ export function groupInbox(facts: InboxFacts): Inbox {
       createdAt: row.createdAt,
       reassignUntil: hasCapture ? reassignUntil(facts, row) : null,
       canKeep: false,
+      sourceRef: sourceRefOf(row),
     });
   }
   for (const row of facts.captures) {
@@ -289,6 +300,7 @@ export async function getInbox(
         confidence: proposal.confidence,
         needsYouReason: proposal.needsYouReason,
         entityRefs: proposal.entityRefs,
+        meta: proposal.meta,
         createdAt: proposal.createdAt,
       })
       .from(proposal)

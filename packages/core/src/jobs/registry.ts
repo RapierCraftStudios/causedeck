@@ -20,6 +20,7 @@ import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
+import { corpusPoll } from './definitions/corpus-poll.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
@@ -28,6 +29,7 @@ import { emailIntake } from './definitions/email-intake.ts';
 import { emailRawExpire } from './definitions/email-raw-expire.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
 import { deletionTick } from './definitions/deletion-tick.ts';
+import { causelistPoll } from './definitions/causelist-poll.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { memoryErase } from './definitions/memory-erase.ts';
@@ -177,6 +179,8 @@ export const registry = createRegistry([
   extractOrder,
   importBatch,
   importFile,
+  corpusPoll,
+  causelistPoll,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -217,6 +221,8 @@ export type JobMap = RegistryMap<
     typeof extractOrder,
     typeof importBatch,
     typeof importFile,
+    typeof corpusPoll,
+    typeof causelistPoll,
   ]
 >;
 export type JobName = keyof JobMap;

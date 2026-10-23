@@ -477,6 +477,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@causedeck/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@causedeck/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -843,6 +846,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@causedeck/fetch':
+        specifier: workspace:*
+        version: link:../../packages/fetch
       '@causedeck/observability':
         specifier: workspace:*
         version: link:../../packages/observability
@@ -1186,6 +1192,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
+      '@causedeck/fetch':
+        specifier: workspace:*
+        version: link:../fetch
       '@causedeck/flags':
         specifier: workspace:*
         version: link:../flags

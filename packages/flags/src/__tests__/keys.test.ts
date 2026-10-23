@@ -18,6 +18,7 @@ const LEGAL = [
   'limitation.enabled',
   'court.a2.retrieval',
   'court.live-tracking',
+  'court.khc-a2',
   'court.sanctioned-push',
   'capture.whatsapp-import',
 ];

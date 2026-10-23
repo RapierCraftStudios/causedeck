@@ -115,6 +115,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   ics_feed_event: DB_TABLES_TEST,
   ics_import_event: DB_TABLES_TEST,
 
+  // Case-status watch (#589).
+  case_watch: DB_TABLES_TEST,
+  case_status_snapshot: DB_TABLES_TEST,
+
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
 
@@ -125,6 +129,11 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,
+
+  // Karnataka HC cause-list watches (#482).
+  cause_list_watch: DB_TABLES_TEST,
+  // Official notices feed (#584).
+  notice_match: DB_TABLES_TEST,
 };
 
 /**
@@ -221,6 +230,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'sends the payload as given; runJob scopes the handler to the payload workspace',
   },
   retentionSweep: selfScoped,
+  // KHC cause-list watches (#482)
+  addCauseListWatch: selfScoped,
+  listCauseListWatches: selfScoped,
+  removeCauseListWatch: selfScoped,
   runBillingProcessEvent: {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
@@ -666,6 +679,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
   },
+  // citations (#484): the global corpus, one answer for every workspace
+  verifyCitation: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments, the same answer in every workspace; reads nothing tenant-scoped',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -853,6 +872,19 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   AiCallContractError: 'error class',
   hashUserAgent: 'pure',
   truncateIpForDisplay: 'pure',
+  // court: KHC cause-list watch (#482)
+  KHC_CAUSE_LIST_SOURCE_ID: 'constant',
+  COURT_KHC_A2_FLAG: 'constant',
+  KHC_LIST_PATHS: 'constant',
+  PUBLICATION_REF_PREFIX: 'constant',
+  createKhcListParser: 'pure (builds the KHC adapter parser; no database access)',
+  getPublicationForRef:
+    'global table `cause_list_publication` (GLOBAL_TABLES, no workspace_id, no RLS): content-free list publication metadata (URL, fetch time, hash), never tenant data',
+  pollCauseList:
+    'system job body: no workspace; reads watches only through the owner-defined app_cause_list_watch_targets and writes proposals under each watching workspace scope; covered by list-watch.test.ts',
+  CAUSELIST_POLL_CRON: 'constant',
+  causelistPoll: 'job definition (handler is runCauselistPoll)',
+  runCauselistPoll: 'system job body: see pollCauseList',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',
@@ -927,6 +959,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   digestInstant: 'pure (time zone math)',
   notificationJobDeps: 'transport wiring (no database access)',
   setNotificationJobDeps: 'setter',
+  setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
   // usage: keys and periods (#219)
   USAGE_KEYS: 'constant',
   USAGE_KEY_KINDS: 'constant',

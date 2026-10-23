@@ -392,6 +392,46 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
 }
 
 const CASES: Record<string, Case> = {
+  addCauseListWatch: async (f) => {
+    // ub's watch lands in B; A has no watch from it.
+    await core.addCauseListWatch(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+      {
+        kind: 'brn',
+        value: 'KAR/2/2000',
+      },
+    );
+    const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    expect(aWatches.map((w) => w.value)).toEqual(['KAR/1/1900']);
+  },
+  listCauseListWatches: async (f) => {
+    // ub sees exactly B's own seeded watch, never A's.
+    const own = await core.listCauseListWatches(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+    );
+    const bIds = (
+      await inWorkspace(f.tx, f.b.id, (s) => s.select().from(schema.causeListWatch))
+    ).map((w) => w.id);
+    const aIds = (
+      await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch))
+    ).map((w) => w.id);
+    expect(own.map((w) => w.id)).toEqual(bIds);
+    expect(own.some((w) => aIds.includes(w.id))).toBe(false);
+  },
+  removeCauseListWatch: async (f) => {
+    const [watch] = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    await expectDenied(
+      core.removeCauseListWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id },
+        watch?.id ?? '',
+      ),
+    );
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    expect(after).toHaveLength(1);
+  },
   record: async (f) => {
     const before = await auditIds(f, f.a.id);
     await expectTenancyViolation(
@@ -913,6 +953,36 @@ const CASES: Record<string, Case> = {
     expect((await aWorkspace(f))?.slug).toBe(f.a.slug);
   },
   resolveSlug: () => Promise.resolve(),
+  verifyCitation: async (f) => {
+    const citation = `2026:MHC:${String(900000 + Math.floor(Math.random() * 99999))}`;
+    await f.tx.insert(schema.judgment).values({
+      sourceId: 'in.mhc.judgments',
+      court: 'MHC',
+      neutralCitation: citation,
+      sha256: randomUUID().replaceAll('-', ''),
+      provenance: {
+        url: 'https://mhc.example/j/xt.pdf',
+        fetchedAt: '2026-10-23T00:00:00.000Z',
+        sha256: 'xt',
+        sourceId: 'in.mhc.judgments',
+        sourceVersion: 'v1',
+        tierUsed: 'http',
+        costDollars: 0,
+      },
+      pageText: [{ pageNo: 1, text: `${citation}\nORDER` }],
+    });
+    const before = await aWorkspace(f);
+    // The corpus is global: A's and B's scopes see the same record, and nothing of A's changes.
+    const asA = await inWorkspace(f.tx, f.a.id, (s) => core.verifyCitation(citation, { db: s }));
+    const asB = await f.asB((s) => core.verifyCitation(citation, { db: s }));
+    expect(asA).toMatchObject({ status: 'VERIFIED', citation, court: 'MHC' });
+    expect(asB).toEqual(asA);
+    expect(await core.verifyCitation('2026:MHC:1', { db: f.tx })).toMatchObject({
+      status: 'UNVERIFIED',
+      reason: 'not_in_corpus',
+    });
+    expect(await aWorkspace(f)).toEqual(before);
+  },
   createWorkspace: async (f) => {
     const before = await aMembers(f);
     const created = await core.createWorkspace(f.tx, { userId: f.ub, input: { name: f.a.name } });

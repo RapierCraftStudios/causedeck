@@ -12,7 +12,8 @@ import type { IntakeContext } from '../types.ts';
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const FIXTURES = join(HERE, '../../../fixtures/email');
 
-export const fixture = (name: string): string => readFileSync(join(FIXTURES, `${name}.eml`), 'utf8');
+export const fixture = (name: string): string =>
+  readFileSync(join(FIXTURES, `${name}.eml`), 'utf8');
 
 export const MATTER_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -21,12 +22,10 @@ export const ALLOW_LIST: readonly SenderPattern[] = [
   { pattern: 'registry@example.test', kind: 'court' },
   { pattern: 'efiling@example.test', kind: 'efiling' },
   { pattern: '@chambers.example.test', kind: 'briefing_counsel' },
-  ...[
-    'r.fictional',
-    'k.kalpitham',
-    's.imaginary',
-    'v.imaginary',
-  ].map((user): SenderPattern => ({ pattern: `${user}@example.test`, kind: 'self' })),
+  ...['r.fictional', 'k.kalpitham', 's.imaginary', 'v.imaginary'].map((user): SenderPattern => ({
+    pattern: `${user}@example.test`,
+    kind: 'self',
+  })),
 ];
 
 export const CONTEXT: IntakeContext = {
@@ -41,7 +40,10 @@ export async function intake(
   name: string,
   context: Partial<IntakeContext> = {},
 ): Promise<IntakeOutcome> {
-  return processIntake(fixture(name), { allowList: ALLOW_LIST, context: { ...CONTEXT, ...context } });
+  return processIntake(fixture(name), {
+    allowList: ALLOW_LIST,
+    context: { ...CONTEXT, ...context },
+  });
 }
 
 /** The parsed outcome, failing the test when the message was dropped or quarantined. */

@@ -60,7 +60,11 @@ describe('aims-cause-list parser', () => {
     const outcome = await parsed('aims-plain', {
       matters: [
         ...CONTEXT.matters,
-        { matterId: '22222222-2222-4222-8222-222222222222', matchKey: 'WP/1/2020', expectedOn: '2026-10-23' },
+        {
+          matterId: '22222222-2222-4222-8222-222222222222',
+          matchKey: 'WP/1/2020',
+          expectedOn: '2026-10-23',
+        },
       ],
     });
     expect(outcome.result.diagnostics).toContainEqual(

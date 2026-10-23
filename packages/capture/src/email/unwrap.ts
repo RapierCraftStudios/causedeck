@@ -2,7 +2,13 @@
 // (`Begin forwarded message:`), Outlook (`From:/Sent:/To:/Subject:` block) and an attached
 // `message/rfc822`. Matching uses the original sender, date, subject and body; the user who
 // forwarded the message is kept as `submitter`. Nested forwards unwrap to the innermost message.
-import type { EmailAddress, EmailAttachment, IntakeEmail, ParsedEmail, SenderKind } from './types.ts';
+import type {
+  EmailAddress,
+  EmailAttachment,
+  IntakeEmail,
+  ParsedEmail,
+  SenderKind,
+} from './types.ts';
 
 const MAX_DEPTH = 4;
 const MARKER =
@@ -12,7 +18,8 @@ const HEADER = /^(From|Sent|Date|To|Cc|Subject):\s*(.*)$/i;
 /** `Name <addr@host>`, `"Name" <addr>` or a bare address. */
 export function parseAddress(value: string): EmailAddress {
   const bracket = /^\s*"?([^"<]*?)"?\s*<\s*([^<>\s]+)\s*>/.exec(value);
-  if (bracket !== null) return { name: (bracket[1] ?? '').trim(), address: (bracket[2] ?? '').toLowerCase() };
+  if (bracket !== null)
+    return { name: (bracket[1] ?? '').trim(), address: (bracket[2] ?? '').toLowerCase() };
   const bare = /[^\s<>,;]+@[^\s<>,;]+/.exec(value);
   return { name: '', address: (bare?.[0] ?? '').toLowerCase() };
 }
@@ -59,19 +66,33 @@ function textForward(text: string, fallback: Inner): Inner | null {
 }
 
 function collectAttachments(email: ParsedEmail, depth = 0): EmailAttachment[] {
-  const nested = depth < MAX_DEPTH ? email.forwarded.flatMap((f) => collectAttachments(f, depth + 1)) : [];
+  const nested =
+    depth < MAX_DEPTH ? email.forwarded.flatMap((f) => collectAttachments(f, depth + 1)) : [];
   return [...email.attachments, ...nested];
 }
 
 /** The original message inside any forwarding wrappers. `senderKind` is the allow-list's. */
-export function unwrapForward(email: ParsedEmail, senderKind: SenderKind | null = null): IntakeEmail {
-  let inner: Inner = { sender: email.from, date: email.date, subject: email.subject, body: email.text };
+export function unwrapForward(
+  email: ParsedEmail,
+  senderKind: SenderKind | null = null,
+): IntakeEmail {
+  let inner: Inner = {
+    sender: email.from,
+    date: email.date,
+    subject: email.subject,
+    body: email.text,
+  };
   let forwarded = false;
   let current = email;
   for (let depth = 0; depth < MAX_DEPTH; depth += 1) {
     const attached = current.forwarded[0];
     if (attached !== undefined) {
-      inner = { sender: attached.from, date: attached.date, subject: attached.subject, body: attached.text };
+      inner = {
+        sender: attached.from,
+        date: attached.date,
+        subject: attached.subject,
+        body: attached.text,
+      };
       current = attached;
       forwarded = true;
       continue;

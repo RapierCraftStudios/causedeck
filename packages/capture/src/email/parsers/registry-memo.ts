@@ -6,16 +6,25 @@ import { parseRegistryEvents, type RegistryEvent } from '@causedeck/adapters';
 import type { ProposalDraft } from '@causedeck/validators';
 
 import { allowedAttachments, bodyCapture } from './generic.ts';
-import type { IntakeContext, IntakeDiagnostic, IntakeEmail, IntakeParser, IntakeResult } from '../types.ts';
+import type {
+  IntakeContext,
+  IntakeDiagnostic,
+  IntakeEmail,
+  IntakeParser,
+  IntakeResult,
+} from '../types.ts';
 
-const CUES = /\b(?:returned\s+for\s+(?:rectification|defects)|defects?|re-?present(?:ed)?|S\.?R\.?\s*No)\b/i;
+const CUES =
+  /\b(?:returned\s+for\s+(?:rectification|defects)|defects?|re-?present(?:ed)?|S\.?R\.?\s*No)\b/i;
 
 export const registryMemoParser: IntakeParser = {
   id: 'registry-memo',
   match(email: IntakeEmail) {
     const text = `${email.subject}\n${email.body}`;
     if (!CUES.test(text)) return 0;
-    return email.senderKind === 'court' || /\b(?:defect|return|re-?present)/i.test(email.subject) ? 0.85 : 0.6;
+    return email.senderKind === 'court' || /\b(?:defect|return|re-?present)/i.test(email.subject)
+      ? 0.85
+      : 0.6;
   },
   async parse(email, ctx: IntakeContext): Promise<IntakeResult> {
     const events: RegistryEvent[] = parseRegistryEvents({
@@ -27,7 +36,9 @@ export const registryMemoParser: IntakeParser = {
     const diagnostics: IntakeDiagnostic[] = [];
     const source = { type: 'deterministic' as const, input: 'email', ref: email.email.messageId };
     const caseRef = events.find((event) => event.caseRef !== undefined)?.caseRef;
-    const matter = ctx.matters.find((m) => caseRef?.matchKey != null && m.matchKey === caseRef.matchKey);
+    const matter = ctx.matters.find(
+      (m) => caseRef?.matchKey != null && m.matchKey === caseRef.matchKey,
+    );
 
     for (const event of events) {
       if (event.kind !== 'cure_deadline' || event.deadline === undefined) continue;

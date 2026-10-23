@@ -48,7 +48,9 @@ export function evaluateSender(email: ParsedEmail, list: readonly SenderPattern[
     const hit = list.find((entry) => matchesPattern(address, entry.pattern));
     if (hit === undefined) continue;
     if (hit.kind !== 'self') {
-      const failed = (['spf', 'dkim', 'dmarc'] as const).filter((key) => email.auth[key] === 'fail');
+      const failed = (['spf', 'dkim', 'dmarc'] as const).filter(
+        (key) => email.auth[key] === 'fail',
+      );
       if (failed.length > 0) return { verdict: 'quarantine', reason: 'auth_failed', failed };
     }
     return { verdict: 'allowed', kind: hit.kind, matchedAs, pattern: hit.pattern };

@@ -34,7 +34,9 @@ describe('selectParser', () => {
 
   it('picks the highest score, breaking ties by registry order', async () => {
     const e = await email();
-    expect(selectParser(e, [make('a', 0.7), make('b', 0.9), make('c', 0.9), genericParser]).parser.id).toBe('b');
+    expect(
+      selectParser(e, [make('a', 0.7), make('b', 0.9), make('c', 0.9), genericParser]).parser.id,
+    ).toBe('b');
   });
 
   it('ignores scores under the threshold and falls back to generic', async () => {

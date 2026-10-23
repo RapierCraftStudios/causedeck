@@ -4,7 +4,13 @@
 import PostalMime from 'postal-mime';
 
 import { htmlToText } from './sanitize.ts';
-import type { AuthVerdict, EmailAddress, EmailAttachment, EmailAuth, ParsedEmail } from './types.ts';
+import type {
+  AuthVerdict,
+  EmailAddress,
+  EmailAttachment,
+  EmailAuth,
+  ParsedEmail,
+} from './types.ts';
 
 const MAX_DEPTH = 4;
 
@@ -12,7 +18,10 @@ const toBytes = (raw: string | Uint8Array): Uint8Array =>
   typeof raw === 'string' ? new TextEncoder().encode(raw) : raw;
 
 const address = (value: { name?: string | undefined; address?: string | undefined } | undefined) =>
-  ({ name: value?.name ?? '', address: (value?.address ?? '').toLowerCase() }) satisfies EmailAddress;
+  ({
+    name: value?.name ?? '',
+    address: (value?.address ?? '').toLowerCase(),
+  }) satisfies EmailAddress;
 
 function verdict(headerValue: string, mechanism: string): AuthVerdict {
   const match = new RegExp(String.raw`\b${mechanism}\s*=\s*([a-z]+)`, 'i').exec(headerValue);

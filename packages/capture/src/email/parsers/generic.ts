@@ -21,7 +21,12 @@ import type {
 const encoder = new TextEncoder();
 
 const safeName = (subject: string) =>
-  `${subject.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'email'}.txt`;
+  `${
+    subject
+      .replace(/[^A-Za-z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'email'
+  }.txt`;
 
 /** The body as a text capture; null when the message has no text. */
 export function bodyCapture(email: IntakeEmail): IntakeCapture | null {
@@ -47,7 +52,12 @@ export async function allowedAttachments(
       const type = resolveAllowedType(attachment.fileName, attachment.contentType);
       assertWithinCap(type, attachment.content.byteLength, ctx.sizeCapOverrides);
       const mime = await assertBytesMatch(type, attachment.content);
-      captures.push({ source: 'attachment', fileName: attachment.fileName, mime, content: attachment.content });
+      captures.push({
+        source: 'attachment',
+        fileName: attachment.fileName,
+        mime,
+        content: attachment.content,
+      });
     } catch (error) {
       const reason = isUnsupportedTypeError(error)
         ? error.reason

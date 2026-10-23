@@ -55,7 +55,8 @@ export function selectParser(
 export type DropReason = 'bounce' | 'auto_reply';
 
 const BOUNCE_FROM = /^(?:mailer-daemon|postmaster)@/i;
-const BOUNCE_SUBJECT = /^(?:undeliverable|delivery status notification|mail delivery failed|returned mail|failure notice)/i;
+const BOUNCE_SUBJECT =
+  /^(?:undeliverable|delivery status notification|mail delivery failed|returned mail|failure notice)/i;
 const AUTO_SUBJECT = /^(?:automatic reply|auto(?:matic)?[- ]?reply|out of office|vacation)\b/i;
 
 /** Bounce, vacation and out-of-office mail is dropped before anything else reads it. */
@@ -99,7 +100,14 @@ export function detectInjection(text: string): boolean {
 export type IntakeOutcome =
   | { status: 'dropped'; reason: DropReason }
   | { status: 'quarantined'; verdict: Extract<SenderVerdict, { verdict: 'quarantine' }> }
-  | { status: 'parsed'; parserId: string; score: number; sender: SenderVerdict; intake: IntakeEmail; result: IntakeResult };
+  | {
+      status: 'parsed';
+      parserId: string;
+      score: number;
+      sender: SenderVerdict;
+      intake: IntakeEmail;
+      result: IntakeResult;
+    };
 
 export interface IntakeOptions {
   allowList: readonly SenderPattern[];

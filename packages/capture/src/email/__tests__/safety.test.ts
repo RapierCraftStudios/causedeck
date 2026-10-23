@@ -25,7 +25,9 @@ describe('prompt-injection posture', () => {
   });
 
   it('does not flag ordinary legal text', () => {
-    expect(detectInjection('Re-present the papers within 7 days. The prior order stands.')).toBe(false);
+    expect(detectInjection('Re-present the papers within 7 days. The prior order stands.')).toBe(
+      false,
+    );
   });
 });
 

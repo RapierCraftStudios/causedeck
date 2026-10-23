@@ -44,11 +44,15 @@ function exactMatch(row: ParsedListRow, matters: readonly KnownMatter[]) {
 export const aimsCauseListParser: IntakeParser = {
   id: 'aims-cause-list',
   match(email: IntakeEmail) {
-    if (SUBJECT.test(email.subject)) return email.senderKind === 'court' || email.forwarded ? 0.9 : 0.7;
+    if (SUBJECT.test(email.subject))
+      return email.senderKind === 'court' || email.forwarded ? 0.9 : 0.7;
     return /\bcause\s*list\b/i.test(email.body.slice(0, 2000)) ? 0.4 : 0;
   },
   async parse(email, ctx): Promise<IntakeResult> {
-    const parsed = parseAimsEmail(email.email.raw, ctx.forumCode === undefined ? {} : { forumCode: ctx.forumCode });
+    const parsed = parseAimsEmail(
+      email.email.raw,
+      ctx.forumCode === undefined ? {} : { forumCode: ctx.forumCode },
+    );
     const drafts: ProposalDraft[] = [];
     const diagnostics: IntakeDiagnostic[] = [];
     const source = { type: 'deterministic' as const, input: 'email', ref: email.email.messageId };
@@ -80,7 +84,8 @@ export const aimsCauseListParser: IntakeParser = {
         });
       } else if (ownedByLawyer(row, ctx)) {
         const parent = ctx.matters.find(
-          (matter) => row.parentProceedingKey != null && matter.matchKey === row.parentProceedingKey,
+          (matter) =>
+            row.parentProceedingKey != null && matter.matchKey === row.parentProceedingKey,
         );
         drafts.push({
           kind: parent === undefined ? 'new_matter' : 'new_proceeding',
@@ -113,7 +118,10 @@ export const aimsCauseListParser: IntakeParser = {
     }
     if (parsed.listDate !== null) {
       for (const matter of ctx.matters) {
-        if (matter.expectedOn === parsed.listDate && !(matter.matchKey && listed.has(matter.matchKey))) {
+        if (
+          matter.expectedOn === parsed.listDate &&
+          !(matter.matchKey && listed.has(matter.matchKey))
+        ) {
           diagnostics.push({
             code: 'matter_not_listed',
             severity: 'needs_you',

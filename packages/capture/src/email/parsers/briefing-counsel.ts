@@ -9,7 +9,9 @@ export const briefingCounselParser: IntakeParser = {
   id: 'briefing-counsel',
   match(email: IntakeEmail) {
     if (email.senderKind === 'briefing_counsel') return 0.9;
-    return /\b(?:brief|instructions?|opinion)\b.*\b(?:counsel|advocate)\b/i.test(email.subject) ? 0.65 : 0;
+    return /\b(?:brief|instructions?|opinion)\b.*\b(?:counsel|advocate)\b/i.test(email.subject)
+      ? 0.65
+      : 0;
   },
   async parse(email, ctx): Promise<IntakeResult> {
     const draft: ProposalDraft = {

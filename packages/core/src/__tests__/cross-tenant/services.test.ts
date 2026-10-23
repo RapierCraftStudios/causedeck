@@ -52,6 +52,22 @@ async function expectDenied(promise: Promise<unknown>): Promise<void> {
   expect(['NOT_FOUND', 'FORBIDDEN']).toContain((error as core.WorkspaceError).code);
 }
 
+/** News (#481): rejects with a NewsError FORBIDDEN (the caller is not a member of the workspace). */
+async function expectNewsDenied(promise: Promise<unknown>): Promise<void> {
+  const error: unknown = await promise.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error, 'expected a news FORBIDDEN').toBeInstanceOf(core.NewsError);
+  expect((error as core.NewsError).code).toBe('FORBIDDEN');
+}
+
+async function aNewsPref(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.newsPref).where(eq(schema.newsPref.workspaceId, f.a.id)),
+  );
+}
+
 async function aWorkspaceRow(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
@@ -1045,6 +1061,77 @@ const CASES: Record<string, Case> = {
     );
     expect(outcome).toEqual({ status: 'completed' });
     expect(sent).toEqual([]);
+  },
+  // News digest (#481): B's member never reads, writes or marks A's preferences or digest.
+  getNewsPref: async (f) => {
+    await expectNewsDenied(
+      core.getNewsPref({ db: f.tx as unknown as Database, workspaceId: f.a.id }, { userId: f.ub }),
+    );
+  },
+  setNewsPref: async (f) => {
+    const before = await aNewsPref(f);
+    await expectNewsDenied(
+      core.setNewsPref(
+        { db: f.tx as unknown as Database, workspaceId: f.a.id },
+        { userId: f.ub, practiceAreas: ['tax'], forums: [], digestTime: '08:00' },
+      ),
+    );
+    expect(await aNewsPref(f)).toEqual(before);
+  },
+  markNewsDigestSent: async (f) => {
+    const before = await aNewsPref(f);
+    await expectNewsDenied(
+      core.markNewsDigestSent(
+        { db: f.tx as unknown as Database, workspaceId: f.a.id },
+        { userId: f.ub, localDate: '2026-10-19' },
+      ),
+    );
+    expect(await aNewsPref(f)).toEqual(before);
+  },
+  listNewsForMember: async (f) => {
+    await expectNewsDenied(
+      core.listNewsForMember(
+        { db: f.tx as unknown as Database, workspaceId: f.a.id },
+        { userId: f.ub, since: new Date('2026-10-01T00:00:00Z') },
+      ),
+    );
+  },
+  selectNewsDigestItems: async (f) => {
+    await expectNewsDenied(
+      core.selectNewsDigestItems(
+        { db: f.tx as unknown as Database, workspaceId: f.a.id },
+        { userId: f.ub, since: new Date('2026-10-01T00:00:00Z') },
+      ),
+    );
+  },
+  listNewsDigestRecipients: async (f) => {
+    // B's recipients are B's members only: A's owner never appears.
+    const users = await core.listNewsDigestRecipients(
+      { db: f.tx as unknown as Database, workspaceId: f.b.id },
+      { slot: '07:30', localDate: '2026-10-19' },
+    );
+    expect(users).not.toContain(f.ua);
+  },
+  runNewsDigestMember: async (f) => {
+    // ua is not a member of B: nothing is built, marked or sent.
+    const { sent, deps } = recordingDeps();
+    const outcome = await core.runNewsDigestMember(
+      { db: f.tx as unknown as Database, log: logger } as unknown as core.JobContext,
+      { workspaceId: f.b.id, userId: f.ua, localDate: '2026-10-19' },
+      deps,
+    );
+    expect(outcome).toBe('skippedNotMember');
+    expect(sent).toEqual([]);
+  },
+  runNewsDigest: async (f) => {
+    // B's fan-out lists B's members only; A's owner is never enqueued.
+    const enqueued: { userId: string }[] = [];
+    await core.runNewsDigest(
+      { db: f.tx as unknown as Database, log: logger } as unknown as core.JobContext,
+      { workspaceId: f.b.id, localDate: '2026-10-19', slot: '07:30' },
+      { enqueue: (p) => Promise.resolve(enqueued.push(p)) },
+    );
+    expect(enqueued.map((e) => e.userId)).not.toContain(f.ua);
   },
   runActivityDigest: async (f) => {
     // B's fan-out lists B's members only; at a slot nobody chose it enqueues nothing.

@@ -13,14 +13,15 @@ const VIEWPORTS = [
   { name: '1280', width: 1280, height: 800 },
 ] as const;
 
-test.describe('camera sheet', { tag: '@a11y' }, () => {
-  test.use({
-    permissions: ['camera'],
-    launchOptions: {
-      args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
-    },
-  });
+// `launchOptions` forces a new worker, so Playwright only allows it at the top level of a file.
+test.use({
+  permissions: ['camera'],
+  launchOptions: {
+    args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+  },
+});
 
+test.describe('camera sheet', { tag: '@a11y' }, () => {
   test('captures pages into a strip, with the gallery picker always offered', async ({
     page,
     asUser,

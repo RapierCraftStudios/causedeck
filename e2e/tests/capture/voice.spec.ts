@@ -14,14 +14,15 @@ const VIEWPORTS = [
   { name: '1280', width: 1280, height: 800 },
 ] as const;
 
-test.describe('voice recorder sheet', { tag: '@a11y' }, () => {
-  test.use({
-    permissions: ['microphone'],
-    launchOptions: {
-      args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
-    },
-  });
+// `launchOptions` forces a new worker, so Playwright only allows it at the top level of a file.
+test.use({
+  permissions: ['microphone'],
+  launchOptions: {
+    args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+  },
+});
 
+test.describe('voice recorder sheet', { tag: '@a11y' }, () => {
   test('records with tap-to-toggle, reviews and saves into the outbox', async ({
     page,
     asUser,

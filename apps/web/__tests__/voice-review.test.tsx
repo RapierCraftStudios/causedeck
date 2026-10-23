@@ -4,11 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderWithIntl } from '../components/shell/__tests__/helpers.tsx';
 
-const search = vi.hoisted(() => vi.fn());
+import { RecordingReview } from '../components/capture/voice/recording-review.tsx';
 
-vi.mock('../app/(app)/w/[slug]/matters/actions.ts', () => ({ searchMattersAction: search }));
-
-const { RecordingReview } = await import('../components/capture/voice/recording-review.tsx');
+const search = vi.fn();
 
 afterEach(() => {
   cleanup();
@@ -27,6 +25,7 @@ describe('recording review matter picker', () => {
         url="blob:x"
         durationMs={12_000}
         workspaceId="ws-1"
+        searchMatters={search}
         onPickMatter={onPickMatter}
         onClearMatter={vi.fn()}
         busy={false}

@@ -1,0 +1,180 @@
+{
+  "adapterId": "generic.a0",
+  "adapterVersion": "1.0.0",
+  "forumCode": "generic.a0",
+  "listDate": "2026-07-22",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. M.V.C. No. 5476/2019    Pretend Housing Society vs Invented Motors    CNR: KABG068025512019",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "1",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "5476",
+      "caseYear": 2019,
+      "matchKey": "MVC/5476/2019",
+      "parties": "Pretend Housing Society vs Invented Motors",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. C.C. No. 9173/2019    Invented Motors vs Sample Bank Ltd    CNR: KABG054892832019",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "2",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "9173",
+      "caseYear": 2019,
+      "matchKey": "CC/9173/2019",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. O.S. No. 3434/2026    Fictional Traders Pvt Ltd vs Invented Motors    CNR: KABG025290782026",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "3",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "3434",
+      "caseYear": 2026,
+      "matchKey": "OS/3434/2026",
+      "parties": "Fictional Traders Pvt Ltd vs Invented Motors",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. O.S. No. 3456/2025    Sample Bank Ltd vs Fictional Traders Pvt Ltd    CNR: KABG064179212025",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "4",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "3456",
+      "caseYear": 2025,
+      "matchKey": "OS/3456/2025",
+      "parties": "Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. S.C. No. 8155/2026    Sample Bank Ltd vs Fictional Traders Pvt Ltd    CNR: KABG049768712026",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "5",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "8155",
+      "caseYear": 2026,
+      "matchKey": "SC/8155/2026",
+      "parties": "Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. Crl.Misc. No. 4169/2021    Sample Bank Ltd vs Made-up Farmer    CNR: KABG028455802021",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "6",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "4169",
+      "caseYear": 2021,
+      "matchKey": "CRLMISC/4169/2021",
+      "parties": "Sample Bank Ltd vs Made-up Farmer",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. O.S. No. 7938/2019    Pretend Housing Society vs Imaginary Textiles    CNR: KABG018863482019",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "7",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "7938",
+      "caseYear": 2019,
+      "matchKey": "OS/7938/2019",
+      "parties": "Pretend Housing Society vs Imaginary Textiles",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. Ex.P. No. 3885/2024    Made-up Farmer vs Pretend Housing Society    CNR: KABG055663272024",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "8",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "3885",
+      "caseYear": 2024,
+      "matchKey": "EXP/3885/2024",
+      "parties": "Made-up Farmer vs Pretend Housing Society",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. S.C. No. 1867/2020    Made-up Farmer vs Sample Bank Ltd    CNR: KABG013157892020",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "9",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "1867",
+      "caseYear": 2020,
+      "matchKey": "SC/1867/2020",
+      "parties": "Made-up Farmer vs Sample Bank Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "22.07.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["29", "12"],
+    "hallsUnreadable": []
+  }
+}

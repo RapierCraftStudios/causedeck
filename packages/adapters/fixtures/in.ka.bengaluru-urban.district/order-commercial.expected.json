@@ -1,0 +1,13 @@
+{
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "truth": {
+    "kind": "order",
+    "cases": [
+      { "caseTypeRaw": "Com.O.S.", "caseType": "COMOS", "caseNumber": "6748", "caseYear": 2024 }
+    ],
+    "orderDate": "2026-12-19",
+    "nextDate": "2027-01-16",
+    "dates": ["2026-12-19"],
+    "language": "en"
+  }
+}

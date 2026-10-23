@@ -1,0 +1,19 @@
+{
+  "forumCode": "generic.a0",
+  "truth": {
+    "kind": "order",
+    "cases": [
+      {
+        "caseTypeRaw": "CCCA",
+        "caseType": "CCCA",
+        "caseNumber": "8174",
+        "caseYear": 2022,
+        "cnr": "KABG041727822022"
+      }
+    ],
+    "orderDate": "2026-10-18",
+    "nextDate": "2026-07-13",
+    "dates": ["2026-10-18", "2026-07-13"],
+    "language": "en"
+  }
+}

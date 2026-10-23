@@ -6,6 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./extract": "./src/extract/index.ts",
+    "./language": "./src/language/detect.ts",
     "./synthetic": "./src/synthetic/make-docs.ts"
   },
   "scripts": {

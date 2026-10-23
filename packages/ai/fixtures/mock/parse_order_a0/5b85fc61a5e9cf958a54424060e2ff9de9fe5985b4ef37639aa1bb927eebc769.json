@@ -1,0 +1,44 @@
+{
+  "output": {
+    "caseNumbers": [
+      {
+        "value": "Ex.P. No. 1050/2022",
+        "page": 1,
+        "quote": "Ex.P. No. 1050/2022",
+        "lineRef": 3
+      }
+    ],
+    "cnrs": [],
+    "parties": [],
+    "orderDate": {
+      "date": "2026-10-26",
+      "page": 1,
+      "quote": "தேதி: ௨௬.௧௦.௨௦௨௬",
+      "lineRef": 2
+    },
+    "orderType": "interim",
+    "directions": [
+      {
+        "text": "வாதி இரண்டு வாரங்களுக்குள் பதில் மனு தாக்கல் செய்ய வேண்டும்.",
+        "kind": "filing",
+        "dueExpression": null,
+        "dueDate": null,
+        "page": 1,
+        "quote": "வாதி இரண்டு வாரங்களுக்குள் பதில் மனு தாக்கல் செய்ய வேண்டும்.",
+        "lineRef": 6
+      }
+    ],
+    "nextDate": {
+      "date": "2026-10-06",
+      "phrase": "௦௬.௧௦.௨௦௨௬ அன்று சாட்சியத்திற்காக பட்டியலிடப்படும்.",
+      "page": 1,
+      "quote": "௦௬.௧௦.௨௦௨௬ அன்று சாட்சியத்திற்காக பட்டியலிடப்படும்.",
+      "lineRef": 7
+    },
+    "confidence": 0.9
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0
+  }
+}

@@ -8,6 +8,7 @@ import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
+import { writeGeneratedFixtures as writeA0 } from '../generic-a0/synthetic/generate.ts';
 import { writeGeneratedFixtures as writeKarnataka } from '../karnataka-hc/synthetic/generate.ts';
 import { writeGeneratedFixtures as writeMadras } from '../madras-hc/synthetic/generate.ts';
 
@@ -22,6 +23,7 @@ const GENERATORS: Record<
 > = {
   madras: { adapterId: 'in.tn.madras-hc.principal', write: writeMadras },
   karnataka: { adapterId: 'in.ka.karnataka-hc.bengaluru', write: writeKarnataka },
+  a0: { adapterId: 'generic.a0', write: writeA0 },
 };
 
 const GENERATED_ROOT = path.resolve(import.meta.dirname, '../../fixtures/generated');

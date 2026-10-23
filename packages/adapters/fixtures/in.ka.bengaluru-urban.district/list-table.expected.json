@@ -1,0 +1,162 @@
+{
+  "adapterId": "in.ka.bengaluru-urban.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "listDate": "2026-12-16",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1 Com.A.A. No. 6797/2024 Sample Bank Ltd vs Pretend Housing Society FOR ORDERS",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "1",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "6797",
+      "caseYear": 2024,
+      "matchKey": "COMAA/6797/2024",
+      "parties": "Sample Bank Ltd vs Pretend Housing Society",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2 Com.FDP No. 4963/2022 Imaginary Textiles vs Made-up Farmer FOR EVIDENCE",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "2",
+      "caseTypeRaw": "Com.FDP",
+      "caseType": "COMFDP",
+      "caseNumber": "4963",
+      "caseYear": 2022,
+      "matchKey": "COMFDP/4963/2022",
+      "parties": "Imaginary Textiles vs Made-up Farmer",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3 Com.Misc. No. 1244/2023 Sample Bank Ltd vs Pretend Housing Society FOR EVIDENCE",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "3",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "1244",
+      "caseYear": 2023,
+      "matchKey": "COMMISC/1244/2023",
+      "parties": "Sample Bank Ltd vs Pretend Housing Society",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4 Com.Misc. No. 1833/2021 Made-up Farmer vs Sample Bank Ltd FOR EVIDENCE",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "4",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "1833",
+      "caseYear": 2021,
+      "matchKey": "COMMISC/1833/2021",
+      "parties": "Made-up Farmer vs Sample Bank Ltd",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5 Com.A.P. No. 295/2019 Invented Motors vs Made-up Farmer FOR ORDERS",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "5",
+      "caseTypeRaw": "Com.A.P.",
+      "caseType": "COMAP",
+      "caseNumber": "295",
+      "caseYear": 2019,
+      "matchKey": "COMAP/295/2019",
+      "parties": "Invented Motors vs Made-up Farmer",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "6 Com.A.A. No. 5044/2019 Imaginary Textiles vs Pretend Housing Society FOR ORDERS",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "6",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "5044",
+      "caseYear": 2019,
+      "matchKey": "COMAA/5044/2019",
+      "parties": "Imaginary Textiles vs Pretend Housing Society",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "7 Com.FDP No. 4924/2021 Fictional Traders Pvt Ltd vs Sample Bank Ltd FOR ORDERS",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "7",
+      "caseTypeRaw": "Com.FDP",
+      "caseType": "COMFDP",
+      "caseNumber": "4924",
+      "caseYear": 2021,
+      "matchKey": "COMFDP/4924/2021",
+      "parties": "Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "8 Com.Misc. No. 1004/2025 Sample Bank Ltd vs Sample Bank Ltd FOR EVIDENCE",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "8",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "1004",
+      "caseYear": 2025,
+      "matchKey": "COMMISC/1004/2025",
+      "parties": "Sample Bank Ltd vs Sample Bank Ltd",
+      "stageRaw": null,
+      "stageNorm": null
+    }
+  ],
+  "source": "pdf",
+  "listDateAnchor": { "page": 1, "quote": "16.12.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["7"],
+    "hallsUnreadable": []
+  }
+}

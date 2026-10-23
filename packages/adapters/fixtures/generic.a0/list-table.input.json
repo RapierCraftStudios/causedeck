@@ -1,0 +1,102 @@
+{
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "text": "CAUSE LIST FOR 17.11.2026\nCOURT HALL 7\nSl. No. Case No. Parties Stage\n1 Com.O.S. No. 9347/2026 Invented Motors vs Invented Motors FOR ARGUMENTS\n2 Com.A.A. No. 2282/2021 Pretend Housing Society vs Made-up Farmer FOR ORDERS\n3 Com.A.P. No. 9940/2019 Imaginary Textiles vs Pretend Housing Society FOR ARGUMENTS\n4 Com.A.A. No. 8248/2020 Made-up Farmer vs Made-up Farmer FOR ORDERS\n5 Com.Ex. No. 8256/2022 Fictional Traders Pvt Ltd vs Sample Bank Ltd FOR ARGUMENTS\n6 Com.A.A. No. 1781/2021 Made-up Farmer vs Imaginary Textiles FOR ARGUMENTS\n7 Com.Misc. No. 8778/2024 Invented Motors vs Imaginary Textiles FOR ARGUMENTS\n8 Com.Ex. No. 8231/2021 Pretend Housing Society vs Made-up Farmer FOR EVIDENCE",
+      "items": [
+        {
+          "text": "CAUSE LIST FOR 17.11.2026",
+          "bbox": { "x": 40, "y": 40, "width": 125, "height": 10 }
+        },
+        { "text": "COURT HALL 7", "bbox": { "x": 40, "y": 56, "width": 60, "height": 10 } },
+        { "text": "Sl. No.", "bbox": { "x": 40, "y": 72, "width": 35, "height": 10 } },
+        { "text": "Case No.", "bbox": { "x": 90, "y": 72, "width": 40, "height": 10 } },
+        { "text": "Parties", "bbox": { "x": 260, "y": 72, "width": 35, "height": 10 } },
+        { "text": "Stage", "bbox": { "x": 480, "y": 72, "width": 25, "height": 10 } },
+        { "text": "1", "bbox": { "x": 40, "y": 88, "width": 8, "height": 10 } },
+        {
+          "text": "Com.O.S. No. 9347/2026",
+          "bbox": { "x": 90, "y": 88, "width": 110, "height": 10 }
+        },
+        {
+          "text": "Invented Motors vs Invented Motors",
+          "bbox": { "x": 260, "y": 88, "width": 170, "height": 10 }
+        },
+        { "text": "FOR ARGUMENTS", "bbox": { "x": 480, "y": 88, "width": 65, "height": 10 } },
+        { "text": "2", "bbox": { "x": 40, "y": 104, "width": 8, "height": 10 } },
+        {
+          "text": "Com.A.A. No. 2282/2021",
+          "bbox": { "x": 90, "y": 104, "width": 110, "height": 10 }
+        },
+        {
+          "text": "Pretend Housing Society vs Made-up Farmer",
+          "bbox": { "x": 260, "y": 104, "width": 205, "height": 10 }
+        },
+        { "text": "FOR ORDERS", "bbox": { "x": 480, "y": 104, "width": 50, "height": 10 } },
+        { "text": "3", "bbox": { "x": 40, "y": 120, "width": 8, "height": 10 } },
+        {
+          "text": "Com.A.P. No. 9940/2019",
+          "bbox": { "x": 90, "y": 120, "width": 110, "height": 10 }
+        },
+        {
+          "text": "Imaginary Textiles vs Pretend Housing Society",
+          "bbox": { "x": 260, "y": 120, "width": 225, "height": 10 }
+        },
+        { "text": "FOR ARGUMENTS", "bbox": { "x": 480, "y": 120, "width": 65, "height": 10 } },
+        { "text": "4", "bbox": { "x": 40, "y": 136, "width": 8, "height": 10 } },
+        {
+          "text": "Com.A.A. No. 8248/2020",
+          "bbox": { "x": 90, "y": 136, "width": 110, "height": 10 }
+        },
+        {
+          "text": "Made-up Farmer vs Made-up Farmer",
+          "bbox": { "x": 260, "y": 136, "width": 160, "height": 10 }
+        },
+        { "text": "FOR ORDERS", "bbox": { "x": 480, "y": 136, "width": 50, "height": 10 } },
+        { "text": "5", "bbox": { "x": 40, "y": 152, "width": 8, "height": 10 } },
+        {
+          "text": "Com.Ex. No. 8256/2022",
+          "bbox": { "x": 90, "y": 152, "width": 105, "height": 10 }
+        },
+        {
+          "text": "Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+          "bbox": { "x": 260, "y": 152, "width": 220, "height": 10 }
+        },
+        { "text": "FOR ARGUMENTS", "bbox": { "x": 480, "y": 152, "width": 65, "height": 10 } },
+        { "text": "6", "bbox": { "x": 40, "y": 168, "width": 8, "height": 10 } },
+        {
+          "text": "Com.A.A. No. 1781/2021",
+          "bbox": { "x": 90, "y": 168, "width": 110, "height": 10 }
+        },
+        {
+          "text": "Made-up Farmer vs Imaginary Textiles",
+          "bbox": { "x": 260, "y": 168, "width": 180, "height": 10 }
+        },
+        { "text": "FOR ARGUMENTS", "bbox": { "x": 480, "y": 168, "width": 65, "height": 10 } },
+        { "text": "7", "bbox": { "x": 40, "y": 184, "width": 8, "height": 10 } },
+        {
+          "text": "Com.Misc. No. 8778/2024",
+          "bbox": { "x": 90, "y": 184, "width": 115, "height": 10 }
+        },
+        {
+          "text": "Invented Motors vs Imaginary Textiles",
+          "bbox": { "x": 260, "y": 184, "width": 185, "height": 10 }
+        },
+        { "text": "FOR ARGUMENTS", "bbox": { "x": 480, "y": 184, "width": 65, "height": 10 } },
+        { "text": "8", "bbox": { "x": 40, "y": 200, "width": 8, "height": 10 } },
+        {
+          "text": "Com.Ex. No. 8231/2021",
+          "bbox": { "x": 90, "y": 200, "width": 105, "height": 10 }
+        },
+        {
+          "text": "Pretend Housing Society vs Made-up Farmer",
+          "bbox": { "x": 260, "y": 200, "width": 205, "height": 10 }
+        },
+        { "text": "FOR EVIDENCE", "bbox": { "x": 480, "y": 200, "width": 60, "height": 10 } }
+      ],
+      "textCoverage": 0.4
+    }
+  ]
+}

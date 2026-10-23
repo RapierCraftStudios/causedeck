@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.tn.chennai.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "listDate": "2026-10-28",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. O.S. No. 2199/2024    புனைவு ஜவுளி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "16",
+      "itemNo": "1",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "2199",
+      "caseYear": 2024,
+      "matchKey": "OS/2199/2024",
+      "parties": "புனைவு ஜவுளி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Crl.Misc. No. 333/2025    Invented Motors vs Sample Bank Ltd",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "16",
+      "itemNo": "2",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "333",
+      "caseYear": 2025,
+      "matchKey": "CRLMISC/333/2025",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. S.C. No. 4551/2023    கற்பனை மோட்டார்ஸ் எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "16",
+      "itemNo": "3",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "4551",
+      "caseYear": 2023,
+      "matchKey": "SC/4551/2023",
+      "parties": "கற்பனை மோட்டார்ஸ் எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. Ex.P. No. 959/2024    Fictional Traders Pvt Ltd vs Made-up Farmer",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "16",
+      "itemNo": "4",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "959",
+      "caseYear": 2024,
+      "matchKey": "EXP/959/2024",
+      "parties": "Fictional Traders Pvt Ltd vs Made-up Farmer",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. Ex.P. No. 8352/2019    போலி விவசாயி எதிர் மாதிரி வங்கி",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "16",
+      "itemNo": "5",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "8352",
+      "caseYear": 2019,
+      "matchKey": "EXP/8352/2019",
+      "parties": "போலி விவசாயி எதிர் மாதிரி வங்கி",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. S.C. No. 3762/2022    Sample Bank Ltd vs Invented Motors",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "27",
+      "itemNo": "6",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "3762",
+      "caseYear": 2022,
+      "matchKey": "SC/3762/2022",
+      "parties": "Sample Bank Ltd vs Invented Motors",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. S.C. No. 2427/2025    கற்பனை மோட்டார்ஸ் எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "27",
+      "itemNo": "7",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "2427",
+      "caseYear": 2025,
+      "matchKey": "SC/2427/2025",
+      "parties": "கற்பனை மோட்டார்ஸ் எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. C.C. No. 4725/2025    Sample Bank Ltd vs Imaginary Textiles",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "27",
+      "itemNo": "8",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "4725",
+      "caseYear": 2025,
+      "matchKey": "CC/4725/2025",
+      "parties": "Sample Bank Ltd vs Imaginary Textiles",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. M.V.C. No. 8164/2024    போலி விவசாயி எதிர் மாதிரி வங்கி",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "27",
+      "itemNo": "9",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "8164",
+      "caseYear": 2024,
+      "matchKey": "MVC/8164/2024",
+      "parties": "போலி விவசாயி எதிர் மாதிரி வங்கி",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "௨௮.௧௦.௨௦௨௬", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["16", "27"],
+    "hallsUnreadable": []
+  }
+}

@@ -190,6 +190,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
+  deleteRecordingAction: inbox,
   createCalendarFeedAction: calendar,
   rotateCalendarFeedAction: calendar,
   revokeCalendarFeedAction: calendar,
@@ -516,6 +517,7 @@ function inputs(workspaceId: string): Record<string, unknown> {
     enableChannelAction: { workspaceId, channel: 'email', disclosureVersion: '2026-10-v1' },
     discardCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id },
     pinCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id, pinned: true },
+    deleteRecordingAction: { workspaceId, captureId: t.a.rows.capture?.id },
     // Calendar (#53): ub, owner of B, may not touch A's feed or review A's imported events.
     createCalendarFeedAction: {
       workspaceId,
@@ -1057,7 +1059,11 @@ describe('cross-tenant server actions', () => {
     const capturesBefore = await aCaptures();
     expect(capturesBefore.length).toBeGreaterThan(0);
     const own = inputs(t.b.id);
-    for (const name of ['discardCaptureAction', 'pinCaptureAction'] as const) {
+    for (const name of [
+      'discardCaptureAction',
+      'pinCaptureAction',
+      'deleteRecordingAction',
+    ] as const) {
       // A's capture id under B's workspace: not found, whatever B's role.
       expect(await action(name)(own[name]), name).toMatchObject({
         ok: false,

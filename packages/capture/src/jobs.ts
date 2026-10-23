@@ -6,6 +6,8 @@ export const CAPTURE_JOB_NAMES = {
   retention: 'capture.retention',
   /** Structures a WhatsApp chat import (#526); queued by `capture.process` for `whatsapp_export`. */
   whatsappImport: 'whatsapp.import',
+  /** Transcribes and structures a voice recording (#542); queued by `capture.process` for `voice`. */
+  voiceProcess: 'voice.process',
   /** The daily global tick (02:00 IST) that queues `capture.retention` per workspace. */
   retentionTick: 'system.capture.retention',
 } as const;
@@ -24,6 +26,11 @@ export interface CaptureProcessPayload {
 }
 
 export interface WhatsAppImportPayload {
+  workspaceId: string;
+  captureId: string;
+}
+
+export interface VoiceProcessPayload {
   workspaceId: string;
   captureId: string;
 }
@@ -58,3 +65,33 @@ export const CAPTURE_FAILURE_REASONS = [
   'processing_failed',
 ] as const;
 export type CaptureFailureReason = (typeof CAPTURE_FAILURE_REASONS)[number];
+
+/** A recording shorter than this is never read (#542): too little speech to trust. */
+export const VOICE_MIN_DURATION_SECONDS = 2;
+/** A transcript the provider scored below this is never structured (#542): no guesses. */
+export const VOICE_MIN_CONFIDENCE = 0.5;
+
+/** Why a voice capture ends in Needs you (`source_meta.needsYouReason`). */
+export const VOICE_NEEDS_YOU_REASONS = [
+  'voice_unreadable',
+  'voice_unmatched',
+  'voice_next_date_dropped',
+] as const;
+export type VoiceNeedsYouReason = (typeof VOICE_NEEDS_YOU_REASONS)[number];
+
+/**
+ * Whether a recording is too short, silent or noisy to read (#542). Pure: the job calls it before
+ * any structuring, so unreadable audio produces no drafts. `confidence` is the provider's 0-1 score
+ * for the transcript, when it gives one.
+ */
+export function isUnreadableAudio(input: {
+  durationSeconds: number;
+  text: string;
+  confidence?: number | undefined;
+}): boolean {
+  return (
+    input.durationSeconds < VOICE_MIN_DURATION_SECONDS ||
+    input.text.trim().length === 0 ||
+    (input.confidence !== undefined && input.confidence < VOICE_MIN_CONFIDENCE)
+  );
+}

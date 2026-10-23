@@ -4,6 +4,7 @@
 // object past its TTL (a discarded capture is never kept: discarding clears the pin).
 import { discardTtl, historyOf } from '@causedeck/capture';
 import { schema, withWorkspace } from '@causedeck/db';
+import type { ObjectKey } from '@causedeck/storage';
 import { and, eq, sql } from 'drizzle-orm';
 
 import { conflict, forbidden } from '../shared/errors.ts';
@@ -13,7 +14,7 @@ import type { CaptureCtx } from './context.ts';
 import { createManualCapture } from './create.ts';
 import { moveCapture, requireCapture, type CaptureRecord } from './state.ts';
 
-const { capture } = schema;
+const { anchor, blob, capture, document } = schema;
 
 const scope = (ctx: CaptureCtx) => ({ workspaceId: ctx.workspaceId, userId: ctx.userId });
 
@@ -126,4 +127,71 @@ export async function createKeyLineCapture(
       .where(and(eq(capture.id, created.captureId), eq(capture.workspaceId, ctx.workspaceId))),
   );
   return { captureId: created.captureId, linkedCaptureId: original.id };
+}
+
+/** The id and key of the stored transcript a voice capture recorded in `source_meta.voice`. */
+function storedTranscript(row: CaptureRecord): { documentId: string; key: string } | null {
+  const voice = row.sourceMeta['voice'];
+  if (typeof voice !== 'object' || voice === null) return null;
+  const { transcriptDocumentId, transcriptKey } = voice as Record<string, unknown>;
+  return typeof transcriptDocumentId === 'string' && typeof transcriptKey === 'string'
+    ? { documentId: transcriptDocumentId, key: transcriptKey }
+    : null;
+}
+
+/**
+ * Delete a voice recording and its transcript at once (#542): the raw audio object and the
+ * transcript object and their blob rows go; the transcript document and its anchors stay with
+ * their quotes blanked (applied proposals point at the anchors), and every proposal and the
+ * capture row stay. Idempotent. Own capture, or `workspace.manage`.
+ */
+export function deleteRecording(ctx: CaptureCtx, captureId: string): Promise<CaptureRecord> {
+  return withWorkspace(ctx.db, scope(ctx), async (tx) => {
+    const row = await requireCapture(tx, ctx.workspaceId, captureId);
+    await ownOrManage(ctx, row);
+    if (row.channel !== 'voice') throw conflict('Only a voice recording can be deleted this way');
+    const transcript = storedTranscript(row);
+    const keys = [row.rawStorageKey, transcript?.key ?? null].filter(
+      (key): key is string => key !== null,
+    );
+    for (const key of keys) {
+      await ctx.store.delete(key as ObjectKey);
+      await tx.delete(blob).where(and(eq(blob.key, key), eq(blob.workspaceId, ctx.workspaceId)));
+    }
+    if (transcript !== null) {
+      await tx
+        .update(anchor)
+        .set({ quote: '' })
+        .where(
+          and(
+            eq(anchor.documentId, transcript.documentId),
+            eq(anchor.workspaceId, ctx.workspaceId),
+          ),
+        );
+      await tx
+        .update(document)
+        .set({ textStatus: 'skipped', textSkippedReason: 'recording_deleted' })
+        .where(
+          and(eq(document.id, transcript.documentId), eq(document.workspaceId, ctx.workspaceId)),
+        );
+    }
+    if (keys.length === 0) return row;
+    const [updated] = await tx
+      .update(capture)
+      .set({
+        rawStorageKey: null,
+        ttlAt: null,
+        sourceMeta: sql`${capture.sourceMeta} || ${JSON.stringify({ recordingDeleted: true })}::jsonb`,
+      })
+      .where(and(eq(capture.id, row.id), eq(capture.workspaceId, row.workspaceId)))
+      .returning();
+    await auditCapture(
+      ctx,
+      tx,
+      'capture.recording_deleted',
+      { kind: 'capture', id: row.id },
+      { channel: row.channel, transcriptDeleted: transcript !== null },
+    );
+    return updated ?? row;
+  });
 }

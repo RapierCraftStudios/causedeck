@@ -19,6 +19,7 @@ import {
   systemCaptureRetention,
 } from './capture-retention.ts';
 import { captureScan, captureScanSchema, runCaptureScanJob } from './capture-scan.ts';
+import { voiceProcess, voiceProcessSchema } from './voice-process.ts';
 
 const WORKSPACE = '6f9619ff-8b86-4011-b42d-00c04fc964ff';
 const CAPTURE = '7f9619ff-8b86-4011-b42d-00c04fc964fe';
@@ -41,6 +42,21 @@ describe('definitions', () => {
     expect(CAPTURE_JOB_NAMES.retentionTick).toBe('system.capture.retention');
     expect(systemCaptureRetention.schedule).toEqual({ cron: '0 2 * * *', payload: {} });
     expect(contentFieldViolations([captureScan, captureProcess, captureRetention])).toEqual([]);
+  });
+
+  it('registers voice.process with an id-only payload, singleton per capture (#542)', () => {
+    expect(registry.definitions.map((def) => def.name)).toContain('voice.process');
+    expect(CAPTURE_JOB_NAMES.voiceProcess).toBe('voice.process');
+    expect(contentFieldViolations([voiceProcess])).toEqual([]);
+    expect(
+      voiceProcessSchema.safeParse({ workspaceId: WORKSPACE, captureId: CAPTURE }).success,
+    ).toBe(true);
+    expect(
+      voiceProcessSchema.parse({ workspaceId: WORKSPACE, captureId: CAPTURE, text: 'x' }),
+    ).toEqual({ workspaceId: WORKSPACE, captureId: CAPTURE });
+    expect(voiceProcess.singleton?.key({ workspaceId: WORKSPACE, captureId: CAPTURE })).toBe(
+      `voice-process:${CAPTURE}`,
+    );
   });
 
   it('retries five attempts in all with exponential backoff', () => {

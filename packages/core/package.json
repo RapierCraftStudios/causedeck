@@ -19,6 +19,7 @@
     "./matter-graph": "./src/matter-graph/index.ts",
     "./matters": "./src/matters/index.ts",
     "./runtime": "./src/runtime/index.ts",
+    "./voice": "./src/voice/index.ts",
     "./whatsapp": "./src/whatsapp/index.ts",
     "./support": "./src/support/index.ts",
     "./usage": "./src/usage/index.ts",

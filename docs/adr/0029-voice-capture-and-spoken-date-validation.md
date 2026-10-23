@@ -53,3 +53,11 @@ Issue #51 (split into #541, #542, #543) lets a lawyer dictate what happened at a
 - The #113 Sarvam credentials show timestamps or language tags that the single-segment mapping hides.
 - Counsel or users need dates the parser does not read (for example, Hindi, or "the Monday after" phrases).
 - The `hearing` table gains outcome columns and #542 enables the `hearing_outcome` handler.
+
+## Worker job, transcript storage and deletion (#542)
+
+- **Job.** `capture.process` claims a `voice` capture (`runCapturePipeline` returns `not_document` for it) and queues `voice.process`, as it does `whatsapp.import`. The body is `runVoiceProcess` in the new `voice` core domain; jobs live in `packages/core/src/jobs/definitions/` (there is no `apps/worker` jobs directory). Events `capture.transcribed` and `capture.structured` carry ids and counts only and leave after the commit.
+- **Sensitive matters.** `capture.ai_blocked` is read from the row before the audio is fetched: a blocked capture finishes `ready` at L1 with `source_meta.voice.reason = ai_blocked`, and neither the transcriber nor the gateway is called.
+- **Unreadable audio.** Under 2 s (`VOICE_MIN_DURATION_SECONDS`), an empty transcript, or a transcript scored below `VOICE_MIN_CONFIDENCE` (the optional `confidence` on the transcript) is never structured: the capture goes to Needs you with reason `voice_unreadable`, the audio is kept and no draft is made. A recording whose duration is declared (`source_meta.durationSeconds`) and too short is not even sent to the provider.
+- **Transcript.** Stored as a JSON blob and a `note` document of the matter (no new table), with one `transcript` anchor per cited span carrying the quote, the character range and the millisecond bounds. With no matched matter and no matter hint there is no document to hang it on: the capture goes to Needs you (`voice_unmatched`) with the candidate matters in `source_meta`, and no drafts are staged.
+- **Retention and deletion.** The audio's 30-day `ttl_at` is set at creation; the sweep deletes only the raw object. `deleteRecording` deletes the audio and the transcript objects now; the transcript document and its anchors stay with the quotes blanked (applied proposals point at the anchors), and proposals are untouched.

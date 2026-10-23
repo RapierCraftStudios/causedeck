@@ -26,11 +26,12 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `ai` | `@causedeck/core/ai` | the AI gateway wiring (#44, [ADR 0022](../adr/0022-ai-gateway-implementation.md)): the ports `@causedeck/ai` declares, implemented on usage budgets, `workspace_settings.india_only_ai`, `matter.sensitive`, the `ai_call` writer and the 24 h `ai_call_result` store |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
-| `capture` | `@causedeck/core/capture` | the capture inbox (#43, [ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)): `createCapture` / `completeUpload` / `createManualCapture`, per-channel opt-in, discard and pin, raw-object retention, and the bodies of `capture.scan`, `capture.process` and `capture.retention`; jobs arrive as the `CaptureJobs` port. Not re-exported from the package root |
+| `capture` | `@causedeck/core/capture` | the capture inbox (#43, [ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)): `createCapture` / `completeUpload` / `createManualCapture`, per-channel opt-in, discard and pin, raw-object retention, `deleteRecording` (a voice recording and its transcript, #542), and the bodies of `capture.scan`, `capture.process` and `capture.retention`; jobs arrive as the `CaptureJobs` port. Not re-exported from the package root |
 | `calendar` | `@causedeck/core/calendar` | calendar interop (#53, [ADR 0024](../adr/0024-ics-import-and-private-feed.md)): the private ICS feed (`createFeed` / `rotateFeed` / `revokeFeed`, the unauthenticated `serveFeed`) and the ICS import (`runIcsImport`, the `capture.process` body for channel `ics`, and its review). Pure parsing and rendering is `@causedeck/capture` `ics/`. Not re-exported from the package root |
 | `email-intake` | `@causedeck/core/email-intake` | email forward-in intake (#54): the per-user intake address (`createAddress`, `rotateAddress`, `revokeAddress`, `getActiveAddress`, `resolveAddress` with no oracle), the sender allow-list (`addAllowlistEntry`, `removeAllowlistEntry`, `listAllowlist`) and `enableEmailChannel`. Not re-exported from the package root |
 | `extraction` | `@causedeck/core/extraction` | anchored order extraction (#46, [ADR 0028](../adr/0028-anchored-extraction.md)): `runOrderExtraction`, the body of the `extraction.extract-order` job. It reads a processed order or judgment, runs the deterministic pre-parse and (only where AI is allowed) the `extract_order` task, stores the validated extraction and its rejections (superseding, never deleting), stages proposals through automation and routes a capture that needs a person to "Needs you". Pure steps are `@causedeck/intelligence` `extract/`. Not re-exported from the package root |
 | `whatsapp` | `@causedeck/core/whatsapp` | the WhatsApp chat import (#526, PRD CA-6): `receiveWhatsAppImport` (the `whatsapp_export` intake: `validateSelection` re-applied server-side, selected messages only, audio never transcribed) and `runWhatsAppImport` (the `whatsapp.import` job body: the `structure_chat` task on internal chats only, proposals anchored to the source message, the 30-day raw-text clock). Parsing, rules and the pure structuring are `@causedeck/capture` `whatsapp/`. Not re-exported from the package root |
+| `voice` | `@causedeck/core/voice` | voice capture (#542, [ADR 0029](../adr/0029-voice-capture-and-spoken-date-validation.md)): `runVoiceProcess`, the body of the `voice.process` job (queued by `capture.process` for channel `voice`). It never reads audio of an `ai_blocked` capture, sends unreadable audio to "Needs you" with no drafts, transcribes (`transcribe`), structures (`structure_hearing`), stores the transcript as a note document with `transcript` anchors and stages proposals. Pure steps are `@causedeck/intelligence` `transcribe/` and `structure/`. Not re-exported from the package root |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
 | `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains. apps/web, apps/api and apps/worker use it (#299): the `db` handle, `closeAppDb`, `inWorkspaceOn` for an injected handle and the api idempotency store; the roster wrappers `previewRosterImportFor` and `confirmRosterImportFor` (#434) |
 | `shared` | none | helpers no domain owns |
@@ -96,6 +97,7 @@ graph LR
   jobs --> calendar
   jobs --> automation
   jobs --> whatsapp
+  jobs --> voice
   jobs --> extraction
   calendar --> audit
   calendar --> workspaces
@@ -108,6 +110,11 @@ graph LR
   whatsapp --> ai
   whatsapp --> automation
   whatsapp --> matter-graph
+  voice --> workspaces
+  voice --> capture
+  voice --> ai
+  voice --> automation
+  voice --> matter-graph
   extraction --> workspaces
   extraction --> ai
   extraction --> automation
@@ -143,8 +150,9 @@ graph LR
 | `calendar` | `audit`, `workspaces`, `capture`, `automation`, `matter-graph` |
 | `email-intake` | `audit`, `capture` |
 | `whatsapp` | `audit`, `workspaces`, `capture`, `ai`, `automation`, `matter-graph` |
+| `voice` | `workspaces`, `capture`, `ai`, `automation`, `matter-graph` |
 | `extraction` | `workspaces`, `ai`, `automation`, `matter-graph` |
-| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `extraction` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `voice`, `extraction` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

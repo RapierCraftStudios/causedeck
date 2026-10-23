@@ -32,5 +32,5 @@ export async function postWebhook(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  if (!response.ok) throw new Error(`Webhook responded ${response.status}`);
+  if (!response.ok) throw new Error(`Webhook responded ${String(response.status)}`);
 }

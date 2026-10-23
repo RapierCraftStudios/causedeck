@@ -469,10 +469,10 @@ export const serverShape = {
   // The governed fetch layer (#479, D-048): no key means the mock provider.
   ALTERLAB_API_KEY: secret(z.string().min(1)).optional().describe(d(serverKeys.ALTERLAB_API_KEY)),
   // Data-ops alert routing (#515, D-049): both unset means alerts are logged.
-  DATA_OPS_SLACK_WEBHOOK_URL: secret(z.string().url())
+  DATA_OPS_SLACK_WEBHOOK_URL: secret(z.url())
     .optional()
     .describe(d(serverKeys.DATA_OPS_SLACK_WEBHOOK_URL)),
-  DATA_OPS_ALERT_EMAIL: z.string().email().optional().describe(d(serverKeys.DATA_OPS_ALERT_EMAIL)),
+  DATA_OPS_ALERT_EMAIL: z.email().optional().describe(d(serverKeys.DATA_OPS_ALERT_EMAIL)),
   FETCH_DELEGATED_CAPTCHA_PER_HOUR: z.coerce
     .number()
     .int()

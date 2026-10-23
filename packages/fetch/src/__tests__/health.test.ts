@@ -111,7 +111,7 @@ describe('fetcher health port', () => {
 describe('postWebhook', () => {
   it('posts to Slack hosts only', async () => {
     const impl = vi.fn(() => Promise.resolve(new Response('ok')));
-    await postWebhook('https://hooks.slack.com/services/T/B/x', { text: 'hi' }, impl as never);
+    await postWebhook('https://hooks.slack.com/services/T/B/x', { text: 'hi' }, impl);
     expect(impl).toHaveBeenCalledTimes(1);
     await expect(
       postWebhook('https://evil.example/x', { text: 'hi' }, impl as never),

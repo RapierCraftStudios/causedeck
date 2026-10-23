@@ -65,13 +65,13 @@ export function detectFreshness(m: SourceMetrics): Detection {
   const limit = m.slo.freshnessMinutes;
   if (limit === null) return { ...base, breached: false, detail: 'no freshness SLO' };
   if (m.lastSuccessAt === null) {
-    return { ...base, breached: true, detail: `no successful fetch; SLO ${limit} min` };
+    return { ...base, breached: true, detail: `no successful fetch; SLO ${String(limit)} min` };
   }
   const ageMinutes = Math.floor((m.now.getTime() - m.lastSuccessAt.getTime()) / 60_000);
   return {
     ...base,
     breached: ageMinutes > limit,
-    detail: `last success ${ageMinutes} min ago; SLO ${limit} min`,
+    detail: `last success ${String(ageMinutes)} min ago; SLO ${String(limit)} min`,
   };
 }
 
@@ -87,7 +87,7 @@ export function detectErrorRate(m: SourceMetrics): Detection {
   return {
     ...base,
     breached: rate < target,
-    detail: `success ${pct(rate)} over ${total} calls; SLO ${pct(target)}`,
+    detail: `success ${pct(rate)} over ${String(total)} calls; SLO ${pct(target)}`,
   };
 }
 
@@ -97,7 +97,7 @@ export function detectBlockSignature(m: SourceMetrics): Detection {
   return {
     ...base,
     breached,
-    detail: `${m.calls.blocks} blocked call(s) in ${ERROR_WINDOW_MINUTES} min${m.backedOff ? '; backing off' : ''}`,
+    detail: `${String(m.calls.blocks)} blocked call(s) in ${String(ERROR_WINDOW_MINUTES)} min${m.backedOff ? '; backing off' : ''}`,
   };
 }
 
@@ -112,7 +112,7 @@ export function detectParseYield(m: SourceMetrics): Detection {
   return {
     ...base,
     breached: yieldRate < floor,
-    detail: `yield ${pct(yieldRate)} (${run.parsed}/${run.expected}) on parser ${run.parserVersion}; floor ${pct(floor)}`,
+    detail: `yield ${pct(yieldRate)} (${String(run.parsed)}/${String(run.expected)}) on parser ${run.parserVersion}; floor ${pct(floor)}`,
     parserVersion: run.parserVersion,
   };
 }
@@ -141,7 +141,7 @@ export function detectConflictRate(m: SourceMetrics): Detection {
   return {
     ...base,
     breached: rate > DETECTOR_DEFAULTS.conflictRateCeiling,
-    detail: `${conflicts} conflicts in ${parsed} records (${pct(rate)}); ceiling ${pct(DETECTOR_DEFAULTS.conflictRateCeiling)}`,
+    detail: `${String(conflicts)} conflicts in ${String(parsed)} records (${pct(rate)}); ceiling ${pct(DETECTOR_DEFAULTS.conflictRateCeiling)}`,
   };
 }
 

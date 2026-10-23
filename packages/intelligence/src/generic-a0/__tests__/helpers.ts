@@ -1,7 +1,7 @@
 // Shared test helpers for the A0 adapter (#56): a counting fake gateway, page builders and a
 // "recorded model" that answers from a synthetic document's truth, so no test needs a real model.
 import type { AiGateway, GatewayResult, RunContext } from '@causedeck/ai';
-import type { PageText } from '@causedeck/intelligence/extract';
+import type { PageText } from '../../extract/index.ts';
 
 import type { GeneratedA0Document } from '../synthetic/generate.ts';
 import type { ModelA0OrderOutput, ModelListOutput } from '../validate.ts';

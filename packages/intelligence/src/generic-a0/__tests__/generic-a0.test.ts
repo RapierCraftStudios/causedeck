@@ -8,12 +8,11 @@ import {
   renderDate,
   DATE_FORMATS,
   type PageText,
-} from '@causedeck/intelligence/extract';
+} from '../../extract/index.ts';
 import { ProposalDraftSchema } from '@causedeck/validators/proposal-draft';
 import { describe, expect, it } from 'vitest';
 
-import { createAdapterRegistry } from '../../registry.ts';
-import { mulberry32 } from '../../testing/synthetic.ts';
+import { createAdapterRegistry } from '@causedeck/adapters';
 import {
   A0_ACCESS_MODES,
   A0_ADAPTER_IDS,
@@ -53,6 +52,7 @@ import {
 import {
   A0_SYNTHETIC_FORUMS,
   generateA0Document,
+  mulberry32,
   type A0Scenario,
   type A0SyntheticForum,
 } from '../synthetic/generate.ts';

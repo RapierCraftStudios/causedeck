@@ -5,19 +5,32 @@
 // validated later with #119. The same seed gives the same bytes. Test tooling only: not exported
 // from the package entry. Regenerate the committed fixtures after a deliberate change (then run
 // Prettier and review):
+// (from packages/intelligence):
 //   node --experimental-strip-types -e \
-//     "import('./src/generic-a0/synthetic/generate.ts').then((m) => m.writeA0Fixtures())"
+//     "import('././src/generic-a0/synthetic/generate.ts').then((m) => m.writeA0Fixtures())"
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { addInterval, renderDate } from '@causedeck/intelligence/extract';
+import { addInterval, renderDate } from '../../extract/index.ts';
 import { PDFDocument } from 'pdf-lib';
 
-import { layoutFromPdf } from '../../layout/pdf.ts';
-import { GOLDEN_RECEIVED_AT } from '../../testing/golden.ts';
-import { mulberry32 } from '../../testing/synthetic.ts';
-import type { LayoutDocument, ParserInput } from '../../types.ts';
+import { layoutFromPdf, type LayoutDocument, type ParserInput } from '@causedeck/adapters';
+
 import { createA0Adapter } from '../index.ts';
+
+/** The `receivedAt` the golden fixtures are read with (the adapters golden harness uses the same). */
+const GOLDEN_RECEIVED_AT = '2026-10-21T04:00:00.000Z';
+
+/** Deterministic PRNG: the same seed always yields the same sequence in [0, 1). */
+export function mulberry32(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 export const A0_SYNTHETIC_FORUMS = [
   { adapterId: 'generic.a0', forumCode: 'generic.a0', court: 'THE FICTIONAL DISTRICT COURT' },
@@ -533,7 +546,7 @@ export function ocrSidecar(doc: GeneratedA0Document): LayoutDocument {
   };
 }
 
-export const A0_FIXTURES_ROOT = path.resolve(import.meta.dirname, '../../../fixtures');
+export const A0_FIXTURES_ROOT = path.resolve(import.meta.dirname, '../../../../adapters/fixtures');
 const SEED = 56;
 
 /** Every file of the committed fixtures of one A0 adapter id. */
@@ -585,7 +598,7 @@ async function filesFor(
     content: `${JSON.stringify({
       adapter: forum.adapterId,
       classification: 'FICTIONAL',
-      note: `Synthetic A0 district fixtures from src/generic-a0/synthetic/generate.ts (#56), seed ${String(SEED)}. Every party and court is fictional; real district fixtures are validated later with #119.`,
+      note: `Synthetic A0 district fixtures from ./src/generic-a0/synthetic/generate.ts (#56), seed ${String(SEED)}. Every party and court is fictional; real district fixtures are validated later with #119.`,
       fixtures: manifest,
     })}\n`,
   });
@@ -599,27 +612,4 @@ export async function writeA0Fixtures(root: string = A0_FIXTURES_ROOT): Promise<
     for (const { name, content } of await filesFor(forum))
       writeFileSync(path.join(dir, name), content);
   }
-}
-
-/**
- * `gen:fixtures --adapter a0 --seed N` (`src/testing/gen-fixtures.ts`): the generic forum's seeded
- * documents and their truth files, for the generated-data metrics. Not the committed fixtures.
- */
-export async function writeGeneratedFixtures(options: {
-  seed: number;
-  outDir: string;
-}): Promise<{ cause_list: number; order: number; registry_notice: number }> {
-  mkdirSync(options.outDir, { recursive: true });
-  const forum = A0_SYNTHETIC_FORUMS[0];
-  const counts = { cause_list: 0, order: 0, registry_notice: 0 };
-  for (const scenario of A0_SCENARIOS) {
-    const doc = generateA0Document(forum, scenario, options.seed);
-    const base = path.join(options.outDir, `${doc.name}.input`);
-    if (doc.ext === 'pdf') writeFileSync(`${base}.pdf`, await imageOnlyPdf(doc.pages.length));
-    else if (doc.layout !== undefined) writeFileSync(`${base}.json`, JSON.stringify(doc.layout));
-    else writeFileSync(`${base}.txt`, doc.pages.join('\f'));
-    writeFileSync(path.join(options.outDir, `${doc.name}.truth.json`), JSON.stringify(doc.truth));
-    counts[doc.kind] += 1;
-  }
-  return counts;
 }

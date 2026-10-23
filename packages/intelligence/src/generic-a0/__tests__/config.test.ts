@@ -7,8 +7,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { canonicalJson, configChecksum } from '../../config/checksum.ts';
-import { AdapterConfigSchema } from '../../config/schema.ts';
+import { AdapterConfigSchema, canonicalJson, configChecksum } from '@causedeck/adapters';
 import {
   A0_ACCESS_MODES,
   A0_ADAPTER_IDS,

@@ -5,9 +5,9 @@
 // capture or a sensitive matter) the gateway is never contacted, so no `ai_call` row is written.
 // The gateway is a port: this package never opens a connection.
 import type { AiGateway, RunContext } from '@causedeck/ai';
-import { preParse, type PageText } from '@causedeck/intelligence/extract';
+import { preParse, type PageText } from '../extract/index.ts';
 
-import type { LayoutDocument } from '../types.ts';
+import type { LayoutDocument } from '@causedeck/adapters';
 
 import { buildCaseTypeLookup, type CaseTypeLookup } from './patterns.ts';
 import { skeletonPass, type Skeleton } from './skeleton.ts';

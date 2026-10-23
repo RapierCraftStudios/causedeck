@@ -2,10 +2,7 @@
 // a line. The set is the union of the nomenclature of every registered adapter and the district
 // types below. A district type that no official source confirms is `verified: false`, and so is any
 // type outside the set (`known: false`), so a row is never trusted for a spelling we only guessed.
-import type { CourtAdapter } from '../types.ts';
-import { compactCaseType } from '../normalise/case-type.ts';
-import { expandYear } from '../normalise/case-number.ts';
-import { listAdapters } from '../registry.ts';
+import { compactCaseType, expandYear, listAdapters, type CourtAdapter } from '@causedeck/adapters';
 
 /** The eCourts CNR: 4 letters (state and district), 2 digits (establishment), 6 (case), 4 (year). */
 export const CNR_PATTERN = /^[A-Z]{4}\d{2}\d{6}\d{4}$/;

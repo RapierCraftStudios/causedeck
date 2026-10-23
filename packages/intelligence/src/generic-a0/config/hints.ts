@@ -1,6 +1,6 @@
 // Per-forum hints for the A0 adapters (#56): language profile and nomenclature. The same data is
 // committed as `*.config.json` (versioned in `adapter_version`, checksum pinned by `config.test.ts`).
-import { defineAdapterConfig, type AdapterConfig } from '../../config/schema.ts';
+import { defineAdapterConfig, type AdapterConfig } from '@causedeck/adapters';
 import { DISTRICT_CASE_TYPES } from '../patterns.ts';
 
 export const GENERIC_A0_ADAPTER_ID = 'generic.a0';

@@ -910,9 +910,6 @@ importers:
 
   packages/adapters:
     dependencies:
-      '@causedeck/ai':
-        specifier: workspace:*
-        version: link:../ai
       '@causedeck/config':
         specifier: workspace:*
         version: link:../config
@@ -922,12 +919,6 @@ importers:
       '@causedeck/flags':
         specifier: workspace:*
         version: link:../flags
-      '@causedeck/intelligence':
-        specifier: workspace:*
-        version: link:../intelligence
-      '@causedeck/validators':
-        specifier: workspace:*
-        version: link:../validators
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(kysely@0.29.6)(pg@8.23.1)(postgres@3.4.9)

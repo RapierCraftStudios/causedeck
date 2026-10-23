@@ -6,17 +6,15 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { datePresence } from '@causedeck/intelligence/extract';
+import { datePresence } from '../../extract/index.ts';
 import { describe, expect, it } from 'vitest';
 
-import { layoutFromPdf } from '../../layout/pdf.ts';
 import {
-  FIXTURES_ROOT,
-  FixtureManifestSchema,
-  pageTexts,
-  runGolden,
-} from '../../testing/golden.ts';
-import { LayoutDocumentSchema, ParsedCauseListSchema } from '../../types.ts';
+  layoutFromPdf,
+  LayoutDocumentSchema,
+  ParsedCauseListSchema,
+  type ParserInput,
+} from '@causedeck/adapters';
 import {
   createA0Adapter,
   parseListA0,
@@ -41,8 +39,43 @@ import {
   scope,
 } from './helpers.ts';
 
+// The committed golden fixtures and thresholds live with the adapters.
+const ADAPTERS_ROOT = path.resolve(import.meta.dirname, '../../../../adapters');
+const FIXTURES_ROOT = path.join(ADAPTERS_ROOT, 'fixtures');
+const RECEIVED_AT = '2026-10-21T04:00:00.000Z';
+
+interface Manifest {
+  classification?: string;
+  fixtures: {
+    file: string;
+    kind: string;
+    origin: string;
+    classification?: string;
+    forumCode?: string;
+  }[];
+}
+const readManifest = (id: string): Manifest =>
+  JSON.parse(readFileSync(path.join(FIXTURES_ROOT, id, 'manifest.json'), 'utf8')) as Manifest;
+
+/** The parser input of a fixture file, as the adapters golden harness builds it. */
+async function inputFor(file: string, forumCode: string): Promise<ParserInput> {
+  const meta = { fileName: path.basename(file), receivedAt: RECEIVED_AT, forumCode };
+  if (file.endsWith('.pdf')) {
+    return {
+      kind: 'layout',
+      layout: await layoutFromPdf(new Uint8Array(readFileSync(file))),
+      meta,
+    };
+  }
+  const content = readFileSync(file, 'utf8');
+  if (file.endsWith('.json')) {
+    return { kind: 'layout', layout: LayoutDocumentSchema.parse(JSON.parse(content)), meta };
+  }
+  return { kind: 'text', text: content, meta };
+}
+
 const THRESHOLDS = JSON.parse(
-  readFileSync(path.resolve(import.meta.dirname, '../../../eval/a0/thresholds.json'), 'utf8'),
+  readFileSync(path.join(ADAPTERS_ROOT, 'eval/a0/thresholds.json'), 'utf8'),
 ) as {
   minRowPrecision: number;
   anchorValidity: number;
@@ -57,9 +90,7 @@ describe('committed A0 fixtures', () => {
     '%s: at least 12 synthetic FICTIONAL fixtures, each with an expected file',
     (id) => {
       const dir = path.join(FIXTURES_ROOT, id);
-      const manifest = FixtureManifestSchema.parse(
-        JSON.parse(readFileSync(path.join(dir, 'manifest.json'), 'utf8')),
-      );
+      const manifest = readManifest(id);
       expect(manifest.classification).toBe('FICTIONAL');
       expect(manifest.fixtures.length).toBeGreaterThanOrEqual(THRESHOLDS.minFixturesPerForum);
       const files = readdirSync(dir);
@@ -83,17 +114,22 @@ describe('committed A0 fixtures', () => {
   it.each(A0_ADAPTER_IDS)(
     '%s: passes the golden harness with every anchor verbatim in its page',
     async (id) => {
-      const report = await runGolden(id, {
-        adapter: createA0Adapter({ id }),
-        privateFixturesDir: null,
-      });
-      for (const c of report.public.cases)
-        expect(c.diff.concat(c.anchorViolations), c.file).toEqual([]);
-      expect(report.public.passed).toBe(true);
-      // The harness parses the cause lists; the orders are checked by the metrics below.
-      expect(report.public.cases.length).toBe(
-        A0_SCENARIOS.filter((n) => n.startsWith('list-')).length,
-      );
+      const adapter = createA0Adapter({ id });
+      const lists = readManifest(id).fixtures.filter((f) => f.kind === 'cause_list');
+      expect(lists.length).toBe(A0_SCENARIOS.filter((n) => n.startsWith('list-')).length);
+      for (const entry of lists) {
+        const file = path.join(FIXTURES_ROOT, id, entry.file);
+        const input = await inputFor(file, entry.forumCode ?? '');
+        const actual = ParsedCauseListSchema.parse(await adapter.parseCauseList(input));
+        const expected = ParsedCauseListSchema.parse(
+          JSON.parse(readFileSync(file.replace(/\.input\.[^.]+$/, '.expected.json'), 'utf8')),
+        );
+        expect(actual, entry.file).toEqual(expected);
+        const pages = input.layout?.pages.map((p) => p.text) ?? (input.text ?? '').split('\f');
+        for (const row of actual.rows) {
+          expect(pages[row.anchor.page - 1], entry.file).toContain(row.anchor.quote);
+        }
+      }
     },
   );
 
@@ -287,16 +323,5 @@ describe('A0 golden metrics on generated documents', () => {
     expect(generateA0Document(forum, 'list-mixed', 56).pages).not.toEqual(
       generateA0Document(forum, 'list-mixed', 57).pages,
     );
-  });
-
-  it('page texts of an input are the texts anchors quote (golden harness contract)', () => {
-    const doc = generateA0Document(must(A0_SYNTHETIC_FORUMS[0]), 'list-english', 56);
-    expect(
-      pageTexts({
-        kind: 'text',
-        text: doc.pages.join('\f'),
-        meta: { receivedAt: '2026-10-21T04:00:00.000Z', forumCode: 'generic.a0' },
-      }),
-    ).toEqual(doc.pages);
   });
 });

@@ -98,3 +98,4 @@ export {
   type TranscriptLanguage,
   type TranscriptSegment,
 } from './transcribe/transcribe.ts';
+export * from './generic-a0/index.ts';

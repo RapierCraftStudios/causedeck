@@ -7,23 +7,23 @@
 // district cause-list pages (two verification challenges) are never accessed; the model is reached only through
 // the injected gateway (see `llm-parse.ts`). The adapter object's `parseCauseList` is the
 // deterministic skeleton, so the golden harness and the registry treat A0 like any adapter.
-import { preParse } from '@causedeck/intelligence/extract';
+import {
+  layoutFromEmail,
+  layoutFromHtml,
+  layoutFromText,
+  matchKey,
+  normaliseStage,
+  type AccessModes,
+  type AdapterConfig,
+  type CourtAdapter,
+  type LayoutDocument,
+  type ParsedCauseList,
+  type ParsedListRow,
+  type ParsedOrderHeader,
+  type ParserInput,
+} from '@causedeck/adapters';
 
-import type { AdapterConfig } from '../config/schema.ts';
-import { layoutFromEmail } from '../layout/email.ts';
-import { layoutFromHtml } from '../layout/html.ts';
-import { layoutFromText } from '../layout/text.ts';
-import { matchKey } from '../normalise/match-key.ts';
-import { normaliseStage } from '../normalise/stage.ts';
-import type {
-  AccessModes,
-  CourtAdapter,
-  LayoutDocument,
-  ParsedCauseList,
-  ParsedListRow,
-  ParsedOrderHeader,
-  ParserInput,
-} from '../types.ts';
+import { preParse } from '../extract/index.ts';
 
 import {
   A0_CONFIGS,

@@ -17,11 +17,10 @@ import {
   type OrderExtraction,
   type PageText,
   type Rejected,
-} from '@causedeck/intelligence/extract';
-import { detectLanguage } from '@causedeck/intelligence/language';
+} from '../extract/index.ts';
+import { detectLanguage } from '../language/detect.ts';
 
-import { matchKey } from '../normalise/match-key.ts';
-import type { BBox, LayoutDocument } from '../types.ts';
+import { matchKey, type BBox, type LayoutDocument } from '@causedeck/adapters';
 
 import { CNR_PATTERN, findCaseRefs, type CaseTypeLookup } from './patterns.ts';
 import { skeletonPass, type Skeleton, type SkeletonRow } from './skeleton.ts';

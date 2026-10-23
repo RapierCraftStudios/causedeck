@@ -11,7 +11,7 @@ import {
   toProposalDrafts,
   type ExtractionAnchor,
   type ProposalContext,
-} from '@causedeck/intelligence/extract';
+} from '../extract/index.ts';
 import type { ProposalDraft } from '@causedeck/validators/proposal-draft';
 
 import { matchRow, type RowMatch, type WorkspaceIdentifiers } from './confirmation.ts';

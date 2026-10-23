@@ -17,12 +17,9 @@
     "gen:fixtures": "node --experimental-strip-types src/testing/gen-fixtures.ts"
   },
   "dependencies": {
-    "@causedeck/ai": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/flags": "workspace:*",
-    "@causedeck/intelligence": "workspace:*",
-    "@causedeck/validators": "workspace:*",
     "drizzle-orm": "catalog:",
     "parse5": "catalog:",
     "pdfjs-dist": "catalog:",

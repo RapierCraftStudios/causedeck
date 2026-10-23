@@ -3,10 +3,10 @@
 // literals in English, Tamil and Kannada digit forms, headings and table rows from the layout, and
 // anchors each to its line of the page. Its output is the model's hints and the whole answer when
 // the model is unavailable, over budget or not allowed (sensitive matters, `ai_blocked` captures).
-import { findDateLiterals, type PageText } from '@causedeck/intelligence/extract';
-import { detectDocumentLanguage } from '@causedeck/intelligence/language';
+import { findDateLiterals, type PageText } from '../extract/index.ts';
+import { detectDocumentLanguage } from '../language/detect.ts';
 
-import type { LayoutDocument } from '../types.ts';
+import type { LayoutDocument } from '@causedeck/adapters';
 
 import {
   buildCaseTypeLookup,

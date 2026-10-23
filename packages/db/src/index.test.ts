@@ -100,6 +100,7 @@ describe('@causedeck/db root entry point', () => {
       'invitation',
       'invoice_counter',
       'job_effect',
+      'judgment',
       'legal_hold_invoice',
       'listing',
       'matter',

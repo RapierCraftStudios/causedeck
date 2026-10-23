@@ -70,6 +70,11 @@ export function CameraViewfinder({
   const t = useTranslations('camera');
   const shownHint = useRateLimitedHint(hint);
 
+  // The shutter waits for the stream's first decoded frame: before it the video is 0 x 0 and a
+  // grab fails.
+  const [framedStream, setFramedStream] = useState<MediaStream | null>(null);
+  const frameReady = stream !== null && framedStream === stream;
+
   useEffect(() => {
     const video = videoRef.current;
     if (video !== null && stream !== null) video.srcObject = stream;
@@ -116,6 +121,9 @@ export function CameraViewfinder({
             playsInline
             muted
             data-slot="camera-video"
+            onLoadedData={() => {
+              setFramedStream(stream);
+            }}
             className="absolute inset-0 size-full object-cover"
           />
         )}
@@ -146,7 +154,7 @@ export function CameraViewfinder({
         <button
           type="button"
           aria-label={t('shutter')}
-          disabled={busy || stream === null}
+          disabled={busy || stream === null || !frameReady}
           onClick={onShutter}
           className="grid size-[72px] shrink-0 place-items-center rounded-full border-4 border-white bg-white/20 text-white disabled:opacity-50 motion-safe:active:scale-95"
         >

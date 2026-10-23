@@ -2,20 +2,27 @@
 // `<BootstrapImport />` (#552, #57 part 6): the stepper of the bootstrap import. Choose files ->
 // upload each as a `bulk_import` capture -> add them to a batch -> (ask for the member's
 // identifiers when none are saved) -> watch the files being read. #92 embeds it in onboarding;
-// #551 takes over at `onPlanReady` with the confirm grid. Nothing is created here: applying the
-// plan is a later step.
+// the confirm grid (#551) opens from the processing view's review button (or `onPlanReady`, when
+// the host takes over). `?batch=<id>` resumes a batch that is already being read.
+import type { ImportPlan } from '@causedeck/core/import';
 import { Alert } from '@causedeck/ui/alert';
 import { Button } from '@causedeck/ui/button';
 import { WifiOff } from 'lucide-react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import { enableChannelAction } from '../../app/(app)/w/[slug]/inbox/actions.ts';
 import {
   addImportFilesAction,
+  applyImportPlanAction,
   buildImportPlanAction,
+  getImportPlanAction,
   importProgressAction,
+  saveImportPlanEditsAction,
   startImportBatchAction,
+  undoImportBatchAction,
+  type ApplyView,
   type ImportProgressView,
 } from '../../app/(app)/w/[slug]/import/actions.ts';
 import {
@@ -24,9 +31,11 @@ import {
   type Candidate,
   type ImportEntry,
 } from '../../lib/import/file-rules.ts';
+import { confirmImport, type ConfirmInput } from '../../lib/import/plan-edit.ts';
 import { runLimited, uploadImportFile } from '../../lib/import/upload-batch.ts';
 import { useOnline } from '../settings/settings-offline-banner.tsx';
 
+import { ConfirmGrid } from './confirm-grid.tsx';
 import { DropZone } from './drop-zone.tsx';
 import { FileList } from './file-list.tsx';
 import { IdentifiersForm, type Identifiers } from './identifiers-form.tsx';
@@ -43,7 +52,9 @@ export interface BootstrapImportProps {
   onPlanReady?: ((batchId: string) => void) | undefined;
 }
 
-type Phase = 'select' | 'uploading' | 'identifiers' | 'processing';
+type Phase = 'select' | 'uploading' | 'identifiers' | 'processing' | 'review';
+
+const BATCH_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const UPLOAD_CONCURRENCY = 3;
 const POLL_MS = 3000;
@@ -61,8 +72,13 @@ export function BootstrapImport({
   const [enableFailed, setEnableFailed] = useState(false);
   const [entries, setEntries] = useState<ImportEntry[]>([]);
   const [refused, setRefused] = useState(0);
-  const [phase, setPhase] = useState<Phase>('select');
-  const [batchId, setBatchId] = useState<string | null>(null);
+  const resume = useSearchParams().get('batch');
+  const resumeId = resume !== null && BATCH_ID.test(resume) ? resume : null;
+  const courtDayHref = usePathname().replace(/\/import\/?$/, '/today');
+  const [phase, setPhase] = useState<Phase>(resumeId === null ? 'select' : 'processing');
+  const [batchId, setBatchId] = useState<string | null>(resumeId);
+  const [reviewPlan, setReviewPlan] = useState<ImportPlan | null>(null);
+  const [reviewFailed, setReviewFailed] = useState(false);
   const [progress, setProgress] = useState<ImportProgressView | null>(null);
   const [proposed, setProposed] = useState<Identifiers | null>(null);
   const [failed, setFailed] = useState(false);
@@ -209,6 +225,25 @@ export function BootstrapImport({
     }
   }
 
+  async function openReview() {
+    if (batchId === null) return;
+    setReviewFailed(false);
+    const result = await getImportPlanAction({ workspaceId, batchId }).catch(() => null);
+    if (result?.ok === true) {
+      setReviewPlan(result.data);
+      setPhase('review');
+    } else {
+      setReviewFailed(true);
+    }
+  }
+
+  const applyEdits = (plan: ImportPlan, input: ConfirmInput) =>
+    confirmImport<ApplyView>(input, {
+      plan,
+      savePlan: (groups) => saveImportPlanEditsAction({ workspaceId, batchId, groups }),
+      applyPlan: (decisions) => applyImportPlanAction({ workspaceId, batchId, decisions }),
+    });
+
   async function turnOn() {
     setEnableFailed(false);
     const result = await enableChannelAction({
@@ -339,12 +374,36 @@ export function BootstrapImport({
           retrying={busy}
           onRetryFailed={() => void retryFailedFiles()}
           onReview={
-            onPlanReady === undefined || batchId === null
+            batchId === null
               ? undefined
               : () => {
-                  onPlanReady(batchId);
+                  if (onPlanReady === undefined) void openReview();
+                  else onPlanReady(batchId);
                 }
           }
+        />
+      ) : null}
+      {phase === 'processing' && reviewFailed ? (
+        <Alert tone="danger" data-pattern-state="error">
+          <p>{t('error.action')}</p>
+          <Button type="button" size="sm" variant="outline" onClick={() => void openReview()}>
+            {t('error.retry')}
+          </Button>
+        </Alert>
+      ) : null}
+      {phase === 'review' && reviewPlan !== null ? (
+        <ConfirmGrid
+          plan={reviewPlan}
+          courtDayHref={courtDayHref}
+          onConfirm={(input) => applyEdits(reviewPlan, input)}
+          onUndo={() => undoImportBatchAction({ workspaceId, batchId })}
+          onAddIdentifiers={() => {
+            setProposed(null);
+            setPhase('identifiers');
+          }}
+          onRetryFile={() => void retryFailedFiles()}
+          // Nothing lists per-file issues yet, so there is no file to keep.
+          onKeepFile={() => undefined}
         />
       ) : null}
     </div>

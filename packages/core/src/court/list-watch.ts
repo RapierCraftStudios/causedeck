@@ -50,7 +50,8 @@ type Db = Database | Transaction;
 /** The watch value as stored: a BRN upper-cased in its printed form, a name trimmed as written. */
 function normalizeWatch(kind: schema.CauseListWatchKind, raw: string): string {
   const value = raw.trim().replace(/\s+/g, ' ');
-  if (value === '' || value.length > 200) throw invalid('Enter a name or BRN of up to 200 characters');
+  if (value === '' || value.length > 200)
+    throw invalid('Enter a name or BRN of up to 200 characters');
   if (kind === 'brn') {
     // Only a printed enrolment number or BRN: the identifier helper would accept any text.
     const key = extractEnrolmentNo(value) ?? extractBarRegistrationNo(value);

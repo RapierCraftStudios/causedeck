@@ -67,11 +67,5 @@ export default async function InboxPage({ params }: InboxPageProps) {
         : { ...item, sourceFetchedAt: publication.fetchedAt.toISOString() };
     }),
   );
-  return (
-    <InboxShell
-      view={{ ...view, needsYou }}
-      workspaceId={context.workspace.id}
-      slug={slug}
-    />
-  );
+  return <InboxShell view={{ ...view, needsYou }} workspaceId={context.workspace.id} slug={slug} />;
 }

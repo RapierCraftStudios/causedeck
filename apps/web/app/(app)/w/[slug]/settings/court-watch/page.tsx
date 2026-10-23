@@ -42,9 +42,7 @@ export default async function CourtWatchPage({ params }: CourtWatchPageProps) {
   if (!canOpenSettings(context.role, 'court-watch')) return <PermissionDeniedPage />;
   const [t, flag] = await Promise.all([getTranslations('settings'), workspaceFlagCheck(context)]);
   const on = flag('court.khc_a2');
-  const watches = on
-    ? await listCourtWatchesAction({ workspaceId: context.workspace.id })
-    : null;
+  const watches = on ? await listCourtWatchesAction({ workspaceId: context.workspace.id }) : null;
   const cleared = on ? await sourceCleared() : false;
 
   return (

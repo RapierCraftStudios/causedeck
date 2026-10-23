@@ -9,7 +9,11 @@ import { serverEnv } from '@causedeck/config/env';
 import { createFetcher, createProvider, type FetchPolicy } from '@causedeck/fetch';
 import { z } from 'zod';
 
-import { pollCauseList, type PollCauseListDeps, type PollCauseListReport } from '../../court/index.ts';
+import {
+  pollCauseList,
+  type PollCauseListDeps,
+  type PollCauseListReport,
+} from '../../court/index.ts';
 import { createFetchLogSink, policyFor } from '../../sources/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
@@ -20,7 +24,9 @@ export const CAUSELIST_POLL_CRON = '30 7,18 * * *';
 /** Poll once with the production fetcher; the sinks write usage nowhere and the log through the app db. */
 export async function runCauselistPoll(
   ctx: Pick<JobContext, 'db' | 'log'>,
-  deps: Partial<Pick<PollCauseListDeps, 'clock' | 'fetcher' | 'parser' | 'flagEnabled' | 'policy'>> = {},
+  deps: Partial<
+    Pick<PollCauseListDeps, 'clock' | 'fetcher' | 'parser' | 'flagEnabled' | 'policy'>
+  > = {},
 ): Promise<PollCauseListReport> {
   const clock = deps.clock ?? { now: () => new Date() };
   const fetcher =

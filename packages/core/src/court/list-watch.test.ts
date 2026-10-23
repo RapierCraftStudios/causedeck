@@ -46,7 +46,11 @@ function fakeFetcher(pages: Record<string, string>): ListFetcher & { calls: stri
       if (key === undefined) throw new Error(`no page for ${url}`);
       return Promise.resolve({
         body: pages[key] ?? '',
-        provenance: { url, fetchedAt: NOW.toISOString(), sha256: `sha-${key}-${(pages[key] ?? '').length}` },
+        provenance: {
+          url,
+          fetchedAt: NOW.toISOString(),
+          sha256: `sha-${key}-${(pages[key] ?? '').length}`,
+        },
       });
     },
   };
@@ -84,7 +88,10 @@ describe('watch services', () => {
     await withTestDb(async (tx) => {
       const a = await watcher(tx);
       const b = await watcher(tx);
-      const again = await addCauseListWatch({ db: tx }, a, { kind: 'brn', value: ' kar/1234/2001 ' });
+      const again = await addCauseListWatch({ db: tx }, a, {
+        kind: 'brn',
+        value: ' kar/1234/2001 ',
+      });
       expect(await listCauseListWatches({ db: tx }, a)).toHaveLength(1);
       expect(await listCauseListWatches({ db: tx }, b)).toHaveLength(1);
       await expect(removeCauseListWatch({ db: tx }, b, again.id)).rejects.toMatchObject({
@@ -98,8 +105,12 @@ describe('watch services', () => {
   it('rejects an invalid BRN and an empty name', async () => {
     await withTestDb(async (tx) => {
       const a = await watcher(tx);
-      await expect(addCauseListWatch({ db: tx }, a, { kind: 'brn', value: 'nope' })).rejects.toThrow();
-      await expect(addCauseListWatch({ db: tx }, a, { kind: 'name', value: '  ' })).rejects.toThrow();
+      await expect(
+        addCauseListWatch({ db: tx }, a, { kind: 'brn', value: 'nope' }),
+      ).rejects.toThrow();
+      await expect(
+        addCauseListWatch({ db: tx }, a, { kind: 'name', value: '  ' }),
+      ).rejects.toThrow();
     });
   });
 });
@@ -109,7 +120,9 @@ describe('pollCauseList', () => {
     await withTestDb(async (tx) => {
       await watcher(tx);
       const fetcher = fakeFetcher(pages);
-      const report = await pollCauseList(deps(tx, fetcher, { flagEnabled: () => Promise.resolve(false) }));
+      const report = await pollCauseList(
+        deps(tx, fetcher, { flagEnabled: () => Promise.resolve(false) }),
+      );
       expect(report.outcome).toBe('flag_off');
       expect(fetcher.calls).toEqual([]);
     });
@@ -152,7 +165,16 @@ describe('pollCauseList', () => {
       expect(publications.every((p) => p.completedAt !== null && p.rowCount > 0)).toBe(true);
       // The publication row holds metadata only.
       expect(Object.keys(publications[0] ?? {}).sort()).toEqual(
-        ['completedAt', 'fetchedAt', 'id', 'listKey', 'rowCount', 'sha256', 'sourceId', 'url'].sort(),
+        [
+          'completedAt',
+          'fetchedAt',
+          'id',
+          'listKey',
+          'rowCount',
+          'sha256',
+          'sourceId',
+          'url',
+        ].sort(),
       );
 
       for (const member of [a, b]) {
@@ -195,17 +217,20 @@ describe('pollCauseList', () => {
 });
 
 describe('golden fixtures through the fetched-HTML path', () => {
-  it.each([
-    ['list-01-daily-three-halls-two-lists'],
-    ['list-03-advance'],
-  ])('%s parses to its expected rows', async (name) => {
-    const expected = JSON.parse(read(`${name}.expected.json`)) as {
-      rows: { matchKey: string | null; advocates?: unknown[] }[];
-    };
-    const parsed = await createKhcListParser()(read(`${name}.input.html`), '2026-10-21T04:00:00.000Z');
-    expect(parsed.rows.map((r) => r.matchKey)).toEqual(expected.rows.map((r) => r.matchKey));
-    expect(parsed.rows.map((r) => r.advocates?.length ?? 0)).toEqual(
-      expected.rows.map((r) => r.advocates?.length ?? 0),
-    );
-  });
+  it.each([['list-01-daily-three-halls-two-lists'], ['list-03-advance']])(
+    '%s parses to its expected rows',
+    async (name) => {
+      const expected = JSON.parse(read(`${name}.expected.json`)) as {
+        rows: { matchKey: string | null; advocates?: unknown[] }[];
+      };
+      const parsed = await createKhcListParser()(
+        read(`${name}.input.html`),
+        '2026-10-21T04:00:00.000Z',
+      );
+      expect(parsed.rows.map((r) => r.matchKey)).toEqual(expected.rows.map((r) => r.matchKey));
+      expect(parsed.rows.map((r) => r.advocates?.length ?? 0)).toEqual(
+        expected.rows.map((r) => r.advocates?.length ?? 0),
+      );
+    },
+  );
 });

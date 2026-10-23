@@ -8,6 +8,7 @@ import path from 'node:path';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as Business from '@causedeck/core/business';
 import type * as FlagKeys from '@causedeck/flags/keys';
 
 import type * as DataLayer from '../lib/data/index.ts';
@@ -86,6 +87,11 @@ vi.mock('@causedeck/core/sources', () => {
     setSourceKillSwitch: audited,
   };
 });
+vi.mock('@causedeck/core/business', async (importOriginal) => ({
+  ...(await importOriginal<typeof Business>()),
+  staffBusinessSnapshot: () =>
+    Promise.resolve({ plans: [], shared: { fetchDollars: 0, captchaDollars: 0 } }),
+}));
 vi.mock('@causedeck/core/workspaces', () => ({
   WorkspaceError: class WorkspaceError extends Error {
     constructor(readonly code: string) {
@@ -379,9 +385,15 @@ describe('admin data layer reads', () => {
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),
     workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
+    businessMetrics: (d) =>
+      d.businessMetrics(staff, {
+        usdInr: 85,
+        infraCostPaiseMonthly: 0,
+        costAlertPaisePerUser: 4000,
+      }),
   };
   // The building blocks every read goes through, not reads themselves.
-  const PRIMITIVES = ['staffCall', 'staffQuery', 'StaffQueryDeniedError'];
+  const PRIMITIVES = ['staffCall', 'staffQuery', 'StaffQueryDeniedError', 'businessConfigFromEnv'];
 
   it('are all registered here', async () => {
     const data = await import('../lib/data/index.ts');

@@ -32,7 +32,9 @@ import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { notice, noticeMatch } from '../schema/notices.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
+import { judgment } from '../schema/corpus.ts';
 import { matter } from '../schema/matter-graph.ts';
+import { judgmentAlert, matterIssueTag } from '../schema/matter-issue.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
@@ -115,6 +117,27 @@ async function seedCaseWatch(
     })
     .returning({ id: caseWatch.id });
   return first(rows, 'case_watch').id;
+}
+
+/** A confirmed issue tag on a fresh matter of the workspace (#497), the parent of `judgment_alert` seeds. */
+async function seedIssueTag(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<{ matterId: string; tagId: string }> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(matterIssueTag)
+    .values({
+      workspaceId,
+      matterId,
+      statute: 'arbitration and conciliation act',
+      section: '34',
+      status: 'confirmed',
+      source: 'manual',
+    })
+    .returning({ id: matterIssueTag.id });
+  return { matterId, tagId: first(rows, 'matter_issue_tag').id };
 }
 
 /** A draft SaaS invoice for the workspace (the seed for `saas_invoice` and `saas_invoice_line`). */
@@ -929,6 +952,43 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: causeListWatch.id });
     return { id: first(rows, 'cause_list_watch').id };
+  },
+  matter_issue_tag: async (tx, { workspaceId, tag }) => {
+    const { matterId, tagId } = await seedIssueTag(tx, workspaceId, tag);
+    return { matterId, id: tagId };
+  },
+  judgment_alert: async (tx, { workspaceId, tag }) => {
+    const { matterId, tagId } = await seedIssueTag(tx, workspaceId, tag);
+    // The corpus is global: one judgment row per seeding run (sha256 is unique).
+    const judgments = await tx
+      .insert(judgment)
+      .values({
+        sourceId: 'xt.judgment-alert',
+        court: 'INSC',
+        sha256: createHash('sha256').update(`xt-judgment-${tag}-${randomUUID()}`).digest('hex'),
+        provenance: {
+          url: 'https://xt.example.test/j.pdf',
+          fetchedAt: '2026-10-23T00:00:00.000Z',
+          sha256: 'a'.repeat(64),
+          sourceId: 'xt.judgment-alert',
+          sourceVersion: '1',
+          tierUsed: 'http',
+          costDollars: 0,
+        },
+        pageText: [{ pageNo: 1, text: 'Section 34 of the Arbitration and Conciliation Act' }],
+      })
+      .returning({ id: judgment.id });
+    const rows = await tx
+      .insert(judgmentAlert)
+      .values({
+        workspaceId,
+        matterId,
+        tagId,
+        judgmentId: first(judgments, 'judgment').id,
+        pageNo: 1,
+      })
+      .returning({ id: judgmentAlert.id });
+    return { matterId, tagId, id: first(rows, 'judgment_alert').id };
   },
   import_plan: async (tx, { workspaceId, ownerId }) => {
     const batchId = await seedImportBatch(tx, workspaceId, ownerId);

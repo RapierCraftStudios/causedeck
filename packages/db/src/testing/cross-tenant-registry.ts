@@ -132,6 +132,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
+  // Judgment alerts (#497).
+  matter_issue_tag: DB_TABLES_TEST,
+  judgment_alert: DB_TABLES_TEST,
   // Official notices feed (#584).
   notice_match: DB_TABLES_TEST,
 };
@@ -680,6 +683,18 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: MEMORY_ERASURE_TEST,
     kind: 'self-scoped',
     note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
+  },
+  // judgment alerts (#497)
+  listTags: denies,
+  addTag: denies,
+  proposeTags: denies,
+  confirmTag: denies,
+  dismissTag: denies,
+  listRelevantJudgments: denies,
+  scanJudgments: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
   },
   // citations (#484): the global corpus, one answer for every workspace
   verifyCitation: {

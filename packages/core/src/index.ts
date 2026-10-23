@@ -11,6 +11,7 @@ export * from './lifecycle/index.ts';
 export * from './matter-graph/index.ts';
 export * from './matters/index.ts';
 export * from './network/index.ts';
+export * from './research/index.ts';
 export * from './sources/index.ts';
 export * from './support/index.ts';
 export * from './usage/index.ts';

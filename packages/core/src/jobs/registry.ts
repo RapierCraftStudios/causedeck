@@ -22,6 +22,7 @@ import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
+import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
@@ -183,6 +184,7 @@ export const registry = createRegistry([
   importFile,
   corpusPoll,
   causelistPoll,
+  judgmentAlertScan,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -226,6 +228,7 @@ export type JobMap = RegistryMap<
     typeof importFile,
     typeof corpusPoll,
     typeof causelistPoll,
+    typeof judgmentAlertScan,
   ]
 >;
 export type JobName = keyof JobMap;

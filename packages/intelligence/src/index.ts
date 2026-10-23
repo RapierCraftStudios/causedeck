@@ -146,3 +146,4 @@ export {
 } from './transcribe/transcribe.ts';
 export * from './generic-a0/index.ts';
 export * from './corpus/index.ts';
+export * from './issues/index.ts';

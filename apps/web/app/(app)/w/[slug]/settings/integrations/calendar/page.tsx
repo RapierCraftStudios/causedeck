@@ -141,7 +141,7 @@ async function CalendarSection({
           setParties: setCalendarFeedPartiesAction,
         }}
       />
-      <ImportCard workspaceId={context.workspace.id} reviewHref={(id) => `${base}?capture=${id}`} />
+      <ImportCard workspaceId={context.workspace.id} reviewHrefBase={base} />
       <p className="sr-only">{t('title')}</p>
     </>
   );

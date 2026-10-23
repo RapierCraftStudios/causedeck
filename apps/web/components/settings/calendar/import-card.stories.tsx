@@ -8,7 +8,7 @@ const meta = {
   component: ImportCard,
   args: {
     workspaceId: '00000000-0000-4000-8000-000000000001',
-    reviewHref: (captureId: string) => `?capture=${captureId}`,
+    reviewHrefBase: '',
     upload: (): Promise<CalendarUpload> =>
       Promise.resolve({ ok: true, captureId: 'c-1', duplicate: false }),
   },

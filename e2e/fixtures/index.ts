@@ -29,14 +29,17 @@ export const test = merged.extend<{ autoClock: undefined; autoA11y: undefined }>
   ],
   // The `@a11y` after-each: once the test body passed, assert no serious/critical axe violations
   // on the page it ended on. A skipped test never opened a page (it would be `about:blank`), so it
-  // is left out; this matters now that the ship scope skips the phone-only specs at 1280 px.
+  // is left out; this matters now that the ship scope skips the phone-only specs at 1280 px. A test
+  // that only used `request` (the PWA manifest and worker checks) also ends on `about:blank`: there
+  // is no document to audit.
   autoA11y: [
     async ({ page, a11y, a11yOptions }, use, testInfo) => {
       await use(undefined);
       if (
         testInfo.tags.includes('@a11y') &&
         testInfo.status !== 'skipped' &&
-        testInfo.status === testInfo.expectedStatus
+        testInfo.status === testInfo.expectedStatus &&
+        page.url() !== 'about:blank'
       ) {
         await a11y.expectNoViolations(page, a11yOptions);
       }

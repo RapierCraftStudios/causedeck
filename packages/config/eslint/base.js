@@ -24,12 +24,20 @@ export const deepImportPatterns = [
     group: ['**/apps/*/src/**', '**/packages/*/src/**'],
     message: 'Import other workspaces by name (`@causedeck/<pkg>`), not by relative path.',
   },
+  alterlabImportPattern,
 ];
 
 /** Packages never import apps (spike §2), including by workspace name. */
 export const appImportPattern = {
   group: APP_NAMES.flatMap((app) => [`@causedeck/${app}`, `@causedeck/${app}/**`]),
   message: 'Packages must not import apps (spike §2 dependency rules).',
+};
+
+/** The AlterLab SDK is imported only by `packages/fetch` (#479, D-048); everything else uses its fetcher. */
+export const alterlabImportPattern = {
+  group: ['alterlab', 'alterlab/**'],
+  message:
+    'Read external sources through `@causedeck/fetch`; only packages/fetch imports `alterlab`.',
 };
 
 /** Server env holds secrets; client modules use `@causedeck/config/env/client` instead. */
@@ -53,6 +61,17 @@ const loggerCalls = [
 const LOG_CONTENT_MESSAGE =
   'Do not log request bodies or matter content; log ids and lengths instead (docs/engineering/observability.md).';
 
+const EXTERNAL_FETCH_MESSAGE =
+  'Read external sources through `@causedeck/fetch` (governed fetch layer, D-048), not a direct `fetch` of an external host.';
+
+/** `fetch('https://…')` of a literal external host (#479); relative and variable URLs are not flagged. */
+const externalFetchRestrictions = [
+  "CallExpression[callee.name='fetch'] > Literal.arguments:first-child[value=/^https?:/]",
+  "CallExpression[callee.name='fetch'] > TemplateLiteral.arguments:first-child > TemplateElement.quasis:first-child[value.raw=/^https?:/]",
+].map((selector) => ({ selector, message: EXTERNAL_FETCH_MESSAGE }));
+
+// The shared `no-restricted-syntax` list: the logger rules below (#13) plus the external-fetch ban,
+// so `next.js` and the other configs that spread it keep both.
 export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
   [
     `${call} > MemberExpression.arguments[property.name=${CONTENT_NAMES}]`,
@@ -61,7 +80,7 @@ export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
     `${call} > ObjectExpression.arguments > SpreadElement > Identifier.argument[name=${CONTENT_NAMES}]`,
     `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
   ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
-);
+).concat(externalFetchRestrictions);
 
 /** `withoutWorkspace` (#19) import ban; defined in boundaries.js so the app→db blocks reuse it. */
 export { withoutWorkspaceImportBan };
@@ -185,6 +204,21 @@ export const base = tseslint.config(
       'no-restricted-imports': [
         'error',
         { paths: [serverEnvImportPath], patterns: [...deepImportPatterns, appImportPattern] },
+      ],
+    },
+  },
+  {
+    // The governed fetch layer is the one place that talks to AlterLab (#479, D-048).
+    files: ['**/packages/fetch/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            ...deepImportPatterns.filter((pattern) => pattern !== alterlabImportPattern),
+            appImportPattern,
+          ],
+        },
       ],
     },
   },

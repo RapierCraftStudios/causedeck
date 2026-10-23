@@ -107,7 +107,7 @@ export default async function ShareTargetPage({ searchParams }: ShareTargetPageP
       {
         user: {
           id: loaded.session.user.id,
-          name: loaded.session.user.name,
+          name: loaded.session.user.name ?? '',
           email: loaded.session.user.email,
         },
         workspace: membership.workspace,

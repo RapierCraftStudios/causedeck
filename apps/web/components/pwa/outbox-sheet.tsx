@@ -33,12 +33,26 @@ export interface OutboxSheetViewProps extends OutboxSheetHandlers {
   now?: number | undefined;
 }
 
-function reasonKey(error: string | null): string {
-  if (error === null) return 'other';
-  if (error === 'network') return 'network';
-  return ['too_large', 'unsupported_type', 'forbidden', 'not_found', 'invalid'].includes(error)
-    ? error
-    : 'other';
+type ReasonKey =
+  | 'too_large'
+  | 'unsupported_type'
+  | 'forbidden'
+  | 'not_found'
+  | 'invalid'
+  | 'network'
+  | 'other';
+
+const REASON_KEYS: readonly ReasonKey[] = [
+  'too_large',
+  'unsupported_type',
+  'forbidden',
+  'not_found',
+  'invalid',
+  'network',
+];
+
+function reasonKey(error: string | null): ReasonKey {
+  return REASON_KEYS.find((key) => key === error) ?? 'other';
 }
 
 function OutboxRow({

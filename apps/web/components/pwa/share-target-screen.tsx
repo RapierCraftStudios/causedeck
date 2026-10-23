@@ -65,13 +65,26 @@ function FileIcon({ mime }: { mime: string }) {
   return <FileText aria-hidden="true" className={className} />;
 }
 
-function reasonKey(error: string | null): string {
-  if (error === 'network') return 'network';
-  return ['too_large', 'unsupported_type', 'forbidden', 'not_found', 'invalid'].includes(
-    error ?? '',
-  )
-    ? (error as string)
-    : 'other';
+type ReasonKey =
+  | 'too_large'
+  | 'unsupported_type'
+  | 'forbidden'
+  | 'not_found'
+  | 'invalid'
+  | 'network'
+  | 'other';
+
+const REASON_KEYS: readonly ReasonKey[] = [
+  'too_large',
+  'unsupported_type',
+  'forbidden',
+  'not_found',
+  'invalid',
+  'network',
+];
+
+function reasonKey(error: string | null): ReasonKey {
+  return REASON_KEYS.find((key) => key === error) ?? 'other';
 }
 
 function FileRow({ item, onRetry }: { item: OutboxItem; onRetry: (id: string) => void }) {

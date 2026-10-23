@@ -7,7 +7,7 @@ import type { Page } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
 import { expect, test } from '../../fixtures/index.ts';
-import { shellReady } from '../shell/helpers.ts';
+import { contentReady } from '../shell/helpers.ts';
 
 import { IMPORT_PATH, seedBatch, type SeedKind } from './import-helpers.ts';
 
@@ -20,7 +20,7 @@ interface Fixtures {
 const open = async (kind: SeedKind, { page, asUser, db }: Fixtures) => {
   const batch = await seedBatch(db.name, kind);
   await asUser('owner', { path: `${IMPORT_PATH}?batch=${batch}` });
-  await shellReady(page);
+  await contentReady(page);
 };
 
 test.describe('bootstrap import journeys', () => {
@@ -52,16 +52,13 @@ test.describe('bootstrap import journeys', () => {
       await page.getByRole('button', { name: 'Review the plan' }).click();
       await expect(page.getByRole('heading', { name: 'Confirm what we found' })).toBeVisible();
       await expect(page.getByText('3 of 3 matters included')).toBeVisible();
-      await page
-        .getByRole('listitem', { name: /Rao v State/ })
-        .getByRole('button', { name: 'Show proceedings' })
-        .click();
-      await expect(page.getByText('W.M.P. 11/2026')).toBeVisible();
-      await page
-        .getByRole('listitem', { name: /Menon v Menon/ })
-        .getByRole('button', { name: 'Show proceedings' })
-        .click();
-      await expect(page.getByText('S.A. 22/2026')).toBeVisible();
+      // Scoped to the matter's row: the same label also appears in the grid's summary line.
+      const rao = page.getByRole('listitem', { name: /Rao v State/ });
+      await rao.getByRole('button', { name: 'Show proceedings' }).click();
+      await expect(rao.getByText('W.M.P. 11/2026')).toBeVisible();
+      const menon = page.getByRole('listitem', { name: /Menon v Menon/ });
+      await menon.getByRole('button', { name: 'Show proceedings' }).click();
+      await expect(menon.getByText('S.A. 22/2026')).toBeVisible();
     },
   );
 

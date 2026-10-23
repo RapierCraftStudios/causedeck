@@ -3,6 +3,16 @@
 // the global table (`@causedeck/flags` for `access_mode_registry`); apps never value-import
 // `@causedeck/db` (#299). This layer only scopes and audits them.
 import {
+  buildBusinessReport,
+  businessConfigFromEnv,
+  evaluateCostThresholds,
+  staffBusinessSnapshot,
+  type BusinessConfig,
+  type BusinessReport,
+  type CostBreach,
+  type PlanReport,
+} from '@causedeck/core/business';
+import {
   listSources,
   sourceFetchLogs,
   sourceOpsOverview,
@@ -38,6 +48,10 @@ export {
   type StaffQuery,
 } from './scope.ts';
 export type {
+  BusinessConfig,
+  BusinessReport,
+  CostBreach,
+  PlanReport,
   StaffAuditCursor,
   StaffAuditEntry,
   StaffBudgetOverride,
@@ -114,6 +128,31 @@ export function staffAuditLog(
     (db) => staffAuditEvents(db, staff.userId, { before }),
   );
 }
+
+/** The business dashboard's figures for the IST month containing `now`: aggregates only (#519). */
+export function businessMetrics(
+  staff: StaffActor,
+  config: BusinessConfig,
+  now: Date = new Date(),
+): Promise<{ report: BusinessReport; breaches: CostBreach[] }> {
+  return staffCall(
+    staff,
+    {
+      purpose: 'business.metrics',
+      capability: 'business',
+      functions: ['app_staff_business_snapshot'],
+    },
+    async (db) => {
+      const report = buildBusinessReport(
+        await staffBusinessSnapshot(db, staff.userId, now),
+        config,
+      );
+      return { report, breaches: evaluateCostThresholds(report, config.costAlertPaisePerUser) };
+    },
+  );
+}
+
+export { businessConfigFromEnv };
 
 /** Every court-adapter registry row, for the Adapters page (#312). */
 export function adapterRegistry(

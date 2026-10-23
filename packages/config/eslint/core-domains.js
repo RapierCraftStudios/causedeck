@@ -46,6 +46,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   research: Object.freeze(['workspaces', 'citations']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
+  // The business dashboard (#519): the IST month through usage's `periodStart`, FORBIDDEN through workspaces.
+  business: Object.freeze(['usage', 'workspaces']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
   // arrive as a port (it never imports jobs). The diary-photo step (#52) runs in the pipeline's
   // transaction: the `structure_diary` call through ai, member roles through workspaces, proposals
@@ -98,6 +100,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'court',
     'sources',
     'research',
+    'business',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

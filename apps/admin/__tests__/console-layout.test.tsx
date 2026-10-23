@@ -50,6 +50,7 @@ describe('ConsoleNav', () => {
       'Workspaces',
       'Support sessions',
       'Audit',
+      'Business',
     ]);
   });
 
@@ -69,6 +70,7 @@ describe('ConsoleNav', () => {
       'Workspaces',
       'Support sessions',
       'Audit',
+      'Business',
     ]);
   });
 

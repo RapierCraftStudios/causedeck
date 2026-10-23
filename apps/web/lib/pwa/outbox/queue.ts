@@ -52,7 +52,7 @@ export class OutboxCapError extends Error {
 
 export interface EnqueueOptions {
   workspaceId: string | null;
-  channel: 'share' | 'upload' | 'camera';
+  channel: 'share' | 'upload' | 'camera' | 'voice';
   batchId?: string | undefined;
   matterHintId?: string | undefined;
   capBytes?: number | undefined;

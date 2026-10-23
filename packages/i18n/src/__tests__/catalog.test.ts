@@ -115,6 +115,7 @@ describe('namespaced catalogs (#174)', () => {
         'shortcuts',
         'theme',
         'usage',
+        'voice',
         'whatsappImport',
         'workspace',
       ].sort(),
@@ -128,6 +129,17 @@ describe('camera copy (#52)', () => {
     expect(en.camera.causeList.title).toBe('This looks like a cause list');
     expect(ta.camera.title.length).toBeGreaterThan(0);
     expect(kn.camera.title.length).toBeGreaterThan(0);
+  });
+});
+
+describe('voice copy (#543)', () => {
+  it('keeps the exact offline sentence and the voice namespace in every locale', () => {
+    expect(en.voice.saved.offline).toBe(
+      "Saved on this device. Will transcribe when you're back online.",
+    );
+    expect(en.voice.command).toBe('Record a voice note');
+    expect(ta.voice.title.length).toBeGreaterThan(0);
+    expect(kn.voice.title.length).toBeGreaterThan(0);
   });
 });
 

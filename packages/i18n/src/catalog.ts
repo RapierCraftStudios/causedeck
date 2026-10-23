@@ -27,6 +27,7 @@ export const NAMESPACES = [
   'bootstrap-import',
   'email-intake',
   'camera',
+  'voice',
   'errors',
 ] as const;
 

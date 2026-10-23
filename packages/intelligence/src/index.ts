@@ -5,7 +5,12 @@ export const packageName: string = '@causedeck/intelligence';
 
 export * from './classify/index.ts';
 export * from './events.ts';
-export { detectDocumentLanguage, detectLanguage, LANGUAGE_TAGS, type LanguageTag } from './language/detect.ts';
+export {
+  detectDocumentLanguage,
+  detectLanguage,
+  LANGUAGE_TAGS,
+  type LanguageTag,
+} from './language/detect.ts';
 export {
   createGatewayOcr,
   DEFAULT_OCR_BATCH,

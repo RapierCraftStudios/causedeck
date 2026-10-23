@@ -14,12 +14,14 @@ export const RULE_CONFIDENT = 0.8;
 /** The head of the text where a title or bench line lives. */
 const HEAD_CHARS = 1200;
 
-const BENCH_LINE = /(PRESENT\s*:|HON'?BLE|HONOURABLE|\bBEFORE\b.*\bJUSTICE\b|\bCORAM\b|ಮಾನ್ಯ|மாண்புமிகு)/i;
+const BENCH_LINE =
+  /(PRESENT\s*:|HON'?BLE|HONOURABLE|\bBEFORE\b.*\bJUSTICE\b|\bCORAM\b|ಮಾನ್ಯ|மாண்புமிகு)/i;
 const ORDER_TITLE = /(^|\n)\s*(ORDER|ORDERS|ORDER SHEET|ஆணை|ಆದೇಶ)\s*($|\n)/i;
 const JUDGMENT_TITLE = /(^|\n)\s*(JUDGMENT|JUDGEMENT|COMMON JUDGMENT|தீர்ப்பு|ತೀರ್ಪು)\s*($|\n)/i;
 const CAUSE_LIST_TITLE =
   /(CAUSE LIST|LIST OF BUSINESS|ADVANCE LIST|SUPPLEMENTARY LIST|DAILY LIST|வழக்குப் பட்டியல்|ವ್ಯಾಜ್ಯ ಪಟ್ಟಿ)/i;
-const LIST_ROW = /^\s*\d{1,3}[.)]?\s+[A-Z][A-Za-z.() ]{0,15}\.?\s*(No\.?\s*)?\d{1,6}\s*\/\s*\d{2,4}/gm;
+const LIST_ROW =
+  /^\s*\d{1,3}[.)]?\s+[A-Z][A-Za-z.() ]{0,15}\.?\s*(No\.?\s*)?\d{1,6}\s*\/\s*\d{2,4}/gm;
 const REGISTRY_CUES =
   /(REGISTRY|REGISTRAR|OFFICE NOTE|OFFICE OBJECTION|OFFICE REPORT|OBJECTIONS? RAISED|DEFECTS? (NOTED|IN))/i;
 const MEMO_CUES = /(MEMO|MEMORANDUM|NOTE|OBJECTION|REPORT)/i;
@@ -27,7 +29,8 @@ const IA_CUES =
   /(INTERLOCUTORY APPLICATION|\bI\.?\s?A\.?\s*(NO|\(?[A-Z]\)?)\b|MISCELLANEOUS PETITION|APPLICATION UNDER (ORDER|SECTION|ARTICLE))/i;
 const PLEADING_CUES =
   /(PETITION|PLAINT|WRIT PETITION|WRITTEN STATEMENT|COUNTER[- ]AFFIDAVIT|AFFIDAVIT|MOST RESPECTFULLY SHEWETH|GROUNDS|PRAYER|IT IS THEREFORE PRAYED)/gi;
-const ANNEXURE_TITLE = /^\s*(ANNEXURE|ANNEXURE[- ]?[A-Z0-9-]+|EXHIBIT\s*[A-Z]?-?\d+|DOCUMENT NO\.?\s*\d+)\b/im;
+const ANNEXURE_TITLE =
+  /^\s*(ANNEXURE|ANNEXURE[- ]?[A-Z0-9-]+|EXHIBIT\s*[A-Z]?-?\d+|DOCUMENT NO\.?\s*\d+)\b/im;
 const CORRESPONDENCE_CUES =
   /(^|\n)\s*(DEAR (SIR|MADAM|SIRS)|TO,|SUBJECT\s*:|SUB\s*:|REF\s*:|YOURS (FAITHFULLY|SINCERELY|TRULY)|REGARDS,)/gi;
 

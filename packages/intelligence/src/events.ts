@@ -24,7 +24,9 @@ export interface IntelligenceEvents {
 export const noEvents: IntelligenceEvents = { emit: () => undefined };
 
 /** Collects events in memory, for tests. */
-export function createEventLog(): IntelligenceEvents & { readonly events: DocumentPipelineEvent[] } {
+export function createEventLog(): IntelligenceEvents & {
+  readonly events: DocumentPipelineEvent[];
+} {
   const events: DocumentPipelineEvent[] = [];
   return {
     events,

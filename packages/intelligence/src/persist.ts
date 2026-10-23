@@ -85,42 +85,42 @@ export function createDbPersister(options: DbPersisterOptions): Persister {
     captureId: string,
     pipelineVersion: string,
   ): Promise<ExistingDocument | null> {
-      const [row] = await tx
-        .select({
-          id: document.id,
-          kind: document.kind,
-          language: document.language,
-          textStatus: document.textStatus,
-          low: document.lowConfidencePages,
-        })
-        .from(document)
-        .where(
-          and(
-            eq(document.workspaceId, workspaceId),
-            eq(document.sourceCaptureId, captureId),
-            eq(document.pipelineVersion, pipelineVersion),
-          ),
-        );
-      if (row === undefined) return null;
-      const [withText] = await tx
-        .select({ id: documentPage.id })
-        .from(documentPage)
-        .where(
-          and(
-            eq(documentPage.workspaceId, workspaceId),
-            eq(documentPage.documentId, row.id),
-            sql`coalesce(${documentPage.text}, '') <> ''`,
-          ),
-        )
-        .limit(1);
-      return {
-        documentId: row.id,
-        kind: row.kind,
-        language: row.language,
-        textStatus: row.textStatus,
-        lowConfidencePages: row.low,
-        hasText: withText !== undefined,
-      };
+    const [row] = await tx
+      .select({
+        id: document.id,
+        kind: document.kind,
+        language: document.language,
+        textStatus: document.textStatus,
+        low: document.lowConfidencePages,
+      })
+      .from(document)
+      .where(
+        and(
+          eq(document.workspaceId, workspaceId),
+          eq(document.sourceCaptureId, captureId),
+          eq(document.pipelineVersion, pipelineVersion),
+        ),
+      );
+    if (row === undefined) return null;
+    const [withText] = await tx
+      .select({ id: documentPage.id })
+      .from(documentPage)
+      .where(
+        and(
+          eq(documentPage.workspaceId, workspaceId),
+          eq(documentPage.documentId, row.id),
+          sql`coalesce(${documentPage.text}, '') <> ''`,
+        ),
+      )
+      .limit(1);
+    return {
+      documentId: row.id,
+      kind: row.kind,
+      language: row.language,
+      textStatus: row.textStatus,
+      lowConfidencePages: row.low,
+      hasText: withText !== undefined,
+    };
   }
 
   function findExisting(
@@ -199,7 +199,11 @@ export function createDbPersister(options: DbPersisterOptions): Persister {
   return {
     findExisting,
     async persist(input, hook) {
-      const existing = await findExisting(input.workspaceId, input.captureId, input.pipelineVersion);
+      const existing = await findExisting(
+        input.workspaceId,
+        input.captureId,
+        input.pipelineVersion,
+      );
       // A `pending` document is the text layer kept while AI was paused: this run completes it.
       if (existing !== null && existing.textStatus !== 'pending') {
         return { documentId: existing.documentId, created: false, nearDuplicateOf: null };
@@ -242,7 +246,10 @@ export function createDbPersister(options: DbPersisterOptions): Persister {
           await tx
             .delete(documentPage)
             .where(
-              and(eq(documentPage.workspaceId, input.workspaceId), eq(documentPage.documentId, pendingId)),
+              and(
+                eq(documentPage.workspaceId, input.workspaceId),
+                eq(documentPage.documentId, pendingId),
+              ),
             );
           inserted = { id: pendingId };
         }

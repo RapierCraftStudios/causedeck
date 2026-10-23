@@ -208,7 +208,9 @@ export async function processCapture(
   const rendered = format === 'pdf' || format === 'image';
   const source = createPageSource(deps.renderer, input.bytes, renderMime(input.bytes, format));
   try {
-    const weak = rendered ? weakPages(layer, { minPageChars: options.minPageChars, languageHint }) : [];
+    const weak = rendered
+      ? weakPages(layer, { minPageChars: options.minPageChars, languageHint })
+      : [];
 
     let skipReason: SkipReason | null = input.aiBlocked ? 'ai_blocked' : null;
     let ocrRan = false;

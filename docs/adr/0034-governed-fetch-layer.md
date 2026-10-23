@@ -53,4 +53,4 @@ The `alterlab` SDK is imported only by `packages/fetch/src/providers/alterlab.ts
 ## Links
 
 - [Technical architecture spike](../engineering/13-technical-architecture-spike.md)
-- [0011. Access mode registry](0011-access-mode-registry.md)
+- [0011. Access-mode registry closed enum](0011-access-mode-registry-closed-enum.md)

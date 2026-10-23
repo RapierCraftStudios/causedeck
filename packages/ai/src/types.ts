@@ -9,6 +9,7 @@ export const TASK_IDS = [
   'transcribe',
   'structure_hearing',
   'structure_diary',
+  'structure_chat',
   'parse_list_a0',
   'translate',
   'summarise',

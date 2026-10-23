@@ -23,6 +23,7 @@ import { billingEvent, entitlement, plan, subscription, usageCounter } from '../
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { extraction } from '../schema/extraction.ts';
+import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
@@ -66,6 +67,19 @@ export type SeedRow = Record<string, string>;
 
 /** Writes one row into its table for `ctx.workspaceId`, on a transaction scoped to it. */
 export type TenantSeeder = (tx: Transaction, ctx: SeedContext) => Promise<SeedRow>;
+
+/** A pending import batch (#546), the parent of `import_batch_file` and `import_plan` seeds. */
+async function seedImportBatch(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+): Promise<string> {
+  const rows = await tx
+    .insert(importBatch)
+    .values({ workspaceId, createdBy: ownerId })
+    .returning({ id: importBatch.id });
+  return first(rows, 'import_batch').id;
+}
 
 /** A draft SaaS invoice for the workspace (the seed for `saas_invoice` and `saas_invoice_line`). */
 async function seedDraftInvoice(tx: Transaction, workspaceId: string): Promise<string> {
@@ -762,6 +776,34 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, documentId, pipelineVersion: 'xt', result: { seeded: true } })
       .returning({ id: extraction.id });
     return { documentId, extractionId: first(rows, 'extraction').id };
+  },
+  import_batch: async (tx, { workspaceId, ownerId }) => ({
+    id: await seedImportBatch(tx, workspaceId, ownerId),
+  }),
+  import_batch_file: async (tx, { workspaceId, ownerId, tag }) => {
+    const batchId = await seedImportBatch(tx, workspaceId, ownerId);
+    const captures = await tx
+      .insert(capture)
+      .values({
+        workspaceId,
+        channel: 'upload',
+        mime: 'application/pdf',
+        sizeBytes: 8,
+        originalFilename: `xt-${tag}.pdf`,
+        createdBy: ownerId,
+      })
+      .returning({ id: capture.id });
+    const captureId = first(captures, 'capture').id;
+    const rows = await tx
+      .insert(importBatchFile)
+      .values({ workspaceId, batchId, captureId })
+      .returning({ id: importBatchFile.id });
+    return { batchId, captureId, id: first(rows, 'import_batch_file').id };
+  },
+  import_plan: async (tx, { workspaceId, ownerId }) => {
+    const batchId = await seedImportBatch(tx, workspaceId, ownerId);
+    await tx.insert(importPlan).values({ workspaceId, batchId, plan: { rows: [] } });
+    return { batchId };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

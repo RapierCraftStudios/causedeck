@@ -43,7 +43,9 @@ export function dismissInstall(viewerId: string): void {
 
 export function isStandalone(): boolean {
   const ios = (navigator as { standalone?: boolean }).standalone === true;
-  return ios || window.matchMedia('(display-mode: standalone)').matches;
+  // `matchMedia` is missing in jsdom and some embedded webviews: treat those as not installed.
+  if (ios || typeof window.matchMedia !== 'function') return ios;
+  return window.matchMedia('(display-mode: standalone)').matches;
 }
 
 export function isIos(

@@ -320,9 +320,16 @@ describe('admin data layer reads', () => {
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),
     workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
+    growthFunnel: (d) => d.growthFunnel(staff),
   };
-  // The building blocks every read goes through, not reads themselves.
-  const PRIMITIVES = ['staffCall', 'staffQuery', 'StaffQueryDeniedError'];
+  // The building blocks every read goes through, and the activation catalogues, not reads themselves.
+  const PRIMITIVES = [
+    'staffCall',
+    'staffQuery',
+    'StaffQueryDeniedError',
+    'ACTIVATION_CHANNELS',
+    'ACTIVATION_STEPS',
+  ];
 
   it('are all registered here', async () => {
     const data = await import('../lib/data/index.ts');

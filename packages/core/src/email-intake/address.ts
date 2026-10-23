@@ -34,7 +34,7 @@ export interface IntakeAddressView {
 /** `u-` + 10 random base32 characters. 256 is a multiple of 32, so the modulo is unbiased. */
 export function generateLocalPart(random: (size: number) => Uint8Array = randomBytes): string {
   let out = 'u-';
-  for (const byte of random(10)) out += BASE32[byte % 32];
+  for (const byte of random(10)) out += BASE32.charAt(byte % 32);
   return out;
 }
 
@@ -75,11 +75,7 @@ export async function getActiveAddress(
   return row ? view(row) : null;
 }
 
-async function insertAddress(
-  ctx: EmailIntakeCtx,
-  tx: Queryable,
-  now: Date,
-): Promise<Row> {
+async function insertAddress(ctx: EmailIntakeCtx, tx: Queryable, now: Date): Promise<Row> {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     const [row] = await tx
       .insert(intakeAddress)
@@ -191,7 +187,10 @@ export async function resolveAddress(
   const at = address.lastIndexOf('@');
   if (at < 1) return null;
   const localPart = address.slice(0, at).trim().toLowerCase();
-  const domain = address.slice(at + 1).trim().toLowerCase();
+  const domain = address
+    .slice(at + 1)
+    .trim()
+    .toLowerCase();
   if (!isIntakeLocalPart(localPart) || domain === '' || domain.length > 253) return null;
   const rows = await db.execute<{ workspace_id: string; user_id: string }>(
     sql`select workspace_id, user_id from app_resolve_intake_address(${localPart}, ${domain})`,

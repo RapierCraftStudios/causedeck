@@ -1229,9 +1229,7 @@
       "emailIntake": {
         "title": "Email intake address",
         "description": "A private address you can forward court and registry emails to. Anyone who knows it can send to it, so keep it private.",
-        "label": "Intake address",
-        "rotateTitle": "Rotate the intake address?",
-        "rotateBody": "A new address is created and the current one stops working at once. Emails sent to the old address will not arrive."
+        "open": "Open"
       },
       "icsFeed": {
         "title": "Calendar feed",
@@ -3054,6 +3052,92 @@
       "sections": "Switch section",
       "help": "Show this sheet",
       "open": "Shortcuts"
+    }
+  },
+  "emailIntake": {
+    "metaTitle": "Email intake",
+    "title": "Email intake",
+    "description": "Forward court and registry emails to your private address and CauseDeck reads them for you.",
+    "loading": "Loading email intake",
+    "notEnabled": "Not enabled yet",
+    "notEnabledReason": "This is not enabled yet for this workspace.",
+    "offlineReason": "Settings can be changed when you are back online.",
+    "back": "Back to integrations",
+    "channel": {
+      "title": "Email forwarding",
+      "disclosure": "Forwarded emails are processed in India. Forward only what you want CauseDeck to read. Client emails are excluded unless you choose to forward them.",
+      "on": "Email forwarding is on.",
+      "off": "Email forwarding is off.",
+      "enable": "Turn on email forwarding",
+      "enabling": "Turning on..."
+    },
+    "address": {
+      "title": "Your intake address",
+      "description": "Forward emails here. Only you and the workspace admins can see this address. Anyone who knows it can send to it, so keep it private.",
+      "label": "Intake address",
+      "empty": "You do not have an intake address yet.",
+      "create": "Create address",
+      "creating": "Creating...",
+      "copy": "Copy",
+      "copied": "Copied",
+      "createdOn": "Created on {date}.",
+      "rotate": "Rotate",
+      "rotating": "Rotating...",
+      "rotateTitle": "Rotate the intake address?",
+      "rotateBody": "A new address is created and the current one stops working at once. Emails sent to the old address will not arrive.",
+      "rotateConfirm": "Rotate",
+      "revoke": "Revoke",
+      "revoking": "Revoking...",
+      "revokeTitle": "Revoke the intake address?",
+      "revokeBody": "The address stops working at once and you will have no intake address until you create a new one.",
+      "revokeConfirm": "Revoke",
+      "cancel": "Cancel"
+    },
+    "allowlist": {
+      "title": "Allowed senders",
+      "description": "Emails from these senders are accepted. Add the courts, e-filing portals and counsel you expect to forward from.",
+      "empty": "No allowed senders yet.",
+      "tableLabel": "Allowed senders",
+      "pattern": "Email or domain",
+      "patternHint": "For example clerk@court.gov.in or court.gov.in",
+      "kind": "Kind",
+      "label": "Label (optional)",
+      "actions": "Actions",
+      "add": "Add sender",
+      "adding": "Adding...",
+      "remove": "Remove",
+      "removeLabel": "Remove {pattern}",
+      "domain": "Domain",
+      "kinds": {
+        "court": "Court",
+        "efiling": "E-filing portal",
+        "self": "Me",
+        "briefing_counsel": "Briefing counsel"
+      }
+    },
+    "aims": {
+      "title": "Set up AIMS cause-list emails",
+      "description": "Have your AIMS account email the daily cause list to your intake address.",
+      "step1": "Copy your intake address above.",
+      "step2": "In your AIMS account, add it as an email recipient for cause-list notifications.",
+      "step3": "Add the AIMS sender domain under Allowed senders as a court.",
+      "note": "CauseDeck only reads emails from senders on your list."
+    },
+    "toast": {
+      "created": "Address created.",
+      "rotated": "Address rotated. The old one no longer works.",
+      "revoked": "Address revoked.",
+      "added": "Sender added.",
+      "removed": "Sender removed.",
+      "enabled": "Email forwarding is on.",
+      "error": "Could not change it. Nothing was changed.",
+      "forbidden": "You do not have permission to change this.",
+      "invalid": "Check the email or domain and try again.",
+      "copyFailed": "Could not copy. Select the text and copy it instead."
+    },
+    "error": {
+      "title": "Could not load email intake.",
+      "retry": "Try again"
     }
   },
   "error": {

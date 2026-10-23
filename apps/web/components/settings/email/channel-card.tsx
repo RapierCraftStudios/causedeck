@@ -24,7 +24,12 @@ export interface ChannelCardProps {
   enable: ActionFn<{ enabled: boolean; disclosureVersion: string | null }>;
 }
 
-export function ChannelCard({ workspaceId, enabled, channelOn: initialOn, enable }: ChannelCardProps) {
+export function ChannelCard({
+  workspaceId,
+  enabled,
+  channelOn: initialOn,
+  enable,
+}: ChannelCardProps) {
   const t = useTranslations('emailIntake');
   const online = useOnline();
   const [on, setOn] = useState(initialOn);

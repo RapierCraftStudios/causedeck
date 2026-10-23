@@ -149,14 +149,8 @@ const CASES: Record<string, () => Promise<void>> = {
   resolveIntakeAddressFor: async () => {
     // By design the lookup is workspace-free (the webhook sender is not a member), so it answers
     // for an active address; a retired or unknown one is the same null, with no other signal.
-    const [row] = await withWorkspace(
-      testAppDb(),
-      { workspaceId: t.a.id, userId: t.ua },
-      (tx) =>
-        tx
-          .select()
-          .from(schema.intakeAddress)
-          .where(eq(schema.intakeAddress.workspaceId, t.a.id)),
+    const [row] = await withWorkspace(testAppDb(), { workspaceId: t.a.id, userId: t.ua }, (tx) =>
+      tx.select().from(schema.intakeAddress).where(eq(schema.intakeAddress.workspaceId, t.a.id)),
     );
     expect(row, 'A has a seeded intake address').toBeDefined();
     const address = `${row?.localPart ?? ''}@${row?.domain ?? ''}`;

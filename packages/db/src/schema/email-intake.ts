@@ -64,10 +64,7 @@ export const intakeAddress = tenantTable(
     }).onDelete('cascade'),
     check('intake_address_status_chk', sql`status in ${inList(INTAKE_ADDRESS_STATUSES)}`),
     check('intake_address_local_part_chk', sql`local_part ~ '^u-[a-z2-7]{10}$'`),
-    check(
-      'intake_address_revoked_at_chk',
-      sql`(status = 'revoked') = (revoked_at is not null)`,
-    ),
+    check('intake_address_revoked_at_chk', sql`(status = 'revoked') = (revoked_at is not null)`),
   ],
 );
 
@@ -111,11 +108,7 @@ export const intakeMessage = tenantTable(
   },
   (t) => [
     unique('intake_message_workspace_message_id_uq').on(t.workspaceId, t.messageId),
-    index('intake_message_workspace_status_received_idx').on(
-      t.workspaceId,
-      t.status,
-      t.receivedAt,
-    ),
+    index('intake_message_workspace_status_received_idx').on(t.workspaceId, t.status, t.receivedAt),
     foreignKey({
       name: 'intake_message_workspace_id_fk',
       columns: [t.workspaceId],

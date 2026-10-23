@@ -171,6 +171,11 @@ export const settingsExporter = tablesExporter('settings', [
   ws('matter_restriction'),
   // Integration tokens (#287): the kind and dates only; the token hash is a secret.
   ws('workspace_integration', { exclude: ['token_hash'] }),
+  // Email forward-in intake (#54): the member's address and sender allow-list; the message ledger
+  // leaves out the raw MIME object's key, which is internal like `blob.key`.
+  ws('intake_address', { userColumn: 'user_id' }),
+  ws('intake_allowlist', { userColumn: 'added_by' }),
+  ws('intake_message', { exclude: ['raw_mime_ref'] }),
 ]);
 
 export const auditExporter: Exporter = {

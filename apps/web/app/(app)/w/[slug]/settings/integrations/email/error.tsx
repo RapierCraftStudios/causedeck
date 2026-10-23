@@ -41,10 +41,7 @@ interface EmailIntakeErrorBoundaryProps {
   reset: () => void;
 }
 
-export default function EmailIntakeErrorBoundary({
-  error,
-  reset,
-}: EmailIntakeErrorBoundaryProps) {
+export default function EmailIntakeErrorBoundary({ error, reset }: EmailIntakeErrorBoundaryProps) {
   useEffect(() => {
     reportError(error, { boundary: 'route', digest: error.digest });
   }, [error]);

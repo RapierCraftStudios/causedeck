@@ -7,7 +7,7 @@ import { Button } from '@causedeck/ui/button';
 import { Input } from '@causedeck/ui/input';
 import { toast } from '@causedeck/ui/sonner';
 import { useTranslations } from 'next-intl';
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 
 import { DisabledWithReason, disabledReasonId } from '../disabled-with-reason.tsx';
 import { SettingSection } from '../setting-section.tsx';
@@ -42,7 +42,7 @@ export function AllowlistCard({
   const disabled = reason !== null || pending;
   const describedBy = reason === null ? undefined : disabledReasonId('email-allowlist');
 
-  async function submit(event: FormEvent) {
+  async function submit(event: SyntheticEvent) {
     event.preventDefault();
     if (!navigator.onLine) {
       toast(t('offlineReason'));
@@ -58,7 +58,15 @@ export function AllowlistCard({
     setPending(false);
     if (!result.ok) {
       const code = result.error.code;
-      toast(t(code === 'FORBIDDEN' ? 'toast.forbidden' : code === 'VALIDATION' ? 'toast.invalid' : 'toast.error'));
+      toast(
+        t(
+          code === 'FORBIDDEN'
+            ? 'toast.forbidden'
+            : code === 'VALIDATION'
+              ? 'toast.invalid'
+              : 'toast.error',
+        ),
+      );
       return;
     }
     setEntries((current) => [...current, result.data]);
@@ -152,7 +160,9 @@ export function AllowlistCard({
                         disabled={disabled}
                         aria-label={t('allowlist.removeLabel', { pattern: entry.pattern })}
                         aria-describedby={
-                          reason === null ? undefined : disabledReasonId(`email-allowlist-${entry.id}`)
+                          reason === null
+                            ? undefined
+                            : disabledReasonId(`email-allowlist-${entry.id}`)
                         }
                         onClick={() => {
                           void onRemove(entry);

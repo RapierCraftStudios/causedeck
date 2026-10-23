@@ -1,5 +1,5 @@
-// Settings integrations page (#287): `/w/<slug>/settings/integrations` shows the private email
-// intake address and ICS feed cards with masked placeholders. With a card's flag off it reads
+// Settings integrations page (#287): `/w/<slug>/settings/integrations` shows the private ICS feed link
+// card with a masked placeholder and a link to the email page. With a card's flag off it reads
 // `Not enabled yet` and cannot rotate. With the flags on, an owner creates a token (the full value
 // is shown once and gone after a reload) and rotates it through a confirm dialog that names the
 // effect; the rotation lands in the audit log. Clerks and viewers get the permission-denied page.
@@ -44,22 +44,22 @@ async function openIntegrations(page: Page, asUser: AsUser, role: E2eRole = 'own
   await shellReady(page);
 }
 
-const card = (page: Page, kind: 'email_intake' | 'ics_feed') =>
-  page.locator(`[data-slot="integration-${kind}"]`);
+const card = (page: Page, kind: 'ics_feed') => page.locator(`[data-slot="integration-${kind}"]`);
 const feedValue = (page: Page) => page.getByRole('textbox', { name: 'Feed URL' });
 
 test.describe('settings integrations', () => {
   test(
-    'flags off: both cards read Not enabled yet and cannot rotate',
+    'flag off: the feed card reads Not enabled yet and cannot rotate',
     { tag: '@a11y' },
     async ({ page, asUser }) => {
       await openIntegrations(page, asUser);
-      for (const kind of ['email_intake', 'ics_feed'] as const) {
-        await expect(card(page, kind).getByText('Not enabled yet', { exact: true })).toBeVisible();
-        await expect(card(page, kind).getByRole('button', { name: 'Create' })).toBeDisabled();
-      }
-      await expect(page.getByRole('textbox', { name: 'Intake address' })).toHaveValue(
-        /^intake\+••••••••@/,
+      await expect(
+        card(page, 'ics_feed').getByText('Not enabled yet', { exact: true }),
+      ).toBeVisible();
+      await expect(card(page, 'ics_feed').getByRole('button', { name: 'Create' })).toBeDisabled();
+      await expect(page.getByRole('link', { name: 'Open' })).toHaveAttribute(
+        'href',
+        /\/settings\/integrations\/email$/,
       );
       await expect(feedValue(page)).toHaveValue(/\/api\/ics\/••••••••$/);
     },
@@ -108,14 +108,12 @@ test.describe('settings integrations', () => {
     async ({ page, asUser, db }) => {
       await enableFlags(db.name);
       await openIntegrations(page, asUser);
-      await card(page, 'email_intake').getByRole('button', { name: 'Create' }).click();
-      await expect(page.getByRole('textbox', { name: 'Intake address' })).toHaveValue(
-        /^intake\+[\w-]{43}@/,
-      );
-      await card(page, 'email_intake').getByRole('button', { name: 'Rotate' }).click();
+      await card(page, 'ics_feed').getByRole('button', { name: 'Create' }).click();
+      await expect(feedValue(page)).toHaveValue(/\/api\/ics\/[\w-]{43}$/);
+      await card(page, 'ics_feed').getByRole('button', { name: 'Rotate' }).click();
       // The test ends with the dialog open, so the axe pass covers it.
       await expect(
-        page.getByRole('alertdialog', { name: 'Rotate the intake address?' }),
+        page.getByRole('alertdialog', { name: 'Rotate the calendar feed link?' }),
       ).toBeVisible();
     },
   );

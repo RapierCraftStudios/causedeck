@@ -1,10 +1,9 @@
-// `/w/[slug]/settings/integrations` (#287): the workspace's private email intake address
-// (`intake+<token>@<domain>`) and private ICS feed URL. Only each token's hash is stored, so the
-// cards show a masked placeholder with the token's status; members with `workspace.manage` (owners
-// and advocates) create or rotate a token through `rotateIntegrationTokenAction`, which shows the
-// full value once and makes the old one stop working. Each card reads `Not enabled yet` and cannot
-// rotate until its flag is on (`capture.email-forward`, `capture.ics-feed`). What the address and
-// the feed do is the Capture milestone (#54, #53). Clerks and viewers get the permission-denied
+// `/w/[slug]/settings/integrations` (#287): the workspace's private ICS feed URL, and a link to the
+// per-member email intake page (`./email`, #54). Only the token's hash is stored, so the card shows
+// a masked placeholder with the token's status; members with `workspace.manage` (owners and
+// advocates) create or rotate it through `rotateIntegrationTokenAction`, which shows the full value
+// once and makes the old one stop working. The card reads `Not enabled yet` and cannot rotate until
+// its flag is on (`capture.ics-feed`). What the feed does is the Capture milestone (#53). Clerks and viewers get the permission-denied
 // page, the same `can()` check as the sub-nav. Read on the workspace-scoped transaction
 // (`inWorkspace`).
 //
@@ -15,6 +14,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { PermissionDeniedPage } from '../../../../../../components/shell/permission-denied-page.tsx';
@@ -26,7 +26,6 @@ import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
 
 import { rotateIntegrationTokenAction } from './actions.ts';
-import { EmailIntakeCard } from './email-intake-card.tsx';
 import { IntegrationsError } from './error.tsx';
 import { IcsFeedCard } from './ics-feed-card.tsx';
 import { IntegrationsSkeleton, type IntegrationTokenStatus } from './integration-card.tsx';
@@ -66,6 +65,24 @@ async function loadIntegrations(context: WorkspaceContext): Promise<Statuses> {
   );
 }
 
+function EmailLinkCard({ slug, t }: { slug: string; t: (key: string) => string }) {
+  return (
+    <section
+      data-slot="integration-email-link"
+      className="border-line bg-surface flex flex-col gap-2 rounded-lg border p-4"
+    >
+      <h2 className="text-base font-medium">{t('title')}</h2>
+      <p className="text-ink-muted text-sm">{t('description')}</p>
+      <Link
+        href={`/w/${slug}/settings/integrations/email`}
+        className="text-sm font-medium underline"
+      >
+        {t('open')}
+      </Link>
+    </section>
+  );
+}
+
 async function IntegrationsSection({
   context,
   state,
@@ -86,15 +103,11 @@ async function IntegrationsSection({
     return <IntegrationsError />;
   }
   const appUrl = serverEnv().APP_URL;
+  const emailT = await getTranslations('settings.integrations.emailIntake');
   const common = { workspaceId: context.workspace.id, rotate: rotateIntegrationTokenAction };
   return (
     <>
-      <EmailIntakeCard
-        {...common}
-        masked={maskedIntegrationValue('email_intake', appUrl)}
-        status={statuses.email_intake}
-        enabled={flag(INTEGRATION_FLAGS.email_intake)}
-      />
+      <EmailLinkCard slug={context.workspace.slug} t={emailT} />
       <IcsFeedCard
         {...common}
         masked={maskedIntegrationValue('ics_feed', appUrl)}

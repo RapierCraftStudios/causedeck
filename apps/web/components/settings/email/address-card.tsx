@@ -56,7 +56,11 @@ export function AddressCard({
   const [copied, setCopied] = useState(false);
   const reason = !enabled ? t('notEnabledReason') : online ? null : t('offlineReason');
 
-  async function run<T>(call: () => Promise<Awaited<ReturnType<ActionFn<T>>>>, done: (data: T) => void, ok: string) {
+  async function run<T>(
+    call: () => Promise<Awaited<ReturnType<ActionFn<T>>>>,
+    done: (data: T) => void,
+    ok: string,
+  ) {
     if (!navigator.onLine) {
       toast(t('offlineReason'));
       return;
@@ -80,13 +84,27 @@ export function AddressCard({
   }
 
   const onCreate = () =>
-    run(() => create({ workspaceId }), (data) => { setAddress(data); }, 'toast.created');
+    run(
+      () => create({ workspaceId }),
+      (data) => {
+        setAddress(data);
+      },
+      'toast.created',
+    );
   const onRotate = () =>
-    run(() => rotate({ workspaceId }), (data) => { setAddress(data); }, 'toast.rotated');
+    run(
+      () => rotate({ workspaceId }),
+      (data) => {
+        setAddress(data);
+      },
+      'toast.rotated',
+    );
   const onRevoke = () =>
     run(
       () => revoke({ workspaceId, addressId: address?.id }),
-      () => { setAddress(null); },
+      () => {
+        setAddress(null);
+      },
       'toast.revoked',
     );
 

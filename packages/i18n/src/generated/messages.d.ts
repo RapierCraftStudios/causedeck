@@ -1230,9 +1230,7 @@ export type Messages = {
       emailIntake: {
         title: string;
         description: string;
-        label: string;
-        rotateTitle: string;
-        rotateBody: string;
+        open: string;
       };
       icsFeed: {
         title: string;
@@ -3055,6 +3053,92 @@ export type Messages = {
       sections: string;
       help: string;
       open: string;
+    };
+  };
+  emailIntake: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    notEnabled: string;
+    notEnabledReason: string;
+    offlineReason: string;
+    back: string;
+    channel: {
+      title: string;
+      disclosure: string;
+      on: string;
+      off: string;
+      enable: string;
+      enabling: string;
+    };
+    address: {
+      title: string;
+      description: string;
+      label: string;
+      empty: string;
+      create: string;
+      creating: string;
+      copy: string;
+      copied: string;
+      createdOn: string;
+      rotate: string;
+      rotating: string;
+      rotateTitle: string;
+      rotateBody: string;
+      rotateConfirm: string;
+      revoke: string;
+      revoking: string;
+      revokeTitle: string;
+      revokeBody: string;
+      revokeConfirm: string;
+      cancel: string;
+    };
+    allowlist: {
+      title: string;
+      description: string;
+      empty: string;
+      tableLabel: string;
+      pattern: string;
+      patternHint: string;
+      kind: string;
+      label: string;
+      actions: string;
+      add: string;
+      adding: string;
+      remove: string;
+      removeLabel: string;
+      domain: string;
+      kinds: {
+        court: string;
+        efiling: string;
+        self: string;
+        briefing_counsel: string;
+      };
+    };
+    aims: {
+      title: string;
+      description: string;
+      step1: string;
+      step2: string;
+      step3: string;
+      note: string;
+    };
+    toast: {
+      created: string;
+      rotated: string;
+      revoked: string;
+      added: string;
+      removed: string;
+      enabled: string;
+      error: string;
+      forbidden: string;
+      invalid: string;
+      copyFailed: string;
+    };
+    error: {
+      title: string;
+      retry: string;
     };
   };
   error: {

@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-// Settings integrations page (#287): the email intake address and ICS feed cards show masked
-// placeholders (only the token hash is stored) with the token status; `Create` makes the first
-// token at once and `Rotate` asks first; the full value is then shown once with `Copy`; a card reads
-// `Not enabled yet` and cannot rotate while its flag is off; offline the buttons are disabled with
-// the reason; a failed rotate changes nothing; a load failure shows the error state with
-// `Try again`; clerks and viewers get the permission-denied page.
+// Settings integrations page (#287): the ICS feed card shows a masked placeholder (only the token
+// hash is stored) with the token status and a link card leads to the email intake page; `Create`
+// makes the first token at once and `Rotate` asks first; the full value is then shown once with
+// `Copy`; the card reads `Not enabled yet` and cannot rotate while its flag is off; offline the
+// buttons are disabled with the reason; a failed rotate changes nothing; a load failure shows the
+// error state with `Try again`; clerks and viewers get the permission-denied page.
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement, ReactNode } from 'react';
@@ -30,7 +30,7 @@ const page = vi.hoisted((): PageState => ({
   dev: true,
   fail: false,
   flags: {},
-  statuses: { email_intake: null, ics_feed: null },
+  statuses: { ics_feed: null },
 }));
 const runtime = vi.hoisted(() => ({
   inWorkspace: vi.fn((_scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true })),
@@ -76,7 +76,6 @@ const { IntegrationCard } =
 
 const en = catalogs.en.settings.integrations;
 const WORKSPACE_ID = '00000000-0000-4000-8000-00000000a001';
-const MASKED_INTAKE = 'intake+••••••••@app.causedeck.test';
 const MASKED_FEED = 'https://app.causedeck.test/api/ics/••••••••';
 const FEED = 'https://app.causedeck.test/api/ics/tok_new';
 const CREATED = new Date('2026-10-01T10:00:00Z');
@@ -101,7 +100,7 @@ beforeEach(() => {
   page.dev = true;
   page.fail = false;
   page.flags = { 'capture.email-forward': true, 'capture.ics-feed': true };
-  page.statuses = { email_intake: null, ics_feed: null };
+  page.statuses = { ics_feed: null };
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
   setOnline(true);
 });
@@ -269,8 +268,8 @@ describe('integrations page (server)', () => {
     withIntl(<div>{children}</div>);
   }
 
-  it('shows both cards with masked placeholders, loaded on the workspace transaction', async () => {
-    page.statuses = { email_intake: { createdAt: CREATED, rotatedAt: null }, ics_feed: null };
+  it('shows the email link card and the feed card with masked placeholders, loaded on the workspace transaction', async () => {
+    page.statuses = { ics_feed: null };
     await renderPage();
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.title);
     expect(runtime.inWorkspace).toHaveBeenCalledWith(
@@ -279,10 +278,11 @@ describe('integrations page (server)', () => {
     );
     expect(workspaces.getIntegrations).toHaveBeenCalledWith({ tx: true }, 'ws-1');
     expect(screen.getByRole('heading', { name: en.emailIntake.title })).toBeTruthy();
+    expect(screen.getByRole('link', { name: en.emailIntake.open }).getAttribute('href')).toBe(
+      '/w/demo/settings/integrations/email',
+    );
     expect(screen.getByRole('heading', { name: en.icsFeed.title })).toBeTruthy();
-    expect(value('email_intake')?.value).toBe(MASKED_INTAKE);
     expect(value('ics_feed')?.value).toBe(MASKED_FEED);
-    expect(actionButton('email_intake')?.textContent).toBe(en.rotate);
     expect(actionButton('ics_feed')?.textContent).toBe(en.create);
     expect(document.querySelector('[data-slot="integration-not-enabled"]')).toBeNull();
   });
@@ -292,15 +292,9 @@ describe('integrations page (server)', () => {
     await renderPage();
     expect(
       document.querySelector(
-        '[data-slot="integration-email_intake"] [data-slot="integration-not-enabled"]',
-      ),
-    ).toBeNull();
-    expect(
-      document.querySelector(
         '[data-slot="integration-ics_feed"] [data-slot="integration-not-enabled"]',
       )?.textContent,
     ).toBe(en.notEnabled);
-    expect(actionButton('email_intake')?.disabled).toBe(false);
     expect(actionButton('ics_feed')?.disabled).toBe(true);
   });
 

@@ -589,7 +589,7 @@ describe('sensitive-matter gate', () => {
         { db: tx, now: () => NOW },
         { workspaceId: a.id, captureId, pipelineVersion: 'x' },
       );
-      expect(outcome).toEqual({ outcome: 'started', aiSteps: false });
+      expect(outcome).toMatchObject({ outcome: 'started', aiSteps: false });
 
       // Unblocked captures may run AI steps.
       await putRaw(tx, h, open.captureId, PDF);
@@ -599,7 +599,7 @@ describe('sensitive-matter gate', () => {
           { db: tx },
           { workspaceId: a.id, captureId: open.captureId, pipelineVersion: 'x' },
         ),
-      ).toEqual({ outcome: 'started', aiSteps: true });
+      ).toMatchObject({ outcome: 'started', aiSteps: true });
     });
   });
 

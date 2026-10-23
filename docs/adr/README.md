@@ -31,6 +31,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0021](0021-capture-inbox-and-upload-pipeline.md) | Capture inbox and upload pipeline | Proposed | 2026-10-22 | — |
 | [0022](0022-ai-gateway-implementation.md) | AI gateway implementation: ports, residency, audit and idempotent results | Proposed | 2026-10-22 | — |
 | [0023](0023-automation-ladder-and-undo.md) | Automation ladder, proposals and undo cascades | Proposed | 2026-10-22 | — |
+| [0024](0024-ics-import-and-private-feed.md) | ICS import and the private calendar feed | Proposed | 2026-10-23 | — |
 
 ## Statuses
 

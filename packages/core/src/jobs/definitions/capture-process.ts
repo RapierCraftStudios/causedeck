@@ -9,8 +9,10 @@ import {
   CAPTURE_JOB_RETRY_DELAY_SEC,
 } from '@causedeck/capture';
 import { db as rootDb } from '@causedeck/db';
+import type { ObjectStore } from '@causedeck/storage';
 import { z } from 'zod';
 
+import { runIcsImport } from '../../calendar/index.ts';
 import { markCaptureFailed, runCaptureProcess } from '../../capture/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
@@ -39,7 +41,7 @@ export async function enqueueCaptureProcess(payload: CaptureProcessJobPayload): 
 export async function runCaptureProcessJob(
   ctx: Pick<JobContext, 'db' | 'log' | 'attempt'>,
   payload: CaptureProcessJobPayload,
-  deps: { now?: () => Date } = {},
+  deps: { now?: () => Date; store?: ObjectStore } = {},
 ): Promise<void> {
   try {
     const result = await runCaptureProcess({ db: ctx.db, ...deps }, payload);
@@ -54,6 +56,22 @@ export async function runCaptureProcessJob(
       },
       'capture processed',
     );
+    // The ICS channel (#53) is read deterministically: no model is involved, so `aiSteps` does not
+    // matter and a sensitive-matter hint cannot be bypassed (events of sensitive matters are dropped).
+    if (result.outcome === 'started' && result.channel === 'ics') {
+      const imported = await runIcsImport(
+        { db: ctx.db, ...deps },
+        { workspaceId: payload.workspaceId, captureId: payload.captureId },
+      );
+      ctx.log.info(
+        {
+          captureId: payload.captureId,
+          outcome: imported.outcome,
+          ...(imported.outcome === 'imported' ? { summary: imported.summary } : {}),
+        },
+        'ics imported',
+      );
+    }
   } catch (error) {
     if (ctx.attempt > CAPTURE_JOB_RETRIES) {
       await markCaptureFailed(rootDb, payload.workspaceId, payload.captureId, 'processing_failed');

@@ -35,8 +35,16 @@ async function flagAudit(database: string): Promise<AuditRow[]> {
 
 async function toggle(page: Page, table: string, key: string, to: 'on' | 'off') {
   const row = page.getByRole('table', { name: table }).getByTestId(`flag-row-${key}`);
-  await row.getByRole('switch', { name: `${key}: turn ${to}` }).click();
-  return page.getByRole('dialog');
+  const dialog = page.getByRole('dialog');
+  // A click that lands before React hydrates the freshly server-rendered table is lost and opens
+  // no dialog (#474); the switch only opens the confirmation, so clicking again is safe.
+  await expect(async () => {
+    if (!(await dialog.isVisible())) {
+      await row.getByRole('switch', { name: `${key}: turn ${to}` }).click();
+    }
+    await expect(dialog).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+  return dialog;
 }
 
 test.describe('admin flags', () => {
@@ -70,7 +78,9 @@ test.describe('admin flags', () => {
     const workspaceId = E2E_WORKSPACES['chennai-solo'].id;
     await page.getByLabel('Workspace id').fill(workspaceId);
     await page.getByRole('button', { name: 'Show overrides' }).click();
+    await page.waitForURL(/[?&]workspace=/);
     const overrides = `Overrides for workspace ${workspaceId}`;
+    await expect(page.getByRole('table', { name: overrides })).toBeVisible();
     dialog = await toggle(page, overrides, 'pwa.offline', 'on');
     await expect(dialog.getByTestId('flag-diff')).toHaveText(
       `pwa.offline · Workspace ${workspaceId} · Inherit → On`,

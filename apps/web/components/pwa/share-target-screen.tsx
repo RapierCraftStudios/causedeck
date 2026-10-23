@@ -66,13 +66,7 @@ function FileIcon({ mime }: { mime: string }) {
 }
 
 type ReasonKey =
-  | 'too_large'
-  | 'unsupported_type'
-  | 'forbidden'
-  | 'not_found'
-  | 'invalid'
-  | 'network'
-  | 'other';
+  'too_large' | 'unsupported_type' | 'forbidden' | 'not_found' | 'invalid' | 'network' | 'other';
 
 const REASON_KEYS: readonly ReasonKey[] = [
   'too_large',

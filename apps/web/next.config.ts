@@ -4,7 +4,7 @@ import bundleAnalyzer from '@next/bundle-analyzer';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
-import { analyzeBundle, buildTimeAppUrl, e2eBuild, nextPhase } from './lib/env.ts';
+import { analyzeBundle, buildTimeAppUrl, e2eBuild } from './lib/env.ts';
 import { buildServiceWorker } from './lib/pwa/build-sw.ts';
 
 const repoRoot = path.join(import.meta.dirname, '../..');
@@ -31,12 +31,6 @@ const workspacePackages = [
 ];
 
 const appUrl = buildTimeAppUrl();
-
-// The PWA service worker (#50) is bundled to public/sw.js when the dev server or a build starts.
-const phase = nextPhase();
-if (phase === 'phase-development-server' || phase === 'phase-production-build') {
-  buildServiceWorker(import.meta.dirname, { minify: phase === 'phase-production-build' });
-}
 
 // Baseline headers for every response. The nonce CSP is per request (proxy.ts); Caddy adds HSTS.
 const securityHeaders = [
@@ -105,4 +99,11 @@ const withNextIntl = createNextIntlPlugin({
 });
 const withBundleAnalyzer = bundleAnalyzer({ enabled: analyzeBundle() });
 
-export default withBundleAnalyzer(withNextIntl(nextConfig));
+// The PWA service worker (#50) is bundled to public/sw.js when the dev server or a build starts.
+// Next.js passes the phase to a function config; `NEXT_PHASE` is not set while the config loads.
+export default function config(phase: string): NextConfig {
+  if (phase === 'phase-development-server' || phase === 'phase-production-build') {
+    buildServiceWorker(import.meta.dirname, { minify: phase === 'phase-production-build' });
+  }
+  return withBundleAnalyzer(withNextIntl(nextConfig));
+}

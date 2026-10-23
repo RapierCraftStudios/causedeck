@@ -1,7 +1,7 @@
 // Builds `app/sw.ts` into `public/sw.js` (#50) with esbuild, called from next.config.ts when the dev
 // server or `next build` starts. The worker is a plain bundle served from the site root, so its
 // scope is `/` and never needs `Service-Worker-Allowed`. `@serwist/next` and the Turbopack route
-// both serve it from a sub-path, which does (ADR 0025). Only the offline page and the icons are
+// both serve it from a sub-path, which does (ADR 0026). Only the offline page and the icons are
 // precached with a per-build revision; hashed `/_next/static/*` assets cache on first use.
 import { buildSync } from 'esbuild';
 import path from 'node:path';

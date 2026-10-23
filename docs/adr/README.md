@@ -32,7 +32,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0022](0022-ai-gateway-implementation.md) | AI gateway implementation: ports, residency, audit and idempotent results | Proposed | 2026-10-22 | — |
 | [0023](0023-automation-ladder-and-undo.md) | Automation ladder, proposals and undo cascades | Proposed | 2026-10-22 | — |
 | [0024](0024-ics-import-and-private-feed.md) | ICS import and the private calendar feed | Proposed | 2026-10-23 | — |
-| [0025](0025-pwa-share-target-and-outbox.md) | PWA share target and encrypted outbox | Proposed | 2026-10-23 | — |
+| [0026](0026-pwa-share-target-and-outbox.md) | PWA share target and encrypted outbox | Proposed | 2026-10-23 | — |
 
 ## Statuses
 

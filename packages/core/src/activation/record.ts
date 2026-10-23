@@ -1,10 +1,12 @@
 // Record that a user reached a funnel step (#509). Ids and closed enums only: the row holds the
 // user id, the step, an optional acquisition channel and a timestamp, never a matter, an email or
 // any free text. A step counts once per user (`activation_event_user_step_uq`).
-import { schema, type ActivationChannel, type ActivationStep, type Queryable } from '@causedeck/db';
+import { schema, type Queryable } from '@causedeck/db';
 
-export { ACTIVATION_CHANNELS, ACTIVATION_STEPS } from '@causedeck/db';
-export type { ActivationChannel, ActivationStep };
+export const ACTIVATION_CHANNELS = schema.ACTIVATION_CHANNELS;
+export const ACTIVATION_STEPS = schema.ACTIVATION_STEPS;
+export type ActivationChannel = schema.ActivationChannel;
+export type ActivationStep = schema.ActivationStep;
 
 export interface RecordActivationInput {
   userId: string;

@@ -38,6 +38,8 @@ export {
 } from './manage.ts';
 export {
   aiStepsAllowed,
+  closeReviewedCapture,
+  finishCapture,
   runCapturePipeline,
   runCaptureProcess,
   type CapturePipelineDeps,

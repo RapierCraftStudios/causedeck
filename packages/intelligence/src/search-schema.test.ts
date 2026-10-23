@@ -4,11 +4,11 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const migration = readFileSync(
-  path.resolve(import.meta.dirname, '../../db/migrations/0057_document_search.sql'),
+  path.resolve(import.meta.dirname, '../../db/migrations/0058_document_search.sql'),
   'utf8',
 );
 
-describe('document search schema (migration 0057)', () => {
+describe('document search schema (migration 0058)', () => {
   it('generates the page tsvector with the simple config, so Tamil and English words match whole', () => {
     expect(migration).toContain(
       "GENERATED ALWAYS AS (to_tsvector('simple', coalesce(text, ''))) STORED",

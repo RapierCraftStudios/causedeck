@@ -23,6 +23,7 @@ import { billingEvent, entitlement, plan, subscription, usageCounter } from '../
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
+import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { matter } from '../schema/matter-graph.ts';
@@ -634,6 +635,81 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       disclosureVersion: 'v1',
     });
     return { workspaceId };
+  },
+  ics_feed: async (tx, { workspaceId, ownerId }) => {
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const row = first(
+      await tx
+        .insert(icsFeed)
+        // Revoked, so the owner can still create an active feed in the action suites.
+        .values({
+          workspaceId,
+          userId: ownerId,
+          tokenHash,
+          disclosureVersion: 'v1',
+          revokedAt: new Date(),
+        })
+        .returning({ id: icsFeed.id }),
+      'ics_feed',
+    );
+    return { id: row.id };
+  },
+  ics_feed_event: async (tx, { workspaceId, ownerId, tag }) => {
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const feed = first(
+      await tx
+        .insert(icsFeed)
+        .values({
+          workspaceId,
+          userId: ownerId,
+          tokenHash,
+          disclosureVersion: 'v1',
+          revokedAt: new Date(),
+        })
+        .returning({ id: icsFeed.id }),
+      'ics_feed',
+    );
+    await tx.insert(icsFeedEvent).values({
+      workspaceId,
+      feedId: feed.id,
+      uid: `listing-${tag}@causedeck`,
+      contentHash: 'h',
+      changedAt: new Date(),
+      snapshot: { date: '2026-12-01', summary: 'Hearing', location: null, description: null },
+    });
+    return { feedId: feed.id };
+  },
+  ics_import_event: async (tx, { workspaceId, ownerId, tag }) => {
+    const cap = first(
+      await tx
+        .insert(capture)
+        .values({
+          workspaceId,
+          channel: 'ics',
+          mime: 'text/calendar',
+          sizeBytes: 8,
+          originalFilename: `xt-${tag}.ics`,
+          createdBy: ownerId,
+        })
+        .returning({ id: capture.id }),
+      'capture',
+    );
+    const row = first(
+      await tx
+        .insert(icsImportEvent)
+        .values({
+          workspaceId,
+          uid: `xt-${tag}`,
+          captureId: cap.id,
+          status: 'unmatched',
+          summary: 'Hearing',
+          eventDate: '2026-12-01',
+          score: '0.800',
+        })
+        .returning({ id: icsImportEvent.id }),
+      'ics_import_event',
+    );
+    return { id: row.id };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

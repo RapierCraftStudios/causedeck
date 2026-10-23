@@ -129,6 +129,7 @@ catalog:
   file-type: 22.2.0
   globals: 17.13.0
   hono: 4.13.13
+  ical.js: 2.2.1
   icu-minify: 4.14.9
   intl-messageformat: 11.2.15
   jose: 6.2.12

@@ -1,4 +1,4 @@
-# 0024. Document pipeline: ports, text layer first, OCR through the gateway
+# 0025. Document pipeline: ports, text layer first, OCR through the gateway
 
 ## Status
 

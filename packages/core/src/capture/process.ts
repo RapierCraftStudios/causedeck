@@ -4,6 +4,8 @@
 // `ai_blocked` is read from the row, never from the payload, so a sensitive matter hint cannot be
 // bypassed by a hand-built job. Idempotent: a capture that already left `queued` is skipped.
 import type { AiGateway } from '@causedeck/ai';
+import type { CaptureChannel, CaptureFailureReason } from '@causedeck/capture';
+import { schema, withWorkspace, type Queryable } from '@causedeck/db';
 import {
   createDbPersister,
   createGatewayClassifier,
@@ -15,8 +17,12 @@ import {
   type OcrLanguage,
   type PageRenderer,
 } from '@causedeck/intelligence';
-import { schema, withWorkspace, type Queryable } from '@causedeck/db';
-import { ObjectNotFoundError, type KeyProvider, type ObjectStore, type ObjectKey } from '@causedeck/storage';
+import {
+  ObjectNotFoundError,
+  type KeyProvider,
+  type ObjectKey,
+  type ObjectStore,
+} from '@causedeck/storage';
 import { and, eq } from 'drizzle-orm';
 
 import type { CaptureJobDeps } from './context.ts';
@@ -26,7 +32,9 @@ import { loadCapture, moveCapture, type CaptureRecord } from './state.ts';
 const { capture: captureTable } = schema;
 
 export type CaptureProcessOutcome =
-  { outcome: 'missing' } | { outcome: 'skipped' } | { outcome: 'started'; aiSteps: boolean };
+  | { outcome: 'missing' }
+  | { outcome: 'skipped' }
+  | { outcome: 'started'; aiSteps: boolean; channel: CaptureChannel };
 
 export async function runCaptureProcess(
   deps: Pick<CaptureJobDeps, 'db' | 'now'>,
@@ -39,7 +47,7 @@ export async function runCaptureProcess(
     if (row === null) return { outcome: 'missing' };
     if (row.status !== 'queued') return { outcome: 'skipped' };
     await moveCapture(tx, row, 'processing', now);
-    return { outcome: 'started', aiSteps: !row.aiBlocked };
+    return { outcome: 'started', aiSteps: !row.aiBlocked, channel: row.channel };
   });
 }
 
@@ -55,6 +63,46 @@ export async function aiStepsAllowed(
     .from(capture)
     .where(and(eq(capture.id, captureId), eq(capture.workspaceId, workspaceId)));
   return row !== undefined && !row.aiBlocked;
+}
+
+/**
+ * End a claimed capture (`processing -> ready | needs_you | failed`) from a channel handler such as
+ * the ICS import (#53), merging `meta` (counts, no content) into `source_meta`. The caller holds the
+ * workspace scope; a capture that is no longer `processing` is left alone (`null`).
+ */
+export async function finishCapture(
+  db: Queryable,
+  row: CaptureRecord,
+  to: 'ready' | 'needs_you' | 'failed',
+  meta: Record<string, unknown>,
+  now: Date,
+  reason?: CaptureFailureReason,
+): Promise<CaptureRecord | null> {
+  if (row.status !== 'processing') return null;
+  const moved = await moveCapture(db, row, to, now, { processedAt: now }, reason);
+  const { capture } = schema;
+  const [updated] = await db
+    .update(capture)
+    .set({ sourceMeta: { ...moved.sourceMeta, ...meta } })
+    .where(and(eq(capture.id, moved.id), eq(capture.workspaceId, moved.workspaceId)))
+    .returning();
+  return updated ?? moved;
+}
+
+/**
+ * Close a capture whose review is done (`needs_you | ready -> applied`), as the ICS review screen
+ * does once every event has been confirmed, skipped or noted (#53). Anything else is left alone.
+ */
+export async function closeReviewedCapture(
+  db: Queryable,
+  workspaceId: string,
+  captureId: string,
+  now: Date,
+): Promise<boolean> {
+  const row = await loadCapture(db, workspaceId, captureId);
+  if (row === null || (row.status !== 'needs_you' && row.status !== 'ready')) return false;
+  await moveCapture(db, row, 'applied', now);
+  return true;
 }
 
 export interface CapturePipelineDeps {
@@ -73,6 +121,8 @@ export type CapturePipelineOutcome =
   | { outcome: 'missing' }
   | { outcome: 'skipped' }
   | { outcome: 'failed' }
+  /** Not a document (an ICS file is read by its own channel handler): the caller takes over. */
+  | { outcome: 'not_document' }
   /** AI is paused or over budget: the capture stays `queued` and is marked "processing later". */
   | { outcome: 'deferred' }
   | { outcome: 'ready' | 'needs_you'; documentId: string | null; reason: string | null };
@@ -99,7 +149,7 @@ async function readRaw(store: ObjectStore, key: ObjectKey): Promise<Uint8Array> 
  * the reason (and the document, if one was stored) in `source_meta`. A capture that already
  * finished is left alone, so a replay changes nothing.
  */
-async function finishCapture(
+async function finishPipelineCapture(
   tx: Queryable,
   workspaceId: string,
   captureId: string,
@@ -147,6 +197,7 @@ export async function runCapturePipeline(
   );
   if (row === null) return { outcome: 'missing' };
   if (row.status !== 'queued') return { outcome: 'skipped' };
+  if (row.channel === 'ics') return { outcome: 'not_document' };
   const key = row.rawStorageKey as ObjectKey | null;
   if (key === null || row.sha256 === null) {
     await markCaptureFailed(deps.db, workspaceId, captureId, 'upload_missing', now);
@@ -180,7 +231,8 @@ export async function runCapturePipeline(
         ...(deps.now ? { now: deps.now } : {}),
       }),
       ...(deps.events ? { events: deps.events } : {}),
-      onPersisted: (tx, finished) => finishCapture(tx, workspaceId, captureId, finished, now),
+      onPersisted: (tx, finished) =>
+        finishPipelineCapture(tx, workspaceId, captureId, finished, now),
     },
     {
       workspaceId,
@@ -211,7 +263,7 @@ export async function runCapturePipeline(
   // The persisting transaction already moved the capture for a new document; this covers a
   // failure with no document and a replay (finishing is a no-op once the capture has moved).
   await withWorkspace(deps.db, { workspaceId }, (tx) =>
-    finishCapture(tx, workspaceId, captureId, outcome, now),
+    finishPipelineCapture(tx, workspaceId, captureId, outcome, now),
   );
   return { outcome: outcome.status, documentId: outcome.documentId, reason: outcome.reason };
 }

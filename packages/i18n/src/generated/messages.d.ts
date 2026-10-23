@@ -2876,6 +2876,126 @@ export type Messages = {
       selectMore: string;
     };
   };
+  calendar: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    link: {
+      open: string;
+    };
+    loading: string;
+    offlineReason: string;
+    error: {
+      title: string;
+      retry: string;
+    };
+    feed: {
+      title: string;
+      description: string;
+      empty: string;
+      urlLabel: string;
+      maskedUrl: string;
+      privacy: string;
+      shownOnce: string;
+      copy: string;
+      copied: string;
+      create: string;
+      rotate: string;
+      revoke: string;
+      cancel: string;
+      offline: string;
+      working: string;
+      statusLabel: string;
+      status: {
+        created: string;
+        rotated: string;
+        lastFetched: string;
+        neverFetched: string;
+      };
+      scope: {
+        label: string;
+        mine: string;
+        workspace: string;
+        ownerOnly: string;
+      };
+      parties: {
+        label: string;
+        why: string;
+      };
+      disclosure: {
+        text: string;
+        ack: string;
+      };
+      rotateTitle: string;
+      rotateBody: string;
+      rotateConfirm: string;
+      revokeTitle: string;
+      revokeBody: string;
+      revokeConfirm: string;
+      toast: {
+        created: string;
+        rotated: string;
+        revoked: string;
+        saved: string;
+        error: string;
+        forbidden: string;
+        copyFailed: string;
+      };
+    };
+    import: {
+      title: string;
+      description: string;
+      instructions: string;
+      choose: string;
+      uploading: string;
+      received: string;
+      duplicate: string;
+      channelOff: string;
+      tooLarge: string;
+      invalid: string;
+      forbidden: string;
+      failed: string;
+    };
+    review: {
+      title: string;
+      summary: string;
+      ignored: string;
+      processing: string;
+      failed: string;
+      empty: string;
+      matchedHeading: string;
+      unmatchedHeading: string;
+      when: string;
+      allDay: string;
+      preview: {
+        next_date: string;
+        conflict: string;
+        listing_update: string;
+        none: string;
+        unmatched: string;
+      };
+      status: {
+        applied: string;
+        skipped: string;
+        noted: string;
+        unchanged: string;
+      };
+      confirm: string;
+      skip: string;
+      attach: string;
+      attachMatter: string;
+      attachChoose: string;
+      attachConfirm: string;
+      attachHint: string;
+      toast: {
+        confirmed: string;
+        skipped: string;
+        noted: string;
+        error: string;
+        forbidden: string;
+      };
+    };
+  };
   inbox: {
     metaTitle: string;
     title: string;

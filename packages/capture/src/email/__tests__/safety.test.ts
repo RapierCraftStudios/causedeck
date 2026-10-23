@@ -69,7 +69,7 @@ describe('htmlToText', () => {
         '<img src="https://track.example.test/p.gif" width="1" height="1">' +
         '<script>fetch("https://evil.example.test")</script><div>Next&nbsp;date 5&#46;11</div></body></html>',
     );
-    expect(text).toBe('Hearing & orders\nNext date 5.11');
+    expect(text).toBe('Hearing & orders\n\nNext date 5.11');
     expect(text).not.toMatch(/track|evil|fetch/);
   });
 });

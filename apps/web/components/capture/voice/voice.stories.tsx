@@ -61,7 +61,7 @@ export const Review: Story = {
   ),
 };
 
-export const Denied: Story = {
+export const MicDenied: Story = {
   render: () => (
     <div className="max-w-sm">
       <VoiceDenied kind="denied" />
@@ -69,7 +69,7 @@ export const Denied: Story = {
   ),
 };
 
-export const Unavailable: Story = {
+export const MicUnavailable: Story = {
   render: () => (
     <div className="max-w-sm">
       <VoiceDenied kind="unavailable" />

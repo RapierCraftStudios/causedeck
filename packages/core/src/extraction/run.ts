@@ -57,9 +57,9 @@ export type ExtractionOutcome =
 export interface ExtractionPayload {
   workspaceId: string;
   documentId: string;
-  pipelineVersion?: string;
+  pipelineVersion?: string | undefined;
   /** Supersede the current extraction instead of keeping it. */
-  reextract?: boolean;
+  reextract?: boolean | undefined;
 }
 
 export async function runOrderExtraction(

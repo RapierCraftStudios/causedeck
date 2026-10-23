@@ -45,10 +45,7 @@ async function oncallEmail(db: Queryable, userId: string | null): Promise<string
   return row?.email ?? null;
 }
 
-function message(
-  row: typeof dataOpsAlert.$inferSelect,
-  email: string | null,
-): AlertMessage {
+function message(row: typeof dataOpsAlert.$inferSelect, email: string | null): AlertMessage {
   return {
     id: row.id,
     type: row.type,
@@ -130,7 +127,9 @@ export async function reconcileDetection(
   if (resolved === undefined) return report;
   report.resolved += 1;
   try {
-    await deps.notifier.resolved(message(resolved, await oncallEmail(deps.db, resolved.oncallUserId)));
+    await deps.notifier.resolved(
+      message(resolved, await oncallEmail(deps.db, resolved.oncallUserId)),
+    );
     await deps.db
       .update(dataOpsAlert)
       .set({ resolveNotifiedAt: deps.now })

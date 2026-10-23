@@ -34,6 +34,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `whatsapp` | `@causedeck/core/whatsapp` | the WhatsApp chat import (#526, PRD CA-6): `receiveWhatsAppImport` (the `whatsapp_export` intake: `validateSelection` re-applied server-side, selected messages only, audio never transcribed) and `runWhatsAppImport` (the `whatsapp.import` job body: the `structure_chat` task on internal chats only, proposals anchored to the source message, the 30-day raw-text clock). Parsing, rules and the pure structuring are `@causedeck/capture` `whatsapp/`. Not re-exported from the package root |
 | `import` | `@causedeck/core/import` | the bootstrap import plan engine (#57 part 2, #548): `getAdvocateIdentifiers`, the matched-only `filterMatchedRows` (a row that does not match the advocate is counted and never stored or logged), `clusterProceedings` (parent/child, connected batches, appeal links, same parties; deterministic, with confidence and reason), the `ImportPlan` types and `buildImportPlan` (reads the proposals of a batch's captures, applies the IST next-date/history rules, stores the plan on `import_plan` and the batch counters). `applyImportPlan` (#549: chunked writes through matter-graph with `import` provenance, idempotent by batch and plan hash, duplicates offered as a merge, sensitive matters excluded unless included, one L3 activity per matter under one cascade group), `undoImportBatch` (reverses the group within 7 days) and the free-plan OCR cap (`splitByOcrAllowance`: past the cap files are attached unread; `batchCostPaise`). The batch (#57 part 4, #550): `createImportBatch`, `addImportFiles` (uploaded `bulk_import` captures), `getImportProgress`, `processImportFile` (a cause list is read by the dedicated court adapter that detects it and only rows matching the advocate are staged as proposals; a list no dedicated adapter reads is kept as an attachment with a needs-a-dedicated-adapter note), `finishImportBatch` (builds the plan once no file is waiting) and the per-member `advocate_profile` identifiers (`getAdvocateProfile`, `saveAdvocateProfile`, saved only when confirmed); the `import.batch` and `import.file` jobs in `jobs` wrap them. Not re-exported from the package root |
 | `voice` | `@causedeck/core/voice` | voice capture (#542, [ADR 0029](../adr/0029-voice-capture-and-spoken-date-validation.md)): `runVoiceProcess`, the body of the `voice.process` job (queued by `capture.process` for channel `voice`). It never reads audio of an `ai_blocked` capture, sends unreadable audio to "Needs you" with no drafts, transcribes (`transcribe`), structures (`structure_hearing`), stores the transcript as a note document with `transcript` anchors and stages proposals. Pure steps are `@causedeck/intelligence` `transcribe/` and `structure/`. Not re-exported from the package root |
+| `data-ops` | `@causedeck/core/data-ops` | data-operations alerting (#515, [ADR 0035](../adr/0035-data-ops-alerting.md)): the pure SLO detectors, the alert ledger (open once, refresh, auto-resolve), Slack and email routing with the on-call rotation, a runbook link per alert type, the block-backoff and parser-quarantine responses and `recordParseRun`. Imports no other domain; the `system.data-ops.evaluate` job in `jobs` wraps it. Not re-exported from the package root |
 | `jobs` | `@causedeck/core/jobs` | job definitions and handlers ([jobs.md](jobs.md)) |
 | `runtime` | `@causedeck/core/runtime` | the app's runtime database seam: services that bind the app-role handle and delegate to the other domains. apps/web, apps/api and apps/worker use it (#299): the `db` handle, `closeAppDb`, `inWorkspaceOn` for an injected handle and the api idempotency store; the roster wrappers `previewRosterImportFor` and `confirmRosterImportFor` (#434) |
 | `shared` | none | helpers no domain owns |
@@ -114,6 +115,7 @@ graph LR
   jobs --> email-intake
   jobs --> extraction
   jobs --> import
+  jobs --> data-ops
   calendar --> audit
   calendar --> workspaces
   calendar --> capture
@@ -161,6 +163,7 @@ graph LR
 | `ai` | `audit`, `usage` |
 | `lifecycle` | `audit`, `workspaces` |
 | `sources` | `audit` |
+| `data-ops` | nothing (only `shared/`) |
 | `support` | `workspaces`, `audit` |
 | `capture` | `audit`, `workspaces`, `ai`, `automation`, `matter-graph` |
 | `calendar` | `audit`, `workspaces`, `capture`, `automation`, `matter-graph` |
@@ -169,7 +172,7 @@ graph LR
 | `voice` | `workspaces`, `capture`, `ai`, `automation`, `matter-graph` |
 | `extraction` | `workspaces`, `ai`, `automation`, `matter-graph` |
 | `import` | `matter-graph`, `usage`, `automation` |
-| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `data-ops` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

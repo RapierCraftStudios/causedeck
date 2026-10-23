@@ -128,12 +128,21 @@ export interface ReviewQueueItem {
 
 /** Parser versions waiting for review, oldest first. */
 export async function listReviewQueue(db: Queryable): Promise<ReviewQueueItem[]> {
-  const rows = await db.select().from(sourceHealth).where(isNotNull(sourceHealth.quarantinedParserVersion));
+  const rows = await db
+    .select()
+    .from(sourceHealth)
+    .where(isNotNull(sourceHealth.quarantinedParserVersion));
   return rows
     .flatMap((r) =>
       r.quarantinedParserVersion === null || r.quarantinedAt === null
         ? []
-        : [{ sourceId: r.sourceId, parserVersion: r.quarantinedParserVersion, quarantinedAt: r.quarantinedAt }],
+        : [
+            {
+              sourceId: r.sourceId,
+              parserVersion: r.quarantinedParserVersion,
+              quarantinedAt: r.quarantinedAt,
+            },
+          ],
     )
     .sort((a, b) => a.quarantinedAt.getTime() - b.quarantinedAt.getTime());
 }
@@ -180,7 +189,12 @@ export function createFetchHealth(deps: Omit<ReconcileDeps, 'now'> & { now?: () 
 export async function applyResponses(
   db: Queryable,
   metrics: SourceMetrics,
-  detections: readonly { type: string; breached: boolean; parserVersion?: string; detail: string }[],
+  detections: readonly {
+    type: string;
+    breached: boolean;
+    parserVersion?: string;
+    detail: string;
+  }[],
   now: Date,
 ): Promise<void> {
   for (const d of detections) {
@@ -193,7 +207,13 @@ export async function applyResponses(
     }
     if (d.type === 'parse_yield') {
       if (d.breached && d.parserVersion !== undefined) {
-        await quarantineParser(db, metrics.sourceId, d.parserVersion, now, 'parse yield below floor');
+        await quarantineParser(
+          db,
+          metrics.sourceId,
+          d.parserVersion,
+          now,
+          'parse yield below floor',
+        );
       } else if (!d.breached) {
         await releaseQuarantine(db, metrics.sourceId, now);
       }

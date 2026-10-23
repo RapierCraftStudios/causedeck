@@ -101,6 +101,8 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `BILLING_SAC` | string (99xxxx) | `998314` | never (defaults to 998314) | #253 | — |
 | `ADAPTER_PRIVATE_FIXTURES_DIR` | path | — | never | #371 | — |
 | `ALTERLAB_API_KEY` | secret | — | never (the mock provider is used when unset) | #479 | — |
+| `DATA_OPS_SLACK_WEBHOOK_URL` | secret | — | never (alerts are logged when unset) | #515 | — |
+| `DATA_OPS_ALERT_EMAIL` | email | — | never (alerts are logged when unset) | #515 | — |
 | `FETCH_DELEGATED_CAPTCHA_PER_HOUR` | integer (1-1000) | `10` | never (defaults to 10) | #479 | — |
 | `EMAIL_PROVIDER` | enum(console\|ses\|smtp) | `console` | never (defaults to console) | #23 | — |
 | `SES_REGION` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |

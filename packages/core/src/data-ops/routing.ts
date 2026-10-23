@@ -34,7 +34,9 @@ export function formatAlert(event: 'opened' | 'resolved', m: AlertMessage): stri
 }
 
 /** Slack incoming webhook; `post` is `postWebhook` bound to the configured URL. */
-export function createSlackChannel(post: (payload: { text: string }) => Promise<void>): AlertChannel {
+export function createSlackChannel(
+  post: (payload: { text: string }) => Promise<void>,
+): AlertChannel {
   return {
     name: 'slack',
     send: (event, message) => post({ text: formatAlert(event, message) }),
@@ -86,7 +88,9 @@ export function createAlertRouter(channels: readonly AlertChannel[]): AlertNotif
     if (channels.length === 0) return;
     const results = await Promise.allSettled(channels.map((c) => c.send(event, message)));
     if (results.every((r) => r.status === 'rejected')) {
-      throw new Error(`Alert ${event} reached no channel (${channels.map((c) => c.name).join(', ')})`);
+      throw new Error(
+        `Alert ${event} reached no channel (${channels.map((c) => c.name).join(', ')})`,
+      );
     }
   }
   return {

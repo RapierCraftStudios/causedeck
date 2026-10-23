@@ -50,7 +50,12 @@ import {
   type A0Row,
   type WorkspaceIdentifiers,
 } from '../index.ts';
-import { A0_SYNTHETIC_FORUMS, generateA0Document, type A0Scenario } from '../synthetic/generate.ts';
+import {
+  A0_SYNTHETIC_FORUMS,
+  generateA0Document,
+  type A0Scenario,
+  type A0SyntheticForum,
+} from '../synthetic/generate.ts';
 
 import {
   fakeGateway,
@@ -64,14 +69,14 @@ import {
 const BENGALURU = must(A0_SYNTHETIC_FORUMS[1]);
 const CHENNAI = must(A0_SYNTHETIC_FORUMS[2]);
 const lookup = buildCaseTypeLookup([]);
-const doc = (forum: (typeof A0_SYNTHETIC_FORUMS)[number], scenario: A0Scenario) =>
+const doc = (forum: A0SyntheticForum, scenario: A0Scenario) =>
   generateA0Document(forum, scenario, 56);
 const UUID_BASE = '00000000-0000-4000-8000-';
 const uuid = (n: number): string => `${UUID_BASE}${String(n).padStart(12, '0')}`;
 
 async function parsedList(
   scenario: A0Scenario,
-  forum = BENGALURU,
+  forum: A0SyntheticForum = BENGALURU,
   model: 'none' | 'good' | 'faulty' = 'none',
 ) {
   const d = doc(forum, scenario);

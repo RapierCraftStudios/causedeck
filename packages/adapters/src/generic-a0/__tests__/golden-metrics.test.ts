@@ -90,7 +90,10 @@ describe('committed A0 fixtures', () => {
       for (const c of report.public.cases)
         expect(c.diff.concat(c.anchorViolations), c.file).toEqual([]);
       expect(report.public.passed).toBe(true);
-      expect(report.public.cases.length).toBeGreaterThanOrEqual(THRESHOLDS.minFixturesPerForum);
+      // The harness parses the cause lists; the orders are checked by the metrics below.
+      expect(report.public.cases.length).toBe(
+        A0_SCENARIOS.filter((n) => n.startsWith('list-')).length,
+      );
     },
   );
 
@@ -217,7 +220,7 @@ async function scoreOrder(doc: GeneratedA0Document, tally: Tally): Promise<void>
   const dates = [
     e.orderDate?.date,
     e.nextDate?.derived === true ? undefined : e.nextDate?.date,
-    ...e.candidates.map((c) => c.date),
+    ...e.candidates.filter((c) => c.derived !== true).map((c) => c.date),
   ];
   for (const date of dates) {
     if (date === undefined) continue;

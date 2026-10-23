@@ -9,7 +9,7 @@ import { registry } from '../registry.ts';
 import {
   businessCostAlert,
   founderEmails,
-  istDay,
+  businessIstDay,
   runBusinessCostAlert,
 } from './business-cost-alert.ts';
 import { businessDigest, runBusinessDigest } from './business-digest.ts';
@@ -89,7 +89,7 @@ describe('runBusinessCostAlert', () => {
   it('parses the founder list and the IST day', () => {
     expect(founderEmails(' a@x.test, b@x.test ,')).toEqual(['a@x.test', 'b@x.test']);
     expect(founderEmails(undefined)).toEqual([]);
-    expect(istDay(new Date('2026-10-25T20:00:00Z'))).toBe('2026-10-26');
+    expect(businessIstDay(new Date('2026-10-25T20:00:00Z'))).toBe('2026-10-26');
   });
 });
 

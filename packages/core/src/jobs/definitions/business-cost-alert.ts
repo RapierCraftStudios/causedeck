@@ -43,7 +43,7 @@ export function founderEmails(raw: string | undefined): string[] {
 }
 
 /** The IST calendar day of `at`, `YYYY-MM-DD`. */
-export function istDay(at: Date): string {
+export function businessIstDay(at: Date): string {
   return new Date(at.getTime() + 330 * 60_000).toISOString().slice(0, 10);
 }
 
@@ -81,7 +81,7 @@ export async function runBusinessCostAlert(
   }
 
   const email = deps.email ?? notificationJobDeps(ctx.log).email;
-  const message = renderCostAlert(breaches, istDay(now));
+  const message = renderCostAlert(breaches, businessIstDay(now));
   for (const to of founders) {
     await email.send({ to, ...message, tags: { template: 'business.cost-alert' } });
     report.sent += 1;

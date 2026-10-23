@@ -14,7 +14,11 @@ import {
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
-import { istDay, resolveBusinessDeps, type BusinessJobDeps } from './business-cost-alert.ts';
+import {
+  businessIstDay,
+  resolveBusinessDeps,
+  type BusinessJobDeps,
+} from './business-cost-alert.ts';
 import { notificationJobDeps } from './notification-deliver.ts';
 
 export interface BusinessDigestReport {
@@ -37,7 +41,7 @@ export async function runBusinessDigest(
   const report = buildBusinessReport(snapshot, config);
   const breaches = evaluateCostThresholds(report, config.costAlertPaisePerUser);
   const email = deps.email ?? notificationJobDeps(ctx.log).email;
-  const message = renderBusinessDigest(report, breaches, istDay(now));
+  const message = renderBusinessDigest(report, breaches, businessIstDay(now));
   for (const to of founders) {
     await email.send({ to, ...message, tags: { template: 'business.digest' } });
   }

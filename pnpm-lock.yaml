@@ -1147,6 +1147,9 @@ importers:
       '@causedeck/flags':
         specifier: workspace:*
         version: link:../flags
+      '@causedeck/intelligence':
+        specifier: workspace:*
+        version: link:../intelligence
       '@causedeck/notifications':
         specifier: workspace:*
         version: link:../notifications

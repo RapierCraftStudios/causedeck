@@ -85,6 +85,9 @@ export const PURGE_ORDER = [
   'role_edge',
   'person',
   'organisation',
+  // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
+  'case_status_snapshot',
+  'case_watch',
   'proceeding_state_change',
   'proceeding_link',
   'proceeding',

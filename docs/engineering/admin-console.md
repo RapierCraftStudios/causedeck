@@ -176,6 +176,26 @@ then `registryHealthSource` reads `access_mode_registry` through the data layer
 checked. The page shows `No adapters registered yet.` when the registry is empty, and a
 `No health data yet` notice when no row has been checked.
 
+## Fixtures workbench
+
+`/fixtures` (#516, `ops` and `admin`, the `adapters` capability) turns a contributed document into
+a redacted adapter fixture. Staff pick an adapter and format, paste or upload the document, and run
+the adapter's parser. The page shows the parsed rows (hall, bench, item, case number, case type,
+year, parties, stage) and the list date in a form; corrections are applied by row anchor and
+validated against the parser output schema. "Redact and build fixture" returns a bundle (input,
+expected JSON, manifest entry) for download.
+
+Redaction (`@causedeck/adapters/workbench`): party names (from the parser output, plus names the
+labeler lists) become deterministic synthetic names, and emails, phone numbers, Aadhaar and PAN
+numbers become placeholders; layout, page breaks and anchors are kept. The builder runs a leak
+detector over the result and refuses to return a bundle that still holds a known name or personal
+data. The contributed document lives only in the request: it is never stored or logged, and both
+actions record `staff.read` (purpose `adapters.fixture_workbench`, actor kind `staff`).
+
+Export to a PR: `pnpm --filter @causedeck/adapters fixtures:export <bundle.json>` writes the files
+into `packages/adapters/fixtures/<adapter>/`, a person commits them and opens a PR. Fetched
+documents are not offered: `fetch_log` keeps no bodies.
+
 ## Workspaces and audit pages
 
 - **Workspaces** (`/workspaces`, roles `support` and `admin`): a GET search (`?q=`) by slug prefix

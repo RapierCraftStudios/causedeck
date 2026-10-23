@@ -67,6 +67,8 @@ describe('@causedeck/db root entry point', () => {
       'blob',
       'budget_override',
       'capture',
+      'case_status_snapshot',
+      'case_watch',
       'catalogue_meta',
       'cause_list_publication',
       'cause_list_watch',

@@ -477,6 +477,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@causedeck/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@causedeck/auth':
         specifier: workspace:*
         version: link:../../packages/auth

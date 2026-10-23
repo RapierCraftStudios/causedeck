@@ -1,4 +1,4 @@
--- Migration 0069_judgment_corpus: table, columns and indexes follow the drizzle schema (hand-assembled: drizzle-kit is not installed on the build host), grants hand-written, reviewed before commit.
+-- Migration 0070_judgment_corpus: table, columns and indexes follow the drizzle schema (hand-assembled: drizzle-kit is not installed on the build host), grants hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #484)
 -- The raw judgments and orders corpus (#484, D-048, D-004): `judgment` is global (GLOBAL_TABLES, no
 -- RLS) and holds public judgments as published (text layer per page, sha256, provenance), with no

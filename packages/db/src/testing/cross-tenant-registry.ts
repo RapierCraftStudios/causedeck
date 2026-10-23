@@ -124,6 +124,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,
+
+  // Official notices feed (#584).
+  notice_match: DB_TABLES_TEST,
 };
 
 /**

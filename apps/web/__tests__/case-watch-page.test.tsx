@@ -7,7 +7,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { StatusWatchPanel } from '../components/matters/status-watch-panel.tsx';
-import { WatchForm } from '../app/(app)/w/[slug]/settings/case-watch/watch-form.tsx';
+import { CaseWatchForm } from '../app/(app)/w/[slug]/settings/case-watch/watch-form.tsx';
 
 import { catalogs } from './helpers/intl.ts';
 
@@ -44,7 +44,7 @@ afterEach(() => {
 describe('case-watch UI', () => {
   it('lists watches with Refresh status and shows the server provenance, with no captcha or court page', async () => {
     const { container } = wrap(
-      <WatchForm
+      <CaseWatchForm
         workspaceId={WS}
         watches={[
           {

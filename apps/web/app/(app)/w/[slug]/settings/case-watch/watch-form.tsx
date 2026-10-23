@@ -13,7 +13,7 @@ import type { Result } from '../../../../../../lib/safe-action.ts';
 
 import type { CaseWatchView } from './actions.ts';
 
-export interface WatchFormProps {
+export interface CaseWatchFormProps {
   workspaceId: string;
   watches: CaseWatchView[];
   remove: (raw: unknown) => Promise<Result<{ removed: true }>>;
@@ -21,7 +21,13 @@ export interface WatchFormProps {
   device?: DeviceLookup | undefined;
 }
 
-export function WatchForm({ workspaceId, watches, remove, refresh, device }: WatchFormProps) {
+export function CaseWatchForm({
+  workspaceId,
+  watches,
+  remove,
+  refresh,
+  device,
+}: CaseWatchFormProps) {
   const t = useTranslations('caseWatch');
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);

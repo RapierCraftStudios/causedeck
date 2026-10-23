@@ -19,7 +19,7 @@ import {
   refreshCaseStatusAction,
   removeCaseWatchAction,
 } from './actions.ts';
-import { WatchForm } from './watch-form.tsx';
+import { CaseWatchForm } from './watch-form.tsx';
 
 interface CaseWatchPageProps {
   params: Promise<{ slug: string }>;
@@ -47,7 +47,7 @@ export default async function CaseWatchPage({ params }: CaseWatchPageProps) {
       </header>
       <SettingSection id="case-watch-card" title={t('title')}>
         {on && watches?.ok ? (
-          <WatchForm
+          <CaseWatchForm
             workspaceId={context.workspace.id}
             watches={watches.data}
             remove={removeCaseWatchAction}

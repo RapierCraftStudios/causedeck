@@ -235,6 +235,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   retentionSweep: selfScoped,
   // KHC cause-list watches (#482)
   addCauseListWatch: selfScoped,
+  matchNotices: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
   // Case-status watches (#591)
@@ -901,6 +902,14 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   CAUSELIST_POLL_CRON: 'constant',
   causelistPoll: 'job definition (handler is runCauselistPoll)',
   runCauselistPoll: 'system job body: see pollCauseList',
+  // notices: the official notices feed (#586)
+  NOTICE_PARSERS: 'constant',
+  pollNotices:
+    'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
+  NOTICES_POLL_CRON: 'constant',
+  noticesPoll: 'job definition (handler is runNoticesPoll)',
+  runNoticesPoll: 'system job body: see pollNotices',
+  setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
   // case-watch: delegated status lookups (#591)
   STATUS_SOURCES: 'constant',
   hashStatusFields: 'pure',

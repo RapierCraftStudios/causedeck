@@ -32,6 +32,7 @@ describe('registerSchedules', () => {
       'system.capture.retention',
       'system.corpus.poll',
       'system.causelist.poll',
+      'system.notices.poll',
       'system.judgment-alert.scan',
     ]);
 
@@ -84,6 +85,8 @@ describe('registerSchedules', () => {
       ['system.capture.retention', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // KHC cause-list poll (#482): 07:30 and 18:30 IST; 07:30 IST is 02:00 UTC.
       ['system.causelist.poll', '30 7,18 * * *', '2026-10-18T02:00:00.000Z'],
+      // Notices poll (#586): hourly on the hour IST; 06:00 IST is 00:30 UTC.
+      ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
     ] as const;
     for (const [name, cron, firstRun] of others) {
       const row = await worker.boss.getSchedule(name);

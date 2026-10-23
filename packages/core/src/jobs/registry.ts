@@ -30,6 +30,7 @@ import { emailRawExpire } from './definitions/email-raw-expire.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
 import { deletionTick } from './definitions/deletion-tick.ts';
 import { causelistPoll } from './definitions/causelist-poll.ts';
+import { noticesPoll } from './definitions/notices-poll.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { memoryErase } from './definitions/memory-erase.ts';
@@ -180,6 +181,7 @@ export const registry = createRegistry([
   importFile,
   corpusPoll,
   causelistPoll,
+  noticesPoll,
   judgmentAlertScan,
 ] as const);
 
@@ -222,6 +224,7 @@ export type JobMap = RegistryMap<
     typeof importFile,
     typeof corpusPoll,
     typeof causelistPoll,
+    typeof noticesPoll,
     typeof judgmentAlertScan,
   ]
 >;

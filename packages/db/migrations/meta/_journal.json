@@ -519,6 +519,13 @@
       "when": 1792792271295,
       "tag": "0073_judgment_alerts",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792793000000,
+      "tag": "0074_notice_match_targets",
+      "breakpoints": true
     }
   ]
 }

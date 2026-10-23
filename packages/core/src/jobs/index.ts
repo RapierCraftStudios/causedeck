@@ -117,6 +117,13 @@ export {
   setCauseListFetcherFactory,
   type CauseListFetcherFactory,
 } from './definitions/causelist-poll.ts';
+export {
+  NOTICES_POLL_CRON,
+  noticesPoll,
+  runNoticesPoll,
+  setNoticeFetcherFactory,
+  type NoticeFetcherFactory,
+} from './definitions/notices-poll.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { supportSessionExpire } from './definitions/support-session-expire.ts';
 export { systemPing } from './definitions/system-ping.ts';

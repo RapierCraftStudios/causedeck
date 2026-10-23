@@ -82,10 +82,15 @@ const LOG_CONTENT_MESSAGE =
 const EXTERNAL_FETCH_MESSAGE =
   'Read external sources through `@causedeck/fetch` (governed fetch layer, D-048), not a direct `fetch` of an external host.';
 
-/** `fetch('https://…')` of a literal external host (#479); relative and variable URLs are not flagged. */
+/**
+ * `fetch('https://…')` of a literal external host (#479); relative and variable URLs are not flagged,
+ * nor is loopback (`localhost`, `127.0.0.1`, `[::1]`), which tests use to reach their own servers.
+ * esquery regexes cannot contain `/`, so `..` stands for the `//` after the scheme.
+ */
+const EXTERNAL_URL = String.raw`/^https?:..(?!localhost|127\.0\.0\.1|\[::1\])/`;
 const externalFetchRestrictions = [
-  "CallExpression[callee.name='fetch'] > Literal.arguments:first-child[value=/^https?:/]",
-  "CallExpression[callee.name='fetch'] > TemplateLiteral.arguments:first-child > TemplateElement.quasis:first-child[value.raw=/^https?:/]",
+  `CallExpression[callee.name='fetch'] > Literal.arguments:first-child[value=${EXTERNAL_URL}]`,
+  `CallExpression[callee.name='fetch'] > TemplateLiteral.arguments:first-child > TemplateElement.quasis:first-child[value.raw=${EXTERNAL_URL}]`,
 ].map((selector) => ({ selector, message: EXTERNAL_FETCH_MESSAGE }));
 
 // The shared `no-restricted-syntax` list: the logger rules below (#13) plus the external-fetch ban,

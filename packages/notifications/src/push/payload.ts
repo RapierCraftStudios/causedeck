@@ -20,6 +20,7 @@ export const GENERIC_PUSH_TITLES: Record<CategoryKey, string> = {
   'security.alert': 'Security alert',
   'billing.notice': 'Billing update',
   'reminder.hearing': 'Hearing reminder',
+  'court.board': 'Your item is coming up in court',
   'proposal.new': 'New proposal to review',
   'judgment.alert': 'New judgment on one of your matters',
   'digest.daily': 'Your daily digest is ready',

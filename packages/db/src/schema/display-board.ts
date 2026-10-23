@@ -1,7 +1,7 @@
 // Court display-board observations (#493, D-048). `board_observation` is global and content-free:
 // one row each time a hall's board changes (hall, item now being heard, state, items passed over),
 // shared by every workspace so one fetch serves every watcher. It holds no party, case or advocate,
-// and it is the pace history behind the call-time estimate (median minutes per item per bench).
+// and it is the pace history behind the call-time estimate (median minutes per item in that hall).
 import { sql } from 'drizzle-orm';
 import { check, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 

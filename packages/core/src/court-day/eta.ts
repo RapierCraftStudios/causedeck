@@ -1,5 +1,5 @@
 // The call-time estimate (#493, D-048): the items ahead of a matter's item on a hall's board times
-// the bench's pace, the median minutes per item learnt from the hall's own board history. The pace
+// the hall's pace, the median minutes per item learnt from the hall's own board history. The pace
 // comes from consecutive board observations of one hall on one day while it was sitting; the window
 // is the 25th to 75th percentile of that pace, so the answer is a range with a confidence level, never
 // a promise. Pure: no clock, no database. `backtestEta` replays recorded observations and reports the
@@ -74,7 +74,7 @@ function confidenceOf(sorted: readonly number[]): EtaConfidence {
   return spread <= 1 ? 'medium' : 'low';
 }
 
-/** The estimated call window `itemsAhead` items from now; null when the bench has no pace history. */
+/** The estimated call window `itemsAhead` items from now; null when the hall has no pace history. */
 export function estimateCallWindow(input: {
   itemsAhead: number;
   samples: readonly number[];

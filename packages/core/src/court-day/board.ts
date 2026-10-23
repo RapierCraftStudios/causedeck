@@ -152,7 +152,7 @@ export interface PollBoardsReport {
   alerts: number;
 }
 
-interface TargetRow {
+type TargetRow = {
   workspace_id: string;
   listing_id: string;
   proceeding_id: string;
@@ -161,7 +161,7 @@ interface TargetRow {
   forum_code: string;
   hall_no: string;
   item_no: string;
-}
+};
 
 const sameState = (
   last: { itemNo: string | null; status: string; passedOver: string[] },

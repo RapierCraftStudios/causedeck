@@ -1,12 +1,13 @@
 // The redaction detector test (#516): saved fixtures contain no real party names or personal data.
 // Known names and PII are planted in contributed documents; the built fixture must hold none of
 // them, keep its structure and anchors, and the detector must catch a name that is put back.
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { createEchoAdapter } from '../example/echo-adapter.ts';
+import { AccuracyBaselineSchema } from '../testing/accuracy.ts';
 import { FIXTURES_ROOT, FixtureManifestSchema, GOLDEN_RECEIVED_AT } from '../testing/golden.ts';
 import {
   buildFixture,
@@ -103,8 +104,13 @@ describe('buildFixture', () => {
 describe('committed fixtures', () => {
   it('hold no personal data where a lawyer or the workbench supplied them', () => {
     const offenders: string[] = [];
-    for (const entry of readdirSync(FIXTURES_ROOT, { withFileTypes: true })) {
-      if (!entry.isDirectory() || entry.name === 'generated') continue;
+    // The committed sources are the ones in the accuracy baseline; other directories under the
+    // root (such as git-ignored `generated/` output) are not committed fixtures.
+    const baseline = AccuracyBaselineSchema.parse(
+      JSON.parse(readFileSync(path.join(FIXTURES_ROOT, 'accuracy-baseline.json'), 'utf8')),
+    );
+    for (const source of Object.keys(baseline)) {
+      const entry = { name: source };
       const dir = path.join(FIXTURES_ROOT, entry.name);
       const manifest = FixtureManifestSchema.parse(
         JSON.parse(readFileSync(path.join(dir, 'manifest.json'), 'utf8')),

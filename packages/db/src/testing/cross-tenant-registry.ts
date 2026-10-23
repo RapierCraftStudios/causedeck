@@ -726,6 +726,15 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
   createFetchLogSink:
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
+  sourceOpsOverview:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  sourceFetchLogs:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  topFailingSources: 'pure',
+  isFetchError: 'pure',
+  FRESHNESS_SLA_HOURS: 'constant',
+  staffParseYield:
+    'app_staff_parse_yield() returns per-adapter counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

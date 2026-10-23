@@ -2,7 +2,15 @@
 // `withoutWorkspace` itself. The queries come from `@causedeck/core`, or from the package that owns
 // the global table (`@causedeck/flags` for `access_mode_registry`); apps never value-import
 // `@causedeck/db` (#299). This layer only scopes and audits them.
-import { listSources, type SourceRecord } from '@causedeck/core/sources';
+import {
+  listSources,
+  sourceFetchLogs,
+  sourceOpsOverview,
+  staffParseYield,
+  type SourceFetchLogEntry,
+  type SourceOpsRow,
+  type SourceRecord,
+} from '@causedeck/core/sources';
 import {
   countActiveStaff,
   staffAuditEvents,
@@ -126,6 +134,54 @@ export function sourceRegistry(staff: StaffActor, db?: Database): Promise<Source
     staff,
     { purpose: 'sources.registry', capability: 'sources', tables: ['source'] },
     (tx) => listSources(tx),
+    db,
+  );
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Every source's 24 hour and 7 day health for the Data Ops page (#514), or just `sourceId`'s. Two
+ * audited reads: parse yield through the staff definer function, then `source` and `fetch_log`.
+ */
+export async function dataOpsOverview(
+  staff: StaffActor,
+  sourceId?: string,
+  now: Date = new Date(),
+  db?: Database,
+): Promise<SourceOpsRow[]> {
+  const [day, week] = await staffCall(
+    staff,
+    {
+      purpose: 'data_ops.parse_yield',
+      capability: 'data-ops',
+      functions: ['app_staff_parse_yield'],
+    },
+    (handle) =>
+      Promise.all([
+        staffParseYield(handle, staff.userId, new Date(now.getTime() - DAY_MS)),
+        staffParseYield(handle, staff.userId, new Date(now.getTime() - 7 * DAY_MS)),
+      ]),
+    db,
+  );
+  return staffQuery(
+    staff,
+    { purpose: 'data_ops.overview', capability: 'data-ops', tables: ['fetch_log', 'source'] },
+    (tx) => sourceOpsOverview(tx, now, { day, week }, sourceId),
+    db,
+  );
+}
+
+/** One source's newest fetch log rows (status, tier, cost, time; no content) for the drill-down. */
+export function dataOpsFetchLogs(
+  staff: StaffActor,
+  sourceId: string,
+  db?: Database,
+): Promise<SourceFetchLogEntry[]> {
+  return staffQuery(
+    staff,
+    { purpose: 'data_ops.fetch_log', capability: 'data-ops', tables: ['fetch_log'] },
+    (tx) => sourceFetchLogs(tx, sourceId),
     db,
   );
 }

@@ -509,8 +509,15 @@
     {
       "idx": 72,
       "version": "7",
-      "when": 1792790240000,
-      "tag": "0072_display_board",
+      "when": 1792790737502,
+      "tag": "0072_staff_parse_yield",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1792793899674,
+      "tag": "0073_display_board",
       "breakpoints": true
     }
   ]

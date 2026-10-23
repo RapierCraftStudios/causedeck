@@ -6,6 +6,10 @@ export const CAPTURE_JOB_NAMES = {
   retention: 'capture.retention',
   /** Structures a WhatsApp chat import (#526); queued by `capture.process` for `whatsapp_export`. */
   whatsappImport: 'whatsapp.import',
+  /** Runs one forwarded email through the parser registry (#530); queued by the inbound webhook. */
+  emailIntake: 'email.intake',
+  /** Deletes the raw MIME of one received email once its 30 days are up (#530). */
+  emailRawExpire: 'email.raw-expire',
   /** The daily global tick (02:00 IST) that queues `capture.retention` per workspace. */
   retentionTick: 'system.capture.retention',
 } as const;
@@ -26,6 +30,13 @@ export interface CaptureProcessPayload {
 export interface WhatsAppImportPayload {
   workspaceId: string;
   captureId: string;
+}
+
+export interface EmailIntakePayload {
+  workspaceId: string;
+  /** The member whose intake address received the message. */
+  userId: string;
+  intakeMessageId: string;
 }
 
 export interface CaptureRetentionPayload {

@@ -89,6 +89,7 @@ describe('namespaced catalogs (#174)', () => {
         'auth',
         'billing',
         'calendar',
+        'camera',
         'common',
         'courts',
         'courtsRosters',
@@ -117,6 +118,15 @@ describe('namespaced catalogs (#174)', () => {
         'workspace',
       ].sort(),
     );
+  });
+});
+
+describe('camera copy (#52)', () => {
+  it('keeps the exact recovery sentence reachable and the camera namespace in every locale', () => {
+    expect(en.camera.receipt.copy).toBe('Kept as an attachment. Fee tracking arrives later.');
+    expect(en.camera.causeList.title).toBe('This looks like a cause list');
+    expect(ta.camera.title.length).toBeGreaterThan(0);
+    expect(kn.camera.title.length).toBeGreaterThan(0);
   });
 });
 

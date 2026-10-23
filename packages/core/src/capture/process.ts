@@ -26,6 +26,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 
 import type { CaptureJobDeps } from './context.ts';
+import { runDiaryStep, type DiarySummary } from './diary.ts';
 import { markCaptureFailed } from './retention.ts';
 import { loadCapture, moveCapture, type CaptureRecord } from './state.ts';
 
@@ -155,6 +156,7 @@ async function finishPipelineCapture(
   captureId: string,
   outcome: FinishedOutcome,
   now: Date,
+  diary: DiarySummary | null = null,
 ): Promise<void> {
   let row = await loadCapture(tx, workspaceId, captureId);
   if (row === null) return;
@@ -174,6 +176,8 @@ async function finishPipelineCapture(
           ? {}
           : { lowConfidencePages: outcome.lowConfidencePages }),
         ...(outcome.skippedReason === null ? {} : { textSkippedReason: outcome.skippedReason }),
+        ...(outcome.route == null ? {} : { cameraRoute: outcome.route }),
+        ...(diary === null ? {} : { diary }),
       },
     })
     .where(and(eq(captureTable.id, captureId), eq(captureTable.workspaceId, workspaceId)));
@@ -231,8 +235,11 @@ export async function runCapturePipeline(
         ...(deps.now ? { now: deps.now } : {}),
       }),
       ...(deps.events ? { events: deps.events } : {}),
-      onPersisted: (tx, finished) =>
-        finishPipelineCapture(tx, workspaceId, captureId, finished, now),
+      onPersisted: async (tx, finished) => {
+        // A photographed diary page is structured in the same transaction (#52).
+        const diary = await runDiaryStep(tx, row, finished, { now, pipelineVersion });
+        await finishPipelineCapture(tx, workspaceId, captureId, diary.outcome, now, diary.summary);
+      },
     },
     {
       workspaceId,
@@ -246,6 +253,7 @@ export async function runCapturePipeline(
       aiBlocked: row.aiBlocked,
       languageHint: languageHintOf(row),
       pipelineVersion,
+      channel: row.channel,
     },
   );
 

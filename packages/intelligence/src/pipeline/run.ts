@@ -51,10 +51,26 @@ export interface PipelineInput {
   /** `en`, `ta` or `kn` from the forum or the capture's meta. */
   languageHint?: OcrLanguage | null;
   pipelineVersion?: string;
+  /** The capture's channel; a `camera` photo can be routed to list import or kept as a receipt (#52). */
+  channel?: string | null;
+}
+
+/** Where a photographed page goes next instead of diary structuring (#52). */
+export type CameraRoute = 'cause_list' | 'receipt';
+
+const RECEIPT_WORDS =
+  /\b(?:upi|receipt|transaction id|txn id|paid to|payment (?:successful|received)|amount paid|utr)\b/i;
+
+/** The route of a photographed page: a printed cause list, or a receipt kept as an attachment. */
+export function cameraRoute(kind: DocumentKind, text: string): CameraRoute | null {
+  if (kind === 'cause_list') return 'cause_list';
+  return kind === 'other' && RECEIPT_WORDS.test(text) ? 'receipt' : null;
 }
 
 export interface FinishedOutcome {
   status: 'ready' | 'needs_you';
+  /** Set for a `camera` capture classified as a printed cause list or a receipt. */
+  route?: CameraRoute | null;
   reason: CaptureNeedsYouReason | null;
   /** `null` when nothing could be read at all (corrupt, password protected, unsupported). */
   documentId: string | null;
@@ -271,14 +287,17 @@ export async function processCapture(
     const lowConfidence = lowConfidencePages(pages, options.confidenceFloor);
     const textStatus = textStatusOf({ pages, weak, ocrRan, skipReason });
     const reason = needsYouReason({ pages, lowConfidence });
+    const route = input.channel === 'camera' ? cameraRoute(classification.kind, fullText) : null;
     const persistPages: PersistPage[] = [];
     for (const page of pages) {
       persistPages.push({ ...page, images: rendered ? await source.imagesFor(page.pageNo) : null });
     }
 
     const finished = (result: PersistResult): FinishedOutcome => ({
-      status: reason === null ? 'ready' : 'needs_you',
+      // A cause list waits in Needs you for list import (#57); a receipt for the lawyer to keep it.
+      status: reason === null && route === null ? 'ready' : 'needs_you',
       reason,
+      route,
       documentId: result.documentId,
       kind: classification.kind,
       language,

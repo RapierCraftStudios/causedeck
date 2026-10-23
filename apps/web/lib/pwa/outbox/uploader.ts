@@ -105,7 +105,9 @@ export async function uploadItem(item: OutboxItem, deps: UploaderDeps): Promise<
   const { store } = deps;
   const send = deps.fetch ?? fetch.bind(globalThis);
   const now = deps.now ?? Date.now;
-  if (item.workspaceId === null || item.state !== 'queued') return 'skipped';
+  if (item.workspaceId === null || item.state !== 'queued' || item.hold === true) {
+    return 'skipped';
+  }
   const claimed = await markUploading(store, item.id);
   if (claimed === undefined) return 'skipped';
 

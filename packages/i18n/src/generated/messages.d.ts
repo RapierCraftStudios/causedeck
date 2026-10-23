@@ -3117,6 +3117,8 @@ export type Messages = {
       submit: string;
       saved: string;
       kept: string;
+      unrecognisedSender: string;
+      unrecognisedSenderCopy: string;
     };
     reassign: {
       prompt: string;
@@ -3471,6 +3473,80 @@ export type Messages = {
     error: {
       title: string;
       retry: string;
+    };
+  };
+  camera: {
+    command: string;
+    title: string;
+    description: string;
+    guide: string;
+    privacy: string;
+    loading: string;
+    close: string;
+    flash: string;
+    shutter: string;
+    done: string;
+    choose: string;
+    captured: string;
+    offline: string;
+    hints: {
+      blurry: string;
+      glare: string;
+    };
+    errors: {
+      open: string;
+      process: string;
+      save: string;
+    };
+    denied: {
+      title: string;
+      body: string;
+      steps: string;
+    };
+    strip: {
+      label: string;
+      empty: string;
+      page: string;
+      earlier: string;
+      later: string;
+      retake: string;
+      delete: string;
+    };
+    crop: {
+      title: string;
+      hint: string;
+      handle: string;
+      corner: {
+        tl: string;
+        tr: string;
+        br: string;
+        bl: string;
+      };
+      reset: string;
+      apply: string;
+      original: string;
+      enhance: string;
+    };
+    review: {
+      title: string;
+      upload: string;
+      discard: string;
+    };
+    recover: {
+      title: string;
+      body: string;
+      resume: string;
+      discard: string;
+    };
+    causeList: {
+      title: string;
+      copy: string;
+      action: string;
+      soon: string;
+    };
+    receipt: {
+      title: string;
+      copy: string;
     };
   };
   error: {

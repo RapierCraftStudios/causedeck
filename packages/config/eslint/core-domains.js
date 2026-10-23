@@ -31,15 +31,19 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
-  // arrive as a port (it never imports jobs).
-  capture: Object.freeze(['audit']),
+  // arrive as a port (it never imports jobs). The diary-photo step (#52) runs in the pipeline's
+  // transaction: the `structure_diary` call through ai, member roles through workspaces, proposals
+  // through automation and every graph read through matter-graph (imports `index.ts` only).
+  capture: Object.freeze(['audit', 'workspaces', 'ai', 'automation', 'matter-graph']),
   // Calendar interop (#53): the ICS feed and import. Roles and role settings through workspaces,
   // the importer's capture through capture, proposals through automation and every graph read or
   // write through matter-graph (imports `index.ts` only); the feed token events go through audit.
   calendar: Object.freeze(['audit', 'workspaces', 'capture', 'automation', 'matter-graph']),
-  // Email forward-in intake (#54): per-user addresses and the sender allow-list; events through
-  // audit, the `email` channel is switched on through the capture domain's public index.
-  'email-intake': Object.freeze(['audit', 'capture']),
+  // Email forward-in intake (#54, #530): per-user addresses and the sender allow-list; events
+  // through audit, the `email` channel and the captures the `email.intake` body stores through the
+  // capture domain's public index, drafts through automation, matters through matter-graph, the
+  // member's role through workspaces.
+  'email-intake': Object.freeze(['audit', 'capture', 'automation', 'matter-graph', 'workspaces']),
   // WhatsApp chat import (#526): intake and the structuring job body. The capture row and its
   // retention through capture, the `structure_chat` call through ai, proposals through automation,
   // evidence documents through matter-graph, member roles through workspaces.
@@ -65,6 +69,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'automation',
     'calendar',
     'whatsapp',
+    'email-intake',
     'extraction',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.

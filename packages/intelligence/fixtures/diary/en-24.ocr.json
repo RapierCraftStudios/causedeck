@@ -1,0 +1,53 @@
+{
+  "pages": [
+    {
+      "page": 1,
+      "text": "25/10/2026\nWP 508/2026 - arguments heard, next date 7 Jan 2026\nCall the clerk about the certified copy\nReminder: file vakalat by 22/01/2026",
+      "confidence": 0.87,
+      "lines": [
+        {
+          "text": "25/10/2026",
+          "conf": 0.92,
+          "bbox": [0.06, 0.08, 0.94, 0.15]
+        },
+        {
+          "text": "WP 508/2026 - arguments heard, next date 7 Jan 2026",
+          "conf": 0.88,
+          "bbox": [0.06, 0.18, 0.94, 0.25]
+        },
+        {
+          "text": "Call the clerk about the certified copy",
+          "conf": 0.86,
+          "bbox": [0.06, 0.28, 0.94, 0.35]
+        },
+        {
+          "text": "Reminder: file vakalat by 22/01/2026",
+          "conf": 0.84,
+          "bbox": [0.06, 0.38000000000000006, 0.94, 0.45000000000000007]
+        }
+      ]
+    }
+  ],
+  "truth": {
+    "entries": [
+      {
+        "line": 2,
+        "kind": "hearing_note",
+        "caseRef": "WP 508/2026",
+        "nextDate": "2026-01-07",
+        "phrase": "7 Jan 2026"
+      },
+      {
+        "line": 3,
+        "kind": "task",
+        "nextDate": null
+      },
+      {
+        "line": 4,
+        "kind": "reminder",
+        "nextDate": "2026-01-22",
+        "phrase": "22/01/2026"
+      }
+    ]
+  }
+}

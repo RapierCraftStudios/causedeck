@@ -99,7 +99,7 @@ function as<T>(tx: Transaction, userId: string, fn: (s: Transaction) => Promise<
   return withUser(tx, { userId }, fn);
 }
 
-describe('staff parse yield (0067)', () => {
+describe('staff parse yield (0069)', () => {
   it('returns per-adapter counts only, summed across workspaces, to an enabled staff member', async () => {
     await withTestDb(async (tx) => {
       const t = await seedTwoTenants(tx);

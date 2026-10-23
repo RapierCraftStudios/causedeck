@@ -190,7 +190,7 @@ edits stay on `/sources` (audited as `source.changed`).
   through the data layer (`dataOpsOverview`, `dataOpsFetchLogs`; purposes `data_ops.*`).
 - Freshness SLA: `FRESHNESS_SLA_HOURS` per source kind (court and notice 24h, news 6h, licensed 24h,
   corpus 168h) since the last successful fetch. A source that never succeeded is stale.
-- Parse yield (rows anchored / rows parsed) comes from `app_staff_parse_yield` (migration 0067), a
+- Parse yield (rows anchored / rows parsed) comes from `app_staff_parse_yield` (migration 0069), a
   staff-only definer function over `adapter_parse_run` returning per-adapter counts; the adapter id
   is the source id. Conflict rate is not shown yet (#499).
 - Errors are status 0 or >= 400. No URL, URL hash, advocate, document or party data is read.

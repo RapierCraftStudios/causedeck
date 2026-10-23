@@ -1,5 +1,5 @@
 {
-  "id": "b4636032-e988-4572-8c90-ed613c2bca33",
+  "id": "5b6ef717-f878-490d-8d6a-c342efdfa03b",
   "prevId": "85ac600e-14e2-4d0c-abdb-c72343561698",
   "version": "7",
   "dialect": "postgresql",
@@ -3486,6 +3486,226 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.contributed_document": {
+      "name": "contributed_document",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "source_id": {
+          "name": "source_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "forum_label": {
+          "name": "forum_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "listing_date": {
+          "name": "listing_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provenance": {
+          "name": "provenance",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'contributed'"
+        },
+        "contributed_at": {
+          "name": "contributed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "retention_until": {
+          "name": "retention_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "withdrawn_at": {
+          "name": "withdrawn_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "contributed_document_lookup_idx": {
+          "name": "contributed_document_lookup_idx",
+          "columns": [
+            {
+              "expression": "source_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "listing_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "contributed_document_source_id_source_id_fk": {
+          "name": "contributed_document_source_id_source_id_fk",
+          "tableFrom": "contributed_document",
+          "tableTo": "source",
+          "columnsFrom": ["source_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "contributed_document_sha256_uq": {
+          "name": "contributed_document_sha256_uq",
+          "nullsNotDistinct": false,
+          "columns": ["sha256"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "contributed_document_kind_chk": {
+          "name": "contributed_document_kind_chk",
+          "value": "\"contributed_document\".\"kind\" in ('cause_list', 'order')"
+        },
+        "contributed_document_provenance_chk": {
+          "name": "contributed_document_provenance_chk",
+          "value": "\"contributed_document\".\"provenance\" = 'contributed'"
+        },
+        "contributed_document_sha256_chk": {
+          "name": "contributed_document_sha256_chk",
+          "value": "\"contributed_document\".\"sha256\" ~ '^[0-9a-f]{64}$'"
+        },
+        "contributed_document_withdrawn_chk": {
+          "name": "contributed_document_withdrawn_chk",
+          "value": "(\"contributed_document\".\"withdrawn_at\" is null) = (\"contributed_document\".\"content\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.contribution_ledger": {
+      "name": "contribution_ledger",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "contributed_document_id": {
+          "name": "contributed_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "contribution_ledger_workspace_id_idx": {
+          "name": "contribution_ledger_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "contribution_ledger_contributed_document_id_contributed_document_id_fk": {
+          "name": "contribution_ledger_contributed_document_id_contributed_document_id_fk",
+          "tableFrom": "contribution_ledger",
+          "tableTo": "contributed_document",
+          "columnsFrom": ["contributed_document_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "contribution_ledger_workspace_doc_uq": {
+          "name": "contribution_ledger_workspace_doc_uq",
+          "nullsNotDistinct": false,
+          "columns": ["workspace_id", "contributed_document_id"]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -13389,6 +13609,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "contribute_public_court_documents": {
+          "name": "contribute_public_court_documents",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "retention_audio_days": {
           "name": "retention_audio_days",

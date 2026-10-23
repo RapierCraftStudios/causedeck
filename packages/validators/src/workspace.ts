@@ -110,6 +110,8 @@ export const RETENTION_AUDIO_DAYS = [7, 14, 30] as const;
 export const UpdateWorkspacePrivacyInput = z.strictObject({
   sensitiveDefaultRestricted: z.boolean(),
   retentionAudioDays: z.literal(RETENTION_AUDIO_DAYS),
+  /** Omitted: keep the current value (#485). */
+  contributePublicCourtDocuments: z.boolean().optional(),
 });
 
 /**

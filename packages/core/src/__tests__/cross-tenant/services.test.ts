@@ -67,6 +67,31 @@ async function aMembers(f: Fixture) {
   );
 }
 
+async function aLedger(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({
+        id: schema.contributionLedger.id,
+        copy: schema.contributionLedger.contributedDocumentId,
+      })
+      .from(schema.contributionLedger)
+      .orderBy(schema.contributionLedger.id),
+  );
+}
+
+/** B opts in to contribution, so only the document's owner (A) stands between B and the row. */
+async function bOptsIn(f: Fixture) {
+  await inWorkspace(f.tx, f.b.id, (s) =>
+    s
+      .insert(schema.workspaceSettings)
+      .values({ workspaceId: f.b.id, contributePublicCourtDocuments: true })
+      .onConflictDoUpdate({
+        target: schema.workspaceSettings.workspaceId,
+        set: { contributePublicCourtDocuments: true },
+      }),
+  );
+}
+
 async function aInvitations(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s
@@ -367,6 +392,46 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
 }
 
 const CASES: Record<string, Case> = {
+  addCauseListWatch: async (f) => {
+    // ub's watch lands in B; A has no watch from it.
+    await core.addCauseListWatch(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+      {
+        kind: 'brn',
+        value: 'KAR/2/2000',
+      },
+    );
+    const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    expect(aWatches.map((w) => w.value)).toEqual(['KAR/1/1900']);
+  },
+  listCauseListWatches: async (f) => {
+    // ub sees exactly B's own seeded watch, never A's.
+    const own = await core.listCauseListWatches(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+    );
+    const bIds = (
+      await inWorkspace(f.tx, f.b.id, (s) => s.select().from(schema.causeListWatch))
+    ).map((w) => w.id);
+    const aIds = (
+      await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch))
+    ).map((w) => w.id);
+    expect(own.map((w) => w.id)).toEqual(bIds);
+    expect(own.some((w) => aIds.includes(w.id))).toBe(false);
+  },
+  removeCauseListWatch: async (f) => {
+    const [watch] = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    await expectDenied(
+      core.removeCauseListWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id },
+        watch?.id ?? '',
+      ),
+    );
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    expect(after).toHaveLength(1);
+  },
   record: async (f) => {
     const before = await auditIds(f, f.a.id);
     await expectTenancyViolation(
@@ -1093,6 +1158,49 @@ const CASES: Record<string, Case> = {
       ),
     );
     expect(await aRestrictions(f)).toEqual(before);
+  },
+  checkEligibility: async (f) => {
+    await bOptsIn(f);
+    const sourceId = 'xt.none';
+    const before = await aLedger(f);
+    // B is opted in but A's document is not B's: it is not found, never contributable.
+    const outcome = await core.checkEligibility(f.tx, {
+      workspaceId: f.b.id,
+      documentId: f.a.rows.document?.documentId ?? '',
+      sourceId,
+    });
+    expect(outcome).toBe('not_found');
+    expect(await aLedger(f)).toEqual(before);
+  },
+  contributeDocument: async (f) => {
+    await bOptsIn(f);
+    const before = await aLedger(f);
+    const error: unknown = await core
+      .contributeDocument(f.tx, {
+        workspaceId: f.b.id,
+        documentId: f.a.rows.document?.documentId ?? '',
+        sourceId: 'xt.none',
+        actorUserId: f.ub,
+      })
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(error).toBeInstanceOf(core.ContributionRefused);
+    expect((error as core.ContributionRefused).reason).toBe('not_found');
+    expect(await aLedger(f)).toEqual(before);
+  },
+  withdrawContributions: async (f) => {
+    const before = await aLedger(f);
+    expect(before.length).toBeGreaterThan(0);
+    // B withdrawing its own (none) contributions leaves A's link and A's shared copy untouched.
+    await core.withdrawContributions(f.tx, f.b.id);
+    expect(await aLedger(f)).toEqual(before);
+    const [copy] = await f.tx
+      .select({ withdrawnAt: schema.contributedDocument.withdrawnAt })
+      .from(schema.contributedDocument)
+      .where(eq(schema.contributedDocument.id, before[0]?.copy ?? ''));
+    expect(copy?.withdrawnAt).toBeNull();
   },
   listMatterRestrictions: async (f) => {
     await expectDenied(core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.a.id }));

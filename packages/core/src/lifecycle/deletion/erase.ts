@@ -58,6 +58,8 @@ export const PURGE_ORDER = [
   'support_session',
   // Court document network (#485): the link to a shared public copy; the rows step withdraws first.
   'contribution_ledger',
+  // Official notices feed (#584): matches cite a matter or forum; before both.
+  'notice_match',
   // The matter graph (#345-#348): appearances before their hearing, hearings before their
   // listing; tasks before the obligations they fulfil, obligations before their source order;
   // listings, orders and obligations before the proceedings, documents, anchors and matters they

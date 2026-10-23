@@ -406,11 +406,19 @@ const CASES: Record<string, Case> = {
     expect(aWatches.map((w) => w.value)).toEqual(['KAR/1/1900']);
   },
   listCauseListWatches: async (f) => {
+    // ub sees exactly B's own seeded watch, never A's.
     const own = await core.listCauseListWatches(
       { db: f.tx },
       { userId: f.ub, workspaceId: f.b.id },
     );
-    expect(own).toEqual([]);
+    const bIds = (
+      await inWorkspace(f.tx, f.b.id, (s) => s.select().from(schema.causeListWatch))
+    ).map((w) => w.id);
+    const aIds = (
+      await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch))
+    ).map((w) => w.id);
+    expect(own.map((w) => w.id)).toEqual(bIds);
+    expect(own.some((w) => aIds.includes(w.id))).toBe(false);
   },
   removeCauseListWatch: async (f) => {
     const [watch] = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));

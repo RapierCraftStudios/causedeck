@@ -114,6 +114,8 @@ export {
   CAUSELIST_POLL_CRON,
   causelistPoll,
   runCauselistPoll,
+  setCauseListFetcherFactory,
+  type CauseListFetcherFactory,
 } from './definitions/causelist-poll.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { supportSessionExpire } from './definitions/support-session-expire.ts';

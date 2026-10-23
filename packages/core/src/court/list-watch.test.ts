@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { schema, type Database, type Transaction } from '@causedeck/db';
+import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -49,7 +49,7 @@ function fakeFetcher(pages: Record<string, string>): ListFetcher & { calls: stri
         provenance: {
           url,
           fetchedAt: NOW.toISOString(),
-          sha256: `sha-${key}-${(pages[key] ?? '').length}`,
+          sha256: `sha-${key}-${String((pages[key] ?? '').length)}`,
         },
       });
     },
@@ -63,7 +63,7 @@ function deps(
   extra: Partial<PollCauseListDeps> = {},
 ): PollCauseListDeps {
   return {
-    db: tx as unknown as Database,
+    db: tx,
     fetcher,
     clock: { now: () => NOW },
     flagEnabled: () => Promise.resolve(true),
@@ -190,7 +190,8 @@ describe('pollCauseList', () => {
 
       const ref = JSON.stringify((await proposalsOf(tx, a.workspaceId))[0]?.meta);
       const id = /cause_list_publication:([0-9a-f-]{36})/.exec(ref)?.[1];
-      const pub = await getPublicationForRef({ db: tx }, `${PUBLICATION_REF_PREFIX}${id}`);
+      expect(id).toBeDefined();
+      const pub = await getPublicationForRef({ db: tx }, `${PUBLICATION_REF_PREFIX}${id ?? ''}`);
       expect(pub?.url).toContain('causelist/');
       expect(pub?.fetchedAt.toISOString()).toBe(NOW.toISOString());
       expect(await getPublicationForRef({ db: tx }, 'something:else')).toBeNull();

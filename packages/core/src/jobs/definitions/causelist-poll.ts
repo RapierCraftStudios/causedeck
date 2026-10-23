@@ -4,24 +4,39 @@
 // advance list and the morning daily list. It has no workspace, so it is `system.*` by rule and
 // reads watches through the owner-defined `app_cause_list_watch_targets` function (0067). It does
 // nothing while the flag `court.khc_a2` is off or the source is uncleared (`pollCauseList`). Only
-// counts are logged.
-import { serverEnv } from '@causedeck/config/env';
-import { createFetcher, createProvider, type FetchPolicy } from '@causedeck/fetch';
+// counts are logged. Core never imports `@causedeck/fetch` (spike §2): the worker wires the governed
+// fetcher through `setCauseListFetcherFactory`.
 import { z } from 'zod';
 
 import {
   pollCauseList,
+  type ListFetcher,
   type PollCauseListDeps,
   type PollCauseListReport,
 } from '../../court/index.ts';
-import { createFetchLogSink, policyFor } from '../../sources/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
 /** Evening advance list (18:30 IST) and morning daily list (07:30 IST). */
 export const CAUSELIST_POLL_CRON = '30 7,18 * * *';
 
-/** Poll once with the production fetcher; the sinks write usage nowhere and the log through the app db. */
+/** Builds the governed fetcher for one poll from the job's db (the worker supplies it at startup). */
+export type CauseListFetcherFactory = (db: JobContext['db']) => ListFetcher;
+
+let fetcherFactory: CauseListFetcherFactory | null = null;
+
+/** Wiring point: the worker passes a factory over `@causedeck/fetch`; `null` unwires it (tests). */
+export function setCauseListFetcherFactory(factory: CauseListFetcherFactory | null): void {
+  fetcherFactory = factory;
+}
+
+/** Without a wired fetcher the poll still checks the flag, the source and the watchers, and fails loudly only if it must fetch. */
+const unwiredFetcher: ListFetcher = {
+  fetchSource: () =>
+    Promise.reject(new Error('cause list poll: no fetcher wired (setCauseListFetcherFactory)')),
+};
+
+/** Poll once with the wired governed fetcher (or `deps.fetcher` in tests). */
 export async function runCauselistPoll(
   ctx: Pick<JobContext, 'db' | 'log'>,
   deps: Partial<
@@ -29,21 +44,14 @@ export async function runCauselistPoll(
   > = {},
 ): Promise<PollCauseListReport> {
   const clock = deps.clock ?? { now: () => new Date() };
-  const fetcher =
-    deps.fetcher ??
-    createFetcher({
-      registry: { policyFor: (id) => policyFor(id, { db: ctx.db }) as Promise<FetchPolicy> },
-      alterlab: createProvider({ apiKey: serverEnv().ALTERLAB_API_KEY?.reveal() }),
-      clock,
-      // The fetch layer has no workspace: per-workspace usage stays with callers that know one.
-      usage: { record: () => Promise.resolve() },
-      log: createFetchLogSink(ctx.db),
-    });
+  const fetcher = deps.fetcher ?? fetcherFactory?.(ctx.db) ?? unwiredFetcher;
   const report = await pollCauseList({
     db: ctx.db,
     fetcher,
     clock,
-    log: (event, counts) => ctx.log.info({ ...counts }, event),
+    log: (event, counts) => {
+      ctx.log.info({ ...counts }, event);
+    },
     ...(deps.parser === undefined ? {} : { parser: deps.parser }),
     ...(deps.flagEnabled === undefined ? {} : { flagEnabled: deps.flagEnabled }),
     ...(deps.policy === undefined ? {} : { policy: deps.policy }),

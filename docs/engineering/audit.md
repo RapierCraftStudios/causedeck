@@ -73,7 +73,7 @@ Each action is either **security** or **informational**:
 | `capture.completed`                   | informational | `completeUpload` (#43; metadata `status`, `reason` or `duplicateOf`)                                                       |
 | `capture.quarantined`                 | security      | `runCaptureScan`, system actor (#43; metadata channel, mime, size, scanner signature name)                                 |
 | `capture.discarded`                   | informational | `discardCapture` (#43; metadata channel and previous status)                                                               |
-| `capture.recording_deleted` | informational | `deleteRecording` (#542; metadata channel; no content) |
+| `capture.recording_deleted`           | informational | `deleteRecording` (#542; metadata channel; no content)                                                                     |
 | `capture.channel_enabled`             | security      | `enableChannel` (#43; metadata channel and the disclosure version shown)                                                   |
 | `capture.channel_disabled`            | security      | `disableChannel` (#43; metadata channel)                                                                                   |
 | `email_intake.address_created`        | security      | `createAddress` (#54; metadata `addressId`, `domain`; never the local part)                                                |

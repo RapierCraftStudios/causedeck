@@ -80,6 +80,7 @@ const CATEGORY_MESSAGE = {
   'billing.notice': 'billingNotice',
   'reminder.hearing': 'reminderHearing',
   'proposal.new': 'proposalNew',
+  'judgment.alert': 'judgmentAlert',
   'digest.daily': 'digestDaily',
   'digest.end_of_day': 'digestEndOfDay',
   'system.notice': 'systemNotice',

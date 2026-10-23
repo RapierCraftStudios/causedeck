@@ -36,7 +36,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0026](0026-pwa-share-target-and-outbox.md) | PWA share target and encrypted outbox | Proposed | 2026-10-23 | — |
 | [0027](0027-whatsapp-import-browser-parsing.md) | WhatsApp import: parse in the browser, upload the selection | Proposed | 2026-10-23 | — |
 | [0028](0028-anchored-extraction.md) | Anchored order extraction: deterministic first, validator last | Proposed | 2026-10-23 | — |
-| [0030](0030-email-forward-in-and-parser-registry.md) | Email forward-in: inbound webhook, providers and the `email.intake` job | Proposed | 2026-10-23 | — |
+| [0031](0031-email-forward-in-and-parser-registry.md) | Email forward-in: inbound webhook, providers and the `email.intake` job | Proposed | 2026-10-23 | — |
 
 ## Statuses
 

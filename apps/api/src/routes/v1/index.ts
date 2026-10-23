@@ -8,6 +8,7 @@ import type { MiddlewareHandler } from 'hono';
 
 import { createRouter, type AppEnv, type AppRouter } from '../../lib/openapi.ts';
 
+import { inboundEmailRouter, type InboundEmailDeps } from '../inbound-email.ts';
 import { razorpayWebhookRouter, type RazorpayWebhookDeps } from '../webhooks/razorpay.ts';
 
 import { billingRouter } from './billing.ts';
@@ -20,13 +21,15 @@ export interface V1Options {
   middleware: MiddlewareHandler<AppEnv>[];
   /** Razorpay webhook deps; without them the webhook route rejects every call with 400. */
   billing?: Omit<RazorpayWebhookDeps, 'db'>;
+  /** Inbound email deps (#530); without a provider the route rejects every call with 400. */
+  inboundEmail?: Omit<InboundEmailDeps, 'db'>;
   /** Extra routes (tests, and later webhook groups) registered after the built-in ones. */
   routes?: (v1: AppRouter) => void;
 }
 
 const noop = () => undefined;
 
-export function v1Router({ db, middleware, billing, routes }: V1Options): AppRouter {
+export function v1Router({ db, middleware, billing, inboundEmail, routes }: V1Options): AppRouter {
   const v1 = createRouter();
   for (const handler of middleware) v1.use('*', handler);
   v1.route('/', meRouter(db));
@@ -37,6 +40,13 @@ export function v1Router({ db, middleware, billing, routes }: V1Options): AppRou
     razorpayWebhookRouter({
       db,
       ...(billing ?? { webhookSecret: null, logger: { info: noop, warn: noop } }),
+    }),
+  );
+  v1.route(
+    '/',
+    inboundEmailRouter({
+      db,
+      ...(inboundEmail ?? { provider: null, logger: { info: noop, warn: noop } }),
     }),
   );
   routes?.(v1);

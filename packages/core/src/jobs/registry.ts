@@ -21,6 +21,8 @@ import { captureRetention, systemCaptureRetention } from './definitions/capture-
 import { captureScan } from './definitions/capture-scan.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { whatsappImport } from './definitions/whatsapp-import.ts';
+import { emailIntake } from './definitions/email-intake.ts';
+import { emailRawExpire } from './definitions/email-raw-expire.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
 import { deletionTick } from './definitions/deletion-tick.ts';
 import { exportBuild } from './definitions/export-build.ts';
@@ -165,6 +167,8 @@ export const registry = createRegistry([
   systemCaptureRetention,
   captureRetention,
   whatsappImport,
+  emailIntake,
+  emailRawExpire,
   extractOrder,
 ] as const);
 
@@ -199,6 +203,8 @@ export type JobMap = RegistryMap<
     typeof systemCaptureRetention,
     typeof captureRetention,
     typeof whatsappImport,
+    typeof emailIntake,
+    typeof emailRawExpire,
     typeof extractOrder,
   ]
 >;

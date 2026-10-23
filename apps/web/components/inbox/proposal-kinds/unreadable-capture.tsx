@@ -42,6 +42,9 @@ export function UnreadableCapture({
   const titleId = useId();
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState('');
+  // Email intake (#530) quarantines mail from a sender that is not allowed: nothing was read.
+  const unrecognised =
+    item.needsYouReason === 'unrecognised_sender' || item.needsYouReason === 'sender_failed_checks';
 
   const submit = (event: SyntheticEvent) => {
     event.preventDefault();
@@ -60,18 +63,22 @@ export function UnreadableCapture({
     >
       <h3 id={titleId} className="text-ink flex items-center gap-2 font-serif text-lg">
         <FileQuestion aria-hidden="true" className="text-ink-muted size-4 shrink-0" />
-        {route === 'cause_list'
-          ? tc('causeList.title')
-          : route === 'receipt'
-            ? tc('receipt.title')
-            : t('unreadable.title')}
+        {unrecognised
+          ? t('unreadable.unrecognisedSender')
+          : route === 'cause_list'
+            ? tc('causeList.title')
+            : route === 'receipt'
+              ? tc('receipt.title')
+              : t('unreadable.title')}
       </h3>
       <p className="text-ink text-sm">
-        {route === 'cause_list'
-          ? tc('causeList.copy')
-          : route === 'receipt'
-            ? tc('receipt.copy')
-            : t('unreadable.copy')}
+        {unrecognised
+          ? t('unreadable.unrecognisedSenderCopy')
+          : route === 'cause_list'
+            ? tc('causeList.copy')
+            : route === 'receipt'
+              ? tc('receipt.copy')
+              : t('unreadable.copy')}
       </p>
       {error ? (
         <p role="alert" className="text-danger bg-danger-soft rounded-md px-3 py-2 text-sm">

@@ -58,7 +58,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
   // Bootstrap import (#57, #548, #549): the plan reads proposals from the tables directly; apply
   // writes every graph row through matter-graph, meters the OCR cap through usage and refuses an
-  // expired or edited undo with automation's errors (imports `index.ts` only).
+  // expired or edited undo with automation's errors (imports `index.ts` only). The batch (#550)
+  // stages list rows as proposals through automation; it reads captures and documents from the
+  // tables and never imports capture or jobs (the job bodies in jobs wrap it).
   import: Object.freeze(['matter-graph', 'usage', 'automation']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
@@ -76,6 +78,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'voice',
     'email-intake',
     'extraction',
+    'import',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

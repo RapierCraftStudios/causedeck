@@ -30,6 +30,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   lifecycle: Object.freeze(['audit', 'workspaces']),
   // The source registry (#478, D-048): staff changes record `source.changed` through audit.
   sources: Object.freeze(['audit']),
+  // The legal news digest (#481): global items and the member's own prefs, no other domain.
+  news: Object.freeze([]),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
@@ -81,6 +83,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'email-intake',
     'extraction',
     'import',
+    'news',
+    'sources',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

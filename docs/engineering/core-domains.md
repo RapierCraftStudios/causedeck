@@ -26,6 +26,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `ai` | `@causedeck/core/ai` | the AI gateway wiring (#44, [ADR 0022](../adr/0022-ai-gateway-implementation.md)): the ports `@causedeck/ai` declares, implemented on usage budgets, `workspace_settings.india_only_ai`, `matter.sensitive`, the `ai_call` writer and the 24 h `ai_call_result` store |
 | `sources` | `@causedeck/core/sources` | the source registry (D-048): `policyFor` / `isCleared` fail closed, and audited staff changes to every external data source |
+| `news` | `@causedeck/core/news` | the legal news digest (#481, D-048): `upsertNewsItems` (global `news_item`, idempotent on source and URL, feed-provided fields only), the member's `news_pref` (`getNewsPref`, `setNewsPref`), `listNewsForMember` and `selectNewsDigestItems` (tagged items first, then recency, with source attribution and the link to the original) |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
 | `capture` | `@causedeck/core/capture` | the capture inbox (#43, [ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)): `createCapture` / `completeUpload` / `createManualCapture`, per-channel opt-in, discard and pin, raw-object retention, `deleteRecording` (a voice recording and its transcript, #542), the diary-photo step of `capture.process` for channel `camera` (#52, [ADR 0030](../adr/0030-diary-photo-capture-and-image-anchors.md)), and the bodies of `capture.scan`, `capture.process` and `capture.retention`; jobs arrive as the `CaptureJobs` port. Not re-exported from the package root |
 | `calendar` | `@causedeck/core/calendar` | calendar interop (#53, [ADR 0024](../adr/0024-ics-import-and-private-feed.md)): the private ICS feed (`createFeed` / `rotateFeed` / `revokeFeed`, the unauthenticated `serveFeed`) and the ICS import (`runIcsImport`, the `capture.process` body for channel `ics`, and its review). Pure parsing and rendering is `@causedeck/capture` `ics/`. Not re-exported from the package root |
@@ -88,6 +89,8 @@ graph LR
   lifecycle --> audit
   lifecycle --> workspaces
   sources --> audit
+  jobs --> news
+  jobs --> sources
   support --> workspaces
   support --> audit
   capture --> audit
@@ -161,6 +164,7 @@ graph LR
 | `ai` | `audit`, `usage` |
 | `lifecycle` | `audit`, `workspaces` |
 | `sources` | `audit` |
+| `news` | nothing |
 | `support` | `workspaces`, `audit` |
 | `capture` | `audit`, `workspaces`, `ai`, `automation`, `matter-graph` |
 | `calendar` | `audit`, `workspaces`, `capture`, `automation`, `matter-graph` |
@@ -169,7 +173,7 @@ graph LR
 | `voice` | `workspaces`, `capture`, `ai`, `automation`, `matter-graph` |
 | `extraction` | `workspaces`, `ai`, `automation`, `matter-graph` |
 | `import` | `matter-graph`, `usage`, `automation` |
-| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `news`, `sources` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

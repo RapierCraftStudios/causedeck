@@ -3,7 +3,7 @@
 // date it returns carries the phrase and the character span it came from, so a date that cannot be
 // traced to a span does not exist. The model never supplies a date; it may only point at a phrase.
 //
-// Conventions (ADR 0028): a date without a year is the first such date strictly after the hearing
+// Conventions (ADR 0029): a date without a year is the first such date strictly after the hearing
 // date; "on the 14th" is the first 14th after the hearing date; "next Tuesday" is the first Tuesday
 // strictly after the hearing date; "after N weeks" is hearing date + 7N days; "after N months"
 // keeps the day of month, clamped to the month's last day.

@@ -1,4 +1,4 @@
-# 0028. Voice capture: transcribe, structure with spans, and validate every spoken date
+# 0029. Voice capture: transcribe, structure with spans, and validate every spoken date
 
 ## Status
 

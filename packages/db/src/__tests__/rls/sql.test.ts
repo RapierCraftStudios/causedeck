@@ -154,6 +154,9 @@ describe('row-level security catalog', () => {
         'ics_feed',
         'ics_feed_event',
         'ics_import_event',
+
+        // Anchored order extraction (#46).
+        'extraction',
       ].sort(),
     );
     for (const row of rows)

@@ -6,8 +6,8 @@
 // product/09 §8.4: other advocates' rows are counted, never stored or logged). Matches are staged
 // as L2 `new_proceeding` proposals with a score-only match, so the engine never applies them
 // unasked; the proposal's source ref names the publication for the "Fetched from the KHC public
-// list" chip. Nothing is fetched while the flag `court.khc_a2` is off or the source is uncleared.
-// Watches are read across workspaces only through `app_cause_list_watch_targets` (0067). Counts only
+// list" chip. Nothing is fetched while the flag `court.khc-a2` is off or the source is uncleared.
+// Watches are read across workspaces only through `app_cause_list_watch_targets` (0068). Counts only
 // are logged.
 import {
   createKarnatakaHcAdapter,
@@ -30,7 +30,7 @@ const { causeListPublication, causeListWatch } = schema;
 
 /** The source row of the KHC public list (seeded uncleared by 0067). */
 export const KHC_CAUSE_LIST_SOURCE_ID = 'in.ka.karnataka-hc.bengaluru:cause_list';
-export const COURT_KHC_A2_FLAG = 'court.khc_a2';
+export const COURT_KHC_A2_FLAG = 'court.khc-a2';
 /** The list pages under the source's `base_url`, by list type. */
 export const KHC_LIST_PATHS = { daily: 'causelist/daily', advance: 'causelist/advance' } as const;
 export type KhcListType = keyof typeof KHC_LIST_PATHS;

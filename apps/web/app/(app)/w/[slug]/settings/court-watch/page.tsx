@@ -1,6 +1,6 @@
 // `/w/[slug]/settings/court-watch` (#482): the member's watches on the Karnataka HC public cause
 // list (an advocate name or BRN). Matches arrive in the Inbox as proposals, never confirmed. The
-// page shows whether the flag `court.khc_a2` is on for the workspace and whether the list source
+// page shows whether the flag `court.khc-a2` is on for the workspace and whether the list source
 // is cleared; with the flag off the form is hidden. A direct URL without `matter.write` shows the
 // permission-denied page.
 import type { Metadata } from 'next';
@@ -41,7 +41,7 @@ export default async function CourtWatchPage({ params }: CourtWatchPageProps) {
   if (!context) notFound();
   if (!canOpenSettings(context.role, 'court-watch')) return <PermissionDeniedPage />;
   const [t, flag] = await Promise.all([getTranslations('settings'), workspaceFlagCheck(context)]);
-  const on = flag('court.khc_a2');
+  const on = flag('court.khc-a2');
   const watches = on ? await listCourtWatchesAction({ workspaceId: context.workspace.id }) : null;
   const cleared = on ? await sourceCleared() : false;
 

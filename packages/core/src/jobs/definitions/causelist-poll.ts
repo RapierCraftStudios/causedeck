@@ -2,8 +2,8 @@
 // the governed fetch layer and stages the rows that match each member's watches as proposals. It
 // runs at the KHC publication times (cron evaluated in `Asia/Kolkata` by the worker): the evening
 // advance list and the morning daily list. It has no workspace, so it is `system.*` by rule and
-// reads watches through the owner-defined `app_cause_list_watch_targets` function (0067). It does
-// nothing while the flag `court.khc_a2` is off or the source is uncleared (`pollCauseList`). Only
+// reads watches through the owner-defined `app_cause_list_watch_targets` function (0068). It does
+// nothing while the flag `court.khc-a2` is off or the source is uncleared (`pollCauseList`). Only
 // counts are logged. Core never imports `@causedeck/fetch` (spike §2): the worker wires the governed
 // fetcher through `setCauseListFetcherFactory`.
 import { z } from 'zod';

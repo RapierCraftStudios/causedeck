@@ -2,7 +2,7 @@
 // Court watch actions (#482): a member's watches on the Karnataka HC public cause list. Each goes
 // through `workspaceAction` with the `matter.write` policy action (the member may stage proposals)
 // and calls `@causedeck/core/court` on the action's workspace transaction, scoped to the member.
-// Dark until the `court.khc_a2` flag is on for the workspace: with it off every action is NOT_FOUND.
+// Dark until the `court.khc-a2` flag is on for the workspace: with it off every action is NOT_FOUND.
 import { z } from 'zod';
 
 import { ActionError, type Result } from '../../../../../../lib/safe-action.ts';
@@ -20,7 +20,7 @@ export interface CourtWatchView {
 
 async function requireWatchFlag(ctx: WorkspaceActionCtx): Promise<void> {
   const { isEnabled } = await import('@causedeck/flags/server');
-  const on = await isEnabled('court.khc_a2', { workspaceId: ctx.workspaceId, userId: ctx.userId });
+  const on = await isEnabled('court.khc-a2', { workspaceId: ctx.workspaceId, userId: ctx.userId });
   if (!on) throw new ActionError('NOT_FOUND', '');
 }
 

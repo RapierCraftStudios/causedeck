@@ -144,6 +144,8 @@ describe('pollCauseList', () => {
 
   it('fetches nothing when nobody watches', async () => {
     await withTestDb(async (tx) => {
+      // The targets function reads every workspace; clear watches other files may have committed.
+      await tx.delete(schema.causeListWatch);
       const fetcher = fakeFetcher(pages);
       expect((await pollCauseList(deps(tx, fetcher))).outcome).toBe('no_watchers');
       expect(fetcher.calls).toEqual([]);

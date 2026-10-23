@@ -36,7 +36,8 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0026](0026-pwa-share-target-and-outbox.md) | PWA share target and encrypted outbox | Proposed | 2026-10-23 | — |
 | [0027](0027-whatsapp-import-browser-parsing.md) | WhatsApp import: parse in the browser, upload the selection | Proposed | 2026-10-23 | — |
 | [0028](0028-anchored-extraction.md) | Anchored order extraction: deterministic first, validator last | Proposed | 2026-10-23 | — |
-| [0029](0029-diary-photo-capture-and-image-anchors.md) | Diary-photo capture and image-region anchors | Proposed | 2026-10-23 | — |
+| [0029](0029-voice-capture-and-spoken-date-validation.md) | Voice capture: transcribe, structure with spans, and validate every spoken date | Proposed | 2026-10-23 | — |
+| [0030](0030-diary-photo-capture-and-image-anchors.md) | Diary-photo capture and image-region anchors | Proposed | 2026-10-23 | — |
 
 ## Statuses
 

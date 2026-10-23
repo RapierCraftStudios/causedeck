@@ -1378,6 +1378,9 @@ importers:
 
   packages/intelligence:
     dependencies:
+      '@causedeck/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@causedeck/ai':
         specifier: workspace:*
         version: link:../ai

@@ -221,6 +221,10 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('ics_feed', { exclude: ['token_hash'], userColumn: 'user_id' }),
   ws('ics_feed_event', { keys: ['feed_id', 'uid'] }),
   ws('ics_import_event'),
+  // Bootstrap import (#546): batches, their files and the matched-rows plan (while not yet purged).
+  ws('import_batch', { userColumn: 'created_by' }),
+  ws('import_batch_file'),
+  ws('import_plan', { keys: ['batch_id'] }),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [

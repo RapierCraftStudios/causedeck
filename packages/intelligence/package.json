@@ -28,6 +28,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@causedeck/adapters": "workspace:*",
     "@causedeck/ai": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/storage": "workspace:*",

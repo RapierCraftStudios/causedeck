@@ -1,4 +1,4 @@
-# 0029. Diary-photo capture and image-region anchors
+# 0030. Diary-photo capture and image-region anchors
 
 ## Status
 

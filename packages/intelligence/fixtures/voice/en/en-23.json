@@ -1,0 +1,23 @@
+{
+  "id": "en-23",
+  "language": "en",
+  "hearingDate": "2025-02-05",
+  "text": "In case 4868 of 2023 today. Arguments were heard and the matter stands adjourned. The opposite counsel sought time. Next hearing after two weeks. The court directed the State to produce the original records after four weeks. The court directed both sides to exchange written submissions by thirteenth of February.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-02-19",
+      "phrase": "after two weeks"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records after four weeks.",
+        "dueDate": "2025-03-05"
+      },
+      {
+        "text": "The court directed both sides to exchange written submissions by thirteenth of February.",
+        "dueDate": "2025-02-13"
+      }
+    ],
+    "tasks": []
+  }
+}

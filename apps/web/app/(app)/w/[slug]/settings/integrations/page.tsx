@@ -84,19 +84,29 @@ function CalendarLinkCard({ slug, enabled }: { slug: string; enabled: boolean })
   );
 }
 
-function EmailLinkCard({ slug, t }: { slug: string; t: (key: string) => string }) {
+function EmailLinkCard({
+  slug,
+  title,
+  description,
+  open,
+}: {
+  slug: string;
+  title: string;
+  description: string;
+  open: string;
+}) {
   return (
     <section
       data-slot="integration-email-link"
       className="border-line bg-surface flex flex-col gap-2 rounded-lg border p-4"
     >
-      <h2 className="text-base font-medium">{t('title')}</h2>
-      <p className="text-ink-muted text-sm">{t('description')}</p>
+      <h2 className="text-base font-medium">{title}</h2>
+      <p className="text-ink-muted text-sm">{description}</p>
       <Link
         href={`/w/${slug}/settings/integrations/email`}
         className="text-sm font-medium underline"
       >
-        {t('open')}
+        {open}
       </Link>
     </section>
   );
@@ -122,7 +132,12 @@ async function IntegrationsSection({
   const emailT = await getTranslations('settings.integrations.emailIntake');
   return (
     <>
-      <EmailLinkCard slug={context.workspace.slug} t={emailT} />
+      <EmailLinkCard
+        slug={context.workspace.slug}
+        title={emailT('title')}
+        description={emailT('description')}
+        open={emailT('open')}
+      />
       <CalendarLinkCard slug={context.workspace.slug} enabled={flag(INTEGRATION_FLAGS.ics_feed)} />
     </>
   );

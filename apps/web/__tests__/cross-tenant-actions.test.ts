@@ -866,6 +866,13 @@ describe('cross-tenant server actions', () => {
   it('the email intake actions under B’s own workspace change only B (#54)', async () => {
     const before = await snapshotA();
     const own = inputs(t.b.id);
+    // B's owner already holds the seeded active address: retire it, then create a fresh one.
+    expect(
+      await action('revokeIntakeAddressAction')({
+        workspaceId: t.b.id,
+        addressId: t.b.rows.intake_address?.id,
+      }),
+    ).toMatchObject({ ok: true });
     const created = (await action('createIntakeAddressAction')(own.createIntakeAddressAction)) as {
       ok: boolean;
       data: { id: string; address: string };

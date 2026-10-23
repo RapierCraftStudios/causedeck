@@ -116,7 +116,11 @@ const addEntry = workspaceAction(
   AddAllowlist,
   async ({ pattern, kind, label }, ctx) => {
     const { addAllowlistEntry } = await import('@causedeck/core/email-intake');
-    const row = await addAllowlistEntry(await intakeCtx(ctx), { pattern, kind, label });
+    const row = await addAllowlistEntry(await intakeCtx(ctx), {
+      pattern,
+      kind,
+      ...(label === undefined ? {} : { label }),
+    });
     revalidate();
     return {
       id: row.id,

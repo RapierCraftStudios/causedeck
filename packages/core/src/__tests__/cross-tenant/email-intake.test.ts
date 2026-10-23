@@ -33,7 +33,8 @@ describe('email-intake cross-tenant', () => {
       const t = await seedTwoTenants(tx);
       const a = ctxFor(tx, t.a.id, t.ua);
       const b = ctxFor(tx, t.b.id, t.ub);
-      const aAddress = await createAddress(a);
+      // The seeded owner addresses are active: A's is the target, B's the caller's own.
+      const aAddressId = t.a.rows.intake_address?.id ?? '';
       const aEntry = await addAllowlistEntry(a, { pattern: 'court.a.test', kind: 'court' });
       const snapshot = () =>
         inWorkspace(tx, t.a.id, async (s) => ({
@@ -46,15 +47,16 @@ describe('email-intake cross-tenant', () => {
       const before = await snapshot();
 
       // B's scope sees none of A's allow-list.
-      expect(await inWorkspace(tx, t.b.id, (s) => listAllowlist(s, t.b.id))).toEqual([]);
+      const bList = await inWorkspace(tx, t.b.id, (s) => listAllowlist(s, t.b.id));
+      expect(bList.map((entry) => entry.id)).not.toContain(aEntry.id);
       expect(await inWorkspace(tx, t.b.id, (s) => listAllowlist(s, t.a.id))).toEqual([]);
       // B names A's ids.
-      await expect(revokeAddress(b, aAddress.id)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      await expect(revokeAddress(b, aAddressId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
       await expect(removeAllowlistEntry(b, aEntry.id)).rejects.toMatchObject({ code: 'NOT_FOUND' });
       // A context for A's workspace with B's user finds no row to rotate.
       await expect(rotateAddress(ctxFor(tx, t.a.id, t.ub))).rejects.toBeDefined();
-      // B's own create touches only B.
-      const bAddress = await createAddress(b);
+      // B's own rotate touches only B.
+      const bAddress = await rotateAddress(b);
       expect(bAddress.userId).toBe(t.ub);
 
       expect(await snapshot()).toEqual(before);
@@ -64,7 +66,8 @@ describe('email-intake cross-tenant', () => {
   it('resolve never reveals a workspace for a revoked or unknown address', async () => {
     await withTestDb(async (tx) => {
       const t = await seedTwoTenants(tx);
-      const a = ctxFor(tx, t.a.id, t.ua);
+      // `uboth` has no seeded address in A.
+      const a = ctxFor(tx, t.a.id, t.uboth);
       const created = await createAddress(a);
       await revokeAddress(a, created.id);
       expect(await resolveAddress(tx, created.address)).toBeNull();

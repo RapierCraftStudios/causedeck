@@ -21,6 +21,7 @@ import { Check, Copy } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState, type ReactNode } from 'react';
 
+import type { Result } from '../../../lib/safe-action.ts';
 import { DisabledWithReason, disabledReasonId } from '../disabled-with-reason.tsx';
 import { SettingSection } from '../setting-section.tsx';
 import { useOnline } from '../settings-offline-banner.tsx';
@@ -57,16 +58,16 @@ export function AddressCard({
   const reason = !enabled ? t('notEnabledReason') : online ? null : t('offlineReason');
 
   async function run<T>(
-    call: () => Promise<Awaited<ReturnType<ActionFn<T>>>>,
+    call: () => Promise<Result<T>>,
     done: (data: T) => void,
-    ok: string,
+    ok: 'toast.created' | 'toast.rotated' | 'toast.revoked',
   ) {
     if (!navigator.onLine) {
       toast(t('offlineReason'));
       return;
     }
     setPending(true);
-    let result: Awaited<ReturnType<ActionFn<T>>>;
+    let result: Result<T>;
     try {
       result = await call();
     } catch {

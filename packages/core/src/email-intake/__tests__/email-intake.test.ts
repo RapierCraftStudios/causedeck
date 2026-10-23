@@ -23,6 +23,7 @@ import {
   resolveAddress,
   revokeAddress,
   rotateAddress,
+  type AddAllowlistEntryInput,
   type EmailIntakeCtx,
 } from '../index.ts';
 
@@ -72,7 +73,7 @@ describe('address format', () => {
 
   it('creates one active address per member and refuses a second', async () => {
     await withTestDb(async (tx) => {
-      const { a, ua } = await seedTwoTenants(tx);
+      const { a, uboth: ua } = await seedTwoTenants(tx);
       const ctx = ctxFor(tx, a.id, ua);
       const created = await createAddress(ctx);
       expect(created.address).toMatch(/^u-[a-z2-7]{10}@intake\.test$/);
@@ -83,7 +84,7 @@ describe('address format', () => {
 
   it('is refused without workspace.manage', async () => {
     await withTestDb(async (tx) => {
-      const { a, ua } = await seedTwoTenants(tx);
+      const { a, uboth: ua } = await seedTwoTenants(tx);
       await expect(createAddress(ctxFor(tx, a.id, ua, false))).rejects.toBeInstanceOf(Denied);
     });
   });
@@ -92,7 +93,7 @@ describe('address format', () => {
 describe('rotate, revoke and resolve', () => {
   it('rotating stops the old address at once and the new one resolves', async () => {
     await withTestDb(async (tx) => {
-      const { a, ua } = await seedTwoTenants(tx);
+      const { a, uboth: ua } = await seedTwoTenants(tx);
       const ctx = ctxFor(tx, a.id, ua);
       const first = await createAddress(ctx);
       expect(await resolveAddress(tx, first.address)).toEqual({ workspaceId: a.id, userId: ua });
@@ -105,7 +106,7 @@ describe('rotate, revoke and resolve', () => {
 
   it('revoking stops the address; resolve gives the same null for unknown and revoked', async () => {
     await withTestDb(async (tx) => {
-      const { a, ua } = await seedTwoTenants(tx);
+      const { a, uboth: ua } = await seedTwoTenants(tx);
       const ctx = ctxFor(tx, a.id, ua);
       const created = await createAddress(ctx);
       await revokeAddress(ctx, created.id);
@@ -124,7 +125,7 @@ describe('rotate, revoke and resolve', () => {
 describe('allow-list', () => {
   it('adds, lists and removes entries, normalising the pattern', async () => {
     await withTestDb(async (tx) => {
-      const { a, ua } = await seedTwoTenants(tx);
+      const { a, uboth: ua } = await seedTwoTenants(tx);
       const ctx = ctxFor(tx, a.id, ua);
       const domain = await addAllowlistEntry(ctx, { pattern: ' Court.Gov.IN ', kind: 'court' });
       expect(domain).toMatchObject({ pattern: 'court.gov.in', isDomain: true, kind: 'court' });
@@ -147,14 +148,15 @@ describe('allow-list', () => {
 
   it('rejects a bad pattern, an unknown kind and an over-long label', async () => {
     await withTestDb(async (tx) => {
-      const { a, ua } = await seedTwoTenants(tx);
+      const { a, uboth: ua } = await seedTwoTenants(tx);
       const ctx = ctxFor(tx, a.id, ua);
-      for (const input of [
+      const bad: AddAllowlistEntryInput[] = [
         { pattern: 'not an address', kind: 'court' },
         { pattern: '*@court.gov.in', kind: 'court' },
         { pattern: 'court.gov.in', kind: 'friend' },
         { pattern: 'court.gov.in', kind: 'court', label: 'x'.repeat(81) },
-      ]) {
+      ];
+      for (const input of bad) {
         await expect(addAllowlistEntry(ctx, input)).rejects.toMatchObject({ code: 'VALIDATION' });
       }
     });
@@ -164,7 +166,7 @@ describe('allow-list', () => {
 describe('email channel', () => {
   it('records the current disclosure version and carries the product text', async () => {
     await withTestDb(async (tx) => {
-      const { a, ua } = await seedTwoTenants(tx);
+      const { a, uboth: ua } = await seedTwoTenants(tx);
       const state = await enableEmailChannel(captureCtx(tx, a.id, ua));
       expect(state).toMatchObject({
         channel: 'email',

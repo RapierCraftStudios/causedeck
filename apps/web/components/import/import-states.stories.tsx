@@ -68,7 +68,7 @@ export const FileListMixed: Story = {
   ),
 };
 
-export const Processing: Story = { render: () => processing() };
+export const ImportProcessing: Story = { render: () => processing() };
 
 export const ProcessingPartialFailure: Story = {
   render: () =>

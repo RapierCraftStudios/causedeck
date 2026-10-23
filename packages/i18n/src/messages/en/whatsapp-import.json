@@ -37,14 +37,12 @@
       "label": "WhatsApp export",
       "hint": "Export the chat from WhatsApp without media (or with it), then choose the .zip or .txt file here.",
       "choose": "Choose file",
-      "parsing": "Reading the export",
       "progress": "Reading the export, {percent}% done"
     },
     "preview": {
       "title": "Choose the messages to import",
       "summary": "{kept, plural, one {# message} other {# messages}} selected of {total}",
       "limit": "{max} messages is the most one import can hold. Unselect some to continue.",
-      "list": "Messages in the chat",
       "search": "Search messages",
       "searchPlaceholder": "Search text or sender",
       "noMatches": "No messages match your search.",
@@ -66,7 +64,6 @@
       "credential_phrase": "Password or OTP",
       "sensitive_keyword": "Sensitive keyword",
       "sensitive_matter": "Sensitive matter",
-      "held": "Held back",
       "confirm": "Include anyway",
       "confirmed": "Included",
       "locked": "Can never be imported"
@@ -95,8 +92,7 @@
         "too_large": "That export is too large. Export without media and try again.",
         "empty": "No importable messages were found in that file.",
         "failed": "The export could not be read. Try exporting it again."
-      },
-      "retry": "Choose another file"
+      }
     }
   }
 }

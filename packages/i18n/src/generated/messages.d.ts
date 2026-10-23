@@ -3215,14 +3215,12 @@ export type Messages = {
       label: string;
       hint: string;
       choose: string;
-      parsing: string;
       progress: string;
     };
     preview: {
       title: string;
       summary: string;
       limit: string;
-      list: string;
       search: string;
       searchPlaceholder: string;
       noMatches: string;
@@ -3244,7 +3242,6 @@ export type Messages = {
       credential_phrase: string;
       sensitive_keyword: string;
       sensitive_matter: string;
-      held: string;
       confirm: string;
       confirmed: string;
       locked: string;
@@ -3274,7 +3271,6 @@ export type Messages = {
         empty: string;
         failed: string;
       };
-      retry: string;
     };
   };
   error: {

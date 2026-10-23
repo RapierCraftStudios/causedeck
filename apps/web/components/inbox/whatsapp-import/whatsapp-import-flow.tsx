@@ -136,7 +136,10 @@ export function WhatsAppImportFlow({ workspaceId, slug, memberName }: WhatsAppIm
           <p role="status" className="text-ink text-sm">
             {t('file.progress', { percent: Math.round(step.fraction * 100) })}
           </p>
-          <Progress aria-label={t('file.parsing')} value={Math.round(step.fraction * 100)} />
+          <Progress
+            aria-label={t('file.progress', { percent: Math.round(step.fraction * 100) })}
+            value={Math.round(step.fraction * 100)}
+          />
         </div>
       ) : null}
 

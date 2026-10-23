@@ -67,7 +67,7 @@ export function MessageList({ rows, selected, confirmed, onToggle, onConfirm }: 
     <div
       ref={parent}
       role="list"
-      aria-label={t('preview.list')}
+      aria-label={t('preview.title')}
       data-slot="whatsapp-message-list"
       onKeyDown={onKeyDown}
       className="border-line bg-surface-raised h-[60vh] overflow-auto rounded-xl border"

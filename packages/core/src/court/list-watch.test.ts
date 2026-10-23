@@ -144,10 +144,13 @@ describe('pollCauseList', () => {
 
   it('fetches nothing when nobody watches', async () => {
     await withTestDb(async (tx) => {
-      // The targets function reads every workspace; clear watches other files may have committed.
-      await tx.delete(schema.causeListWatch);
+      // The targets function reads every workspace (security definer), so other files' committed
+      // watches would show here; a source nobody can have watched keeps the test self-contained.
       const fetcher = fakeFetcher(pages);
-      expect((await pollCauseList(deps(tx, fetcher))).outcome).toBe('no_watchers');
+      const report = await pollCauseList(
+        deps(tx, fetcher, { sourceId: 'test.unwatched:cause_list' }),
+      );
+      expect(report.outcome).toBe('no_watchers');
       expect(fetcher.calls).toEqual([]);
     });
   });

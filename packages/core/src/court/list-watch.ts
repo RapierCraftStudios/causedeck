@@ -213,6 +213,8 @@ export interface PollCauseListDeps {
   policy?: (sourceId: string) => Promise<{ baseUrl: string }>;
   /** Counts only: never row content. */
   log?: (event: string, counts: Record<string, number>) => void;
+  /** The cause-list source to poll; defaults to the Karnataka HC list. */
+  sourceId?: string;
 }
 
 export interface PollCauseListReport {
@@ -247,10 +249,11 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
   const log = deps.log ?? (() => undefined);
   const report: PollCauseListReport = { outcome: 'ok', fetched: 0, unchanged: 0, proposals: 0 };
   const policy = deps.policy ?? ((id: string) => policyFor(id, { db: deps.db }));
+  const sourceId = deps.sourceId ?? KHC_CAUSE_LIST_SOURCE_ID;
 
   let baseUrl: string;
   try {
-    baseUrl = (await policy(KHC_CAUSE_LIST_SOURCE_ID)).baseUrl;
+    baseUrl = (await policy(sourceId)).baseUrl;
   } catch (error) {
     if (error instanceof SourceNotCleared) return { ...report, outcome: 'source_not_cleared' };
     throw error;
@@ -262,7 +265,7 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
     kind: schema.CauseListWatchKind;
     value: string;
   }>(
-    sql`select workspace_id::text, user_id::text, kind, value from app_cause_list_watch_targets(${KHC_CAUSE_LIST_SOURCE_ID})`,
+    sql`select workspace_id::text, user_id::text, kind, value from app_cause_list_watch_targets(${sourceId})`,
   );
   if (rows.length === 0) return { ...report, outcome: 'no_watchers' };
 
@@ -302,7 +305,7 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
   const parse = deps.parser ?? createKhcListParser();
   for (const type of Object.keys(KHC_LIST_PATHS) as KhcListType[]) {
     const url = new URL(KHC_LIST_PATHS[type], baseUrl).toString();
-    const fetched = await deps.fetcher.fetchSource(KHC_CAUSE_LIST_SOURCE_ID, url);
+    const fetched = await deps.fetcher.fetchSource(sourceId, url);
     report.fetched += 1;
     const { sha256 } = fetched.provenance;
     const fetchedAt = new Date(fetched.provenance.fetchedAt);
@@ -310,7 +313,7 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
     const [inserted] = await deps.db
       .insert(causeListPublication)
       .values({
-        sourceId: KHC_CAUSE_LIST_SOURCE_ID,
+        sourceId: sourceId,
         listKey: `${type}:${istDate(now)}`,
         url: fetched.provenance.url,
         sha256,
@@ -325,7 +328,7 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
           .from(causeListPublication)
           .where(
             and(
-              eq(causeListPublication.sourceId, KHC_CAUSE_LIST_SOURCE_ID),
+              eq(causeListPublication.sourceId, sourceId),
               eq(causeListPublication.sha256, sha256),
             ),
           );

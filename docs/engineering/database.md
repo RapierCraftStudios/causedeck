@@ -235,7 +235,7 @@ names in bench-change notifications.
 
 ## Notices tables
 
-`notice` and `notice_match` in `packages/db/src/schema/notices.ts`, migration `0067_notices` (#584,
+`notice` and `notice_match` in `packages/db/src/schema/notices.ts`, migration `0068_notices` (#584,
 part 1 of #480, D-048). `notice` is a global table (GLOBAL_TABLES, no RLS; the app role may SELECT,
 INSERT and UPDATE, never DELETE) holding official court, bar and Gazette notices read from a cleared
 `source`: `source_id`, `forum_codes text[]`, `kind` (`notice_kind`), `title`, `issued_on`,

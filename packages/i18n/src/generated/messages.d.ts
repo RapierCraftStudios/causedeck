@@ -1261,6 +1261,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        contributePublicCourtDocuments: {
+          label: string;
+          description: string;
+        };
         retentionAudioDays: {
           label: string;
           description: string;

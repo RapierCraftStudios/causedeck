@@ -1,4 +1,4 @@
--- Migration 0067_notices: table, enum, keys, indexes and checks follow the drizzle-kit shape of src/schema/notices.ts; grants, RLS, the scope guard and the seed rows hand-written, reviewed before commit.
+-- Migration 0068_notices: table, enum, keys, indexes and checks follow the drizzle-kit shape of src/schema/notices.ts; grants, RLS, the scope guard and the seed rows hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #584)
 -- The official notices feed (#584, part 1 of #480, D-048):
 --   * notice: global table (GLOBAL_TABLES, no workspace, no RLS) of court, bar and Gazette notices read

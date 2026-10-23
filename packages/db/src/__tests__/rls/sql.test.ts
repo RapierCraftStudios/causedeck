@@ -166,6 +166,9 @@ describe('row-level security catalog', () => {
         // Advocate identifiers for the bootstrap import (#57, #550).
         'advocate_profile',
 
+        // Court document network (#485).
+        'contribution_ledger',
+
         // Official notices feed (#584).
         'notice_match',
       ].sort(),

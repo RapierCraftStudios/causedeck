@@ -68,6 +68,8 @@ describe('@causedeck/db root entry point', () => {
       'budget_override',
       'capture',
       'catalogue_meta',
+      'contributed_document',
+      'contribution_ledger',
       'court_hall',
       'deletion_job',
       'deletion_tombstone',

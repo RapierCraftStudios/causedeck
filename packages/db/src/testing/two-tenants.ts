@@ -36,6 +36,8 @@ import { proceeding, proceedingLink, proceedingStateChange } from '../schema/pro
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
 import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
+import { contributedDocument, contributionLedger } from '../schema/network.ts';
+import { source } from '../schema/source-registry.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
@@ -458,6 +460,35 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       'matter_restriction',
     );
     return { id: row.id, matterId: row.matterId };
+  },
+  contribution_ledger: async (tx, { workspaceId }) => {
+    // The shared copy is a global row (no workspace); only the ledger link is tenant data.
+    const sourceId = `xt.seed.${randomUUID()}`;
+    await tx
+      .insert(source)
+      .values({ id: sourceId, kind: 'court', baseUrl: `urn:xt:${sourceId}`, owner: 'xt' });
+    const content = `xt cause list ${randomUUID()}`;
+    const copy = first(
+      await tx
+        .insert(contributedDocument)
+        .values({
+          sourceId,
+          kind: 'cause_list',
+          content,
+          sha256: createHash('sha256').update(content).digest('hex'),
+          retentionUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        })
+        .returning({ id: contributedDocument.id }),
+      'contributed_document',
+    );
+    const row = first(
+      await tx
+        .insert(contributionLedger)
+        .values({ workspaceId, contributedDocumentId: copy.id })
+        .returning({ id: contributionLedger.id }),
+      'contribution_ledger',
+    );
+    return { id: row.id };
   },
   support_session: async (tx, { workspaceId, ownerId }) => {
     // A pending request; the requester's staff_user row is not needed at the SQL level.

@@ -34,7 +34,10 @@ import type { Result } from '../../../../../../lib/safe-action.ts';
 
 import type { PrivacySettingsView } from './actions.ts';
 
-type Editable = Pick<PrivacySettingsView, 'sensitiveDefaultRestricted' | 'retentionAudioDays'>;
+type Editable = Pick<
+  PrivacySettingsView,
+  'sensitiveDefaultRestricted' | 'retentionAudioDays' | 'contributePublicCourtDocuments'
+>;
 type Status = 'idle' | 'saving' | 'saved';
 
 const SAVED_MS = 2000;
@@ -43,6 +46,7 @@ function editable(settings: PrivacySettingsView): Editable {
   return {
     sensitiveDefaultRestricted: settings.sensitiveDefaultRestricted,
     retentionAudioDays: settings.retentionAudioDays,
+    contributePublicCourtDocuments: settings.contributePublicCourtDocuments,
   };
 }
 
@@ -168,6 +172,23 @@ export function PrivacyForm({ workspaceId, settings, canEdit, save }: PrivacyFor
             aria-describedby={settingDescriptionId(`${id}-sensitiveDefaultRestricted`)}
             onCheckedChange={(value) => {
               onChange({ sensitiveDefaultRestricted: value });
+            }}
+          />
+        </SettingRow>
+        <SettingRow
+          id={`${id}-contributePublicCourtDocuments`}
+          label={t('settings.contributePublicCourtDocuments.label')}
+          description={t('settings.contributePublicCourtDocuments.description')}
+        >
+          <Switch
+            name="contributePublicCourtDocuments"
+            checked={values.contributePublicCourtDocuments}
+            readOnly={readOnly}
+            aria-busy={pending || undefined}
+            aria-labelledby={`${id}-contributePublicCourtDocuments-label`}
+            aria-describedby={settingDescriptionId(`${id}-contributePublicCourtDocuments`)}
+            onCheckedChange={(value) => {
+              onChange({ contributePublicCourtDocuments: value });
             }}
           />
         </SettingRow>

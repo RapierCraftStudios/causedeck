@@ -9,13 +9,9 @@ import { requireStaff } from '../../../../lib/staff.ts';
 
 export const metadata: Metadata = { title: 'Data Ops source' };
 
-export default async function DataOpsSourcePage({
-  params,
-}: {
-  params: Promise<{ sourceId: string }>;
-}) {
+export default async function DataOpsSourcePage({ params }: { params: Promise<{ id: string }> }) {
   const staff = await requireStaff('data-ops');
-  const sourceId = decodeURIComponent((await params).sourceId);
+  const sourceId = decodeURIComponent((await params).id);
   const [row] = await dataOpsOverview(staff, sourceId);
   if (row === undefined) notFound();
   const logs = await dataOpsFetchLogs(staff, sourceId);

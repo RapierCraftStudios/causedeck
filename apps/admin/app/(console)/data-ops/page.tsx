@@ -19,7 +19,7 @@ const dollars = (v: number): string => `$${v.toFixed(4)}`;
 
 function tierMix(w: SourceOpsWindow): string {
   const parts = Object.entries(w.tierMix).filter(([, n]) => n > 0);
-  return parts.length === 0 ? '-' : parts.map(([tier, n]) => `${tier} ${n}`).join(', ');
+  return parts.length === 0 ? '-' : parts.map(([tier, n]) => `${tier} ${String(n)}`).join(', ');
 }
 
 function Bars({
@@ -41,9 +41,11 @@ function Bars({
             {r.daily.map((d) => (
               <div
                 key={d.day}
-                title={`${d.day}: ${pick === 'fetches' ? d.fetches : dollars(d.costDollars)}`}
+                title={`${d.day}: ${pick === 'fetches' ? String(d.fetches) : dollars(d.costDollars)}`}
                 className="bg-ink-muted w-6 rounded-t"
-                style={{ height: `${peak === 0 ? 0 : Math.max(2, (d[pick] / peak) * 100)}%` }}
+                style={{
+                  height: `${String(peak === 0 ? 0 : Math.max(2, (d[pick] / peak) * 100))}%`,
+                }}
               />
             ))}
           </div>

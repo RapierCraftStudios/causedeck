@@ -109,7 +109,7 @@ describe('staff parse yield (0067)', () => {
             select w, gen_random_uuid(), ${adapterId}, '1', 'f', 10, 8, 0, 0, 'ok' from unnest(array[${t.a.id}::uuid, ${t.b.id}::uuid]) as w`,
       );
       const rows = await as(tx, staffId, (s) =>
-        s.execute<Record<string, unknown>>(
+        s.execute(
           sql`select * from app_staff_parse_yield(now() - interval '1 day') where adapter_id = ${adapterId}`,
         ),
       );

@@ -4,9 +4,9 @@
 import { randomUUID } from 'node:crypto';
 
 import type { Transaction } from '@causedeck/db';
-import { closeTestDb, inWorkspace, schema, withTestDb } from '@causedeck/db/testing';
+import { closeTestDb, inWorkspace, schema, withTestDb, withUser } from '@causedeck/db/testing';
 import { seedTwoTenants } from '@causedeck/db/testing/two-tenants';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -37,9 +37,10 @@ vi.mock('@causedeck/core/runtime', () => ({
 vi.mock('../lib/staff.ts', () => ({ requireStaff: () => Promise.resolve(state.staff) }));
 
 const { dataOpsOverview, StaffQueryDeniedError } = await import('../lib/data/index.ts');
+const { asSourceStaff, policyFor, setSourceKillSwitch, SourceNotCleared } =
+  await import('@causedeck/core/sources');
 const { default: DataOpsPage } = await import('../app/(console)/data-ops/page.tsx');
-const { default: DataOpsSourcePage } =
-  await import('../app/(console)/data-ops/[sourceId]/page.tsx');
+const { default: DataOpsSourcePage } = await import('../app/(console)/data-ops/[id]/page.tsx');
 
 const URL_HASH = 'f'.repeat(64);
 const ADVOCATE = 'advocate-0b6c1a52';
@@ -134,7 +135,7 @@ describe('Data Ops console', () => {
     await withTestDb(async (tx) => {
       state.tx = tx;
       const { active } = await seed(tx);
-      const page = await html(DataOpsSourcePage({ params: Promise.resolve({ sourceId: active }) }));
+      const page = await html(DataOpsSourcePage({ params: Promise.resolve({ id: active }) }));
       expect(page).toContain('<td>500</td>');
       expect(page).toContain('captcha');
     });
@@ -146,12 +147,27 @@ describe('Data Ops console', () => {
       const t = await seed(tx);
       const pages = [
         await html(DataOpsPage()),
-        await html(DataOpsSourcePage({ params: Promise.resolve({ sourceId: t.active }) })),
+        await html(DataOpsSourcePage({ params: Promise.resolve({ id: t.active }) })),
       ].join('\n');
       for (const secret of [URL_HASH, ADVOCATE, FORUM, 'example.test']) {
         expect(pages).not.toContain(secret);
       }
       expect(pages).not.toMatch(/\b(documents?|parties|party|drafts?|memory)\b/i);
+    });
+  });
+
+  it('a kill switch flip blocks the next policyFor call and writes source.changed', async () => {
+    await withTestDb(async (tx) => {
+      state.tx = tx;
+      const { active } = await seed(tx);
+      const db = tx as never;
+      await expect(policyFor(active, { db })).resolves.toMatchObject({ sourceId: active });
+      await setSourceKillSwitch(db, asSourceStaff(staffFixture.userId), active, true);
+      await expect(policyFor(active, { db })).rejects.toBeInstanceOf(SourceNotCleared);
+      const events = await withUser(tx, { userId: staffFixture.userId }, (s) =>
+        s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'source.changed')),
+      );
+      expect(events.length).toBeGreaterThan(0);
     });
   });
 

@@ -45,8 +45,14 @@ export const judgment = pgTable(
     court: text('court').notNull(),
     /** Canonical neutral citation (`normaliseNeutralCitation`), e.g. `2026:MHC:1234`; null when none is printed. */
     neutralCitation: text('neutral_citation'),
-    caseNumbers: text('case_numbers').array().notNull().default(sql`'{}'::text[]`),
-    bench: text('bench').array().notNull().default(sql`'{}'::text[]`),
+    caseNumbers: text('case_numbers')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    bench: text('bench')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     judgmentDate: date('judgment_date', { mode: 'string' }),
     /** The stored object key of the original PDF, once a blob store holds it. */
     blobKey: text('blob_key'),

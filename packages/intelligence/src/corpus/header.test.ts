@@ -41,7 +41,9 @@ describe('extractJudgmentHeader', () => {
   });
 
   it('does not take a date from the body', () => {
-    expect(extractJudgmentHeader(['In the order dated 03.03.2019 the court']).judgmentDate).toBeNull();
+    expect(
+      extractJudgmentHeader(['In the order dated 03.03.2019 the court']).judgmentDate,
+    ).toBeNull();
   });
 
   it('reads the court from a canonical citation', () => {

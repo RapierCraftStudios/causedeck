@@ -15,7 +15,9 @@ const row = (citation: string) => ({
 });
 
 const dbWith = (rows: unknown[]) =>
-  ({ select: () => ({ from: () => ({ where: () => ({ limit: () => Promise.resolve(rows) }) }) }) }) as unknown as Queryable;
+  ({
+    select: () => ({ from: () => ({ where: () => ({ limit: () => Promise.resolve(rows) }) }) }),
+  }) as unknown as Queryable;
 
 describe('verifyCitation', () => {
   it('verifies Madras and Karnataka forms with page anchors', async () => {

@@ -42,7 +42,11 @@ const provenance = (sha256: string) => ({
 
 const fetcherFor = (sha256: string): CorpusFetcher => ({
   fetchSource: () =>
-    Promise.resolve({ body: '%PDF-1.4', contentType: 'application/pdf', provenance: provenance(sha256) }),
+    Promise.resolve({
+      body: '%PDF-1.4',
+      contentType: 'application/pdf',
+      provenance: provenance(sha256),
+    }),
 });
 
 const readPdf = () =>
@@ -61,11 +65,14 @@ describe('ingestJudgment', () => {
       court: 'MHC',
       neutralCitation: '2026:MHC:1234',
       judgmentDate: '2026-10-21',
-      pageText: [{ pageNo: 1, text: expect.any(String) }],
+      pageText: [{ pageNo: 1, text: expect.any(String) as string }],
     });
 
     const again = await ingestJudgment(deps, input);
-    expect(again).toMatchObject({ status: 'duplicate', judgmentId: first.status === 'inserted' ? first.judgmentId : '' });
+    expect(again).toMatchObject({
+      status: 'duplicate',
+      judgmentId: first.status === 'inserted' ? first.judgmentId : '',
+    });
     expect(rows).toHaveLength(1);
   });
 
@@ -92,7 +99,9 @@ describe('ingestJudgment', () => {
 
 describe('bodyBytes', () => {
   it('reads a %PDF body as bytes and other PDF bodies as base64', () => {
-    expect(Buffer.from(bodyBytes('%PDF-1.4', 'application/pdf')).toString('latin1')).toBe('%PDF-1.4');
+    expect(Buffer.from(bodyBytes('%PDF-1.4', 'application/pdf')).toString('latin1')).toBe(
+      '%PDF-1.4',
+    );
     expect(Buffer.from(bodyBytes('JVBERi0=', 'application/pdf')).toString('latin1')).toBe('%PDF-');
   });
 });

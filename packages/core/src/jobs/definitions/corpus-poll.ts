@@ -67,7 +67,13 @@ export async function runCorpusPoll(
 ): Promise<CorpusPollReport> {
   const db = deps.db ?? rootDb;
   const fetcher = deps.fetcher === undefined ? configured : deps.fetcher;
-  const report: CorpusPollReport = { sources: 0, skipped: 0, inserted: 0, duplicates: 0, failed: 0 };
+  const report: CorpusPollReport = {
+    sources: 0,
+    skipped: 0,
+    inserted: 0,
+    duplicates: 0,
+    failed: 0,
+  };
   if (fetcher === null) {
     ctx.log.warn({}, 'corpus.poll: no fetcher configured');
     return report;
@@ -93,7 +99,10 @@ export async function runCorpusPoll(
       links = pdfLinks((await fetcher.fetchSource(sourceId, baseUrl)).body, baseUrl);
     } catch (error) {
       report.failed += 1;
-      ctx.log.warn({ sourceId, error: error instanceof Error ? error.name : 'error' }, 'corpus.poll: listing failed');
+      ctx.log.warn(
+        { sourceId, error: error instanceof Error ? error.name : 'error' },
+        'corpus.poll: listing failed',
+      );
       continue;
     }
     for (const url of links.slice(0, CORPUS_POLL_MAX_PER_SOURCE)) {
@@ -104,7 +113,10 @@ export async function runCorpusPoll(
         else report.failed += 1;
       } catch (error) {
         report.failed += 1;
-        ctx.log.warn({ sourceId, error: error instanceof Error ? error.name : 'error' }, 'corpus.poll: ingest failed');
+        ctx.log.warn(
+          { sourceId, error: error instanceof Error ? error.name : 'error' },
+          'corpus.poll: ingest failed',
+        );
       }
     }
   }

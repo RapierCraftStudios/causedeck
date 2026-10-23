@@ -1,5 +1,6 @@
 // Static checks on the judgment corpus schema (#484, D-048): a raw corpus, nothing editorial.
-import { getTableColumns, getTableConfig } from 'drizzle-orm/pg-core';
+import { getTableColumns } from 'drizzle-orm';
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
 
 import { GLOBAL_TABLES } from '../conventions.ts';
@@ -7,7 +8,8 @@ import { GLOBAL_TABLES } from '../conventions.ts';
 import { judgment } from './corpus.ts';
 
 /** Words that would make a column editorial content (headnote, summary, holding, citator, ...). */
-const EDITORIAL = /headnote|summary|synopsis|holding|ratio|digest|annotation|commentary|citator|treatment|overrul|distinguish|followed|keyword|tag|catchword|abstract|analysis|note/i;
+const EDITORIAL =
+  /headnote|summary|synopsis|holding|ratio|digest|annotation|commentary|citator|treatment|overrul|distinguish|followed|keyword|tag|catchword|abstract|analysis|note/i;
 
 describe('judgment schema', () => {
   const columns = Object.values(getTableColumns(judgment)).map((c) => c.name);
@@ -34,7 +36,9 @@ describe('judgment schema', () => {
   });
 
   it('dedupes by sha256 with a unique index', () => {
-    const unique = getTableConfig(judgment).indexes.find((i) => i.config.name === 'judgment_sha256_uq');
+    const unique = getTableConfig(judgment).indexes.find(
+      (i) => i.config.name === 'judgment_sha256_uq',
+    );
     expect(unique?.config.unique).toBe(true);
   });
 

@@ -2096,6 +2096,13 @@ const CASES: Record<string, Case> = {
     await expectDenied(core.staffWorkspaceUsage(f.tx, f.ub, 'not-a-uuid'));
     expect(await aBudgetState(f)).toEqual(before);
   },
+  staffBusinessSnapshot: async (f) => {
+    // ub is not staff: the definer function refuses, for a malformed id as well; A is unchanged.
+    const before = await aWorkspaceRow(f);
+    await expectDenied(core.staffBusinessSnapshot(f.tx, f.ub));
+    await expectDenied(core.staffBusinessSnapshot(f.tx, 'not-a-uuid'));
+    expect(await aWorkspaceRow(f)).toEqual(before);
+  },
   staffAuditEvents: async (f) => {
     const before = await aWorkspaceRow(f);
     await expectDenied(core.staffAuditEvents(f.tx, f.ub));

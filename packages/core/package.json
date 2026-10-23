@@ -27,6 +27,7 @@
     "./voice": "./src/voice/index.ts",
     "./whatsapp": "./src/whatsapp/index.ts",
     "./sources": "./src/sources/index.ts",
+    "./business": "./src/business/index.ts",
     "./support": "./src/support/index.ts",
     "./usage": "./src/usage/index.ts",
     "./workspaces": "./src/workspaces/index.ts"

@@ -10,7 +10,10 @@ export interface CostBreach {
 }
 
 /** The plans over `thresholdPaise`, most expensive first. */
-export function evaluateCostThresholds(report: BusinessReport, thresholdPaise: number): CostBreach[] {
+export function evaluateCostThresholds(
+  report: BusinessReport,
+  thresholdPaise: number,
+): CostBreach[] {
   return report.plans
     .filter((p) => p.mau > 0 && p.costPerUser.totalPaise > thresholdPaise)
     .map((p) => ({ planId: p.planId, name: p.name, costPerUser: p.costPerUser, thresholdPaise }))

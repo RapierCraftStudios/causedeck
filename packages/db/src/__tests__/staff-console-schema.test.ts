@@ -420,7 +420,9 @@ describe('staff business snapshot functions (0070, #519)', () => {
           sql`select app_staff_business_snapshot(${period.toISOString()}::timestamptz, ${period.toISOString()}::timestamptz) as snapshot`,
         ),
       );
-      const doc = (typeof row?.snapshot === 'string' ? JSON.parse(row.snapshot) : row?.snapshot) as Snapshot;
+      const doc = (
+        typeof row?.snapshot === 'string' ? JSON.parse(row.snapshot) : row?.snapshot
+      ) as Snapshot;
       const seeded = doc.plans.find((p) => p.planId === TWO_TENANTS_PLAN_ID);
       expect(seeded).toBeDefined();
       expect(Number(seeded?.aiSpendPaise)).toBe(127);

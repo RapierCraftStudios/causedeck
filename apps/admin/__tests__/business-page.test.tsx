@@ -5,6 +5,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type * as business from '@causedeck/core/business';
 import { buildBusinessReport, evaluateCostThresholds } from '@causedeck/core/business';
 
 import { canStaff } from '../lib/roles.ts';
@@ -22,7 +23,7 @@ vi.mock('../lib/env.ts', () => ({
 vi.mock('@causedeck/core/runtime', () => ({ db: { runtime: true } }));
 vi.mock('@causedeck/core/audit', () => ({ record: vi.fn(() => Promise.resolve()) }));
 vi.mock('@causedeck/core/business', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@causedeck/core/business')>()),
+  ...(await importOriginal<typeof business>()),
   staffBusinessSnapshot: mocks.snapshot,
 }));
 
@@ -124,14 +125,17 @@ describe('Business role gate', () => {
     expect(canStaff('ops', 'business')).toBe(false);
   });
 
-  it.each(['support', 'ops'] as const)('refuses %s in the data layer before any read', async (role) => {
-    mocks.snapshot.mockClear();
-    await expect(
-      businessMetrics(
-        { userId: ADMIN.userId, role },
-        { usdInr: 100, infraCostPaiseMonthly: 0, costAlertPaisePerUser: 4000 },
-      ),
-    ).rejects.toThrow(/may not read business\.metrics/);
-    expect(mocks.snapshot).not.toHaveBeenCalled();
-  });
+  it.each(['support', 'ops'] as const)(
+    'refuses %s in the data layer before any read',
+    async (role) => {
+      mocks.snapshot.mockClear();
+      await expect(
+        businessMetrics(
+          { userId: ADMIN.userId, role },
+          { usdInr: 100, infraCostPaiseMonthly: 0, costAlertPaisePerUser: 4000 },
+        ),
+      ).rejects.toThrow(/may not read business\.metrics/);
+      expect(mocks.snapshot).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -13,7 +13,11 @@ import {
   type PlanSnapshot,
 } from '../index.ts';
 
-const CONFIG: BusinessConfig = { usdInr: 100, infraCostPaiseMonthly: 1000, costAlertPaisePerUser: 4000 };
+const CONFIG: BusinessConfig = {
+  usdInr: 100,
+  infraCostPaiseMonthly: 1000,
+  costAlertPaisePerUser: 4000,
+};
 
 const plan = (over: Partial<PlanSnapshot>): PlanSnapshot => ({
   planId: 'free',
@@ -98,8 +102,16 @@ describe('buildBusinessReport', () => {
   });
 
   it('is zero and null, not NaN, with no data', () => {
-    const empty = buildBusinessReport({ plans: [], shared: { fetchDollars: 0, captchaDollars: 0 } }, CONFIG);
-    expect(empty).toMatchObject({ mrrPaise: 0, conversionBps: null, churnBps: null, grossMarginBps: null });
+    const empty = buildBusinessReport(
+      { plans: [], shared: { fetchDollars: 0, captchaDollars: 0 } },
+      CONFIG,
+    );
+    expect(empty).toMatchObject({
+      mrrPaise: 0,
+      conversionBps: null,
+      churnBps: null,
+      grossMarginBps: null,
+    });
   });
 
   it('reads the settings from the env', () => {
@@ -125,7 +137,10 @@ describe('evaluateCostThresholds', () => {
 
   it('does not flag a cost at or under the threshold, nor a plan with no active user', () => {
     expect(evaluateCostThresholds(report, 2375)).toEqual([]);
-    const idle = buildBusinessReport({ plans: [plan({ aiSpendPaise: 9999 })], shared: { fetchDollars: 0, captchaDollars: 0 } }, CONFIG);
+    const idle = buildBusinessReport(
+      { plans: [plan({ aiSpendPaise: 9999 })], shared: { fetchDollars: 0, captchaDollars: 0 } },
+      CONFIG,
+    );
     expect(evaluateCostThresholds(idle, 1)).toEqual([]);
   });
 
@@ -144,13 +159,18 @@ describe('digest and alert emails', () => {
     expect(mail.subject).toBe('CauseDeck business digest, week of 2026-10-26');
     expect(mail.text).toContain('MRR Rs 20.00, ARR Rs 240.00');
     expect(mail.text).toContain('Free to paid: 20.0%');
-    expect(mail.text).toContain('Pro: 1 active, cost per user Rs 23.75 (fetch Rs 11.00, captcha Rs 5.25, AI Rs 5.00, infra Rs 2.50)');
+    expect(mail.text).toContain(
+      'Pro: 1 active, cost per user Rs 23.75 (fetch Rs 11.00, captcha Rs 5.25, AI Rs 5.00, infra Rs 2.50)',
+    );
     expect(mail.text).toContain('Over the cost-per-user threshold:');
     expect(mail.html).toContain('<p>');
   });
 
   it('names each breaching plan in the alert and escapes the HTML part', () => {
-    const mail = renderCostAlert(breaches.map((b) => ({ ...b, name: '<b>Pro</b>' })), '2026-10-26');
+    const mail = renderCostAlert(
+      breaches.map((b) => ({ ...b, name: '<b>Pro</b>' })),
+      '2026-10-26',
+    );
     expect(mail.subject).toBe('CauseDeck cost alert 2026-10-26: 1 plan(s) over threshold');
     expect(mail.text).toContain('<b>Pro</b>: cost per user Rs 23.75 against Rs 20.00');
     expect(mail.html).toContain('&lt;b&gt;Pro&lt;/b&gt;');
@@ -160,7 +180,10 @@ describe('digest and alert emails', () => {
 
 describe('parseBusinessSnapshot', () => {
   it('reads a jsonb object or its text and coerces numeric strings', () => {
-    const doc = { plans: [{ planId: 'pro', name: 'Pro', mrrPaise: '2000.5', mau: 3 }], shared: { fetchDollars: '0.5' } };
+    const doc = {
+      plans: [{ planId: 'pro', name: 'Pro', mrrPaise: '2000.5', mau: 3 }],
+      shared: { fetchDollars: '0.5' },
+    };
     for (const raw of [doc, JSON.stringify(doc)]) {
       const parsed = parseBusinessSnapshot(raw);
       expect(parsed.plans[0]).toMatchObject({ planId: 'pro', mrrPaise: 2000.5, mau: 3, dau: 0 });
@@ -169,6 +192,9 @@ describe('parseBusinessSnapshot', () => {
   });
 
   it('is empty for a missing document', () => {
-    expect(parseBusinessSnapshot(undefined)).toEqual({ plans: [], shared: { fetchDollars: 0, captchaDollars: 0 } });
+    expect(parseBusinessSnapshot(undefined)).toEqual({
+      plans: [],
+      shared: { fetchDollars: 0, captchaDollars: 0 },
+    });
   });
 });

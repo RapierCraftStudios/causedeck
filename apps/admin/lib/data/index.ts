@@ -10,6 +10,7 @@ import {
   type BusinessConfig,
   type BusinessReport,
   type CostBreach,
+  type PlanReport,
 } from '@causedeck/core/business';
 import { listSources, type SourceRecord } from '@causedeck/core/sources';
 import {
@@ -42,6 +43,7 @@ export type {
   BusinessConfig,
   BusinessReport,
   CostBreach,
+  PlanReport,
   StaffAuditCursor,
   StaffAuditEntry,
   StaffBudgetOverride,
@@ -133,7 +135,10 @@ export function businessMetrics(
       functions: ['app_staff_business_snapshot'],
     },
     async (db) => {
-      const report = buildBusinessReport(await staffBusinessSnapshot(db, staff.userId, now), config);
+      const report = buildBusinessReport(
+        await staffBusinessSnapshot(db, staff.userId, now),
+        config,
+      );
       return { report, breaches: evaluateCostThresholds(report, config.costAlertPaisePerUser) };
     },
   );

@@ -6,10 +6,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { BusinessConfig, BusinessSnapshot } from '../../business/index.ts';
 import { registry } from '../registry.ts';
-import { businessCostAlert, founderEmails, istDay, runBusinessCostAlert } from './business-cost-alert.ts';
+import {
+  businessCostAlert,
+  founderEmails,
+  istDay,
+  runBusinessCostAlert,
+} from './business-cost-alert.ts';
 import { businessDigest, runBusinessDigest } from './business-digest.ts';
 
-const CONFIG: BusinessConfig = { usdInr: 100, infraCostPaiseMonthly: 0, costAlertPaisePerUser: 4000 };
+const CONFIG: BusinessConfig = {
+  usdInr: 100,
+  infraCostPaiseMonthly: 0,
+  costAlertPaisePerUser: 4000,
+};
 const NOW = new Date('2026-10-26T03:30:00Z');
 
 const planOf = (aiSpendPaise: number) => ({
@@ -37,7 +46,13 @@ function harness(aiSpendPaise: number, founders: string[]) {
   const send = vi.fn(() => Promise.resolve({}));
   const email: EmailTransport = { provider: 'console', send };
   const log = { info: vi.fn() };
-  const deps = { now: () => NOW, snapshot: () => Promise.resolve(snapshotWith(aiSpendPaise)), email, founders, config: CONFIG };
+  const deps = {
+    now: () => NOW,
+    snapshot: () => Promise.resolve(snapshotWith(aiSpendPaise)),
+    email,
+    founders,
+    config: CONFIG,
+  };
   const ctx = { db: {}, log } as never;
   return { send, ctx, deps };
 }
@@ -47,7 +62,9 @@ describe('runBusinessCostAlert', () => {
     const { send, ctx, deps } = harness(4001, ['a@founders.test', 'b@founders.test']);
     expect(await runBusinessCostAlert(ctx, deps)).toEqual({ breaches: 1, sent: 2 });
     expect(send).toHaveBeenCalledTimes(2);
-    const [[first]] = send.mock.calls as unknown as [[{ to: string; subject: string; text: string }]];
+    const [[first]] = send.mock.calls as unknown as [
+      [{ to: string; subject: string; text: string }],
+    ];
     expect(first).toMatchObject({ to: 'a@founders.test' });
     expect(first.subject).toBe('CauseDeck cost alert 2026-10-26: 1 plan(s) over threshold');
     expect(first.text).toContain('Pro: cost per user Rs 40.01 against Rs 40.00');

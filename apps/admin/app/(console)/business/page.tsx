@@ -17,7 +17,8 @@ export const metadata: Metadata = { title: 'Business' };
 export const dynamic = 'force-dynamic';
 
 const rupees = (paise: number): string => `Rs ${(paise / 100).toFixed(2)}`;
-const percent = (bps: number | null): string => (bps === null ? 'n/a' : `${(bps / 100).toFixed(1)}%`);
+const percent = (bps: number | null): string =>
+  bps === null ? 'n/a' : `${(bps / 100).toFixed(1)}%`;
 
 const cell = 'px-2 py-1 text-right';
 const head = 'px-2 py-1 text-right font-medium';
@@ -102,7 +103,9 @@ export default async function BusinessPage() {
       ) : null}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <caption className="sr-only">Plans: revenue, active users and cost to serve per user</caption>
+          <caption className="sr-only">
+            Plans: revenue, active users and cost to serve per user
+          </caption>
           <thead>
             <tr>
               <th scope="col" className="px-2 py-1 text-left font-medium">

@@ -11,7 +11,8 @@ export interface BusinessEmail {
 }
 
 const rupees = (paise: number): string => `Rs ${(paise / 100).toFixed(2)}`;
-const percent = (value: number | null): string => (value === null ? 'n/a' : `${(value / 100).toFixed(1)}%`);
+const percent = (value: number | null): string =>
+  value === null ? 'n/a' : `${(value / 100).toFixed(1)}%`;
 const escapeHtml = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -50,7 +51,11 @@ export function renderBusinessDigest(
   weekOf: string,
 ): BusinessEmail {
   const rows = lines(report, breaches);
-  return { subject: `CauseDeck business digest, week of ${weekOf}`, text: rows.join('\n'), html: toHtml(rows) };
+  return {
+    subject: `CauseDeck business digest, week of ${weekOf}`,
+    text: rows.join('\n'),
+    html: toHtml(rows),
+  };
 }
 
 /** The alert sent when a plan's cost per user is over the threshold. */

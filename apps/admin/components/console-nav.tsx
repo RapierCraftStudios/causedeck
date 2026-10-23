@@ -18,7 +18,8 @@ import { canStaff, type StaffCapability, type StaffRole } from '../lib/roles.ts'
 
 export interface ConsoleNavItem {
   capability: StaffCapability;
-  href: '/' | '/adapters' | '/sources' | '/flags' | '/workspaces' | '/support' | '/audit' | '/business';
+  href:
+    '/' | '/adapters' | '/sources' | '/flags' | '/workspaces' | '/support' | '/audit' | '/business';
   label: string;
   icon: LucideIcon;
 }

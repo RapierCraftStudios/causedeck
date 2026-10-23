@@ -101,6 +101,7 @@ export function ImportCard({
           accept=".ics,text/calendar"
           className="sr-only"
           id="calendar-import-file"
+          aria-label={t('choose')}
           data-slot="calendar-import-file"
           tabIndex={-1}
           onChange={(event) => {

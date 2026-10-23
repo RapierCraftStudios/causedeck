@@ -18,7 +18,8 @@
     "@causedeck/db": "workspace:*",
     "@causedeck/storage": "workspace:*",
     "@causedeck/validators": "workspace:*",
-    "ical.js": "catalog:"
+    "ical.js": "catalog:",
+    "postal-mime": "catalog:"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",

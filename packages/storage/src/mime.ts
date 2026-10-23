@@ -23,7 +23,7 @@ export interface AllowedType {
 
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-/** The upload allow-list: PDF, DOCX, `.ics`, `.txt`, PNG, JPEG, HEIC, audio and `.zip`. */
+/** The upload allow-list: PDF, DOCX, `.ics`, `.txt`, PNG, JPEG, WebP, HEIC, audio and `.zip`. */
 export const ALLOWED_TYPES: readonly AllowedType[] = Object.freeze([
   {
     name: 'pdf',
@@ -72,6 +72,14 @@ export const ALLOWED_TYPES: readonly AllowedType[] = Object.freeze([
     extensions: ['jpg', 'jpeg'],
     declared: ['image/jpeg', 'image/jpg'],
     sniffed: ['image/jpeg'],
+  },
+  {
+    name: 'webp',
+    kind: 'image',
+    mime: 'image/webp',
+    extensions: ['webp'],
+    declared: ['image/webp'],
+    sniffed: ['image/webp'],
   },
   {
     name: 'heic',

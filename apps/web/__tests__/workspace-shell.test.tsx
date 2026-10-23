@@ -161,6 +161,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'courts',
   // Its own page test since #388 (matters-page.test.tsx).
   'matters',
+  // Its own page and shell test since #48 (components/inbox/__tests__/inbox-shell.test.tsx).
+  'inbox',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
@@ -513,7 +515,6 @@ describe('placeholder pages', () => {
   it('uses the #11 design-spec empty copy verbatim', async () => {
     const spec: Partial<Record<PlaceholderId, string>> = {
       today: 'No hearings today. Forward a cause list to see your court day.',
-      inbox: 'Your inbox is clear.',
       obligations: 'No open obligations.',
     };
     for (const [route, copy] of Object.entries(spec)) {
@@ -599,7 +600,7 @@ describe('placeholder pages', () => {
   });
 
   it('renders no offline banner when online', async () => {
-    withIntl(await PAGES.inbox(props('demo')));
+    withIntl(await PAGES.today(props('demo')));
     expect(document.querySelector('[data-pattern-state="offline"]')).toBeNull();
   });
 });

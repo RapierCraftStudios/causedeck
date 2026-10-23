@@ -1,0 +1,19 @@
+{
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "truth": {
+    "kind": "order",
+    "cases": [
+      {
+        "caseTypeRaw": "Ex.P.",
+        "caseType": "EXP",
+        "caseNumber": "3284",
+        "caseYear": 2022,
+        "cnr": "TNCH021263272022"
+      }
+    ],
+    "orderDate": "2026-09-28",
+    "nextDate": "2026-11-15",
+    "dates": ["2026-09-28", "2026-11-15"],
+    "language": "en"
+  }
+}

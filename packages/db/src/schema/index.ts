@@ -1,9 +1,27 @@
 // Every table and enum drizzle-kit migrates. Later issues add their tables here.
 export * from './enums.ts';
 export { adapterHealthSummary, adapterParseRun, adapterVersion } from './adapters.ts';
-export { aiCall, auditActorKind, auditActorSalt, auditEvent, auditOutcome } from './audit.ts';
+export {
+  aiCall,
+  aiCallResult,
+  auditActorKind,
+  auditActorSalt,
+  auditEvent,
+  auditOutcome,
+} from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
+export {
+  CAPTURE_CHANNELS,
+  CAPTURE_SCAN_STATUSES,
+  CAPTURE_STATUSES,
+  capture,
+  workspaceCaptureChannel,
+  type CaptureChannel,
+  type CaptureRow,
+  type CaptureScanStatus,
+  type CaptureStatus,
+} from './capture.ts';
 export { catalogueMeta } from './catalogue-meta.ts';
 export {
   account,
@@ -37,7 +55,20 @@ export {
   type AnchorBbox,
   type AnchorKind,
   type AnchorTranscriptSpan,
+  type OcrLine,
 } from './documents.ts';
+export {
+  ACTIVITY_ACTORS,
+  activity,
+  AUTOMATION_LEVELS,
+  automationPreference,
+  automationThreshold,
+  PROPOSAL_STATUSES,
+  proposal,
+  type ActivityActor,
+  type AutomationLevelValue,
+  type ProposalStatus,
+} from './automation.ts';
 export { jobEffect } from './job-effect.ts';
 export {
   DELETION_KINDS,
@@ -125,7 +156,39 @@ export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';
 export {
+  ICS_FEED_SCOPES,
+  ICS_IMPORT_STATUSES,
+  icsFeed,
+  icsFeedEvent,
+  icsImportEvent,
+  type IcsFeedScope,
+  type IcsFeedSnapshot,
+  type IcsImportStatus,
+} from './ics.ts';
+export {
   INTEGRATION_KINDS,
   workspaceIntegration,
   type IntegrationKind,
 } from './workspace-integration.ts';
+export {
+  INTAKE_ADDRESS_STATUSES,
+  INTAKE_ALLOWLIST_KINDS,
+  INTAKE_MESSAGE_STATUSES,
+  intakeAddress,
+  intakeAllowlist,
+  intakeMessage,
+  type IntakeAddressStatus,
+  type IntakeAllowlistKind,
+  type IntakeMessageStatus,
+} from './email-intake.ts';
+export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';
+export { advocateProfile } from './advocate-profile.ts';
+export {
+  IMPORT_BATCH_FILE_STATUSES,
+  IMPORT_BATCH_STATUSES,
+  importBatch,
+  importBatchFile,
+  importPlan,
+  type ImportBatchFileStatus,
+  type ImportBatchStatus,
+} from './import-batch.ts';

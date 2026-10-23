@@ -37,7 +37,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347), the people tables (#348), the catalogue version table (#34) the adapter tables (#372) and the bench roster tables (#384)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347), the people tables (#348), the catalogue version table (#34) the adapter tables (#372), the bench roster tables (#384) and the automation tables (#47)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -46,14 +46,19 @@ describe('@causedeck/db root entry point', () => {
     ).toEqual([
       'access_mode_registry',
       'account',
+      'activity',
       'adapter_parse_run',
       'adapter_version',
+      'advocate_profile',
       'ai_call',
+      'ai_call_result',
       'anchor',
       'api_idempotency_key',
       'appearance',
       'audit_actor_salt',
       'audit_event',
+      'automation_preference',
+      'automation_threshold',
       'bench',
       'bench_change_alert',
       'bench_roster',
@@ -61,6 +66,7 @@ describe('@causedeck/db root entry point', () => {
       'billing_event',
       'blob',
       'budget_override',
+      'capture',
       'catalogue_meta',
       'court_hall',
       'deletion_job',
@@ -70,10 +76,20 @@ describe('@causedeck/db root entry point', () => {
       'email_suppression',
       'entitlement',
       'export_job',
+      'extraction',
       'feature_flag',
       'flag_change_request',
       'forum',
       'hearing',
+      'ics_feed',
+      'ics_feed_event',
+      'ics_import_event',
+      'import_batch',
+      'import_batch_file',
+      'import_plan',
+      'intake_address',
+      'intake_allowlist',
+      'intake_message',
       'invitation',
       'invoice_counter',
       'job_effect',
@@ -95,6 +111,7 @@ describe('@causedeck/db root entry point', () => {
       'proceeding',
       'proceeding_link',
       'proceeding_state_change',
+      'proposal',
       'push_subscription',
       'rate_limit',
       'role_edge',
@@ -113,6 +130,7 @@ describe('@causedeck/db root entry point', () => {
       'usage_reservation',
       'user',
       'verification',
+      'workspace_capture_channel',
       'workspace_feature_flag',
       'workspace_integration',
       'workspace_key',

@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.ka.bengaluru-urban.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "listDate": "2026-08-21",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. S.C. No. 2252/2026    ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ರೈತ",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "1",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "2252",
+      "caseYear": 2026,
+      "matchKey": "SC/2252/2026",
+      "parties": "ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ರೈತ",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Ex.P. No. 9531/2023    Pretend Housing Society vs Sample Bank Ltd",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "2",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "9531",
+      "caseYear": 2023,
+      "matchKey": "EXP/9531/2023",
+      "parties": "Pretend Housing Society vs Sample Bank Ltd",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. CCCA No. 8974/2025    ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "3",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "8974",
+      "caseYear": 2025,
+      "matchKey": "CCCA/8974/2025",
+      "parties": "ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. C.C. No. 5309/2025    Imaginary Textiles vs Made-up Farmer",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "4",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "5309",
+      "caseYear": 2025,
+      "matchKey": "CC/5309/2025",
+      "parties": "Imaginary Textiles vs Made-up Farmer",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. S.C. No. 740/2025    ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "12",
+      "itemNo": "5",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "740",
+      "caseYear": 2025,
+      "matchKey": "SC/740/2025",
+      "parties": "ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. M.V.C. No. 3984/2022    Invented Motors vs Imaginary Textiles",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "6",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "3984",
+      "caseYear": 2022,
+      "matchKey": "MVC/3984/2022",
+      "parties": "Invented Motors vs Imaginary Textiles",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. S.C. No. 5900/2020    ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಮಾದರಿ ಬ್ಯಾಂಕ್",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "7",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "5900",
+      "caseYear": 2020,
+      "matchKey": "SC/5900/2020",
+      "parties": "ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಮಾದರಿ ಬ್ಯಾಂಕ್",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. CCCA No. 4994/2019    Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "8",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "4994",
+      "caseYear": 2019,
+      "matchKey": "CCCA/4994/2019",
+      "parties": "Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. Crl.Misc. No. 3055/2022    ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "9",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "3055",
+      "caseYear": 2022,
+      "matchKey": "CRLMISC/3055/2022",
+      "parties": "ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "೨೧.೦೮.೨೦೨೬", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["12", "2"],
+    "hallsUnreadable": []
+  }
+}

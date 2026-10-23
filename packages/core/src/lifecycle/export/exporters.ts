@@ -171,6 +171,11 @@ export const settingsExporter = tablesExporter('settings', [
   ws('matter_restriction'),
   // Integration tokens (#287): the kind and dates only; the token hash is a secret.
   ws('workspace_integration', { exclude: ['token_hash'] }),
+  // Email forward-in intake (#54): the member's address and sender allow-list; the message ledger
+  // leaves out the raw MIME object's key, which is internal like `blob.key`.
+  ws('intake_address', { userColumn: 'user_id' }),
+  ws('intake_allowlist', { userColumn: 'added_by' }),
+  ws('intake_message', { exclude: ['raw_mime_ref'] }),
 ]);
 
 export const auditExporter: Exporter = {
@@ -207,6 +212,21 @@ export const billingExporter = tablesExporter('billing', [
 
 export const blobsExporter = tablesExporter('blobs', [
   ws('blob', { exclude: ['enc_header', 'key'], userColumn: 'created_by' }),
+  // The capture inbox (#43): the raw object's key is internal, like `blob.key`; the file itself
+  // comes with the blobs while retention has not deleted it.
+  ws('capture', { exclude: ['raw_storage_key'], userColumn: 'created_by' }),
+  ws('workspace_capture_channel', { keys: ['channel'], userColumn: 'enabled_by' }),
+  // Calendar interop (#53): the feed's token hash is a credential and never leaves; the import
+  // ledger holds only the hearing-like events' own text.
+  ws('ics_feed', { exclude: ['token_hash'], userColumn: 'user_id' }),
+  ws('ics_feed_event', { keys: ['feed_id', 'uid'] }),
+  ws('ics_import_event'),
+  // Bootstrap import (#546): batches, their files and the matched-rows plan (while not yet purged).
+  ws('import_batch', { userColumn: 'created_by' }),
+  ws('import_batch_file'),
+  ws('import_plan', { keys: ['batch_id'] }),
+  // The importing member's own identifiers (#550).
+  ws('advocate_profile', { userColumn: 'user_id' }),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [
@@ -248,6 +268,18 @@ export const mattersExporter = tablesExporter('matters', [
   ws('document', { exclude: ['storage_key'] }),
   ws('document_page'),
   ws('anchor'),
+  // Anchored order extractions (#46): the validated result and what was rejected, with quotes.
+  ws('extraction'),
+]);
+
+// What the automation engine did and proposed (#47): proposals, the activity feed with its undo
+// state, and the user's ask-first dials and learned thresholds. Ids, kinds and the short summaries
+// the person already sees; no document text.
+export const automationExporter = tablesExporter('automation', [
+  ws('proposal'),
+  ws('activity', { userColumn: 'actor_user_id' }),
+  ws('automation_preference', { userColumn: 'user_id' }),
+  ws('automation_threshold'),
 ]);
 
 /** The platform exporters, registered once per process. */
@@ -262,6 +294,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   lifecycleExporter,
   courtExporter,
   mattersExporter,
+  automationExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

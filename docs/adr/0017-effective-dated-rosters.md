@@ -19,7 +19,7 @@ The court reference tables (`forum`, `court_hall`, `bench`, [ADR 0013](0013-matt
 - A roster is lawyer-supplied data: it belongs to one workspace, is never shared, and follows the same RLS and erase rules as the rest of the matter graph.
 - For a workspace and forum, exactly one confirmed roster answers "which bench sits in hall N on day D". The database, not only the service, must guarantee it.
 - A roster can be for a catalogue forum (the main case) or for one of the workspace's own forums.
-- No judge analytics, no bench profiling, no cross-workspace aggregation.
+- No judge ratings, predictions or bench profiling, and no cross-workspace aggregation of lawyers' notes. Roster data may feed internal bench-level data and, after counsel, factual bench facts (D-050).
 - History stays: an older roster is superseded, not overwritten.
 
 ## Considered options

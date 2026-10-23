@@ -150,7 +150,11 @@ export function DocumentsPanel({
           }
         />
       ) : (
-        <ul aria-label={t('listLabel')} className="border-line bg-surface rounded-lg border px-4">
+        <ul
+          aria-label={t('listLabel')}
+          data-documents="list"
+          className="border-line bg-surface rounded-lg border px-4"
+        >
           {list.documents.map((doc) => (
             <DocumentRow key={doc.id} doc={doc} previewHref={previewHref} />
           ))}

@@ -1,0 +1,19 @@
+{
+  "id": "en-19",
+  "language": "en",
+  "hearingDate": "2025-11-10",
+  "text": "In case 68620 of 2021 today. Arguments were heard and the matter stands adjourned. Next hearing on December 26th. The court directed the petitioner to file the rejoinder. Remind me to collect the certified copy.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-12-26",
+      "phrase": "December 26th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the petitioner to file the rejoinder.",
+        "dueDate": null
+      }
+    ],
+    "tasks": ["collect the certified copy"]
+  }
+}

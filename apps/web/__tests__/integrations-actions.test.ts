@@ -78,7 +78,7 @@ afterEach(() => {
 
 describe('rotateIntegrationTokenAction', () => {
   it.each([
-    ['owner', 'email_intake', `intake+${TOKEN}@app.causedeck.test`],
+    ['owner', 'ics_feed', `https://app.causedeck.test/api/ics/${TOKEN}`],
     ['advocate', 'ics_feed', `https://app.causedeck.test/api/ics/${TOKEN}`],
   ])(
     'rotates for an %s on the workspace transaction and returns the %s value once',
@@ -103,18 +103,18 @@ describe('rotateIntegrationTokenAction', () => {
     },
   );
 
-  it.each([
-    ['email_intake', 'capture.email-forward'],
-    ['ics_feed', 'capture.ics-feed'],
-  ])('is NOT_FOUND for %s while %s is off, and writes nothing', async (kind, flag) => {
-    state.flags[flag] = false;
-    expect(await rotateIntegrationTokenAction({ workspaceId: WS, kind })).toMatchObject({
-      ok: false,
-      error: { code: 'NOT_FOUND' },
-    });
-    expect(flags.isEnabled).toHaveBeenCalledWith(flag, { workspaceId: WS, userId: USER });
-    expect(core.rotateIntegrationToken).not.toHaveBeenCalled();
-  });
+  it.each([['ics_feed', 'capture.ics-feed']])(
+    'is NOT_FOUND for %s while %s is off, and writes nothing',
+    async (kind, flag) => {
+      state.flags[flag] = false;
+      expect(await rotateIntegrationTokenAction({ workspaceId: WS, kind })).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+      expect(flags.isEnabled).toHaveBeenCalledWith(flag, { workspaceId: WS, userId: USER });
+      expect(core.rotateIntegrationToken).not.toHaveBeenCalled();
+    },
+  );
 
   it.each(['junior', 'clerk', 'viewer', null])(
     'returns FORBIDDEN for %s before any write',

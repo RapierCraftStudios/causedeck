@@ -38,6 +38,12 @@ export const CATEGORIES = {
   },
   'proposal.new': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'digest.daily': { defaultChannels: ['email'], mandatory: false, lockedChannels: [] },
+  // "What CauseDeck did today" (#49): counts of what the system did on its own, once per local day.
+  'digest.end_of_day': {
+    defaultChannels: ['in_app', 'email'],
+    mandatory: false,
+    lockedChannels: [],
+  },
   'system.notice': { defaultChannels: ['in_app'], mandatory: false, lockedChannels: [] },
 } as const satisfies Record<string, CategoryDefinition>;
 

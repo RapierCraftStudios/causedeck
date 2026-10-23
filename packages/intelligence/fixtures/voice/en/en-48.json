@@ -1,0 +1,19 @@
+{
+  "id": "en-48",
+  "language": "en",
+  "hearingDate": "2025-07-08",
+  "text": "In case 3319 of 2023 today. The matter was adjourned. The opposite counsel sought time. Next hearing next sunday. The court directed both sides to exchange written submissions next thursday. Remind me to call the client about the vakalatnama.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-07-13",
+      "phrase": "next sunday"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions next thursday.",
+        "dueDate": "2025-07-10"
+      }
+    ],
+    "tasks": ["call the client about the vakalatnama"]
+  }
+}

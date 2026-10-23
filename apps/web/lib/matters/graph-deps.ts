@@ -34,6 +34,27 @@ export function domainErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
+/**
+ * The core entry points of the list and its filter options, imported one after another and once:
+ * the page loads both at the same time, and concurrent imports race the test mocks.
+ */
+async function importCore() {
+  const runtime = await import('@causedeck/core/runtime');
+  const graph = await import('@causedeck/core/matter-graph');
+  const court = await import('@causedeck/core/court');
+  return { runtime, graph, court };
+}
+
+let core: ReturnType<typeof importCore> | null = null;
+
+function loadCore() {
+  core ??= importCore().catch((error: unknown) => {
+    core = null;
+    throw error;
+  });
+  return core;
+}
+
 export type MatterListLoad =
   | { kind: 'page'; page: MatterListPage }
   | { kind: 'denied' }
@@ -46,9 +67,9 @@ export async function loadMatterList(
   input: SearchMattersInput,
 ): Promise<MatterListLoad> {
   try {
-    // One at a time, not in a Promise.all: concurrent imports race the test mocks.
-    const { inWorkspace } = await import('@causedeck/core/runtime');
-    const { searchMatters } = await import('@causedeck/core/matter-graph');
+    const { runtime, graph } = await loadCore();
+    const { inWorkspace } = runtime;
+    const { searchMatters } = graph;
     const scope = { workspaceId: context.workspace.id, userId: context.user.id };
     const page = await inWorkspace(scope, (tx) => searchMatters(graphDeps(tx), scope, input));
     return { kind: 'page', page };
@@ -80,12 +101,15 @@ export async function loadMatterFilterOptions(
   context: WorkspaceContext,
 ): Promise<MatterFilterOptions> {
   try {
-    const { inWorkspace, listMembersIn } = await import('@causedeck/core/runtime');
-    const { getCourtsIndex } = await import('@causedeck/core/court');
+    const { runtime, court: courtModule } = await loadCore();
+    const { inWorkspace, listMembersIn } = runtime;
+    const { getCourtsIndex } = courtModule;
     const workspaceId = context.workspace.id;
     const scope = { workspaceId, userId: context.user.id };
-    const members = await listMembersIn(scope);
-    const index = await inWorkspace(scope, (tx) => getCourtsIndex(tx, workspaceId));
+    const [members, index] = await Promise.all([
+      listMembersIn(scope),
+      inWorkspace(scope, (tx) => getCourtsIndex(tx, workspaceId)),
+    ]);
     const forums = index.cities.flatMap((city) =>
       city.courts.flatMap((court) =>
         court.forums.map((forum) => ({

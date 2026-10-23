@@ -209,6 +209,14 @@ describe('People tab (#393)', () => {
     );
   });
 
+  it('marks the populated list with [data-people]', async () => {
+    await renderPage();
+    const list = document.querySelector('[data-people]') as HTMLElement;
+    expect(list.getAttribute('data-people')).toBe('list');
+    expect(list.querySelectorAll('[data-person]').length).toBeGreaterThan(0);
+    expect(document.querySelector('[data-people="empty"]')).toBeNull();
+  });
+
   it('shows contact details only for clients and professional contacts', async () => {
     await renderPage();
     const contacts = [...document.querySelectorAll('[data-person-contact]')];
@@ -228,6 +236,15 @@ describe('People tab (#393)', () => {
       screen.queryByRole('button', { name: 'Remove Government Pleader from this matter' }),
     ).toBeNull();
     expect(document.querySelector('[data-people-import]')).toBeNull();
+  });
+
+  it('keeps the visible text of every Edit button inside its accessible name', async () => {
+    await renderPage();
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-person-edit]');
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const button of buttons) {
+      expect(button.getAttribute('aria-label')).toContain(button.textContent);
+    }
   });
 
   it.each(['viewer', 'clerk'] as const)('gives a %s no mutation controls at all', async (role) => {

@@ -113,10 +113,11 @@ export const UpdateWorkspacePrivacyInput = z.strictObject({
 });
 
 /**
- * The integration tokens on the settings integrations page (#287): the private email intake address
- * and the private ICS feed URL. Mirrors `INTEGRATION_KINDS` in `@causedeck/db`.
+ * The integration tokens on the settings integrations page (#287): the private ICS feed URL. The
+ * email intake address is per member and has its own page (#54), so it is not a token kind.
+ * Mirrors `INTEGRATION_KINDS` in `@causedeck/db`.
  */
-export const INTEGRATION_KIND_VALUES = ['email_intake', 'ics_feed'] as const;
+export const INTEGRATION_KIND_VALUES = ['ics_feed'] as const;
 
 /** Rotate (or create) one integration token; the only input is which one. */
 export const RotateIntegrationTokenInput = z.strictObject({

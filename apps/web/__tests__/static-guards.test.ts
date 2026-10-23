@@ -89,14 +89,28 @@ describe('apps/web static guards', () => {
     expect(config).toMatch(/reactStrictMode:\s*true/);
   });
 
-  it('has no API routes besides Better Auth, Web Push, the audit and workspace exports and uploads (webhooks live in apps/api)', () => {
+  it('loads pdfjs-dist from node_modules, not the server bundle (roster import preview, #459)', () => {
+    const config = readFileSync(path.join(appDir, 'next.config.ts'), 'utf8');
+    expect(config).toMatch(/serverExternalPackages:\s*\[[^\]]*'pdfjs-dist'/);
+    const pkg = JSON.parse(readFileSync(path.join(appDir, 'package.json'), 'utf8')) as {
+      dependencies: Record<string, string>;
+    };
+    expect(pkg.dependencies).toHaveProperty('pdfjs-dist');
+  });
+
+  it('has no API routes besides Better Auth, Web Push, the activity, audit and workspace exports, uploads, captures and the private calendar feed (webhooks live in apps/api)', () => {
     expect(readdirSync(path.join(appDir, 'app/api')).sort()).toEqual([
+      'activity',
       'audit',
       'auth',
+      'captures',
       'exports',
+      'ics',
       'push',
       'uploads',
     ]);
+    // The activity feed CSV/JSON export download (#49).
+    expect(readdirSync(path.join(appDir, 'app/api/activity'))).toEqual(['export']);
     // The workspace data export download (#301); tests sit beside it.
     expect(readdirSync(path.join(appDir, 'app/api/exports')).sort()).toEqual(['[id]', '__tests__']);
     expect(readdirSync(path.join(appDir, 'app/api/auth'))).toEqual(['[...all]']);

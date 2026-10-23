@@ -1,0 +1,23 @@
+{
+  "id": "en-10",
+  "language": "en",
+  "hearingDate": "2025-03-09",
+  "text": "In case 64359 of 2021 today. The court heard both sides and the matter was adjourned again. The opposite counsel sought time. Next hearing on the 16th. The court directed the respondent to file a counter affidavit next wednesday. The court directed the petitioner to file the rejoinder by 23/5. Remind me to call the client about the vakalatnama.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-03-16",
+      "phrase": "on the 16th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit next wednesday.",
+        "dueDate": "2025-03-12"
+      },
+      {
+        "text": "The court directed the petitioner to file the rejoinder by 23/5.",
+        "dueDate": "2025-05-23"
+      }
+    ],
+    "tasks": ["call the client about the vakalatnama"]
+  }
+}

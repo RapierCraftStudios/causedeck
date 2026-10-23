@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.ka.bengaluru-urban.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "listDate": "2026-12-01",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. Crl.Misc. No. 2523/2025    Invented Motors vs Made-up Farmer",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "1",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "2523",
+      "caseYear": 2025,
+      "matchKey": "CRLMISC/2523/2025",
+      "parties": "Invented Motors vs Made-up Farmer",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. O.S. No. 8975/2022    Invented Motors vs Fictional Traders Pvt Ltd",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "2",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "8975",
+      "caseYear": 2022,
+      "matchKey": "OS/8975/2022",
+      "parties": "Invented Motors vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. CCCA No. 9276/2026    Fictional Traders Pvt Ltd vs Pretend Housing Society",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "3",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "9276",
+      "caseYear": 2026,
+      "matchKey": "CCCA/9276/2026",
+      "parties": "Fictional Traders Pvt Ltd vs Pretend Housing Society",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. Crl.Misc. No. 9806/2023    Imaginary Textiles vs Invented Motors",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "4",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "9806",
+      "caseYear": 2023,
+      "matchKey": "CRLMISC/9806/2023",
+      "parties": "Imaginary Textiles vs Invented Motors",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. C.C. No. 4706/2026    Sample Bank Ltd vs Pretend Housing Society",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "5",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "4706",
+      "caseYear": 2026,
+      "matchKey": "CC/4706/2026",
+      "parties": "Sample Bank Ltd vs Pretend Housing Society",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. Crl.Misc. No. 1002/2019    Fictional Traders Pvt Ltd vs Invented Motors",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "13",
+      "itemNo": "6",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "1002",
+      "caseYear": 2019,
+      "matchKey": "CRLMISC/1002/2019",
+      "parties": "Fictional Traders Pvt Ltd vs Invented Motors",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. CCCA No. 1005/2022    Fictional Traders Pvt Ltd vs Imaginary Textiles",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "13",
+      "itemNo": "7",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "1005",
+      "caseYear": 2022,
+      "matchKey": "CCCA/1005/2022",
+      "parties": "Fictional Traders Pvt Ltd vs Imaginary Textiles",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. CCCA No. 1280/2019    Invented Motors vs Sample Bank Ltd",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "13",
+      "itemNo": "8",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "1280",
+      "caseYear": 2019,
+      "matchKey": "CCCA/1280/2019",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. C.C. No. 8163/2023    Pretend Housing Society vs Made-up Farmer",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "13",
+      "itemNo": "9",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "8163",
+      "caseYear": 2023,
+      "matchKey": "CC/8163/2023",
+      "parties": "Pretend Housing Society vs Made-up Farmer",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "01.12.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["2", "13"],
+    "hallsUnreadable": []
+  }
+}

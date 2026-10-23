@@ -16,6 +16,8 @@ async function openAccount(page: Page, asUser: AsUser, query = '') {
   await asUser('owner');
   await page.goto(`/account${query}`);
   await expect(page.getByRole('heading', { level: 1, name: 'Account' })).toBeVisible();
+  // The title streams in after the page body; axe's document-title rule needs it present.
+  await expect.poll(() => page.title()).not.toBe('');
 }
 
 /** RFC 6238 TOTP (SHA-1, 30 s, 6 digits) from a base32 secret. */
@@ -87,6 +89,9 @@ test.describe('account security', () => {
       await expect(
         page.getByText('No passkeys yet. Add one to sign in with your fingerprint or screen lock.'),
       ).toBeVisible();
+      // Adding and removing a passkey refreshes the route, and the streamed `<title>` is briefly
+      // absent while it re-renders; the `@a11y` axe pass at the end of the test needs it back.
+      await expect.poll(() => page.title()).not.toBe('');
     },
   );
 

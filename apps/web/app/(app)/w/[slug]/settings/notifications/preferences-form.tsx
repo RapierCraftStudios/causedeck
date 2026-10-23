@@ -81,6 +81,7 @@ const CATEGORY_MESSAGE = {
   'reminder.hearing': 'reminderHearing',
   'proposal.new': 'proposalNew',
   'digest.daily': 'digestDaily',
+  'digest.end_of_day': 'digestEndOfDay',
   'system.notice': 'systemNotice',
 } as const satisfies Record<CategoryKey, string>;
 

@@ -6,7 +6,8 @@
 // are filtered by their own `created_at`, so a call and its spend that land on opposite sides of a
 // month boundary are reported in each period rather than hidden. Ledger rows without `ai_call_id`
 // (other keys, commits without an id) are not part of the reconciliation. Read-only; ids and
-// numbers only, never call content.
+// numbers only, never call content. Only `ok` calls take part: blocked and failed gateway calls
+// (#44) record a row but spend nothing, so they have no ledger row to match.
 import { schema, withWorkspace } from '@causedeck/db';
 import { sql, type SQL } from 'drizzle-orm';
 
@@ -50,7 +51,8 @@ export function reconcileAiCallsSql(workspaceId: string, period: UsagePeriod): S
     with calls as (
       select lower(c.id::text) as ai_call_id, c.cost_paise as cost
       from ${aiCall} c
-      where c.workspace_id = ${workspaceId} and c.created_at >= ${start} and c.created_at < ${end}
+      where c.workspace_id = ${workspaceId} and c.status = 'ok'
+        and c.created_at >= ${start} and c.created_at < ${end}
     ),
     spend as (
       select lower(e.metadata ->> 'ai_call_id') as ai_call_id, sum(e.amount) as amount

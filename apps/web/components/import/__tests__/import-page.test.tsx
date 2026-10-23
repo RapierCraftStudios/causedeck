@@ -73,16 +73,13 @@ describe('import page', () => {
     expect(state.props).toBeNull();
   });
 
-  it('gives an advocate the stepper, and only an owner may turn the channel on', async () => {
+  it('gives an advocate the stepper and the means to turn the channel on (workspace.manage)', async () => {
     state.channels = [];
     await open('advocate');
     expect(state.props).toMatchObject({
       channelEnabled: false,
-      canEnableChannel: false,
+      canEnableChannel: true,
       disclosureVersion: 'v-test',
     });
-    cleanup();
-    await open('owner');
-    expect(state.props).toMatchObject({ canEnableChannel: true });
   });
 });

@@ -243,6 +243,9 @@ catalogs:
     hono:
       specifier: 4.13.13
       version: 4.13.13
+    ical.js:
+      specifier: 2.2.1
+      version: 2.2.1
     icu-minify:
       specifier: 4.14.9
       version: 4.14.9
@@ -1031,6 +1034,9 @@ importers:
 
   packages/capture:
     dependencies:
+      '@causedeck/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
@@ -1040,6 +1046,9 @@ importers:
       '@causedeck/validators':
         specifier: workspace:*
         version: link:../validators
+      ical.js:
+        specifier: 'catalog:'
+        version: 2.2.1
     devDependencies:
       '@causedeck/config':
         specifier: workspace:*
@@ -7814,6 +7823,9 @@ packages:
 
   hyphen@1.6.6:
     resolution: {integrity: sha512-XtqmnT+b9n5MX+MsqluFAVTIenbtC25iskW0Z+jLd+awfhA+ZbWKWQMIvLJccGoa2bM1R6juWJ27cZxIFOmkWw==}
+
+  ical.js@2.2.1:
+    resolution: {integrity: sha512-yK/UlPbEs316igb/tjRgbFA8ZV75rCsBJp/hWOatpyaPNlgw0dGDmU+FoicOcwX4xXkeXOkYiOmCqNPFpNPkQg==}
 
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
@@ -16444,6 +16456,8 @@ snapshots:
       - supports-color
 
   hyphen@1.6.6: {}
+
+  ical.js@2.2.1: {}
 
   iconv-lite@0.4.24:
     dependencies:

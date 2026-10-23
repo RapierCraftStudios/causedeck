@@ -1,4 +1,4 @@
-# 0024. PWA share target and encrypted outbox
+# 0025. PWA share target and encrypted outbox
 
 ## Status
 

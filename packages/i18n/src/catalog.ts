@@ -20,6 +20,7 @@ export const NAMESPACES = [
   'courts-rosters',
   'matters',
   'matter-timeline',
+  'calendar',
   'inbox',
   'pwa',
   'errors',

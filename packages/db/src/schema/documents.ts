@@ -11,6 +11,7 @@
 import { sql } from 'drizzle-orm';
 import {
   check,
+  customType,
   foreignKey,
   index,
   integer,
@@ -57,6 +58,9 @@ export interface AnchorTranscriptSpan {
   speaker?: string;
 }
 
+/** Postgres `tsvector`; only ever a generated column, so it is read, never written. */
+const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });
+
 export const document = tenantTable(
   'document',
   {
@@ -70,10 +74,25 @@ export const document = tenantTable(
     textStatus: documentTextStatus('text_status').notNull().default('pending'),
     sourceCaptureId: uuid('source_capture_id'),
     matterId: uuid('matter_id'),
+    /** The document pipeline version that produced this row (#45); null for a manual document. */
+    pipelineVersion: text('pipeline_version'),
+    /** 0-1 confidence of `kind` (deterministic rule score or the model's); null before the pipeline ran. */
+    classificationConfidence: numeric('classification_confidence', { precision: 4, scale: 3 }),
+    /** Page numbers whose OCR confidence was under the floor. */
+    lowConfidencePages: jsonb('low_confidence_pages')
+      .$type<number[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    /** Why text extraction did not run (`ai_blocked`, `sensitive_matter`); with `text_status = 'skipped'`. */
+    textSkippedReason: text('text_skipped_reason'),
+    /** 64-bit simhash of the normalised text, 16 hex characters; the near-duplicate lookup key. */
+    textSimhash: text('text_simhash'),
     ...timestamps(),
   },
   (t) => [
     unique('document_workspace_id_id_uq').on(t.workspaceId, t.id),
+    // One document per capture and pipeline version: the pipeline's idempotency guard (#45).
+    unique('document_capture_pipeline_uq').on(t.workspaceId, t.sourceCaptureId, t.pipelineVersion),
     index('document_workspace_matter_idx').on(t.workspaceId, t.matterId),
     foreignKey({
       name: 'document_workspace_id_fk',
@@ -97,6 +116,14 @@ export const document = tenantTable(
     }).onDelete('set null'),
     check('document_sha256_chk', sql`sha256 ~ '^[0-9a-f]{64}$'`),
     check(
+      'document_classification_confidence_chk',
+      sql`classification_confidence is null or (classification_confidence >= 0 and classification_confidence <= 1)`,
+    ),
+    check(
+      'document_text_simhash_chk',
+      sql`text_simhash is null or text_simhash ~ '^[0-9a-f]{16}$'`,
+    ),
+    check(
       'document_not_superseding_self_chk',
       sql`supersedes_document_id is null or supersedes_document_id <> id`,
     ),
@@ -114,9 +141,21 @@ export const documentPage = tenantTable(
     textSource: text('text_source'),
     ocrConfidence: numeric('ocr_confidence', { precision: 4, scale: 3 }),
     lang: text('lang'),
+    /** `blob.key` of the 150 DPI WebP thumbnail (#45). */
+    imageKey: text('image_key'),
+    /** `blob.key` of the 1024 px WebP preview. */
+    previewKey: text('preview_key'),
+    /** Rendered thumbnail size in pixels. */
+    width: integer('width'),
+    height: integer('height'),
+    /** `simple`-config full-text vector of `text`: no stemming, so Tamil and Kannada match whole words. */
+    searchTsv: tsvector('search_tsv').generatedAlwaysAs(
+      sql`to_tsvector('simple', coalesce(text, ''))`,
+    ),
     ...timestamps(),
   },
   (t) => [
+    index('document_page_search_tsv_idx').using('gin', t.searchTsv),
     unique('document_page_document_page_uq').on(t.workspaceId, t.documentId, t.pageNo),
     foreignKey({
       name: 'document_page_workspace_id_fk',

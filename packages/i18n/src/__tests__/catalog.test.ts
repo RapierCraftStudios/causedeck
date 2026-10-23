@@ -117,3 +117,13 @@ describe('namespaced catalogs (#174)', () => {
     );
   });
 });
+
+describe('document pipeline recovery copy (#45, consumed by #48)', () => {
+  it('keeps the stable inbox.unreadable.copy key with the exact English sentence in every locale', () => {
+    expect(en.inbox.unreadable.copy).toBe(
+      "Couldn't read this. Retake, type the key line, or keep as an attachment.",
+    );
+    expect(ta.inbox.unreadable.copy.length).toBeGreaterThan(0);
+    expect(kn.inbox.unreadable.copy.length).toBeGreaterThan(0);
+  });
+});

@@ -4,6 +4,8 @@
 // step with the `capture` table.
 import { z } from 'zod';
 
+import { DOCUMENT_KINDS, DOCUMENT_TEXT_STATUSES } from './matter-graph';
+
 export const CAPTURE_CHANNELS = [
   'share',
   'upload',
@@ -75,3 +77,54 @@ export const CaptureCompleteResponseSchema = z.object({
   duplicateOf: z.uuid().optional(),
 });
 export type CaptureCompleteResponse = z.infer<typeof CaptureCompleteResponseSchema>;
+
+/**
+ * Why the document pipeline (#45) moved a capture to "Needs you". `unreadable` covers an empty scan,
+ * OCR under the confidence floor and a format with nothing to read.
+ */
+export const CAPTURE_NEEDS_YOU_REASONS = ['unreadable', 'password_protected', 'corrupt'] as const;
+export const CaptureNeedsYouReasonSchema = z.enum(CAPTURE_NEEDS_YOU_REASONS);
+export type CaptureNeedsYouReason = z.infer<typeof CaptureNeedsYouReasonSchema>;
+
+/**
+ * Events the document pipeline emits (#45). Payloads carry ids and classification, never text.
+ * `document.processed` feeds extraction (#46); `capture.classified` feeds cause-list ingestion
+ * (#57); `document.near_duplicate` is for the automation engine to merge or chain at L3.
+ */
+export const DocumentProcessedEventSchema = z.object({
+  type: z.literal('document.processed'),
+  workspaceId: z.uuid(),
+  captureId: z.uuid(),
+  documentId: z.uuid(),
+  kind: z.enum(DOCUMENT_KINDS),
+  language: z.string().nullable(),
+  textStatus: z.enum(DOCUMENT_TEXT_STATUSES),
+});
+export type DocumentProcessedEvent = z.infer<typeof DocumentProcessedEventSchema>;
+
+export const CaptureClassifiedEventSchema = z.object({
+  type: z.literal('capture.classified'),
+  workspaceId: z.uuid(),
+  captureId: z.uuid(),
+  documentId: z.uuid(),
+  kind: z.enum(DOCUMENT_KINDS),
+  confidence: z.number().min(0).max(1),
+  /** The capture is `ai_blocked`: subscribers must not send its text to a model (CA-10). */
+  aiBlocked: z.boolean(),
+});
+export type CaptureClassifiedEvent = z.infer<typeof CaptureClassifiedEventSchema>;
+
+export const DocumentNearDuplicateEventSchema = z.object({
+  type: z.literal('document.near_duplicate'),
+  workspaceId: z.uuid(),
+  documentId: z.uuid(),
+  ofDocumentId: z.uuid(),
+});
+export type DocumentNearDuplicateEvent = z.infer<typeof DocumentNearDuplicateEventSchema>;
+
+export const DocumentPipelineEventSchema = z.discriminatedUnion('type', [
+  DocumentProcessedEventSchema,
+  CaptureClassifiedEventSchema,
+  DocumentNearDuplicateEventSchema,
+]);
+export type DocumentPipelineEvent = z.infer<typeof DocumentPipelineEventSchema>;

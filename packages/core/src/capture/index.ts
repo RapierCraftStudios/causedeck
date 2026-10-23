@@ -40,7 +40,10 @@ export {
   aiStepsAllowed,
   closeReviewedCapture,
   finishCapture,
+  runCapturePipeline,
   runCaptureProcess,
+  type CapturePipelineDeps,
+  type CapturePipelineOutcome,
   type CaptureProcessOutcome,
 } from './process.ts';
 export {

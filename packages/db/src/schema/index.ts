@@ -50,6 +50,7 @@ export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corp
 export {
   NO_CAPTCHA_KINDS,
   SOURCE_ACCESS_MODES,
+  SOURCE_DATA_CLASSES,
   SOURCE_KINDS,
   SOURCE_MAX_TIERS,
   SOURCE_REVIEW_STATUSES,
@@ -59,6 +60,7 @@ export {
   sourceMaxTier,
   sourceReviewStatus,
   type SourceAccessMode,
+  type SourceDataClass,
   type SourceKind,
   type SourceMaxTier,
   type SourceReviewStatus,

@@ -14,6 +14,13 @@ import {
   withoutWorkspaceImportBan,
 } from './boundaries.js';
 
+/** The AlterLab SDK is imported only by `packages/fetch` (#479, D-048); everything else uses its fetcher. */
+export const alterlabImportPattern = {
+  group: ['alterlab', 'alterlab/**'],
+  message:
+    'Read external sources through `@causedeck/fetch`; only packages/fetch imports `alterlab`.',
+};
+
 /** Deep imports into another workspace's sources bypass its public `exports`. */
 export const deepImportPatterns = [
   {
@@ -31,13 +38,6 @@ export const deepImportPatterns = [
 export const appImportPattern = {
   group: APP_NAMES.flatMap((app) => [`@causedeck/${app}`, `@causedeck/${app}/**`]),
   message: 'Packages must not import apps (spike §2 dependency rules).',
-};
-
-/** The AlterLab SDK is imported only by `packages/fetch` (#479, D-048); everything else uses its fetcher. */
-export const alterlabImportPattern = {
-  group: ['alterlab', 'alterlab/**'],
-  message:
-    'Read external sources through `@causedeck/fetch`; only packages/fetch imports `alterlab`.',
 };
 
 /** Server env holds secrets; client modules use `@causedeck/config/env/client` instead. */
@@ -72,15 +72,17 @@ const externalFetchRestrictions = [
 
 // The shared `no-restricted-syntax` list: the logger rules below (#13) plus the external-fetch ban,
 // so `next.js` and the other configs that spread it keep both.
-export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
-  [
-    `${call} > MemberExpression.arguments[property.name=${CONTENT_NAMES}]`,
-    `${call} > Identifier.arguments[name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > SpreadElement > MemberExpression.argument[property.name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > SpreadElement > Identifier.argument[name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
-  ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
-).concat(externalFetchRestrictions);
+export const loggerContentRestrictions = loggerCalls
+  .flatMap((call) =>
+    [
+      `${call} > MemberExpression.arguments[property.name=${CONTENT_NAMES}]`,
+      `${call} > Identifier.arguments[name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > SpreadElement > MemberExpression.argument[property.name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > SpreadElement > Identifier.argument[name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
+    ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
+  )
+  .concat(externalFetchRestrictions);
 
 /** `withoutWorkspace` (#19) import ban; defined in boundaries.js so the app→db blocks reuse it. */
 export { withoutWorkspaceImportBan };

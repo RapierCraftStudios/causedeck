@@ -35,8 +35,8 @@ function loadConfig(file: string): LoadedConfig {
 }
 
 describe('workspace tsconfigs', () => {
-  it('covers all 5 apps and 17 packages', () => {
-    expect(workspaceTsconfigs).toHaveLength(22);
+  it('covers all 5 apps and 18 packages', () => {
+    expect(workspaceTsconfigs).toHaveLength(23);
   });
 
   describe.each(workspaceTsconfigs.map((file) => [path.relative(repoRoot, file), file]))(

@@ -113,7 +113,9 @@ describe('fetchSource: registry first', () => {
     await expect(
       fetcher.fetchSource('in.nclt.bengaluru', 'https://evil.example/x'),
     ).rejects.toMatchObject({ reason: 'url_outside_source' });
-    await expect(fetcher.fetchSource('in.nclt.bengaluru', 'file:///etc/passwd')).rejects.toMatchObject({
+    await expect(
+      fetcher.fetchSource('in.nclt.bengaluru', 'file:///etc/passwd'),
+    ).rejects.toMatchObject({
       reason: 'invalid_url',
     });
     expect(requests).toEqual([]);
@@ -247,10 +249,7 @@ describe('fetchSource: the captcha tier', () => {
   });
 
   it('allows captcha without delegation for a counsel-cleared bulk source', async () => {
-    const { fetcher, requests } = setup(
-      { captchaBulkCleared: true },
-      { tierUsed: 'captcha' },
-    );
+    const { fetcher, requests } = setup({ captchaBulkCleared: true }, { tierUsed: 'captcha' });
 
     await fetcher.fetchSource('in.nclt.bengaluru', URL_OK);
 
@@ -258,7 +257,10 @@ describe('fetchSource: the captcha tier', () => {
   });
 
   it('leaves the stored tier as the cap for a news or licensed source', async () => {
-    const { fetcher, requests } = setup({ kind: 'news', maxTier: 'captcha' }, { tierUsed: 'captcha' });
+    const { fetcher, requests } = setup(
+      { kind: 'news', maxTier: 'captcha' },
+      { tierUsed: 'captcha' },
+    );
 
     await fetcher.fetchSource('in.nclt.bengaluru', URL_OK);
 

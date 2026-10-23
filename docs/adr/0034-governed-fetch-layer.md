@@ -21,11 +21,11 @@ Every external read (court pages, notices, news, licensed feeds) must obey the s
 
 ## Considered options
 
-| Option                                                        | Verdict  | Reason                                                                         |
-| ------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------ |
-| `packages/fetch` with injected registry, provider, clock, sinks | Chosen   | One choke point, no import cycle, testable with fakes                           |
-| Each adapter calls AlterLab itself                            | Rejected | No single place to enforce clearance, caps or the kill switch                   |
-| Store `captcha` on court rows when allowed                    | Rejected | Conflicts with `source_no_captcha_chk`; a stored raise outlives its clearance   |
+| Option                                                          | Verdict  | Reason                                                                        |
+| --------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------- |
+| `packages/fetch` with injected registry, provider, clock, sinks | Chosen   | One choke point, no import cycle, testable with fakes                         |
+| Each adapter calls AlterLab itself                              | Rejected | No single place to enforce clearance, caps or the kill switch                 |
+| Store `captcha` on court rows when allowed                      | Rejected | Conflicts with `source_no_captcha_chk`; a stored raise outlives its clearance |
 
 ## Decision
 

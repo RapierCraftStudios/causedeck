@@ -32,7 +32,10 @@ const stripComments = (source: string): string =>
 const files = ['apps', 'packages']
   .flatMap((dir) => sources(path.join(root, dir)))
   .filter((file) => !file.startsWith(path.join(root, 'packages', 'fetch') + path.sep))
-  .map((file) => ({ file: path.relative(root, file), code: stripComments(readFileSync(file, 'utf8')) }));
+  .map((file) => ({
+    file: path.relative(root, file),
+    code: stripComments(readFileSync(file, 'utf8')),
+  }));
 
 describe('external reads', () => {
   it('scans the workspace', () => {

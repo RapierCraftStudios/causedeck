@@ -118,7 +118,7 @@ describe('text-layer PDF', () => {
     expect(outcome.status).toBe('ready');
     // Text extraction plus rendering all 20 pages must fit the render budget.
     expect(seconds).toBeLessThan(20);
-  });
+  }, 30_000); // budgets are 5 s + 20 s, asserted inside; the default 5 s test timeout would cut them off
 
   it('never executes PDF JavaScript', async () => {
     const alerts: string[] = [];

@@ -104,7 +104,12 @@ export interface TextStatusInput {
 }
 
 /** `layer`, `ocr`, `skipped` (OCR was needed and not allowed) or `failed` (OCR found nothing). */
-export function textStatusOf({ pages, weak, ocrRan, skipReason }: TextStatusInput): DocumentTextStatus {
+export function textStatusOf({
+  pages,
+  weak,
+  ocrRan,
+  skipReason,
+}: TextStatusInput): DocumentTextStatus {
   const hasText = pages.some((page) => page.text !== '');
   if (weak.length === 0) return hasText ? 'layer' : 'failed';
   if (skipReason !== null) return 'skipped';
@@ -117,8 +122,7 @@ export function lowConfidencePages(pages: readonly PageDraft[], floor: number): 
   return pages
     .filter(
       (page) =>
-        page.textSource === 'ocr' &&
-        ((page.ocrConfidence ?? 0) < floor || page.text === ''),
+        page.textSource === 'ocr' && ((page.ocrConfidence ?? 0) < floor || page.text === ''),
     )
     .map((page) => page.pageNo);
 }

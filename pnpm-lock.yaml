@@ -354,6 +354,9 @@ catalogs:
     recharts:
       specifier: 3.10.1
       version: 3.10.1
+    regenerator-runtime:
+      specifier: 0.14.1
+      version: 0.14.1
     sharp:
       specifier: 0.35.5
       version: 0.35.5
@@ -1400,6 +1403,9 @@ importers:
       pdf-lib:
         specifier: 'catalog:'
         version: 1.17.1
+      regenerator-runtime:
+        specifier: 'catalog:'
+        version: 0.14.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -9374,6 +9380,9 @@ packages:
 
   reflect-metadata@0.2.2:
     resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
+
+  regenerator-runtime@0.14.1:
+    resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
 
   regjsparser@0.13.4:
     resolution: {integrity: sha512-EWV80YgFaVgFrjGCAsV7oybp4GOxbls5RzBg8OB0nKEVXsBJR1JlV8Di1JhCROg3MzTfe1RI8yitIm1eOs68iA==}
@@ -18067,6 +18076,8 @@ snapshots:
   redux@5.0.1: {}
 
   reflect-metadata@0.2.2: {}
+
+  regenerator-runtime@0.14.1: {}
 
   regjsparser@0.13.4:
     dependencies:

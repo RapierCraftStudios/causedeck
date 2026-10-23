@@ -22,6 +22,7 @@
     "docx": "catalog:",
     "eslint": "catalog:",
     "pdf-lib": "catalog:",
+    "regenerator-runtime": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

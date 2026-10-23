@@ -6,6 +6,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
+// @pdf-lib/fontkit's bundle shapes Indic syllables with a Babel-transpiled generator that needs a
+// global regeneratorRuntime; load it before fontkit so Kannada and Tamil fixtures can be drawn.
+import 'regenerator-runtime/runtime.js';
 import fontkit from '@pdf-lib/fontkit';
 import { Document, Packer, Paragraph } from 'docx';
 import { PDFDocument, PDFName, PDFString, StandardFonts, type PDFFont } from 'pdf-lib';
@@ -109,7 +112,14 @@ export async function indicPdf(
   englishLine?: string,
 ): Promise<Uint8Array> {
   const pdf = await newPdf();
-  const noto = await pdf.embedFont(await readBytes(font(script === 'tamil' ? 'tamil' : 'kannada')));
+  // Subset: pdf-lib cannot write the full Noto Sans Kannada WOFF (fontkit 1.1.1 overruns a table);
+  // the subset carries only the glyphs drawn, with a ToUnicode map, which is all the text layer needs.
+  const noto = await pdf.embedFont(
+    await readBytes(font(script === 'tamil' ? 'tamil' : 'kannada')),
+    {
+      subset: true,
+    },
+  );
   const helvetica = await pdf.embedFont(StandardFonts.Helvetica);
   const page = pdf.addPage(PAGE);
   const y = drawLines(page, noto, lines);

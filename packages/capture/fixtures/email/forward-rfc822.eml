@@ -1,0 +1,33 @@
+From: K. Kalpitham <k.kalpitham@example.test>
+To: intake-fictional@example.test
+Subject: Fwd: Cause List for 23.10.2026
+Date: Thu, 22 Oct 2026 19:10:00 +0530
+Message-ID: <rfc822-fwd@example.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="rfc822-fictional"
+
+--rfc822-fictional
+Content-Type: text/plain; charset=utf-8
+
+Attached for the diary. (FICTIONAL - SYNTHETIC FIXTURE)
+
+--rfc822-fictional
+Content-Type: message/rfc822
+Content-Disposition: attachment; filename="cause-list.eml"
+
+From: AIMS Registry <aims-registry@example.test>
+To: K. Kalpitham <k.kalpitham@example.test>
+Subject: Cause List for 23.10.2026
+Date: Thu, 22 Oct 2026 18:05:00 +0530
+Message-ID: <rfc822-inner@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+COURT No. 4
+THE HONOURABLE MRS. JUSTICE B. EXAMPLE
+FOR ORDERS
+4. Arb O.P.No.12 of 2026
+   K. Imaginary Selvam vs Fictional Mills Ltd.
+   Mr. K. Kalpitham (MS/4567/2004)
+
+--rfc822-fictional--

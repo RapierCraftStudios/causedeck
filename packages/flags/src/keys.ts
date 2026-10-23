@@ -59,7 +59,7 @@ export const FLAGS = {
     'court.live-tracking',
     'Live cause-list item tracking.',
     true,
-    [35, 120],
+    [35, 120, 493],
   ),
   'court.khc-a2': flag(
     'court.khc-a2',

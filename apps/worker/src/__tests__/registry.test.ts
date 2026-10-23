@@ -151,6 +151,7 @@ describe('enqueue', () => {
       'extraction.extract-order',
       'import.batch',
       'import.file',
+      'system.corpus.poll',
     ]);
   });
 });

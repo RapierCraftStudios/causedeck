@@ -30,6 +30,7 @@ describe('registerSchedules', () => {
       'system.support.session-expire',
       'system.deletion.tick',
       'system.capture.retention',
+      'system.corpus.poll',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');

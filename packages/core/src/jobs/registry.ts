@@ -19,6 +19,7 @@ import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
+import { corpusPoll } from './definitions/corpus-poll.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
@@ -175,6 +176,7 @@ export const registry = createRegistry([
   extractOrder,
   importBatch,
   importFile,
+  corpusPoll,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -214,6 +216,7 @@ export type JobMap = RegistryMap<
     typeof extractOrder,
     typeof importBatch,
     typeof importFile,
+    typeof corpusPoll,
   ]
 >;
 export type JobName = keyof JobMap;

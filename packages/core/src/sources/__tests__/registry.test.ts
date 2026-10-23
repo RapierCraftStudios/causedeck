@@ -3,7 +3,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
-import { createDb, schema, type Database } from '@causedeck/db';
+import { createDb, schema, withUser, type Database } from '@causedeck/db';
 import { closeTestDb, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -127,10 +127,10 @@ describe('policyFor and staff changes', () => {
         updateSource(db, actor, 'test.court', { maxTier: 'captcha' }),
       ).rejects.toMatchObject({ code: 'INVALID' });
       await updateSource(db, actor, 'test.court', { rateLimitPerMinute: 9 });
-      const events = await tx
-        .select()
-        .from(schema.auditEvent)
-        .where(eq(schema.auditEvent.action, 'source.changed'));
+      // Account-level events are visible only to their actor (RLS `account_self`).
+      const events = await withUser(tx, { userId: actor.userId }, (s) =>
+        s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'source.changed')),
+      );
       const last = events.at(-1);
       expect(last?.actorUserId).toBe(actor.userId);
       expect(last?.metadata).toMatchObject({

@@ -63,6 +63,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'source',
   'contributed_document',
   'fetch_log',
+  'judgment',
   'cause_list_publication',
 ];
 

@@ -46,6 +46,7 @@ export {
   type FlagChangeRequestStatus,
 } from './flags.ts';
 export { fetchLog } from './fetch-log.ts';
+export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
 export {
   NO_CAPTCHA_KINDS,
   SOURCE_ACCESS_MODES,

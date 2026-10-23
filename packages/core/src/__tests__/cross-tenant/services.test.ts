@@ -953,6 +953,36 @@ const CASES: Record<string, Case> = {
     expect((await aWorkspace(f))?.slug).toBe(f.a.slug);
   },
   resolveSlug: () => Promise.resolve(),
+  verifyCitation: async (f) => {
+    const citation = `2026:MHC:${String(900000 + Math.floor(Math.random() * 99999))}`;
+    await f.tx.insert(schema.judgment).values({
+      sourceId: 'in.mhc.judgments',
+      court: 'MHC',
+      neutralCitation: citation,
+      sha256: randomUUID().replaceAll('-', ''),
+      provenance: {
+        url: 'https://mhc.example/j/xt.pdf',
+        fetchedAt: '2026-10-23T00:00:00.000Z',
+        sha256: 'xt',
+        sourceId: 'in.mhc.judgments',
+        sourceVersion: 'v1',
+        tierUsed: 'http',
+        costDollars: 0,
+      },
+      pageText: [{ pageNo: 1, text: `${citation}\nORDER` }],
+    });
+    const before = await aWorkspace(f);
+    // The corpus is global: A's and B's scopes see the same record, and nothing of A's changes.
+    const asA = await inWorkspace(f.tx, f.a.id, (s) => core.verifyCitation(citation, { db: s }));
+    const asB = await f.asB((s) => core.verifyCitation(citation, { db: s }));
+    expect(asA).toMatchObject({ status: 'VERIFIED', citation, court: 'MHC' });
+    expect(asB).toEqual(asA);
+    expect(await core.verifyCitation('2026:MHC:1', { db: f.tx })).toMatchObject({
+      status: 'UNVERIFIED',
+      reason: 'not_in_corpus',
+    });
+    expect(await aWorkspace(f)).toEqual(before);
+  },
   createWorkspace: async (f) => {
     const before = await aMembers(f);
     const created = await core.createWorkspace(f.tx, { userId: f.ub, input: { name: f.a.name } });

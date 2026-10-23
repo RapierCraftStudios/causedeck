@@ -90,11 +90,11 @@ describe('sourceOpsOverview', () => {
       const [row] = await sourceOpsOverview(tx, NOW, undefined, id);
       expect(row?.day).toMatchObject({ fetches: 4, errors: 2, errorRate: 0.5, captchaCalls: 1 });
       expect(row?.day.captchaSolveRate).toBe(1);
-      expect(row?.day.costDollars).toBeCloseTo(0.21);
+      expect(row?.day.costDollars).toBeCloseTo(0.12);
       expect(row?.day.tierMix).toEqual({ http: 2, headless: 0, proxy: 0, captcha: 1 });
       expect(row?.week).toMatchObject({ fetches: 6, errors: 3, captchaCalls: 3 });
       expect(row?.week.captchaSolveRate).toBeCloseTo(2 / 3);
-      expect(row?.week.costDollars).toBeCloseTo(0.31);
+      expect(row?.week.costDollars).toBeCloseTo(0.32);
       expect(row?.lastSuccessAt).toEqual(hoursAgo(1));
       expect(row?.freshnessHours).toBeCloseTo(1);
       expect(row?.slaHours).toBe(FRESHNESS_SLA_HOURS.court);

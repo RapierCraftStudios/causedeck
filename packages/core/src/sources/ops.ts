@@ -185,7 +185,9 @@ export async function sourceOpsOverview(
         sourceId === undefined ? undefined : eq(fetchLog.sourceId, sourceId),
       ),
     )
-    .groupBy(fetchLog.sourceId, fetchLog.tier, dayExpr, recentExpr);
+    // By position: the select list binds the 24h bound as its own parameter, so Postgres cannot
+    // match a repeated expression to it.
+    .groupBy(sql`1, 2, 3, 4`);
 
   const lastSuccess = await db
     .select({ sourceId: fetchLog.sourceId, at: max(fetchLog.fetchedAt) })

@@ -41,6 +41,11 @@ function uploadOrigin(): string | undefined {
 }
 
 export function proxy(request: NextRequest): NextResponse {
+  // A share that reached the server (no service worker yet) has no page to POST to: the files were
+  // never read, so send the person to the share screen's "share from another app" empty state.
+  if (request.method === 'POST' && request.nextUrl.pathname === '/share-target') {
+    return NextResponse.redirect(new URL('/share-target', request.url), 303);
+  }
   const nonce = createNonce();
   const csp = buildCsp(nonce, { dev: isDev(), uploadOrigin: uploadOrigin() });
 
@@ -84,7 +89,8 @@ export const config = {
   matcher: [
     {
       // Static assets and the health probes need neither a nonce nor a locale.
-      source: '/((?!_next/static|_next/image|favicon.ico|healthz|readyz).*)',
+      source:
+        '/((?!_next/static|_next/image|favicon.ico|healthz|readyz|sw.js|manifest.webmanifest|icons/|screenshots/).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

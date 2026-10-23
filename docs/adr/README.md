@@ -33,7 +33,8 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0023](0023-automation-ladder-and-undo.md) | Automation ladder, proposals and undo cascades | Proposed | 2026-10-22 | — |
 | [0024](0024-ics-import-and-private-feed.md) | ICS import and the private calendar feed | Proposed | 2026-10-23 | — |
 | [0025](0025-document-pipeline.md) | Document pipeline: ports, text layer first, OCR through the gateway | Proposed | 2026-10-23 | — |
-| [0026](0026-whatsapp-import-browser-parsing.md) | WhatsApp import: parse in the browser, upload the selection | Proposed | 2026-10-23 | — |
+| [0026](0026-pwa-share-target-and-outbox.md) | PWA share target and encrypted outbox | Proposed | 2026-10-23 | — |
+| [0027](0027-whatsapp-import-browser-parsing.md) | WhatsApp import: parse in the browser, upload the selection | Proposed | 2026-10-23 | — |
 
 ## Statuses
 

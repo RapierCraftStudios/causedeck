@@ -3174,6 +3174,121 @@
       "open": "Shortcuts"
     }
   },
+  "pwa": {
+    "share": {
+      "metaTitle": "Share to CauseDeck",
+      "title": "Saved on this device",
+      "savedOnline": "Saved. Uploading when you're online.",
+      "savedOffline": "Saved. Will upload when you're back online.",
+      "allSent": "Uploaded. Your files are in the inbox.",
+      "uploadingOf": "Uploading {current} of {total}",
+      "filesLabel": "Files in this share",
+      "progressLabel": "Upload progress",
+      "empty": {
+        "title": "Nothing shared yet",
+        "body": "Share a file from another app to add it here.",
+        "upload": "Upload files"
+      },
+      "status": {
+        "queued": "Waiting to upload",
+        "uploading": "Uploading",
+        "failed": "Couldn't upload. Retry",
+        "sent": "Uploaded"
+      },
+      "reason": {
+        "too_large": "The file is too large.",
+        "unsupported_type": "This file type isn't supported.",
+        "forbidden": "You aren't allowed to add files here.",
+        "not_found": "That workspace wasn't found.",
+        "invalid": "The file was rejected.",
+        "network": "No connection.",
+        "other": "The server had a problem."
+      },
+      "retry": "Retry",
+      "uploadNow": "Upload now",
+      "dataSaver": "Data saver is on, so uploads wait until you tap Upload now.",
+      "workspace": {
+        "label": "Save to workspace",
+        "hint": "You belong to more than one workspace. Pick where these files go."
+      },
+      "matter": {
+        "label": "Matter (optional)",
+        "none": "No matter",
+        "hint": "A hint only. You confirm where it belongs in the inbox."
+      },
+      "openInbox": "Open Inbox",
+      "error": {
+        "full": "The space for waiting files on this device is full. Upload or remove some, then share again.",
+        "failed": "Couldn't save this share on the device. Try sharing again."
+      },
+      "signIn": {
+        "title": "You need to sign in to save this share.",
+        "body": "Your files are kept on this device and nothing is sent until you sign in.",
+        "action": "Sign in"
+      },
+      "channel": {
+        "title": "Where your data goes",
+        "body": "Files you share are stored only in India, scanned, and read to suggest dates and notes for you to confirm. They are never used to train AI. Sharing is off until you turn it on.",
+        "enable": "Enable sharing",
+        "enabling": "Enabling",
+        "ask": "Sharing is off for this workspace. Ask an owner to enable it. Your files stay on this device until then.",
+        "failed": "Couldn't enable sharing. Try again."
+      }
+    },
+    "outbox": {
+      "indicator": {
+        "label": "Waiting to upload",
+        "waiting": "{count, plural, one {# waiting to upload} other {# waiting to upload}}",
+        "uploading": "Uploading {current} of {total}",
+        "failed": "{count, plural, one {# failed, tap to retry} other {# failed, tap to retry}}"
+      },
+      "sheet": {
+        "title": "Waiting to upload",
+        "description": "Files saved on this device. They upload when you're online.",
+        "empty": "Nothing is waiting to upload.",
+        "age": "Added {when}",
+        "retry": "Retry",
+        "remove": "Remove",
+        "removeLabel": "Remove {name} from this device",
+        "retryLabel": "Retry {name}",
+        "uploadNow": "Upload now",
+        "capWarn": "Space for waiting files on this device is almost full ({percent}%).",
+        "capFull": "The space for waiting files on this device is full. New files can't be added until some upload."
+      }
+    },
+    "install": {
+      "title": "Install CauseDeck",
+      "body": "Add it to your home screen, then share files from WhatsApp or Gmail straight into CauseDeck.",
+      "install": "Install",
+      "dismiss": "Not now",
+      "ios": {
+        "body": "On iPhone and iPad: tap Share, then Add to Home Screen. Sharing into CauseDeck isn't available on iOS, so use Upload files.",
+        "upload": "Upload files"
+      }
+    },
+    "update": {
+      "ready": "A new version is ready",
+      "now": "Update now"
+    },
+    "offline": {
+      "metaTitle": "Offline",
+      "title": "You're offline",
+      "intro": "Here is what works without a connection.",
+      "works": {
+        "title": "Works offline",
+        "saved": "Viewing items saved on this device",
+        "capture": "Capturing: shared and picked files are saved on this device"
+      },
+      "doesNot": {
+        "title": "Needs a connection",
+        "items": "Live court data, search, and anything that sends or changes data"
+      },
+      "outbox": {
+        "none": "Nothing is waiting to upload.",
+        "some": "{count, plural, one {# file waiting to upload} other {# files waiting to upload}}"
+      }
+    }
+  },
   "whatsappImport": {
     "metaTitle": "Import a WhatsApp chat",
     "title": "Import a WhatsApp chat",

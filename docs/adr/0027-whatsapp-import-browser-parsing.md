@@ -1,4 +1,4 @@
-# 0026. WhatsApp import: parse in the browser, upload the selection
+# 0027. WhatsApp import: parse in the browser, upload the selection
 
 ## Status
 
@@ -10,7 +10,7 @@ Proposed
 
 ## Context
 
-PRD CA-6 lets a lawyer bring an internal WhatsApp chat (chambers, juniors, clerks, co-counsel) into the capture inbox. Client conversations stay out for now, and a chat export holds identity numbers, bank details and passwords that must never be stored. Parts 1 and 2 of #55 built the isomorphic parser and exclusion rules (#525) and the server intake, structuring and upload route (#526, [ADR 0021](0021-capture-inbox-and-upload-pipeline.md)). This ADR records how part 3 (#527), the import UI, is built. The issue called it ADR 0024; 0024 and 0025 were taken on the base, so it is 0026.
+PRD CA-6 lets a lawyer bring an internal WhatsApp chat (chambers, juniors, clerks, co-counsel) into the capture inbox. Client conversations stay out for now, and a chat export holds identity numbers, bank details and passwords that must never be stored. Parts 1 and 2 of #55 built the isomorphic parser and exclusion rules (#525) and the server intake, structuring and upload route (#526, [ADR 0021](0021-capture-inbox-and-upload-pipeline.md)). This ADR records how part 3 (#527), the import UI, is built. The issue called it ADR 0024; 0024 to 0026 were taken on the base, so it is 0027.
 
 ## Decision drivers
 

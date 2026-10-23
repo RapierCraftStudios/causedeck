@@ -3175,6 +3175,121 @@ export type Messages = {
       open: string;
     };
   };
+  pwa: {
+    share: {
+      metaTitle: string;
+      title: string;
+      savedOnline: string;
+      savedOffline: string;
+      allSent: string;
+      uploadingOf: string;
+      filesLabel: string;
+      progressLabel: string;
+      empty: {
+        title: string;
+        body: string;
+        upload: string;
+      };
+      status: {
+        queued: string;
+        uploading: string;
+        failed: string;
+        sent: string;
+      };
+      reason: {
+        too_large: string;
+        unsupported_type: string;
+        forbidden: string;
+        not_found: string;
+        invalid: string;
+        network: string;
+        other: string;
+      };
+      retry: string;
+      uploadNow: string;
+      dataSaver: string;
+      workspace: {
+        label: string;
+        hint: string;
+      };
+      matter: {
+        label: string;
+        none: string;
+        hint: string;
+      };
+      openInbox: string;
+      error: {
+        full: string;
+        failed: string;
+      };
+      signIn: {
+        title: string;
+        body: string;
+        action: string;
+      };
+      channel: {
+        title: string;
+        body: string;
+        enable: string;
+        enabling: string;
+        ask: string;
+        failed: string;
+      };
+    };
+    outbox: {
+      indicator: {
+        label: string;
+        waiting: string;
+        uploading: string;
+        failed: string;
+      };
+      sheet: {
+        title: string;
+        description: string;
+        empty: string;
+        age: string;
+        retry: string;
+        remove: string;
+        removeLabel: string;
+        retryLabel: string;
+        uploadNow: string;
+        capWarn: string;
+        capFull: string;
+      };
+    };
+    install: {
+      title: string;
+      body: string;
+      install: string;
+      dismiss: string;
+      ios: {
+        body: string;
+        upload: string;
+      };
+    };
+    update: {
+      ready: string;
+      now: string;
+    };
+    offline: {
+      metaTitle: string;
+      title: string;
+      intro: string;
+      works: {
+        title: string;
+        saved: string;
+        capture: string;
+      };
+      doesNot: {
+        title: string;
+        items: string;
+      };
+      outbox: {
+        none: string;
+        some: string;
+      };
+    };
+  };
   whatsappImport: {
     metaTitle: string;
     title: string;

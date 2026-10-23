@@ -115,6 +115,7 @@ catalog:
   d3-hierarchy: 3.1.2
   d3-shape: 3.2.0
   date-fns: 4.4.0
+  dexie: 4.4.6
   docx: 9.5.1
   drizzle-kit: 0.31.11
   drizzle-orm: 0.45.4
@@ -166,6 +167,7 @@ catalog:
   react-resizable-panels: 4.14.5
   recharts: 3.10.1
   regenerator-runtime: 0.14.1
+  serwist: 9.5.13
   sonner: 2.0.8
   sharp: 0.35.5
   storybook: 9.1.21

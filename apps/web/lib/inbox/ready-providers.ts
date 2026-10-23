@@ -5,7 +5,8 @@
 // in the inbox sends, files or pays anything.
 //
 // The locally queued captures of the offline outbox (#50) come through the same kind of registry on
-// the client (`registerOutboxSource`), empty until the outbox exists.
+// the client (`registerOutboxSource`); `components/pwa/outbox-indicator.tsx` registers the device's
+// outbox there, so queued files show in the inbox's Processing list.
 
 export type ReadyAction =
   | { id: string; kind: 'copy'; text: string }
@@ -62,7 +63,7 @@ export async function markReadySent(
   return true;
 }
 
-/** A capture saved on this device and waiting to upload (#50 fills this). */
+/** A capture saved on this device and waiting to upload (the outbox, #50). */
 export interface LocalCapture {
   id: string;
   channel: string;

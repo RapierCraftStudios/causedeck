@@ -161,8 +161,27 @@ describe('proxy', () => {
     const source = new RegExp(`^${config.matcher[0]?.source ?? ''}$`);
     expect(source.test('/sign-in')).toBe(true);
     expect(source.test('/')).toBe(true);
-    for (const path of ['/_next/static/chunks/a.js', '/_next/image', '/healthz', '/readyz']) {
+    for (const path of [
+      '/_next/static/chunks/a.js',
+      '/_next/image',
+      '/healthz',
+      '/readyz',
+      '/sw.js',
+      '/manifest.webmanifest',
+      '/icons/icon-192.png',
+    ]) {
       expect(source.test(path)).toBe(false);
     }
+    // The share screen is a page: it still gets a nonce and a locale.
+    expect(source.test('/share-target')).toBe(true);
+    expect(source.test('/offline')).toBe(true);
+  });
+
+  it('sends a share that reached the server (no service worker yet) back to the share screen (#50)', () => {
+    const response = proxy(
+      new NextRequest('https://app.example.test/share-target', { method: 'POST' }),
+    );
+    expect(response.status).toBe(303);
+    expect(new URL(response.headers.get('location') ?? '').pathname).toBe('/share-target');
   });
 });

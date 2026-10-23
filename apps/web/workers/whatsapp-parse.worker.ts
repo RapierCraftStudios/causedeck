@@ -1,4 +1,4 @@
-// WhatsApp export parsing off the main thread (#527, ADR 0026): unzip with fflate, parse with the
+// WhatsApp export parsing off the main thread (#527, ADR 0027): unzip with fflate, parse with the
 // isomorphic `@causedeck/capture/whatsapp` entry (never the package root: it pulls server code) and
 // flag the exclusion rules. The worker has no network access path: it only posts results back.
 import { ParseChatError, parseChat } from '../lib/inbox/whatsapp-import/parse-chat.ts';

@@ -1,7 +1,7 @@
 'use client';
 // The WhatsApp import flow (#527, PRD CA-6): chat type → export file → in-browser parse (Web Worker)
 // → preview and selection → upload of the selected messages only. The raw file, the chat title and
-// every unselected or held-back message stay in this browser (ADR 0026).
+// every unselected or held-back message stay in this browser (ADR 0027).
 import { Alert } from '@causedeck/ui/alert';
 import { Button } from '@causedeck/ui/button';
 import { Progress } from '@causedeck/ui/progress';

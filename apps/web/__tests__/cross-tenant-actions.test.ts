@@ -107,6 +107,7 @@ const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
@@ -191,6 +192,12 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
   deleteRecordingAction: inbox,
+  startImportBatchAction: importer,
+  addImportFilesAction: importer,
+  importProgressAction: importer,
+  buildImportPlanAction: importer,
+  applyImportPlanAction: importer,
+  undoImportBatchAction: importer,
   createCalendarFeedAction: calendar,
   rotateCalendarFeedAction: calendar,
   revokeCalendarFeedAction: calendar,
@@ -518,6 +525,22 @@ function inputs(workspaceId: string): Record<string, unknown> {
     discardCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id },
     pinCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id, pinned: true },
     deleteRecordingAction: { workspaceId, captureId: t.a.rows.capture?.id },
+    // Bootstrap import (#550): ub may not start a batch in A, nor add files to, build, apply, undo or read A's batch.
+    startImportBatchAction: { workspaceId },
+    addImportFilesAction: {
+      workspaceId,
+      batchId: t.a.rows.import_batch?.id,
+      captureIds: [t.a.rows.capture?.id],
+    },
+    importProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    buildImportPlanAction: {
+      workspaceId,
+      batchId: t.a.rows.import_batch?.id,
+      identifiers: { enrolmentNumbers: ['MS/9/1900'], aliases: [] },
+      confirmIdentifiers: true,
+    },
+    applyImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    undoImportBatchAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     // Calendar (#53): ub, owner of B, may not touch A's feed or review A's imported events.
     createCalendarFeedAction: {
       workspaceId,

@@ -2,7 +2,7 @@
 // (the shape is recorded in the golden fixtures; ADR 0019 style): a header row naming the hall and
 // item columns, then `hall | item | status [| passed over]`. The visible text comes from the HTML
 // layout reader, which joins the cells of a row with a tab. Pure and total: no clock, no I/O, never
-// throws. A row whose hall cannot be read is dropped; a board with a header and no rows is `empty`.
+// throws. A row whose hall cannot be read is dropped; a hall with no item prints a cell short (empty cells are dropped by the layout reader) and the item cell is put back; a board with a header and no rows is `empty`.
 import { layoutFromHtml } from '../layout/html.ts';
 
 import type { BoardStatus, DisplayBoardRow, ParsedDisplayBoard } from './types.ts';
@@ -44,7 +44,8 @@ function itemOf(raw: string): string | null {
 
 export function readDisplayBoard(html: string, columns: BoardColumns): ParsedDisplayBoard {
   const lines = (layoutFromHtml(html).pages[0]?.text ?? '').split('\n');
-  let index: { hall: number; item: number; status: number; passed: number } | null = null;
+  let index: { hall: number; item: number; status: number; passed: number; width: number } | null =
+    null;
   const rows: DisplayBoardRow[] = [];
   for (const line of lines) {
     const cells = line.split('\t').map((cell) => cell.trim());
@@ -56,6 +57,7 @@ export function readDisplayBoard(html: string, columns: BoardColumns): ParsedDis
         index = {
           hall,
           item,
+          width: cells.length,
           status: cells.findIndex((cell) => columns.status.test(cell)),
           passed:
             columns.passedOver === undefined
@@ -64,6 +66,15 @@ export function readDisplayBoard(html: string, columns: BoardColumns): ParsedDis
         };
       }
       continue;
+    }
+    // The layout reader drops empty cells, so a hall showing no item prints one cell short and every
+    // later cell moves left: put the missing item cell back before reading by column.
+    if (
+      cells.length < index.width &&
+      index.item > index.hall &&
+      itemOf(cells[index.item] ?? '') === null
+    ) {
+      cells.splice(index.item, 0, '');
     }
     const hallNo = normaliseHall(cells[index.hall] ?? '');
     if (hallNo === null) continue;

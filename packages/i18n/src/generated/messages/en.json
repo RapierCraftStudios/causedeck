@@ -3388,6 +3388,88 @@
       }
     }
   },
+  "bootstrapImport": {
+    "metaTitle": "Import your cases",
+    "title": "Import your cases",
+    "loading": "Loading the import",
+    "denied": "You need permission to add matters to import files.",
+    "empty": {
+      "title": "Bring your existing cases in",
+      "body": "Drop cause lists, orders and diary photos. CauseDeck finds only the cases that carry your enrolment number or name, builds a plan you review, and nothing is created until you confirm."
+    },
+    "channel": {
+      "title": "Turn on bulk import first",
+      "body": "Bulk import is off until a workspace manager turns it on. Files are kept in India, are not used to train models and raw files are deleted after 30 days.",
+      "enable": "Turn on bulk import",
+      "ownerOnly": "Ask a workspace owner to turn it on.",
+      "failed": "Bulk import could not be turned on. Try again."
+    },
+    "sensitive": "Matters marked sensitive are never imported, and files hinted at one are refused.",
+    "drop": {
+      "label": "Drop files or a folder here",
+      "hint": "Up to {max} files: PDF, images, Word, calendar (.ics) and text.",
+      "choose": "Choose files",
+      "folder": "Choose a folder",
+      "refused": "Only {max} files can be imported at a time. {n, plural, one {# file was} other {# files were}} not added.",
+      "offline": "You are offline. Files can be added when you are back online."
+    },
+    "list": {
+      "title": "Files",
+      "summary": "{n, plural, one {# file} other {# files}} of {max}",
+      "retry": "Retry",
+      "status": {
+        "hashing": "Checking",
+        "queued": "Ready",
+        "uploading": "Uploading",
+        "uploaded": "Uploaded",
+        "failed": "Failed",
+        "rejected": "Not accepted",
+        "duplicate": "Already added"
+      },
+      "reason": {
+        "type": "This file type is not accepted.",
+        "size": "This file is over the size limit for its type.",
+        "empty": "This file is empty.",
+        "channel_disabled": "Bulk import is turned off.",
+        "sensitive": "This file belongs to a sensitive matter.",
+        "too_large": "This file is over the size limit.",
+        "unsupported": "This file type is not accepted.",
+        "rate_limited": "Too many uploads. Try again in a minute.",
+        "forbidden": "You cannot upload files here.",
+        "offline": "You are offline.",
+        "failed": "The upload failed."
+      }
+    },
+    "start": "Read {n, plural, one {# file} other {# files}}",
+    "starting": "Starting",
+    "identifiers": {
+      "title": "Which cases are yours?",
+      "body": "Only cases that carry your enrolment number or a spelling of your name are imported. Nothing is read until you give at least one.",
+      "enrolment": "Enrolment numbers (one per line)",
+      "aliases": "Name spellings (one per line)",
+      "propose": "Check what I typed",
+      "confirmTitle": "Save these to your profile?",
+      "confirmBody": "These are used to pick your cases from every list you import.",
+      "confirm": "Save and read the files",
+      "edit": "Change"
+    },
+    "processing": {
+      "title": "Reading your files",
+      "progress": "{done} of {total} files read",
+      "failed": "{n, plural, one {# file} other {# files}} could not be read.",
+      "retry": "Retry the failed files",
+      "nothing": "Nothing recognised. None of the files had a case with your enrolment number or name.",
+      "ready": "Your plan is ready. {n, plural, one {# row matches} other {# rows match}} you.",
+      "review": "Review the plan",
+      "kept": "Import limit reached for this plan. {n, plural, one {# file was} other {# files were}} kept as attachments without reading."
+    },
+    "error": {
+      "title": "The import could not load",
+      "reference": "Reference {digest}",
+      "retry": "Retry",
+      "action": "Something went wrong. Try again."
+    }
+  },
   "emailIntake": {
     "metaTitle": "Email intake",
     "title": "Email intake",

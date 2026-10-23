@@ -202,6 +202,7 @@ describe('import batch', () => {
         status: 'pending',
         total: 3,
         files: { pending: 3 },
+        keptAsAttachments: 0,
         needsIdentifiers: false,
       });
 
@@ -407,6 +408,10 @@ describe('import batch', () => {
       expect(await fileRow(w, a as string)).toMatchObject({
         status: 'unmatched',
         adapterId: OVER_OCR_CAP,
+      });
+      // The free-plan message (#552) counts them: only the file past the cap.
+      expect(await getImportProgress(w.deps, w.actor, w.batchId)).toMatchObject({
+        keptAsAttachments: 1,
       });
       expect(parser).not.toHaveBeenCalled();
       const redo = await startImportProcessing(

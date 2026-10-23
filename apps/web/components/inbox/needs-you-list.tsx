@@ -9,6 +9,7 @@ import { useReducedMotion } from '@causedeck/ui/hooks';
 import { useProposalShortcuts } from '@causedeck/ui/patterns';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import type { InboxItemView } from '../../lib/inbox/view.ts';
@@ -38,6 +39,14 @@ export interface NeedsYouListProps {
   onConfirmed: (item: InboxItemView) => void;
 }
 
+/** The fetch time of a public list, in the court's time zone. */
+const formatFetchedAt = (iso: string, locale: Locale): string =>
+  new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date(iso));
+
 const idleCards = (list: HTMLElement | null): HTMLElement[] =>
   list
     ? [...list.querySelectorAll<HTMLElement>(CARD)].filter(
@@ -60,6 +69,7 @@ function Collapse({ collapsing, children }: { collapsing: boolean; children: Rea
 export function NeedsYouList(props: NeedsYouListProps) {
   const { items, locale, handlers, offline, readOnly, collapsing, generation, onSelect } = props;
   const listRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations('inbox');
   const reduced = useReducedMotion();
 
   const focusCard = (card: HTMLElement | undefined) => {
@@ -135,6 +145,11 @@ export function NeedsYouList(props: NeedsYouListProps) {
             moveFocusFrom(resolved.id);
           }}
         />
+        {item.sourceFetchedAt == null ? null : (
+          <p data-slot="source-chip" className="text-ink-muted px-1 pt-1 text-xs">
+            {t('sourceChip.khcList', { time: formatFetchedAt(item.sourceFetchedAt, locale) })}
+          </p>
+        )}
       </Collapse>
     </motion.div>
   );

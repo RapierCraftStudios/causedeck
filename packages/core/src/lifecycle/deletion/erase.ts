@@ -87,6 +87,9 @@ export const PURGE_ORDER = [
   'role_edge',
   'person',
   'organisation',
+  // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
+  'case_status_snapshot',
+  'case_watch',
   'proceeding_state_change',
   'proceeding_link',
   'proceeding',
@@ -107,6 +110,8 @@ export const PURGE_ORDER = [
   'import_batch',
   // The importing member's identifiers (#550): cites no capture, only the user.
   'advocate_profile',
+  // Court watches (#482): cite the member's user and the organization only.
+  'cause_list_watch',
   // The capture inbox (#43): after the documents that cite a capture, before the matters it hints.
   'capture',
   'workspace_capture_channel',

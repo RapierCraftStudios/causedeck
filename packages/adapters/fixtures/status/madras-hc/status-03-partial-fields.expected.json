@@ -1,0 +1,27 @@
+{
+  "template": "madras-hc",
+  "status": "ok",
+  "cnr": null,
+  "caseNumber": "CRL.P/12/2026",
+  "nextHearingDate": "2026-12-31",
+  "lastHearingDate": null,
+  "stage": {
+    "raw": "Arguments",
+    "norm": "arguments"
+  },
+  "bench": "Hon FICTIONAL J.",
+  "orders": [
+    {
+      "date": "2026-11-01",
+      "number": null,
+      "summary": "Notice",
+      "href": null
+    }
+  ],
+  "quotes": {
+    "caseNumber": "CRL.P/12/2026",
+    "stage": "Arguments",
+    "bench": "Hon FICTIONAL J.",
+    "nextHearingDate": "31 Dec 2026"
+  }
+}

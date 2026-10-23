@@ -207,6 +207,12 @@ export {
 export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';
 export { advocateProfile } from './advocate-profile.ts';
 export {
+  CAUSE_LIST_WATCH_KINDS,
+  causeListPublication,
+  causeListWatch,
+  type CauseListWatchKind,
+} from './cause-list-watch.ts';
+export {
   IMPORT_BATCH_FILE_STATUSES,
   IMPORT_BATCH_STATUSES,
   importBatch,
@@ -224,3 +230,9 @@ export {
   type NoticeKind,
   type NoticeMatchReason,
 } from './notices.ts';
+export {
+  CASE_STATUS_VIA,
+  caseStatusSnapshot,
+  caseWatch,
+  type CaseStatusVia,
+} from './case-watch.ts';

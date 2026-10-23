@@ -17,6 +17,12 @@ export function analyzeBundle(): boolean {
   return process.env.ANALYZE === 'true';
 }
 
+/** The phase Next.js sets while loading next.config (`phase-development-server`, `phase-production-build`, ...). */
+export function nextPhase(): string | undefined {
+  // eslint-disable-next-line no-process-env -- Next.js sets the phase while loading the config.
+  return process.env.NEXT_PHASE;
+}
+
 /**
  * `E2E_BUILD=1 NODE_ENV=development next build`: the e2e harness build (#16). Next.js otherwise
  * inlines `NODE_ENV` as `'production'`, which strips the dev sign-in provider the fixtures drive.

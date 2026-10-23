@@ -4,7 +4,7 @@ import bundleAnalyzer from '@next/bundle-analyzer';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
-import { analyzeBundle, buildTimeAppUrl, e2eBuild } from './lib/env.ts';
+import { analyzeBundle, buildTimeAppUrl, e2eBuild, nextPhase } from './lib/env.ts';
 import { buildServiceWorker } from './lib/pwa/build-sw.ts';
 
 const repoRoot = path.join(import.meta.dirname, '../..');
@@ -33,8 +33,7 @@ const workspacePackages = [
 const appUrl = buildTimeAppUrl();
 
 // The PWA service worker (#50) is bundled to public/sw.js when the dev server or a build starts.
-// eslint-disable-next-line no-process-env -- Next.js sets the phase while loading this config.
-const phase = process.env.NEXT_PHASE;
+const phase = nextPhase();
 if (phase === 'phase-development-server' || phase === 'phase-production-build') {
   buildServiceWorker(import.meta.dirname, { minify: phase === 'phase-production-build' });
 }

@@ -52,11 +52,13 @@ export class OutboxCapError extends Error {
 
 export interface EnqueueOptions {
   workspaceId: string | null;
-  channel: 'share' | 'upload';
+  channel: 'share' | 'upload' | 'camera';
   batchId?: string | undefined;
   matterHintId?: string | undefined;
   capBytes?: number | undefined;
   now?: number | undefined;
+  /** Store the items held back from upload (camera pages awaiting their batch, #52). */
+  hold?: boolean | undefined;
 }
 
 export interface EnqueueResult {
@@ -101,6 +103,7 @@ export async function enqueueFiles(
       lastError: null,
       ...sealed,
       ...(options.matterHintId === undefined ? {} : { matterHintId: options.matterHintId }),
+      ...(options.hold === true ? { hold: true } : {}),
     };
     await store.put(item);
     items.push(item);

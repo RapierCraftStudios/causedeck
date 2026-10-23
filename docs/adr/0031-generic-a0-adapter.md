@@ -1,4 +1,4 @@
-# 0030. A0 generic adapter: skeleton first, anchored model pass, always L2
+# 0031. A0 generic adapter: skeleton first, anchored model pass, always L2
 
 ## Status
 

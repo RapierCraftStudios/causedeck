@@ -105,6 +105,8 @@ interface CaptureInput {
   status: string;
   matterHintId: string | null;
   createdAt: Date;
+  /** A camera capture routed away from structuring (`cause_list`, `receipt`; #52). */
+  route?: string | null;
 }
 
 export interface InboxFacts {
@@ -192,7 +194,8 @@ export function groupInbox(facts: InboxFacts): Inbox {
       payload: null,
       currentDate: null,
       confidence: null,
-      needsYouReason: 'unreadable',
+      needsYouReason:
+        row.route === 'cause_list' || row.route === 'receipt' ? row.route : 'unreadable',
       anchors: [],
       createdAt: row.createdAt,
       reassignUntil: null,
@@ -296,6 +299,7 @@ export async function getInbox(
         status: capture.status,
         matterHintId: capture.matterHintId,
         createdAt: capture.createdAt,
+        sourceMeta: capture.sourceMeta,
       })
       .from(capture)
       .where(
@@ -388,7 +392,10 @@ export async function getInbox(
     return groupInbox({
       now,
       proposals,
-      captures,
+      captures: captures.map(({ sourceMeta, ...row }) => ({
+        ...row,
+        route: typeof sourceMeta['cameraRoute'] === 'string' ? sourceMeta['cameraRoute'] : null,
+      })),
       matters: new Map(matterRows.map((row) => [row.id, row])),
       caseNumbers: new Map(
         proceedingRows.flatMap((row) => {

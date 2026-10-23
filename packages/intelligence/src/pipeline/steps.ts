@@ -5,6 +5,7 @@ import type { CaptureNeedsYouReason } from '@causedeck/validators';
 
 import { detectLanguage } from '../language/detect.ts';
 import { coverage, isGarbled, normaliseText } from '../text/quality.ts';
+import type { OcrLine } from '../ocr/line-boxes.ts';
 import type { OcrLanguage, OcrPageResult } from '../ocr/ocr.ts';
 
 export type InputFormat = 'pdf' | 'docx' | 'text' | 'image' | 'unsupported';
@@ -44,6 +45,8 @@ export interface PageDraft {
   textSource: 'layer' | 'ocr' | null;
   ocrConfidence: number | null;
   lang: string | null;
+  /** OCR line boxes of an OCR-read page, when the provider reported them (#52). */
+  ocrLines?: OcrLine[] | undefined;
 }
 
 /** Page numbers whose text layer is empty, thin or garbled. */
@@ -79,6 +82,7 @@ export function assemblePages(
         textSource: 'ocr',
         ocrConfidence: read.confidence,
         lang: detectLanguage(clean),
+        ...(read.lines === undefined || read.lines.length === 0 ? {} : { ocrLines: read.lines }),
       };
     }
     const clean = normaliseText(text);

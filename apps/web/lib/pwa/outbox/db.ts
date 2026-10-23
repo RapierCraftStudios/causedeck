@@ -12,7 +12,7 @@ export interface OutboxItem {
   batchId: string;
   /** `null` until the person picks one (several workspaces) or signs in. */
   workspaceId: string | null;
-  channel: 'share' | 'upload';
+  channel: 'share' | 'upload' | 'camera';
   name: string;
   mime: string;
   size: number;
@@ -28,6 +28,11 @@ export interface OutboxItem {
   /** Set after a successful presign, so a retry after the PUT goes straight to `complete`. */
   captureId?: string | undefined;
   putDone?: boolean | undefined;
+  /**
+   * A camera page waiting for its batch to be finished (#52): stored encrypted at once, never
+   * uploaded on its own. Finishing the batch replaces its held pages with one multi-page item.
+   */
+  hold?: boolean | undefined;
   /** Epoch ms before which the sync loop leaves a failed attempt alone (backoff). */
   nextAttemptAt?: number | undefined;
 }

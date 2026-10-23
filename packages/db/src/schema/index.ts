@@ -55,6 +55,7 @@ export {
   type AnchorBbox,
   type AnchorKind,
   type AnchorTranscriptSpan,
+  type OcrLine,
 } from './documents.ts';
 export {
   ACTIVITY_ACTORS,

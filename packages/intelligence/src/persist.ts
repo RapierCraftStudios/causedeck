@@ -282,6 +282,7 @@ export function createDbPersister(options: DbPersisterOptions): Persister {
               previewKey: images.get(page.pageNo)?.previewKey ?? null,
               width: page.images?.width ?? null,
               height: page.images?.height ?? null,
+              ocrLines: page.ocrLines ?? null,
             })),
           );
         }

@@ -15,7 +15,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   workspaces: Object.freeze(['audit']),
   matters: Object.freeze(['workspaces', 'audit']),
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
-  court: Object.freeze(['workspaces']),
+  // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
+  court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),
@@ -27,9 +28,13 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.
   ai: Object.freeze(['audit', 'usage']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.
-  lifecycle: Object.freeze(['audit', 'workspaces']),
+  // Workspace erase also withdraws the workspace's contributed court documents (#485) through network.
+  lifecycle: Object.freeze(['audit', 'workspaces', 'network']),
   // The source registry (#478, D-048): staff changes record `source.changed` through audit.
   sources: Object.freeze(['audit']),
+  // The court document network (#485, D-048): contributions need a cleared source through sources and
+  // record their events through audit; opt-in, matter and document reads go to the tables directly.
+  network: Object.freeze(['audit', 'sources']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
@@ -81,6 +86,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'email-intake',
     'extraction',
     'import',
+    'court',
+    'sources',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

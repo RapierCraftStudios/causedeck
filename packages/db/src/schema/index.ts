@@ -62,6 +62,12 @@ export {
   type SourceMaxTier,
   type SourceReviewStatus,
 } from './source-registry.ts';
+export {
+  CONTRIBUTABLE_KINDS,
+  contributedDocument,
+  contributionLedger,
+  type ContributableKind,
+} from './network.ts';
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export {
   ANCHOR_KINDS,
@@ -200,6 +206,12 @@ export {
 } from './email-intake.ts';
 export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';
 export { advocateProfile } from './advocate-profile.ts';
+export {
+  CAUSE_LIST_WATCH_KINDS,
+  causeListPublication,
+  causeListWatch,
+  type CauseListWatchKind,
+} from './cause-list-watch.ts';
 export {
   IMPORT_BATCH_FILE_STATUSES,
   IMPORT_BATCH_STATUSES,

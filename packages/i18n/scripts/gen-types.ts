@@ -52,7 +52,10 @@ const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
 function typeOf(catalog: Catalog, depth: number): string {
   const pad = '  '.repeat(depth);
   const lines = Object.entries(catalog).map(([key, value]) => {
-    const name = IDENTIFIER.test(key) ? key : JSON.stringify(key);
+    // Non-identifier keys (`court-watch`) get single quotes, as Prettier writes them, so the output stays format-clean.
+    const name = IDENTIFIER.test(key)
+      ? key
+      : `'${key.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
     if (!isPlainObject(value)) return `${pad}  ${name}: string;`;
     if (Object.keys(value).length === 0) return `${pad}  ${name}: Record<string, never>;`;
     return `${pad}  ${name}: ${typeOf(value, depth + 1)};`;

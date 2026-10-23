@@ -27,6 +27,7 @@ import { emailIntake } from './definitions/email-intake.ts';
 import { emailRawExpire } from './definitions/email-raw-expire.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
 import { deletionTick } from './definitions/deletion-tick.ts';
+import { causelistPoll } from './definitions/causelist-poll.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { memoryErase } from './definitions/memory-erase.ts';
@@ -175,6 +176,7 @@ export const registry = createRegistry([
   extractOrder,
   importBatch,
   importFile,
+  causelistPoll,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -214,6 +216,7 @@ export type JobMap = RegistryMap<
     typeof extractOrder,
     typeof importBatch,
     typeof importFile,
+    typeof causelistPoll,
   ]
 >;
 export type JobName = keyof JobMap;

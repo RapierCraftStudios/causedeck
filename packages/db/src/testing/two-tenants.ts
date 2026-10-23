@@ -25,6 +25,7 @@ import { anchor, document, documentPage } from '../schema/documents.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
+import { causeListWatch } from '../schema/cause-list-watch.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
@@ -36,6 +37,8 @@ import { proceeding, proceedingLink, proceedingStateChange } from '../schema/pro
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
 import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
+import { contributedDocument, contributionLedger } from '../schema/network.ts';
+import { source } from '../schema/source-registry.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
@@ -490,6 +493,35 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     );
     return { id: row.id, matterId: row.matterId };
   },
+  contribution_ledger: async (tx, { workspaceId }) => {
+    // The shared copy is a global row (no workspace); only the ledger link is tenant data.
+    const sourceId = `xt.seed.${randomUUID()}`;
+    await tx
+      .insert(source)
+      .values({ id: sourceId, kind: 'court', baseUrl: `urn:xt:${sourceId}`, owner: 'xt' });
+    const content = `xt cause list ${randomUUID()}`;
+    const copy = first(
+      await tx
+        .insert(contributedDocument)
+        .values({
+          sourceId,
+          kind: 'cause_list',
+          content,
+          sha256: createHash('sha256').update(content).digest('hex'),
+          retentionUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        })
+        .returning({ id: contributedDocument.id }),
+      'contributed_document',
+    );
+    const row = first(
+      await tx
+        .insert(contributionLedger)
+        .values({ workspaceId, contributedDocumentId: copy.id })
+        .returning({ id: contributionLedger.id }),
+      'contribution_ledger',
+    );
+    return { id: row.id };
+  },
   support_session: async (tx, { workspaceId, ownerId }) => {
     // A pending request; the requester's staff_user row is not needed at the SQL level.
     const row = first(
@@ -862,6 +894,19 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: advocateProfile.id });
     return { id: first(rows, 'advocate_profile').id };
+  },
+  cause_list_watch: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(causeListWatch)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        sourceId: 'in.ka.karnataka-hc.bengaluru:cause_list',
+        kind: 'brn',
+        value: 'KAR/1/1900',
+      })
+      .returning({ id: causeListWatch.id });
+    return { id: first(rows, 'cause_list_watch').id };
   },
   import_plan: async (tx, { workspaceId, ownerId }) => {
     const batchId = await seedImportBatch(tx, workspaceId, ownerId);

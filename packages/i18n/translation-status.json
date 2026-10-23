@@ -5,7 +5,8 @@
     "billing.gstin.title",
     "billing.gstin.label",
     "settings.account.connected.providers.google",
-    "inbox.card.matter"
+    "inbox.card.matter",
+    "settings.courtWatch.kind.brn"
   ],
   "ta": {
     "auth.checkEmail.body": "draft",
@@ -1070,6 +1071,8 @@
     "settings.privacy.settings.readOnly": "draft",
     "settings.privacy.settings.sensitiveDefaultRestricted.label": "draft",
     "settings.privacy.settings.sensitiveDefaultRestricted.description": "draft",
+    "settings.privacy.settings.contributePublicCourtDocuments.label": "draft",
+    "settings.privacy.settings.contributePublicCourtDocuments.description": "draft",
     "settings.privacy.settings.retentionAudioDays.label": "draft",
     "settings.privacy.settings.retentionAudioDays.description": "draft",
     "settings.privacy.settings.retentionAudioDays.option": "draft",
@@ -2795,7 +2798,24 @@
     "importReview.result.undoing": "draft",
     "importReview.result.undone": "draft",
     "importReview.result.undoFailed": "draft",
-    "importReview.result.next": "draft"
+    "importReview.result.next": "draft",
+    "settings.nav.court-watch": "draft",
+    "settings.courtWatch.title": "draft",
+    "settings.courtWatch.description": "draft",
+    "settings.courtWatch.kind.name": "draft",
+    "settings.courtWatch.kind.brn": "draft",
+    "settings.courtWatch.value": "draft",
+    "settings.courtWatch.add": "draft",
+    "settings.courtWatch.remove": "draft",
+    "settings.courtWatch.empty": "draft",
+    "settings.courtWatch.flagOff": "draft",
+    "settings.courtWatch.uncleared": "draft",
+    "settings.courtWatch.cleared": "draft",
+    "settings.courtWatch.added": "draft",
+    "settings.courtWatch.removed": "draft",
+    "settings.courtWatch.failed": "draft",
+    "settings.courtWatch.loading": "draft",
+    "inbox.sourceChip.khcList": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -3860,6 +3880,8 @@
     "settings.privacy.settings.readOnly": "draft",
     "settings.privacy.settings.sensitiveDefaultRestricted.label": "draft",
     "settings.privacy.settings.sensitiveDefaultRestricted.description": "draft",
+    "settings.privacy.settings.contributePublicCourtDocuments.label": "draft",
+    "settings.privacy.settings.contributePublicCourtDocuments.description": "draft",
     "settings.privacy.settings.retentionAudioDays.label": "draft",
     "settings.privacy.settings.retentionAudioDays.description": "draft",
     "settings.privacy.settings.retentionAudioDays.option": "draft",
@@ -5585,6 +5607,23 @@
     "importReview.result.undoing": "draft",
     "importReview.result.undone": "draft",
     "importReview.result.undoFailed": "draft",
-    "importReview.result.next": "draft"
+    "importReview.result.next": "draft",
+    "settings.nav.court-watch": "draft",
+    "settings.courtWatch.title": "draft",
+    "settings.courtWatch.description": "draft",
+    "settings.courtWatch.kind.name": "draft",
+    "settings.courtWatch.kind.brn": "draft",
+    "settings.courtWatch.value": "draft",
+    "settings.courtWatch.add": "draft",
+    "settings.courtWatch.remove": "draft",
+    "settings.courtWatch.empty": "draft",
+    "settings.courtWatch.flagOff": "draft",
+    "settings.courtWatch.uncleared": "draft",
+    "settings.courtWatch.cleared": "draft",
+    "settings.courtWatch.added": "draft",
+    "settings.courtWatch.removed": "draft",
+    "settings.courtWatch.failed": "draft",
+    "settings.courtWatch.loading": "draft",
+    "inbox.sourceChip.khcList": "draft"
   }
 }

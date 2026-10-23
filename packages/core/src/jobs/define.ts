@@ -2,6 +2,7 @@
 // and timeout policy. See docs/engineering/jobs.md.
 import { z } from 'zod';
 
+import { DEFAULT_FAIRNESS_CONCURRENCY } from '../shared/fairness.ts';
 import type { JobContext } from './context.ts';
 
 /** `<domain>.<verb>`, e.g. `notification.send`, `document.ocr`, `system.retention.sweep`. */
@@ -32,8 +33,7 @@ export const DEFAULT_RETRY: RetryPolicy = {
 };
 export const DEFAULT_CONCURRENCY = 2;
 export const DEFAULT_TIMEOUT_SEC = 300;
-/** Concurrent jobs per `fairnessKey` (default the workspace) across all workers. */
-export const DEFAULT_FAIRNESS_CONCURRENCY = 3;
+export { DEFAULT_FAIRNESS_CONCURRENCY } from '../shared/fairness.ts';
 
 export type SingletonPolicy = 'singleton' | 'short' | 'stately' | 'exclusive';
 

@@ -6,7 +6,13 @@ import unicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-import { APP_NAMES, boundaries } from './boundaries.js';
+import { causedeck } from './authorization.js';
+import {
+  APP_NAMES,
+  appDbImportBlocks,
+  boundaries,
+  withoutWorkspaceImportBan,
+} from './boundaries.js';
 
 /** Deep imports into another workspace's sources bypass its public `exports`. */
 export const deepImportPatterns = [
@@ -56,6 +62,17 @@ export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
     `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
   ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
 );
+
+/** `withoutWorkspace` (#19) import ban; defined in boundaries.js so the app→db blocks reuse it. */
+export { withoutWorkspaceImportBan };
+
+/** Where `withoutWorkspace` may be imported. */
+export const WITHOUT_WORKSPACE_ALLOWED_GLOBS = [
+  '**/packages/db/**',
+  // The audited admin data layer (#309); the rest of apps/admin goes through it.
+  '**/apps/admin/lib/data/**',
+  '**/migrations/**',
+];
 
 /** Files treated as client modules (browser bundles). */
 export const CLIENT_FILE_GLOBS = [
@@ -119,6 +136,7 @@ export const base = tseslint.config(
       '@typescript-eslint/no-unsafe-unary-minus': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-restricted-imports': ['error', { patterns: deepImportPatterns }],
+      '@typescript-eslint/no-restricted-imports': ['error', withoutWorkspaceImportBan],
       // Read configuration through `@causedeck/config/env` (spike §3.2), never `process.env`.
       'no-process-env': 'error',
       'no-restricted-syntax': ['error', ...loggerContentRestrictions],
@@ -175,10 +193,25 @@ export const base = tseslint.config(
     rules: { 'no-process-env': 'off' },
   },
   {
+    files: WITHOUT_WORKSPACE_ALLOWED_GLOBS.filter((glob) => !glob.includes('/apps/')),
+    rules: { '@typescript-eslint/no-restricted-imports': 'off' },
+  },
+  // apps/admin, like every app, imports no `@causedeck/db` value (#299). Only its audited data
+  // layer (`apps/admin/lib/data`, #309) may import `withoutWorkspace`; the later blocks win there.
+  ...appDbImportBlocks('**/apps/admin', { withoutWorkspace: true }),
+  ...appDbImportBlocks('**/apps/admin/lib/data', { withoutWorkspace: false }),
+  {
     // Plain JS config files and root-level TS config files are not part of any tsconfig project.
     files: ['**/*.{js,mjs,cjs}', 'vitest.workspace.ts'],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    // Core domains import one another only through `index.ts` along the declared map (#293,
+    // docs/engineering/core-domains.md).
+    files: ['**/packages/core/src/**/*.{ts,tsx,js,mjs}'],
+    plugins: { causedeck },
+    rules: { 'causedeck/core-domain-boundaries': 'error' },
   },
 );
 

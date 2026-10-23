@@ -1,0 +1,19 @@
+{
+  "id": "en-29",
+  "language": "en",
+  "hearingDate": "2026-05-06",
+  "text": "In case 23059 of 2020 today. The matter was adjourned. The opposite counsel sought time. Next hearing next monday. The court directed the respondent to file a counter affidavit.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-05-11",
+      "phrase": "next monday"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit.",
+        "dueDate": null
+      }
+    ],
+    "tasks": []
+  }
+}

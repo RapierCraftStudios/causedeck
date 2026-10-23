@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.ka.bengaluru-urban.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "listDate": "2026-11-22",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. C.C. No. 3383/2023    ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಮಾದರಿ ಬ್ಯಾಂಕ್",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "1",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "3383",
+      "caseYear": 2023,
+      "matchKey": "CC/3383/2023",
+      "parties": "ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಮಾದರಿ ಬ್ಯಾಂಕ್",
+      "stageRaw": "ವಾದಕ್ಕಾಗಿ",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Crl.Misc. No. 456/2025    ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "2",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "456",
+      "caseYear": 2025,
+      "matchKey": "CRLMISC/456/2025",
+      "parties": "ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+      "stageRaw": "ವಾದಕ್ಕಾಗಿ",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. M.V.C. No. 1145/2024    ಕಲ್ಪಿತ ಜವಳಿ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "3",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "1145",
+      "caseYear": 2024,
+      "matchKey": "MVC/1145/2024",
+      "parties": "ಕಲ್ಪಿತ ಜವಳಿ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ",
+      "stageRaw": "ವಾದಕ್ಕಾಗಿ",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. S.C. No. 2229/2020    ಕಲ್ಪಿತ ಜವಳಿ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "4",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "2229",
+      "caseYear": 2020,
+      "matchKey": "SC/2229/2020",
+      "parties": "ಕಲ್ಪಿತ ಜವಳಿ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+      "stageRaw": "ವಾದಕ್ಕಾಗಿ",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. M.V.C. No. 2608/2024    ಕಲ್ಪಿತ ಜವಳಿ ವಿರುದ್ಧ ಮಾದರಿ ಬ್ಯಾಂಕ್",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "5",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "2608",
+      "caseYear": 2024,
+      "matchKey": "MVC/2608/2024",
+      "parties": "ಕಲ್ಪಿತ ಜವಳಿ ವಿರುದ್ಧ ಮಾದರಿ ಬ್ಯಾಂಕ್",
+      "stageRaw": "ವಾದಕ್ಕಾಗಿ",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. CCCA No. 2164/2022    ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "6",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "2164",
+      "caseYear": 2022,
+      "matchKey": "CCCA/2164/2022",
+      "parties": "ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. M.V.C. No. 736/2025    ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಜವಳಿ",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "7",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "736",
+      "caseYear": 2025,
+      "matchKey": "MVC/736/2025",
+      "parties": "ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಜವಳಿ",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. C.C. No. 477/2019    ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಜವಳಿ",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "8",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "477",
+      "caseYear": 2019,
+      "matchKey": "CC/477/2019",
+      "parties": "ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಜವಳಿ",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. Ex.P. No. 94/2024    ಮಾದರಿ ಬ್ಯಾಂಕ್ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "2",
+      "itemNo": "9",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "94",
+      "caseYear": 2024,
+      "matchKey": "EXP/94/2024",
+      "parties": "ಮಾದರಿ ಬ್ಯಾಂಕ್ ವಿರುದ್ಧ ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "೨೨.೧೧.೨೦೨೬", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["10", "2"],
+    "hallsUnreadable": []
+  }
+}

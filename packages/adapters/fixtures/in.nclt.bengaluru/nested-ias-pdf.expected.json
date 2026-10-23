@@ -1,0 +1,127 @@
+{
+  "adapterId": "in.nclt.bengaluru",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.nclt.bengaluru",
+  "listDate": "2026-10-21",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1 CP(IB) No. 34/BB/2022 Hearing 7 Fictional Bank Ltd. Vs. Pretend Infra Mr. Fictional Rao Ms. Pretend Iyer, Mr. A.",
+        "rowIndex": 0,
+        "bbox": { "x": 24, "y": 102, "width": 635.91, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "34",
+      "caseYear": 2022,
+      "matchKey": "CPIB(BB)/34/2022",
+      "parties": "Fictional Bank Ltd. Vs. Pretend Infra Pvt. Ltd.",
+      "stageRaw": "Hearing",
+      "stageNorm": "hearing",
+      "advocates": [
+        { "raw": "Mr. Fictional Rao", "aliases": ["FICTIONAL RAO"], "side": "petitioner" },
+        { "raw": "Ms. Pretend Iyer", "aliases": ["PRETEND IYER"], "side": "respondent" },
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["A B IMAGINARY", "IMAGINARY A B", "AB IMAGINARY"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2 CP(IB) No. 376/BB/2022 Admission 10 Sample Credit Union Vs Pretend Infra Mr. Fictional Rao Mr. A. B. Imaginary",
+        "rowIndex": 1,
+        "bbox": { "x": 24, "y": 125, "width": 621.91, "height": 52 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "376",
+      "caseYear": 2022,
+      "matchKey": "CPIB(BB)/376/2022",
+      "parties": "Sample Credit Union Vs Pretend Infra Pvt. Ltd.",
+      "stageRaw": "Admission",
+      "stageNorm": "admission",
+      "advocates": [
+        { "raw": "Mr. Fictional Rao", "aliases": ["FICTIONAL RAO"], "side": "petitioner" },
+        {
+          "raw": "Mr. A. B. Imaginary",
+          "aliases": ["A B IMAGINARY", "IMAGINARY A B", "AB IMAGINARY"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3 CP(IB) No. 355/BB/2024 Pronouncement 60(5) Imaginary Finance Ltd. Vs. Sample Mr. Fictional Rao Mr. K. S. Madeup",
+        "rowIndex": 2,
+        "bbox": { "x": 24, "y": 184, "width": 616.47, "height": 25 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "355",
+      "caseYear": 2024,
+      "matchKey": "CPIB(BB)/355/2024",
+      "parties": "Imaginary Finance Ltd. Vs. Sample Logistics LLP",
+      "stageRaw": "Pronouncement",
+      "stageNorm": "pronouncement",
+      "advocates": [
+        { "raw": "Mr. Fictional Rao", "aliases": ["FICTIONAL RAO"], "side": "petitioner" },
+        {
+          "raw": "Mr. K. S. Madeup",
+          "aliases": ["K S MADEUP", "MADEUP K S", "KS MADEUP"],
+          "side": "respondent"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4 CP(IB) No. 183/BB/2022 Compliance 7 Fictional Bank Ltd. V/s Sample Ms. Notional Shetty Ms. Pretend Iyer, Mr.",
+        "rowIndex": 3,
+        "bbox": { "x": 24, "y": 216, "width": 627.36, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "4",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "183",
+      "caseYear": 2022,
+      "matchKey": "CPIB(BB)/183/2022",
+      "parties": "Fictional Bank Ltd. V/s Sample Logistics LLP",
+      "stageRaw": "Compliance",
+      "stageNorm": "compliance",
+      "advocates": [
+        { "raw": "Ms. Notional Shetty", "aliases": ["NOTIONAL SHETTY"], "side": "petitioner" },
+        { "raw": "Ms. Pretend Iyer", "aliases": ["PRETEND IYER"], "side": "respondent" },
+        { "raw": "Mr. Fictional Rao", "aliases": ["FICTIONAL RAO"], "side": "respondent" }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1"],
+    "hallsUnreadable": []
+  }
+}

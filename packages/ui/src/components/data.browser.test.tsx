@@ -39,16 +39,20 @@ afterEach(async () => {
   await page.viewport(1280, 900);
 });
 
+/** Comfortable rows: 40 px with a fine pointer (mouse, trackpad), 44 px on touch (#183). */
+const comfortablePx = () => (window.matchMedia('(pointer: fine)').matches ? 40 : 44);
+
 describe('row density', () => {
-  it('comfortable rows measure 44 px and compact rows 32 px', () => {
+  it('comfortable rows measure 40 px with a fine pointer (44 px on touch), compact rows 32 px', () => {
+    expect(window.matchMedia('(pointer: fine)').matches).toBe(true);
     const { unmount } = render(<Matters />);
-    for (const row of bodyRows()) expect(height(row)).toBe(44);
+    for (const row of bodyRows()) expect(height(row)).toBe(comfortablePx());
     unmount();
     render(<Matters density="compact" />);
     for (const row of bodyRows()) expect(height(row)).toBe(32);
   });
 
-  it('stays 44 px with Tamil text in the cells', () => {
+  it('keeps the comfortable height with Tamil text in the cells', () => {
     render(
       <Table>
         <TableBody>
@@ -58,7 +62,7 @@ describe('row density', () => {
         </TableBody>
       </Table>,
     );
-    expect(height(screen.getByRole('row'))).toBe(44);
+    expect(height(screen.getByRole('row'))).toBe(comfortablePx());
   });
 });
 
@@ -99,11 +103,22 @@ describe('virtualised', () => {
     expect(bodyRows().length).toBeLessThan(60);
     const container = document.querySelector<HTMLElement>('[data-slot="data-table-scroll"]');
     if (!container) throw new Error('no scroll container');
-    container.scrollTop = 44 * 2500;
+    container.scrollTop = comfortablePx() * 2500;
     await expect
       .poll(() => bodyRows().some((row) => row.getAttribute('data-row-index') === '2505'))
       .toBe(true);
     expect(bodyRows().length).toBeLessThan(60);
+  });
+
+  it('spaces virtual rows by their rendered height, with no gaps', async () => {
+    render(<Matters data={matterRows(200)} virtualized />);
+    await expect.poll(() => bodyRows().length).toBeGreaterThan(3);
+    const [first, second] = bodyRows();
+    const step = Math.round(
+      (second?.getBoundingClientRect().top ?? 0) - (first?.getBoundingClientRect().top ?? 0),
+    );
+    expect(step).toBe(height(first));
+    expect(step).toBe(comfortablePx());
   });
 });
 

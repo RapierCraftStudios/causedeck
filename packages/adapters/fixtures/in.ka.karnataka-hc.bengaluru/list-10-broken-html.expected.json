@@ -1,0 +1,222 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-10-29",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1\tWP No. 4501/2026 (GM-RES)\tMade-up Traders vs State of Fictionland\tSri. A. Fictional\tAGA (FICTIONAL)",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "9",
+      "itemNo": "1",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "4501",
+      "caseYear": 2026,
+      "matchKey": "WP/4501/2026",
+      "parties": "Made-up Traders vs State of Fictionland",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Sri. A. Fictional",
+          "aliases": ["A FICTIONAL", "FICTIONAL A"]
+        },
+        {
+          "raw": "AGA (FICTIONAL)",
+          "aliases": ["AGA FICTIONAL"]
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2\tRFA No. 88/2024\tS. Kalpita Rao vs The Fictional Bank\tSri. K. Kalpita\tSri. R. Madeup",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "9",
+      "itemNo": "2",
+      "caseTypeRaw": "RFA",
+      "caseType": "RFA",
+      "caseNumber": "88",
+      "caseYear": 2024,
+      "matchKey": "RFA/88/2024",
+      "parties": "S. Kalpita Rao vs The Fictional Bank",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Sri. K. Kalpita",
+          "aliases": ["K KALPITA", "KALPITA K"]
+        },
+        {
+          "raw": "Sri. R. Madeup",
+          "aliases": ["R MADEUP", "MADEUP R"]
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3\tMFA No. 7001/2025\tPretend Growers Society vs Imaginary Panchayat\tSmt. S. Pretend",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "9",
+      "itemNo": "3",
+      "caseTypeRaw": "MFA",
+      "caseType": "MFA",
+      "caseNumber": "7001",
+      "caseYear": 2025,
+      "matchKey": "MFA/7001/2025",
+      "parties": "Pretend Growers Society vs Imaginary Panchayat",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Smt. S. Pretend",
+          "aliases": ["S PRETEND", "PRETEND S"]
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["9"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "9",
+      "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+      "lists": [
+        {
+          "listNo": "1",
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1\tWP No. 4501/2026 (GM-RES)\tMade-up Traders vs State of Fictionland\tSri. A. Fictional\tAGA (FICTIONAL)",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "9",
+              "itemNo": "1",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "4501",
+              "caseYear": 2026,
+              "matchKey": "WP/4501/2026",
+              "parties": "Made-up Traders vs State of Fictionland",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Sri. A. Fictional",
+                  "aliases": ["A FICTIONAL", "FICTIONAL A"]
+                },
+                {
+                  "raw": "AGA (FICTIONAL)",
+                  "aliases": ["AGA FICTIONAL"]
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2\tRFA No. 88/2024\tS. Kalpita Rao vs The Fictional Bank\tSri. K. Kalpita\tSri. R. Madeup",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "9",
+              "itemNo": "2",
+              "caseTypeRaw": "RFA",
+              "caseType": "RFA",
+              "caseNumber": "88",
+              "caseYear": 2024,
+              "matchKey": "RFA/88/2024",
+              "parties": "S. Kalpita Rao vs The Fictional Bank",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Sri. K. Kalpita",
+                  "aliases": ["K KALPITA", "KALPITA K"]
+                },
+                {
+                  "raw": "Sri. R. Madeup",
+                  "aliases": ["R MADEUP", "MADEUP R"]
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3\tMFA No. 7001/2025\tPretend Growers Society vs Imaginary Panchayat\tSmt. S. Pretend",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "9",
+              "itemNo": "3",
+              "caseTypeRaw": "MFA",
+              "caseType": "MFA",
+              "caseNumber": "7001",
+              "caseYear": 2025,
+              "matchKey": "MFA/7001/2025",
+              "parties": "Pretend Growers Society vs Imaginary Panchayat",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Smt. S. Pretend",
+                  "aliases": ["S PRETEND", "PRETEND S"]
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "status": "ok",
+  "listType": "daily",
+  "source": "html",
+  "publishedAt": "2026-10-28T18:30:00+05:30",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 29-10-2026",
+    "rowIndex": 0
+  }
+}

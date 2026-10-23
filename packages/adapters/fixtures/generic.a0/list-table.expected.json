@@ -1,0 +1,162 @@
+{
+  "adapterId": "generic.a0",
+  "adapterVersion": "1.0.0",
+  "forumCode": "generic.a0",
+  "listDate": "2026-11-17",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1 Com.O.S. No. 9347/2026 Invented Motors vs Invented Motors FOR ARGUMENTS",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "1",
+      "caseTypeRaw": "Com.O.S.",
+      "caseType": "COMOS",
+      "caseNumber": "9347",
+      "caseYear": 2026,
+      "matchKey": "COMOS/9347/2026",
+      "parties": "Invented Motors vs Invented Motors",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2 Com.A.A. No. 2282/2021 Pretend Housing Society vs Made-up Farmer FOR ORDERS",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "2",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "2282",
+      "caseYear": 2021,
+      "matchKey": "COMAA/2282/2021",
+      "parties": "Pretend Housing Society vs Made-up Farmer",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3 Com.A.P. No. 9940/2019 Imaginary Textiles vs Pretend Housing Society FOR ARGUMENTS",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "3",
+      "caseTypeRaw": "Com.A.P.",
+      "caseType": "COMAP",
+      "caseNumber": "9940",
+      "caseYear": 2019,
+      "matchKey": "COMAP/9940/2019",
+      "parties": "Imaginary Textiles vs Pretend Housing Society",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4 Com.A.A. No. 8248/2020 Made-up Farmer vs Made-up Farmer FOR ORDERS",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "4",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "8248",
+      "caseYear": 2020,
+      "matchKey": "COMAA/8248/2020",
+      "parties": "Made-up Farmer vs Made-up Farmer",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5 Com.Ex. No. 8256/2022 Fictional Traders Pvt Ltd vs Sample Bank Ltd FOR ARGUMENTS",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "5",
+      "caseTypeRaw": "Com.Ex.",
+      "caseType": "COMEX",
+      "caseNumber": "8256",
+      "caseYear": 2022,
+      "matchKey": "COMEX/8256/2022",
+      "parties": "Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "6 Com.A.A. No. 1781/2021 Made-up Farmer vs Imaginary Textiles FOR ARGUMENTS",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "6",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "1781",
+      "caseYear": 2021,
+      "matchKey": "COMAA/1781/2021",
+      "parties": "Made-up Farmer vs Imaginary Textiles",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "7 Com.Misc. No. 8778/2024 Invented Motors vs Imaginary Textiles FOR ARGUMENTS",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "7",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "8778",
+      "caseYear": 2024,
+      "matchKey": "COMMISC/8778/2024",
+      "parties": "Invented Motors vs Imaginary Textiles",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "8 Com.Ex. No. 8231/2021 Pretend Housing Society vs Made-up Farmer FOR EVIDENCE",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "8",
+      "caseTypeRaw": "Com.Ex.",
+      "caseType": "COMEX",
+      "caseNumber": "8231",
+      "caseYear": 2021,
+      "matchKey": "COMEX/8231/2021",
+      "parties": "Pretend Housing Society vs Made-up Farmer",
+      "stageRaw": null,
+      "stageNorm": null
+    }
+  ],
+  "source": "pdf",
+  "listDateAnchor": { "page": 1, "quote": "17.11.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["7"],
+    "hallsUnreadable": []
+  }
+}

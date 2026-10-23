@@ -14,15 +14,24 @@ forge.yaml.bak
 out/
 dist/
 .turbo/
+.cache/
 coverage/
 reports/
 playwright-report/
 test-results/
+test-results-perf/
 blob-report/
 .lighthouseci/
 e2e/.auth/
 storybook-static/
 *.tsbuildinfo
+# Bundled by apps/web/lib/pwa/build-sw.ts when the dev server or a build starts (#50).
+apps/web/public/sw.js
+
+# Lawyer-supplied court fixtures: never committed (#371, #119).
+fixtures-private/
+# Seeded output of `pnpm --filter @causedeck/adapters gen:fixtures` (#401): never committed.
+packages/adapters/fixtures/generated/
 
 # OS and editor noise
 .DS_Store

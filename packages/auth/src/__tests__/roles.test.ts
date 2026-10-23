@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
-import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { Secret } from '@causedeck/config/env';
+import { createDb, schema, withWorkspace, type Database } from '@causedeck/db';
+import { closeTestDb, testAppDb, testDatabaseUrls } from '@causedeck/db/testing';
 import { sql } from 'drizzle-orm';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -47,10 +49,23 @@ describe('roles (Better Auth access control)', () => {
     expect(roles.viewer.authorize({ matter: ['update'] }).success).toBe(false);
     expect(roles.viewer.authorize({ member: ['create'] }).success).toBe(false);
   });
+
+  it('grants audit read to owners and advocates only (#229)', () => {
+    for (const role of ['owner', 'advocate'] as const) {
+      expect(roles[role].authorize({ audit: ['read'] }).success, role).toBe(true);
+    }
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(roles[role].authorize({ audit: ['read'] }).success, role).toBe(false);
+    }
+  });
 });
 
 describe('roles as Better Auth organization roles', () => {
-  afterAll(closeTestDb);
+  const pools: Database[] = [];
+  afterAll(async () => {
+    for (const pool of pools) await pool.$client.end();
+    await closeTestDb();
+  });
 
   it('matches the role list the database CHECK constraints use', async () => {
     for (const name of ['member_role_chk', 'invitation_role_chk']) {
@@ -71,18 +86,44 @@ describe('roles as Better Auth organization roles', () => {
     expect(plugin.options.creatorRole).toBe('owner');
   });
 
-  async function workspaceWithMember() {
+  it('sees no workspace through the organization endpoints with no workspace pinned (#19 RLS)', async () => {
     const { auth } = makeAuth();
     const owner = await devSignInAs(auth, uniqueEmail('owner'));
-    const created = await authRequest(auth, '/organization/create', {
+    const workspaceId = await ownedWorkspace(owner.user.id);
+    const listed = await authRequest(auth, '/organization/list', {
+      method: 'GET',
       cookie: owner.cookie,
-      body: { name: 'Chambers', slug: `chambers-${randomUUID()}` },
     });
-    expect(created.status).toBe(200);
-    const workspace = (await created.json()) as { id: string; members: { role: string }[] };
-    expect(workspace.members[0]?.role).toBe('owner');
+    expect(listed.status).toBe(200);
+    expect(((await listed.json()) as { id: string }[]).map((w) => w.id)).not.toContain(workspaceId);
+  });
+
+  /** A workspace owned by `userId`, written inside its own scope as createWorkspace does. */
+  async function ownedWorkspace(userId: string): Promise<string> {
+    const id = randomUUID();
+    await withWorkspace(testAppDb(), { workspaceId: id }, async (tx) => {
+      await tx.insert(schema.organization).values({ id, name: 'Chambers', slug: `chambers-${id}` });
+      await tx.insert(schema.member).values({ organizationId: id, userId, role: 'owner' });
+    });
+    return id;
+  }
+
+  /**
+   * The apps never call Better Auth's organization endpoints (workspaces live in
+   * @causedeck/core/workspaces); under FORCE RLS they only work with a workspace pinned. This pins
+   * one on every connection (a startup parameter) so the role guards stay tested at the boundary.
+   */
+  async function workspaceWithMember() {
+    const { auth: global } = makeAuth();
+    const owner = await devSignInAs(global, uniqueEmail('owner'));
+    const workspaceId = await ownedWorkspace(owner.user.id);
+    const url = new URL(testDatabaseUrls().app);
+    url.searchParams.set('app.workspace_id', workspaceId);
+    const pinned = createDb({ url: new Secret(url.toString()), role: 'app', max: 2 });
+    pools.push(pinned);
+    const { auth } = makeAuth({ db: pinned });
     const other = await devSignInAs(auth, uniqueEmail('member'));
-    return { auth, owner, other, workspaceId: workspace.id };
+    return { auth, owner, other, workspaceId };
   }
 
   it('rejects an unknown role at the API boundary and accepts a known one', async () => {

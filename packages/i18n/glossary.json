@@ -1,0 +1,103 @@
+{
+  "$comment": "Legal terms and their approved ta/kn renderings (stems, so inflected forms match). status: needs-lawyer-review until a native-speaking advocate confirms; then reviewed. See docs/engineering/i18n.md.",
+  "terms": [
+    {
+      "en": "Next date",
+      "ta": "அடுத்த தேதி",
+      "kn": "ಮುಂದಿನ ದಿನಾಂಕ",
+      "status": "needs-lawyer-review",
+      "note": "The date a matter is next posted to. Courts in both states also say 'next date' in English."
+    },
+    {
+      "en": "Listed",
+      "ta": "பட்டியலிட",
+      "kn": "ಪಟ್ಟಿಯಾ",
+      "status": "needs-lawyer-review",
+      "note": "A matter appearing on a cause list for a day."
+    },
+    {
+      "en": "Order",
+      "ta": "உத்தரவு",
+      "kn": "ಆದೇಶ",
+      "status": "needs-lawyer-review",
+      "note": "A court order, not a purchase order."
+    },
+    {
+      "en": "Cause list",
+      "ta": "வழக்குப் பட்டியல",
+      "kn": "ಕಾಸ್ ಲಿಸ್ಟ್",
+      "status": "needs-lawyer-review",
+      "note": "Kannada keeps the English term transliterated, as used at the Karnataka High Court; confirm or switch to Latin script with a gloss."
+    },
+    {
+      "en": "Bench",
+      "ta": "அமர்வு",
+      "kn": "ಪೀಠ",
+      "status": "needs-lawyer-review",
+      "note": "The judge or judges hearing a matter."
+    },
+    {
+      "en": "Hall",
+      "ta": "அரங்கு",
+      "kn": "ಸಭಾಂಗಣ",
+      "status": "needs-lawyer-review",
+      "note": "Court hall number. Bar usage is often 'court hall' in English; confirm the vernacular reads naturally."
+    },
+    {
+      "en": "Matter",
+      "ta": "வழக்க",
+      "kn": "ಪ್ರಕರಣ",
+      "status": "needs-lawyer-review",
+      "note": "A case handled by the chamber."
+    },
+    {
+      "en": "Hearing",
+      "ta": "விசாரணை",
+      "kn": "ವಿಚಾರಣೆ",
+      "status": "needs-lawyer-review",
+      "note": "A listed hearing; not an investigation."
+    },
+    {
+      "en": "Advocate",
+      "ta": "வழக்கறிஞர்",
+      "kn": "ವಕೀಲ",
+      "status": "reviewed",
+      "note": "Standard term in both states."
+    },
+    {
+      "en": "Junior",
+      "ta": "இளைய வழக்கறிஞர்",
+      "kn": "ಕಿರಿಯ ವಕೀಲ",
+      "status": "needs-lawyer-review",
+      "note": "A junior advocate in a chamber."
+    },
+    {
+      "en": "Clerk",
+      "ta": "எழுத்தர்",
+      "kn": "ಗುಮಾಸ್ತ",
+      "status": "needs-lawyer-review",
+      "note": "The advocate's clerk, not a court officer."
+    },
+    {
+      "en": "Brief",
+      "ta": "சுருக்க",
+      "kn": "ಸಂಕ್ಷಿಪ್ತ",
+      "status": "needs-lawyer-review",
+      "note": "The prepared brief sheet for a hearing. 'Summary' may read too generic; confirm."
+    },
+    {
+      "en": "Limitation",
+      "ta": "காலவரம்பு",
+      "kn": "ಮಿತಿ ಅವಧಿ",
+      "status": "needs-lawyer-review",
+      "note": "Limitation period under the Limitation Act."
+    },
+    {
+      "en": "Obligation",
+      "ta": "கடமை",
+      "kn": "ಬಾಧ್ಯತೆ",
+      "status": "needs-lawyer-review",
+      "note": "A follow-up duty arising from an order or listing."
+    }
+  ]
+}

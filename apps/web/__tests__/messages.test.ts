@@ -1,4 +1,4 @@
-import { createTranslator } from 'next-intl';
+import { createTranslator, type useTranslations } from 'next-intl';
 import { describe, expect, it } from 'vitest';
 
 import { defaultLocale, locales } from '../i18n/routing.ts';
@@ -71,7 +71,7 @@ describe('message catalogs', () => {
     }
   });
 
-  it.each(['ta', 'kn'] as const)('%s auth strings keep the ICU arguments of en', (locale) => {
+  it.each(['ta', 'kn'] as const)('%s strings keep the ICU arguments of en', (locale) => {
     const args = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
     const pick = (catalog: unknown, key: string): string =>
       key
@@ -80,10 +80,18 @@ describe('message catalogs', () => {
           (node, part) => (node as Record<string, unknown>)[part],
           catalog,
         ) as string;
-    for (const key of keys(catalogs.en.auth)) {
-      expect(args(pick(catalogs[locale].auth, key)), key).toEqual(
-        args(pick(catalogs.en.auth, key)),
-      );
+    // Every namespace, not only auth (#174).
+    for (const key of keys(catalogs.en)) {
+      expect(args(pick(catalogs[locale], key)), key).toEqual(args(pick(catalogs.en, key)));
     }
+  });
+
+  it('types t() keys from the en catalog', () => {
+    const check = (t: ReturnType<typeof useTranslations<'nav'>>) => {
+      // @ts-expect-error -- unknown keys do not typecheck (AppConfig Messages, global.d.ts)
+      t('notAKey');
+      return t('today');
+    };
+    expect(typeof check).toBe('function');
   });
 });

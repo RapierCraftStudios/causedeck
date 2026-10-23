@@ -55,9 +55,12 @@ export const db: Database = new Proxy({} as Database, {
   get: (_target, prop) => Reflect.get(appDatabase(), prop) as unknown,
 });
 
-/** Close the runtime pool (graceful shutdown and tests). */
-export async function closeDb(): Promise<void> {
+/**
+ * Close the runtime pool (graceful shutdown and tests). `timeout` (seconds) bounds the wait for
+ * open queries before connections are closed; without it, `end()` waits for them.
+ */
+export async function closeDb(options?: { timeout?: number }): Promise<void> {
   const current = appDb;
   appDb = undefined;
-  await current?.$client.end();
+  await current?.$client.end(options);
 }

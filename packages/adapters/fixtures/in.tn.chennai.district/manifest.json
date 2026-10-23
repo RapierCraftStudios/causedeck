@@ -1,0 +1,119 @@
+{
+  "adapter": "in.tn.chennai.district",
+  "classification": "FICTIONAL",
+  "note": "Synthetic A0 district fixtures from src/generic-a0/synthetic/generate.ts (#56), seed 56. Every party and court is fictional; real district fixtures are validated later with #119.",
+  "fixtures": [
+    {
+      "file": "list-english.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "list-tamil.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "list-kannada.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "list-mixed.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "list-commercial.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "list-cnr.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "list-table.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "list-image-only.input.pdf",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "list-malformed.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "order-english.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "order-tamil.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "order-kannada.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "order-mixed.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "order-commercial.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "order-cnr.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    },
+    {
+      "file": "order-malformed.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.tn.chennai.city-civil-court"
+    }
+  ]
+}

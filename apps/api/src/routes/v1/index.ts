@@ -1,11 +1,17 @@
 // The `/v1` router (#14). Additive changes only; breaking changes go to `/v2`. Middleware order:
 // resolve the caller → CSRF (cookie callers) → rate limit (per user, per IP when anonymous) →
-// idempotency (POST) → routes (each adds `requireAuth` unless `public: true`).
+// idempotency (POST) → routes (each adds `requireAuth` unless `public: true`). Webhooks
+// (`/v1/webhooks/*`) are public and verify a provider signature instead; CSRF and idempotency only
+// act on signed-in callers, so they pass through.
 import type { Database } from '@causedeck/db';
 import type { MiddlewareHandler } from 'hono';
 
 import { createRouter, type AppEnv, type AppRouter } from '../../lib/openapi.ts';
 
+import { inboundEmailRouter, type InboundEmailDeps } from '../inbound-email.ts';
+import { razorpayWebhookRouter, type RazorpayWebhookDeps } from '../webhooks/razorpay.ts';
+
+import { billingRouter } from './billing.ts';
 import { meRouter } from './me.ts';
 import { workspacesRouter } from './workspaces.ts';
 
@@ -13,15 +19,36 @@ export interface V1Options {
   db: Database;
   /** Applied in order before any route. */
   middleware: MiddlewareHandler<AppEnv>[];
+  /** Razorpay webhook deps; without them the webhook route rejects every call with 400. */
+  billing?: Omit<RazorpayWebhookDeps, 'db'>;
+  /** Inbound email deps (#530); without a provider the route rejects every call with 400. */
+  inboundEmail?: Omit<InboundEmailDeps, 'db'>;
   /** Extra routes (tests, and later webhook groups) registered after the built-in ones. */
   routes?: (v1: AppRouter) => void;
 }
 
-export function v1Router({ db, middleware, routes }: V1Options): AppRouter {
+const noop = () => undefined;
+
+export function v1Router({ db, middleware, billing, inboundEmail, routes }: V1Options): AppRouter {
   const v1 = createRouter();
   for (const handler of middleware) v1.use('*', handler);
   v1.route('/', meRouter(db));
   v1.route('/', workspacesRouter(db));
+  v1.route('/', billingRouter(db));
+  v1.route(
+    '/',
+    razorpayWebhookRouter({
+      db,
+      ...(billing ?? { webhookSecret: null, logger: { info: noop, warn: noop } }),
+    }),
+  );
+  v1.route(
+    '/',
+    inboundEmailRouter({
+      db,
+      ...(inboundEmail ?? { provider: null, logger: { info: noop, warn: noop } }),
+    }),
+  );
   routes?.(v1);
   return v1;
 }

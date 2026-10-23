@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.tn.chennai.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "listDate": "2026-07-17",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. Crl.Misc. No. 9012/2020    புனைவு ஜவுளி எதிர் போலி விவசாயி",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "17",
+      "itemNo": "1",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "9012",
+      "caseYear": 2020,
+      "matchKey": "CRLMISC/9012/2020",
+      "parties": "புனைவு ஜவுளி எதிர் போலி விவசாயி",
+      "stageRaw": "ஆணைக்காக",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. M.V.C. No. 2206/2024    மாதிரி வங்கி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "17",
+      "itemNo": "2",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "2206",
+      "caseYear": 2024,
+      "matchKey": "MVC/2206/2024",
+      "parties": "மாதிரி வங்கி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+      "stageRaw": "ஆணைக்காக",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. Ex.P. No. 4537/2025    மாதிரி வங்கி எதிர் போலி விவசாயி",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "17",
+      "itemNo": "3",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "4537",
+      "caseYear": 2025,
+      "matchKey": "EXP/4537/2025",
+      "parties": "மாதிரி வங்கி எதிர் போலி விவசாயி",
+      "stageRaw": "ஆணைக்காக",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. M.V.C. No. 6860/2019    கற்பனை வணிகர்கள் நிறுவனம் எதிர் மாதிரி வங்கி",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "17",
+      "itemNo": "4",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "6860",
+      "caseYear": 2019,
+      "matchKey": "MVC/6860/2019",
+      "parties": "கற்பனை வணிகர்கள் நிறுவனம் எதிர் மாதிரி வங்கி",
+      "stageRaw": "ஆணைக்காக",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. Ex.P. No. 4664/2025    மாதிரி வங்கி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "17",
+      "itemNo": "5",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "4664",
+      "caseYear": 2025,
+      "matchKey": "EXP/4664/2025",
+      "parties": "மாதிரி வங்கி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+      "stageRaw": "ஆணைக்காக",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. CCCA No. 816/2019    போலி விவசாயி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "13",
+      "itemNo": "6",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "816",
+      "caseYear": 2019,
+      "matchKey": "CCCA/816/2019",
+      "parties": "போலி விவசாயி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. CCCA No. 6643/2025    புனைவு ஜவுளி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "13",
+      "itemNo": "7",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "6643",
+      "caseYear": 2025,
+      "matchKey": "CCCA/6643/2025",
+      "parties": "புனைவு ஜவுளி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. Crl.Misc. No. 2848/2019    புனைவு ஜவுளி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "13",
+      "itemNo": "8",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "2848",
+      "caseYear": 2019,
+      "matchKey": "CRLMISC/2848/2019",
+      "parties": "புனைவு ஜவுளி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. O.S. No. 7926/2019    புனைவு ஜவுளி எதிர் கற்பனை மோட்டார்ஸ்",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "13",
+      "itemNo": "9",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "7926",
+      "caseYear": 2019,
+      "matchKey": "OS/7926/2019",
+      "parties": "புனைவு ஜவுளி எதிர் கற்பனை மோட்டார்ஸ்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "௧௭.௦௭.௨௦௨௬", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["17", "13"],
+    "hallsUnreadable": []
+  }
+}

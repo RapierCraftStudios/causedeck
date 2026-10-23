@@ -1,4 +1,7 @@
 {
-  "extends": "@causedeck/config/tsconfig/node.json",
+  "extends": "@causedeck/config/tsconfig/react-library.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  },
   "include": ["src", "*.ts"]
 }

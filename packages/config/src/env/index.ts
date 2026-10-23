@@ -15,6 +15,8 @@ import { REDACTED } from './secret.ts';
 
 export { clientEnv, createClientEnv, type ClientEnv } from './client.ts';
 export { envRegistry, OVERRIDE_ACK, type ServerEnv } from './schema.ts';
+export { FLAG_KILL_SWITCHES, killSwitch, type FlagKillSwitch } from './kill-switches.ts';
+export { INDIA_AWS_REGIONS } from './providers.ts';
 export { isSecret, Secret } from './secret.ts';
 export type { KeySpec } from './registry.ts';
 

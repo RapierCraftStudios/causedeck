@@ -33,6 +33,27 @@ describe('Button', () => {
     expect(buttonVariants({ size: 'lg' })).toContain('h-11');
   });
 
+  it('wraps Tamil and Kannada labels instead of overflowing, keeping the size as a minimum', () => {
+    const INDIC = '[&:is(:lang(ta),:lang(kn))]:';
+    for (const [size, height] of [
+      ['sm', '8'],
+      ['md', '9'],
+      ['lg', '11'],
+    ] as const) {
+      const classes = buttonVariants({ size }).split(' ');
+      expect(classes).toEqual(
+        expect.arrayContaining([
+          `${INDIC}whitespace-normal`,
+          `${INDIC}h-auto`,
+          `${INDIC}min-h-${height}`,
+          `${INDIC}text-center`,
+        ]),
+      );
+      // English is unchanged: one line at the fixed height.
+      expect(classes).toEqual(expect.arrayContaining(['whitespace-nowrap', `h-${height}`]));
+    }
+  });
+
   it('guarantees the --hit area on coarse pointers', () => {
     for (const size of ['sm', 'md', 'lg'] as const) {
       expect(buttonVariants({ size })).toContain('pointer-coarse:hit');

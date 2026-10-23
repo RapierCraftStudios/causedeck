@@ -1,0 +1,43 @@
+{
+  "header": {
+    "caseTypeRaw": "W.A.",
+    "caseType": "WA",
+    "caseNumber": "777",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": null,
+    "neutralCitationRaw": null,
+    "anchor": {
+      "page": 1,
+      "quote": "W.A.No.777 of 2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WA",
+        "caseTypeRaw": "W.A.",
+        "number": "777",
+        "year": 2026,
+        "matchKey": "WA/777/2026"
+      }
+    ],
+    "bench": "THE HONOURABLE MR.JUSTICE A. FICTIONAL",
+    "judges": ["THE HONOURABLE MR.JUSTICE A. FICTIONAL"],
+    "orderType": "daily"
+  },
+  "cues": [
+    {
+      "kind": "reserved",
+      "text": "Orders reserved.",
+      "phrase": "Orders reserved",
+      "anchor": {
+        "page": 1,
+        "quote": "Orders reserved.",
+        "rowIndex": 11
+      },
+      "confidence": 0.8,
+      "date": null
+    }
+  ]
+}

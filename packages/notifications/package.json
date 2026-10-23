@@ -5,17 +5,41 @@
   "description": "Email, web push, in-app notifications, digests.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./categories": "./src/categories.ts",
+    "./service": "./src/service.ts",
+    "./email": "./src/email/index.ts",
+    "./quiet-hours": "./src/quiet-hours.ts",
+    "./push": "./src/push/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:tenancy": "vitest run src/__tests__/cross-tenant",
+    "vapid:generate": "tsx scripts/vapid-generate.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sesv2": "catalog:",
+    "@causedeck/config": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "@causedeck/i18n": "workspace:*",
+    "@react-email/components": "catalog:",
+    "drizzle-orm": "catalog:",
+    "icu-minify": "catalog:",
+    "intl-messageformat": "catalog:",
+    "nodemailer": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "web-push": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@causedeck/config": "workspace:*",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/web-push": "catalog:",
     "eslint": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

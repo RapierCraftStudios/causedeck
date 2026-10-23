@@ -35,6 +35,7 @@ vi.mock('next/navigation', () => ({
   redirect: (url: string) => {
     throw new Error(`NEXT_REDIRECT ${url}`);
   },
+  useRouter: () => ({ refresh: vi.fn() }),
 }));
 
 const { SignInForm } = await import('../app/(public)/sign-in/sign-in-form.tsx');
@@ -282,6 +283,9 @@ describe('sign-in page', () => {
     expect(screen.getByText('India-hosted. Your matter data never leaves India.')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Terms' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Privacy Policy' })).toBeTruthy();
+    // #175: the compact language switcher sits in the footer.
+    const globe = screen.getByRole('button', { name: 'Language: English' });
+    expect(globe.closest('footer')).toBeTruthy();
   });
 
   it('sends a signed-in user to a safe next', async () => {

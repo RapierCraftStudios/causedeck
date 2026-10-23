@@ -157,6 +157,137 @@
           }
         },
         "required": ["data", "nextCursor"]
+      },
+      "BillingPlans": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["junior", "advocate", "chamber", "dedicated"]
+                },
+                "interval": {
+                  "type": "string",
+                  "enum": ["month", "year"]
+                },
+                "pricePaise": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "perSeat": {
+                  "type": "boolean"
+                },
+                "clerkSeatPricePaise": {
+                  "type": ["integer", "null"],
+                  "minimum": 0
+                },
+                "minSeats": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "kind",
+                "interval",
+                "pricePaise",
+                "perSeat",
+                "clerkSeatPricePaise",
+                "minSeats"
+              ]
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "BillingSubscription": {
+        "type": "object",
+        "properties": {
+          "subscription": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "planId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["trialing", "active", "past_due", "paused", "cancelled", "expired"]
+              },
+              "seats": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "clerkSeats": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "currentPeriodStart": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              },
+              "currentPeriodEnd": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              },
+              "graceUntil": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              },
+              "cancelAtPeriodEnd": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "planId",
+              "status",
+              "seats",
+              "clerkSeats",
+              "currentPeriodStart",
+              "currentPeriodEnd",
+              "graceUntil",
+              "cancelAtPeriodEnd"
+            ]
+          }
+        },
+        "required": ["subscription"]
+      },
+      "RazorpayWebhookAck": {
+        "type": "object",
+        "properties": {
+          "received": {
+            "type": "boolean",
+            "enum": [true]
+          },
+          "duplicate": {
+            "type": "boolean"
+          }
+        },
+        "required": ["received"]
+      },
+      "InboundEmailAck": {
+        "type": "object",
+        "properties": {
+          "received": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["received"]
       }
     },
     "parameters": {}
@@ -268,6 +399,222 @@
           },
           "422": {
             "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing/plans": {
+      "get": {
+        "operationId": "listBillingPlans",
+        "tags": ["Billing"],
+        "summary": "The active plan catalogue (prices in paise, ex-GST)",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active plans",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPlans"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing/subscription": {
+      "get": {
+        "operationId": "getBillingSubscription",
+        "tags": ["Billing"],
+        "summary": "The workspace's current subscription (x-workspace-id header)",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The current subscription, or null on the free plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingSubscription"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/razorpay": {
+      "post": {
+        "operationId": "receiveRazorpayWebhook",
+        "tags": ["Webhooks"],
+        "summary": "Razorpay subscription and payment events (signed with X-Razorpay-Signature)",
+        "security": [],
+        "x-public": true,
+        "responses": {
+          "200": {
+            "description": "Accepted (also for replays and unknown subscriptions)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RazorpayWebhookAck"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inbound/email": {
+      "post": {
+        "operationId": "receiveInboundEmail",
+        "tags": ["Inbound"],
+        "summary": "Inbound email notifications (SNS-signed for SES, shared secret in dev)",
+        "security": [],
+        "x-public": true,
+        "responses": {
+          "200": {
+            "description": "Accepted (also for duplicates, unknown addresses and disabled channels)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundEmailAck"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload too large",
             "content": {
               "application/problem+json": {
                 "schema": {

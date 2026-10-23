@@ -1,0 +1,97 @@
+{
+  "pages": [
+    {
+      "page": 1,
+      "width": 842,
+      "height": 595,
+      "text": "NATIONAL COMPANY LAW TRIBUNAL, BENGALURU BENCH (FICTIONAL)\nCAUSE LIST DATED 21.10.2026\nCoram: Hon'ble Shri Fictional Rao, Member (Judicial)\nHon'ble Shri Pretend Kumar, Member (Judicial)\nPHYSICAL HEARING AT 2:30 PM\nSl. CP No. CA/IA No. Purpose Section Name of Parties Counsel for Counsel for Respondent IRP/RP/Liquidator/MP Remarks\nNo. Petitioner/Applicant",
+      "items": [
+        {
+          "text": "NATIONAL COMPANY LAW TRIBUNAL, BENGALURU BENCH (FICTIONAL)",
+          "bbox": { "x": 24, "y": 24, "width": 240.36, "height": 7 }
+        },
+        {
+          "text": "CAUSE LIST DATED 21.10.2026",
+          "bbox": { "x": 24, "y": 33, "width": 102.02, "height": 7 }
+        },
+        {
+          "text": "Coram: Hon'ble Shri Fictional Rao, Member (Judicial)",
+          "bbox": { "x": 24, "y": 47, "width": 164.22, "height": 7 }
+        },
+        {
+          "text": "Hon'ble Shri Pretend Kumar, Member (Judicial)",
+          "bbox": { "x": 24, "y": 56, "width": 145.7, "height": 7 }
+        },
+        {
+          "text": "PHYSICAL HEARING AT 2:30 PM",
+          "bbox": { "x": 24, "y": 65, "width": 106.53, "height": 7 }
+        },
+        {
+          "text": "Sl. CP No. CA/IA No. Purpose Section Name of Parties Counsel for Counsel for Respondent IRP/RP/Liquidator/MP Remarks",
+          "bbox": { "x": 24, "y": 79, "width": 766.11, "height": 7 }
+        },
+        {
+          "text": "No. Petitioner/Applicant",
+          "bbox": { "x": 24, "y": 88, "width": 529.96, "height": 7 }
+        }
+      ],
+      "words": [
+        { "text": "NATIONAL", "bbox": { "x": 24, "y": 24, "width": 33.15, "height": 7 } },
+        { "text": "COMPANY", "bbox": { "x": 61.3, "y": 24, "width": 29.01, "height": 7 } },
+        { "text": "LAW", "bbox": { "x": 94.45, "y": 24, "width": 12.43, "height": 7 } },
+        { "text": "TRIBUNAL,", "bbox": { "x": 111.03, "y": 24, "width": 37.3, "height": 7 } },
+        { "text": "BENGALURU", "bbox": { "x": 152.47, "y": 24, "width": 37.3, "height": 7 } },
+        { "text": "BENCH", "bbox": { "x": 193.91, "y": 24, "width": 20.72, "height": 7 } },
+        { "text": "(FICTIONAL)", "bbox": { "x": 218.77, "y": 24, "width": 45.59, "height": 7 } },
+        { "text": "CAUSE", "bbox": { "x": 24, "y": 33, "width": 18.89, "height": 7 } },
+        { "text": "LIST", "bbox": { "x": 46.67, "y": 33, "width": 15.11, "height": 7 } },
+        { "text": "DATED", "bbox": { "x": 65.56, "y": 33, "width": 18.89, "height": 7 } },
+        { "text": "21.10.2026", "bbox": { "x": 88.23, "y": 33, "width": 37.78, "height": 7 } },
+        { "text": "Coram:", "bbox": { "x": 24, "y": 47, "width": 18.95, "height": 7 } },
+        { "text": "Hon'ble", "bbox": { "x": 46.11, "y": 47, "width": 22.11, "height": 7 } },
+        { "text": "Shri", "bbox": { "x": 71.37, "y": 47, "width": 12.63, "height": 7 } },
+        { "text": "Fictional", "bbox": { "x": 87.16, "y": 47, "width": 28.42, "height": 7 } },
+        { "text": "Rao,", "bbox": { "x": 118.74, "y": 47, "width": 12.63, "height": 7 } },
+        { "text": "Member", "bbox": { "x": 134.53, "y": 47, "width": 18.95, "height": 7 } },
+        { "text": "(Judicial)", "bbox": { "x": 156.64, "y": 47, "width": 31.58, "height": 7 } },
+        { "text": "Hon'ble", "bbox": { "x": 24, "y": 56, "width": 22.66, "height": 7 } },
+        { "text": "Shri", "bbox": { "x": 49.9, "y": 56, "width": 12.95, "height": 7 } },
+        { "text": "Pretend", "bbox": { "x": 66.09, "y": 56, "width": 22.66, "height": 7 } },
+        { "text": "Kumar,", "bbox": { "x": 91.99, "y": 56, "width": 19.43, "height": 7 } },
+        { "text": "Member", "bbox": { "x": 114.66, "y": 56, "width": 19.43, "height": 7 } },
+        { "text": "(Judicial)", "bbox": { "x": 137.32, "y": 56, "width": 32.38, "height": 7 } },
+        { "text": "PHYSICAL", "bbox": { "x": 24, "y": 65, "width": 31.56, "height": 7 } },
+        { "text": "HEARING", "bbox": { "x": 59.51, "y": 65, "width": 27.62, "height": 7 } },
+        { "text": "AT", "bbox": { "x": 91.07, "y": 65, "width": 7.89, "height": 7 } },
+        { "text": "2:30", "bbox": { "x": 102.91, "y": 65, "width": 15.78, "height": 7 } },
+        { "text": "PM", "bbox": { "x": 122.64, "y": 65, "width": 7.89, "height": 7 } },
+        { "text": "Sl.", "bbox": { "x": 24, "y": 79, "width": 8.17, "height": 7 } },
+        { "text": "CP", "bbox": { "x": 54, "y": 79, "width": 7.43, "height": 7 } },
+        { "text": "No.", "bbox": { "x": 65.14, "y": 79, "width": 11.14, "height": 7 } },
+        { "text": "CA/IA", "bbox": { "x": 154, "y": 79, "width": 17.13, "height": 7 } },
+        { "text": "No.", "bbox": { "x": 174.56, "y": 79, "width": 10.28, "height": 7 } },
+        { "text": "Purpose", "bbox": { "x": 254, "y": 79, "width": 26.28, "height": 7 } },
+        { "text": "Section", "bbox": { "x": 318, "y": 79, "width": 23.35, "height": 7 } },
+        { "text": "Name", "bbox": { "x": 364, "y": 79, "width": 13.38, "height": 7 } },
+        { "text": "of", "bbox": { "x": 380.73, "y": 79, "width": 6.69, "height": 7 } },
+        { "text": "Parties", "bbox": { "x": 390.76, "y": 79, "width": 23.42, "height": 7 } },
+        { "text": "Counsel", "bbox": { "x": 494, "y": 79, "width": 22.64, "height": 7 } },
+        { "text": "for", "bbox": { "x": 519.88, "y": 79, "width": 9.7, "height": 7 } },
+        { "text": "Counsel", "bbox": { "x": 586, "y": 79, "width": 23.95, "height": 7 } },
+        { "text": "for", "bbox": { "x": 613.37, "y": 79, "width": 10.26, "height": 7 } },
+        { "text": "Respondent", "bbox": { "x": 627.06, "y": 79, "width": 34.21, "height": 7 } },
+        {
+          "text": "IRP/RP/Liquidator/MP",
+          "bbox": { "x": 678, "y": 79, "width": 68.47, "height": 7 }
+        },
+        { "text": "Remarks", "bbox": { "x": 762, "y": 79, "width": 28.1, "height": 7 } },
+        { "text": "No.", "bbox": { "x": 24, "y": 88, "width": 10.61, "height": 7 } },
+        {
+          "text": "Petitioner/Applicant",
+          "bbox": { "x": 494, "y": 88, "width": 59.96, "height": 7 }
+        }
+      ],
+      "textCoverage": 0.0287
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "header": {
+    "caseTypeRaw": "CRIMINAL PETITION",
+    "caseType": "CRLP",
+    "caseNumber": "4410",
+    "caseYear": 2026,
+    "orderDate": "2026-10-27",
+    "neutralCitation": null,
+    "anchor": {
+      "page": 1,
+      "quote": "CRIMINAL PETITION NO. 4410 OF 2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "CRLP",
+        "caseTypeRaw": "CRIMINAL PETITION",
+        "number": "4410",
+        "year": 2026,
+        "matchKey": "CRLP/4410/2026"
+      }
+    ],
+    "bench": "THE HON'BLE MRS JUSTICE B. EXAMPLE",
+    "judges": ["THE HON'BLE MRS JUSTICE B. EXAMPLE"],
+    "neutralCitationRaw": null,
+    "orderType": "daily",
+    "authenticityFlag": null
+  },
+  "cues": [
+    {
+      "kind": "next_date_relative",
+      "text": "List the matter after four weeks.",
+      "anchor": {
+        "page": 1,
+        "quote": "List the matter after four weeks.",
+        "rowIndex": 15
+      },
+      "confidence": 0.85,
+      "phrase": "List the matter after",
+      "date": null
+    }
+  ]
+}

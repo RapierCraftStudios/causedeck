@@ -1,8 +1,8 @@
 import { createTranslator } from 'next-intl';
 
-import en from '../../messages/en.json';
-import kn from '../../messages/kn.json';
-import ta from '../../messages/ta.json';
+import en from '@causedeck/i18n/messages/en.json';
+import kn from '@causedeck/i18n/messages/kn.json';
+import ta from '@causedeck/i18n/messages/ta.json';
 
 export const catalogs = { en, ta, kn } as const;
 

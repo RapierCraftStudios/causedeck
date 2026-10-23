@@ -1,0 +1,19 @@
+{
+  "id": "en-38",
+  "language": "en",
+  "hearingDate": "2026-04-08",
+  "text": "In case 81382 of 2024 today. The matter was adjourned. The bench was not available. Next hearing next thursday. The court directed the State to produce the original records after seven weeks. Remind me to collect the certified copy.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-04-09",
+      "phrase": "next thursday"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records after seven weeks.",
+        "dueDate": "2026-05-27"
+      }
+    ],
+    "tasks": ["collect the certified copy"]
+  }
+}

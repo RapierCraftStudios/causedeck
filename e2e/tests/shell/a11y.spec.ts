@@ -13,7 +13,7 @@ import {
 } from './helpers.ts';
 
 test.describe('shell accessibility', { tag: '@a11y' }, () => {
-  for (const route of ['today', 'matters', 'courts'] as const) {
+  for (const route of ['today', 'matters', 'courts', 'settings'] as const) {
     test(`/${route}`, async ({ page, asUser }) => {
       await openShell(page, asUser, { path: route });
       await expect(page.getByRole('main')).toBeVisible();
@@ -27,12 +27,12 @@ test.describe('shell accessibility', { tag: '@a11y' }, () => {
   });
 
   test('loading state', async ({ page, asUser }) => {
-    await openShell(page, asUser, { path: 'matters?__state=loading', wait: false });
+    await openShell(page, asUser, { path: 'today?__state=loading', wait: false });
     await expect(page.locator('main [data-slot="route-skeleton"]')).toBeVisible();
   });
 
   test('error state', async ({ page, asUser }) => {
-    await openShell(page, asUser, { path: 'matters?__state=error', wait: false });
+    await openShell(page, asUser, { path: 'today?__state=error', wait: false });
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Something went wrong.', {
       timeout: 15_000,
     });

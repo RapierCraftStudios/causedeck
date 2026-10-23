@@ -2,13 +2,21 @@
 import { flagsOff } from '../nav.ts';
 import { can, type FlagKey, type Role } from '../workspace-context.ts';
 
-import { COMMAND_GROUPS, type Command, type CommandGroupId } from './types.ts';
+import {
+  COMMAND_GROUPS,
+  type Command,
+  type CommandGroupId,
+  type CommandInput,
+  type CommandSource,
+} from './types.ts';
 
 let commands: readonly Command[] = [];
+let sources: readonly CommandSource[] = [];
 const listeners = new Set<() => void>();
 
-function commit(next: readonly Command[]) {
+function commit(next: readonly Command[], nextSources: readonly CommandSource[] = sources) {
   commands = next;
+  sources = nextSources;
   for (const notify of listeners) notify();
 }
 
@@ -18,7 +26,7 @@ function commit(next: readonly Command[]) {
  */
 export function registerCommands(
   group: CommandGroupId,
-  items: readonly Omit<Command, 'group'>[],
+  items: readonly CommandInput[],
 ): () => void {
   const added = items.map((entry): Command => ({ ...entry, group }));
   const ids = new Set(added.map((entry) => entry.id));
@@ -61,7 +69,43 @@ export function getCommands(
   );
 }
 
-/** Tests only: empty the registry. */
+/**
+ * Add a search-backed source (a source whose id is already registered replaces it). Returns a
+ * function that removes exactly this source again.
+ */
+export function registerCommandSource(source: CommandSource): () => void {
+  commit(commands, [...sources.filter((entry) => entry.id !== source.id), source]);
+  return () => {
+    commit(
+      commands,
+      sources.filter((entry) => entry !== source),
+    );
+  };
+}
+
+/** Sources change through the same listeners as commands. */
+export function subscribeCommandSources(listener: () => void): () => void {
+  return subscribeCommands(listener);
+}
+
+/** Every registered source, in registration order. Stable between changes. */
+export function commandSourcesSnapshot(): readonly CommandSource[] {
+  return sources;
+}
+
+/** Sources visible to the role with the flags on, as `getCommands` filters commands. */
+export function getCommandSources(
+  { role, isEnabled = flagsOff }: GetCommandsOptions = {},
+  source: readonly CommandSource[] = sources,
+): CommandSource[] {
+  return source.filter(
+    (entry) =>
+      (entry.flag === undefined || isEnabled(entry.flag)) &&
+      (role === undefined || entry.requires === undefined || can(role, entry.requires)),
+  );
+}
+
+/** Tests only: empty the registry (commands and sources). */
 export function resetCommands(): void {
-  commit([]);
+  commit([], []);
 }

@@ -67,7 +67,11 @@ const SAMPLE_ICS = [
 test.describe('settings calendar', () => {
   test('a dark flag is a plain 404', async ({ page, asUser }) => {
     await asUser('owner', { path: 'settings/integrations/calendar' });
-    await expect(page.getByText('This page could not be found')).toBeVisible();
+    // The workspace not-found page (status 200: it streams behind the loading boundary first).
+    await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText(
+      'Page not found',
+    );
+    await expect(page.locator('[data-route="settings-calendar"]')).toHaveCount(0);
   });
 
   test(

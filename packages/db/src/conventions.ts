@@ -55,6 +55,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'flag_change_request',
   'catalogue_meta',
   'adapter_version',
+  'activation_event',
 ];
 
 /**

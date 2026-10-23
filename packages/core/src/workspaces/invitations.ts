@@ -11,6 +11,7 @@ import { schema, withWorkspace, type Database, type Transaction } from '@causede
 import { InviteInput } from '@causedeck/validators/workspace';
 import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 
+import { recordActivation } from '../activation/index.ts';
 import {
   conflict,
   forbidden,
@@ -199,6 +200,8 @@ export async function inviteMember(
   });
 
   await sendInvitation(request, issued);
+  // The inviter's `invite_sent` step (#509); measurement never fails the invitation.
+  await recordActivation(db, { userId: request.actorUserId, step: 'invite_sent', at: now });
   return issued;
 }
 

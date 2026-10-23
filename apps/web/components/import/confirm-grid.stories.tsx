@@ -43,7 +43,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** The conflicting matter blocks the confirm until a date is picked. */
-export const Conflict: Story = {
+export const BlockedByConflict: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByText(t.blockedNote)).toBeVisible();
     await expect(canvas.getByRole('button', { name: /Confirm 3 matters/ })).toBeDisabled();
@@ -51,7 +51,7 @@ export const Conflict: Story = {
 };
 
 /** A date picked: the confirm is enabled and the result offers the first court-day view. */
-export const Confirmed: Story = {
+export const ConfirmedFirstView: Story = {
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getAllByRole('button', { name: /Use .*17/ })[0] as HTMLElement);
     await userEvent.click(canvas.getByRole('button', { name: /Confirm 3 matters/ }));

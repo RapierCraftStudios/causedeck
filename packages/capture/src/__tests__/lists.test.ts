@@ -34,6 +34,8 @@ describe('capture lists', () => {
       process: 'capture.process',
       retention: 'capture.retention',
       voiceProcess: 'voice.process',
+      emailIntake: 'email.intake',
+      emailRawExpire: 'email.raw-expire',
     });
     expect(CAPTURE_FAILURE_REASONS).toContain('too_large');
   });

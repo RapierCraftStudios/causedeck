@@ -105,6 +105,8 @@ interface CaptureInput {
   status: string;
   matterHintId: string | null;
   createdAt: Date;
+  /** `source_meta.needsYouReason`: why a channel handler (email intake, #530) put it in Needs you. */
+  needsYouReason?: string | null;
   /** A camera capture routed away from structuring (`cause_list`, `receipt`; #52). */
   route?: string | null;
 }
@@ -195,11 +197,12 @@ export function groupInbox(facts: InboxFacts): Inbox {
       currentDate: null,
       confidence: null,
       needsYouReason:
-        row.route === 'cause_list' || row.route === 'receipt' ? row.route : 'unreadable',
+        row.needsYouReason ??
+        (row.route === 'cause_list' || row.route === 'receipt' ? row.route : 'unreadable'),
       anchors: [],
       createdAt: row.createdAt,
       reassignUntil: null,
-      canKeep: row.status === 'needs_you',
+      canKeep: row.status === 'needs_you' && row.needsYouReason == null,
     });
   }
   items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -395,6 +398,8 @@ export async function getInbox(
       captures: captures.map(({ sourceMeta, ...row }) => ({
         ...row,
         route: typeof sourceMeta['cameraRoute'] === 'string' ? sourceMeta['cameraRoute'] : null,
+        needsYouReason:
+          typeof sourceMeta['needsYouReason'] === 'string' ? sourceMeta['needsYouReason'] : null,
       })),
       matters: new Map(matterRows.map((row) => [row.id, row])),
       caseNumbers: new Map(

@@ -6,6 +6,7 @@
 import type { SessionSource } from '@causedeck/auth/session';
 import type { ReplayWindow } from '@causedeck/billing/webhook';
 import type { Secret } from '@causedeck/config/env';
+import type { InboundEmailProvider } from '@causedeck/core/email-intake';
 import type { JobSender } from '@causedeck/core/jobs';
 import type { Database } from '@causedeck/db';
 import { createHealthHandlers, type HealthCheck, type Logger } from '@causedeck/observability';
@@ -49,6 +50,14 @@ export interface AppDeps {
   routes?: (v1: AppRouter) => void;
   /** Razorpay webhooks (#204). Without it `POST /v1/webhooks/razorpay` rejects every call. */
   billing?: BillingDeps;
+  /** Inbound email (#530). Without a provider `POST /v1/inbound/email` rejects every call. */
+  inboundEmail?: InboundEmailAppDeps;
+}
+
+export interface InboundEmailAppDeps {
+  provider: InboundEmailProvider | null;
+  /** Sender for `email.intake`; defaults to the process-wide producer. */
+  sender?: JobSender;
 }
 
 export interface BillingDeps {
@@ -104,11 +113,16 @@ export function createApp(deps: AppDeps): AppRouter {
       rateLimit({
         now: () => now().getTime(),
         ...deps.rateLimit,
-        groups: { '/v1/webhooks': WEBHOOK_RATE_LIMIT, ...deps.rateLimit?.groups },
+        groups: {
+          '/v1/webhooks': WEBHOOK_RATE_LIMIT,
+          '/v1/inbound': WEBHOOK_RATE_LIMIT,
+          ...deps.rateLimit?.groups,
+        },
       }),
       idempotency({ store: deps.idempotencyStore ?? createIdempotencyStore(db), now }),
     ],
     ...(deps.billing && { billing: { ...deps.billing, logger, now } }),
+    ...(deps.inboundEmail && { inboundEmail: { ...deps.inboundEmail, logger, now } }),
     ...(deps.routes && { routes: deps.routes }),
   });
   app.route(`/${API_VERSION}`, v1);

@@ -1,0 +1,90 @@
+{
+  "adapterId": "in.tn.chennai.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "listDate": "2026-12-04",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. Crl.Misc. No. 9000/2020    Made-up Farmer vs Invented Motors",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "36",
+      "itemNo": "1",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "9000",
+      "caseYear": 2020,
+      "matchKey": "CRLMISC/9000/2020",
+      "parties": "Made-up Farmer vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Ex.P. No. 891/2026    Made-up Farmer vs Sample Bank Ltd",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "36",
+      "itemNo": "2",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "891",
+      "caseYear": 2026,
+      "matchKey": "EXP/891/2026",
+      "parties": "Made-up Farmer vs Sample Bank Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. O.S. No. 5847/2023    Fictional Traders Pvt Ltd vs Made-up Farmer",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "36",
+      "itemNo": "3",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "5847",
+      "caseYear": 2023,
+      "matchKey": "OS/5847/2023",
+      "parties": "Fictional Traders Pvt Ltd vs Made-up Farmer",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. M.V.C. No. 9853/2026    Fictional Traders Pvt Ltd vs Invented Motors",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "36",
+      "itemNo": "4",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "9853",
+      "caseYear": 2026,
+      "matchKey": "MVC/9853/2026",
+      "parties": "Fictional Traders Pvt Ltd vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "04.12.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["36"],
+    "hallsUnreadable": []
+  }
+}

@@ -1,0 +1,180 @@
+{
+  "adapterId": "generic.a0",
+  "adapterVersion": "1.0.0",
+  "forumCode": "generic.a0",
+  "listDate": "2026-09-15",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. O.S. No. 3914/2020    ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "33",
+      "itemNo": "1",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "3914",
+      "caseYear": 2020,
+      "matchKey": "OS/3914/2020",
+      "parties": "ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವ್ಯಾಪಾರಿಗಳ ಸಂಸ್ಥೆ",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. CCCA No. 159/2021    Made-up Farmer vs Invented Motors",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "33",
+      "itemNo": "2",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "159",
+      "caseYear": 2021,
+      "matchKey": "CCCA/159/2021",
+      "parties": "Made-up Farmer vs Invented Motors",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. M.V.C. No. 3156/2025    ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "33",
+      "itemNo": "3",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "3156",
+      "caseYear": 2025,
+      "matchKey": "MVC/3156/2025",
+      "parties": "ಕಾಲ್ಪನಿಕ ರೈತ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. O.S. No. 418/2024    Imaginary Textiles vs Sample Bank Ltd",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "33",
+      "itemNo": "4",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "418",
+      "caseYear": 2024,
+      "matchKey": "OS/418/2024",
+      "parties": "Imaginary Textiles vs Sample Bank Ltd",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. Crl.Misc. No. 2370/2021    ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ರೈತ",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "33",
+      "itemNo": "5",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "2370",
+      "caseYear": 2021,
+      "matchKey": "CRLMISC/2370/2021",
+      "parties": "ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ರೈತ",
+      "stageRaw": "ಆದೇಶಕ್ಕಾಗಿ",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. C.C. No. 5491/2024    Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "5",
+      "itemNo": "6",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "5491",
+      "caseYear": 2024,
+      "matchKey": "CC/5491/2024",
+      "parties": "Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+      "stageRaw": "ಸಾಕ್ಷ್ಯಕ್ಕಾಗಿ",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. S.C. No. 8578/2024    ಕಲ್ಪಿತ ಜವಳಿ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ರೈತ",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "5",
+      "itemNo": "7",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "8578",
+      "caseYear": 2024,
+      "matchKey": "SC/8578/2024",
+      "parties": "ಕಲ್ಪಿತ ಜವಳಿ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ರೈತ",
+      "stageRaw": "ಸಾಕ್ಷ್ಯಕ್ಕಾಗಿ",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. C.C. No. 5701/2019    Imaginary Textiles vs Invented Motors",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "5",
+      "itemNo": "8",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "5701",
+      "caseYear": 2019,
+      "matchKey": "CC/5701/2019",
+      "parties": "Imaginary Textiles vs Invented Motors",
+      "stageRaw": "ಸಾಕ್ಷ್ಯಕ್ಕಾಗಿ",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. Crl.Misc. No. 2436/2020    ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "5",
+      "itemNo": "9",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "2436",
+      "caseYear": 2020,
+      "matchKey": "CRLMISC/2436/2020",
+      "parties": "ಕಲ್ಪಿತ ಮೋಟಾರ್ಸ್ ವಿರುದ್ಧ ಕಾಲ್ಪನಿಕ ವಸತಿ ಸಂಘ",
+      "stageRaw": "ಸಾಕ್ಷ್ಯಕ್ಕಾಗಿ",
+      "stageNorm": "evidence"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "೧೫.೦೯.೨೦೨೬", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["33", "5"],
+    "hallsUnreadable": []
+  }
+}

@@ -146,6 +146,8 @@ describe('enqueue', () => {
       'capture.retention',
       'whatsapp.import',
       'voice.process',
+      'email.intake',
+      'email.raw-expire',
       'extraction.extract-order',
     ]);
   });

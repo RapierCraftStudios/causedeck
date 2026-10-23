@@ -11,6 +11,7 @@ export const TASK_IDS = [
   'structure_diary',
   'structure_chat',
   'parse_list_a0',
+  'parse_order_a0',
   'translate',
   'summarise',
 ] as const;

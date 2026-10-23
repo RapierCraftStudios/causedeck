@@ -1,0 +1,13 @@
+{
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "truth": {
+    "kind": "order",
+    "cases": [
+      { "caseTypeRaw": "Com.O.S.", "caseType": "COMOS", "caseNumber": "9481", "caseYear": 2024 }
+    ],
+    "orderDate": "2026-11-22",
+    "nextDate": "2026-12-20",
+    "dates": ["2026-11-22"],
+    "language": "en"
+  }
+}

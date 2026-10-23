@@ -34,3 +34,17 @@ a769157733785c56e85dcfeb09b1c8342c688849:packages/adapters/fixtures/in.tn.madras
 da75a0f7acaccc4600c6e36c2709e4b63c48bffe:packages/adapters/fixtures/in.tn.madras-hc.principal/order-11-long-over-20-pages.expected.json:generic-api-key:22
 da75a0f7acaccc4600c6e36c2709e4b63c48bffe:packages/adapters/fixtures/in.tn.madras-hc.principal/order-11-long-over-20-pages.expected.json:generic-api-key:31
 da75a0f7acaccc4600c6e36c2709e4b63c48bffe:packages/adapters/fixtures/in.tn.madras-hc.principal/order-11-long-over-20-pages.expected.json:generic-api-key:40
+# Adapter case keys (matchKey such as 'COMFDP/9153/2023') in the FICTIONAL A0 golden fixtures (#56) trip
+# generic-api-key on entropy alone; they are made-up court case numbers, not secrets. History only.
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/generic.a0/list-cnr.expected.json:generic-api-key:21
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/generic.a0/list-cnr.expected.json:generic-api-key:111
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/generic.a0/list-commercial.expected.json:generic-api-key:39
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/generic.a0/list-table.expected.json:generic-api-key:21
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/generic.a0/list-tamil.expected.json:generic-api-key:75
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.ka.bengaluru-urban.district/list-commercial.expected.json:generic-api-key:57
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.ka.bengaluru-urban.district/list-commercial.expected.json:generic-api-key:111
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.ka.bengaluru-urban.district/list-english.expected.json:generic-api-key:75
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.ka.bengaluru-urban.district/list-table.expected.json:generic-api-key:39
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-commercial.expected.json:generic-api-key:39
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-tamil.expected.json:generic-api-key:147
+bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-table.expected.json:generic-api-key:111

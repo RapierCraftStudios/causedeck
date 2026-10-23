@@ -25,25 +25,31 @@ const SHOTS: Shot[] = [
 ];
 
 for (const shot of SHOTS) {
-  test(`bootstrap-import ${shot.name}`, { tag: '@visual' }, async ({ page, asUser, db }, testInfo) => {
-    const baseline = testInfo.snapshotPath(`bootstrap-import-${shot.name}.png`, { kind: 'screenshot' });
-    test.skip(
-      testInfo.config.updateSnapshots === 'none' && !existsSync(baseline),
-      'no baseline yet: dispatch the e2e workflow with update_snapshots',
-    );
-    const batch = shot.seed === null ? null : await seedBatch(db.name, shot.seed);
-    await asUser('owner', {
-      path: batch === null ? IMPORT_PATH : `${IMPORT_PATH}?batch=${batch}`,
-    });
-    await shellReady(page);
-    if (shot.review === true) {
-      await page.getByRole('button', { name: 'Review the plan' }).click();
-      await expect(page.getByRole('heading', { name: 'Confirm what we found' })).toBeVisible();
-    }
-    if (shot.confirm === true) {
-      await page.getByRole('button', { name: /^Confirm 1 matter/ }).click();
-      await expect(page.getByText('Import confirmed')).toBeVisible();
-    }
-    await expect(page).toHaveScreenshot(`bootstrap-import-${shot.name}.png`, { fullPage: true });
-  });
+  test(
+    `bootstrap-import ${shot.name}`,
+    { tag: '@visual' },
+    async ({ page, asUser, db }, testInfo) => {
+      const baseline = testInfo.snapshotPath(`bootstrap-import-${shot.name}.png`, {
+        kind: 'screenshot',
+      });
+      test.skip(
+        testInfo.config.updateSnapshots === 'none' && !existsSync(baseline),
+        'no baseline yet: dispatch the e2e workflow with update_snapshots',
+      );
+      const batch = shot.seed === null ? null : await seedBatch(db.name, shot.seed);
+      await asUser('owner', {
+        path: batch === null ? IMPORT_PATH : `${IMPORT_PATH}?batch=${batch}`,
+      });
+      await shellReady(page);
+      if (shot.review === true) {
+        await page.getByRole('button', { name: 'Review the plan' }).click();
+        await expect(page.getByRole('heading', { name: 'Confirm what we found' })).toBeVisible();
+      }
+      if (shot.confirm === true) {
+        await page.getByRole('button', { name: /^Confirm 1 matter/ }).click();
+        await expect(page.getByText('Import confirmed')).toBeVisible();
+      }
+      await expect(page).toHaveScreenshot(`bootstrap-import-${shot.name}.png`, { fullPage: true });
+    },
+  );
 }

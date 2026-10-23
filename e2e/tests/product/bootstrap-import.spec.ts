@@ -49,9 +49,15 @@ test.describe('bootstrap import journeys', () => {
       await page.getByRole('button', { name: 'Review the plan' }).click();
       await expect(page.getByRole('heading', { name: 'Confirm what we found' })).toBeVisible();
       await expect(page.getByText('3 of 3 matters included')).toBeVisible();
-      await page.getByRole('listitem', { name: /Rao v State/ }).getByRole('button', { name: 'Show proceedings' }).click();
+      await page
+        .getByRole('listitem', { name: /Rao v State/ })
+        .getByRole('button', { name: 'Show proceedings' })
+        .click();
       await expect(page.getByText('W.M.P. 11/2026')).toBeVisible();
-      await page.getByRole('listitem', { name: /Menon v Menon/ }).getByRole('button', { name: 'Show proceedings' }).click();
+      await page
+        .getByRole('listitem', { name: /Menon v Menon/ })
+        .getByRole('button', { name: 'Show proceedings' })
+        .click();
       await expect(page.getByText('S.A. 22/2026')).toBeVisible();
     },
   );
@@ -61,7 +67,9 @@ test.describe('bootstrap import journeys', () => {
     await open('conflict', fixtures);
     await page.getByRole('button', { name: 'Review the plan' }).click();
     const confirm = page.getByRole('button', { name: /^Confirm 2 matters/ });
-    await expect(page.getByText('Pick a date for each conflicting matter before confirming.')).toBeVisible();
+    await expect(
+      page.getByText('Pick a date for each conflicting matter before confirming.'),
+    ).toBeVisible();
     await expect(confirm).toBeDisabled();
     await page.getByRole('button', { name: /Use .*17/ }).click();
     await expect(confirm).toBeEnabled();
@@ -71,7 +79,10 @@ test.describe('bootstrap import journeys', () => {
     const { page } = fixtures;
     await open('srStage', fixtures);
     await page.getByRole('button', { name: 'Review the plan' }).click();
-    await page.getByRole('listitem', { name: /Pending v State/ }).getByRole('button', { name: 'Show proceedings' }).click();
+    await page
+      .getByRole('listitem', { name: /Pending v State/ })
+      .getByRole('button', { name: 'Show proceedings' })
+      .click();
     await expect(page.getByText('Unnumbered').first()).toBeVisible();
   });
 
@@ -94,12 +105,18 @@ test.describe('bootstrap import journeys', () => {
     await expect(page.getByRole('link', { name: 'Open your first court-day view' })).toBeVisible();
   });
 
-  test('confirming shows the result and its first court-day view', { tag: '@a11y' }, async (fixtures) => {
-    const { page } = fixtures;
-    await open('appealChain', fixtures);
-    await page.getByRole('button', { name: 'Review the plan' }).click();
-    await page.getByRole('button', { name: /^Confirm 1 matter/ }).click();
-    await expect(page.getByText('Import confirmed')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Open your first court-day view' })).toBeVisible();
-  });
+  test(
+    'confirming shows the result and its first court-day view',
+    { tag: '@a11y' },
+    async (fixtures) => {
+      const { page } = fixtures;
+      await open('appealChain', fixtures);
+      await page.getByRole('button', { name: 'Review the plan' }).click();
+      await page.getByRole('button', { name: /^Confirm 1 matter/ }).click();
+      await expect(page.getByText('Import confirmed')).toBeVisible();
+      await expect(
+        page.getByRole('link', { name: 'Open your first court-day view' }),
+      ).toBeVisible();
+    },
+  );
 });

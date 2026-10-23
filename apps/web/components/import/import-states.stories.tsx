@@ -81,7 +81,10 @@ export const ProcessingFreePlanCap: Story = {
 
 export const NothingRecognised: Story = {
   render: () =>
-    processing({ status: 'ready', files: { pending: 0, processing: 0, parsed: 0, unmatched: 4, failed: 0 } }),
+    processing({
+      status: 'ready',
+      files: { pending: 0, processing: 0, parsed: 0, unmatched: 4, failed: 0 },
+    }),
 };
 
 export const PlanReady: Story = {
@@ -89,7 +92,11 @@ export const PlanReady: Story = {
 };
 
 export const ProcessingError: Story = {
-  render: () => processing({ status: 'failed', files: { pending: 0, processing: 0, parsed: 0, unmatched: 0, failed: 4 } }),
+  render: () =>
+    processing({
+      status: 'failed',
+      files: { pending: 0, processing: 0, parsed: 0, unmatched: 0, failed: 4 },
+    }),
 };
 
 const applied = () =>
@@ -162,7 +169,11 @@ export const GridAppealChain: Story = {
           tempId: 'm_chain',
           title: 'Menon v Menon',
           proceedings: [
-            proceeding('20', { caseType: 'OS', label: 'O.S. 20/2019', forumCode: 'in.tn.chennai.district' }),
+            proceeding('20', {
+              caseType: 'OS',
+              label: 'O.S. 20/2019',
+              forumCode: 'in.tn.chennai.district',
+            }),
             proceeding('21', { caseType: 'AS', label: 'A.S. 21/2023', parentKey: '20' }),
             proceeding('22', {
               caseType: 'SA',

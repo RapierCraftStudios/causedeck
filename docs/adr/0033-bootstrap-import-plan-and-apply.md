@@ -22,13 +22,13 @@ Issue #57 brings a lawyer's existing work into the product: cause lists, orders 
 
 ## Considered options
 
-| Option                                                                  | Verdict  | Reason                                                                                         |
-| ----------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------- |
-| Create matters as each file is read                                     | Rejected | Nothing is confirmable or undoable; a wrong match is already in the lawyer's diary             |
-| Store the plan, edit it in a grid, then apply it once                   | Chosen   | Reading, review and writing are separate steps; the stored plan is the thing the lawyer sees   |
-| Keep the plan in the browser only                                       | Rejected | A reload or a second device loses the work; the worker cannot hand over a plan it never stored |
-| Let the apply pick the date when sources disagree                       | Rejected | A confident wrong hearing date is the failure the product cannot afford                        |
-| Test the flow with a real worker in e2e                                 | Rejected | The e2e stack has no worker; seeded batches exercise the same pages and actions                |
+| Option                                                | Verdict  | Reason                                                                                         |
+| ----------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| Create matters as each file is read                   | Rejected | Nothing is confirmable or undoable; a wrong match is already in the lawyer's diary             |
+| Store the plan, edit it in a grid, then apply it once | Chosen   | Reading, review and writing are separate steps; the stored plan is the thing the lawyer sees   |
+| Keep the plan in the browser only                     | Rejected | A reload or a second device loses the work; the worker cannot hand over a plan it never stored |
+| Let the apply pick the date when sources disagree     | Rejected | A confident wrong hearing date is the failure the product cannot afford                        |
+| Test the flow with a real worker in e2e               | Rejected | The e2e stack has no worker; seeded batches exercise the same pages and actions                |
 
 ## Decision
 

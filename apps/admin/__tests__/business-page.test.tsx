@@ -5,6 +5,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type * as audit from '@causedeck/core/audit';
 import type * as business from '@causedeck/core/business';
 import { buildBusinessReport, evaluateCostThresholds } from '@causedeck/core/business';
 
@@ -21,7 +22,10 @@ vi.mock('../lib/env.ts', () => ({
   }),
 }));
 vi.mock('@causedeck/core/runtime', () => ({ db: { runtime: true } }));
-vi.mock('@causedeck/core/audit', () => ({ record: vi.fn(() => Promise.resolve()) }));
+vi.mock('@causedeck/core/audit', async (importOriginal) => ({
+  ...(await importOriginal<typeof audit>()),
+  record: vi.fn(() => Promise.resolve()),
+}));
 vi.mock('@causedeck/core/business', async (importOriginal) => ({
   ...(await importOriginal<typeof business>()),
   staffBusinessSnapshot: mocks.snapshot,

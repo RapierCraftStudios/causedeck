@@ -145,3 +145,4 @@ export {
   type TranscriptSegment,
 } from './transcribe/transcribe.ts';
 export * from './generic-a0/index.ts';
+export * from './corpus/index.ts';

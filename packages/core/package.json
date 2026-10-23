@@ -16,6 +16,7 @@
     "./import": "./src/import/index.ts",
     "./jobs": "./src/jobs/index.ts",
     "./lifecycle": "./src/lifecycle/index.ts",
+    "./citations": "./src/citations/index.ts",
     "./capture": "./src/capture/index.ts",
     "./matter-graph": "./src/matter-graph/index.ts",
     "./matters": "./src/matters/index.ts",

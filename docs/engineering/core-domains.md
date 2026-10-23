@@ -26,6 +26,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `ai` | `@causedeck/core/ai` | the AI gateway wiring (#44, [ADR 0022](../adr/0022-ai-gateway-implementation.md)): the ports `@causedeck/ai` declares, implemented on usage budgets, `workspace_settings.india_only_ai`, `matter.sensitive`, the `ai_call` writer and the 24 h `ai_call_result` store |
 | `sources` | `@causedeck/core/sources` | the source registry (D-048): `policyFor` / `isCleared` fail closed, and audited staff changes to every external data source |
+| `citations` | `@causedeck/core/citations` | citation verification (#484, D-004): `verifyCitation` resolves a neutral citation (Madras HC, Karnataka HC, Supreme Court) to a stored judgment in the global raw corpus with page anchors, or marks it UNVERIFIED |
 | `network` | `@causedeck/core/network` | the court document network (#485, D-048 tier 3): opt-in contribution of public court documents (cause lists, published orders) stored once globally, `findContributed` reads, and withdrawal on workspace erase |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
 | `business` | `@causedeck/core/business` | the internal business dashboard (#519, D-049): `staffBusinessSnapshot` / `readBusinessSnapshot` (aggregates from the owner-defined `app_business_snapshot` functions), the pure MRR, ARR, churn, conversion, cost-per-user and margin maths, the cost-per-user threshold and the founders' digest and alert emails |
@@ -175,6 +176,7 @@ graph LR
 | `ai` | `audit`, `usage` |
 | `lifecycle` | `audit`, `workspaces`, `network` |
 | `sources` | `audit` |
+| `citations` | none |
 | `network` | `audit`, `sources` |
 | `support` | `workspaces`, `audit` |
 | `business` | `usage`, `workspaces` |

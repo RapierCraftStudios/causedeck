@@ -32,6 +32,7 @@ describe('registerSchedules', () => {
       'system.support.session-expire',
       'system.deletion.tick',
       'system.capture.retention',
+      'system.corpus.poll',
       'system.causelist.poll',
     ]);
 

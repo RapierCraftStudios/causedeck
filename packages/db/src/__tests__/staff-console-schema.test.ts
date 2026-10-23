@@ -387,7 +387,7 @@ interface Snapshot {
   shared: Record<string, unknown>;
 }
 
-describe('staff business snapshot functions (0070, #519)', () => {
+describe('staff business snapshot functions (0071, #519)', () => {
   it('app_business_snapshot is callable by the app role only, not PUBLIC or the clerk role', async () => {
     await withTestDb(async (tx) => {
       const [grant] = await tx.execute<{ pub: boolean; app: boolean; clerk: boolean }>(

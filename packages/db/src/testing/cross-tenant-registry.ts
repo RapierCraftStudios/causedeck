@@ -679,6 +679,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
   },
+  // citations (#484): the global corpus, one answer for every workspace
+  verifyCitation: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments, the same answer in every workspace; reads nothing tenant-scoped',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */

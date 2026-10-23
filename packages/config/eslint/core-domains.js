@@ -32,6 +32,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   lifecycle: Object.freeze(['audit', 'workspaces', 'network']),
   // The source registry (#478, D-048): staff changes record `source.changed` through audit.
   sources: Object.freeze(['audit']),
+  // Citation verification (#484, D-004): resolves a neutral citation against the global `judgment`
+  // corpus; reads tables and `@causedeck/intelligence` only, no other domain.
+  citations: Object.freeze([]),
   // The court document network (#485, D-048): contributions need a cleared source through sources and
   // record their events through audit; opt-in, matter and document reads go to the tables directly.
   network: Object.freeze(['audit', 'sources']),

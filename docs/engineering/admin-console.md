@@ -225,7 +225,7 @@ documents are not offered: `fetch_log` keeps no bodies.
   conversion, paid churn over 30 days, and a per-plan table of cost to serve per active user split
   into fetch, captcha, AI and infrastructure, with gross margin and an "Over threshold" marker for a
   plan above `BUSINESS_COST_PER_USER_ALERT_PAISE`. `businessMetrics` in `lib/data` reads it through
-  the owner-defined `app_staff_business_snapshot` (migration 0070), which refuses (`42501`) anyone
+  the owner-defined `app_staff_business_snapshot` (migration 0071), which refuses (`42501`) anyone
   but an enabled staff member and returns plan ids and numbers only; the maths is
   `@causedeck/core/business`. AI cost is the metered `ai.spend_paise`; fetch and captcha cost is
   `fetch_log` dollars (converted at `BUSINESS_USD_INR`) charged to the delegating advocate's plan,

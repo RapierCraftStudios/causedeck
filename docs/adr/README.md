@@ -35,7 +35,8 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0025](0025-document-pipeline.md) | Document pipeline: ports, text layer first, OCR through the gateway | Proposed | 2026-10-23 | — |
 | [0026](0026-pwa-share-target-and-outbox.md) | PWA share target and encrypted outbox | Proposed | 2026-10-23 | — |
 | [0027](0027-whatsapp-import-browser-parsing.md) | WhatsApp import: parse in the browser, upload the selection | Proposed | 2026-10-23 | — |
-| [0028](0028-diary-photo-capture-and-image-anchors.md) | Diary-photo capture and image-region anchors | Proposed | 2026-10-23 | — |
+| [0028](0028-anchored-extraction.md) | Anchored order extraction: deterministic first, validator last | Proposed | 2026-10-23 | — |
+| [0029](0029-diary-photo-capture-and-image-anchors.md) | Diary-photo capture and image-region anchors | Proposed | 2026-10-23 | — |
 
 ## Statuses
 

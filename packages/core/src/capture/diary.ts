@@ -7,7 +7,7 @@ import type { AiGateway } from '@causedeck/ai';
 import { can, isRole } from '@causedeck/auth/policy';
 import { schema, type Queryable } from '@causedeck/db';
 import {
-  anchorKey,
+  diaryAnchorKey,
   anchorRow,
   diaryToProposalDrafts,
   normaliseCaseRef,
@@ -146,9 +146,9 @@ export async function runDiaryStep(
   // Anchors first: one `image_region` row per distinct line box cited.
   const anchors = new Map<string, DiaryAnchor>();
   for (const entry of entries) {
-    anchors.set(anchorKey(entry.anchor), entry.anchor);
+    anchors.set(diaryAnchorKey(entry.anchor), entry.anchor);
     if (entry.nextDate !== undefined)
-      anchors.set(anchorKey(entry.nextDate.anchor), entry.nextDate.anchor);
+      anchors.set(diaryAnchorKey(entry.nextDate.anchor), entry.nextDate.anchor);
   }
   const anchorIds = new Map<string, string>();
   for (const [key, value] of anchors) {

@@ -22,6 +22,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
+import { extraction } from '../schema/extraction.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
@@ -753,6 +754,14 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       'ics_import_event',
     );
     return { id: row.id };
+  },
+  extraction: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(extraction)
+      .values({ workspaceId, documentId, pipelineVersion: 'xt', result: { seeded: true } })
+      .returning({ id: extraction.id });
+    return { documentId, extractionId: first(rows, 'extraction').id };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

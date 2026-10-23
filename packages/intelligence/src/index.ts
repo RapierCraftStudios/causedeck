@@ -48,9 +48,9 @@ export {
 export { mupdfRenderer } from './render/mupdf.ts';
 export { noRenderer, type PageRenderer } from './render/renderer.ts';
 export { DEFAULT_MIN_PAGE_CHARS, isGarbled, normaliseText } from './text/quality.ts';
-export { datePresence, writtenDates, asciiDigits } from './diary/dates.ts';
+export { datePresence as diaryDatePresence, writtenDates, asciiDigits } from './diary/dates.ts';
 export {
-  anchorKey,
+  anchorKey as diaryAnchorKey,
   anchorOf,
   anchorRow,
   numberLines,
@@ -94,3 +94,4 @@ export {
   type OcrLine,
 } from './ocr/line-boxes.ts';
 export { cameraRoute, type CameraRoute } from './pipeline/run.ts';
+export * from './extract/index.ts';

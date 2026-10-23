@@ -82,7 +82,16 @@ export type CaptureCompleteResponse = z.infer<typeof CaptureCompleteResponseSche
  * Why the document pipeline (#45) moved a capture to "Needs you". `unreadable` covers an empty scan,
  * OCR under the confidence floor and a format with nothing to read.
  */
-export const CAPTURE_NEEDS_YOU_REASONS = ['unreadable', 'password_protected', 'corrupt'] as const;
+export const CAPTURE_NEEDS_YOU_REASONS = [
+  'unreadable',
+  'password_protected',
+  'corrupt',
+  // Anchored order extraction (#46): the capture is ready but a date or field needs a person.
+  'extraction_unanchored',
+  'extraction_ambiguous',
+  'extraction_suspicious',
+  'extraction_low_confidence',
+] as const;
 export const CaptureNeedsYouReasonSchema = z.enum(CAPTURE_NEEDS_YOU_REASONS);
 export type CaptureNeedsYouReason = z.infer<typeof CaptureNeedsYouReasonSchema>;
 

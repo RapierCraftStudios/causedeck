@@ -145,6 +145,7 @@ describe('enqueue', () => {
       'system.capture.retention',
       'capture.retention',
       'whatsapp.import',
+      'extraction.extract-order',
     ]);
   });
 });

@@ -10,6 +10,7 @@ import {
 } from '@causedeck/capture';
 import { serverEnv } from '@causedeck/config/env';
 import { db as rootDb } from '@causedeck/db';
+import type { IntelligenceEvents } from '@causedeck/intelligence';
 import { createObjectStoreFromEnv, EnvKeyProvider, type ObjectStore } from '@causedeck/storage';
 import { z } from 'zod';
 
@@ -26,6 +27,7 @@ import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
 import { getProducer } from '../producer.ts';
+import { enqueueExtractOrder } from './extraction-extract-order.ts';
 import { enqueueWhatsAppImport } from './whatsapp-import.ts';
 
 export const captureProcessSchema = z.object({
@@ -46,6 +48,19 @@ export async function enqueueCaptureProcess(payload: CaptureProcessJobPayload): 
   });
 }
 
+/**
+ * `document.processed` for an order or a judgment queues anchored extraction (#46). Events leave
+ * after the pipeline's commit; a failed enqueue never undoes the document (the pipeline logs and
+ * moves on), and the job is singleton per document, so a replayed event extracts once.
+ */
+export const extractionEvents: IntelligenceEvents = {
+  async emit(event) {
+    if (event.type !== 'document.processed') return;
+    if (event.kind !== 'order' && event.kind !== 'judgment') return;
+    await enqueueExtractOrder({ workspaceId: event.workspaceId, documentId: event.documentId });
+  },
+};
+
 let defaultStorage: Pick<CapturePipelineDeps, 'store' | 'keys'> | undefined;
 
 /** The pipeline's storage and gateway from the environment: S3 or MinIO, the env KEK, mock AI. */
@@ -58,6 +73,7 @@ function defaultPipelineDeps(ctx: Pick<JobContext, 'db'>): CapturePipelineDeps {
   return {
     db: ctx.db,
     ...defaultStorage,
+    events: extractionEvents,
     gateway: createCoreAiGateway(ctx.db, {
       isCaptureAiBlocked: async (workspaceId, captureId) =>
         !(await aiStepsAllowed(ctx.db, workspaceId, captureId)),

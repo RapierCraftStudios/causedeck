@@ -1,5 +1,5 @@
 {
-  "id": "7f7cfd3c-f818-4c63-b03c-6d213c224687",
+  "id": "96f65e65-766b-4004-bb1e-461812167bc8",
   "prevId": "1956c058-c8b4-48b2-b939-54c583036799",
   "version": "7",
   "dialect": "postgresql",
@@ -3986,12 +3986,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "ocr_lines": {
-          "name": "ocr_lines",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "search_tsv": {
           "name": "search_tsv",
           "type": "tsvector",
@@ -4414,6 +4408,214 @@
         "export_job_ready_chk": {
           "name": "export_job_ready_chk",
           "value": "status <> 'ready' or (blob_id is not null and sha256 is not null and expires_at is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.extraction": {
+      "name": "extraction",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pipeline_version": {
+          "name": "pipeline_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'current'"
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rejected": {
+          "name": "rejected",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "ambiguous": {
+          "name": "ambiguous",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "suspicious": {
+          "name": "suspicious",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "deterministic_only": {
+          "name": "deterministic_only",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "needs_you_reason": {
+          "name": "needs_you_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_call_id": {
+          "name": "ai_call_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "superseded_at": {
+          "name": "superseded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "extraction_workspace_id_idx": {
+          "name": "extraction_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "extraction_workspace_document_idx": {
+          "name": "extraction_workspace_document_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "document_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "extraction_current_uq": {
+          "name": "extraction_current_uq",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "document_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "pipeline_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "status = 'current'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "extraction_workspace_id_fk": {
+          "name": "extraction_workspace_id_fk",
+          "tableFrom": "extraction",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "extraction_document_fk": {
+          "name": "extraction_document_fk",
+          "tableFrom": "extraction",
+          "tableTo": "document",
+          "columnsFrom": ["workspace_id", "document_id"],
+          "columnsTo": ["workspace_id", "id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "extraction_status_chk": {
+          "name": "extraction_status_chk",
+          "value": "status in ('current', 'superseded')"
+        },
+        "extraction_superseded_chk": {
+          "name": "extraction_superseded_chk",
+          "value": "(status = 'superseded') = (superseded_at is not null)"
+        },
+        "extraction_rejected_chk": {
+          "name": "extraction_rejected_chk",
+          "value": "jsonb_typeof(rejected) = 'array'"
         }
       },
       "isRLSEnabled": false

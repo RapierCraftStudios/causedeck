@@ -1826,6 +1826,7 @@ export type Messages = {
       kindAll: string;
       kinds: {
         next_date: string;
+        hearing_outcome: string;
         new_matter: string;
         new_proceeding: string;
         listing_update: string;

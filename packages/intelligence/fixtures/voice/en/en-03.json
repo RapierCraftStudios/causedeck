@@ -1,0 +1,23 @@
+{
+  "id": "en-03",
+  "language": "en",
+  "hearingDate": "2026-06-15",
+  "text": "In case 14379 of 2026 today. Arguments were heard and the matter stands adjourned. The bench was not available. Next hearing after two weeks. The court directed the respondent to file a counter affidavit. The court directed the respondent to file a counter affidavit by ninth of August.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-06-29",
+      "phrase": "after two weeks"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit.",
+        "dueDate": null
+      },
+      {
+        "text": "The court directed the respondent to file a counter affidavit by ninth of August.",
+        "dueDate": "2026-08-09"
+      }
+    ],
+    "tasks": []
+  }
+}

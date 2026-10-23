@@ -82,8 +82,21 @@ export function buildSarvamRequest(
 export function mapSarvamResponse(task: TaskDef, input: Rec, json: Rec): ProviderResult {
   if (task.id === 'transcribe') {
     const code = str(json.language_code) || 'en-IN';
+    const language = FROM_LOCALE[code] ?? 'en';
+    const text = str(json.transcript);
     return {
-      output: { text: str(json.transcript), language: FROM_LOCALE[code] ?? 'en' },
+      output: {
+        text,
+        language,
+        segments: [
+          {
+            startMs: 0,
+            endMs: Math.round(Number(input.durationSeconds ?? 0) * 1000),
+            language,
+            text,
+          },
+        ],
+      },
       usage: { inputTokens: 0, outputTokens: 0, seconds: Number(input.durationSeconds ?? 0) },
       model: 'stt',
       modelVersion: 'saarika:v2.5',

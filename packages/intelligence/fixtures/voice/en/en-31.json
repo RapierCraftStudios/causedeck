@@ -1,0 +1,19 @@
+{
+  "id": "en-31",
+  "language": "en",
+  "hearingDate": "2025-12-30",
+  "text": "In case 2556 of 2021 today. Arguments were heard and the matter stands adjourned. The opposite counsel sought time. Next hearing after eight weeks. The court directed both sides to exchange written submissions.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-02-24",
+      "phrase": "after eight weeks"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions.",
+        "dueDate": null
+      }
+    ],
+    "tasks": []
+  }
+}

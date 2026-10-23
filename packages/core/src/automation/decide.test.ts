@@ -341,6 +341,7 @@ describe('decideLevel: the 09 §4.2 approval matrix', () => {
     const always: ProposalKind[] = [
       'next_date',
       'obligation_from_direction',
+      'hearing_outcome',
       'new_matter',
       'new_proceeding',
       'order_record',

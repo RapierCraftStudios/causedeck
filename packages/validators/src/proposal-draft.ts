@@ -9,6 +9,7 @@ import { z } from 'zod';
 /** Every kind of change a draft may propose. `memory_item` and `fee_entry` wait for #72 and #83. */
 export const PROPOSAL_KINDS = [
   'next_date',
+  'hearing_outcome',
   'new_matter',
   'new_proceeding',
   'listing_update',

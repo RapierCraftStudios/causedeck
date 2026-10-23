@@ -7,7 +7,12 @@ import { PROPOSAL_KINDS, type ProposalKind } from '@causedeck/validators/proposa
 import type { ProposalHandler } from '../types.ts';
 
 import { documentAttachHandler } from './document-attach.ts';
-import { feeEntryHandler, memoryItemHandler, outwardDraftHandler } from './disabled.ts';
+import {
+  feeEntryHandler,
+  hearingOutcomeHandler,
+  memoryItemHandler,
+  outwardDraftHandler,
+} from './disabled.ts';
 import { duplicateMergeHandler } from './duplicate-merge.ts';
 import { listingUpdateHandler } from './listing-update.ts';
 import { newMatterHandler } from './new-matter.ts';
@@ -54,6 +59,7 @@ export function buildHandlerRegistry(
 
 export const HANDLERS = buildHandlerRegistry([
   nextDateHandler,
+  hearingOutcomeHandler,
   newMatterHandler,
   newProceedingHandler,
   listingUpdateHandler,

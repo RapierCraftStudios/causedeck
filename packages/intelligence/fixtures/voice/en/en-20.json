@@ -1,0 +1,23 @@
+{
+  "id": "en-20",
+  "language": "en",
+  "hearingDate": "2025-03-17",
+  "text": "In case 12758 of 2023 today. Arguments were heard and the matter stands adjourned. The opposite counsel sought time. Next hearing on July 6th. The court directed the respondent to file a counter affidavit. The court directed the petitioner to file the rejoinder.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-07-06",
+      "phrase": "July 6th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit.",
+        "dueDate": null
+      },
+      {
+        "text": "The court directed the petitioner to file the rejoinder.",
+        "dueDate": null
+      }
+    ],
+    "tasks": []
+  }
+}

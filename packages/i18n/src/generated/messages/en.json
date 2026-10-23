@@ -1825,6 +1825,7 @@
       "kindAll": "All kinds",
       "kinds": {
         "next_date": "Next date",
+        "hearing_outcome": "Hearing outcome",
         "new_matter": "New matter",
         "new_proceeding": "New proceeding",
         "listing_update": "Listing update",

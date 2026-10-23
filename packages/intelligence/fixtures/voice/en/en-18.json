@@ -1,0 +1,19 @@
+{
+  "id": "en-18",
+  "language": "en",
+  "hearingDate": "2025-10-06",
+  "text": "In case 87366 of 2023 today. Arguments were heard and the matter stands adjourned. Pleadings are incomplete. Next hearing on ninth of December. The court directed the State to produce the original records after two weeks.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-12-09",
+      "phrase": "ninth of December"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records after two weeks.",
+        "dueDate": "2025-10-20"
+      }
+    ],
+    "tasks": []
+  }
+}

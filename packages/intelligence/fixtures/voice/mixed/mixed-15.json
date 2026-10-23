@@ -1,0 +1,19 @@
+{
+  "id": "mixed-15",
+  "language": "mixed",
+  "hearingDate": "2026-05-27",
+  "text": "ಪ್ರಕರಣ 39542/2023 ಇಂದು. ವಾದ ಆಲಿಸಿ ಪ್ರಕರಣವನ್ನು ಮುಂದೂಡಲಾಯಿತು. ಪೀಠ ಲಭ್ಯವಿರಲಿಲ್ಲ. ಮುಂದಿನ ವಿಚಾರಣೆ seventeenth of September. ಪ್ರತಿವಾದಿ ಆಕ್ಷೇಪಣೆ ಸಲ್ಲಿಸಲು July 7th ಆದೇಶಿಸಿತು.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-09-17",
+      "phrase": "seventeenth of September"
+    },
+    "directions": [
+      {
+        "text": "ಪ್ರತಿವಾದಿ ಆಕ್ಷೇಪಣೆ ಸಲ್ಲಿಸಲು July 7th ಆದೇಶಿಸಿತು.",
+        "dueDate": "2026-07-07"
+      }
+    ],
+    "tasks": []
+  }
+}

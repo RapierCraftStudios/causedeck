@@ -1,0 +1,23 @@
+{
+  "id": "en-02",
+  "language": "en",
+  "hearingDate": "2025-12-22",
+  "text": "In case 5407 of 2019 today. The court heard both sides and the matter was adjourned again. Pleadings are incomplete. Next hearing on the 8th. The court directed the State to produce the original records. The court directed both sides to exchange written submissions after two weeks. Remind me to call the client about the vakalatnama.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-01-08",
+      "phrase": "on the 8th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records.",
+        "dueDate": null
+      },
+      {
+        "text": "The court directed both sides to exchange written submissions after two weeks.",
+        "dueDate": "2026-01-05"
+      }
+    ],
+    "tasks": ["call the client about the vakalatnama"]
+  }
+}

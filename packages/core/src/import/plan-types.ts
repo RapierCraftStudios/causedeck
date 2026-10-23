@@ -86,3 +86,52 @@ export interface ImportPlan {
   obligations: PlanObligation[];
   counts: { matchedRows: number; unmatchedRowsCount: number };
 }
+
+/** The lawyer's choices from the confirm grid, applied on top of the stored plan. */
+export interface ApplyDecisions {
+  /** Per matter `tempId`: leave it out, merge it into an existing matter, or mark it edited. */
+  matters?: Record<
+    string,
+    { action?: 'apply' | 'skip' | 'merge'; mergeIntoMatterId?: string; corrected?: boolean }
+  >;
+  /** A date picked for a proceeding key whose sources conflicted; resolves the blocking issue. */
+  resolvedDates?: Record<string, string>;
+  /** Matter `tempId`s that touch a sensitive matter and are imported anyway (excluded by default). */
+  includeSensitive?: string[];
+}
+
+export interface ApplyDuplicate {
+  matterTempId: string;
+  proceedingKey: string;
+  existingProceedingId: string;
+  existingMatterId: string;
+  sensitive: boolean;
+}
+
+export interface ApplyResult {
+  batchId: string;
+  planHash: string;
+  /** The activity every other activity of the batch cascades from. */
+  rootActivityId: string;
+  created: {
+    matters: number;
+    proceedings: number;
+    listings: number;
+    hearings: number;
+    orders: number;
+    obligations: number;
+    documents: number;
+  };
+  /** Matters left out because they match an existing proceeding; offered as a merge. */
+  duplicates: ApplyDuplicate[];
+  /** Matters left out: `sensitive` (excluded by default) or `skipped` by the lawyer. */
+  excluded: { matterTempId: string; reason: 'sensitive' | 'skipped' }[];
+  /** Documents that reference a sensitive matter. */
+  sensitiveDocumentIds: string[];
+  /** Documents kept as attachments without being read because the plan's cap was reached. */
+  attachedUnreadDocumentIds: string[];
+  /** Proceedings left out because the plan gave no forum or case type to create them with. */
+  unresolvedProceedingKeys: string[];
+  /** What the batch's AI calls cost, in paise. */
+  costPaise: number;
+}

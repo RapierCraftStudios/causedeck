@@ -15,7 +15,7 @@ import type { Transaction } from '../client.ts';
 import { MIGRATIONS_FOLDER, runMigrations } from '../migrate.ts';
 import { createOwnerDb } from '../owner.ts';
 import { forum } from '../schema/court.ts';
-import { anchor, document } from '../schema/documents.ts';
+import { anchor } from '../schema/documents.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding } from '../schema/proceedings.ts';
@@ -98,16 +98,12 @@ async function newGraph(s: Transaction, workspaceId: string): Promise<Graph> {
       sourceType: 'manual',
     })
     .returning({ id: proceeding.id });
-  const [d] = await s
-    .insert(document)
-    .values({
-      workspaceId,
-      matterId: m.id,
-      kind: 'pleading',
-      storageKey: `ws/${workspaceId}/document/${randomUUID()}`,
-      sha256: 'c'.repeat(64),
-    })
-    .returning({ id: document.id });
+  // Explicit columns: the 0040 test runs this on a database migrated only through 0039, and a
+  // Drizzle insert would list document columns added by later migrations (0058 and on).
+  const storageKey = `ws/${workspaceId}/document/${randomUUID()}`;
+  const [d] = (await s.execute(
+    sql`insert into document (workspace_id, matter_id, kind, storage_key, sha256) values (${workspaceId}, ${m.id}, 'pleading', ${storageKey}, ${'c'.repeat(64)}) returning id`,
+  )) as unknown as { id: string }[];
   const [a] = await s
     .insert(anchor)
     .values({ workspaceId, documentId: d?.id ?? '', pageNo: 1, quote: 'q', kind: 'document' })

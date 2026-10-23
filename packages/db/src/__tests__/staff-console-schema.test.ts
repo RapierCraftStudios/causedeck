@@ -51,6 +51,7 @@ const FUNCTIONS = [
   'app_staff_audit_events(timestamp with time zone,uuid,integer)',
   'app_staff_workspace_usage(uuid)',
   'app_staff_budget_overrides(uuid,integer)',
+  'app_staff_parse_yield(timestamp with time zone)',
 ];
 const COUNTER_COLUMNS = ['key', 'period_start', 'value'];
 const OVERRIDE_COLUMNS = [
@@ -98,6 +99,39 @@ function as<T>(tx: Transaction, userId: string, fn: (s: Transaction) => Promise<
   return withUser(tx, { userId }, fn);
 }
 
+describe('staff parse yield (0072)', () => {
+  it('returns per-adapter counts only, summed across workspaces, to an enabled staff member', async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      const adapterId = `parse-yield-${t.a.id.slice(0, 8)}`;
+      // adapter_parse_run references a real document (FK since 0044): use each tenant's seeded one.
+      const docOf = (ws: string): string =>
+        (ws === t.a.id ? t.a.rows.document?.documentId : t.b.rows.document?.documentId) ?? '';
+      for (const ws of [t.a.id, t.b.id]) {
+        await inWorkspace(tx, ws, (s) =>
+          s.execute(
+            sql`insert into adapter_parse_run (workspace_id, document_id, adapter_id, adapter_version, forum_code, rows_parsed, rows_anchored, unmapped_headings, unknown_case_types, status)
+                values (${ws}::uuid, ${docOf(ws)}::uuid, ${adapterId}, '1', 'f', 10, 8, 0, 0, 'ok')`,
+          ),
+        );
+      }
+      const rows = await as(tx, staffId, (s) =>
+        s.execute(
+          sql`select * from app_staff_parse_yield(now() - interval '1 day') where adapter_id = ${adapterId}`,
+        ),
+      );
+      expect(rows).toHaveLength(1);
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual([
+        'adapter_id',
+        'rows_anchored',
+        'rows_parsed',
+        'runs',
+      ]);
+      expect(rows[0]).toMatchObject({ runs: '2', rows_parsed: '20', rows_anchored: '16' });
+    });
+  });
+});
+
 describe('staff console functions (0033)', () => {
   it('refuse anyone but an enabled staff member, and are not executable by PUBLIC', async () => {
     await withTestDb(async (tx) => {
@@ -108,6 +142,7 @@ describe('staff console functions (0033)', () => {
         sql`select * from app_staff_audit_events(null, null, 10)`,
         sql`select * from app_staff_workspace_usage(${t.a.id}::uuid)`,
         sql`select * from app_staff_budget_overrides(${t.a.id}::uuid, 10)`,
+        sql`select * from app_staff_parse_yield(now() - interval '7 days')`,
       ];
       for (const call of calls) {
         for (const userId of [t.ua, disabledStaffId]) {

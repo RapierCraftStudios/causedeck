@@ -41,7 +41,7 @@ serve only `non-personal` sources. ⚖ Whether any court record may be exposed t
 ## Retention per source kind
 
 Retention is set per source in the registry (`source.retention_days`, default 30) and enforced by
-the daily job `system.court_data.retention` (04:15 IST). A shared copy past
+the daily job `system.court-data.retention` (04:15 IST). A shared copy past
 `least(retention_until, contributed_at + retention_days)` is blanked: its content is removed and
 `withdrawn_at` is set. The row (hash, source, dates) stays so the same text is not stored again.
 Shortening a source's retention applies to copies already stored.

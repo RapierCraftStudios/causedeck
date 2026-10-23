@@ -4,12 +4,20 @@
 import { createHash, randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
-import { createDb, schema, type Database, type Transaction } from '@causedeck/db';
+import { createDb, schema, withUser, type Database, type Transaction } from '@causedeck/db';
 import { closeTestDb, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { and, eq } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+import * as audit from '../../audit/index.ts';
 
 import { CourtDataErasureError, eraseCourtDataSubject, expireCourtData } from '../index.ts';
+
+// System-actor events are invisible to the app role (RLS), so the expiry event is observed at the writer.
+vi.mock('../../audit/index.ts', async () => {
+  const actual = await vi.importActual<typeof audit>('../../audit/index.ts');
+  return { ...actual, record: vi.fn(actual.record) };
+});
 
 // The app role cannot write `staff_user`, so the staff member is committed through the owner role.
 let owner: Database;
@@ -85,7 +93,7 @@ describe('expireCourtData', () => {
       const old = await doc(tx, src, { ageDays: 40, retentionDays: 30 });
       const fresh = await doc(tx, src, { ageDays: 1, retentionDays: 30 });
 
-      const report = await expireCourtData(tx as never);
+      const report = await expireCourtData(tx);
 
       expect(report.bySource[src]).toBe(1);
       const expired = await get(tx, old);
@@ -94,11 +102,13 @@ describe('expireCourtData', () => {
       const live = await get(tx, fresh);
       expect(live.content).not.toBeNull();
       expect(live.withdrawnAt).toBeNull();
-      const events = await tx
-        .select()
-        .from(schema.auditEvent)
-        .where(eq(schema.auditEvent.action, 'court_data.expired'));
-      expect(events.length).toBeGreaterThan(0);
+      expect(vi.mocked(audit.record)).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: null }),
+        expect.objectContaining({
+          action: 'court_data.expired',
+          metadata: { expired: 1, sources: src },
+        }),
+      );
     });
   });
 
@@ -109,7 +119,7 @@ describe('expireCourtData', () => {
       expect((await get(tx, id)).content).not.toBeNull();
 
       await tx.update(schema.source).set({ retentionDays: 5 }).where(eq(schema.source.id, src));
-      await expireCourtData(tx as never);
+      await expireCourtData(tx);
 
       expect((await get(tx, id)).content).toBeNull();
     });
@@ -119,7 +129,7 @@ describe('expireCourtData', () => {
     await withTestDb(async (tx) => {
       const src = await source(tx, 30);
       const id = await doc(tx, src, { ageDays: 1, retentionDays: 30 });
-      const report = await expireCourtData(tx as never);
+      const report = await expireCourtData(tx);
       expect(report.bySource[src]).toBeUndefined();
       expect((await get(tx, id)).content).not.toBeNull();
     });
@@ -142,7 +152,7 @@ describe('eraseCourtDataSubject', () => {
       });
       const before = await get(tx, hit);
 
-      const report = await eraseCourtDataSubject(tx as never, {
+      const report = await eraseCourtDataSubject(tx, {
         staffUserId: staffId,
         subject: 'Ramesh Kumar',
         reason: 'ticket-486',
@@ -154,15 +164,17 @@ describe('eraseCourtDataSubject', () => {
       expect(masked.sha256).toBe(before.sha256);
       expect((await get(tx, other)).content).toBe('Item 9: Sita Devi v. State');
 
-      const [event] = await tx
-        .select()
-        .from(schema.auditEvent)
-        .where(
-          and(
-            eq(schema.auditEvent.action, 'court_data.erased'),
-            eq(schema.auditEvent.actorUserId, staffId),
+      const [event] = await withUser(tx, { userId: staffId }, (s) =>
+        s
+          .select()
+          .from(schema.auditEvent)
+          .where(
+            and(
+              eq(schema.auditEvent.action, 'court_data.erased'),
+              eq(schema.auditEvent.actorUserId, staffId),
+            ),
           ),
-        );
+      );
       expect(event).toBeDefined();
       const text = JSON.stringify(event);
       expect(text).toContain(report.subjectHash);

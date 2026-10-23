@@ -730,7 +730,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   eraseCourtDataSubject:
     'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): staff-only (enabled ops or admin staff_user) masking of a person name; no tenant input, the tenant link `contribution_ledger` is untouched',
   courtDataRetention:
-    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): system job (system.court_data.retention) with no workspace payload',
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): system job (system.court-data.retention) with no workspace payload',
   CourtDataErasureError: 'error class',
   MASKED_NAME: 'constant',
   MIN_ERASURE_SUBJECT_LENGTH: 'constant',

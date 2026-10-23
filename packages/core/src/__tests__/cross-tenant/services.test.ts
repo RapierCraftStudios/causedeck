@@ -1165,6 +1165,24 @@ const CASES: Record<string, Case> = {
       expect(Object.keys(t).sort()).toEqual(['localDate', 'slot', 'workspaceId']);
     expect(mine.every((t) => t.slot === '20:30')).toBe(true);
   },
+  runNewsDigestSchedule: async (f) => {
+    // The scheduler lists every workspace, but hands on ids, the local date and the slot only.
+    const targets: core.NewsDigestTarget[] = [];
+    await core.runNewsDigestSchedule(
+      { db: f.tx, log: logger },
+      {
+        now: () => new Date('2026-10-19T15:00:00Z'),
+        enqueue: (t) => {
+          targets.push(t);
+          return Promise.resolve();
+        },
+      },
+    );
+    const mine = targets.filter((t) => t.workspaceId === f.a.id || t.workspaceId === f.b.id);
+    expect(mine).toHaveLength(2);
+    for (const t of mine)
+      expect(Object.keys(t).sort()).toEqual(['localDate', 'slot', 'workspaceId']);
+  },
   restrictMatter: async (f) => {
     const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
     const before = await aRestrictions(f);

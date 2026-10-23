@@ -250,6 +250,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listNewsDigestRecipients: empty,
   runNewsDigestMember: selfScoped,
   runNewsDigest: selfScoped,
+  runNewsDigestSchedule: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids and timezones only through a definer function',
+  },
   runNotificationDeliver: selfScoped,
   runNotificationDigest: selfScoped,
   // End-of-day digest (#49): B's digest never counts, names or emails A's activity.
@@ -915,8 +920,6 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   newsDigestSchema: 'zod schema',
   newsDigestMemberSchema: 'zod schema',
   newsDigestSlot: 'pure function of a clock and a zone',
-  runNewsDigestSchedule:
-    'system job: lists workspace ids and timezones only through a definer function',
   newsPoll: 'job definition (handler is runNewsPoll)',
   systemNewsPoll: 'job definition (handler is runNewsPollSchedule)',
   newsPollSchema: 'zod schema',

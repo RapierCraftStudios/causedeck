@@ -1,7 +1,7 @@
 // Court-day display-board tracking (#493, D-048). `pollBoards` fetches each High Court's display
 // board once per run through the governed fetch layer (however many workspaces list a matter in a
 // hall), only during court hours and only for halls where a workspace has an advocate listed today
-// (`app_board_poll_targets`, 0072, owner-defined: ids and keys only). Each changed hall is stored as
+// (`app_board_poll_targets`, 0074, owner-defined: ids and keys only). Each changed hall is stored as
 // a content-free `board_observation` (the pace history) and the matter owner is told through
 // `notify()` (category `court.board`) once per threshold: N away, now, risen, passed over. The
 // dedupe key `board:<listing>:<kind>` makes a repeat poll notify nobody. Titles carry hall and item

@@ -1,4 +1,4 @@
--- Migration 0072_display_board: generated shape (one table, one index, one check), grants, owner read policies, function and source seed hand-written, reviewed before commit.
+-- Migration 0074_display_board: generated shape (one table, one index, one check), grants, owner read policies, function and source seed hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #493)
 -- Court-day display boards (#493, D-048). board_observation is global and content-free (hall, item now
 -- being heard, state, items passed over; never a party, case or advocate): one row each time a hall's
@@ -37,7 +37,7 @@ CREATE FUNCTION app_board_poll_targets(p_date date)
     JOIN forum f ON f.id = h.forum_id
     JOIN proceeding p ON p.workspace_id = l.workspace_id AND p.id = l.proceeding_id
     JOIN matter mt ON mt.workspace_id = p.workspace_id AND mt.id = p.matter_id
-    JOIN member m ON m.organization_id = mt.workspace_id AND m.id = mt.owner_member_id AND m.status = 'active'
+    JOIN member m ON m.workspace_id = mt.workspace_id AND m.id = mt.owner_member_id AND m.status = 'active'
     JOIN organization o ON o.id = l.workspace_id AND o.deleted_at IS NULL
     WHERE l.list_date = p_date AND l.item_no IS NOT NULL AND p.state <> 'disposed' AND NOT mt.sensitive
     ORDER BY l.workspace_id, l.id

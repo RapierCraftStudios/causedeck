@@ -104,10 +104,14 @@ describe('staff parse yield (0069)', () => {
     await withTestDb(async (tx) => {
       const t = await seedTwoTenants(tx);
       const adapterId = `parse-yield-${t.a.id.slice(0, 8)}`;
-      await tx.execute(
-        sql`insert into adapter_parse_run (workspace_id, document_id, adapter_id, adapter_version, forum_code, rows_parsed, rows_anchored, unmapped_headings, unknown_case_types, status)
-            select w, gen_random_uuid(), ${adapterId}, '1', 'f', 10, 8, 0, 0, 'ok' from unnest(array[${t.a.id}::uuid, ${t.b.id}::uuid]) as w`,
-      );
+      for (const ws of [t.a.id, t.b.id]) {
+        await inWorkspace(tx, ws, (s) =>
+          s.execute(
+            sql`insert into adapter_parse_run (workspace_id, document_id, adapter_id, adapter_version, forum_code, rows_parsed, rows_anchored, unmapped_headings, unknown_case_types, status)
+                values (${ws}::uuid, gen_random_uuid(), ${adapterId}, '1', 'f', 10, 8, 0, 0, 'ok')`,
+          ),
+        );
+      }
       const rows = await as(tx, staffId, (s) =>
         s.execute(
           sql`select * from app_staff_parse_yield(now() - interval '1 day') where adapter_id = ${adapterId}`,

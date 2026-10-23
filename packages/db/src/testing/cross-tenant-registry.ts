@@ -132,6 +132,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
+  // Judgment alerts (#497).
+  matter_issue_tag: DB_TABLES_TEST,
+  judgment_alert: DB_TABLES_TEST,
 };
 
 /**

@@ -1,4 +1,5 @@
 -- Migration 0074_status_poll: no table change (hand-assembled, function only). `app_case_watch_due`
+-- Reviewed-by: Claude (agent, #592)
 -- lets the system `status.poll` job list the watches that are due across workspaces: case_watch is a
 -- tenant table under FORCE RLS and the job has no workspace, so, like `app_judgment_alert_targets`,
 -- the owner-defined function returns only the ids the job needs to run each lookup in its own scope.

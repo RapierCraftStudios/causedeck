@@ -9,6 +9,9 @@ export default defineProject({
     include: [
       'src/__tests__/golden.test.ts',
       'src/__tests__/synthetic.test.ts',
+      'src/__tests__/fixture-regression.test.ts',
+      'src/__tests__/redaction.test.ts',
+      'src/__tests__/workbench.test.ts',
       'src/karnataka-hc/fixtures.test.ts',
       'src/nclt-blr/**/*.test.ts',
     ],

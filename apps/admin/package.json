@@ -16,6 +16,7 @@
     "staff:seed-dev": "tsx src/cli/staff.ts seed-dev"
   },
   "dependencies": {
+    "@causedeck/adapters": "workspace:*",
     "@causedeck/auth": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/core": "workspace:*",

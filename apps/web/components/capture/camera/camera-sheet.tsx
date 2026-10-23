@@ -146,7 +146,8 @@ export function CameraSheet({
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [pages, setPages] = useState<Page[]>([]);
   const [pending, setPending] = useState<Pending | null>(null);
-  const [queue, setQueue] = useState<Blob[]>([]);
+  // Gallery photos wait their turn through the crop editor, one at a time.
+  const queue = useRef<Blob[]>([]);
   const [enhance, setEnhance] = useState(false);
   const [keepOriginal, setKeepOriginal] = useState(false);
   const [hint, setHint] = useState<'blurry' | 'glare' | null>(null);
@@ -193,10 +194,11 @@ export function CameraSheet({
     const run = { cancelled: false };
     batchId.current = crypto.randomUUID();
     nextIndex.current = 1;
-    setPages([]);
-    setError(null);
-    setOffline(typeof navigator !== 'undefined' && !navigator.onLine);
+    queue.current = [];
     void (async () => {
+      setPages([]);
+      setError(null);
+      setOffline(typeof navigator !== 'undefined' && !navigator.onLine);
       const sessions = await recoverSessions(dexieOutboxStore()).catch(() => []);
       if (run.cancelled) return;
       const mine = sessions.find((s) => s.workspaceId === workspaceId) ?? null;
@@ -248,13 +250,10 @@ export function CameraSheet({
     }
   };
 
-  // Gallery photos wait their turn through the crop editor, one at a time.
-  useEffect(() => {
-    if (pending !== null || queue.length === 0) return;
-    const [next, ...rest] = queue;
-    setQueue(rest);
+  const cropNextQueued = () => {
+    const next = queue.current.shift();
     if (next !== undefined) void beginCrop(next, null);
-  }, [pending, queue]);
+  };
 
   const shutter = async () => {
     const element = video.current;
@@ -294,6 +293,7 @@ export function CameraSheet({
       URL.revokeObjectURL(pending.url);
       setPending(null);
       setPhase(stream === null ? 'denied' : 'camera');
+      cropNextQueued();
     } catch {
       setError(t('errors.save'));
     } finally {
@@ -305,6 +305,7 @@ export function CameraSheet({
     if (pending !== null) URL.revokeObjectURL(pending.url);
     setPending(null);
     setPhase(stream === null ? 'denied' : 'camera');
+    cropNextQueued();
   };
 
   const move = async (from: number, to: number) => {
@@ -382,7 +383,8 @@ export function CameraSheet({
       void beginCrop(list[0], at);
       return;
     }
-    setQueue((current) => [...current, ...list]);
+    queue.current.push(...list);
+    if (pending === null) cropNextQueued();
   };
 
   const flashSupported = false;

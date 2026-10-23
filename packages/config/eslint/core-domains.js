@@ -48,6 +48,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // automation, graph reads through matter-graph (imports `index.ts` only), member roles through
   // workspaces.
   extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
+  // Bootstrap import plan (#57, #548): proposals are read from the tables directly; the shared
+  // helpers and `@causedeck/adapters` are not domains, so it imports no other domain.
+  import: Object.freeze([]),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([

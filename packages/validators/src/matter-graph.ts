@@ -316,6 +316,9 @@ export const DocumentInsertSchema = z
     }
   });
 
+/** A JSON number within 0..1 (a normalised coordinate or confidence). */
+const ratio = z.number().min(0).max(1);
+
 const documentPageShape = {
   id: uuid,
   workspaceId: uuid,
@@ -335,8 +338,8 @@ const documentPageShape = {
     .array(
       z.object({
         text: z.string(),
-        bbox: z.tuple([unitInterval, unitInterval, unitInterval, unitInterval]),
-        conf: unitInterval,
+        bbox: z.tuple([ratio, ratio, ratio, ratio]),
+        conf: ratio,
       }),
     )
     .nullable(),

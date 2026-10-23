@@ -30,6 +30,7 @@ import { importBatch, importBatchFile, importPlan } from '../schema/import-batch
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { notice, noticeMatch } from '../schema/notices.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
@@ -893,6 +894,28 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: advocateProfile.id });
     return { id: first(rows, 'advocate_profile').id };
+  },
+  notice_match: async (tx, { workspaceId, tag }) => {
+    // The global notice comes from a migration-seeded source (0067), one URL per seed.
+    const notices = await tx
+      .insert(notice)
+      .values({
+        sourceId: 'in.sc.notices',
+        kind: 'circular',
+        title: `XT notice ${tag}`,
+        issuedOn: '2026-11-01',
+        url: `https://notices.example.test/xt/${tag}`,
+        sourceType: 'system',
+        sourceRef: 'xt',
+      })
+      .returning({ id: notice.id });
+    const noticeId = first(notices, 'notice').id;
+    const matterId = await seedMatter(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(noticeMatch)
+      .values({ workspaceId, noticeId, matterId, reason: 'matter_forum' })
+      .returning({ id: noticeMatch.id });
+    return { noticeId, matterId, id: first(rows, 'notice_match').id };
   },
   cause_list_watch: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

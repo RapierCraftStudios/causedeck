@@ -1,8 +1,9 @@
-// Console navigation (#309): Overview, Adapters, Sources, Flags, Workspaces, Support sessions, Audit, Business (admin only),
+// Console navigation (#309): Overview, Adapters, Sources, Data Ops, Flags, Workspaces, Support sessions, Audit, Business (admin only),
 // filtered by the staff role matrix. 240 px left nav at desktop widths, an icon rail at 768, a
 // wrapping row on phones (360).
 import {
   Activity,
+  BarChart3,
   Building2,
   CircleDollarSign,
   Globe,
@@ -19,7 +20,15 @@ import { canStaff, type StaffCapability, type StaffRole } from '../lib/roles.ts'
 export interface ConsoleNavItem {
   capability: StaffCapability;
   href:
-    '/' | '/adapters' | '/sources' | '/flags' | '/workspaces' | '/support' | '/audit' | '/business';
+    | '/'
+    | '/adapters'
+    | '/sources'
+    | '/data-ops'
+    | '/flags'
+    | '/workspaces'
+    | '/support'
+    | '/audit'
+    | '/business';
   label: string;
   icon: LucideIcon;
 }
@@ -28,6 +37,7 @@ export const CONSOLE_NAV: readonly ConsoleNavItem[] = [
   { capability: 'overview', href: '/', label: 'Overview', icon: LayoutDashboard },
   { capability: 'adapters', href: '/adapters', label: 'Adapters', icon: Activity },
   { capability: 'sources', href: '/sources', label: 'Sources', icon: Globe },
+  { capability: 'data-ops', href: '/data-ops', label: 'Data Ops', icon: BarChart3 },
   { capability: 'flags', href: '/flags', label: 'Flags', icon: ToggleLeft },
   { capability: 'workspaces', href: '/workspaces', label: 'Workspaces', icon: Building2 },
   { capability: 'support', href: '/support', label: 'Support sessions', icon: LifeBuoy },

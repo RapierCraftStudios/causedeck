@@ -45,6 +45,7 @@ describe('ConsoleNav', () => {
       'Overview',
       'Adapters',
       'Sources',
+      'Data Ops',
       'Flags',
       'Workspaces',
       'Support sessions',
@@ -64,6 +65,7 @@ describe('ConsoleNav', () => {
       'Overview',
       'Adapters',
       'Sources',
+      'Data Ops',
       'Flags',
       'Workspaces',
       'Support sessions',
@@ -83,6 +85,7 @@ describe('ConsoleNav', () => {
       '/',
       '/adapters',
       '/sources',
+      '/data-ops',
       '/flags',
       '/audit',
     ]);

@@ -155,6 +155,10 @@ describe('row-level security catalog', () => {
         'ics_feed_event',
         'ics_import_event',
 
+        // Case-status watch (#589).
+        'case_watch',
+        'case_status_snapshot',
+
         // Anchored order extraction (#46).
         'extraction',
 

@@ -114,6 +114,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   ics_feed_event: DB_TABLES_TEST,
   ics_import_event: DB_TABLES_TEST,
 
+  // Case-status watch (#589).
+  case_watch: DB_TABLES_TEST,
+  case_status_snapshot: DB_TABLES_TEST,
+
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
 

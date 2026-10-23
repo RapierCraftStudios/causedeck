@@ -124,6 +124,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,
+
+  // Karnataka HC cause-list watches (#482).
+  cause_list_watch: DB_TABLES_TEST,
 };
 
 /**

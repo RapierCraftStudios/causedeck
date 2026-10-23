@@ -61,6 +61,12 @@ export const FLAGS = {
     true,
     [35, 120],
   ),
+  'court.khc_a2': flag(
+    'court.khc_a2',
+    'Karnataka HC public cause-list watch through the governed fetch layer (A2).',
+    true,
+    [482, 118],
+  ),
   'court.sanctioned-push': flag(
     'court.sanctioned-push',
     'Sanctioned push ingestion from courts.',

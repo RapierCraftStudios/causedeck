@@ -165,6 +165,9 @@ describe('row-level security catalog', () => {
 
         // Advocate identifiers for the bootstrap import (#57, #550).
         'advocate_profile',
+
+        // Karnataka HC cause-list watches (#482).
+        'cause_list_watch',
       ].sort(),
     );
     for (const row of rows)

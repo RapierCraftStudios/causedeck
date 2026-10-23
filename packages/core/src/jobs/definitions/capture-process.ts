@@ -26,6 +26,7 @@ import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
 import { getProducer } from '../producer.ts';
+import { enqueueWhatsAppImport } from './whatsapp-import.ts';
 
 export const captureProcessSchema = z.object({
   workspaceId: workspaceIdSchema,
@@ -109,6 +110,13 @@ export async function runCaptureProcessJob(
         },
         'ics imported',
       );
+    }
+    // A WhatsApp chat (#526) is structured by its own job, which owns the model call and its retries.
+    if (result.outcome === 'started' && result.channel === 'whatsapp_export') {
+      await enqueueWhatsAppImport({
+        workspaceId: payload.workspaceId,
+        captureId: payload.captureId,
+      });
     }
   } catch (error) {
     if (ctx.attempt > CAPTURE_JOB_RETRIES) {

@@ -4,6 +4,8 @@ export const CAPTURE_JOB_NAMES = {
   scan: 'capture.scan',
   process: 'capture.process',
   retention: 'capture.retention',
+  /** Structures a WhatsApp chat import (#526); queued by `capture.process` for `whatsapp_export`. */
+  whatsappImport: 'whatsapp.import',
   /** The daily global tick (02:00 IST) that queues `capture.retention` per workspace. */
   retentionTick: 'system.capture.retention',
 } as const;
@@ -19,6 +21,11 @@ export interface CaptureProcessPayload {
   workspaceId: string;
   captureId: string;
   pipelineVersion: string;
+}
+
+export interface WhatsAppImportPayload {
+  workspaceId: string;
+  captureId: string;
 }
 
 export interface CaptureRetentionPayload {

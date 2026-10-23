@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion -- test fixtures index known entries */
 import { describe, expect, it } from 'vitest';
 
 import { decryptBytes } from '../../lib/pwa/outbox/crypto.ts';
@@ -201,7 +202,13 @@ describe('batches and summaries (#50)', () => {
     await markUploading(store, items[1]!.id);
     await markAttemptFailed(store, items[1]!.id, 'x', 0);
     const rows = await listItems(store, 1_000);
-    expect(summarize(rows)).toMatchObject({ waiting: 2, uploading: 1, failed: 0, total: 3, position: 1 });
+    expect(summarize(rows)).toMatchObject({
+      waiting: 2,
+      uploading: 1,
+      failed: 0,
+      total: 3,
+      position: 1,
+    });
     await markSent(store, items[0]!.id);
     expect(await listItems(store, 48 * 60 * 60 * 1000)).toHaveLength(2);
   });

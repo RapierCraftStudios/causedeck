@@ -89,7 +89,8 @@ export const config = {
   matcher: [
     {
       // Static assets and the health probes need neither a nonce nor a locale.
-      source: '/((?!_next/static|_next/image|favicon.ico|healthz|readyz|sw.js|manifest.webmanifest|icons/|screenshots/).*)',
+      source:
+        '/((?!_next/static|_next/image|favicon.ico|healthz|readyz|sw.js|manifest.webmanifest|icons/|screenshots/).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

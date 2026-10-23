@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { decryptBytes, encryptBytes, getDeviceKey, sha256Hex } from '../../lib/pwa/outbox/crypto.ts';
+import {
+  decryptBytes,
+  encryptBytes,
+  getDeviceKey,
+  sha256Hex,
+} from '../../lib/pwa/outbox/crypto.ts';
 
 import { deviceKey, memoryKeyStore } from './helpers.ts';
 

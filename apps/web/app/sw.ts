@@ -81,7 +81,10 @@ async function handleShare(request: Request): Promise<Response> {
     if (files.length === 0) return see('');
     const store = dexieOutboxStore();
     const key = await getDeviceKey(dexieKeyStore());
-    const { batchId } = await enqueueFiles(store, key, files, { workspaceId: null, channel: 'share' });
+    const { batchId } = await enqueueFiles(store, key, files, {
+      workspaceId: null,
+      channel: 'share',
+    });
     notifyOutboxChanged();
     return see(`?batch=${encodeURIComponent(batchId)}`);
   } catch (error) {

@@ -64,7 +64,8 @@ function OutboxRow({
       <div className="min-w-0 flex-1">
         <p className="text-ink truncate text-sm font-medium">{item.name}</p>
         <p className="text-ink-muted text-xs">
-          {size} · {t('outbox.sheet.age', { when: format.relativeTime(new Date(item.createdAt), now) })}
+          {size} ·{' '}
+          {t('outbox.sheet.age', { when: format.relativeTime(new Date(item.createdAt), now) })}
         </p>
         <p className="text-ink-muted text-xs">
           {t(`share.status.${item.state}`)}

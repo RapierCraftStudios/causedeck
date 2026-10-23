@@ -37,13 +37,38 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/icons/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-      { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-      { src: '/icons/icon-monochrome-512.png', sizes: '512x512', type: 'image/png', purpose: 'monochrome' },
+      {
+        src: '/icons/icon-maskable-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
+      {
+        src: '/icons/icon-maskable-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
+      {
+        src: '/icons/icon-monochrome-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'monochrome',
+      },
     ],
     screenshots: [
-      { src: '/screenshots/home-narrow.png', sizes: '540x960', type: 'image/png', form_factor: 'narrow' },
-      { src: '/screenshots/home-wide.png', sizes: '1280x720', type: 'image/png', form_factor: 'wide' },
+      {
+        src: '/screenshots/home-narrow.png',
+        sizes: '540x960',
+        type: 'image/png',
+        form_factor: 'narrow',
+      },
+      {
+        src: '/screenshots/home-wide.png',
+        sizes: '1280x720',
+        type: 'image/png',
+        form_factor: 'wide',
+      },
     ],
     share_target: {
       action: '/share-target',

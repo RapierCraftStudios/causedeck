@@ -68,7 +68,9 @@ export default async function ShareTargetPage({ searchParams }: ShareTargetPageP
   const rawError = first(query.error);
   const error = rawError === 'full' || rawError === 'failed' ? rawError : null;
   const wanted = first(query.ws);
-  const signInHref = signInPathFor(batchId === null ? '/share-target' : `/share-target?batch=${batchId}`);
+  const signInHref = signInPathFor(
+    batchId === null ? '/share-target' : `/share-target?batch=${batchId}`,
+  );
 
   const loaded = await loadMemberships();
   if (!loaded) {

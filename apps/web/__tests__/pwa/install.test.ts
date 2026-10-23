@@ -57,8 +57,12 @@ describe('install banner rules (#50)', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('blocked');
     });
-    expect(() => recordVisit()).not.toThrow();
-    expect(() => dismissInstall('user-a')).not.toThrow();
+    expect(() => {
+      recordVisit();
+    }).not.toThrow();
+    expect(() => {
+      dismissInstall('user-a');
+    }).not.toThrow();
     expect(isDismissed('user-a')).toBe(false);
   });
 });

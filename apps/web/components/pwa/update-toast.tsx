@@ -47,14 +47,15 @@ export function UpdateToast() {
     void registerServiceWorker((waiting) => {
       if (alive) setRegistration(waiting);
     });
+    const worker = Reflect.get(navigator, 'serviceWorker') as ServiceWorkerContainer | undefined;
     const onControllerChange = () => {
       // Only a reload the person asked for; a silent takeover never reloads the page.
       if (reloadOnChange.current) window.location.reload();
     };
-    navigator.serviceWorker?.addEventListener('controllerchange', onControllerChange);
+    worker?.addEventListener('controllerchange', onControllerChange);
     return () => {
       alive = false;
-      navigator.serviceWorker?.removeEventListener('controllerchange', onControllerChange);
+      worker?.removeEventListener('controllerchange', onControllerChange);
     };
   }, []);
 

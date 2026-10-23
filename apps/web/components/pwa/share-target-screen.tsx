@@ -67,7 +67,9 @@ function FileIcon({ mime }: { mime: string }) {
 
 function reasonKey(error: string | null): string {
   if (error === 'network') return 'network';
-  return ['too_large', 'unsupported_type', 'forbidden', 'not_found', 'invalid'].includes(error ?? '')
+  return ['too_large', 'unsupported_type', 'forbidden', 'not_found', 'invalid'].includes(
+    error ?? '',
+  )
     ? (error as string)
     : 'other';
 }
@@ -151,7 +153,12 @@ export function ShareTargetView(props: ShareTargetViewProps) {
             <h1 ref={heading} tabIndex={-1} className="text-ink text-xl font-semibold outline-none">
               {empty ? t('empty.title') : t('title')}
             </h1>
-            <p role="status" aria-live="polite" data-share-status="" className="text-ink-muted text-sm">
+            <p
+              role="status"
+              aria-live="polite"
+              data-share-status=""
+              className="text-ink-muted text-sm"
+            >
               {empty ? t('empty.body') : status}
             </p>
           </div>
@@ -185,7 +192,9 @@ export function ShareTargetView(props: ShareTargetViewProps) {
 
         {props.signedIn && workspaces.length > 1 ? (
           <form method="get" action="/share-target" className="flex flex-col gap-2">
-            {props.batchId === null ? null : <input type="hidden" name="batch" value={props.batchId} />}
+            {props.batchId === null ? null : (
+              <input type="hidden" name="batch" value={props.batchId} />
+            )}
             <label htmlFor="share-workspace" className="text-ink text-sm font-medium">
               {t('workspace.label')}
             </label>
@@ -234,7 +243,11 @@ export function ShareTargetView(props: ShareTargetViewProps) {
           </Alert>
         ) : null}
 
-        {props.signedIn && workspace !== null && !channelOff && !empty && props.matters.length > 0 ? (
+        {props.signedIn &&
+        workspace !== null &&
+        !channelOff &&
+        !empty &&
+        props.matters.length > 0 ? (
           <div className="flex flex-col gap-2">
             <label htmlFor="share-matter" className="text-ink text-sm font-medium">
               {t('matter.label')}
@@ -367,12 +380,11 @@ export function ShareTargetScreen(props: ShareTargetScreenProps) {
   useEffect(() => {
     if (!canUpload || workspaceId === null || batchId === null) return undefined;
     let stop: (() => void) | undefined;
-    let alive = true;
+    const life = { alive: true };
     void (async () => {
       const { dexieOutboxStore } = await import('../../lib/pwa/outbox/db.ts');
-      const { assignWorkspace, notifyOutboxChanged } = await import(
-        '../../lib/pwa/outbox/queue.ts'
-      );
+      const { assignWorkspace, notifyOutboxChanged } =
+        await import('../../lib/pwa/outbox/queue.ts');
       await assignWorkspace(
         dexieOutboxStore(),
         batchId,
@@ -381,10 +393,10 @@ export function ShareTargetScreen(props: ShareTargetScreenProps) {
       );
       notifyOutboxChanged();
       const { startOutboxSync } = await import('../../lib/pwa/outbox/sync.ts');
-      if (alive) stop = startOutboxSync();
+      if (life.alive) stop = startOutboxSync();
     })();
     return () => {
-      alive = false;
+      life.alive = false;
       stop?.();
     };
   }, [canUpload, workspaceId, batchId, matterHintId]);
@@ -410,7 +422,11 @@ export function ShareTargetScreen(props: ShareTargetScreenProps) {
         setEnabling(true);
         setEnableFailed(false);
         void props
-          .enableChannel({ workspaceId, channel: 'share', disclosureVersion: props.disclosureVersion })
+          .enableChannel({
+            workspaceId,
+            channel: 'share',
+            disclosureVersion: props.disclosureVersion,
+          })
           .then(({ ok }) => {
             if (ok) setEnabled((ids) => [...ids, workspaceId]);
             else setEnableFailed(true);

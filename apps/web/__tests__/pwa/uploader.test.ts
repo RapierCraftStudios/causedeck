@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-base-to-string -- test fixtures index known entries */
 import { describe, expect, it, vi } from 'vitest';
 
 import { enqueueFiles, MAX_ATTEMPTS } from '../../lib/pwa/outbox/queue.ts';
@@ -136,7 +137,12 @@ describe('uploader (#50)', () => {
     const { store, key, item } = await queued();
     const offline = vi.fn(() => Promise.reject(new TypeError('Failed to fetch')));
     expect(
-      await uploadItem(item, { store, key, fetch: offline as unknown as typeof fetch, now: () => 0 }),
+      await uploadItem(item, {
+        store,
+        key,
+        fetch: offline,
+        now: () => 0,
+      }),
     ).toBe('retry');
     expect((await store.get(item.id))?.lastError).toBe('network');
   });
@@ -149,7 +155,11 @@ describe('uploader (#50)', () => {
     const { store, key, item } = await queued();
     const fake = api({ presign: () => respond(status) });
     expect(await uploadItem(item, { store, key, fetch: fake.send })).toBe('failed');
-    expect(await store.get(item.id)).toMatchObject({ state: 'failed', lastError: reason, attempts: 0 });
+    expect(await store.get(item.id)).toMatchObject({
+      state: 'failed',
+      lastError: reason,
+      attempts: 0,
+    });
   });
 
   it('keeps the item queued, with no attempt spent, when signed out', async () => {

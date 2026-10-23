@@ -35,7 +35,9 @@ describe('service worker cache policy (#50)', () => {
   });
 
   it('caches only hashed static assets and icons cache-first', () => {
-    expect(isStaticAsset(new URL('/_next/static/chunks/a1b2.js', 'https://app.example.test'))).toBe(true);
+    expect(isStaticAsset(new URL('/_next/static/chunks/a1b2.js', 'https://app.example.test'))).toBe(
+      true,
+    );
     expect(isStaticAsset(new URL('/icons/icon-192.png', 'https://app.example.test'))).toBe(true);
     expect(isStaticAsset(new URL('/api/x', 'https://app.example.test'))).toBe(false);
     expect(isStaticAsset(new URL('/', 'https://app.example.test'))).toBe(false);

@@ -178,7 +178,9 @@ describe('proxy', () => {
   });
 
   it('sends a share that reached the server (no service worker yet) back to the share screen (#50)', () => {
-    const response = proxy(new NextRequest('https://app.example.test/share-target', { method: 'POST' }));
+    const response = proxy(
+      new NextRequest('https://app.example.test/share-target', { method: 'POST' }),
+    );
     expect(response.status).toBe(303);
     expect(new URL(response.headers.get('location') ?? '').pathname).toBe('/share-target');
   });

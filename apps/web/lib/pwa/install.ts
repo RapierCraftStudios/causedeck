@@ -34,7 +34,8 @@ export function recordVisit(): number {
   return visits;
 }
 
-export const isDismissed = (viewerId: string): boolean => read(DISMISSED_PREFIX + viewerId) !== null;
+export const isDismissed = (viewerId: string): boolean =>
+  read(DISMISSED_PREFIX + viewerId) !== null;
 
 export function dismissInstall(viewerId: string): void {
   write(DISMISSED_PREFIX + viewerId, '1');
@@ -45,9 +46,14 @@ export function isStandalone(): boolean {
   return ios || window.matchMedia('(display-mode: standalone)').matches;
 }
 
-export function isIos(userAgent = navigator.userAgent, maxTouchPoints = navigator.maxTouchPoints): boolean {
+export function isIos(
+  userAgent = navigator.userAgent,
+  maxTouchPoints = navigator.maxTouchPoints,
+): boolean {
   // iPadOS 13+ reports as a Mac with touch points.
-  return /iphone|ipad|ipod/i.test(userAgent) || (/macintosh/i.test(userAgent) && maxTouchPoints > 1);
+  return (
+    /iphone|ipad|ipod/i.test(userAgent) || (/macintosh/i.test(userAgent) && maxTouchPoints > 1)
+  );
 }
 
 export interface BannerInput {
@@ -66,7 +72,9 @@ export function bannerMode(input: BannerInput): 'android' | 'ios' | null {
 }
 
 /** Hold the install prompt for the banner; returns a stop function. */
-export function listenForInstallPrompt(onPrompt: (event: BeforeInstallPromptEvent) => void): () => void {
+export function listenForInstallPrompt(
+  onPrompt: (event: BeforeInstallPromptEvent) => void,
+): () => void {
   const handler = (event: Event) => {
     event.preventDefault();
     onPrompt(event as BeforeInstallPromptEvent);

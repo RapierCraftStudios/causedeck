@@ -102,7 +102,10 @@ describe('OutboxSheetView', () => {
         open
         onOpenChange={vi.fn()}
         now={3 * 60 * 60 * 1000}
-        items={[row(), row({ id: 'item-2', name: 'photo.jpg', state: 'failed', lastError: 'too_large' })]}
+        items={[
+          row(),
+          row({ id: 'item-2', name: 'photo.jpg', state: 'failed', lastError: 'too_large' }),
+        ]}
         {...handlers}
       />,
     );
@@ -114,7 +117,9 @@ describe('OutboxSheetView', () => {
     expect(items[1]?.textContent).toContain(t.share.reason.too_large);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Retry photo.jpg' }));
     expect(handlers.onRetry).toHaveBeenCalledWith('item-2');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove order-copy.pdf from this device' }));
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Remove order-copy.pdf from this device' }),
+    );
     expect(handlers.onRemove).toHaveBeenCalledWith('item-1');
     fireEvent.click(within(dialog).getByRole('button', { name: t.outbox.sheet.uploadNow }));
     expect(handlers.onUploadNow).toHaveBeenCalled();
@@ -122,12 +127,24 @@ describe('OutboxSheetView', () => {
 
   it('warns at 80% of the cap and blocks at 100%', () => {
     const { rerender } = withIntl(
-      <OutboxSheetView open onOpenChange={vi.fn()} items={[row({ size: 85 })]} capBytes={100} {...handlers} />,
+      <OutboxSheetView
+        open
+        onOpenChange={vi.fn()}
+        items={[row({ size: 85 })]}
+        capBytes={100}
+        {...handlers}
+      />,
     );
     expect(screen.getByText(/almost full \(85%\)/)).toBeTruthy();
     rerender(
       <NextIntlClientProvider locale="en" messages={catalogs.en} timeZone="Asia/Kolkata">
-        <OutboxSheetView open onOpenChange={vi.fn()} items={[row({ size: 100 })]} capBytes={100} {...handlers} />
+        <OutboxSheetView
+          open
+          onOpenChange={vi.fn()}
+          items={[row({ size: 100 })]}
+          capBytes={100}
+          {...handlers}
+        />
       </NextIntlClientProvider>,
     );
     expect(screen.getByText(t.outbox.sheet.capFull)).toBeTruthy();
@@ -207,7 +224,10 @@ describe('ShareTargetView', () => {
     const onRetry = vi.fn();
     withIntl(
       <ShareTargetView
-        {...shareProps({ items: [row({ state: 'failed', lastError: 'unsupported_type' })], onRetry })}
+        {...shareProps({
+          items: [row({ state: 'failed', lastError: 'unsupported_type' })],
+          onRetry,
+        })}
       />,
     );
     expect(screen.getByText(/Couldn't upload\. Retry/).textContent).toContain(
@@ -239,7 +259,7 @@ describe('ShareTargetView', () => {
     const a = workspace();
     const b = workspace({ id: '00000000-0000-4000-8000-000000000002', name: 'Second Chambers' });
     withIntl(<ShareTargetView {...shareProps({ workspace: null, workspaces: [a, b] })} />);
-    const select = screen.getByLabelText(t.share.workspace.label) as HTMLSelectElement;
+    const select = screen.getByLabelText<HTMLSelectElement>(t.share.workspace.label);
     expect(select.name).toBe('ws');
     expect(within(select).getAllByRole('option').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByRole('link', { name: 'Open Inbox' })).toBeNull();
@@ -250,7 +270,9 @@ describe('ShareTargetView', () => {
     withIntl(
       <ShareTargetView
         {...shareProps({
-          matters: [{ id: '00000000-0000-4000-8000-0000000000aa', title: 'Meera Rao v. Example Traders' }],
+          matters: [
+            { id: '00000000-0000-4000-8000-0000000000aa', title: 'Meera Rao v. Example Traders' },
+          ],
           onMatterHint,
         })}
       />,
@@ -262,7 +284,9 @@ describe('ShareTargetView', () => {
   });
 
   it('asks a signed-out visitor to sign in and promises the files stay on the device', () => {
-    withIntl(<ShareTargetView {...shareProps({ signedIn: false, workspace: null, workspaces: [] })} />);
+    withIntl(
+      <ShareTargetView {...shareProps({ signedIn: false, workspace: null, workspaces: [] })} />,
+    );
     expect(screen.getByText(t.share.signIn.title)).toBeTruthy();
     expect(screen.getByText(t.share.signIn.body)).toBeTruthy();
     expect(screen.getByRole('link', { name: t.share.signIn.action }).getAttribute('href')).toBe(
@@ -293,7 +317,14 @@ describe('InstallBannerView', () => {
   it('Android: Install and Not now', () => {
     const onInstall = vi.fn();
     const onDismiss = vi.fn();
-    withIntl(<InstallBannerView mode="android" onInstall={onInstall} onDismiss={onDismiss} onFiles={vi.fn()} />);
+    withIntl(
+      <InstallBannerView
+        mode="android"
+        onInstall={onInstall}
+        onDismiss={onDismiss}
+        onFiles={vi.fn()}
+      />,
+    );
     fireEvent.click(screen.getByRole('button', { name: t.install.install }));
     fireEvent.click(screen.getByRole('button', { name: t.install.dismiss }));
     expect(onInstall).toHaveBeenCalled();
@@ -301,7 +332,9 @@ describe('InstallBannerView', () => {
   });
 
   it('iOS: add-to-home-screen steps and an Upload files button, no install button', () => {
-    withIntl(<InstallBannerView mode="ios" onInstall={vi.fn()} onDismiss={vi.fn()} onFiles={vi.fn()} />);
+    withIntl(
+      <InstallBannerView mode="ios" onInstall={vi.fn()} onDismiss={vi.fn()} onFiles={vi.fn()} />,
+    );
     expect(screen.getByText(/Add to Home Screen/)).toBeTruthy();
     expect(screen.getByRole('button', { name: t.install.ios.upload })).toBeTruthy();
     expect(screen.queryByRole('button', { name: t.install.install })).toBeNull();
@@ -311,7 +344,9 @@ describe('InstallBannerView', () => {
 describe('UpdateToastView', () => {
   it('offers Update now only outside court-day windows', () => {
     const onUpdateNow = vi.fn();
-    const { rerender } = withIntl(<UpdateToastView offerUpdateNow={false} onUpdateNow={onUpdateNow} />);
+    const { rerender } = withIntl(
+      <UpdateToastView offerUpdateNow={false} onUpdateNow={onUpdateNow} />,
+    );
     expect(screen.getByText(t.update.ready)).toBeTruthy();
     expect(screen.queryByRole('button', { name: t.update.now })).toBeNull();
     rerender(

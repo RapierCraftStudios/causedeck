@@ -6,13 +6,7 @@
 // sent bytes are deleted from the device as soon as `complete` succeeds.
 import { decryptBytes } from './crypto.ts';
 import type { OutboxItem, OutboxStore } from './db.ts';
-import {
-  markAttemptFailed,
-  markDeferred,
-  markFailed,
-  markSent,
-  markUploading,
-} from './queue.ts';
+import { markAttemptFailed, markDeferred, markFailed, markSent, markUploading } from './queue.ts';
 
 export const PRESIGN_PATH = '/api/captures/presign';
 export const completePath = (captureId: string) => `/api/captures/${captureId}/complete`;
@@ -58,7 +52,7 @@ function checkStatus(response: Response): void {
   if (response.status === 401) throw new StepError('signed-out', 'unauthorized');
   const reason = PERMANENT[response.status];
   if (reason !== undefined) throw new StepError('permanent', reason);
-  throw new StepError('retry', `http_${response.status}`);
+  throw new StepError('retry', `http_${String(response.status)}`);
 }
 
 interface Presigned {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-base-to-string -- test fixtures index known entries */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { dataSaverOn, syncOutbox } from '../../lib/pwa/outbox/sync.ts';
@@ -15,7 +16,11 @@ function okFetch() {
     if (url.endsWith('/presign')) {
       return Promise.resolve(
         Response.json(
-          { captureId: 'c1', uploadUrl: 'https://s.example.test/p', headers: { 'content-type': 'application/pdf' } },
+          {
+            captureId: 'c1',
+            uploadUrl: 'https://s.example.test/p',
+            headers: { 'content-type': 'application/pdf' },
+          },
           { status: 201 },
         ),
       );

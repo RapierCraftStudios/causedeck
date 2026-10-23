@@ -119,10 +119,13 @@ export function InstallBanner({ viewerId, workspaceId }: InstallBannerProps) {
       onInstall={() => {
         const event = prompt.current;
         if (event === null) return;
-        void event.prompt().then(() => event.userChoice).then(() => {
-          prompt.current = null;
-          setMode(null);
-        });
+        void event
+          .prompt()
+          .then(() => event.userChoice)
+          .then(() => {
+            prompt.current = null;
+            setMode(null);
+          });
       }}
       onFiles={(files) => {
         if (files.length === 0) return;

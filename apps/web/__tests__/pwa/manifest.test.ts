@@ -30,7 +30,10 @@ describe('web app manifest (#50)', () => {
       enctype: 'multipart/form-data',
       params: { title: 'title', text: 'text', url: 'url' },
     });
-    const [files] = m.share_target?.params.files ?? [];
+    const params = m.share_target?.params as {
+      files?: { name: string; accept: string | string[] }[];
+    };
+    const [files] = params.files ?? [];
     expect(files?.name).toBe('files');
     const accept = Array.isArray(files?.accept) ? files.accept : [files?.accept];
     expect(accept).toEqual(
@@ -51,7 +54,12 @@ describe('web app manifest (#50)', () => {
 
   it('asks for no permission and registers no handler beyond sharing', () => {
     const keys = Object.keys(m);
-    for (const key of ['permissions', 'protocol_handlers', 'file_handlers', 'related_applications']) {
+    for (const key of [
+      'permissions',
+      'protocol_handlers',
+      'file_handlers',
+      'related_applications',
+    ]) {
       expect(keys).not.toContain(key);
     }
   });

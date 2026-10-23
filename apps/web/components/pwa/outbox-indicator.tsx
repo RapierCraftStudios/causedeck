@@ -18,7 +18,9 @@ import {
   type OutboxSummary,
 } from '../../lib/pwa/outbox/queue.ts';
 
-const OutboxSheet = lazy(() => import('./outbox-sheet.tsx').then((m) => ({ default: m.OutboxSheet })));
+const OutboxSheet = lazy(() =>
+  import('./outbox-sheet.tsx').then((m) => ({ default: m.OutboxSheet })),
+);
 
 const FIRST_LOAD_DELAY_MS = 1500;
 

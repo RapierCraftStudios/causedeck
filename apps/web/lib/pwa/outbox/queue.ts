@@ -25,13 +25,10 @@ export function usedBytes(items: readonly OutboxItem[]): number {
 }
 
 /** Warn from 80% of the cap, block when the new bytes would pass 100%. */
-export function capStatus(
-  used: number,
-  incoming: number,
-  capBytes = DEFAULT_CAP_BYTES,
-): CapStatus {
+export function capStatus(used: number, incoming: number, capBytes = DEFAULT_CAP_BYTES): CapStatus {
   const after = used + incoming;
-  const level: CapLevel = after > capBytes ? 'blocked' : after >= capBytes * WARN_RATIO ? 'warn' : 'ok';
+  const level: CapLevel =
+    after > capBytes ? 'blocked' : after >= capBytes * WARN_RATIO ? 'warn' : 'ok';
   return { level, usedBytes: used, capBytes };
 }
 

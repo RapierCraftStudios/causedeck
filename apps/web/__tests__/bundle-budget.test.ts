@@ -13,10 +13,7 @@ interface BudgetModule {
   parseClientReferenceManifest: (source: string) => { entryJSFiles?: Record<string, string[]> };
   WORKSPACE_SHELL_BUDGET_BYTES: number;
   SW_BUDGET_BYTES: number;
-  swBudget: (
-    source: string,
-    budget?: number,
-  ) => { gzipBytes: number; budget: number; ok: boolean };
+  swBudget: (source: string, budget?: number) => { gzipBytes: number; budget: number; ok: boolean };
   WORKSPACE_ROUTE_MANIFEST: string;
   shellDelta: (
     homeChunks: string[],

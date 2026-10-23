@@ -74,9 +74,9 @@ export async function syncOutbox(options: SyncOptions = {}): Promise<SyncResult>
   if (options.manual !== true && dataSaverOn()) {
     return { attempted: 0, outcomes: [], nextAt: null, skippedForDataSaver: true };
   }
-  const locks = globalThis.navigator?.locks;
+  const locks = Reflect.get(globalThis.navigator, 'locks') as LockManager | undefined;
   if (locks === undefined) return runOnce(options);
-  const result = await locks.request(LOCK_NAME, { ifAvailable: true }, (lock) =>
+  const result = await locks.request(LOCK_NAME, { ifAvailable: true }, (lock: Lock | null) =>
     lock === null ? null : runOnce(options),
   );
   return result ?? { attempted: 0, outcomes: [], nextAt: null, skippedForDataSaver: false };
@@ -107,7 +107,8 @@ export function startOutboxSync(): () => void {
   const run = () => {
     clearTimeout(timer);
     void syncOutbox().then((result) => {
-      if (result.nextAt !== null) timer = setTimeout(run, Math.max(1000, result.nextAt - Date.now()));
+      if (result.nextAt !== null)
+        timer = setTimeout(run, Math.max(1000, result.nextAt - Date.now()));
     });
   };
   const onVisible = () => {

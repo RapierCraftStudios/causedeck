@@ -22,7 +22,6 @@ interface PageState {
   dev: boolean;
   fail: boolean;
   flags: Record<string, boolean>;
-  statuses: Record<string, unknown>;
 }
 
 const page = vi.hoisted((): PageState => ({
@@ -30,15 +29,6 @@ const page = vi.hoisted((): PageState => ({
   dev: true,
   fail: false,
   flags: {},
-  statuses: { ics_feed: null },
-}));
-const runtime = vi.hoisted(() => ({
-  inWorkspace: vi.fn((_scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true })),
-}));
-const workspaces = vi.hoisted(() => ({
-  getIntegrations: vi.fn(() =>
-    page.fail ? Promise.reject(new Error('db down')) : Promise.resolve(page.statuses),
-  ),
 }));
 const logger = vi.hoisted(() => ({ error: vi.fn() }));
 
@@ -59,12 +49,13 @@ vi.mock('../lib/env.ts', () => ({
   serverEnv: () => ({ APP_URL: 'https://app.causedeck.test' }),
 }));
 vi.mock('../lib/flags.ts', () => ({
-  workspaceFlagCheck: () => Promise.resolve((key: string) => page.flags[key] === true),
+  workspaceFlagCheck: () =>
+    page.fail
+      ? Promise.reject(new Error('flags down'))
+      : Promise.resolve((key: string) => page.flags[key] === true),
 }));
 vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('@causedeck/ui/sonner', () => ({ toast }));
-vi.mock('@causedeck/core/runtime', () => runtime);
-vi.mock('@causedeck/core/workspaces', () => workspaces);
 vi.mock('../app/(app)/w/[slug]/settings/integrations/actions.ts', () => ({
   rotateIntegrationTokenAction: vi.fn(),
 }));
@@ -100,7 +91,6 @@ beforeEach(() => {
   page.dev = true;
   page.fail = false;
   page.flags = { 'capture.email-forward': true, 'capture.ics-feed': true };
-  page.statuses = { ics_feed: null };
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
   setOnline(true);
 });
@@ -268,22 +258,18 @@ describe('integrations page (server)', () => {
     withIntl(<div>{children}</div>);
   }
 
-  it('shows the email link card and the feed card with masked placeholders, loaded on the workspace transaction', async () => {
-    page.statuses = { ics_feed: null };
+  it('shows the email link card and the feed card and the calendar link card', async () => {
     await renderPage();
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.title);
-    expect(runtime.inWorkspace).toHaveBeenCalledWith(
-      { workspaceId: 'ws-1', userId: 'user-1' },
-      expect.any(Function),
-    );
-    expect(workspaces.getIntegrations).toHaveBeenCalledWith({ tx: true }, 'ws-1');
     expect(screen.getByRole('heading', { name: en.emailIntake.title })).toBeTruthy();
     expect(screen.getByRole('link', { name: en.emailIntake.open }).getAttribute('href')).toBe(
       '/w/demo/settings/integrations/email',
     );
     expect(screen.getByRole('heading', { name: en.icsFeed.title })).toBeTruthy();
-    expect(value('ics_feed')?.value).toBe(MASKED_FEED);
-    expect(actionButton('ics_feed')?.textContent).toBe(en.create);
+    // The feed has its own page (#53): its card here is a link to it, not a token card.
+    expect(
+      document.querySelector('[data-slot="integration-calendar-link"]')?.getAttribute('href'),
+    ).toBe('/w/demo/settings/integrations/calendar');
     expect(document.querySelector('[data-slot="integration-not-enabled"]')).toBeNull();
   });
 
@@ -295,13 +281,14 @@ describe('integrations page (server)', () => {
         '[data-slot="integration-ics_feed"] [data-slot="integration-not-enabled"]',
       )?.textContent,
     ).toBe(en.notEnabled);
-    expect(actionButton('ics_feed')?.disabled).toBe(true);
+    // No link to a page that is not there yet.
+    expect(document.querySelector('[data-slot="integration-calendar-link"]')).toBeNull();
   });
 
-  it('lets an advocate rotate', async () => {
+  it('shows the same cards to an advocate', async () => {
     page.context = testWorkspaceContext('demo', 'advocate');
     await renderPage();
-    expect(actionButton('ics_feed')?.disabled).toBe(false);
+    expect(screen.getByRole('link', { name: en.emailIntake.open })).toBeTruthy();
   });
 
   it('shows the error state with Try again when loading fails', async () => {
@@ -316,7 +303,6 @@ describe('integrations page (server)', () => {
   it('previews the loading skeleton in development', async () => {
     await renderPage({ __state: 'loading' });
     expect(document.querySelector('[data-pattern-state="loading"]')).not.toBeNull();
-    expect(workspaces.getIntegrations).not.toHaveBeenCalled();
   });
 
   it.each(['clerk', 'viewer'] as const)('is permission-denied for a %s', async (role) => {
@@ -330,7 +316,6 @@ describe('integrations page (server)', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       catalogs.en.shell.permissionDenied.title,
     );
-    expect(workspaces.getIntegrations).not.toHaveBeenCalled();
   });
 
   it('is not found for a non-member', async () => {

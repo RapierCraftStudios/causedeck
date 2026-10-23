@@ -149,6 +149,11 @@ describe('row-level security catalog', () => {
         // Capture inbox (#43).
         'capture',
         'workspace_capture_channel',
+
+        // Calendar interop (#53).
+        'ics_feed',
+        'ics_feed_event',
+        'ics_import_event',
       ].sort(),
     );
     for (const row of rows)

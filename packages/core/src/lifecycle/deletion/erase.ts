@@ -89,6 +89,11 @@ export const PURGE_ORDER = [
   'anchor',
   'document_page',
   'document',
+  // Calendar interop (#53): the import ledger cites captures, so it goes before them; feed events
+  // before their feed.
+  'ics_import_event',
+  'ics_feed_event',
+  'ics_feed',
   // The capture inbox (#43): after the documents that cite a capture, before the matters it hints.
   'capture',
   'workspace_capture_channel',

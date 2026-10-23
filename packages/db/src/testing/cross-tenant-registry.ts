@@ -108,6 +108,11 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Capture inbox (#43).
   capture: DB_TABLES_TEST,
   workspace_capture_channel: DB_TABLES_TEST,
+
+  // Calendar interop (#53).
+  ics_feed: DB_TABLES_TEST,
+  ics_feed_event: DB_TABLES_TEST,
+  ics_import_event: DB_TABLES_TEST,
 };
 
 /**

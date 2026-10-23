@@ -216,6 +216,11 @@ export const blobsExporter = tablesExporter('blobs', [
   // comes with the blobs while retention has not deleted it.
   ws('capture', { exclude: ['raw_storage_key'], userColumn: 'created_by' }),
   ws('workspace_capture_channel', { keys: ['channel'], userColumn: 'enabled_by' }),
+  // Calendar interop (#53): the feed's token hash is a credential and never leaves; the import
+  // ledger holds only the hearing-like events' own text.
+  ws('ics_feed', { exclude: ['token_hash'], userColumn: 'user_id' }),
+  ws('ics_feed_event', { keys: ['feed_id', 'uid'] }),
+  ws('ics_import_event'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [

@@ -21,6 +21,24 @@ export const alterlabImportPattern = {
     'Read external sources through `@causedeck/fetch`; only packages/fetch imports `alterlab`.',
 };
 
+/** The governed fetch layer is the one place that talks to AlterLab (#479, D-048). */
+export function fetchLayerOverride(files) {
+  return {
+    files,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            ...deepImportPatterns.filter((pattern) => pattern !== alterlabImportPattern),
+            appImportPattern,
+          ],
+        },
+      ],
+    },
+  };
+}
+
 /** Deep imports into another workspace's sources bypass its public `exports`. */
 export const deepImportPatterns = [
   {
@@ -209,21 +227,7 @@ export const base = tseslint.config(
       ],
     },
   },
-  {
-    // The governed fetch layer is the one place that talks to AlterLab (#479, D-048).
-    files: ['**/packages/fetch/**'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            ...deepImportPatterns.filter((pattern) => pattern !== alterlabImportPattern),
-            appImportPattern,
-          ],
-        },
-      ],
-    },
-  },
+  fetchLayerOverride(['**/packages/fetch/**']),
   {
     files: PROCESS_ENV_ALLOWED_GLOBS,
     rules: { 'no-process-env': 'off' },

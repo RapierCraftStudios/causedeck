@@ -154,6 +154,7 @@ describe('enqueue', () => {
       'system.corpus.poll',
       'system.causelist.poll',
       'system.board.poll',
+      'system.judgment-alert.scan',
     ]);
   });
 });

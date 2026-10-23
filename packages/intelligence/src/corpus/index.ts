@@ -15,3 +15,9 @@ export {
   type IngestDeps,
   type IngestOutcome,
 } from './ingest.ts';
+export {
+  matchJudgmentToTags,
+  type MatchablePage,
+  type MatchableTag,
+  type TagMatch,
+} from './match.ts';

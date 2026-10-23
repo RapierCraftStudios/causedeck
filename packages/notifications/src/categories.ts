@@ -39,6 +39,7 @@ export const CATEGORIES = {
   // Court-day display-board alerts (#493): N away, now, risen, passed over.
   'court.board': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'proposal.new': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  'judgment.alert': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'digest.daily': { defaultChannels: ['email'], mandatory: false, lockedChannels: [] },
   // "What CauseDeck did today" (#49): counts of what the system did on its own, once per local day.
   'digest.end_of_day': {

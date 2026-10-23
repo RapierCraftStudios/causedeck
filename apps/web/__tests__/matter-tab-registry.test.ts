@@ -69,7 +69,14 @@ describe('matter tab registry (#390)', () => {
     registerMatterTabs();
     registerMatterTabs();
     for (const role of ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const) {
-      expect(ids(role)).toEqual(['overview', 'proceedings', 'timeline', 'people', 'documents']);
+      expect(ids(role)).toEqual([
+        'overview',
+        'proceedings',
+        'timeline',
+        'people',
+        'documents',
+        'research',
+      ]);
     }
     expect(matterTabs('viewer')[0]).toMatchObject({ labelKey: 'overview', segment: '' });
     expect(matterTabs('viewer')[1]).toMatchObject({

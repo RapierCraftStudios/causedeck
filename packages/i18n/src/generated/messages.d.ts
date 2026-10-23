@@ -691,6 +691,14 @@ export type Messages = {
           label: string;
           description: string;
         };
+        courtBoard: {
+          label: string;
+          description: string;
+        };
+        judgmentAlert: {
+          label: string;
+          description: string;
+        };
         digestDaily: {
           label: string;
           description: string;
@@ -2376,6 +2384,7 @@ export type Messages = {
         timeline: string;
         people: string;
         documents: string;
+        research: string;
       };
       status: {
         active: string;
@@ -2758,6 +2767,29 @@ export type Messages = {
           conflict: string;
           failed: string;
         };
+      };
+      research: {
+        title: string;
+        metaTitle: string;
+        intro: string;
+        tagsHeading: string;
+        tagsEmpty: string;
+        statute: string;
+        section: string;
+        issue: string;
+        add: string;
+        confirm: string;
+        dismiss: string;
+        status: {
+          proposed: string;
+          confirmed: string;
+          dismissed: string;
+        };
+        judgmentsHeading: string;
+        judgmentsEmpty: string;
+        cites: string;
+        open: string;
+        saveError: string;
       };
     };
   };

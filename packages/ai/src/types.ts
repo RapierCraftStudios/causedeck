@@ -14,6 +14,7 @@ export const TASK_IDS = [
   'parse_order_a0',
   'translate',
   'summarise',
+  'extract_issue_tags',
 ] as const;
 
 export type TaskId = (typeof TASK_IDS)[number];

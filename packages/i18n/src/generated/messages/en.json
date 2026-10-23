@@ -690,6 +690,14 @@
           "label": "New proposals",
           "description": "When CauseDeck prepares something for you to review."
         },
+        "courtBoard": {
+          "label": "Court-day alerts",
+          "description": "When an item of yours is a few items away, now being heard, or the court rises or passes it over."
+        },
+        "judgmentAlert": {
+          "label": "Relevant judgments",
+          "description": "When a new judgment cites a statute section confirmed on one of your matters."
+        },
         "digestDaily": {
           "label": "Daily digest",
           "description": "One email at 6:30 pm with the day's updates."
@@ -2374,7 +2382,8 @@
         "proceedings": "Proceedings",
         "timeline": "Timeline",
         "people": "People",
-        "documents": "Documents"
+        "documents": "Documents",
+        "research": "Research"
       },
       "status": {
         "active": "Active",
@@ -2757,6 +2766,29 @@
           "conflict": "Something changed since. Nothing was undone.",
           "failed": "Couldn't undo. Try again."
         }
+      },
+      "research": {
+        "title": "Relevant judgments",
+        "metaTitle": "Relevant judgments",
+        "intro": "Tag the statute sections this matter turns on. A new judgment that cites a confirmed tag appears here, linked to the court record.",
+        "tagsHeading": "Issue tags",
+        "tagsEmpty": "No tags yet. Add a statute and section to be alerted to new judgments.",
+        "statute": "Statute",
+        "section": "Section (optional)",
+        "issue": "Issue (optional)",
+        "add": "Add tag",
+        "confirm": "Confirm",
+        "dismiss": "Dismiss",
+        "status": {
+          "proposed": "Proposed",
+          "confirmed": "Confirmed",
+          "dismissed": "Dismissed"
+        },
+        "judgmentsHeading": "Judgments",
+        "judgmentsEmpty": "No relevant judgments yet.",
+        "cites": "Cites {section} {statute} on page {page}",
+        "open": "Open the judgment",
+        "saveError": "Could not save the tag."
       }
     }
   },

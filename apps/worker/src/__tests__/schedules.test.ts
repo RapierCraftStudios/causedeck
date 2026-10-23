@@ -33,6 +33,7 @@ describe('registerSchedules', () => {
       'system.corpus.poll',
       'system.causelist.poll',
       'system.board.poll',
+      'system.judgment-alert.scan',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');

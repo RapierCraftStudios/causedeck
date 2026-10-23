@@ -1,5 +1,5 @@
 {
-  "id": "dfde66b3-74c8-4bbe-8340-b1d01cac9cec",
+  "id": "7a5f2017-f96f-4845-a44b-489e99bcbb4f",
   "prevId": "0a1609b1-bf5f-41ef-ace9-e5d502f24c8b",
   "version": "7",
   "dialect": "postgresql",
@@ -3025,97 +3025,6 @@
         "blob_finalized_chk": {
           "name": "blob_finalized_chk",
           "value": "(\"blob\".\"finalized_at\" is null) = (\"blob\".\"scan_status\" is null) and (\"blob\".\"finalized_at\" is null or \"blob\".\"sha256\" is not null)"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.board_observation": {
-      "name": "board_observation",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "source_id": {
-          "name": "source_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hall_no": {
-          "name": "hall_no",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "item_no": {
-          "name": "item_no",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "passed_over": {
-          "name": "passed_over",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
-        "observed_at": {
-          "name": "observed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "board_observation_hall_idx": {
-          "name": "board_observation_hall_idx",
-          "columns": [
-            {
-              "expression": "source_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "hall_no",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "observed_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "board_observation_status_chk": {
-          "name": "board_observation_status_chk",
-          "value": "status in ('sitting', 'risen', 'passed_over', 'lunch')"
         }
       },
       "isRLSEnabled": false
@@ -7987,6 +7896,133 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.judgment_alert": {
+      "name": "judgment_alert",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "matter_id": {
+          "name": "matter_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "judgment_id": {
+          "name": "judgment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page_no": {
+          "name": "page_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "notified_at": {
+          "name": "notified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "judgment_alert_workspace_id_idx": {
+          "name": "judgment_alert_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "judgment_alert_judgment_id_judgment_id_fk": {
+          "name": "judgment_alert_judgment_id_judgment_id_fk",
+          "tableFrom": "judgment_alert",
+          "tableTo": "judgment",
+          "columnsFrom": ["judgment_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "judgment_alert_workspace_id_fk": {
+          "name": "judgment_alert_workspace_id_fk",
+          "tableFrom": "judgment_alert",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "judgment_alert_matter_fk": {
+          "name": "judgment_alert_matter_fk",
+          "tableFrom": "judgment_alert",
+          "tableTo": "matter",
+          "columnsFrom": ["workspace_id", "matter_id"],
+          "columnsTo": ["workspace_id", "id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "judgment_alert_tag_fk": {
+          "name": "judgment_alert_tag_fk",
+          "tableFrom": "judgment_alert",
+          "tableTo": "matter_issue_tag",
+          "columnsFrom": ["workspace_id", "tag_id"],
+          "columnsTo": ["workspace_id", "id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "judgment_alert_matter_judgment_uq": {
+          "name": "judgment_alert_matter_judgment_uq",
+          "nullsNotDistinct": false,
+          "columns": ["workspace_id", "matter_id", "judgment_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "judgment_alert_page_chk": {
+          "name": "judgment_alert_page_chk",
+          "value": "page_no >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.legal_hold_invoice": {
       "name": "legal_hold_invoice",
       "schema": "",
@@ -8627,6 +8663,153 @@
         "matter_not_merged_into_self_chk": {
           "name": "matter_not_merged_into_self_chk",
           "value": "merged_into_matter_id is null or merged_into_matter_id <> id"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.matter_issue_tag": {
+      "name": "matter_issue_tag",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "matter_id": {
+          "name": "matter_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "statute": {
+          "name": "statute",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "issue": {
+          "name": "issue",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'proposed'"
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "numeric(4, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "matter_issue_tag_workspace_id_idx": {
+          "name": "matter_issue_tag_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "matter_issue_tag_workspace_id_fk": {
+          "name": "matter_issue_tag_workspace_id_fk",
+          "tableFrom": "matter_issue_tag",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "matter_issue_tag_matter_fk": {
+          "name": "matter_issue_tag_matter_fk",
+          "tableFrom": "matter_issue_tag",
+          "tableTo": "matter",
+          "columnsFrom": ["workspace_id", "matter_id"],
+          "columnsTo": ["workspace_id", "id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "matter_issue_tag_workspace_id_id_uq": {
+          "name": "matter_issue_tag_workspace_id_id_uq",
+          "nullsNotDistinct": false,
+          "columns": ["workspace_id", "id"]
+        },
+        "matter_issue_tag_matter_statute_section_uq": {
+          "name": "matter_issue_tag_matter_statute_section_uq",
+          "nullsNotDistinct": false,
+          "columns": ["workspace_id", "matter_id", "statute", "section"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "matter_issue_tag_status_chk": {
+          "name": "matter_issue_tag_status_chk",
+          "value": "status in ('proposed', 'confirmed', 'dismissed')"
+        },
+        "matter_issue_tag_source_chk": {
+          "name": "matter_issue_tag_source_chk",
+          "value": "source in ('ai', 'manual')"
+        },
+        "matter_issue_tag_statute_chk": {
+          "name": "matter_issue_tag_statute_chk",
+          "value": "statute <> ''"
+        },
+        "matter_issue_tag_confidence_chk": {
+          "name": "matter_issue_tag_confidence_chk",
+          "value": "confidence is null or (confidence >= 0 and confidence <= 1)"
         }
       },
       "isRLSEnabled": false

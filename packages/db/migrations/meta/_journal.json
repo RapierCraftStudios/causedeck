@@ -516,8 +516,15 @@
     {
       "idx": 73,
       "version": "7",
-      "when": 1792793899674,
-      "tag": "0073_display_board",
+      "when": 1792792271295,
+      "tag": "0073_judgment_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792794385339,
+      "tag": "0074_display_board",
       "breakpoints": true
     }
   ]

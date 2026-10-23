@@ -274,6 +274,11 @@ export const mattersExporter = tablesExporter('matters', [
   ws('anchor'),
   // Anchored order extractions (#46): the validated result and what was rejected, with quotes.
   ws('extraction'),
+  // Judgment alerts (#497): the lawyer's own issue tags on a matter (statute, section, issue) and
+  // the alerts raised against confirmed tags. The alert carries ids and a page number only; the
+  // judgment itself is global corpus data, not the workspace's.
+  ws('matter_issue_tag'),
+  ws('judgment_alert'),
 ]);
 
 // What the automation engine did and proposed (#47): proposals, the activity feed with its undo

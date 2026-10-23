@@ -1,0 +1,19 @@
+{
+  "id": "en-11",
+  "language": "en",
+  "hearingDate": "2025-10-10",
+  "text": "In case 11995 of 2019 today. Arguments were heard and the matter stands adjourned. Pleadings are incomplete. Next hearing on January 12th. The court directed both sides to exchange written submissions next thursday.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-01-12",
+      "phrase": "January 12th"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions next thursday.",
+        "dueDate": "2025-10-16"
+      }
+    ],
+    "tasks": []
+  }
+}

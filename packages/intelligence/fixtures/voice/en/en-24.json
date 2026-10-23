@@ -1,0 +1,23 @@
+{
+  "id": "en-24",
+  "language": "en",
+  "hearingDate": "2025-06-13",
+  "text": "In case 43896 of 2026 today. The court heard both sides and the matter was adjourned again. Next hearing on thirteenth of July. The court directed both sides to exchange written submissions after eight weeks. The court directed the petitioner to file the rejoinder. Remind me to call the client about the vakalatnama.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-07-13",
+      "phrase": "thirteenth of July"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions after eight weeks.",
+        "dueDate": "2025-08-08"
+      },
+      {
+        "text": "The court directed the petitioner to file the rejoinder.",
+        "dueDate": null
+      }
+    ],
+    "tasks": ["call the client about the vakalatnama"]
+  }
+}

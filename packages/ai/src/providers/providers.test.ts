@@ -202,6 +202,14 @@ describe('sarvam adapter', () => {
     expect(result.output).toEqual({
       text: 'Next hearing on the ninth of February.',
       language: 'en',
+      segments: [
+        {
+          startMs: 0,
+          endMs: 42_000,
+          language: 'en',
+          text: 'Next hearing on the ninth of February.',
+        },
+      ],
     });
     expect(result.usage.seconds).toBe(42);
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];

@@ -157,6 +157,11 @@ describe('row-level security catalog', () => {
 
         // Anchored order extraction (#46).
         'extraction',
+
+        // Bootstrap import (#57, #546).
+        'import_batch',
+        'import_batch_file',
+        'import_plan',
       ].sort(),
     );
     for (const row of rows)

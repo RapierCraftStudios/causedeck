@@ -45,6 +45,10 @@ export const APPROVAL_MATRIX: Readonly<Record<ProposalKind, MatrixRule>> = {
     reason:
       'A next date is date-critical: always a proposal; a confirmed date is never overwritten',
   },
+  hearing_outcome: {
+    defaultLevel: 'L2',
+    reason: 'What happened at a hearing is a legal fact read from speech: always a proposal',
+  },
   obligation_from_direction: {
     defaultLevel: 'L2',
     reason: 'Compliance and limitation dates are date-critical: always a proposal',

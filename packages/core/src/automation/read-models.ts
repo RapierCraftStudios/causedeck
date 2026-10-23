@@ -107,6 +107,8 @@ interface CaptureInput {
   createdAt: Date;
   /** `source_meta.needsYouReason`: why a channel handler (email intake, #530) put it in Needs you. */
   needsYouReason?: string | null;
+  /** A camera capture routed away from structuring (`cause_list`, `receipt`; #52). */
+  route?: string | null;
 }
 
 export interface InboxFacts {
@@ -194,7 +196,9 @@ export function groupInbox(facts: InboxFacts): Inbox {
       payload: null,
       currentDate: null,
       confidence: null,
-      needsYouReason: row.needsYouReason ?? 'unreadable',
+      needsYouReason:
+        row.needsYouReason ??
+        (row.route === 'cause_list' || row.route === 'receipt' ? row.route : 'unreadable'),
       anchors: [],
       createdAt: row.createdAt,
       reassignUntil: null,
@@ -298,7 +302,7 @@ export async function getInbox(
         status: capture.status,
         matterHintId: capture.matterHintId,
         createdAt: capture.createdAt,
-        needsYouReason: sql<string | null>`${capture.sourceMeta}->>'needsYouReason'`,
+        sourceMeta: capture.sourceMeta,
       })
       .from(capture)
       .where(
@@ -391,7 +395,12 @@ export async function getInbox(
     return groupInbox({
       now,
       proposals,
-      captures,
+      captures: captures.map(({ sourceMeta, ...row }) => ({
+        ...row,
+        route: typeof sourceMeta['cameraRoute'] === 'string' ? sourceMeta['cameraRoute'] : null,
+        needsYouReason:
+          typeof sourceMeta['needsYouReason'] === 'string' ? sourceMeta['needsYouReason'] : null,
+      })),
       matters: new Map(matterRows.map((row) => [row.id, row])),
       caseNumbers: new Map(
         proceedingRows.flatMap((row) => {

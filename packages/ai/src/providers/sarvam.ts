@@ -79,11 +79,49 @@ export function buildSarvamRequest(
   };
 }
 
+/** Line boxes of one page, `[x0, y0, x1, y1]` normalised 0..1; absent when none are valid. */
+function sarvamLines(page: Rec): { text: string; bbox: number[]; conf: number }[] | undefined {
+  const raw = page.lines;
+  if (!Array.isArray(raw)) return undefined;
+  const lines: { text: string; bbox: number[]; conf: number }[] = [];
+  for (const item of raw as Rec[]) {
+    const bbox = item.bbox;
+    if (
+      !Array.isArray(bbox) ||
+      bbox.length !== 4 ||
+      !bbox.every((v) => typeof v === 'number' && v >= 0 && v <= 1)
+    ) {
+      continue;
+    }
+    const text = str(item.text);
+    if (text === '') continue;
+    lines.push({
+      text,
+      bbox: bbox as number[],
+      conf: typeof item.confidence === 'number' ? Math.min(1, Math.max(0, item.confidence)) : 0.5,
+    });
+  }
+  return lines.length === 0 ? undefined : lines;
+}
+
 export function mapSarvamResponse(task: TaskDef, input: Rec, json: Rec): ProviderResult {
   if (task.id === 'transcribe') {
     const code = str(json.language_code) || 'en-IN';
+    const language = FROM_LOCALE[code] ?? 'en';
+    const text = str(json.transcript);
     return {
-      output: { text: str(json.transcript), language: FROM_LOCALE[code] ?? 'en' },
+      output: {
+        text,
+        language,
+        segments: [
+          {
+            startMs: 0,
+            endMs: Math.round(Number(input.durationSeconds ?? 0) * 1000),
+            language,
+            text,
+          },
+        ],
+      },
       usage: { inputTokens: 0, outputTokens: 0, seconds: Number(input.durationSeconds ?? 0) },
       model: 'stt',
       modelVersion: 'saarika:v2.5',
@@ -93,10 +131,14 @@ export function mapSarvamResponse(task: TaskDef, input: Rec, json: Rec): Provide
     const pages = (json.pages as Rec[] | undefined) ?? [];
     return {
       output: {
-        pages: pages.map((p, i) => ({
-          page: Number(p.page_number ?? i + 1),
-          text: str(p.text),
-        })),
+        pages: pages.map((p, i) => {
+          const lines = sarvamLines(p);
+          return {
+            page: Number(p.page_number ?? i + 1),
+            text: str(p.text),
+            ...(lines === undefined ? {} : { lines }),
+          };
+        }),
         confidence: typeof json.confidence === 'number' ? json.confidence : 0.5,
       },
       usage: {

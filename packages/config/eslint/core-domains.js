@@ -31,8 +31,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
-  // arrive as a port (it never imports jobs).
-  capture: Object.freeze(['audit']),
+  // arrive as a port (it never imports jobs). The diary-photo step (#52) runs in the pipeline's
+  // transaction: the `structure_diary` call through ai, member roles through workspaces, proposals
+  // through automation and every graph read through matter-graph (imports `index.ts` only).
+  capture: Object.freeze(['audit', 'workspaces', 'ai', 'automation', 'matter-graph']),
   // Calendar interop (#53): the ICS feed and import. Roles and role settings through workspaces,
   // the importer's capture through capture, proposals through automation and every graph read or
   // write through matter-graph (imports `index.ts` only); the feed token events go through audit.
@@ -50,6 +52,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // automation, graph reads through matter-graph (imports `index.ts` only), member roles through
   // workspaces.
   extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
+  // Bootstrap import plan (#57, #548): proposals are read from the tables directly; the shared
+  // helpers and `@causedeck/adapters` are not domains, so it imports no other domain.
+  import: Object.freeze([]),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([

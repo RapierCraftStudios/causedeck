@@ -55,6 +55,7 @@ export {
   type AnchorBbox,
   type AnchorKind,
   type AnchorTranscriptSpan,
+  type OcrLine,
 } from './documents.ts';
 export {
   ACTIVITY_ACTORS,
@@ -181,3 +182,12 @@ export {
   type IntakeMessageStatus,
 } from './email-intake.ts';
 export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';
+export {
+  IMPORT_BATCH_FILE_STATUSES,
+  IMPORT_BATCH_STATUSES,
+  importBatch,
+  importBatchFile,
+  importPlan,
+  type ImportBatchFileStatus,
+  type ImportBatchStatus,
+} from './import-batch.ts';

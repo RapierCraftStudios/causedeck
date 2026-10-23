@@ -116,6 +116,11 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
+
+  // Bootstrap import (#57, #546).
+  import_batch: DB_TABLES_TEST,
+  import_batch_file: DB_TABLES_TEST,
+  import_plan: DB_TABLES_TEST,
 };
 
 /**

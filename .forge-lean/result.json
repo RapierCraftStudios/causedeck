@@ -1,0 +1,121 @@
+{
+ "status": "fixed",
+ "summary": "Hourly system.notices.poll fetches cleared notice sources via the governed fetcher, stores notices once and matches them to workspaces and matters",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/core/src/notices/poll.ts:1",
+   "instrumented": false
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/notices-poll.ts:56",
+   "instrumented": false
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/notices/poll.ts:95",
+   "instrumented": false
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "packages/config/eslint/core-domains.js:29",
+   "instrumented": false
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/core/src/__tests__/cross-tenant/services.test.ts:425",
+   "instrumented": false
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "apps/worker/src/__tests__/schedules.test.ts:88",
+   "instrumented": false
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "",
+   "ci": true
+  },
+  {
+   "id": "V2",
+   "command": "",
+   "ci": true
+  },
+  {
+   "id": "V3",
+   "command": "",
+   "ci": true
+  },
+  {
+   "id": "V4",
+   "command": "",
+   "ci": true
+  },
+  {
+   "id": "V5",
+   "command": "",
+   "ci": true
+  }
+ ],
+ "tests": [
+  {
+   "command": "",
+   "result": "not run locally (CI)",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "all deliver requirements implemented; see implementation.md"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "existing jobs untouched; registry/schedule tests updated"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "deliverables match; V1-V5 run on CI"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "git diff --stat shows only deliverable paths and tests"
+  }
+ ],
+ "amendments": [],
+ "not_members": [
+  {
+   "symbol": "NOTICES_POLL_CRON",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "constant; it is in NOT_A_SERVICE (packages/db/src/testing/cross-tenant-registry.ts:909-912), not SERVICE_TESTS, so CASES does not list it"
+  },
+  {
+   "symbol": "noticesPoll",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "job definition; it is in NOT_A_SERVICE (packages/db/src/testing/cross-tenant-registry.ts:909-912), not SERVICE_TESTS, so CASES does not list it"
+  },
+  {
+   "symbol": "runNoticesPoll",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "global system job body with no workspace; it is in NOT_A_SERVICE (packages/db/src/testing/cross-tenant-registry.ts:909-912), not SERVICE_TESTS, so CASES does not list it"
+  },
+  {
+   "symbol": "setNoticeFetcherFactory",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "wiring setter with no database access; it is in NOT_A_SERVICE (packages/db/src/testing/cross-tenant-registry.ts:909-912), not SERVICE_TESTS, so CASES does not list it"
+  }
+ ]
+}

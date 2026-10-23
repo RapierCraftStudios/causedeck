@@ -2,7 +2,7 @@
 // workspace that has a proceeding before one of those forums (reason `forum`, one row per workspace
 // and forum) and to each such matter (reason `matter_forum`). The poll has no workspace, so the
 // workspaces are found only through the owner-defined `app_notice_match_targets` (ids and the forum
-// code, 0074) and every `notice_match` row is written inside that workspace's own scope.
+// code, 0075) and every `notice_match` row is written inside that workspace's own scope.
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { sql } from 'drizzle-orm';
 

@@ -102,6 +102,10 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `ADAPTER_PRIVATE_FIXTURES_DIR` | path | — | never | #371 | — |
 | `ALTERLAB_API_KEY` | secret | — | never (the mock provider is used when unset) | #479 | — |
 | `FETCH_DELEGATED_CAPTCHA_PER_HOUR` | integer (1-1000) | `10` | never (defaults to 10) | #479 | — |
+| `BUSINESS_FOUNDER_EMAILS` | list (comma-separated emails) | — | never (set per deployment) | #519 | — |
+| `BUSINESS_INFRA_COST_PAISE_MONTHLY` | integer (paise) | `0` | never (defaults to 0) | #519 | — |
+| `BUSINESS_COST_PER_USER_ALERT_PAISE` | integer (paise) | `4000` | never (defaults to 4000) | #519 | — |
+| `BUSINESS_USD_INR` | number (INR per USD) | `85` | never (defaults to 85) | #519 | — |
 | `EMAIL_PROVIDER` | enum(console\|ses\|smtp) | `console` | never (defaults to console) | #23 | — |
 | `SES_REGION` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SES_ACCESS_KEY_ID` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |

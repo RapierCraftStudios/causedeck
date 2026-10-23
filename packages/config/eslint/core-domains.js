@@ -57,10 +57,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Anchored order extraction (#46): the `extract_order` call through ai, proposals through
   // automation, graph reads through matter-graph (imports `index.ts` only), member roles through
   // workspaces.
+  extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
   // Data-ops alerting (#515, D-049): detectors, the alert ledger, routing and auto-response read the
   // global tables directly and import no other domain.
   'data-ops': Object.freeze([]),
-  extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
   // Bootstrap import (#57, #548, #549): the plan reads proposals from the tables directly; apply
   // writes every graph row through matter-graph, meters the OCR cap through usage and refuses an
   // expired or edited undo with automation's errors (imports `index.ts` only). The batch (#550)

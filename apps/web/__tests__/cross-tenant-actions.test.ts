@@ -100,6 +100,7 @@ const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
 const courtWatch = await import('../app/(app)/w/[slug]/settings/court-watch/actions.ts');
+const caseWatch = await import('../app/(app)/w/[slug]/settings/case-watch/actions.ts');
 const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
 const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
 const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
@@ -167,6 +168,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   listCourtWatchesAction: courtWatch,
   addCourtWatchAction: courtWatch,
   removeCourtWatchAction: courtWatch,
+  listCaseWatchesAction: caseWatch,
+  addCaseWatchAction: caseWatch,
+  removeCaseWatchAction: caseWatch,
+  refreshCaseStatusAction: caseWatch,
+  recordDeviceStatusAction: caseWatch,
   requestWorkspaceDeletionAction: danger,
   cancelWorkspaceDeletionAction: danger,
   requestAccountDeletionAction: account,
@@ -504,6 +510,32 @@ function inputs(workspaceId: string): Record<string, unknown> {
     listCourtWatchesAction: { workspaceId },
     addCourtWatchAction: { workspaceId, kind: 'brn', value: 'KAR/1/1900' },
     removeCourtWatchAction: { workspaceId, watchId: randomUUID() },
+    // Case-status watches (#593): ub, owner of B, may not list, add, remove, refresh or record on A's.
+    listCaseWatchesAction: { workspaceId },
+    addCaseWatchAction: {
+      workspaceId,
+      proceedingId: randomUUID(),
+      sourceId: 'in.tn.chennai-district:case_status',
+      cnr: 'KABC010012342024',
+    },
+    removeCaseWatchAction: { workspaceId, watchId: randomUUID() },
+    refreshCaseStatusAction: { workspaceId, watchId: randomUUID() },
+    recordDeviceStatusAction: {
+      workspaceId,
+      watchId: randomUUID(),
+      status: {
+        template: 'ecourts-district',
+        status: 'not_found',
+        cnr: null,
+        caseNumber: null,
+        nextHearingDate: null,
+        lastHearingDate: null,
+        stage: null,
+        bench: null,
+        orders: [],
+        quotes: {},
+      },
+    },
     requestWorkspaceDeletionAction: { workspaceId, confirmName: t.a.name },
     cancelWorkspaceDeletionAction: { workspaceId, jobId: aDeletionId },
     // Courts (#402): ub, owner of B, may not add a forum to A.

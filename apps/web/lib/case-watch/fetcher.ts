@@ -8,11 +8,12 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 import type { StatusFetcher } from '@causedeck/core/case-watch';
 import { createFetchLogSink, policyFor } from '@causedeck/core/sources';
+import type { Queryable } from '@causedeck/db';
 import { createFetcher, createProvider, type Fetcher } from '@causedeck/fetch';
 
 import { serverEnv } from '../env.ts';
 
-type Db = Parameters<typeof policyFor>[1]['db'];
+type Db = Queryable;
 
 /** What the last lookup through a fetcher cost, for the refresh result (provenance of the fallback). */
 export interface LookupProvenance {

@@ -367,6 +367,27 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
 }
 
 const CASES: Record<string, Case> = {
+  addCauseListWatch: async (f) => {
+    // ub's watch lands in B; A has no watch from it.
+    await core.addCauseListWatch({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, {
+      kind: 'brn',
+      value: 'KAR/2/2000',
+    });
+    const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    expect(aWatches.map((w) => w.value)).toEqual(['KAR/1/1900']);
+  },
+  listCauseListWatches: async (f) => {
+    const own = await core.listCauseListWatches({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id });
+    expect(own).toEqual([]);
+  },
+  removeCauseListWatch: async (f) => {
+    const [watch] = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    await expectDenied(
+      core.removeCauseListWatch({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, watch?.id ?? ''),
+    );
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    expect(after).toHaveLength(1);
+  },
   record: async (f) => {
     const before = await auditIds(f, f.a.id);
     await expectTenancyViolation(

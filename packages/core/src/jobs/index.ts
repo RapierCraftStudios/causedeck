@@ -124,6 +124,14 @@ export {
   setNoticeFetcherFactory,
   type NoticeFetcherFactory,
 } from './definitions/notices-poll.ts';
+export {
+  runStatusPoll,
+  setStatusFetcherFactory,
+  STATUS_POLL_CRON,
+  statusPoll,
+  type StatusFetcherFactory,
+  type StatusPollDeps,
+} from './definitions/status-poll.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { supportSessionExpire } from './definitions/support-session-expire.ts';
 export { systemPing } from './definitions/system-ping.ts';

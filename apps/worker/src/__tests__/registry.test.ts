@@ -157,6 +157,7 @@ describe('enqueue', () => {
       'system.causelist.poll',
       'system.notices.poll',
       'system.judgment-alert.scan',
+      'system.status.poll',
     ]);
   });
 });

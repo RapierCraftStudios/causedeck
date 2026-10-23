@@ -300,7 +300,7 @@ export async function runVoiceProcess(
         match,
         confidence: structured.confidence,
         anchorFor: (span) => stored.anchors.get(spanKey(span)) ?? '',
-      }).filter((draft) => draft.anchors.every((id) => id !== ''));
+      }).filter((draft) => (draft.anchors ?? []).every((id) => id !== ''));
       const submitted =
         drafts.length === 0 ? { items: [] } : await submitProposals(graph, graphActor, drafts);
       const proposals = submitted.items.filter((i) => i.status !== 'refused').length;

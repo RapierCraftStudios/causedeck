@@ -86,6 +86,8 @@ export const PURGE_ORDER = [
   'proceeding_link',
   'proceeding',
   'adapter_parse_run',
+  // Anchored order extractions (#46) cite their document; before it.
+  'extraction',
   'anchor',
   'document_page',
   'document',

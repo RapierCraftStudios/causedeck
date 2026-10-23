@@ -96,6 +96,10 @@ export const PURGE_ORDER = [
   'ics_import_event',
   'ics_feed_event',
   'ics_feed',
+  // Bootstrap import (#546): plan and files before their batch, all before the captures they cite.
+  'import_plan',
+  'import_batch_file',
+  'import_batch',
   // The capture inbox (#43): after the documents that cite a capture, before the matters it hints.
   'capture',
   'workspace_capture_channel',

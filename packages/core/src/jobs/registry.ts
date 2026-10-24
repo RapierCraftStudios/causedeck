@@ -10,6 +10,8 @@ import {
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
 import { courtDataRetention } from './definitions/court-data-retention.ts';
+import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
+import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { systemDataOpsEvaluate } from './definitions/data-ops-evaluate.ts';
@@ -164,6 +166,11 @@ export const registry = createRegistry([
   activityDigestSchedule,
   activityDigest,
   activityDigestMember,
+  newsDigestSchedule,
+  newsDigest,
+  newsDigestMember,
+  systemNewsPoll,
+  newsPoll,
   usageRollup,
   businessCostAlert,
   businessDigest,
@@ -213,6 +220,11 @@ export type JobMap = RegistryMap<
     typeof activityDigestSchedule,
     typeof activityDigest,
     typeof activityDigestMember,
+    typeof newsDigestSchedule,
+    typeof newsDigest,
+    typeof newsDigestMember,
+    typeof systemNewsPoll,
+    typeof newsPoll,
     typeof usageRollup,
     typeof businessCostAlert,
     typeof businessDigest,

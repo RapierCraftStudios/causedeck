@@ -134,7 +134,7 @@ describe('staff parse yield (0072)', () => {
   });
 });
 
-describe('staff conflict rate (0080)', () => {
+describe('staff conflict rate (0082)', () => {
   it('counts per-source readings that disagree with the canonical date, and names no tenant', async () => {
     await withTestDb(async (tx) => {
       const t = await seedTwoTenants(tx);

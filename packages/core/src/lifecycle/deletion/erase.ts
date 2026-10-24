@@ -54,6 +54,8 @@ export const PURGE_ORDER = [
   'notification',
   'notification_pref',
   'notification_setting',
+  // News digest (#481): the member's followed areas and digest time (news_item is global).
+  'news_pref',
   'invitation',
   'support_session',
   // Court document network (#485): the link to a shared public copy; the rows step withdraws first.
@@ -138,6 +140,7 @@ export const PURGE_ORDER = [
   'subscription',
   'workspace_feature_flag',
   'workspace_integration',
+  'api_key',
   // Email intake (#54): the ledger, then the allow-list and the members' addresses.
   'intake_message',
   'intake_allowlist',

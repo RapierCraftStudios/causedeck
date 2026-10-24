@@ -272,7 +272,7 @@ describe('usage page (server)', () => {
       { workspaceId: WORKSPACE.id, userId: 'u-owner' },
       expect.any(Function),
     );
-    expect(getUsage).toHaveBeenCalledTimes(7);
+    expect(getUsage).toHaveBeenCalledTimes(8);
 
     // Active matters are unlimited here: no bar, the plain value and `No limit on your plan`.
     const bars = screen.getAllByRole('progressbar');

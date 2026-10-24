@@ -102,6 +102,7 @@ function defaults(): PreferenceView[] {
     notices: ['in_app', 'push'],
     'digest.daily': ['email'],
     'digest.end_of_day': ['in_app', 'email'],
+    'digest.news': ['in_app', 'email', 'push'],
     'system.notice': ['in_app'],
   };
   return CATEGORY_KEYS.flatMap((category) =>

@@ -10,6 +10,7 @@ export {
   auditOutcome,
 } from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
+export { apiKey } from './api-keys.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,
@@ -47,6 +48,16 @@ export {
 } from './flags.ts';
 export { fetchLog } from './fetch-log.ts';
 export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
+export {
+  NEWS_EXCERPT_MAX,
+  NEWS_FORUMS,
+  NEWS_PRACTICE_AREAS,
+  newsItem,
+  newsPref,
+  type NewsForum,
+  type NewsPracticeArea,
+  type NewsTags,
+} from './news.ts';
 export {
   DATA_OPS_ALERT_STATUSES,
   DATA_OPS_ALERT_TYPES,

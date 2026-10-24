@@ -92,6 +92,7 @@ describe('row-level security catalog', () => {
         'audit_event',
         'ai_call',
         'ai_call_result',
+        'news_pref',
         'notification',
         'notification_pref',
         'notification_setting',
@@ -154,6 +155,9 @@ describe('row-level security catalog', () => {
         'ics_feed',
         'ics_feed_event',
         'ics_import_event',
+
+        // Public API keys (#624).
+        'api_key',
 
         // Case-status watch (#589).
         'case_watch',

@@ -4,6 +4,8 @@
 // request is anonymous and so gets 401 on authenticated routes. Otherwise the Better Auth session
 // cookie is checked.
 import { toSessionUser, type SessionSource } from '@causedeck/auth/session';
+import { authenticateApiKey, findApiKeyIssuer } from '@causedeck/core/api-keys';
+import type { Database } from '@causedeck/db';
 import type { MiddlewareHandler } from 'hono';
 
 import type { AppEnv, Principal } from '../lib/openapi.ts';
@@ -12,6 +14,22 @@ import type { AppEnv, Principal } from '../lib/openapi.ts';
 export type BearerResolver = (token: string) => Promise<Principal | null>;
 
 export const rejectAllBearerTokens: BearerResolver = () => Promise.resolve(null);
+
+/**
+ * Resolves a workspace API key (#624) to a principal. The caller is the member who issued the key,
+ * so a key whose issuer has left the workspace fails `requireWorkspace`'s membership check.
+ */
+export function createApiKeyResolver(
+  db: Database,
+  now: () => Date = () => new Date(),
+): BearerResolver {
+  return async (token) => {
+    const apiKey = await authenticateApiKey(db, token, now());
+    if (apiKey === null) return null;
+    const row = await findApiKeyIssuer(db, apiKey.createdBy);
+    return row ? { user: toSessionUser(row), via: 'bearer', apiKey } : null;
+  };
+}
 
 export interface ResolvePrincipalOptions {
   auth: SessionSource;

@@ -20,3 +20,6 @@ V1-V4 not run locally (verify.mode ci); CI runs them. Prettier 3.9.10 with the r
 
 ### Notes
 No behaviour or env changes.
+
+## Migration renumber
+Base took 0080 (news) and 0081 (api_keys). Lane migration renumbered to 0082_staff_conflict_rate (SQL byte-identical). Snapshot 0082 is the 0081 snapshot with new id/prevId (custom SQL-only migration); journal entry idx 82 appended. drizzle-kit/pnpm were unavailable offline, so the generator was not run.

@@ -21,11 +21,12 @@ export interface MatchNoticesReport {
   matches: number;
 }
 
-interface Target {
+// A `type`, not an interface: `db.execute<T>` needs a row type assignable to `Record<string, unknown>`.
+type Target = {
   workspace_id: string;
   matter_id: string;
   forum_id: string;
-}
+};
 
 /** Match `notices` to the workspaces and matters that use their forums. Idempotent. */
 export async function matchNotices(

@@ -45,3 +45,9 @@ Registry lists conflicted (core jobs/registry.ts, worker registry/schedules test
 
 ### Merge fix (fourth check)
 `turbo: command not found` (exit 127) is a PATH problem, not a code clash. With `node_modules/.bin` on PATH, `turbo run typecheck --filter=@causedeck/core --filter=@causedeck/worker` passes (17/17). Vitest still cannot start on this host (Postgres container), so V1/V2 were not re-run. No source change.
+
+### Merge fix (fifth check)
+`turbo: command not found` (exit 127) is again a PATH problem, not a code clash. With `node_modules/.bin` on PATH, `turbo run typecheck --filter=@causedeck/core` passes (16/16). The worker vitest run (V2) still fails to start on this host (no Postgres container), so it was not re-verified. No source change.
+
+### Post-merge (third base merge)
+core-domains.md conflicted; kept the `deadlines` and extended `case-watch` rows plus the base's `notices` row (onMatched hook). `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.

@@ -6,7 +6,6 @@ import {
   setBoardFetcherFactory,
   setCauseListFetcherFactory,
   setNoticeFetcherFactory,
-  type NoticeFetcherFactory,
   setStatusFetcherFactory,
   type CauseListFetcherFactory,
 } from '@causedeck/core/jobs';

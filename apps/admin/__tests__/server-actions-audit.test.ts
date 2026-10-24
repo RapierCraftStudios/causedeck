@@ -140,6 +140,21 @@ vi.mock('@causedeck/core/usage', () => ({
   setBudgetOverride: auditedOverrideWrite('usage.budget_override_set'),
   expireBudgetOverride: auditedOverrideWrite('usage.budget_override_expired'),
 }));
+// The migration services run as the workspace owner; the data layer records `staff.read` first.
+vi.mock('@causedeck/core/migration', () => {
+  const progress = { runId: '0192d3b0-0000-7000-8000-000000000685', chunks: { total: 0, done: 0 } };
+  return {
+    MIGRATION_FIELDS: ['title', 'caseType'],
+    findMigrationOwner: () => Promise.resolve(STAFF_ID),
+    startMigrationRun: () => Promise.resolve(progress),
+    resumeMigrationRun: () => Promise.resolve(progress),
+    rollbackMigrationRun: () => Promise.resolve(progress),
+    listMigrationRuns: () => Promise.resolve([]),
+    getMigrationProgress: () => Promise.resolve(progress),
+    getMigrationReport: () =>
+      Promise.resolve({ ...progress, issueCounts: {}, issues: [], missingColumns: [] }),
+  };
+});
 vi.mock('@causedeck/core/activation', () => ({
   ACTIVATION_CHANNELS: [],
   ACTIVATION_STEPS: [],
@@ -237,7 +252,31 @@ const FIXTURE_FIELDS = {
 
 const REVIEW_ID = '0192d3b0-0000-7000-8000-000000000518';
 
+const MIGRATION_RUN_ID = '0192d3b0-0000-7000-8000-000000000685';
+
+function migrationForm(extra: Record<string, string> = {}): FormData {
+  const data = form({ workspaceId: WORKSPACE_ID, map_title: 'Title', ...extra });
+  data.set('file', new File(['Title\nFictional v. State'], 'portfolio.csv', { type: 'text/csv' }));
+  return data;
+}
+
 const ACTIONS: Record<string, () => Promise<unknown>> = {
+  'app/(console)/migrations/actions.ts#startDryRunAction': async () => {
+    const { startDryRunAction } = await import('../app/(console)/migrations/actions.ts');
+    return startDryRunAction(migrationForm());
+  },
+  'app/(console)/migrations/actions.ts#startImportAction': async () => {
+    const { startImportAction } = await import('../app/(console)/migrations/actions.ts');
+    return startImportAction(migrationForm());
+  },
+  'app/(console)/migrations/actions.ts#resumeRunAction': async () => {
+    const { resumeRunAction } = await import('../app/(console)/migrations/actions.ts');
+    return resumeRunAction(form({ workspaceId: WORKSPACE_ID, runId: MIGRATION_RUN_ID }));
+  },
+  'app/(console)/migrations/actions.ts#rollbackRunAction': async () => {
+    const { rollbackRunAction } = await import('../app/(console)/migrations/actions.ts');
+    return rollbackRunAction(form({ workspaceId: WORKSPACE_ID, runId: MIGRATION_RUN_ID }));
+  },
   'app/(console)/review/actions.ts#assignReviewAction': async () => {
     const { assignReviewAction } = await import('../app/(console)/review/actions.ts');
     return assignReviewAction(form({ id: REVIEW_ID }));
@@ -441,6 +480,9 @@ describe('admin data layer reads', () => {
         costAlertPaisePerUser: 4000,
       }),
     growthFunnel: (d) => d.growthFunnel(staff),
+    workspaceMigrationRuns: (d) => d.workspaceMigrationRuns(staff, WORKSPACE_ID),
+    migrationRunProgress: (d) => d.migrationRunProgress(staff, WORKSPACE_ID, MIGRATION_RUN_ID),
+    migrationRunReport: (d) => d.migrationRunReport(staff, WORKSPACE_ID, MIGRATION_RUN_ID),
   };
   // Reads made of more than one audited step: parse yield (definer function), then the tables.
   const READ_EVENTS: Record<string, number> = { dataOpsOverview: 2 };
@@ -448,6 +490,7 @@ describe('admin data layer reads', () => {
   const PRIMITIVES = [
     'staffCall',
     'staffQuery',
+    'asMigrationOwner',
     'StaffQueryDeniedError',
     'businessConfigFromEnv',
     'ACTIVATION_CHANNELS',

@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Deadlines engine, orders.poll and extraction hook delivered; V1-V3 pass; merged base, typecheck of affected packages passes; merge fix: turbo-not-found was a PATH issue, typecheck passes with node_modules/.bin on PATH; vitest V1/V2 not re-run (no Postgres container on host)",
+ "summary": "Deadlines engine, orders.poll and extraction hook delivered; V1-V3 pass; merged base, typecheck of affected packages passes; merge fix: turbo-not-found was a PATH issue, typecheck passes with node_modules/.bin on PATH; vitest V1/V2 not re-run (no Postgres container on host); CI fix: orders poll captures now set ttlAt (initialTtl) like createCapture; CI log unavailable and DB tests not runnable locally, so unconfirmed against the failing test",
  "requirements": [
   {
    "id": "R1",

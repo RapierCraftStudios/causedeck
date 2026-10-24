@@ -12,6 +12,7 @@ import type { ParsedCaseStatus } from '@causedeck/adapters';
 import {
   CAPTURE_PIPELINE_VERSION,
   assertWithinCap,
+  initialTtl,
   resolveAllowedType,
   transition,
   type CaptureConfig,
@@ -236,6 +237,7 @@ async function storeOrder(
           matterHintId: matterId,
           aiBlocked: false,
           scanStatus: scanning ? 'pending' : 'skipped',
+          ttlAt: initialTtl({ mime: type.mime, createdAt: now }),
           createdBy: watch.advocateUserId,
           createdAt: now,
         })

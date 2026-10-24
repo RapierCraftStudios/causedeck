@@ -51,3 +51,6 @@ Registry lists conflicted (core jobs/registry.ts, worker registry/schedules test
 
 ### Post-merge (third base merge)
 core-domains.md conflicted; kept the `deadlines` and extended `case-watch` rows plus the base's `notices` row (onMatched hook). `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.
+
+## CI fix (test job)
+CI log was unavailable and no Postgres exists on the host, so DB-backed tests could not run. Reviewed the diff against the guard lists (registries, domains, worker tests: consistent) and ran the pure tests (deadlines, orders-poll, domains: pass). Found one real defect: `storeOrder` created captures without `ttlAt`, so retention would never expire them (createCapture sets `initialTtl`). Fixed in case-watch/orders.ts. Not confirmed to be the CI failure.

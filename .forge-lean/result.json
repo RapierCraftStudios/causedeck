@@ -95,5 +95,47 @@
   "conventions": [
    "Run vitest with TESTCONTAINERS_RYUK_DISABLED=true on this host (Ryuk never logs Started)"
   ]
- }
+ },
+ "not_members": [
+  {
+   "symbol": "MAX_ORDERS_PER_WATCH_PER_RUN",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "partial vi.hoisted mock of only the core functions the web actions call; no sibling export (pollCaseWatches, notifyStatusChanges, caps) is listed either"
+  },
+  {
+   "symbol": "pollOrders",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "partial vi.hoisted mock of only the core functions the web actions call; no sibling export (pollCaseWatches, notifyStatusChanges, caps) is listed either"
+  },
+  {
+   "symbol": "MAX_ORDERS_PER_WATCH_PER_RUN",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "CASES holds one case per service; constants, job definitions and job bodies are registered in NOT_A_SERVICE in cross-tenant-registry.ts, where this symbol is already named"
+  },
+  {
+   "symbol": "MAX_ORDERS_PER_WATCH_PER_RUN",
+   "test": "packages/core/src/jobs/definitions/status-poll.test.ts",
+   "why": "mocks only the modules status-poll.ts imports (case-watch/lookup.ts, alerts.ts); orders poll is a separate job with its own test, and no sibling export is listed here"
+  },
+  {
+   "symbol": "pollOrders",
+   "test": "packages/core/src/jobs/definitions/status-poll.test.ts",
+   "why": "mocks only the modules status-poll.ts imports (case-watch/lookup.ts, alerts.ts); orders poll is a separate job with its own test, and no sibling export is listed here"
+  },
+  {
+   "symbol": "ORDERS_POLL_CRON",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "CASES holds one case per service; constants, job definitions and job bodies are registered in NOT_A_SERVICE in cross-tenant-registry.ts, where this symbol is already named"
+  },
+  {
+   "symbol": "ordersPoll",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "CASES holds one case per service; constants, job definitions and job bodies are registered in NOT_A_SERVICE in cross-tenant-registry.ts, where this symbol is already named"
+  },
+  {
+   "symbol": "runOrdersPoll",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "CASES holds one case per service; constants, job definitions and job bodies are registered in NOT_A_SERVICE in cross-tenant-registry.ts, where this symbol is already named"
+  }
+ ]
 }

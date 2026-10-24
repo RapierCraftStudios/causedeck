@@ -24,3 +24,6 @@ Run with TESTCONTAINERS_RYUK_DISABLED=true (the Ryuk reaper container never logs
 
 ### Notes
 No env vars. Vacations come from a static per-forum table (R8 deferred).
+
+### Stale-list follow-up
+The eight flagged symbols are not members of the named lists (partial mocks in case-watch-actions and status-poll tests; services.test.ts CASES is per-service, and the constants/job symbols are already in NOT_A_SERVICE). Recorded under `not_members` in result.json; no code changed, so V1-V3 results stand.

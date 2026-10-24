@@ -1,1 +1,78 @@
-{"status":"fixed","summary":"consumeApiCall now locks the key row and checks plus increments in one transaction, so concurrent calls cannot exceed quota","requirements":[{"id":"R1","status":"implemented","evidence":"packages/core/src/api-keys/index.ts:310","instrumented":false},{"id":"R2","status":"implemented","evidence":"packages/core/src/api-keys/index.ts:310-330","instrumented":false},{"id":"R3","status":"implemented","evidence":"packages/core/src/api-keys/__tests__/concurrency.test.ts:54","instrumented":false},{"id":"R4","status":"implemented","evidence":"packages/core/src/api-keys/__tests__/concurrency.test.ts:70,81","instrumented":false}],"validation":[{"id":"V1","command":"pnpm --filter @causedeck/core exec vitest run src/api-keys/__tests__/concurrency.test.ts src/api-keys/__tests__/api-keys.test.ts src/usage/__tests__/concurrency.test.ts src/__tests__/cross-tenant/services.test.ts","exit":0}],"tests":[{"command":"vitest run (4 files, TESTCONTAINERS_RYUK_DISABLED=true)","result":"pass","fails_without_fix":true}],"self_review":[{"question":"1","answer":"yes","evidence":"index.ts:310; concurrency.test.ts:54"},{"question":"2","answer":"yes","evidence":"api-keys.test.ts and cross-tenant services.test.ts pass (192 tests)"},{"question":"3","answer":"yes","evidence":"V1 exit 0; forgedock check PASS"},{"question":"4","answer":"yes","evidence":"diff touches only index.ts, concurrency.test.ts and .forge-lean files"}],"amendments":[],"facts":{"conventions":["Run vitest with TESTCONTAINERS_RYUK_DISABLED=true on this host: the Ryuk container fails to start"]}}
+{
+ "status": "fixed",
+ "summary": "consumeApiCall now locks the key row and checks plus increments in one transaction, so concurrent calls cannot exceed quota",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/core/src/api-keys/index.ts:310",
+   "instrumented": false
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/core/src/api-keys/index.ts:310-330",
+   "instrumented": false
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/api-keys/__tests__/concurrency.test.ts:54",
+   "instrumented": false
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "packages/core/src/api-keys/__tests__/concurrency.test.ts:70,81",
+   "instrumented": false
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/api-keys/__tests__/concurrency.test.ts src/api-keys/__tests__/api-keys.test.ts src/usage/__tests__/concurrency.test.ts src/__tests__/cross-tenant/services.test.ts",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "vitest run (4 files, TESTCONTAINERS_RYUK_DISABLED=true)",
+   "result": "pass with TESTCONTAINERS_RYUK_DISABLED=true; base fails the K-remaining case, head passes",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "index.ts:310; concurrency.test.ts:54"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "api-keys.test.ts and cross-tenant services.test.ts pass (192 tests)"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1 exit 0; forgedock check PASS"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "diff touches only index.ts, concurrency.test.ts and .forge-lean files"
+  }
+ ],
+ "amendments": [],
+ "facts": {
+  "conventions": [
+   "Run vitest with TESTCONTAINERS_RYUK_DISABLED=true on this host: the Ryuk container fails to start"
+  ],
+  "hotspots": [
+   {
+    "at": "packages/db/src/testing/container.ts:67",
+    "why": "Testcontainers' Ryuk reaper cannot reach the docker daemon here (DOCKER_HOST=tcp://127.0.0.1:2375, no /var/run/docker.sock), so any db-backed vitest run fails at global setup unless TESTCONTAINERS_RYUK_DISABLED=true is set. This is a host problem, not a code one."
+   }
+  ]
+ }
+}

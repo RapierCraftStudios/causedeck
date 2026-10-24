@@ -2,25 +2,61 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Register eCourts status and list sources per state in the sources registry and `STATUS_SOURCES` (`packages/core/src/case-watch/lookup.ts`)",
+   "quote": "**No user-facing dimension or filter by individual judge or bench composition**, enforced in the user-facing query and API layer with a static test.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "route through `packages/fetch` with `delegatedFor` and per-host rate budgets",
+   "quote": "`packages/intelligence/src/analytics/`: aggregates by forum, case type, stage and period (listing delay, adjournments per hearing, time to disposal, backlog).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "record provenance.",
+   "quote": "Internal stores may hold bench-level data (D-050); the user-facing layer can't read them, except through the separate, flagged `bench_facts` surface.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Acceptance: a watched district matter refreshes through a delegated lookup, with provenance [type:integration].",
+   "quote": "Privacy: aggregates only, with a minimum cell size (k-anonymity threshold) and no party data.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "`apps/web`: a court insights page per forum and case type",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "and expected timelines on a matter.",
+   "disposition": "defer",
+   "why": "Needs a per-matter lookup from the matter's forum and case type into the aggregates plus a matter-detail UI change; separate work once the aggregates exist and the page is proven. The aggregate core delivered here is reusable for it."
+  },
+  {
+   "id": "R6",
+   "quote": "API (#487): aggregate endpoints for institutions.",
+   "disposition": "defer",
+   "why": "#487 (public developer API with quotas) was closed not_planned, so no institution API, key scoping or quota framework exists to build on; the endpoints also need the cross-workspace aggregation and counsel review that this change does not do."
+  },
+  {
+   "id": "R7",
+   "quote": "A static test fails if any user-facing analytics query, column or API parameter refers to a judge or bench member. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "Cells below the minimum size are suppressed. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "A forum and case-type page shows median listing delay, adjournment rate and time to disposal, with the data window and coverage stated. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -28,115 +64,133 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/case-watch/lookup.ts",
-   "change": "Add STATUS_SOURCES entries `in.\u003cst>.district:case_status` for tn, ka, mh, dl, up (template ecourts-district, path case-status); keep the existing Chennai id. No new export.",
+   "path": "packages/intelligence/src/analytics/index.ts",
+   "change": "Export MIN_CELL_SIZE (5), a pure summariseCells(rows, {minCell}) that returns median listing delay, adjournment rate, median time to disposal and backlog per forum x case type x stage x period, with values null and suppressed:true when n \u003c MIN_CELL_SIZE; plus getCourtInsights(tx, {forumId?, caseTypeCode?, from, to}) that reads proceeding, listing, hearing and proceeding_state_change inside the caller's RLS transaction and returns cells plus window {from,to} and coverage {proceedings, hearings}. Must not select listing.bench_id, hall_id, bench or judge columns, party titles, or any bench_sitting_fact / board table.",
    "requirements": [
-    "R1"
+    "R2",
+    "R3",
+    "R4",
+    "R8"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/fetch/src/fetcher.ts",
-   "change": "Add a per-host sliding-window budget keyed `host:\u003curl host>` (default constant, overridable via FetcherDeps), checked with canAcquire alongside the source and advocate checks before any tryAcquire; deny with FetchDenied reason host_rate_limited (add the reason where FetchDenied reasons are declared).",
+   "path": "packages/intelligence/src/analytics/analytics.test.ts",
+   "change": "Unit tests: medians, adjournment rate, suppression below MIN_CELL_SIZE and at the boundary (n = 5 shown, n = 4 suppressed), no cell carries a suppressed value; one DB-backed test if the package already has a DB test harness, otherwise a fake tx.",
    "requirements": [
-    "R2"
+    "R2",
+    "R8"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations/20261024090000_ecourts_district_status_sources.sql",
-   "change": "Hand-written migration inserting five uncleared `source` rows (kind court, access_mode A0, max_tier http, base_url https://services.ecourts.gov.in/, low rate_limit_per_minute, notes naming terms to confirm), ON CONFLICT (id) DO NOTHING. Add the matching meta/_journal.json entry and snapshot (copy the previous snapshot, same schema). Use the next free tag if the base took the timestamp.",
+   "path": "packages/intelligence/src/analytics/static-guard.test.ts",
+   "change": "Static guard modelled on bench-facts/static-guard.test.ts: comment-stripped scan of the analytics source, the insights page and its component, and the court-insights i18n keys for /judge|bench|justice|coram|petitioner|respondent|party/i (judge, bench and party fields), with a planted-offender mutation case. Also asserts the analytics query file never references the bench_sitting_fact, board_observation or bench schema objects.",
    "requirements": [
-    "R1"
+    "R1",
+    "R3",
+    "R4",
+    "R7"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/i18n/src/messages/en/case-watch.json",
-   "change": "Add `source.\u003ckey>` labels for the new ids (key = id with '.'->'_', see sourceKey) in en, ta, kn case-watch.json, then regenerate generated/messages*, messages.d.ts and translation-status.json with the repo's i18n generator.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/core/src/case-watch/case-watch.test.ts",
-   "change": "Add a test: a watch on a new state district source refreshes through a stub delegated fetcher; assert delegatedFor, stored snapshot provenance (tierUsed, costDollars, sourceRef) and the 5 ids are registered.",
-   "requirements": [
-    "R4",
-    "R3"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/fetch/src/__tests__/fetcher.test.ts",
-   "change": "Add tests: two sources on one host share the host budget (second denied host_rate_limited, no provider call, no slot spent); different hosts are independent.",
+   "path": "packages/intelligence/src/index.ts",
+   "change": "Add export * from './analytics/index.ts'.",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D7",
-   "path": "packages/db/src/__tests__/source-registry.test.ts",
-   "change": "Assert the five district case_status rows are seeded uncleared.",
+   "id": "D5",
+   "path": "apps/web/app/(app)/w/[slug]/courts/insights/page.tsx",
+   "change": "Server page: require the workspace context, gate on can(ctx,'insights.read') (PermissionDeniedPage otherwise), read forum and caseType from searchParams, call getCourtInsights inside withWorkspace, render the component. No judge or bench filter or parameter.",
    "requirements": [
-    "R1"
+    "R5",
+    "R9"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "apps/web/components/courts/court-insights.tsx",
+   "change": "Table of cells: median listing delay, adjournment rate and median time to disposal per forum x case type, 'not enough data' for suppressed cells, and a footer stating the data window and coverage counts. Add a test in apps/web/components/courts/__tests__/court-insights.test.tsx covering values, suppressed cell and window/coverage text.",
+   "requirements": [
+    "R5",
+    "R9"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/i18n/src/messages/en/court-insights.json",
+   "change": "New namespace court-insights with the page strings. Add the same keys to ta and kn (mirror files), regenerate generated messages (pnpm --filter @causedeck/i18n i18n:types), update translation-status.json if the checker requires it, and register the namespace in packages/i18n/src/__tests__/catalog.test.ts.",
+   "requirements": [
+    "R5",
+    "R9"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "apps/web/components/courts/court-nav.tsx",
+   "change": "Add an Insights link to the courts nav to the new route, only if the nav lists sibling courts pages; otherwise leave unchanged and drop this deliverable.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "docs/engineering/court-analytics.md",
+   "change": "Short doc: metric definitions, the MIN_CELL_SIZE rule, own-workspace scope, the guard, and the deferred items.",
+   "requirements": [
+    "R1",
+    "R4"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "runCaseStatusLookup always passes delegatedFor and enforces own-watch scoping (packages/core/src/case-watch/lookup.ts)"
+   "what": "bench-facts guard and surfaces stay unchanged: packages/intelligence/src/bench-facts/*, packages/core/src/court-day/bench-card.ts, apps/api/src/routes/v1/bench-card.ts."
   },
   {
    "id": "P2",
-   "what": "Existing Chennai/HC STATUS_SOURCES ids and the sources' fail-closed policy: new rows stay uncleared (packages/core/src/sources/registry.ts)"
+   "what": "The /w/[slug]/insights placeholder page and its nav item (apps/web/lib/nav.ts:108, apps/web/__tests__/nav.test.ts) keep working; the new page is a separate route under courts/insights."
   },
   {
    "id": "P3",
-   "what": "Existing per-source and per-advocate limits and tier caps in packages/fetch/src/fetcher.ts; apps/web/__tests__/case-watch-actions.test.ts mock list of core exports"
+   "what": "No change to @causedeck/core runtime exports, so packages/db/src/testing/cross-tenant-registry.ts needs no entry; no new table, so no migration or RLS catalog change."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/fetch exec vitest run src/__tests__/fetcher.test.ts src/__tests__/static-checks.test.ts"
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/analytics src/bench-facts src/index.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/case-watch/case-watch.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run components/courts/__tests__/court-insights.test.tsx __tests__/nav.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/source-registry.test.ts"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/case-watch-actions.test.ts"
-  },
-  {
-   "id": "V5",
    "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Source ids `in.\u003cst>.district:case_status` per state, matching the forum adapterId `in.\u003cst>.district`.",
-   "justification": "packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts adapterId convention; STATUS_SOURCES key format at lookup.ts:42",
-   "source": "precedent"
+   "choice": "Aggregate only the caller's own workspace data (RLS scope) instead of cross-workspace network aggregates.",
+   "justification": "The source tables are tenant tables under FORCE RLS (packages/db/src/schema/docket.ts:38, proceedings.ts:40); cross-tenant aggregation needs an owner-defined function like app_bench_* (bench-facts.ts:1-9) and a privacy/counsel decision that D-050 reserves; own-workspace keeps R4 satisfiable with a cell-size floor.",
+   "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "Per-host budget lives in the fetcher (not the registry row) because many per-state sources share services.ecourts.gov.in.",
-   "justification": "fetcher.ts:107-114 limits only `source:\u003cid>`; district forums share one host (snapshot.ts:151)",
+   "choice": "Copy the comment-stripped regex static guard with a mutation case.",
+   "justification": "packages/intelligence/src/bench-facts/static-guard.test.ts:12-45 is the repo's established way to pin a D-050 prohibition.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Rows are seeded uncleared with max_tier http; delegated calls raise the cap to captcha in code.",
-   "justification": "0076_display_board.sql:49-71 pattern; fetcher.ts tierCap",
+   "choice": "The new page is courts/insights, not the /insights placeholder.",
+   "justification": "/insights is the practice-insights slot gated by insights.read (apps/web/lib/nav.ts:108); court analytics is a courts concern and a static segment beats courts/[code].",
    "source": "precedent"
   }
  ]

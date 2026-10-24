@@ -34,3 +34,6 @@ The failing shard test is `packages/intelligence/src/pipeline/pipeline.test.ts >
 - `legal-gate.test.ts` legal flag count 7 -> 8.
 - `proceedings-page.test.tsx` mocks `lib/flags.ts` (the page now evaluates `court.case-status`; the test workspace id is not a uuid).
 - Build: the web bundle budget reported the `/w/[slug]/today` shell delta at 40.9 KB vs 40.0 KB (base lane was 40.0 KB). The shell bundles the flag registry, so the new flag description was shortened; the effect could not be measured locally (no builds) and the next CI run decides.
+
+## Stale sibling-list findings (no code change)
+Checked each flagged test: none lists matters components or nav/route items that the new files belong to (matters-stories discovers components by directory and the new ones have stories; no settings nav item or API route was added). Recorded all as not_members in result.json.

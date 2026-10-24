@@ -9,10 +9,6 @@ export * from './bench-card.ts';
 export * from './query.ts';
 export { detectClashes, type ClashCandidate } from './clashes.ts';
 export { diffLists, hashRows, snapshotList, type DiffSide, type SnapshotResult } from './diff.ts';
-export {
-  clearCurrentItem,
-  setCurrentItem,
-  type MarkerRow,
-} from './markers.ts';
+export { clearCurrentItem, setCurrentItem, type MarkerRow } from './markers.ts';
 export type { CourtDayActor, CourtDayDeps, CourtDayEvent, CourtDayEvents } from './scope.ts';
 export { listConflictCards, proposeCourtDayNextDate } from './next-date.ts';

@@ -10,7 +10,12 @@ import { newWorkspace } from '../__tests__/fixtures.ts';
 import { diffLists, hashRows, itemOrdinal, snapshotList } from './diff.ts';
 import type { CourtDayEvent } from './scope.ts';
 
-const row = (key: string, hallNo: string | null, itemNo: string | null, stage: string | null = 'FOR ORDERS'): SnapshotRow => ({
+const row = (
+  key: string,
+  hallNo: string | null,
+  itemNo: string | null,
+  stage: string | null = 'FOR ORDERS',
+): SnapshotRow => ({
   proceedingKey: key,
   hallNo,
   itemNo,
@@ -37,7 +42,10 @@ describe('diffLists (R6)', () => {
   });
 
   it('treats an item number change as a move', () => {
-    const diff = diffLists({ rows: prev }, { rows: [row('WP/1/2026', '3', '9'), ...prev.slice(1)] });
+    const diff = diffLists(
+      { rows: prev },
+      { rows: [row('WP/1/2026', '3', '9'), ...prev.slice(1)] },
+    );
     expect(diff.moved).toHaveLength(1);
     expect(diff.moved[0]?.before?.itemNo).toBe('4');
     expect(diff.moved[0]?.after?.itemNo).toBe('9');
@@ -45,7 +53,9 @@ describe('diffLists (R6)', () => {
 
   it('is idempotent for identical input and empty for equal lists', () => {
     const next = [row('WP/1/2026', '5', '4'), row('WP/9/2026', '3', '1')];
-    expect(diffLists({ rows: prev }, { rows: next })).toEqual(diffLists({ rows: prev }, { rows: next }));
+    expect(diffLists({ rows: prev }, { rows: next })).toEqual(
+      diffLists({ rows: prev }, { rows: next }),
+    );
     const same = diffLists({ rows: prev }, { rows: [...prev].reverse() });
     expect(same.entries).toEqual([]);
     expect(hashRows(prev)).toBe(hashRows([...prev].reverse()));
@@ -61,7 +71,11 @@ describe('diffLists (R6)', () => {
 describe('diffLists daily against supplementary (R7)', () => {
   it('is labelled supplementary and lists new rows first', () => {
     const daily = [row('WP/1/2026', '3', '2'), row('WP/2/2026', '3', '3')];
-    const supp = [row('WP/1/2026', '4', '2'), row('WP/2/2026', '3', '3'), row('WP/5/2026', '3', '40')];
+    const supp = [
+      row('WP/1/2026', '4', '2'),
+      row('WP/2/2026', '3', '3'),
+      row('WP/5/2026', '3', '40'),
+    ];
     const diff = diffLists(
       { rows: daily, listType: 'daily' },
       { rows: supp, listType: 'supplementary' },
@@ -87,7 +101,11 @@ describe('snapshotList (R6, R7)', () => {
       expect(first).toMatchObject({ created: true, diff: null });
       expect(first.contentHash).toBe(hashRows(daily));
 
-      const again = await snapshotList(deps, actor, { ...base, listType: 'daily', rows: [...daily].reverse() });
+      const again = await snapshotList(deps, actor, {
+        ...base,
+        listType: 'daily',
+        rows: [...daily].reverse(),
+      });
       expect(again).toMatchObject({ created: false, snapshotId: first.snapshotId });
       expect(events).toEqual([]);
 
@@ -107,11 +125,16 @@ describe('snapshotList (R6, R7)', () => {
         added: 1,
       });
 
-      const stored = await inWorkspace(tx, workspaceId, (s) => s.select().from(schema.listSnapshot));
+      const stored = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.listSnapshot),
+      );
       expect(stored).toHaveLength(2);
       await expect(
         inWorkspace(tx, workspaceId, (s) =>
-          s.update(schema.listSnapshot).set({ rows: [] }).where(eq(schema.listSnapshot.id, first.snapshotId)),
+          s
+            .update(schema.listSnapshot)
+            .set({ rows: [] })
+            .where(eq(schema.listSnapshot.id, first.snapshotId)),
         ),
       ).rejects.toBeDefined();
     });
@@ -121,12 +144,16 @@ describe('snapshotList (R6, R7)', () => {
     await withTestDb(async (tx) => {
       const { ownerId, workspaceId } = await newWorkspace(tx);
       await expect(
-        snapshotList({ db: tx }, { userId: ownerId, workspaceId }, {
-          forumId: '00000000-0000-4000-8000-000000000000',
-          listDate: '2026-11-02',
-          listType: 'daily',
-          rows: [],
-        }),
+        snapshotList(
+          { db: tx },
+          { userId: ownerId, workspaceId },
+          {
+            forumId: '00000000-0000-4000-8000-000000000000',
+            listDate: '2026-11-02',
+            listType: 'daily',
+            rows: [],
+          },
+        ),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     });
   });

@@ -459,6 +459,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getLiveHalls: denies,
   // bench card (#521): the flagged read model opens withWorkspace on the given actor
   getBenchCard: denies,
+  // court day (#58): B acting on A's workspace is denied, A's rows are unchanged
+  getCourtDay: denies,
+  setCurrentItem: denies,
+  clearCurrentItem: denies,
+  snapshotList: denies,
+  proposeCourtDayNextDate: denies,
+  listConflictCards: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -1095,6 +1102,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   planBoardAlert: 'pure (decides the one alert a listed item earns from a board row)',
   pollBoards:
     'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
+  detectClashes: 'pure (groups already-loaded items by date and member)',
+  diffLists: 'pure',
+  hashRows: 'pure',
+  itemOrdinal: 'pure',
   itemNumber: 'pure',
   paceSamples: 'pure',
   estimateCallWindow: 'pure',

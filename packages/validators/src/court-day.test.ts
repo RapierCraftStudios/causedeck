@@ -39,8 +39,14 @@ describe('court-day schemas', () => {
       }).success,
     ).toBe(true);
     expect(
-      ListDiff.safeParse({ label: 'changed', added: [], removed: [], moved: [], stage_changed: [], entries: [] })
-        .success,
+      ListDiff.safeParse({
+        label: 'changed',
+        added: [],
+        removed: [],
+        moved: [],
+        stage_changed: [],
+        entries: [],
+      }).success,
     ).toBe(true);
     expect(
       ListDiff.safeParse({

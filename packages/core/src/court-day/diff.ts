@@ -185,7 +185,11 @@ export async function snapshotList(
         .select({ id: listSnapshot.id })
         .from(listSnapshot)
         .where(
-          and(same, eq(listSnapshot.listType, data.listType), eq(listSnapshot.contentHash, contentHash)),
+          and(
+            same,
+            eq(listSnapshot.listType, data.listType),
+            eq(listSnapshot.contentHash, contentHash),
+          ),
         )
         .limit(1);
       if (existing === undefined) throw new Error('snapshotList: conflict without a stored row');

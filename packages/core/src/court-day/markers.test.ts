@@ -23,7 +23,9 @@ describe('setCurrentItem (R8)', () => {
     await withTestDb(async (tx) => {
       const { ownerId, workspaceId, hallId } = await seed(tx);
       const actor = { userId: ownerId, workspaceId };
-      const listingsBefore = await inWorkspace(tx, workspaceId, (s) => s.select().from(schema.listing));
+      const listingsBefore = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.listing),
+      );
       const row = await setCurrentItem({ db: tx }, actor, {
         hallId,
         listDate: '2026-11-02',
@@ -33,7 +35,11 @@ describe('setCurrentItem (R8)', () => {
       expect(row).toMatchObject({ hallId, currentItem: 14, setBy: ownerId, note: 'lunch at 13' });
       expect(row.setAt).toBeInstanceOf(Date);
 
-      const moved = await setCurrentItem({ db: tx }, actor, { hallId, listDate: '2026-11-02', currentItem: 20 });
+      const moved = await setCurrentItem({ db: tx }, actor, {
+        hallId,
+        listDate: '2026-11-02',
+        currentItem: 20,
+      });
       expect(moved.id).toBe(row.id);
       expect(moved.currentItem).toBe(20);
 
@@ -90,10 +96,15 @@ describe('clearCurrentItem', () => {
       expect(await clearCurrentItem({ db: tx }, actor, input)).toBe(false);
       await setCurrentItem({ db: tx }, actor, { ...input, currentItem: 5 });
       expect(await clearCurrentItem({ db: tx }, actor, input)).toBe(true);
-      const left = await inWorkspace(tx, workspaceId, (s) => s.select().from(schema.courtDayMarker));
+      const left = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.courtDayMarker),
+      );
       expect(left).toEqual([]);
       const cleared = await inWorkspace(tx, workspaceId, (s) =>
-        s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'court_day.marker_cleared')),
+        s
+          .select()
+          .from(schema.auditEvent)
+          .where(eq(schema.auditEvent.action, 'court_day.marker_cleared')),
       );
       expect(cleared).toHaveLength(1);
     });

@@ -89,7 +89,12 @@ export async function clearCurrentItem(
   return inCourtDayScope(deps, actor, async (scope) => {
     const { tx } = scope;
     const { workspaceId, userId } = scope.actor;
-    requireAction(scope, 'matter.write', await scope.settings(), 'You cannot clear the current item');
+    requireAction(
+      scope,
+      'matter.write',
+      await scope.settings(),
+      'You cannot clear the current item',
+    );
     const removed = await tx
       .delete(courtDayMarker)
       .where(

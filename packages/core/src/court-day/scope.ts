@@ -93,8 +93,7 @@ export async function inCourtDayScope<T>(
     return fn({
       tx,
       actor: { userId, workspaceId, role },
-      settings: async () =>
-        (settings ??= toPolicySettings(await getRoleSettings(tx, workspaceId))),
+      settings: async () => (settings ??= toPolicySettings(await getRoleSettings(tx, workspaceId))),
       emit: (event) => events.push(event),
     });
   });

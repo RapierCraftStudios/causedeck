@@ -63,7 +63,9 @@ describe('proposeCourtDayNextDate and listConflictCards (R9)', () => {
         s
           .select()
           .from(schema.listing)
-          .where(and(eq(schema.listing.proceedingId, proceedingId), eq(schema.listing.canonical, true))),
+          .where(
+            and(eq(schema.listing.proceedingId, proceedingId), eq(schema.listing.canonical, true)),
+          ),
       );
       expect(canonical.map((l) => l.listDate)).toEqual(['2099-03-02']);
 
@@ -87,7 +89,11 @@ describe('one canonical listing per proceeding (R10)', () => {
       const error = await failure(
         inWorkspace(tx, workspaceId, (s) =>
           s.transaction((nested) =>
-            buildListing(nested, workspaceId, { proceedingId, listDate: '2099-03-09', canonical: true }),
+            buildListing(nested, workspaceId, {
+              proceedingId,
+              listDate: '2099-03-09',
+              canonical: true,
+            }),
           ),
         ),
       );

@@ -63,7 +63,13 @@ describe('detectClashes never predicts a time overlap (R5)', () => {
   it('carries only the factual statement: same date, different hall', () => {
     const [clash] = detectClashes([item(), item({ hallId: hall2 })]);
     expect(clash?.statement).toBe('Listed on the same date in different halls.');
-    expect(Object.keys(clash ?? {}).sort()).toEqual(['date', 'items', 'kind', 'memberId', 'statement']);
+    expect(Object.keys(clash ?? {}).sort()).toEqual([
+      'date',
+      'items',
+      'kind',
+      'memberId',
+      'statement',
+    ]);
     const text = JSON.stringify(clash).toLowerCase();
     for (const word of ['overlap', 'predict', 'estimate', 'minute', 'time']) {
       expect(text).not.toContain(word);

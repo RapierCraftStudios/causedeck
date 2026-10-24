@@ -86,7 +86,10 @@ export async function getCourtDay(
     if (!can(scope.actor, 'listing.read', undefined, settings).allow) {
       throw forbidden('You cannot read the court day');
     }
-    if (query.scope === 'workspace' && !can(scope.actor, 'court_day.view_all', undefined, settings).allow) {
+    if (
+      query.scope === 'workspace' &&
+      !can(scope.actor, 'court_day.view_all', undefined, settings).allow
+    ) {
       throw forbidden('You cannot view the whole workspace court day');
     }
     const strategy = can(scope.actor, 'strategy.read', undefined, settings).allow;
@@ -119,12 +122,15 @@ export async function getCourtDay(
         allowedUserIds: matterRestriction.allowedUserIds,
         restricted: sql<boolean>`${matterRestriction.id} is not null`,
         openObligations: sql<number>`(select count(*)::int from obligation o where o.workspace_id = ${listing.workspaceId} and o.proceeding_id = ${listing.proceedingId} and o.status = 'open')`,
-        carryCount: sql<number>`(select count(*)::int from listing p where p.workspace_id = ${listing.workspaceId} and p.proceeding_id = ${listing.proceedingId} and p.list_date < ${listing.listDate} and p.confirmation_state <> 'rejected')`,
+        carryCount: sql<number>`(select count(*)::int from listing p where p.workspace_id = ${listing.workspaceId} and p.proceeding_id = ${listing.proceedingId} and p.list_date < ${listing.listDate})`,
       })
       .from(listing)
       .innerJoin(
         proceeding,
-        and(eq(proceeding.workspaceId, listing.workspaceId), eq(proceeding.id, listing.proceedingId)),
+        and(
+          eq(proceeding.workspaceId, listing.workspaceId),
+          eq(proceeding.id, listing.proceedingId),
+        ),
       )
       .innerJoin(
         matter,
@@ -144,7 +150,6 @@ export async function getCourtDay(
         and(
           eq(listing.workspaceId, workspaceId),
           eq(listing.listDate, day),
-          ne(listing.confirmationState, 'rejected'),
           placed,
           query.scope === 'mine' ? mine(matter.ownerMemberId, listing.id) : undefined,
         ),
@@ -152,18 +157,19 @@ export async function getCourtDay(
       .orderBy(asc(listing.id));
 
     // Restricted matters and matters a junior is not on stay out, as the matter reads do.
-    const readable = rows.filter((r) =>
-      can(
-        scope.actor,
-        'listing.read',
-        {
-          kind: 'listing',
-          workspaceId,
-          matterId: r.matter.id,
-          ...(r.restricted ? { restricted: { allowUserIds: r.allowedUserIds ?? [] } } : {}),
-        },
-        settings,
-      ).allow,
+    const readable = rows.filter(
+      (r) =>
+        can(
+          scope.actor,
+          'listing.read',
+          {
+            kind: 'listing',
+            workspaceId,
+            matterId: r.matter.id,
+            ...(r.restricted ? { restricted: { allowUserIds: r.allowedUserIds ?? [] } } : {}),
+          },
+          settings,
+        ).allow,
     );
     const listingIds = readable.map((r) => r.listing.id);
 
@@ -179,9 +185,14 @@ export async function getCourtDay(
             .from(appearance)
             .innerJoin(
               hearing,
-              and(eq(hearing.workspaceId, appearance.workspaceId), eq(hearing.id, appearance.hearingId)),
+              and(
+                eq(hearing.workspaceId, appearance.workspaceId),
+                eq(hearing.id, appearance.hearingId),
+              ),
             )
-            .where(and(eq(appearance.workspaceId, workspaceId), inArray(hearing.listingId, listingIds)))
+            .where(
+              and(eq(appearance.workspaceId, workspaceId), inArray(hearing.listingId, listingIds)),
+            )
             .orderBy(asc(appearance.id));
     const markers = await tx
       .select()
@@ -201,7 +212,10 @@ export async function getCourtDay(
       .from(listing)
       .innerJoin(
         proceeding,
-        and(eq(proceeding.workspaceId, listing.workspaceId), eq(proceeding.id, listing.proceedingId)),
+        and(
+          eq(proceeding.workspaceId, listing.workspaceId),
+          eq(proceeding.id, listing.proceedingId),
+        ),
       )
       .innerJoin(
         matter,
@@ -220,7 +234,7 @@ export async function getCourtDay(
           eq(listing.listDate, day),
           eq(listing.canonical, true),
           eq(listing.confirmationState, 'confirmed'),
-          sql`not exists (select 1 from listing l2 where l2.workspace_id = ${listing.workspaceId} and l2.proceeding_id = ${listing.proceedingId} and l2.list_date = ${listing.listDate} and l2.confirmation_state <> 'rejected' and (l2.item_no is not null or l2.hall_id is not null))`,
+          sql`not exists (select 1 from listing l2 where l2.workspace_id = ${listing.workspaceId} and l2.proceeding_id = ${listing.proceedingId} and l2.list_date = ${listing.listDate} and (l2.item_no is not null or l2.hall_id is not null))`,
           query.scope === 'mine' ? sql`${matter.ownerMemberId} = ${me}` : undefined,
         ),
       )
@@ -235,13 +249,18 @@ export async function getCourtDay(
 
     const complexes = new Map<
       string,
-      { name: string; halls: Map<string, { hallNo: string | null; hallId: string | null; items: CourtDayItem[] }> }
+      {
+        name: string;
+        halls: Map<string, { hallNo: string | null; hallId: string | null; items: CourtDayItem[] }>;
+      }
     >();
     let freshness: Date | null = null;
     for (const r of readable) {
       const l = r.listing;
       const appears = byListing.get(l.id) ?? [];
-      const ownApp = appears.find((a) => a.memberId !== null && a.memberId === r.matter.ownerMemberId);
+      const ownApp = appears.find(
+        (a) => a.memberId !== null && a.memberId === r.matter.ownerMemberId,
+      );
       const ai = !r.matter.sensitive;
       const item: CourtDayItem = {
         listingId: l.id,
@@ -332,18 +351,19 @@ export async function getCourtDay(
       .sort((a, b) => a.name.localeCompare(b.name) || a.forumId.localeCompare(b.forumId));
 
     const expectedNotListed: ExpectedNotListed[] = expected
-      .filter((e) =>
-        can(
-          scope.actor,
-          'listing.read',
-          {
-            kind: 'listing',
-            workspaceId,
-            matterId: e.matterId,
-            ...(e.restricted ? { restricted: { allowUserIds: e.allowedUserIds ?? [] } } : {}),
-          },
-          settings,
-        ).allow,
+      .filter(
+        (e) =>
+          can(
+            scope.actor,
+            'listing.read',
+            {
+              kind: 'listing',
+              workspaceId,
+              matterId: e.matterId,
+              ...(e.restricted ? { restricted: { allowUserIds: e.allowedUserIds ?? [] } } : {}),
+            },
+            settings,
+          ).allow,
       )
       .map((e) => ({
         proceedingId: e.proceedingId,

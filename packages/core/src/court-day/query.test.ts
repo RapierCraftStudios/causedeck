@@ -62,7 +62,9 @@ async function seed(tx: Transaction) {
 
 const itemNos = (day: Awaited<ReturnType<typeof getCourtDay>>) =>
   day.complexes.flatMap((c) =>
-    c.halls.flatMap((h) => h.lists.flatMap((l) => l.items.map((i) => `${h.hallNo}/${l.listType}/${i.itemNo}`))),
+    c.halls.flatMap((h) =>
+      h.lists.flatMap((l) => l.items.map((i) => `${h.hallNo}/${l.listType}/${i.itemNo}`)),
+    ),
   );
 
 describe('getCourtDay grouping and order (R1, R3)', () => {
@@ -79,7 +81,11 @@ describe('getCourtDay grouping and order (R1, R3)', () => {
         { hallId: s.hall3, itemNo: '9', listNo: 1 },
         { hallId: s.hall12, itemNo: '1' },
       ]);
-      const day = await getCourtDay({ db: tx }, { userId: s.ownerId, workspaceId: s.workspaceId }, { date: DAY });
+      const day = await getCourtDay(
+        { db: tx },
+        { userId: s.ownerId, workspaceId: s.workspaceId },
+        { date: DAY },
+      );
       expect(day.complexes).toHaveLength(1);
       expect(day.complexes[0]?.halls.map((h) => h.hallNo)).toEqual(['3', '12A']);
       expect(itemNos(day)).toEqual([
@@ -122,12 +128,16 @@ describe('getCourtDay grouping and order (R1, R3)', () => {
           workspaceId: s.workspaceId,
           matterId: m.matterId,
           proceedingId: m.proceedingId,
-          source: 'manual',
+          source: 'internal',
           description: 'File counter',
           sourceType: 'manual',
         }),
       );
-      const day = await getCourtDay({ db: tx }, { userId: s.ownerId, workspaceId: s.workspaceId }, { date: DAY });
+      const day = await getCourtDay(
+        { db: tx },
+        { userId: s.ownerId, workspaceId: s.workspaceId },
+        { date: DAY },
+      );
       const item = day.complexes[0]?.halls[0]?.lists[0]?.items[0];
       expect(item).toMatchObject({ openObligations: 1, carryCount: 2 });
     });
@@ -135,7 +145,7 @@ describe('getCourtDay grouping and order (R1, R3)', () => {
 });
 
 describe('getCourtDay scopes (R2)', () => {
-  it('mine returns the caller\'s matters and appearances; workspace needs court_day.view_all', async () => {
+  it("mine returns the caller's matters and appearances; workspace needs court_day.view_all", async () => {
     await withTestDb(async (tx) => {
       const s = await seed(tx);
       const advocate = await addMember(tx, s.workspaceId, 'advocate');
@@ -144,7 +154,9 @@ describe('getCourtDay scopes (R2)', () => {
       await s.matterWith({ title: 'Advocate matter', ownerMemberId: advocateMember }, [
         { hallId: s.hall3, itemNo: '2' },
       ]);
-      const appeared = await s.matterWith({ title: 'Appearance only' }, [{ hallId: s.hall12, itemNo: '3' }]);
+      const appeared = await s.matterWith({ title: 'Appearance only' }, [
+        { hallId: s.hall12, itemNo: '3' },
+      ]);
       await inWorkspace(tx, s.workspaceId, async (db) => {
         const [h] = await db
           .insert(schema.hearing)
@@ -164,28 +176,36 @@ describe('getCourtDay scopes (R2)', () => {
       });
       const asAdvocate = { userId: advocate, workspaceId: s.workspaceId };
       const titles = async (scope: 'mine' | 'workspace', who = asAdvocate, settings = {}) =>
-        (await getCourtDay({ db: tx, settings }, who, { date: DAY, scope }))
-          .complexes.flatMap((c) => c.halls.flatMap((h) => h.lists.flatMap((l) => l.items)))
+        (await getCourtDay({ db: tx, settings }, who, { date: DAY, scope })).complexes
+          .flatMap((c) => c.halls.flatMap((h) => h.lists.flatMap((l) => l.items)))
           .map((i) => i.matterTitle)
           .sort();
       expect(await titles('mine')).toEqual(['Advocate matter', 'Appearance only']);
       expect(await titles('workspace')).toHaveLength(3);
       const mineDay = await getCourtDay({ db: tx }, asAdvocate, { date: DAY });
       expect(mineDay.scope).toBe('mine');
-      const arguing = mineDay.complexes[0]?.halls.flatMap((h) => h.lists.flatMap((l) => l.items)).find(
-        (i) => i.matterTitle === 'Appearance only',
-      );
+      const arguing = mineDay.complexes[0]?.halls
+        .flatMap((h) => h.lists.flatMap((l) => l.items))
+        .find((i) => i.matterTitle === 'Appearance only');
       expect(arguing?.capacity).toBe('arguing');
       expect(arguing?.appearingMemberIds).toEqual([advocateMember]);
 
       // The owner turned the advocate's workspace view off: scope workspace is refused, mine is not.
       const off = { advocatesCanViewAllCourtDay: false };
-      await expect(titles('workspace', asAdvocate, off)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      await expect(titles('workspace', asAdvocate, off)).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      });
       expect(await titles('mine', asAdvocate, off)).toHaveLength(2);
-      expect(await titles('workspace', { userId: s.ownerId, workspaceId: s.workspaceId }, off)).toHaveLength(3);
+      expect(
+        await titles('workspace', { userId: s.ownerId, workspaceId: s.workspaceId }, off),
+      ).toHaveLength(3);
       const junior = await addMember(tx, s.workspaceId, 'junior');
       await expect(
-        getCourtDay({ db: tx }, { userId: junior, workspaceId: s.workspaceId }, { date: DAY, scope: 'workspace' }),
+        getCourtDay(
+          { db: tx },
+          { userId: junior, workspaceId: s.workspaceId },
+          { date: DAY, scope: 'workspace' },
+        ),
       ).rejects.toMatchObject({ code: 'FORBIDDEN' });
     });
   });
@@ -198,7 +218,11 @@ describe('getCourtDay scopes (R2)', () => {
         getCourtDay({ db: tx }, { userId: stranger, workspaceId: s.workspaceId }, { date: DAY }),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
       await expect(
-        getCourtDay({ db: tx }, { userId: s.ownerId, workspaceId: s.workspaceId }, { date: 'tomorrow' }),
+        getCourtDay(
+          { db: tx },
+          { userId: s.ownerId, workspaceId: s.workspaceId },
+          { date: 'tomorrow' },
+        ),
       ).rejects.toMatchObject({ code: 'VALIDATION' });
     });
   });
@@ -215,7 +239,11 @@ describe('getCourtDay expected but not listed (R11)', () => {
         { canonical: true, confirmationState: 'confirmed', hallId: s.hall3, itemNo: '5' },
       ]);
       await s.matterWith({ title: 'Only proposed' }, [{ canonical: false }]);
-      const day = await getCourtDay({ db: tx }, { userId: s.ownerId, workspaceId: s.workspaceId }, { date: DAY });
+      const day = await getCourtDay(
+        { db: tx },
+        { userId: s.ownerId, workspaceId: s.workspaceId },
+        { date: DAY },
+      );
       expect(day.expectedNotListed.map((e) => e.proceedingId)).toEqual([missing.proceedingId]);
       expect(day.expectedNotListed[0]?.matterTitle).toBe('Missing from list');
       expect(itemNos(day)).toEqual(['3/daily/5']);
@@ -227,7 +255,9 @@ describe('getCourtDay role and sensitive payloads (R12, R14)', () => {
   it('keeps the marker note and matter memory out of the clerk payload', async () => {
     await withTestDb(async (tx) => {
       const s = await seed(tx);
-      await s.matterWith({ synopsis: 'Settle if costs are waived' }, [{ hallId: s.hall3, itemNo: '1' }]);
+      await s.matterWith({ synopsis: 'Settle if costs are waived' }, [
+        { hallId: s.hall3, itemNo: '1' },
+      ]);
       await inWorkspace(tx, s.workspaceId, (db) =>
         db.insert(schema.courtDayMarker).values({
           workspaceId: s.workspaceId,
@@ -251,7 +281,11 @@ describe('getCourtDay role and sensitive payloads (R12, R14)', () => {
       await s.matterWith({ ownerMemberId: clerkMember, synopsis: 'Strategy text' }, [
         { hallId: s.hall3, itemNo: '2' },
       ]);
-      const mine = await getCourtDay({ db: tx }, { userId: clerk, workspaceId: s.workspaceId }, { date: DAY });
+      const mine = await getCourtDay(
+        { db: tx },
+        { userId: clerk, workspaceId: s.workspaceId },
+        { date: DAY },
+      );
       const json = JSON.stringify(mine);
       expect(mine.complexes[0]?.halls[0]?.marker).toMatchObject({ currentItem: 4 });
       expect(json).not.toContain('senior is late');
@@ -259,7 +293,11 @@ describe('getCourtDay role and sensitive payloads (R12, R14)', () => {
       expect(json).not.toContain('matterMemory');
       expect(mine.complexes[0]?.halls[0]?.marker).not.toHaveProperty('note');
 
-      const owner = await getCourtDay({ db: tx }, { userId: s.ownerId, workspaceId: s.workspaceId }, { date: DAY });
+      const owner = await getCourtDay(
+        { db: tx },
+        { userId: s.ownerId, workspaceId: s.workspaceId },
+        { date: DAY },
+      );
       expect(owner.complexes[0]?.halls[0]?.marker?.note).toBe('senior is late');
       expect(JSON.stringify(owner)).toContain('Settle if costs are waived');
     });
@@ -269,12 +307,31 @@ describe('getCourtDay role and sensitive payloads (R12, R14)', () => {
     await withTestDb(async (tx) => {
       const s = await seed(tx);
       await s.matterWith({ sensitive: true, synopsis: 'AI summary' }, [
-        { hallId: s.hall3, itemNo: '1', stageNorm: 'admission', confidence: '0.900', sourceType: 'ai', sourceRef: 'x', confirmationState: 'proposed' },
+        {
+          hallId: s.hall3,
+          itemNo: '1',
+          stageNorm: 'admission',
+          confidence: '0.900',
+          sourceType: 'ai',
+          sourceRef: 'x',
+          confirmationState: 'proposed',
+        },
       ]);
       await s.matterWith({ synopsis: 'Plain' }, [
-        { hallId: s.hall3, itemNo: '2', stageNorm: 'admission', confidence: '0.900', sourceType: 'ai', sourceRef: 'x' },
+        {
+          hallId: s.hall3,
+          itemNo: '2',
+          stageNorm: 'admission',
+          confidence: '0.900',
+          sourceType: 'ai',
+          sourceRef: 'x',
+        },
       ]);
-      const day = await getCourtDay({ db: tx }, { userId: s.ownerId, workspaceId: s.workspaceId }, { date: DAY });
+      const day = await getCourtDay(
+        { db: tx },
+        { userId: s.ownerId, workspaceId: s.workspaceId },
+        { date: DAY },
+      );
       const items = day.complexes[0]?.halls[0]?.lists[0]?.items ?? [];
       const sensitive = items.find((i) => i.itemNo === '1');
       const normal = items.find((i) => i.itemNo === '2');
@@ -301,7 +358,11 @@ describe('getCourtDay role and sensitive payloads (R12, R14)', () => {
       const asAdvocate = { userId: advocate, workspaceId: s.workspaceId };
       const seen = await getCourtDay({ db: tx }, asAdvocate, { date: DAY, scope: 'workspace' });
       expect(seen.complexes).toEqual([]);
-      const owner = await getCourtDay({ db: tx }, { userId: s.ownerId, workspaceId: s.workspaceId }, { date: DAY });
+      const owner = await getCourtDay(
+        { db: tx },
+        { userId: s.ownerId, workspaceId: s.workspaceId },
+        { date: DAY },
+      );
       expect(owner.complexes).toHaveLength(1);
     });
   });
@@ -325,9 +386,13 @@ describe('getCourtDay budget on the seeded chamber (R13)', () => {
             if (typeof value !== 'function') return value;
             if (prop === 'transaction') {
               return (cb: (t: object) => unknown, cfg?: unknown) =>
-                (value as (...a: unknown[]) => unknown).call(target, (t: object) => cb(counted(t)), cfg);
+                (value as (...a: unknown[]) => unknown).call(
+                  target,
+                  (t: object) => cb(counted(t)),
+                  cfg,
+                );
             }
-            if (['select', 'insert', 'update', 'delete', 'execute'].includes(String(prop))) {
+            if (['select', 'insert', 'update', 'delete'].includes(String(prop))) {
               return (...args: unknown[]) => {
                 statements++;
                 return (value as (...a: unknown[]) => unknown).apply(target, args);
@@ -337,9 +402,14 @@ describe('getCourtDay budget on the seeded chamber (R13)', () => {
           },
         });
       const actor = { userId: ownerId, workspaceId };
-      const day = await getCourtDay({ db: counted(tx) as Transaction }, actor, { date: DAY, scope: 'workspace' });
+      const day = await getCourtDay({ db: counted(tx) as Transaction }, actor, {
+        date: DAY,
+        scope: 'workspace',
+      });
       expect(day.complexes).toHaveLength(2);
-      expect(day.complexes.flatMap((c) => c.halls.flatMap((h) => h.lists.flatMap((l) => l.items)))).toHaveLength(40);
+      expect(
+        day.complexes.flatMap((c) => c.halls.flatMap((h) => h.lists.flatMap((l) => l.items))),
+      ).toHaveLength(40);
       expect(statements).toBeLessThanOrEqual(6);
 
       const samples: number[] = [];

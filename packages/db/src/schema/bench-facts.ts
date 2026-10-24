@@ -21,14 +21,15 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { bench } from './court.ts';
-
 export const benchSittingFact = pgTable(
   'bench_sitting_fact',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    /** Null when no single active roster bench covers the hall that day. */
-    benchId: uuid('bench_id').references(() => bench.id, { onDelete: 'set null' }),
+    /**
+     * Null when no single active roster bench covers the hall that day. A plain id, not an FK: the
+     * table is global and a tenant FK would need a workspace scope guard it cannot have.
+     */
+    benchId: uuid('bench_id'),
     /** The `source.id` of the display board the counts come from. */
     sourceId: text('source_id').notNull(),
     hallNo: text('hall_no').notNull(),

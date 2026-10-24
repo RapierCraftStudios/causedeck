@@ -23,7 +23,6 @@ CREATE TABLE "bench_sitting_fact" (
 	CONSTRAINT "bench_sitting_fact_counts_chk" CHECK (items_listed >= 0 and items_heard >= 0 and items_disposed >= 0 and items_heard <= items_listed and items_disposed <= items_heard)
 );
 --> statement-breakpoint
-ALTER TABLE "bench_sitting_fact" ADD CONSTRAINT "bench_sitting_fact_bench_id_bench_id_fk" FOREIGN KEY ("bench_id") REFERENCES "public"."bench"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "bench_sitting_fact_bench_idx" ON "bench_sitting_fact" USING btree ("bench_id","sitting_date");--> statement-breakpoint
 REVOKE ALL ON "bench_sitting_fact" FROM PUBLIC, causedeck_app, causedeck_clerk;--> statement-breakpoint
 CREATE POLICY "owner_definer_read" ON "bench_roster" AS PERMISSIVE FOR SELECT TO causedeck_owner

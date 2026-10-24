@@ -3286,21 +3286,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "bench_sitting_fact_bench_id_bench_id_fk": {
-          "name": "bench_sitting_fact_bench_id_bench_id_fk",
-          "tableFrom": "bench_sitting_fact",
-          "tableTo": "bench",
-          "columnsFrom": [
-            "bench_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "bench_sitting_fact_hall_day_uq": {

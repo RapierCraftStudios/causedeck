@@ -22,10 +22,22 @@ beforeEach(() => {
 
 describe('acceptInvitationAction', () => {
   it('installs the seat gate and accepts', async () => {
-    acceptInvitation.mockResolvedValue({ workspaceSlug: 'hebbal' });
+    acceptInvitation.mockResolvedValue({ workspaceSlug: 'hebbal', role: 'junior' });
     const result = await acceptInvitationAction({ token: TOKEN });
     expect(installBillingEntitlements).toHaveBeenCalled();
-    expect(result).toEqual({ ok: true, data: { status: 'accepted', slug: 'hebbal' } });
+    expect(result).toEqual({
+      ok: true,
+      data: { status: 'accepted', slug: 'hebbal', next: '/w/hebbal/today' },
+    });
+  });
+
+  it('sends an accepted clerk to the clerk-led setup (#505)', async () => {
+    acceptInvitation.mockResolvedValue({ workspaceSlug: 'hebbal', role: 'clerk' });
+    const result = await acceptInvitationAction({ token: TOKEN });
+    expect(result).toEqual({
+      ok: true,
+      data: { status: 'accepted', slug: 'hebbal', next: '/w/hebbal/welcome' },
+    });
   });
 
   it('maps ENTITLEMENT_EXCEEDED to a SEAT_LIMIT rejection', async () => {

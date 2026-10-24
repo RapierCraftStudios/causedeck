@@ -2,231 +2,170 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Sign-up and sign-in by phone OTP work end to end; OTPs are rate-limited and expire. [type:e2e]",
+   "quote": "A clerk can complete onboarding on mobile in Tamil or Kannada and the senior approves with one tap. [type:e2e]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "CI Playwright e2e job (ship PRs and nightly) runs e2e/tests/workspaces/clerk-onboarding.spec.ts; component and action tests run in lane"
   },
   {
    "id": "R2",
-   "quote": "A phone account can link an email and Google later. [type:integration]",
+   "quote": "Clerk permissions are unchanged (no strategy notes). [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/auth`: a phone-number plugin with OTP over SMS through an Indian DLT-registered provider (template registration), rate limits and abuse controls.",
+   "quote": "The senior gets a one-tap approval of the clerk's setup.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "`apps/web`: phone-first sign-in, with email as an alternative; account linking.",
+   "quote": "The UI is localised Tamil and Kannada first and mobile-first.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Env and processor entries (SMS provider), with mock-safe defaults.",
+   "quote": "the clerk can import, confirm listings and run the court-day view; strategy notes stay hidden (existing rule).",
    "disposition": "deliver",
    "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "The clerk is invited by the senior, or the clerk starts and invites the senior to confirm.",
+   "disposition": "defer",
+   "why": "The senior-invites-clerk path is delivered. A clerk-started workspace would have no owner, and the clerk must not get owner, so this needs a product decision on ownerless or draft workspaces."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
    "path": "packages/db/src/schema/auth.ts",
-   "change": "Add nullable unique phoneNumber (phone_number) and phoneNumberVerified boolean default false to user.",
+   "change": "Add nullable member.clerk_setup_status ('pending'|'approved', check constraint) and clerk_setup_decided_at",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/migrations/\u003cnext-timestamp>_user_phone_number.sql",
-   "change": "Migration adding the two user columns and unique index; also regenerate migrations/meta snapshot and append _journal.json entry (timestamp later than 20261024182641).",
+   "path": "packages/db/migrations/\u003cnext free timestamp>_clerk_setup.sql",
+   "change": "Migration adding the columns (locate the migrations dir next to 20261024182641_activation_event.sql, regenerate the snapshot) and update the db schema tests that list member columns",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/config/src/env/providers.ts",
-   "change": "Add SMS_PROVIDER (console default, msg91) and SMS_AUTH_KEY (secret), SMS_SENDER_ID, SMS_DLT_ENTITY_ID, SMS_OTP_TEMPLATE_ID with requiredWhen SMS_PROVIDER=msg91; extend env tests if they enumerate keys.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "docs/engineering/env.md",
-   "change": "Document the SMS env keys (and .env.example / .env.ci entries with mock-safe console default).",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/auth/src/sms.ts",
-   "change": "New SmsSender interface, console sender (never prints OTP in production), DLT provider sender, createSmsSender(env). Export ./sms in package.json.",
+   "path": "packages/core/src/workspaces/clerk-setup.ts",
+   "change": "requestClerkSetupApproval(clerk) sets pending; approveClerkSetup(actor needs workspace.manage) sets approved; getClerkSetup. Export from workspaces/index.ts; add to SERVICE_TESTS in packages/db/src/testing/cross-tenant-registry.ts with a real case in packages/core/src/__tests__/cross-tenant/services.test.ts",
    "requirements": [
     "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/auth/package.json",
-   "change": "Add ./sms export (no new dependencies; better-auth already ships the phone-number plugin).",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/auth/src/server.ts",
-   "change": "Add phoneNumber plugin (6-digit OTP, 5 min expiry, 3 attempts, signUpOnVerification with temp email, honouring disableSignUp), per-phone-hash and per-IP rate limits, security events with a phone method, account.accountLinking for google and signed-in email/phone linking; sms dep optional in CreateAuthDeps.",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/auth/src/rate-limit.ts",
-   "change": "Add phone OTP limit constants and phoneOtpKey (hashed) helpers.",
-   "requirements": [
-    "R1",
-    "R3"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/auth/src/client.ts",
-   "change": "Add phoneNumberClient plugin.",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/web/lib/auth.ts",
-   "change": "Pass createSmsSender(env) into createAuth.",
-   "requirements": [
-    "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "apps/web/app/(public)/sign-in/sign-in-form.tsx",
-   "change": "Phone-first sign-in: new phone-otp-form component (+91 default, send, verify, resend cooldown) above the existing email/magic-link, Google and passkey options.",
-   "requirements": [
-    "R4",
-    "R1"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "apps/web/app/(app)/account",
-   "change": "Linking UI so a phone account can add an email and link Google (new component(s) under this route).",
-   "requirements": [
-    "R2",
-    "R4"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/i18n/src/messages/en/auth.json",
-   "change": "Add phone sign-in and linking strings; mirror keys in kn/auth.json and ta/auth.json.",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/auth/src/__tests__/phone-otp.test.ts",
-   "change": "Regression tests: sign-up and sign-in by OTP, expiry, attempt limit, per-phone/IP rate limit, disableSignUp, linking email and Google to a phone account.",
-   "requirements": [
-    "R1",
     "R2"
    ]
   },
   {
-   "id": "D15",
-   "path": "e2e/tests/auth/phone-sign-in.spec.ts",
-   "change": "E2E phone OTP sign-up/sign-in with console SMS sender (CI-only; not run locally).",
+   "id": "D4",
+   "path": "packages/core/src/workspaces/index.ts",
+   "change": "Export clerk-setup",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "apps/web/app/(app)/w/[slug]/welcome/page.tsx",
+   "change": "Mobile-first clerk welcome flow (language pick ta/kn/en via existing locale mechanism, links to import, listing confirmation, today) plus actions.ts with requestApproval and approve 'use server' actions (workspaceAction); register both in apps/web/__tests__/cross-tenant-actions.test.ts ACTIONS",
+   "requirements": [
+    "R1",
+    "R4",
+    "R5",
+    "R3"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "apps/web/app/(public)/invite/[token]/actions.ts",
+   "change": "After accepting a clerk invite, redirect to /w/\u003cslug>/welcome instead of /today",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D16",
-   "path": "docs/engineering/auth.md",
-   "change": "Document phone OTP, SMS provider, limits and linking.",
+   "id": "D7",
+   "path": "packages/i18n/src/messages/en/workspace.json",
+   "change": "Add clerk welcome and approval strings in en, plus ta and kn files; update the catalog test only if a namespace is added (prefer extending workspace)",
    "requirements": [
-    "R3"
+    "R4"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "e2e/tests/workspaces/clerk-onboarding.spec.ts",
+   "change": "Mobile viewport e2e: clerk accepts the invite, completes the Tamil flow, the senior approves with one tap",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "apps/web/__tests__/clerk-welcome.test.tsx",
+   "change": "Unit tests for the welcome page, approval action and a clerk-cannot-read-strategy assertion",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Magic-link, passkey, Google and 2FA sign-in behaviour and rate limits in packages/auth/src/server.ts (existing server.test.ts passes)."
+   "what": "packages/auth/src/policy/matrix.ts and roles.ts: no clerk permission changes (strategy.read and memory.* stay at junior)"
   },
   {
    "id": "P2",
-   "what": "createAuth callers (apps/web/lib/auth.ts, apps/admin, packages/auth/src/__tests__/helpers.ts, apps/api tests) keep compiling: new sms dep is optional; admin disableSignUp still blocks sign-up."
+   "what": "createWorkspaceFor and the existing /onboarding page behaviour (apps/web/app/(app)/onboarding)"
   },
   {
    "id": "P3",
-   "what": "user.email stays notNull unique; phone-only users get a non-deliverable temp email."
-  },
-  {
-   "id": "P4",
-   "what": "Raw phone numbers and OTPs are never logged in production or stored in security events (hash like email)."
+   "what": "inviteMember and acceptInvitation signatures and error reasons in packages/core/src/workspaces/invitations.ts; owner is still never invitable"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/auth exec vitest run src/__tests__/phone-otp.test.ts src/__tests__/server.test.ts src/__tests__/security-events.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/clerk-welcome.test.tsx __tests__/invite.test.tsx __tests__/invite-actions.test.ts __tests__/onboarding.test.tsx __tests__/cross-tenant-actions.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/config exec vitest run src/env --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/workspaces src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/sign-in.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__ -t auth --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/auth-schema.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Use Better Auth's bundled phoneNumber plugin; no new dependency.",
-   "justification": "better-auth already a catalog dep (packages/auth/package.json:33) and ships plugins/phone-number.",
+   "choice": "Store approval on member columns, not a new table",
+   "justification": "Avoids the new-table registries (RLS catalog, root table list) listed in CLAUDE.md; member is already tenant-scoped (packages/db/src/schema/auth.ts:223 region)",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Per-phone rate limit via consumeRateLimit with a hashed key, same as magic-link email.",
-   "justification": "packages/auth/src/rate-limit.ts:12-60 and server.ts hooks.before; Better Auth only keys by IP.",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "SMS provider selected by SMS_PROVIDER env with console default, mirroring EMAIL_PROVIDER.",
-   "justification": "packages/config/src/env/providers.ts:221-245 and packages/auth/src/mailer.ts header.",
-   "source": "precedent"
+   "choice": "Reuse role clerk and the invitation flow; no new role or matrix entry",
+   "justification": "Matrix is the single source of truth (packages/auth/src/policy/matrix.ts:1) and the issue requires unchanged clerk permissions",
+   "source": "spec"
   }
  ]
 }

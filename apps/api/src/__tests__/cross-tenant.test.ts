@@ -31,6 +31,15 @@ const ROUTES: Record<string, string> = {
   'GET /v1/workspaces': 'never lists another user’s workspace',
   'GET /v1/billing/plans': 'global catalogue only, no tenant data',
   'GET /v1/billing/subscription': 'B gets 403 for A’s id and only its own subscription',
+  'GET /v1/cases/:cnr':
+    'own workspace only; another workspace’s case is a 404 (public-api.test.ts)',
+  'GET /v1/causelists':
+    'shared non-personal lists, no workspace data; advocate narrows to own watches (public-api.test.ts)',
+  'GET /v1/orders':
+    'own case or shared non-personal orders; another workspace’s case gives none (public-api.test.ts)',
+  'GET /v1/notices': 'global non-personal notices, no tenant fields (public-api.test.ts)',
+  'GET /v1/workspaces/:workspaceId/matters/:matterId/bench-card':
+    'flag-gated 404 when off; workspace membership checked; reads under the workspace scope (bench-card.test.ts)',
   'POST /v1/webhooks/razorpay':
     'signature-gated; workspace from the stored provider id only (razorpay-webhook.test.ts)',
   'POST /v1/inbound/email':

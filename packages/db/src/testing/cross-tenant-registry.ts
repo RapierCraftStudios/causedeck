@@ -424,6 +424,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // name a row of another workspace, and undos handed a payload of A's ids
   // court day (#493): the live halls read model opens withWorkspace on the given actor
   getLiveHalls: denies,
+  // bench card (#521): the flagged read model opens withWorkspace on the given actor
+  getBenchCard: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -760,6 +762,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listRelevantJudgments: denies,
   // notices page and matter card (#588)
   listWorkspaceNotices: empty,
+  getPublicCase: empty,
+  listPublicCauseLists: empty,
+  listPublicOrders: empty,
+  listPublicNotices: selfScoped,
   listMatterNotices: denies,
   scanJudgments: {
     test: CORE_SERVICES_TEST,
@@ -838,6 +844,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   MIN_ERASURE_SUBJECT_LENGTH: 'constant',
   SOURCE_DATA_CLASSES: 'constant',
   exposableThroughApi: 'pure',
+  PUBLIC_API_MAX_LIMIT: 'constant',
+  PUBLIC_API_DEFAULT_LIMIT: 'constant',
+  sourceLicense: 'pure',
   sourceOpsOverview:
     'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
   sourceFetchLogs:
@@ -1000,6 +1009,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   runCauselistPoll: 'system job body: see pollCauseList',
   // court day: display-board tracking and the call-time estimate (#493)
   COURT_LIVE_TRACKING_FLAG: 'constant',
+  BENCH_FACTS_FLAG: 'constant',
   BOARD_SOURCES: 'constant',
   DEFAULT_AWAY_THRESHOLDS: 'constant',
   isCourtHours: 'pure (clock arithmetic in IST)',

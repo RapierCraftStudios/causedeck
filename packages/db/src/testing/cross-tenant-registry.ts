@@ -888,6 +888,19 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'app_staff_conflict_rate() returns per-source counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   staffParseYield:
     'app_staff_parse_yield() returns per-adapter counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
+  // staff coverage tracker (#517)
+  COVERAGE_DATA_TYPES: 'constant',
+  COVERAGE_LEVELS: 'constant',
+  forumState: 'pure',
+  sourceCoversForum: 'pure',
+  buildCoverage: 'pure',
+  rankGaps: 'pure',
+  diffCoverage: 'pure',
+  coverageReport: 'pure',
+  readCatalogueCoverageInputs:
+    'global tables `forum` (system catalogue rows only, `global_read`), `source`, `fetch_log` and `notice` (GLOBAL_TABLES, no RLS): ids, levels, counts and times, never tenant data',
+  staffCoverageInputs:
+    'app_staff_watch_demand() returns per-source counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

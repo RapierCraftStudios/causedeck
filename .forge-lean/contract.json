@@ -2,61 +2,31 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "**No user-facing dimension or filter by individual judge or bench composition**, enforced in the user-facing query and API layer with a static test.",
+   "quote": "`apps/admin` Coverage: a matrix of forums (grouped by state and court type) against data types, each cell showing the level, freshness and volume, filterable by state.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`packages/intelligence/src/analytics/`: aggregates by forum, case type, stage and period (listing delay, adjournments per hearing, time to disposal, backlog).",
+   "quote": "A gap list ranked by demand (watches and users in that forum) times missing level.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Internal stores may hold bench-level data (D-050); the user-facing layer can't read them, except through the separate, flagged `bench_facts` surface.",
+   "quote": "A weekly coverage report (email to staff) with the change since last week.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Privacy: aggregates only, with a minimum cell size (k-anonymity threshold) and no party data.",
+   "quote": "Every forum in the catalogue appears with a level per data type. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "`apps/web`: a court insights page per forum and case type",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R10",
-   "quote": "and expected timelines on a matter.",
-   "disposition": "defer",
-   "why": "Needs a per-matter lookup from the matter's forum and case type into the aggregates plus a matter-detail UI change; separate work once the aggregates exist and the page is proven. The aggregate core delivered here is reusable for it."
-  },
-  {
-   "id": "R6",
-   "quote": "API (#487): aggregate endpoints for institutions.",
-   "disposition": "defer",
-   "why": "#487 (public developer API with quotas) was closed not_planned, so no institution API, key scoping or quota framework exists to build on; the endpoints also need the cross-workspace aggregation and counsel review that this change does not do."
-  },
-  {
-   "id": "R7",
-   "quote": "A static test fails if any user-facing analytics query, column or API parameter refers to a judge or bench member. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R8",
-   "quote": "Cells below the minimum size are suppressed. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R9",
-   "quote": "A forum and case-type page shows median listing delay, adjournment rate and time to disposal, with the data window and coverage stated. [type:integration]",
+   "quote": "The gap ranking uses live demand (watch counts). [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -64,133 +34,201 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/intelligence/src/analytics/index.ts",
-   "change": "Export MIN_CELL_SIZE (5), a pure summariseCells(rows, {minCell}) that returns median listing delay, adjournment rate, median time to disposal and backlog per forum x case type x stage x period, with values null and suppressed:true when n \u003c MIN_CELL_SIZE; plus getCourtInsights(tx, {forumId?, caseTypeCode?, from, to}) that reads proceeding, listing, hearing and proceeding_state_change inside the caller's RLS transaction and returns cells plus window {from,to} and coverage {proceedings, hearings}. Must not select listing.bench_id, hall_id, bench or judge columns, party titles, or any bench_sitting_fact / board table.",
+   "path": "packages/core/src/sources/coverage.ts",
+   "change": "New. Pure functions: sourcesForForum (source id `\u003cprefix>:\u003ctype>`; prefix equals forum code, is a dotted ancestor, or is `in.\u003cst>.district` for district-kind forums of state \u003cst>), buildCoverage (every enabled catalogue forum with workspace_id null x data types cause_list, case_status, order, display_board, notice; level = highest access_mode of cleared, non-killed matching sources else 'none'; freshness = latest successful fetch_log fetch (status 200-399); volume = successful fetches in 7 days), rankGaps (score = demand watches/users x (3 - level index, none lowest); deterministic tie-break by forum code), diffCoverage (week-over-week change derived from source cleared_at / first fetch, no snapshot table), plus a reader over source, forum, fetch_log, notice and the demand function. Export from packages/core/src/sources/index.ts.",
    "requirements": [
+    "R1",
     "R2",
     "R3",
     "R4",
-    "R8"
+    "R5"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/intelligence/src/analytics/analytics.test.ts",
-   "change": "Unit tests: medians, adjournment rate, suppression below MIN_CELL_SIZE and at the boundary (n = 5 shown, n = 4 suppressed), no cell carries a suppressed value; one DB-backed test if the package already has a DB test harness, otherwise a fake tx.",
+   "path": "packages/core/src/sources/index.ts",
+   "change": "Add `export * from './coverage.ts'`.",
    "requirements": [
-    "R2",
-    "R8"
+    "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/intelligence/src/analytics/static-guard.test.ts",
-   "change": "Static guard modelled on bench-facts/static-guard.test.ts: comment-stripped scan of the analytics source, the insights page and its component, and the court-insights i18n keys for /judge|bench|justice|coram|petitioner|respondent|party/i (judge, bench and party fields), with a planted-offender mutation case. Also asserts the analytics query file never references the bench_sitting_fact, board_observation or bench schema objects.",
+   "path": "packages/db/migrations/20261024100000_staff_watch_demand.sql",
+   "change": "New hand-written migration (use next free timestamp after 20261024090000_ecourts_district_status_sources; rename if base took it): SECURITY DEFINER app_staff_watch_demand() returning source_id, watches, users over case_watch (enabled) and cause_list_watch; calls app_staff_require_caller(); REVOKE FROM PUBLIC, GRANT to causedeck_app, causedeck_clerk; aggregates only, modelled on 0082_staff_conflict_rate.sql. Add the matching entry to migrations/meta/_journal.json and a snapshot file.",
    "requirements": [
-    "R1",
-    "R3",
-    "R4",
-    "R7"
+    "R2",
+    "R5"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/intelligence/src/index.ts",
-   "change": "Add export * from './analytics/index.ts'.",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "Journal entry for D3 (idx 86).",
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D5",
-   "path": "apps/web/app/(app)/w/[slug]/courts/insights/page.tsx",
-   "change": "Server page: require the workspace context, gate on can(ctx,'insights.read') (PermissionDeniedPage otherwise), read forum and caseType from searchParams, call getCourtInsights inside withWorkspace, render the component. No judge or bench filter or parameter.",
+   "path": "apps/admin/lib/data/index.ts",
+   "change": "Add audited coverageOverview(staff, now?, db?) using staffCall (function app_staff_watch_demand) and staffQuery (tables forum, source, fetch_log, notice) with purpose `coverage.overview`; never import withoutWorkspace elsewhere.",
    "requirements": [
-    "R5",
-    "R9"
+    "R1",
+    "R2",
+    "R4"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/components/courts/court-insights.tsx",
-   "change": "Table of cells: median listing delay, adjournment rate and median time to disposal per forum x case type, 'not enough data' for suppressed cells, and a footer stating the data window and coverage counts. Add a test in apps/web/components/courts/__tests__/court-insights.test.tsx covering values, suppressed cell and window/coverage text.",
+   "path": "apps/admin/app/(console)/coverage/page.tsx",
+   "change": "New server component, requireStaff capability for coverage: matrix grouped by state then court type x 5 data types (level, freshness, volume per cell), `?state=` filter, ranked gap list. Counts, ids, levels and times only (no content fields).",
    "requirements": [
-    "R5",
-    "R9"
+    "R1",
+    "R2",
+    "R4"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/messages/en/court-insights.json",
-   "change": "New namespace court-insights with the page strings. Add the same keys to ta and kn (mirror files), regenerate generated messages (pnpm --filter @causedeck/i18n i18n:types), update translation-status.json if the checker requires it, and register the namespace in packages/i18n/src/__tests__/catalog.test.ts.",
+   "path": "apps/admin/components/console-nav.tsx",
+   "change": "Add Coverage nav item (/coverage) and extend the href union; update header comment.",
    "requirements": [
-    "R5",
-    "R9"
+    "R1"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/components/courts/court-nav.tsx",
-   "change": "Add an Insights link to the courts nav to the new route, only if the nav lists sibling courts pages; otherwise leave unchanged and drop this deliverable.",
+   "path": "apps/admin/lib/roles.ts",
+   "change": "Add `coverage` staff capability for ops and admin (or reuse data-ops if lint/guard tests prefer); keep support without it.",
    "requirements": [
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D9",
-   "path": "docs/engineering/court-analytics.md",
-   "change": "Short doc: metric definitions, the MIN_CELL_SIZE rule, own-workspace scope, the guard, and the deferred items.",
+   "path": "packages/core/src/jobs/definitions/coverage-weekly.ts",
+   "change": "New job `system.coverage.weekly`, cron `30 9 * * 1`, singleton key, injectable email/now/recipients deps; recipients are enabled ops/admin staff emails; emails top gaps and change since last week; nothing sent when no recipients.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Import and register coverageWeekly in the definitions list and the type map.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add `system.coverage.weekly` to the expected job names.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "Add `system.coverage.weekly` to the expected schedules.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/core/src/sources/__tests__/coverage.test.ts",
+   "change": "New unit tests: mapping rule, level selection (uncleared/killed => none), freshness/volume, every catalogue forum has 5 cells (R4), rankGaps reorders when stubbed watch counts change (R5), diffCoverage.",
+   "requirements": [
+    "R4",
+    "R5",
+    "R3"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/admin/__tests__/coverage-page.test.tsx",
+   "change": "New page test with mocked lib/data: matrix renders every forum with five data-type cells, state filter narrows, gap list order, access denied for support role.",
    "requirements": [
     "R1",
+    "R2",
     "R4"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register new runtime core exports from coverage.ts in NOT_A_SERVICE (pure functions) or SERVICE_TESTS for the reader, with a reason; add a real case in packages/core/src/__tests__/cross-tenant/services.test.ts if SERVICE_TESTS is chosen.",
+   "requirements": [
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "bench-facts guard and surfaces stay unchanged: packages/intelligence/src/bench-facts/*, packages/core/src/court-day/bench-card.ts, apps/api/src/routes/v1/bench-card.ts."
+   "what": "sourceOpsOverview, staffParseYield, staffConflictRate and Data Ops page behaviour in packages/core/src/sources/ops.ts and apps/admin/app/(console)/data-ops/page.tsx."
   },
   {
    "id": "P2",
-   "what": "The /w/[slug]/insights placeholder page and its nav item (apps/web/lib/nav.ts:108, apps/web/__tests__/nav.test.ts) keep working; the new page is a separate route under courts/insights."
+   "what": "Admin guard tests: pages never import withoutWorkspace, no content fields (apps/admin/__tests__/{data-layer,server-component-imports,no-content-fields,no-without-workspace-outside-data}.test.ts)."
   },
   {
    "id": "P3",
-   "what": "No change to @causedeck/core runtime exports, so packages/db/src/testing/cross-tenant-registry.ts needs no entry; no new table, so no migration or RLS catalog change."
+   "what": "Tenant isolation: staff see only aggregate counts of case_watch/cause_list_watch through the definer function; no workspace, proceeding, party or user id leaves it."
+  },
+  {
+   "id": "P4",
+   "what": "Existing job schedules and business digest in packages/core/src/jobs/definitions/business-digest.ts and registry ordering/typing in packages/core/src/jobs/registry.ts."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/analytics src/bench-facts src/index.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/web exec vitest run components/courts/__tests__/court-insights.test.tsx __tests__/nav.test.ts"
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing"
+  },
+  {
+   "id": "V5",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Aggregate only the caller's own workspace data (RLS scope) instead of cross-workspace network aggregates.",
-   "justification": "The source tables are tenant tables under FORCE RLS (packages/db/src/schema/docket.ts:38, proceedings.ts:40); cross-tenant aggregation needs an owner-defined function like app_bench_* (bench-facts.ts:1-9) and a privacy/counsel decision that D-050 reserves; own-workspace keeps R4 satisfiable with a cell-size floor.",
-   "source": "doc"
+   "choice": "Derive 'change since last week' from source.cleared_at and fetch_log history instead of a new coverage_snapshot table.",
+   "justification": "A new global table triggers the db root-table list, GLOBAL_TABLES, grants and RLS catalogue updates (CLAUDE.md registries table); source.cleared_at (schema/source-registry.ts:60) and fetch_log (schema/fetch-log.ts:9) already hold the dates.",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Copy the comment-stripped regex static guard with a mutation case.",
-   "justification": "packages/intelligence/src/bench-facts/static-guard.test.ts:12-45 is the repo's established way to pin a D-050 prohibition.",
+   "choice": "Read tenant watch demand only through a new SECURITY DEFINER function, like app_staff_conflict_rate.",
+   "justification": "case_watch and cause_list_watch are tenant tables under FORCE RLS (schema/case-watch.ts:1-6); precedent migrations/0082_staff_conflict_rate.sql and core sources/ops.ts:165.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "The new page is courts/insights, not the /insights placeholder.",
-   "justification": "/insights is the practice-insights slot gated by insights.read (apps/web/lib/nav.ts:108); court analytics is a courts concern and a static segment beats courts/[code].",
+   "choice": "Model the weekly email on system.business.digest (defineJob, cron, injected deps).",
+   "justification": "packages/core/src/jobs/definitions/business-digest.ts:56-67; registered at jobs/registry.ts:177-178.",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "Source-to-forum mapping by id prefix (forum code, dotted ancestor, or in.\u003cst>.district for district forums) in one tested function.",
+   "justification": "Source ids are `\u003cscope>:\u003ctype>` with state-wide district ids (migrations 20261024090000_ecourts_district_status_sources.sql) and per-forum ids (0076_display_board.sql:49-71); forum codes per schema/court.ts:41 and ecourts/snapshot.ts.",
    "source": "precedent"
   }
  ]

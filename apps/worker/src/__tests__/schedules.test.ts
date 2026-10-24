@@ -29,6 +29,7 @@ describe('registerSchedules', () => {
       'system.usage.rollup',
       'system.business.cost-alert',
       'system.business.digest',
+      'system.coverage.weekly',
       'system.audit.verify',
       'system.audit.retention',
       'system.export.expire',

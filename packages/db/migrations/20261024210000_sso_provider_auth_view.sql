@@ -1,35 +1,42 @@
--- Migration 20261024210000_sso_provider_auth_view: hand-written (one policy, one view, one grant), no table changes; reviewed before commit.
+-- Migration 20261024210000_sso_provider_auth_view: hand-written (one policy, one function, one grant), no table changes; reviewed before commit.
 -- Reviewed-by: Claude (agent, #683)
 -- SSO sign-in (#683, #508 part 2). The Better Auth SSO plugin resolves a provider by email domain
--- or provider id before any workspace is known, so it cannot read the FORCE RLS table `sso_provider`
--- as the app role. `sso_provider_auth` is the plugin's read model: owned by the owner role, which
--- can read the table only through `owner_definer_read` (the 0006 pattern), so a view owner's
--- privileges are the only widening, and the view lists enabled providers only. It carries the
--- protocol settings (client secrets) because the plugin needs them to finish a sign-in: only the
--- auth server reads it, and the core service that edits providers never returns `config`.
--- Providers are written through the owner-only core service, never through this view. Expand only.
+-- or provider id before any workspace is known, so the app role cannot read the FORCE RLS table
+-- `sso_provider` directly. `app_sso_provider_lookup` is the narrow, keyed read (the `app_slug_taken`
+-- pattern): SECURITY DEFINER, it returns at most ONE enabled provider for an exact provider id or an
+-- exact domain, never a list, so no query can enumerate other tenants' providers. The owner role is
+-- reachable only through definer functions (`owner_definer_read`, the 0006 pattern); the app role
+-- gets no SELECT on the table and no view over it. The one caller that needs the protocol settings
+-- is the auth server finishing a sign-in, which names the provider by its unguessable id (or the
+-- domain the user typed); the core service that edits providers never returns `config`.
+-- Providers are written through the owner-only core service only. Expand only.
 CREATE POLICY "owner_definer_read" ON "sso_provider" AS PERMISSIVE FOR SELECT TO causedeck_owner
   USING (true);--> statement-breakpoint
-CREATE VIEW "sso_provider_auth" AS
-  SELECT
-    p.id::text AS id,
-    p.id::text AS provider_id,
-    p.issuer,
-    p.domain,
-    CASE WHEN p.protocol = 'oidc' THEN p.config::text END AS oidc_config,
-    CASE WHEN p.protocol = 'saml' THEN p.config::text END AS saml_config,
-    p.workspace_id::text AS organization_id,
-    p.created_by::text AS user_id
-  FROM "sso_provider" p
-  WHERE p.enabled;--> statement-breakpoint
-CREATE FUNCTION "sso_provider_auth_noop_update"() RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-  -- The plugin "locks" a provider with an update that changes nothing before linking an account;
-  -- the view stays read-only, so the update is accepted and discarded.
-  RETURN NEW;
-END;
-$$;--> statement-breakpoint
-CREATE TRIGGER "sso_provider_auth_noop_update" INSTEAD OF UPDATE ON "sso_provider_auth"
-  FOR EACH ROW EXECUTE FUNCTION "sso_provider_auth_noop_update"();--> statement-breakpoint
-REVOKE ALL ON "sso_provider_auth" FROM PUBLIC;--> statement-breakpoint
-GRANT SELECT ON "sso_provider_auth" TO causedeck_app;
+CREATE FUNCTION "app_sso_provider_lookup"(p_provider_id text, p_domain text)
+  RETURNS TABLE (
+    id text,
+    issuer text,
+    domain text,
+    oidc_config text,
+    saml_config text,
+    organization_id text,
+    user_id text
+  )
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
+  AS $$
+    SELECT
+      p.id::text,
+      p.issuer,
+      p.domain,
+      CASE WHEN p.protocol = 'oidc' THEN p.config::text END,
+      CASE WHEN p.protocol = 'saml' THEN p.config::text END,
+      p.workspace_id::text,
+      p.created_by::text
+    FROM sso_provider p
+    WHERE p.enabled
+      AND ((p_provider_id IS NOT NULL AND p.id::text = p_provider_id)
+        OR (p_provider_id IS NULL AND p_domain IS NOT NULL AND p.domain = lower(btrim(p_domain))))
+    LIMIT 1
+  $$;--> statement-breakpoint
+REVOKE ALL ON FUNCTION "app_sso_provider_lookup"(text, text) FROM PUBLIC;--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION "app_sso_provider_lookup"(text, text) TO causedeck_app;

@@ -3,7 +3,7 @@
 // (`requireOwner`), audited fail-closed in the caller's transaction as `sso.provider_*` with the
 // protocol, domain and enabled flag only. The settings (client secret, certificate) are validated
 // by `@causedeck/auth/sso`, stored, and never returned by anything here. Sign-in itself is the
-// Better Auth SSO plugin reading the `sso_provider_auth` view (docs/engineering/auth.md).
+// Better Auth SSO plugin reading `app_sso_provider_lookup` (docs/engineering/auth.md).
 import { randomUUID } from 'node:crypto';
 
 import { parseSsoConfig, ssoDomainOf, SsoConfigError } from '@causedeck/auth/sso';

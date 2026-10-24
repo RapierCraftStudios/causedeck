@@ -30,7 +30,7 @@ import {
   isSsoPath,
   provisionSsoMember,
   ssoDomainOf,
-  ssoProviderAuth,
+  withSsoProviderLookup,
 } from './sso';
 import { markStepUp } from './step-up';
 
@@ -335,11 +335,10 @@ export function createAuth({
     // the session alone (#289); a user who somehow has a credential password is still asked for it.
     twoFactor({ issuer: 'CauseDeck', allowPasswordless: true }),
     // Per-organisation SAML and OIDC (#683). The plugin only reads the enabled providers of the
-    // `sso_provider_auth` view; the owner-only core service edits them, so its own provider
+    // keyed `app_sso_provider_lookup` function; the owner-only core service edits them, so its own provider
     // endpoints are refused in `hooks.before`. Membership is ours (`provisionSsoMember`), not the
     // plugin's organisation provisioning, because `member` is under row-level security.
     sso({
-      modelName: 'ssoProviderAuth',
       organizationProvisioning: { disabled: true },
       provisionUserOnEveryLogin: true,
       provisionUser: async ({ user, provider }) => {
@@ -361,7 +360,7 @@ export function createAuth({
     baseURL: appUrl.origin,
     secret: env.BETTER_AUTH_SECRET.reveal(),
     trustedOrigins: [appUrl.origin],
-    database: drizzleAdapter(db, { provider: 'pg', schema: { ...schema, ssoProviderAuth } }),
+    database: withSsoProviderLookup(db, drizzleAdapter(db, { provider: 'pg', schema })),
     emailAndPassword: { enabled: false },
     socialProviders: env.AUTH_GOOGLE_ENABLED
       ? {

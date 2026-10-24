@@ -167,10 +167,13 @@ Per-organisation SSO uses the Better Auth `@better-auth/sso` plugin (OIDC and SA
 - **Providers.** Rows of `sso_provider` (#682), edited only by workspace owners through the core
   service `@causedeck/core/workspaces` (`saveSsoProvider`, `deleteSsoProvider`) and the page
   `/w/<slug>/settings/sso`. The plugin's own registration, listing and delete endpoints answer 404.
-- **Domain lookup.** The plugin reads the `sso_provider_auth` view (migration `20261024210000`):
-  enabled providers only, exposing the id, issuer, domain and protocol config, resolved by the
-  email's domain. Unknown and disabled domains fail identically, so the form cannot enumerate
-  organisations; a provider or organisation id is refused as input.
+- **Domain lookup.** The plugin's `ssoProvider` model is answered by the keyed SECURITY DEFINER
+  function `app_sso_provider_lookup` (migration `20261024210000`, the `app_slug_taken` pattern):
+  one enabled provider for an exact provider id or domain, never a list. The app role has no
+  SELECT on `sso_provider` and no view over it, so RLS and the "config is never exported" rule hold;
+  the settings are read only to finish a sign-in for a provider named by its id or the typed
+  domain. Unknown and disabled domains fail identically, so the form cannot enumerate
+  organisations.
 - **Provisioning.** A first SSO sign-in creates the user and makes them a `viewer` of the
   organisation, never an owner; an owner raises the role afterwards.
 - **Audit.** Provider changes write `sso.provider_created`, `sso.provider_updated` and

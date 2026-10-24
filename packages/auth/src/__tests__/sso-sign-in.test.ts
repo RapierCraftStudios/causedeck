@@ -1,12 +1,12 @@
 // SSO sign-in (#683) against the real `createAuth` and a mocked OIDC identity provider: the
-// provider is a row of `sso_provider` (read through the `sso_provider_auth` view); the IdP's token
+// provider is a row of `sso_provider` (read through `app_sso_provider_lookup`); the IdP's token
 // and JWKS endpoints are answered by a stubbed `fetch`. Better Auth commits its own writes, so
 // tests isolate by unique domains, emails and client IPs.
 import { createSign, generateKeyPairSync, randomUUID } from 'node:crypto';
 
 import { schema, withWorkspace } from '@causedeck/db';
 import { closeTestDb, testAppDb } from '@causedeck/db/testing';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { RATE_LIMIT_MESSAGE, SSO_DOMAIN_LIMIT } from '../rate-limit';
@@ -228,5 +228,26 @@ describe('SSO sign-in', () => {
     await vi.waitFor(() => {
       expect(events).toContainEqual({ kind: 'failed', method: 'sso' });
     });
+  });
+});
+
+describe('SSO provider isolation', () => {
+  it('gives the app role no bulk read of any tenant’s providers or settings', async () => {
+    const seed = await seedProvider();
+    const db = testAppDb();
+    // No workspace context: row-level security hides every provider, and there is no view.
+    const direct = await db.execute(sql`select 1 from sso_provider where id = ${seed.providerId}`);
+    expect(direct).toHaveLength(0);
+    const views = await db.execute(
+      sql`select 1 from pg_views where viewname = 'sso_provider_auth'`,
+    );
+    expect(views).toHaveLength(0);
+    // The keyed lookup answers one provider for an exact key and nothing for a miss or no key.
+    const hit = await db.execute(
+      sql`select id from app_sso_provider_lookup(${seed.providerId}, null)`,
+    );
+    expect(hit).toHaveLength(1);
+    const none = await db.execute(sql`select id from app_sso_provider_lookup(null, null)`);
+    expect(none).toHaveLength(0);
   });
 });

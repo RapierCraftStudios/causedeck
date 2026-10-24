@@ -42,3 +42,6 @@ Typecheck failure after the base merge was exit 127 `turbo: command not found` (
 
 ### Merge recheck (#662)
 The failing check was exit 127, `turbo: command not found` (turbo is not on PATH on this host), not a duplicate-key or symbol conflict. No source change. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[67683bb1]'` passes 23/23. V1 (115 tests), V2 (33 tests) and V3 (15 tests) pass.
+
+## Merge recheck (#662, turbo 127)
+Exit 127 was only `turbo` missing from PATH, not a code conflict. With node_modules/.bin on PATH, typecheck passes 23/23 and V1-V3 pass. No code change.

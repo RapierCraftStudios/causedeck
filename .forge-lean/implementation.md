@@ -57,3 +57,9 @@ CI log was unavailable and no Postgres exists on the host, so DB-backed tests co
 
 ### Post-merge recheck (turbo exit 127)
 Again `turbo: command not found` only: no code clash. `tsc --noEmit` is clean in core, db and worker; targeted vitest (deadlines, case-watch, extraction, orders-poll, domains, worker registry/schedules) passes. No code change needed.
+
+## Merge recheck (turbo exit 127)
+`turbo: command not found` was a PATH problem, not a code clash. No source change needed. Ran `tsc --noEmit` for core, worker and db (pass) and the V1/V2 vitest subsets (core 37 tests, worker 11 tests; pass).
+
+### Post-merge (fourth base merge)
+Only .forge-lean files conflicted (kept this branch's). `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.

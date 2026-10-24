@@ -25,3 +25,8 @@ A pure coverage model in core (forum x data type levels, freshness, volume, rank
 - New `coverage` capability: ops and admin only.
 
 - Added coverageOverview to the READS list (with staffCoverageInputs/coverageReport mocks) in apps/admin/__tests__/server-actions-audit.test.ts.
+
+- Merge recheck: `turbo: command not found` (exit 127) is a PATH issue, not a code conflict. `pnpm exec turbo run typecheck --filter='...[base]'` passes (23/23); V1-V4 pass. No code change.
+
+### Merge check
+- After merging the base, `turbo run typecheck --filter=...[e39ede8b]` exited 127 (`turbo` not on PATH, an environment problem, not code). Run as `pnpm turbo run typecheck`: 23/23 tasks pass; V1-V5 pass. No code change was needed.

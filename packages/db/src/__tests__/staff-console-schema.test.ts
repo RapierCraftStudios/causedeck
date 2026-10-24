@@ -53,6 +53,7 @@ const FUNCTIONS = [
   'app_staff_budget_overrides(uuid,integer)',
   'app_staff_parse_yield(timestamp with time zone)',
   'app_staff_conflict_rate(timestamp with time zone)',
+  'app_staff_watch_demand()',
   'app_staff_business_snapshot(timestamp with time zone,timestamp with time zone)',
 ];
 const COUNTER_COLUMNS = ['key', 'period_start', 'value'];
@@ -186,6 +187,7 @@ describe('staff console functions (0033)', () => {
         sql`select * from app_staff_budget_overrides(${t.a.id}::uuid, 10)`,
         sql`select * from app_staff_parse_yield(now() - interval '7 days')`,
         sql`select * from app_staff_conflict_rate(now() - interval '7 days')`,
+        sql`select * from app_staff_watch_demand()`,
         sql`select app_staff_business_snapshot(now(), now())`,
       ];
       for (const call of calls) {

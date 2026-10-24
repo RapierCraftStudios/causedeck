@@ -13,11 +13,16 @@ import {
   type PlanReport,
 } from '@causedeck/core/business';
 import {
+  coverageReport,
   listSources,
   sourceFetchLogs,
   sourceOpsOverview,
   staffConflictRate,
+  staffCoverageInputs,
   staffParseYield,
+  type CoverageChange,
+  type CoverageGap,
+  type ForumCoverage,
   type SourceFetchLogEntry,
   type SourceOpsRow,
   type SourceRecord,
@@ -225,6 +230,30 @@ export function dataOpsFetchLogs(
     staff,
     { purpose: 'data_ops.fetch_log', capability: 'data-ops', tables: ['fetch_log'] },
     (tx) => sourceFetchLogs(tx, sourceId),
+    db,
+  );
+}
+
+export interface CoverageOverview {
+  coverage: ForumCoverage[];
+  gaps: CoverageGap[];
+  changes: CoverageChange[];
+}
+
+/** Every catalogue forum against every data type, the ranked gap list and last week's changes (#517). */
+export async function coverageOverview(
+  staff: StaffActor,
+  now: Date = new Date(),
+  db?: Database,
+): Promise<CoverageOverview> {
+  return staffCall(
+    staff,
+    {
+      purpose: 'coverage.overview',
+      capability: 'coverage',
+      functions: ['app_staff_watch_demand'],
+    },
+    async (handle) => coverageReport(await staffCoverageInputs(handle, staff.userId, now), now),
     db,
   );
 }

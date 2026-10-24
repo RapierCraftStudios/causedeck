@@ -22,6 +22,7 @@ import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { businessCostAlert } from './definitions/business-cost-alert.ts';
 import { businessDigest } from './definitions/business-digest.ts';
+import { coverageWeekly } from './definitions/coverage-weekly.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
@@ -176,6 +177,7 @@ export const registry = createRegistry([
   usageRollup,
   businessCostAlert,
   businessDigest,
+  coverageWeekly,
   systemAuditVerify,
   auditVerify,
   auditRetention,
@@ -232,6 +234,7 @@ export type JobMap = RegistryMap<
     typeof usageRollup,
     typeof businessCostAlert,
     typeof businessDigest,
+    typeof coverageWeekly,
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,

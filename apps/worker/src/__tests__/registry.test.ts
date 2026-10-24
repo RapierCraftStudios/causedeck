@@ -138,6 +138,7 @@ describe('enqueue', () => {
       'system.usage.rollup',
       'system.business.cost-alert',
       'system.business.digest',
+      'system.coverage.weekly',
       'system.audit.verify',
       'audit.verify',
       'system.audit.retention',

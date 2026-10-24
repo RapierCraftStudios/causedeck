@@ -16,7 +16,7 @@ import { type Result } from '../../../../../lib/safe-action.ts';
 import { WorkspaceScoped, workspaceAction } from '../../../../../lib/workspace-action.ts';
 
 /** A CSV of 1,000 rows is well under this; a larger body is refused before parsing. */
-export const MAX_PORTFOLIO_CSV_CHARS = 512_000;
+const MAX_PORTFOLIO_CSV_CHARS = 512_000;
 
 const CreatePortfolio = WorkspaceScoped.extend({ name: z.string().trim().min(1).max(200) });
 

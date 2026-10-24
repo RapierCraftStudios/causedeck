@@ -3,7 +3,7 @@
 import type { EmailTransport } from '@causedeck/notifications/email';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CoverageInputs } from '../../sources/coverage.ts';
+import type { CoverageInputs } from '../../sources/index.ts';
 
 import { coverageWeekly, renderCoverageReport, runCoverageWeekly } from './coverage-weekly.ts';
 

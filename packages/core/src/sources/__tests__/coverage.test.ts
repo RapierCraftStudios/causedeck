@@ -127,7 +127,9 @@ describe('buildCoverage', () => {
         ],
       }),
     );
-    expect(rows[0]?.cells.notice).toMatchObject({ level: 'A1', volume7d: 2 });
+    expect(
+      rows.find((r) => r.forum.code === 'in.ka.karnataka-hc.bengaluru')?.cells.notice,
+    ).toMatchObject({ level: 'A1', volume7d: 2 });
   });
 });
 

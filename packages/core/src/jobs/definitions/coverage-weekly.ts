@@ -10,11 +10,11 @@ import { z } from 'zod';
 
 import {
   coverageReport,
-  readCatalogueCoverageInputs,
+  staffCoverageInputs,
   type CoverageChange,
   type CoverageGap,
   type CoverageInputs,
-} from '../../sources/coverage.ts';
+} from '../../sources/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
@@ -66,14 +66,14 @@ export function renderCoverageReport(
   };
 }
 
-/** Emails of enabled ops and admin staff. */
-async function staffRecipients(db: JobContext['db']): Promise<string[]> {
-  const rows = await db
-    .select({ email: user.email })
+/** Enabled ops and admin staff; the first one reads the watch demand definer function. */
+async function staffRecipients(db: JobContext['db']): Promise<{ userId: string; email: string }[]> {
+  return db
+    .select({ userId: staffUser.userId, email: user.email })
     .from(staffUser)
     .innerJoin(user, sql`${user.id} = ${staffUser.userId}`)
-    .where(and(isNull(staffUser.disabledAt), inArray(staffUser.role, ['ops', 'admin'])));
-  return rows.map((r) => r.email);
+    .where(and(isNull(staffUser.disabledAt), inArray(staffUser.role, ['ops', 'admin'])))
+    .orderBy(staffUser.userId);
 }
 
 /** Build and email the report. Exported for tests. */
@@ -82,12 +82,17 @@ export async function runCoverageWeekly(
   deps: CoverageWeeklyDeps = {},
 ): Promise<CoverageWeeklyReport> {
   const now = deps.now?.() ?? new Date();
-  const recipients = deps.recipients ?? (await staffRecipients(ctx.db));
+  const staff = deps.recipients ? [] : await staffRecipients(ctx.db);
+  const recipients = deps.recipients ?? staff.map((r) => r.email);
   if (recipients.length === 0) {
     ctx.log.info('coverage weekly: no staff recipients');
     return { sent: 0, gaps: 0, changes: 0 };
   }
-  const inputs = await (deps.inputs?.() ?? readCatalogueCoverageInputs(ctx.db, now));
+  const reader = staff[0];
+  const inputs = await (deps.inputs?.() ??
+    (reader
+      ? staffCoverageInputs(ctx.db, reader.userId, now)
+      : Promise.reject(new Error('no staff reader'))));
   const { coverage, gaps, changes } = coverageReport(inputs, now);
   const cells = coverage.flatMap((r) => Object.values(r.cells));
   const message = renderCoverageReport(

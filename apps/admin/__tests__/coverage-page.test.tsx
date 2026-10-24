@@ -48,7 +48,7 @@ const inputs: CoverageInputs = {
 };
 const coverage = buildCoverage(inputs);
 
-const state = vi.hoisted(() => ({ role: 'ops' as string }));
+const state = vi.hoisted(() => ({ role: 'ops' }));
 vi.mock('../lib/staff.ts', () => ({
   requireStaff: (capability: string) => {
     if (capability !== 'coverage') throw new Error('wrong capability');
@@ -63,7 +63,9 @@ const { default: CoveragePage } = await import('../app/(console)/coverage/page.t
 const { canStaff } = await import('../lib/roles.ts');
 
 const render = async (state?: string): Promise<string> =>
-  renderToStaticMarkup(await CoveragePage({ searchParams: Promise.resolve({ state }) }));
+  renderToStaticMarkup(
+    await CoveragePage({ searchParams: Promise.resolve(state === undefined ? {} : { state }) }),
+  );
 
 describe('Coverage page', () => {
   it('lists every forum with a level cell per data type', async () => {

@@ -126,6 +126,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // proposals on an import batch through the import and automation indexes, reads the fetch policy
   // through sources, and types its actor through matter-graph. Nothing is applied here.
   onboarding: Object.freeze(['import', 'automation', 'sources', 'matter-graph']),
+  // The migration concierge (#685): runs matter imports through the import domain's apply and undo
+  // (imports `index.ts` only) and checks the actor's role through workspaces.
+  migration: Object.freeze(['import', 'workspaces']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([

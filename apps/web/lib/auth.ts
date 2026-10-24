@@ -4,6 +4,7 @@
 import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth, type Auth } from '@causedeck/auth/server';
 import { createSessionHelpers } from '@causedeck/auth/session';
+import { createSmsSender } from '@causedeck/auth/sms';
 import { createSecurityEventRecorder } from '@causedeck/core/audit';
 import { db } from '@causedeck/core/runtime';
 import { headers } from 'next/headers';
@@ -22,6 +23,7 @@ export function getAuth(): Auth {
       db,
       env,
       mailer: createMailer(env, logger),
+      sms: createSmsSender(env, logger),
       logger,
       securityEvents: createSecurityEventRecorder(db),
     });

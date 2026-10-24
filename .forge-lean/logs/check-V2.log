@@ -1,0 +1,7 @@
+
+ RUN  v3.2.7 /work/repo/.claude/worktrees/lean-501/packages/core
+
+ ✓ |@causedeck/core| src/domains.test.ts (5 tests) 182ms
+{"level":"error","time":"2026-10-24T22:02:17.781Z","service":"audit","env":"test","version":"dev","region":"ap-south-1","err":"[REDACTED]","action":"access.denied","msg":"access denial not recorded"}
+
+(timed out after 300s)

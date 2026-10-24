@@ -217,6 +217,16 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   countOpenWork: empty,
   offboardMember: denies,
   inviteMember: denies,
+  addProvisionedMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'trusts its caller (a SCIM token or a member holding member.invite); a B-scoped call for workspace A fails on RLS and adds no member',
+  },
+  deactivateProvisionedMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'trusts its caller (a SCIM token); a B-scoped call for workspace A finds no member row and changes nothing',
+  },
   reissueInvitation: denies,
   revokeInvitation: denies,
   listPendingInvitations: empty,

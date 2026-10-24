@@ -11,6 +11,7 @@ export const NAMESPACES = [
   'auth',
   'workspace',
   'members',
+  'provisioning',
   'notifications',
   'settings',
   'lifecycle',

@@ -9,6 +9,7 @@
     "./ai": "./src/ai/index.ts",
     "./audit": "./src/audit/index.ts",
     "./api-keys": "./src/api-keys/index.ts",
+    "./provisioning": "./src/provisioning/index.ts",
     "./automation": "./src/automation/index.ts",
     "./activation": "./src/activation/index.ts",
     "./billing": "./src/billing/index.ts",

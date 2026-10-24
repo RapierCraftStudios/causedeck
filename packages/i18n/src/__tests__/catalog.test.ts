@@ -116,6 +116,7 @@ describe('namespaced catalogs (#174)', () => {
         'onboardingDiscovery',
         'palette',
         'portfolio',
+        'provisioning',
         'pwa',
         'settings',
         'shell',

@@ -170,7 +170,7 @@ function searchUrlFor(path: string) {
   };
 }
 
-/** The launch courts. Each source row is seeded uncleared (migration 20261024221355). */
+/** The launch courts. Each source row is seeded uncleared (migration 20261025010000). */
 export const DISCOVERY_SOURCES: Readonly<Record<string, DiscoverySource>> = (() => {
   const khc = createKarnatakaHcAdapter();
   const mhc = createMadrasHcAdapter();

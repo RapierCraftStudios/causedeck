@@ -23,3 +23,9 @@ The flagged tests do not enumerate job exports or schema tables (no sibling symb
 
 ### Follow-up: post-merge typecheck
 The reported failure (`turbo: command not found`, exit 127) was the check shell lacking turbo on PATH, not a code conflict. Ran `node_modules/.bin/turbo run typecheck --filter='...[origin/milestone/court-data-network]'`: 24/24 tasks pass on the merged tree. No code changed.
+
+### Follow-up: turbo not on PATH (again)
+Exit 127 is environmental. `pnpm exec turbo run typecheck --concurrency=$FORGE_HOST_PARALLELISM` passes 24/24 on the merged tree. No code changed.
+
+### Follow-up: merged-tree typecheck
+`turbo run typecheck` exited 127 because `turbo` is not on PATH (a local-tool lookup issue, no code fault). `pnpm exec turbo run typecheck` on the merged tree: 24/24 packages pass. No source change was needed.

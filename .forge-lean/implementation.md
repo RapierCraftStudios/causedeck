@@ -34,3 +34,6 @@ Own-workspace aggregates: `getCourtInsights` reads proceedings, listings, hearin
 
 ### Stale-list follow-up
 - catalog.test.ts already lists courtInsights. The other flagged tests enumerate unrelated things (nav, actions, routes, packages); recorded as not_members in result.json.
+
+## CI fix
+Added apps/web/components/courts/court-insights.stories.tsx (courts-stories guard requires a stories file per courts component).

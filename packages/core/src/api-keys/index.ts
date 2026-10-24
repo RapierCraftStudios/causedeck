@@ -10,7 +10,7 @@ import { schema, withWorkspace, type Database, type Transaction } from '@causede
 import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
-import { increment, usagePeriod, type UsageContext } from '../usage/index.ts';
+import { incrementSql, usagePeriod, type UsageContext } from '../usage/index.ts';
 import { requireCan } from '../workspaces/index.ts';
 
 type Queryable = Database | Transaction;
@@ -275,22 +275,32 @@ export async function findApiKeyIssuer(db: Queryable, userId: string) {
 export type ApiCallResult =
   { allowed: true; used: number } | { allowed: false; used: number; quota: number };
 
+/** Counts the calls billed to `keyId` in the IST month of `at`, inside the caller's workspace tx. */
+async function countKeyCalls(
+  tx: Transaction,
+  workspaceId: string,
+  keyId: string,
+  at: Date,
+): Promise<number> {
+  const [row] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(usageEvent)
+    .where(
+      and(
+        eq(usageEvent.workspaceId, workspaceId),
+        eq(usageEvent.key, API_CALLS_USAGE_KEY),
+        sql`${usageEvent.metadata}->>'api_key_id' = ${keyId}`,
+        gte(usageEvent.createdAt, usagePeriod(at).start),
+      ),
+    );
+  return row?.n ?? 0;
+}
+
 /** Calls billed to `keyId` in the IST month of `at` (counted from the usage ledger). */
 export function apiKeyCallsThisPeriod(ctx: UsageContext, keyId: string, at: Date): Promise<number> {
-  return withWorkspace(ctx.db, { workspaceId: ctx.workspaceId }, async (tx) => {
-    const [row] = await tx
-      .select({ n: sql<number>`count(*)::int` })
-      .from(usageEvent)
-      .where(
-        and(
-          eq(usageEvent.workspaceId, ctx.workspaceId),
-          eq(usageEvent.key, API_CALLS_USAGE_KEY),
-          sql`${usageEvent.metadata}->>'api_key_id' = ${keyId}`,
-          gte(usageEvent.createdAt, usagePeriod(at).start),
-        ),
-      );
-    return row?.n ?? 0;
-  });
+  return withWorkspace(ctx.db, { workspaceId: ctx.workspaceId }, (tx) =>
+    countKeyCalls(tx, ctx.workspaceId, keyId, at),
+  );
 }
 
 /**
@@ -303,20 +313,33 @@ export async function consumeApiCall(
   requestId: string,
 ): Promise<ApiCallResult> {
   const at = ctx.now?.() ?? new Date();
-  const used = await apiKeyCallsThisPeriod(ctx, identity.id, at);
-  if (identity.monthlyQuota !== null && used >= identity.monthlyQuota) {
-    return { allowed: false, used, quota: identity.monthlyQuota };
-  }
-  const { applied } = await increment(ctx, API_CALLS_USAGE_KEY, 1, {
-    idempotencyKey: `api.call:${requestId}`,
-    metadata: { api_key_id: identity.id },
-    at,
-  });
-  await withWorkspace(ctx.db, { workspaceId: ctx.workspaceId }, (tx) =>
-    tx
+  const { workspaceId } = ctx;
+  // One transaction: the key's row lock serialises concurrent calls on the same key, so the count
+  // below sees every committed call and check, bill and stamp cannot interleave with another call.
+  return withWorkspace(ctx.db, { workspaceId }, async (tx) => {
+    await tx
+      .select({ id: apiKey.id })
+      .from(apiKey)
+      .where(and(eq(apiKey.workspaceId, workspaceId), eq(apiKey.id, identity.id)))
+      .for('update');
+    const used = await countKeyCalls(tx, workspaceId, identity.id, at);
+    if (identity.monthlyQuota !== null && used >= identity.monthlyQuota) {
+      return { allowed: false, used, quota: identity.monthlyQuota } as const;
+    }
+    const claimed = await tx.execute(
+      incrementSql({
+        workspaceId,
+        key: API_CALLS_USAGE_KEY,
+        amount: 1,
+        idempotencyKey: `api.call:${requestId}`,
+        metadata: { api_key_id: identity.id },
+        at,
+      }),
+    );
+    await tx
       .update(apiKey)
       .set({ lastUsedAt: at })
-      .where(and(eq(apiKey.workspaceId, ctx.workspaceId), eq(apiKey.id, identity.id))),
-  );
-  return { allowed: true, used: used + (applied ? 1 : 0) };
+      .where(and(eq(apiKey.workspaceId, workspaceId), eq(apiKey.id, identity.id)));
+    return { allowed: true, used: used + (claimed.length > 0 ? 1 : 0) } as const;
+  });
 }

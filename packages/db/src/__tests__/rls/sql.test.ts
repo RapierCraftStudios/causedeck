@@ -159,6 +159,10 @@ describe('row-level security catalog', () => {
         // Public API keys (#624).
         'api_key',
 
+        // Change webhooks (#626).
+        'webhook_endpoint',
+        'webhook_delivery',
+
         // Case-status watch (#589).
         'case_watch',
         'case_status_snapshot',

@@ -34,6 +34,7 @@ export {
   pollCaseWatches,
   type DueWatch,
   type PollCaseWatchesDeps,
+  type StatusChangeEvent,
   type PollCaseWatchesReport,
 } from './poll.ts';
 export { notifyStatusChanges, type StatusAlertDeps, type StatusAlertInput } from './alerts.ts';

@@ -36,6 +36,21 @@ export interface PollCaseWatchesDeps
   listDue?: (limit: number) => Promise<DueWatch[]>;
   caps?: { perAdvocate?: number; perSource?: number; total?: number };
   log?: (event: string, fields: Record<string, unknown>) => void;
+  /**
+   * Called once per changed snapshot (never the watch's first, never a failure of the call itself:
+   * errors are swallowed) with the ids and kinds of change; the job wires webhooks here (#626).
+   */
+  onChange?: (change: StatusChangeEvent) => Promise<unknown>;
+}
+
+export interface StatusChangeEvent {
+  workspaceId: string;
+  watchId: string;
+  sourceId: string;
+  matterId: string;
+  snapshotId: string;
+  /** `next_date`, `order` and `stage`, as in the alerts. */
+  kinds: string[];
 }
 
 export interface PollCaseWatchesReport {
@@ -130,6 +145,25 @@ export async function pollCaseWatches(deps: PollCaseWatchesDeps): Promise<PollCa
             changes: done.changes,
             firstSnapshot: done.firstSnapshot,
           });
+          if (!done.firstSnapshot && deps.onChange !== undefined) {
+            const kinds = [
+              ...(done.changes.nextHearingDate === null ? [] : ['next_date']),
+              ...(done.changes.newOrders.length === 0 ? [] : ['order']),
+              ...(done.changes.stage === null ? [] : ['stage']),
+            ];
+            try {
+              await deps.onChange({
+                workspaceId: watch.workspaceId,
+                watchId: watch.watchId,
+                sourceId: watch.sourceId,
+                matterId: done.matterId,
+                snapshotId: done.snapshotId,
+                kinds,
+              });
+            } catch {
+              // An event that cannot be emitted never fails the poll.
+            }
+          }
         }
       } else if (done.outcome === 'unchanged') {
         report.unchanged += 1;

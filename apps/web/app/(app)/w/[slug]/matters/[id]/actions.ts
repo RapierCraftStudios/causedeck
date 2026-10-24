@@ -12,7 +12,7 @@
 // - `chooseNextDateSourceAction` (`matter.write`): resolve a conflict card as the person chose.
 // - `reportRecordErrorAction` (`matter.read`): tell CauseDeck review a fetched value is wrong, with
 //   consent to share the record; only a case the workspace watches can be reported (#518).
-import { REVIEW_FIELDS } from '@causedeck/db/schema';
+import { REVIEW_FIELDS } from '@causedeck/core/review';
 import { NEXT_DATE_CHOICES } from '@causedeck/validators/matter-graph-inputs';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';

@@ -144,13 +144,31 @@ export function DiscoveryOnboarding({ workspaceId, courts }: DiscoveryOnboarding
           <p className="text-muted-foreground text-sm">{t('identifiers.body')}</p>
           <label className="grid gap-1 text-sm">
             {t('identifiers.enrolment')}
-            <Textarea value={enrolment} rows={2} onChange={(e) => setEnrolment(e.target.value)} />
+            <Textarea
+              value={enrolment}
+              rows={2}
+              onChange={(e) => {
+                setEnrolment(e.target.value);
+              }}
+            />
           </label>
           <label className="grid gap-1 text-sm">
             {t('identifiers.names')}
-            <Textarea value={names} rows={2} onChange={(e) => setNames(e.target.value)} />
+            <Textarea
+              value={names}
+              rows={2}
+              onChange={(e) => {
+                setNames(e.target.value);
+              }}
+            />
           </label>
-          <Button type="button" disabled={!hasIdentifiers} onClick={() => setPhase('courts')}>
+          <Button
+            type="button"
+            disabled={!hasIdentifiers}
+            onClick={() => {
+              setPhase('courts');
+            }}
+          >
             {t('identifiers.next')}
           </Button>
         </section>
@@ -164,13 +182,21 @@ export function DiscoveryOnboarding({ workspaceId, courts }: DiscoveryOnboarding
               <input
                 type="checkbox"
                 checked={selected.includes(court.sourceId)}
-                onChange={() => setSelected(toggle(selected, court.sourceId))}
+                onChange={() => {
+                  setSelected(toggle(selected, court.sourceId));
+                }}
               />
               {t(COURT_LABELS[court.labelKey])}
             </label>
           ))}
           <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={() => setPhase('identifiers')}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setPhase('identifiers');
+              }}
+            >
               {t('courts.back')}
             </Button>
             <Button type="button" disabled={selected.length === 0} onClick={() => void search()}>
@@ -203,13 +229,21 @@ export function DiscoveryOnboarding({ workspaceId, courts }: DiscoveryOnboarding
               <input
                 type="checkbox"
                 checked={picked.includes(sample.matchKey)}
-                onChange={() => setPicked(toggle(picked, sample.matchKey))}
+                onChange={() => {
+                  setPicked(toggle(picked, sample.matchKey));
+                }}
               />
               {[sample.label, sample.parties].filter(Boolean).join(' · ')}
             </label>
           ))}
           <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={() => setPhase('identifiers')}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setPhase('identifiers');
+              }}
+            >
               {t('disambiguate.addEnrolment')}
             </Button>
             <Button
@@ -241,7 +275,9 @@ export function DiscoveryOnboarding({ workspaceId, courts }: DiscoveryOnboarding
             courtDayHref={courtDayHref}
             onConfirm={confirm}
             onUndo={() => undoImportBatchAction({ workspaceId, batchId })}
-            onAddIdentifiers={() => setPhase('identifiers')}
+            onAddIdentifiers={() => {
+              setPhase('identifiers');
+            }}
             onRetryFile={() => void search()}
             onKeepFile={() => undefined}
           />

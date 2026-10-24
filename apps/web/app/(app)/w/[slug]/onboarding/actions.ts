@@ -63,7 +63,9 @@ const discover = workspaceAction(
       {
         db: ctx.tx,
         fetcher: webStatusFetcher(ctx.tx).fetcher,
-        log: (event, counts) => logger.info({ ...counts }, event),
+        log: (event, counts) => {
+          logger.info({ ...counts }, event);
+        },
       },
       { workspaceId: ctx.workspaceId, userId: ctx.userId },
       {

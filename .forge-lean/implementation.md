@@ -31,3 +31,6 @@ The migration was renumbered to 20261025010000, after the base's 20261025000000_
 
 ## Post-merge typecheck fix (re-check)
 The reported failure (`turbo: command not found`, exit 127) was a PATH problem, not a merge clash. `pnpm exec turbo run typecheck` for core, web and i18n passes (19/19 tasks). Validate V1–V4 all pass. No source change was needed.
+
+## Lint fix (CI)
+CI lint failed on `@typescript-eslint/no-confusing-void-expression`: the onboarding `log` callback in `actions.ts` and eight shorthand handlers in `discovery-onboarding.tsx` returned a void call. I gave each arrow function a block body. Both files now lint clean with `eslint` run on just those two files, and V3 still passes. Nothing else changed.

@@ -35,7 +35,7 @@ export function listCauseListsRoute(db: Database) {
     request: {
       query: z.object({
         forum: z.string().min(1).max(200).optional(),
-        date: z.string().date().optional(),
+        date: z.iso.date().optional(),
         advocate: z.string().min(1).max(200).optional(),
         limit: LimitQuery,
       }),

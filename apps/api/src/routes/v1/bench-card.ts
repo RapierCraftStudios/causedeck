@@ -37,8 +37,6 @@ export function benchCardRoute(db: Database) {
     method: 'get',
     path: '/workspaces/{workspaceId}/matters/{matterId}/bench-card',
     operationId: 'getMatterBenchCard',
-    // Dark until counsel clears it (#118): kept out of the published spec so the feature leaves no hint.
-    hide: true,
     tags: ['Court day'],
     summary: 'The matter’s bench card: neutral sitting facts (flag-gated)',
     middleware: [

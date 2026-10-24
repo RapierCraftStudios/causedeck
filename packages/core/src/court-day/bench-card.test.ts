@@ -13,7 +13,7 @@ const rows = [
 ];
 const withWorkspace = vi.fn(() => Promise.resolve([{ benchId: 'b1', sat: ['A B', 'C D'] }]));
 vi.mock('@causedeck/db', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@causedeck/db')>()),
+  ...(await importOriginal<Record<string, unknown>>()),
   withWorkspace: () => withWorkspace(),
 }));
 

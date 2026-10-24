@@ -14,7 +14,7 @@ const mine = [
 ];
 
 vi.mock('@causedeck/db', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@causedeck/db')>()),
+  ...(await importOriginal<Record<string, unknown>>()),
   withWorkspace: () => Promise.resolve(mine),
 }));
 vi.mock('@causedeck/intelligence', () => ({

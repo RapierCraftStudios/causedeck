@@ -52,7 +52,11 @@ vi.mock('../lib/auth.ts', () => ({
 }));
 vi.mock('../lib/env.ts', () => ({
   isProd: () => false,
-  serverEnv: () => ({ APP_URL: 'http://localhost:3000', EMAIL_PROVIDER: 'console' }),
+  serverEnv: () => ({
+    APP_URL: 'http://localhost:3000',
+    EMAIL_PROVIDER: 'console',
+    BETTER_AUTH_SECRET: { reveal: () => 'cross-tenant-test-secret-0123456789' },
+  }),
 }));
 vi.mock('../src/health.ts', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },

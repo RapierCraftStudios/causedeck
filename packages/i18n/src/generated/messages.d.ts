@@ -303,6 +303,24 @@ export type Messages = {
         offline: string;
         accessDenied: string;
       };
+      phone: {
+        label: string;
+        placeholder: string;
+        submit: string;
+        codeSent: string;
+        codeLabel: string;
+        verify: string;
+        differentNumber: string;
+        resend: string;
+        resendIn: string;
+        errors: {
+          invalidNumber: string;
+          sendFailed: string;
+          invalidCode: string;
+          expiredCode: string;
+          tooManyAttempts: string;
+        };
+      };
     };
     checkEmail: {
       title: string;
@@ -320,6 +338,18 @@ export type Messages = {
         subject: string;
         body: string;
       };
+    };
+    link: {
+      title: string;
+      description: string;
+      emailLabel: string;
+      submit: string;
+      added: string;
+      error: string;
+      googleTitle: string;
+      googleDescription: string;
+      googleButton: string;
+      googleError: string;
     };
   };
   workspace: {

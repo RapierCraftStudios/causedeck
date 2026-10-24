@@ -39,3 +39,6 @@ The merged-tree failure was `turbo: command not found` (exit 127), an environmen
 
 ### Post-merge (second base merge)
 Registry lists conflicted (core jobs/registry.ts, worker registry/schedules tests); kept both the base's webhook jobs and `system.orders.poll`. `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.
+
+### Merge fix (third check)
+`turbo: command not found` (exit 127) is again a PATH problem, not a code clash. With `node_modules/.bin` on PATH, `tsc --noEmit` over core, worker and db is clean. Vitest could not start on this host (Postgres container "Started" log never arrives), so V1/V2 were not re-run. No source change.

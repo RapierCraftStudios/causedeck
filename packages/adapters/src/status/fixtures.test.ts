@@ -46,9 +46,13 @@ function parsePage(
     return parseEcourtsCauseList(html, { forumCode: `in.${forum}.district` });
   }
   if (page === 'options') {
-    return Object.fromEntries(
-      Object.entries(readEcourtsCodeMaps(html)).map(([key, map]) => [key, map.entries]),
-    );
+    const maps = readEcourtsCodeMaps(html);
+    return {
+      state: maps.state.entries,
+      district: maps.district.entries,
+      establishment: maps.establishment.entries,
+      caseType: maps.caseType.entries,
+    };
   }
   return ParsedCaseStatusSchema.parse(parseCaseStatus(template, html));
 }

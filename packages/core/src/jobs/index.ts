@@ -167,6 +167,21 @@ export {
   type StatusFetcherFactory,
   type StatusPollDeps,
 } from './definitions/status-poll.ts';
+export {
+  runWebhookDeliver,
+  webhookDeliver,
+  webhookDeliverSchema,
+  WEBHOOK_RETRY_LIMIT,
+  type WebhookDeliverDeps,
+  type WebhookDeliverOutcome,
+  type WebhookDeliverPayload,
+} from './definitions/webhook-deliver.ts';
+export {
+  runWebhookSweep,
+  systemWebhookSweep,
+  WEBHOOK_SWEEP_CRON,
+  type WebhookSweepDeps,
+} from './definitions/webhook-sweep.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { supportSessionExpire } from './definitions/support-session-expire.ts';
 export { systemPing } from './definitions/system-ping.ts';

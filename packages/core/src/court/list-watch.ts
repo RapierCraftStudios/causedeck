@@ -215,6 +215,18 @@ export interface PollCauseListDeps {
   log?: (event: string, counts: Record<string, number>) => void;
   /** The cause-list source to poll; defaults to the Karnataka HC list. */
   sourceId?: string;
+  /**
+   * Called once per workspace with the count of rows a publication matched for its members' watches
+   * (never the rows); errors are swallowed. The job wires webhooks here (#626).
+   */
+  onMatch?: (match: CauseListMatchEvent) => Promise<unknown>;
+}
+
+export interface CauseListMatchEvent {
+  workspaceId: string;
+  sourceId: string;
+  publicationId: string;
+  matchCount: number;
 }
 
 export interface PollCauseListReport {
@@ -341,6 +353,7 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
     const list = await parse(fetched.body, now.toISOString());
     // `fetched.body` goes out of scope here: only the metadata above is ever stored.
     let unmatched = 0;
+    const matchedByWorkspace = new Map<string, number>();
     for (const { actor, names, brns } of members.values()) {
       const identifiers = getAdvocateIdentifiers({ enrolmentNumbers: brns, aliases: names });
       const { matched, unmatchedCount } = filterMatchedRows(list.rows, identifiers);
@@ -364,11 +377,22 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
       if (drafts.length === 0) continue;
       await submitProposals({ db: deps.db, events: NO_EVENTS, now: () => now }, actor, drafts);
       report.proposals += drafts.length;
+      matchedByWorkspace.set(
+        actor.workspaceId,
+        (matchedByWorkspace.get(actor.workspaceId) ?? 0) + drafts.length,
+      );
     }
     await deps.db
       .update(causeListPublication)
       .set({ rowCount: list.rows.length, completedAt: now })
       .where(eq(causeListPublication.id, existing.id));
+    for (const [workspaceId, matchCount] of matchedByWorkspace) {
+      try {
+        await deps.onMatch?.({ workspaceId, sourceId, publicationId: existing.id, matchCount });
+      } catch {
+        // An event that cannot be emitted never fails the poll.
+      }
+    }
     log('causelist.publication_matched', {
       rows: list.rows.length,
       unmatched,

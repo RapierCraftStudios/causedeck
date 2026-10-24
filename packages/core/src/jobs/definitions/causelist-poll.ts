@@ -14,8 +14,12 @@ import {
   type PollCauseListDeps,
   type PollCauseListReport,
 } from '../../court/index.ts';
+import { emitWebhookEvent } from '../../webhooks/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
+import { getProducer } from '../producer.ts';
+
+import { webhookDeliveryKey, webhookDeliverSchema } from './webhook-deliver.ts';
 
 /** Evening advance list (18:30 IST) and morning daily list (07:30 IST). */
 export const CAUSELIST_POLL_CRON = '30 7,18 * * *';
@@ -36,11 +40,24 @@ const unwiredFetcher: ListFetcher = {
     Promise.reject(new Error('cause list poll: no fetcher wired (setCauseListFetcherFactory)')),
 };
 
+/** Send one `webhook.deliver` job (the registry imports this file, so it cannot call `enqueue`). */
+export async function enqueueWebhookDelivery(job: {
+  workspaceId: string;
+  deliveryId: string;
+}): Promise<unknown> {
+  const data = webhookDeliverSchema.parse(job);
+  const sender = await getProducer();
+  return sender.send('webhook.deliver', data, {
+    singletonKey: webhookDeliveryKey(data),
+    group: { id: data.workspaceId },
+  });
+}
+
 /** Poll once with the wired governed fetcher (or `deps.fetcher` in tests). */
 export async function runCauselistPoll(
   ctx: Pick<JobContext, 'db' | 'log'>,
   deps: Partial<
-    Pick<PollCauseListDeps, 'clock' | 'fetcher' | 'parser' | 'flagEnabled' | 'policy'>
+    Pick<PollCauseListDeps, 'clock' | 'fetcher' | 'parser' | 'flagEnabled' | 'policy' | 'onMatch'>
   > = {},
 ): Promise<PollCauseListReport> {
   const clock = deps.clock ?? { now: () => new Date() };
@@ -52,6 +69,21 @@ export async function runCauselistPoll(
     log: (event, counts) => {
       ctx.log.info({ ...counts }, event);
     },
+    onMatch:
+      deps.onMatch ??
+      ((match) =>
+        emitWebhookEvent(
+          { db: ctx.db, enqueue: enqueueWebhookDelivery },
+          {
+            workspaceId: match.workspaceId,
+            type: 'causelist.matched',
+            eventKey: `causelist:${match.publicationId}`,
+            sourceId: match.sourceId,
+            changes: ['cause_list_match'],
+            publicationId: match.publicationId,
+            matchCount: match.matchCount,
+          },
+        )),
     ...(deps.parser === undefined ? {} : { parser: deps.parser }),
     ...(deps.flagEnabled === undefined ? {} : { flagEnabled: deps.flagEnabled }),
     ...(deps.policy === undefined ? {} : { policy: deps.policy }),

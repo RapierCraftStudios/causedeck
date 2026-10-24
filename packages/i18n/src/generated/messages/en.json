@@ -301,6 +301,24 @@
         "expired": "This link has expired. Request a new one.",
         "offline": "You are offline. Connect to sign in.",
         "accessDenied": "Access was not granted."
+      },
+      "phone": {
+        "label": "Mobile number",
+        "placeholder": "98765 43210",
+        "submit": "Send code",
+        "codeSent": "We texted a 6-digit code to {phone}. It expires in {minutes} minutes.",
+        "codeLabel": "Code",
+        "verify": "Verify and sign in",
+        "differentNumber": "Use a different number",
+        "resend": "Resend code",
+        "resendIn": "Resend in {seconds}s",
+        "errors": {
+          "invalidNumber": "Enter a 10-digit Indian mobile number.",
+          "sendFailed": "We could not send the code. Try again in a moment.",
+          "invalidCode": "That code is not right. Check it and try again.",
+          "expiredCode": "This code has expired. Request a new one.",
+          "tooManyAttempts": "Too many wrong attempts. Request a new code."
+        }
       }
     },
     "checkEmail": {
@@ -319,6 +337,18 @@
         "subject": "You are invited to a CauseDeck workspace",
         "body": "Use this link to join the workspace. It expires in {minutes} minutes: {url}"
       }
+    },
+    "link": {
+      "title": "Add an email",
+      "description": "Add an email so you can also sign in with a link, and receive notices.",
+      "emailLabel": "Email",
+      "submit": "Add email",
+      "added": "Email added.",
+      "error": "We could not add that email. Try again.",
+      "googleTitle": "Link Google",
+      "googleDescription": "Link your Google account to sign in with it.",
+      "googleButton": "Link Google",
+      "googleError": "We could not start Google linking."
     }
   },
   "workspace": {

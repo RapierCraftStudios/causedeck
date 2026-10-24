@@ -420,12 +420,12 @@ export const BOOLEAN_SWITCHES = ['AUTH_GOOGLE_ENABLED', 'SENTRY_ENABLED'] as con
 /** Provider values that only simulate an integration; rejected in production by default. */
 export const MOCK_PROVIDERS = {
   EMAIL_PROVIDER: 'console',
-  SMS_PROVIDER: 'console',
   AI_PROVIDER: 'mock',
   BILLING_PROVIDER: 'mock',
 } as const;
 
 export type ProviderEnv = z.output<typeof emailProvider> &
+  z.output<typeof smsProvider> &
   z.output<typeof aiProvider> &
   z.output<typeof storageProvider> &
   z.output<typeof billingProvider> &

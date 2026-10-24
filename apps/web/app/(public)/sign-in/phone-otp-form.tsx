@@ -10,6 +10,12 @@ import { useEffect, useId, useState, type SyntheticEvent } from 'react';
 
 import { RESEND_AFTER_SECONDS } from './check-email.tsx';
 
+/** A text field's value from a submitted form. */
+function fieldValue(form: HTMLFormElement, name: string): string {
+  const value = new FormData(form).get(name);
+  return typeof value === 'string' ? value : '';
+}
+
 export const COUNTRY_CODE = '+91';
 export const OTP_LENGTH = 6;
 
@@ -86,7 +92,7 @@ export function PhoneOtpForm({ next, offline }: PhoneOtpFormProps) {
   async function onSubmitNumber(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     if (offline) return;
-    const number = toE164(String(new FormData(event.currentTarget).get('phone') ?? ''));
+    const number = toE164(fieldValue(event.currentTarget, 'phone'));
     if (number === null) {
       setFailure('invalidNumber');
       return;
@@ -97,7 +103,7 @@ export function PhoneOtpForm({ next, offline }: PhoneOtpFormProps) {
   async function onSubmitCode(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     if (offline || phoneNumber === null) return;
-    const code = String(new FormData(event.currentTarget).get('code') ?? '').trim();
+    const code = fieldValue(event.currentTarget, 'code').trim();
     if (code.length !== OTP_LENGTH) {
       setFailure('invalidCode');
       return;

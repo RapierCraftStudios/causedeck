@@ -1,7 +1,7 @@
 // Auth SMS delivery (#503): the phone sign-in OTP goes through the `SmsSender` that SMS_PROVIDER
 // selects, mirroring `mailer.ts`: the console in dev/CI, MSG91 with a DLT-registered template
 // (India) in production. Callers never see the provider; they hand over a phone number and a code.
-import type { ServerEnv } from '@causedeck/config/env';
+import type { Secret, ServerEnv } from '@causedeck/config/env';
 
 import { consoleLogger, type AuthLogger } from './mailer';
 
@@ -17,8 +17,12 @@ export interface SmsSender {
 }
 
 /** The env keys the SMS sender reads. */
-export type SmsEnv = Pick<ServerEnv, 'NODE_ENV'> &
-  ({ SMS_PROVIDER: 'console' } | Extract<ServerEnv, { SMS_PROVIDER: 'msg91' }>);
+export type SmsEnv = Pick<ServerEnv, 'NODE_ENV' | 'SMS_PROVIDER'> & {
+  SMS_AUTH_KEY?: Secret | undefined;
+  SMS_SENDER_ID?: string | undefined;
+  SMS_DLT_ENTITY_ID?: string | undefined;
+  SMS_OTP_TEMPLATE_ID?: string | undefined;
+};
 
 /** Last four digits only, so logs can correlate a send without holding the number. */
 export function maskPhone(phoneNumber: string): string {
@@ -89,15 +93,19 @@ export function createSmsSender(
   fetchImpl: typeof fetch = fetch,
 ): SmsSender {
   if (env.SMS_PROVIDER === 'msg91') {
-    return msg91SmsSender(
-      {
-        authKey: env.SMS_AUTH_KEY.reveal(),
-        senderId: env.SMS_SENDER_ID,
-        dltEntityId: env.SMS_DLT_ENTITY_ID,
-        templateId: env.SMS_OTP_TEMPLATE_ID,
-      },
-      fetchImpl,
-    );
+    const { SMS_AUTH_KEY, SMS_SENDER_ID, SMS_DLT_ENTITY_ID, SMS_OTP_TEMPLATE_ID } = env;
+    if (SMS_AUTH_KEY && SMS_SENDER_ID && SMS_DLT_ENTITY_ID && SMS_OTP_TEMPLATE_ID) {
+      return msg91SmsSender(
+        {
+          authKey: SMS_AUTH_KEY.reveal(),
+          senderId: SMS_SENDER_ID,
+          dltEntityId: SMS_DLT_ENTITY_ID,
+          templateId: SMS_OTP_TEMPLATE_ID,
+        },
+        fetchImpl,
+      );
+    }
+    logger.warn({}, 'SMS_PROVIDER=msg91 without credentials; falling back to the console sender');
   }
   return consoleSmsSender(logger, { includeCode: env.NODE_ENV !== 'production' });
 }

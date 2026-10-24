@@ -33,7 +33,8 @@ describe('system.orders.poll', () => {
     await expect(runOrdersPoll(ctx, { store: {} as never, jobs: {} as never })).resolves.toEqual(
       report,
     );
-    expect(orders.poll.mock.calls[0]?.[0].fetcher).toBe(fetcher);
+    const first = orders.poll.mock.calls[0]?.[0] as { fetcher: unknown };
+    expect(first.fetcher).toBe(fetcher);
     expect(log.info).toHaveBeenCalledWith({ ...report }, 'orders poll done');
   });
 

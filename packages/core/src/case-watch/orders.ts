@@ -135,7 +135,7 @@ async function newOrders(db: Db, watch: DueWatch, baseUrl: string): Promise<Watc
       .orderBy(desc(caseStatusSnapshot.fetchedAt), desc(caseStatusSnapshot.createdAt))
       .limit(1);
     if (row === undefined) return null;
-    const listed = (row.fields as ParsedCaseStatus).orders ?? [];
+    const listed = (row.fields as ParsedCaseStatus).orders;
     const orders: WatchOrders['orders'] = [];
     for (const o of listed) {
       if (o.href === null) continue;

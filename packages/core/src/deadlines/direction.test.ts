@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as CalendarModule from './calendar.ts';
 
 const cal = vi.hoisted(() => ({ load: vi.fn() }));
 
 vi.mock('./calendar.ts', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./calendar.ts')>()),
+  ...(await importOriginal<typeof CalendarModule>()),
   loadCourtCalendar: cal.load,
 }));
 

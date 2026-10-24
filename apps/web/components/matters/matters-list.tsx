@@ -22,7 +22,7 @@ import { MatterCard } from './matter-card.tsx';
 import { MattersTable } from './matters-table.tsx';
 import { useOnline } from './matters-offline-banner.tsx';
 import type * as DialogModule from './new-matter-dialog.tsx';
-import type { CreateMatterAction } from './new-matter-dialog.tsx';
+import type { CheckConflictsAction, CreateMatterAction } from './new-matter-dialog.tsx';
 
 let loaded: typeof DialogModule | null = null;
 let pending: Promise<typeof DialogModule> | null = null;
@@ -92,6 +92,8 @@ export interface MattersListProps {
   /** Open New matter on load (`?new=1`, the palette's `New matter`). */
   openNew?: boolean;
   createAction: CreateMatterAction;
+  /** The conflict check (#500): given only while the legal-gated flag is on. */
+  checkConflictsAction?: CheckConflictsAction | undefined;
   /** The page title block, rendered beside `New matter`. */
   header: ReactNode;
   /** Filters, between the header and the rows. */
@@ -109,6 +111,7 @@ export function MattersList({
   empty,
   openNew = false,
   createAction,
+  checkConflictsAction,
   header,
   toolbar,
   footer,
@@ -287,6 +290,7 @@ export function MattersList({
         <mod.NewMatterDialog
           workspaceId={workspaceId}
           action={createAction}
+          checkConflictsAction={checkConflictsAction}
           open={open}
           offline={!online}
           onOpenChange={(next) => {

@@ -2342,6 +2342,16 @@
         "forbidden": "Your role can't add matters.",
         "failed": "Couldn't create the matter. Try again.",
         "offline": "You're offline. Changes will not save until you're back."
+      },
+      "conflicts": {
+        "heading": "Conflict check",
+        "hint": "Check names against your own matters before you take this one. This is only a prompt: you decide.",
+        "clientLabel": "Client name",
+        "adverseLabel": "Opposite party name",
+        "check": "Check for conflicts",
+        "none": "No conflict found in your matters.",
+        "failed": "Couldn't run the conflict check. Try again.",
+        "hit": "“{checked}” matches {matched} ({source, select, alias {alias} other {name}}) in {matter}, where this is {role, select, client {your client} other {an adverse party}}."
       }
     },
     "search": {

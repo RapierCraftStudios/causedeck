@@ -238,6 +238,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   matchNotices: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
+  // Conflict-of-interest checks (#500): B's check sees none of A's parties
+  checkConflicts: empty,
+  nameKey: 'pure',
+  nameSimilarity: 'pure',
+  nameTokens: 'pure',
+  transliterate: 'pure',
   // Case-status watches (#591)
   addCaseWatch: selfScoped,
   listCaseWatches: selfScoped,

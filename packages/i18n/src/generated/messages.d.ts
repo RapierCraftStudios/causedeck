@@ -2344,6 +2344,16 @@ export type Messages = {
         failed: string;
         offline: string;
       };
+      conflicts: {
+        heading: string;
+        hint: string;
+        clientLabel: string;
+        adverseLabel: string;
+        check: string;
+        none: string;
+        failed: string;
+        hit: string;
+      };
     };
     search: {
       label: string;

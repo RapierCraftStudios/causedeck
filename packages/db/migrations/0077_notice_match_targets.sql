@@ -1,12 +1,11 @@
--- Migration 0077_notice_match_targets: hand-written (one policy, one function), no table changes; reviewed before commit.
+-- Migration 0077_notice_match_targets: hand-written (one function), no table changes; reviewed before commit.
 -- Reviewed-by: Claude (agent, #586)
 -- Notice matching (#586, D-048). The notices poll has no workspace, so it finds the workspaces and
 -- matters that use a forum only through app_notice_match_targets (owner-defined; ids and the forum
--- code only), as app_cause_list_watch_targets does (0068). owner_definer_read on proceeding backs it:
--- the owner role can read proceedings only through definer functions. Only catalogue (global)
+-- code only), as app_cause_list_watch_targets does (0068). It relies on owner_definer_read on
+-- proceeding, which 0076 (#493) already created: the owner role can read proceedings only through
+-- definer functions. Only catalogue (global)
 -- forums match; a workspace's own forum never matches a notice. Expand only.
-CREATE POLICY "owner_definer_read" ON "proceeding" AS PERMISSIVE FOR SELECT TO causedeck_owner
-  USING (true);--> statement-breakpoint
 CREATE FUNCTION app_notice_match_targets(p_forum_codes text[])
   RETURNS TABLE (workspace_id uuid, matter_id uuid, forum_id uuid, forum_code text)
   LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp

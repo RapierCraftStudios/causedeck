@@ -42,6 +42,7 @@ describe('registerSchedules', () => {
       'system.notices.poll',
       'system.judgment-alert.scan',
       'system.status.poll',
+      'system.webhook.sweep',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');

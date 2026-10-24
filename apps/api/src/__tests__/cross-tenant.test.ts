@@ -5,6 +5,7 @@
 // get A's rows only. Every `/v1` route must be listed in ROUTES below.
 import { randomUUID } from 'node:crypto';
 
+import { createApiKey } from '@causedeck/core/api-keys';
 import { createRoute, z } from '@hono/zod-openapi';
 import type { Transaction } from '@causedeck/db';
 import {
@@ -42,6 +43,12 @@ const ROUTES: Record<string, string> = {
     'flag-gated 404 when off; workspace membership checked; reads under the workspace scope (bench-card.test.ts)',
   'POST /v1/webhooks/razorpay':
     'signature-gated; workspace from the stored provider id only (razorpay-webhook.test.ts)',
+  'GET /v1/webhook-endpoints':
+    'a key or session of B lists only B’s endpoints; A’s never appear; a session naming A is 403 (this file)',
+  'POST /v1/webhook-endpoints':
+    'the workspace is the key’s own (or the member-checked header), never the body; B’s create lands in B only (this file)',
+  'DELETE /v1/webhook-endpoints/:id':
+    'B’s key or session cannot delete A’s endpoint: 404 and the row survives (this file)',
   'POST /v1/inbound/email':
     'provider-verified; the workspace comes only from the resolved intake address (inbound-email.test.ts)',
 };
@@ -197,6 +204,93 @@ describe('cross-tenant REST routes', () => {
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ visible: [workspaceId] });
     }
+  });
+
+  describe('/v1/webhook-endpoints', () => {
+    const endpointIds = (workspaceId: string) =>
+      withWorkspace(testAppDb(), { workspaceId }, (tx) =>
+        tx.select({ id: schema.webhookEndpoint.id }).from(schema.webhookEndpoint),
+      ).then((rows) => rows.map((r) => r.id));
+
+    const keyFor = async (workspaceId: string, actorUserId: string) =>
+      (
+        await createApiKey(testAppDb(), {
+          workspaceId,
+          actorUserId,
+          name: 'xt-webhooks',
+          scopes: ['webhooks:write'],
+        })
+      ).token;
+
+    it('GET: A’s endpoints never appear in B’s list, by key or by session', async () => {
+      const app = makeApp();
+      const aIds = await endpointIds(t.a.id);
+      expect(aIds.length).toBeGreaterThan(0);
+      const keyB = await keyFor(t.b.id, ub.id);
+      const byKey = await call(app, '/v1/webhook-endpoints', { bearer: keyB });
+      expect(byKey.status).toBe(200);
+      const listedByKey = ((await byKey.json()) as { data: { id: string }[] }).data.map(
+        (e) => e.id,
+      );
+      expect(listedByKey.sort()).toEqual((await endpointIds(t.b.id)).sort());
+      for (const id of aIds) expect(listedByKey).not.toContain(id);
+
+      const keyA = await keyFor(t.a.id, ua.id);
+      const ownA = await call(app, '/v1/webhook-endpoints', { bearer: keyA });
+      const listedA = ((await ownA.json()) as { data: { id: string }[] }).data.map((e) => e.id);
+      expect(listedA.sort()).toEqual([...aIds].sort());
+
+      const denied = await call(app, '/v1/webhook-endpoints', {
+        cookie: ub.cookie,
+        headers: { 'x-workspace-id': t.a.id },
+      });
+      expect(denied.status).toBe(403);
+    });
+
+    it('POST: B’s key creates in B only; a session naming A is 403 and writes nothing', async () => {
+      const app = makeApp();
+      const aBefore = (await endpointIds(t.a.id)).sort();
+      const keyB = await keyFor(t.b.id, ub.id);
+      const created = await call(app, '/v1/webhook-endpoints', {
+        method: 'POST',
+        bearer: keyB,
+        // A workspace id in the body is ignored: the key's own workspace wins.
+        body: { url: 'https://hooks.example.com/xt-b', workspaceId: t.a.id },
+      });
+      expect(created.status).toBe(201);
+      const { id } = (await created.json()) as { id: string };
+      expect(await endpointIds(t.b.id)).toContain(id);
+      expect((await endpointIds(t.a.id)).sort()).toEqual(aBefore);
+
+      const denied = await call(app, '/v1/webhook-endpoints', {
+        method: 'POST',
+        cookie: ub.cookie,
+        headers: { 'x-workspace-id': t.a.id },
+        body: { url: 'https://hooks.example.com/xt-denied' },
+      });
+      expect(denied.status).toBe(403);
+      expect((await endpointIds(t.a.id)).sort()).toEqual(aBefore);
+    });
+
+    it('DELETE: B cannot delete A’s endpoint by key (404) or by session (403); the row survives', async () => {
+      const app = makeApp();
+      const aIds = await endpointIds(t.a.id);
+      const keyB = await keyFor(t.b.id, ub.id);
+      for (const id of aIds) {
+        const byKey = await call(app, `/v1/webhook-endpoints/${id}`, {
+          method: 'DELETE',
+          bearer: keyB,
+        });
+        expect(byKey.status).toBe(404);
+        const bySession = await call(app, `/v1/webhook-endpoints/${id}`, {
+          method: 'DELETE',
+          cookie: ub.cookie,
+          headers: { 'x-workspace-id': t.a.id },
+        });
+        expect(bySession.status).toBe(403);
+      }
+      expect((await endpointIds(t.a.id)).sort()).toEqual([...aIds].sort());
+    });
   });
 
   it('probe routes are test-only', () => {

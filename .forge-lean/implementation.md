@@ -1,31 +1,34 @@
 ### Approach
-Continued the checkpointed work (public-api core domain, four key-scoped v1 routes, registries). This session made the tests runnable, fixed what they exposed, and formatted and linted.
+Continued the checkpointed branch. With node 22.23 on PATH the validate commands could run; they exposed three test/import defects, fixed here. Testcontainers' ryuk reaper cannot start on this host, so tests ran with `TESTCONTAINERS_RYUK_DISABLED=true` (env only).
 ### Changes
-- All contract deliverables D1-D14 (see `git diff origin/milestone/court-data-network...HEAD`).
-- apps/api/openapi/v1.json: regenerated with `pnpm openapi:export`; the committed-spec test requires it (amendment add-deliverable).
-- apps/api/src/__tests__/api-keys.test.ts: probe routes moved to `/cases/probe/ping` and `/orders/probe/ping`, because `/v1/cases/probe` now matches the real `/cases/{cnr}` route (422).
-- apps/api/src/__tests__/public-api.test.ts: seeds the watch that owns the snapshot (`case_status_snapshot.watchId`), and a lint fix.
+- packages/core/src/jobs/definitions/webhook-deliver.ts: import the webhooks domain through its index.ts (core-domain boundary); lint-safe error text.
+- packages/core/src/webhooks/__tests__/webhooks.test.ts: jobs imports via jobs/index.ts; clear the two-tenant seeder's webhook rows; run the delivery job inside a workspace scope as the runner does.
+- packages/core/src/__tests__/cross-tenant/services.test.ts: clear seeded webhook rows before the list and emit cases.
 ### Acceptance Criteria Status
-R1-R7 ✅ (routes `apps/api/src/public/v1/*.ts`, domain `packages/core/src/public-api/index.ts`, test `apps/api/src/__tests__/public-api.test.ts`). R8 deferred per contract.
+- R1 ✅ packages/core/src/webhooks/events.ts, jobs/definitions/webhook-deliver.ts, apps/worker/src/__tests__/registry.test.ts:169, schedules.test.ts:45
+- R2 ✅ packages/core/src/webhooks/__tests__/webhooks.test.ts (emit + deliver on the test database)
+- R3 ✅ apps/api/src/routes/v1/webhook-endpoints.ts:60 requireScope
+- R4 ✅ apps/api/src/__tests__/webhook-endpoints.test.ts:26
+- R5 ✅ content-free payload asserted in webhooks.test.ts; no judge data
 ### Verification
-- V1 (api: public-api, api-keys, cross-tenant, openapi, static-guards): 70/70 pass.
-- V2 (core: cross-tenant services, public-api, sources): 198/198 pass.
-- V3 (db): `src/testing` holds no test files; `src/__tests__/cross-tenant/registry.test.ts` passes 4/4.
-- V4 (admin): 32/32 pass.
-- tsc in core and api pass. Prettier and eslint pass (pre-commit hook).
-- public-api.test.ts fails without the fix: the routes do not exist, so every request is a 404.
-- The sandbox host's node is 22.12.0, which has no `zlib.createZstdDecompress` (needed by undici 8), and testcontainers cannot see Postgres start. I ran the same test files with a scratch zstd preload and a scratch global setup in $TMPDIR (labelled docker postgres, same init SQL and migrations). `forgedock check` itself still fails on this host for that reason, not because of the code.
+V1–V5 all pass (`forgedock check` PASS, run with TESTCONTAINERS_RYUK_DISABLED=true). The domains.test.ts, webhooks and cross-tenant cases failed before these fixes and pass now.
 ### Notes
-No env vars, no behaviour change for existing routes.
+No behaviour change in production code. Env: TESTCONTAINERS_RYUK_DISABLED=true needed locally only.
 
-## Merge-check fix
-The reported failure (`turbo: command not found`, exit 127) is a host PATH problem, not a code conflict. Per-package `tsc --noEmit` on core, db and api passes on the merged tree, so no symbols needed renaming. Vitest cannot start on this host (Node 22.12 with undici 8.12.1 throws in `decompress.js`, even for the untouched errors.test.ts), so V1-V4 were not re-run after the merge.
+## Stale-list follow-up
+Flagged job/schema symbols are already in cross-tenant-registry NOT_A_SERVICE / table list; the flagged app and services tests enumerate no sibling schema or job symbols, so recorded as not_members in result.json.
 
-### Post-merge check (base merged, 533acbcf)
-`turbo run typecheck` exited 127 because bare `turbo` is not on PATH, not because of the code. After the merge, `pnpm exec turbo run typecheck --filter=@causedeck/api --filter=@causedeck/core --filter=@causedeck/db` passes (17/17 tasks), and `tsc --noEmit` passes in core, db, api and admin. There were no duplicate keys or same-named symbols. The api test suites pass after the merge (18 files, 152 tests).
+### Follow-up: sibling lists
+The flagged tests do not enumerate job exports or schema tables (no sibling symbol appears in them); recorded as `not_members` in result.json. The registries that do enumerate them (cross-tenant-registry.ts, db index.test.ts, rls sql.test.ts) already name the webhook symbols. V1-V5 were passing on the previous commit; no code changed.
 
-## Lint fix
-CI lint failed on `z.string().date()` (deprecated, no-deprecated) in apps/api/src/public/v1/causelists.ts; switched to `z.iso.date()`. Same OpenAPI output (format: date). ESLint on changed api/core files is clean; api tsc clean. Vitest could not run in this shell (undici/Node 22.12 load error, environmental).
+### Follow-up: post-merge typecheck
+The reported failure (`turbo: command not found`, exit 127) was the check shell lacking turbo on PATH, not a code conflict. Ran `node_modules/.bin/turbo run typecheck --filter='...[origin/milestone/court-data-network]'`: 24/24 tasks pass on the merged tree. No code changed.
 
-## CI test failure (@causedeck/intelligence#test)
-No code change. `@causedeck/intelligence` does not depend on `@causedeck/core` and this branch changes nothing under packages/intelligence, so the branch cannot affect it. The CI log shows only the tail with no failing test id, in a cold (0 cached) 17-task shard. The package passes here: 37 files, 307 passed, 1 skipped. The failure looks like a load-dependent timeout flake on the shared runner (its PDF/font tests have a 30 s timeout set for that reason). A CI rerun is the next step.
+### Follow-up: turbo not on PATH (again)
+Exit 127 is environmental. `pnpm exec turbo run typecheck --concurrency=$FORGE_HOST_PARALLELISM` passes 24/24 on the merged tree. No code changed.
+
+### Follow-up: merged-tree typecheck
+`turbo run typecheck` exited 127 because `turbo` is not on PATH (a local-tool lookup issue, no code fault). `pnpm exec turbo run typecheck` on the merged tree: 24/24 packages pass. No source change was needed.
+
+## CI lint fix
+- `require-authorization` flagged the three webhook-endpoints routes; annotated them `// authz: public — gated by requireScope(...)`, core asserts `workspace.manage`. Removed the accidentally committed `.eslintcache`.

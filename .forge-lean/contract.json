@@ -2,248 +2,309 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Under apps/api/src/public/v1/: GET /v1/cases/{cnr}, /v1/causelists, /v1/orders, /v1/notices.",
+   "quote": "Webhook endpoints per workspace, signed delivery with retries, fired on status, cause-list and order changes for watched items; worker delivery job registered in apps/worker registry and schedules tests.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Every record carries provenance and source_license;",
+   "quote": "Acceptance: webhooks fire on changes for watched items [integration].",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "serve only cleared sources or contributed copies and only data_class non-personal via exposableThroughApi (packages/core/src/sources/registry.ts:25), personal data only for the caller's own matters, per docs/legal/court-data-posture.md.",
+   "quote": "every route added under the public API prefixes (`/v1/cases`, `/v1/causelists`, `/v1/orders`, `/v1/notices`, `/v1/webhook-endpoints`) must call `requireScope` with its scope and stay workspace-scoped.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Acceptance: only cleared-source data with provenance on every record [integration].",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "every route added under the public API prefixes (/v1/cases, /v1/causelists, /v1/orders, /v1/notices, /v1/webhook-endpoints) must call requireScope with its scope and stay workspace-scoped.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
    "quote": "Add a test that a key without the scope gets 403.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R7",
+   "id": "R5",
    "quote": "D-048 applies to what each route exposes (no resale of personal data); D-050 applies too (no judge ratings, rankings or predictions in any response).",
    "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R8",
-   "quote": "every route added under the public API prefixes (/v1/cases, /v1/causelists, /v1/orders, /v1/notices, /v1/webhook-endpoints)",
-   "disposition": "defer",
-   "why": "/v1/webhook-endpoints routes belong to sibling #626 (webhooks); this change adds the four data routes and a reusable per-route requireScope pattern.",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/public-api/index.ts",
-   "change": "New core domain: gated reads getPublicCase(db, {workspaceId, cnr}), listPublicCauseLists, listPublicOrders, listPublicNotices and pure sourceLicense(source). Gate = decideSourceClearance(row)===null and, for global/shared records, exposableThroughApi(dataClass). Own-matter case data read via workspace scope. Returns provenance {sourceId, kind fetched|contributed, ref, capturedAt, confidence} plus source_license; never contributor workspace, party analytics or judge metrics. Split into read.ts if large.",
+   "path": "packages/db/src/schema/webhooks.ts",
+   "change": "New tenantTable()s webhook_endpoint and webhook_delivery (FORCE RLS, workspace FK cascade, CHECKs for status and https url length); export from packages/db/src/schema/index.ts.",
    "requirements": [
-    "R2",
-    "R3",
-    "R4",
-    "R7"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/package.json",
-   "change": "Add export './public-api': './src/public-api/index.ts'.",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the webhooks schema.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Register public-api in CORE_DOMAIN_DEPENDENCIES depending on sources only (import via its index.ts).",
+   "path": "packages/db/migrations",
+   "change": "Generate with pnpm db:generate (timestamp-named per D-051, not 0083): the two tables, RLS policies and owner-defined app_webhook_delivery_due(); Reviewed-by header; snapshot and journal.",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D4",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Document the public-api domain and its dependency on sources.",
+   "path": "packages/fetch/src/webhook-delivery.ts",
+   "change": "deliverWebhook(url, body, headers): https only, refuse private/loopback/link-local addresses and redirects, timeout and response cap; export from packages/fetch/src/index.ts. Leave postWebhook (Slack) unchanged.",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register new core runtime exports: workspace-scoped reads in SERVICE_TESTS, pure sourceLicense in NOT_A_SERVICE with a reason.",
+   "path": "packages/fetch/src/index.ts",
+   "change": "Export deliverWebhook.",
    "requirements": [
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cases: workspace B on A's cnr/own-matter data gets nothing; A unchanged.",
+   "path": "packages/core/src/webhooks/index.ts",
+   "change": "New core domain webhooks: createWebhookEndpoint (secret returned once, audited), listWebhookEndpoints, deleteWebhookEndpoint, signWebhook (HMAC-SHA256 over timestamp.body), emitWebhookEvent (fan out to matching active endpoints in the workspace, content-free payload with ids, CNR, change kind, provenance and source_license; no party names, order text or judge ratings/rankings/predictions; no event for sensitive matters). Split into endpoints.ts, events.ts, sign.ts as needed.",
    "requirements": [
+    "R1",
     "R5"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/api/src/public/v1/index.ts",
-   "change": "publicV1Router(db) mounting the four routes; shared schemas.ts with Provenance and source_license response schemas.",
+   "path": "packages/core/src/jobs/definitions/webhook-deliver.ts",
+   "change": "Job webhook.deliver: re-read delivery and endpoint in the payload's workspace, sign, call deliverWebhook, record outcome; RetryableError for retryable failures (backoff), permanent failure marked failed, endpoint disabled after consecutive failures; once() against double send. Plus system.webhook.sweep (webhook-sweep.ts) that re-enqueues due pending deliveries via app_webhook_delivery_due on a cron.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register webhook.deliver and system.webhook.sweep; export from packages/core/src/jobs/index.ts.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/core/src/jobs/index.ts",
+   "change": "Export the new job definitions and schemas.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/core/src/case-watch/poll.ts",
+   "change": "Add an optional injected onChange/emit dep called after a changed snapshot (status, new order), skipped for the first snapshot; no new core-domain import. Wire it in packages/core/src/jobs/definitions/status-poll.ts.",
    "requirements": [
     "R1",
     "R2"
    ]
   },
   {
-   "id": "D8",
-   "path": "apps/api/src/public/v1/cases.ts",
-   "change": "GET /v1/cases/{cnr}: defineRoute with middleware [requireScope('cases:read')], workspace from the key (principal.apiKey.workspaceId) else requireWorkspace, call getPublicCase, 404 when not own matter or source not cleared.",
-   "requirements": [
-    "R1",
-    "R5",
-    "R3"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "apps/api/src/public/v1/causelists.ts",
-   "change": "GET /v1/causelists?forum&date&advocate with requireScope('causelists:read'); shared copies only from non-personal cleared sources; advocate filter only the caller's own watches.",
-   "requirements": [
-    "R1",
-    "R5",
-    "R3",
-    "R7"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/api/src/public/v1/orders.ts",
-   "change": "GET /v1/orders?case with requireScope('orders:read'); own-matter orders from the workspace snapshot plus non-personal cleared contributed orders.",
-   "requirements": [
-    "R1",
-    "R5",
-    "R3",
-    "R7"
-   ]
-  },
-  {
    "id": "D11",
-   "path": "apps/api/src/public/v1/notices.ts",
-   "change": "GET /v1/notices?forum with requireScope('notices:read'); cleared non-personal sources only.",
+   "path": "packages/core/src/jobs/definitions/status-poll.ts",
+   "change": "Wire emitWebhookEvent into pollCaseWatches deps.",
    "requirements": [
-    "R1",
-    "R5",
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D12",
+   "path": "packages/core/src/court/list-watch.ts",
+   "change": "Add an optional injected emit dep for new cause-list matches of a watch; wire in packages/core/src/jobs/definitions/causelist-poll.ts.",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/core/src/jobs/definitions/causelist-poll.ts",
+   "change": "Wire emitWebhookEvent into the cause-list poll deps.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/api/src/routes/v1/webhook-endpoints.ts",
+   "change": "POST/GET/DELETE /v1/webhook-endpoints via defineRoute, each with requireScope('webhooks:write'), workspace taken from the principal (never from the body); responses never echo the secret after creation.",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D15",
    "path": "apps/api/src/routes/v1/index.ts",
-   "change": "Mount publicV1Router after the built-in routers.",
+   "change": "Mount the webhook-endpoints router.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "apps/api/src/__tests__/webhook-endpoints.test.ts",
+   "change": "Tests: key without webhooks:write gets 403 on every method, key with it works, a key cannot see or delete another workspace's endpoint, secret shown once.",
+   "requirements": [
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/core/src/webhooks/__tests__/webhooks.test.ts",
+   "change": "Integration tests: a change on a watched item creates a signed delivery for a matching endpoint and not for another workspace or sensitive matter; signature verifies; payload has no personal data or ratings; deliver job retries then succeeds, permanent failure stops.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Add SERVICE_TESTS entries (or NOT_A_SERVICE with reason for pure helpers like signWebhook) for each new @causedeck/core export; add real cases in packages/core/src/__tests__/cross-tenant/services.test.ts.",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D13",
-   "path": "apps/api/src/__tests__/public-api.test.ts",
-   "change": "Integration test: 403 per route for a key lacking its scope, 200 with it; personal/mixed/uncleared/killed sources are never served; every record has provenance and source_license; workspace B's key never sees A; no rating/ranking/prediction keys in responses.",
+   "id": "D19",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Cross-tenant cases: B cannot list or delete A's endpoints; emit in B never delivers to A's endpoint.",
    "requirements": [
-    "R4",
-    "R6",
-    "R7",
-    "R5"
+    "R1"
    ]
   },
   {
-   "id": "D14",
-   "path": "apps/api/src/__tests__/cross-tenant.test.ts",
-   "change": "Add the four GET /v1 routes to the ROUTES coverage map with how each is covered.",
+   "id": "D20",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add webhook_endpoint and webhook_delivery to the root table list.",
    "requirements": [
-    "R5"
+    "R1"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add both tables to the RLS catalog; add TABLE_TESTS/registry entries and two-tenant seeders where the rls suite requires them.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add the webhooks domain to CORE_DOMAIN_DEPENDENCIES (audit, workspaces as needed) and add webhooks to the jobs dependency list; mirror in docs/engineering/core-domains.md.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the webhooks domain, its edges and the jobs dependency.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add webhook.deliver and system.webhook.sweep to the expected job names (in registry order).",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "Add system.webhook.sweep to the expected schedules.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "packages/fetch/src/__tests__/webhook-delivery.test.ts",
+   "change": "Tests: refuses http, private/loopback addresses and redirects; times out; posts signed headers to an https public host.",
+   "requirements": [
+    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "apiKeyEnforcement, API_KEY_ROUTE_PREFIXES and per-call billing in apps/api/src/middleware/api-key.ts"
+   "what": "Slack postWebhook and its WEBHOOK_HOSTS allow-list in packages/fetch/src/webhook.ts stay unchanged; deliverWebhook is a separate function."
   },
   {
    "id": "P2",
-   "what": "requireScope semantics in apps/api/src/lib/openapi.ts:78 (scopes limit keys only; cookie callers unaffected)"
+   "what": "notifyStatusChanges behaviour (no alert on first snapshot or sensitive matter, dedupeKey) in packages/core/src/case-watch/alerts.ts and the PollCaseWatchesReport counts in poll.ts; new deps are optional."
   },
   {
    "id": "P3",
-   "what": "packages/core/src/sources/registry.ts exports unchanged, so the literal export lists in apps/admin/__tests__/server-actions-audit.test.ts:78 and sources-actions.test.ts:12 stay valid"
+   "what": "apiKeyEnforcement and API_KEY_ROUTE_PREFIXES in apps/api/src/middleware/api-key.ts, and requireScope semantics in apps/api/src/lib/openapi.ts (cookie callers unaffected)."
   },
   {
    "id": "P4",
-   "what": "findContributed (packages/core/src/network/read.ts) and listWorkspaceNotices (packages/core/src/notices/list.ts) behaviour for existing callers"
-  },
-  {
-   "id": "P5",
-   "what": "assertRouteSecurity guard in apps/api (all /v1 routes via defineRoute) and the OpenAPI document tests"
+   "what": "Existing migrations 0001-0082 and their snapshots; no edits to shipped migrations."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/public-api.test.ts src/__tests__/api-keys.test.ts src/__tests__/cross-tenant.test.ts src/__tests__/openapi.test.ts src/__tests__/static-guards.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/webhook-endpoints.test.ts src/__tests__/api-keys.test.ts src/__tests__/static-guards.test.ts src/__tests__/security.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/public-api src/sources --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/webhooks src/case-watch src/court/list-watch.test.ts src/jobs/registry.test.ts src/domains.test.ts src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/fetch exec vitest run src/__tests__/webhook-delivery.test.ts src/__tests__/static-checks.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/server-actions-audit.test.ts __tests__/sources-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add a new core domain public-api (depends only on sources) instead of querying from apps/api.",
-   "justification": "Core owns data access and apps import it via package exports (apps/api/src/routes/v1/billing.ts:6, me.ts:2); new domains register in CORE_DOMAIN_DEPENDENCIES and core-domains.md per CLAUDE.md.",
-   "source": "precedent"
-  },
-  {
-   "id": "K2",
-   "choice": "Derive source_license (no schema/migration): contributed copies 'contributed-public-document', fetched records '\u003csource.owner> public record (terms and counsel cleared)'.",
-   "justification": "source has no licence column (packages/db/src/schema/source-registry.ts:54-76); avoiding a migration keeps the change in-lane. Revisit if counsel wants per-source licence text.",
-   "source": "spec"
-  },
-  {
-   "id": "K3",
-   "choice": "Gate fails closed: unknown/uncleared/killed or non-'non-personal' source means the record is omitted; own-matter case data is exempt from the data-class rule only because it is the caller's workspace data.",
-   "justification": "docs/legal/court-data-posture.md lawful-basis table and 'No resale of personal data'; exposableThroughApi at packages/core/src/sources/registry.ts:25; decideSourceClearance at registry.ts:~105.",
+   "choice": "Outbound customer-URL delivery lives in @causedeck/fetch as a new deliverWebhook with SSRF guards, not an inline fetch in core.",
+   "justification": "packages/fetch/src/webhook.ts:1-4 says only that package may call fetch on an external host (#479); core already depends on it, so no new workspace dependency is added.",
    "source": "doc"
   },
   {
-   "id": "K4",
-   "choice": "Do not reuse findContributed or listWorkspaceNotices unfiltered.",
-   "justification": "Neither checks clearance or data class (network/read.ts:36-60, notices/list.ts:55-70).",
+   "id": "K2",
+   "choice": "Change events reach the webhooks domain through optional injected deps wired in the job definitions, not a case-watch -> webhooks import.",
+   "justification": "Mirrors StatusAlertDeps.enqueueDelivery (packages/core/src/case-watch/alerts.ts:18-22) and avoids a new CORE_DOMAIN_DEPENDENCIES edge (packages/config/eslint/core-domains.js:30).",
+   "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "Retries use RetryableError + pg-boss backoff plus a cron sweep over an owner-defined due function; migration is timestamp-named.",
+   "justification": "notification-deliver.ts retry pattern; app_case_watch_due/app_api_key_by_hash for cross-workspace reads (0081_api_keys.sql); D-051 in DECISIONS.md and packages/db/drizzle.config.ts for naming.",
    "source": "precedent"
   }
  ]

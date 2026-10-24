@@ -295,6 +295,15 @@ export const automationExporter = tablesExporter('automation', [
   ws('automation_threshold'),
 ]);
 
+// Change webhooks (#626): the workspace's own receivers and the delivery history of each event.
+// The signing secret is a credential and never leaves, so it is dropped from the endpoint; the
+// customer can rotate by recreating the endpoint. A delivery holds a content-free payload (ids and
+// change kinds, D-048) with its status, attempts and timestamps.
+export const webhooksExporter = tablesExporter('webhooks', [
+  ws('webhook_endpoint', { exclude: ['secret'], userColumn: 'created_by' }),
+  ws('webhook_delivery'),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -308,6 +317,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   courtExporter,
   mattersExporter,
   automationExporter,
+  webhooksExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

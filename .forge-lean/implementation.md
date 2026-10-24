@@ -27,3 +27,6 @@ No migration, no new dependency, no env vars. Judges are never read.
 
 ### Follow-up
 e2e/tests/courts/courts.spec.ts:99 does not enumerate courts components; recorded bench-notice-alerts and its stories as not_members in result.json. No code change.
+
+### Merge re-check
+The post-merge typecheck failure was `turbo: command not found` (PATH only, exit 127), not a code clash. `pnpm exec turbo run typecheck --filter='...[9820df68]'` passes (23/23 tasks). No source change was needed. Vitest suites need the Postgres testcontainer global setup, which is unavailable on this host; they run in CI.

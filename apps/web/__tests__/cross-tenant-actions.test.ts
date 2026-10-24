@@ -266,7 +266,12 @@ function signInAs(userId: string): void {
 function snapshotA() {
   return withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => ({
     members: await tx
-      .select({ id: schema.member.id, role: schema.member.role, status: schema.member.status })
+      .select({
+        id: schema.member.id,
+        role: schema.member.role,
+        status: schema.member.status,
+        clerkSetupStatus: schema.member.clerkSetupStatus,
+      })
       .from(schema.member)
       .orderBy(schema.member.id),
     invitations: await tx

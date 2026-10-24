@@ -4,7 +4,13 @@ import { describe, expect, it } from 'vitest';
 
 import { checkSchemaConventions, GLOBAL_TABLES, tablesOf } from '../conventions.ts';
 import { workspace } from '../index.ts';
-import { LOCALES, MEMBER_STATUSES, WORKSPACE_KINDS, WORKSPACE_ROLES } from '../schema/auth.ts';
+import {
+  CLERK_SETUP_STATUSES,
+  LOCALES,
+  MEMBER_STATUSES,
+  WORKSPACE_KINDS,
+  WORKSPACE_ROLES,
+} from '../schema/auth.ts';
 import * as schema from '../schema/index.ts';
 
 const GLOBAL_AUTH_TABLES = [
@@ -118,6 +124,7 @@ describe('workspace data model (#177)', () => {
 
   it('adds the nullable clerk setup columns with a closed status check (#505)', () => {
     const { member } = schema;
+    expect(CLERK_SETUP_STATUSES).toEqual(['pending', 'approved']);
     expect(member.clerkSetupStatus.notNull).toBe(false);
     expect(member.clerkSetupDecidedAt.notNull).toBe(false);
     expect(Object.keys(checksOf(member))).toContain('member_clerk_setup_status_chk');

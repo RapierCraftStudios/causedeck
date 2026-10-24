@@ -155,6 +155,9 @@ describe('row-level security catalog', () => {
         'ics_feed_event',
         'ics_import_event',
 
+        // Public API keys (#624).
+        'api_key',
+
         // Case-status watch (#589).
         'case_watch',
         'case_status_snapshot',

@@ -1,6 +1,7 @@
 /** Domain services: workspaces, matter graph, obligations, briefs, memory, audit. */
 export const packageName: string = '@causedeck/core';
 
+export * from './api-keys/index.ts';
 export * from './audit/index.ts';
 export * from './automation/index.ts';
 export * from './business/index.ts';

@@ -19,6 +19,7 @@ Recovery pass for ci.red. Three CI causes fixed on top of the earlier #499 work;
 V1-V4 not run locally (verify.mode ci); CI runs them. Prettier 3.9.10 with the repo config was run on the changed files. The page-test regression (logger.warn mock) is the existing matter-workspace-page suite, which failed on CI before this fix.
 
 ### Notes
+Branch merged with origin/milestone/court-data-network (30 commits, conflicts only in .forge-lean notes); V1 and V2 re-run after the merge fail identically at undici load (Node 22.12.0 has no zstd), so they are environment failures, not caused by this change.
 No behaviour or env changes.
 
 ## Migration renumber

@@ -26,6 +26,7 @@ import {
 } from './merge-split-dialogs.tsx';
 import { ProceedingForm, type ProceedingFormActions } from './proceeding-form.tsx';
 import { ProceedingRow } from './proceeding-row.tsx';
+import { StatusWatchPanel, type StatusWatchActions } from './status-watch-panel.tsx';
 import type { TransitionProceedingAction } from './state-transition-menu.tsx';
 
 export interface ProceedingTreeActions {
@@ -46,6 +47,16 @@ export interface ProceedingTreeProps {
   /** Present only for writers (absent, not disabled, for everyone else). */
   actions?: ProceedingTreeActions | undefined;
   forcedOffline?: boolean;
+  /** Case-status watches (#593): only when `court.case-status` is on and the member may write. */
+  statusWatch?:
+    | {
+        /** Status source ids a watch can read. */
+        sources: string[];
+        /** The member's own watch ids by proceeding id. */
+        watches: Record<string, string>;
+        actions: StatusWatchActions;
+      }
+    | undefined;
 }
 
 type Overlay =
@@ -90,6 +101,7 @@ export function ProceedingTree({
   canWrite,
   actions,
   forcedOffline = false,
+  statusWatch,
 }: ProceedingTreeProps) {
   const t = useTranslations('matters.workspace.proceedingsTab');
   const online = useOnline();
@@ -373,6 +385,21 @@ export function ProceedingTree({
           {renderItems(rows)}
         </ul>
       )}
+      {statusWatch !== undefined && writer ? (
+        <StatusWatchPanel
+          workspaceId={workspaceId}
+          sources={statusWatch.sources}
+          actions={statusWatch.actions}
+          disabled={offline}
+          targets={all.map((row) => ({
+            proceedingId: row.id,
+            label: row.label,
+            cnr: row.cnr,
+            caseNumber: row.label,
+            watchId: statusWatch.watches[row.id] ?? null,
+          }))}
+        />
+      ) : null}
       {actions !== undefined && (overlay.kind === 'add' || overlay.kind === 'edit') ? (
         <ProceedingForm
           workspaceId={workspaceId}

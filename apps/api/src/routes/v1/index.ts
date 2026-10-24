@@ -6,13 +6,16 @@
 import type { Database } from '@causedeck/db';
 import type { MiddlewareHandler } from 'hono';
 
+import { publicV1Router } from '../../public/v1/index.ts';
 import { createRouter, type AppEnv, type AppRouter } from '../../lib/openapi.ts';
 
 import { inboundEmailRouter, type InboundEmailDeps } from '../inbound-email.ts';
 import { razorpayWebhookRouter, type RazorpayWebhookDeps } from '../webhooks/razorpay.ts';
 
+import { benchCardRouter } from './bench-card.ts';
 import { billingRouter } from './billing.ts';
 import { meRouter } from './me.ts';
+import { webhookEndpointsRouter } from './webhook-endpoints.ts';
 import { workspacesRouter } from './workspaces.ts';
 
 export interface V1Options {
@@ -35,6 +38,9 @@ export function v1Router({ db, middleware, billing, inboundEmail, routes }: V1Op
   v1.route('/', meRouter(db));
   v1.route('/', workspacesRouter(db));
   v1.route('/', billingRouter(db));
+  v1.route('/', publicV1Router(db));
+  v1.route('/', benchCardRouter(db));
+  v1.route('/', webhookEndpointsRouter(db));
   v1.route(
     '/',
     razorpayWebhookRouter({

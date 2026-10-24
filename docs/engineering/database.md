@@ -233,6 +233,21 @@ only sets `status`. Migration `0050_notification_bench_alert_party_names` adds
 `notification_setting.bench_alert_party_names` (boolean, default false): the member's opt-in to party
 names in bench-change notifications.
 
+## Notices tables
+
+`notice` and `notice_match` in `packages/db/src/schema/notices.ts`, migration `0068_notices` (#584,
+part 1 of #480, D-048). `notice` is a global table (GLOBAL_TABLES, no RLS; the app role may SELECT,
+INSERT and UPDATE, never DELETE) holding official court, bar and Gazette notices read from a cleared
+`source`: `source_id`, `forum_codes text[]`, `kind` (`notice_kind`), `title`, `issued_on`,
+`effective_on`, `url`, the document as `document_key` / `document_sha256` / `document_mime` (all set
+or all null; not a `blob` FK, since `blob` is a tenant table) and `provenance()` columns. One row per
+`(source_id, url)`. `notice_match` is a tenant table under FORCE RLS: `notice_id`, a nullable
+composite `(workspace_id, matter_id)` FK, a nullable `forum_id` (scope-guarded `same_or_global`), a
+`reason` (`forum` or `matter_forum`) and a check that a matter or forum is named. The migration also
+seeds uncleared `notice` sources (Supreme Court, Madras HC, Karnataka HC, the Chennai and Bengaluru
+district courts, BCTNP, KSBC, eGazette) with terms URLs in `notes`. Tested in
+`packages/db/src/__tests__/notices-schema.test.ts`.
+
 ## Audit tables
 
 `packages/db/src/schema/audit.ts`, migration `0008_audit` (#226, #26 part 1). Both tables are
@@ -288,8 +303,11 @@ metadata?)`, which returns `(id, hash)`. A non-null workspace must be the pinned
 ## Writing a migration (reviewed SQL)
 
 1. Change or add tables under `packages/db/src/schema/` and export them from `schema/index.ts`.
-2. `pnpm db:generate`. drizzle-kit writes `migrations/NNNN_<name>.sql` plus its snapshot, and the
-   script stamps a header ending in `-- Reviewed-by: <unreviewed>`.
+2. `pnpm db:generate`. drizzle-kit writes `migrations/<YYYYMMDDHHMMSS>_<name>.sql` plus its snapshot,
+   and the script stamps a header ending in `-- Reviewed-by: <unreviewed>`. Since D-051, names are
+   timestamps (files up to `0082` keep their index), so parallel branches never pick the same name.
+   A hand-written migration with no schema change: `pnpm --filter @causedeck/db exec drizzle-kit
+   generate --custom --name <name>`, then write the SQL into the new file.
 3. Read the SQL. Check locks, defaults on large tables, index creation and backward
    compatibility (below). Edit it if needed (for example `CREATE INDEX CONCURRENTLY` in its own
    migration, or a backfill), then replace `<unreviewed>` with your name.

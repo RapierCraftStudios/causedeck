@@ -91,6 +91,7 @@ const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
+const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
@@ -99,13 +100,17 @@ const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/em
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
+const courtWatch = await import('../app/(app)/w/[slug]/settings/court-watch/actions.ts');
+const caseWatch = await import('../app/(app)/w/[slug]/settings/case-watch/actions.ts');
 const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
 const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
 const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
+const portfolioActions = await import('../app/(app)/w/[slug]/portfolio/actions.ts');
 const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
+const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
@@ -140,6 +145,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
   updateWorkspacePrivacyAction: privacy,
@@ -162,6 +168,14 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   revokeSupportSessionAction: support,
   requestExportAction: exports,
   listExportsAction: exports,
+  listCourtWatchesAction: courtWatch,
+  addCourtWatchAction: courtWatch,
+  removeCourtWatchAction: courtWatch,
+  listCaseWatchesAction: caseWatch,
+  addCaseWatchAction: caseWatch,
+  removeCaseWatchAction: caseWatch,
+  refreshCaseStatusAction: caseWatch,
+  recordDeviceStatusAction: caseWatch,
   requestWorkspaceDeletionAction: danger,
   cancelWorkspaceDeletionAction: danger,
   requestAccountDeletionAction: account,
@@ -169,12 +183,20 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   previewRosterImportAction: rosters,
   confirmRosterImportAction: rosters,
   dismissBenchChangeAlertAction: rosters,
+  createPortfolioAction: portfolioActions,
+  importPortfolioAction: portfolioActions,
+  exportPortfolioCsvAction: portfolioActions,
   createMatterAction: matters,
   searchMattersAction: matters,
+  checkConflictsAction: matters,
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
+  addTagAction: research,
+  confirmTagAction: research,
+  dismissTagAction: research,
   chooseNextDateSourceAction: matterWorkspace,
+  reportRecordErrorAction: matterWorkspace,
   createProceedingAction: proceedingsTab,
   updateProceedingAction: proceedingsTab,
   transitionProceedingAction: proceedingsTab,
@@ -287,6 +309,15 @@ function snapshotA() {
       })
       .from(schema.workspaceIntegration)
       .orderBy(schema.workspaceIntegration.kind),
+    // A's API keys (#624): no web action may issue, revoke or touch one.
+    apiKeys: await tx
+      .select({
+        id: schema.apiKey.id,
+        tokenHash: schema.apiKey.tokenHash,
+        revokedAt: schema.apiKey.revokedAt,
+      })
+      .from(schema.apiKey)
+      .orderBy(schema.apiKey.id),
     // A's intake addresses, allow-list and messages (#54).
     intakeAddresses: await tx.select().from(schema.intakeAddress).orderBy(schema.intakeAddress.id),
     intakeAllowlist: await tx
@@ -435,6 +466,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    saveNewsPreferencesAction: {
+      workspaceId,
+      practiceAreas: ['tax'],
+      forums: [],
+      digestTime: '08:00',
+    },
     updateWorkspaceProfileAction: {
       workspaceId,
       name: 'Cross-tenant probe',
@@ -493,6 +530,35 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Lifecycle (#305): ub, owner of B, may not export, delete or cancel A's deletion.
     requestExportAction: { workspaceId },
     listExportsAction: { workspaceId },
+    listCourtWatchesAction: { workspaceId },
+    addCourtWatchAction: { workspaceId, kind: 'brn', value: 'KAR/1/1900' },
+    removeCourtWatchAction: { workspaceId, watchId: randomUUID() },
+    // Case-status watches (#593): ub, owner of B, may not list, add, remove, refresh or record on A's.
+    listCaseWatchesAction: { workspaceId },
+    addCaseWatchAction: {
+      workspaceId,
+      proceedingId: randomUUID(),
+      sourceId: 'in.tn.chennai-district:case_status',
+      cnr: 'KABC010012342024',
+    },
+    removeCaseWatchAction: { workspaceId, watchId: randomUUID() },
+    refreshCaseStatusAction: { workspaceId, watchId: randomUUID() },
+    recordDeviceStatusAction: {
+      workspaceId,
+      watchId: randomUUID(),
+      status: {
+        template: 'ecourts-district',
+        status: 'not_found',
+        cnr: null,
+        caseNumber: null,
+        nextHearingDate: null,
+        lastHearingDate: null,
+        stage: null,
+        bench: null,
+        orders: [],
+        quotes: {},
+      },
+    },
     requestWorkspaceDeletionAction: { workspaceId, confirmName: t.a.name },
     cancelWorkspaceDeletionAction: { workspaceId, jobId: aDeletionId },
     // Courts (#402): ub, owner of B, may not add a forum to A.
@@ -522,6 +588,14 @@ function inputs(workspaceId: string): Record<string, unknown> {
       workspaceId,
       alertId: t.a.rows.bench_change_alert?.alertId,
     },
+    // Portfolios (#666): A's portfolio id under B's workspace is not found; creation is B's own.
+    createPortfolioAction: { workspaceId, name: 'Cross-tenant probe book' },
+    importPortfolioAction: {
+      workspaceId,
+      portfolioId: t.a.rows.portfolio?.id,
+      csv: 'cnr\nMHAU019999992026\n',
+    },
+    exportPortfolioCsvAction: { workspaceId, portfolioId: t.a.rows.portfolio?.id },
     // Capture inbox (#43): ub, owner of B, may not enable a channel on A, nor discard or pin A's capture.
     enableChannelAction: { workspaceId, channel: 'email', disclosureVersion: '2026-10-v1' },
     discardCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id },
@@ -588,6 +662,10 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
+    checkConflictsAction: {
+      workspaceId,
+      parties: [{ name: 'Cross-tenant probe party', side: 'adverse' }],
+    },
     // Matter workspace (#390): ub may not change A's matter or resolve A's next dates.
     updateMatterAction: {
       workspaceId,
@@ -596,11 +674,31 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Research tab (#497): ub may not tag A's matter or confirm A's tag.
+    addTagAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId, statute: 'ipc' },
+    confirmTagAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      tagId: t.a.rows.matter_issue_tag?.id,
+    },
+    dismissTagAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      tagId: t.a.rows.matter_issue_tag?.id,
+    },
     chooseNextDateSourceAction: {
       workspaceId,
       currentListingId: t.a.rows.listing?.listingId,
       proposedListingId: t.a.rows.listing?.listingId,
       choice: 'current',
+    },
+    reportRecordErrorAction: {
+      workspaceId,
+      proceedingId: t.a.rows.proceeding?.proceedingId,
+      field: 'next_date',
+      shownValue: '1 Jan 2026',
+      reportedValue: '2 Jan 2026',
+      consent: true,
     },
     upsertPersonAction: {
       workspaceId,
@@ -827,6 +925,21 @@ describe('cross-tenant server actions', () => {
     expect(mine(inB.settings)).toHaveLength(1);
   });
 
+  it('saveNewsPreferencesAction under B’s own workspace saves only ub’s row in B (#481)', async () => {
+    const before = await snapshotA();
+    const input = inputs(t.b.id).saveNewsPreferencesAction;
+    expect(await action('saveNewsPreferencesAction')(input)).toMatchObject({
+      ok: true,
+      data: { practiceAreas: ['tax'], digestTime: '08:00' },
+    });
+    expect(await snapshotA()).toEqual(before);
+    const inB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx.select().from(schema.newsPref),
+    );
+    expect(inB.filter((row) => row.userId === t.ub && row.workspaceId === t.b.id)).toHaveLength(1);
+    expect(inB.every((row) => row.workspaceId === t.b.id)).toBe(true);
+  });
+
   it('updateWorkspaceProfileAction under B’s own workspace changes only B', async () => {
     const before = await snapshotA();
     // B's slug stays: later tests confirm transfers with it.
@@ -990,6 +1103,12 @@ describe('cross-tenant server actions', () => {
     expect(found.ok).toBe(true);
     const aIds = new Set(before.matters.map((row) => row.id));
     expect(found.data.filter((hit) => aIds.has(hit.id))).toEqual([]);
+    // The conflict check (#500) under B's own workspace finds none of A's parties.
+    const checked = (await action('checkConflictsAction')(own.checkConflictsAction)) as {
+      ok: boolean;
+      data: unknown[];
+    };
+    expect(checked).toEqual({ ok: true, data: [] });
     expect(await snapshotA()).toEqual(before);
   });
 
@@ -1001,6 +1120,10 @@ describe('cross-tenant server actions', () => {
       'setSensitiveAction',
       'confirmNextDateAction',
       'chooseNextDateSourceAction',
+      'reportRecordErrorAction',
+      'addTagAction',
+      'confirmTagAction',
+      'dismissTagAction',
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',
@@ -1079,6 +1202,27 @@ describe('cross-tenant server actions', () => {
     }
     expect(await snapshotA()).toEqual(before);
     expect(await aAlerts()).toEqual(alertsBefore);
+  });
+
+  it('portfolio actions under B’s own workspace find none of A’s portfolio (#666)', async () => {
+    const before = await snapshotA();
+    const aPortfolios = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.portfolio).orderBy(schema.portfolio.id),
+      );
+    const portfoliosBefore = await aPortfolios();
+    const own = inputs(t.b.id);
+    for (const name of ['importPortfolioAction', 'exportPortfolioCsvAction'] as const) {
+      expect(await action(name)(own[name]), name).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    expect(await action('createPortfolioAction')(own.createPortfolioAction)).toMatchObject({
+      ok: true,
+    });
+    expect(await aPortfolios()).toEqual(portfoliosBefore);
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('capture actions under B’s own workspace find none of A’s captures and change only B (#43)', async () => {

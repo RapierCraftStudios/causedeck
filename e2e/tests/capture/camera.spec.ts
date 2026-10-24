@@ -47,6 +47,8 @@ test.describe('camera sheet', { tag: '@a11y' }, () => {
     await asUser('owner', { path: PATH });
     await shellReady(page);
     const sheet = page.locator(SHEET);
+    // The shutter is enabled by the stream's first decoded frame; a tap before it cannot grab one.
+    await expect(sheet.getByRole('button', { name: 'Take photo' })).toBeEnabled();
     await sheet.getByRole('button', { name: 'Take photo' }).click();
     await sheet.getByRole('button', { name: 'Use this crop' }).click();
     await expect(sheet.getByRole('button', { name: 'Done (1)' })).toBeVisible();

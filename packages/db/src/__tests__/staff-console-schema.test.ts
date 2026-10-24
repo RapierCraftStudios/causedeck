@@ -17,7 +17,7 @@ import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { staffUser } from '../schema/staff.ts';
 import { budgetOverride } from '../schema/usage.ts';
 import { inWorkspace, testDatabaseUrls, withTestDb } from '../testing/index.ts';
-import { seedTwoTenants } from '../testing/two-tenants.ts';
+import { seedTwoTenants, TWO_TENANTS_PLAN_ID } from '../testing/two-tenants.ts';
 import { sqlState } from './rls/fixtures.ts';
 
 const WORKSPACE_COLUMNS = [
@@ -51,6 +51,10 @@ const FUNCTIONS = [
   'app_staff_audit_events(timestamp with time zone,uuid,integer)',
   'app_staff_workspace_usage(uuid)',
   'app_staff_budget_overrides(uuid,integer)',
+  'app_staff_parse_yield(timestamp with time zone)',
+  'app_staff_conflict_rate(timestamp with time zone)',
+  'app_staff_watch_demand()',
+  'app_staff_business_snapshot(timestamp with time zone,timestamp with time zone)',
 ];
 const COUNTER_COLUMNS = ['key', 'period_start', 'value'];
 const OVERRIDE_COLUMNS = [
@@ -98,6 +102,79 @@ function as<T>(tx: Transaction, userId: string, fn: (s: Transaction) => Promise<
   return withUser(tx, { userId }, fn);
 }
 
+describe('staff parse yield (0072)', () => {
+  it('returns per-adapter counts only, summed across workspaces, to an enabled staff member', async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      const adapterId = `parse-yield-${t.a.id.slice(0, 8)}`;
+      // adapter_parse_run references a real document (FK since 0044): use each tenant's seeded one.
+      const docOf = (ws: string): string =>
+        (ws === t.a.id ? t.a.rows.document?.documentId : t.b.rows.document?.documentId) ?? '';
+      for (const ws of [t.a.id, t.b.id]) {
+        await inWorkspace(tx, ws, (s) =>
+          s.execute(
+            sql`insert into adapter_parse_run (workspace_id, document_id, adapter_id, adapter_version, forum_code, rows_parsed, rows_anchored, unmapped_headings, unknown_case_types, status)
+                values (${ws}::uuid, ${docOf(ws)}::uuid, ${adapterId}, '1', 'f', 10, 8, 0, 0, 'ok')`,
+          ),
+        );
+      }
+      const rows = await as(tx, staffId, (s) =>
+        s.execute(
+          sql`select * from app_staff_parse_yield(now() - interval '1 day') where adapter_id = ${adapterId}`,
+        ),
+      );
+      expect(rows).toHaveLength(1);
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual([
+        'adapter_id',
+        'rows_anchored',
+        'rows_parsed',
+        'runs',
+      ]);
+      expect(rows[0]).toMatchObject({ runs: '2', rows_parsed: '20', rows_anchored: '16' });
+    });
+  });
+});
+
+describe('staff conflict rate (0082)', () => {
+  it('counts per-source readings that disagree with the canonical date, and names no tenant', async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      const host = `conflict-${t.a.id.slice(0, 8)}.example`;
+      const proceedingId = t.a.rows.proceeding?.proceedingId ?? '';
+      const canonical = await inWorkspace(tx, t.a.id, (s) =>
+        s.execute<{ list_date: string }>(
+          sql`select list_date::text as list_date from listing where proceeding_id = ${proceedingId}::uuid and canonical`,
+        ),
+      );
+      await inWorkspace(tx, t.a.id, async (s) => {
+        if (canonical.length === 0) {
+          await s.execute(
+            sql`insert into listing (workspace_id, proceeding_id, list_date, list_type, stage_raw, canonical, source_type, confirmation_state)
+                values (${t.a.id}::uuid, ${proceedingId}::uuid, '2031-05-05', 'daily', 'x', true, 'manual', 'confirmed')`,
+          );
+        }
+        // A reading of another date from the host (a conflict) and one of the canonical date.
+        await s.execute(
+          sql`insert into listing (workspace_id, proceeding_id, list_date, list_type, stage_raw, source_type, source_ref, confirmation_state)
+              values (${t.a.id}::uuid, ${proceedingId}::uuid, '2031-06-06', 'daily', 'x', 'adapter', ${`https://${host}/status?cnr=1`}, 'proposed')`,
+        );
+      });
+      const rows = await as(tx, staffId, (s) =>
+        s.execute(
+          sql`select * from app_staff_conflict_rate(now() - interval '1 day') where source_key = ${host}`,
+        ),
+      );
+      expect(rows).toHaveLength(1);
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual([
+        'conflicts',
+        'observations',
+        'source_key',
+      ]);
+      expect(rows[0]).toMatchObject({ observations: '1', conflicts: '1' });
+    });
+  });
+});
+
 describe('staff console functions (0033)', () => {
   it('refuse anyone but an enabled staff member, and are not executable by PUBLIC', async () => {
     await withTestDb(async (tx) => {
@@ -108,6 +185,10 @@ describe('staff console functions (0033)', () => {
         sql`select * from app_staff_audit_events(null, null, 10)`,
         sql`select * from app_staff_workspace_usage(${t.a.id}::uuid)`,
         sql`select * from app_staff_budget_overrides(${t.a.id}::uuid, 10)`,
+        sql`select * from app_staff_parse_yield(now() - interval '7 days')`,
+        sql`select * from app_staff_conflict_rate(now() - interval '7 days')`,
+        sql`select * from app_staff_watch_demand()`,
+        sql`select app_staff_business_snapshot(now(), now())`,
       ];
       for (const call of calls) {
         for (const userId of [t.ua, disabledStaffId]) {
@@ -359,6 +440,78 @@ describe('staff workspace usage functions (0035, #224)', () => {
           .insert(budgetOverride)
           .values({ ...base, expiredAt: now, expiredBy: t.ua, expireReason: 'pilot ended' }),
       );
+    });
+  });
+});
+
+const PLAN_FIELDS = [
+  'aiSpendPaise',
+  'captchaDollars',
+  'churned30d',
+  'dau',
+  'fetchDollars',
+  'mau',
+  'mrrPaise',
+  'name',
+  'new30d',
+  'planId',
+  'pricePaise',
+  'seats',
+  'subscribers',
+  'wau',
+];
+
+interface Snapshot {
+  plans: Record<string, unknown>[];
+  shared: Record<string, unknown>;
+}
+
+describe('staff business snapshot functions (0071, #519)', () => {
+  it('app_business_snapshot is callable by the app role only, not PUBLIC or the clerk role', async () => {
+    await withTestDb(async (tx) => {
+      const [grant] = await tx.execute<{ pub: boolean; app: boolean; clerk: boolean }>(
+        sql`select has_function_privilege('public', p.oid, 'execute') as pub,
+                   has_function_privilege('causedeck_app', p.oid, 'execute') as app,
+                   has_function_privilege('causedeck_clerk', p.oid, 'execute') as clerk
+              from pg_proc p where p.proname = 'app_business_snapshot'`,
+      );
+      expect(grant).toEqual({ pub: false, app: true, clerk: false });
+    });
+  });
+
+  it("sums the period's AI spend per plan across workspaces, with aggregate fields only", async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      // A period no other row uses, so only these counters match.
+      const period = new Date('2031-01-01T00:00:00+05:30');
+      await inWorkspace(tx, t.a.id, (s) =>
+        s
+          .insert(usageCounter)
+          .values({ workspaceId: t.a.id, key: 'ai.spend_paise', periodStart: period, value: 120 }),
+      );
+      await inWorkspace(tx, t.b.id, (s) =>
+        s
+          .insert(usageCounter)
+          .values({ workspaceId: t.b.id, key: 'ai.spend_paise', periodStart: period, value: 7 }),
+      );
+      const [row] = await as(tx, staffId, (s) =>
+        s.execute<{ snapshot: Snapshot | string }>(
+          sql`select app_staff_business_snapshot(${period.toISOString()}::timestamptz, ${period.toISOString()}::timestamptz) as snapshot`,
+        ),
+      );
+      const doc = (
+        typeof row?.snapshot === 'string' ? JSON.parse(row.snapshot) : row?.snapshot
+      ) as Snapshot;
+      const seeded = doc.plans.find((p) => p.planId === TWO_TENANTS_PLAN_ID);
+      expect(seeded).toBeDefined();
+      expect(Number(seeded?.aiSpendPaise)).toBe(127);
+      expect(Number(seeded?.subscribers)).toBeGreaterThanOrEqual(2);
+      // Numbers and plan ids only: no email, workspace id or content.
+      for (const plan of doc.plans) expect(Object.keys(plan).sort()).toEqual(PLAN_FIELDS);
+      expect(Object.keys(doc.shared).sort()).toEqual(['captchaDollars', 'fetchDollars']);
+      const text = JSON.stringify(doc);
+      expect(text).not.toContain(t.a.id);
+      expect(text).not.toContain(t.b.id);
     });
   });
 });

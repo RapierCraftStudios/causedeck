@@ -10,22 +10,24 @@ import {
   createEntitlementCache,
   deriveEntitlements,
   fromSubscriptionRow,
+  trackedCaseChargePaise,
   type EntitlementKey,
   type WorkspaceEntitlements,
 } from '@causedeck/billing';
 import {
+  getPlan,
   SUBSCRIPTION_STATUSES,
   TERMINAL_SUBSCRIPTION_STATUSES,
   type SubscriptionStatus,
 } from '@causedeck/billing/plans';
 import { schema, type Database, type Transaction } from '@causedeck/db';
-import { desc, eq, sql } from 'drizzle-orm';
+import { count, desc, eq, sql } from 'drizzle-orm';
 
 import { countBillableSeats, setEntitlements, type Entitlements } from '../workspaces/index.ts';
 
 type Queryable = Database | Transaction;
 
-const { subscription } = schema;
+const { portfolioCase, subscription } = schema;
 
 const terminal = sql.raw(TERMINAL_SUBSCRIPTION_STATUSES.map((s) => `'${s}'`).join(', '));
 
@@ -101,4 +103,33 @@ export const billingEntitlements: Entitlements = {
 /** Install the billing seat gate (idempotent). */
 export function installBillingEntitlements(): void {
   setEntitlements(billingEntitlements);
+}
+
+/** Cases tracked across the workspace's portfolios (#664). Runs on the caller's workspace-scoped queryable. */
+export async function countTrackedCases(db: Queryable, workspaceId: string): Promise<number> {
+  const [row] = await db
+    .select({ n: count() })
+    .from(portfolioCase)
+    .where(eq(portfolioCase.workspaceId, workspaceId));
+  return row?.n ?? 0;
+}
+
+export interface TrackedCaseCharge {
+  planId: string;
+  trackedCases: number;
+  /** One cycle's charge, integer paise, ex-GST; 0 unless the plan is billed per tracked case. */
+  chargePaise: number;
+}
+
+/** The workspace's per-tracked-case charge for one cycle: the plan price times its tracked cases. */
+export async function getTrackedCaseCharge(
+  db: Queryable,
+  workspaceId: string,
+  now: Date = new Date(),
+): Promise<TrackedCaseCharge> {
+  const { planId } = await getWorkspaceEntitlements(db, workspaceId, now);
+  const plan = getPlan(planId);
+  if (!plan?.perTrackedCase) return { planId, trackedCases: 0, chargePaise: 0 };
+  const trackedCases = await countTrackedCases(db, workspaceId);
+  return { planId, trackedCases, chargePaise: trackedCaseChargePaise(plan, trackedCases) };
 }

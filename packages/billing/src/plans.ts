@@ -20,6 +20,7 @@ export {
   PLAN_KINDS,
   SUBSCRIPTION_STATUSES,
   TERMINAL_SUBSCRIPTION_STATUSES,
+  TRACKED_CASE_PRICE_PAISE,
   UPI_AUTOPAY_MANDATE_CAP_PAISE,
 } from '@causedeck/validators/plans';
 export type {
@@ -52,18 +53,32 @@ export interface MandateChargeNotice {
   requiresAdditionalAuth: boolean;
 }
 
+/** One cycle's charge for a per-tracked-case plan (#664): its price per case times the case count. */
+export function trackedCaseChargePaise(
+  plan: Pick<Plan, 'pricePaise'>,
+  trackedCases: number,
+): number {
+  if (!Number.isSafeInteger(trackedCases) || trackedCases < 0) {
+    throw new RangeError('trackedCases must be a non-negative integer');
+  }
+  return plan.pricePaise * trackedCases;
+}
+
 /**
  * The single-cycle charge for `plan` at these seat counts, and whether it needs the
  * additional-authentication copy in the mandate flow. Per-seat plans charge each paid seat plus
- * each clerk seat; fixed-price plans charge the plan price.
+ * each clerk seat; per-tracked-case plans charge each tracked case (`trackedCases`, default 0);
+ * fixed-price plans charge the plan price.
  */
 export function mandateChargeNotice(
-  plan: Pick<Plan, 'pricePaise' | 'perSeat' | 'clerkSeatPricePaise'>,
-  counts: { seats: number; clerkSeats: number },
+  plan: Pick<Plan, 'pricePaise' | 'perSeat' | 'clerkSeatPricePaise' | 'perTrackedCase'>,
+  counts: { seats: number; clerkSeats: number; trackedCases?: number },
 ): MandateChargeNotice {
-  const chargePaise = plan.perSeat
-    ? plan.pricePaise * counts.seats + (plan.clerkSeatPricePaise ?? 0) * counts.clerkSeats
-    : plan.pricePaise;
+  const chargePaise = plan.perTrackedCase
+    ? trackedCaseChargePaise(plan, counts.trackedCases ?? 0)
+    : plan.perSeat
+      ? plan.pricePaise * counts.seats + (plan.clerkSeatPricePaise ?? 0) * counts.clerkSeats
+      : plan.pricePaise;
   return { chargePaise, requiresAdditionalAuth: exceedsUpiMandateCap(chargePaise) };
 }
 
@@ -108,11 +123,20 @@ export function checkPlanConfig(catalogue: readonly Plan[] = PLAN_CATALOGUE): Pl
       invalid(`${plan.id}: minSeats must be a positive integer`);
       continue;
     }
+    if (plan.perSeat && plan.perTrackedCase) {
+      invalid(`${plan.id}: a plan is billed per seat or per tracked case, not both`);
+      continue;
+    }
     if (plan.perSeat && plan.minSeats < MIN_CHAMBER_SEATS) {
       invalid(`${plan.id}: per-seat plans need at least ${String(MIN_CHAMBER_SEATS)} seats`);
     }
 
-    const minimumCharge = plan.perSeat ? plan.pricePaise * plan.minSeats : plan.pricePaise;
+    // A per-tracked-case plan has no fixed minimum: the charge follows the case count.
+    const minimumCharge = plan.perTrackedCase
+      ? 0
+      : plan.perSeat
+        ? plan.pricePaise * plan.minSeats
+        : plan.pricePaise;
     if (exceedsUpiMandateCap(minimumCharge)) {
       findings.push({
         planId: plan.id,

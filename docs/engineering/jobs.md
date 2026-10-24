@@ -183,6 +183,14 @@ checked and trimmed ([audit.md](audit.md#verification-and-retention)).
   fails the payload schema, and the handler's `assertRetentionDays` throws `PermanentError`
   (`AUDIT_RETENTION_TOO_SHORT`).
 
+`system.orders.poll` (#494, hourly at :45 IST, stately singleton, no workspace) ingests the new
+daily orders of watched matters. It uses the due-watch list, caps and kill switch of
+`system.status.poll`: the latest snapshot's order links not yet captured are fetched as delegated
+lookups (the watch's advocate and matter, through the governed fetcher wired with
+`setStatusFetcherFactory`) and stored as `bulk_import` captures, so `extraction.extract-order`
+stages their directions as L2 proposals. A sensitive matter is skipped. Only ids and counts are
+logged.
+
 ## The `pgboss` schema and roles
 
 - pg-boss lives in its own schema `pgboss`. Migration `0001_job_effect` creates the schema owned by

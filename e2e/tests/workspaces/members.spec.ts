@@ -367,10 +367,14 @@ test.describe('members page', () => {
     // hydration settles, the streamed list and its client render can both be in the DOM for a
     // moment, which trips the strict-mode text match below.
     await shellReady(page);
+    // Scoped to `main`: React keeps a hidden copy of a streamed boundary outside `#main` until it
+    // swaps it in, so an unscoped text locator can match both and throw (strict mode).
     await expect(
-      page.getByText(
-        'It is just you for now. Invite juniors, clerks or co-counsel when you are ready.',
-      ),
+      page
+        .locator('main')
+        .getByText(
+          'It is just you for now. Invite juniors, clerks or co-counsel when you are ready.',
+        ),
     ).toBeVisible();
     await openInvitations(page);
     await expect(page.getByText('No pending invitations.')).toBeVisible();

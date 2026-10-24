@@ -91,7 +91,10 @@ describe('namespaced catalogs (#174)', () => {
         'bootstrapImport',
         'calendar',
         'camera',
+        'caseWatch',
         'common',
+        'courtDay',
+        'courtInsights',
         'courts',
         'courtsRosters',
         'emailIntake',
@@ -107,9 +110,11 @@ describe('namespaced catalogs (#174)', () => {
         'members',
         'nav',
         'notFound',
+        'notices',
         'notifications',
         'offline',
         'palette',
+        'portfolio',
         'pwa',
         'settings',
         'shell',
@@ -121,6 +126,15 @@ describe('namespaced catalogs (#174)', () => {
         'workspace',
       ].sort(),
     );
+  });
+});
+
+describe('case-watch copy (#593)', () => {
+  it('has the case-watch namespace in every locale with the refresh provenance strings', () => {
+    expect(en.caseWatch.refresh.label).toBe('Refresh status');
+    expect(en.caseWatch.refresh.via.server).toContain('{tier}');
+    expect(ta.caseWatch.refresh.via.server).toContain('{tier}');
+    expect(kn.caseWatch.refresh.via.server).toContain('{tier}');
   });
 });
 

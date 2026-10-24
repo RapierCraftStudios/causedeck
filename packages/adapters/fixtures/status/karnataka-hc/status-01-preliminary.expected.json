@@ -1,0 +1,35 @@
+{
+  "template": "karnataka-hc",
+  "status": "ok",
+  "cnr": "KAHC010056782026",
+  "caseNumber": "WP 1234/2026",
+  "nextHearingDate": "2026-12-17",
+  "lastHearingDate": "2026-10-29",
+  "stage": {
+    "raw": "Preliminary Hearing",
+    "norm": "hearing"
+  },
+  "bench": "Court Hall 1 (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2026-10-29",
+      "number": "1",
+      "summary": "Notice to respondents",
+      "href": "/khc/fict-1.pdf"
+    },
+    {
+      "date": "2026-11-05",
+      "number": "2",
+      "summary": "Time granted",
+      "href": "/khc/fict-2.pdf"
+    }
+  ],
+  "quotes": {
+    "cnr": "KAHC010056782026",
+    "caseNumber": "WP 1234/2026",
+    "stage": "Preliminary Hearing",
+    "bench": "Court Hall 1 (FICTIONAL)",
+    "nextHearingDate": "17-12-2026",
+    "lastHearingDate": "29-10-2026"
+  }
+}

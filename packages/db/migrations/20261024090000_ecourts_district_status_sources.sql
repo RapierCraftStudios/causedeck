@@ -1,0 +1,11 @@
+-- Migration 20261024090000_ecourts_district_status_sources: data only, hand-written, no schema change.
+-- Reviewed-by: Claude (agent, #636)
+-- eCourts district case-status sources per state (#636, #495 part 3). Seeded uncleared (cleared_at null), so the fetch layer refuses them until counsel clears the terms.
+INSERT INTO "source" ("id", "kind", "base_url", "owner", "access_mode", "max_tier", "rate_limit_per_minute", "notes")
+VALUES
+  ('in.tn.district:case_status', 'court', 'https://services.ecourts.gov.in/', 'Tamil Nadu district courts (eCourts)', 'A0', 'http', 5, 'Tamil Nadu district court case status through the eCourts services portal (delegated lookups only, captcha applies). Uncleared until counsel clears the portal terms; staff confirm the base URL and status path before clearing.'),
+  ('in.ka.district:case_status', 'court', 'https://services.ecourts.gov.in/', 'Karnataka district courts (eCourts)', 'A0', 'http', 5, 'Karnataka district court case status through the eCourts services portal (delegated lookups only, captcha applies). Uncleared until counsel clears the portal terms; staff confirm the base URL and status path before clearing.'),
+  ('in.mh.district:case_status', 'court', 'https://services.ecourts.gov.in/', 'Maharashtra district courts (eCourts)', 'A0', 'http', 5, 'Maharashtra district court case status through the eCourts services portal (delegated lookups only, captcha applies). Uncleared until counsel clears the portal terms; staff confirm the base URL and status path before clearing.'),
+  ('in.dl.district:case_status', 'court', 'https://services.ecourts.gov.in/', 'Delhi district courts (eCourts)', 'A0', 'http', 5, 'Delhi district court case status through the eCourts services portal (delegated lookups only, captcha applies). Uncleared until counsel clears the portal terms; staff confirm the base URL and status path before clearing.'),
+  ('in.up.district:case_status', 'court', 'https://services.ecourts.gov.in/', 'Uttar Pradesh district courts (eCourts)', 'A0', 'http', 5, 'Uttar Pradesh district court case status through the eCourts services portal (delegated lookups only, captcha applies). Uncleared until counsel clears the portal terms; staff confirm the base URL and status path before clearing.')
+ON CONFLICT ("id") DO NOTHING;

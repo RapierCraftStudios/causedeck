@@ -93,9 +93,16 @@ function defaults(): PreferenceView[] {
     'security.alert': ['in_app', 'email', 'push'],
     'billing.notice': ['in_app', 'email'],
     'reminder.hearing': ['in_app', 'email', 'push'],
+    'court.board': ['in_app', 'push'],
     'proposal.new': ['in_app', 'push'],
+    'judgment.alert': ['in_app', 'push'],
+    'status.next_date': ['in_app', 'push'],
+    'status.order': ['in_app', 'push'],
+    'status.stage': ['in_app', 'push'],
+    notices: ['in_app', 'push'],
     'digest.daily': ['email'],
     'digest.end_of_day': ['in_app', 'email'],
+    'digest.news': ['in_app', 'email', 'push'],
     'system.notice': ['in_app'],
   };
   return CATEGORY_KEYS.flatMap((category) =>

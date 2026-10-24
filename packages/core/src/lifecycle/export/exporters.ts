@@ -171,6 +171,8 @@ export const settingsExporter = tablesExporter('settings', [
   ws('matter_restriction'),
   // Integration tokens (#287): the kind and dates only; the token hash is a secret.
   ws('workspace_integration', { exclude: ['token_hash'] }),
+  // API keys (#624): the name, prefix, scopes and limits; the token hash is a secret.
+  ws('api_key', { exclude: ['token_hash'], userColumn: 'created_by' }),
   // Email forward-in intake (#54): the member's address and sender allow-list; the message ledger
   // leaves out the raw MIME object's key, which is internal like `blob.key`.
   ws('intake_address', { userColumn: 'user_id' }),
@@ -194,6 +196,8 @@ export const notificationsExporter = tablesExporter('notifications', [
   }),
   ws('notification_setting', { keys: ['user_id'], userColumn: 'user_id' }),
   ws('notification', { userColumn: 'user_id' }),
+  // News digest (#481): the member's followed practice areas and forums and their digest time.
+  ws('news_pref', { keys: ['user_id'], userColumn: 'user_id' }),
 ]);
 
 export const billingExporter = tablesExporter('billing', [
@@ -227,6 +231,12 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('import_plan', { keys: ['batch_id'] }),
   // The importing member's own identifiers (#550).
   ws('advocate_profile', { userColumn: 'user_id' }),
+  ws('cause_list_watch', { userColumn: 'user_id' }),
+  // Case-status watch (#589): the advocate's watches and the status snapshots they took.
+  ws('case_watch', { userColumn: 'advocate_user_id' }),
+  ws('case_status_snapshot'),
+  // Corrections CauseDeck review fanned out to this workspace's watched proceedings (#518).
+  ws('review_correction'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [
@@ -270,6 +280,11 @@ export const mattersExporter = tablesExporter('matters', [
   ws('anchor'),
   // Anchored order extractions (#46): the validated result and what was rejected, with quotes.
   ws('extraction'),
+  // Judgment alerts (#497): the lawyer's own issue tags on a matter (statute, section, issue) and
+  // the alerts raised against confirmed tags. The alert carries ids and a page number only; the
+  // judgment itself is global corpus data, not the workspace's.
+  ws('matter_issue_tag'),
+  ws('judgment_alert'),
 ]);
 
 // What the automation engine did and proposed (#47): proposals, the activity feed with its undo
@@ -280,6 +295,23 @@ export const automationExporter = tablesExporter('automation', [
   ws('activity', { userColumn: 'actor_user_id' }),
   ws('automation_preference', { userColumn: 'user_id' }),
   ws('automation_threshold'),
+]);
+
+// Change webhooks (#626): the workspace's own receivers and the delivery history of each event.
+// The signing secret is a credential and never leaves, so it is dropped from the endpoint; the
+// customer can rotate by recreating the endpoint. A delivery holds a content-free payload (ids and
+// change kinds, D-048) with its status, attempts and timestamps.
+export const webhooksExporter = tablesExporter('webhooks', [
+  ws('webhook_endpoint', { exclude: ['secret'], userColumn: 'created_by' }),
+  ws('webhook_delivery'),
+]);
+
+// Institution portfolios (#661): the portfolios, their tracked cases (status, next date, last
+// adverse order) and the panel advocates delegated for them. Ids, short references and dates.
+const portfoliosExporter = tablesExporter('portfolios', [
+  ws('portfolio', { userColumn: 'created_by' }),
+  ws('portfolio_case'),
+  ws('portfolio_panel_advocate', { userColumn: 'advocate_user_id' }),
 ]);
 
 /** The platform exporters, registered once per process. */
@@ -295,6 +327,8 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   courtExporter,
   mattersExporter,
   automationExporter,
+  webhooksExporter,
+  portfoliosExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

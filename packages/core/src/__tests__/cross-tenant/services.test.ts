@@ -479,6 +479,97 @@ const CASES: Record<string, Case> = {
     const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
     expect(aAfter).toEqual(aBefore);
   },
+  notifyNoticeMatches: async (f) => {
+    // A notice matched to B alerts B's members only; A's notifications are exactly as they were.
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'circular',
+        title: 'XT alert notice',
+        issuedOn: '2026-11-02',
+        url: `https://notices.example.test/xt/alert/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.notification));
+    const sent = await core.notifyNoticeMatches(
+      { db: f.tx, enqueueDelivery: () => Promise.resolve() },
+      [{ workspaceId: f.b.id, noticeId }],
+    );
+    expect(sent).toBeGreaterThanOrEqual(1);
+    const bRows = await inWorkspace(f.tx, f.b.id, (s) =>
+      s
+        .select()
+        .from(schema.notification)
+        .where(eq(schema.notification.dedupeKey, `notice:${noticeId}`)),
+    );
+    expect(bRows).toHaveLength(sent);
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.notification));
+    expect(aAfter).toEqual(aBefore);
+  },
+  listHolidayListings: async (f) => {
+    // B's holiday listing is flagged for B and invisible to A.
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, 'in.tn.madras-hc.madurai'));
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'holiday',
+        title: 'XT holiday notice',
+        issuedOn: '2026-11-02',
+        effectiveOn: '2026-12-25',
+        url: `https://notices.example.test/xt/holiday/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    const listingId = await inWorkspace(f.tx, f.b.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.b.id, title: 'XT holiday matter', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.b.id,
+          matterId: m?.id ?? '',
+          forumId: forum?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: 'F-XT-HOLIDAY',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      const [l] = await s
+        .insert(schema.listing)
+        .values({
+          workspaceId: f.b.id,
+          proceedingId: p?.id ?? '',
+          listDate: '2026-12-25',
+          listType: 'daily',
+          stageRaw: 'For Orders',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.listing.id });
+      await s
+        .insert(schema.noticeMatch)
+        .values({ workspaceId: f.b.id, noticeId, forumId: forum?.id ?? '', reason: 'forum' });
+      return l?.id ?? '';
+    });
+    const range = { from: '2026-12-01', to: '2026-12-31' };
+    const own = await core.listHolidayListings(f.tx, f.b.id, range);
+    expect(own.map((r) => [r.listingId, r.noticeId])).toEqual([[listingId, noticeId]]);
+    expect(await core.listHolidayListings(f.tx, f.a.id, range)).toEqual([]);
+  },
   listCauseListWatches: async (f) => {
     // ub sees exactly B's own seeded watch, never A's.
     const own = await core.listCauseListWatches(

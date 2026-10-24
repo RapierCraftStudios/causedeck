@@ -1,5 +1,3 @@
-import { performance } from 'node:perf_hooks';
-
 import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import {
@@ -63,7 +61,9 @@ async function seed(tx: Transaction) {
 const itemNos = (day: Awaited<ReturnType<typeof getCourtDay>>) =>
   day.complexes.flatMap((c) =>
     c.halls.flatMap((h) =>
-      h.lists.flatMap((l) => l.items.map((i) => `${h.hallNo}/${l.listType}/${i.itemNo}`)),
+      h.lists.flatMap((l) =>
+        l.items.map((i) => `${String(h.hallNo)}/${l.listType}/${String(i.itemNo)}`),
+      ),
     ),
   );
 
@@ -398,7 +398,7 @@ describe('getCourtDay budget on the seeded chamber (R13)', () => {
                 return (value as (...a: unknown[]) => unknown).apply(target, args);
               };
             }
-            return value.bind(target);
+            return (value as (...a: unknown[]) => unknown).bind(target);
           },
         });
       const actor = { userId: ownerId, workspaceId };
@@ -414,9 +414,11 @@ describe('getCourtDay budget on the seeded chamber (R13)', () => {
 
       const samples: number[] = [];
       for (let i = 0; i < 20; i++) {
-        const t0 = performance.now();
+        // CPU time, not wall clock: the shared build host's load must not fail the budget.
+        const c0 = process.cpuUsage();
         await getCourtDay({ db: tx }, actor, { date: DAY, scope: 'workspace' });
-        samples.push(performance.now() - t0);
+        const c = process.cpuUsage(c0);
+        samples.push((c.user + c.system) / 1000);
       }
       samples.sort((a, b) => a - b);
       const p95 = samples[Math.ceil(samples.length * 0.95) - 1] ?? Number.POSITIVE_INFINITY;

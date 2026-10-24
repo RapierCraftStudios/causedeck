@@ -137,6 +137,7 @@ export {
   type DigestTarget,
   type NotificationDigestPayload,
 } from './definitions/notification-digest.ts';
+export { courtDataRetention } from './definitions/court-data-retention.ts';
 export {
   BOARD_POLL_CRON,
   boardPoll,

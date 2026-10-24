@@ -14,6 +14,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 
+import {
+  toNoticeView,
+  type NoticeView,
+} from '../../../../../../components/notices/notice-list.tsx';
 import { MatterOverview } from '../../../../../../components/matters/matter-overview.tsx';
 import { MattersPermissionDenied } from '../../../../../../components/matters/matters-list.tsx';
 import { isDev } from '../../../../../../lib/env.ts';
@@ -23,8 +27,9 @@ import {
   toOverviewView,
   type MatterOverviewView,
 } from '../../../../../../lib/matters/workspace.ts';
-import { can } from '../../../../../../lib/workspace-context.ts';
+import { can, type WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
+import { logger } from '../../../../../../src/health.ts';
 
 import {
   chooseNextDateSourceAction,
@@ -76,6 +81,26 @@ function emptied(view: MatterOverviewView): MatterOverviewView {
   };
 }
 
+/** The notices affecting the matter (#588). A failed read leaves the card empty, never the page. */
+async function loadMatterNotices(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<NoticeView[]> {
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { listMatterNotices } = await import('@causedeck/core/notices');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    const rows = await inWorkspace(actor, (tx) => listMatterNotices(tx, actor, matterId));
+    return rows.map(toNoticeView);
+  } catch (error) {
+    logger.error(
+      { err: error },
+      'matter overview: could not load the notices affecting the matter',
+    );
+    return [];
+  }
+}
+
 export default async function MatterOverviewPage({ params, searchParams }: MatterPageProps) {
   const [{ slug, id }, query] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
@@ -91,6 +116,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   if (loaded.kind === 'denied') return <MattersPermissionDenied />;
   if (loaded.kind === 'error') throw new Error('Matter could not be loaded');
 
+  const notices = dev === 'empty' ? [] : await loadMatterNotices(context, id);
   const view = toOverviewView(loaded.overview, { locale: await pageLocale(), now: new Date() });
   return (
     <MatterOverview
@@ -99,6 +125,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
       slug={slug}
       canWrite={can(context.role, 'matter.write')}
       forcedOffline={dev === 'offline'}
+      notices={notices}
       actions={{
         confirmNextDate: confirmNextDateAction,
         chooseNextDateSource: chooseNextDateSourceAction,

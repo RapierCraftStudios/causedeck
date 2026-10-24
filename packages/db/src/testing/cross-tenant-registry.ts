@@ -237,8 +237,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // KHC cause-list watches (#482)
   addCauseListWatch: selfScoped,
   matchNotices: selfScoped,
+  notifyNoticeMatches: selfScoped,
+  listHolidayListings: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
+  // Conflict-of-interest checks (#500): B's check sees none of A's parties
+  checkConflicts: empty,
   // Case-status watches (#591)
   addCaseWatch: selfScoped,
   listCaseWatches: selfScoped,
@@ -713,6 +717,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // notices page and matter card (#588)
+  listWorkspaceNotices: empty,
+  listMatterNotices: denies,
   scanJudgments: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -730,6 +737,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
   // business dashboard (#519): pure maths and rendering over aggregates
+  nameKey: 'pure',
+  nameSimilarity: 'pure',
+  nameTokens: 'pure',
+  transliterate: 'pure',
   parseBusinessSnapshot: 'pure',
   buildBusinessReport: 'pure',
   businessConfigFromEnv: 'pure',
@@ -772,6 +783,18 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
   createFetchLogSink:
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
+  // global court-data controls (#486): act on the global `contributed_document` table, never on tenant rows
+  expireCourtData:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): blanks copies past their source retention; a system job, no tenant input',
+  eraseCourtDataSubject:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): staff-only (enabled ops or admin staff_user) masking of a person name; no tenant input, the tenant link `contribution_ledger` is untouched',
+  courtDataRetention:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): system job (system.court-data.retention) with no workspace payload',
+  CourtDataErasureError: 'error class',
+  MASKED_NAME: 'constant',
+  MIN_ERASURE_SUBJECT_LENGTH: 'constant',
+  SOURCE_DATA_CLASSES: 'constant',
+  exposableThroughApi: 'pure',
   sourceOpsOverview:
     'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
   sourceFetchLogs:
@@ -951,6 +974,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   pollNotices:
     'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
   NOTICES_POLL_CRON: 'constant',
+  NOTICES_LIST_LIMIT: 'constant',
   noticesPoll: 'job definition (handler is runNoticesPoll)',
   runNoticesPoll: 'system job body: see pollNotices',
   setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',

@@ -32,6 +32,7 @@ export type Messages = {
     memory: string;
     people: string;
     courts: string;
+    notices: string;
     activity: string;
     billing: string;
     invoices: string;
@@ -133,6 +134,11 @@ export type Messages = {
         hint: string;
       };
       courts: {
+        description: string;
+        empty: string;
+        hint: string;
+      };
+      notices: {
         description: string;
         empty: string;
         hint: string;
@@ -716,6 +722,10 @@ export type Messages = {
           description: string;
         };
         statusStage: {
+          label: string;
+          description: string;
+        };
+        notices: {
           label: string;
           description: string;
         };
@@ -2322,6 +2332,40 @@ export type Messages = {
       failed: string;
     };
   };
+  notices: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    empty: {
+      title: string;
+      hint: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    kind: {
+      circular: string;
+      practice_direction: string;
+      roster: string;
+      holiday: string;
+      registry: string;
+      bar_council: string;
+      gazette: string;
+      other: string;
+    };
+    issued: string;
+    effective: string;
+    forums: string;
+    matters: string;
+    provenance: string;
+    open: string;
+    matterCard: {
+      title: string;
+      empty: string;
+    };
+  };
   caseWatch: {
     title: string;
     description: string;
@@ -2403,6 +2447,16 @@ export type Messages = {
         forbidden: string;
         failed: string;
         offline: string;
+      };
+      conflicts: {
+        heading: string;
+        hint: string;
+        clientLabel: string;
+        adverseLabel: string;
+        check: string;
+        none: string;
+        failed: string;
+        hit: string;
       };
     };
     search: {

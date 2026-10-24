@@ -31,6 +31,7 @@
     "memory": "Memory",
     "people": "People",
     "courts": "Courts",
+    "notices": "Notices",
     "activity": "Activity",
     "billing": "Billing",
     "invoices": "Invoices",
@@ -135,6 +136,11 @@
         "description": "Your forums, halls and rosters.",
         "empty": "Choose your courts to get started.",
         "hint": "Your forums decide which cause lists CauseDeck reads for you."
+      },
+      "notices": {
+        "description": "Official notices for your forums and matters.",
+        "empty": "No notices matched yet.",
+        "hint": "Notices appear when a court publishes one for a forum you use."
       },
       "activity": {
         "description": "Everything that happened, with undo.",
@@ -717,6 +723,10 @@
         "statusStage": {
           "label": "Stage changes",
           "description": "When a watched case moves to a new stage."
+        },
+        "notices": {
+          "label": "Court notices",
+          "description": "When the court or Bar Council publishes a notice for a forum you use."
         },
         "digestDaily": {
           "label": "Daily digest",
@@ -2321,6 +2331,40 @@
       "failed": "The roster was not saved. Try again."
     }
   },
+  "notices": {
+    "metaTitle": "Notices",
+    "title": "Notices",
+    "description": "Official court and bar notices that name a forum you use, listed with the source they came from.",
+    "loading": "Loading notices",
+    "empty": {
+      "title": "No notices yet",
+      "hint": "Notices appear here when an official source publishes one that names a court where you have a matter."
+    },
+    "error": {
+      "title": "Could not load notices.",
+      "retry": "Try again"
+    },
+    "kind": {
+      "circular": "Circular",
+      "practice_direction": "Practice direction",
+      "roster": "Roster",
+      "holiday": "Holiday list",
+      "registry": "Registry notice",
+      "bar_council": "Bar Council",
+      "gazette": "Gazette",
+      "other": "Notice"
+    },
+    "issued": "Issued {date}",
+    "effective": "Effective {date}",
+    "forums": "Forums: {codes}",
+    "matters": "{count, plural, one {Affects # of your matters} other {Affects # of your matters}}",
+    "provenance": "Source: {source}, recorded {date}",
+    "open": "Open the official notice",
+    "matterCard": {
+      "title": "Affecting this matter",
+      "empty": "No official notice affects this matter."
+    }
+  },
   "caseWatch": {
     "title": "Case status watch",
     "description": "Watch the status of your own cases on the court status pages. Lookups run in the background and you never see a captcha. A changed next date arrives as a proposal; nothing is confirmed for you.",
@@ -2402,6 +2446,16 @@
         "forbidden": "Your role can't add matters.",
         "failed": "Couldn't create the matter. Try again.",
         "offline": "You're offline. Changes will not save until you're back."
+      },
+      "conflicts": {
+        "heading": "Conflict check",
+        "hint": "Check names against your own matters before you take this one. This is only a prompt: you decide.",
+        "clientLabel": "Client name",
+        "adverseLabel": "Opposite party name",
+        "check": "Check for conflicts",
+        "none": "No conflict found in your matters.",
+        "failed": "Couldn't run the conflict check. Try again.",
+        "hit": "“{checked}” matches {matched} ({source, select, alias {as an alias} other {by name}}) in {matter}, where this is {role, select, client {your client} other {an adverse party}}."
       }
     },
     "search": {

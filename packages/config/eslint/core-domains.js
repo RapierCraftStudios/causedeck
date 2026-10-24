@@ -30,7 +30,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   'case-watch': Object.freeze(['workspaces', 'automation', 'matter-graph', 'sources']),
   // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
   // tables and the owner-defined match function only.
-  notices: Object.freeze(['sources']),
+  notices: Object.freeze(['workspaces', 'sources']),
+  // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
+  conflicts: Object.freeze(['audit']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.

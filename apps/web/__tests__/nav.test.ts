@@ -23,6 +23,7 @@ const SPIKE_ROUTES = [
   'memory',
   'people',
   'courts',
+  'notices',
   'activity',
   'billing',
   'invoices',

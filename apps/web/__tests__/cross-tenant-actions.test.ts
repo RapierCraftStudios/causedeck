@@ -184,6 +184,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   dismissBenchChangeAlertAction: rosters,
   createMatterAction: matters,
   searchMattersAction: matters,
+  checkConflictsAction: matters,
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
@@ -639,6 +640,10 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
+    checkConflictsAction: {
+      workspaceId,
+      parties: [{ name: 'Cross-tenant probe party', side: 'adverse' }],
+    },
     // Matter workspace (#390): ub may not change A's matter or resolve A's next dates.
     updateMatterAction: {
       workspaceId,
@@ -1068,6 +1073,12 @@ describe('cross-tenant server actions', () => {
     expect(found.ok).toBe(true);
     const aIds = new Set(before.matters.map((row) => row.id));
     expect(found.data.filter((hit) => aIds.has(hit.id))).toEqual([]);
+    // The conflict check (#500) under B's own workspace finds none of A's parties.
+    const checked = (await action('checkConflictsAction')(own.checkConflictsAction)) as {
+      ok: boolean;
+      data: unknown[];
+    };
+    expect(checked).toEqual({ ok: true, data: [] });
     expect(await snapshotA()).toEqual(before);
   });
 

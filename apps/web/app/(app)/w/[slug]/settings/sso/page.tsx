@@ -13,7 +13,7 @@ import { logger } from '../../../../../../src/health.ts';
 
 import { deleteSsoProviderAction, saveSsoProviderAction, type SsoProviderView } from './actions.ts';
 import { SsoError } from './error.tsx';
-import { SsoForm, SsoSkeleton } from './sso-form.tsx';
+import { SsoProviderForm, SsoSkeleton } from './sso-form.tsx';
 
 interface SsoPageProps {
   params: Promise<{ slug: string }>;
@@ -44,7 +44,7 @@ async function SsoSection({ workspaceId, userId }: { workspaceId: string; userId
     return <SsoError />;
   }
   return (
-    <SsoForm
+    <SsoProviderForm
       workspaceId={workspaceId}
       providers={providers}
       save={saveSsoProviderAction}

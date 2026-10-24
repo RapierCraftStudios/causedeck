@@ -26,14 +26,14 @@ export function SsoSkeleton() {
   );
 }
 
-export interface SsoFormProps {
+export interface SsoProviderFormProps {
   workspaceId: string;
   providers: SsoProviderView[];
   save: (input: unknown) => Promise<Result<SsoProviderView>>;
   remove: (input: unknown) => Promise<Result<{ id: string }>>;
 }
 
-export function SsoForm({ workspaceId, providers, save, remove }: SsoFormProps) {
+export function SsoProviderForm({ workspaceId, providers, save, remove }: SsoProviderFormProps) {
   const t = useTranslations('settings.sso');
   const id = useId();
   const router = useRouter();

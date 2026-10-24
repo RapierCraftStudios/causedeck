@@ -28,12 +28,17 @@ const HOUR_MS = 3_600_000;
 /** Default per-advocate allowance for delegated `captcha` lookups. */
 export const DEFAULT_DELEGATED_CAPTCHA_PER_HOUR = 10;
 
+/** Default budget for all sources that share one host (state sources of one portal share it). */
+export const DEFAULT_HOST_REQUESTS_PER_MINUTE = 30;
+
 export interface FetcherDeps extends FetchSinks {
   registry: FetchRegistry;
   /** The AlterLab provider, or the mock when `ALTERLAB_API_KEY` is unset. */
   alterlab: FetchProvider;
   clock: FetchClock;
   delegatedCaptchaPerHour?: number;
+  /** Requests per minute across every source on one host; defaults to `DEFAULT_HOST_REQUESTS_PER_MINUTE`. */
+  hostRequestsPerMinute?: number;
   /** Backoff and block reporting from the data-ops evaluator (#515); absent means neither. */
   health?: FetchHealth;
 }
@@ -73,6 +78,7 @@ function tierCap(policy: FetchPolicy, delegated: boolean): FetchTier {
 
 export function createFetcher(deps: FetcherDeps): Fetcher {
   const limiter = createRateLimiter(() => deps.clock.now().getTime());
+  const perHost = deps.hostRequestsPerMinute ?? DEFAULT_HOST_REQUESTS_PER_MINUTE;
   const perAdvocate = deps.delegatedCaptchaPerHour ?? DEFAULT_DELEGATED_CAPTCHA_PER_HOUR;
 
   async function fetchSource(
@@ -108,10 +114,16 @@ export function createFetcher(deps: FetcherDeps): Fetcher {
     if (!limiter.canAcquire(sourceKey, policy.rateLimitPerMinute, MINUTE_MS)) {
       throw new FetchDenied('source_rate_limited', sourceId);
     }
+    // Per-host budget: sources of one portal (e.g. every state's eCourts district source) share it.
+    const hostKey = `host:${new URL(url).host}`;
+    if (!limiter.canAcquire(hostKey, perHost, MINUTE_MS)) {
+      throw new FetchDenied('host_rate_limited', sourceId);
+    }
     if (advocateKey !== null && !limiter.canAcquire(advocateKey, perAdvocate, HOUR_MS)) {
       throw new FetchDenied('advocate_rate_limited', sourceId);
     }
     limiter.tryAcquire(sourceKey, policy.rateLimitPerMinute, MINUTE_MS);
+    limiter.tryAcquire(hostKey, perHost, MINUTE_MS);
     if (advocateKey !== null) limiter.tryAcquire(advocateKey, perAdvocate, HOUR_MS);
 
     const urlHash = sha256(url);

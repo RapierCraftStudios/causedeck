@@ -102,6 +102,8 @@ vi.mock('@causedeck/core/sources', () => {
     sourceOpsOverview: () => Promise.resolve([]),
     staffParseYield: () => Promise.resolve([]),
     staffConflictRate: () => Promise.resolve([]),
+    staffCoverageInputs: () => Promise.resolve({}),
+    coverageReport: () => ({ coverage: [], gaps: [], changes: [] }),
     createSource: audited,
     updateSource: audited,
     setSourceKillSwitch: audited,
@@ -425,6 +427,7 @@ describe('admin data layer reads', () => {
     workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
     dataOpsOverview: (d) => d.dataOpsOverview(staff),
     dataOpsFetchLogs: (d) => d.dataOpsFetchLogs(staff, 'court.test'),
+    coverageOverview: (d) => d.coverageOverview(staff),
     businessMetrics: (d) =>
       d.businessMetrics(staff, {
         usdInr: 85,

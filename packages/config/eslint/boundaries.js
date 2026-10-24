@@ -26,14 +26,14 @@ export const CORE_DEPENDENCIES = [
   'ai',
   'adapters',
   'intelligence',
-  'fetch',
   'drafting',
   'notifications',
   'billing',
   'validators',
   'observability',
   'config',
-  // The one sanctioned external-host sender (#479, #515): data-ops posts Slack through postWebhook.
+  // D-052: core may use the governed fetch layer (Slack alerts #515, news #481, webhooks #626). Every external
+  // host is still reached only through it; `no-restricted-syntax` bans a direct `fetch` of an external host.
   'fetch',
 ];
 

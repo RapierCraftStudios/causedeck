@@ -65,6 +65,8 @@ Each action is either **security** or **informational**:
 | `usage.budget_override_expired`       | security      | `expireBudgetOverride` (#224); metadata `key`, `expired_at`                                                        |
 | `api_key.created` | security | `createApiKey` (`@causedeck/core/api-keys`, #624); metadata `scopes` |
 | `api_key.revoked` | security | `revokeApiKey` (#624) |
+| `webhook_endpoint.created` | security | `createWebhookEndpoint` (`@causedeck/core/webhooks`, #626); metadata `events` |
+| `webhook_endpoint.deleted` | security | `deleteWebhookEndpoint` (#626) |
 | `billing.subscription_changed`        | security      | owner billing actions (`changeSubscription`, #257)                                                                         |
 | `billing.gstin_updated`               | security      | `setSubscriptionGstin` (#257)                                                                                              |
 | `billing.invoice_downloaded`          | security      | `openSaasInvoicePdf`, before the first byte (#258)                                                                         |

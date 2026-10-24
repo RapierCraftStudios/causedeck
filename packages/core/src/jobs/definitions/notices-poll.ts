@@ -8,6 +8,7 @@
 import type { DeliveryJob } from '@causedeck/notifications';
 import { z } from 'zod';
 
+import { notifyBenchNoticeAlerts } from '../../court/index.ts';
 import {
   pollNotices,
   type NoticeFetcher,
@@ -56,10 +57,14 @@ export async function runNoticesPoll(
     Pick<PollNoticesDeps, 'fetcher' | 'policy' | 'parsers' | 'sourceId' | 'enqueueDelivery'>
   > = {},
 ): Promise<PollNoticesReport> {
+  const send = deps.enqueueDelivery ?? enqueueDelivery;
   const report = await pollNotices({
     db: ctx.db,
     fetcher: deps.fetcher ?? fetcherFactory?.(ctx.db) ?? unwiredFetcher,
-    enqueueDelivery: deps.enqueueDelivery ?? enqueueDelivery,
+    enqueueDelivery: send,
+    onMatched: async (matched) => {
+      await notifyBenchNoticeAlerts({ db: ctx.db, enqueueDelivery: send }, matched);
+    },
     log: (event, counts) => {
       ctx.log.info({ ...counts }, event);
     },

@@ -27,6 +27,7 @@ import { reviewCorrection, reviewItem } from '../schema/review.ts';
 import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
 import { apiKey } from '../schema/api-keys.ts';
+import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
@@ -992,6 +993,43 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: apiKey.id });
     return { id: first(rows, 'api_key').id };
+  },
+  webhook_endpoint: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(webhookEndpoint)
+      .values({
+        workspaceId,
+        url: `https://hooks.example.com/${tag}`,
+        secret: `whsec_seed_${tag}`,
+        events: ['status.changed'],
+        createdBy: ownerId,
+      })
+      .returning({ id: webhookEndpoint.id });
+    return { id: first(rows, 'webhook_endpoint').id };
+  },
+  webhook_delivery: async (tx, { workspaceId, ownerId, tag }) => {
+    const endpoints = await tx
+      .insert(webhookEndpoint)
+      .values({
+        workspaceId,
+        url: `https://hooks.example.com/delivery-${tag}`,
+        secret: `whsec_seed_delivery_${tag}`,
+        events: ['status.changed'],
+        createdBy: ownerId,
+      })
+      .returning({ id: webhookEndpoint.id });
+    const endpointId = first(endpoints, 'webhook_endpoint').id;
+    const rows = await tx
+      .insert(webhookDelivery)
+      .values({
+        workspaceId,
+        endpointId,
+        eventType: 'status.changed',
+        eventKey: `seed-${tag}`,
+        payload: { seed: true },
+      })
+      .returning({ id: webhookDelivery.id });
+    return { endpointId, id: first(rows, 'webhook_delivery').id };
   },
   cause_list_watch: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

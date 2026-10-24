@@ -94,6 +94,7 @@ describe('namespaced catalogs (#174)', () => {
         'caseWatch',
         'common',
         'courtDay',
+        'courtInsights',
         'courts',
         'courtsRosters',
         'emailIntake',

@@ -23,6 +23,7 @@ const LEGAL = [
   'court.sanctioned-push',
   'capture.whatsapp-import',
   'conflicts.check',
+  'bench_facts',
 ];
 
 describe('flag registry', () => {

@@ -6,7 +6,7 @@ import { db as appDb, schema, type Queryable } from '@causedeck/db';
 
 const { fetchLog } = schema;
 
-/** Structurally the `FetchLogEntry` of `@causedeck/fetch`, which core must not import for its types. */
+/** Structurally the `FetchLogEntry` of `@causedeck/fetch` (kept structural; D-052 allows importing it). */
 export interface FetchLogInput {
   sourceId: string;
   urlHash: string;

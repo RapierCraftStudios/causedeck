@@ -22,12 +22,16 @@ import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
 import { businessCostAlert } from './definitions/business-cost-alert.ts';
 import { businessDigest } from './definitions/business-digest.ts';
+import { coverageWeekly } from './definitions/coverage-weekly.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { ordersPoll } from './definitions/orders-poll.ts';
 import { statusPoll } from './definitions/status-poll.ts';
+import { webhookDeliver } from './definitions/webhook-deliver.ts';
+import { systemWebhookSweep } from './definitions/webhook-sweep.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
@@ -174,6 +178,7 @@ export const registry = createRegistry([
   usageRollup,
   businessCostAlert,
   businessDigest,
+  coverageWeekly,
   systemAuditVerify,
   auditVerify,
   auditRetention,
@@ -202,6 +207,9 @@ export const registry = createRegistry([
   noticesPoll,
   judgmentAlertScan,
   statusPoll,
+  webhookDeliver,
+  systemWebhookSweep,
+  ordersPoll,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -228,6 +236,7 @@ export type JobMap = RegistryMap<
     typeof usageRollup,
     typeof businessCostAlert,
     typeof businessDigest,
+    typeof coverageWeekly,
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
@@ -256,6 +265,9 @@ export type JobMap = RegistryMap<
     typeof noticesPoll,
     typeof judgmentAlertScan,
     typeof statusPoll,
+    typeof webhookDeliver,
+    typeof systemWebhookSweep,
+    typeof ordersPoll,
   ]
 >;
 export type JobName = keyof JobMap;

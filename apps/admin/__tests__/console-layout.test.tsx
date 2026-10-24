@@ -40,13 +40,14 @@ describe('adminEnvLabel', () => {
 });
 
 describe('ConsoleNav', () => {
-  it('has the console areas in order', () => {
+  it('has the eleven console areas in order', () => {
     expect(CONSOLE_NAV.map((item) => item.label)).toEqual([
       'Overview',
       'Adapters',
       'Sources',
       'Data Ops',
       'Review queue',
+      'Coverage',
       'Flags',
       'Workspaces',
       'Support sessions',
@@ -68,6 +69,7 @@ describe('ConsoleNav', () => {
       'Sources',
       'Data Ops',
       'Review queue',
+      'Coverage',
       'Flags',
       'Workspaces',
       'Support sessions',
@@ -89,6 +91,7 @@ describe('ConsoleNav', () => {
       '/sources',
       '/data-ops',
       '/review',
+      '/coverage',
       '/flags',
       '/audit',
     ]);

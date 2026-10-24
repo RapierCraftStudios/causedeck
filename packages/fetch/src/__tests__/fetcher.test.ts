@@ -32,7 +32,7 @@ const URL_OK = 'https://nclt.gov.in/cause-list';
 function setup(
   policy: Partial<FetchPolicy> | 'denied' = {},
   response: Partial<ProviderResponse> = {},
-  extra: { delegatedCaptchaPerHour?: number } = {},
+  extra: { delegatedCaptchaPerHour?: number; hostRequestsPerMinute?: number } = {},
 ) {
   const requests: ProviderRequest[] = [];
   const logs: FetchLogEntry[] = [];
@@ -282,6 +282,66 @@ describe('fetchSource: rate limit', () => {
     advance(60_001);
     await fetcher.fetchSource('in.nclt.bengaluru', URL_OK);
     expect(requests).toHaveLength(3);
+  });
+});
+
+describe('fetchSource: per-host budget (#636)', () => {
+  it('shares one budget across sources on a host and spends nothing on a denial', async () => {
+    const { fetcher, requests, logs, advance } = setup(
+      { rateLimitPerMinute: 10 },
+      {},
+      { hostRequestsPerMinute: 2 },
+    );
+
+    await fetcher.fetchSource('in.a.district', URL_OK);
+    await fetcher.fetchSource('in.b.district', URL_OK);
+    await expect(fetcher.fetchSource('in.c.district', URL_OK)).rejects.toMatchObject({
+      reason: 'host_rate_limited',
+    });
+    expect(requests).toHaveLength(2);
+    expect(logs).toHaveLength(2);
+
+    advance(60_001);
+    await fetcher.fetchSource('in.c.district', URL_OK);
+    expect(requests).toHaveLength(3);
+  });
+
+  it('keeps hosts independent', async () => {
+    const requests: ProviderRequest[] = [];
+    const bases: Record<string, string> = {
+      'in.a.district': 'https://nclt.gov.in',
+      'in.b.district': 'https://nclt.gov.in',
+      'in.c.district': 'https://other.gov.in',
+    };
+    const fetcher = createFetcher({
+      registry: {
+        policyFor: (id: string) =>
+          Promise.resolve({ ...COURT, rateLimitPerMinute: 10, baseUrl: bases[id] as string }),
+      },
+      alterlab: {
+        fetch(request) {
+          requests.push(request);
+          return Promise.resolve({
+            status: 200,
+            body: '<html>list</html>',
+            contentType: 'text/html',
+            tierUsed: 'http',
+            costDollars: 0.001,
+          });
+        },
+      },
+      clock: { now: () => new Date('2026-10-23T10:00:00Z') },
+      usage: { record: () => Promise.resolve() },
+      log: { record: () => Promise.resolve() },
+      hostRequestsPerMinute: 1,
+    });
+    await fetcher.fetchSource('in.a.district', URL_OK);
+    await expect(fetcher.fetchSource('in.b.district', URL_OK)).rejects.toMatchObject({
+      reason: 'host_rate_limited',
+    });
+    expect(requests).toHaveLength(1);
+    await fetcher.fetchSource('in.c.district', 'https://other.gov.in/x');
+    expect(requests).toHaveLength(2);
   });
 });
 

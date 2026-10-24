@@ -25,6 +25,7 @@ Every flag is off by default and ships dark. ⚖ marks a legal-gated flag. A leg
 | `insights.enabled` | no | `KILL_INSIGHTS_ENABLED` | #85 insights dashboard |
 | `workspace.export` | no | `KILL_WORKSPACE_EXPORT` | #31 export service, #288 export settings page (enables `Export workspace`) |
 | `conflicts.check` | ⚖ yes | `KILL_CONFLICTS_CHECK` | #500 conflict-of-interest check on new-matter intake, counsel sign-off through #486 |
+| `bench_facts` | ⚖ yes | `KILL_BENCH_FACTS` | #521 factual bench card (D-050), off until counsel clears it, #118 counsel clearance |
 
 ## Evaluation
 
@@ -69,7 +70,7 @@ Each server process caches every workspace's flag rows in an LRU with a 15 s TTL
 3. Add a row to the table above. A test checks it.
 4. Gate the server path with `requireFlag`. Gate the UI with `useFlag` or `<Feature>`, or with a nav item's `flag`.
 
-**Naming.** Use `<area>.<capability>`, lower case, with dot-separated segments and hyphens inside a segment (`court.live-tracking`). Use `.enabled` for a whole area (`invoices.enabled`).
+**Naming.** Use `<area>.<capability>`, lower case (`bench_facts` is the one legacy underscore key, named by D-050), with dot-separated segments and hyphens inside a segment (`court.live-tracking`). Use `.enabled` for a whole area (`invoices.enabled`).
 
 **Removing a flag.** Once its feature is launched and the flag is no longer needed, delete it from the registry, the kill-switch list and this table, and delete its rows in a migration.
 

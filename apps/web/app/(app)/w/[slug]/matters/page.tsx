@@ -37,7 +37,7 @@ import {
 import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 
-import { createMatterAction } from './actions.ts';
+import { checkConflictsAction, createMatterAction } from './actions.ts';
 import MattersLoading from './loading.tsx';
 
 interface MattersPageProps {
@@ -61,6 +61,21 @@ async function pageLocale() {
   const { isLocale, DEFAULT_LOCALE } = await import('@causedeck/i18n');
   const requested = await getLocale();
   return isLocale(requested) ? requested : DEFAULT_LOCALE;
+}
+
+/** The legal-gated conflict check (#500): off unless counsel has signed off; a failed read is off. */
+async function conflictCheckEnabled(
+  context: NonNullable<Awaited<ReturnType<typeof getWorkspaceContext>>>,
+) {
+  try {
+    const { isEnabled } = await import('@causedeck/flags/server');
+    return await isEnabled('conflicts.check', {
+      workspaceId: context.workspace.id,
+      userId: context.user.id,
+    });
+  } catch {
+    return false;
+  }
 }
 
 export default async function MattersPage({ params, searchParams }: MattersPageProps) {
@@ -94,6 +109,7 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
   const filtered = hasMatterFilters(state);
   const { nextCursor } = loaded.page;
   const canWrite = can(context.role, 'matter.write');
+  const conflictCheck = canWrite && (await conflictCheckEnabled(context));
   const newParam = query.new;
   const openNew = (Array.isArray(newParam) ? newParam[0] : newParam) === '1';
 
@@ -136,6 +152,7 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
         empty={empty}
         openNew={openNew}
         createAction={createMatterAction}
+        checkConflictsAction={conflictCheck ? checkConflictsAction : undefined}
         header={<h1 className="font-serif text-2xl font-medium">{t('title')}</h1>}
         toolbar={
           empty === 'empty' ? null : (

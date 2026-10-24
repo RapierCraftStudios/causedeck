@@ -9,6 +9,7 @@ export const USAGE_KEYS = [
   'stt.seconds',
   'storage.bytes',
   'matters.active',
+  'api.calls',
 ] as const;
 
 export type UsageKey = (typeof USAGE_KEYS)[number];
@@ -25,6 +26,7 @@ export const USAGE_KEY_KINDS: Readonly<Record<UsageKey, 'counter' | 'gauge'>> = 
   'stt.seconds': 'counter',
   'storage.bytes': 'gauge',
   'matters.active': 'gauge',
+  'api.calls': 'counter',
 };
 
 export function isUsageKey(value: string): value is UsageKey {

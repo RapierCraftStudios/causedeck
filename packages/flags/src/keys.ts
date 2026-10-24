@@ -59,7 +59,19 @@ export const FLAGS = {
     'court.live-tracking',
     'Live cause-list item tracking.',
     true,
-    [35, 120],
+    [35, 120, 493],
+  ),
+  'court.khc-a2': flag(
+    'court.khc-a2',
+    'Karnataka HC public cause-list watch through the governed fetch layer (A2).',
+    true,
+    [482, 118],
+  ),
+  'court.case-status': flag(
+    'court.case-status',
+    'Case-status watch and refresh.',
+    true,
+    [483, 118],
   ),
   'court.sanctioned-push': flag(
     'court.sanctioned-push',
@@ -100,6 +112,18 @@ export const FLAGS = {
     'Workspace data export (ZIP) from settings.',
     false,
     [31, 288],
+  ),
+  'conflicts.check': flag(
+    'conflicts.check',
+    'Conflict-of-interest check on new-matter intake (counsel sign-off required).',
+    true,
+    [500, 486],
+  ),
+  bench_facts: flag(
+    'bench_facts',
+    "User-facing factual bench facts (a matter's bench card); internal bench data is never behind this flag (D-050).",
+    true,
+    [521, 118],
   ),
 } as const;
 

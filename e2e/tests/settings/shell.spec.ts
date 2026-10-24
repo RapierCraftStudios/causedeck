@@ -48,7 +48,13 @@ test.describe('settings shell', () => {
     async ({ page, asUser }) => {
       await openSettings(page, asUser, 'owner');
       await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/settings/profile$`));
-      expect(await navLabels(page)).toEqual([...SECTIONS, 'Usage', 'Audit log', 'Support access']);
+      expect(await navLabels(page)).toEqual([
+        ...SECTIONS,
+        'Usage',
+        'Audit log',
+        'Support access',
+        'Court watch',
+      ]);
       await expect(subNav(page).getByRole('link', { name: 'Profile' })).toHaveAttribute(
         'aria-current',
         'page',
@@ -81,6 +87,7 @@ test.describe('settings shell', () => {
       'Integrations',
       'Privacy',
       'Audit log',
+      'Court watch',
     ]);
     await page.goto(`/w/${SHELL_WORKSPACE}/settings/danger`);
     await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('No access');

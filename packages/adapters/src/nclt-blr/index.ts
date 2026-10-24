@@ -17,11 +17,13 @@ import type {
   Resource,
 } from '../types.ts';
 
+import { NCLT_BENCH_FORUM_CODES } from './config/benches.ts';
 import { NCLT_COLUMNS } from './config/columns.ts';
 import { NCLT_PREFIXES } from './config/prefixes.ts';
 import { parseNcltCauseList, type NcltCauseList } from './parse-cause-list.ts';
 
 export * from './case-number.ts';
+export * from './config/benches.ts';
 export * from './config/columns.ts';
 export * from './config/prefixes.ts';
 export * from './parse-cause-list.ts';
@@ -29,6 +31,9 @@ export * from './parse-cause-list.ts';
 export const NCLT_ADAPTER_ID = 'in.nclt.bengaluru';
 export const NCLT_FORUM_CODE = 'in.nclt.bengaluru';
 export const NCLT_VERSION = '1.0.0';
+
+/** Every bench the adapter serves: Bengaluru and the national benches (#662). */
+export const NCLT_FORUM_CODES: readonly string[] = [NCLT_FORUM_CODE, ...NCLT_BENCH_FORUM_CODES];
 
 /** Recorded with the access-mode registry rows (migration 0049) until counsel reviews them. */
 export const NCLT_ACCESS_NOTE = 'NCLT T&C not yet read, counsel review pending (#118)';
@@ -155,7 +160,7 @@ export function createNcltAdapter(options: NcltAdapterOptions = {}): CourtAdapte
   return {
     id: NCLT_ADAPTER_ID,
     version,
-    forumCodes: [NCLT_FORUM_CODE],
+    forumCodes: NCLT_FORUM_CODES,
     accessModes: NCLT_ACCESS_MODES,
     nomenclature: config.nomenclature,
     listing: config.listing,

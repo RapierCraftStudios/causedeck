@@ -40,6 +40,12 @@ export const CLERK_SEAT_PRICE_PAISE = 19_900;
  */
 export const UPI_AUTOPAY_MANDATE_CAP_PAISE = 1_500_000;
 
+/**
+ * An institution's per-tracked-case plan (#664): one tracked portfolio case, per month, ex-GST.
+ * The charge is this price times the number of tracked cases.
+ */
+export const TRACKED_CASE_PRICE_PAISE = 4_900;
+
 /** Prices are ex-GST; #29 applies GST at this rate (basis points) on the invoice. */
 export const GST_RATE_BPS = 1_800;
 
@@ -80,6 +86,8 @@ export interface Plan {
   /** Per charge, or per seat when `perSeat`. Integer paise, ex-GST. */
   pricePaise: number;
   perSeat: boolean;
+  /** Billed per tracked portfolio case (#664): `pricePaise` is one case's price, not a flat charge. */
+  perTrackedCase?: boolean;
   clerkSeatPricePaise: number | null;
   minSeats: number;
   active: boolean;
@@ -168,4 +176,18 @@ export const PLAN_CATALOGUE: readonly Readonly<Plan>[] = Object.freeze([
       limits: PAID,
     }),
   ),
+  // Provisioned for institutions, not self-serve: inactive plans stay out of the plan pickers.
+  freeze<Plan>({
+    id: 'institution-case-monthly',
+    name: 'Institution (per tracked case, monthly)',
+    kind: 'dedicated',
+    interval: 'month',
+    pricePaise: TRACKED_CASE_PRICE_PAISE,
+    perSeat: false,
+    perTrackedCase: true,
+    clerkSeatPricePaise: null,
+    minSeats: 1,
+    active: false,
+    limits: PAID,
+  }),
 ]);

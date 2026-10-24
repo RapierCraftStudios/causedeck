@@ -40,14 +40,19 @@ describe('adminEnvLabel', () => {
 });
 
 describe('ConsoleNav', () => {
-  it('has the six console areas in order', () => {
+  it('has the eleven console areas in order', () => {
     expect(CONSOLE_NAV.map((item) => item.label)).toEqual([
       'Overview',
       'Adapters',
+      'Sources',
+      'Data Ops',
+      'Review queue',
+      'Coverage',
       'Flags',
       'Workspaces',
       'Support sessions',
       'Audit',
+      'Business',
     ]);
   });
 
@@ -58,7 +63,19 @@ describe('ConsoleNav', () => {
       within(nav)
         .getAllByRole('link')
         .map((a) => a.textContent),
-    ).toEqual(['Overview', 'Adapters', 'Flags', 'Workspaces', 'Support sessions', 'Audit']);
+    ).toEqual([
+      'Overview',
+      'Adapters',
+      'Sources',
+      'Data Ops',
+      'Review queue',
+      'Coverage',
+      'Flags',
+      'Workspaces',
+      'Support sessions',
+      'Audit',
+      'Business',
+    ]);
   });
 
   it('filters items by role', () => {
@@ -68,6 +85,15 @@ describe('ConsoleNav', () => {
       '/support',
       '/audit',
     ]);
-    expect(navItemsFor('ops').map((i) => i.href)).toEqual(['/', '/adapters', '/flags', '/audit']);
+    expect(navItemsFor('ops').map((i) => i.href)).toEqual([
+      '/',
+      '/adapters',
+      '/sources',
+      '/data-ops',
+      '/review',
+      '/coverage',
+      '/flags',
+      '/audit',
+    ]);
   });
 });

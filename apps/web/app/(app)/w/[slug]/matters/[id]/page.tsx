@@ -14,21 +14,30 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 
+import { type BenchNoticeAlertView } from '../../../../../../components/courts/bench-notice-alerts.tsx';
+import {
+  toNoticeView,
+  type NoticeView,
+} from '../../../../../../components/notices/notice-list.tsx';
+import { ReportError } from '../../../../../../components/matters/report-error.tsx';
 import { MatterOverview } from '../../../../../../components/matters/matter-overview.tsx';
 import { MattersPermissionDenied } from '../../../../../../components/matters/matters-list.tsx';
 import { isDev } from '../../../../../../lib/env.ts';
 import type { SearchParams } from '../../../../../../lib/matters/list-params.ts';
 import {
   loadMatterOverview,
+  loadReviewCorrections,
   toOverviewView,
   type MatterOverviewView,
 } from '../../../../../../lib/matters/workspace.ts';
-import { can } from '../../../../../../lib/workspace-context.ts';
+import { can, type WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
+import { logger } from '../../../../../../src/health.ts';
 
 import {
   chooseNextDateSourceAction,
   confirmNextDateAction,
+  reportRecordErrorAction,
   updateMatterAction,
 } from './actions.ts';
 import MatterLoading from './loading.tsx';
@@ -76,6 +85,42 @@ function emptied(view: MatterOverviewView): MatterOverviewView {
   };
 }
 
+/** The notices affecting the matter (#588). A failed read leaves the card empty, never the page. */
+async function loadMatterNotices(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<NoticeView[]> {
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { listMatterNotices } = await import('@causedeck/core/notices');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    const rows = await inWorkspace(actor, (tx) => listMatterNotices(tx, actor, matterId));
+    return rows.map(toNoticeView);
+  } catch (error) {
+    logger.error(
+      { err: error },
+      'matter overview: could not load the notices affecting the matter',
+    );
+    return [];
+  }
+}
+
+/** The bench-notice alerts affecting the matter (#496). A failed read renders no card, never breaks the page. */
+async function loadBenchNotices(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<BenchNoticeAlertView[]> {
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { listBenchNoticeAlerts } = await import('@causedeck/core/court');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    return await inWorkspace(actor, (tx) => listBenchNoticeAlerts(tx, actor, { matterId }));
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load the bench-notice alerts');
+    return [];
+  }
+}
+
 export default async function MatterOverviewPage({ params, searchParams }: MatterPageProps) {
   const [{ slug, id }, query] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
@@ -91,19 +136,39 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   if (loaded.kind === 'denied') return <MattersPermissionDenied />;
   if (loaded.kind === 'error') throw new Error('Matter could not be loaded');
 
-  const view = toOverviewView(loaded.overview, { locale: await pageLocale(), now: new Date() });
+  const notices = dev === 'empty' ? [] : await loadMatterNotices(context, id);
+  const locale = await pageLocale();
+  const benchNotices = dev === 'empty' ? [] : await loadBenchNotices(context, id);
+  const view = toOverviewView(loaded.overview, { locale, now: new Date() });
+  const proceedingId = view.nextDate?.proceedingId;
+  const corrections =
+    proceedingId === undefined || dev === 'empty'
+      ? []
+      : await loadReviewCorrections(context, proceedingId, locale);
   return (
-    <MatterOverview
-      matter={dev === 'empty' ? emptied(view) : view}
-      workspaceId={context.workspace.id}
-      slug={slug}
-      canWrite={can(context.role, 'matter.write')}
-      forcedOffline={dev === 'offline'}
-      actions={{
-        confirmNextDate: confirmNextDateAction,
-        chooseNextDateSource: chooseNextDateSourceAction,
-        updateMatter: updateMatterAction,
-      }}
-    />
+    <>
+      <MatterOverview
+        matter={dev === 'empty' ? emptied(view) : view}
+        workspaceId={context.workspace.id}
+        slug={slug}
+        canWrite={can(context.role, 'matter.write')}
+        forcedOffline={dev === 'offline'}
+        notices={notices}
+        benchNotices={benchNotices}
+        actions={{
+          confirmNextDate: confirmNextDateAction,
+          chooseNextDateSource: chooseNextDateSourceAction,
+          updateMatter: updateMatterAction,
+        }}
+      />
+      {proceedingId === undefined ? null : (
+        <ReportError
+          workspaceId={context.workspace.id}
+          proceedingId={proceedingId}
+          corrections={corrections}
+          report={reportRecordErrorAction}
+        />
+      )}
+    </>
   );
 }

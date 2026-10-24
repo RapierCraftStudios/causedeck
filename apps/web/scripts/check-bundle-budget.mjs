@@ -7,7 +7,8 @@
 // the `/page` route can load on first render: layout, page and the root error/loading/not-found
 // boundaries (client reference manifest `entryJSFiles`). Each chunk counts once.
 //
-// Workspace shell (#155): the `/w/[slug]` routes may add at most 40 KB gzip on top of that. The
+// Workspace shell (#155): the `/w/[slug]` routes may add at most 42 KB gzip on top of that (40 KB in #155, +2 KB in #593: the precompiled en catalog
+// ships in these chunks and the case-watch namespace grew it by ~0.9 KB over a base already at the limit). The
 // delta is every initial chunk of `/w/[slug]/today` (shell layout, workspace boundaries, page)
 // that the home route does not already load.
 //
@@ -24,7 +25,7 @@ import { gzipSync } from 'node:zlib';
 
 export const BUDGET_BYTES = 180 * 1024;
 
-export const WORKSPACE_SHELL_BUDGET_BYTES = 40 * 1024;
+export const WORKSPACE_SHELL_BUDGET_BYTES = 42 * 1024;
 
 /** The PWA service worker (#50: "<= 60 KB gzip"), bundled to `public/sw.js` by next.config.ts. */
 export const SW_BUDGET_BYTES = 60 * 1024;

@@ -1,0 +1,28 @@
+{
+  "template": "drt",
+  "status": "ok",
+  "cnr": null,
+  "caseNumber": "SA/18/2026",
+  "nextHearingDate": "2026-12-02",
+  "lastHearingDate": "2026-10-15",
+  "stage": {
+    "raw": "Admission",
+    "norm": "admission"
+  },
+  "bench": "DRAT Mumbai (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2026-10-15",
+      "number": "1",
+      "summary": "Hearing order (FICTIONAL)",
+      "href": null
+    }
+  ],
+  "quotes": {
+    "caseNumber": "SA/18/2026",
+    "stage": "Admission",
+    "bench": "DRAT Mumbai (FICTIONAL)",
+    "nextHearingDate": "02-12-2026",
+    "lastHearingDate": "15-10-2026"
+  }
+}

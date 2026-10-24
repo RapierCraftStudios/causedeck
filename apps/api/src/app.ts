@@ -21,7 +21,8 @@ import {
   registerSecuritySchemes,
   type AppRouter,
 } from './lib/openapi.ts';
-import { resolvePrincipal, type BearerResolver } from './middleware/auth.ts';
+import { apiKeyEnforcement } from './middleware/api-key.ts';
+import { createApiKeyResolver, resolvePrincipal, type BearerResolver } from './middleware/auth.ts';
 import { bodyLimit, type BodyLimitOptions } from './middleware/body-limit.ts';
 import { allowedOrigins, cors, csrf } from './middleware/cors.ts';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.ts';
@@ -108,7 +109,7 @@ export function createApp(deps: AppDeps): AppRouter {
   const v1 = v1Router({
     db,
     middleware: [
-      resolvePrincipal({ auth: deps.auth, ...(deps.bearer && { bearer: deps.bearer }) }),
+      resolvePrincipal({ auth: deps.auth, bearer: deps.bearer ?? createApiKeyResolver(db, now) }),
       csrf(origins),
       rateLimit({
         now: () => now().getTime(),
@@ -119,6 +120,7 @@ export function createApp(deps: AppDeps): AppRouter {
           ...deps.rateLimit?.groups,
         },
       }),
+      apiKeyEnforcement({ db, now }),
       idempotency({ store: deps.idempotencyStore ?? createIdempotencyStore(db), now }),
     ],
     ...(deps.billing && { billing: { ...deps.billing, logger, now } }),

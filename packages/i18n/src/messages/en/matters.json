@@ -21,6 +21,16 @@
         "forbidden": "Your role can't add matters.",
         "failed": "Couldn't create the matter. Try again.",
         "offline": "You're offline. Changes will not save until you're back."
+      },
+      "conflicts": {
+        "heading": "Conflict check",
+        "hint": "Check names against your own matters before you take this one. This is only a prompt: you decide.",
+        "clientLabel": "Client name",
+        "adverseLabel": "Opposite party name",
+        "check": "Check for conflicts",
+        "none": "No conflict found in your matters.",
+        "failed": "Couldn't run the conflict check. Try again.",
+        "hit": "“{checked}” matches {matched} ({source, select, alias {as an alias} other {by name}}) in {matter}, where this is {role, select, client {your client} other {an adverse party}}."
       }
     },
     "search": {
@@ -109,7 +119,8 @@
         "proceedings": "Proceedings",
         "timeline": "Timeline",
         "people": "People",
-        "documents": "Documents"
+        "documents": "Documents",
+        "research": "Research"
       },
       "status": {
         "active": "Active",
@@ -167,7 +178,15 @@
         "dateRequired": "Enter a date from today onwards.",
         "announce": "Next date set to {date}.",
         "failed": "Couldn't save the date. Try again.",
-        "stale": "This conflict was already resolved. Showing the latest dates."
+        "stale": "This conflict was already resolved. Showing the latest dates.",
+        "chooseN": "Choose {letter}"
+      },
+      "confidence": {
+        "chip": "Confidence {percent}%",
+        "agree": "Sources agree",
+        "conflict": "Sources disagree",
+        "single": "One source",
+        "sources": "Sources: {list}"
       },
       "proceedings": {
         "title": "Proceedings",
@@ -491,6 +510,48 @@
           "done": "Undone.",
           "conflict": "Something changed since. Nothing was undone.",
           "failed": "Couldn't undo. Try again."
+        }
+      },
+      "research": {
+        "title": "Relevant judgments",
+        "metaTitle": "Relevant judgments",
+        "intro": "Tag the statute sections this matter turns on. A new judgment that cites a confirmed tag appears here, linked to the court record.",
+        "tagsHeading": "Issue tags",
+        "tagsEmpty": "No tags yet. Add a statute and section to be alerted to new judgments.",
+        "statute": "Statute",
+        "section": "Section (optional)",
+        "issue": "Issue (optional)",
+        "add": "Add tag",
+        "confirm": "Confirm",
+        "dismiss": "Dismiss",
+        "status": {
+          "proposed": "Proposed",
+          "confirmed": "Confirmed",
+          "dismissed": "Dismissed"
+        },
+        "judgmentsHeading": "Judgments",
+        "judgmentsEmpty": "No relevant judgments yet.",
+        "cites": "Cites {section} {statute} on page {page}",
+        "open": "Open the judgment",
+        "saveError": "Could not save the tag."
+      },
+      "reviewReport": {
+        "title": "Report an error",
+        "open": "Report an error",
+        "corrections": "Corrections from CauseDeck review",
+        "correction": "{field}: {value} (corrected by CauseDeck review, {date})",
+        "field": "What is wrong",
+        "shown": "What CauseDeck shows",
+        "reported": "What it should be",
+        "consent": "I agree to share this record with CauseDeck staff so they can correct it.",
+        "send": "Send report",
+        "cancel": "Cancel",
+        "sent": "Thanks. CauseDeck review will check it and send back a correction.",
+        "error": "The report was not sent. Check the fields and try again.",
+        "fields": {
+          "next_date": "Next date",
+          "stage": "Stage",
+          "bench": "Bench"
         }
       }
     }

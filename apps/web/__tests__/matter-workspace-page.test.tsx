@@ -34,6 +34,10 @@ const page = vi.hoisted(() => ({
   dev: true,
   overview: null as MatterOverview | null,
   error: null as Error | null,
+  notices: [] as unknown[],
+  noticesError: null as Error | null,
+  bench: [] as unknown[],
+  benchError: null as Error | null,
 }));
 const runtime = vi.hoisted(() => ({
   inWorkspace: vi.fn((_scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true })),
@@ -43,7 +47,35 @@ const graph = vi.hoisted(() => ({
     page.error === null ? Promise.resolve(page.overview) : Promise.reject(page.error),
   ),
 }));
-const logger = vi.hoisted(() => ({ error: vi.fn() }));
+const notices = vi.hoisted(() => ({
+  listMatterNotices: vi.fn(() =>
+    page.noticesError === null ? Promise.resolve(page.notices) : Promise.reject(page.noticesError),
+  ),
+}));
+const court = vi.hoisted(() => ({
+  listBenchNoticeAlerts: vi.fn(() =>
+    page.benchError === null ? Promise.resolve(page.bench) : Promise.reject(page.benchError),
+  ),
+}));
+const facts = vi.hoisted(() => {
+  const agree = {
+    status: 'agree',
+    sources: [{ sourceType: 'adapter', sourceRef: null, value: '2026-05-14', confidence: 0.9 }],
+    value: '2026-05-14',
+    confidence: 0.9,
+    groups: [],
+  };
+  return {
+    error: null as Error | null,
+    getNextDateAgreement: vi.fn(() =>
+      facts.error === null ? Promise.resolve(agree) : Promise.reject(facts.error),
+    ),
+    getStageAgreement: vi.fn(() =>
+      facts.error === null ? Promise.resolve(agree) : Promise.reject(facts.error),
+    ),
+  };
+});
+const logger = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn() }));
 const reportError = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
@@ -66,11 +98,15 @@ vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('../lib/report-error.ts', () => ({ reportError }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/matter-graph', () => graph);
+vi.mock('@causedeck/core/notices', () => notices);
+vi.mock('@causedeck/core/court', () => court);
+vi.mock('@causedeck/core/facts', () => facts);
 vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
   updateMatterAction: vi.fn(),
   setSensitiveAction: vi.fn(),
   confirmNextDateAction: vi.fn(),
   chooseNextDateSourceAction: vi.fn(),
+  reportRecordErrorAction: vi.fn(),
 }));
 
 const { default: MatterLayout } = await import('../app/(app)/w/[slug]/matters/[id]/layout.tsx');
@@ -229,6 +265,11 @@ beforeEach(() => {
   page.dev = true;
   page.overview = overview();
   page.error = null;
+  page.notices = [];
+  page.noticesError = null;
+  page.bench = [];
+  page.benchError = null;
+  facts.error = null;
   setOnline(true);
 });
 
@@ -409,6 +450,97 @@ describe('matter workspace Overview (#390)', () => {
     );
     expect(logger.error).toHaveBeenCalled();
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain('Rao');
+  });
+
+  it('lists the notices affecting the matter, with provenance and the official link (#588)', async () => {
+    page.notices = [
+      {
+        id: 'n-1',
+        title: 'Holiday list for 2027',
+        kind: 'holiday',
+        issuedOn: '2026-11-05',
+        effectiveOn: null,
+        url: 'https://mhc.example.test/notices/holiday-2027.pdf',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        sourceId: 'in.tn.madras-hc.notices',
+        sourceName: 'Madras High Court',
+        recordedAt: new Date('2026-11-06T04:00:00Z'),
+        matterCount: 1,
+      },
+    ];
+    withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
+    const card = document.querySelector('[data-slot="matter-notices"]');
+    expect(card?.textContent).toContain('Holiday list for 2027');
+    expect(card?.textContent).toContain('Madras High Court');
+    const link = card?.querySelector('a');
+    expect(link?.getAttribute('href')).toBe('https://mhc.example.test/notices/holiday-2027.pdf');
+    expect(link?.getAttribute('rel')).toContain('noopener');
+    expect(notices.listMatterNotices).toHaveBeenCalledWith(
+      expect.anything(),
+      { workspaceId: 'ws-1', userId: 'user-1' },
+      MATTER_ID,
+    );
+  });
+
+  it('shows an empty notices card, and still renders the matter when notices fail to load (#588)', async () => {
+    withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
+    expect(
+      document.querySelector('[data-slot="matter-notices"] [data-notices="empty"]'),
+    ).not.toBeNull();
+    cleanup();
+    page.noticesError = new Error('db down');
+    withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
+    expect(
+      document.querySelector('[data-slot="matter-notices"] [data-notices="empty"]'),
+    ).not.toBeNull();
+    expect(document.querySelector('[data-slot="matter-overview"]')).not.toBeNull();
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  it('shows the bench-notice alert card with the notice as its source, and none when empty or failing (#496)', async () => {
+    withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
+    expect(document.querySelector('[data-slot="bench-notice-alerts"]')).toBeNull();
+    cleanup();
+    page.bench = [
+      {
+        noticeId: 'n-9',
+        title: 'Special bench for W.P. matters',
+        url: 'https://mhc.example.test/notices/special-bench.pdf',
+        kind: 'circular',
+        type: 'special_bench',
+        sourceName: 'Madras High Court',
+        matterId: MATTER_ID,
+        matterTitle: 'Rao v State',
+        listDates: ['2026-11-05'],
+      },
+    ];
+    withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
+    const card = document.querySelector('[data-slot="bench-notice-alerts"]');
+    expect(card?.textContent).toContain('Special bench for W.P. matters');
+    expect(card?.querySelector('a')?.getAttribute('href')).toBe(
+      'https://mhc.example.test/notices/special-bench.pdf',
+    );
+    expect(court.listBenchNoticeAlerts).toHaveBeenCalledWith(
+      expect.anything(),
+      { workspaceId: 'ws-1', userId: 'user-1' },
+      { matterId: MATTER_ID },
+    );
+    cleanup();
+    page.benchError = new Error('db down');
+    withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
+    expect(document.querySelector('[data-slot="bench-notice-alerts"]')).toBeNull();
+    expect(document.querySelector('[data-slot="matter-overview"]')).not.toBeNull();
+  });
+
+  it('shows the confidence chip, and still loads the Overview without it when the agreement read fails (#499)', async () => {
+    await renderRoute();
+    expect(document.querySelector('[data-confidence-chip="date"]')).not.toBeNull();
+    cleanup();
+    facts.error = new Error('db down');
+    await renderRoute();
+    expect(document.querySelector('[data-slot="matter-overview"]')).not.toBeNull();
+    expect(document.querySelector('[data-confidence-chip]')).toBeNull();
+    expect(logger.warn).toHaveBeenCalled();
   });
 
   it('previews the states in development only', async () => {

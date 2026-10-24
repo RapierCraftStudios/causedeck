@@ -1,0 +1,35 @@
+{
+  "template": "ecourts-district",
+  "status": "ok",
+  "cnr": "MHPU010123452025",
+  "caseNumber": "RCS/845/2025",
+  "nextHearingDate": "2026-11-14",
+  "lastHearingDate": "2025-03-21",
+  "stage": {
+    "raw": "Judgment",
+    "norm": "judgment"
+  },
+  "bench": "3-Civil Judge Senior Division (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2025-03-21",
+      "number": "1",
+      "summary": "Order issue summons",
+      "href": "/orders/mh-1.pdf"
+    },
+    {
+      "date": "2026-09-19",
+      "number": "2",
+      "summary": "Order posted for hearing",
+      "href": "/orders/mh-2.pdf"
+    }
+  ],
+  "quotes": {
+    "cnr": "MHPU010123452025",
+    "caseNumber": "RCS/845/2025",
+    "stage": "Judgment",
+    "bench": "3-Civil Judge Senior Division (FICTIONAL)",
+    "nextHearingDate": "14 Nov 2026",
+    "lastHearingDate": "21 Mar 2025"
+  }
+}

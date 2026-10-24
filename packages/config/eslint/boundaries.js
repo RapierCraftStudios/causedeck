@@ -32,6 +32,9 @@ export const CORE_DEPENDENCIES = [
   'validators',
   'observability',
   'config',
+  // D-052: core may use the governed fetch layer (Slack alerts #515, news #481, webhooks #626). Every external
+  // host is still reached only through it; `no-restricted-syntax` bans a direct `fetch` of an external host.
+  'fetch',
 ];
 
 /** Packages that `observability` may depend on: no domain packages (#13). */

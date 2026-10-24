@@ -3,6 +3,7 @@
 // workspace-scoped transaction as `deps.db` and returns only the id and title.
 // `searchMattersAction` needs `matter.read` (every role), asks `searchMatters` for 8 matters and
 // returns only what the palette row shows: id, title, forum, next date (formatted) and sensitive.
+// `checkConflictsAction` (#500, flag-gated, advisory) is covered in conflicts-action.test.ts.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppSession } from '../lib/auth.ts';

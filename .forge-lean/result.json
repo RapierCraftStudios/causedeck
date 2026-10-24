@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Review queue (#518): report-error action, queue with assignment/SLA/fix form, propagation as corrections, one-action fixture export; V1-V5 pass after merge",
+ "summary": "Review queue (#518): report-error action, queue with assignment/SLA/fix form, propagation as corrections, one-action fixture export; V1-V5 pass after merge; tenancy CI fix: review_correction registered in the workspace export",
  "requirements": [
   {
    "id": "R1",

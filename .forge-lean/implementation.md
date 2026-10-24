@@ -31,3 +31,6 @@ The merged-tree failure was `turbo: command not found` (PATH), not a code confli
 
 ### Post-merge check (turbo exit 127, again)
 Still `turbo: command not found` (PATH), not a code conflict. `pnpm exec turbo run typecheck` scoped to db, core, admin, web, i18n and adapters: all tasks pass. `forgedock check`: V1-V5 pass. No code change.
+
+### CI fix: tenancy job
+The tenancy job's last step (`test:export-coverage`) failed: new tenant table `review_correction` had no exporter. Registered `ws('review_correction')` in `packages/core/src/lifecycle/export/exporters.ts`. Verified the export-coverage test fails without it and passes with it; db cross-tenant/rls, core cross-tenant and web cross-tenant-actions suites also pass locally.

@@ -15,6 +15,7 @@ import type { ReactNode } from 'react';
 
 import type { MatterOverviewView } from '../../lib/matters/workspace.ts';
 
+import { BenchNoticeAlerts, type BenchNoticeAlertView } from '../courts/bench-notice-alerts.tsx';
 import { MatterNoticesBody, MatterNoticesTitle, type NoticeView } from '../notices/notice-list.tsx';
 
 import { DateConflictCard, type ChooseNextDateSourceAction } from './date-conflict-card.tsx';
@@ -39,6 +40,8 @@ export interface MatterOverviewProps {
   forcedOffline?: boolean;
   /** Official notices that affect this matter (#588); empty when none or when they could not load. */
   notices?: readonly NoticeView[];
+  /** Bench-notice alerts that affect this matter (#496); empty when none or when they could not load. */
+  benchNotices?: readonly BenchNoticeAlertView[];
 }
 
 function Card({ title, slot, children }: { title: ReactNode; slot: string; children: ReactNode }) {
@@ -209,6 +212,7 @@ export function MatterOverview({
   actions,
   forcedOffline = false,
   notices = [],
+  benchNotices = [],
 }: MatterOverviewProps) {
   const online = useOnline();
   const offline = forcedOffline || !online;
@@ -236,6 +240,7 @@ export function MatterOverview({
           />
         ))}
         <ProceedingsCard matter={matter} />
+        <BenchNoticeAlerts alerts={benchNotices} />
         <NoticesCard notices={notices} />
         <SynopsisEditor
           workspaceId={workspaceId}

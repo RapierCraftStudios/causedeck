@@ -61,7 +61,8 @@ const ROW_LIMIT = 1000;
 const TITLE_MAX = 200;
 
 const SPECIAL = /\bspecial\s+(?:bench|sitting)s?\b/i;
-const LEAVE = /\bon\s+leave\b|\bleave\s+of\s+absence\b|\bnot\s+sit(?:ting)?\b|\bwill\s+not\s+sit\b/i;
+const LEAVE =
+  /\bon\s+leave\b|\bleave\s+of\s+absence\b|\bnot\s+sit(?:ting)?\b|\bwill\s+not\s+sit\b/i;
 const REASSIGN =
   /\brosters?\b|\bre-?assign\w*|\bre-?allot\w*|\bre-?constitut\w*|\bbench\s+(?:change|composition|constitution)\b/i;
 

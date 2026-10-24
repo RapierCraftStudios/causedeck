@@ -721,6 +721,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        benchChange: {
+          label: string;
+          description: string;
+        };
         digestDaily: {
           label: string;
           description: string;
@@ -2304,6 +2308,17 @@ export type Messages = {
     matterCard: {
       title: string;
       empty: string;
+    };
+    benchAlerts: {
+      title: string;
+      type: {
+        leave: string;
+        special_bench: string;
+        roster_reassignment: string;
+      };
+      listed: string;
+      source: string;
+      open: string;
     };
   };
   caseWatch: {

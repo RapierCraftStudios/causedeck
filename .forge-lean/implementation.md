@@ -20,3 +20,6 @@ Flagged job/schema symbols are already in cross-tenant-registry NOT_A_SERVICE / 
 
 ### Follow-up: sibling lists
 The flagged tests do not enumerate job exports or schema tables (no sibling symbol appears in them); recorded as `not_members` in result.json. The registries that do enumerate them (cross-tenant-registry.ts, db index.test.ts, rls sql.test.ts) already name the webhook symbols. V1-V5 were passing on the previous commit; no code changed.
+
+### Follow-up: post-merge typecheck
+The reported failure (`turbo: command not found`, exit 127) was the check shell lacking turbo on PATH, not a code conflict. Ran `node_modules/.bin/turbo run typecheck --filter='...[origin/milestone/court-data-network]'`: 24/24 tasks pass on the merged tree. No code changed.

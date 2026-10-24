@@ -38,14 +38,14 @@ export interface BenchCardDeps {
   flagEnabled?: (workspaceId: string) => Promise<boolean>;
 }
 
-interface CardRow {
+type CardRow = {
   sitting_date: string;
   hall_no: string;
   items_listed: number;
   items_heard: number;
   items_disposed: number;
   minutes_per_item: string | null;
-}
+};
 
 /** The bench card of a matter (its latest listed bench), or null when the flag is off or no bench is known. */
 export async function getBenchCard(

@@ -91,11 +91,11 @@ export function summariseHallDay(
   };
 }
 
-export interface RosterHall {
+export type RosterHall = {
   forum_code: string;
   hall_no: string;
   bench_id: string;
-}
+};
 
 /** The roster bench covering a hall, or null: only a single active, confirmed roster bench counts. */
 export function benchForHall(

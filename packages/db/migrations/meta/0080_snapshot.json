@@ -1,5 +1,5 @@
 {
-  "id": "83db8e7b-3657-44e3-b6ed-e831dba87c8d",
+  "id": "8e705404-ac70-41c8-9f58-ed06ec9a4937",
   "prevId": "0b9a07a8-6f53-49f7-8733-de49ef4ba3f1",
   "version": "7",
   "dialect": "postgresql",
@@ -1569,188 +1569,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.api_key": {
-      "name": "api_key",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "prefix": {
-          "name": "prefix",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token_hash": {
-          "name": "token_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "scopes": {
-          "name": "scopes",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "monthly_quota": {
-          "name": "monthly_quota",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "rate_limit_per_minute": {
-          "name": "rate_limit_per_minute",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 60
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_used_at": {
-          "name": "last_used_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "api_key_workspace_id_idx": {
-          "name": "api_key_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "api_key_token_hash_uq": {
-          "name": "api_key_token_hash_uq",
-          "columns": [
-            {
-              "expression": "token_hash",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "api_key_workspace_idx": {
-          "name": "api_key_workspace_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "api_key_created_by_user_id_fk": {
-          "name": "api_key_created_by_user_id_fk",
-          "tableFrom": "api_key",
-          "tableTo": "user",
-          "columnsFrom": ["created_by"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "api_key_workspace_id_organization_id_fk": {
-          "name": "api_key_workspace_id_organization_id_fk",
-          "tableFrom": "api_key",
-          "tableTo": "organization",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "api_key_name_chk": {
-          "name": "api_key_name_chk",
-          "value": "length(btrim(name)) between 1 and 100"
-        },
-        "api_key_quota_chk": {
-          "name": "api_key_quota_chk",
-          "value": "monthly_quota is null or monthly_quota >= 0"
-        },
-        "api_key_rate_chk": {
-          "name": "api_key_rate_chk",
-          "value": "rate_limit_per_minute between 1 and 10000"
-        },
-        "api_key_scopes_chk": {
-          "name": "api_key_scopes_chk",
-          "value": "cardinality(scopes) > 0"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.appearance": {
@@ -9565,6 +9383,236 @@
           "value": "status in ('active', 'suspended', 'removed')"
         }
       },
+      "isRLSEnabled": false
+    },
+    "public.news_item": {
+      "name": "news_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "source_id": {
+          "name": "source_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "excerpt": {
+          "name": "excerpt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"practiceAreas\":[],\"forums\":[]}'::jsonb"
+        },
+        "provenance_sha256": {
+          "name": "provenance_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provenance_fetched_at": {
+          "name": "provenance_fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provenance_source_version": {
+          "name": "provenance_source_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "news_item_source_url_uq": {
+          "name": "news_item_source_url_uq",
+          "columns": [
+            {
+              "expression": "source_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "url",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "news_item_published_idx": {
+          "name": "news_item_published_idx",
+          "columns": [
+            {
+              "expression": "published_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "news_item_excerpt_chk": {
+          "name": "news_item_excerpt_chk",
+          "value": "\"news_item\".\"excerpt\" is null or char_length(\"news_item\".\"excerpt\") <= 500"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.news_pref": {
+      "name": "news_pref",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "practice_areas": {
+          "name": "practice_areas",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "forums": {
+          "name": "forums",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "digest_time": {
+          "name": "digest_time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'07:30'"
+        },
+        "last_digest_date": {
+          "name": "last_digest_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "news_pref_workspace_id_idx": {
+          "name": "news_pref_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "news_pref_user_id_user_id_fk": {
+          "name": "news_pref_user_id_user_id_fk",
+          "tableFrom": "news_pref",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "news_pref_workspace_id_fk": {
+          "name": "news_pref_workspace_id_fk",
+          "tableFrom": "news_pref",
+          "tableTo": "organization",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "news_pref_pkey": {
+          "name": "news_pref_pkey",
+          "columns": ["workspace_id", "user_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.notice": {

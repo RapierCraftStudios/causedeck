@@ -22,6 +22,11 @@ import {
   type EndOfDayDigestProps,
 } from './templates/end-of-day-digest.tsx';
 import {
+  NewsDigestEmail,
+  newsDigestSubject,
+  type NewsDigestProps,
+} from './templates/news-digest.tsx';
+import {
   InvitationEmail,
   invitationSubject,
   type InvitationProps,
@@ -40,6 +45,7 @@ export interface TemplateProps {
   'security-alert': SecurityAlertProps;
   'daily-digest': DailyDigestProps;
   'end-of-day-digest': EndOfDayDigestProps;
+  'news-digest': NewsDigestProps;
   'billing-notice': BillingNoticeProps;
   notice: NoticeProps;
 }
@@ -74,6 +80,11 @@ export const TEMPLATES: { [K in TemplateName]: TemplateDefinition<TemplateProps[
     category: 'digest.end_of_day',
     subject: endOfDayDigestSubject,
     component: EndOfDayDigestEmail,
+  },
+  'news-digest': {
+    category: 'digest.news',
+    subject: newsDigestSubject,
+    component: NewsDigestEmail,
   },
   'billing-notice': {
     category: 'billing.notice',

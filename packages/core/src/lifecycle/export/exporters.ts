@@ -196,6 +196,8 @@ export const notificationsExporter = tablesExporter('notifications', [
   }),
   ws('notification_setting', { keys: ['user_id'], userColumn: 'user_id' }),
   ws('notification', { userColumn: 'user_id' }),
+  // News digest (#481): the member's followed practice areas and forums and their digest time.
+  ws('news_pref', { keys: ['user_id'], userColumn: 'user_id' }),
 ]);
 
 export const billingExporter = tablesExporter('billing', [

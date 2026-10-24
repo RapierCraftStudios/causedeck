@@ -1,4 +1,4 @@
--- Migration 0080_api_keys: generated shape (table, keys, indexes), RLS and function hand-written, reviewed before commit.
+-- Migration 0081_api_keys: generated shape (table, keys, indexes), RLS and function hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #624)
 -- Public API keys (#624, #487 part 1). api_key is a tenant table under FORCE RLS: only the sha256 of
 -- a token is stored. The API resolves a bearer token before it knows the workspace, so it reads a key

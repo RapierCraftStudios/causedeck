@@ -49,6 +49,16 @@ export {
 export { fetchLog } from './fetch-log.ts';
 export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
 export {
+  NEWS_EXCERPT_MAX,
+  NEWS_FORUMS,
+  NEWS_PRACTICE_AREAS,
+  newsItem,
+  newsPref,
+  type NewsForum,
+  type NewsPracticeArea,
+  type NewsTags,
+} from './news.ts';
+export {
   DATA_OPS_ALERT_STATUSES,
   DATA_OPS_ALERT_TYPES,
   SOURCE_HEALTH_STATES,

@@ -25,3 +25,6 @@ No new env vars. `turbo` is not on PATH here; use `pnpm exec turbo`.
 
 ### Post-merge check (turbo exit 127)
 The merged-tree failure was `turbo: command not found` (PATH), not a code conflict. Ran `node_modules/.bin/turbo run typecheck --filter='...[origin/milestone/court-data-network]'`: 24/24 tasks pass. V1-V5 re-run and pass. No code changes needed.
+
+### Post-merge check (turbo exit 127)
+`turbo: command not found` is an environment issue (not on PATH), not a code conflict. Ran `pnpm exec turbo run typecheck` scoped to db, core, admin, web and i18n: 20/20 tasks pass. `forgedock check`: V1-V5 pass. No code change needed.

@@ -30,3 +30,6 @@ The merge-check failure was `turbo: command not found` (host tooling), not a cod
 
 ## Post-merge typecheck fix
 The reported failure (`turbo: command not found`, exit 127) was environmental: turbo is not on PATH. No merged-tree conflict exists. Re-ran via `pnpm exec turbo run typecheck --filter=...[9820df68]` (23/23 ok), db tsc, db forum-catalogue tests (24 pass) and core forums.test.ts (11 pass). No code changes.
+
+- Re-verified at base fa74649a: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` 23/23 green; db forum-catalogue tests (24) and core forums.test.ts (11) pass. Exit 127 was `turbo` not on PATH; no code change.
+- Re-checked against base fa74649a: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` passes (23/23, shared turbo cache hit); direct `tsc --noEmit` on core and db also clean. Exit 127 is `turbo` not on the check shell's PATH; no code change.

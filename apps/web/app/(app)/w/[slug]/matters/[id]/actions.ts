@@ -10,6 +10,9 @@
 // - `setSensitiveAction` (`matter.restrict`, owners and advocates): the sensitive flag (CA-10).
 // - `confirmNextDateAction` (`matter.write`): confirm a `proposed` next date.
 // - `chooseNextDateSourceAction` (`matter.write`): resolve a conflict card as the person chose.
+// - `reportRecordErrorAction` (`matter.read`): tell CauseDeck review a fetched value is wrong, with
+//   consent to share the record; only a case the workspace watches can be reported (#518).
+import { REVIEW_FIELDS } from '@causedeck/db/schema';
 import { NEXT_DATE_CHOICES } from '@causedeck/validators/matter-graph-inputs';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -156,4 +159,31 @@ const choose = workspaceAction(
 
 export async function chooseNextDateSourceAction(raw: unknown): Promise<Result<ChosenNextDate>> {
   return choose(raw);
+}
+
+const ReportRecordError = WorkspaceScoped.extend({
+  proceedingId: z.uuid(),
+  field: z.enum(REVIEW_FIELDS),
+  shownValue: z.string().trim().max(200),
+  reportedValue: z.string().trim().min(1).max(200),
+  consent: z.literal(true),
+});
+
+const report = workspaceAction(
+  ReportRecordError,
+  async (input, ctx) => {
+    const { reportRecordError } = await import('@causedeck/core/review');
+    return reportRecordError(ctx.tx, actorOf(ctx), {
+      proceedingId: input.proceedingId,
+      field: input.field,
+      shownValue: input.shownValue,
+      reportedValue: input.reportedValue,
+      consent: input.consent,
+    });
+  },
+  { action: 'matter.read' },
+);
+
+export async function reportRecordErrorAction(raw: unknown): Promise<Result<{ id: string }>> {
+  return report(raw);
 }

@@ -18,12 +18,14 @@ import {
   toNoticeView,
   type NoticeView,
 } from '../../../../../../components/notices/notice-list.tsx';
+import { ReportError } from '../../../../../../components/matters/report-error.tsx';
 import { MatterOverview } from '../../../../../../components/matters/matter-overview.tsx';
 import { MattersPermissionDenied } from '../../../../../../components/matters/matters-list.tsx';
 import { isDev } from '../../../../../../lib/env.ts';
 import type { SearchParams } from '../../../../../../lib/matters/list-params.ts';
 import {
   loadMatterOverview,
+  loadReviewCorrections,
   toOverviewView,
   type MatterOverviewView,
 } from '../../../../../../lib/matters/workspace.ts';
@@ -34,6 +36,7 @@ import { logger } from '../../../../../../src/health.ts';
 import {
   chooseNextDateSourceAction,
   confirmNextDateAction,
+  reportRecordErrorAction,
   updateMatterAction,
 } from './actions.ts';
 import MatterLoading from './loading.tsx';
@@ -117,20 +120,36 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   if (loaded.kind === 'error') throw new Error('Matter could not be loaded');
 
   const notices = dev === 'empty' ? [] : await loadMatterNotices(context, id);
-  const view = toOverviewView(loaded.overview, { locale: await pageLocale(), now: new Date() });
+  const locale = await pageLocale();
+  const view = toOverviewView(loaded.overview, { locale, now: new Date() });
+  const proceedingId = view.nextDate?.proceedingId;
+  const corrections =
+    proceedingId === undefined || dev === 'empty'
+      ? []
+      : await loadReviewCorrections(context, proceedingId, locale);
   return (
-    <MatterOverview
-      matter={dev === 'empty' ? emptied(view) : view}
-      workspaceId={context.workspace.id}
-      slug={slug}
-      canWrite={can(context.role, 'matter.write')}
-      forcedOffline={dev === 'offline'}
-      notices={notices}
-      actions={{
-        confirmNextDate: confirmNextDateAction,
-        chooseNextDateSource: chooseNextDateSourceAction,
-        updateMatter: updateMatterAction,
-      }}
-    />
+    <>
+      <MatterOverview
+        matter={dev === 'empty' ? emptied(view) : view}
+        workspaceId={context.workspace.id}
+        slug={slug}
+        canWrite={can(context.role, 'matter.write')}
+        forcedOffline={dev === 'offline'}
+        notices={notices}
+        actions={{
+          confirmNextDate: confirmNextDateAction,
+          chooseNextDateSource: chooseNextDateSourceAction,
+          updateMatter: updateMatterAction,
+        }}
+      />
+      {proceedingId === undefined ? null : (
+        <ReportError
+          workspaceId={context.workspace.id}
+          proceedingId={proceedingId}
+          corrections={corrections}
+          report={reportRecordErrorAction}
+        />
+      )}
+    </>
   );
 }

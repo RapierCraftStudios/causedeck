@@ -6,6 +6,7 @@ import {
   BarChart3,
   Building2,
   CircleDollarSign,
+  ClipboardCheck,
   Globe,
   LayoutDashboard,
   LifeBuoy,
@@ -24,6 +25,7 @@ export interface ConsoleNavItem {
     | '/adapters'
     | '/sources'
     | '/data-ops'
+    | '/review'
     | '/flags'
     | '/workspaces'
     | '/support'
@@ -38,6 +40,7 @@ export const CONSOLE_NAV: readonly ConsoleNavItem[] = [
   { capability: 'adapters', href: '/adapters', label: 'Adapters', icon: Activity },
   { capability: 'sources', href: '/sources', label: 'Sources', icon: Globe },
   { capability: 'data-ops', href: '/data-ops', label: 'Data Ops', icon: BarChart3 },
+  { capability: 'data-ops', href: '/review', label: 'Review queue', icon: ClipboardCheck },
   { capability: 'flags', href: '/flags', label: 'Flags', icon: ToggleLeft },
   { capability: 'workspaces', href: '/workspaces', label: 'Workspaces', icon: Building2 },
   { capability: 'support', href: '/support', label: 'Support sessions', icon: LifeBuoy },

@@ -1,26 +1,23 @@
 ### Approach
-Recovery pass for ci.red. Three CI causes fixed on top of the earlier #499 work; nothing re-derived.
-
+eCourts establishment snapshot (JSON) is validated, mapped to A0 `ForumSeed`s and spread into `FORUM_CATALOGUE`; the shipped snapshot is empty (real data is #640). Nothing is fetched.
 ### Changes
-- apps/web/lib/matters/workspace.ts: `agreement` accepts `undefined` (exactOptionalPropertyTypes typecheck error).
-- apps/web/components/matters/next-date-card.tsx: chip keys resolve under the `matters` namespace (`workspace.confidence.*`), so the matters i18n key guard finds them.
-- apps/web/__tests__/matter-workspace-page.test.tsx: mock `@causedeck/core/facts` and give the logger mock `warn`; a failed agreement load now degrades to no chip instead of failing the page.
-- Prettier applied to apps/admin/lib/data/index.ts, date-conflict-card.tsx, 0080_snapshot.json, staff-console-schema.test.ts.
-
+- packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts: types, `validateSnapshot`, `snapshotToForumSeeds` (A0, per-state level flag)
+- ecourts/snapshot.json: empty reviewed snapshot with provenance
+- ecourts/index.ts: `ECOURTS_DISTRICT`
+- forum-catalogue/index.ts: spread, version 2026-10-24.1, chunked upsert (2000 rows)
+- ecourts/snapshot.test.ts, ecourts/import.test.ts: unit and DB integration tests (import test fixed to use drizzle `TransactionRollbackError`)
+- packages/db/src/seed/README.md: documented
 ### Acceptance Criteria Status
-- R1 ✅ apps/web/components/matters/date-conflict-card.tsx
-- R2 ✅ apps/admin/app/(console)/data-ops/page.tsx
-- R3 ✅ packages/core/src/facts/agreement.ts
-- R4 ✅ apps/web/components/matters/date-conflict-card.tsx
-- R5 ✅ apps/web/components/matters/next-date-card.tsx
-- R6 ✅ packages/core/src/sources/ops.ts
-
+- R1 ✅ snapshot.ts validateSnapshot
+- R2 ✅ forum-catalogue/index.ts:23
+- R3 ✅ snapshot.ts per-state level map
+- R4 ✅ snapshot.json, no fetching
+- R5 ✅ ecourts/import.test.ts
+- R6 ✅ ecourts/snapshot.test.ts
+- R7 ✅ version bump + determinism tests
 ### Verification
-V1-V4 not run locally (verify.mode ci); CI runs them. Prettier 3.9.10 with the repo config was run on the changed files. The page-test regression (logger.warn mock) is the existing matter-workspace-page suite, which failed on CI before this fix.
-
+- V1 db vitest src/seed/forum-catalogue: pass (24 tests); import test failed before the rollback fix
+- V2 core vitest forums.test.ts: pass
+- V3 db tsc --noEmit: pass
 ### Notes
-Branch merged with origin/milestone/court-data-network (30 commits, conflicts only in .forge-lean notes); V1 and V2 re-run after the merge fail identically at undici load (Node 22.12.0 has no zstd), so they are environment failures, not caused by this change.
-No behaviour or env changes.
-
-## Migration renumber
-Base took 0080 (news) and 0081 (api_keys). Lane migration renumbered to 0082_staff_conflict_rate (SQL byte-identical). Snapshot 0082 is the 0081 snapshot with new id/prevId (custom SQL-only migration); journal entry idx 82 appended. drizzle-kit/pnpm were unavailable offline, so the generator was not run.
+In this sandbox Testcontainers' Ryuk log wait fails; validate commands pass with `TESTCONTAINERS_RYUK_DISABLED=true`. No behaviour change to shipped catalogue content except the version bump.

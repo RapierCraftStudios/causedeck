@@ -40,3 +40,9 @@ Added apps/web/components/courts/court-insights.stories.tsx (courts-stories guar
 
 ## Merge-check follow-up
 The reported failure (`turbo: command not found`, exit 127) was an environment PATH issue, not a code conflict. Re-ran via `pnpm turbo run typecheck --filter=...[base]`: 23/23 pass. V1-V3 pass. No source change needed.
+
+## Merge-check rerun (turbo not found)
+The merged-tree typecheck failed with exit 127 (`turbo: command not found`): an environment PATH problem, not a code or symbol conflict. No source change was needed. With `node_modules/.bin` on PATH, scoped `turbo run typecheck` passes (23/23) and V1-V3 pass.
+
+### Merge verification
+After merging the base, the scoped typecheck (`pnpm exec turbo run typecheck --filter='...[e39ede8b]'`, 23 tasks) passes. The earlier failure (exit 127) was `turbo` missing from PATH on the check host, not a code defect (the binary is `node_modules/.bin/turbo`, run through `pnpm exec`). No duplicate keys or same-named symbols were found; no source change was needed. V1-V3 pass again.

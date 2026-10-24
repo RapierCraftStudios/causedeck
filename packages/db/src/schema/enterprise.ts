@@ -13,7 +13,6 @@ import {
   index,
   integer,
   jsonb,
-  pgView,
   text,
   timestamp,
   unique,
@@ -67,22 +66,6 @@ export const ssoProvider = tenantTable(
     check('sso_provider_issuer_chk', sql`length(btrim(issuer)) > 0`),
   ],
 );
-
-/**
- * The Better Auth SSO plugin's read model of enabled providers (migration
- * 20261024210000_sso_provider_auth_view, #683). Column keys are the plugin's field names. The
- * plugin resolves a provider before a workspace is known, which the RLS table cannot serve; the
- * view is owner-owned and read-only. `oidcConfig` and `samlConfig` are the `config` JSON as text.
- */
-export const ssoProviderAuth = pgView('sso_provider_auth', {
-  providerId: text('provider_id').notNull(),
-  issuer: text('issuer').notNull(),
-  domain: text('domain').notNull(),
-  oidcConfig: text('oidc_config'),
-  samlConfig: text('saml_config'),
-  organizationId: text('organization_id').notNull(),
-  userId: text('user_id'),
-}).existing();
 
 export const scimToken = tenantTable(
   'scim_token',

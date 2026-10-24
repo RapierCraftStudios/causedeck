@@ -17,11 +17,15 @@ const client = vi.hoisted(() => ({
   magicLink: vi.fn(),
   social: vi.fn(),
   passkey: vi.fn(),
+  sso: vi.fn(),
 }));
 
 vi.mock('../lib/auth-client.ts', () => ({
   authClient: {
-    signIn: { magicLink: client.magicLink, social: client.social, passkey: client.passkey },
+    signIn: { magicLink: client.magicLink, social: client.social,
+      passkey: client.passkey,
+      sso: client.sso,
+    },
   },
 }));
 vi.mock('../lib/auth.ts', () => ({ getSession: () => Promise.resolve(state.session) }));
@@ -85,6 +89,7 @@ afterEach(() => {
   client.magicLink.mockReset();
   client.social.mockReset();
   client.passkey.mockReset();
+  client.sso.mockReset();
   state.googleEnabled = false;
   state.session = null;
 });
@@ -316,5 +321,36 @@ describe('sign-in page', () => {
         expect.objectContaining({ callbackURL: '/', errorCallbackURL: '/sign-in' }),
       );
     });
+  });
+});
+
+describe('SSO sign-in (#683)', () => {
+  const start = async (email: string) => {
+    await renderPage({ next: '/w/anything' });
+    fireEvent.click(screen.getByRole('button', { name: en.signIn.sso.open }));
+    fireEvent.change(screen.getByLabelText(en.signIn.sso.emailLabel), { target: { value: email } });
+    fireEvent.click(screen.getByRole('button', { name: en.signIn.sso.submit }));
+  };
+
+  it('starts SSO for the work email and returns to next', async () => {
+    client.sso.mockResolvedValue({ data: { url: 'https://idp.example.com' }, error: null });
+    await start('a@firm.example.com');
+    await waitFor(() => {
+      expect(client.sso).toHaveBeenCalledWith({
+        email: 'a@firm.example.com',
+        callbackURL: '/w/anything',
+        errorCallbackURL: '/sign-in?next=%2Fw%2Fanything',
+      });
+    });
+  });
+
+  it('shows the same message for an unknown domain and for a failed request', async () => {
+    client.sso.mockResolvedValue({ data: null, error: { message: 'No provider found' } });
+    await start('a@unknown.example.com');
+    expect((await screen.findByRole('alert')).textContent).toBe(en.signIn.sso.failed);
+    cleanup();
+    client.sso.mockRejectedValue(new Error('network'));
+    await start('a@firm.example.com');
+    expect((await screen.findByRole('alert')).textContent).toBe(en.signIn.sso.failed);
   });
 });

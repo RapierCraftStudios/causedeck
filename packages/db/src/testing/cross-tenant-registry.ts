@@ -226,6 +226,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,
+  // SSO providers (#683)
+  listSsoProviders: empty,
+  saveSsoProvider: denies,
+  deleteSsoProvider: denies,
   // privacy settings (#286)
   getPrivacySettings: empty,
   updateWorkspacePrivacy: denies,

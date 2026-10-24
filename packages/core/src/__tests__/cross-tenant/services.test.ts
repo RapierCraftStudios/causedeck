@@ -1263,6 +1263,64 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getRoleSettings(f.tx, f.a.id)).toEqual(before);
   },
+  listSsoProviders: async (f) => {
+    await f.tx.insert(schema.ssoProvider).values({
+      workspaceId: f.a.id,
+      protocol: 'oidc',
+      issuer: 'https://idp.a.example',
+      domain: 'a-sso.example.com',
+      config: { clientSecret: 'secret' },
+      enabled: true,
+      createdBy: f.ua,
+    });
+    // B is an owner of its own workspace but sees nothing of A's providers.
+    expect(await f.asB((s) => core.listSsoProviders(s, { workspaceId: f.a.id, actorUserId: f.ub }))).toEqual([]);
+  },
+  saveSsoProvider: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.saveSsoProvider(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          protocol: 'oidc',
+          issuer: 'https://idp.b.example',
+          domain: 'b-sso.example.com',
+          settings: { clientId: 'id', clientSecret: 'secret' },
+          enabled: true,
+          baseUrl: 'https://app.example.com',
+        }),
+      ),
+    );
+    const rows = await f.tx
+      .select({ id: schema.ssoProvider.id })
+      .from(schema.ssoProvider)
+      .where(eq(schema.ssoProvider.domain, 'b-sso.example.com'));
+    expect(rows).toEqual([]);
+  },
+  deleteSsoProvider: async (f) => {
+    const [row] = await f.tx
+      .insert(schema.ssoProvider)
+      .values({
+        workspaceId: f.a.id,
+        protocol: 'oidc',
+        issuer: 'https://idp.a.example',
+        domain: 'a-del.example.com',
+        config: {},
+        enabled: true,
+        createdBy: f.ua,
+      })
+      .returning({ id: schema.ssoProvider.id });
+    await expectDenied(
+      f.asB((s) =>
+        core.deleteSsoProvider(s, { workspaceId: f.a.id, actorUserId: f.ub, providerId: row!.id }),
+      ),
+    );
+    const left = await f.tx
+      .select({ id: schema.ssoProvider.id })
+      .from(schema.ssoProvider)
+      .where(eq(schema.ssoProvider.id, row!.id));
+    expect(left).toHaveLength(1);
+  },
   getPrivacySettings: async (f) => {
     await f.tx
       .update(schema.workspaceSettings)

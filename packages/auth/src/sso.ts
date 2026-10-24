@@ -4,7 +4,23 @@
 // core service, which validates settings with `parseSsoConfig`. A first SSO sign-in makes the user
 // a `viewer` of the organisation; an owner raises the role afterwards. Server-only.
 import { schema, withWorkspace, type Database } from '@causedeck/db';
+import { pgTable, text } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
+
+/**
+ * The plugin's read model, `sso_provider_auth` (migration 20261024210000), as a table object: the
+ * Drizzle adapter only addresses tables, not views. Column keys are the plugin's field names. It is
+ * only ever read; the owner-only core service writes `sso_provider`.
+ */
+export const ssoProviderAuth = pgTable('sso_provider_auth', {
+  providerId: text('provider_id').notNull(),
+  issuer: text('issuer').notNull(),
+  domain: text('domain').notNull(),
+  oidcConfig: text('oidc_config'),
+  samlConfig: text('saml_config'),
+  organizationId: text('organization_id').notNull(),
+  userId: text('user_id'),
+});
 
 /** The role an SSO sign-in gives in the organisation: least privilege, never `owner`. */
 export const SSO_DEFAULT_ROLE = 'viewer' as const;

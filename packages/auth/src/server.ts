@@ -25,7 +25,13 @@ import {
   ssoDomainKey,
 } from './rate-limit';
 import { ac, isRole, roles } from './roles';
-import { isBlockedSsoPath, isSsoPath, provisionSsoMember, ssoDomainOf } from './sso';
+import {
+  isBlockedSsoPath,
+  isSsoPath,
+  provisionSsoMember,
+  ssoDomainOf,
+  ssoProviderAuth,
+} from './sso';
 import { markStepUp } from './step-up';
 
 export const MAGIC_LINK_PATH = '/sign-in/magic-link';
@@ -354,7 +360,7 @@ export function createAuth({
     baseURL: appUrl.origin,
     secret: env.BETTER_AUTH_SECRET.reveal(),
     trustedOrigins: [appUrl.origin],
-    database: drizzleAdapter(db, { provider: 'pg', schema }),
+    database: drizzleAdapter(db, { provider: 'pg', schema: { ...schema, ssoProviderAuth } }),
     emailAndPassword: { enabled: false },
     socialProviders: env.AUTH_GOOGLE_ENABLED
       ? {

@@ -212,6 +212,34 @@ describe('inviteMember', () => {
     });
   });
 
+  it('denies advocates, not owners, while advocates_can_invite is off (#285)', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await setup(tx);
+      const advocate = await addMember(tx, workspaceId, 'advocate');
+      const base = { workspaceId, mailer: recordingMailer(), appUrl: APP_URL };
+      await inWorkspace(tx, workspaceId, (s) =>
+        core.updateRoleSettings(s, {
+          workspaceId,
+          actorUserId: ownerId,
+          input: { advocatesCanInvite: false, ownersSeeRestrictedMatters: true },
+        }),
+      );
+      await expectCode(
+        inviteMember(tx, {
+          ...base,
+          actorUserId: advocate.userId,
+          input: { email: 'junior@example.test', role: 'junior' },
+        }),
+        'FORBIDDEN',
+      );
+      await inviteMember(tx, {
+        ...base,
+        actorUserId: ownerId,
+        input: { email: 'junior@example.test', role: 'junior' },
+      });
+    });
+  });
+
   it('reissues the token when the same email is invited again', async () => {
     await withTestDb(async (tx) => {
       const { ownerId, workspaceId } = await setup(tx);

@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@causedeck/ui/select';
 import { toast } from '@causedeck/ui/sonner';
+import { ROLES } from '@causedeck/auth/policy';
 import { useTranslations } from 'next-intl';
 import { useState, useSyncExternalStore, type SyntheticEvent } from 'react';
 
@@ -31,17 +32,8 @@ import type { Role } from '../../../../../../lib/workspace-context.ts';
 
 import type { TransferPlan } from './actions.ts';
 
-/** Most to least privileged, the order roles are listed in. */
-export const ROLE_ORDER: readonly Role[] = ['owner', 'advocate', 'junior', 'clerk', 'viewer'];
-
-/** Roles each role may invite (mirrors `INVITABLE_ROLES` in `@causedeck/core/workspaces`). */
-export const INVITABLE: Record<Role, readonly Role[]> = {
-  owner: ['advocate', 'junior', 'clerk', 'viewer'],
-  advocate: ['junior', 'clerk', 'viewer'],
-  junior: [],
-  clerk: [],
-  viewer: [],
-};
+/** Most to least privileged, the order roles are listed in (`ROLES` from the policy). */
+export const ROLE_ORDER: readonly Role[] = ROLES;
 
 /** Semantic soft tokens per role; the pill always carries the role name, never colour alone. */
 const ROLE_PILL: Record<

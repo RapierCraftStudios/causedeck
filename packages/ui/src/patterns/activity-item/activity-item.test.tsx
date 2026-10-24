@@ -122,6 +122,26 @@ describe('ActivityItem', () => {
     );
   });
 
+  it('leaves out provenance and level when not given, and shows the trailing slot', () => {
+    render(
+      <ActivityItem
+        actor={attached.actor}
+        sentence="Asha Rao changed Meera's role to Clerk"
+        at={attached.at}
+        now={NOW}
+        trailing={<span>Allowed</span>}
+      />,
+    );
+    const row = screen
+      .getByText("Asha Rao changed Meera's role to Clerk")
+      .closest('[data-slot="activity-item"]');
+    if (!(row instanceof HTMLElement)) throw new Error('no row');
+    expect(row.querySelector('[data-slot="provenance-chip"]')).toBeNull();
+    expect(row.querySelector('[data-slot="level-badge"]')).toBeNull();
+    expect(row.querySelector('[data-slot="activity-trailing"]')).toHaveTextContent('Allowed');
+    expect(within(row).queryByRole('button', { name: 'Undo' })).toBeNull();
+  });
+
   it('fades to 60% with an `Undone` label after Undo, and returns on Redo', async () => {
     const user = userEvent.setup();
     const { container } = render(<ActivityItem {...attached} now={NOW} onUndo={vi.fn()} />);

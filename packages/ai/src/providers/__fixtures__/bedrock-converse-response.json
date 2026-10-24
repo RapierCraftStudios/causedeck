@@ -1,0 +1,12 @@
+{
+  "ResponseMetadata": {},
+  "output": {
+    "message": {
+      "role": "assistant",
+      "content": [{ "text": "{\"documentType\":\"order\",\"confidence\":0.93}" }]
+    }
+  },
+  "stopReason": "end_turn",
+  "usage": { "inputTokens": 412, "outputTokens": 19, "totalTokens": 431 },
+  "metrics": { "latencyMs": 640 }
+}

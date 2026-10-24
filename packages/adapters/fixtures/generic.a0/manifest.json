@@ -1,0 +1,119 @@
+{
+  "adapter": "generic.a0",
+  "classification": "FICTIONAL",
+  "note": "Synthetic A0 district fixtures from src/generic-a0/synthetic/generate.ts (#56), seed 56. Every party and court is fictional; real district fixtures are validated later with #119.",
+  "fixtures": [
+    {
+      "file": "list-english.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "list-tamil.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "list-kannada.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "list-mixed.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "list-commercial.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "list-cnr.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "list-table.input.json",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "list-image-only.input.pdf",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "list-malformed.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "order-english.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "order-tamil.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "order-kannada.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "order-mixed.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "order-commercial.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "order-cnr.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    },
+    {
+      "file": "order-malformed.input.txt",
+      "kind": "order",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "generic.a0"
+    }
+  ]
+}

@@ -315,3 +315,73 @@ describe('errors', () => {
     });
   });
 });
+
+describe('plan changes, cancellation withdrawal and adoption (#257)', () => {
+  it('switches the plan and quantity now', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    const result = await provider.updateSubscriptionPlan(id, {
+      planId: 'chamber-seat-2',
+      quantity: 4,
+      at: 'now',
+    });
+    expect(result).toMatchObject({ planId: 'chamber-seat-2', quantity: 4, pendingQuantity: null });
+    const charged = await provider.simulate(id, 'subscription.charged');
+    // chamber-seat-2 is 64_900 paise per seat.
+    expect(charged.payload.payment?.entity.amount).toBe(4 * 64_900);
+  });
+
+  it('schedules a plan for the next cycle', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    const scheduled = await provider.updateSubscriptionPlan(id, {
+      planId: 'chamber-seat-2',
+      quantity: 3,
+      at: 'cycle_end',
+    });
+    expect(scheduled.planId).toBe('chamber-seat-1');
+    const charged = await provider.simulate(id, 'subscription.charged');
+    expect(charged.payload.subscription?.entity).toMatchObject({
+      plan_id: 'chamber-seat-2',
+      has_scheduled_changes: false,
+    });
+  });
+
+  it('rejects a plan change on an ended subscription', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    await provider.cancelSubscription(id, { atCycleEnd: false });
+    await expect(
+      provider.updateSubscriptionPlan(id, { planId: 'chamber-seat-2', quantity: 3, at: 'now' }),
+    ).rejects.toMatchObject({ code: 'invalid_state' });
+  });
+
+  it('withdraws a scheduled cancellation, and only one', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    await expect(provider.withdrawCancellation(id)).rejects.toBeInstanceOf(BillingProviderError);
+    await provider.cancelSubscription(id, { atCycleEnd: true });
+    expect((await provider.withdrawCancellation(id)).cancelAtCycleEnd).toBe(false);
+  });
+
+  it('adopts a subscription known only to the database, idempotently', async () => {
+    const provider = createMockBillingProvider();
+    const input = {
+      id: 'sub_e2e_ws',
+      customerId: 'cust_e2e_ws',
+      planId: 'chamber-seat-1',
+      quantity: 3,
+      status: 'active' as const,
+      currentStart: MOCK_EPOCH,
+      currentEnd: new Date('2026-02-01T00:00:00Z'),
+      cancelAtCycleEnd: false,
+    };
+    const adopted = await provider.adoptSubscription(input);
+    expect(adopted).toMatchObject({ id: 'sub_e2e_ws', status: 'active', quantity: 3 });
+    await provider.updateSubscriptionQuantity('sub_e2e_ws', 5);
+    const again = await provider.adoptSubscription({ ...input, quantity: 9 });
+    expect(again.quantity).toBe(5);
+    await provider.cancelSubscription('sub_e2e_ws', { atCycleEnd: true });
+    expect((await provider.withdrawCancellation('sub_e2e_ws')).cancelAtCycleEnd).toBe(false);
+  });
+});

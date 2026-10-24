@@ -187,16 +187,14 @@
       "requestAccess": "Request access",
       "requestAccessSoon": "Access requests are coming soon."
     },
+    "permission": {
+      "ownersOnly": "Only owners can do this",
+      "ownersAndAdvocates": "Only owners and advocates can do this",
+      "roleTooLow": "Your role cannot do this"
+    },
     "notFound": {
       "title": "Page not found",
       "message": "We could not find this page in this workspace."
-    },
-    "account": {
-      "title": "Account",
-      "description": "Passkeys, two-factor authentication, sessions and connected accounts.",
-      "empty": "Account settings are coming soon.",
-      "hint": "Passkeys, two-factor sign-in and sessions will be managed here.",
-      "action": "Back to your workspace"
     },
     "sidebar": {
       "label": "Sidebar",
@@ -253,6 +251,19 @@
     },
     "sheet": {
       "close": "Close"
+    },
+    "supportBanner": {
+      "message": "Support is viewing this workspace until {time}",
+      "end": "End session",
+      "error": "Could not end the session. Try again."
+    },
+    "ownerTwoFactor": {
+      "message": "Turn on two-factor authentication to keep owner access. Deleting, exporting and billing changes are blocked until you do.",
+      "action": "Set up two-factor"
+    },
+    "demoBanner": {
+      "label": "Demo data — fictional",
+      "hint": "Every matter, party and case number in this workspace is invented."
     }
   },
   "auth": {
@@ -360,6 +371,10 @@
       "alreadyMember": {
         "title": "You are already a member",
         "body": "You already belong to {workspace}."
+      },
+      "seatLimit": {
+        "title": "No seats left in this workspace",
+        "body": "The workspace's plan has no free seat for you. Ask the person who invited you to add a seat."
       }
     },
     "accept": "Accept invitation",
@@ -461,6 +476,10 @@
         "invalid": "{email} could not be invited. Check the address.",
         "conflict": "{email} could not be invited: the workspace has no seat left for this role.",
         "failed": "Could not invite {email}. Please try again."
+      },
+      "seatLimit": {
+        "message": "Your plan includes {seats} seats. Add a seat to invite more people.",
+        "managePlan": "Manage plan"
       }
     },
     "changeRole": {
@@ -513,6 +532,3261 @@
       "signedOut": "Your session ended. Sign in again to continue.",
       "offline": "You are offline. Connect to make changes.",
       "generic": "Something went wrong. Please try again."
+    },
+    "rolesLink": "How roles work",
+    "tabs": {
+      "label": "Members and invitations",
+      "members": "Members ({count})",
+      "invitations": "Pending invitations ({count})"
+    },
+    "invitationsEmpty": "No pending invitations.",
+    "seats": {
+      "title": "Seats",
+      "used": "{used} of {granted} seats in use",
+      "clerk": "{used} of {granted} clerk seats in use",
+      "overLimit": "Over plan limit",
+      "note": "Invitations take a seat when they are accepted."
+    },
+    "aboutRoles": "About roles",
+    "transferPicker": {
+      "title": "Transfer ownership",
+      "description": "Choose the member who will become the owner of {workspace}.",
+      "label": "New owner",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "none": "Invite another member before you transfer ownership."
+    }
+  },
+  "notifications": {
+    "email": {
+      "layout": {
+        "brand": "CauseDeck",
+        "footer": "You received this email because of your CauseDeck account.",
+        "preferences": "Manage notification preferences or unsubscribe",
+        "mandatory": "This is a required account email and cannot be turned off."
+      },
+      "magicLink": {
+        "subject": "Your CauseDeck sign-in link",
+        "preview": "Sign in to CauseDeck",
+        "heading": "Sign in to CauseDeck",
+        "body": "Use the button below to sign in. The link expires in {minutes} minutes and works once.",
+        "cta": "Sign in",
+        "fallback": "If the button does not work, open this link:",
+        "ignore": "If you did not ask to sign in, you can ignore this email."
+      },
+      "invitation": {
+        "subject": "You are invited to a CauseDeck workspace",
+        "preview": "Join a CauseDeck workspace",
+        "heading": "You are invited to a workspace",
+        "body": "A colleague invited you to join their CauseDeck workspace. The invitation expires in {days, plural, one {# day} other {# days}}.",
+        "cta": "Accept invitation",
+        "fallback": "If the button does not work, open this link:",
+        "ignore": "If you were not expecting this invitation, you can ignore this email."
+      },
+      "securityAlert": {
+        "subject": "Security alert: {title}",
+        "preview": "Security activity on your CauseDeck account",
+        "intro": "We noticed security activity on your CauseDeck account.",
+        "cta": "Review activity",
+        "help": "If this was not you, sign out of other sessions and contact your workspace owner."
+      },
+      "dailyDigest": {
+        "subject": "Your CauseDeck daily digest",
+        "preview": "Your updates from today",
+        "heading": "Today in your workspace",
+        "summary": "{count, plural, one {# update} other {# updates}} since your last digest.",
+        "empty": "Nothing new since your last digest.",
+        "cta": "Open CauseDeck"
+      },
+      "endOfDayDigest": {
+        "subject": "What CauseDeck did today",
+        "preview": "A count of what CauseDeck did and what waits for you",
+        "heading": "What CauseDeck did today",
+        "applied": "{count, plural, =0 {CauseDeck applied nothing on its own today.} one {CauseDeck applied # change on its own today. You can undo it for 7 days.} other {CauseDeck applied # changes on its own today. You can undo them for 7 days.}}",
+        "pending": "{count, plural, =0 {Nothing is waiting for your confirmation.} one {# proposal is waiting for your confirmation.} other {# proposals are waiting for your confirmation.}}",
+        "matters": "Matters touched today",
+        "activityCta": "Review today's activity",
+        "inboxCta": "Open your inbox",
+        "note": "This summary only opens the app. It never changes anything and it is not sent to anyone else."
+      },
+      "billingNotice": {
+        "subject": "Billing: {title}",
+        "preview": "A billing update for your workspace",
+        "cta": "View billing"
+      },
+      "notice": {
+        "subject": "{title}",
+        "preview": "An update from your CauseDeck workspace",
+        "cta": "Open in CauseDeck"
+      }
+    },
+    "push": {
+      "card": {
+        "title": "Push notifications",
+        "body": "Get a nudge before your hearings. You can change this any time.",
+        "turnOn": "Turn on",
+        "notNow": "Not now",
+        "enabled": "Push notifications are on for this browser.",
+        "blocked": "Notifications are blocked for this site. Allow them in your browser settings to turn them on.",
+        "error": "Could not turn on push notifications. Try again."
+      }
+    },
+    "title": "Notifications",
+    "bell": {
+      "label": "Notifications",
+      "labelUnread": "Notifications, {count} unread"
+    },
+    "markAllRead": "Mark all read",
+    "groups": {
+      "today": "Today",
+      "earlier": "Earlier"
+    },
+    "empty": "You are all caught up.",
+    "error": "Could not load notifications.",
+    "retry": "Try again",
+    "offline": "Showing saved notifications",
+    "loading": "Loading notifications",
+    "unread": "Unread",
+    "unreadCount": "{count} unread",
+    "announce": "{count, plural, one {# new notification} other {# new notifications}}",
+    "close": "Close",
+    "shortcut": "Open notifications",
+    "preferences": {
+      "metaTitle": "Notification preferences",
+      "title": "Notification preferences",
+      "description": "Choose how CauseDeck tells you about activity in {workspace}.",
+      "link": "Notification preferences",
+      "linkHint": "Choose channels, the daily digest and quiet hours.",
+      "matrixCaption": "Channels for each kind of notification",
+      "categoryHeader": "Notification",
+      "channels": {
+        "inApp": "In-app",
+        "email": "Email",
+        "push": "Push"
+      },
+      "switchLabel": "{category}: {channel}",
+      "categories": {
+        "workspaceInvite": {
+          "label": "Workspace invitations",
+          "description": "When someone invites you to a workspace."
+        },
+        "memberJoined": {
+          "label": "New members",
+          "description": "When someone joins this workspace."
+        },
+        "securityAlert": {
+          "label": "Security alerts",
+          "description": "Sign-ins and changes to your account."
+        },
+        "billingNotice": {
+          "label": "Billing",
+          "description": "Payments, invoices and plan changes."
+        },
+        "reminderHearing": {
+          "label": "Hearing reminders",
+          "description": "Before your listed hearings."
+        },
+        "proposalNew": {
+          "label": "New proposals",
+          "description": "When CauseDeck prepares something for you to review."
+        },
+        "digestDaily": {
+          "label": "Daily digest",
+          "description": "One email at 6:30 pm with the day's updates."
+        },
+        "digestEndOfDay": {
+          "label": "What CauseDeck did today",
+          "description": "One summary each evening: what CauseDeck applied and what waits for you."
+        },
+        "systemNotice": {
+          "label": "Service notices",
+          "description": "Updates about CauseDeck itself."
+        }
+      },
+      "mandatory": "Security alerts are always sent in the app and by email so you never miss a sign-in or account change.",
+      "lockedLabel": "Always on",
+      "digest": {
+        "label": "Email digest",
+        "hint": "Instant sends each email as it happens. Daily gathers them into one email at 6:30 pm. Off sends only required emails.",
+        "instant": "Instant",
+        "daily": "Daily at 6:30 pm",
+        "off": "Off"
+      },
+      "courtHours": {
+        "label": "Do not push during court hours",
+        "hint": "No push notifications from 10:30 am to 5:00 pm in your workspace time zone."
+      },
+      "lockScreen": {
+        "label": "Show details on lock screen",
+        "hint": "When off, push notifications show only a general title, never matter or party names."
+      },
+      "saved": "Saved",
+      "error": "Could not save your change. Try again.",
+      "loadError": "Could not load notification preferences.",
+      "retry": "Try again",
+      "loading": "Loading notification preferences",
+      "empty": "No notification settings are available for this workspace yet."
+    }
+  },
+  "billing": {
+    "mandate": {
+      "additionalAuth": {
+        "title": "Your bank will ask you to approve this charge",
+        "body": "UPI Autopay pays up to {amount} per charge on its own. This charge is larger, so you'll approve it in your UPI app each time it's due."
+      }
+    },
+    "metaTitle": "Billing",
+    "title": "Billing",
+    "description": "Your plan, seats, payment method and invoices for {workspace}.",
+    "loading": "Loading billing",
+    "comingSoon": "Available soon",
+    "permissionDenied": "Only workspace owners can manage billing.",
+    "error": {
+      "title": "Could not load billing.",
+      "retry": "Try again"
+    },
+    "plan": {
+      "title": "Plan",
+      "perMonth": "/ month",
+      "perYear": "/ year",
+      "seatBreakdown": "{seats, plural, one {# seat} other {# seats}} at {seatPrice} + {clerkSeats, plural, one {# clerk seat} other {# clerk seats}} at {clerkPrice}",
+      "renewal": "Renews on {date}",
+      "noRenewal": "No renewal scheduled",
+      "endsOn": "Ends on {date}",
+      "gstNote": "GST at 18% is added to this price.",
+      "change": "Change plan"
+    },
+    "status": {
+      "active": "Active",
+      "pending": "Awaiting payment setup",
+      "pastDue": "Past due",
+      "grace": "Past due: grace until {date}",
+      "paused": "Paused",
+      "cancelsOn": "Cancels on {date}",
+      "cancelled": "Cancelled"
+    },
+    "seats": {
+      "title": "Seats",
+      "members": "{used} of {total} seats",
+      "clerks": "{used} of {total} clerk seats",
+      "membersLabel": "Seats used",
+      "clerksLabel": "Clerk seats used",
+      "hint": "Clerk seats are billed separately from advocate seats."
+    },
+    "paymentMethod": {
+      "title": "Payment method",
+      "active": "UPI Autopay active",
+      "pending": "UPI Autopay pending",
+      "failed": "UPI Autopay failed",
+      "activeHint": "Each renewal is paid automatically from your UPI account.",
+      "pendingHint": "Approve the UPI Autopay mandate in your UPI app to start payments.",
+      "failedHint": "Your last payment did not go through.",
+      "update": "Update payment method"
+    },
+    "banner": {
+      "graceTitle": "Payment failed",
+      "grace": "Access continues until {date} ({days, plural, =0 {last day} one {# day left} other {# days left}}). Update your payment method to keep your plan.",
+      "paymentFailed": "Your last payment failed. Update your payment method to keep your plan.",
+      "cancels": "Your plan ends on {date}. Your data stays accessible read-only and can be exported."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "caption": "Tax invoices for your CauseDeck subscription",
+      "columns": {
+        "number": "Number",
+        "date": "Date",
+        "amount": "Amount",
+        "status": "Status",
+        "pdf": "PDF"
+      },
+      "status": {
+        "issued": "Issued",
+        "paid": "Paid",
+        "void": "Void"
+      },
+      "download": "Download invoice {number} (PDF)",
+      "preparing": "Preparing",
+      "empty": "No invoices yet. Your first invoice appears after your first payment."
+    },
+    "junior": {
+      "title": "You are on the free Junior plan",
+      "body": "Upgrade when you need unlimited matters or a chamber for your team.",
+      "advocate": "Advocate",
+      "advocateBody": "For an advocate practising on their own.",
+      "chamber": "Chamber",
+      "chamberBody": "For chambers, priced per seat (at least {minSeats} seats).",
+      "from": "From {price}",
+      "upgrade": "Upgrade to {plan}"
+    },
+    "quote": {
+      "base": "New price per period",
+      "gst": "GST at 18%",
+      "total": "Total per period (incl. GST)",
+      "proration": "Prorated charge for this period",
+      "prorationGst": "GST at 18% on the prorated charge",
+      "prorationTotal": "Due now (incl. GST)",
+      "effectiveNow": "Takes effect now ({date}).",
+      "effectivePeriodEnd": "Takes effect on {date}, at the end of this billing period."
+    },
+    "seatManager": {
+      "seats": "Seats",
+      "clerkSeats": "Clerk seats",
+      "increaseSeats": "Add a seat",
+      "decreaseSeats": "Remove a seat",
+      "increaseClerkSeats": "Add a clerk seat",
+      "decreaseClerkSeats": "Remove a clerk seat",
+      "announceSeats": "{count, plural, one {# seat} other {# seats}}",
+      "announceClerkSeats": "{count, plural, one {# clerk seat} other {# clerk seats}}",
+      "minHint": "At least {min} seats: {used} are in use.",
+      "review": "Review change",
+      "confirm": "Confirm change",
+      "back": "Back",
+      "done": "Seats updated."
+    },
+    "changePlan": {
+      "title": "Change plan",
+      "chooseBody": "Choose a plan. Moving to a more expensive plan takes effect now; a cheaper plan from the end of this period.",
+      "confirmTitle": "Move to {plan}?",
+      "confirmBody": "Check the amounts before you confirm.",
+      "perSeat": "{price} per seat",
+      "flat": "{price}",
+      "back": "Back",
+      "confirm": "Confirm change",
+      "close": "Close"
+    },
+    "gstin": {
+      "title": "GSTIN",
+      "label": "GSTIN",
+      "hint": "15 characters, for example 27AAPFU0939F1ZV. Leave empty to remove it.",
+      "clientInvalid": "This does not look like a valid GSTIN yet.",
+      "note": "Applies to future invoices only; issued invoices are not changed.",
+      "save": "Save GSTIN",
+      "saved": "GSTIN saved.",
+      "cleared": "GSTIN removed."
+    },
+    "cancel": {
+      "open": "Cancel plan",
+      "title": "Cancel at the end of this period?",
+      "body": "Your plan stays active until {date}.",
+      "bodyNoDate": "Your plan stays active until the end of this billing period.",
+      "readOnlyNote": "After your plan ends, your data remains accessible read-only and can be exported.",
+      "keep": "Keep plan",
+      "confirm": "Cancel at period end",
+      "resume": "Resume plan"
+    },
+    "errors": {
+      "invalidGstinFormat": "Enter a 15-character GSTIN: a 2-digit state code, a 10-character PAN, the entity number, Z and a check character.",
+      "invalidGstinChecksum": "The last character of this GSTIN does not match the rest. Check it for typos.",
+      "invalid": "This change is not possible on your plan.",
+      "notAllowed": "This change is not possible while the subscription is in its current state.",
+      "unsupported": "Your payment provider cannot undo a scheduled cancellation. Subscribe again after the plan ends.",
+      "forbidden": "Only workspace owners can manage billing.",
+      "offline": "You are offline. Billing changes are unavailable until you reconnect.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
+  "usage": {
+    "metaTitle": "Usage",
+    "title": "Usage",
+    "description": "This month's usage for {workspace}. Monthly meters reset at the start of each month (IST).",
+    "loading": "Loading usage",
+    "link": "Usage",
+    "linkHint": "AI processing, OCR pages, transcription and matters this month",
+    "billingLink": "View usage",
+    "permissionDenied": "Only workspace owners can see usage.",
+    "empty": {
+      "title": "No usage yet this month.",
+      "description": "The meters fill as you use AI processing, OCR and transcription."
+    },
+    "error": {
+      "title": "Could not load usage.",
+      "retry": "Try again"
+    },
+    "meters": {
+      "ai": "AI processing",
+      "ocr": "OCR pages",
+      "stt": "Transcription",
+      "matters": "Active matters"
+    },
+    "value": "{used} of {limit}",
+    "percentUsed": "{percent}% used",
+    "valueText": "{percent}% used, {used} of {limit}",
+    "unlimited": "No limit on your plan",
+    "aiResets": "AI processing budget resets on {date}",
+    "resets": "Resets on {date}",
+    "level": {
+      "warning": "Nearing the limit",
+      "exceeded": "Limit reached"
+    },
+    "aiWarning": "You have used {percent}% of this month's AI processing budget. Existing work is not affected.",
+    "aiExceeded": "You have used this month's AI processing budget. New AI processing resumes on {date}. Existing work is not affected.",
+    "limitWarning": "You have used {percent}% of this limit.",
+    "limitExceeded": "You have reached this limit. Existing work is not affected.",
+    "breakdown": {
+      "title": "This month in detail",
+      "caption": "Usage by resource this month",
+      "resource": "Resource",
+      "used": "Used",
+      "limit": "Limit",
+      "noLimit": "No limit",
+      "rows": {
+        "aiSpend": "AI processing spend",
+        "tokensIn": "AI tokens read",
+        "tokensOut": "AI tokens written",
+        "ocr": "OCR pages",
+        "stt": "Transcription",
+        "storage": "Storage",
+        "matters": "Active matters"
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "navLabel": "Settings sections",
+    "offline": "Settings can be changed when you are back online.",
+    "nav": {
+      "profile": "Profile",
+      "members": "Members",
+      "roles": "Roles",
+      "notifications": "Notifications",
+      "integrations": "Integrations",
+      "privacy": "Privacy",
+      "export": "Export",
+      "danger": "Danger zone",
+      "usage": "Usage",
+      "audit": "Audit log",
+      "support": "Support access",
+      "more": "More"
+    },
+    "placeholder": {
+      "export": "Download a copy of everything in this workspace.",
+      "danger": "Transfer ownership or delete this workspace."
+    },
+    "unsaved": {
+      "title": "Leave without saving?",
+      "description": "Your changes on this page have not been saved.",
+      "stay": "Stay on this page",
+      "leave": "Leave without saving"
+    },
+    "profile": {
+      "metaTitle": "Workspace profile",
+      "title": "Profile",
+      "description": "How this workspace is named and set up.",
+      "section": "Workspace",
+      "sectionHint": "Shown to everyone in this workspace.",
+      "readOnly": "Only owners and advocates can change the workspace profile.",
+      "name": "Workspace name",
+      "nameHint": "Your chamber or practice name.",
+      "kind": "Kind",
+      "kindHint": "A solo practice or a chamber with several members.",
+      "kinds": {
+        "solo": "Solo practice",
+        "chamber": "Chamber"
+      },
+      "timezone": "Time zone",
+      "timezoneHint": "Used for hearing dates, reminders and digests.",
+      "locale": "Default language",
+      "localeHint": "The language new members and emails start in.",
+      "practiceCity": "Practice city",
+      "practiceCityHint": "The city where you mostly appear.",
+      "practiceCityPlaceholder": "For example, Chennai",
+      "slug": "Web address",
+      "slugHint": "The part of the link after /w/.",
+      "ownerOnly": "Only workspace owners can change this.",
+      "rename": "Rename",
+      "renameTitle": "Rename the web address",
+      "renameBody": "The old address keeps working for 90 days and then becomes free for others.",
+      "newSlug": "New web address",
+      "newSlugHint": "Lowercase letters, digits and single hyphens, 3 to 48 characters.",
+      "renameConfirm": "Rename",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "saved": "Saved",
+      "loading": "Loading the workspace profile",
+      "toast": {
+        "saved": "Workspace profile saved.",
+        "renamed": "Web address changed to {slug}."
+      },
+      "error": {
+        "title": "Could not load the workspace profile.",
+        "retry": "Try again"
+      },
+      "errors": {
+        "name": "Enter a workspace name of up to 120 characters.",
+        "kind": "Choose solo practice or chamber.",
+        "timezone": "Choose a time zone from the list.",
+        "locale": "Choose a language from the list.",
+        "practiceCity": "Keep the practice city to 80 characters.",
+        "slug": "Use 3 to 48 lowercase letters, digits and single hyphens. Some words are reserved.",
+        "slugTaken": "This web address is taken. Try another.",
+        "forbidden": "You do not have permission to make this change.",
+        "invalid": "Some values are not valid. Check the form and try again.",
+        "rateLimited": "Too many changes in a short time. Try again in a minute.",
+        "offline": "You are offline. Settings can be changed when you are back online.",
+        "generic": "Could not save the profile. Your changes were undone. Try again."
+      }
+    },
+    "danger": {
+      "title": "Danger zone",
+      "description": "These actions affect everyone in the workspace.",
+      "transfer": {
+        "label": "Transfer ownership",
+        "description": "Make another member the owner of this workspace.",
+        "action": "Transfer ownership"
+      },
+      "transferHint": "Opens the members list, where you choose the new owner.",
+      "loading": "Loading danger zone",
+      "error": {
+        "title": "Could not load the danger zone.",
+        "retry": "Try again"
+      }
+    },
+    "export": {
+      "title": "Export workspace data",
+      "description": "A complete copy of this workspace, for your records or to move to another tool.",
+      "contentsTitle": "What the export includes",
+      "contents": {
+        "matters": "Matters, hearings and tasks",
+        "documents": "Documents and notes",
+        "people": "Clients, members and roles",
+        "audit": "The audit log"
+      },
+      "delivery": "Only owners can export. When the file is ready, we email you a download link that works for 24 hours.",
+      "actionLabel": "Download a copy",
+      "actionDescription": "Prepares a ZIP of everything in this workspace.",
+      "action": "Export workspace",
+      "comingSoon": "Coming from export service",
+      "loading": "Loading export",
+      "error": {
+        "title": "Could not load the export page.",
+        "retry": "Try again"
+      }
+    },
+    "roles": {
+      "metaTitle": "Roles and permissions",
+      "title": "Roles",
+      "description": "What each role can see and do in this workspace.",
+      "loading": "Loading the role settings",
+      "clerkLimits": "Clerks cannot see strategy notes or matter memory, even on matters they work on.",
+      "matrix": {
+        "title": "Permissions by role",
+        "description": "Set by CauseDeck for every workspace. A tick means the role can do it.",
+        "caption": "What each role can do",
+        "action": "Action",
+        "allowed": "Allowed",
+        "denied": "Not allowed",
+        "settingsNote": "Advocates invite members only while Advocates can invite members is on. Restricted matters are open only to the people listed on them, and to owners while Owners see restricted matters is on."
+      },
+      "domains": {
+        "workspace": "Workspace",
+        "member": "Members",
+        "billing": "Billing",
+        "matter": "Matters",
+        "strategy": "Strategy",
+        "memory": "Matter memory",
+        "document": "Documents",
+        "task": "Tasks",
+        "listing": "Cause list",
+        "draft": "Drafts",
+        "audit": "Audit log",
+        "export": "Export",
+        "support": "Support",
+        "shell": "Workspace areas"
+      },
+      "actions": {
+        "workspace": {
+          "manage": "Edit the workspace profile and settings",
+          "rename": "Rename the web address",
+          "delete": "Delete the workspace"
+        },
+        "member": {
+          "invite": "Invite members",
+          "remove": "Remove members",
+          "role": "Change roles and transfer ownership"
+        },
+        "billing": {
+          "manage": "Manage the plan and payment",
+          "read": "See billing and usage"
+        },
+        "matter": {
+          "read": "See matters",
+          "write": "Edit matters",
+          "restrict": "Restrict a matter"
+        },
+        "strategy": {
+          "read": "See strategy notes"
+        },
+        "memory": {
+          "read": "See matter memory",
+          "write": "Add to matter memory"
+        },
+        "document": {
+          "read": "See documents",
+          "write": "Upload and edit documents"
+        },
+        "task": {
+          "read": "See tasks",
+          "write": "Create and update tasks"
+        },
+        "listing": {
+          "read": "See the cause list"
+        },
+        "draft": {
+          "write": "Write drafts"
+        },
+        "audit": {
+          "read": "Read and export the audit log"
+        },
+        "export": {
+          "run": "Export all workspace data"
+        },
+        "support": {
+          "manage": "Allow and end support access"
+        },
+        "limitation": {
+          "read": "See limitation dates"
+        },
+        "insights": {
+          "read": "See practice insights"
+        },
+        "settings": {
+          "read": "Open workspace settings"
+        },
+        "invoices": {
+          "read": "Download invoices"
+        }
+      },
+      "settings": {
+        "title": "Role settings",
+        "description": "Two choices this workspace can make on top of the roles above.",
+        "readOnly": "Only workspace owners can change these settings.",
+        "advocatesCanInvite": {
+          "label": "Advocates can invite members",
+          "description": "When off, only owners can invite people to this workspace."
+        },
+        "ownersSeeRestrictedMatters": {
+          "label": "Owners see restricted matters",
+          "description": "When off, owners see a restricted matter only if they are listed on it."
+        }
+      },
+      "toast": {
+        "saved": "Role settings saved.",
+        "undo": "Undo",
+        "undone": "Change undone.",
+        "error": "Could not save the role settings. Try again.",
+        "forbidden": "Only workspace owners can change role settings.",
+        "offline": "Settings can be changed when you are back online."
+      },
+      "restricted": {
+        "title": "Restricted matters",
+        "description": "Matters open only to the people listed on them.",
+        "matter": "Matter {id}",
+        "allowed": "Open to {names}",
+        "ownersOnly": "Open to owners only",
+        "since": "Restricted on {date}",
+        "empty": "No restricted matters",
+        "emptyHint": "Restricted matters you can see will be listed here.",
+        "picker": "Restrict a matter",
+        "pickerUnavailable": "You can restrict matters once matters arrive in CauseDeck."
+      },
+      "error": {
+        "title": "Could not load the role settings.",
+        "retry": "Try again"
+      }
+    },
+    "integrations": {
+      "metaTitle": "Integrations",
+      "title": "Integrations",
+      "description": "The private email intake address and calendar feed for this workspace.",
+      "loading": "Loading the integrations",
+      "notEnabled": "Not enabled yet",
+      "notEnabledReason": "This is not enabled yet for this workspace.",
+      "offlineReason": "Settings can be changed when you are back online.",
+      "tokenLabel": "Private link",
+      "notCreated": "Not created yet.",
+      "createdOn": "Created on {date}.",
+      "rotatedOn": "Last rotated on {date}.",
+      "create": "Create",
+      "rotate": "Rotate",
+      "rotating": "Rotating...",
+      "rotateConfirm": "Rotate",
+      "rotateCancel": "Cancel",
+      "copy": "Copy",
+      "copied": "Copied",
+      "shownOnce": "This is shown only once. Copy it now and keep it private.",
+      "error": {
+        "title": "Could not load the integrations.",
+        "retry": "Try again"
+      },
+      "toast": {
+        "created": "Created. Copy it now: it is shown only once.",
+        "rotated": "Rotated. The old one no longer works.",
+        "error": "Could not change it. Nothing was changed.",
+        "forbidden": "You do not have permission to change this.",
+        "copyFailed": "Could not copy. Select the text and copy it instead."
+      },
+      "emailIntake": {
+        "title": "Email intake address",
+        "description": "A private address you can forward court and registry emails to. Anyone who knows it can send to it, so keep it private.",
+        "open": "Open"
+      },
+      "icsFeed": {
+        "title": "Calendar feed",
+        "description": "A private link your calendar app can subscribe to. Anyone with this link can see your hearing dates. Keep it private.",
+        "label": "Feed URL",
+        "rotateTitle": "Rotate the calendar feed link?",
+        "rotateBody": "A new link is created and the current one stops working at once. Calendars subscribed to the old link stop updating."
+      }
+    },
+    "privacy": {
+      "metaTitle": "Privacy",
+      "title": "Privacy",
+      "description": "Where your data is processed, how sensitive matters start and how long raw audio is kept.",
+      "loading": "Loading the privacy settings",
+      "summary": "Your data stays in India. AI processing stays in India. We never train on your content.",
+      "indiaOnly": {
+        "title": "AI processing",
+        "label": "India-only AI processing",
+        "description": "AI features run only on providers that process data in India, under terms that forbid keeping or training on your content.",
+        "locked": "Locked on",
+        "note": "This stays on for every workspace. It protects client confidentiality and cannot be turned off here."
+      },
+      "settings": {
+        "title": "Sensitive matters and retention",
+        "description": "Two choices this workspace can make about how matters start and how long recordings are kept.",
+        "readOnly": "Only owners and advocates can change these settings.",
+        "sensitiveDefaultRestricted": {
+          "label": "Restrict sensitive matters by default",
+          "description": "New matters marked sensitive start open only to the people listed on them."
+        },
+        "retentionAudioDays": {
+          "label": "Keep raw audio for",
+          "description": "Voice recordings are deleted after this many days. Transcripts stay until you delete them.",
+          "option": "{days} days"
+        }
+      },
+      "subProcessors": {
+        "title": "Sub-processors",
+        "description": "The companies that help us run CauseDeck, what they do and where they process data.",
+        "link": "See the sub-processor list"
+      },
+      "neverDoes": {
+        "title": "What CauseDeck never does",
+        "items": {
+          "train": "Train AI models on your matters, documents or notes.",
+          "sell": "Sell or share your data for advertising.",
+          "abroad": "Send matter content to AI providers outside India.",
+          "access": "Let our staff open your workspace without your consent.",
+          "keep": "Keep raw audio longer than the window you choose."
+        }
+      },
+      "saving": "Saving...",
+      "saved": "Saved",
+      "toast": {
+        "saved": "Privacy settings saved.",
+        "undo": "Undo",
+        "undone": "Change undone.",
+        "error": "Could not save the privacy settings. Try again.",
+        "forbidden": "Only owners and advocates can change privacy settings.",
+        "offline": "Settings can be changed when you are back online."
+      },
+      "error": {
+        "title": "Could not load the privacy settings.",
+        "retry": "Try again"
+      }
+    },
+    "support": {
+      "title": "Support access",
+      "description": "CauseDeck support can see this workspace only when you allow it, and only for the time you choose.",
+      "scope": {
+        "title": "What support can see",
+        "view": "Read-only view: support can open the matters, documents and tasks an advocate could see. Restricted matters and billing stay hidden, and support cannot change anything.",
+        "metadata": "Details only: support sees your plan, seat count and usage, never your matters or documents.",
+        "audit": "Access ends when the time runs out or when you end it. Everything support opens is recorded in the audit log."
+      },
+      "scopeLabel": {
+        "view": "Read-only view",
+        "metadata": "Details only"
+      },
+      "pending": {
+        "title": "Pending requests",
+        "requestedAt": "Requested {time}",
+        "reason": "Reason: {reason}"
+      },
+      "active": {
+        "title": "Active sessions",
+        "until": "Until {time}"
+      },
+      "duration": {
+        "label": "Length",
+        "h1": "1 hour",
+        "h2": "2 hours",
+        "h4": "4 hours"
+      },
+      "grant": "Grant for {duration}",
+      "deny": "Deny",
+      "revoke": "Revoke now",
+      "empty": {
+        "title": "No support requests.",
+        "hint": "When CauseDeck support asks to see this workspace, the request appears here and you get a security alert."
+      },
+      "error": {
+        "title": "Could not load support sessions.",
+        "retry": "Try again"
+      },
+      "toast": {
+        "granted": "Support can view this workspace until {time}.",
+        "denied": "Request denied.",
+        "revoked": "Support session ended."
+      },
+      "errors": {
+        "conflict": "This request has changed. Refresh to see where it stands.",
+        "forbidden": "Only workspace owners can decide on support access.",
+        "notFound": "This support request no longer exists.",
+        "offline": "You are offline. Support access can be changed when you are back online.",
+        "generic": "Something went wrong. Try again."
+      },
+      "loading": "Loading support sessions"
+    },
+    "account": {
+      "metaTitle": "Account",
+      "title": "Account",
+      "description": "Your profile, sign-in methods and active sessions. These apply in every workspace.",
+      "navLabel": "Account sections",
+      "nav": {
+        "profile": "Profile",
+        "security": "Security",
+        "danger": "Danger zone"
+      },
+      "loading": "Loading your account",
+      "error": {
+        "title": "Could not load your account.",
+        "retry": "Try again"
+      },
+      "forbidden": "You can only manage your own account.",
+      "offline": "You are offline. Settings can be changed when you are back online.",
+      "cancel": "Cancel",
+      "profile": {
+        "title": "Profile",
+        "description": "How you appear to colleagues in every workspace.",
+        "name": "Name",
+        "nameHint": "Shown on matters, tasks and the activity log.",
+        "avatar": "Avatar",
+        "avatarHint": "Your initials for now. Photo upload comes later.",
+        "email": "Email",
+        "emailHint": "The address you sign in with.",
+        "language": "Language",
+        "languageHint": "The language CauseDeck uses for you on every device.",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "saved": "Saved",
+        "toast": {
+          "saved": "Profile saved."
+        },
+        "errors": {
+          "name": "Enter a name of up to 120 characters.",
+          "language": "Could not change the language. Try again.",
+          "generic": "Could not save your profile. Try again."
+        }
+      },
+      "security": {
+        "title": "Security",
+        "description": "Passkeys, two-factor authentication, sessions and connected accounts."
+      },
+      "passkeys": {
+        "title": "Passkeys",
+        "description": "Sign in with your fingerprint, face or screen lock instead of an email link.",
+        "listLabel": "Your passkeys",
+        "add": "Add passkey",
+        "empty": "No passkeys yet. Add one to sign in with your fingerprint or screen lock.",
+        "unnamed": "Passkey",
+        "added": "Added {date}",
+        "remove": "Remove",
+        "removeLabel": "Remove {name}",
+        "removeTitle": "Remove this passkey?",
+        "removeBody": "You will no longer be able to sign in with {name}. You can add it again later.",
+        "removeConfirm": "Remove passkey",
+        "unsupported": "This browser cannot create passkeys.",
+        "toast": {
+          "added": "Passkey added.",
+          "removed": "Passkey removed.",
+          "addFailed": "Could not add the passkey. Try again.",
+          "removeFailed": "Could not remove the passkey. Try again."
+        }
+      },
+      "twoFactor": {
+        "title": "Two-factor authentication",
+        "description": "Ask for a code from an authenticator app as a second step.",
+        "status": "Status",
+        "on": "On",
+        "off": "Off",
+        "onHint": "Your account is protected with an authenticator app.",
+        "offHint": "Add an authenticator app to protect your account if someone gets your email.",
+        "setUp": "Set up",
+        "toast": {
+          "enabled": "Two-factor authentication is on."
+        },
+        "dialog": {
+          "title": "Set up two-factor authentication",
+          "step": "Step {current} of {total}",
+          "preparing": "Preparing your QR code",
+          "scanTitle": "Scan the QR code",
+          "scanBody": "Open an authenticator app, such as Google Authenticator or Microsoft Authenticator, and scan this code.",
+          "qrAlt": "QR code for your authenticator app",
+          "manual": "Can't scan? Enter this key",
+          "next": "Next",
+          "back": "Back",
+          "verifyTitle": "Enter the 6-digit code",
+          "verifyBody": "Type the code your authenticator app shows for CauseDeck.",
+          "code": "Code",
+          "verify": "Verify",
+          "codesTitle": "Save your backup codes",
+          "codesBody": "Each code works once if you lose your phone. They are shown only now, so keep them somewhere safe.",
+          "codesLabel": "Backup codes",
+          "copy": "Copy",
+          "copied": "Backup codes copied.",
+          "download": "Download",
+          "done": "Done",
+          "retry": "Try again",
+          "errors": {
+            "code": "Enter the 6-digit code from your app.",
+            "wrongCode": "That code did not work. Check the time on your phone and try again.",
+            "copy": "Could not copy. Select the codes and copy them yourself.",
+            "generic": "Could not set up two-factor authentication. Try again."
+          }
+        }
+      },
+      "sessions": {
+        "title": "Active sessions",
+        "description": "Devices signed in to your account. Revoke any you don't recognise.",
+        "tableCaption": "Your active sessions",
+        "columns": {
+          "device": "Device",
+          "ip": "IP address",
+          "signedIn": "Signed in",
+          "actions": "Actions"
+        },
+        "device": "{browser} on {os}",
+        "unknownDevice": "Unknown device",
+        "unknownIp": "Unknown",
+        "current": "This device",
+        "empty": "No other active sessions.",
+        "revoke": "Revoke",
+        "revokeLabel": "Revoke the session on {device}",
+        "revokeTitle": "Revoke this session?",
+        "revokeBody": "{device} will be signed out on its next request.",
+        "revokeConfirm": "Revoke session",
+        "toast": {
+          "revoked": "Session revoked.",
+          "failed": "Could not revoke the session. Try again."
+        }
+      },
+      "connected": {
+        "title": "Connected accounts",
+        "description": "Services you can sign in with besides email links and passkeys.",
+        "listLabel": "Connected accounts",
+        "empty": "No connected accounts. You sign in with an email link or a passkey.",
+        "connectedOn": "Connected {date}",
+        "providers": {
+          "google": "Google"
+        }
+      }
+    }
+  },
+  "lifecycle": {
+    "offline": "Needs a connection",
+    "forbidden": "Only workspace owners can export or delete this workspace.",
+    "stepUp": {
+      "title": "Confirm it is you",
+      "body": "Use your passkey or the code from your authenticator app. It stays confirmed for 10 minutes.",
+      "passkey": "Use passkey",
+      "code": "Authenticator code",
+      "verify": "Verify code",
+      "verified": "Confirmed. You can continue.",
+      "wrongCode": "That code did not work.",
+      "codeFormat": "Enter the 6-digit code.",
+      "passkeyFailed": "The passkey check did not finish. Try again.",
+      "required": "Confirm it is you to continue."
+    },
+    "export": {
+      "title": "Export everything",
+      "action": "Request export",
+      "helper": "A ZIP containing your matters, documents, memory and activity. Ready within minutes for most workspaces.",
+      "leave": "You can leave this page; come back here to download it.",
+      "progressLabel": "Export progress",
+      "steps": {
+        "queued": "Waiting to start",
+        "collecting": "Collecting records",
+        "files": "Decrypting files",
+        "packaging": "Packaging"
+      },
+      "readyTitle": "Your export is ready",
+      "expires": "Expires in {hours, plural, =0 {less than an hour} one {# hour} other {# hours}}",
+      "download": "Download",
+      "copySha": "Copy SHA-256",
+      "copied": "SHA-256 copied",
+      "copyFailed": "Could not copy the SHA-256.",
+      "failed": "The export did not finish.",
+      "retry": "Try again",
+      "requestError": "Could not request the export. Try again.",
+      "downloadError": "Could not start the download. Try again."
+    },
+    "history": {
+      "title": "History",
+      "empty": "No exports yet.",
+      "requested": "Requested {date}",
+      "status": {
+        "queued": "Queued",
+        "running": "Building",
+        "ready": "Ready",
+        "failed": "Failed",
+        "expired": "Expired"
+      }
+    },
+    "danger": {
+      "title": "Delete this workspace",
+      "consequences": {
+        "data": "Every matter, document, member and setting in this workspace is deleted.",
+        "permanent": "Deletion becomes permanent after a 14-day cooling-off period.",
+        "export": "Export the workspace first if you need a copy.",
+        "cryptoErase": "We destroy the workspace's encryption key, so stored files can never be read again."
+      },
+      "action": "Delete workspace",
+      "scheduled": "Scheduled for deletion on {date}. Cancel any time before then.",
+      "cancel": "Cancel deletion",
+      "cancelled": "Deletion cancelled",
+      "cancelError": "Could not cancel the deletion. Try again.",
+      "requested": "Deletion scheduled",
+      "dialog": {
+        "title": "Delete this workspace",
+        "step": "Step {current} of {total}",
+        "exportTitle": "Export first",
+        "exportBody": "After deletion nothing can be recovered. Download an export if you need a copy.",
+        "exportLink": "Open export",
+        "exportAck": "I have exported what I need, or I do not need a copy",
+        "nameTitle": "Type the workspace name",
+        "nameLabel": "Workspace name",
+        "nameHint": "Type {name} to confirm.",
+        "nameMismatch": "The name does not match.",
+        "next": "Next",
+        "back": "Back",
+        "close": "Cancel",
+        "delete": "Delete",
+        "error": "Could not request deletion. Try again."
+      }
+    },
+    "account": {
+      "title": "Delete account",
+      "description": "Delete your CauseDeck account and sign out everywhere.",
+      "consequences": "Your name and email are removed and your activity in workspaces is anonymised. You must first transfer or delete any workspace you are the only owner of.",
+      "action": "Delete account",
+      "dialogTitle": "Delete your account",
+      "confirmLabel": "Type your email to confirm",
+      "confirmHint": "Type {email} to confirm.",
+      "mismatch": "The email does not match.",
+      "delete": "Delete account",
+      "close": "Cancel",
+      "requested": "Your account deletion has started.",
+      "error": "Could not delete your account. Try again."
+    }
+  },
+  "audit": {
+    "metaTitle": "Activity",
+    "title": "Activity",
+    "description": "Security and administrative events in {workspace}.",
+    "tabs": {
+      "label": "Activity views",
+      "security": "Security and audit"
+    },
+    "tableLabel": "Security events",
+    "loading": "Loading activity",
+    "empty": "No security events in this period.",
+    "error": {
+      "title": "Could not load activity.",
+      "retry": "Try again"
+    },
+    "offline": "You are offline. Showing the first page as saved; filters and export are paused.",
+    "denied": "Only owners and advocates can view the audit log.",
+    "loadMore": "Load more",
+    "loadMoreFailed": "Could not load more events.",
+    "columns": {
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "target": "Target",
+      "outcome": "Outcome",
+      "ip": "IP"
+    },
+    "outcome": {
+      "success": "Allowed",
+      "denied": "Denied",
+      "error": "Failed"
+    },
+    "actor": {
+      "system": "CauseDeck",
+      "staff": "CauseDeck support",
+      "api": "An API client",
+      "unknown": "A former member"
+    },
+    "sentence": {
+      "memberRemoved": "{actor} removed {target} from the workspace",
+      "memberRoleChanged": "{actor} changed {target}'s role to {role}",
+      "memberRoleChangedNoRole": "{actor} changed {target}'s role",
+      "flagChanged": "{actor} changed the feature flag {target}",
+      "budgetOverride": "{actor} set an AI budget override",
+      "retentionPurged": "{actor} purged audit events past the retention window",
+      "exported": "{actor} exported the audit log",
+      "settingsViewed": "{actor} opened the workspace settings",
+      "profileUpdated": "{actor} updated the workspace profile",
+      "slugRenamed": "{actor} changed the web address from {from} to {to}",
+      "slugRenamedNoSlugs": "{actor} changed the web address",
+      "generic": "{actor} recorded {action}"
+    },
+    "selected": "Selected: {event}",
+    "filters": {
+      "label": "Filters",
+      "date": "Date range",
+      "dateAll": "Any date",
+      "dateRange": "{from} to {to}",
+      "dateFrom": "From {from}",
+      "dateHint": "Pick the first and last day. Times are in IST.",
+      "actor": "Actor",
+      "actorAll": "Anyone",
+      "action": "Action",
+      "actionAll": "All actions",
+      "apply": "Apply",
+      "clear": "Clear filters",
+      "groups": {
+        "member": "Members",
+        "flag": "Feature flags",
+        "usage": "AI usage",
+        "audit": "Audit log",
+        "workspace": "Workspace"
+      }
+    },
+    "export": {
+      "button": "Export",
+      "title": "Export the audit log",
+      "description": "The file covers the selected range and is itself recorded in the audit log.",
+      "format": "Format",
+      "csv": "CSV",
+      "jsonl": "JSON Lines",
+      "bom": "Add a byte order mark for Excel",
+      "from": "From",
+      "to": "To",
+      "rangeInvalid": "The start date must be before the end date.",
+      "confirm": "Download",
+      "cancel": "Cancel",
+      "started": "Your download has started.",
+      "failed": "Could not start the export.",
+      "denied": "Only owners and advocates can export the audit log.",
+      "offline": "You are offline. Export needs a connection."
+    },
+    "drawer": {
+      "title": "Event details",
+      "who": "Who",
+      "when": "When",
+      "target": "Target",
+      "outcome": "Outcome",
+      "ip": "IP address",
+      "requestId": "Request id",
+      "eventId": "Event id",
+      "metadata": "Metadata",
+      "noMetadata": "No metadata recorded.",
+      "copyId": "Copy event id",
+      "copied": "Event id copied.",
+      "chain": "Chain",
+      "chainVerified": "Verified",
+      "chainUnverified": "Chain not yet verified",
+      "chainChecking": "Checking the chain",
+      "close": "Close"
+    },
+    "shortcuts": "J and K move between rows, Enter opens the details, E exports.",
+    "settingsLink": {
+      "title": "Audit log",
+      "hint": "Security and administrative events, with export."
+    }
+  },
+  "activity": {
+    "metaTitle": "Activity",
+    "title": "Activity",
+    "description": "Everything CauseDeck did in {workspace}, with one tap to undo for seven days.",
+    "tabs": {
+      "label": "Activity views",
+      "feed": "What CauseDeck did",
+      "security": "Security and audit"
+    },
+    "feed": {
+      "label": "Activity",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "loadMore": "Load more",
+      "loadingMore": "Loading more activity",
+      "loaded": "{count, plural, one {# more activity loaded} other {# more activities loaded}}",
+      "viewOnly": "You can read the activity but not undo it. Ask the workspace owner.",
+      "clerkNote": "You see the kinds of changes your role can make.",
+      "captureBanner": "Everything from one capture",
+      "captureClear": "Show all activity",
+      "shortcutsButton": "Keyboard shortcuts"
+    },
+    "item": {
+      "level": {
+        "L1": "L1, captured",
+        "L2": "L2, confirmed",
+        "L3": "L3, applied automatically",
+        "L4": "L4, prepared"
+      },
+      "levelShort": {
+        "L1": "Captured",
+        "L2": "Confirmed",
+        "L3": "Auto-applied",
+        "L4": "Prepared"
+      },
+      "source": {
+        "document": "Document",
+        "voice": "Voice note",
+        "email": "Email",
+        "list": "List row",
+        "form": "Form",
+        "calendar": "Calendar",
+        "capture": "Capture",
+        "unknown": "Source"
+      },
+      "sourceLabel": "Source: {source}",
+      "matter": "Matter: {title}",
+      "confidence": "Confidence {percent}%",
+      "redacted": "A change to a restricted matter",
+      "redactedHint": "You do not have access to this matter, so the detail is hidden.",
+      "expand": "Show details",
+      "collapse": "Hide details",
+      "details": {
+        "model": "Model",
+        "version": "Version",
+        "region": "Region",
+        "noModel": "No AI model was used",
+        "confirmedBy": "Confirmed by",
+        "notConfirmed": "Not confirmed by anyone",
+        "system": "CauseDeck",
+        "capture": "All activity from this capture",
+        "time": "Time"
+      },
+      "undone": "Undone by {name} at {time}",
+      "undoneUnknown": "Undone at {time}",
+      "undoLabel": "Undo: {summary}",
+      "undo": "Undo",
+      "undoAvailable": "Undo available for {days, plural, one {# more day} other {# more days}}",
+      "undoLessThanDay": "Undo available for less than a day",
+      "undoEnded": "Undo window ended",
+      "viewOnly": "View only",
+      "offlineUndo": "Undo needs a connection.",
+      "confirmedNoUndo": "Confirmed, so it can no longer be undone",
+      "bulkUndo": "Undo everything from this capture",
+      "reassign": "Moved to wrong matter? Reassign"
+    },
+    "undoDialog": {
+      "title": "Undo this change?",
+      "titleCapture": "Undo everything from this capture?",
+      "description": "This also removes what was created from it.",
+      "loading": "Checking what else this will remove",
+      "cascade": "This will remove",
+      "cascadeNone": "Nothing else depends on this change.",
+      "confirm": "Undo",
+      "confirmCapture": "Undo everything",
+      "working": "Undoing",
+      "cancel": "Cancel",
+      "refusedTitle": "This cannot be undone",
+      "expiredTitle": "The undo window has ended",
+      "openMatter": "Open the matter",
+      "close": "Close",
+      "error": "Could not undo. Nothing was changed. Try again.",
+      "previewError": "Could not check what this will remove. Try again.",
+      "skipped": "{count, plural, one {# change was left as it is} other {# changes were left as they are}}: you confirmed them or their window ended."
+    },
+    "reassign": {
+      "title": "Move to another matter",
+      "description": "Pick the matter this capture belongs to. Everything created from it moves there.",
+      "search": "Search matters",
+      "placeholder": "Title, party or case number",
+      "noResults": "No matter found.",
+      "confirm": "Move",
+      "working": "Moving",
+      "cancel": "Cancel",
+      "error": "Could not move it. Nothing was changed.",
+      "select": "Select {title}"
+    },
+    "filters": {
+      "label": "Filters",
+      "toggle": "Filters",
+      "autoOnly": "Auto-applied only",
+      "level": "Level",
+      "levelAll": "All levels",
+      "kind": "Kind",
+      "kindAll": "All kinds",
+      "kinds": {
+        "next_date": "Next date",
+        "hearing_outcome": "Hearing outcome",
+        "new_matter": "New matter",
+        "new_proceeding": "New proceeding",
+        "listing_update": "Listing update",
+        "task": "Task",
+        "obligation_from_direction": "Obligation from a direction",
+        "document_attach": "Attached document",
+        "order_record": "Order",
+        "party_detail": "Party detail",
+        "duplicate_merge": "Duplicate merge",
+        "memory_item": "Memory",
+        "fee_entry": "Fee entry",
+        "outward_draft": "Draft for you to send"
+      },
+      "matter": "Matter",
+      "matterAll": "All matters",
+      "matterPick": "Choose a matter",
+      "capture": "Capture",
+      "captureOne": "One capture",
+      "from": "From",
+      "to": "To",
+      "day": "Day",
+      "search": "Search",
+      "searchPlaceholder": "Search summaries",
+      "searchHint": "Press / to search",
+      "apply": "Apply",
+      "clear": "Clear filters"
+    },
+    "export": {
+      "button": "Export",
+      "label": "Export activity",
+      "description": "Download the activity log for a date range, with source, model, region, confidence, level, who confirmed it and undo state.",
+      "from": "From",
+      "to": "To",
+      "csv": "Download CSV",
+      "json": "Download JSON",
+      "own": "You export the activity you made, confirmed or undid. Owners export the whole workspace.",
+      "offline": "Export needs a connection.",
+      "invalidRange": "Pick a start date that is before the end date."
+    },
+    "states": {
+      "empty": "Nothing has happened yet. Share a cause list or an order and it will show up here.",
+      "filteredEmpty": "No activity matches these filters.",
+      "clear": "Clear filters",
+      "error": "Could not load activity.",
+      "errorHint": "Nothing was changed. Check your connection and try again.",
+      "retry": "Try again",
+      "offline": "Showing saved activity. Undo needs a connection.",
+      "denied": "You do not have access to this. Ask the workspace owner.",
+      "loading": "Loading activity"
+    },
+    "shortcuts": {
+      "title": "Activity shortcuts",
+      "next": "Next activity",
+      "prev": "Previous activity",
+      "expand": "Show or hide details",
+      "undo": "Open undo for the focused activity",
+      "search": "Search activity",
+      "help": "Show these shortcuts",
+      "close": "Close"
+    },
+    "announce": {
+      "undone": "{count, plural, one {# change undone} other {# changes undone}}",
+      "reassigned": "Moved to the other matter",
+      "refused": "Could not undo: {reason}"
+    }
+  },
+  "courts": {
+    "metaTitle": "Courts",
+    "title": "Courts",
+    "description": "The courts CauseDeck knows, what it can read for each, and the way to each court's official pages.",
+    "loading": "Loading courts",
+    "search": {
+      "label": "Search forums",
+      "placeholder": "Search courts and forums",
+      "noMatch": "No forum matches “{query}”."
+    },
+    "gridLabel": "Forums",
+    "cityOther": "Other forums",
+    "workspaceOwned": "Your forum",
+    "languagesLabel": "Languages",
+    "planned": {
+      "title": "Planned",
+      "hint": "Catalogued but not available yet. They have no links until they are ready.",
+      "reasonFallback": "Not available yet."
+    },
+    "side": {
+      "original": "Original side",
+      "appellate": "Appellate side"
+    },
+    "levels": {
+      "label": "Adapter level {level}",
+      "A0": "Known court. Share a list or order and we will read it with your confirmation.",
+      "A1": "Document-assisted. We read lists and orders you share and match them to your matters."
+    },
+    "status": {
+      "ok": "Lists read",
+      "degraded": "Partly read",
+      "failed": "Couldn't read",
+      "none": "No lists yet"
+    },
+    "banner": {
+      "hall": "Couldn't read today's list for Hall {halls}",
+      "halls": "Couldn't read today's list for Halls {halls}",
+      "generic": "Couldn't read today's list",
+      "openOfficial": "Open the official list",
+      "shareAgain": "Share it again",
+      "newWindow": "Opens the court's website in a new window"
+    },
+    "empty": {
+      "title": "Choose your courts to get started.",
+      "hint": "No forums are listed for this workspace yet. When they are, each shows what CauseDeck can read for it."
+    },
+    "error": {
+      "title": "Could not load courts.",
+      "retry": "Try again"
+    },
+    "offline": "Showing saved court information from {time}.",
+    "addForum": {
+      "trigger": "Add forum",
+      "title": "Add a forum",
+      "description": "A court or forum your workspace uses that CauseDeck does not list yet. Only your workspace sees it.",
+      "name": {
+        "label": "Forum name"
+      },
+      "courtType": {
+        "label": "Court type",
+        "high_court": "High Court",
+        "district": "District court",
+        "tribunal": "Tribunal",
+        "commission": "Commission",
+        "other": "Other"
+      },
+      "city": {
+        "label": "City"
+      },
+      "primaryLanguage": "Main language",
+      "secondaryLanguages": "Other languages",
+      "languages": {
+        "en": "English",
+        "ta": "Tamil",
+        "kn": "Kannada",
+        "hi": "Hindi"
+      },
+      "website": {
+        "label": "Court website (optional)",
+        "hint": "An https address. Links to it open in a new window."
+      },
+      "code": {
+        "label": "Forum code",
+        "hint": "A short dotted code, such as ws.chennai.city-civil-court."
+      },
+      "errors": {
+        "required": "Fill this in.",
+        "codeInvalid": "Use lower-case letters, digits and hyphens, with at least one dot.",
+        "codeTaken": "This code belongs to an existing forum. Choose another.",
+        "websiteInvalid": "Enter an https address, such as https://example.gov.in.",
+        "forbidden": "Only owners and advocates can add forums.",
+        "failed": "Couldn't add the forum. Try again."
+      },
+      "submit": "Add forum",
+      "cancel": "Cancel",
+      "created": "{name} added to your courts."
+    },
+    "detail": {
+      "back": "All courts",
+      "tabsLabel": "Forum sections",
+      "tabs": {
+        "halls": "Halls",
+        "adapter": "Adapter",
+        "links": "Links",
+        "rosters": "Rosters"
+      },
+      "halls": {
+        "caption": "Halls seen in your lists",
+        "hall": "Hall",
+        "lastList": "Last list",
+        "state": "Reading",
+        "read": "Read",
+        "unreadable": "Unreadable",
+        "emptyTitle": "No halls seen yet",
+        "emptyHint": "Halls appear here after you share a cause list for this forum. Each shows the date of its latest list and whether we could read it."
+      },
+      "adapter": {
+        "title": "Adapter status",
+        "noAdapter": "This forum has no adapter yet. You can still open the court's official pages from Links.",
+        "id": "Adapter",
+        "version": "Version",
+        "noVersion": "No active version",
+        "level": "Level",
+        "levelHelp": "What the levels mean",
+        "levelsTitle": "Adapter levels",
+        "levelA0": "A0, known court: we know the court and its official pages. Share a list or order and we read it with your confirmation.",
+        "levelA1": "A1, document-assisted: we read the lists and orders you share and match them to your matters.",
+        "levelHigher": "Higher levels, such as reading lists straight from the court, are not available yet.",
+        "lastVerified": "Last verified",
+        "notVerified": "Not yet verified with real lists",
+        "health": "Health across workspaces",
+        "healthStatus": {
+          "ok": "Working",
+          "degraded": "Some lists not read",
+          "failed": "Most lists failing",
+          "none": "No runs yet"
+        },
+        "lastParse": "Your last list",
+        "lastParseNone": "No lists shared yet",
+        "rows": "{parsed} rows read, {anchored} matched to matters",
+        "unreadableHalls": "Unreadable halls: {halls}"
+      },
+      "accessModes": {
+        "title": "Access modes",
+        "caption": "How CauseDeck may get each resource for this court",
+        "resource": "Resource",
+        "mode": "Mode",
+        "note": "Counsel note",
+        "legalReviewPending": "Legal review pending",
+        "userSuppliedHelp": "Share the list or forward the court email",
+        "empty": "No access modes are recorded for this court yet.",
+        "modes": {
+          "user_supplied": "You share it",
+          "device_user_triggered": "Your device, when you ask",
+          "official": "Official feed",
+          "licensed": "Licensed source",
+          "none": "Not available"
+        },
+        "resources": {
+          "cause_list": "Cause list",
+          "case_status": "Case status",
+          "orders": "Orders",
+          "display_board": "Display board",
+          "a2_retrieval": "Retrieval from the court",
+          "live_tracking": "Live tracking",
+          "sanctioned_push": "Court-sanctioned updates"
+        }
+      },
+      "links": {
+        "title": "Official pages",
+        "newWindow": "Opens the court's website in a new window",
+        "captcha": "The court's page may ask you to solve a captcha. That is the court's requirement; Lawyer OS never solves it for you.",
+        "empty": "No official pages are listed for this forum yet.",
+        "kinds": {
+          "cause_list": "Cause list",
+          "case_status": "Case status",
+          "orders": "Orders",
+          "display_board": "Display board",
+          "e_copy": "Certified e-copy",
+          "sitting_arrangements": "Sitting arrangements",
+          "aims": "Advocate Information Management System"
+        }
+      }
+    }
+  },
+  "courtsRosters": {
+    "metaTitle": "Rosters",
+    "title": "Bench rosters",
+    "description": "The sitting arrangements you confirmed for each forum, and the matters whose bench changed.",
+    "loading": "Loading rosters",
+    "back": "All courts",
+    "importRoster": "Import roster",
+    "importOffline": "Importing a roster needs a connection.",
+    "readOnly": "Only owners and advocates can import rosters.",
+    "forums": {
+      "label": "Forum",
+      "rail": "Forums with rosters"
+    },
+    "roster": {
+      "listLabel": "Roster versions",
+      "effectiveFrom": "From {date}",
+      "effectiveTo": "until {date}",
+      "openEnded": "until replaced",
+      "version": "Version {version}",
+      "entries": "{count, plural, one {# hall} other {# halls}}",
+      "activeToday": "Active today",
+      "status": {
+        "active": "Active",
+        "superseded": "Superseded",
+        "draft": "Draft"
+      }
+    },
+    "halls": {
+      "caption": "Halls in the roster in force today",
+      "hall": "Hall",
+      "bench": "Bench",
+      "portfolio": "Portfolio",
+      "benchNotRecorded": "Bench not recorded",
+      "noneInForce": {
+        "title": "No roster in force today",
+        "hint": "None of this forum's rosters covers today. Import the current sitting arrangements to see who sits where."
+      }
+    },
+    "alerts": {
+      "title": "Bench changes",
+      "warning": "Bench changed",
+      "changed": "Bench changed from {date}: <link>{matter}</link> now sits with {bench}.",
+      "previousBench": "Previously {bench}.",
+      "noPreviousBench": "No bench was recorded for it before.",
+      "unknownBench": "a bench with no judges recorded",
+      "none": "No open bench changes."
+    },
+    "empty": {
+      "title": "No roster imported yet.",
+      "hint": "Share the court's sitting arrangements PDF to be told when your bench changes."
+    },
+    "error": {
+      "title": "Could not load rosters.",
+      "retry": "Try again"
+    },
+    "import": {
+      "parseError": "We couldn't read the dates in this PDF. Enter them yourself or try the original file.",
+      "metaTitle": "Import roster",
+      "title": "Import a roster",
+      "back": "Back to rosters",
+      "forum": "Sitting arrangements for {court}",
+      "chooseForum": {
+        "label": "Forum",
+        "title": "Choose the forum",
+        "hint": "Pick the court whose sitting arrangements you are importing.",
+        "placeholder": "Choose a forum"
+      },
+      "upload": {
+        "label": "Roster PDF",
+        "hint": "The court's sitting arrangements as a PDF. Nothing is saved until you confirm.",
+        "uploading": "Uploading and reading the PDF",
+        "failed": "The upload did not finish. Try again.",
+        "tooLarge": "This file is too large to upload.",
+        "notPdf": "Choose a PDF file."
+      },
+      "parsing": "Reading the roster",
+      "unreadable": {
+        "title": "We could not read this PDF.",
+        "retry": "Choose another file"
+      },
+      "noRows": "No halls were found in this PDF. Try the original file from the court.",
+      "effectiveFrom": {
+        "label": "Effective from",
+        "fromPdf": "Read from the PDF. Check it before you confirm.",
+        "required": "Enter the date this roster takes effect."
+      },
+      "summary": {
+        "label": "Roster summary",
+        "rows": "{count, plural, one {# hall} other {# halls}}",
+        "lowConfidence": "{count, plural, =0 {No rows to check} one {# row to check} other {# rows to check}}"
+      },
+      "grid": {
+        "label": "Parsed roster rows",
+        "hint": "Arrow keys move between cells, Enter edits a cell, Escape cancels. Cmd or Ctrl+Enter confirms.",
+        "hall": "Hall",
+        "judges": "Judges",
+        "portfolio": "Portfolio",
+        "caseTypes": "Case types",
+        "years": "Years",
+        "confidence": "Confidence",
+        "remove": "Remove hall {hall}",
+        "removeColumn": "Remove",
+        "edit": "Edit {column} for hall {hall}",
+        "judgesHint": "Separate judges with a semicolon.",
+        "caseTypesHint": "Case types separated by commas, for example WP, CRL.A",
+        "yearsHint": "A year or a range, for example 2020-2024",
+        "none": "None",
+        "yearRange": "{from} to {to}",
+        "yearFrom": "From {year}",
+        "yearTo": "Up to {year}",
+        "announce": "{column} for hall {hall} changed to {value}.",
+        "cleared": "{column} for hall {hall} cleared.",
+        "removed": "Hall {hall} removed.",
+        "invalidYears": "Enter a year or a range such as 2020-2024."
+      },
+      "confidence": {
+        "low": "Check this row",
+        "ok": "Read clearly"
+      },
+      "validation": {
+        "hall": "Enter the hall number.",
+        "judges": "Enter at least one judge.",
+        "rows": "Keep at least one hall.",
+        "fix": "Fix the marked rows before you confirm."
+      },
+      "confirm": "Confirm roster",
+      "confirming": "Confirming the roster",
+      "supersede": {
+        "title": "Replace the current roster?",
+        "body": "This forum already has an active roster. Confirming makes this one active from {date}, and the current one stops applying from that day.",
+        "confirm": "Replace and confirm",
+        "cancel": "Keep reviewing"
+      },
+      "done": "Roster confirmed from {date}.",
+      "alerts": "{count, plural, =0 {No bench changes on your matters.} one {The bench changed on # matter.} other {The bench changed on # matters.}}",
+      "detectionFailed": "The roster is saved, but bench changes could not be checked yet.",
+      "failed": "The roster was not saved. Try again."
+    }
+  },
+  "matters": {
+    "metaTitle": "Matters",
+    "title": "Matters",
+    "loading": "Loading matters",
+    "listLabel": "Matters",
+    "new": {
+      "trigger": "New matter",
+      "title": "New matter",
+      "description": "Add a matter by hand. You can add its proceedings and people next.",
+      "titleLabel": "Title",
+      "titleHint": "For example: Rao v. State of Tamil Nadu",
+      "practiceArea": "Practice area",
+      "sensitive": "Sensitive matter",
+      "sensitiveHint": "AI processing is turned off for this matter and it is excluded from bulk imports and shared briefs",
+      "cancel": "Cancel",
+      "submit": "Create matter",
+      "created": "Matter created: {title}",
+      "errors": {
+        "required": "Enter a title.",
+        "forbidden": "Your role can't add matters.",
+        "failed": "Couldn't create the matter. Try again.",
+        "offline": "You're offline. Changes will not save until you're back."
+      }
+    },
+    "search": {
+      "label": "Search matters",
+      "placeholder": "Title, party or case number"
+    },
+    "filters": {
+      "label": "Filters",
+      "open": "Filter",
+      "status": "Status",
+      "statusAny": "Any status",
+      "statusValues": {
+        "active": "Active",
+        "disposed": "Disposed",
+        "archived": "Archived"
+      },
+      "forum": "Forum",
+      "forumAny": "Any forum",
+      "owner": "Owner",
+      "ownerAny": "Anyone",
+      "noNextDate": "No next date",
+      "sensitive": "Sensitive",
+      "sort": "Sort by",
+      "sortValues": {
+        "next_date": "Next date",
+        "updated": "Recently updated",
+        "title": "Title"
+      },
+      "clear": "Clear filters",
+      "done": "Show matters"
+    },
+    "columns": {
+      "matter": "Matter",
+      "nextDate": "Next date",
+      "forumStage": "Forum and stage",
+      "proceedings": "Proceedings",
+      "owner": "Owner",
+      "updated": "Updated"
+    },
+    "row": {
+      "open": "Open matter {title}, next date {date}",
+      "versus": "{petitioner} v. {respondent}",
+      "noOwner": "No owner",
+      "noForum": "No forum",
+      "updated": "Updated {date}"
+    },
+    "nextDate": {
+      "none": "No next date",
+      "confirmed": "Confirmed",
+      "toConfirm": "To confirm"
+    },
+    "sensitive": "Sensitive",
+    "proceedings": "{count, plural, one {# proceeding} other {# proceedings}}",
+    "pagination": {
+      "label": "Pages",
+      "next": "Next 50",
+      "first": "First page"
+    },
+    "empty": {
+      "title": "No matters yet",
+      "body": "Share a cause list or an order to your Inbox, or add a matter by hand.",
+      "openInbox": "Open Inbox"
+    },
+    "filteredEmpty": {
+      "title": "No matters match these filters.",
+      "clear": "Clear filters"
+    },
+    "error": {
+      "title": "Couldn't load matters.",
+      "retry": "Retry",
+      "reference": "Reference: {digest}"
+    },
+    "offline": "You're offline. Showing the last saved matters. Changes will not save until you're back.",
+    "denied": "Your role can't see this. Ask the chamber owner.",
+    "palette": {
+      "new": "New matter",
+      "noNextDate": "No next date"
+    },
+    "workspace": {
+      "metaTitle": "Matter",
+      "loading": "Loading matter",
+      "breadcrumb": "Matters",
+      "tabListLabel": "Matter sections",
+      "tabs": {
+        "overview": "Overview",
+        "proceedings": "Proceedings",
+        "timeline": "Timeline",
+        "people": "People",
+        "documents": "Documents"
+      },
+      "status": {
+        "active": "Active",
+        "disposed": "Disposed",
+        "archived": "Archived"
+      },
+      "owner": "Owner: {name}",
+      "noOwner": "No owner",
+      "clients": "Clients",
+      "menu": {
+        "label": "Matter actions",
+        "markSensitive": "Mark as sensitive",
+        "removeSensitive": "Remove sensitive",
+        "markTitle": "Mark this matter as sensitive?",
+        "removeTitle": "Remove the sensitive mark?",
+        "removeHint": "AI processing, bulk imports and shared briefs will be available for this matter again.",
+        "confirmMark": "Mark as sensitive",
+        "confirmRemove": "Remove sensitive",
+        "cancel": "Cancel",
+        "failed": "Couldn't change this. Try again.",
+        "announceOn": "This matter is now sensitive.",
+        "announceOff": "This matter is no longer sensitive."
+      },
+      "source": {
+        "document": "From a document",
+        "capture": "From a capture",
+        "adapter": "From the court list",
+        "ai": "Proposed by assistant",
+        "import": "From an import",
+        "manual": "Entered by hand",
+        "system": "From CauseDeck"
+      },
+      "nextDate": {
+        "title": "Next date",
+        "confirm": "Confirm",
+        "none": "No next date",
+        "noneBody": "Add a proceeding and its next listing to see the next date here.",
+        "stage": "Stage: {stage}",
+        "announceConfirmed": "Next date confirmed.",
+        "failed": "Couldn't confirm the date. Try again."
+      },
+      "conflict": {
+        "title": "Two dates for one proceeding",
+        "body": "The sources disagree. Choose the date to keep, or enter the right one.",
+        "current": "Current: {date}",
+        "proposed": "Proposed: {date}",
+        "chooseA": "Choose A",
+        "chooseB": "Choose B",
+        "sideA": "A",
+        "sideB": "B",
+        "manual": "Enter manually",
+        "manualDate": "Next date",
+        "save": "Save date",
+        "cancel": "Cancel",
+        "dateRequired": "Enter a date from today onwards.",
+        "announce": "Next date set to {date}.",
+        "failed": "Couldn't save the date. Try again.",
+        "stale": "This conflict was already resolved. Showing the latest dates."
+      },
+      "proceedings": {
+        "title": "Proceedings",
+        "count": "{count, plural, one {# proceeding} other {# proceedings}}",
+        "caseNumber": "{type} No. {number} of {year}",
+        "unnumbered": "{type} (unnumbered)",
+        "lead": "Lead",
+        "empty": "No proceedings recorded. Add the case number you have, even before it is numbered (SR or FR number).",
+        "states": {
+          "filed": "Filed",
+          "sr_fr": "SR/FR",
+          "defects": "Defects",
+          "re_presented": "Re-presented",
+          "numbered": "Numbered",
+          "disposed": "Disposed"
+        }
+      },
+      "obligations": {
+        "title": "Open obligations",
+        "count": "{count, plural, =0 {No open obligations} one {# open obligation} other {# open obligations}}"
+      },
+      "documents": {
+        "title": "Recent documents",
+        "empty": "Share or drop files into your Inbox",
+        "openInbox": "Open Inbox",
+        "added": "Added {date}",
+        "textStatus": {
+          "pending": "Text pending",
+          "layer": "Text ready",
+          "ocr": "Text read by OCR",
+          "failed": "Text failed",
+          "skipped": "No text"
+        },
+        "kinds": {
+          "pleading": "Pleading",
+          "ia": "I.A.",
+          "annexure": "Annexure",
+          "order": "Order",
+          "judgment": "Judgment",
+          "cause_list": "Cause list",
+          "correspondence": "Correspondence",
+          "note": "Note",
+          "draft": "Draft",
+          "registry_memo": "Registry memo",
+          "other": "Other"
+        },
+        "label": "{kind}, {status}",
+        "tabTitle": "Documents",
+        "listLabel": "Documents of this matter",
+        "loading": "Loading documents",
+        "inbox": "Share or drop files into your Inbox",
+        "emptyTitle": "No documents yet",
+        "open": "Open {kind}, added {date}",
+        "languages": {
+          "EN": "English",
+          "TA": "Tamil",
+          "KN": "Kannada"
+        },
+        "sources": {
+          "capture": "From your Inbox",
+          "manual": "Added by hand"
+        },
+        "replaces": "Replaces an earlier version",
+        "replacedBy": "Replaced by a newer version",
+        "loadMore": "Show older documents",
+        "newest": "Back to the newest",
+        "error": {
+          "title": "Couldn't load the documents of this matter.",
+          "retry": "Retry",
+          "reference": "Reference: {digest}"
+        },
+        "preview": {
+          "title": "{kind}, added {date}",
+          "description": "The page image and the text read from it.",
+          "pageOf": "Page {page} of {count}",
+          "pages": "Pages",
+          "previous": "Previous page",
+          "next": "Next page",
+          "goTo": "Go to page",
+          "go": "Go",
+          "image": "Page {page}",
+          "imagePending": "Page image not ready yet",
+          "imagePendingHint": "It appears here once the document has been processed.",
+          "text": "Text of this page",
+          "textPending": "Text not extracted yet",
+          "noPages": "No pages yet",
+          "unavailable": "This document is not available.",
+          "failed": "Couldn't load this document. Try again.",
+          "close": "Close"
+        }
+      },
+      "people": {
+        "title": "People",
+        "empty": "No people recorded for this matter yet.",
+        "kinds": {
+          "represents": "We represent",
+          "appears_for": "Appears for",
+          "instructed_by": "Instructed by",
+          "assigned_to": "Assigned to",
+          "opposes": "Opposite side"
+        },
+        "listLabel": "People of this matter",
+        "loading": "Loading people",
+        "add": "Add person",
+        "edit": "Edit {name}",
+        "editShort": "Edit",
+        "remove": "Remove {name} from this matter",
+        "removeTitle": "Remove {name} from this matter?",
+        "removeHint": "Their role here is removed. The person stays in your workspace.",
+        "removeConfirm": "Remove",
+        "removeFailed": "Couldn't remove. Try again.",
+        "cancel": "Cancel",
+        "aliases": "Also known as {aliases}",
+        "onProceeding": "On a proceeding",
+        "announceSaved": "{name} saved.",
+        "announceRemoved": "{name} removed from this matter.",
+        "personKinds": {
+          "party": "Party",
+          "advocate": "Advocate",
+          "judge_staff": "Court or government staff",
+          "client": "Client",
+          "professional": "Professional contact",
+          "other": "Other"
+        },
+        "contact": {
+          "email": "Email",
+          "phone": "Phone",
+          "address": "Address"
+        },
+        "form": {
+          "addTitle": "Add person",
+          "editTitle": "Edit person",
+          "description": "People you add stay in this workspace. Nothing is imported from your contacts.",
+          "name": "Name",
+          "aliases": "Other names",
+          "aliasesHint": "Spellings used in orders and cause lists.",
+          "alias": "Other name {n}",
+          "addAlias": "Add another name",
+          "removeAlias": "Remove other name {n}",
+          "kind": "Who they are",
+          "role": "Role on this matter",
+          "contactTitle": "Contact details",
+          "contactHint": "Kept only for clients and professional contacts.",
+          "save": "Save",
+          "cancel": "Cancel",
+          "errors": {
+            "name": "Enter a name.",
+            "email": "Enter a valid email.",
+            "failed": "Couldn't save. Try again.",
+            "forbidden": "Your role can't change the people of this matter.",
+            "notFound": "This person is no longer on this matter."
+          }
+        },
+        "error": {
+          "title": "Couldn't load the people of this matter.",
+          "retry": "Retry",
+          "reference": "Reference: {digest}"
+        }
+      },
+      "synopsis": {
+        "title": "Synopsis",
+        "manual": "Written by hand",
+        "edit": "Edit synopsis",
+        "write": "Write synopsis",
+        "save": "Save synopsis",
+        "cancel": "Cancel",
+        "label": "Synopsis",
+        "empty": "No synopsis yet",
+        "emptyBody": "A few lines on what this matter is about and where it stands.",
+        "denied": "Your role can't see the synopsis. Ask the chamber owner.",
+        "announceSaved": "Synopsis saved.",
+        "failed": "Couldn't save the synopsis. Try again."
+      },
+      "offlineAction": "You're offline. Changes will not save until you're back.",
+      "error": {
+        "title": "Couldn't load this matter.",
+        "retry": "Retry",
+        "reference": "Reference: {digest}"
+      },
+      "notFound": {
+        "title": "This matter doesn't exist or you can't open it.",
+        "back": "Back to matters"
+      },
+      "provenance": {
+        "confirmed": "Confirmed",
+        "proposed": "Proposed",
+        "edited": "Corrected by hand",
+        "viewOnly": "View only",
+        "offline": "You're offline."
+      },
+      "proceedingsTab": {
+        "title": "Proceedings",
+        "treeLabel": "Proceedings of this matter",
+        "loading": "Loading proceedings",
+        "toolbarLabel": "Proceeding actions",
+        "add": "Add proceeding",
+        "mergeIn": "Merge a matter into this one",
+        "splitStart": "Split into a new matter",
+        "split": {
+          "title": "Move proceedings to a new matter",
+          "description": "The selected proceedings and their obligations move to a new matter. You can undo for 10 seconds.",
+          "newTitle": "New matter title",
+          "titleRequired": "Give the new matter a title.",
+          "moves": "What moves",
+          "crossing": "{count, plural, =0 {No links cross the split} one {# link stays across the two matters} other {# links stay across the two matters}}",
+          "confirm": "Split matter",
+          "cancel": "Cancel",
+          "done": "Proceedings moved to a new matter.",
+          "openNew": "Open new matter",
+          "failed": "Couldn't split. Try again."
+        },
+        "splitHint": "Select the proceedings to move, then continue.",
+        "splitContinue": "{count, plural, =0 {Choose proceedings first} one {Continue with # proceeding} other {Continue with # proceedings}}",
+        "splitCancel": "Cancel split",
+        "expand": "Show the proceedings filed in {label}",
+        "collapse": "Hide the proceedings filed in {label}",
+        "selectRow": "Move {label} to a new matter",
+        "empty": {
+          "title": "No proceedings recorded",
+          "body": "Add the case number you have, even before it is numbered (SR or FR number)."
+        },
+        "unnumbered": "Unnumbered",
+        "chips": {
+          "sr": "SR {value}",
+          "fr": "FR {value}",
+          "diary": "Diary {value}",
+          "filing": "Filing {value}",
+          "cnr": "CNR {value}",
+          "copyCnr": "Copy CNR {value}",
+          "copied": "CNR copied."
+        },
+        "nextDate": "Next date: {date}",
+        "noNextDate": "No next date",
+        "links": {
+          "appealFrom": "Appeal from {label}",
+          "appealedIn": "Appealed in {label}",
+          "connected": "Connected with {label}",
+          "lowerCourt": "Lower court: {label}",
+          "lowerCourtOf": "Lower court of {label}",
+          "parentOf": "Filed in {label}",
+          "anotherMatter": "a proceeding in another matter",
+          "openMatter": "Open linked matter"
+        },
+        "edit": "Edit {label}",
+        "transition": {
+          "menu": "Change state of {label}",
+          "to": "Move to {state}",
+          "title": "Move {label} to {state}?",
+          "number": "Number",
+          "year": "Year",
+          "numberRequired": "Enter the number and year the registry gave.",
+          "reason": "Reason for reopening",
+          "reasonRequired": "Give a reason for reopening a disposed proceeding.",
+          "cureDeadline": "Cure deadline (optional)",
+          "confirm": "Change state",
+          "cancel": "Cancel",
+          "announce": "{label} moved to {state}.",
+          "failed": "Couldn't change the state. Try again.",
+          "stale": "The state changed since. Showing the latest."
+        },
+        "form": {
+          "addTitle": "Add proceeding",
+          "editTitle": "Edit {label}",
+          "description": "Add what you have. An SR or FR number is enough before the case is numbered.",
+          "forum": "Forum",
+          "forumPlaceholder": "Choose a forum",
+          "noForums": "No forums yet. Add one in Courts.",
+          "caseType": "Case type",
+          "caseTypeHint": "Pick from the court's list or type it as printed.",
+          "caseTypeFreeText": "Not in the court's list. It will be saved as typed.",
+          "number": "Number",
+          "year": "Year",
+          "srNo": "SR number",
+          "frNo": "FR number",
+          "diaryNo": "Diary number",
+          "filingNo": "Filing number",
+          "cnr": "CNR",
+          "parent": "Filed in",
+          "noParent": "None (a main proceeding)",
+          "connected": "Connected with",
+          "appealFrom": "Appeal from",
+          "lowerCourt": "Lower court proceeding",
+          "none": "None",
+          "save": "Save proceeding",
+          "cancel": "Cancel",
+          "required": "Required",
+          "invalidYear": "Enter a year like 2026.",
+          "invalidCnr": "A CNR is 16 letters and digits.",
+          "duplicate": "Looks like {label} which is already here. Merge?",
+          "openIt": "Open it",
+          "merge": "Merge",
+          "announceAdded": "Proceeding added.",
+          "announceSaved": "Proceeding saved.",
+          "failed": "Couldn't save the proceeding. Try again.",
+          "conflict": "That proceeding is already recorded."
+        },
+        "merge": {
+          "title": "Merge another matter into this one",
+          "description": "Its proceedings, documents and obligations move here. You can undo for 10 seconds.",
+          "pick": "Matter to merge in",
+          "searchHint": "Type a title, party or case number.",
+          "noResults": "No matching matters",
+          "checking": "Checking what moves",
+          "moves": "What moves here",
+          "proceedingsCount": "{count, plural, =0 {No proceedings} one {# proceeding} other {# proceedings}}",
+          "documentsCount": "{count, plural, =0 {No documents} one {# document} other {# documents}}",
+          "obligationsCount": "{count, plural, =0 {No obligations} one {# obligation} other {# obligations}}",
+          "blocked": {
+            "sensitive": "A sensitive matter can only be merged with another sensitive matter. AI processing is off for sensitive matters, so merging would expose its documents.",
+            "restricted": "These matters are restricted to different people, so they can't be merged.",
+            "merged": "One of these matters was already merged.",
+            "archived": "An archived matter can't be merged or split."
+          },
+          "confirm": "Merge matters",
+          "cancel": "Cancel",
+          "done": "Matter merged.",
+          "failed": "Couldn't merge. Try again."
+        },
+        "undo": {
+          "action": "Undo",
+          "done": "Undone.",
+          "conflict": "Something changed since. Nothing was undone.",
+          "failed": "Couldn't undo. Try again."
+        }
+      }
+    }
+  },
+  "matterTimeline": {
+    "title": "Timeline",
+    "loading": "Loading the timeline",
+    "error": {
+      "title": "Couldn't load the timeline of this matter.",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "offline": "Showing saved timeline from {time}",
+    "count": "{shown} of {total} events",
+    "empty": {
+      "title": "Nothing has happened on this matter yet.",
+      "body": "Hearings, orders and obligations will appear here."
+    },
+    "filteredEmpty": {
+      "title": "No events match these filters.",
+      "body": "Clear the filters to see everything on this matter."
+    },
+    "announce": {
+      "shown": "{count, plural, one {# event shown} other {# events shown}}"
+    },
+    "today": {
+      "label": "Today · {date}",
+      "jump": "Jump to today"
+    },
+    "mode": {
+      "label": "Timeline layout",
+      "combined": "Combined",
+      "lanes": "Lanes"
+    },
+    "pane": {
+      "label": "View",
+      "timeline": "Timeline",
+      "tree": "Tree",
+      "openTree": "Open tree"
+    },
+    "list": {
+      "label": "Events across all proceedings"
+    },
+    "event": {
+      "toConfirm": "To confirm",
+      "openSource": "Open source"
+    },
+    "filters": {
+      "title": "Filters",
+      "description": "Narrow the timeline by kind, proceeding, date or text.",
+      "open": "Filter events",
+      "search": "Search events",
+      "kinds": "Kinds",
+      "proceedings": "Proceedings",
+      "removeProceeding": "Remove {label} from the filter",
+      "dates": "Dates",
+      "from": "From",
+      "to": "To",
+      "showProposed": "Show proposed",
+      "clear": "Clear filters"
+    },
+    "kinds": {
+      "listing": "Listings",
+      "hearing": "Hearings",
+      "order": "Orders",
+      "obligation_due": "Obligations due",
+      "obligation_closed": "Obligations closed",
+      "state_change": "State changes",
+      "document_added": "Documents added",
+      "bench_change": "Bench changes"
+    },
+    "states": {
+      "filed": "Filed",
+      "sr_fr": "SR/FR stage",
+      "defects": "Defects",
+      "re_presented": "Re-presented",
+      "numbered": "Numbered",
+      "disposed": "Disposed"
+    },
+    "sources": {
+      "manual": "Entered by you",
+      "document": "Document",
+      "capture": "Capture",
+      "adapter": "Court website",
+      "ai": "AI reading",
+      "import": "Import",
+      "system": "System"
+    },
+    "qualifier": {
+      "daily": "Daily list",
+      "advance": "Advance list",
+      "supplementary": "Supplementary list",
+      "special": "Special list",
+      "interim": "Interim",
+      "final": "Final",
+      "procedural": "Procedural",
+      "pleading": "Pleading",
+      "ia": "Interim application",
+      "annexure": "Annexure",
+      "order": "Order",
+      "judgment": "Judgment",
+      "cause_list": "Cause list",
+      "correspondence": "Correspondence",
+      "note": "Note",
+      "draft": "Draft",
+      "registry_memo": "Registry memo",
+      "other": "Document"
+    },
+    "summary": {
+      "listing": "{tense, select, future {Listed for {subject}} other {Was listed: {subject}}}",
+      "hearing": "{hasSubject, select, yes {Heard: {subject}} other {Hearing held}}",
+      "order": "{qualifier} order passed",
+      "obligationDue": "{tense, select, future {Due: {subject}} other {Was due: {subject}}}",
+      "obligationClosed": "Closed: {subject}",
+      "stateChange": "Moved from {from} to {to}",
+      "documentAdded": "{qualifier} added",
+      "benchChange": "Bench composition changed"
+    },
+    "graph": {
+      "title": "Proceedings",
+      "treeLabel": "Proceedings of this matter",
+      "chipsLabel": "Choose proceedings",
+      "allProceedings": "All proceedings",
+      "showAll": "Show all",
+      "appeal": "appeal",
+      "unnumbered": "Unnumbered",
+      "srFrNo": "SR/FR no. {number}",
+      "group": "{caseType} × {count}",
+      "groupLabel": "{count} miscellaneous proceedings ({caseType})",
+      "relations": {
+        "appealFrom": "appeal from {label}",
+        "appealedIn": "appealed in {label}",
+        "connected": "connected to {label}",
+        "lowerCourt": "lower court: {label}",
+        "lowerCourtOf": "lower court of {label}"
+      }
+    },
+    "legend": {
+      "title": "Line styles",
+      "parentOf": "Child proceeding (indented)",
+      "appeal": "Appeal, from lower court to higher",
+      "connected": "Connected matter",
+      "lowerCourt": "Lower-court link"
+    },
+    "lanes": {
+      "label": "Proceedings side by side on one time axis",
+      "date": "Date",
+      "matter": "Matter",
+      "menu": "More lanes ({count})",
+      "menuHint": "Show up to {max} lanes."
+    },
+    "keys": {
+      "title": "Keyboard shortcuts",
+      "description": "Shortcuts for the timeline and the proceedings tree.",
+      "open": "Shortcuts",
+      "month": "Previous or next month",
+      "today": "Jump to today",
+      "rows": "Move between events",
+      "ends": "First or last event",
+      "help": "Show this list",
+      "tree": "Move in the proceedings tree",
+      "expandAll": "Expand all groups",
+      "select": "Select a proceeding or open a group",
+      "selectMore": "Add to the selection"
+    }
+  },
+  "calendar": {
+    "metaTitle": "Calendar",
+    "title": "Calendar",
+    "description": "See your hearings in your phone calendar, and bring in your old diary without retyping.",
+    "link": {
+      "open": "Open calendar settings"
+    },
+    "loading": "Loading the calendar settings",
+    "offlineReason": "Settings can be changed when you are back online.",
+    "error": {
+      "title": "Could not load the calendar settings.",
+      "retry": "Try again"
+    },
+    "feed": {
+      "title": "Calendar feed",
+      "description": "A private link your calendar app subscribes to. It shows confirmed hearings and deadlines only.",
+      "empty": "No feed yet. Create one to see hearings in your phone calendar.",
+      "urlLabel": "Feed URL",
+      "maskedUrl": "The link is shown once, when you create or rotate it.",
+      "privacy": "Anyone with this link can see your hearing dates. Keep it private.",
+      "shownOnce": "Copy it now. It will not be shown again.",
+      "copy": "Copy URL",
+      "copied": "Copied",
+      "create": "Create feed",
+      "rotate": "Rotate",
+      "revoke": "Revoke",
+      "cancel": "Cancel",
+      "offline": "Settings can be changed when you are back online.",
+      "working": "Working",
+      "statusLabel": "Status",
+      "status": {
+        "created": "Created {date}",
+        "rotated": "Rotated {date}",
+        "lastFetched": "Last fetched {date}",
+        "neverFetched": "Not fetched yet"
+      },
+      "scope": {
+        "label": "Which matters",
+        "mine": "My matters",
+        "workspace": "Whole workspace",
+        "ownerOnly": "Only workspace owners can share the whole workspace."
+      },
+      "parties": {
+        "label": "Include party names",
+        "why": "Calendar providers fetch this feed on servers outside India. Party names stay out unless you turn this on."
+      },
+      "disclosure": {
+        "text": "Your calendar app may fetch this feed from servers outside India. We keep the content minimal.",
+        "ack": "I understand"
+      },
+      "rotateTitle": "Rotate the feed link?",
+      "rotateBody": "The current link stops working at once. Update the subscription in your calendar app with the new link.",
+      "rotateConfirm": "Rotate link",
+      "revokeTitle": "Revoke the feed?",
+      "revokeBody": "The link stops working at once and your calendar app stops updating. You can create a new feed later.",
+      "revokeConfirm": "Revoke feed",
+      "toast": {
+        "created": "Feed created",
+        "rotated": "Link rotated",
+        "revoked": "Feed revoked",
+        "saved": "Saved",
+        "error": "Something went wrong. Nothing changed.",
+        "forbidden": "You cannot do that.",
+        "copyFailed": "Could not copy. Select the link and copy it."
+      }
+    },
+    "import": {
+      "title": "Import a calendar file",
+      "description": "Bring in diary entries without retyping. Hearing-like events become proposals that you confirm one by one.",
+      "instructions": "Export your calendar as an .ics file (Google, Outlook and Apple all can), then choose it here. Importing the same calendar again only picks up what changed.",
+      "choose": "Choose an .ics file",
+      "uploading": "Sending the file",
+      "received": "File received. Reading it now.",
+      "duplicate": "You already imported this exact file.",
+      "channelOff": "Calendar files are switched off for this workspace. An owner can turn them on in the inbox settings.",
+      "tooLarge": "That file is too large. Calendar files can be up to 1 MB.",
+      "invalid": "That does not look like a calendar file.",
+      "forbidden": "You cannot import calendar files.",
+      "failed": "The file could not be sent. Try again."
+    },
+    "review": {
+      "title": "Calendar import",
+      "summary": "{new} new, {changed} changed, {unchanged} unchanged",
+      "ignored": "{count} other events were not hearings and were skipped.",
+      "processing": "Reading your calendar file. This page updates when it is ready.",
+      "failed": "This calendar file could not be read.",
+      "empty": "No hearing-like events were found in this file.",
+      "matchedHeading": "Matched to a matter",
+      "unmatchedHeading": "Not matched to a matter",
+      "when": "{date} {time}",
+      "allDay": "all day",
+      "preview": {
+        "next_date": "Proposes {date} as the next date.",
+        "conflict": "Differs from the confirmed next date. Confirming makes {date} the next date; you can undo it.",
+        "listing_update": "Updates the item number of the confirmed listing.",
+        "none": "Nothing to change.",
+        "unmatched": "No single matter has this case number."
+      },
+      "status": {
+        "applied": "Confirmed",
+        "skipped": "Skipped",
+        "noted": "Attached as a note",
+        "unchanged": "Already up to date"
+      },
+      "confirm": "Confirm",
+      "skip": "Skip",
+      "attach": "Attach to a matter as a note",
+      "attachMatter": "Matter",
+      "attachChoose": "Choose a matter",
+      "attachConfirm": "Attach note",
+      "attachHint": "A note has no date. It does not change any hearing date or create a matter.",
+      "toast": {
+        "confirmed": "Confirmed",
+        "skipped": "Skipped",
+        "noted": "Attached as a note",
+        "error": "Something went wrong. Nothing changed.",
+        "forbidden": "You cannot do that."
+      }
+    }
+  },
+  "inbox": {
+    "metaTitle": "Inbox",
+    "title": "Inbox",
+    "sections": {
+      "label": "Inbox sections",
+      "needsYou": "Needs you",
+      "ready": "Ready to send",
+      "processing": "Processing"
+    },
+    "empty": {
+      "needsYou": {
+        "title": "Nothing needs you.",
+        "body": "Anything unclear will show up here."
+      },
+      "ready": {
+        "title": "Nothing waiting to be sent.",
+        "body": "Drafts you ask for appear here. You always press send yourself."
+      }
+    },
+    "firstRun": {
+      "title": "Capture once, confirm once.",
+      "body": "Send things to your inbox in any of these ways. Each one is switched on by you.",
+      "share": "Share from another app",
+      "voice": "Record a voice note",
+      "upload": "Upload a file",
+      "on": "On",
+      "off": "Off"
+    },
+    "offline": {
+      "banner": "You're offline. Captures are saved on this device and will process when you're back.",
+      "decisions": "Decisions need the server. Reconnect to confirm, edit or dismiss.",
+      "badge": "Offline, will process when you're back"
+    },
+    "processing": {
+      "label": "Processing",
+      "step": {
+        "received": "Received",
+        "scanning": "Checking the file",
+        "queued": "Waiting its turn",
+        "processing": "Reading"
+      },
+      "channel": {
+        "share": "Shared",
+        "upload": "Uploaded",
+        "voice": "Voice note",
+        "camera": "Photo",
+        "email": "Email",
+        "ics": "Calendar file",
+        "whatsapp_export": "Chat export",
+        "bulk_import": "Import",
+        "manual": "Typed note"
+      }
+    },
+    "card": {
+      "kind": {
+        "next_date": "Next date",
+        "new_matter": "New matter",
+        "new_proceeding": "New proceeding",
+        "listing_update": "Listing update",
+        "task": "Task",
+        "obligation_from_direction": "Order direction",
+        "document_attach": "Order attached",
+        "order_record": "Order",
+        "party_detail": "Party details",
+        "duplicate_merge": "Possible duplicate",
+        "memory_item": "Memory",
+        "fee_entry": "Fee entry",
+        "outward_draft": "Outward draft"
+      },
+      "matter": "{matter} · {caseNumber}",
+      "readNextDate": "We read {date} in the order, page {page}. Set as the next date?",
+      "read": "We read this in the source. Confirm it?",
+      "sensitive": "Sensitive matter. Details are hidden here.",
+      "confidence": {
+        "high": "High",
+        "check": "Check this",
+        "label": "Confidence: {level}"
+      },
+      "reason": {
+        "ambiguous": "More than one match",
+        "low": "Low confidence",
+        "unanchored": "No quote in the source",
+        "other": "Needs a look"
+      },
+      "confirmName": "Confirm {kind} {value} for {matter}",
+      "dontSuggest": "Don't suggest this again",
+      "save": "Save and confirm",
+      "cancel": "Cancel",
+      "field": {
+        "date": "Date",
+        "title": "Title",
+        "description": "Description",
+        "dueDate": "Due date",
+        "name": "Name",
+        "number": "Case number",
+        "year": "Year"
+      },
+      "noValue": "Not given",
+      "failed": "Couldn't save that. Nothing changed. Try again.",
+      "stale": "This was already resolved. The inbox has been refreshed."
+    },
+    "conflict": {
+      "title": "Two sources disagree about the next date",
+      "current": "Confirmed date",
+      "proposed": "Proposed date",
+      "keep": "Keep current",
+      "use": "Use proposed",
+      "other": "Enter another",
+      "otherLabel": "Another date",
+      "apply": "Use this date",
+      "oneProceeding": "This changes the date for this proceeding only."
+    },
+    "unreadable": {
+      "title": "Couldn't read this",
+      "copy": "Couldn't read this. Retake, type the key line, or keep as an attachment.",
+      "retake": "Retake",
+      "type": "Type the key line",
+      "keep": "Keep as attachment",
+      "keyLine": "Key line",
+      "submit": "Save key line",
+      "saved": "Saved. We will read what you typed.",
+      "kept": "Kept as an attachment, unread.",
+      "unrecognisedSender": "Unrecognised sender: review",
+      "unrecognisedSenderCopy": "This email came from a sender you have not allowed, so nothing in it was read. Review it, then add the sender to your allow-list if you trust it."
+    },
+    "reassign": {
+      "prompt": "Moved to wrong matter? Reassign",
+      "explain": "This moves the documents, tasks and obligations made from this capture to the matter you pick. Available until {date}.",
+      "search": "Find a matter",
+      "move": "Move",
+      "done": "Moved to {matter}.",
+      "none": "No matters found"
+    },
+    "toast": {
+      "undo": "Undo",
+      "nextDate": "Next date set to {date}",
+      "done": "{kind} confirmed",
+      "dismissed": "Dismissed",
+      "undone": "Undone. The card is back in your inbox.",
+      "undoFailed": "Couldn't undo that. It may be older than 7 days."
+    },
+    "announce": {
+      "confirmedNextDate": "Proposal confirmed. Next date set to {date}.",
+      "confirmed": "Proposal confirmed.",
+      "dismissed": "Proposal dismissed.",
+      "newItems": "{count, plural, one {# new item needs you} other {# new items need you}}",
+      "section": "{section}, {count, plural, one {# item} other {# items}}"
+    },
+    "ready": {
+      "copy": "Copy",
+      "markSent": "Mark as sent by me",
+      "openIn": "Open in {app} (opens your app)",
+      "reminder": "You press send yourself.",
+      "marked": "Logged as sent by you."
+    },
+    "preview": {
+      "title": "Source",
+      "empty": "Select an item to see where it came from.",
+      "page": "Page {page}",
+      "openFull": "Open full document",
+      "noSource": "No source quote for this item."
+    },
+    "readOnly": "View only. You can read this item but not act on it.",
+    "denied": "You do not have access to this. Ask the workspace owner.",
+    "error": {
+      "title": "Couldn't load your inbox.",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "loading": "Loading your inbox",
+    "shortcuts": {
+      "title": "Inbox shortcuts",
+      "description": "Shortcuts are ignored while you are typing in a field.",
+      "move": "Next or previous card",
+      "confirm": "Confirm the focused card",
+      "edit": "Edit the focused card",
+      "dismiss": "Dismiss the focused card",
+      "undo": "Undo the last item (while the toast shows)",
+      "sections": "Switch section",
+      "help": "Show this sheet",
+      "open": "Shortcuts"
+    }
+  },
+  "pwa": {
+    "share": {
+      "metaTitle": "Share to CauseDeck",
+      "title": "Saved on this device",
+      "savedOnline": "Saved. Uploading when you're online.",
+      "savedOffline": "Saved. Will upload when you're back online.",
+      "allSent": "Uploaded. Your files are in the inbox.",
+      "uploadingOf": "Uploading {current} of {total}",
+      "filesLabel": "Files in this share",
+      "progressLabel": "Upload progress",
+      "empty": {
+        "title": "Nothing shared yet",
+        "body": "Share a file from another app to add it here.",
+        "upload": "Upload files"
+      },
+      "status": {
+        "queued": "Waiting to upload",
+        "uploading": "Uploading",
+        "failed": "Couldn't upload. Retry",
+        "sent": "Uploaded"
+      },
+      "reason": {
+        "too_large": "The file is too large.",
+        "unsupported_type": "This file type isn't supported.",
+        "forbidden": "You aren't allowed to add files here.",
+        "not_found": "That workspace wasn't found.",
+        "invalid": "The file was rejected.",
+        "network": "No connection.",
+        "other": "The server had a problem."
+      },
+      "retry": "Retry",
+      "uploadNow": "Upload now",
+      "dataSaver": "Data saver is on, so uploads wait until you tap Upload now.",
+      "workspace": {
+        "label": "Save to workspace",
+        "hint": "You belong to more than one workspace. Pick where these files go."
+      },
+      "matter": {
+        "label": "Matter (optional)",
+        "none": "No matter",
+        "hint": "A hint only. You confirm where it belongs in the inbox."
+      },
+      "openInbox": "Open Inbox",
+      "error": {
+        "full": "The space for waiting files on this device is full. Upload or remove some, then share again.",
+        "failed": "Couldn't save this share on the device. Try sharing again."
+      },
+      "signIn": {
+        "title": "You need to sign in to save this share.",
+        "body": "Your files are kept on this device and nothing is sent until you sign in.",
+        "action": "Sign in"
+      },
+      "channel": {
+        "title": "Where your data goes",
+        "body": "Files you share are stored only in India, scanned, and read to suggest dates and notes for you to confirm. They are never used to train AI. Sharing is off until you turn it on.",
+        "enable": "Enable sharing",
+        "enabling": "Enabling",
+        "ask": "Sharing is off for this workspace. Ask an owner to enable it. Your files stay on this device until then.",
+        "failed": "Couldn't enable sharing. Try again."
+      }
+    },
+    "outbox": {
+      "indicator": {
+        "label": "Waiting to upload",
+        "waiting": "{count, plural, one {# waiting to upload} other {# waiting to upload}}",
+        "uploading": "Uploading {current} of {total}",
+        "failed": "{count, plural, one {# failed, tap to retry} other {# failed, tap to retry}}"
+      },
+      "sheet": {
+        "title": "Waiting to upload",
+        "description": "Files saved on this device. They upload when you're online.",
+        "empty": "Nothing is waiting to upload.",
+        "age": "Added {when}",
+        "retry": "Retry",
+        "remove": "Remove",
+        "removeLabel": "Remove {name} from this device",
+        "retryLabel": "Retry {name}",
+        "uploadNow": "Upload now",
+        "capWarn": "Space for waiting files on this device is almost full ({percent}%).",
+        "capFull": "The space for waiting files on this device is full. New files can't be added until some upload."
+      }
+    },
+    "install": {
+      "title": "Install CauseDeck",
+      "body": "Add it to your home screen, then share files from WhatsApp or Gmail straight into CauseDeck.",
+      "install": "Install",
+      "dismiss": "Not now",
+      "ios": {
+        "body": "On iPhone and iPad: tap Share, then Add to Home Screen. Sharing into CauseDeck isn't available on iOS, so use Upload files.",
+        "upload": "Upload files"
+      }
+    },
+    "update": {
+      "ready": "A new version is ready",
+      "now": "Update now"
+    },
+    "offline": {
+      "metaTitle": "Offline",
+      "title": "You're offline",
+      "intro": "Here is what works without a connection.",
+      "works": {
+        "title": "Works offline",
+        "saved": "Viewing items saved on this device",
+        "capture": "Capturing: shared and picked files are saved on this device"
+      },
+      "doesNot": {
+        "title": "Needs a connection",
+        "items": "Live court data, search, and anything that sends or changes data"
+      },
+      "outbox": {
+        "none": "Nothing is waiting to upload.",
+        "some": "{count, plural, one {# file waiting to upload} other {# files waiting to upload}}"
+      }
+    }
+  },
+  "whatsappImport": {
+    "metaTitle": "Import a WhatsApp chat",
+    "title": "Import a WhatsApp chat",
+    "back": "Back to inbox",
+    "disclosure": {
+      "title": "What happens to the chat",
+      "parsed": "The export is read and checked in this browser. Nothing is uploaded until you press Import.",
+      "selected": "Only the messages you keep are uploaded. The chat name and the zip file stay on this device.",
+      "held": "Messages with ID numbers, bank details, passwords or sensitive keywords are held back.",
+      "voice": "Voice notes are kept as files and are not transcribed.",
+      "access": "CauseDeck never reads your contacts or notifications, and never connects to WhatsApp.",
+      "retention": "The chat text is deleted 30 days after its tasks are extracted, unless you pin it."
+    },
+    "chatType": {
+      "legend": "What kind of chat is this?",
+      "internal": "Internal",
+      "internalHint": "Chambers, juniors, clerks or co-counsel. No clients in it.",
+      "client": "A client conversation",
+      "clientHint": "A client is in the chat.",
+      "unsure": "Not sure",
+      "unsureHint": "I can't tell who is in it.",
+      "continue": "Continue",
+      "stopTitle": "Client conversations stay out of CauseDeck imports for now",
+      "stopBody": "Nothing was read or uploaded. Your file never left this device.",
+      "startOver": "Choose again"
+    },
+    "warning": {
+      "clientTitle": "This looks like a client conversation",
+      "clientBody": "These participants look like clients: {names}. Client conversations stay out of CauseDeck imports for now. Nothing was uploaded.",
+      "twoTitle": "Only two people, and neither is you",
+      "twoBody": "A chat between two people who are not you is often a client's. Is every participant part of your chambers?",
+      "confirmInternal": "Yes, it is internal",
+      "stop": "No, stop the import"
+    },
+    "file": {
+      "label": "WhatsApp export",
+      "hint": "Export the chat from WhatsApp without media (or with it), then choose the .zip or .txt file here.",
+      "choose": "Choose file",
+      "progress": "Reading the export, {percent}% done"
+    },
+    "preview": {
+      "title": "Choose the messages to import",
+      "summary": "{kept, plural, one {# message} other {# messages}} selected of {total}",
+      "limit": "{max} messages is the most one import can hold. Unselect some to continue.",
+      "search": "Search messages",
+      "searchPlaceholder": "Search text or sender",
+      "noMatches": "No messages match your search.",
+      "selectShown": "Select shown",
+      "clearShown": "Clear shown",
+      "excludeHeld": "Unselect all held",
+      "select": "Include message from {sender} at {time}",
+      "attachment": "Attachment: {name}",
+      "keys": "Arrow keys move, Space includes or excludes, C confirms a held message.",
+      "dateOrder": "Dates read as day/month. Flip if they look wrong.",
+      "dateOrderAmbiguous": "These dates could be day/month or month/day.",
+      "flip": "Flip day and month"
+    },
+    "pii": {
+      "aadhaar": "Aadhaar number",
+      "pan": "PAN",
+      "bank_account": "Bank account",
+      "ifsc": "IFSC code",
+      "credential_phrase": "Password or OTP",
+      "sensitive_keyword": "Sensitive keyword",
+      "sensitive_matter": "Sensitive matter",
+      "confirm": "Include anyway",
+      "confirmed": "Included",
+      "locked": "Can never be imported"
+    },
+    "upload": {
+      "submit": "Import {count, plural, one {# message} other {# messages}}",
+      "uploading": "Uploading",
+      "done": "Imported. CauseDeck is reading the chat. Proposals will appear in your inbox.",
+      "openInbox": "Open inbox",
+      "failed": {
+        "forbidden": "You are not allowed to import chats in this workspace.",
+        "not_found": "This import is not available.",
+        "too_large": "The chat is too large to import. Unselect some messages.",
+        "invalid": "The server did not accept these messages. Check the selection and try again.",
+        "rate_limited": "Too many imports just now. Try again in a minute.",
+        "failed": "The upload failed. Nothing was imported. Try again."
+      }
+    },
+    "states": {
+      "empty": "No messages to import yet. Choose an export file to begin.",
+      "offline": "You're offline. You can read and choose messages, but importing needs a connection.",
+      "denied": "Only owners and advocates can import chats.",
+      "error": {
+        "not_zip": "That file is not a valid zip export.",
+        "no_chat": "No chat text was found in the zip.",
+        "too_large": "That export is too large. Export without media and try again.",
+        "empty": "No importable messages were found in that file.",
+        "failed": "The export could not be read. Try exporting it again."
+      }
+    }
+  },
+  "bootstrapImport": {
+    "metaTitle": "Import your cases",
+    "title": "Import your cases",
+    "loading": "Loading the import",
+    "denied": "You need permission to add matters to import files.",
+    "empty": {
+      "title": "Bring your existing cases in",
+      "body": "Drop cause lists, orders and diary photos. CauseDeck finds only the cases that carry your enrolment number or name, builds a plan you review, and nothing is created until you confirm."
+    },
+    "channel": {
+      "title": "Turn on bulk import first",
+      "body": "Bulk import is off until a workspace manager turns it on. Files are kept in India, are not used to train models and raw files are deleted after 30 days.",
+      "enable": "Turn on bulk import",
+      "ownerOnly": "Ask a workspace owner to turn it on.",
+      "failed": "Bulk import could not be turned on. Try again."
+    },
+    "sensitive": "Matters marked sensitive are never imported, and files hinted at one are refused.",
+    "drop": {
+      "label": "Drop files or a folder here",
+      "hint": "Up to {max} files: PDF, images, Word, calendar (.ics) and text.",
+      "choose": "Choose files",
+      "folder": "Choose a folder",
+      "refused": "Only {max} files can be imported at a time. {n, plural, one {# file was} other {# files were}} not added.",
+      "offline": "You are offline. Files can be added when you are back online."
+    },
+    "list": {
+      "title": "Files",
+      "summary": "{n, plural, one {# file} other {# files}} of {max}",
+      "retry": "Retry",
+      "status": {
+        "hashing": "Checking",
+        "queued": "Ready",
+        "uploading": "Uploading",
+        "uploaded": "Uploaded",
+        "failed": "Failed",
+        "rejected": "Not accepted",
+        "duplicate": "Already added"
+      },
+      "reason": {
+        "type": "This file type is not accepted.",
+        "size": "This file is over the size limit for its type.",
+        "empty": "This file is empty.",
+        "channel_disabled": "Bulk import is turned off.",
+        "sensitive": "This file belongs to a sensitive matter.",
+        "too_large": "This file is over the size limit.",
+        "unsupported": "This file type is not accepted.",
+        "rate_limited": "Too many uploads. Try again in a minute.",
+        "forbidden": "You cannot upload files here.",
+        "offline": "You are offline.",
+        "failed": "The upload failed."
+      }
+    },
+    "start": "Read {n, plural, one {# file} other {# files}}",
+    "starting": "Starting",
+    "identifiers": {
+      "title": "Which cases are yours?",
+      "body": "Only cases that carry your enrolment number or a spelling of your name are imported. Nothing is read until you give at least one.",
+      "enrolment": "Enrolment numbers (one per line)",
+      "aliases": "Name spellings (one per line)",
+      "propose": "Check what I typed",
+      "confirmTitle": "Save these to your profile?",
+      "confirmBody": "These are used to pick your cases from every list you import.",
+      "confirm": "Save and read the files",
+      "edit": "Change"
+    },
+    "processing": {
+      "title": "Reading your files",
+      "progress": "{done} of {total} files read",
+      "failed": "{n, plural, one {# file} other {# files}} could not be read.",
+      "retry": "Retry the failed files",
+      "nothing": "Nothing recognised. None of the files had a case with your enrolment number or name.",
+      "ready": "Your plan is ready. {n, plural, one {# row matches} other {# rows match}} you.",
+      "review": "Review the plan",
+      "kept": "Import limit reached for this plan. {n, plural, one {# file was} other {# files were}} kept as attachments without reading."
+    },
+    "error": {
+      "title": "The import could not load",
+      "reference": "Reference {digest}",
+      "retry": "Retry",
+      "action": "Something went wrong. Try again."
+    }
+  },
+  "emailIntake": {
+    "metaTitle": "Email intake",
+    "title": "Email intake",
+    "description": "Forward court and registry emails to your private address and CauseDeck reads them for you.",
+    "loading": "Loading email intake",
+    "notEnabled": "Not enabled yet",
+    "notEnabledReason": "This is not enabled yet for this workspace.",
+    "offlineReason": "Settings can be changed when you are back online.",
+    "back": "Back to integrations",
+    "channel": {
+      "title": "Email forwarding",
+      "disclosure": "Forwarded emails are processed in India. Forward only what you want CauseDeck to read. Client emails are excluded unless you choose to forward them.",
+      "on": "Email forwarding is on.",
+      "off": "Email forwarding is off.",
+      "enable": "Turn on email forwarding",
+      "enabling": "Turning on..."
+    },
+    "address": {
+      "title": "Your intake address",
+      "description": "Forward emails here. Only you and the workspace admins can see this address. Anyone who knows it can send to it, so keep it private.",
+      "label": "Intake address",
+      "empty": "You do not have an intake address yet.",
+      "create": "Create address",
+      "creating": "Creating...",
+      "copy": "Copy",
+      "copied": "Copied",
+      "createdOn": "Created on {date}.",
+      "rotate": "Rotate",
+      "rotating": "Rotating...",
+      "rotateTitle": "Rotate the intake address?",
+      "rotateBody": "A new address is created and the current one stops working at once. Emails sent to the old address will not arrive.",
+      "rotateConfirm": "Rotate",
+      "revoke": "Revoke",
+      "revoking": "Revoking...",
+      "revokeTitle": "Revoke the intake address?",
+      "revokeBody": "The address stops working at once and you will have no intake address until you create a new one.",
+      "revokeConfirm": "Revoke",
+      "cancel": "Cancel"
+    },
+    "allowlist": {
+      "title": "Allowed senders",
+      "description": "Emails from these senders are accepted. Add the courts, e-filing portals and counsel you expect to forward from.",
+      "empty": "No allowed senders yet.",
+      "tableLabel": "Allowed senders",
+      "pattern": "Email or domain",
+      "patternHint": "For example clerk@court.gov.in or court.gov.in",
+      "kind": "Kind",
+      "label": "Label (optional)",
+      "actions": "Actions",
+      "add": "Add sender",
+      "adding": "Adding...",
+      "remove": "Remove",
+      "removeLabel": "Remove {pattern}",
+      "domain": "Domain",
+      "kinds": {
+        "court": "Court",
+        "efiling": "E-filing portal",
+        "self": "Me",
+        "briefing_counsel": "Briefing counsel"
+      }
+    },
+    "aims": {
+      "title": "Set up AIMS cause-list emails",
+      "description": "Have your AIMS account email the daily cause list to your intake address.",
+      "step1": "Copy your intake address above.",
+      "step2": "In your AIMS account, add it as an email recipient for cause-list notifications.",
+      "step3": "Add the AIMS sender domain under Allowed senders as a court.",
+      "note": "CauseDeck only reads emails from senders on your list."
+    },
+    "toast": {
+      "created": "Address created.",
+      "rotated": "Address rotated. The old one no longer works.",
+      "revoked": "Address revoked.",
+      "added": "Sender added.",
+      "removed": "Sender removed.",
+      "enabled": "Email forwarding is on.",
+      "error": "Could not change it. Nothing was changed.",
+      "forbidden": "You do not have permission to change this.",
+      "invalid": "Check the email or domain and try again.",
+      "copyFailed": "Could not copy. Select the text and copy it instead."
+    },
+    "error": {
+      "title": "Could not load email intake.",
+      "retry": "Try again"
+    }
+  },
+  "importReview": {
+    "title": "Confirm what we found",
+    "intro": "Each row is a matter we propose to create. Check it, fix it, then confirm. Nothing is created until you confirm.",
+    "summary": "{included} of {total} matters included",
+    "empty": "No matters were found in these files.",
+    "confirm": "Confirm {count, plural, one {# matter} other {# matters}}",
+    "confirming": "Confirming…",
+    "blockedNote": "Pick a date for each conflicting matter before confirming.",
+    "failed": "Could not confirm the import. Nothing was created. Try again.",
+    "saveFailed": "Could not save your edits. Nothing was created.",
+    "grid": {
+      "label": "Proposed matters",
+      "include": "Include {title}",
+      "expand": "Show proceedings",
+      "collapse": "Hide proceedings",
+      "title": "Matter title",
+      "forum": "Forum",
+      "stage": "Stage",
+      "noForum": "Forum not known",
+      "noStage": "Stage not known",
+      "nextDate": "Next date",
+      "noNextDate": "No next date",
+      "sources": "{count, plural, one {# source} other {# sources}}",
+      "confidence": "Confidence {percent}%",
+      "lowConfidence": "Low confidence: check this matter",
+      "conflict": "Sources disagree on a date",
+      "proceedings": "Proceedings",
+      "unnumbered": "Unnumbered",
+      "moveTo": "Move to",
+      "moveLabel": "Move {label} to another matter",
+      "moved": "{label} moved to {title}.",
+      "renamed": "Renamed to {title}.",
+      "merged": "{from} merged into {into}.",
+      "split": "{label} is now a matter of its own.",
+      "mergeNext": "Merge into next",
+      "splitLast": "Split out last",
+      "edit": "Rename",
+      "active": "{title}, row {index} of {total}"
+    },
+    "conflict": {
+      "title": "Which date is right?",
+      "pick": "Use {date}",
+      "picked": "Using {date}.",
+      "blocked": "Blocked until you pick a date"
+    },
+    "provenance": {
+      "label": "Imported from your files"
+    },
+    "preview": {
+      "title": "Sources",
+      "empty": "Select a matter to see where it came from.",
+      "proceeding": "Proceeding",
+      "sources": "{count, plural, one {# source} other {# sources}}",
+      "kind": "From {kind}"
+    },
+    "issues": {
+      "title": "Needs a look",
+      "none": "Nothing needs a look.",
+      "lowConfidence": "{title}: low confidence",
+      "conflictingDates": "{title}: sources disagree on a date",
+      "missingIdentifiers": "No enrolment number or name spelling saved, so no list rows were imported.",
+      "unreadable": "{name}: couldn't read this",
+      "unreadableCopy": "Couldn't read this. Retake, type the key line, or keep as an attachment.",
+      "a0Only": "{name}: kept as an attachment, it needs a dedicated adapter",
+      "review": "Review",
+      "pickDate": "Pick a date",
+      "addIdentifiers": "Add identifiers",
+      "retry": "Retry",
+      "keep": "Keep as attachment"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "open": "Show keyboard shortcuts",
+      "move": "Move between rows",
+      "toggle": "Include or leave out",
+      "expand": "Show or hide proceedings",
+      "merge": "Merge into the next row",
+      "split": "Split out the last proceeding",
+      "edit": "Rename the matter",
+      "confirm": "Confirm the import",
+      "help": "Show this help",
+      "close": "Close"
+    },
+    "result": {
+      "title": "Import confirmed",
+      "created": "{matters, plural, one {# matter} other {# matters}}, {proceedings, plural, one {# proceeding} other {# proceedings}}, {hearings, plural, one {# hearing} other {# hearings}}, {documents, plural, one {# document} other {# documents}} created.",
+      "duplicates": "{count, plural, one {# matter was left out because it already exists} other {# matters were left out because they already exist}}.",
+      "unresolved": "{count, plural, one {# proceeding needs a forum or case type before it can be created} other {# proceedings need a forum or case type before they can be created}}.",
+      "undo": "Undo this import",
+      "undoing": "Undoing…",
+      "undone": "Import undone.",
+      "undoFailed": "Could not undo the import.",
+      "next": "Open your first court-day view"
+    }
+  },
+  "camera": {
+    "command": "Photograph a diary page",
+    "title": "Photograph a diary page",
+    "description": "Tomorrow's page? Hold steady, we will read it.",
+    "guide": "Place the diary page flat in good light.",
+    "privacy": "Photos stay in India and are deleted per your retention settings.",
+    "loading": "Opening the camera",
+    "close": "Close",
+    "flash": "Flash",
+    "shutter": "Take photo",
+    "done": "Done ({count})",
+    "choose": "Choose photos",
+    "captured": "{count, plural, one {# page captured} other {# pages captured}}",
+    "offline": "Saved on this device. Will read when you're back online.",
+    "hints": {
+      "blurry": "Move closer and hold steady",
+      "glare": "Glare on the page. Tilt it away from the light."
+    },
+    "errors": {
+      "open": "Couldn't open the camera. Choose photos instead.",
+      "process": "Couldn't prepare this photo. Try again.",
+      "save": "Couldn't save this page on the device."
+    },
+    "denied": {
+      "title": "Camera access is off",
+      "body": "You can still add photos from your gallery.",
+      "steps": "To use the camera, allow camera access for this site in your browser settings, then open this again."
+    },
+    "strip": {
+      "label": "Pages in this batch",
+      "empty": "No pages yet",
+      "page": "Page {n}",
+      "earlier": "Move page {n} earlier",
+      "later": "Move page {n} later",
+      "retake": "Retake page {n}",
+      "delete": "Delete page {n}"
+    },
+    "crop": {
+      "title": "Adjust the page edges",
+      "hint": "Drag the four corners to the page edges. Arrow keys move a corner 4 px, Shift moves 16 px.",
+      "handle": "{corner} corner",
+      "corner": {
+        "tl": "Top left",
+        "tr": "Top right",
+        "br": "Bottom right",
+        "bl": "Bottom left"
+      },
+      "reset": "Reset corners",
+      "apply": "Use this crop",
+      "original": "Also upload the original photo",
+      "enhance": "Brighten the writing"
+    },
+    "review": {
+      "title": "Review pages",
+      "upload": "Upload {count, plural, one {# page} other {# pages}}",
+      "discard": "Discard all"
+    },
+    "recover": {
+      "title": "Pick up where you left off",
+      "body": "{count, plural, one {# page} other {# pages}} from an earlier session are saved on this device.",
+      "resume": "Resume",
+      "discard": "Discard"
+    },
+    "causeList": {
+      "title": "This looks like a cause list",
+      "copy": "Printed cause lists are read by list import, not as a diary page.",
+      "action": "Hand to list import",
+      "soon": "List import arrives soon"
+    },
+    "receipt": {
+      "title": "Kept as an attachment",
+      "copy": "Kept as an attachment. Fee tracking arrives later."
+    }
+  },
+  "voice": {
+    "command": "Record a voice note",
+    "title": "Record a voice note",
+    "description": "Say the hearing, the next date or what to do. We will turn it into drafts for you to confirm.",
+    "privacy": "Audio stays in India and is deleted after 30 days. The transcript stays.",
+    "close": "Close",
+    "cancel": "Cancel",
+    "onboarding": {
+      "title": "Why we need your microphone",
+      "why": "To record the voice notes you make here. Nothing is recorded in the background.",
+      "india": "Audio is stored in India.",
+      "retention": "The audio file is deleted after 30 days. You can delete a recording at any time.",
+      "allow": "Allow microphone"
+    },
+    "record": {
+      "hold": "Hold to record",
+      "tap": "Tap to start or stop",
+      "stop": "Stop recording",
+      "start": "Start recording",
+      "hint": "Hold, speak, release. Slide left to cancel.",
+      "slideCancel": "Slide to cancel",
+      "waveform": "Sound level",
+      "elapsed": "Recording, {time}",
+      "stopped": "Recording stopped, {time}",
+      "cancelled": "Recording cancelled",
+      "limit": "Reached the {minutes}-minute limit. Recording stopped."
+    },
+    "review": {
+      "title": "Review your note",
+      "play": "Play",
+      "pause": "Pause",
+      "audio": "Your recording, {time}",
+      "again": "Re-record",
+      "save": "Save",
+      "matter": "Linked to this matter",
+      "matterClear": "Don't link to a matter",
+      "matterSearch": "Link to a matter (optional)",
+      "matterSearchPlaceholder": "Search by title, party or case number",
+      "matterNone": "No matching matters",
+      "matterPicked": "Linked to {title}",
+      "dateHint": "date mentioned: {date}?",
+      "dateHintNote": "A hint from this device only. Nothing is created from it.",
+      "note": "Key line (optional)",
+      "notePlaceholder": "Type the date or key line, if you want a hint"
+    },
+    "saved": {
+      "online": "Saved. We will transcribe it now.",
+      "offline": "Saved on this device. Will transcribe when you're back online."
+    },
+    "denied": {
+      "title": "Microphone access is off",
+      "steps": "Allow microphone access for this site in your browser settings, then open this again.",
+      "body": "You can still add an audio file from the capture menu."
+    },
+    "unavailable": {
+      "title": "This device can't record here",
+      "body": "Open CauseDeck in a current browser over a secure connection to record."
+    },
+    "errors": {
+      "record": "Couldn't record. Try again.",
+      "save": "Couldn't save this recording on the device.",
+      "full": "The device outbox is full. Let uploads finish, then try again."
     }
   },
   "error": {

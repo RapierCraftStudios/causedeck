@@ -11,10 +11,13 @@
     "app",
     "components",
     "lib",
+    "workers",
     "i18n",
     "messages",
     "__tests__",
     "scripts",
+    ".storybook/*.ts",
+    ".storybook/*.tsx",
     "*.ts",
     "*.tsx"
   ],

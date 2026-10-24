@@ -96,9 +96,28 @@ export interface CancelOptions {
   atCycleEnd: boolean;
 }
 
+export interface UpdatePlanInput {
+  /** The provider's plan id for the new plan. */
+  planId: string;
+  quantity: number;
+  /** `now` switches immediately; `cycle_end` from the next billing cycle. */
+  at: 'now' | 'cycle_end';
+}
+
 export interface UpdateQuantityOptions {
   /** `now` applies the quantity immediately; `cycle_end` from the next billing cycle. */
   at: 'now' | 'cycle_end';
+}
+
+/**
+ * What a payment retry did. `provider_scheduled`: the provider retries on its own schedule and
+ * nothing was charged by this call.
+ */
+export type PaymentRetryOutcome = 'charged' | 'failed' | 'provider_scheduled';
+
+export interface PaymentRetryResult {
+  subscription: BillingSubscription;
+  outcome: PaymentRetryOutcome;
 }
 
 export interface BillingProvider {
@@ -110,11 +129,26 @@ export interface BillingProvider {
     quantity: number,
     options?: UpdateQuantityOptions,
   ): Promise<BillingSubscription>;
+  /** Move the subscription to another plan (#257). */
+  updateSubscriptionPlan(
+    subscriptionId: string,
+    input: UpdatePlanInput,
+  ): Promise<BillingSubscription>;
   cancelSubscription(subscriptionId: string, options: CancelOptions): Promise<BillingSubscription>;
+  /**
+   * Withdraw a scheduled cancel-at-cycle-end (#257). Providers that cannot (Razorpay) reject it
+   * with `unsupported`.
+   */
+  withdrawCancellation(subscriptionId: string): Promise<BillingSubscription>;
   pause(subscriptionId: string): Promise<BillingSubscription>;
   resume(subscriptionId: string): Promise<BillingSubscription>;
   fetchSubscription(subscriptionId: string): Promise<BillingSubscription>;
   createMandateLink(subscriptionId: string): Promise<MandateLink>;
+  /**
+   * Retry a failed subscription charge (dunning, #205). The subscription's state still changes
+   * only through webhooks (`subscription.charged` / `payment.failed`), never from this result.
+   */
+  retryPayment(subscriptionId: string): Promise<PaymentRetryResult>;
 }
 
 /** Razorpay webhook body (https://razorpay.com/docs/webhooks/payloads/subscriptions/). */
@@ -177,7 +211,8 @@ export interface RazorpayPaymentEntity {
   created_at: number;
 }
 
-export type BillingProviderErrorCode = 'not_found' | 'invalid_state' | 'invalid_input' | 'provider';
+export type BillingProviderErrorCode =
+  'not_found' | 'invalid_state' | 'invalid_input' | 'unsupported' | 'provider';
 
 /**
  * A provider call failed. Carries only the provider's own error code and description: never the

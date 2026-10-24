@@ -5,18 +5,49 @@
 // committed data (the api and web suites, whose users come from Better Auth).
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
+import { sql } from 'drizzle-orm';
+
 import type { Database, Transaction } from '../client.ts';
-import { registeredTenantTables } from '../rls-policies.ts';
+import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
+import { adapterParseRun } from '../schema/adapters.ts';
+import { aiCall, aiCallResult } from '../schema/audit.ts';
+import {
+  activity,
+  automationPreference,
+  automationThreshold,
+  proposal,
+} from '../schema/automation.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
+import { bench, courtHall, forum } from '../schema/court.ts';
+import { anchor, document, documentPage } from '../schema/documents.ts';
+import { extraction } from '../schema/extraction.ts';
+import { advocateProfile } from '../schema/advocate-profile.ts';
+import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
+import { workspaceFeatureFlag } from '../schema/flags.ts';
+import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { deletionJob, exportJob } from '../schema/lifecycle.ts';
+import { matter } from '../schema/matter-graph.ts';
+import { organisation, person, roleEdge } from '../schema/people.ts';
+import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
+import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
+import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
+import { matterRestriction } from '../schema/matter-restriction.ts';
+import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
   usageEvent,
   usagePeriodSummary,
   usageReservation,
 } from '../schema/usage.ts';
+import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
+import { supportSession } from '../schema/staff.ts';
+import { capture, workspaceCaptureChannel } from '../schema/capture.ts';
+import { blob, workspaceKey } from '../schema/storage.ts';
+import { intakeAddress, intakeAllowlist, intakeMessage } from '../schema/email-intake.ts';
+import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
 type Queryable = Database | Transaction;
@@ -38,6 +69,36 @@ export type SeedRow = Record<string, string>;
 /** Writes one row into its table for `ctx.workspaceId`, on a transaction scoped to it. */
 export type TenantSeeder = (tx: Transaction, ctx: SeedContext) => Promise<SeedRow>;
 
+/** A pending import batch (#546), the parent of `import_batch_file` and `import_plan` seeds. */
+async function seedImportBatch(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+): Promise<string> {
+  const rows = await tx
+    .insert(importBatch)
+    .values({ workspaceId, createdBy: ownerId })
+    .returning({ id: importBatch.id });
+  return first(rows, 'import_batch').id;
+}
+
+/** A draft SaaS invoice for the workspace (the seed for `saas_invoice` and `saas_invoice_line`). */
+async function seedDraftInvoice(tx: Transaction, workspaceId: string): Promise<string> {
+  const party = { legalName: 'XT Seed', address: 'Seed Road', gstin: null, stateCode: '29' };
+  const rows = await tx
+    .insert(saasInvoice)
+    .values({
+      workspaceId,
+      series: 'XT',
+      fy: '26-27',
+      supplier: party,
+      recipient: party,
+      placeOfSupplyStateCode: '29',
+    })
+    .returning({ id: saasInvoice.id });
+  return first(rows, 'saas_invoice').id;
+}
+
 function first<T>(rows: T[], table: string): T {
   const [row] = rows;
   if (row === undefined) throw new Error(`two-tenants: ${table} insert returned no row`);
@@ -55,6 +116,146 @@ async function newUser(q: Queryable, label: string): Promise<string> {
 /** The invite-token hash `@causedeck/core` stores (sha256 hex of the plaintext token). */
 export function invitationTokenHash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+/** A custom (workspace-owned) forum, as an A0 forum a workspace adds itself (#344). */
+async function seedForum(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(forum)
+    .values({
+      workspaceId,
+      code: `xt.${tag}.${randomUUID().slice(0, 8)}`,
+      court: 'Seed District Court',
+      jurisdictionKind: 'district',
+    })
+    .returning({ id: forum.id });
+  return first(rows, 'forum').id;
+}
+
+/** A matter of the workspace (#345), for the matter graph and restriction seeds. */
+async function seedMatter(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(matter)
+    .values({ workspaceId, title: `XT Matter ${tag}`, practiceArea: 'civil' })
+    .returning({ id: matter.id });
+  return first(rows, 'matter').id;
+}
+
+/** A proceeding of a fresh matter before a custom forum (#346), still at the filing stage. */
+async function seedProceeding(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const forumId = await seedForum(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(proceeding)
+    .values({
+      workspaceId,
+      matterId,
+      forumId,
+      caseTypeCode: 'WP',
+      caseTypeRaw: 'W.P.',
+      filingNo: `F-${tag}`,
+      sourceType: 'manual',
+    })
+    .returning({ id: proceeding.id });
+  return first(rows, 'proceeding').id;
+}
+
+/** A fictional party (#348). */
+async function seedPerson(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(person)
+    .values({ workspaceId, name: `Party ${tag}`, kind: 'party', sourceType: 'manual' })
+    .returning({ id: person.id });
+  return first(rows, 'person').id;
+}
+
+/** A document of a fresh matter (#345). */
+async function seedDocument(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const id = randomUUID();
+  const rows = await tx
+    .insert(document)
+    .values({
+      id,
+      workspaceId,
+      matterId,
+      kind: 'pleading',
+      storageKey: `ws/${workspaceId}/document/${id}`,
+      sha256: createHash('sha256').update(id).digest('hex'),
+    })
+    .returning({ id: document.id });
+  return first(rows, 'document').id;
+}
+
+/** A listing of a fresh proceeding (#347), on the daily list. */
+async function seedListing(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const proceedingId = await seedProceeding(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(listing)
+    .values({
+      workspaceId,
+      proceedingId,
+      listDate: '2026-11-02',
+      listType: 'daily',
+      stageRaw: 'FOR ADMISSION',
+      canonical: true,
+      sourceType: 'manual',
+    })
+    .returning({ id: listing.id });
+  return first(rows, 'listing').id;
+}
+
+/** A draft roster of a fresh custom forum (#384), and a bench of that forum. */
+async function seedBenchRoster(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<{ forumId: string; rosterId: string; benchId: string }> {
+  const forumId = await seedForum(tx, workspaceId, `${tag}-roster`);
+  const rosters = await tx
+    .insert(benchRoster)
+    .values({ workspaceId, forumId, effectiveFrom: '2026-11-01', version: 1 })
+    .returning({ id: benchRoster.id });
+  const benches = await tx
+    .insert(bench)
+    .values({ workspaceId, forumId, judges: ['Judge B'], benchKind: 'single' })
+    .returning({ id: bench.id });
+  return {
+    forumId,
+    rosterId: first(rosters, 'bench_roster').id,
+    benchId: first(benches, 'bench').id,
+  };
+}
+
+/** A hearing of a fresh listing (#347). */
+async function seedHearing(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const listingId = await seedListing(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(hearing)
+    .values({ workspaceId, listingId, heldOn: '2026-11-02', sourceType: 'manual' })
+    .returning({ id: hearing.id });
+  return first(rows, 'hearing').id;
+}
+
+/** An open obligation of a fresh matter (#347). */
+async function seedObligation(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(obligation)
+    .values({
+      workspaceId,
+      matterId,
+      source: 'internal',
+      description: 'File the counter affidavit',
+      sourceType: 'manual',
+    })
+    .returning({ id: obligation.id });
+  return first(rows, 'obligation').id;
+}
+
+/** Tenant tables and global-or-workspace reference tables: every table the suite seeds. */
+function seededTables(): string[] {
+  return [...registeredTenantTables(), ...registeredGlobalOrWorkspaceTables()];
 }
 
 /**
@@ -119,7 +320,8 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     return { key };
   },
   usage_counter: async (tx, { workspaceId }) => {
-    const key = `xt.seed.${randomUUID()}`;
+    // Usage keys are lowercase dotted segments (usage_*_key_chk): no hyphens, so strip the UUID's.
+    const key = `xt.seed.${randomUUID().replaceAll('-', '')}`;
     await tx.insert(usageCounter).values({ workspaceId, key, periodStart: new Date(), value: 1 });
     return { key };
   },
@@ -129,6 +331,63 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .insert(billingEvent)
       .values({ providerEventId, workspaceId, type: 'xt.seed', payloadHash: randomUUID() });
     return { providerEventId };
+  },
+  audit_event: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx.execute<{ id: string }>(
+      sql`select id from app_audit_append(${workspaceId}::uuid, ${ownerId}::uuid, 'user', 'xt.seed')`,
+    );
+    return { auditEventId: first([...rows], 'audit_event').id };
+  },
+  ai_call: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(aiCall)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        purpose: 'xt.seed',
+        provider: 'mock',
+        model: 'mock-1',
+        region: 'ap-south-1',
+        automationLevel: 1,
+      })
+      .returning({ id: aiCall.id });
+    return { aiCallId: first(rows, 'ai_call').id };
+  },
+  ai_call_result: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(aiCallResult)
+      .values({
+        workspaceId,
+        idempotencyKey: `xt-${randomUUID()}`,
+        aiCallId: randomUUID(),
+        output: {},
+        expiresAt: new Date(Date.now() + 86_400_000),
+      })
+      .returning({ id: aiCallResult.id });
+    return { aiCallResultId: first(rows, 'ai_call_result').id };
+  },
+  notification: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(notification)
+      .values({ workspaceId, userId: ownerId, category: 'system.notice', title: 'Seed notice' })
+      .returning({ id: notification.id });
+    return { notificationId: first(rows, 'notification').id, userId: ownerId };
+  },
+  notification_pref: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(notificationPref).values({
+      workspaceId,
+      userId: ownerId,
+      category: 'system.notice',
+      channel: 'email',
+      enabled: false,
+    });
+    return { userId: ownerId, category: 'system.notice', channel: 'email' };
+  },
+  notification_setting: async (tx, { workspaceId, ownerId }) => {
+    await tx
+      .insert(notificationSetting)
+      .values({ workspaceId, userId: ownerId, courtHoursQuiet: true });
+    return { userId: ownerId };
   },
   usage_reservation: async (tx, { workspaceId }) => {
     const rows = await tx
@@ -176,11 +435,550 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, key, periodStart: new Date(), value: 1 });
     return { key };
   },
+  workspace_feature_flag: async (tx, { workspaceId, ownerId }) => {
+    const key = `xt.seed.${randomUUID()}`;
+    await tx
+      .insert(workspaceFeatureFlag)
+      .values({ workspaceId, key, enabled: true, updatedBy: ownerId });
+    return { key };
+  },
+  matter_restriction: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, tag);
+    const row = first(
+      await tx
+        .insert(matterRestriction)
+        .values({
+          workspaceId,
+          matterId,
+          allowedUserIds: [ownerId],
+          createdBy: ownerId,
+        })
+        .returning({ id: matterRestriction.id, matterId: matterRestriction.matterId }),
+      'matter_restriction',
+    );
+    return { id: row.id, matterId: row.matterId };
+  },
+  support_session: async (tx, { workspaceId, ownerId }) => {
+    // A pending request; the requester's staff_user row is not needed at the SQL level.
+    const row = first(
+      await tx
+        .insert(supportSession)
+        .values({ workspaceId, requestedByStaff: ownerId, reason: 'Seed support request' })
+        .returning({ id: supportSession.id }),
+      'support_session',
+    );
+    return { id: row.id };
+  },
+  intake_address: async (tx, { workspaceId, ownerId }) => {
+    // `u-` + 10 base32 characters (a-z, 2-7), as the core service generates them.
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+    const localPart = `u-${[...randomBytes(10)].map((byte) => alphabet[byte % 32]).join('')}`;
+    const row = first(
+      await tx
+        .insert(intakeAddress)
+        .values({ workspaceId, userId: ownerId, localPart, domain: 'intake.test' })
+        .returning({ id: intakeAddress.id }),
+      'intake_address',
+    );
+    return { id: row.id };
+  },
+  intake_allowlist: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(intakeAllowlist)
+        .values({
+          workspaceId,
+          pattern: `xt-${randomUUID().slice(0, 8)}.court.test`,
+          kind: 'court',
+          addedBy: ownerId,
+        })
+        .returning({ id: intakeAllowlist.id }),
+      'intake_allowlist',
+    );
+    return { id: row.id };
+  },
+  intake_message: async (tx, { workspaceId }) => {
+    const row = first(
+      await tx
+        .insert(intakeMessage)
+        .values({
+          workspaceId,
+          messageId: `<xt-${randomUUID()}@mail.test>`,
+          rawExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        })
+        .returning({ id: intakeMessage.id }),
+      'intake_message',
+    );
+    return { id: row.id };
+  },
+  workspace_integration: async (tx, { workspaceId }) => {
+    // The hash of a random token: the plaintext is never stored.
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const row = first(
+      await tx
+        .insert(workspaceIntegration)
+        .values({ workspaceId, kind: 'ics_feed', tokenHash })
+        .returning({ id: workspaceIntegration.id }),
+      'workspace_integration',
+    );
+    return { id: row.id };
+  },
+  workspace_key: async (tx, { workspaceId }) => {
+    // Opaque bytes standing in for a wrapped DEK; the table never sees a plaintext key.
+    await tx
+      .insert(workspaceKey)
+      .values({ workspaceId, wrappedDek: randomBytes(60), kekId: 'kek-test' });
+    return { workspaceId };
+  },
+  blob: async (tx, { workspaceId, ownerId }) => {
+    // A finalized upload row; the object itself never exists in a SQL-only suite.
+    const id = randomUUID();
+    const year = new Date().getUTCFullYear();
+    await tx.insert(blob).values({
+      id,
+      workspaceId,
+      key: `ws/${workspaceId}/document/${String(year)}/${id}`,
+      kind: 'document',
+      filename: 'seed.pdf',
+      size: 8,
+      sha256: createHash('sha256').update(id).digest('hex'),
+      mime: 'application/pdf',
+      scanStatus: 'pending',
+      createdBy: ownerId,
+      finalizedAt: new Date(),
+    });
+    return { id };
+  },
+  saas_invoice: async (tx, { workspaceId }) => ({
+    invoiceId: await seedDraftInvoice(tx, workspaceId),
+  }),
+  saas_invoice_line: async (tx, { workspaceId }) => {
+    const invoiceId = await seedDraftInvoice(tx, workspaceId);
+    const rows = await tx
+      .insert(saasInvoiceLine)
+      .values({
+        workspaceId,
+        invoiceId,
+        description: 'Seed seat',
+        quantity: 1,
+        unitPricePaise: 100,
+        amountPaise: 100,
+      })
+      .returning({ id: saasInvoiceLine.id });
+    return { invoiceId, lineId: first(rows, 'saas_invoice_line').id };
+  },
+  export_job: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(exportJob)
+        .values({ workspaceId, requestedBy: ownerId, scope: 'workspace', status: 'failed' })
+        .returning({ id: exportJob.id }),
+      'export_job',
+    );
+    return { id: row.id };
+  },
+  forum: async (tx, { workspaceId, tag }) => ({ forumId: await seedForum(tx, workspaceId, tag) }),
+  court_hall: async (tx, { workspaceId, tag }) => {
+    const forumId = await seedForum(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(courtHall)
+      .values({ workspaceId, forumId, hallNo: '12A', label: 'Court Hall 12A' })
+      .returning({ id: courtHall.id });
+    return { forumId, hallId: first(rows, 'court_hall').id };
+  },
+  bench: async (tx, { workspaceId, tag }) => {
+    const forumId = await seedForum(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(bench)
+      .values({ workspaceId, forumId, judges: ['Judge A'], benchKind: 'single' })
+      .returning({ id: bench.id });
+    return { forumId, benchId: first(rows, 'bench').id };
+  },
+  bench_roster: async (tx, { workspaceId, tag }) => {
+    const { forumId, rosterId } = await seedBenchRoster(tx, workspaceId, tag);
+    return { forumId, rosterId };
+  },
+  bench_roster_entry: async (tx, { workspaceId, tag }) => {
+    const { forumId, rosterId, benchId } = await seedBenchRoster(tx, workspaceId, tag);
+    const halls = await tx
+      .insert(courtHall)
+      .values({ workspaceId, forumId, hallNo: '12A' })
+      .returning({ id: courtHall.id });
+    const rows = await tx
+      .insert(benchRosterEntry)
+      .values({
+        workspaceId,
+        rosterId,
+        hallId: first(halls, 'court_hall').id,
+        hallNo: '12A',
+        benchId,
+        portfolioText: 'Writ petitions',
+        portfolioRule: { caseTypes: ['WP'] },
+      })
+      .returning({ id: benchRosterEntry.id });
+    return { rosterId, entryId: first(rows, 'bench_roster_entry').id };
+  },
+  bench_change_alert: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const { rosterId, benchId } = await seedBenchRoster(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(benchChangeAlert)
+      .values({ workspaceId, proceedingId, rosterId, newBenchId: benchId, reason: 'hall' })
+      .returning({ id: benchChangeAlert.id });
+    return { proceedingId, rosterId, alertId: first(rows, 'bench_change_alert').id };
+  },
+  proposal: async (tx, { workspaceId, tag }) => {
+    const rows = await tx
+      .insert(proposal)
+      .values({
+        workspaceId,
+        kind: 'task',
+        level: 'L2',
+        payload: { title: `Seed ${tag}` },
+        idempotencyKey: `seed-${tag}-${randomUUID()}`,
+      })
+      .returning({ id: proposal.id });
+    return { proposalId: first(rows, 'proposal').id };
+  },
+  activity: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(activity)
+      .values({
+        workspaceId,
+        kind: 'task',
+        level: 'L3',
+        actor: 'user',
+        actorUserId: ownerId,
+        summary: `Seed activity ${tag}`,
+        undoExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      })
+      .returning({ id: activity.id });
+    return { activityId: first(rows, 'activity').id };
+  },
+  automation_preference: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(automationPreference)
+      .values({ workspaceId, userId: ownerId, kind: 'task', askFirst: true })
+      .returning({ id: automationPreference.id });
+    return { preferenceId: first(rows, 'automation_preference').id, userId: ownerId };
+  },
+  automation_threshold: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(automationThreshold)
+      .values({ workspaceId, kind: 'task', patternKey: 'undated', threshold: '0.820' })
+      .returning({ id: automationThreshold.id });
+    return { thresholdId: first(rows, 'automation_threshold').id };
+  },
+  capture: async (tx, { workspaceId, ownerId, tag }) => {
+    // A received upload row; the raw object never exists in a SQL-only suite.
+    const rows = await tx
+      .insert(capture)
+      .values({
+        workspaceId,
+        channel: 'upload',
+        mime: 'application/pdf',
+        sizeBytes: 8,
+        originalFilename: `xt-${tag}.pdf`,
+        createdBy: ownerId,
+      })
+      .returning({ id: capture.id });
+    return { id: first(rows, 'capture').id };
+  },
+  workspace_capture_channel: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(workspaceCaptureChannel).values({
+      workspaceId,
+      channel: 'email',
+      enabled: true,
+      enabledBy: ownerId,
+      enabledAt: new Date(),
+      disclosureVersion: 'v1',
+    });
+    return { workspaceId };
+  },
+  ics_feed: async (tx, { workspaceId, ownerId }) => {
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const row = first(
+      await tx
+        .insert(icsFeed)
+        // Revoked, so the owner can still create an active feed in the action suites.
+        .values({
+          workspaceId,
+          userId: ownerId,
+          tokenHash,
+          disclosureVersion: 'v1',
+          revokedAt: new Date(),
+        })
+        .returning({ id: icsFeed.id }),
+      'ics_feed',
+    );
+    return { id: row.id };
+  },
+  ics_feed_event: async (tx, { workspaceId, ownerId, tag }) => {
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const feed = first(
+      await tx
+        .insert(icsFeed)
+        .values({
+          workspaceId,
+          userId: ownerId,
+          tokenHash,
+          disclosureVersion: 'v1',
+          revokedAt: new Date(),
+        })
+        .returning({ id: icsFeed.id }),
+      'ics_feed',
+    );
+    await tx.insert(icsFeedEvent).values({
+      workspaceId,
+      feedId: feed.id,
+      uid: `listing-${tag}@causedeck`,
+      contentHash: 'h',
+      changedAt: new Date(),
+      snapshot: { date: '2026-12-01', summary: 'Hearing', location: null, description: null },
+    });
+    return { feedId: feed.id };
+  },
+  ics_import_event: async (tx, { workspaceId, ownerId, tag }) => {
+    const cap = first(
+      await tx
+        .insert(capture)
+        .values({
+          workspaceId,
+          channel: 'ics',
+          mime: 'text/calendar',
+          sizeBytes: 8,
+          originalFilename: `xt-${tag}.ics`,
+          createdBy: ownerId,
+        })
+        .returning({ id: capture.id }),
+      'capture',
+    );
+    const row = first(
+      await tx
+        .insert(icsImportEvent)
+        .values({
+          workspaceId,
+          uid: `xt-${tag}`,
+          captureId: cap.id,
+          status: 'unmatched',
+          summary: 'Hearing',
+          eventDate: '2026-12-01',
+          score: '0.800',
+        })
+        .returning({ id: icsImportEvent.id }),
+      'ics_import_event',
+    );
+    return { id: row.id };
+  },
+  extraction: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(extraction)
+      .values({ workspaceId, documentId, pipelineVersion: 'xt', result: { seeded: true } })
+      .returning({ id: extraction.id });
+    return { documentId, extractionId: first(rows, 'extraction').id };
+  },
+  import_batch: async (tx, { workspaceId, ownerId }) => ({
+    id: await seedImportBatch(tx, workspaceId, ownerId),
+  }),
+  import_batch_file: async (tx, { workspaceId, ownerId, tag }) => {
+    const batchId = await seedImportBatch(tx, workspaceId, ownerId);
+    const captures = await tx
+      .insert(capture)
+      .values({
+        workspaceId,
+        channel: 'upload',
+        mime: 'application/pdf',
+        sizeBytes: 8,
+        originalFilename: `xt-${tag}.pdf`,
+        createdBy: ownerId,
+      })
+      .returning({ id: capture.id });
+    const captureId = first(captures, 'capture').id;
+    const rows = await tx
+      .insert(importBatchFile)
+      .values({ workspaceId, batchId, captureId })
+      .returning({ id: importBatchFile.id });
+    return { batchId, captureId, id: first(rows, 'import_batch_file').id };
+  },
+  advocate_profile: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(advocateProfile)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        enrolmentNumbers: ['MS/1/1900'],
+        aliases: ['XT, ADV.'],
+      })
+      .returning({ id: advocateProfile.id });
+    return { id: first(rows, 'advocate_profile').id };
+  },
+  import_plan: async (tx, { workspaceId, ownerId }) => {
+    const batchId = await seedImportBatch(tx, workspaceId, ownerId);
+    await tx.insert(importPlan).values({ workspaceId, batchId, plan: { rows: [] } });
+    return { batchId };
+  },
+  matter: async (tx, { workspaceId, tag }) => ({
+    matterId: await seedMatter(tx, workspaceId, tag),
+  }),
+  document: async (tx, { workspaceId, tag }) => ({
+    documentId: await seedDocument(tx, workspaceId, tag),
+  }),
+  adapter_parse_run: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(adapterParseRun)
+      .values({
+        workspaceId,
+        documentId,
+        adapterId: 'echo',
+        adapterVersion: '1.0.0',
+        forumCode: 'test.echo.principal',
+        rowsParsed: 3,
+        rowsAnchored: 3,
+        unmappedHeadings: 0,
+        unknownCaseTypes: 0,
+        hallsSeen: ['1'],
+        status: 'ok',
+      })
+      .returning({ id: adapterParseRun.id });
+    return { documentId, parseRunId: first(rows, 'adapter_parse_run').id };
+  },
+  document_page: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(documentPage)
+      .values({ workspaceId, documentId, pageNo: 1, text: 'Seed page', textSource: 'layer' })
+      .returning({ id: documentPage.id });
+    return { documentId, pageId: first(rows, 'document_page').id };
+  },
+  anchor: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(anchor)
+      .values({ workspaceId, documentId, pageNo: 1, quote: 'Seed quote', kind: 'document' })
+      .returning({ id: anchor.id });
+    return { documentId, anchorId: first(rows, 'anchor').id };
+  },
+  proceeding: async (tx, { workspaceId, tag }) => ({
+    proceedingId: await seedProceeding(tx, workspaceId, tag),
+  }),
+  proceeding_link: async (tx, { workspaceId, tag }) => {
+    const parentId = await seedProceeding(tx, workspaceId, `${tag}-main`);
+    const childId = await seedProceeding(tx, workspaceId, `${tag}-misc`);
+    const rows = await tx
+      .insert(proceedingLink)
+      .values({
+        workspaceId,
+        fromProceedingId: parentId,
+        toProceedingId: childId,
+        kind: 'parent_of',
+        sourceType: 'manual',
+      })
+      .returning({ id: proceedingLink.id });
+    return { parentId, childId, linkId: first(rows, 'proceeding_link').id };
+  },
+  proceeding_state_change: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(proceedingStateChange)
+      .values({
+        workspaceId,
+        proceedingId,
+        fromState: 'filed',
+        toState: 'sr_fr',
+        sourceType: 'manual',
+        confirmationState: 'confirmed',
+      })
+      .returning({ id: proceedingStateChange.id });
+    return { proceedingId, stateChangeId: first(rows, 'proceeding_state_change').id };
+  },
+  listing: async (tx, { workspaceId, tag }) => ({
+    listingId: await seedListing(tx, workspaceId, tag),
+  }),
+  hearing: async (tx, { workspaceId, tag }) => ({
+    hearingId: await seedHearing(tx, workspaceId, tag),
+  }),
+  appearance: async (tx, { workspaceId, tag }) => {
+    const hearingId = await seedHearing(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(appearance)
+      .values({ workspaceId, hearingId, capacity: 'arguing' })
+      .returning({ id: appearance.id });
+    return { hearingId, appearanceId: first(rows, 'appearance').id };
+  },
+  order: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(order)
+      .values({
+        workspaceId,
+        proceedingId,
+        documentId,
+        orderDate: '2026-11-02',
+        orderType: 'procedural',
+        sourceType: 'manual',
+      })
+      .returning({ id: order.id });
+    return { proceedingId, documentId, orderId: first(rows, 'order').id };
+  },
+  obligation: async (tx, { workspaceId, tag }) => ({
+    obligationId: await seedObligation(tx, workspaceId, tag),
+  }),
+  task: async (tx, { workspaceId, tag }) => {
+    const obligationId = await seedObligation(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(task)
+      .values({
+        workspaceId,
+        title: 'Draft the counter affidavit',
+        fulfilsObligationId: obligationId,
+        sourceType: 'manual',
+      })
+      .returning({ id: task.id });
+    return { obligationId, taskId: first(rows, 'task').id };
+  },
+  person: async (tx, { workspaceId, tag }) => ({
+    personId: await seedPerson(tx, workspaceId, tag),
+  }),
+  organisation: async (tx, { workspaceId, tag }) => {
+    const rows = await tx
+      .insert(organisation)
+      .values({ workspaceId, name: `Firm ${tag}` })
+      .returning({ id: organisation.id });
+    return { organisationId: first(rows, 'organisation').id };
+  },
+  role_edge: async (tx, { workspaceId, tag }) => {
+    const advocateId = await seedPerson(tx, workspaceId, `${tag}-advocate`);
+    const partyId = await seedPerson(tx, workspaceId, `${tag}-party`);
+    const rows = await tx
+      .insert(roleEdge)
+      .values({
+        workspaceId,
+        kind: 'represents',
+        fromPersonId: advocateId,
+        toPersonId: partyId,
+        sourceType: 'manual',
+      })
+      .returning({ id: roleEdge.id });
+    return { advocateId, partyId, roleEdgeId: first(rows, 'role_edge').id };
+  },
+  deletion_job: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(deletionJob)
+        .values({ workspaceId, kind: 'workspace', requestedBy: ownerId, status: 'cancelled' })
+        .returning({ id: deletionJob.id }),
+      'deletion_job',
+    );
+    return { id: row.id };
+  },
 };
 
 /** Registered tenant tables with no seeder (the registry test expects none). */
 export function unseededTenantTables(): string[] {
-  return registeredTenantTables().filter((table) => !(table in TENANT_SEEDERS));
+  return seededTables().filter((table) => !(table in TENANT_SEEDERS));
 }
 
 export interface TenantFixture {
@@ -221,7 +1019,7 @@ async function seedWorkspace(
       { organizationId: id, userId: ownerId, role: 'owner' },
       { organizationId: id, userId: uboth, role: 'advocate' },
     ]);
-    for (const table of registeredTenantTables()) {
+    for (const table of seededTables()) {
       const seeder = TENANT_SEEDERS[table];
       if (seeder === undefined) throw new Error(`two-tenants: no seeder for tenant table ${table}`);
       rows[table] = await seeder(tx, { workspaceId: id, ownerId, tag });

@@ -14,13 +14,15 @@ import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { checkMigrationPolicies, checkRls } from '../../check-rls.ts';
 import type { Transaction } from '../../client.ts';
 import { id } from '../../columns.ts';
-import { GLOBAL_TABLES } from '../../conventions.ts';
+import { GLOBAL_OR_WORKSPACE_TABLES, GLOBAL_TABLES } from '../../conventions.ts';
 import { runMigrations } from '../../migrate.ts';
 import { createOwnerDb } from '../../owner.ts';
 import {
   BASELINE_TENANT_TABLES,
+  globalOrWorkspacePolicy,
   missingTenantPolicies,
   registeredTenantTables,
+  scopeGuardTrigger,
   tenantPolicy,
 } from '../../rls-policies.ts';
 import { tenantTable } from '../../schema-helpers/tenant-table.ts';
@@ -83,10 +85,113 @@ describe('row-level security catalog', () => {
         and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'workspace_id')
         and not (c.relname = any(${sql.raw(`array[${GLOBAL_TABLES.map((t) => `'${t}'`).join(', ')}]`)}))
       order by 1`);
-    expect(rows.map((r) => r.name)).toEqual([...BASELINE_TENANT_TABLES, ...USAGE_TABLES].sort());
+    // Baseline tables plus the tenant tables created after 0006 (#226, #194, #218, #22, #216, #252, #233, #217, #301, #308).
+    expect(rows.map((r) => r.name)).toEqual(
+      [
+        ...BASELINE_TENANT_TABLES,
+        'audit_event',
+        'ai_call',
+        'ai_call_result',
+        'notification',
+        'notification_pref',
+        'notification_setting',
+        ...USAGE_TABLES,
+        'workspace_feature_flag',
+        'workspace_key',
+        'saas_invoice',
+        'saas_invoice_line',
+        'matter_restriction',
+        'blob',
+        'export_job',
+        'deletion_job',
+        'support_session',
+        'workspace_integration',
+        'intake_address',
+        'intake_allowlist',
+        'intake_message',
+        // Global-or-workspace reference tables (#344): ws_isolation plus catalogue policies.
+        'forum',
+        'court_hall',
+        'bench',
+        // Matter and documents (#345).
+        'matter',
+        'document',
+        'document_page',
+        'anchor',
+        // Proceedings (#346).
+        'proceeding',
+        'proceeding_link',
+        // Proceeding state history (#363).
+        'proceeding_state_change',
+        // Docket (#347).
+        'listing',
+        'hearing',
+        'appearance',
+        'order',
+        'obligation',
+        'task',
+        // People (#348).
+        'person',
+        'organisation',
+        'role_edge',
+        // Adapter parse health (#372).
+        'adapter_parse_run',
+        // Bench rosters (#384).
+        'bench_roster',
+        'bench_roster_entry',
+        'bench_change_alert',
+        // Automation engine (#47).
+        'proposal',
+        'activity',
+        'automation_preference',
+        'automation_threshold',
+
+        // Capture inbox (#43).
+        'capture',
+        'workspace_capture_channel',
+
+        // Calendar interop (#53).
+        'ics_feed',
+        'ics_feed_event',
+        'ics_import_event',
+
+        // Anchored order extraction (#46).
+        'extraction',
+
+        // Bootstrap import (#57, #546).
+        'import_batch',
+        'import_batch_file',
+        'import_plan',
+
+        // Advocate identifiers for the bootstrap import (#57, #550).
+        'advocate_profile',
+      ].sort(),
+    );
     for (const row of rows)
       expect(row, row.name).toMatchObject({ enabled: true, forced: true, policy: true });
     expect(await checkRls(owner)).toEqual([]);
+  });
+
+  it('keeps audit_actor_salt global and out of reach of the app and clerk roles (#303)', async () => {
+    const [row] = await owner.execute<{ enabled: boolean; app: boolean; clerk: boolean }>(sql`
+      select c.relrowsecurity as enabled,
+             has_table_privilege('causedeck_app', c.oid, 'select, insert, update, delete') as app,
+             has_table_privilege('causedeck_clerk', c.oid, 'select, insert, update, delete') as clerk
+      from pg_class c where c.relname = 'audit_actor_salt'`);
+    expect(row).toEqual({ enabled: false, app: false, clerk: false });
+    expect(GLOBAL_TABLES).toContain('audit_actor_salt');
+  });
+
+  it('lets account deletion jobs (no workspace) through account_self only (#303)', async () => {
+    const policies = await owner.execute<{ policyname: string; cmd: string }>(sql`
+      select policyname::text, cmd::text from pg_policies
+      where tablename = 'deletion_job' order by policyname`);
+    expect(policies).toEqual([
+      { policyname: 'account_self', cmd: 'ALL' },
+      // Owner role only: backs app_deletion_due_jobs (#302, 0032).
+      { policyname: 'owner_definer_read', cmd: 'SELECT' },
+      { policyname: 'ws_isolation', cmd: 'ALL' },
+    ]);
   });
 
   it('keeps api_idempotency_key global (allow-listed, no RLS)', async () => {
@@ -139,6 +244,67 @@ describe('row-level security catalog', () => {
         /^rls_fixture_child\.\S+ \(parent_id\) -> rls_fixture_parent must be a composite FK/,
       ),
     ]);
+  });
+});
+
+describe('global-or-workspace reference tables (#344)', () => {
+  it('forum, court_hall and bench have exactly ws_isolation, global_read and owner_catalogue', async () => {
+    const rows = await owner.execute<{ tablename: string; policyname: string; cmd: string }>(sql`
+      select tablename::text, policyname::text, cmd::text from pg_policies
+      where tablename in ('forum', 'court_hall', 'bench') order by 1, 2`);
+    expect(rows).toEqual(
+      ['bench', 'court_hall', 'forum'].flatMap((t) => [
+        { tablename: t, policyname: 'global_read', cmd: 'SELECT' },
+        { tablename: t, policyname: 'owner_catalogue', cmd: 'ALL' },
+        { tablename: t, policyname: 'ws_isolation', cmd: 'ALL' },
+      ]),
+    );
+  });
+
+  it('flags missing catalogue policies and a FK into the table without a scope guard', async () => {
+    const options = {
+      globalOrWorkspaceTables: [...GLOBAL_OR_WORKSPACE_TABLES, 'gw_fixture_ref', 'gw_fixture_bare'],
+    };
+    const found = await rolledBack(async (tx) => {
+      for (const t of ['gw_fixture_ref', 'gw_fixture_bare']) {
+        await tx.execute(sql.raw(`create table ${t} (id uuid primary key, workspace_id uuid)`));
+      }
+      await tx.execute(sql`create table gw_fixture_child (
+        id uuid primary key, workspace_id uuid not null,
+        ref_id uuid references gw_fixture_ref (id),
+        guarded_id uuid references gw_fixture_ref (id))`);
+      for (const statement of [
+        ...globalOrWorkspacePolicy('gw_fixture_ref'),
+        ...tenantPolicy('gw_fixture_bare'),
+        ...tenantPolicy('gw_fixture_child'),
+        scopeGuardTrigger('gw_fixture_child', 'guarded_id', 'gw_fixture_ref', 'same_or_global'),
+      ])
+        await tx.execute(sql.raw(statement));
+      return checkRls(tx, options);
+    });
+    expect(rules(found)).toEqual([
+      'gw_fixture_bare:missing-global-or-workspace-policy',
+      'gw_fixture_child:missing-scope-guard',
+    ]);
+    expect(found.find((v) => v.rule === 'missing-scope-guard')?.message).toContain(
+      'gw_fixture_child_ref_id_scope_guard',
+    );
+  });
+
+  it('requires globalOrWorkspacePolicy() in the migration that creates a listed table', () => {
+    const create = 'CREATE TABLE "gw_ref" (\n\t"id" uuid PRIMARY KEY,\n\t"workspace_id" uuid\n);\n';
+    const tenantOnly =
+      create +
+      tenantPolicy('gw_ref')
+        .map((s) => `${s};\n`)
+        .join('');
+    const full =
+      create +
+      globalOrWorkspacePolicy('gw_ref')
+        .map((s) => `${s};\n`)
+        .join('');
+    expect(missingTenantPolicies('x.sql', tenantOnly, GLOBAL_TABLES, ['gw_ref'])).toHaveLength(1);
+    expect(missingTenantPolicies('x.sql', full, GLOBAL_TABLES, ['gw_ref'])).toEqual([]);
   });
 });
 
@@ -229,5 +395,7 @@ describe('db:check-rls CLI', () => {
     for (const statement of tenantPolicy('rls_fixture')) await scratch.execute(sql.raw(statement));
     const fixed = await run('--url', db.owner);
     expect(fixed.status, fixed.stderr).toBe(0);
-  });
+    // Three `pnpm exec tsx` spawns plus a migration: 24 s on a free host, over the 60 s default
+    // when turbo runs every package's tests at once on the CI runner.
+  }, 240_000);
 });

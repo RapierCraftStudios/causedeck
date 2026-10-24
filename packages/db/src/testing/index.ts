@@ -12,6 +12,13 @@ import type { TestDatabaseUrls } from './container.ts';
 // Brings in the `ProvidedContext` augmentation for `inject()`.
 import type {} from './global-setup.ts';
 
+// Values app test files need from the root entry (#299): apps may value-import `@causedeck/db` only
+// through `@causedeck/db/testing` (and `testing/*`, `seed/*`) in tests.
+export { createDb } from '../client.ts';
+export { isUuid, withUser, withWorkspace } from '../rls.ts';
+export { registeredTenantTables } from '../rls-policies.ts';
+export * as schema from '../schema/index.ts';
+
 export {
   createScratchDatabase,
   POSTGRES_IMAGE,
@@ -70,18 +77,22 @@ export function inWorkspace<T>(
 /**
  * Empty every table in `public` except `schema_info` (as the owner; the app role has no TRUNCATE). For suites that must
  * commit, such as tests of code that opens its own transactions. Not safe alongside parallel files
- * that commit to the same tables.
+ * that commit to the same tables: pass `ownerUrl` of a scratch database to keep it away from them.
  */
-export async function truncateAll(): Promise<void> {
-  const owner = createOwnerDb(new Secret(testDatabaseUrls().owner));
+export async function truncateAll(ownerUrl: string = testDatabaseUrls().owner): Promise<void> {
+  const owner = createOwnerDb(new Secret(ownerUrl));
   try {
     const rows = await owner.execute<{ name: string }>(
       sql`select quote_ident(tablename) as name from pg_tables where schemaname = 'public' and tablename <> 'schema_info'`,
     );
     if (rows.length > 0) {
-      await owner.execute(
-        sql.raw(`truncate table ${rows.map((r) => r.name).join(', ')} restart identity cascade`),
-      );
+      // The append-only audit tables (#226) reject TRUNCATE outside the retention path.
+      await owner.transaction(async (tx) => {
+        await tx.execute(sql`select set_config('app.audit_retention', 'on', true)`);
+        await tx.execute(
+          sql.raw(`truncate table ${rows.map((r) => r.name).join(', ')} restart identity cascade`),
+        );
+      });
     }
   } finally {
     await owner.$client.end();

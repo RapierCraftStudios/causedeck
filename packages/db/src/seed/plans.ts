@@ -1,7 +1,7 @@
-// The `plans` seed (#200): the plan catalogue from `@causedeck/billing/plans`, in every profile and
+// The `plans` seed (#200): the plan catalogue from `@causedeck/validators/plans`, in every profile and
 // before any workspace data. Upserts by id, so re-seeding is idempotent and a price edited in the
 // catalogue reaches the table.
-import { PLAN_CATALOGUE } from '@causedeck/billing/plans';
+import { PLAN_CATALOGUE } from '@causedeck/validators/plans';
 import { sql } from 'drizzle-orm';
 
 import { plan } from '../schema/billing.ts';

@@ -1,0 +1,23 @@
+{
+  "id": "en-28",
+  "language": "en",
+  "hearingDate": "2026-03-08",
+  "text": "In case 36903 of 2026 today. The court heard both sides and the matter was adjourned again. Next hearing on the 20th. The court directed both sides to exchange written submissions. The court directed the petitioner to file the rejoinder. Remind me to update the junior on the listing.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-03-20",
+      "phrase": "on the 20th"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions.",
+        "dueDate": null
+      },
+      {
+        "text": "The court directed the petitioner to file the rejoinder.",
+        "dueDate": null
+      }
+    ],
+    "tasks": ["update the junior on the listing"]
+  }
+}

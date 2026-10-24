@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { defaultSnapshot } from '@causedeck/flags/keys';
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -163,7 +164,7 @@ describe('visible shortcuts', () => {
 describe('shortcuts in the app shell', () => {
   const renderShell = (context: WorkspaceContext = owner) =>
     renderWithIntl(
-      <AppShell context={context} sidebarState="expanded">
+      <AppShell context={context} sidebarState="expanded" flags={defaultSnapshot()}>
         <input aria-label="Note" data-testid="field" />
         <div data-testid="editable" contentEditable suppressContentEditableWarning>
           text
@@ -269,7 +270,7 @@ describe('shortcuts in the app shell', () => {
     expect(event.defaultPrevented).toBe(false);
     cleanup();
     renderWithIntl(
-      <AppShell context={owner} sidebarState="expanded">
+      <AppShell context={owner} sidebarState="expanded" flags={defaultSnapshot()}>
         <input aria-label="Search matters" data-page-search="" />
       </AppShell>,
     );
@@ -288,10 +289,23 @@ describe('shortcuts in the app shell', () => {
     const navigation = within(dialog.querySelector('[aria-label="Navigation"]') as HTMLElement);
     expect(navigation.getByText('Go to Today')).toBeTruthy();
     expect(navigation.getByText('Go to Settings')).toBeTruthy();
-    expect(dialog.querySelectorAll('[data-slot="shortcut"]')).toHaveLength(SHORTCUTS.length);
+    // The shell registers `New matter` (`n`, matters list) with the palette: one page row on top.
+    expect(dialog.querySelectorAll('[data-slot="shortcut"]')).toHaveLength(SHORTCUTS.length + 1);
+    const actions = within(dialog.querySelector('[aria-label="Actions"]') as HTMLElement);
+    expect(actions.getByText('New matter')).toBeTruthy();
     expect(within(dialog).getByText('Open command palette')).toBeTruthy();
     expect(within(dialog).getByText('Search this page')).toBeTruthy();
     expect(within(dialog).getByText('G then T')).toBeTruthy();
+  });
+
+  it('leaves New matter out of the dialog for a viewer, who cannot write matters', async () => {
+    renderShell({ ...owner, role: 'viewer' });
+    press({ key: '?', shiftKey: true });
+    const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' });
+    expect(dialog.querySelectorAll('[data-slot="shortcut"]').length).toBeLessThanOrEqual(
+      SHORTCUTS.length,
+    );
+    expect(within(dialog).queryByText('New matter')).toBeNull();
   });
 
   it('leaves out g s for a viewer, who cannot open Settings', async () => {

@@ -1,0 +1,23 @@
+{
+  "id": "en-05",
+  "language": "en",
+  "hearingDate": "2025-10-29",
+  "text": "In case 12546 of 2026 today. The court heard both sides and the matter was adjourned again. The opposite counsel sought time. Next hearing on November 11th. The court directed both sides to exchange written submissions on the 12th. The court directed the respondent to file a counter affidavit after five weeks. Remind me to update the junior on the listing.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-11-11",
+      "phrase": "November 11th"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions on the 12th.",
+        "dueDate": "2025-11-12"
+      },
+      {
+        "text": "The court directed the respondent to file a counter affidavit after five weeks.",
+        "dueDate": "2025-12-03"
+      }
+    ],
+    "tasks": ["update the junior on the listing"]
+  }
+}

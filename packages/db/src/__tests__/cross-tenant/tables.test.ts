@@ -1,13 +1,14 @@
-// Cross-tenant SQL (#19, #209): for every tenant table in the registry, workspace A (as `ua`)
-// cannot read, update, delete or insert workspace B's rows, whatever the WHERE clause says, and
-// B's rows are intact afterwards. Runs as causedeck_app in a rolled-back transaction.
+// Cross-tenant SQL (#19, #209): for every tenant table in the registry, workspace A (as `ua`, and as
+// `uboth`, a member of both, pinned to A; #345) cannot read, update, delete or insert workspace B's
+// rows, whatever the WHERE clause says, and B's rows are intact afterwards. Runs as causedeck_app in
+// a rolled-back transaction.
 import { randomUUID } from 'node:crypto';
 
 import { sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import type { Transaction } from '../../client.ts';
-import { TABLE_TESTS } from '../../testing/cross-tenant-registry.ts';
+import { APPEND_ONLY_TABLES, TABLE_TESTS } from '../../testing/cross-tenant-registry.ts';
 import { inWorkspace, withTestDb } from '../../testing/index.ts';
 import { organization } from '../../schema/auth.ts';
 import { seedTwoTenants, TENANT_SEEDERS } from '../../testing/two-tenants.ts';
@@ -50,33 +51,38 @@ describe('cross-tenant SQL: every tenant table', () => {
 
   it.each(tables)('%s: workspace A cannot read, change or add workspace B rows', async (table) => {
     await withTestDb(async (tx) => {
-      const { a, b, ua, ub } = await seedTwoTenants(tx);
+      const { a, b, ua, ub, uboth } = await seedTwoTenants(tx);
       const col = scopeColumn(table);
 
-      await inWorkspace(
-        tx,
-        a.id,
-        async (scoped) => {
-          expect(await count(scoped, table, `"${col}" = '${a.id}'`)).toBeGreaterThan(0);
-          expect(await count(scoped, table, `"${col}" = '${b.id}'`)).toBe(0);
-          expect(await count(scoped, table, `"${col}" <> '${a.id}'`)).toBe(0);
+      // As A's owner, then as `uboth` (a member of both) with app.workspace_id pinned to A only.
+      for (const actor of [ua, uboth]) {
+        await inWorkspace(
+          tx,
+          a.id,
+          async (scoped) => {
+            expect(await count(scoped, table, `"${col}" = '${a.id}'`)).toBeGreaterThan(0);
+            expect(await count(scoped, table, `"${col}" = '${b.id}'`)).toBe(0);
+            expect(await count(scoped, table, `"${col}" <> '${a.id}'`)).toBe(0);
 
-          const updated = await scoped.execute(
-            sql.raw(
+            const update = sql.raw(
               `update "${table}" set "${col}" = "${col}" where "${col}" = '${b.id}' returning 1`,
-            ),
-          );
-          expect(updated.length).toBe(0);
-          const deleted = await scoped.execute(
-            sql.raw(`delete from "${table}" where "${col}" = '${b.id}' returning 1`),
-          );
-          expect(deleted.length).toBe(0);
+            );
+            const remove = sql.raw(`delete from "${table}" where "${col}" = '${b.id}' returning 1`);
+            if (APPEND_ONLY_TABLES.includes(table)) {
+              // Append-only: the app role has no UPDATE or DELETE at all.
+              expect(await sqlState(scoped.transaction((sp) => sp.execute(update)))).toBe('42501');
+              expect(await sqlState(scoped.transaction((sp) => sp.execute(remove)))).toBe('42501');
+            } else {
+              expect((await scoped.execute(update)).length).toBe(0);
+              expect((await scoped.execute(remove)).length).toBe(0);
+            }
 
-          const target = table === 'organization' ? randomUUID() : b.id;
-          expect(await sqlState(insertFor(scoped, table, target, ub))).toBe('42501');
-        },
-        ua,
-      );
+            const target = table === 'organization' ? randomUUID() : b.id;
+            expect(await sqlState(insertFor(scoped, table, target, ub))).toBe('42501');
+          },
+          actor,
+        );
+      }
 
       // B's seed rows are untouched and still only visible to B.
       await inWorkspace(tx, b.id, async (scoped) => {

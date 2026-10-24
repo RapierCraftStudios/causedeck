@@ -1,41 +1,16 @@
-// Domain errors for the workspace service (#177). Codes are a subset of the API error codes
-// (`@causedeck/validators/api` API_ERROR_CODES), so the API and server actions map them 1:1.
-export type WorkspaceErrorCode =
-  'NOT_FOUND' | 'FORBIDDEN' | 'CONFLICT' | 'VALIDATION' | 'RATE_LIMITED';
+// Domain errors for the workspace service (#177). The shared `WorkspaceError` and its constructors
+// live in `shared/errors.ts` (#293) so other domains can throw them without importing workspaces.
+import { WorkspaceError, type WorkspaceErrorCode } from '../shared/errors.ts';
 
-export class WorkspaceError extends Error {
-  readonly code: WorkspaceErrorCode;
-
-  constructor(code: WorkspaceErrorCode, message: string) {
-    super(message);
-    this.name = 'WorkspaceError';
-    this.code = code;
-  }
-}
-
-/** The workspace does not exist, is soft-deleted, or the target member is not in it. */
-export function notFound(message = 'Workspace not found'): WorkspaceError {
-  return new WorkspaceError('NOT_FOUND', message);
-}
-
-export function forbidden(message = 'Only an owner can do this'): WorkspaceError {
-  return new WorkspaceError('FORBIDDEN', message);
-}
-
-export function conflict(message: string): WorkspaceError {
-  return new WorkspaceError('CONFLICT', message);
-}
-
-export function invalid(message: string): WorkspaceError {
-  return new WorkspaceError('VALIDATION', message);
-}
-
-/** Same wording as the auth rate limit, so the limits are indistinguishable. */
-export function rateLimited(
-  message = 'Too many requests. Please try again later.',
-): WorkspaceError {
-  return new WorkspaceError('RATE_LIMITED', message);
-}
+export {
+  conflict,
+  forbidden,
+  invalid,
+  notFound,
+  rateLimited,
+  WorkspaceError,
+  type WorkspaceErrorCode,
+} from '../shared/errors.ts';
 
 /** Why an invitation token cannot be accepted (#178); the accept UI shows a state per reason. */
 export type InvitationErrorReason = 'INVALID' | 'EXPIRED' | 'REVOKED' | 'USED' | 'EMAIL_MISMATCH';

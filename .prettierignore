@@ -4,6 +4,7 @@ node_modules/
 out/
 dist/
 .turbo/
+.cache/
 coverage/
 playwright-report/
 test-results/
@@ -18,6 +19,9 @@ docs/adr/scripts/__fixtures__/
 research/
 DECISIONS.md
 ASSUMPTIONS.md
+
+# A court-adapter fixture of malformed HTML (#408): its bytes are the test input.
+packages/adapters/fixtures/in.ka.karnataka-hc.bengaluru/list-10-broken-html.input.html
 
 # Local tooling
 .claude/

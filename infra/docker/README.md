@@ -44,8 +44,18 @@ SMTP_URL=smtp://127.0.0.1:1025
 | Postgres superuser | `causedeck` | `causedeck` | Database `causedeck`; for admin work in `psql` only |
 | Postgres owner role | `causedeck_owner` | `causedeck_owner` | Owns the database and schema `public`; runs migrations (`DATABASE_URL_OWNER`) |
 | Postgres app role | `causedeck_app` | `causedeck_app` | What the apps use (`DATABASE_URL`): not an owner, `NOBYPASSRLS`, cannot `CREATE` in `public`; gets `SELECT/INSERT/UPDATE/DELETE` on tables the owner creates |
+| Postgres clerk role | `causedeck_clerk` | none (`NOLOGIN`) | The app role switches to it for clerk members (`withWorkspace({ dbRole: 'clerk' })`); no grant on base tables behind clerk views. Migration `0018_matter_restriction` fails until it exists |
 | MinIO root | `minioadmin` | `minioadmin` | S3 access and secret key, and the console login |
 | Mailpit | none | none | No authentication |
+
+A `pgdata` volume created before the clerk role (#233) does not get it, because the init scripts
+only run on an empty volume. Add it once, then migrate:
+
+```sh
+docker compose -f infra/docker/compose.dev.yml exec -T postgres psql -U causedeck -d causedeck -c \
+  "CREATE ROLE causedeck_clerk NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT" \
+  -c "GRANT USAGE ON SCHEMA public TO causedeck_clerk" -c "GRANT causedeck_clerk TO causedeck_app"
+```
 
 ## Checking the stack
 
@@ -88,3 +98,13 @@ Nothing connects to Postgres until the first request that needs it, so `/healthz
 - **Init SQL changes do not apply.** Scripts in `postgres/init/` run only when the `pgdata` volume is first created. Run `pnpm stack:reset` and then `pnpm stack:up`.
 - **`stack:up` times out on a healthcheck.** `docker compose -f infra/docker/compose.dev.yml logs <service>` shows why. A corrupt volume is fixed with `pnpm stack:reset`.
 - **`stack:reset` refuses to run in a script.** It needs a terminal for the prompt. Pass `--yes` (`pnpm stack:reset --yes`) when deleting the data is intended.
+
+## Admin image
+
+`infra/docker/admin.Dockerfile` builds the staff console (`apps/admin`, #309) as a Next.js standalone server. It runs as the non-root `node` user, listens on port 3200 and has a `HEALTHCHECK` on `/healthz`. Exposure (Cloudflare Access, `ADMIN_IP_ALLOWLIST`) is set per deployment at runtime, never baked in; see [docs/engineering/admin-console.md](../../docs/engineering/admin-console.md).
+
+```sh
+docker build -f infra/docker/admin.Dockerfile --build-arg ADMIN_URL=https://admin.example.test -t causedeck-admin .
+docker run --rm -p 127.0.0.1:3200:3200 --env-file .env.admin causedeck-admin
+curl -s http://127.0.0.1:3200/healthz
+```

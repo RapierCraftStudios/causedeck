@@ -6,8 +6,12 @@ import { pathToFileURL } from 'node:url';
 
 import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth } from '@causedeck/auth/server';
+import { webhookSecretFor } from '@causedeck/billing/webhook';
 import { serverEnv } from '@causedeck/config/env';
-import { closeDb, db } from '@causedeck/db';
+import { createSecurityEventRecorder } from '@causedeck/core/audit';
+import { inboundProviderFromProcess } from '@causedeck/core/email-intake';
+import { closeProducer } from '@causedeck/core/jobs';
+import { closeAppDb, db, startAppFlagListener } from '@causedeck/core/runtime';
 import {
   createLogger,
   initTelemetry,
@@ -115,7 +119,13 @@ async function main(): Promise<void> {
   const env = serverEnv();
   const telemetry = initTelemetry({ service: 'api' });
   const logger = createLogger({ service: 'api' });
-  const auth = createAuth({ db, env, mailer: createMailer(env, logger), logger });
+  const auth = createAuth({
+    db,
+    env,
+    mailer: createMailer(env, logger),
+    logger,
+    securityEvents: createSecurityEventRecorder(db),
+  });
 
   const app = createApp({
     db,
@@ -123,12 +133,21 @@ async function main(): Promise<void> {
     logger,
     allowedOrigins: [env.APP_URL],
     readyChecks: readyChecksFromEnv(env),
+    billing: { webhookSecret: webhookSecretFor(env) },
+    inboundEmail: { provider: inboundProviderFromProcess() },
   });
   const { server, port } = await startServer({ app, port: env.API_PORT });
+  // Staff flag changes drop this process's flag cache at once; the 15 s TTL covers a failure (#22).
+  const flagListener = await startAppFlagListener().catch((err: unknown) => {
+    logger.warn({ err }, 'LISTEN flag_changed failed; flag changes apply after the cache TTL');
+    return undefined;
+  });
   handleShutdownSignals(server, {
     logger,
     cleanup: async () => {
-      await closeDb();
+      await flagListener?.unlisten();
+      await closeProducer();
+      await closeAppDb();
       await telemetry.shutdown();
     },
   });

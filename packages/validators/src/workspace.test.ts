@@ -3,10 +3,74 @@ import { describe, expect, it } from 'vitest';
 import {
   ChangeRoleInput,
   CreateWorkspaceInput,
+  DEMO_WORKSPACE_SLUG,
   InviteInput,
+  isDemoWorkspaceSlug,
   RESERVED_SLUGS,
+  RotateIntegrationTokenInput,
   Slug,
+  UpdateRoleSettingsInput,
+  UpdateWorkspacePrivacyInput,
+  UpdateWorkspaceProfileInput,
 } from './workspace';
+
+describe('RotateIntegrationTokenInput', () => {
+  it.each(['ics_feed'] as const)('accepts %s', (kind) => {
+    expect(RotateIntegrationTokenInput.parse({ kind })).toEqual({ kind });
+  });
+
+  it.each([{}, { kind: 'webhook' }, { kind: 'ics_feed', token: 'x' }])('rejects %j', (input) => {
+    expect(RotateIntegrationTokenInput.safeParse(input).success).toBe(false);
+  });
+});
+
+describe('UpdateRoleSettingsInput', () => {
+  it('accepts both role settings as booleans', () => {
+    const input = { advocatesCanInvite: false, ownersSeeRestrictedMatters: true };
+    expect(UpdateRoleSettingsInput.parse(input)).toEqual(input);
+  });
+
+  it('rejects a missing, non-boolean or unknown setting', () => {
+    expect(UpdateRoleSettingsInput.safeParse({ advocatesCanInvite: true }).success).toBe(false);
+    expect(
+      UpdateRoleSettingsInput.safeParse({
+        advocatesCanInvite: 'false',
+        ownersSeeRestrictedMatters: true,
+      }).success,
+    ).toBe(false);
+    expect(
+      UpdateRoleSettingsInput.safeParse({
+        advocatesCanInvite: true,
+        ownersSeeRestrictedMatters: true,
+        advocatesCanReadAudit: false,
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe('UpdateWorkspacePrivacyInput', () => {
+  it.each([7, 14, 30])('accepts a %i day raw audio window', (retentionAudioDays) => {
+    const input = { sensitiveDefaultRestricted: false, retentionAudioDays };
+    expect(UpdateWorkspacePrivacyInput.parse(input)).toEqual(input);
+  });
+
+  it.each([0, 1, 31, 90, '30'])('rejects a %j day window', (retentionAudioDays) => {
+    expect(
+      UpdateWorkspacePrivacyInput.safeParse({
+        sensitiveDefaultRestricted: true,
+        retentionAudioDays,
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects India-only AI and any other unknown field', () => {
+    const base = { sensitiveDefaultRestricted: true, retentionAudioDays: 30 };
+    expect(UpdateWorkspacePrivacyInput.safeParse({ ...base, indiaOnlyAi: false }).success).toBe(
+      false,
+    );
+    expect(UpdateWorkspacePrivacyInput.safeParse({ retentionAudioDays: 30 }).success).toBe(false);
+  });
+});
 
 describe('Slug', () => {
   it('accepts lowercase hyphenated slugs', () => {
@@ -22,6 +86,15 @@ describe('Slug', () => {
 
   it.each(RESERVED_SLUGS)('rejects the reserved slug %j', (value) => {
     expect(Slug.safeParse(value).success).toBe(false);
+  });
+
+  it('reserves the demo workspace slug, which only the demo seed writes (#182)', () => {
+    expect(DEMO_WORKSPACE_SLUG).toBe('demo');
+    expect(Slug.safeParse('demo').success).toBe(false);
+    expect(isDemoWorkspaceSlug('demo')).toBe(true);
+    expect(isDemoWorkspaceSlug('DEMO')).toBe(true);
+    expect(isDemoWorkspaceSlug('Demo-x')).toBe(false);
+    expect(isDemoWorkspaceSlug('chennai-solo')).toBe(false);
   });
 });
 
@@ -52,5 +125,54 @@ describe('ChangeRoleInput', () => {
     expect(ChangeRoleInput.parse({ memberId, role: 'owner' })).toEqual({ memberId, role: 'owner' });
     expect(ChangeRoleInput.safeParse({ memberId, role: 'partner' }).success).toBe(false);
     expect(ChangeRoleInput.safeParse({ memberId: 'x', role: 'junior' }).success).toBe(false);
+  });
+});
+
+describe('UpdateWorkspaceProfileInput', () => {
+  const valid = {
+    name: ' Iyer Chambers ',
+    kind: 'chamber',
+    timezone: 'Asia/Kolkata',
+    locale: 'ta',
+    practiceCity: ' Chennai ',
+  };
+
+  it('trims the name and city and keeps the other fields', () => {
+    expect(UpdateWorkspaceProfileInput.parse(valid)).toEqual({
+      name: 'Iyer Chambers',
+      kind: 'chamber',
+      timezone: 'Asia/Kolkata',
+      locale: 'ta',
+      practiceCity: 'Chennai',
+    });
+  });
+
+  it('turns an empty practice city into null', () => {
+    expect(UpdateWorkspaceProfileInput.parse({ ...valid, practiceCity: '  ' }).practiceCity).toBe(
+      null,
+    );
+    expect(UpdateWorkspaceProfileInput.parse({ ...valid, practiceCity: null }).practiceCity).toBe(
+      null,
+    );
+  });
+
+  it.each([
+    { name: '  ' },
+    { name: 'x'.repeat(121) },
+    { kind: 'firm' },
+    { timezone: 'Mars/Olympus' },
+    { timezone: '' },
+    { locale: 'fr' },
+    { practiceCity: 'x'.repeat(81) },
+    { slug: 'Not A Slug' },
+    { slug: 'settings' },
+  ])('rejects %j', (patch) => {
+    expect(UpdateWorkspaceProfileInput.safeParse({ ...valid, ...patch }).success).toBe(false);
+  });
+
+  it('accepts an optional valid slug', () => {
+    expect(UpdateWorkspaceProfileInput.parse({ ...valid, slug: 'iyer-chambers' }).slug).toBe(
+      'iyer-chambers',
+    );
   });
 });

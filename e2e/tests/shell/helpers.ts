@@ -12,24 +12,23 @@ export const CLERK_WORKSPACE = 'bengaluru-chamber';
 
 /**
  * Placeholder routes an owner sees with flags off (apps/web/lib/nav.ts `WORKSPACE_ROUTES`, minus
- * the flag-gated `invoices` and `limitation`). `settings` is an index page until #25.
+ * the flag-gated `invoices` and `limitation`, and `billing` and `activity`, real pages since #256
+ * and #232 with their own specs in tests/billing and tests/activity, and `courts`, a real page since
+ * #399 with its own states in tests/courts, #425, and `inbox`, a real page since #48 with its own
+ * specs in tests/inbox). `settings` redirects to its profile section since
+ * #284 (tests/settings).
  */
 export const PLACEHOLDER_ROUTES = [
   'today',
   'tomorrow',
   'calendar',
-  'inbox',
-  'matters',
+  // `matters` is a real page since #388 (its own states are covered in tests/matters).
   'briefs',
   'obligations',
   'drafts',
   'memory',
   'people',
-  'courts',
-  'activity',
-  'billing',
   'insights',
-  'settings',
 ] as const;
 
 export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];
@@ -37,8 +36,11 @@ export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];
 /** Routes behind a flag that ships dark: they 404 for everyone. */
 export const FLAG_GATED_ROUTES = ['invoices', 'limitation'] as const;
 
-/** `clerk` lacks `billing.read` and `insights.read`: these render the permission-denied page. */
-export const CLERK_DENIED_ROUTES = ['billing', 'insights'] as const;
+/**
+ * `clerk` lacks `insights.read`: it renders the shell permission-denied page. Billing (also denied)
+ * has its own owners-only copy since #256 (tests/billing).
+ */
+export const CLERK_DENIED_ROUTES = ['insights'] as const;
 
 /** Layout tier of the project's viewport: phone below 768 px, rail to 1280 px, then desktop. */
 export type Layout = 'phone' | 'rail' | 'desktop';
@@ -56,6 +58,18 @@ export function layoutOf(page: Page): Layout {
  */
 export async function shellReady(page: Page): Promise<void> {
   await page.locator('[data-active-indicator="animated"]').waitFor({ state: 'attached' });
+}
+
+/**
+ * Wait until React has hydrated the page's `main`, for routes that have no nav item (so no animated
+ * active indicator to wait on, see `shellReady`), such as `/import`. Interactions that rely on event
+ * handlers (file inputs, key presses) need it; assertions on visible text do not.
+ */
+export async function contentReady(page: Page): Promise<void> {
+  await page.waitForFunction(() => {
+    const main = document.querySelector('main');
+    return main !== null && Object.keys(main).some((key) => key.startsWith('__reactFiber$'));
+  });
 }
 
 export interface OpenShellOptions {

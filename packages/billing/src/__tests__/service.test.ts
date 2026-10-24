@@ -7,7 +7,13 @@ import {
   MOCK_MANDATE_BASE_URL,
   type MockBillingProvider,
 } from '../provider';
-import { applyProviderEvent, BillingServiceError, createBillingService } from '../service';
+import { getPlan } from '../plans';
+import {
+  applyProviderEvent,
+  BillingServiceError,
+  createBillingService,
+  quoteChange,
+} from '../service';
 import { IllegalTransitionError, type SubscriptionSnapshot } from '../state-machine';
 
 const DAY_MS = 86_400_000;
@@ -201,5 +207,163 @@ describe('cancel and resume', () => {
     await expect(service.resume(s)).rejects.toBeInstanceOf(IllegalTransitionError);
     const cancelling = (await service.cancel(s, { atPeriodEnd: true })).subscription;
     await expect(service.resume(cancelling)).rejects.toBeInstanceOf(IllegalTransitionError);
+  });
+});
+
+async function activeOn(
+  provider: MockBillingProvider,
+  service: ReturnType<typeof createBillingService>,
+  now: () => Date,
+  planId: string,
+  seats = 3,
+): Promise<SubscriptionSnapshot> {
+  const started = await service.startSubscription({
+    planId,
+    seats,
+    billingEmail: 'chamber@example.com',
+  });
+  const id = started.subscription.providerSubscriptionId ?? '';
+  return applyProviderEvent(started.subscription, await provider.authorizeMandate(id), now());
+}
+
+describe('changePlan (#257)', () => {
+  it('applies an upgrade now and charges the prorated difference', async () => {
+    const { service, provider, now, advance } = setup();
+    const s = await activeOn(provider, service, now, 'chamber-seat-1');
+    advance(10);
+    const result = await service.changePlan(s, {
+      planId: 'chamber-seat-2',
+      seats: 3,
+      clerkSeats: 0,
+    });
+    expect(result.subscription).toMatchObject({ planId: 'chamber-seat-2', seats: 3 });
+    expect(result.provider).toMatchObject({ planId: 'chamber-seat-2', quantity: 3 });
+    // (3 × 64_900 − 3 × 49_900) × 21 / 31 = 30_483.87 → 30_484.
+    expect(result.charge?.amountPaise).toBe(30_484);
+  });
+
+  it('schedules a downgrade at period end without a refund', async () => {
+    const { service, provider, now, advance } = setup();
+    const s = await activeOn(provider, service, now, 'chamber-seat-2');
+    advance(10);
+    const result = await service.changePlan(s, {
+      planId: 'chamber-seat-1',
+      seats: 3,
+      clerkSeats: 0,
+    });
+    expect(result.charge).toBeNull();
+    expect(result.subscription.planId).toBe('chamber-seat-2');
+    const id = s.providerSubscriptionId ?? '';
+    expect((await provider.fetchSubscription(id)).planId).toBe('chamber-seat-2');
+    const charged = await provider.simulate(id, 'subscription.charged');
+    expect(charged.payload.subscription?.entity.plan_id).toBe('chamber-seat-1');
+    expect(charged.payload.payment?.entity.amount).toBe(3 * 49_900);
+  });
+
+  it.each([
+    ['an unknown plan', { planId: 'nope', seats: 3, clerkSeats: 0 }],
+    ['the free plan', { planId: 'junior', seats: 1, clerkSeats: 0 }],
+    ['the current plan', { planId: 'chamber-seat-1', seats: 3, clerkSeats: 0 }],
+    ['another interval', { planId: 'advocate-annual-3', seats: 1, clerkSeats: 0 }],
+    ['too few seats', { planId: 'chamber-seat-2', seats: 2, clerkSeats: 0 }],
+  ])('rejects %s without calling the provider', async (_label, input) => {
+    const { service, provider, now } = setup();
+    const s = await activeOn(provider, service, now, 'chamber-seat-1');
+    await expect(service.changePlan(s, input)).rejects.toBeInstanceOf(BillingServiceError);
+    expect((await provider.fetchSubscription(s.providerSubscriptionId ?? '')).planId).toBe(
+      'chamber-seat-1',
+    );
+  });
+
+  it('rejects a change in an illegal state before calling the provider', async () => {
+    const { service, provider, now } = setup();
+    const s = await activeOn(provider, service, now, 'chamber-seat-1');
+    const cancelled = { ...s, state: 'cancelled' as const };
+    await expect(
+      service.changePlan(cancelled, { planId: 'chamber-seat-2', seats: 3, clerkSeats: 0 }),
+    ).rejects.toBeInstanceOf(IllegalTransitionError);
+    await expect(
+      service.changePlan(cancelled, { planId: 'chamber-seat-1', seats: 3, clerkSeats: 0 }),
+    ).rejects.toBeInstanceOf(BillingServiceError);
+    expect((await provider.fetchSubscription(s.providerSubscriptionId ?? '')).planId).toBe(
+      'chamber-seat-1',
+    );
+  });
+});
+
+describe('withdrawCancellation (#257)', () => {
+  it('keeps a subscription that was set to cancel at period end', async () => {
+    const { service, provider, now } = setup();
+    const s = await activeChamber(provider, service, now);
+    const cancelling = (await service.cancel(s, { atPeriodEnd: true })).subscription;
+    const result = await service.withdrawCancellation(cancelling);
+    expect(result.subscription).toMatchObject({ state: 'active', cancelAtPeriodEnd: false });
+    expect(result.provider.cancelAtCycleEnd).toBe(false);
+  });
+
+  it('refuses when nothing is scheduled to cancel', async () => {
+    const { service, provider, now } = setup();
+    const s = await activeChamber(provider, service, now);
+    await expect(service.withdrawCancellation(s)).rejects.toBeInstanceOf(BillingServiceError);
+  });
+});
+
+describe('quoteChange (#257)', () => {
+  const seat1 = getPlan('chamber-seat-1');
+  const seat2 = getPlan('chamber-seat-2');
+  if (!seat1 || !seat2) throw new Error('catalogue');
+  const periodStart = MOCK_EPOCH;
+  const periodEnd = new Date('2026-02-01T00:00:00Z');
+  const at = new Date(MOCK_EPOCH.getTime() + 10 * DAY_MS);
+
+  it('quotes an upgrade exactly: base, GST at 18%, total and the prorated charge now', () => {
+    const quote = quoteChange({
+      current: { plan: seat1, counts: { seats: 3, clerkSeats: 0 } },
+      target: { plan: seat2, counts: { seats: 3, clerkSeats: 0 } },
+      periodStart,
+      periodEnd,
+      at,
+    });
+    expect(quote).toEqual({
+      basePaise: 194_700,
+      gstPaise: 35_046,
+      totalPaise: 229_746,
+      prorationPaise: 30_484,
+      prorationGstPaise: 5_487,
+      prorationTotalPaise: 35_971,
+      effective: 'now',
+      effectiveDate: at,
+    });
+  });
+
+  it('quotes a downgrade at period end with nothing due now', () => {
+    const quote = quoteChange({
+      current: { plan: seat2, counts: { seats: 3, clerkSeats: 0 } },
+      target: { plan: seat1, counts: { seats: 3, clerkSeats: 0 } },
+      periodStart,
+      periodEnd,
+      at,
+    });
+    expect(quote).toMatchObject({
+      basePaise: 149_700,
+      gstPaise: 26_946,
+      totalPaise: 176_646,
+      prorationPaise: 0,
+      prorationTotalPaise: 0,
+      effective: 'period_end',
+      effectiveDate: periodEnd,
+    });
+  });
+
+  it('quotes a seat increase with the seat proration', () => {
+    const quote = quoteChange({
+      current: { plan: seat1, counts: { seats: 3, clerkSeats: 0 } },
+      target: { plan: seat1, counts: { seats: 5, clerkSeats: 0 } },
+      periodStart,
+      periodEnd,
+      at,
+    });
+    expect(quote).toMatchObject({ basePaise: 249_500, prorationPaise: 67_606, effective: 'now' });
+    expect(quote.totalPaise).toBe(quote.basePaise + quote.gstPaise);
   });
 });

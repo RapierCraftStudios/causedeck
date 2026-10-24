@@ -1,8 +1,9 @@
 'use client';
 
-import { PatternSkeleton } from '@causedeck/ui/patterns';
+import { PatternSkeleton } from '@causedeck/ui/patterns/skeletons';
 
-// A client component: the patterns entry point includes interactive (hook-using) patterns.
+// A client component. Imports the skeletons entry, not the patterns barrel, to keep popover and
+// dialog code out of the home route's initial JS (budget).
 /** Route-level loading: a 2 px accent progress bar (150 ms fade, static under reduced motion). */
 export default function Loading() {
   return (

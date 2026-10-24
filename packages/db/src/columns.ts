@@ -27,7 +27,8 @@ export const SOURCE_TYPES = [
 ] as const;
 export type SourceType = (typeof SOURCE_TYPES)[number];
 
-export const CONFIRMATION_STATES = ['proposed', 'confirmed', 'edited', 'rejected'] as const;
+/** #32 data contract: `auto_applied` (applied without review) and `corrected` (fixed by a person). */
+export const CONFIRMATION_STATES = ['proposed', 'confirmed', 'auto_applied', 'corrected'] as const;
 export type ConfirmationState = (typeof CONFIRMATION_STATES)[number];
 
 export const sourceType = pgEnum('source_type', SOURCE_TYPES);
@@ -71,7 +72,7 @@ export function workspaceIndex(
   return index(`${tableName}_workspace_id_idx`).on(workspace, ...rest);
 }
 
-/** The five provenance columns every fact carries (spike §4.2). */
+/** The six provenance columns every fact carries (spike §4.2, #32 data contract). */
 export function provenance() {
   return {
     sourceType: sourceType('source_type').notNull(),
@@ -79,13 +80,17 @@ export function provenance() {
     anchorId: uuid('anchor_id'),
     confidence: numeric('confidence', { precision: 4, scale: 3 }),
     confirmationState: confirmationState('confirmation_state').notNull().default('proposed'),
+    capturedAt: timestamp('captured_at', { withTimezone: true }).notNull().defaultNow(),
   };
 }
 
-/** A non-manual fact must point at its source: an anchor or a source reference. */
+/**
+ * A non-manual fact must point at its source (an anchor or a source reference), and its confidence,
+ * when set, lies within 0..1.
+ */
 export function provenanceCheck(tableName: string): CheckBuilder {
   return check(
     `${tableName}_provenance_chk`,
-    sql`source_type = 'manual' or anchor_id is not null or source_ref is not null`,
+    sql`(source_type = 'manual' or anchor_id is not null or source_ref is not null) and (confidence is null or (confidence >= 0 and confidence <= 1))`,
   );
 }

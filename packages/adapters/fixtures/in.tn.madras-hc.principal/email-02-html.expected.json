@@ -1,0 +1,233 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.original",
+  "listDate": "2026-10-23",
+  "listType": null,
+  "source": "email",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "12",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "Court No. 12\t5\tW.P.No.12345 of 2026\tFictional Mills Ltd. vs The Secretary to Government (Fictional Department)\tMr. R. Fictional (MS/123/1990)",
+                "rowIndex": 0
+              },
+              "confidence": 0.9,
+              "hallNo": "12",
+              "itemNo": "5",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "12345",
+              "caseYear": 2026,
+              "matchKey": "WP/12345/2026",
+              "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+              "stageRaw": null,
+              "stageNorm": null,
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "hallNo": "4",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "Court No. 4\t2\tAppl.No.33 of 2026 in C.S.No.10 of 2026\tFictional Mills Ltd. vs Pretend Weavers Co-operative Society\tMr. R. Fictional (MS/123/1990) / Ms. A. Example",
+                "rowIndex": 1
+              },
+              "confidence": 0.9,
+              "hallNo": "4",
+              "itemNo": "2",
+              "caseTypeRaw": "C.S.",
+              "caseType": "CS",
+              "caseNumber": "10",
+              "caseYear": 2026,
+              "matchKey": "CS/10/2026",
+              "parties": "Fictional Mills Ltd. vs Pretend Weavers Co-operative Society",
+              "stageRaw": null,
+              "stageNorm": null,
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                },
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "APPL",
+                  "caseTypeRaw": "Appl.",
+                  "number": "33",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "APPL/33/2026",
+                  "parentProceedingKey": "CS/10/2026"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "hallNo": "21",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "Court No. 21\t4\tC.R.P.(NPD)No.44/26\tM. Kalpitha Devi vs R. Karpanai Murugan\tMr. R. Fictional (MS/123/1990)",
+                "rowIndex": 2
+              },
+              "confidence": 0.9,
+              "hallNo": "21",
+              "itemNo": "4",
+              "caseTypeRaw": "C.R.P.(NPD)",
+              "caseType": "CRPNPD",
+              "caseNumber": "44",
+              "caseYear": 2026,
+              "matchKey": "CRPNPD/44/2026",
+              "parties": "M. Kalpitha Devi vs R. Karpanai Murugan",
+              "stageRaw": null,
+              "stageNorm": null,
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "Court No. 12\t5\tW.P.No.12345 of 2026\tFictional Mills Ltd. vs The Secretary to Government (Fictional Department)\tMr. R. Fictional (MS/123/1990)",
+        "rowIndex": 0
+      },
+      "confidence": 0.9,
+      "hallNo": "12",
+      "itemNo": "5",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "12345",
+      "caseYear": 2026,
+      "matchKey": "WP/12345/2026",
+      "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+      "stageRaw": null,
+      "stageNorm": null,
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "Court No. 4\t2\tAppl.No.33 of 2026 in C.S.No.10 of 2026\tFictional Mills Ltd. vs Pretend Weavers Co-operative Society\tMr. R. Fictional (MS/123/1990) / Ms. A. Example",
+        "rowIndex": 1
+      },
+      "confidence": 0.9,
+      "hallNo": "4",
+      "itemNo": "2",
+      "caseTypeRaw": "C.S.",
+      "caseType": "CS",
+      "caseNumber": "10",
+      "caseYear": 2026,
+      "matchKey": "CS/10/2026",
+      "parties": "Fictional Mills Ltd. vs Pretend Weavers Co-operative Society",
+      "stageRaw": null,
+      "stageNorm": null,
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        },
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "APPL",
+          "caseTypeRaw": "Appl.",
+          "number": "33",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "APPL/33/2026",
+          "parentProceedingKey": "CS/10/2026"
+        }
+      ]
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "Court No. 21\t4\tC.R.P.(NPD)No.44/26\tM. Kalpitha Devi vs R. Karpanai Murugan\tMr. R. Fictional (MS/123/1990)",
+        "rowIndex": 2
+      },
+      "confidence": 0.9,
+      "hallNo": "21",
+      "itemNo": "4",
+      "caseTypeRaw": "C.R.P.(NPD)",
+      "caseType": "CRPNPD",
+      "caseNumber": "44",
+      "caseYear": 2026,
+      "matchKey": "CRPNPD/44/2026",
+      "parties": "M. Kalpitha Devi vs R. Karpanai Murugan",
+      "stageRaw": null,
+      "stageNorm": null,
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["12", "4", "21"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "on 23.10.2026",
+    "rowIndex": 0
+  }
+}

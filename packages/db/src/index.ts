@@ -17,6 +17,7 @@ export {
 export * from './columns.ts';
 export {
   checkSchemaConventions,
+  GLOBAL_OR_WORKSPACE_TABLES,
   GLOBAL_TABLES,
   tablesOf,
   type ConventionViolation,
@@ -36,7 +37,13 @@ export {
   type UserScope,
   type WorkspaceScope,
 } from './rls.ts';
-export { registeredTenantTables, tenantPolicy, WS_ISOLATION_POLICY } from './rls-policies.ts';
+export {
+  globalOrWorkspacePolicy,
+  registeredTenantTables,
+  tenantPolicy,
+  WS_ISOLATION_POLICY,
+} from './rls-policies.ts';
+export { globalOrWorkspaceTable } from './schema-helpers/global-or-workspace-table.ts';
 export { tenantTable } from './schema-helpers/tenant-table.ts';
 export * as schema from './schema/index.ts';
 

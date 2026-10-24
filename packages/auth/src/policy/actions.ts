@@ -2,8 +2,8 @@
 // not listed here, so a new feature adds its actions here and its row to `matrix.ts`.
 
 export const ACTIONS = {
-  workspace: ['workspace.manage', 'workspace.delete'],
-  member: ['member.invite', 'member.remove'],
+  workspace: ['workspace.manage', 'workspace.rename', 'workspace.delete'],
+  member: ['member.invite', 'member.remove', 'member.role'],
   billing: ['billing.manage', 'billing.read', 'invoices.read'],
   matter: ['matter.read', 'matter.write', 'matter.restrict'],
   strategy: ['strategy.read'],
@@ -14,6 +14,7 @@ export const ACTIONS = {
   draft: ['draft.write'],
   audit: ['audit.read'],
   export: ['export.run'],
+  support: ['support.manage'],
   // Shell surfaces gated in apps/web/lib/workspace-context.ts.
   shell: ['limitation.read', 'insights.read', 'settings.read'],
 } as const;

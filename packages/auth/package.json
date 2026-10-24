@@ -12,8 +12,11 @@
     "./mailer": "./src/mailer.ts",
     "./messages": "./src/messages.ts",
     "./rate-limit": "./src/rate-limit.ts",
+    "./step-up": "./src/step-up.ts",
     "./dev-provider": "./src/dev-provider.ts",
-    "./policy": "./src/policy/index.ts"
+    "./policy": "./src/policy/index.ts",
+    "./policy/visibility": "./src/policy/visibility.ts",
+    "./react": "./src/react/use-can.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -26,18 +29,30 @@
     "@better-auth/passkey": "catalog:",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/notifications": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
-    "nodemailer": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@aws-sdk/client-sesv2": "catalog:",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
     "esbuild": "catalog:",
     "eslint": "catalog:",
     "fast-check": "catalog:",
+    "nodemailer": "catalog:",
+    "react": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   }
 }

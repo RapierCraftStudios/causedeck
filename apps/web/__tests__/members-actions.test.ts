@@ -43,10 +43,13 @@ const core = vi.hoisted(() => ({
   transferOwnership: vi.fn(() => Promise.resolve()),
 }));
 
+const installBillingEntitlements = vi.hoisted(() => vi.fn());
+
 const withWorkspace = vi.hoisted(() =>
   vi.fn((_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn(TX)),
 );
 const revalidatePath = vi.hoisted(() => vi.fn());
+const recordAccessDenied = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
 vi.mock('../lib/auth.ts', () => ({
   requireSession: () =>
@@ -63,6 +66,8 @@ vi.mock('../src/health.ts', () => ({
 }));
 vi.mock('@causedeck/db', () => ({ db: { fake: 'db' }, withWorkspace }));
 vi.mock('@causedeck/core/workspaces', () => core);
+vi.mock('@causedeck/core/audit', () => ({ recordAccessDenied }));
+vi.mock('@causedeck/core/billing', () => ({ installBillingEntitlements }));
 vi.mock('@causedeck/auth/mailer', () => ({ createMailer }));
 vi.mock('next/cache', () => ({ revalidatePath }));
 vi.mock('next-intl/server', () => ({ getLocale: () => Promise.resolve('ta') }));
@@ -111,6 +116,10 @@ describe('membership guard', () => {
     expect(result).toMatchObject({ ok: false, error: { code: 'FORBIDDEN' } });
     expect(core.inviteMember).not.toHaveBeenCalled();
     expect(withWorkspace).not.toHaveBeenCalled();
+    expect(recordAccessDenied).toHaveBeenCalledWith(
+      { fake: 'db' },
+      expect.objectContaining({ workspaceId: WS, member: false }),
+    );
   });
 
   it('rejects a signed-out caller as UNAUTHENTICATED', async () => {
@@ -197,6 +206,30 @@ describe('inviteMembersAction', () => {
       'failed',
       'sent',
     ]);
+  });
+
+  it('installs the billing seat gate and reports a seat limit with the plan seats (#203)', async () => {
+    const exceeded = Object.assign(new Error('Entitlement seats exceeded'), {
+      name: 'EntitlementError',
+      code: 'ENTITLEMENT_EXCEEDED',
+      key: 'seats',
+      limit: 3,
+      requested: 4,
+    });
+    core.inviteMember
+      .mockResolvedValueOnce(issued('a@x.test', 'tok'))
+      .mockRejectedValueOnce(exceeded);
+    const result = await actions.inviteMembersAction({
+      workspaceId: WS,
+      emails: ['a@x.test', 'b@x.test'],
+      role: 'advocate',
+    });
+    expect(installBillingEntitlements).toHaveBeenCalled();
+    expect(result.ok && result.data.results[1]).toEqual({
+      email: 'b@x.test',
+      status: 'seatLimit',
+      seats: 3,
+    });
   });
 
   it.each([

@@ -18,6 +18,29 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0008](0008-design-system-tailwind4-shadcn-oklch-tokens.md) | Design system on Tailwind CSS v4, shadcn/ui and OKLCH tokens | Accepted | 2026-10-18 | — |
 | [0009](0009-offline-pwa-serwist-dexie-indexeddb.md) | Offline PWA with Serwist and Dexie on IndexedDB | Accepted | 2026-10-18 | — |
 | [0010](0010-feature-flags-db-backed-legal-gating-and-no-l5.md) | DB-backed feature flags, legal gating and no L5 actions | Accepted | 2026-10-18 | — |
+| [0011](0011-access-mode-registry-closed-enum.md) | Access-mode registry closed enum | Proposed | 2026-10-19 | — |
+| [0012](0012-core-package-split-threshold.md) | Split @causedeck/core into domain packages at a threshold | Proposed | 2026-10-20 | — |
+| [0013](0013-matter-graph-schema.md) | Matter-graph schema: composite tenant keys, global-or-workspace reference tables, case identity | Proposed | 2026-10-21 | — |
+| [0014](0014-forum-catalogue-and-deep-links.md) | Forum catalogue: hosts as data, new-window deep links, owner-role versioned seed | Proposed | 2026-10-21 | — |
+| [0015](0015-court-adapter-framework.md) | Court adapter framework: no network, registry-enforced access, config versus parser | Proposed | 2026-10-21 | — |
+| [0016](0016-proceeding-state-machine-and-next-date-rules.md) | Proceeding state machine and canonical next-date rules | Proposed | 2026-10-21 | — |
+| [0017](0017-effective-dated-rosters.md) | Effective-dated bench rosters | Proposed | 2026-10-21 | — |
+| [0018](0018-madras-hc-adapter-assumptions.md) | Madras HC adapter assumptions | Proposed | 2026-10-22 | — |
+| [0019](0019-karnataka-hc-adapter-assumptions.md) | Karnataka HC adapter: layout assumptions and how H13 retires them | Proposed | 2026-10-22 | — |
+| [0020](0020-nclt-bengaluru-table-parsing.md) | NCLT Bengaluru cause lists: table parsing from word coordinates | Proposed | 2026-10-21 | — |
+| [0021](0021-capture-inbox-and-upload-pipeline.md) | Capture inbox and upload pipeline | Proposed | 2026-10-22 | — |
+| [0022](0022-ai-gateway-implementation.md) | AI gateway implementation: ports, residency, audit and idempotent results | Proposed | 2026-10-22 | — |
+| [0023](0023-automation-ladder-and-undo.md) | Automation ladder, proposals and undo cascades | Proposed | 2026-10-22 | — |
+| [0024](0024-ics-import-and-private-feed.md) | ICS import and the private calendar feed | Proposed | 2026-10-23 | — |
+| [0025](0025-document-pipeline.md) | Document pipeline: ports, text layer first, OCR through the gateway | Proposed | 2026-10-23 | — |
+| [0026](0026-pwa-share-target-and-outbox.md) | PWA share target and encrypted outbox | Proposed | 2026-10-23 | — |
+| [0027](0027-whatsapp-import-browser-parsing.md) | WhatsApp import: parse in the browser, upload the selection | Proposed | 2026-10-23 | — |
+| [0028](0028-anchored-extraction.md) | Anchored order extraction: deterministic first, validator last | Proposed | 2026-10-23 | — |
+| [0029](0029-voice-capture-and-spoken-date-validation.md) | Voice capture: transcribe, structure with spans, and validate every spoken date | Proposed | 2026-10-23 | — |
+| [0030](0030-diary-photo-capture-and-image-anchors.md) | Diary-photo capture and image-region anchors | Proposed | 2026-10-23 | — |
+| [0031](0031-email-forward-in-and-parser-registry.md) | Email forward-in: inbound webhook, providers and the `email.intake` job | Proposed | 2026-10-23 | — |
+| [0032](0032-generic-a0-adapter.md) | A0 generic adapter: skeleton first, anchored model pass, always L2 | Proposed | 2026-10-23 | — |
+| [0033](0033-bootstrap-import-plan-and-apply.md) | Bootstrap import: a stored plan, a confirm grid, one apply and an undo | Proposed | 2026-10-23 | — |
 
 ## Statuses
 

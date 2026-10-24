@@ -15,6 +15,7 @@ import {
   listMemberships,
   listWorkspacesForUser,
   memberRole,
+  ownerGrace,
   resolveSlug,
   setEntitlements,
   WorkspaceError,
@@ -293,6 +294,79 @@ describe('ownership transfer', () => {
       await transferOwnership(tx, { ...request, confirmation: plan.confirmation });
       expect(await memberRole(tx, junior.userId, workspace.id)).toBe('owner');
       expect(await memberRole(tx, ownerId, workspace.id)).toBe('advocate');
+    });
+  });
+});
+
+describe('role grant time (owner 2FA grace, #290)', () => {
+  const LONG_AGO = new Date('2020-01-01T00:00:00Z');
+
+  /** Back-date every member's grant so a re-stamp is visible inside the one test transaction. */
+  async function backdate(tx: Transaction, workspaceId: string): Promise<void> {
+    await inWorkspace(tx, workspaceId, (s) =>
+      s
+        .update(schema.member)
+        .set({ roleGrantedAt: LONG_AGO })
+        .where(eq(schema.member.organizationId, workspaceId)),
+    );
+  }
+
+  it('starts at creation and is re-stamped by an ownership transfer for both members', async () => {
+    await withTestDb(async (tx) => {
+      const ownerId = await newUser(tx);
+      const workspace = await createWorkspace(tx, {
+        userId: ownerId,
+        input: { name: uniqueName() },
+      });
+      const created = await ownerGrace(tx, ownerId, workspace.id);
+      expect(created?.role).toBe('owner');
+      expect(created?.roleGrantedAt.getTime()).toBeGreaterThan(LONG_AGO.getTime());
+
+      const junior = await addMember(tx, workspace.id, 'junior');
+      await backdate(tx, workspace.id);
+      const request = {
+        workspaceId: workspace.id,
+        actorUserId: ownerId,
+        newOwnerUserId: junior.userId,
+      };
+      const plan = await prepareOwnershipTransfer(tx, request);
+      await transferOwnership(tx, { ...request, confirmation: plan.confirmation });
+
+      const newOwner = await ownerGrace(tx, junior.userId, workspace.id);
+      expect(newOwner?.role).toBe('owner');
+      expect(newOwner?.roleGrantedAt.getTime()).toBeGreaterThan(LONG_AGO.getTime());
+      const previous = await ownerGrace(tx, ownerId, workspace.id);
+      expect(previous?.role).toBe('advocate');
+      expect(previous?.roleGrantedAt.getTime()).toBeGreaterThan(LONG_AGO.getTime());
+    });
+  });
+
+  it('is re-stamped by a role change, kept when the role is unchanged, null for non-members', async () => {
+    await withTestDb(async (tx) => {
+      const ownerId = await newUser(tx);
+      const workspace = await createWorkspace(tx, {
+        userId: ownerId,
+        input: { name: uniqueName() },
+      });
+      const advocate = await addMember(tx, workspace.id, 'advocate');
+      await backdate(tx, workspace.id);
+      const request = {
+        workspaceId: workspace.id,
+        actorUserId: ownerId,
+        memberId: advocate.memberId,
+      };
+
+      await changeRole(tx, { ...request, role: 'advocate' });
+      expect((await ownerGrace(tx, advocate.userId, workspace.id))?.roleGrantedAt).toEqual(
+        LONG_AGO,
+      );
+
+      await changeRole(tx, { ...request, role: 'owner' });
+      const promoted = await ownerGrace(tx, advocate.userId, workspace.id);
+      expect(promoted?.role).toBe('owner');
+      expect(promoted?.roleGrantedAt.getTime()).toBeGreaterThan(LONG_AGO.getTime());
+
+      expect(await ownerGrace(tx, await newUser(tx), workspace.id)).toBeNull();
     });
   });
 });

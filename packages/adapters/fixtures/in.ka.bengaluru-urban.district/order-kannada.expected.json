@@ -1,0 +1,13 @@
+{
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "truth": {
+    "kind": "order",
+    "cases": [
+      { "caseTypeRaw": "Ex.P.", "caseType": "EXP", "caseNumber": "2299", "caseYear": 2025 }
+    ],
+    "orderDate": "2026-11-17",
+    "nextDate": "2026-07-11",
+    "dates": ["2026-11-17", "2026-07-11"],
+    "language": "kn"
+  }
+}

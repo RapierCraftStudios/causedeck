@@ -1,15 +1,15 @@
 // Billing tables (#28 part 1, #200; spike §4.2). `plan` is global (GLOBAL_TABLES): the catalogue
-// rows come from `@causedeck/billing/plans` via the `plans` seeder. `subscription`, `entitlement`,
+// rows come from `@causedeck/validators/plans` via the `plans` seeder. `subscription`, `entitlement`,
 // `usage_counter` and `billing_event` are tenant tables in the `0004_workspaces` style: NOT NULL
 // `workspace_id` referencing the workspace, led index. RLS policies arrive with #19 and the
 // cross-tenant registration with #207.
-import { GSTIN_PATTERN_SOURCE } from '@causedeck/billing/gstin';
+import { GSTIN_PATTERN_SOURCE } from '@causedeck/validators/gstin';
 import {
   PLAN_INTERVALS,
   PLAN_KINDS,
   SUBSCRIPTION_STATUSES,
   TERMINAL_SUBSCRIPTION_STATUSES,
-} from '@causedeck/billing/plans';
+} from '@causedeck/validators/plans';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -82,6 +82,10 @@ export const subscription = pgTable(
     currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
     graceUntil: timestamp('grace_until', { withTimezone: true }),
     cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+    /** When the current dunning episode began (first failed charge or halt); null when paid up (#205). */
+    dunningStartedAt: timestamp('dunning_started_at', { withTimezone: true }),
+    /** Payment retries made in the current dunning episode (`DUNNING_RETRY_DAYS`). */
+    dunningAttempts: integer('dunning_attempts').notNull().default(0),
     gstin: text('gstin'),
     billingEmail: text('billing_email'),
     ...timestamps(),
@@ -97,6 +101,7 @@ export const subscription = pgTable(
     ),
     check('subscription_status_chk', sql`status in ${inList(SUBSCRIPTION_STATUSES)}`),
     check('subscription_seats_chk', sql`seats >= 1 and clerk_seats >= 0`),
+    check('subscription_dunning_attempts_chk', sql`dunning_attempts between 0 and 4`),
     check('subscription_gstin_chk', sql.raw(`gstin is null or gstin ~ '${GSTIN_PATTERN_SOURCE}'`)),
   ],
 );
@@ -131,7 +136,11 @@ export const usageCounter = pgTable(
   ],
 );
 
-/** Provider webhook events, one row per provider event id, for idempotent processing (#204). */
+/**
+ * Provider webhook events, one row per provider event id, for idempotent processing (#204).
+ * `payload` is the minimised webhook event (`minimiseWebhookEvent`, no contact data) that the
+ * `billing.process-event` job applies.
+ */
 export const billingEvent = pgTable(
   'billing_event',
   {
@@ -139,6 +148,7 @@ export const billingEvent = pgTable(
     workspaceId: workspaceRef(),
     type: text('type').notNull(),
     payloadHash: text('payload_hash').notNull(),
+    payload: jsonb('payload'),
     receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
     processedAt: timestamp('processed_at', { withTimezone: true }),
   },

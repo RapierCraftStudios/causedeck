@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/index.ts';
 
-import { openShell, palette, switcherTrigger, SHELL_WORKSPACE } from './helpers.ts';
+import { openShell, palette, switcherList, switcherTrigger, SHELL_WORKSPACE } from './helpers.ts';
 
 /** apps/web/lib/shortcuts/registry.ts `NAV_CHORDS`. */
 const CHORDS = {
@@ -32,7 +32,9 @@ test.describe('keyboard chords', () => {
       // Start somewhere else so the move is visible.
       await openShell(page, asUser, { path: key === 't' ? 'matters' : 'today' });
       await chord(page, key);
-      await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/${destination}$`));
+      // Settings lands on its first section, the workspace profile (#284).
+      const landing = destination === 'settings' ? 'settings/profile' : destination;
+      await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/${landing}$`));
     });
   }
 
@@ -83,6 +85,8 @@ test.describe('keyboard chords', () => {
     await chord(page, 'm');
     await expect(filter).toHaveValue('gm');
     await page.keyboard.press('Escape');
+    // The popover must be gone before Ctrl+K, or the shortcut races its focus restore.
+    await expect(switcherList(page)).toHaveCount(0);
 
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+k' : 'Control+k');
     const input = palette(page).getByRole('combobox');

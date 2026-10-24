@@ -1,0 +1,19 @@
+{
+  "id": "en-30",
+  "language": "en",
+  "hearingDate": "2026-02-10",
+  "text": "In case 67056 of 2019 today. Arguments were heard and the matter stands adjourned. The opposite counsel sought time. Next hearing after five weeks. The court directed the State to produce the original records. Remind me to update the junior on the listing.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-03-17",
+      "phrase": "after five weeks"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records.",
+        "dueDate": null
+      }
+    ],
+    "tasks": ["update the junior on the listing"]
+  }
+}

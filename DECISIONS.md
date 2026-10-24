@@ -350,3 +350,78 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Decision:** Lane PRs run the fast tier only. Ship PRs (into `staging`/`main`) add `e2e` (2 shards) as the single heavy gate. `lighthouse` and Storybook `visual` move to nightly + manual + `full-ci` label, with `continue-on-error` (report-only). Pushes to `staging` no longer re-run e2e. The milestone chain stops regenerating visual baselines on each ship.
 - **Why:** Lighthouse and the ~4,500-screenshot visual suite cost about 40–60 runner-minutes per ship and caused most red ship PRs without catching product defects.
 - **Revisit:** Once real pilot users are on staging, make `lighthouse` blocking again on `main` only.
+
+### D-046 — The e2e ship gate runs one project; the full matrix is nightly and report-only
+- **Date:** 2026-10-21 · **Status:** Accepted (founder: one real gate on ship PRs, heavy coverage nightly). Refines D-045.
+- **Decision:** `E2E_SCOPE=ship` (ship PRs, pushes to `main`, `full-ci` label) runs every non-visual spec on `chromium-1280-light`, the `@smoke` subset on `chromium-360-light`, and the `@smoke` subset on `webkit-360`, split over the same 2 shards (`e2e (N/2)`). `E2E_SCOPE=full` (nightly schedule, manual dispatch; the default when run locally) keeps the 6-project matrix (360/768/1280 x light/dark) plus the `*.visual.spec.ts` specs, with a 90-minute timeout and `continue-on-error`, so it reports and never blocks.
+- **Why:** The 6x matrix repeated the same functional assertions at every width and theme (about 1,650 browser tests per run, 2 workers per shard), so it needed more than the 45-minute timeout and both recent runs (ship PR #342, staging dispatch) were cancelled: the gate never completed. Layout and theme coverage is what the visual and axe specs and the nightly matrix are for. The ship scope is about 340 tests, about 20 minutes.
+- **Revisit:** If a width- or theme-specific regression reaches `main` that the ship scope missed, add that spec's tag to the 360 smoke subset rather than widening the matrix.
+
+### D-047 — Fast lane gate: turbo cache in Actions, test shards, changed-file lint
+- **Date:** 2026-10-21 · **Status:** Accepted (founder: "the most I can get out of CI without wasting my pipeline's time")
+- **Decision:** Lane PR CI takes about 6 minutes instead of about 16 with the same coverage and the same required checks (`lint`, `typecheck`, `test`, `build`, `tenancy`). (1) Turborepo's remote cache is served from the GitHub Actions cache by `rharkor/caching-for-turbo` (SHA-pinned), with no paid service; the `test` task declares the repo-wide files that tests read as inputs, so a cached pass is trustworthy. (2) `test` is a five-shard matrix (db+auth, core, web, admin+api+worker, rest) plus an aggregating job named `test` that fails unless every shard passed. (3) On pull requests, Prettier checks only the changed files and the docs checks run only when their inputs change; ESLint uses a content cache on lane PRs only. Pushes, merge groups and ship PRs keep the full checks. `tenancy`, the bundle budget and the D-044/D-045 tiers are unchanged.
+- **Evidence:** 23 lane PR runs: `test` 15.2 min median (p90 17.2), `lint` 8.8 (p90 10.7), workflow wall time 15.6. `test` was one runner running about 11 Vitest suites 3 at a time; `lint` ran `prettier --check .` over the whole repo plus an uncached ESLint. No turbo cache was shared between runs (`TURBO_TOKEN` and `TURBO_TEAM` are empty).
+- **Alternatives:** Vercel remote cache (paid, rejected by the "no paid service" constraint); per-package `test` inputs (fragile: several suites scan other packages, `docs/` or the migrations); a larger runner (paid); caching ESLint results on ship PRs (typed rules can go stale when a type changes in an unchanged file).
+- **Revisit:** If the 10 GB Actions cache budget evicts useful entries, if cold runs on a fresh lane stay slow (the GitHub cache only reads the PR's own ref, its base branch and the default branch), or if a shard becomes the long pole: rebalance `infra/scripts/ci-test-shard.mjs`.
+
+### D-048 — Legal data infrastructure: court data, notices and news through a governed fetch layer
+- **Date:** 2026-10-23 · **Status:** Accepted for direction (founder: "we want to be a superior replacement for eCourtsIndia and all modern and future age requirements for legal infra in india"); every new source and access mode stays **Proposed** until its ⚖ review clears · **⚖**
+- **Decision:** CauseDeck adds a legal data layer next to the practice OS: case status, cause lists, orders and judgments, official notices, and legal news, served in the app and later through a developer API. Sources come in this order of preference:
+  1. **Official and licensed** (A3): data-sharing from NIC/eCommittee and the High Court Registries (the Madras HC AIMS email push is the model), and licensed feeds. causedeck#118 starts this.
+  2. **Lawful public retrieval** (A2) of pages that need no captcha, one source at a time after its terms and counsel review. Fetching goes through one governed fetch layer, built on the AlterLab API, never through ad hoc scrapers.
+  3. **Contributed data**: lists, orders and statuses that lawyers already share (A1), reused across workspaces only with opt-in consent and under the DPDP posture below.
+  4. **Delegated lookups** for portals behind a captcha (amended 2026-10-23, founder: "we need to solve those captchas, we are a convenience business too"). CauseDeck performs a signed-in advocate's own lookup on their behalf and solves the captcha automatically: on the device first, with a server fallback through the fetch layer (AlterLab `captcha` tier). It runs only for that advocate's own matters, on demand or on a watch, at a low fixed rate per advocate. **Solving at scale** (coverage for all users, or the API) is planned but stays off until counsel clears it (#118).
+- **The fetch layer** (one package, every external read goes through it):
+  - a **source registry**, extending the access-mode registry of D-028: per source, the access mode, terms status, counsel status, rate limit, retention, residency, a kill switch and an AlterLab tier cap;
+  - AlterLab calls with `proxyCountry: 'IN'`, `failFast: true`, a per-source `maxTier` and `maxCostDollars`. **The `captcha` tier is off by default for every court and government source** and is allowed only for a delegated lookup (one advocate, their own matter, within the per-advocate rate), enforced in code and tested. Bulk use of the `captcha` tier needs a per-source counsel clearance in the registry;
+  - provenance on every fetched fact (URL, time, content hash, source version), shown in the product like every other fact (D-026);
+  - cost metered into usage and budgets.
+- **Notices and news**:
+  - **Official notices** (circulars, practice directions, roster and bench notifications, holiday lists, registry notices, Bar Council and Gazette notices) are ingested from registered sources, typed, matched to the lawyer's forums and matters, and alerted through `packages/notifications`.
+  - **Legal news** is headlines, links and short summaries from sources that offer feeds or licences. No full-text republication of copyrighted reporting.
+- **Corpus:** raw judgments and orders from public sources are stored with provenance for citation verification (D-004) and later research. No editorial content, headnotes or citator (*EBC v. D.B. Modak*). **Amends D-001.**
+- **Bright lines, never relaxed:**
+  - no captcha solving except delegated lookups for a signed-in advocate's own matters, at a low fixed rate; no solving at scale before counsel clears it;
+  - no covert bulk crawling;
+  - no framing of court pages;
+  - no use of a source before its registry row says it is cleared.
+- **DPDP posture** ⚖: party names in court records are personal data. Purpose limitation (the lawyer's own matters, and the court's public listing), retention limits per source, erasure on request where the law allows, no resale of personal data, and a published policy on republishing before any API exposes court data.
+- **Amends:** D-001 (corpus), D-003 (bulk access replaced by the tiered, governed model above; captcha rule replaced by delegated lookups; covert-crawl prohibition kept), D-011 (the user no longer solves the captcha: delegated, automated lookups), D-028 (access-mode registry generalised to a source registry).
+- **Evidence:** No official eCourts API [R]. Portal terms are silent or contradictory and forbid framing [V] ([11](docs/strategy/11-launch-markets-madras-hc-bengaluru.md)). The Karnataka HC cause list is a public page with no captcha [V]. Madras HC Registry email push (Notification 230/2026) [V]. Aggregators' sourcing is undisclosed (D-003). AlterLab exposes tier caps, fail-fast, an India proxy and cost caps (`alterlab` SDK 2.4.0).
+- **Alternatives:** Buy a licensed reseller API (Surepass, eCourtsIndia): kept as a fallback, but sourcing is opaque and it is no moat. Competitor-style bulk scraping with captcha solving: deferred until the counsel opinion (#118), for legal, DPDP and trust risk. User-solved captchas only (the original D-011): rejected as too much friction for a convenience product.
+- **Revisit if:** counsel advises against a source or mode; an official API appears (move that source to A3); a Registry objects (kill switch, then remove).
+
+### D-049 — Vision: "Zerodha for law" in posture, "Bloomberg for law" in data
+- **Date:** 2026-10-23 · **Status:** Accepted (founder: "what if that is a vision?")
+- **Decision:** CauseDeck aims to be the operating system and data layer that every Indian advocate and legal institution runs on: **priced like Zerodha, as dependable as Bloomberg.**
+  - **Public posture (Zerodha):** simple, self-serve, cheap, India-scale; no dark patterns; profitable per user; trust is the brand; education drives growth; an open developer API builds an ecosystem.
+  - **Data ambition (Bloomberg):** the most reliable and complete legal data layer in India (case status, cause lists, display boards, orders and judgments, notices, news), inside the workflow advocates use all day, with a network that compounds (shared matters, referrals, contributed public documents). The premium price is only for institutions and the API.
+- **How the roadmap maps:**
+
+  | Element | CauseDeck |
+  | --- | --- |
+  | Daily workflow (Kite / the Terminal) | The practice OS (milestones 3–7) |
+  | Market data | Court Data Network (D-048) |
+  | News | Notices and news feeds |
+  | Free entry point (zero brokerage) | Free court-day alerts, zero-entry onboarding |
+  | Developer API (Kite Connect) | Public API |
+  | Institutional product | B2B portfolio tracking for banks, NBFCs and ARCs |
+  | Network | Referrals, shared briefs, contributed public documents |
+  | Education (Varsity) | The practice education program |
+- **Official rails are the strategic priority.** Zerodha exists because exchanges sell official feeds, and Bloomberg's premium is data that doesn't break. Delegated captcha lookups (D-048) give convenience now, but the durable layer must sit on official or licensed feeds (A3) from NIC/eCommittee and the High Court Registries. That makes official data partnerships a named workstream with an owner.
+- **Guardrails the vision keeps:** no judge ratings, rankings, outcome predictions or profiling (D-050: judge-level data is internal for data building, and factual bench facts reach users only after counsel); user-facing analytics are court and process analytics (listing delays, adjournment rates, disposal times by forum and case type); no L5 autonomous action (D-017); verified citations only (D-004); India residency (D-009); the D-048 bright lines and DPDP posture.
+- **Moat:** data inside the daily workflow, plus a network. Data alone commoditises to other aggregators, and workflow alone to other practice tools.
+- **Evidence:** Roadmap, decisions D-026, D-028, D-030 and D-048; milestones Court Data Network and Instant GTM & Adoption.
+- **Alternatives:** A data-only aggregator (an eCourtsIndia-style API business): rejected, it's commoditised and fragile without official rails. A workflow-only practice tool: rejected, it's easy to copy and has no compounding data.
+- **Revisit if:** official rails stay closed after sustained outreach (the data ambition then rests on delegated and contributed data, at lower reliability), or unit economics at the Zerodha price point don't hold.
+
+### D-050 — Judge-level data: internal for data building; factual bench facts for users only after counsel
+- **Date:** 2026-10-23 · **Status:** Accepted (founder: "judge analytics and internal tools for data building is needed"; chose "internal + factual, then counsel") · **⚖**
+- **Decision:**
+  - **Internal (now):** CauseDeck may hold judge-level and bench-level data (who sat where and when, listing pace, items heard, disposal counts per bench and period) in internal, staff-only stores, used for data building and quality: display-board call-time estimates, roster reconciliation, coverage and adapter health. No user-facing surface reads it.
+  - **User-facing factual bench facts (after counsel):** neutral, verifiable facts per bench, such as who sat, the dates and halls, listing pace, and the number of items heard and disposed. They ship behind the flag `bench_facts`, off until the counsel opinion clears them (#118).
+  - **Still prohibited, at any stage:** ratings, rankings or comparisons of judges; outcome tendencies or predictions ("this judge grants X% of bail pleas"); AI-generated profiles of judges; sentiment about judges; any content that could scandalise or lower the authority of a court.
+  - M4 court notes stay the lawyer's own and private, never aggregated (D-027 unchanged on that point).
+- **Why:** call-time estimates, roster accuracy and coverage need bench-level facts; factual bench information also helps advocates plan. Ratings, predictions and profiling carry contempt-of-court risk (scandalising the court), would damage the Registry relationships the data layer depends on (D-049 official rails), and many jurisdictions restrict them (France prohibited judge analytics in 2019).
+- **Amends:** D-027 (the judge-analytics prohibition narrowed to ratings, predictions and profiling), D-049 (guardrail wording), PRD ME-6 and PX-9, ADR 0017 (bench data use).
+- **Revisit if:** counsel advises against even factual bench facts (keep them internal only), or a court or Registry objects (switch off `bench_facts`).

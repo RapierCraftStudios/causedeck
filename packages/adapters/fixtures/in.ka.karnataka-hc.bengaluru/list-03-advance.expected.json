@@ -1,0 +1,222 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-11-02",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1\tRFA No. 1201/2019\tPretend Growers Society vs K. Kalpita Gowda\tSri. K. Kalpita\tSmt. B. Example",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "5",
+      "itemNo": "1",
+      "caseTypeRaw": "RFA",
+      "caseType": "RFA",
+      "caseNumber": "1201",
+      "caseYear": 2019,
+      "matchKey": "RFA/1201/2019",
+      "parties": "Pretend Growers Society vs K. Kalpita Gowda",
+      "stageRaw": "FINAL HEARING",
+      "stageNorm": "final_hearing",
+      "advocates": [
+        {
+          "raw": "Sri. K. Kalpita",
+          "aliases": ["K KALPITA", "KALPITA K"]
+        },
+        {
+          "raw": "Smt. B. Example",
+          "aliases": ["B EXAMPLE", "EXAMPLE B"]
+        }
+      ],
+      "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+      "listNo": "1",
+      "listType": "advance",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2\tMFA No. 3305/2023\tThe Fictional Bank vs Made-up Traders\tSri. R. Madeup\tSri. D. Imaginary",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "5",
+      "itemNo": "2",
+      "caseTypeRaw": "MFA",
+      "caseType": "MFA",
+      "caseNumber": "3305",
+      "caseYear": 2023,
+      "matchKey": "MFA/3305/2023",
+      "parties": "The Fictional Bank vs Made-up Traders",
+      "stageRaw": "FINAL HEARING",
+      "stageNorm": "final_hearing",
+      "advocates": [
+        {
+          "raw": "Sri. R. Madeup",
+          "aliases": ["R MADEUP", "MADEUP R"]
+        },
+        {
+          "raw": "Sri. D. Imaginary",
+          "aliases": ["D IMAGINARY", "IMAGINARY D"]
+        }
+      ],
+      "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+      "listNo": "1",
+      "listType": "advance",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3\tCRP No. 45/2025\tS. Kalpita Rao vs R. Fictional Naik\tSmt. S. Pretend",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "5",
+      "itemNo": "3",
+      "caseTypeRaw": "CRP",
+      "caseType": "CRP",
+      "caseNumber": "45",
+      "caseYear": 2025,
+      "matchKey": "CRP/45/2025",
+      "parties": "S. Kalpita Rao vs R. Fictional Naik",
+      "stageRaw": "FINAL HEARING",
+      "stageNorm": "final_hearing",
+      "advocates": [
+        {
+          "raw": "Smt. S. Pretend",
+          "aliases": ["S PRETEND", "PRETEND S"]
+        }
+      ],
+      "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+      "listNo": "1",
+      "listType": "advance",
+      "registryObjection": null
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["5"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "5",
+      "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+      "lists": [
+        {
+          "listNo": "1",
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1\tRFA No. 1201/2019\tPretend Growers Society vs K. Kalpita Gowda\tSri. K. Kalpita\tSmt. B. Example",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "5",
+              "itemNo": "1",
+              "caseTypeRaw": "RFA",
+              "caseType": "RFA",
+              "caseNumber": "1201",
+              "caseYear": 2019,
+              "matchKey": "RFA/1201/2019",
+              "parties": "Pretend Growers Society vs K. Kalpita Gowda",
+              "stageRaw": "FINAL HEARING",
+              "stageNorm": "final_hearing",
+              "advocates": [
+                {
+                  "raw": "Sri. K. Kalpita",
+                  "aliases": ["K KALPITA", "KALPITA K"]
+                },
+                {
+                  "raw": "Smt. B. Example",
+                  "aliases": ["B EXAMPLE", "EXAMPLE B"]
+                }
+              ],
+              "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+              "listNo": "1",
+              "listType": "advance",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2\tMFA No. 3305/2023\tThe Fictional Bank vs Made-up Traders\tSri. R. Madeup\tSri. D. Imaginary",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "5",
+              "itemNo": "2",
+              "caseTypeRaw": "MFA",
+              "caseType": "MFA",
+              "caseNumber": "3305",
+              "caseYear": 2023,
+              "matchKey": "MFA/3305/2023",
+              "parties": "The Fictional Bank vs Made-up Traders",
+              "stageRaw": "FINAL HEARING",
+              "stageNorm": "final_hearing",
+              "advocates": [
+                {
+                  "raw": "Sri. R. Madeup",
+                  "aliases": ["R MADEUP", "MADEUP R"]
+                },
+                {
+                  "raw": "Sri. D. Imaginary",
+                  "aliases": ["D IMAGINARY", "IMAGINARY D"]
+                }
+              ],
+              "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+              "listNo": "1",
+              "listType": "advance",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3\tCRP No. 45/2025\tS. Kalpita Rao vs R. Fictional Naik\tSmt. S. Pretend",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "5",
+              "itemNo": "3",
+              "caseTypeRaw": "CRP",
+              "caseType": "CRP",
+              "caseNumber": "45",
+              "caseYear": 2025,
+              "matchKey": "CRP/45/2025",
+              "parties": "S. Kalpita Rao vs R. Fictional Naik",
+              "stageRaw": "FINAL HEARING",
+              "stageNorm": "final_hearing",
+              "advocates": [
+                {
+                  "raw": "Smt. S. Pretend",
+                  "aliases": ["S PRETEND", "PRETEND S"]
+                }
+              ],
+              "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+              "listNo": "1",
+              "listType": "advance",
+              "registryObjection": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "status": "ok",
+  "listType": "advance",
+  "source": "html",
+  "publishedAt": "2026-10-28T17:15:00+05:30",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "ADVANCE CAUSE LIST FOR 02-11-2026",
+    "rowIndex": 0
+  }
+}

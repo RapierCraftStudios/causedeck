@@ -1,0 +1,185 @@
+{
+  "inbox": {
+    "metaTitle": "Inbox",
+    "title": "Inbox",
+    "sections": {
+      "label": "Inbox sections",
+      "needsYou": "Needs you",
+      "ready": "Ready to send",
+      "processing": "Processing"
+    },
+    "empty": {
+      "needsYou": {
+        "title": "Nothing needs you.",
+        "body": "Anything unclear will show up here."
+      },
+      "ready": {
+        "title": "Nothing waiting to be sent.",
+        "body": "Drafts you ask for appear here. You always press send yourself."
+      }
+    },
+    "firstRun": {
+      "title": "Capture once, confirm once.",
+      "body": "Send things to your inbox in any of these ways. Each one is switched on by you.",
+      "share": "Share from another app",
+      "voice": "Record a voice note",
+      "upload": "Upload a file",
+      "on": "On",
+      "off": "Off"
+    },
+    "offline": {
+      "banner": "You're offline. Captures are saved on this device and will process when you're back.",
+      "decisions": "Decisions need the server. Reconnect to confirm, edit or dismiss.",
+      "badge": "Offline, will process when you're back"
+    },
+    "processing": {
+      "label": "Processing",
+      "step": {
+        "received": "Received",
+        "scanning": "Checking the file",
+        "queued": "Waiting its turn",
+        "processing": "Reading"
+      },
+      "channel": {
+        "share": "Shared",
+        "upload": "Uploaded",
+        "voice": "Voice note",
+        "camera": "Photo",
+        "email": "Email",
+        "ics": "Calendar file",
+        "whatsapp_export": "Chat export",
+        "bulk_import": "Import",
+        "manual": "Typed note"
+      }
+    },
+    "card": {
+      "kind": {
+        "next_date": "Next date",
+        "new_matter": "New matter",
+        "new_proceeding": "New proceeding",
+        "listing_update": "Listing update",
+        "task": "Task",
+        "obligation_from_direction": "Order direction",
+        "document_attach": "Order attached",
+        "order_record": "Order",
+        "party_detail": "Party details",
+        "duplicate_merge": "Possible duplicate",
+        "memory_item": "Memory",
+        "fee_entry": "Fee entry",
+        "outward_draft": "Outward draft"
+      },
+      "matter": "{matter} · {caseNumber}",
+      "readNextDate": "We read {date} in the order, page {page}. Set as the next date?",
+      "read": "We read this in the source. Confirm it?",
+      "sensitive": "Sensitive matter. Details are hidden here.",
+      "confidence": {
+        "high": "High",
+        "check": "Check this",
+        "label": "Confidence: {level}"
+      },
+      "reason": {
+        "ambiguous": "More than one match",
+        "low": "Low confidence",
+        "unanchored": "No quote in the source",
+        "other": "Needs a look"
+      },
+      "confirmName": "Confirm {kind} {value} for {matter}",
+      "dontSuggest": "Don't suggest this again",
+      "save": "Save and confirm",
+      "cancel": "Cancel",
+      "field": {
+        "date": "Date",
+        "title": "Title",
+        "description": "Description",
+        "dueDate": "Due date",
+        "name": "Name",
+        "number": "Case number",
+        "year": "Year"
+      },
+      "noValue": "Not given",
+      "failed": "Couldn't save that. Nothing changed. Try again.",
+      "stale": "This was already resolved. The inbox has been refreshed."
+    },
+    "conflict": {
+      "title": "Two sources disagree about the next date",
+      "current": "Confirmed date",
+      "proposed": "Proposed date",
+      "keep": "Keep current",
+      "use": "Use proposed",
+      "other": "Enter another",
+      "otherLabel": "Another date",
+      "apply": "Use this date",
+      "oneProceeding": "This changes the date for this proceeding only."
+    },
+    "unreadable": {
+      "title": "Couldn't read this",
+      "copy": "Couldn't read this. Retake, type the key line, or keep as an attachment.",
+      "retake": "Retake",
+      "type": "Type the key line",
+      "keep": "Keep as attachment",
+      "keyLine": "Key line",
+      "submit": "Save key line",
+      "saved": "Saved. We will read what you typed.",
+      "kept": "Kept as an attachment, unread.",
+      "unrecognisedSender": "Unrecognised sender: review",
+      "unrecognisedSenderCopy": "This email came from a sender you have not allowed, so nothing in it was read. Review it, then add the sender to your allow-list if you trust it."
+    },
+    "reassign": {
+      "prompt": "Moved to wrong matter? Reassign",
+      "explain": "This moves the documents, tasks and obligations made from this capture to the matter you pick. Available until {date}.",
+      "search": "Find a matter",
+      "move": "Move",
+      "done": "Moved to {matter}.",
+      "none": "No matters found"
+    },
+    "toast": {
+      "undo": "Undo",
+      "nextDate": "Next date set to {date}",
+      "done": "{kind} confirmed",
+      "dismissed": "Dismissed",
+      "undone": "Undone. The card is back in your inbox.",
+      "undoFailed": "Couldn't undo that. It may be older than 7 days."
+    },
+    "announce": {
+      "confirmedNextDate": "Proposal confirmed. Next date set to {date}.",
+      "confirmed": "Proposal confirmed.",
+      "dismissed": "Proposal dismissed.",
+      "newItems": "{count, plural, one {# new item needs you} other {# new items need you}}",
+      "section": "{section}, {count, plural, one {# item} other {# items}}"
+    },
+    "ready": {
+      "copy": "Copy",
+      "markSent": "Mark as sent by me",
+      "openIn": "Open in {app} (opens your app)",
+      "reminder": "You press send yourself.",
+      "marked": "Logged as sent by you."
+    },
+    "preview": {
+      "title": "Source",
+      "empty": "Select an item to see where it came from.",
+      "page": "Page {page}",
+      "openFull": "Open full document",
+      "noSource": "No source quote for this item."
+    },
+    "readOnly": "View only. You can read this item but not act on it.",
+    "denied": "You do not have access to this. Ask the workspace owner.",
+    "error": {
+      "title": "Couldn't load your inbox.",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "loading": "Loading your inbox",
+    "shortcuts": {
+      "title": "Inbox shortcuts",
+      "description": "Shortcuts are ignored while you are typing in a field.",
+      "move": "Next or previous card",
+      "confirm": "Confirm the focused card",
+      "edit": "Edit the focused card",
+      "dismiss": "Dismiss the focused card",
+      "undo": "Undo the last item (while the toast shows)",
+      "sections": "Switch section",
+      "help": "Show this sheet",
+      "open": "Shortcuts"
+    }
+  }
+}

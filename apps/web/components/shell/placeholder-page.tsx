@@ -5,7 +5,8 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { isDev } from '../../lib/env.ts';
-import { flagsOff, getNavItem, isNavItemEnabled, type WorkspaceRoute } from '../../lib/nav.ts';
+import { requireWorkspaceFlag } from '../../lib/flags.ts';
+import { getNavItem, isNavItemEnabled, type WorkspaceRoute } from '../../lib/nav.ts';
 import { can, type FlagKey } from '../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../lib/workspace-loader.ts';
 
@@ -54,7 +55,10 @@ export interface WorkspacePageProps {
 }
 
 export interface PlaceholderOptions {
-  /** Feature-flag check. TODO(#22): the real evaluator from `@causedeck/flags`. Defaults to off. */
+  /**
+   * Feature-flag check override (tests). By default a flagged route asks `@causedeck/flags` on the
+   * server (`requireWorkspaceFlag`): off, the page is `notFound()`.
+   */
   isEnabled?: ((flag: FlagKey) => boolean) | undefined;
 }
 
@@ -71,10 +75,7 @@ function devState(searchParams: SearchParams): string | undefined {
  * error boundary under the dev toggle, and otherwise the title, the offline banner and the empty
  * state (icon, title, one-line hint and a primary action to a related page).
  */
-export function placeholderPage(
-  routeId: PlaceholderRoute,
-  { isEnabled = flagsOff }: PlaceholderOptions = {},
-) {
+export function placeholderPage(routeId: PlaceholderRoute, { isEnabled }: PlaceholderOptions = {}) {
   const item = getNavItem(routeId);
 
   return async function WorkspacePlaceholderPage({ params, searchParams }: WorkspacePageProps) {
@@ -82,7 +83,11 @@ export function placeholderPage(
     // The layout already checks membership; checking again keeps the page safe on its own.
     const context = await getWorkspaceContext(slug);
     if (!context) notFound();
-    if (!isNavItemEnabled(item, isEnabled)) notFound();
+    if (isEnabled !== undefined) {
+      if (!isNavItemEnabled(item, isEnabled)) notFound();
+    } else if (item.flag !== undefined) {
+      await requireWorkspaceFlag(item.flag, context);
+    }
     if (item.requires !== undefined && !can(context.role, item.requires)) {
       return <PermissionDeniedPage />;
     }

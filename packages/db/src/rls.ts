@@ -9,6 +9,9 @@
 // inside a released savepoint would otherwise survive until the outer COMMIT. The active scope is
 // also tracked per async call chain, so nesting a different workspace (or dropping to a wider scope)
 // inside a workspace throws `TENANCY_VIOLATION` instead of silently switching tenants.
+// A workspace scope opened with `dbRole: 'clerk'` (#233) also switches to the no-login
+// `causedeck_clerk` role (`SET LOCAL ROLE`), which has no grant on the base tables behind clerk
+// column-scoped views (`app_clerk_view`, migration 0018); scopes nested inside it stay clerk.
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { is, sql } from 'drizzle-orm';
@@ -17,9 +20,17 @@ import { PgTransaction } from 'drizzle-orm/pg-core';
 import type { Database, Transaction } from './client.ts';
 import { GLOBAL_TABLES } from './conventions.ts';
 
+/** Database roles a workspace scope can switch to; absent means the connecting app role. */
+export type ScopeDbRole = 'clerk';
+
+/** The Postgres role behind `dbRole: 'clerk'` (infra/docker/postgres/init/02-roles.sql). */
+export const CLERK_DB_ROLE = 'causedeck_clerk' as const;
+
 export interface WorkspaceScope {
   workspaceId: string;
   userId?: string;
+  /** `'clerk'` for clerk members: the transaction runs as `causedeck_clerk`. */
+  dbRole?: ScopeDbRole;
 }
 
 export interface UserScope {
@@ -31,6 +42,8 @@ export interface TenancyScope {
   kind: 'workspace' | 'user' | 'global';
   workspaceId: string | null;
   userId: string | null;
+  /** Set when the scope runs as a narrower database role. */
+  dbRole?: ScopeDbRole;
 }
 
 export type Queryable = Database | Transaction;
@@ -71,9 +84,16 @@ async function applySettings(tx: Transaction, { ws, uid }: Settings): Promise<vo
   );
 }
 
+async function setRole(tx: Transaction, role: string | null): Promise<void> {
+  // `SET LOCAL` takes no bind parameters; the role name is a constant, never caller input.
+  await tx.execute(sql.raw(role === null ? 'set local role none' : `set local role ${role}`));
+}
+
 /**
  * Open a transaction (or a savepoint on `db` when it already is one) with `settings`, run `fn` in
- * `scope`, and on a savepoint put the outer settings back before releasing it.
+ * `scope`, and on a savepoint put the outer settings (and database role) back before releasing it:
+ * like `set_config(..., true)`, a `SET LOCAL ROLE` made in a released savepoint would otherwise
+ * last until the outer COMMIT.
  */
 async function scoped<T>(
   db: Queryable,
@@ -84,14 +104,24 @@ async function scoped<T>(
   const nested = is(db, PgTransaction);
   return db.transaction(async (tx) => {
     let previous: Settings | undefined;
+    let previousRole: string | null = null;
+    const switchRole = scope.dbRole !== undefined;
     if (nested) {
       const [row] = await tx.execute<{ ws: string | null; uid: string | null }>(
         sql`select current_setting('app.workspace_id', true) as ws, current_setting('app.user_id', true) as uid`,
       );
       previous = { ws: row?.ws ?? '', uid: row?.uid ?? '' };
+      if (switchRole) {
+        const [r] = await tx.execute<{ role: string; session: string }>(
+          sql`select current_user as role, session_user as session`,
+        );
+        previousRole = r !== undefined && r.role !== r.session ? r.role : null;
+      }
     }
     await applySettings(tx, settings);
+    if (switchRole) await setRole(tx, CLERK_DB_ROLE);
     const result = await active.run(scope, () => fn(tx));
+    if (switchRole && nested) await setRole(tx, previousRole);
     if (previous) await applySettings(tx, previous);
     return result;
   });
@@ -104,10 +134,15 @@ async function scoped<T>(
  */
 export async function withWorkspace<T>(
   db: Queryable,
-  { workspaceId, userId }: WorkspaceScope,
+  { workspaceId, userId, dbRole }: WorkspaceScope,
   fn: (tx: Transaction) => Promise<T>,
 ): Promise<T> {
   if (!isUuid(workspaceId)) throw new TypeError('withWorkspace: workspaceId must be a uuid');
+  // Untyped callers: anything but a known role would otherwise run as the app role.
+  const requested: string | undefined = dbRole;
+  if (requested !== undefined && requested !== 'clerk') {
+    throw new TypeError('withWorkspace: unknown dbRole');
+  }
   if (userId !== undefined && !isUuid(userId)) {
     throw new TypeError('withWorkspace: userId must be a uuid');
   }
@@ -121,7 +156,18 @@ export async function withWorkspace<T>(
   if (outer?.kind === 'global') {
     throw new TenancyError('withWorkspace: nested inside withoutWorkspace');
   }
-  return scoped(db, { kind: 'workspace', workspaceId, userId: userId ?? null }, fn);
+  // A nested scope never widens a clerk scope back to the app role.
+  const role = dbRole ?? outer?.dbRole;
+  return scoped(
+    db,
+    {
+      kind: 'workspace',
+      workspaceId,
+      userId: userId ?? null,
+      ...(role === undefined ? {} : { dbRole: role }),
+    },
+    fn,
+  );
 }
 
 /**

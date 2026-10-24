@@ -111,6 +111,11 @@ test.describe('placeholder page states', () => {
 
   test('flag-gated routes are not found while their flag is off', async ({ page, asUser }) => {
     await openShell(page, asUser, { wait: false });
+    // The shell nav is built from the server-evaluated flags (#22): no link to a dark route.
+    await expect(page.locator('a[href$="/matters"]').first()).toBeAttached();
+    for (const route of FLAG_GATED_ROUTES) {
+      await expect(page.locator(`a[href$="/${route}"]`), route).toHaveCount(0);
+    }
     for (const route of FLAG_GATED_ROUTES) {
       // Status is 200: the page streams behind the workspace loading boundary before notFound().
       await page.goto(url(route));

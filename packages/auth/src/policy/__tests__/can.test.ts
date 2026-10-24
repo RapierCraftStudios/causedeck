@@ -59,8 +59,11 @@ describe('role rules', () => {
       'billing.read',
       'invoices.read',
       'workspace.delete',
+      'workspace.rename',
       'member.remove',
+      'member.role',
       'export.run',
+      'support.manage',
     ]);
     for (const action of ALL_ACTIONS) {
       expect(allowed(can(actor('advocate'), action)), action).toBe(!denied.has(action));
@@ -81,6 +84,22 @@ describe('role rules', () => {
     expect(can(actor('owner'), 'member.invite', undefined, { advocatesCanInvite: false })).toEqual({
       allow: true,
     });
+  });
+
+  it('advocate reads the audit log by default, not when the workspace turns it off (#229)', () => {
+    expect(can(actor('advocate'), 'audit.read')).toEqual({ allow: true });
+    const off = { advocatesCanReadAudit: false };
+    expect(reasonOf(can(actor('advocate'), 'audit.read', undefined, off))).toBe('ROLE_DENIED');
+    expect(can(actor('owner'), 'audit.read', undefined, off)).toEqual({ allow: true });
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(reasonOf(can(actor(role), 'audit.read')), role).toBe('ROLE_DENIED');
+      expect(
+        reasonOf(can(actor(role), 'audit.read', undefined, { advocatesCanReadAudit: true })),
+        role,
+      ).toBe('ROLE_DENIED');
+    }
+    // The setting is scoped to audit.read only.
+    expect(can(actor('advocate'), 'member.invite', undefined, off)).toEqual({ allow: true });
   });
 
   it('junior is limited to assigned, shared or own matters', () => {
@@ -204,6 +223,7 @@ describe('deny reasons', () => {
         },
       ),
     SUSPENDED: () => can(actor('owner', { suspended: true }), 'matter.read'),
+    STAFF_READ_ONLY: () => can(actor('owner', { kind: 'staff' }), 'matter.write'),
   };
 
   it.each(DENY_REASONS)('%s is produced by can()', (reason) => {
@@ -213,5 +233,46 @@ describe('deny reasons', () => {
   it('FEATURE_OFF only switches off the named domain', () => {
     const settings = { disabledDomains: new Set(['billing'] as const) };
     expect(can(actor('owner'), 'matter.read', undefined, settings)).toEqual({ allow: true });
+  });
+});
+
+describe('staff actors (support sessions, #308)', () => {
+  it('denies every write action to staff, whatever the role', () => {
+    for (const role of ROLES) {
+      for (const action of WRITE_ACTIONS) {
+        expect(can(actor(role, { kind: 'staff' }), action)).toEqual({
+          allow: false,
+          reason: 'STAFF_READ_ONLY',
+        });
+      }
+    }
+  });
+
+  it('leaves staff reads to the role and resource rules', () => {
+    expect(can(actor('advocate', { kind: 'staff' }), 'matter.read', matter())).toEqual({
+      allow: true,
+    });
+    expect(
+      reasonOf(
+        can(
+          actor('advocate', { kind: 'staff' }),
+          'matter.read',
+          matter({ restricted: { allowUserIds: [] } }),
+        ),
+      ),
+    ).toBe('RESTRICTED_MATTER');
+    expect(
+      reasonOf(
+        can(actor('owner', { kind: 'staff' }), 'matter.write', matter({ workspaceId: OTHER_WS })),
+      ),
+    ).toBe('CROSS_WORKSPACE');
+  });
+
+  it('treats an actor without kind, or kind user, exactly as before', () => {
+    for (const role of ROLES) {
+      for (const action of ALL_ACTIONS) {
+        expect(can(actor(role, { kind: 'user' }), action)).toEqual(can(actor(role), action));
+      }
+    }
   });
 });

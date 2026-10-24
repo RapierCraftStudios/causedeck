@@ -1,6 +1,6 @@
 'use client';
 
-// Linking for phone accounts (#503): add an email (Better Auth `changeEmail`, allowed only while the
+// Linking for phone accounts (#503): add an email (Better Auth `changeEmail`, verified by link, only while the
 // address is the phone placeholder) and link Google (`linkSocial`, trusted for linking).
 import { Alert } from '@causedeck/ui/alert';
 import { Button } from '@causedeck/ui/button';

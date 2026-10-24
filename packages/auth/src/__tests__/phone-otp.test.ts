@@ -3,6 +3,7 @@
 // email to a phone account.
 import { createHash } from 'node:crypto';
 
+import { Secret } from '@causedeck/config/env';
 import { closeTestDb, testAppDb } from '@causedeck/db/testing';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -159,8 +160,9 @@ describe('phone OTP sign-in', () => {
 });
 
 describe('linking to a phone account', () => {
-  it('lets a phone-only account add an email, and refuses email accounts', async () => {
-    const { auth, sms } = setup();
+  it('adds an email only after the address is verified, and refuses email accounts', async () => {
+    const sms = recordingSms();
+    const { auth, mailer } = makeAuth({ sms });
     const phone = uniquePhone();
     await sendCode(auth, phone);
     const signUp = await verify(auth, phone, sms.sent.at(-1)?.code ?? '');
@@ -172,16 +174,48 @@ describe('linking to a phone account', () => {
       body: { newEmail: email },
     });
     expect(change.status).toBe(200);
-    const session = (await (
-      await authRequest(auth, '/get-session', { cookie, method: 'GET' })
-    ).json()) as { user: { email: string } };
-    expect(session.user.email).toBe(email);
+    const readEmail = async () =>
+      (
+        (await (await authRequest(auth, '/get-session', { cookie, method: 'GET' })).json()) as {
+          user: { email: string };
+        }
+      ).user.email;
+    // Claiming an address proves nothing: it is unchanged until the link is opened.
+    expect(isPhoneTempEmail(await readEmail())).toBe(true);
+    const message = mailer.sent.at(-1);
+    expect(message?.to).toBe(email);
+
+    const confirm = await authRequest(auth, message?.url ?? '', { cookie, method: 'GET' });
+    expect(confirm.status).toBeLessThan(400);
+    expect(await readEmail()).toBe(email);
 
     const second = await authRequest(auth, '/change-email', {
       cookie,
       body: { newEmail: uniqueEmail('again') },
     });
     expect(second.status).toBe(403);
+  });
+
+  it('lets a phone account start linking Google', async () => {
+    const sms = recordingSms();
+    const { auth } = makeAuth({
+      sms,
+      env: {
+        AUTH_GOOGLE_ENABLED: true,
+        GOOGLE_CLIENT_ID: 'test-client-id',
+        GOOGLE_CLIENT_SECRET: new Secret('test-client-secret'),
+      },
+    });
+    const phone = uniquePhone();
+    await sendCode(auth, phone);
+    const signUp = await verify(auth, phone, sms.sent.at(-1)?.code ?? '');
+    const response = await authRequest(auth, '/link-social', {
+      cookie: cookieHeader(signUp),
+      body: { provider: 'google', callbackURL: '/account' },
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { url?: string };
+    expect(body.url).toContain('accounts.google.com');
   });
 });
 

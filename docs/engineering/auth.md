@@ -167,7 +167,7 @@ required and unique.
 | OTP send: 20 per IP per hour; verify: 30 per IP per hour | Better Auth `customRules` |
 | Wrong codes: 3 per code | plugin `allowedAttempts` |
 
-Linking: a phone-only account can add an email on `/account` (`/change-email`, refused for accounts
+Linking: a phone-only account can add an email on `/account` (`/change-email`: the address changes only after the emailed link is opened; refused for accounts
 that already have a real email) and link Google (`account.accountLinking`, Google trusted). Security
 events record the method `phone_otp`.
 

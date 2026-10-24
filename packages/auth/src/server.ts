@@ -408,7 +408,7 @@ export function createAuth({
     emailVerification: {
       expiresIn: EMAIL_VERIFICATION_EXPIRES_IN_SECONDS,
       // Only reached when a signed-in phone account adds an email (`/change-email` below): the
-      // link marks the address verified. It reuses the magic-link template, a link with an expiry.
+      // account's email changes (and is verified) only when the link is opened. It reuses the magic-link template, a link with an expiry.
       sendVerificationEmail: ({ user, url }) => {
         mailer
           .send({
@@ -430,7 +430,8 @@ export function createAuth({
       },
     },
     user: {
-      changeEmail: { enabled: true, updateEmailWithoutVerification: true },
+      // No `updateEmailWithoutVerification`: the address changes only when its owner opens the link.
+      changeEmail: { enabled: true },
       additionalFields: {
         locale: { type: 'string', required: false, defaultValue: 'en', input: false },
       },

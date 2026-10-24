@@ -172,6 +172,10 @@ describe('row-level security catalog', () => {
         'case_watch',
         'case_status_snapshot',
 
+        // Court-day marker and list snapshots (#58).
+        'court_day_marker',
+        'list_snapshot',
+
         // Review and correction queue (#518).
         'review_correction',
 

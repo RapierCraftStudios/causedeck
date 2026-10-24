@@ -1868,6 +1868,82 @@ const CASES: Record<string, Case> = {
     expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
     expect(await aParseRuns(f)).toEqual(probe.before);
   },
+  // Court day (#58): ub names A's workspace; every entry point is denied and A's rows stay as they were.
+  getCourtDay: async (f) => {
+    await expect(
+      core.getCourtDay(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02', scope: 'workspace' },
+      ),
+    ).rejects.toBeDefined();
+  },
+  setCurrentItem: async (f) => {
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.courtDayMarker));
+    const hallId = '00000000-0000-4000-8000-000000000001';
+    await expect(
+      core.setCurrentItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hallId, listDate: '2026-11-02', currentItem: 3 },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.courtDayMarker))).toEqual(
+      before,
+    );
+  },
+  clearCurrentItem: async (f) => {
+    const hallId = '00000000-0000-4000-8000-000000000001';
+    await expect(
+      core.clearCurrentItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hallId, listDate: '2026-11-02' },
+      ),
+    ).rejects.toBeDefined();
+  },
+  snapshotList: async (f) => {
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listSnapshot));
+    await expect(
+      core.snapshotList(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        {
+          forumId: '00000000-0000-4000-8000-000000000001',
+          listDate: '2026-11-02',
+          listType: 'daily',
+          rows: [],
+        },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listSnapshot))).toEqual(
+      before,
+    );
+  },
+  proposeCourtDayNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.proposeCourtDayNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId, date: '2027-01-04', provenance: PROBE_PROVENANCE },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  listConflictCards: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.listConflictCards(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        {
+          matterId: '00000000-0000-4000-8000-000000000001',
+        },
+      ),
+    );
+  },
   getLiveHalls: async (f) => {
     // getLiveHalls is a per-member read model, not a write: a user with no seat in the workspace
     // they name gets nothing back (the listing query is scoped to the workspace and to matters the

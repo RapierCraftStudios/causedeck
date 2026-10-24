@@ -1200,6 +1200,7 @@ export type Messages = {
         listing: string;
         draft: string;
         audit: string;
+        court_day: string;
         export: string;
         support: string;
         shell: string;
@@ -1247,6 +1248,9 @@ export type Messages = {
         };
         audit: {
           read: string;
+        };
+        court_day: {
+          view_all: string;
         };
         export: {
           run: string;

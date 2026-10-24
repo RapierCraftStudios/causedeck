@@ -255,6 +255,9 @@ export const courtExporter = tablesExporter('court', [
   ws('bench_roster'),
   ws('bench_roster_entry'),
   ws('bench_change_alert'),
+  // Court day (#58): the lawyer's own "court is at item N" notes and the stored list snapshots.
+  ws('court_day_marker', { userColumn: 'set_by' }),
+  ws('list_snapshot'),
 ]);
 
 // Matters, their proceedings, links (#346) and state history (#363), their docket: listings, hearings, appearances,

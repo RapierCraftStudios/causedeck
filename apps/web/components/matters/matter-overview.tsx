@@ -8,14 +8,14 @@
 import { Badge } from '@causedeck/ui/badge';
 import { buttonVariants } from '@causedeck/ui/button';
 import { EmptyState } from '@causedeck/ui/empty-state';
-import { FileText, Inbox, Megaphone, Scale, Users } from 'lucide-react';
+import { FileText, Inbox, Scale, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 import type { MatterOverviewView } from '../../lib/matters/workspace.ts';
 
-import { NoticeList, type NoticeView } from '../notices/notice-list.tsx';
+import { MatterNoticesBody, MatterNoticesTitle, type NoticeView } from '../notices/notice-list.tsx';
 
 import { DateConflictCard, type ChooseNextDateSourceAction } from './date-conflict-card.tsx';
 import { useOnline } from './matters-offline-banner.tsx';
@@ -41,14 +41,16 @@ export interface MatterOverviewProps {
   notices?: readonly NoticeView[];
 }
 
-function Card({ title, slot, children }: { title: string; slot: string; children: ReactNode }) {
+function Card({ title, slot, children }: { title: ReactNode; slot: string; children: ReactNode }) {
   return (
     <section
-      aria-label={title}
+      aria-labelledby={`${slot}-title`}
       data-slot={slot}
       className="border-line bg-surface flex flex-col gap-3 rounded-lg border p-4"
     >
-      <h2 className="text-ink-muted text-sm font-medium">{title}</h2>
+      <h2 id={`${slot}-title`} className="text-ink-muted text-sm font-medium">
+        {title}
+      </h2>
       {children}
     </section>
   );
@@ -181,20 +183,9 @@ function DocumentsCard({ matter, slug }: { matter: MatterOverviewView; slug: str
 
 /** "Affecting this matter" (#588, D-048): the official notices matched to this matter's forums. */
 function NoticesCard({ notices }: { notices: readonly NoticeView[] }) {
-  const t = useTranslations('notices');
   return (
-    <Card title={t('matterCard.title')} slot="matter-notices">
-      {notices.length === 0 ? (
-        <EmptyState
-          data-pattern-state="empty"
-          data-notices="empty"
-          icon={<Megaphone />}
-          title={t('matterCard.empty')}
-          className="py-6"
-        />
-      ) : (
-        <NoticeList notices={notices} compact />
-      )}
+    <Card title={<MatterNoticesTitle />} slot="matter-notices">
+      <MatterNoticesBody notices={notices} />
     </Card>
   );
 }

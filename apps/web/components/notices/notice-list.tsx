@@ -4,7 +4,8 @@
 // court page. A URL that is not http(s) is shown as text, never as a link.
 import type { NoticeRow } from '@causedeck/core/notices';
 import { Badge } from '@causedeck/ui/badge';
-import { ExternalLink } from 'lucide-react';
+import { EmptyState } from '@causedeck/ui/empty-state';
+import { ExternalLink, Megaphone } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 /** A notice as the components show it: dates are plain `YYYY-MM-DD` strings. */
@@ -95,4 +96,27 @@ export function NoticeList({ notices, compact = false }: NoticeListProps) {
       ))}
     </ul>
   );
+}
+
+/** Title of the matter's "Affecting this matter" card. */
+export function MatterNoticesTitle() {
+  const t = useTranslations('notices');
+  return <>{t('matterCard.title')}</>;
+}
+
+/** Body of the matter's "Affecting this matter" card: the compact list, or an empty state. */
+export function MatterNoticesBody({ notices }: { notices: readonly NoticeView[] }) {
+  const t = useTranslations('notices');
+  if (notices.length === 0) {
+    return (
+      <EmptyState
+        data-pattern-state="empty"
+        data-notices="empty"
+        icon={<Megaphone />}
+        title={t('matterCard.empty')}
+        className="py-6"
+      />
+    );
+  }
+  return <NoticeList notices={notices} compact />;
 }

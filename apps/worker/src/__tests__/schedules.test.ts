@@ -24,6 +24,8 @@ describe('registerSchedules', () => {
       'system.billing.dunning-tick',
       'system.notification.digest',
       'system.activity.digest',
+      'system.news.digest',
+      'system.news.poll',
       'system.usage.rollup',
       'system.business.cost-alert',
       'system.business.digest',
@@ -81,6 +83,10 @@ describe('registerSchedules', () => {
       ['system.billing.dunning-tick', '30 4 * * *', '2026-10-18T23:00:00.000Z'],
       // End-of-day digest scheduler (#49): every half hour from 18:00 to 23:30 IST; 18:00 IST is 12:30 UTC.
       ['system.activity.digest', '0,30 18-23 * * *', '2026-10-18T12:30:00.000Z'],
+      // News digest scheduler (#481): every half hour, like the notification digest; 06:00 IST is 00:30 UTC.
+      ['system.news.digest', '0,30 * * * *', '2026-10-18T00:30:00.000Z'],
+      // News poll fan-out (#481): hourly at :10 IST, which is :40 UTC.
+      ['system.news.poll', '10 * * * *', '2026-10-18T00:40:00.000Z'],
       // Usage rollup: hourly at :15 IST, which is :45 UTC.
       ['system.usage.rollup', '15 * * * *', '2026-10-18T00:45:00.000Z'],
       // Business cost alert (#519): daily 08:00 IST; digest: Mondays 09:00 IST (2026-10-19 is a Monday).

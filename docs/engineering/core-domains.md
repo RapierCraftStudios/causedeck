@@ -29,6 +29,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `ai` | `@causedeck/core/ai` | the AI gateway wiring (#44, [ADR 0022](../adr/0022-ai-gateway-implementation.md)): the ports `@causedeck/ai` declares, implemented on usage budgets, `workspace_settings.india_only_ai`, `matter.sensitive`, the `ai_call` writer and the 24 h `ai_call_result` store |
 | `sources` | `@causedeck/core/sources` | the source registry (D-048): `policyFor` / `isCleared` fail closed, and audited staff changes to every external data source |
+| `news` | `@causedeck/core/news` | the legal news digest (#481, D-048): `upsertNewsItems` (global `news_item`, idempotent on source and URL, feed-provided fields only), the member's `news_pref` (`getNewsPref`, `setNewsPref`), `listNewsForMember` and `selectNewsDigestItems` (tagged items first, then recency, with source attribution and the link to the original) |
 | `citations` | `@causedeck/core/citations` | citation verification (#484, D-004): `verifyCitation` resolves a neutral citation (Madras HC, Karnataka HC, Supreme Court) to a stored judgment in the global raw corpus with page anchors, or marks it UNVERIFIED |
 | `court-day` | `@causedeck/core/court-day` | court-day display-board tracking (#493, D-048): `pollBoards` (one governed fetch per High Court board per run, only in court hours and only for halls where a workspace has an item listed today; content-free `board_observation` rows; `court.board` alerts through `notify()` at 5 away, 2 away, now, risen and passed over, deduped per listing and threshold), the `getLiveHalls` read model and the call-time estimate `estimateCallWindow` / `backtestEta` (a range with a confidence level, never a promise) |
 | `research` | `@causedeck/core/research` | judgment alerts (#497, D-048): per-matter issue tags (`listTags`, `addTag`, `proposeTags`, `confirmTag`, `dismissTag`; only confirmed tags drive alerts), `scanJudgments` (matches new corpus judgments to confirmed tags by statute and section, writes `judgment_alert` rows and notifies advocates who may read the matter; sensitive matters never alert) and `listRelevantJudgments` (keeps only alerts whose judgment `verifyCitation` resolves, D-004) |
@@ -103,6 +104,8 @@ graph LR
   lifecycle --> workspaces
   lifecycle --> network
   sources --> audit
+  jobs --> news
+  jobs --> sources
   research --> workspaces
   research --> citations
   network --> audit
@@ -196,6 +199,7 @@ graph LR
 | `ai` | `audit`, `usage` |
 | `lifecycle` | `audit`, `workspaces`, `network` |
 | `sources` | `audit` |
+| `news` | nothing |
 | `data-ops` | nothing (only `shared/`) |
 | `citations` | none |
 | `research` | `workspaces`, `citations` |
@@ -209,7 +213,7 @@ graph LR
 | `voice` | `workspaces`, `capture`, `ai`, `automation`, `matter-graph` |
 | `extraction` | `workspaces`, `ai`, `automation`, `matter-graph` |
 | `import` | `matter-graph`, `usage`, `automation` |
-| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `sources`, `research`, `business`, `case-watch`, `notices`, `data-ops` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `sources`, `research`, `business`, `case-watch`, `notices`, `data-ops`, `news` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

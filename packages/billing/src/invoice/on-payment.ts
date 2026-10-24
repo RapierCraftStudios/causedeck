@@ -56,11 +56,25 @@ export function chargedPaymentId(event: RazorpayWebhookEvent): string | null {
 
 /** The invoice lines for one period of `planId`, or null when the plan bills nothing. */
 export function chargeLines(
-  input: Pick<OnPaymentInput, 'planId' | 'seats' | 'clerkSeats' | 'periodStart' | 'periodEnd'>,
+  input: Pick<OnPaymentInput, 'planId' | 'seats' | 'clerkSeats' | 'periodStart' | 'periodEnd'> & {
+    /** Tracked cases billed in the period; read for a per-tracked-case plan (#664). */
+    trackedCases?: number;
+  },
 ): SaasInvoiceLineInput[] | null {
   const plan = getPlan(input.planId);
   if (!plan || plan.pricePaise <= 0) return null;
   const period = `${dateOf(input.periodStart)} to ${dateOf(input.periodEnd)}`;
+  if (plan.perTrackedCase) {
+    const cases = input.trackedCases ?? 0;
+    if (cases <= 0) return null;
+    return [
+      {
+        description: `${plan.name}, tracked cases, ${period}`,
+        quantity: cases,
+        unitPricePaise: plan.pricePaise,
+      },
+    ];
+  }
   const lines: SaasInvoiceLineInput[] = [
     {
       description: plan.perSeat ? `${plan.name}, seats, ${period}` : `${plan.name}, ${period}`,

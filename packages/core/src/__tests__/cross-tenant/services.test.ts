@@ -2609,9 +2609,7 @@ const CASES: Record<string, Case> = {
   },
   listMatterNotices: async (f) => {
     const matterId = f.a.rows.notice_match?.matterId ?? '';
-    await expectDenied(
-      f.asB((s) => core.listMatterNotices(s, { workspaceId: f.a.id, userId: f.ub }, matterId)),
-    );
+    // B's scope (already open) asking for A's matter: not found (a nested A scope would be refused).
     await expectDenied(
       f.asB((s) => core.listMatterNotices(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
     );

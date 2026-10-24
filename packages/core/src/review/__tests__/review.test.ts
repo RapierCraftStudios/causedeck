@@ -208,12 +208,11 @@ describe('review queue', () => {
 
 /** A workspace with no case watch: the control that a fix does not reach non-watchers. */
 async function seedOtherWatcherFree(tx: Transaction): Promise<{ workspaceId: string }> {
-  const owner = await newUser(tx, 'nowatch');
+  await newUser(tx, 'nowatch');
   const [org] = await tx
     .insert(schema.organization)
     .values({ name: 'No watch', slug: `nw-${crypto.randomUUID().slice(0, 8)}` })
     .returning({ id: schema.organization.id });
   if (org === undefined) throw new Error('org not created');
-  void owner;
   return { workspaceId: org.id };
 }

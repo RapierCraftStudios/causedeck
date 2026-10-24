@@ -233,6 +233,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // workspace profile (#284)
   getWorkspaceProfile: empty,
   updateWorkspaceProfile: denies,
+  // clerk setup approval (#505)
+  getClerkSetup: empty,
+  requestClerkSetupApproval: denies,
+  approveClerkSetup: denies,
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,

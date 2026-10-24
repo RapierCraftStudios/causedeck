@@ -1,3 +1,6 @@
+-- Migration 20261025000000_scim_token_lookup: hand-written, reviewed before commit.
+-- Reviewed-by: Claude (agent, #684)
+-- SCIM token lookup by hash (#684): owner-defined read for the bearer-token path; nothing dropped.
 CREATE POLICY "owner_definer_read" ON "scim_token" AS PERMISSIVE FOR SELECT TO causedeck_owner
   USING (true);--> statement-breakpoint
 CREATE FUNCTION app_scim_token_by_hash(p_token_hash text)

@@ -1,27 +1,32 @@
 ### Approach
-Reuse the existing `dedicated` plan kind (no migration) for an inactive `institution-case-monthly` plan flagged `perTrackedCase`. The charge is price times tracked cases, computed purely in billing and fed by a core count of `portfolio_case` rows.
+Daily system job `system.portfolio-alert.scan` lists institution workspaces with tracked cases through the owner-defined `app_portfolio_alert_targets()`, then runs `scanPortfolioAlerts` per workspace inside its own scope. Alerts go through `notify()` with per-case dedupe keys, so re-runs add nothing.
 
 ### Changes
-- packages/validators/src/plans.ts: `TRACKED_CASE_PRICE_PAISE`, optional `Plan.perTrackedCase`, the inactive catalogue row.
-- packages/billing/src/plans.ts: `trackedCaseChargePaise`; `mandateChargeNotice` takes optional `trackedCases`; `checkPlanConfig` rejects per-seat plus per-case and skips the cap on the zero minimum.
-- packages/billing/src/service.ts: `ChargeCounts`, used by `cycleChargePaise` and `quoteChange`.
-- packages/billing/src/invoice/on-payment.ts: per-case invoice line (null with no cases).
-- packages/core/src/billing/entitlements.ts: `countTrackedCases`, `getTrackedCaseCharge`.
-- Tests: billing plans (snapshot updated for the new row) and on-payment; core billing entitlements (DB).
+- packages/notifications/src/categories.ts: categories `portfolio.adverse_order`, `portfolio.missed_date`.
+- packages/notifications/src/__tests__/categories.test.ts: exact-list expectation.
+- packages/core/src/portfolio/alerts.ts (+ index.ts export, alerts.test.ts): `scanPortfolioAlerts`.
+- packages/core/src/jobs/definitions/portfolio-alert-scan.ts (+ test), jobs/registry.ts: the job (cron `0 6 * * *`).
+- packages/db/migrations/20261024120000_portfolio_alert_targets.sql, meta journal and snapshot: targets function and owner read policy.
+- packages/db/src/testing/cross-tenant-registry.ts, core cross-tenant/portfolio.test.ts: registry entry and a real case.
+- apps/worker registry.test.ts, schedules.test.ts: new job name.
+- packages/config/eslint/core-domains.js, docs/engineering/core-domains.md: jobs -> portfolio.
+- Required by the new category keys (amended as add-deliverable): packages/notifications/src/push/payload.ts, apps/web preferences-form.tsx, packages/i18n messages (en/kn/ta notifications.json, generated, translation-status.json).
 
 ### Acceptance Criteria Status
-- R1 ✅ packages/validators/src/plans.ts (institution-case-monthly row)
-- R2 ✅ packages/core/src/billing/entitlements.ts (countTrackedCases, getTrackedCaseCharge), packages/billing/src/plans.ts (trackedCaseChargePaise)
-- R3 ✅ charge from count, tested in packages/billing/src/__tests__/plans.test.ts and packages/core/src/billing/__tests__/entitlements.test.ts
+- R1 ✅ packages/core/src/portfolio/alerts.ts, jobs/definitions/portfolio-alert-scan.ts, categories.ts
+- R2 ✅ apps/worker/src/__tests__/registry.test.ts:169, schedules.test.ts:45, categories.test.ts:26
+- R3 ✅ packages/core/src/portfolio/alerts.test.ts, cross-tenant/portfolio.test.ts
 
 ### Verification
-- V1 billing vitest (plans, service, on-payment, entitlements): 79 passed.
-- V2 core vitest (billing entitlements, cross-tenant services, fairness): 200 passed.
-- V3 db plans-seed: passed.
-- turbo typecheck on changed packages and dependents: 23/23 successful. eslint on changed files: clean.
-- New tests would fail without the fix (the functions and the plan row do not exist).
+- V1 notifications categories.test.ts: pass.
+- V2 core portfolio, job test, cross-tenant portfolio, domains.test.ts: pass (25 tests).
+- V3 worker registry and schedules tests: pass.
+- V4 config eslint-boundaries test: pass.
+- Scoped turbo typecheck: pass. i18n catalog test: pass.
+- The new tests fail without the fix: `scanPortfolioAlerts` and the job do not exist on base.
 
 ### Notes
-- D6 (SERVICE_TESTS registry entry) is not delivered: `@causedeck/core/billing` is a subpath export, not in `packages/core/src/index.ts`, so the guard does not cover it and an entry would reference a non-existent `core.*` export (recorded as an amendment).
-- D7 delivered as a standalone two-tenant case in `services.test.ts`: B's count/charge ignore A's portfolio_case rows (RLS), and A's count is unchanged.
-- `scripts/check-devdocs-freshness.sh` and `lane-check.sh` do not exist here.
+New daily job at 06:00. Migration adds a SELECT policy for `causedeck_owner` on `portfolio_case`. Removed accidentally committed `.eslintcache` files.
+
+## Fix: stale-list guard
+PORTFOLIO_ALERT_MAX_CASES is a constant already in NOT_A_SERVICE, so it is not a member of the cross-tenant portfolio CASES list; recorded in result.json not_members.

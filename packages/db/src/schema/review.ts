@@ -71,7 +71,10 @@ export const reviewItem = pgTable(
       .where(sql`${t.status} in ('open', 'in_review') and ${t.kind} <> 'user_report'`),
     check('review_item_kind_chk', sql`${t.kind} in ${inList(REVIEW_KINDS)}`),
     check('review_item_status_chk', sql`${t.status} in ${inList(REVIEW_STATUSES)}`),
-    check('review_item_field_chk', sql`${t.field} is null or ${t.field} in ${inList(REVIEW_FIELDS)}`),
+    check(
+      'review_item_field_chk',
+      sql`${t.field} is null or ${t.field} in ${inList(REVIEW_FIELDS)}`,
+    ),
     check(
       'review_item_report_chk',
       sql`${t.kind} <> 'user_report' or (${t.consent} and ${t.cnr} is not null and ${t.field} is not null)`,

@@ -77,7 +77,8 @@ async function requireMember(db: Db, actor: WhatsAppActor): Promise<void> {
 
 function normalise(raw: string): string {
   const e164 = raw.replace(/[\s-]/g, '');
-  if (!E164.test(e164)) throw invalid('Enter the number in international format, e.g. +919812345678');
+  if (!E164.test(e164))
+    throw invalid('Enter the number in international format, e.g. +919812345678');
   return e164;
 }
 
@@ -155,8 +156,7 @@ export async function requestWhatsAppOtp(
 
 type LinkRow = typeof whatsappLink.$inferSelect;
 type VerifyOutcome =
-  | { result: 'ok'; link: LinkRow }
-  | { result: 'none' | 'expired' | 'locked' | 'wrong' };
+  { result: 'ok'; link: LinkRow } | { result: 'none' | 'expired' | 'locked' | 'wrong' };
 
 /**
  * Check the code. A right code creates (or replaces) the member's link with the opt-in recorded
@@ -171,58 +171,54 @@ export async function verifyWhatsAppOtp(
   await requireMember(deps.db, actor);
   const now = nowOf(deps);
   const submitted = input.code.trim();
-  const outcome = await withWorkspace(
-    deps.db,
-    actor,
-    async (tx): Promise<VerifyOutcome> => {
-      const [challenge] = await tx
-        .select()
-        .from(whatsappOtpChallenge)
-        .where(
-          and(
-            eq(whatsappOtpChallenge.workspaceId, actor.workspaceId),
-            eq(whatsappOtpChallenge.userId, actor.userId),
-          ),
-        )
-        .for('update');
-      if (challenge === undefined) return { result: 'none' };
-      if (challenge.expiresAt.getTime() <= now.getTime()) {
-        await tx.delete(whatsappOtpChallenge).where(eq(whatsappOtpChallenge.id, challenge.id));
-        return { result: 'expired' };
-      }
-      if (challenge.attempts >= WHATSAPP_OTP_MAX_ATTEMPTS) return { result: 'locked' };
-      if (!CODE.test(submitted) || !sameHash(hashCode(challenge.id, submitted), challenge.codeHash)) {
-        await tx
-          .update(whatsappOtpChallenge)
-          .set({ attempts: challenge.attempts + 1 })
-          .where(eq(whatsappOtpChallenge.id, challenge.id));
-        return { result: 'wrong' };
-      }
+  const outcome = await withWorkspace(deps.db, actor, async (tx): Promise<VerifyOutcome> => {
+    const [challenge] = await tx
+      .select()
+      .from(whatsappOtpChallenge)
+      .where(
+        and(
+          eq(whatsappOtpChallenge.workspaceId, actor.workspaceId),
+          eq(whatsappOtpChallenge.userId, actor.userId),
+        ),
+      )
+      .for('update');
+    if (challenge === undefined) return { result: 'none' };
+    if (challenge.expiresAt.getTime() <= now.getTime()) {
       await tx.delete(whatsappOtpChallenge).where(eq(whatsappOtpChallenge.id, challenge.id));
-      const [link] = await tx
-        .insert(whatsappLink)
-        .values({
-          workspaceId: actor.workspaceId,
-          userId: actor.userId,
+      return { result: 'expired' };
+    }
+    if (challenge.attempts >= WHATSAPP_OTP_MAX_ATTEMPTS) return { result: 'locked' };
+    if (!CODE.test(submitted) || !sameHash(hashCode(challenge.id, submitted), challenge.codeHash)) {
+      await tx
+        .update(whatsappOtpChallenge)
+        .set({ attempts: challenge.attempts + 1 })
+        .where(eq(whatsappOtpChallenge.id, challenge.id));
+      return { result: 'wrong' };
+    }
+    await tx.delete(whatsappOtpChallenge).where(eq(whatsappOtpChallenge.id, challenge.id));
+    const [link] = await tx
+      .insert(whatsappLink)
+      .values({
+        workspaceId: actor.workspaceId,
+        userId: actor.userId,
+        e164: challenge.e164,
+        verifiedAt: now,
+        consentAt: challenge.consentAt,
+      })
+      .onConflictDoUpdate({
+        target: [whatsappLink.workspaceId, whatsappLink.userId],
+        set: {
           e164: challenge.e164,
           verifiedAt: now,
           consentAt: challenge.consentAt,
-        })
-        .onConflictDoUpdate({
-          target: [whatsappLink.workspaceId, whatsappLink.userId],
-          set: {
-            e164: challenge.e164,
-            verifiedAt: now,
-            consentAt: challenge.consentAt,
-            categories: [],
-            updatedAt: now,
-          },
-        })
-        .returning();
-      if (link === undefined) throw new Error('whatsapp-link: link upsert returned no row');
-      return { result: 'ok', link };
-    },
-  );
+          categories: [],
+          updatedAt: now,
+        },
+      })
+      .returning();
+    if (link === undefined) throw new Error('whatsapp-link: link upsert returned no row');
+    return { result: 'ok', link };
+  });
   if (outcome.result === 'ok') return view(outcome.link);
   if (outcome.result === 'none') throw notFound('No verification is pending');
   if (outcome.result === 'expired') throw invalid('The code has expired; request a new one');

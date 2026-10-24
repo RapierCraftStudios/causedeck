@@ -96,7 +96,7 @@ const CATEGORY_MESSAGE = {
 } as const satisfies Record<CategoryKey, string>;
 
 const CHANNEL_MESSAGE = { in_app: 'inApp', email: 'email', push: 'push' } as const satisfies Record<
-  Channel,
+  Exclude<Channel, 'whatsapp'>,
   string
 >;
 
@@ -192,9 +192,10 @@ export function PreferencesForm({
 
   const categoryLabel = (category: CategoryKey) =>
     t(`categories.${CATEGORY_MESSAGE[category]}.label`);
-  const channelLabel = (channel: Exclude<Channel, 'whatsapp'>) => t(`channels.${CHANNEL_MESSAGE[channel]}`);
+  const channelLabel = (channel: Exclude<Channel, 'whatsapp'>) =>
+    t(`channels.${CHANNEL_MESSAGE[channel]}`);
 
-  const cellSwitch = (category: CategoryKey, channel: Channel) => {
+  const cellSwitch = (category: CategoryKey, channel: Exclude<Channel, 'whatsapp'>) => {
     const cell = cells[cellKey(category, channel)];
     if (cell === undefined) return null;
     return (

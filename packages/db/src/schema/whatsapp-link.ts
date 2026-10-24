@@ -5,15 +5,7 @@
 // verification (one per member): it holds a hash of the code, never the code, with an expiry and an
 // attempt cap. Tenant tables under FORCE RLS via `tenantTable()`.
 import { sql } from 'drizzle-orm';
-import {
-  check,
-  foreignKey,
-  integer,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { check, foreignKey, integer, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 import { id } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';
@@ -37,7 +29,10 @@ export const whatsappLink = tenantTable(
     verifiedAt: timestamp('verified_at', { withTimezone: true }).notNull(),
     consentAt: timestamp('consent_at', { withTimezone: true }).notNull(),
     /** Notification category keys the member opted in to on WhatsApp; empty means none. */
-    categories: text('categories').array().notNull().default(sql`'{}'::text[]`),
+    categories: text('categories')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

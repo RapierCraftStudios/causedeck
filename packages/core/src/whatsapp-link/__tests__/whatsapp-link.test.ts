@@ -73,7 +73,9 @@ describe('whatsapp link (#678)', () => {
   it('sends no target before verification and requires the opt-in', () =>
     setup(async ({ deps, actor, sent }) => {
       expect(await getWhatsAppSendTarget(deps, actor)).toBeNull();
-      const refused = await fails(requestWhatsAppOtp(deps, actor, { e164: NUMBER, consent: false }));
+      const refused = await fails(
+        requestWhatsAppOtp(deps, actor, { e164: NUMBER, consent: false }),
+      );
       expect(code(refused)).toBe('VALIDATION');
       expect(sent).toEqual([]);
       await requestWhatsAppOtp(deps, actor, { e164: NUMBER, consent: true });
@@ -153,7 +155,9 @@ describe('whatsapp link (#678)', () => {
 
   it('sends categories only once linked and only the chosen ones', () =>
     setup(async ({ deps, actor }) => {
-      const early = await fails(setWhatsAppCategories(deps, actor, { categories: ['court.board'] }));
+      const early = await fails(
+        setWhatsAppCategories(deps, actor, { categories: ['court.board'] }),
+      );
       expect(code(early)).toBe('CONFLICT');
       await requestWhatsAppOtp(deps, actor, { e164: NUMBER, consent: true });
       await verifyWhatsAppOtp(deps, actor, { code: '424242' });

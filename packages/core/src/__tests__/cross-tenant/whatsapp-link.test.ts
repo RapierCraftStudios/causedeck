@@ -80,9 +80,7 @@ const CASES: Record<string, Case> = {
       { db: f.tx },
       { userId: f.ub, workspaceId: f.b.id },
     );
-    expect(own?.e164).not.toBe(
-      (await aState(f)).links[0]?.e164,
-    );
+    expect(own?.e164).not.toBe((await aState(f)).links[0]?.e164);
   },
 };
 

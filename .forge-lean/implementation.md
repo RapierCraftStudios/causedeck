@@ -69,3 +69,6 @@ The only failed task was `@causedeck/intelligence#test`; the log excerpt shows n
 
 ## Merge recheck (3)
 turbo not found (exit 127) is a host PATH issue, not a merge conflict. tsc --noEmit clean for core, worker, db; core V1 and worker V2 subsets pass. No code change.
+
+## Merge recheck (4)
+`turbo: command not found` (exit 127) is again a PATH problem: turbo is in `node_modules/.bin`. With it on PATH, `tsc --noEmit` is clean for core, worker and db, and the V1 (39 tests) and V2 (11 tests) subsets pass. No code change.

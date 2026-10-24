@@ -81,7 +81,7 @@ export async function startDryRunAction(formData: FormData): Promise<void> {
   await start(formData, 'dry_run');
 }
 
-// authz: as startDryRunAction.
+// authz: public to the product policy (staff are not workspace members); requireStaff('migrations') gates it.
 export async function startImportAction(formData: FormData): Promise<void> {
   await start(formData, 'import');
 }
@@ -105,12 +105,12 @@ async function control(
   redirect(`/migrations/${runId}?workspace=${workspaceId}`);
 }
 
-// authz: as startDryRunAction.
+// authz: public to the product policy (staff are not workspace members); requireStaff('migrations') gates it.
 export async function resumeRunAction(formData: FormData): Promise<void> {
   await control(formData, 'migrations.resume', resumeMigrationRun);
 }
 
-// authz: as startDryRunAction.
+// authz: public to the product policy (staff are not workspace members); requireStaff('migrations') gates it.
 export async function rollbackRunAction(formData: FormData): Promise<void> {
   await control(formData, 'migrations.rollback', rollbackMigrationRun);
 }

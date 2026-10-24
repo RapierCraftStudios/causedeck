@@ -22,6 +22,7 @@
     "./capture": "./src/capture/index.ts",
     "./case-watch": "./src/case-watch/index.ts",
     "./notices": "./src/notices/index.ts",
+    "./conflicts": "./src/conflicts/index.ts",
     "./matter-graph": "./src/matter-graph/index.ts",
     "./matters": "./src/matters/index.ts",
     "./network": "./src/network/index.ts",

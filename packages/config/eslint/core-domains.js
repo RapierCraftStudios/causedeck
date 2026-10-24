@@ -34,6 +34,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Public API keys (#624, #487): issuing and revoking check the member's role through workspaces and are audited; a
   // billed call increments the `api.calls` key through usage.
   'api-keys': Object.freeze(['audit', 'usage', 'workspaces']),
+  // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
+  conflicts: Object.freeze(['audit']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.

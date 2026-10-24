@@ -33,6 +33,7 @@ const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.
 vi.mock('../app/(app)/w/[slug]/matters/actions.ts', () => ({
   searchMattersAction,
   createMatterAction: vi.fn(),
+  checkConflictsAction: vi.fn(),
 }));
 vi.mock('next/navigation', () => ({ useRouter: () => router }));
 vi.mock('@causedeck/flags/react', () => ({ useIsEnabled: () => () => false }));

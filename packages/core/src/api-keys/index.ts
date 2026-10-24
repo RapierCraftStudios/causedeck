@@ -224,7 +224,7 @@ export interface ApiKeyIdentity {
   rateLimitPerMinute: number;
 }
 
-interface KeyRow extends Record<string, unknown> {
+type KeyRow = {
   id: string;
   workspace_id: string;
   created_by: string;
@@ -233,7 +233,7 @@ interface KeyRow extends Record<string, unknown> {
   rate_limit_per_minute: number;
   expires_at: Date | string | null;
   revoked_at: Date | string | null;
-}
+};
 
 /** The key behind a token, or null when it is malformed, unknown, revoked or expired. */
 export async function authenticateApiKey(

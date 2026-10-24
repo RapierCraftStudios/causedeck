@@ -45,6 +45,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Public API keys (#624, #487): issuing and revoking check the member's role through workspaces and are audited; a
   // billed call increments the `api.calls` key through usage.
   'api-keys': Object.freeze(['audit', 'usage', 'workspaces']),
+  // The public developer API reads (#625, D-048): every record is gated on source clearance and data class through sources.
+  'public-api': Object.freeze(['sources']),
   // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
   conflicts: Object.freeze(['audit']),
   // Cross-checked facts (#499): source agreement and confidence over listing provenance; tables only.

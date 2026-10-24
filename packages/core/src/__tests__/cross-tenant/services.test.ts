@@ -2982,11 +2982,15 @@ const CASES: Record<string, Case> = {
       .asB((s) => core.getPublicCase(s, { workspaceId: f.a.id, userId: f.ub }, cnr))
       .catch(() => null);
     expect(asA).toBeNull();
-    expect(await f.asB((s) => core.getPublicCase(s, { workspaceId: f.b.id, userId: f.ub }, cnr))).toBeNull();
+    expect(
+      await f.asB((s) => core.getPublicCase(s, { workspaceId: f.b.id, userId: f.ub }, cnr)),
+    ).toBeNull();
   },
   listPublicCauseLists: async (f) => {
     const asA = await f
-      .asB((s) => core.listPublicCauseLists(s, { workspaceId: f.a.id, userId: f.ub }, { advocate: 'x' }))
+      .asB((s) =>
+        core.listPublicCauseLists(s, { workspaceId: f.a.id, userId: f.ub }, { advocate: 'x' }),
+      )
       .catch(() => []);
     expect(asA).toEqual([]);
     const own = await f.asB((s) =>
@@ -3009,7 +3013,9 @@ const CASES: Record<string, Case> = {
     // Global notices only: no record names a workspace, and the seeded personal-class sources give none.
     const notices = await f.asB((s) => core.listPublicNotices(s, {}));
     expect(JSON.stringify(notices)).not.toContain(f.a.id);
-    expect(notices.every((n) => n.sourceLicense.length > 0 && n.provenance.sourceId !== '')).toBe(true);
+    expect(notices.every((n) => n.sourceLicense.length > 0 && n.provenance.sourceId !== '')).toBe(
+      true,
+    );
   },
   listMatterNotices: async (f) => {
     const matterId = f.a.rows.notice_match?.matterId ?? '';

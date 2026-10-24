@@ -22,7 +22,11 @@ const ids = {
   uncleared: `pa.${tag}.uncleared`,
   killed: `pa.${tag}.killed`,
 };
-const cleared = { termsStatus: 'cleared', counselStatus: 'cleared', clearedAt: new Date() } as const;
+const cleared = {
+  termsStatus: 'cleared',
+  counselStatus: 'cleared',
+  clearedAt: new Date(),
+} as const;
 
 let t: TwoTenants;
 let keyA: string;
@@ -59,7 +63,7 @@ beforeAll(async () => {
       kind: 'circular',
       title: `Notice from ${sourceId}`,
       issuedOn: '2026-10-01',
-      url: `https://pa.example.test/${tag}/${n}`,
+      url: `https://pa.example.test/${tag}/${String(n)}`,
       forumCodes: [`pa-${tag}`],
       sourceType: 'manual',
     });
@@ -70,7 +74,9 @@ beforeAll(async () => {
         forumLabel: `PA ${tag}`,
         listingDate: '2026-10-02',
         content: `public ${kind} text ${sourceId}`,
-        sha256: (kind + sourceId).length.toString(16).padStart(2, '0') + randomUUID().replaceAll('-', '').padEnd(62, '0'),
+        sha256:
+          (kind + sourceId).length.toString(16).padStart(2, '0') +
+          randomUUID().replaceAll('-', '').padEnd(62, '0'),
         retentionUntil: new Date(Date.now() + 86_400_000),
       });
     }
@@ -82,7 +88,12 @@ beforeAll(async () => {
       .set({ sourceId: ids.personal })
       .where(eq(schema.caseWatch.id, t.a.rows.case_watch?.id ?? ''));
   });
-  keyA = await keyFor(t.a.id, t.ua, ['cases:read', 'causelists:read', 'orders:read', 'notices:read']);
+  keyA = await keyFor(t.a.id, t.ua, [
+    'cases:read',
+    'causelists:read',
+    'orders:read',
+    'notices:read',
+  ]);
   keyB = await keyFor(t.b.id, t.ub, ['cases:read', 'orders:read']);
   keyNoScopes = await keyFor(t.a.id, t.ua, ['webhooks:write']);
 });
@@ -92,12 +103,7 @@ const get = async (path: string, bearer: string) => {
   return { status: response.status, body: (await response.json()) as Record<string, unknown> };
 };
 
-const ROUTES = [
-  `/v1/cases/${CASE_CNR}`,
-  '/v1/causelists',
-  '/v1/orders',
-  '/v1/notices',
-];
+const ROUTES = [`/v1/cases/${CASE_CNR}`, '/v1/causelists', '/v1/orders', '/v1/notices'];
 
 describe('public API scopes', () => {
   it.each(ROUTES)('answers 403 on %s for a key without the scope', async (path) => {
@@ -119,9 +125,13 @@ describe('notices, cause lists and orders', () => {
     ]) {
       const { status, body } = await get(path, keyA);
       expect(status).toBe(200);
-      const data = (body.data as { provenance: { source_id: string }; source_license: string }[])
-        .filter((r) => r.provenance.source_id.startsWith(`pa.${tag}`));
-      expect(data.map((r) => r.provenance.source_id), path).toEqual([ids.open]);
+      const data = (
+        body.data as { provenance: { source_id: string }; source_license: string }[]
+      ).filter((r) => r.provenance.source_id.startsWith(`pa.${tag}`));
+      expect(
+        data.map((r) => r.provenance.source_id),
+        path,
+      ).toEqual([ids.open]);
       for (const record of data) {
         expect(record.source_license).not.toBe('');
         expect(record.provenance).toMatchObject({ source_id: ids.open });
@@ -168,8 +178,8 @@ describe('cases', () => {
 describe('what responses never hold', () => {
   it('has no rating, ranking, prediction or contributor field', async () => {
     const bodies = await Promise.all(
-      [`/v1/cases/${CASE_CNR}`, '/v1/causelists', '/v1/orders', '/v1/notices'].map(
-        async (path) => JSON.stringify((await get(path, keyA)).body),
+      [`/v1/cases/${CASE_CNR}`, '/v1/causelists', '/v1/orders', '/v1/notices'].map(async (path) =>
+        JSON.stringify((await get(path, keyA)).body),
       ),
     );
     for (const text of bodies) {

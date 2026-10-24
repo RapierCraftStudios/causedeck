@@ -41,10 +41,7 @@ export interface PublicRecord {
 }
 
 /** The licence line for a record: derived from the source owner, as the registry has no licence text. */
-export function sourceLicense(
-  owner: string,
-  kind: PublicProvenance['kind'],
-): string {
+export function sourceLicense(owner: string, kind: PublicProvenance['kind']): string {
   return kind === 'contributed'
     ? `contributed-public-document; original publisher: ${owner}`
     : `${owner} public record (terms and counsel cleared)`;
@@ -181,7 +178,11 @@ export async function getPublicCase(
 ): Promise<PublicCase | null> {
   if (!isUuid(actor.workspaceId) || !isUuid(actor.userId)) return null;
   const rows = await ownSnapshots(db, actor, cnr);
-  const servable = await servableSources(db, rows.map((r) => r.sourceId), false);
+  const servable = await servableSources(
+    db,
+    rows.map((r) => r.sourceId),
+    false,
+  );
   for (const row of rows) {
     const origin = servable.get(row.sourceId);
     if (origin === undefined || row.cnr === null) continue;
@@ -260,10 +261,16 @@ async function sharedDocuments(
     )
     .orderBy(desc(contributedDocument.contributedAt))
     .limit(PUBLIC_API_MAX_LIMIT * 4);
-  const servable = await servableSources(db, rows.map((r) => r.sourceId), true);
+  const servable = await servableSources(
+    db,
+    rows.map((r) => r.sourceId),
+    true,
+  );
   return rows.flatMap((row) => {
     const origin = servable.get(row.sourceId);
-    return origin === undefined || row.content === null ? [] : [{ row, origin, content: row.content }];
+    return origin === undefined || row.content === null
+      ? []
+      : [{ row, origin, content: row.content }];
   });
 }
 
@@ -373,12 +380,14 @@ export async function listPublicNotices(
   const rows = await db
     .select()
     .from(notice)
-    .where(
-      query.forum === undefined ? undefined : sql`${query.forum} = any(${notice.forumCodes})`,
-    )
+    .where(query.forum === undefined ? undefined : sql`${query.forum} = any(${notice.forumCodes})`)
     .orderBy(desc(notice.issuedOn), desc(notice.createdAt))
     .limit(PUBLIC_API_MAX_LIMIT * 4);
-  const servable = await servableSources(db, rows.map((r) => r.sourceId), true);
+  const servable = await servableSources(
+    db,
+    rows.map((r) => r.sourceId),
+    true,
+  );
   return rows
     .flatMap((row) => {
       const origin = servable.get(row.sourceId);

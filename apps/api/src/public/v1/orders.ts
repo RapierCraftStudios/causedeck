@@ -63,10 +63,12 @@ export function ordersRouter(db: Database): AppRouter {
       ...(query.limit === undefined ? {} : { limit: query.limit }),
     });
     return c.json(
-      { data: orders.map(({ provenance, sourceLicense, ...rest }) => ({
-        ...rest,
-        ...recordOf({ provenance, sourceLicense }),
-      })) },
+      {
+        data: orders.map(({ provenance, sourceLicense, ...rest }) => ({
+          ...rest,
+          ...recordOf({ provenance, sourceLicense }),
+        })),
+      },
       200,
     );
   });

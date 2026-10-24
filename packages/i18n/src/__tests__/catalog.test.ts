@@ -115,6 +115,7 @@ describe('namespaced catalogs (#174)', () => {
         'offline',
         'palette',
         'portfolio',
+        'provisioning',
         'pwa',
         'settings',
         'shell',

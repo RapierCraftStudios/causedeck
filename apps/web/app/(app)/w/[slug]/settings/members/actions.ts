@@ -9,6 +9,7 @@
 // Invitation emails go through the auth `Mailer` (`createMailer`): the console transport in dev and
 // CI, Mailpit with EMAIL_PROVIDER=smtp. The plaintext invite link comes back to the client only for
 // the dev "Copy link" toast, never in production or with the SES transport (#23).
+import type { ProvisioningReport } from '@causedeck/core/provisioning';
 import type { WorkspaceRole } from '@causedeck/core/workspaces';
 import { ChangeRoleInput, INVITE_ROLE_VALUES } from '@causedeck/validators/workspace';
 import { revalidatePath } from 'next/cache';
@@ -27,6 +28,14 @@ const InviteMembers = WorkspaceScoped.extend({
     .max(MAX_INVITES_PER_SEND),
   role: z.enum(INVITE_ROLE_VALUES),
   note: z.string().trim().max(500).optional(),
+});
+
+/** A pasted or uploaded CSV above this many characters is refused (500 rows fit well under it). */
+const MAX_CSV_CHARS = 200_000;
+
+const ProvisionCsv = WorkspaceScoped.extend({
+  csv: z.string().min(1).max(MAX_CSV_CHARS),
+  dryRun: z.boolean(),
 });
 
 const ChangeRole = WorkspaceScoped.extend(ChangeRoleInput.shape);
@@ -150,6 +159,29 @@ const invite = workspaceAction(
   { action: 'member.invite' },
 );
 
+const provisionCsv = workspaceAction(
+  ProvisionCsv,
+  async (input, ctx) => {
+    const [{ provisionFromCsv }, , mail] = await Promise.all([
+      import('@causedeck/core/provisioning'),
+      gatedCore(),
+      mailSettings(),
+    ]);
+    const report = await provisionFromCsv(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      csv: input.csv,
+      dryRun: input.dryRun,
+      mailer: mail.mailer,
+      appUrl: mail.appUrl,
+      locale: mail.locale,
+    });
+    if (!input.dryRun) refresh();
+    return report;
+  },
+  { action: 'member.invite' },
+);
+
 const changeMemberRole = workspaceAction(
   ChangeRole,
   async (input, ctx) => {
@@ -268,6 +300,10 @@ export async function inviteMembersAction(
   raw: unknown,
 ): Promise<Result<{ results: InviteOutcome[] }>> {
   return invite(raw);
+}
+
+export async function provisionMembersCsvAction(raw: unknown): Promise<Result<ProvisioningReport>> {
+  return provisionCsv(raw);
 }
 
 export async function changeRoleAction(

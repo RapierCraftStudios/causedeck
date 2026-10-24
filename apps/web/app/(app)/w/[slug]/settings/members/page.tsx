@@ -12,7 +12,7 @@
 // settings banner) and permission-denied (in the client view). If only the seat read fails, the
 // list still renders without the seat card. `?__state=loading|error` previews the first two in
 // development, like the shell.
-import type { PolicySettings } from '@causedeck/auth/policy';
+import { invitableRoles, type PolicySettings } from '@causedeck/auth/policy';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -29,12 +29,14 @@ import {
   changeRoleAction,
   confirmTransferAction,
   inviteMembersAction,
+  provisionMembersCsvAction,
   openWorkAction,
   prepareTransferAction,
   removeMemberAction,
   resendInvitationAction,
   revokeInvitationAction,
 } from './actions.ts';
+import { BulkCsvDialog } from './bulk-csv-dialog.tsx';
 import {
   MembersError,
   MembersSkeleton,
@@ -135,7 +137,17 @@ async function MembersSection({
     return <MembersError />;
   }
   if (!data.seats) logger.warn('members page: could not read the seat summary');
+  const canProvision = invitableRoles(context.role, data.policySettings).length > 0;
   return (
+    <>
+      {canProvision ? (
+        <div className="flex justify-end">
+          <BulkCsvDialog
+            workspaceId={context.workspace.id}
+            provision={provisionMembersCsvAction}
+          />
+        </div>
+      ) : null}
     <MembersView
       workspace={context.workspace}
       viewer={{ userId: context.user.id, role: context.role }}
@@ -155,6 +167,7 @@ async function MembersSection({
         revokeInvitation: revokeInvitationAction,
       }}
     />
+    </>
   );
 }
 

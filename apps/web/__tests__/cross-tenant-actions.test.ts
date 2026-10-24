@@ -123,6 +123,7 @@ const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 /** Every exported server action and the module it comes from. */
 const ACTIONS: Record<string, Record<string, unknown>> = {
   inviteMembersAction: members,
+  provisionMembersCsvAction: members,
   changeRoleAction: members,
   openWorkAction: members,
   removeMemberAction: members,
@@ -442,6 +443,11 @@ afterAll(closeTestDb);
 function inputs(workspaceId: string): Record<string, unknown> {
   return {
     inviteMembersAction: { workspaceId, emails: ['xt-probe@example.test'], role: 'junior' },
+    provisionMembersCsvAction: {
+      workspaceId,
+      csv: 'email,role\nxt-probe-csv@example.test,viewer\n',
+      dryRun: false,
+    },
     changeRoleAction: { workspaceId, memberId: aMember.memberId, role: 'owner' },
     openWorkAction: { workspaceId, memberId: aMember.memberId },
     removeMemberAction: { workspaceId, memberId: aMember.memberId },

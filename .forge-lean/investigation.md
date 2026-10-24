@@ -1,47 +1,49 @@
 **Verdict**: CONFIRMED
 **Confidence**: medium
-**Severity**: medium (P2: internal tooling, no user-facing defect; blocks roadmap/partnership targeting, #513)
+**Severity**: medium (P2 feature: roadmap work for the #498 B2B portfolio product, no existing defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Greenfield coverage tracker (D-049): (1) an `apps/admin` Coverage matrix of forums (grouped by state and court type) against data types, each cell showing level, freshness and volume, filterable by state; (2) a gap list ranked by demand (watches and users in that forum) times missing level; (3) a weekly staff email with the change since last week. Acceptance: every catalogue forum appears with a level per data type [integration]; gap ranking uses live demand (watch counts) [unit]. Depends on #478 (closed, source registry) and #495 (closed not_planned, but its parts #634/#635/#636 are merged at HEAD).
+#662 (part 2 of #498): add DRT/DRAT status and cause-list parsers and NCLT benches nationally (extending nclt-blr, #38) with golden fixtures, registered in the adapter registry and forum catalogue config. SARFAESI DM/CMM matters use the eCourts sources already present. Acceptance: parsers pass golden fixtures offline.
 
 ### What We Found
-- The existing `.forge-lean/*` and the earlier "Investigation Report" comment on #517 describe #636 (district status sources); they are stale and superseded. Those changes are already at HEAD (`packages/db/migrations/20261024090000_ecourts_district_status_sources.sql`, journal idx 85).
-- No coverage code exists: `grep -ri coverage apps/admin packages/core/src` finds no tracker. Admin routes are `apps/admin/app/(console)/{adapters,sources,data-ops,flags,...}`; nav is `apps/admin/components/console-nav.tsx:29-39`; roles in `apps/admin/lib/roles.ts:28` (ops has `data-ops`, `sources`).
-- Forum facts: `forum` (`packages/db/src/schema/court.ts:34-62`: `code`, `court`, `establishment`, `jurisdictionKind`, `adapterId`, `adapterLevel`, `enabled`; `workspace_id` null = system catalogue). Forum codes look like `in.ka.karnataka-hc.bengaluru`, `in.tn.chennai.family-courts`; state is the 2nd segment (`packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts:8-40`).
-- Source facts: `source` (`packages/db/src/schema/source-registry.ts:50-90`: `id`, `kind`, `accessMode` A0-A3, `clearedAt`, `killSwitch`, `slo*`). Source ids are `<scope>:<data_type>` with data types seen in migrations: `case_status`, `cause_list`, `display_board` (e.g. `in.ka.karnataka-hc.bengaluru:cause_list`, `in.tn.madras-hc.chennai:display_board`), state-wide district ids `in.<st>.district:case_status`, and Chennai `in.tn.chennai-district:case_status`; notices are a `notice` kind whose rows carry `forum_codes` (`packages/db/src/schema/notices.ts:54,74`). There is no `order` source yet, so that data type will show "none".
-- Freshness/volume: `fetch_log` (`packages/db/src/schema/fetch-log.ts:9-25`, index on `source_id, fetched_at`; status 0 or >=400 is an error per `packages/core/src/sources/ops.ts:128`). `sourceOpsOverview` (`ops.ts:204`) already computes per-source health from it and is the template.
-- Demand: `case_watch.source_id/advocate_user_id` (`packages/db/src/schema/case-watch.ts:34-50`) and `cause_list_watch.source_id/user_id` (`cause-list-watch.ts:27-42`) are tenant tables under FORCE RLS, so staff can only read aggregates through a SECURITY DEFINER function that calls `app_staff_require_caller()`, exactly as `app_staff_conflict_rate` (`packages/db/migrations/0082_staff_conflict_rate.sql`) and its wrapper `staffConflictRate` (`ops.ts:165`), called via `staffCall` (`apps/admin/lib/data/scope.ts:94`).
-- Admin read pattern: pages import only from `apps/admin/lib/data/index.ts` (`dataOpsOverview` at `:187`), never `withoutWorkspace`; guard tests `apps/admin/__tests__/{data-layer,server-component-imports,no-content-fields,no-without-workspace-outside-data}.test.ts` constrain new pages (no content fields: counts/ids/levels only).
-- Weekly email pattern: `packages/core/src/jobs/definitions/business-digest.ts` (cron `0 9 * * 1`, `defineJob`, injected `email`/deps, `notificationJobDeps`), registered in `packages/core/src/jobs/registry.ts:23-24,177-178,233-234` and enumerated in `apps/worker/src/__tests__/registry.test.ts:139` and `schedules.test.ts:30`. Recipients there come from env (`BUSINESS_FOUNDER_EMAILS`); staff accounts are `staff_user` (`schema/staff.ts:52-61`, role, `disabled_at`) joined to `user.email`.
-- No history of past levels is stored, so "change since last week" needs either a snapshot store or derivation (see Recommendation).
+- The `.forge-lean/*` files present at start described #517 (coverage tracker). They were stale and have been replaced.
+- Only NCLT Bengaluru has an adapter: `packages/adapters/src/nclt-blr/index.ts:31-33` (id, forum code and version are all `in.nclt.bengaluru`) and `:155-158` (`forumCodes: [NCLT_FORUM_CODE]`). It parses cause lists only; status is `none` (`:41-46`) and `parseOrderHeader` is a stub.
+- No DRT/DRAT code exists in `packages/adapters`. The catalogue lists only `in.drt.bengaluru-1/-2` at A0 with no `adapterId` (`packages/db/src/seed/forum-catalogue/tribunals.ts:45-67`). There are no DRAT forums and only one NCLT bench (`tribunals.ts:28-43`).
+- Status parsers are HTML label/value specs over `readStatusPage` (`packages/adapters/src/status/ecourts-district.ts:7-21`, `status/html.ts:84`). The template list is closed (`status/types.ts:8`). The dispatcher is `status/index.ts:12-16`, and `core/src/case-watch/lookup.ts:13,36` consumes the type.
+- The eCourts cause-list parser is an HTML table parser, anchored on the case-number cell (`ecourts/cause-list.ts:1-60`). It is the template for a DRT cause-list parser.
+- Registration points:
+  - `adapters/src/registry.ts:25-51` rejects a duplicate id or forum code, so each forum code can map to only one adapter.
+  - `config/loader.ts:63-68` (`BUNDLED_ADAPTER_CONFIGS`).
+  - `workbench/index.ts:13-18` (`WORKBENCH_ADAPTERS`). `src/__tests__/fixture-regression.test.ts:30-32` requires `fixtures/accuracy-baseline.json` to list exactly these adapters.
+  - `core/src/import/batch.ts:107-111`.
+- Fixture conventions: `fixtures/README.md`; `fixtures/<adapter-id>/manifest.json` plus `*.input.*`/`*.expected.json`, run by `runGolden`. Status fixtures live in `fixtures/status/manifest.json`, run by `src/status/fixtures.test.ts`. Both are in `vitest.golden.config.ts`, so they run offline with no database.
+- Catalogue guard tests: `forum-catalogue.test.ts:45-47` (expected codes), `:138` (exactly 4 forums at A1), `:167` (every forum has hosts). The version string is `FORUM_CATALOGUE_VERSION` in `forum-catalogue/index.ts:25`. The catalogue is seeded on deploy, so no migration is needed for forum rows.
+- SARFAESI DM/CMM: covered by the eCourts district sources and parsers already merged (#634-#636); no work needed.
 
 ### Root Cause
-Not a defect: the facts exist (forum catalogue, source registry, fetch log, watch tables) but nothing joins them into a coverage view, a demand-ranked gap list or a weekly report.
+Not a defect. The adapter framework, the NCLT table parser and the HTML status/cause-list patterns exist for 4 forum families, but nothing covers DRT/DRAT, and NCLT is bound to the Bengaluru bench.
 
 ### Affected Files
-- `packages/core/src/sources/coverage.ts` (new; exported from `sources/index.ts`): pure `buildCoverage`/`rankGaps`/`diffCoverage` plus a reader.
-- `packages/db/migrations/<next-timestamp>_staff_watch_demand.sql` + journal entry + snapshot: `app_staff_watch_demand()`.
-- `apps/admin/lib/data/index.ts`: audited `coverageOverview` read; `apps/admin/lib/roles.ts` / `components/console-nav.tsx`: capability and nav item `coverage` (or reuse `data-ops`).
-- `apps/admin/app/(console)/coverage/page.tsx` (new), `apps/admin/__tests__/coverage-page.test.tsx` (new).
-- `packages/core/src/jobs/definitions/coverage-weekly.ts` (new), `jobs/registry.ts`, `apps/worker/src/__tests__/{registry,schedules}.test.ts`.
-- `packages/core/src/sources/__tests__/coverage.test.ts` (new); `packages/db/src/testing/cross-tenant-registry.ts` (new core runtime exports need `SERVICE_TESTS` or `NOT_A_SERVICE`), `packages/core/src/__tests__/cross-tenant/services.test.ts` if a real case is chosen; core domain deps (`CORE_DOMAIN_DEPENDENCIES`, `docs/engineering/core-domains.md`) only if `sources` gains a new cross-domain import.
+- New: `packages/adapters/src/status/{drt,nclt}.ts` (label specs), `src/drt/` (cause-list parser, `createDrtAdapter`, forum code list, config), `src/nclt-blr/config/benches.ts` (national bench codes), and fixtures under `fixtures/status/{drt,nclt}/` and `fixtures/in.drt/`.
+- Edit: `status/{types,index,fixtures.test}.ts`, `src/index.ts`, `nclt-blr/index.ts` (forumCodes), `config/loader.ts`, `workbench/index.ts`, `fixtures/accuracy-baseline.json`, `fixtures/status/manifest.json`.
+- Catalogue: `packages/db/src/seed/forum-catalogue/tribunals.ts` (or a new file imported by `index.ts`), `index.ts` (version bump), `forum-catalogue.test.ts`.
+- Check: `packages/core/src/case-watch/lookup.ts` (it must still typecheck if the template union grows).
 
 ### Sibling Sweep
-- Data Ops (#514) and adapter health (#499) are source-keyed, not forum-keyed; the coverage view reuses their wrappers rather than duplicating SQL. The `source`/`forum` code mismatch (state-wide `in.<st>.district:*` vs per-forum codes) is the one place a new mapping rule is needed; it must be a single tested function.
-- Other staff-readable aggregates over tenant tables all use a definer function (0072 parse yield, 0082 conflict rate): follow it, never read `case_watch` directly from admin.
+- Other code that maps a forum or adapter to its parsers: `core/src/import/batch.ts:107` (the dedicated parser list; DRT is HTML, so add it only if a layout input can reach it) and `core/src/court/forums.test.ts` (uses `in.nclt.bengaluru` and DRT codes).
+- `grep CaseStatusTemplate` found only `lookup.ts` and the status package.
+- The `adapter_version` and `access_mode_registry` DB rows for new adapter ids (cf. migration `0052_nclt_adapter_v1.sql`) are not required for parsing. The loader falls back to `BUNDLED_ADAPTER_CONFIGS`. Adding them is a follow-up if activation through the DB is wanted.
 
 ### History
-`source` registry: #478 (D-048). Fetch log: #479. Case watch: #483/#589/#591. Cause-list watch: #482. Display board: #493. Notices: #584. Data Ops: #514/#515. District importer #635, parsers #634, district status sources #636. Weekly digest pattern: #519.
+NCLT adapter #38 (merge 2b5b4eea, migration 0052, ADR 0020). eCourts template parsers #634 (fc5b3844), status parsers #590, district status sources #636. Parent #498 was closed not_planned, but its parts #661 and #663-#666 stay open.
 
 ### Recommendation
-1. Coverage model (core, pure + tested): a forum covers a data type through a source whose id is `<prefix>:<type>` where prefix equals the forum code, is a dotted ancestor of it, or is `in.<st>.district` for district-kind forums of state `<st>`. Data types: `cause_list`, `case_status`, `order`, `display_board`, `notice`. Cell level = highest `access_mode` among matching sources that are cleared (`cleared_at` set) and not killed; otherwise `none`. Freshness = latest successful `fetch_log.fetched_at` (status 200-399) of those sources; volume = successful fetches in 7 days; notices volume from `notice.forum_codes`. Every enabled catalogue forum (workspace_id null) gets all 5 cells.
-2. Demand: migration with `app_staff_watch_demand()` returning `source_id, watches, users` (count and distinct user) over `case_watch` (enabled) and `cause_list_watch`, refusing non-staff, aggregates only. `rankGaps` scores forum x type = demand(watches, users) * (A3 target level index - current level index), `none`=0 ... A3=3 target; drops zero-demand cells to the tail; deterministic tie-break by forum code.
-3. Admin page `/coverage`: matrix grouped by state then court type, state filter via a `?state=` search param (server component, no client JS), plus the ranked gap list. Audited read through `lib/data` with purpose `coverage.overview`.
-4. Weekly report: `system.coverage.weekly`, Mondays 09:30 IST (cron `30 9 * * 1`), emails enabled staff (ops/admin) with top gaps and the change since last week. Change since last week is derived without a new table: cells whose covering source `cleared_at` or first successful fetch fell inside the last 7 days count as new, and levels are recomputed "as of" 7 days ago by ignoring sources cleared later; this avoids a snapshot table (and the table/RLS/registry updates). If reviewers prefer exact history, a `coverage_snapshot` global table is the alternative.
-5. Tests: unit for mapping, level, ranking uses live watch counts (stubbed demand rows with different counts reorder the list), integration/page test that every forum in a seeded catalogue appears with five levels, job test with injected email.
-Risk: source-to-forum mapping is heuristic until sources carry an explicit forum column; keep it in one function with tests. Medium confidence for that reason.
+1. Keep the NCLT adapter id `in.nclt.bengaluru` (it is pinned by migration 0052, the loader and the baseline). Extend its `forumCodes` with the national bench codes (`in.nclt.<bench>`) and seed those forums at A1 with `adapterId: 'in.nclt.bengaluru'`. Add one test that every bench resolves through the registry.
+2. Add a `drt` adapter (id `in.drt`, forum codes: the DRT and DRAT forums seeded). It provides an HTML cause-list parser modelled on `ecourts/cause-list.ts`, access modes `user_supplied` or `none` as for NCLT (terms unread), and a bundled config.
+3. Add `drt` and `nclt` status templates (`PageSpec` label maps) and parsers, with synthetic FICTIONAL fixtures and expected JSON.
+4. Register in the loader, the workbench and the accuracy baseline, and add the DRT/DRAT/NCLT forums to the catalogue. Update the catalogue guard tests and bump the catalogue version.
+5. Real DRT/NCLT page layouts are unverified, so fixtures are synthetic. This is the main risk (hence medium confidence).
 
 ### Related Issues
-#478, #495 (deps); #513 (partnerships workstream, consumer); #514/#515 (Data Ops), #499, #519 (weekly digest pattern), #583/#584 (notices), #482/#493, #635/#636.
+#498 (parent), #38, #634, #635, #636, #590, #661, #663, #664, #665, #666.

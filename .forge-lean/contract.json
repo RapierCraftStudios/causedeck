@@ -2,31 +2,19 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/admin` Coverage: a matrix of forums (grouped by state and court type) against data types, each cell showing the level, freshness and volume, filterable by state.",
+   "quote": "Add DRT/DRAT status and cause-list parsers and NCLT benches nationally (extending nclt-blr, #38) with golden fixtures, registered in the adapter registry and forum catalogue config.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "A gap list ranked by demand (watches and users in that forum) times missing level.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "SARFAESI DM/CMM matters are tracked through eCourts sources already present.",
+   "disposition": "not-applicable",
+   "evidence": "packages/db/migrations/20261024090000_ecourts_district_status_sources.sql:4; packages/adapters/src/ecourts/index.ts:1-6"
   },
   {
    "id": "R3",
-   "quote": "A weekly coverage report (email to staff) with the change since last week.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R4",
-   "quote": "Every forum in the catalogue appears with a level per data type. [type:integration]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "The gap ranking uses live demand (watch counts). [type:unit]",
+   "quote": "Acceptance: parsers pass golden fixtures offline.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -34,202 +22,215 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/sources/coverage.ts",
-   "change": "New. Pure functions: sourcesForForum (source id `\u003cprefix>:\u003ctype>`; prefix equals forum code, is a dotted ancestor, or is `in.\u003cst>.district` for district-kind forums of state \u003cst>), buildCoverage (every enabled catalogue forum with workspace_id null x data types cause_list, case_status, order, display_board, notice; level = highest access_mode of cleared, non-killed matching sources else 'none'; freshness = latest successful fetch_log fetch (status 200-399); volume = successful fetches in 7 days), rankGaps (score = demand watches/users x (3 - level index, none lowest); deterministic tie-break by forum code), diffCoverage (week-over-week change derived from source cleared_at / first fetch, no snapshot table), plus a reader over source, forum, fetch_log, notice and the demand function. Export from packages/core/src/sources/index.ts.",
+   "path": "packages/adapters/src/status/types.ts",
+   "change": "add 'drt' and 'nclt' to CASE_STATUS_TEMPLATES",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/sources/index.ts",
-   "change": "Add `export * from './coverage.ts'`.",
+   "path": "packages/adapters/src/status/drt.ts",
+   "change": "new parseDrtStatus: PageSpec label map over readStatusPage (DRT and DRAT status page)",
    "requirements": [
-    "R1"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations/20261024100000_staff_watch_demand.sql",
-   "change": "New hand-written migration (use next free timestamp after 20261024090000_ecourts_district_status_sources; rename if base took it): SECURITY DEFINER app_staff_watch_demand() returning source_id, watches, users over case_watch (enabled) and cause_list_watch; calls app_staff_require_caller(); REVOKE FROM PUBLIC, GRANT to causedeck_app, causedeck_clerk; aggregates only, modelled on 0082_staff_conflict_rate.sql. Add the matching entry to migrations/meta/_journal.json and a snapshot file.",
+   "path": "packages/adapters/src/status/nclt.ts",
+   "change": "new parseNcltStatus: PageSpec label map over readStatusPage",
    "requirements": [
-    "R2",
-    "R5"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/db/migrations/meta/_journal.json",
-   "change": "Journal entry for D3 (idx 86).",
+   "path": "packages/adapters/src/status/index.ts",
+   "change": "export and dispatch the two new parsers in PARSERS",
    "requirements": [
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "apps/admin/lib/data/index.ts",
-   "change": "Add audited coverageOverview(staff, now?, db?) using staffCall (function app_staff_watch_demand) and staffQuery (tables forum, source, fetch_log, notice) with purpose `coverage.overview`; never import withoutWorkspace elsewhere.",
+   "path": "packages/adapters/src/status/fixtures.test.ts",
+   "change": "cover the new templates; stays offline",
    "requirements": [
-    "R1",
-    "R2",
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/admin/app/(console)/coverage/page.tsx",
-   "change": "New server component, requireStaff capability for coverage: matrix grouped by state then court type x 5 data types (level, freshness, volume per cell), `?state=` filter, ranked gap list. Counts, ids, levels and times only (no content fields).",
+   "path": "packages/adapters/fixtures/status/manifest.json",
+   "change": "list the new drt and nclt status fixture inputs (synthetic, FICTIONAL)",
    "requirements": [
-    "R1",
-    "R2",
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/admin/components/console-nav.tsx",
-   "change": "Add Coverage nav item (/coverage) and extend the href union; update header comment.",
+   "path": "packages/adapters/src/drt/index.ts",
+   "change": "new DRT/DRAT adapter: DRT_ADAPTER_ID 'in.drt', forum code list, access modes (user_supplied/none, counsel note), config, createDrtAdapter with an HTML cause-list parseCauseList modelled on ecourts/cause-list.ts, bundled config",
    "requirements": [
-    "R1"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/admin/lib/roles.ts",
-   "change": "Add `coverage` staff capability for ops and admin (or reuse data-ops if lint/guard tests prefer); keep support without it.",
+   "path": "packages/adapters/src/drt/cause-list.ts",
+   "change": "new DRT cause-list HTML parser (anchored rows, unparsed rows, halls), pure",
    "requirements": [
-    "R1"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/jobs/definitions/coverage-weekly.ts",
-   "change": "New job `system.coverage.weekly`, cron `30 9 * * 1`, singleton key, injectable email/now/recipients deps; recipients are enabled ops/admin staff emails; emails top gaps and change since last week; nothing sent when no recipients.",
+   "path": "packages/adapters/src/drt/drt.test.ts",
+   "change": "new tests: registry resolves every DRT/DRAT forum code, config matches bundled, parser unit cases",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Import and register coverageWeekly in the definitions list and the type map.",
+   "path": "packages/adapters/fixtures/in.drt/manifest.json",
+   "change": "new golden fixtures dir for in.drt: manifest plus *.input.html and *.expected.json (synthetic, FICTIONAL)",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add `system.coverage.weekly` to the expected job names.",
+   "path": "packages/adapters/src/nclt-blr/config/benches.ts",
+   "change": "new list of national NCLT bench forum codes",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D12",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "Add `system.coverage.weekly` to the expected schedules.",
+   "path": "packages/adapters/src/nclt-blr/index.ts",
+   "change": "forumCodes = Bengaluru plus the national benches; id, version and config unchanged",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/src/sources/__tests__/coverage.test.ts",
-   "change": "New unit tests: mapping rule, level selection (uncleared/killed => none), freshness/volume, every catalogue forum has 5 cells (R4), rankGaps reorders when stubbed watch counts change (R5), diffCoverage.",
+   "path": "packages/adapters/src/config/loader.ts",
+   "change": "add DRT bundled config to BUNDLED_ADAPTER_CONFIGS",
    "requirements": [
-    "R4",
-    "R5",
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/admin/__tests__/coverage-page.test.tsx",
-   "change": "New page test with mocked lib/data: matrix renders every forum with five data-type cells, state filter narrows, gap list order, access denied for support role.",
+   "path": "packages/adapters/src/workbench/index.ts",
+   "change": "add 'in.drt' to WORKBENCH_ADAPTERS so the fixture regression gate covers it",
    "requirements": [
-    "R1",
-    "R2",
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register new runtime core exports from coverage.ts in NOT_A_SERVICE (pure functions) or SERVICE_TESTS for the reader, with a reason; add a real case in packages/core/src/__tests__/cross-tenant/services.test.ts if SERVICE_TESTS is chosen.",
+   "path": "packages/adapters/fixtures/accuracy-baseline.json",
+   "change": "add in.drt baseline entry",
    "requirements": [
-    "R2"
+    "R3"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/adapters/src/index.ts",
+   "change": "export ./drt/index.ts and update the header comment",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/db/src/seed/forum-catalogue/tribunals.ts",
+   "change": "seed national NCLT benches and DRT/DRAT forums (adapterId set, level A1); existing in.drt.bengaluru-1/-2 get adapterId in.drt, A1",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/src/seed/forum-catalogue/index.ts",
+   "change": "bump FORUM_CATALOGUE_VERSION",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/db/src/seed/forum-catalogue/forum-catalogue.test.ts",
+   "change": "update expected code list and A1 count, assert each new forum's adapterId resolves to a registered adapter id",
+   "requirements": [
+    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "sourceOpsOverview, staffParseYield, staffConflictRate and Data Ops page behaviour in packages/core/src/sources/ops.ts and apps/admin/app/(console)/data-ops/page.tsx."
+   "what": "NCLT adapter id, version, config and checksum stay in.nclt.bengaluru 1.0.0 so migration 0052 and packages/adapters/src/nclt-blr/config.test.ts still pass"
   },
   {
    "id": "P2",
-   "what": "Admin guard tests: pages never import withoutWorkspace, no content fields (apps/admin/__tests__/{data-layer,server-component-imports,no-content-fields,no-without-workspace-outside-data}.test.ts)."
+   "what": "parseCaseStatus behaviour for ecourts-district, madras-hc and karnataka-hc (packages/adapters/src/status/index.ts) and its consumer packages/core/src/case-watch/lookup.ts"
   },
   {
    "id": "P3",
-   "what": "Tenant isolation: staff see only aggregate counts of case_watch/cause_list_watch through the definer function; no workspace, proceeding, party or user id leaves it."
+   "what": "adapters register no network access: packages/adapters/src/__tests__/no-network-lint.test.ts; parsers stay pure"
   },
   {
    "id": "P4",
-   "what": "Existing job schedules and business digest in packages/core/src/jobs/definitions/business-digest.ts and registry ordering/typing in packages/core/src/jobs/registry.ts."
+   "what": "Existing fixtures accuracy baseline entries (packages/adapters/fixtures/accuracy-baseline.json) must not drop"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts"
+   "command": "pnpm --filter @causedeck/adapters exec vitest run --config vitest.golden.config.ts src/status src/nclt-blr src/__tests__/fixture-regression.test.ts src/__tests__/workbench.test.ts src/__tests__/golden.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts"
+   "command": "pnpm --filter @causedeck/adapters exec vitest run src/drt src/__tests__/registry.test.ts src/__tests__/no-network-lint.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/forum-catalogue/forum-catalogue.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing"
-  },
-  {
-   "id": "V5",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/adapters --filter @causedeck/db --filter @causedeck/core run typecheck"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Derive 'change since last week' from source.cleared_at and fetch_log history instead of a new coverage_snapshot table.",
-   "justification": "A new global table triggers the db root-table list, GLOBAL_TABLES, grants and RLS catalogue updates (CLAUDE.md registries table); source.cleared_at (schema/source-registry.ts:60) and fetch_log (schema/fetch-log.ts:9) already hold the dates.",
+   "choice": "Reuse adapter id in.nclt.bengaluru for all national NCLT benches instead of a new id",
+   "justification": "id is pinned by migration 0052 (packages/db/migrations/0052_nclt_adapter_v1.sql), the loader (config/loader.ts:67) and the accuracy baseline; registry allows one adapter per forum code (registry.ts:44-48) and one adapter can list many forumCodes",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Read tenant watch demand only through a new SECURITY DEFINER function, like app_staff_conflict_rate.",
-   "justification": "case_watch and cause_list_watch are tenant tables under FORCE RLS (schema/case-watch.ts:1-6); precedent migrations/0082_staff_conflict_rate.sql and core sources/ops.ts:165.",
+   "choice": "One in.drt adapter for DRT and DRAT forums, HTML cause-list parser copied from the eCourts one; no adapter_version/access_mode migration",
+   "justification": "drt.gov.in pages are HTML tables (tribunals.ts:14-18 notes unverified); loader falls back to bundled configs (config/loader.ts:63-68); modes stay user_supplied/none until counsel review (#118, nclt-blr/index.ts:35-46)",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Model the weekly email on system.business.digest (defineJob, cron, injected deps).",
-   "justification": "packages/core/src/jobs/definitions/business-digest.ts:56-67; registered at jobs/registry.ts:177-178.",
-   "source": "precedent"
-  },
-  {
-   "id": "K4",
-   "choice": "Source-to-forum mapping by id prefix (forum code, dotted ancestor, or in.\u003cst>.district for district forums) in one tested function.",
-   "justification": "Source ids are `\u003cscope>:\u003ctype>` with state-wide district ids (migrations 20261024090000_ecourts_district_status_sources.sql) and per-forum ids (0076_display_board.sql:49-71); forum codes per schema/court.ts:41 and ecourts/snapshot.ts.",
-   "source": "precedent"
+   "choice": "Fixtures are synthetic FICTIONAL pages",
+   "justification": "real DRT/NCLT layouts are unverified and project fixtures are classified FICTIONAL (fixtures/README.md, fixtures/status/manifest.json:2)",
+   "source": "doc"
   }
  ]
 }

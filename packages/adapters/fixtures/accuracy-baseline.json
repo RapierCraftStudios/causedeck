@@ -1,5 +1,6 @@
 {
   "echo": { "caseRate": 1, "precision": 1, "recall": 1 },
+  "in.drt": { "caseRate": 1, "precision": 1, "recall": 1 },
   "in.ka.karnataka-hc.bengaluru": { "caseRate": 1, "precision": 1, "recall": 1 },
   "in.nclt.bengaluru": { "caseRate": 1, "precision": 1, "recall": 1 },
   "in.tn.madras-hc.principal": { "caseRate": 1, "precision": 1, "recall": 1 }

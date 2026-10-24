@@ -140,6 +140,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Change webhooks (#626).
   webhook_endpoint: DB_TABLES_TEST,
   webhook_delivery: DB_TABLES_TEST,
+  // Institution portfolios (#661).
+  portfolio: DB_TABLES_TEST,
+  portfolio_case: DB_TABLES_TEST,
+  portfolio_panel_advocate: DB_TABLES_TEST,
 
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,

@@ -66,6 +66,11 @@ export const PURGE_ORDER = [
   // and the creating user, so they go before the workspace and the members.
   'webhook_delivery',
   'webhook_endpoint',
+  // Institution portfolios (#661): cases and panel advocates before their portfolio; the portfolio
+  // cites only the workspace and its creating user, and cases cite proceedings, so before both.
+  'portfolio_case',
+  'portfolio_panel_advocate',
+  'portfolio',
   // The matter graph (#345-#348): appearances before their hearing, hearings before their
   // listing; tasks before the obligations they fulfil, obligations before their source order;
   // listings, orders and obligations before the proceedings, documents, anchors and matters they

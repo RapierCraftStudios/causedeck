@@ -90,7 +90,7 @@ const checksOf = (table: Parameters<typeof getTableConfig>[0]) =>
 describe('workspace data model (#177)', () => {
   it('extends organization in place with kind, plan, creator and soft delete', () => {
     const { organization } = schema;
-    expect(WORKSPACE_KINDS).toEqual(['solo', 'chamber']);
+    expect(WORKSPACE_KINDS).toEqual(['solo', 'chamber', 'institution']);
     expect(organization.slug.getSQLType()).toBe('citext');
     expect(organization.kind.notNull && organization.kind.default).toBe('solo');
     expect(organization.planId.notNull).toBe(false);

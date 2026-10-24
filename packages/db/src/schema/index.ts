@@ -19,6 +19,7 @@ export {
   type WebhookDeliveryStatus,
   type WebhookEventType,
 } from './webhooks.ts';
+export { portfolio, portfolioCase, portfolioPanelAdvocate } from './portfolio.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,

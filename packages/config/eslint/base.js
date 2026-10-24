@@ -14,6 +14,31 @@ import {
   withoutWorkspaceImportBan,
 } from './boundaries.js';
 
+/** The AlterLab SDK is imported only by `packages/fetch` (#479, D-048); everything else uses its fetcher. */
+export const alterlabImportPattern = {
+  group: ['alterlab', 'alterlab/**'],
+  message:
+    'Read external sources through `@causedeck/fetch`; only packages/fetch imports `alterlab`.',
+};
+
+/** The governed fetch layer is the one place that talks to AlterLab (#479, D-048). */
+export function fetchLayerOverride(files) {
+  return {
+    files,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            ...deepImportPatterns.filter((pattern) => pattern !== alterlabImportPattern),
+            appImportPattern,
+          ],
+        },
+      ],
+    },
+  };
+}
+
 /** Deep imports into another workspace's sources bypass its public `exports`. */
 export const deepImportPatterns = [
   {
@@ -24,6 +49,7 @@ export const deepImportPatterns = [
     group: ['**/apps/*/src/**', '**/packages/*/src/**'],
     message: 'Import other workspaces by name (`@causedeck/<pkg>`), not by relative path.',
   },
+  alterlabImportPattern,
 ];
 
 /** Packages never import apps (spike §2), including by workspace name. */
@@ -53,15 +79,33 @@ const loggerCalls = [
 const LOG_CONTENT_MESSAGE =
   'Do not log request bodies or matter content; log ids and lengths instead (docs/engineering/observability.md).';
 
-export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
-  [
-    `${call} > MemberExpression.arguments[property.name=${CONTENT_NAMES}]`,
-    `${call} > Identifier.arguments[name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > SpreadElement > MemberExpression.argument[property.name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > SpreadElement > Identifier.argument[name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
-  ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
-);
+const EXTERNAL_FETCH_MESSAGE =
+  'Read external sources through `@causedeck/fetch` (governed fetch layer, D-048), not a direct `fetch` of an external host.';
+
+/**
+ * `fetch('https://…')` of a literal external host (#479); relative and variable URLs are not flagged,
+ * nor is loopback (`localhost`, `127.0.0.1`, `[::1]`), which tests use to reach their own servers.
+ * esquery regexes cannot contain `/`, so `..` stands for the `//` after the scheme.
+ */
+const EXTERNAL_URL = String.raw`/^https?:..(?!localhost|127\.0\.0\.1|\[::1\])/`;
+const externalFetchRestrictions = [
+  `CallExpression[callee.name='fetch'] > Literal.arguments:first-child[value=${EXTERNAL_URL}]`,
+  `CallExpression[callee.name='fetch'] > TemplateLiteral.arguments:first-child > TemplateElement.quasis:first-child[value.raw=${EXTERNAL_URL}]`,
+].map((selector) => ({ selector, message: EXTERNAL_FETCH_MESSAGE }));
+
+// The shared `no-restricted-syntax` list: the logger rules below (#13) plus the external-fetch ban,
+// so `next.js` and the other configs that spread it keep both.
+export const loggerContentRestrictions = loggerCalls
+  .flatMap((call) =>
+    [
+      `${call} > MemberExpression.arguments[property.name=${CONTENT_NAMES}]`,
+      `${call} > Identifier.arguments[name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > SpreadElement > MemberExpression.argument[property.name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > SpreadElement > Identifier.argument[name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
+    ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
+  )
+  .concat(externalFetchRestrictions);
 
 /** `withoutWorkspace` (#19) import ban; defined in boundaries.js so the app→db blocks reuse it. */
 export { withoutWorkspaceImportBan };
@@ -188,6 +232,7 @@ export const base = tseslint.config(
       ],
     },
   },
+  fetchLayerOverride(['**/packages/fetch/**']),
   {
     files: PROCESS_ENV_ALLOWED_GLOBS,
     rules: { 'no-process-env': 'off' },

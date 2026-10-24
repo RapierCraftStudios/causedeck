@@ -40,6 +40,7 @@ channels, whether it is `mandatory`, and which `lockedChannels` the member canno
 | `security.alert`   | in-app, email, push | in-app, email |
 | `billing.notice`   | in-app, email       |               |
 | `reminder.hearing` | in-app, email, push |               |
+| `court.board`      | in-app, push        |               |
 | `proposal.new`     | in-app, push        |               |
 | `digest.daily`     | email               |               |
 | `system.notice`    | in-app              |               |

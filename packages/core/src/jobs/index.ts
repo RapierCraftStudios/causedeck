@@ -52,6 +52,47 @@ export {
   type RegistryMap,
 } from './registry.ts';
 export {
+  activityDigest,
+  activityDigestMember,
+  activityDigestMemberSchema,
+  activityDigestSchedule,
+  activityDigestSchema,
+  runActivityDigest,
+  runActivityDigestMember,
+  runActivityDigestSchedule,
+  type ActivityDigestMemberPayload,
+  type ActivityDigestPayload,
+  type ActivityDigestTarget,
+  type MemberDigestOutcome,
+} from './definitions/activity-digest.ts';
+export {
+  newsDigest,
+  newsDigestMember,
+  newsDigestMemberSchema,
+  newsDigestSchedule,
+  newsDigestSchema,
+  newsDigestSlot,
+  runNewsDigest,
+  runNewsDigestMember,
+  runNewsDigestSchedule,
+  type NewsDigestMemberPayload,
+  type NewsDigestOutcome,
+  type NewsDigestPayload,
+  type NewsDigestTarget,
+} from './definitions/news-digest.ts';
+export {
+  newsPoll,
+  newsPollSchema,
+  runNewsPoll,
+  runNewsPollSchedule,
+  setNewsFetcherFactory,
+  systemNewsPoll,
+  type NewsFetcher,
+  type NewsFetcherFactory,
+  type NewsPollOutcome,
+  type NewsPollPayload,
+} from './definitions/news-poll.ts';
+export {
   billingProcessEvent,
   billingProcessEventSchema,
   runBillingProcessEvent,
@@ -96,6 +137,57 @@ export {
   type DigestTarget,
   type NotificationDigestPayload,
 } from './definitions/notification-digest.ts';
+export { courtDataRetention } from './definitions/court-data-retention.ts';
+export {
+  BOARD_POLL_CRON,
+  boardPoll,
+  runBoardPoll,
+  setBoardFetcherFactory,
+  type BoardFetcherFactory,
+} from './definitions/board-poll.ts';
+export {
+  CAUSELIST_POLL_CRON,
+  causelistPoll,
+  runCauselistPoll,
+  setCauseListFetcherFactory,
+  type CauseListFetcherFactory,
+} from './definitions/causelist-poll.ts';
+export {
+  NOTICES_POLL_CRON,
+  noticesPoll,
+  runNoticesPoll,
+  setNoticeFetcherFactory,
+  type NoticeFetcherFactory,
+} from './definitions/notices-poll.ts';
+export {
+  ORDERS_POLL_CRON,
+  ordersPoll,
+  runOrdersPoll,
+  type OrdersPollDeps,
+} from './definitions/orders-poll.ts';
+export {
+  runStatusPoll,
+  setStatusFetcherFactory,
+  STATUS_POLL_CRON,
+  statusPoll,
+  type StatusFetcherFactory,
+  type StatusPollDeps,
+} from './definitions/status-poll.ts';
+export {
+  runWebhookDeliver,
+  webhookDeliver,
+  webhookDeliverSchema,
+  WEBHOOK_RETRY_LIMIT,
+  type WebhookDeliverDeps,
+  type WebhookDeliverOutcome,
+  type WebhookDeliverPayload,
+} from './definitions/webhook-deliver.ts';
+export {
+  runWebhookSweep,
+  systemWebhookSweep,
+  WEBHOOK_SWEEP_CRON,
+  type WebhookSweepDeps,
+} from './definitions/webhook-sweep.ts';
 export { JOB_EFFECT_RETENTION_DAYS, retentionSweep } from './definitions/retention-sweep.ts';
 export { supportSessionExpire } from './definitions/support-session-expire.ts';
 export { systemPing } from './definitions/system-ping.ts';

@@ -1,0 +1,19 @@
+{
+  "id": "en-04",
+  "language": "en",
+  "hearingDate": "2025-09-02",
+  "text": "In case 78707 of 2023 today. The court heard both sides and the matter was adjourned again. The opposite counsel sought time. Next hearing next sunday. The court directed the respondent to file a counter affidavit.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-09-07",
+      "phrase": "next sunday"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit.",
+        "dueDate": null
+      }
+    ],
+    "tasks": []
+  }
+}

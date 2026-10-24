@@ -38,7 +38,8 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
   It rejects the mock providers (`console` email, `mock` AI, `mock` billing) unless
   `ALLOW_MOCK_PROVIDERS=true`.
 - **India-only AI**: `AI_INDIA_ONLY` defaults to `true`. Turning it off in production needs
-  `AI_INDIA_ONLY_OVERRIDE_ACK=I_UNDERSTAND`. While it is on, `BEDROCK_REGION` must be an India region.
+  `AI_INDIA_ONLY_OVERRIDE_ACK=I_UNDERSTAND`. While it is on, `BEDROCK_REGION` must be an India region. Production refuses to boot with a real
+  `SARVAM_API_KEY` unless `SARVAM_NO_TRAINING_CONFIRMED=true` (the contract's no-training term).
 - **Data residency**: `AWS_REGION` defaults to `ap-south-1` and `DATA_REGION` to `in`. A non-India
   value (anything except `ap-south-1`/`ap-south-2`, or a `DATA_REGION` other than `in`) is rejected
   unless `AWS_REGION_OVERRIDE_ACK=I_UNDERSTAND`.
@@ -99,6 +100,14 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `BILLING_INVOICE_SERIES` | string (1-3 capitals) | `CD` | never (defaults to CD) | #253 | — |
 | `BILLING_SAC` | string (99xxxx) | `998314` | never (defaults to 998314) | #253 | — |
 | `ADAPTER_PRIVATE_FIXTURES_DIR` | path | — | never | #371 | — |
+| `ALTERLAB_API_KEY` | secret | — | never (the mock provider is used when unset) | #479 | — |
+| `DATA_OPS_SLACK_WEBHOOK_URL` | secret | — | never (alerts are logged when unset) | #515 | — |
+| `DATA_OPS_ALERT_EMAIL` | email | — | never (alerts are logged when unset) | #515 | — |
+| `FETCH_DELEGATED_CAPTCHA_PER_HOUR` | integer (1-1000) | `10` | never (defaults to 10) | #479 | — |
+| `BUSINESS_FOUNDER_EMAILS` | list (comma-separated emails) | — | never (set per deployment) | #519 | — |
+| `BUSINESS_INFRA_COST_PAISE_MONTHLY` | integer (paise) | `0` | never (defaults to 0) | #519 | — |
+| `BUSINESS_COST_PER_USER_ALERT_PAISE` | integer (paise) | `4000` | never (defaults to 4000) | #519 | — |
+| `BUSINESS_USD_INR` | number (INR per USD) | `85` | never (defaults to 85) | #519 | — |
 | `EMAIL_PROVIDER` | enum(console\|ses\|smtp) | `console` | never (defaults to console) | #23 | — |
 | `SES_REGION` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SES_ACCESS_KEY_ID` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
@@ -109,6 +118,9 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `BEDROCK_ACCESS_KEY_ID` | string | — | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_SECRET_ACCESS_KEY` | secret | — | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_MODEL_ID` | string | — | AI_PROVIDER=bedrock | #44 | #112 |
+| `BEDROCK_DRAFTING_MODEL_ID` | string | — | never (optional with AI_PROVIDER=bedrock) | #44 | #112 |
+| `AI_MAX_CONCURRENCY_PER_WORKSPACE` | integer (1-32) | `4` | never (defaults to 4) | #44 | — |
+| `SARVAM_NO_TRAINING_CONFIRMED` | literal(true) | — | NODE_ENV=production and AI_PROVIDER=sarvam | #44 | #113 |
 | `SARVAM_API_KEY` | secret | — | AI_PROVIDER=sarvam | #44 | #113 |
 | `STORAGE_PROVIDER` | enum(minio\|s3) | `minio` | never (defaults to minio) | #21 | — |
 | `S3_ENDPOINT` | url | `http://localhost:9000` (non-prod only) | STORAGE_PROVIDER=minio | #21 | — |

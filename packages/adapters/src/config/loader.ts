@@ -9,6 +9,7 @@ import { db as appDb, type Queryable } from '@causedeck/db';
 import { adapterVersion } from '@causedeck/db/schema';
 import { and, eq } from 'drizzle-orm';
 
+import { DRT_ADAPTER_ID, DRT_BUNDLED } from '../drt/index.ts';
 import { ECHO_ADAPTER_ID, ECHO_BUNDLED } from '../example/echo-adapter.ts';
 import { KARNATAKA_HC_ADAPTER_ID, KARNATAKA_HC_BUNDLED } from '../karnataka-hc/index.ts';
 import { MADRAS_HC_ADAPTER_ID, MADRAS_HC_BUNDLED } from '../madras-hc/index.ts';
@@ -65,6 +66,7 @@ export const BUNDLED_ADAPTER_CONFIGS: Readonly<Record<string, BundledAdapterConf
   [MADRAS_HC_ADAPTER_ID]: MADRAS_HC_BUNDLED,
   [KARNATAKA_HC_ADAPTER_ID]: KARNATAKA_HC_BUNDLED,
   [NCLT_ADAPTER_ID]: NCLT_BUNDLED,
+  [DRT_ADAPTER_ID]: DRT_BUNDLED,
 };
 
 /** Validate a stored config and check it against its checksum. */

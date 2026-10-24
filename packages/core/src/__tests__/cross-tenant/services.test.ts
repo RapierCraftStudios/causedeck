@@ -8,15 +8,27 @@ import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
+import { Secret } from '@causedeck/config/env';
 import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
-import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
+import { seedPlans } from '@causedeck/db/seed/plans';
+import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
+import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
+import { BILLING_SERVICE_TESTS, SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
-import { afterEach, describe, expect, it } from 'vitest';
+import { createMemoryObjectStore } from '@causedeck/storage';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
+import { captureConfigFromProcess } from '../../capture/index.ts';
+import { TRACKED_CASE_PRICE_PAISE } from '@causedeck/billing/plans';
+
+import {
+  countTrackedCases,
+  getTrackedCaseCharge,
+  invalidateEntitlements,
+} from '../../billing/index.ts';
 import * as core from '../../index.ts';
 
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
@@ -52,6 +64,22 @@ async function expectDenied(promise: Promise<unknown>): Promise<void> {
   expect(['NOT_FOUND', 'FORBIDDEN']).toContain((error as core.WorkspaceError).code);
 }
 
+/** News (#481): rejects with a NewsError FORBIDDEN (the caller is not a member of the workspace). */
+async function expectNewsDenied(promise: Promise<unknown>): Promise<void> {
+  const error: unknown = await promise.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error, 'expected a news FORBIDDEN').toBeInstanceOf(core.NewsError);
+  expect((error as core.NewsError).code).toBe('FORBIDDEN');
+}
+
+async function aNewsPref(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.newsPref).where(eq(schema.newsPref.workspaceId, f.a.id)),
+  );
+}
+
 async function aWorkspaceRow(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
@@ -64,6 +92,31 @@ async function aMembers(f: Fixture) {
       .select({ id: schema.member.id, role: schema.member.role, status: schema.member.status })
       .from(schema.member)
       .orderBy(schema.member.id),
+  );
+}
+
+async function aLedger(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({
+        id: schema.contributionLedger.id,
+        copy: schema.contributionLedger.contributedDocumentId,
+      })
+      .from(schema.contributionLedger)
+      .orderBy(schema.contributionLedger.id),
+  );
+}
+
+/** B opts in to contribution, so only the document's owner (A) stands between B and the row. */
+async function bOptsIn(f: Fixture) {
+  await inWorkspace(f.tx, f.b.id, (s) =>
+    s
+      .insert(schema.workspaceSettings)
+      .values({ workspaceId: f.b.id, contributePublicCourtDocuments: true })
+      .onConflictDoUpdate({
+        target: schema.workspaceSettings.workspaceId,
+        set: { contributePublicCourtDocuments: true },
+      }),
   );
 }
 
@@ -222,6 +275,35 @@ async function aWorkspace(f: Fixture) {
   return row;
 }
 
+/** A's API keys, with revocation state. */
+/** The two-tenant seeder gives each workspace an endpoint and a delivery; start from none. */
+async function clearWebhooks(f: Fixture) {
+  for (const workspaceId of [f.a.id, f.b.id]) {
+    await inWorkspace(f.tx, workspaceId, async (s) => {
+      await s.delete(schema.webhookDelivery);
+      await s.delete(schema.webhookEndpoint);
+    });
+  }
+}
+
+async function aWebhookEndpoints(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ id: schema.webhookEndpoint.id })
+      .from(schema.webhookEndpoint)
+      .orderBy(schema.webhookEndpoint.id),
+  );
+}
+
+async function aApiKeys(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ id: schema.apiKey.id, revokedAt: schema.apiKey.revokedAt })
+      .from(schema.apiKey)
+      .orderBy(schema.apiKey.id),
+  );
+}
+
 /** A's usage counters and ledger. */
 async function aUsage(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, async (s) => ({
@@ -366,7 +448,402 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
   return row.email;
 }
 
+/** A's own case-status watch (on top of any the fixture seeds), added through the service as A's owner. */
+async function addAWatch(f: Fixture) {
+  await f.tx
+    .insert(schema.source)
+    .values({ id: 'xt.case-watch', kind: 'court', baseUrl: 'https://xt.example.test', owner: 'xt' })
+    .onConflictDoNothing();
+  return core.addCaseWatch(
+    { db: f.tx },
+    { userId: f.ua, workspaceId: f.a.id, role: 'owner' },
+    {
+      proceedingId: f.a.rows.proceeding?.proceedingId ?? '',
+      sourceId: 'xt.case-watch',
+      cnr: 'TNCH010012342024',
+    },
+  );
+}
+
 const CASES: Record<string, Case> = {
+  addCauseListWatch: async (f) => {
+    // ub's watch lands in B; A has no watch from it.
+    await core.addCauseListWatch(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+      {
+        kind: 'brn',
+        value: 'KAR/2/2000',
+      },
+    );
+    const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    expect(aWatches.map((w) => w.value)).toEqual(['KAR/1/1900']);
+  },
+  matchNotices: async (f) => {
+    // Only B has a proceeding before the catalogue forum the notice names: B gets the matches, and
+    // A's rows are exactly as they were.
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, 'in.tn.madras-hc.madurai'));
+    expect(forum?.id).toBeDefined();
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'circular',
+        title: 'XT match notice',
+        issuedOn: '2026-11-02',
+        url: `https://notices.example.test/xt/match/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    const matterId = await inWorkspace(f.tx, f.b.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.b.id, title: 'XT notice matter', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      await s.insert(schema.proceeding).values({
+        workspaceId: f.b.id,
+        matterId: m?.id ?? '',
+        forumId: forum?.id ?? '',
+        caseTypeCode: 'WP',
+        caseTypeRaw: 'W.P.',
+        filingNo: 'F-XT-NOTICE',
+        sourceType: 'manual',
+      });
+      return m?.id ?? '';
+    });
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    const report = await core.matchNotices({ db: f.tx }, [
+      { id: noticeId, forumCodes: ['in.tn.madras-hc.madurai'] },
+    ]);
+    expect(report.matches).toBeGreaterThanOrEqual(2);
+    const bRows = await inWorkspace(f.tx, f.b.id, (s) =>
+      s.select().from(schema.noticeMatch).where(eq(schema.noticeMatch.noticeId, noticeId)),
+    );
+    expect(bRows.map((r) => [r.reason, r.matterId]).sort()).toEqual(
+      [
+        ['forum', null],
+        ['matter_forum', matterId],
+      ].sort(),
+    );
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    expect(aAfter).toEqual(aBefore);
+  },
+  notifyNoticeMatches: async (f) => {
+    // A notice matched to B alerts B's members only; A's notifications are exactly as they were.
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'circular',
+        title: 'XT alert notice',
+        issuedOn: '2026-11-02',
+        url: `https://notices.example.test/xt/alert/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.notification));
+    const sent = await core.notifyNoticeMatches(
+      { db: f.tx, enqueueDelivery: () => Promise.resolve() },
+      [{ workspaceId: f.b.id, noticeId }],
+    );
+    expect(sent).toBeGreaterThanOrEqual(1);
+    const bRows = await inWorkspace(f.tx, f.b.id, (s) =>
+      s
+        .select()
+        .from(schema.notification)
+        .where(eq(schema.notification.dedupeKey, `notice:${noticeId}`)),
+    );
+    expect(bRows).toHaveLength(sent);
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.notification));
+    expect(aAfter).toEqual(aBefore);
+  },
+  listHolidayListings: async (f) => {
+    // B's holiday listing is flagged for B and invisible to A.
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, 'in.tn.madras-hc.madurai'));
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'holiday',
+        title: 'XT holiday notice',
+        issuedOn: '2026-11-02',
+        effectiveOn: '2026-12-25',
+        url: `https://notices.example.test/xt/holiday/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    const listingId = await inWorkspace(f.tx, f.b.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.b.id, title: 'XT holiday matter', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.b.id,
+          matterId: m?.id ?? '',
+          forumId: forum?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: 'F-XT-HOLIDAY',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      const [l] = await s
+        .insert(schema.listing)
+        .values({
+          workspaceId: f.b.id,
+          proceedingId: p?.id ?? '',
+          listDate: '2026-12-25',
+          listType: 'daily',
+          stageRaw: 'For Orders',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.listing.id });
+      await s
+        .insert(schema.noticeMatch)
+        .values({ workspaceId: f.b.id, noticeId, forumId: forum?.id ?? '', reason: 'forum' });
+      return l?.id ?? '';
+    });
+    const range = { from: '2026-12-01', to: '2026-12-31' };
+    const own = await core.listHolidayListings(f.tx, f.b.id, range);
+    expect(own.map((r) => [r.listingId, r.noticeId])).toEqual([[listingId, noticeId]]);
+    expect(await core.listHolidayListings(f.tx, f.a.id, range)).toEqual([]);
+  },
+  loadCourtCalendar: async (f) => {
+    // A holiday notice matched to B is on B's calendar and absent from A's.
+    const forumCode = 'in.tn.madras-hc.madurai';
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, forumCode));
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: [forumCode],
+        kind: 'holiday',
+        title: 'XT calendar holiday',
+        issuedOn: '2026-11-02',
+        effectiveOn: '2026-12-25',
+        url: `https://notices.example.test/xt/calendar/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    await inWorkspace(f.tx, f.b.id, (s) =>
+      s.insert(schema.noticeMatch).values({
+        workspaceId: f.b.id,
+        noticeId: noticeRow?.id ?? '',
+        forumId: forum?.id ?? '',
+        reason: 'forum',
+      }),
+    );
+    const range = { forumCode, from: '2026-12-01', to: '2026-12-31' };
+    const own = await core.loadCourtCalendar(f.tx, f.b.id, range);
+    expect([...own.holidays]).toEqual([['2026-12-25', 'XT calendar holiday']]);
+    const other = await core.loadCourtCalendar(f.tx, f.a.id, range);
+    expect([...other.holidays]).toEqual([]);
+  },
+  pollOrders: async (f) => {
+    // A watch that is not A's own (here B's) yields nothing in A: no fetch, no capture.
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.capture));
+    const fetchSource = vi.fn();
+    const report = await core.pollOrders({
+      db: f.tx,
+      fetcher: { fetchSource },
+      store: createMemoryObjectStore(),
+      config: captureConfigFromProcess(),
+      jobs: { scan: vi.fn(), process: vi.fn() },
+      policy: () => Promise.resolve({ baseUrl: 'https://xt.example.test' }),
+      listDue: () =>
+        Promise.resolve([
+          {
+            watchId: randomUUID(),
+            workspaceId: f.a.id,
+            advocateUserId: f.ub,
+            sourceId: 'xt.case-watch',
+          },
+        ]),
+    });
+    expect(report).toMatchObject({ captured: 0, failed: 0 });
+    expect(fetchSource).not.toHaveBeenCalled();
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.capture));
+    expect(after).toEqual(before);
+  },
+  listCauseListWatches: async (f) => {
+    // ub sees exactly B's own seeded watch, never A's.
+    const own = await core.listCauseListWatches(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+    );
+    const bIds = (
+      await inWorkspace(f.tx, f.b.id, (s) => s.select().from(schema.causeListWatch))
+    ).map((w) => w.id);
+    const aIds = (
+      await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch))
+    ).map((w) => w.id);
+    expect(own.map((w) => w.id)).toEqual(bIds);
+    expect(own.some((w) => aIds.includes(w.id))).toBe(false);
+  },
+  removeCauseListWatch: async (f) => {
+    const [watch] = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    await expectDenied(
+      core.removeCauseListWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id },
+        watch?.id ?? '',
+      ),
+    );
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
+    expect(after).toHaveLength(1);
+  },
+  addCaseWatch: async (f) => {
+    // ub cannot watch A's proceeding; A gains no watch.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    await expectDenied(
+      core.addCaseWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+        { proceedingId: aProceeding, sourceId: 'xt.case-watch', cnr: 'TNCH010012342024' },
+      ),
+    );
+    const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
+    expect(aWatches.some((w) => w.advocateUserId === f.ub)).toBe(false);
+  },
+  checkConflicts: async (f) => {
+    // A's client is a stored party of A only: B's check for the same name finds nothing, A's does.
+    const { matterId } = await inWorkspace(f.tx, f.a.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.a.id, title: 'XT conflict matter', practiceArea: 'civil' })
+        .returning({ matterId: schema.matter.id });
+      const [p] = await s
+        .insert(schema.person)
+        .values({
+          workspaceId: f.a.id,
+          name: 'Murugan Ilango',
+          kind: 'client',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.person.id });
+      await s.insert(schema.roleEdge).values({
+        workspaceId: f.a.id,
+        kind: 'represents',
+        fromPersonId: p?.id ?? '',
+        matterId: m?.matterId ?? '',
+        sourceType: 'manual',
+      });
+      return { matterId: m?.matterId ?? '' };
+    });
+    const parties = [{ name: 'முருகன் இளங்கோ', side: 'adverse' as const }];
+    const asB = await core.checkConflicts(
+      { db: f.tx },
+      { workspaceId: f.b.id, userId: f.ub },
+      { parties },
+    );
+    expect(asB.hits).toEqual([]);
+    const asA = await core.checkConflicts(
+      { db: f.tx },
+      { workspaceId: f.a.id, userId: f.ua },
+      { parties },
+    );
+    expect(asA.hits.map((h) => h.matterId)).toEqual([matterId]);
+    const aMatters = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.matter));
+    expect(aMatters.filter((m) => m.id === matterId)).toHaveLength(1);
+  },
+  getStageAgreement: async (f) => {
+    // Covered with getNextDateAgreement below: one query, B sees none of A's readings.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const asB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getStageAgreement(s, f.b.id, aProceeding),
+    );
+    expect(asB.sources).toEqual([]);
+  },
+  getNextDateAgreement: async (f) => {
+    // A's two disagreeing proposals are a conflict for A and invisible to B; A's rows are unchanged.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    await inWorkspace(f.tx, f.a.id, async (s) => {
+      await s.insert(schema.listing).values([
+        {
+          workspaceId: f.a.id,
+          proceedingId: aProceeding,
+          listDate: '2031-03-03',
+          listType: 'daily',
+          stageRaw: 'XT agreement',
+          sourceType: 'manual',
+          confirmationState: 'proposed',
+        },
+        {
+          workspaceId: f.a.id,
+          proceedingId: aProceeding,
+          listDate: '2031-03-04',
+          listType: 'daily',
+          stageRaw: 'XT agreement',
+          sourceType: 'document',
+          sourceRef: 'xt-agreement-doc',
+          confirmationState: 'proposed',
+        },
+      ]);
+    });
+    const asB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getNextDateAgreement(s, f.b.id, aProceeding),
+    );
+    expect(asB.sources).toEqual([]);
+    const asA = await inWorkspace(f.tx, f.a.id, (s) =>
+      core.getNextDateAgreement(s, f.a.id, aProceeding),
+    );
+    expect(asA.status).toBe('conflict');
+    expect(asA.groups.map((g) => g.value).sort()).toEqual(
+      expect.arrayContaining(['2031-03-03', '2031-03-04']),
+    );
+    const stageB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getStageAgreement(s, f.b.id, aProceeding),
+    );
+    expect(stageB.sources).toEqual([]);
+    const stageA = await inWorkspace(f.tx, f.a.id, (s) =>
+      core.getStageAgreement(s, f.a.id, aProceeding),
+    );
+    expect(stageA.sources.length).toBeGreaterThan(0);
+  },
+  listCaseWatches: async (f) => {
+    // ub lists nothing of A's: A's own watch is not in B's list.
+    const aWatch = await addAWatch(f);
+    const own = await core.listCaseWatches(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+    );
+    expect(own.some((w) => w.id === aWatch.id)).toBe(false);
+  },
+  removeCaseWatch: async (f) => {
+    const aWatch = await addAWatch(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
+    await expectDenied(
+      core.removeCaseWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+        aWatch.id,
+      ),
+    );
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
+    expect(after.map((w) => w.id).sort()).toEqual(before.map((w) => w.id).sort());
+    expect(after.some((w) => w.id === aWatch.id)).toBe(true);
+  },
   record: async (f) => {
     const before = await auditIds(f, f.a.id);
     await expectTenancyViolation(
@@ -814,7 +1291,6 @@ const CASES: Record<string, Case> = {
     const ofA = await inWorkspace(f.tx, f.a.id, (s) => core.getIntegrations(s, f.a.id));
     expect(ofA.ics_feed).not.toBeNull();
     expect(await f.asB((s) => core.getIntegrations(s, f.a.id))).toEqual({
-      email_intake: null,
       ics_feed: null,
     });
   },
@@ -889,6 +1365,36 @@ const CASES: Record<string, Case> = {
     expect((await aWorkspace(f))?.slug).toBe(f.a.slug);
   },
   resolveSlug: () => Promise.resolve(),
+  verifyCitation: async (f) => {
+    const citation = `2026:MHC:${String(900000 + Math.floor(Math.random() * 99999))}`;
+    await f.tx.insert(schema.judgment).values({
+      sourceId: 'in.mhc.judgments',
+      court: 'MHC',
+      neutralCitation: citation,
+      sha256: randomUUID().replaceAll('-', ''),
+      provenance: {
+        url: 'https://mhc.example/j/xt.pdf',
+        fetchedAt: '2026-10-23T00:00:00.000Z',
+        sha256: 'xt',
+        sourceId: 'in.mhc.judgments',
+        sourceVersion: 'v1',
+        tierUsed: 'http',
+        costDollars: 0,
+      },
+      pageText: [{ pageNo: 1, text: `${citation}\nORDER` }],
+    });
+    const before = await aWorkspace(f);
+    // The corpus is global: A's and B's scopes see the same record, and nothing of A's changes.
+    const asA = await inWorkspace(f.tx, f.a.id, (s) => core.verifyCitation(citation, { db: s }));
+    const asB = await f.asB((s) => core.verifyCitation(citation, { db: s }));
+    expect(asA).toMatchObject({ status: 'VERIFIED', citation, court: 'MHC' });
+    expect(asB).toEqual(asA);
+    expect(await core.verifyCitation('2026:MHC:1', { db: f.tx })).toMatchObject({
+      status: 'UNVERIFIED',
+      reason: 'not_in_corpus',
+    });
+    expect(await aWorkspace(f)).toEqual(before);
+  },
   createWorkspace: async (f) => {
     const before = await aMembers(f);
     const created = await core.createWorkspace(f.tx, { userId: f.ub, input: { name: f.a.name } });
@@ -1031,6 +1537,141 @@ const CASES: Record<string, Case> = {
     expect(mine).toHaveLength(2);
     for (const t of mine) expect(Object.keys(t).sort()).toEqual(['digestDate', 'workspaceId']);
   },
+  runActivityDigestMember: async (f) => {
+    // ua is not a member of B: B's per-member digest finds no one, counts nothing and sends nothing.
+    const { sent, deps } = recordingDeps();
+    core.setNotificationJobDeps(deps);
+    const outcome = await core.runJob(
+      core.activityDigestMember,
+      {
+        id: randomUUID(),
+        data: { workspaceId: f.b.id, userId: f.ua, localDate: '2026-10-19' },
+        retryCount: 0,
+      },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+    expect(sent).toEqual([]);
+  },
+  // News digest (#481): B's member never reads, writes or marks A's preferences or digest.
+  getNewsPref: async (f) => {
+    await expectNewsDenied(core.getNewsPref({ db: f.tx, workspaceId: f.a.id }, { userId: f.ub }));
+  },
+  setNewsPref: async (f) => {
+    const before = await aNewsPref(f);
+    await expectNewsDenied(
+      core.setNewsPref(
+        { db: f.tx, workspaceId: f.a.id },
+        { userId: f.ub, practiceAreas: ['tax'], forums: [], digestTime: '08:00' },
+      ),
+    );
+    expect(await aNewsPref(f)).toEqual(before);
+  },
+  markNewsDigestSent: async (f) => {
+    const before = await aNewsPref(f);
+    await expectNewsDenied(
+      core.markNewsDigestSent(
+        { db: f.tx, workspaceId: f.a.id },
+        { userId: f.ub, localDate: '2026-10-19' },
+      ),
+    );
+    expect(await aNewsPref(f)).toEqual(before);
+  },
+  listNewsForMember: async (f) => {
+    await expectNewsDenied(
+      core.listNewsForMember(
+        { db: f.tx, workspaceId: f.a.id },
+        { userId: f.ub, since: new Date('2026-10-01T00:00:00Z') },
+      ),
+    );
+  },
+  selectNewsDigestItems: async (f) => {
+    await expectNewsDenied(
+      core.selectNewsDigestItems(
+        { db: f.tx, workspaceId: f.a.id },
+        { userId: f.ub, since: new Date('2026-10-01T00:00:00Z') },
+      ),
+    );
+  },
+  listNewsDigestRecipients: async (f) => {
+    // B's recipients are B's members only: A's owner never appears.
+    const users = await core.listNewsDigestRecipients(
+      { db: f.tx, workspaceId: f.b.id },
+      { slot: '07:30', localDate: '2026-10-19' },
+    );
+    expect(users).not.toContain(f.ua);
+  },
+  runNewsDigestMember: async (f) => {
+    // ua is not a member of B: nothing is built, marked or sent.
+    const { sent, deps } = recordingDeps();
+    const outcome = await core.runNewsDigestMember(
+      { db: f.tx as unknown as Database, log: logger } as unknown as core.JobContext,
+      { workspaceId: f.b.id, userId: f.ua, localDate: '2026-10-19' },
+      deps,
+    );
+    expect(outcome).toBe('skippedNotMember');
+    expect(sent).toEqual([]);
+  },
+  runNewsDigest: async (f) => {
+    // B's fan-out lists B's members only; A's owner is never enqueued.
+    const enqueued: { userId: string }[] = [];
+    await core.runNewsDigest(
+      { db: f.tx as unknown as Database, log: logger } as unknown as core.JobContext,
+      { workspaceId: f.b.id, localDate: '2026-10-19', slot: '07:30' },
+      { enqueue: (p) => Promise.resolve(enqueued.push(p)) },
+    );
+    expect(enqueued.map((e) => e.userId)).not.toContain(f.ua);
+  },
+  runActivityDigest: async (f) => {
+    // B's fan-out lists B's members only; at a slot nobody chose it enqueues nothing.
+    const outcome = await core.runJob(
+      core.activityDigest,
+      {
+        id: randomUUID(),
+        data: { workspaceId: f.b.id, localDate: '2026-10-19', slot: '18:00' },
+        retryCount: 0,
+      },
+      { db: f.tx as unknown as Database, logger },
+    );
+    expect(outcome).toEqual({ status: 'completed' });
+  },
+  runActivityDigestSchedule: async (f) => {
+    // The scheduler lists every workspace, but hands on ids, the local date and the slot only.
+    const targets: core.ActivityDigestTarget[] = [];
+    await core.runActivityDigestSchedule(
+      { db: f.tx, log: logger },
+      {
+        now: () => new Date('2026-10-19T15:00:00Z'),
+        enqueue: (t) => {
+          targets.push(t);
+          return Promise.resolve();
+        },
+      },
+    );
+    const mine = targets.filter((t) => t.workspaceId === f.a.id || t.workspaceId === f.b.id);
+    expect(mine).toHaveLength(2);
+    for (const t of mine)
+      expect(Object.keys(t).sort()).toEqual(['localDate', 'slot', 'workspaceId']);
+    expect(mine.every((t) => t.slot === '20:30')).toBe(true);
+  },
+  runNewsDigestSchedule: async (f) => {
+    // The scheduler lists every workspace, but hands on ids, the local date and the slot only.
+    const targets: core.NewsDigestTarget[] = [];
+    await core.runNewsDigestSchedule(
+      { db: f.tx, log: logger },
+      {
+        now: () => new Date('2026-10-19T15:00:00Z'),
+        enqueue: (t) => {
+          targets.push(t);
+          return Promise.resolve();
+        },
+      },
+    );
+    const mine = targets.filter((t) => t.workspaceId === f.a.id || t.workspaceId === f.b.id);
+    expect(mine).toHaveLength(2);
+    for (const t of mine)
+      expect(Object.keys(t).sort()).toEqual(['localDate', 'slot', 'workspaceId']);
+  },
   restrictMatter: async (f) => {
     const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
     const before = await aRestrictions(f);
@@ -1046,6 +1687,49 @@ const CASES: Record<string, Case> = {
       ),
     );
     expect(await aRestrictions(f)).toEqual(before);
+  },
+  checkEligibility: async (f) => {
+    await bOptsIn(f);
+    const sourceId = 'xt.none';
+    const before = await aLedger(f);
+    // B is opted in but A's document is not B's: it is not found, never contributable.
+    const outcome = await core.checkEligibility(f.tx, {
+      workspaceId: f.b.id,
+      documentId: f.a.rows.document?.documentId ?? '',
+      sourceId,
+    });
+    expect(outcome).toBe('not_found');
+    expect(await aLedger(f)).toEqual(before);
+  },
+  contributeDocument: async (f) => {
+    await bOptsIn(f);
+    const before = await aLedger(f);
+    const error: unknown = await core
+      .contributeDocument(f.tx, {
+        workspaceId: f.b.id,
+        documentId: f.a.rows.document?.documentId ?? '',
+        sourceId: 'xt.none',
+        actorUserId: f.ub,
+      })
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(error).toBeInstanceOf(core.ContributionRefused);
+    expect((error as core.ContributionRefused).reason).toBe('not_found');
+    expect(await aLedger(f)).toEqual(before);
+  },
+  withdrawContributions: async (f) => {
+    const before = await aLedger(f);
+    expect(before.length).toBeGreaterThan(0);
+    // B withdrawing its own (none) contributions leaves A's link and A's shared copy untouched.
+    await core.withdrawContributions(f.tx, f.b.id);
+    expect(await aLedger(f)).toEqual(before);
+    const [copy] = await f.tx
+      .select({ withdrawnAt: schema.contributedDocument.withdrawnAt })
+      .from(schema.contributedDocument)
+      .where(eq(schema.contributedDocument.id, before[0]?.copy ?? ''));
+    expect(copy?.withdrawnAt).toBeNull();
   },
   listMatterRestrictions: async (f) => {
     await expectDenied(core.listMatterRestrictions(f.tx, { userId: f.ub, workspaceId: f.a.id }));
@@ -1183,6 +1867,169 @@ const CASES: Record<string, Case> = {
     expect(own.map((hall) => hall.hallNo)).not.toContain('xt-a-hall');
     expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
     expect(await aParseRuns(f)).toEqual(probe.before);
+  },
+  getLiveHalls: async (f) => {
+    // getLiveHalls is a per-member read model, not a write: a user with no seat in the workspace
+    // they name gets nothing back (the listing query is scoped to the workspace and to matters the
+    // actor owns), not a thrown error. So the property is "no row of A's reaches ub", and it is only
+    // meaningful against real data: seed a listing of A's owner on a board forum, listed today, with a
+    // board observation, and prove ua sees it before asserting ub does not.
+    const deps = { flagEnabled: () => Promise.resolve(true) };
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    const seeded = await inWorkspace(f.tx, f.a.id, async (s) => {
+      const [owner] = await s
+        .select({ id: schema.member.id })
+        .from(schema.member)
+        .where(and(eq(schema.member.organizationId, f.a.id), eq(schema.member.userId, f.ua)));
+      const [fo] = await s
+        .insert(schema.forum)
+        .values({
+          workspaceId: f.a.id,
+          code: `in.ka.karnataka-hc.xt-${randomUUID().slice(0, 8)}`,
+          court: 'Seed High Court',
+          jurisdictionKind: 'high_court',
+        })
+        .returning({ id: schema.forum.id });
+      const [hall] = await s
+        .insert(schema.courtHall)
+        .values({ workspaceId: f.a.id, forumId: fo?.id ?? '', hallNo: 'xt-live-hall' })
+        .returning({ id: schema.courtHall.id });
+      const [m] = await s
+        .insert(schema.matter)
+        .values({
+          workspaceId: f.a.id,
+          title: 'XT live hall',
+          practiceArea: 'civil',
+          ownerMemberId: owner?.id,
+        })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.a.id,
+          matterId: m?.id ?? '',
+          forumId: fo?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: `F-live-${randomUUID().slice(0, 8)}`,
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      await s.insert(schema.listing).values({
+        workspaceId: f.a.id,
+        proceedingId: p?.id ?? '',
+        hallId: hall?.id,
+        listDate: today,
+        itemNo: '9',
+        listType: 'daily',
+        stageRaw: 'FOR ADMISSION',
+        canonical: true,
+        sourceType: 'manual',
+      });
+      return { matterId: m?.id ?? '' };
+    });
+    await f.tx.insert(schema.boardObservation).values({
+      sourceId: 'in.ka.karnataka-hc.bengaluru:display_board',
+      hallNo: 'xt-live-hall',
+      itemNo: '5',
+      status: 'sitting',
+    });
+
+    // Control: A's owner, in A, sees the seeded item (so the empty answers below are not vacuous).
+    const own = await core.getLiveHalls(
+      { ...deps, db: f.tx },
+      { workspaceId: f.a.id, userId: f.ua },
+    );
+    expect(own.flatMap((h) => h.items.map((i) => i.matterId))).toContain(seeded.matterId);
+
+    // ub naming A's workspace, with and without B's scope: nothing of A's comes back.
+    const asA = { workspaceId: f.a.id, userId: f.ub };
+    expect(await core.getLiveHalls({ ...deps, db: f.tx }, asA)).toEqual([]);
+    await expect(f.asB((s) => core.getLiveHalls({ ...deps, db: s }, asA))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    // ub in B (their own workspace) sees none of A's halls or matters either.
+    const inB = await f.asB((s) =>
+      core.getLiveHalls({ ...deps, db: s }, { workspaceId: f.b.id, userId: f.ub }),
+    );
+    expect(JSON.stringify(inB)).not.toContain(seeded.matterId);
+    expect(inB.map((h) => h.hallNo)).not.toContain('xt-live-hall');
+  },
+  getBenchCard: async (f) => {
+    // The card is a flagged per-workspace read: seed a bench and a listing in A, prove A's member
+    // sees the bench (control), and that ub naming A, or reading from B, gets nothing of A's.
+    const deps = { flagEnabled: () => Promise.resolve(true) };
+    const seeded = await inWorkspace(f.tx, f.a.id, async (s) => {
+      const [fo] = await s
+        .insert(schema.forum)
+        .values({
+          workspaceId: f.a.id,
+          code: `in.ka.karnataka-hc.xt-${randomUUID().slice(0, 8)}`,
+          court: 'Seed High Court',
+          jurisdictionKind: 'high_court',
+        })
+        .returning({ id: schema.forum.id });
+      const [b] = await s
+        .insert(schema.bench)
+        .values({
+          workspaceId: f.a.id,
+          forumId: fo?.id ?? '',
+          judges: ['XT BENCH JUDGE'],
+          benchKind: 'single',
+        })
+        .returning({ id: schema.bench.id });
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.a.id, title: 'XT bench card', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.a.id,
+          matterId: m?.id ?? '',
+          forumId: fo?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: `F-bench-${randomUUID().slice(0, 8)}`,
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      await s.insert(schema.listing).values({
+        workspaceId: f.a.id,
+        proceedingId: p?.id ?? '',
+        benchId: b?.id,
+        listDate: '2026-01-05',
+        itemNo: '1',
+        listType: 'daily',
+        stageRaw: 'FOR ADMISSION',
+        canonical: true,
+        sourceType: 'manual',
+      });
+      return { matterId: m?.id ?? '' };
+    });
+    const own = await core.getBenchCard(
+      { ...deps, db: f.tx },
+      { workspaceId: f.a.id, userId: f.ua },
+      seeded.matterId,
+    );
+    expect(own?.sat).toEqual(['XT BENCH JUDGE']);
+
+    const asA = { workspaceId: f.a.id, userId: f.ub };
+    await expect(
+      f.asB((s) => core.getBenchCard({ ...deps, db: s }, asA, seeded.matterId)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    const inB = await f.asB((s) =>
+      core.getBenchCard({ ...deps, db: s }, { workspaceId: f.b.id, userId: f.ub }, seeded.matterId),
+    );
+    expect(inB).toBeNull();
+    // A's card is unchanged.
+    expect(
+      await core.getBenchCard(
+        { ...deps, db: f.tx },
+        { workspaceId: f.a.id, userId: f.ua },
+        seeded.matterId,
+      ),
+    ).toEqual(own);
   },
   // Matter graph (#362): A's matter, proceeding and document ids, as ub.
   createMatter: async (f) => {
@@ -1858,6 +2705,13 @@ const CASES: Record<string, Case> = {
     await expectDenied(core.staffWorkspaceUsage(f.tx, f.ub, 'not-a-uuid'));
     expect(await aBudgetState(f)).toEqual(before);
   },
+  staffBusinessSnapshot: async (f) => {
+    // ub is not staff: the definer function refuses, for a malformed id as well; A is unchanged.
+    const before = await aWorkspaceRow(f);
+    await expectDenied(core.staffBusinessSnapshot(f.tx, f.ub));
+    await expectDenied(core.staffBusinessSnapshot(f.tx, 'not-a-uuid'));
+    expect(await aWorkspaceRow(f)).toEqual(before);
+  },
   staffAuditEvents: async (f) => {
     const before = await aWorkspaceRow(f);
     await expectDenied(core.staffAuditEvents(f.tx, f.ub));
@@ -1933,6 +2787,141 @@ const CASES: Record<string, Case> = {
     });
     expect(asB).toEqual({ applied: true, value: 2 });
     expect(await aUsage(f)).toEqual(before);
+  },
+  createApiKey: async (f) => {
+    const before = await aApiKeys(f);
+    const input = { workspaceId: f.a.id, name: 'xt', scopes: ['cases:read'] };
+    await expectDenied(core.createApiKey(f.tx, { ...input, actorUserId: f.ub }));
+    await expect(
+      f.asB((s) => core.createApiKey(s, { ...input, actorUserId: f.ub })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aApiKeys(f)).toEqual(before);
+  },
+  listApiKeys: async (f) => {
+    await expectDenied(core.listApiKeys(f.tx, f.a.id, f.ub));
+    await expect(f.asB((s) => core.listApiKeys(s, f.a.id, f.ub))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    expect(await f.asB((s) => core.listApiKeys(s, f.b.id, f.ub))).toHaveLength(1);
+  },
+  revokeApiKey: async (f) => {
+    const before = await aApiKeys(f);
+    const keyId = before[0]?.id ?? '';
+    await expectDenied(core.revokeApiKey(f.tx, f.a.id, f.ub, keyId));
+    await expect(f.asB((s) => core.revokeApiKey(s, f.a.id, f.ub, keyId))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    // B's own workspace with A's key id: not found, and A's key is untouched.
+    await expect(f.asB((s) => core.revokeApiKey(s, f.b.id, f.ub, keyId))).rejects.toMatchObject({
+      reason: 'NOT_FOUND',
+    });
+    expect(await aApiKeys(f)).toEqual(before);
+  },
+  authenticateApiKey: async (f) => {
+    // A token resolves only to the workspace that issued it; a B-scoped caller learns nothing else.
+    const { key, token } = await core.createApiKey(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      name: 'xt',
+      scopes: ['cases:read'],
+    });
+    const identity = await f.asB((s) => core.authenticateApiKey(s, token));
+    expect(identity).toMatchObject({ id: key.id, workspaceId: f.a.id });
+    expect(
+      await f.asB((s) => core.authenticateApiKey(s, core.generateApiKeyToken().token)),
+    ).toBeNull();
+  },
+  findApiKeyIssuer: async (f) => {
+    expect(await f.asB((s) => core.findApiKeyIssuer(s, f.ua))).toMatchObject({ id: f.ua });
+    expect(await f.asB((s) => core.findApiKeyIssuer(s, randomUUID()))).toBeNull();
+  },
+  apiKeyCallsThisPeriod: async (f) => {
+    await expect(
+      f.asB((s) =>
+        core.apiKeyCallsThisPeriod({ db: s, workspaceId: f.a.id }, randomUUID(), new Date()),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+  },
+  consumeApiCall: async (f) => {
+    const identity = {
+      id: randomUUID(),
+      workspaceId: f.a.id,
+      createdBy: f.ua,
+      scopes: ['cases:read'],
+      monthlyQuota: null,
+      rateLimitPerMinute: 60,
+    };
+    const before = await aUsage(f);
+    await expect(
+      f.asB((s) => core.consumeApiCall({ db: s, workspaceId: f.a.id }, identity, randomUUID())),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aUsage(f)).toEqual(before);
+  },
+  createWebhookEndpoint: async (f) => {
+    const before = await aWebhookEndpoints(f);
+    const input = { workspaceId: f.a.id, url: 'https://hooks.example.com/xt' };
+    await expectDenied(core.createWebhookEndpoint(f.tx, { ...input, actorUserId: f.ub }));
+    await expect(
+      f.asB((s) => core.createWebhookEndpoint(s, { ...input, actorUserId: f.ub })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aWebhookEndpoints(f)).toEqual(before);
+  },
+  listWebhookEndpoints: async (f) => {
+    await clearWebhooks(f);
+    await core.createWebhookEndpoint(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      url: 'https://hooks.example.com/a',
+    });
+    await expectDenied(core.listWebhookEndpoints(f.tx, f.a.id, f.ub));
+    await expect(f.asB((s) => core.listWebhookEndpoints(s, f.a.id, f.ub))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    expect(await f.asB((s) => core.listWebhookEndpoints(s, f.b.id, f.ub))).toEqual([]);
+  },
+  deleteWebhookEndpoint: async (f) => {
+    const { endpoint } = await core.createWebhookEndpoint(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      url: 'https://hooks.example.com/a',
+    });
+    const before = await aWebhookEndpoints(f);
+    await expectDenied(core.deleteWebhookEndpoint(f.tx, f.a.id, f.ub, endpoint.id));
+    await expect(
+      f.asB((s) => core.deleteWebhookEndpoint(s, f.a.id, f.ub, endpoint.id)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    // B's own workspace with A's endpoint id: not found, and A's endpoint is untouched.
+    await expect(
+      f.asB((s) => core.deleteWebhookEndpoint(s, f.b.id, f.ub, endpoint.id)),
+    ).rejects.toMatchObject({ reason: 'NOT_FOUND' });
+    expect(await aWebhookEndpoints(f)).toEqual(before);
+  },
+  emitWebhookEvent: async (f) => {
+    await clearWebhooks(f);
+    await core.createWebhookEndpoint(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      url: 'https://hooks.example.com/a',
+    });
+    const deliveries = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s.select({ id: schema.webhookDelivery.id }).from(schema.webhookDelivery),
+      );
+    const before = await deliveries();
+    const event = {
+      type: 'status.changed' as const,
+      eventKey: 'xt-event',
+      sourceId: 'xt-source',
+      changes: ['stage'],
+    };
+    // B has no endpoint: an event in B reaches nobody, and from B's scope A's workspace is a tenancy violation.
+    expect(
+      await f.asB((s) => core.emitWebhookEvent({ db: s }, { ...event, workspaceId: f.b.id })),
+    ).toBe(0);
+    await expect(
+      f.asB((s) => core.emitWebhookEvent({ db: s }, { ...event, workspaceId: f.a.id })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await deliveries()).toEqual(before);
   },
   getUsage: async (f) => {
     await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ocr.pages', 9, {
@@ -2142,11 +3131,240 @@ const CASES: Record<string, Case> = {
     ).rejects.toBeInstanceOf(TenancyError);
     expect(await aUsage(f)).toEqual(before);
   },
+  // judgment alerts (#497): B on A's matter is denied; A's tags are unchanged.
+  listTags: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    await expectDenied(
+      f.asB((s) => core.listTags(s, { workspaceId: f.a.id, userId: f.ub }, matterId)),
+    );
+    await expectDenied(
+      f.asB((s) => core.listTags(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
+    );
+  },
+  addTag: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    await expectDenied(
+      f.asB((s) =>
+        core.addTag(
+          s,
+          { workspaceId: f.b.id, userId: f.ub },
+          { matterId, statute: 'IPC', section: '420' },
+        ),
+      ),
+    );
+    const tags = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.matterIssueTag).where(eq(schema.matterIssueTag.matterId, matterId)),
+    );
+    expect(tags).toHaveLength(1);
+  },
+  proposeTags: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    const tag = {
+      statute: 'IPC',
+      section: '420',
+      issue: null,
+      confidence: 0.9,
+      status: 'proposed' as const,
+      source: 'ai' as const,
+    };
+    await expectDenied(
+      f.asB((s) => core.proposeTags(s, { workspaceId: f.b.id, userId: f.ub }, matterId, [tag])),
+    );
+  },
+  confirmTag: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    const tagId = f.a.rows.matter_issue_tag?.id ?? '';
+    await expectDenied(
+      f.asB((s) => core.confirmTag(s, { workspaceId: f.b.id, userId: f.ub }, { matterId, tagId })),
+    );
+  },
+  dismissTag: async (f) => {
+    const matterId = f.a.rows.matter_issue_tag?.matterId ?? '';
+    const tagId = f.a.rows.matter_issue_tag?.id ?? '';
+    await expectDenied(
+      f.asB((s) => core.dismissTag(s, { workspaceId: f.b.id, userId: f.ub }, { matterId, tagId })),
+    );
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.matterIssueTag).where(eq(schema.matterIssueTag.id, tagId)),
+    );
+    expect(row?.status).toBe('confirmed');
+  },
+  listRelevantJudgments: async (f) => {
+    const matterId = f.a.rows.judgment_alert?.matterId ?? '';
+    await expectDenied(
+      f.asB((s) => core.listRelevantJudgments(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
+    );
+  },
+  listWorkspaceNotices: async (f) => {
+    const noticeId = f.a.rows.notice_match?.noticeId ?? '';
+    // B asking for A's workspace gets nothing (or is refused); B's own list never holds A's match.
+    const asA = await f
+      .asB((s) => core.listWorkspaceNotices(s, { workspaceId: f.a.id, userId: f.ub }))
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const own = await f.asB((s) =>
+      core.listWorkspaceNotices(s, { workspaceId: f.b.id, userId: f.ub }),
+    );
+    expect(own.map((n) => n.id)).not.toContain(noticeId);
+  },
+  getPublicCase: async (f) => {
+    // B's key asking for A's case: nothing, whatever the CNR (A's workspace is never B's scope).
+    const cnr = 'KABC010000012024';
+    const asA = await f
+      .asB((s) => core.getPublicCase(s, { workspaceId: f.a.id, userId: f.ub }, cnr))
+      .catch(() => null);
+    expect(asA).toBeNull();
+    expect(
+      await f.asB((s) => core.getPublicCase(s, { workspaceId: f.b.id, userId: f.ub }, cnr)),
+    ).toBeNull();
+  },
+  listPublicCauseLists: async (f) => {
+    const asA = await f
+      .asB((s) =>
+        core.listPublicCauseLists(s, { workspaceId: f.a.id, userId: f.ub }, { advocate: 'x' }),
+      )
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const own = await f.asB((s) =>
+      core.listPublicCauseLists(s, { workspaceId: f.b.id, userId: f.ub }, { advocate: 'x' }),
+    );
+    expect(own).toEqual([]);
+  },
+  listPublicOrders: async (f) => {
+    const cnr = 'KABC010000012024';
+    const asA = await f
+      .asB((s) => core.listPublicOrders(s, { workspaceId: f.a.id, userId: f.ub }, { caseCnr: cnr }))
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const own = await f.asB((s) =>
+      core.listPublicOrders(s, { workspaceId: f.b.id, userId: f.ub }, { caseCnr: cnr }),
+    );
+    expect(own).toEqual([]);
+  },
+  listPublicNotices: async (f) => {
+    // Global notices only: no record names a workspace, and the seeded personal-class sources give none.
+    const notices = await f.asB((s) => core.listPublicNotices(s, {}));
+    expect(JSON.stringify(notices)).not.toContain(f.a.id);
+    expect(notices.every((n) => n.sourceLicense.length > 0 && n.provenance.sourceId !== '')).toBe(
+      true,
+    );
+  },
+  listMatterNotices: async (f) => {
+    const matterId = f.a.rows.notice_match?.matterId ?? '';
+    // B's scope (already open) asking for A's matter: not found (a nested A scope would be refused).
+    await expectDenied(
+      f.asB((s) => core.listMatterNotices(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
+    );
+  },
+  listBenchNoticeAlerts: async (f) => {
+    const matterId = f.a.rows.notice_match?.matterId ?? '';
+    // B asking for A's workspace or A's matter gets nothing (or is refused); A's rows are unchanged.
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    const asA = await f
+      .asB((s) => core.listBenchNoticeAlerts(s, { workspaceId: f.a.id, userId: f.ub }))
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const onMatter = await f.asB((s) =>
+      core.listBenchNoticeAlerts(s, { workspaceId: f.b.id, userId: f.ub }, { matterId }),
+    );
+    expect(onMatter).toEqual([]);
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    expect(aAfter).toEqual(aBefore);
+  },
+  notifyBenchNoticeAlerts: async (f) => {
+    // A notice matched to B alerts B's members only; A's notifications are exactly as they were.
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, 'in.tn.madras-hc.madurai'));
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'circular',
+        title: 'Special bench for W.P. matters',
+        issuedOn: '2026-11-02',
+        url: `https://notices.example.test/xt/bench/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    await inWorkspace(f.tx, f.b.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.b.id, title: 'XT bench matter', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.b.id,
+          matterId: m?.id ?? '',
+          forumId: forum?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: 'F-XT-BENCH',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      await s.insert(schema.listing).values({
+        workspaceId: f.b.id,
+        proceedingId: p?.id ?? '',
+        listDate: '2026-11-05',
+        listType: 'daily',
+        stageRaw: 'For Orders',
+        sourceType: 'manual',
+      });
+      await s.insert(schema.noticeMatch).values({
+        workspaceId: f.b.id,
+        noticeId,
+        forumId: forum?.id ?? '',
+        matterId: m?.id ?? '',
+        reason: 'matter_forum',
+      });
+    });
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.notification));
+    const sent = await core.notifyBenchNoticeAlerts(
+      { db: f.tx, enqueueDelivery: () => Promise.resolve() },
+      [{ workspaceId: f.b.id, noticeId }],
+    );
+    const bRows = await inWorkspace(f.tx, f.b.id, (s) =>
+      s
+        .select()
+        .from(schema.notification)
+        .where(eq(schema.notification.dedupeKey, `bench-notice:${noticeId}`)),
+    );
+    expect(bRows).toHaveLength(sent);
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.notification));
+    expect(aAfter).toEqual(aBefore);
+  },
+  scanJudgments: async (f) => {
+    const deps = { db: f.tx, enqueueDelivery: () => Promise.resolve() };
+    // B's scan sees none of A's tags; a malformed workspace id finds nothing.
+    const report = await core.scanJudgments(deps, 'not-a-uuid');
+    expect(report).toEqual({ judgments: 0, alerts: 0, notified: 0 });
+    const asB = await core.scanJudgments(deps, f.b.id);
+    expect(asB.notified).toBe(0);
+    const alerts = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.judgmentAlert));
+    expect(alerts.every((a) => a.notifiedAt === null)).toBe(true);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)
   .filter(([, entry]) => entry.test === THIS_FILE)
   .map(([name]) => name);
+
+const owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
+
+beforeAll(async () => {
+  // Committed, as `pnpm db:migrate` leaves it: the test db does not carry the forum catalogue.
+  await seedForumCatalogue(owner);
+});
+
+afterAll(async () => {
+  await owner.$client.end();
+});
 
 afterEach(() => {
   core.setNotificationJobDeps(null);
@@ -2178,6 +3396,71 @@ describe('cross-tenant core services: ub on workspace B against A', () => {
         aMember: { memberId: member.memberId, userId: member.userId },
         aInvitation: { invitationId: invitation.invitationId, token: invitation.token },
       });
+    });
+  });
+});
+
+// Tracked-case metering (#664) lives in the `@causedeck/core/billing` subpath, not the root index;
+// it is registered in BILLING_SERVICE_TESTS and holds the same B-on-A contract.
+describe('cross-tenant tracked-case metering: ub on workspace B against A', () => {
+  it('has a registry entry for each service tested here', () => {
+    expect(Object.keys(BILLING_SERVICE_TESTS).sort()).toEqual([
+      'countTrackedCases',
+      'getTrackedCaseCharge',
+    ]);
+  });
+
+  it("counts and charges only B's cases; naming A from B reads nothing", async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const seeded = await seedTwoTenants(tx);
+      const aId = seeded.a.id;
+      const bId = seeded.b.id;
+      const asB = <T>(fn: (s: Transaction) => Promise<T>) => inWorkspace(tx, bId, fn, seeded.ub);
+      const track = (workspaceId: string, n: number) =>
+        inWorkspace(tx, workspaceId, async (s) => {
+          const [p] = await s
+            .insert(schema.portfolio)
+            .values({ workspaceId, name: `Book ${randomUUID().slice(0, 8)}` })
+            .returning({ id: schema.portfolio.id });
+          await s.insert(schema.portfolioCase).values(
+            Array.from({ length: n }, (_, i) => ({
+              workspaceId,
+              portfolioId: p?.id ?? '',
+              caseNumber: `OA/${String(i + 1)}/2026`,
+            })),
+          );
+        });
+      for (const workspaceId of [aId, bId]) {
+        await inWorkspace(tx, workspaceId, (s) =>
+          s
+            .update(schema.subscription)
+            .set({ planId: 'institution-case-monthly', status: 'active', seats: 1, clerkSeats: 0 })
+            .where(eq(schema.subscription.workspaceId, workspaceId)),
+        );
+        invalidateEntitlements(workspaceId);
+      }
+      // The two-tenant seed already gives each workspace a portfolio case; count from there.
+      const bSeeded = await inWorkspace(tx, bId, (s) => countTrackedCases(s, bId));
+      const aSeeded = await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId));
+      await track(aId, 5);
+      await track(bId, 2);
+      const bOwn = bSeeded + 2;
+
+      // B sees only its own cases and is charged for exactly those.
+      expect(await asB((s) => countTrackedCases(s, bId))).toBe(bOwn);
+      expect(await asB((s) => getTrackedCaseCharge(s, bId))).toEqual({
+        planId: 'institution-case-monthly',
+        trackedCases: bOwn,
+        chargePaise: bOwn * TRACKED_CASE_PRICE_PAISE,
+      });
+      // Naming A from B is empty: no count, and no charge computed from A's cases.
+      expect(await asB((s) => countTrackedCases(s, aId))).toBe(0);
+      const naming = await asB((s) => getTrackedCaseCharge(s, aId));
+      expect(naming.trackedCases).toBe(0);
+      expect(naming.chargePaise).toBe(0);
+      // A is untouched and still counts its own.
+      expect(await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId))).toBe(aSeeded + 5);
     });
   });
 });

@@ -63,12 +63,28 @@ Each action is either **security** or **informational**:
 | `staff.two_factor_verified` | security | admin console TOTP step (`verify-2fa`, #309) |
 | `usage.budget_override_set`           | security      | `setBudgetOverride` (`@causedeck/core/usage`, #220)                                                                        |
 | `usage.budget_override_expired`       | security      | `expireBudgetOverride` (#224); metadata `key`, `expired_at`                                                        |
+| `api_key.created` | security | `createApiKey` (`@causedeck/core/api-keys`, #624); metadata `scopes` |
+| `api_key.revoked` | security | `revokeApiKey` (#624) |
+| `webhook_endpoint.created` | security | `createWebhookEndpoint` (`@causedeck/core/webhooks`, #626); metadata `events` |
+| `webhook_endpoint.deleted` | security | `deleteWebhookEndpoint` (#626) |
 | `billing.subscription_changed`        | security      | owner billing actions (`changeSubscription`, #257)                                                                         |
 | `billing.gstin_updated`               | security      | `setSubscriptionGstin` (#257)                                                                                              |
 | `billing.invoice_downloaded`          | security      | `openSaasInvoicePdf`, before the first byte (#258)                                                                         |
 | `workspace.role_settings_updated`     | security      | `updateRoleSettings` (#285)                                                                                                |
 | `workspace.privacy_updated`           | security      | `updateWorkspacePrivacy` (#286)                                                                                            |
 | `workspace.integration_token_rotated` | security      | `rotateIntegrationToken` (#287; metadata `kind` only)                                                                      |
+| `capture.created`                     | informational | `createCapture`, `createManualCapture` (#43; metadata channel, mime, size, `aiBlocked`; never the filename)                |
+| `capture.completed`                   | informational | `completeUpload` (#43; metadata `status`, `reason` or `duplicateOf`)                                                       |
+| `capture.quarantined`                 | security      | `runCaptureScan`, system actor (#43; metadata channel, mime, size, scanner signature name)                                 |
+| `capture.discarded`                   | informational | `discardCapture` (#43; metadata channel and previous status)                                                               |
+| `capture.recording_deleted`           | informational | `deleteRecording` (#542; metadata channel; no content)                                                                     |
+| `capture.channel_enabled`             | security      | `enableChannel` (#43; metadata channel and the disclosure version shown)                                                   |
+| `capture.channel_disabled`            | security      | `disableChannel` (#43; metadata channel)                                                                                   |
+| `email_intake.address_created`        | security      | `createAddress` (#54; metadata `addressId`, `domain`; never the local part)                                                |
+| `email_intake.address_rotated`        | security      | `rotateAddress` (#54; metadata `addressId`, `replacedAddressId`)                                                           |
+| `email_intake.address_revoked`        | security      | `revokeAddress` (#54; metadata `addressId`)                                                                                |
+| `email_intake.allowlist_added`        | security      | `addAllowlistEntry` (#54; metadata `entryId`, `kind`, `isDomain`; never the pattern)                                       |
+| `email_intake.allowlist_removed`      | security      | `removeAllowlistEntry` (#54; metadata `entryId`)                                                                           |
 | `workspace.deletion_requested` | security | `requestWorkspaceDeletion` (#302); metadata: job id, cool-off end |
 | `workspace.deletion_cancelled` | security | `cancelWorkspaceDeletion` (#302); metadata: job id |
 | `workspace.deletion_started` | security | `runWorkspaceErase`, before step 1 (system actor, #302) |

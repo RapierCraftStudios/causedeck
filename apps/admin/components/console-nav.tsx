@@ -1,9 +1,14 @@
-// Console navigation (#309): Overview, Adapters, Flags, Workspaces, Support sessions, Audit, Growth,
+// Console navigation (#309): Overview, Adapters, Sources, Data Ops, Coverage, Flags, Workspaces, Support sessions, Audit, Business (admin only), Growth,
 // filtered by the staff role matrix. 240 px left nav at desktop widths, an icon rail at 768, a
 // wrapping row on phones (360).
 import {
   Activity,
+  BarChart3,
   Building2,
+  Grid3x3,
+  CircleDollarSign,
+  ClipboardCheck,
+  Globe,
   LayoutDashboard,
   LifeBuoy,
   ScrollText,
@@ -17,7 +22,19 @@ import { canStaff, type StaffCapability, type StaffRole } from '../lib/roles.ts'
 
 export interface ConsoleNavItem {
   capability: StaffCapability;
-  href: '/' | '/adapters' | '/flags' | '/workspaces' | '/support' | '/audit' | '/growth';
+  href:
+    | '/'
+    | '/adapters'
+    | '/sources'
+    | '/data-ops'
+    | '/review'
+    | '/coverage'
+    | '/flags'
+    | '/workspaces'
+    | '/support'
+    | '/audit'
+    | '/business'
+    | '/growth';
   label: string;
   icon: LucideIcon;
 }
@@ -25,10 +42,15 @@ export interface ConsoleNavItem {
 export const CONSOLE_NAV: readonly ConsoleNavItem[] = [
   { capability: 'overview', href: '/', label: 'Overview', icon: LayoutDashboard },
   { capability: 'adapters', href: '/adapters', label: 'Adapters', icon: Activity },
+  { capability: 'sources', href: '/sources', label: 'Sources', icon: Globe },
+  { capability: 'data-ops', href: '/data-ops', label: 'Data Ops', icon: BarChart3 },
+  { capability: 'data-ops', href: '/review', label: 'Review queue', icon: ClipboardCheck },
+  { capability: 'coverage', href: '/coverage', label: 'Coverage', icon: Grid3x3 },
   { capability: 'flags', href: '/flags', label: 'Flags', icon: ToggleLeft },
   { capability: 'workspaces', href: '/workspaces', label: 'Workspaces', icon: Building2 },
   { capability: 'support', href: '/support', label: 'Support sessions', icon: LifeBuoy },
   { capability: 'audit', href: '/audit', label: 'Audit', icon: ScrollText },
+  { capability: 'business', href: '/business', label: 'Business', icon: CircleDollarSign },
   { capability: 'growth', href: '/growth', label: 'Growth', icon: TrendingUp },
 ];
 

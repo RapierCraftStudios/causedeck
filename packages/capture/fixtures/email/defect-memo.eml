@@ -1,0 +1,13 @@
+From: Registry <registry@example.test>
+To: R. Fictional <r.fictional@example.test>
+Subject: Papers returned for rectification - W.P.No.12345 of 2026
+Date: Thu, 15 Oct 2026 10:00:00 +0530
+Message-ID: <memo-1@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Authentication-Results: mx.example.test; spf=pass; dkim=pass; dmarc=pass
+
+Date: 15.10.2026
+
+The papers in W.P.No.12345 of 2026 are returned for rectification. Re-present within 7 days.
+(FICTIONAL - SYNTHETIC FIXTURE)

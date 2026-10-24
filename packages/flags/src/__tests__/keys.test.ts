@@ -18,7 +18,12 @@ const LEGAL = [
   'limitation.enabled',
   'court.a2.retrieval',
   'court.live-tracking',
+  'court.khc-a2',
+  'court.case-status',
   'court.sanctioned-push',
+  'capture.whatsapp-import',
+  'conflicts.check',
+  'bench_facts',
 ];
 
 describe('flag registry', () => {
@@ -32,7 +37,6 @@ describe('flag registry', () => {
         ...LEGAL,
         'ai.bedrock',
         'ai.sarvam',
-        'capture.whatsapp-import',
         'capture.email-forward',
         'capture.ics-feed',
         'pwa.offline',

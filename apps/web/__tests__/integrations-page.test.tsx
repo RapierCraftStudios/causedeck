@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-// Settings integrations page (#287): the email intake address and ICS feed cards show masked
-// placeholders (only the token hash is stored) with the token status; `Create` makes the first
-// token at once and `Rotate` asks first; the full value is then shown once with `Copy`; a card reads
-// `Not enabled yet` and cannot rotate while its flag is off; offline the buttons are disabled with
-// the reason; a failed rotate changes nothing; a load failure shows the error state with
-// `Try again`; clerks and viewers get the permission-denied page.
+// Settings integrations page (#287): the ICS feed card shows a masked placeholder (only the token
+// hash is stored) with the token status and a link card leads to the email intake page; `Create`
+// makes the first token at once and `Rotate` asks first; the full value is then shown once with
+// `Copy`; the card reads `Not enabled yet` and cannot rotate while its flag is off; offline the
+// buttons are disabled with the reason; a failed rotate changes nothing; a load failure shows the
+// error state with `Try again`; clerks and viewers get the permission-denied page.
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement, ReactNode } from 'react';
@@ -22,7 +22,6 @@ interface PageState {
   dev: boolean;
   fail: boolean;
   flags: Record<string, boolean>;
-  statuses: Record<string, unknown>;
 }
 
 const page = vi.hoisted((): PageState => ({
@@ -30,15 +29,6 @@ const page = vi.hoisted((): PageState => ({
   dev: true,
   fail: false,
   flags: {},
-  statuses: { email_intake: null, ics_feed: null },
-}));
-const runtime = vi.hoisted(() => ({
-  inWorkspace: vi.fn((_scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true })),
-}));
-const workspaces = vi.hoisted(() => ({
-  getIntegrations: vi.fn(() =>
-    page.fail ? Promise.reject(new Error('db down')) : Promise.resolve(page.statuses),
-  ),
 }));
 const logger = vi.hoisted(() => ({ error: vi.fn() }));
 
@@ -59,12 +49,13 @@ vi.mock('../lib/env.ts', () => ({
   serverEnv: () => ({ APP_URL: 'https://app.causedeck.test' }),
 }));
 vi.mock('../lib/flags.ts', () => ({
-  workspaceFlagCheck: () => Promise.resolve((key: string) => page.flags[key] === true),
+  workspaceFlagCheck: () =>
+    page.fail
+      ? Promise.reject(new Error('flags down'))
+      : Promise.resolve((key: string) => page.flags[key] === true),
 }));
 vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('@causedeck/ui/sonner', () => ({ toast }));
-vi.mock('@causedeck/core/runtime', () => runtime);
-vi.mock('@causedeck/core/workspaces', () => workspaces);
 vi.mock('../app/(app)/w/[slug]/settings/integrations/actions.ts', () => ({
   rotateIntegrationTokenAction: vi.fn(),
 }));
@@ -76,7 +67,6 @@ const { IntegrationCard } =
 
 const en = catalogs.en.settings.integrations;
 const WORKSPACE_ID = '00000000-0000-4000-8000-00000000a001';
-const MASKED_INTAKE = 'intake+••••••••@app.causedeck.test';
 const MASKED_FEED = 'https://app.causedeck.test/api/ics/••••••••';
 const FEED = 'https://app.causedeck.test/api/ics/tok_new';
 const CREATED = new Date('2026-10-01T10:00:00Z');
@@ -101,7 +91,6 @@ beforeEach(() => {
   page.dev = true;
   page.fail = false;
   page.flags = { 'capture.email-forward': true, 'capture.ics-feed': true };
-  page.statuses = { email_intake: null, ics_feed: null };
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
   setOnline(true);
 });
@@ -269,21 +258,18 @@ describe('integrations page (server)', () => {
     withIntl(<div>{children}</div>);
   }
 
-  it('shows both cards with masked placeholders, loaded on the workspace transaction', async () => {
-    page.statuses = { email_intake: { createdAt: CREATED, rotatedAt: null }, ics_feed: null };
+  it('shows the email link card and the feed card and the calendar link card', async () => {
     await renderPage();
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.title);
-    expect(runtime.inWorkspace).toHaveBeenCalledWith(
-      { workspaceId: 'ws-1', userId: 'user-1' },
-      expect.any(Function),
-    );
-    expect(workspaces.getIntegrations).toHaveBeenCalledWith({ tx: true }, 'ws-1');
     expect(screen.getByRole('heading', { name: en.emailIntake.title })).toBeTruthy();
+    expect(screen.getByRole('link', { name: en.emailIntake.open }).getAttribute('href')).toBe(
+      '/w/demo/settings/integrations/email',
+    );
     expect(screen.getByRole('heading', { name: en.icsFeed.title })).toBeTruthy();
-    expect(value('email_intake')?.value).toBe(MASKED_INTAKE);
-    expect(value('ics_feed')?.value).toBe(MASKED_FEED);
-    expect(actionButton('email_intake')?.textContent).toBe(en.rotate);
-    expect(actionButton('ics_feed')?.textContent).toBe(en.create);
+    // The feed has its own page (#53): its card here is a link to it, not a token card.
+    expect(
+      document.querySelector('[data-slot="integration-calendar-link"]')?.getAttribute('href'),
+    ).toBe('/w/demo/settings/integrations/calendar');
     expect(document.querySelector('[data-slot="integration-not-enabled"]')).toBeNull();
   });
 
@@ -292,22 +278,17 @@ describe('integrations page (server)', () => {
     await renderPage();
     expect(
       document.querySelector(
-        '[data-slot="integration-email_intake"] [data-slot="integration-not-enabled"]',
-      ),
-    ).toBeNull();
-    expect(
-      document.querySelector(
         '[data-slot="integration-ics_feed"] [data-slot="integration-not-enabled"]',
       )?.textContent,
     ).toBe(en.notEnabled);
-    expect(actionButton('email_intake')?.disabled).toBe(false);
-    expect(actionButton('ics_feed')?.disabled).toBe(true);
+    // No link to a page that is not there yet.
+    expect(document.querySelector('[data-slot="integration-calendar-link"]')).toBeNull();
   });
 
-  it('lets an advocate rotate', async () => {
+  it('shows the same cards to an advocate', async () => {
     page.context = testWorkspaceContext('demo', 'advocate');
     await renderPage();
-    expect(actionButton('ics_feed')?.disabled).toBe(false);
+    expect(screen.getByRole('link', { name: en.emailIntake.open })).toBeTruthy();
   });
 
   it('shows the error state with Try again when loading fails', async () => {
@@ -322,7 +303,6 @@ describe('integrations page (server)', () => {
   it('previews the loading skeleton in development', async () => {
     await renderPage({ __state: 'loading' });
     expect(document.querySelector('[data-pattern-state="loading"]')).not.toBeNull();
-    expect(workspaces.getIntegrations).not.toHaveBeenCalled();
   });
 
   it.each(['clerk', 'viewer'] as const)('is permission-denied for a %s', async (role) => {
@@ -336,7 +316,6 @@ describe('integrations page (server)', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       catalogs.en.shell.permissionDenied.title,
     );
-    expect(workspaces.getIntegrations).not.toHaveBeenCalled();
   });
 
   it('is not found for a non-member', async () => {

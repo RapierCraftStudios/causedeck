@@ -1,0 +1,23 @@
+{
+  "id": "en-32",
+  "language": "en",
+  "hearingDate": "2026-02-25",
+  "text": "In case 81241 of 2026 today. The matter was adjourned. Next hearing on the 28th. The court directed both sides to exchange written submissions by 13/4. The court directed the State to produce the original records.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-02-28",
+      "phrase": "on the 28th"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions by 13/4.",
+        "dueDate": "2026-04-13"
+      },
+      {
+        "text": "The court directed the State to produce the original records.",
+        "dueDate": null
+      }
+    ],
+    "tasks": []
+  }
+}

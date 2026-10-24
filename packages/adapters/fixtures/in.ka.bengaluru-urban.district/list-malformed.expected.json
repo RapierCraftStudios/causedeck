@@ -1,0 +1,90 @@
+{
+  "adapterId": "in.ka.bengaluru-urban.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "listDate": "2026-08-22",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. CCCA No. 1051/2022    Pretend Housing Society vs Invented Motors",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "28",
+      "itemNo": "1",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "1051",
+      "caseYear": 2022,
+      "matchKey": "CCCA/1051/2022",
+      "parties": "Pretend Housing Society vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Ex.P. No. 7126/2026    Invented Motors vs Sample Bank Ltd",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "28",
+      "itemNo": "2",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "7126",
+      "caseYear": 2026,
+      "matchKey": "EXP/7126/2026",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. S.C. No. 7394/2023    Invented Motors vs Sample Bank Ltd",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "28",
+      "itemNo": "3",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "7394",
+      "caseYear": 2023,
+      "matchKey": "SC/7394/2023",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. S.C. No. 426/2019    Made-up Farmer vs Pretend Housing Society",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "28",
+      "itemNo": "4",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "426",
+      "caseYear": 2019,
+      "matchKey": "SC/426/2019",
+      "parties": "Made-up Farmer vs Pretend Housing Society",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "22.08.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["28"],
+    "hallsUnreadable": []
+  }
+}

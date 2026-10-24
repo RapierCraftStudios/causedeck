@@ -91,6 +91,8 @@ describe('row-level security catalog', () => {
         ...BASELINE_TENANT_TABLES,
         'audit_event',
         'ai_call',
+        'ai_call_result',
+        'news_pref',
         'notification',
         'notification_pref',
         'notification_setting',
@@ -105,6 +107,9 @@ describe('row-level security catalog', () => {
         'deletion_job',
         'support_session',
         'workspace_integration',
+        'intake_address',
+        'intake_allowlist',
+        'intake_message',
         // Global-or-workspace reference tables (#344): ws_isolation plus catalogue policies.
         'forum',
         'court_hall',
@@ -136,6 +141,61 @@ describe('row-level security catalog', () => {
         'bench_roster',
         'bench_roster_entry',
         'bench_change_alert',
+        // Automation engine (#47).
+        'proposal',
+        'activity',
+        'automation_preference',
+        'automation_threshold',
+
+        // Capture inbox (#43).
+        'capture',
+        'workspace_capture_channel',
+
+        // Calendar interop (#53).
+        'ics_feed',
+        'ics_feed_event',
+        'ics_import_event',
+
+        // Public API keys (#624).
+        'api_key',
+
+        // Change webhooks (#626).
+        'webhook_endpoint',
+        'webhook_delivery',
+
+        // Institution portfolios (#661).
+        'portfolio',
+        'portfolio_case',
+        'portfolio_panel_advocate',
+
+        // Case-status watch (#589).
+        'case_watch',
+        'case_status_snapshot',
+
+        // Review and correction queue (#518).
+        'review_correction',
+
+        // Anchored order extraction (#46).
+        'extraction',
+
+        // Bootstrap import (#57, #546).
+        'import_batch',
+        'import_batch_file',
+        'import_plan',
+
+        // Advocate identifiers for the bootstrap import (#57, #550).
+        'advocate_profile',
+
+        // Karnataka HC cause-list watches (#482).
+        'cause_list_watch',
+        // Judgment alerts (#497).
+        'matter_issue_tag',
+        'judgment_alert',
+        // Court document network (#485).
+        'contribution_ledger',
+
+        // Official notices feed (#584).
+        'notice_match',
       ].sort(),
     );
     for (const row of rows)

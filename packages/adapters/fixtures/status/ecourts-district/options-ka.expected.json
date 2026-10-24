@@ -1,0 +1,26 @@
+{
+  "state": [
+    {
+      "code": "3",
+      "label": "Karnataka"
+    }
+  ],
+  "district": [
+    {
+      "code": "20",
+      "label": "Bengaluru Urban"
+    }
+  ],
+  "establishment": [
+    {
+      "code": "KABN01",
+      "label": "Civil Court, Bengaluru (FICTIONAL)"
+    }
+  ],
+  "caseType": [
+    {
+      "code": "11",
+      "label": "Original Suit - OS"
+    }
+  ]
+}

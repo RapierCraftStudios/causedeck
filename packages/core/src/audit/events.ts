@@ -32,6 +32,36 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A legal-gated feature flag enable request was rejected or withdrawn',
   },
+  // The source registry in the staff console (#478, D-048). Metadata holds the old and new value of
+  // every changed field (`old_<field>`, `new_<field>`).
+  'source.changed': {
+    security: true,
+    description: 'Staff created or changed an external data source or flipped its kill switch',
+  },
+  // The court document network (#485, D-048). Metadata holds ids and counts only, never content.
+  'network.contributed': {
+    security: false,
+    description: 'A public court document was contributed to the shared court document network',
+  },
+  'network.withdrawn': {
+    security: false,
+    description: "A workspace's contributions to the court document network were withdrawn",
+  },
+  // Global court-data controls (#486, D-048). Metadata holds counts, source ids and a subject hash only.
+  'court_data.expired': {
+    security: false,
+    description: "Court documents past their source's retention were blanked",
+  },
+  'court_data.erased': {
+    security: true,
+    description: "Staff masked a person's name in the shared court-data stores on request",
+  },
+  // The conflict-of-interest check (#500, D-048). Fail-closed: a check that cannot be audited is not
+  // run. Metadata holds counts only, never names.
+  'conflict.checked': {
+    security: true,
+    description: 'A member checked new matter parties for a conflict of interest',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },
@@ -74,6 +104,18 @@ export const AUDIT_ACTIONS = {
   'audit.retention_purged': {
     security: true,
     description: 'Audit events older than the retention window were purged',
+  },
+  // Public API keys (#624): fail-closed. Metadata holds the key's scopes (created) or nothing.
+  'api_key.created': { security: true, description: 'An owner or admin issued a public API key' },
+  'api_key.revoked': { security: true, description: 'An owner or admin revoked a public API key' },
+  // Change webhooks (#626): fail-closed. Metadata holds the subscribed event types (created) or nothing.
+  'webhook_endpoint.created': {
+    security: true,
+    description: 'A workspace manager registered a webhook endpoint',
+  },
+  'webhook_endpoint.deleted': {
+    security: true,
+    description: 'A workspace manager removed a webhook endpoint',
   },
   'billing.subscription_changed': {
     security: true,
@@ -175,9 +217,87 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "The workspace's memory and embeddings were erased",
   },
+  // Capture inbox (#43). Metadata holds the channel, MIME type, size and flags; never a filename or
+  // file content. Channel changes and quarantines are fail-closed: they change where a lawyer's
+  // data may flow or record a threat.
+  'capture.created': {
+    security: false,
+    description: 'A capture was created and an upload URL issued, or a typed note was captured',
+  },
+  'capture.completed': {
+    security: false,
+    description: 'A capture upload was verified and queued, or found to be a duplicate',
+  },
+  'capture.quarantined': {
+    security: true,
+    description: 'A capture failed the virus scan and its raw object was moved to quarantine',
+  },
+  'capture.discarded': {
+    security: false,
+    description: 'A capture was discarded; its raw object is deleted by the retention job',
+  },
+  'capture.recording_deleted': {
+    security: false,
+    description: 'A voice recording and its transcript were deleted by a member; proposals stay',
+  },
+  'capture.channel_enabled': {
+    security: true,
+    description: 'A capture channel was enabled after the data-flow disclosure was shown',
+  },
+  'capture.channel_disabled': {
+    security: true,
+    description: 'A capture channel was disabled',
+  },
+  // Email forward-in intake (#54 part 2). Fail-closed: they change who can put mail into the
+  // workspace. Metadata holds ids, the allow-list kind and the domain; never an address' local part
+  // and never a sender address.
+  'email_intake.address_created': {
+    security: true,
+    description: 'A private email intake address was created for a member',
+  },
+  'email_intake.address_rotated': {
+    security: true,
+    description: 'A private email intake address was replaced; the old address stopped working',
+  },
+  'email_intake.address_revoked': {
+    security: true,
+    description: 'A private email intake address was revoked',
+  },
+  'email_intake.allowlist_added': {
+    security: true,
+    description: 'A sender was added to the email intake allow-list',
+  },
+  'email_intake.allowlist_removed': {
+    security: true,
+    description: 'A sender was removed from the email intake allow-list',
+  },
   'workspace.settings_viewed': {
     security: false,
     description: 'Workspace settings were opened',
+  },
+  // Automation engine (#47). Fail-closed where the system acted or was reversed: an action that
+  // cannot be audited does not happen. Metadata holds ids, kind, level and counts, never content.
+  'automation.submitted': {
+    security: false,
+    description: 'Drafts were submitted to the automation engine',
+  },
+  'automation.applied': {
+    security: true,
+    description: 'The automation engine applied a change without asking (L3)',
+  },
+  'automation.accepted': {
+    security: true,
+    description: 'A person accepted (or edited and accepted) a proposal',
+  },
+  'automation.dismissed': { security: false, description: 'A person dismissed a proposal' },
+  'automation.expired': { security: false, description: 'Proposals expired unanswered' },
+  'automation.undone': {
+    security: true,
+    description: 'An auto-applied change, or a whole capture, was undone',
+  },
+  'automation.reassigned': {
+    security: true,
+    description: "A capture's results were moved to another matter",
   },
 } as const satisfies Record<string, AuditActionSpec>;
 

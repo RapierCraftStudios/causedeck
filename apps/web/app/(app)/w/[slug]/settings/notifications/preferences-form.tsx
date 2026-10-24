@@ -80,7 +80,18 @@ const CATEGORY_MESSAGE = {
   'billing.notice': 'billingNotice',
   'reminder.hearing': 'reminderHearing',
   'proposal.new': 'proposalNew',
+  'court.board': 'courtBoard',
+  'judgment.alert': 'judgmentAlert',
+  'status.next_date': 'statusNextDate',
+  'status.order': 'statusOrder',
+  'status.stage': 'statusStage',
+  bench_change: 'benchChange',
+  'portfolio.adverse_order': 'portfolioAdverseOrder',
+  'portfolio.missed_date': 'portfolioMissedDate',
+  notices: 'notices',
   'digest.daily': 'digestDaily',
+  'digest.end_of_day': 'digestEndOfDay',
+  'digest.news': 'digestNews',
   'system.notice': 'systemNotice',
 } as const satisfies Record<CategoryKey, string>;
 

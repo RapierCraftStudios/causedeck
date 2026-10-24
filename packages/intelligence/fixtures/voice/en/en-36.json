@@ -1,0 +1,23 @@
+{
+  "id": "en-36",
+  "language": "en",
+  "hearingDate": "2025-01-12",
+  "text": "In case 86592 of 2024 today. The court heard both sides and the matter was adjourned again. Pleadings are incomplete. Next hearing on April 20th. The court directed the petitioner to file the rejoinder by February 18th. The court directed the respondent to file a counter affidavit after seven weeks. Remind me to call the client about the vakalatnama.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-04-20",
+      "phrase": "April 20th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the petitioner to file the rejoinder by February 18th.",
+        "dueDate": "2025-02-18"
+      },
+      {
+        "text": "The court directed the respondent to file a counter affidavit after seven weeks.",
+        "dueDate": "2025-03-02"
+      }
+    ],
+    "tasks": ["call the client about the vakalatnama"]
+  }
+}

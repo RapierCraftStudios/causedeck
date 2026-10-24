@@ -69,9 +69,10 @@ export async function expectNoRatingCopy(page: Page): Promise<void> {
 }
 
 /**
- * Drop every catalogue forum from the worker database: the courts index has nothing to list. Rows
- * that point at a forum (proceedings from the matter graph, rosters, ...) go first, since their
- * foreign keys restrict the delete; the worker database is reset from the template per test.
+ * Drop every forum (catalogue and workspace-owned, the seed has both) from the worker database: the
+ * courts index has nothing to list. Rows that point at a forum (proceedings from the matter graph,
+ * rosters, ...) go first, since their foreign keys restrict the delete; the worker database is
+ * reset from the template per test.
  */
 export function emptyCatalogue(database: string): Promise<void> {
   return withSql(database, async (sql) => {
@@ -86,7 +87,7 @@ export function emptyCatalogue(database: string): Promise<void> {
           execute format('truncate %s cascade', r.t);
         end loop;
       end $$`);
-    await sql`delete from forum where workspace_id is null`;
+    await sql`delete from forum`;
   });
 }
 
@@ -141,5 +142,15 @@ export async function uploadRosterPdf(page: Page): Promise<void> {
     mimeType: 'application/pdf',
     buffer: rosterImportPdf(),
   });
-  await expect(page.locator('[data-roster-import-grid]')).toBeVisible({ timeout: 20_000 });
+  const grid = page.locator('[data-roster-import-grid]');
+  const failure = page.locator(
+    '[data-roster-import-error], [data-roster-import="unreadable"], [data-roster-import="upload"] [role="alert"]',
+  );
+  // Fail fast with the page's own message when the upload or the preview fails, instead of
+  // waiting out the grid's timeout blind.
+  await expect(grid.or(failure).first()).toBeVisible({ timeout: 20_000 });
+  if (!(await grid.isVisible())) {
+    const message = await failure.first().innerText();
+    throw new Error(`roster import did not reach the review grid: ${message}`);
+  }
 }

@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
 import { ForumConfigSchema, LanguageProfileSchema } from '@causedeck/validators/forum';
-import { eq, inArray, isNull, TransactionRollbackError } from 'drizzle-orm';
+import { and, eq, inArray, isNull, TransactionRollbackError } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Transaction } from '../../client.ts';
@@ -48,6 +48,45 @@ const ENABLED_CODES = [
   'in.ka.consumer.bengaluru-urban-district',
   'in.ka.consumer.state-commission',
   'in.ka.rera',
+  // National NCLT benches, DRT and DRAT forums (#662).
+  'in.nclt.new-delhi',
+  'in.nclt.mumbai',
+  'in.nclt.chennai',
+  'in.nclt.kolkata',
+  'in.nclt.ahmedabad',
+  'in.nclt.hyderabad',
+  'in.nclt.allahabad',
+  'in.nclt.chandigarh',
+  'in.nclt.guwahati',
+  'in.nclt.cuttack',
+  'in.nclt.jaipur',
+  'in.nclt.kochi',
+  'in.nclt.indore',
+  'in.nclt.amaravati',
+  'in.drt.delhi-1',
+  'in.drt.delhi-2',
+  'in.drt.delhi-3',
+  'in.drt.mumbai-1',
+  'in.drt.mumbai-2',
+  'in.drt.mumbai-3',
+  'in.drt.chennai-1',
+  'in.drt.chennai-2',
+  'in.drt.chennai-3',
+  'in.drt.kolkata-1',
+  'in.drt.kolkata-2',
+  'in.drt.hyderabad',
+  'in.drt.ahmedabad',
+  'in.drt.pune',
+  'in.drt.chandigarh-1',
+  'in.drt.jaipur',
+  'in.drt.lucknow',
+  'in.drt.ernakulam',
+  'in.drt.coimbatore',
+  'in.drat.mumbai',
+  'in.drat.delhi',
+  'in.drat.kolkata',
+  'in.drat.chennai',
+  'in.drat.allahabad',
 ];
 
 const DISABLED_CODES = [
@@ -75,6 +114,19 @@ function* walk(value: unknown): Generator<string> {
 }
 
 const allText = [...walk(FORUM_CATALOGUE)];
+
+describe('national tribunals (#662)', () => {
+  it('serves every NCLT bench with the NCLT adapter and DRT and DRAT forums with in.drt', () => {
+    const tribunals = FORUM_CATALOGUE.filter((f) => /^in\.(nclt|drt|drat)\./.test(f.code));
+    expect(tribunals).toHaveLength(15 + 21 + 5);
+    for (const f of tribunals) {
+      expect(f.adapterLevel, f.code).toBe('A1');
+      expect(f.adapterId, f.code).toBe(
+        f.code.startsWith('in.nclt.') ? 'in.nclt.bengaluru' : 'in.drt',
+      );
+    }
+  });
+});
 
 describe('forum catalogue data (#34)', () => {
   it('lists exactly the enabled launch forums, with stable codes', () => {
@@ -134,9 +186,9 @@ describe('forum catalogue data (#34)', () => {
       adapterId: 'in.nclt.bengaluru',
       adapterLevel: 'A1',
     });
-    // The two HC adapters (three forums) and NCLT Bengaluru ship at A1.
+    // The two HC adapters (three forums), NCLT (15 benches), DRT (21 forums) and DRAT (5) ship at A1.
     expect(FORUM_CATALOGUE.filter((f) => f.adapterLevel === 'A1').map((f) => f.code)).toHaveLength(
-      4,
+      44,
     );
   });
 
@@ -250,12 +302,24 @@ describe('seedForumCatalogue (#34)', () => {
     await ownerRolledBack(async (tx) => {
       await seedForumCatalogue(tx);
       const first = await catalogueRows(tx);
-      const total = await tx.$count(forum, isNull(forum.workspaceId));
+      // Only the catalogue's own rows: other files commit system forums to the shared database.
+      const countCatalogue = () =>
+        tx.$count(
+          forum,
+          and(
+            isNull(forum.workspaceId),
+            inArray(
+              forum.code,
+              FORUM_CATALOGUE.map((f) => f.code),
+            ),
+          ),
+        );
+      const total = await countCatalogue();
       const again = await seedForumCatalogue(tx);
       expect(again).toMatchObject({ inserted: 0, updated: 0, disabled: 0 });
       expect(again.unchanged).toBe(FORUM_CATALOGUE.length);
       expect(await catalogueRows(tx)).toEqual(first);
-      expect(await tx.$count(forum, isNull(forum.workspaceId))).toBe(total);
+      expect(await countCatalogue()).toBe(total);
       expect(first).toHaveLength(FORUM_CATALOGUE.length);
     });
   });

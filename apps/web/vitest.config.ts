@@ -1,5 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
+// Naming a cross-tenant suite on the command line (`vitest run __tests__/cross-tenant-x.test.ts`)
+// runs it with the same database setup as `vitest.tenancy.config.ts`; a bare `vitest run` still skips them.
+const tenancy = process.argv.some((arg) => /__tests__\/cross-tenant-[^/]*\.test\.ts$/.test(arg));
+
 // Node by default; component tests opt into jsdom with `// @vitest-environment jsdom`.
 export default defineConfig({
   esbuild: { jsx: 'automatic' },
@@ -11,7 +15,11 @@ export default defineConfig({
       'src/**/*.test.ts',
     ],
     // Cross-tenant suites need the test database; `vitest.tenancy.config.ts` runs them (#209).
-    exclude: ['**/node_modules/**', '__tests__/cross-tenant-*.test.ts'],
+    exclude: tenancy
+      ? ['**/node_modules/**']
+      : ['**/node_modules/**', '__tests__/cross-tenant-*.test.ts'],
+    globalSetup: tenancy ? ['@causedeck/db/testing/global-setup'] : [],
+    hookTimeout: tenancy ? 120_000 : 10_000,
     environment: 'node',
     // Full app-shell renders under jsdom take 3-5 s on a contended 2-vCPU CI runner (turbo runs
     // every workspace's tests at once); the 5 s default left no headroom. A change that touches

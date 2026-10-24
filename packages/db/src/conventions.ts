@@ -30,7 +30,18 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * has no RLS. `catalogue_meta` (#34) records the version of each owner-seeded system catalogue (the
  * forum catalogue); the app role may only read it. `adapter_version` (#372) holds the versioned
  * court-adapter configs, one `active` row per adapter; staff manage it through the app role like
- * `access_mode_registry`.
+ * `access_mode_registry`. `source` (#478, D-048) is the global source registry that generalises
+ * `access_mode_registry` to every external source; staff write it through the app role (no DELETE).
+ * `contributed_document` (#485, D-048) holds the public court documents workspaces opted in to share;
+ * it has no workspace column by design, the link to a contributor is the tenant table `contribution_ledger`.
+ * `fetch_log` (#479) is the global, content-free log of governed fetches: the app role may only SELECT and INSERT.
+ * `news_item` (#481) holds feed-provided news headlines, links and excerpts, never article bodies; staff-cleared sources only.
+ * `source_health`, `source_parse_run`, `data_ops_alert` and `data_ops_oncall` (#515) are the global, content-free
+ * data-operations tables: per-source health and backoff, parse yield, the alert ledger and the on-call rotation.
+ * `cause_list_publication` (#482) is the global, content-free cache of fetched list publications (no body).
+ * `board_observation` (#493) is the global, content-free hall display-board history (hall, item, state); the app role may SELECT and INSERT it.
+ * `bench_sitting_fact` (#521, D-050) is the global, staff-only bench-facts store (neutral counts and pace per hall and day); the app and clerk roles have no table grants and reach it only through the owner-defined `app_bench_*` functions.
+ * `notice` (#584, D-048) is the global official notices feed read from cleared sources; the app role may SELECT, INSERT and UPDATE it (no DELETE).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -55,6 +66,20 @@ export const GLOBAL_TABLES: readonly string[] = [
   'flag_change_request',
   'catalogue_meta',
   'adapter_version',
+  'source',
+  'contributed_document',
+  'fetch_log',
+  'news_item',
+  'source_health',
+  'source_parse_run',
+  'data_ops_alert',
+  'data_ops_oncall',
+  'judgment',
+  'cause_list_publication',
+  'board_observation',
+  'notice',
+  'review_item',
+  'bench_sitting_fact',
   'activation_event',
 ];
 

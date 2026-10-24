@@ -28,6 +28,8 @@ const CORE_NEXT_DATE_CHOICE_TEST =
 const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-preview.test.ts';
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
+const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
+const CORE_PORTFOLIO_TEST = 'packages/core/src/__tests__/cross-tenant/portfolio.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -45,6 +47,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   billing_event: DB_TABLES_TEST,
   audit_event: DB_TABLES_TEST,
   ai_call: DB_TABLES_TEST,
+  ai_call_result: DB_TABLES_TEST,
+  news_pref: DB_TABLES_TEST,
   notification: DB_TABLES_TEST,
   notification_pref: DB_TABLES_TEST,
   notification_setting: DB_TABLES_TEST,
@@ -58,10 +62,15 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   saas_invoice: DB_TABLES_TEST,
   saas_invoice_line: DB_TABLES_TEST,
   matter_restriction: DB_TABLES_TEST,
+  contribution_ledger: DB_TABLES_TEST,
   export_job: DB_TABLES_TEST,
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
   workspace_integration: DB_TABLES_TEST,
+  // Email forward-in intake (#54 part 2).
+  intake_address: DB_TABLES_TEST,
+  intake_allowlist: DB_TABLES_TEST,
+  intake_message: DB_TABLES_TEST,
   // Global-or-workspace reference tables (#344): catalogue rows are covered by court-schema.test.ts.
   forum: DB_TABLES_TEST,
   court_hall: DB_TABLES_TEST,
@@ -93,6 +102,57 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   bench_roster: DB_TABLES_TEST,
   bench_roster_entry: DB_TABLES_TEST,
   bench_change_alert: DB_TABLES_TEST,
+  // Automation engine (#47).
+  proposal: DB_TABLES_TEST,
+  activity: DB_TABLES_TEST,
+  automation_preference: DB_TABLES_TEST,
+  automation_threshold: DB_TABLES_TEST,
+
+  // Capture inbox (#43).
+  capture: DB_TABLES_TEST,
+  workspace_capture_channel: DB_TABLES_TEST,
+
+  // Calendar interop (#53).
+  ics_feed: DB_TABLES_TEST,
+  ics_feed_event: DB_TABLES_TEST,
+  ics_import_event: DB_TABLES_TEST,
+
+  // Case-status watch (#589).
+  case_watch: DB_TABLES_TEST,
+  case_status_snapshot: DB_TABLES_TEST,
+
+  // Review and correction queue (#518).
+  review_correction: DB_TABLES_TEST,
+
+  // Anchored order extraction (#46).
+  extraction: DB_TABLES_TEST,
+
+  // Bootstrap import (#57, #546).
+  import_batch: DB_TABLES_TEST,
+  import_batch_file: DB_TABLES_TEST,
+  import_plan: DB_TABLES_TEST,
+
+  // Advocate identifiers for the bootstrap import (#57, #550).
+  advocate_profile: DB_TABLES_TEST,
+
+  // Public API keys (#624).
+  api_key: DB_TABLES_TEST,
+
+  // Change webhooks (#626).
+  webhook_endpoint: DB_TABLES_TEST,
+  webhook_delivery: DB_TABLES_TEST,
+  // Institution portfolios (#661).
+  portfolio: DB_TABLES_TEST,
+  portfolio_case: DB_TABLES_TEST,
+  portfolio_panel_advocate: DB_TABLES_TEST,
+
+  // Karnataka HC cause-list watches (#482).
+  cause_list_watch: DB_TABLES_TEST,
+  // Judgment alerts (#497).
+  matter_issue_tag: DB_TABLES_TEST,
+  judgment_alert: DB_TABLES_TEST,
+  // Official notices feed (#584).
+  notice_match: DB_TABLES_TEST,
 };
 
 /**
@@ -131,6 +191,7 @@ const rosterSelfScoped = {
 const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
 const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
 const documentPreviewDenies = { test: CORE_DOCUMENT_PREVIEW_TEST, kind: 'denies' } as const;
+const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
@@ -188,6 +249,39 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'sends the payload as given; runJob scopes the handler to the payload workspace',
   },
   retentionSweep: selfScoped,
+  // KHC cause-list watches (#482)
+  addCauseListWatch: selfScoped,
+  matchNotices: selfScoped,
+  notifyNoticeMatches: selfScoped,
+  listHolidayListings: selfScoped,
+  // Deadline engine and orders poll (#494): B's matched notices and B's watch never reach A
+  loadCourtCalendar: selfScoped,
+  pollOrders: selfScoped,
+  listCauseListWatches: selfScoped,
+  removeCauseListWatch: selfScoped,
+  // Conflict-of-interest checks (#500): B's check sees none of A's parties
+  checkConflicts: empty,
+  // Cross-checked facts (#499): B's agreement for A's proceeding is empty
+  getNextDateAgreement: empty,
+  getStageAgreement: empty,
+  // Case-status watches (#591)
+  addCaseWatch: selfScoped,
+  listCaseWatches: selfScoped,
+  removeCaseWatch: selfScoped,
+  // Institution portfolios (#663): B's call on A's portfolio is denied; B's lists are empty
+  importPortfolioCases: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  listPortfolioCases: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  portfolioSummary: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  exportPortfolioCsv: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  // Portfolio list and create (#666): B cannot list or create in A's workspace; B's list has no A row.
+  listPortfolios: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  createPortfolio: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  // Exception alerts (#665): the scan opens withWorkspace on the given workspace id only.
+  scanPortfolioAlerts: {
+    test: CORE_PORTFOLIO_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id and notifies that workspace's members; RLS keeps every other workspace out",
+  },
   runBillingProcessEvent: {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
@@ -208,8 +302,30 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'system job: lists workspace ids through a definer function, writes each workspace inside withWorkspace',
   },
+  // News digest (#481): a member of B never reads or writes A's preferences, digest or recipients.
+  getNewsPref: denies,
+  setNewsPref: denies,
+  markNewsDigestSent: denies,
+  listNewsForMember: denies,
+  selectNewsDigestItems: denies,
+  listNewsDigestRecipients: empty,
+  runNewsDigestMember: selfScoped,
+  runNewsDigest: selfScoped,
+  runNewsDigestSchedule: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids and timezones only through a definer function',
+  },
   runNotificationDeliver: selfScoped,
   runNotificationDigest: selfScoped,
+  // End-of-day digest (#49): B's digest never counts, names or emails A's activity.
+  runActivityDigest: selfScoped,
+  runActivityDigestMember: selfScoped,
+  runActivityDigestSchedule: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'system job: lists workspace ids and timezones only through a definer function',
+  },
   runNotificationDigestSchedule: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -270,6 +386,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'inserts under withWorkspace; ws_isolation rejects a row for another workspace',
   },
   restrictMatter: denies,
+  // court document network (#485): a contribution reads the caller's own document under RLS
+  checkEligibility: denies,
+  contributeDocument: denies,
+  withdrawContributions: denies,
   assertMatterReadable: denies,
   listMatterRestrictions: denies,
   // court (#34): catalogue rows are global by design; custom forums stay in their workspace
@@ -331,6 +451,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
   // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that
   // name a row of another workspace, and undos handed a payload of A's ids
+  // court day (#493): the live halls read model opens withWorkspace on the given actor
+  getLiveHalls: denies,
+  // bench card (#521): the flagged read model opens withWorkspace on the given actor
+  getBenchCard: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -356,6 +480,28 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmNextDate: denies,
   // conflict card resolution (#390): A's listings from B, or ub claiming A, are NOT_FOUND
   chooseNextDateSource: nextDateChoiceDenies,
+  // Automation engine (#47): B cannot submit, resolve, undo, read or export A's proposals and activity.
+  submitProposals: automationDenies,
+  acceptProposal: automationDenies,
+  editAndAccept: automationDenies,
+  dismissProposal: automationDenies,
+  applyAutomatically: automationDenies,
+  expireProposals: automationDenies,
+  // Activity feed read model (#49): B reads, counts and digests only B's own activities.
+  listActivities: automationDenies,
+  getActivityDetail: automationDenies,
+  countByDay: automationDenies,
+  countDigestActivities: automationDenies,
+  exportActivities: automationDenies,
+  listProposalsForDigest: automationDenies,
+  getAskFirst: automationDenies,
+  setAskFirst: automationDenies,
+  confirmActivity: automationDenies,
+  previewUndo: automationDenies,
+  undoActivity: automationDenies,
+  undoCapture: automationDenies,
+  reassignCapture: automationDenies,
+  getInbox: automationDenies,
   getCanonicalNextDate: denies,
   // matter timeline (#366): A's matter from B, or ub claiming A, is NOT_FOUND
   getMatterTimeline: denies,
@@ -374,6 +520,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setSensitive: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
+  // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
+  staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -481,6 +629,61 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  createApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; a non-member is FORBIDDEN and a nested scope throws TenancyError',
+  },
+  listApiKeys: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; keys are tenant rows under RLS',
+  },
+  revokeApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; another workspace key id is NOT_FOUND',
+  },
+  authenticateApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'the bearer token is the credential: reads one key through the owner-defined app_api_key_by_hash, by hash only (never lists)',
+  },
+  findApiKeyIssuer: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'reads one user row by id for the key issuer (the user table has no workspace column); the caller passes the issuer id from an authenticated key',
+  },
+  apiKeyCallsThisPeriod: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  consumeApiCall: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  createWebhookEndpoint: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; a non-member is FORBIDDEN and a nested scope throws TenancyError',
+  },
+  listWebhookEndpoints: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; endpoints are tenant rows under RLS',
+  },
+  deleteWebhookEndpoint: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; another workspace endpoint id is NOT_FOUND',
+  },
+  emitWebhookEvent: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on input.workspaceId and fans out only to that workspace endpoints; nested in another workspace scope it throws TenancyError',
   },
   getUsage: {
     test: CORE_SERVICES_TEST,
@@ -599,11 +802,159 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
   },
+  // judgment alerts (#497)
+  listTags: denies,
+  addTag: denies,
+  proposeTags: denies,
+  confirmTag: denies,
+  dismissTag: denies,
+  listRelevantJudgments: denies,
+  // notices page and matter card (#588)
+  listWorkspaceNotices: empty,
+  getPublicCase: empty,
+  listPublicCauseLists: empty,
+  listPublicOrders: empty,
+  listPublicNotices: selfScoped,
+  listMatterNotices: denies,
+  // bench-notice alerts (#496)
+  listBenchNoticeAlerts: empty,
+  notifyBenchNoticeAlerts: selfScoped,
+  scanJudgments: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
+  },
+  // citations (#484): the global corpus, one answer for every workspace
+  verifyCitation: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments, the same answer in every workspace; reads nothing tenant-scoped',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // portfolio (#663): pure CSV reader and constants
+  parsePortfolioCsv: 'pure',
+  MAX_PORTFOLIO_IMPORT_ROWS: 'constant',
+  MAX_PORTFOLIO_WATCHES_PER_ADVOCATE: 'constant',
+  PORTFOLIO_ALERT_MAX_CASES: 'constant',
+  PORTFOLIO_WATCH_CADENCE_MINUTES: 'constant',
+  PORTFOLIO_EXPORT_HEADER: 'constant',
+  // business dashboard (#519): pure maths and rendering over aggregates
+  assessAgreement: 'pure',
+  UNKNOWN_CONFIDENCE: 'constant',
+  nameKey: 'pure',
+  nameSimilarity: 'pure',
+  nameTokens: 'pure',
+  transliterate: 'pure',
+  parseBusinessSnapshot: 'pure',
+  buildBusinessReport: 'pure',
+  businessConfigFromEnv: 'pure',
+  evaluateCostThresholds: 'pure',
+  renderBusinessDigest: 'pure',
+  renderCostAlert: 'pure',
+  readBusinessSnapshot:
+    'system read of app_business_snapshot (job use, no staff user): plan ids and counts, sums and dollar totals only, never a workspace id, email or content',
+  // source registry (#478): a global table of external-source policy, no tenant rows to leak
+  SOURCE_KINDS: 'constant',
+  SOURCE_ACCESS_MODES: 'constant',
+  SOURCE_REVIEW_STATUSES: 'constant',
+  SOURCE_MAX_TIERS: 'constant',
+  SourceNotCleared: 'error class',
+  SourceAdminError: 'error class',
+  validateSourceTier: 'pure',
+  validateSourceInput: 'pure',
+  decideSourceClearance: 'pure',
+  asSourceStaff: 'pure',
+  policyFor:
+    'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  isCleared:
+    'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  listSources:
+    'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  createSource:
+    'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  updateSource:
+    'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  setSourceKillSwitch:
+    'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  // court document network (#485): `findContributed` reads the global `contributed_document` table (no
+  // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
+  findContributed:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): public text only, no contributor field; the tenant link is `contribution_ledger`',
+  CONTRIBUTABLE_DOCUMENT_KINDS: 'constant',
+  isContributableKind: 'pure',
+  ContributionRefused: 'error class',
+  recordFetchLog:
+    'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
+  createFetchLogSink:
+    'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
+  // global court-data controls (#486): act on the global `contributed_document` table, never on tenant rows
+  expireCourtData:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): blanks copies past their source retention; a system job, no tenant input',
+  eraseCourtDataSubject:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): staff-only (enabled ops or admin staff_user) masking of a person name; no tenant input, the tenant link `contribution_ledger` is untouched',
+  courtDataRetention:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): system job (system.court-data.retention) with no workspace payload',
+  CourtDataErasureError: 'error class',
+  MASKED_NAME: 'constant',
+  MIN_ERASURE_SUBJECT_LENGTH: 'constant',
+  SOURCE_DATA_CLASSES: 'constant',
+  exposableThroughApi: 'pure',
+  PUBLIC_API_MAX_LIMIT: 'constant',
+  PUBLIC_API_DEFAULT_LIMIT: 'constant',
+  sourceLicense: 'pure',
+  sourceOpsOverview:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  sourceFetchLogs:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  topFailingSources: 'pure',
+  isFetchError: 'pure',
+  FRESHNESS_SLA_HOURS: 'constant',
+  staffConflictRate:
+    'app_staff_conflict_rate() returns per-source counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
+  staffParseYield:
+    'app_staff_parse_yield() returns per-adapter counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
+  // staff coverage tracker (#517)
+  COVERAGE_DATA_TYPES: 'constant',
+  COVERAGE_LEVELS: 'constant',
+  forumState: 'pure',
+  sourceCoversForum: 'pure',
+  buildCoverage: 'pure',
+  rankGaps: 'pure',
+  diffCoverage: 'pure',
+  coverageReport: 'pure',
+  readCatalogueCoverageInputs:
+    'global tables `forum` (system catalogue rows only, `global_read`), `source`, `fetch_log` and `notice` (GLOBAL_TABLES, no RLS): ids, levels, counts and times, never tenant data',
+  staffCoverageInputs:
+    'app_staff_watch_demand() returns per-source counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
+  // automation: pure helpers, constants and error classes (#47)
+  decideLevel: 'pure (reads only the draft and the context it is given)',
+  needsYouReason: 'pure',
+  thresholdKey: 'pure',
+  idempotencyKey: 'pure (sha256 of its arguments)',
+  PROPOSAL_EXPIRY_DAYS: 'constant',
+  KindNotEnabled: 'error class',
+  SensitiveAiRefusedError: 'error class',
+  UndoExpiredError: 'error class',
+  UndoRefusedError: 'error class',
+  ACTIVITY_EXPORT_FIELDS: 'constant',
+  ACTIVITY_PAGE_SIZE: 'constant',
+  CLERK_ACTIVITY_KINDS: 'constant',
+  buildHandlerRegistry: 'pure (checks handler kinds; touches no data)',
+  FORBIDDEN_KIND_PATTERN: 'constant',
+  HANDLERS: 'constant (handler registry; handlers run only inside an engine call)',
+  HandlerRegistrationError: 'error class',
+  AUTOMATION_LEVELS: 'constant',
+  fromNumericLevel: 'pure',
+  isAutomationLevel: 'pure',
+  toNumericLevel: 'pure',
+  UNDO_WINDOW_DAYS: 'constant',
+  APPROVAL_MATRIX: 'constant (the approval matrix as data)',
+  THRESHOLD_CAP: 'constant',
+  THRESHOLD_STEP: 'constant',
   // workspaces: errors
   WorkspaceError: 'error class',
   InvitationError: 'error class',
@@ -635,6 +986,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   normaliseJudgeName: 'pure',
   // court: bench-change alerts (#389)
   portfolioRuleMatches: 'pure (matches a portfolio rule against a case type and year)',
+  classifyBenchNotice: 'pure (reads a notice title; no data access)',
+  BENCH_NOTICE_TYPES: 'constant',
+  BENCH_NOTICE_WINDOW_DAYS: 'constant',
   benchChangeDay: 'pure (formats an ISO date as "05 Oct")',
   benchChangeTitle: 'pure (the counts-only notification title)',
   // court: roster lookup statements (#387), exported for the plan and budget test
@@ -715,6 +1069,82 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   AiCallContractError: 'error class',
   hashUserAgent: 'pure',
   truncateIpForDisplay: 'pure',
+  // court: KHC cause-list watch (#482)
+  KHC_CAUSE_LIST_SOURCE_ID: 'constant',
+  COURT_KHC_A2_FLAG: 'constant',
+  KHC_LIST_PATHS: 'constant',
+  PUBLICATION_REF_PREFIX: 'constant',
+  createKhcListParser: 'pure (builds the KHC adapter parser; no database access)',
+  getPublicationForRef:
+    'global table `cause_list_publication` (GLOBAL_TABLES, no workspace_id, no RLS): content-free list publication metadata (URL, fetch time, hash), never tenant data',
+  pollCauseList:
+    'system job body: no workspace; reads watches only through the owner-defined app_cause_list_watch_targets and writes proposals under each watching workspace scope; covered by list-watch.test.ts',
+  CAUSELIST_POLL_CRON: 'constant',
+  causelistPoll: 'job definition (handler is runCauselistPoll)',
+  runCauselistPoll: 'system job body: see pollCauseList',
+  // court day: display-board tracking and the call-time estimate (#493)
+  COURT_LIVE_TRACKING_FLAG: 'constant',
+  BENCH_FACTS_FLAG: 'constant',
+  BOARD_SOURCES: 'constant',
+  DEFAULT_AWAY_THRESHOLDS: 'constant',
+  isCourtHours: 'pure (clock arithmetic in IST)',
+  planBoardAlert: 'pure (decides the one alert a listed item earns from a board row)',
+  pollBoards:
+    'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
+  itemNumber: 'pure',
+  paceSamples: 'pure',
+  estimateCallWindow: 'pure',
+  backtestEta: 'pure',
+  BOARD_POLL_CRON: 'constant',
+  boardPoll: 'job definition (handler is runBoardPoll)',
+  runBoardPoll: 'system job body: see pollBoards',
+  setBoardFetcherFactory: 'wiring point for the governed fetcher (worker startup)',
+  // notices: the official notices feed (#586)
+  NOTICE_PARSERS: 'constant',
+  pollNotices:
+    'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
+  NOTICES_POLL_CRON: 'constant',
+  NOTICES_LIST_LIMIT: 'constant',
+  noticesPoll: 'job definition (handler is runNoticesPoll)',
+  runNoticesPoll: 'system job body: see pollNotices',
+  setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
+  // case-watch: delegated status lookups (#591)
+  STATUS_SOURCES: 'constant',
+  hashStatusFields: 'pure',
+  diffStatus: 'pure',
+  hasChanges: 'pure',
+  statusChangeDraft: 'pure (builds a draft; submitting it goes through submitProposals)',
+  runCaseStatusLookup:
+    "actor-scoped in withWorkspace: loads only the actor's own watch (advocate_user_id = actor) and proceeds as delegatedFor that advocate on that matter; another advocate or workspace gets NOT_FOUND before any fetch; covered by case-watch.test.ts",
+  recordDeviceSnapshot:
+    "actor-scoped in withWorkspace: stores a snapshot only on the actor's own watch; covered by case-watch.test.ts",
+  // case-watch: the status poll and change alerts (#592)
+  MAX_PER_ADVOCATE_PER_RUN: 'constant',
+  MAX_PER_SOURCE_PER_RUN: 'constant',
+  MAX_WATCHES_PER_RUN: 'constant',
+  pollCaseWatches:
+    "system job body: no workspace; lists due watches only through the owner-defined app_case_watch_due and runs each as the watch's own advocate through runCaseStatusLookup (own watch only, delegatedFor); covered by status-poll.test.ts",
+  touchWatchPolled:
+    "actor-scoped in withWorkspace: updates last_polled_at only on the actor's own watch; covered by status-poll.test.ts",
+  notifyStatusChanges:
+    "actor-scoped in withWorkspace: reads the matter under the actor's workspace and notifies only the actor; covered by status-poll.test.ts",
+  STATUS_POLL_CRON: 'constant',
+  statusPoll: 'job definition (handler is runStatusPoll)',
+  runStatusPoll: 'system job body: see pollCaseWatches',
+  setStatusFetcherFactory: 'setter (worker wires the governed fetcher, #592)',
+  // deadlines (#494, D-048): court calendars and calendar-aware due dates
+  closedReason: 'pure',
+  computeDueDate: 'pure',
+  DEFAULT_WEEKLY_OFFS: 'constant',
+  FORUM_VACATIONS: 'constant',
+  deadlineForDirection: 'reads only the calendar of the given workspace (loadCourtCalendar)',
+  applyDeadlineRules:
+    'pure over its directions plus the given workspace calendar (loadCourtCalendar)',
+  // case-watch: the orders poll (#494)
+  MAX_ORDERS_PER_WATCH_PER_RUN: 'constant',
+  ORDERS_POLL_CRON: 'constant',
+  ordersPoll: 'job definition (handler is runOrdersPoll)',
+  runOrdersPoll: 'system job body: see pollOrders',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',
@@ -773,6 +1203,35 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   notificationDigest: 'job definition (handler is runNotificationDigest)',
   notificationDigestSchedule: 'job definition (handler is runNotificationDigestSchedule)',
   notificationDigestSchema: 'zod schema',
+  // jobs: end-of-day digest definitions and schemas (#49)
+  // news digest (#481): news_item is a global table of public feed fields, no tenant rows
+  NEWS_PRACTICE_AREAS: 'constant',
+  NEWS_FORUMS: 'constant',
+  DEFAULT_NEWS_DIGEST_TIME: 'constant',
+  NEWS_DIGEST_MAX_ITEMS: 'constant',
+  NewsError: 'error class',
+  isNewsDigestTime: 'pure predicate',
+  newsMatchScore: 'pure ranking function over in-memory items',
+  rankNewsItems: 'pure ranking function over in-memory items',
+  upsertNewsItems: 'writes the global news_item table (public feed fields), no tenant rows',
+  listNewsSourceIds: 'reads the global source registry, no tenant rows',
+  newsDigest: 'job definition (handler is runNewsDigest)',
+  newsDigestMember: 'job definition (handler is runNewsDigestMember)',
+  newsDigestSchedule: 'job definition (handler is runNewsDigestSchedule)',
+  newsDigestSchema: 'zod schema',
+  newsDigestMemberSchema: 'zod schema',
+  newsDigestSlot: 'pure function of a clock and a zone',
+  newsPoll: 'job definition (handler is runNewsPoll)',
+  systemNewsPoll: 'job definition (handler is runNewsPollSchedule)',
+  newsPollSchema: 'zod schema',
+  runNewsPoll: 'system job: fetches one global source and writes the global news_item table',
+  runNewsPollSchedule: 'system job: lists cleared global sources only',
+  setNewsFetcherFactory: 'wiring setter for the governed fetcher: no database access',
+  activityDigest: 'job definition (handler is runActivityDigest)',
+  activityDigestMember: 'job definition (handler is runActivityDigestMember)',
+  activityDigestSchedule: 'job definition (handler is runActivityDigestSchedule)',
+  activityDigestSchema: 'zod schema',
+  activityDigestMemberSchema: 'zod schema',
   DELIVERY_CHANNELS: 'constant',
   DIGEST_LOCAL_TIME: 'constant',
   DIGEST_ITEM_LIMIT: 'constant',
@@ -783,6 +1242,33 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   digestInstant: 'pure (time zone math)',
   notificationJobDeps: 'transport wiring (no database access)',
   setNotificationJobDeps: 'setter',
+  // change webhooks (#626)
+  MAX_WEBHOOK_ENDPOINTS_PER_WORKSPACE: 'constant',
+  MAX_WEBHOOK_URL_LENGTH: 'constant',
+  WEBHOOK_DISABLE_AFTER_FAILURES: 'constant',
+  WEBHOOK_HEADERS: 'constant',
+  WEBHOOK_RETRY_LIMIT: 'constant',
+  WEBHOOK_SWEEP_CRON: 'constant',
+  WebhookError: 'error class',
+  generateWebhookSecret: 'pure (random secret)',
+  signWebhook: 'pure (HMAC-SHA256)',
+  verifyWebhookSignature: 'pure (HMAC-SHA256, constant time)',
+  webhookDeliver: 'job definition (handler is runWebhookDeliver)',
+  runWebhookDeliver:
+    'job body: re-reads the delivery and its endpoint inside the payload workspace scope',
+  webhookDeliverSchema: 'job payload schema',
+  systemWebhookSweep: 'job definition (handler is runWebhookSweep)',
+  runWebhookSweep: 'system job body: lists ids through app_webhook_delivery_due and enqueues',
+  setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
+  // public API keys (#624)
+  API_KEY_SCOPES: 'constant',
+  API_CALLS_USAGE_KEY: 'constant',
+  API_KEY_TOKEN_PATTERN: 'constant',
+  DEFAULT_API_KEY_RATE_LIMIT_PER_MINUTE: 'constant',
+  ApiKeyError: 'error class',
+  isApiKeyScope: 'pure',
+  hashApiKeyToken: 'pure (sha256)',
+  generateApiKeyToken: 'pure (random token)',
   // usage: keys and periods (#219)
   USAGE_KEYS: 'constant',
   USAGE_KEY_KINDS: 'constant',
@@ -887,6 +1373,9 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   setCourtHoursQuiet: notificationDenies,
   getDigest: notificationDenies,
   setDigest: notificationDenies,
+  // End-of-day digest preference (#49)
+  getEndOfDayPreference: notificationDenies,
+  setEndOfDayPreference: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */
@@ -902,6 +1391,14 @@ export const NOTIFICATION_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   LIST_LIMIT_MAX: 'constant',
   DEFAULT_NOTIFICATION_SETTINGS: 'constant',
   COURT_HOURS: 'constant',
+  // End-of-day digest (#49): pure builders and schedule maths, no database access
+  buildEndOfDayDigest: 'pure (builds the digest payload from counts)',
+  DEFAULT_END_OF_DAY_TIME: 'constant',
+  END_OF_DAY_ZONE: 'constant',
+  endOfDaySlot: 'pure (time zone math)',
+  isDigestTimeOfDay: 'pure',
+  localDateOf: 'pure (time zone math)',
+  localDayBounds: 'pure (time zone math)',
   isQuietTime: 'pure',
   localMinutes: 'pure',
 };
@@ -929,6 +1426,11 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
   memberRoleFor: runtimeEmpty,
   ownerGraceFor: runtimeEmpty,
+  resolveIntakeAddressFor: {
+    test: CORE_RUNTIME_TEST,
+    kind: 'caller-checked',
+    note: 'looks an inbound address up on the app db with no workspace scope (the sender is not a member); only an active address resolves, unknown and revoked ones are the same null',
+  },
   resolveSlugFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',
@@ -951,6 +1453,15 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   queryAuditFeed: runtimeDenies,
   verifyAuditRange: runtimeDenies,
   exportAuditFor: runtimeDenies,
+  // automation activity feed and undo (#49)
+  listActivitiesFor: runtimeDenies,
+  getActivityDetailFor: runtimeDenies,
+  countActivitiesByDayFor: runtimeDenies,
+  previewUndoFor: runtimeDenies,
+  undoActivityFor: runtimeDenies,
+  undoCaptureFor: runtimeDenies,
+  reassignCaptureFor: runtimeDenies,
+  exportActivitiesFor: runtimeDenies,
   recordAccessDeniedFor: {
     test: CORE_RUNTIME_TEST,
     kind: 'caller-checked',
@@ -1022,6 +1533,26 @@ export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   IN_PROGRESS_STATUS: 'constant',
   uploadContext:
     'pure (binds the app db into a StorageCtx; the uploads route checks membership and authorize gates each storage call)',
+  captureContext:
+    'pure (binds the app db, env config and job producer into a CaptureCtx; capture routes check membership and authorize gates each capture call, covered by packages/core/src/capture/__tests__/cross-tenant.test.ts)',
+};
+
+/**
+ * Tracked-case metering (#664) lives in the `@causedeck/core/billing` subpath, which the root
+ * index does not re-export, so the root registry above never sees it. These entries are checked
+ * for staleness against that subpath's exports and for an existing test file.
+ */
+export const BILLING_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  countTrackedCases: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'counts portfolio_case rows for the given workspace id on the caller transaction; RLS hides other workspaces rows',
+  },
+  getTrackedCaseCharge: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'reads the entitlement row and portfolio_case count for the given workspace id on the caller transaction; naming another workspace reads nothing and charges 0',
+  },
 };
 
 /** The storage presign cross-tenant test (#21). */
@@ -1068,6 +1599,7 @@ export function registeredTestFiles(): string[] {
       ...Object.values(SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(NOTIFICATION_SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(RUNTIME_SERVICE_TESTS).map((entry) => entry.test),
+      ...Object.values(BILLING_SERVICE_TESTS).map((entry) => entry.test),
       STORAGE_PRESIGN_TEST,
     ]),
   ].sort();

@@ -1,0 +1,10 @@
+{
+  "forumCode": "generic.a0",
+  "truth": {
+    "kind": "order",
+    "cases": [],
+    "orderDate": "2026-11-23",
+    "dates": ["2026-11-23", "2019-03-03"],
+    "language": "en"
+  }
+}

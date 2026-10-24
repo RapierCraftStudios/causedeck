@@ -40,6 +40,17 @@
         "empty": "Nothing new since your last digest.",
         "cta": "Open CauseDeck"
       },
+      "endOfDayDigest": {
+        "subject": "What CauseDeck did today",
+        "preview": "A count of what CauseDeck did and what waits for you",
+        "heading": "What CauseDeck did today",
+        "applied": "{count, plural, =0 {CauseDeck applied nothing on its own today.} one {CauseDeck applied # change on its own today. You can undo it for 7 days.} other {CauseDeck applied # changes on its own today. You can undo them for 7 days.}}",
+        "pending": "{count, plural, =0 {Nothing is waiting for your confirmation.} one {# proposal is waiting for your confirmation.} other {# proposals are waiting for your confirmation.}}",
+        "matters": "Matters touched today",
+        "activityCta": "Review today's activity",
+        "inboxCta": "Open your inbox",
+        "note": "This summary only opens the app. It never changes anything and it is not sent to anyone else."
+      },
       "billingNotice": {
         "subject": "Billing: {title}",
         "preview": "A billing update for your workspace",
@@ -49,6 +60,14 @@
         "subject": "{title}",
         "preview": "An update from your CauseDeck workspace",
         "cta": "Open in CauseDeck"
+      },
+      "newsDigest": {
+        "subject": "Legal news for you today",
+        "preview": "Headlines from the courts and tribunals you follow",
+        "heading": "Legal news for you today",
+        "source": "From {source}",
+        "cta": "Open the news page",
+        "note": "Headlines link to the original article. We show only what the publisher's feed provides."
       }
     },
     "push": {
@@ -121,13 +140,57 @@
           "label": "New proposals",
           "description": "When CauseDeck prepares something for you to review."
         },
+        "courtBoard": {
+          "label": "Court-day alerts",
+          "description": "When an item of yours is a few items away, now being heard, or the court rises or passes it over."
+        },
+        "judgmentAlert": {
+          "label": "Relevant judgments",
+          "description": "When a new judgment cites a statute section confirmed on one of your matters."
+        },
+        "statusNextDate": {
+          "label": "Next hearing date",
+          "description": "When a watched case shows a new next hearing date."
+        },
+        "statusOrder": {
+          "label": "New orders",
+          "description": "When a watched case lists a new order."
+        },
+        "statusStage": {
+          "label": "Stage changes",
+          "description": "When a watched case moves to a new stage."
+        },
+        "notices": {
+          "label": "Court notices",
+          "description": "When the court or Bar Council publishes a notice for a forum you use."
+        },
+        "benchChange": {
+          "label": "Bench changes",
+          "description": "When a court notice about a leave, special bench or roster change affects a matter you have listed."
+        },
+        "portfolioAdverseOrder": {
+          "label": "Portfolio adverse orders",
+          "description": "When a case in your institution's portfolio gets a new adverse order."
+        },
+        "portfolioMissedDate": {
+          "label": "Portfolio missed dates",
+          "description": "When the next date of a portfolio case has passed with no new date."
+        },
         "digestDaily": {
           "label": "Daily digest",
           "description": "One email at 6:30 pm with the day's updates."
         },
+        "digestEndOfDay": {
+          "label": "What CauseDeck did today",
+          "description": "One summary each evening: what CauseDeck applied and what waits for you."
+        },
         "systemNotice": {
           "label": "Service notices",
           "description": "Updates about CauseDeck itself."
+        },
+        "digestNews": {
+          "label": "Legal news digest",
+          "description": "One daily digest of legal news, with the items for your practice areas and forums first."
         }
       },
       "mandatory": "Security alerts are always sent in the app and by email so you never miss a sign-in or account change.",
@@ -153,6 +216,54 @@
       "retry": "Try again",
       "loading": "Loading notification preferences",
       "empty": "No notification settings are available for this workspace yet."
+    },
+    "news": {
+      "metaTitle": "Legal news",
+      "title": "Legal news",
+      "description": "Headlines from cleared sources, with your practice areas and forums first.",
+      "empty": "No news yet. Items appear once staff clear a news source.",
+      "matched": "For you",
+      "source": "Source: {source}",
+      "readOriginal": "Read the original",
+      "prefs": {
+        "title": "Daily digest",
+        "description": "Choose what you follow and when the digest arrives.",
+        "areas": "Practice areas",
+        "forums": "Forums",
+        "time": "Digest time",
+        "save": "Save",
+        "saved": "Saved.",
+        "error": "Could not save. Try again."
+      },
+      "areas": {
+        "civil": "Civil",
+        "criminal": "Criminal",
+        "constitutional": "Constitutional",
+        "corporate": "Corporate",
+        "tax": "Tax",
+        "ibc": "Insolvency (IBC)",
+        "arbitration": "Arbitration",
+        "family": "Family",
+        "labour": "Labour",
+        "property": "Property",
+        "ip": "IP",
+        "consumer": "Consumer",
+        "environment": "Environment",
+        "banking": "Banking",
+        "service": "Service"
+      },
+      "forums": {
+        "supreme_court": "Supreme Court",
+        "high_court": "High Court",
+        "district_court": "District court",
+        "nclt": "NCLT",
+        "nclat": "NCLAT",
+        "itat": "ITAT",
+        "drt": "DRT",
+        "consumer_forum": "Consumer forum",
+        "tribunal": "Tribunal",
+        "regulator": "Regulator"
+      }
     }
   }
 }

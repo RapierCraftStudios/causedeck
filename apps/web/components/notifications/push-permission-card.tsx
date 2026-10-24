@@ -4,14 +4,14 @@
 // click on `Turn on`, never page load. The card is hidden when push is disabled on the server (no
 // VAPID key), when the browser cannot do Web Push (e.g. iOS Safari outside an installed PWA), when
 // this browser is already subscribed or blocked, and after `Not now`. `Turn on` registers the
-// standalone push service worker, subscribes with the VAPID public key and stores the subscription
+// PWA service worker (`/sw.js`, #50, which loads the push handlers), subscribes with the VAPID public key and stores the subscription
 // through `POST /api/push/subscribe`. Its home is the notification panel footer (#198).
 import { Button } from '@causedeck/ui/button';
 import { BellRing } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useState } from 'react';
 
-export const PUSH_SW_URL = '/push-sw-handler.js';
+export const PUSH_SW_URL = '/sw.js';
 export const PUSH_CARD_DISMISSED_KEY = 'causedeck.pushCard.dismissed';
 
 type Status = 'hidden' | 'idle' | 'working' | 'enabled' | 'blocked' | 'error';

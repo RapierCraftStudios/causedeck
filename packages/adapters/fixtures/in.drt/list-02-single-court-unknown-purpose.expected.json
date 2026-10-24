@@ -1,0 +1,58 @@
+{
+  "adapterId": "in.drt",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.drat.mumbai",
+  "listDate": "2026-11-03",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "TA/5/2024",
+        "rowIndex": 0
+      },
+      "confidence": 0.9,
+      "itemNo": "1",
+      "caseTypeRaw": "TA",
+      "caseType": "TA",
+      "caseNumber": "5",
+      "caseYear": 2024,
+      "matchKey": "TA/5/2024",
+      "parties": "F. Sample vs G. Madeup",
+      "stageRaw": "Compliance Report",
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "RC/301/2025",
+        "rowIndex": 1
+      },
+      "confidence": 0.9,
+      "itemNo": "2",
+      "caseTypeRaw": "RC",
+      "caseType": "RC",
+      "caseNumber": "301",
+      "caseYear": 2025,
+      "matchKey": "RC/301/2025",
+      "parties": "Notional ARC vs H. Fiction",
+      "stageRaw": "Reply",
+      "stageNorm": "pleadings"
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": ["Compliance Report"],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": [],
+    "hallsUnreadable": []
+  },
+  "halls": [],
+  "unparsedRows": [],
+  "status": "ok",
+  "source": "html",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "Cause List dated 3rd November 2026",
+    "rowIndex": 0
+  }
+}

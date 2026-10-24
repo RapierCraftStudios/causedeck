@@ -27,10 +27,17 @@ test.describe('matters list', () => {
     const rows = listLayout(page).locator('[data-matter-row]');
     await expect(rows.first()).toBeVisible();
     const ids = await rows.evaluateAll((nodes) =>
-      nodes.slice(0, 5).map((node) => node.getAttribute('data-matter-row')),
+      nodes.slice(0, 10).map((node) => node.getAttribute('data-matter-row') ?? ''),
     );
-    expect(ids).toEqual(JOURNEY_ORDER.map((m) => m.id));
-    await expect(matterRow(page, MATTERS.sensitive)).toHaveCount(0);
+    // The journey matters have next dates: they come first, earliest date first.
+    expect(ids.slice(0, JOURNEY_ORDER.length)).toEqual(JOURNEY_ORDER.map((m) => m.id));
+    // Matters without a next date follow, ordered by id: the sensitive matter, locked but listed,
+    // is among them (the courts roster matters seeded below it share that tail, so it is not the
+    // first of the nulls), ahead of the 500-matter bulk whose ids are higher.
+    const tail = ids.slice(JOURNEY_ORDER.length);
+    expect(tail).toEqual([...tail].sort());
+    expect(tail).toContain(MATTERS.sensitive.id);
+    await expect(matterRow(page, MATTERS.sensitive)).toBeVisible();
   });
 
   test('keyset pagination: 50 rows a page, next and first links', async ({ page, asUser }) => {
@@ -224,8 +231,8 @@ test.describe('matter workspace', () => {
     const card = page.locator('[data-slot="date-conflict-card"]');
     await expect(card).toBeVisible();
     await expect(card.locator('[data-conflict-side]')).toHaveCount(2);
-    await expect(card.locator('[data-conflict-choose="a"]')).toBeVisible();
-    await expect(card.locator('[data-conflict-choose="b"]')).toBeVisible();
+    await expect(card.locator('[data-conflict-choose="A"]')).toBeVisible();
+    await expect(card.locator('[data-conflict-choose="B"]')).toBeVisible();
   });
 
   test('a proposed next date shows Confirm; the confirmation is announced', async ({
@@ -241,8 +248,9 @@ test.describe('matter workspace', () => {
   test('the people and documents tabs list the seeded rows', async ({ page, asUser }) => {
     await openMatters(page, asUser, { path: matterPath(MATTERS.appeal, 'people') });
     await expect(page.locator('[data-people]')).toContainText('ராமசாமி');
-    await page.goto(`/w/${MATTERS_WORKSPACE}/${matterPath(MATTERS.appeal, 'documents')}`);
-    await expect(page.locator('[data-documents]')).toBeVisible();
+    await openMatters(page, asUser, { path: matterPath(MATTERS.appeal, 'documents') });
+    // `.first()`: the streamed tab can briefly hold the list twice before the swap settles.
+    await expect(page.locator('[data-documents="list"]').first()).toBeVisible();
   });
 
   test('the sensitive toggle asks for confirmation first', async ({ page, asUser }) => {

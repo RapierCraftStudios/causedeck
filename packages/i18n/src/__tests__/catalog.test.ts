@@ -84,14 +84,24 @@ describe('namespaced catalogs (#174)', () => {
   it('keeps the top-level keys app call sites use', () => {
     expect(Object.keys(en).sort()).toEqual(
       [
+        'activity',
         'audit',
         'auth',
         'billing',
+        'bootstrapImport',
+        'calendar',
+        'camera',
+        'caseWatch',
         'common',
+        'courtDay',
+        'courtInsights',
         'courts',
         'courtsRosters',
+        'emailIntake',
         'error',
         'home',
+        'importReview',
+        'inbox',
         'invite',
         'lifecycle',
         'locale',
@@ -100,16 +110,70 @@ describe('namespaced catalogs (#174)', () => {
         'members',
         'nav',
         'notFound',
+        'notices',
         'notifications',
         'offline',
         'palette',
+        'portfolio',
+        'pwa',
         'settings',
         'shell',
         'shortcuts',
         'theme',
         'usage',
+        'voice',
+        'whatsappImport',
         'workspace',
       ].sort(),
     );
+  });
+});
+
+describe('case-watch copy (#593)', () => {
+  it('has the case-watch namespace in every locale with the refresh provenance strings', () => {
+    expect(en.caseWatch.refresh.label).toBe('Refresh status');
+    expect(en.caseWatch.refresh.via.server).toContain('{tier}');
+    expect(ta.caseWatch.refresh.via.server).toContain('{tier}');
+    expect(kn.caseWatch.refresh.via.server).toContain('{tier}');
+  });
+});
+
+describe('camera copy (#52)', () => {
+  it('keeps the exact recovery sentence reachable and the camera namespace in every locale', () => {
+    expect(en.camera.receipt.copy).toBe('Kept as an attachment. Fee tracking arrives later.');
+    expect(en.camera.causeList.title).toBe('This looks like a cause list');
+    expect(ta.camera.title.length).toBeGreaterThan(0);
+    expect(kn.camera.title.length).toBeGreaterThan(0);
+  });
+});
+
+describe('voice copy (#543)', () => {
+  it('keeps the exact offline sentence and the voice namespace in every locale', () => {
+    expect(en.voice.saved.offline).toBe(
+      "Saved on this device. Will transcribe when you're back online.",
+    );
+    expect(en.voice.command).toBe('Record a voice note');
+    expect(ta.voice.title.length).toBeGreaterThan(0);
+    expect(kn.voice.title.length).toBeGreaterThan(0);
+  });
+});
+
+describe('document pipeline recovery copy (#45, consumed by #48)', () => {
+  it('keeps the stable inbox.unreadable.copy key with the exact English sentence in every locale', () => {
+    expect(en.inbox.unreadable.copy).toBe(
+      "Couldn't read this. Retake, type the key line, or keep as an attachment.",
+    );
+    expect(ta.inbox.unreadable.copy.length).toBeGreaterThan(0);
+    expect(kn.inbox.unreadable.copy.length).toBeGreaterThan(0);
+  });
+});
+
+describe('import review recovery copy (#551)', () => {
+  it.each([
+    ['en', en],
+    ['ta', ta],
+    ['kn', kn],
+  ] as const)('%s reuses the standard unreadable-file sentence', (_locale, messages) => {
+    expect(messages.importReview.issues.unreadableCopy).toBe(messages.inbox.unreadable.copy);
   });
 });

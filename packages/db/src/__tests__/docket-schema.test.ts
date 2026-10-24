@@ -18,7 +18,7 @@ import { createOwnerDb } from '../owner.ts';
 import { member } from '../schema/auth.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
-import { anchor, document } from '../schema/documents.ts';
+import { anchor } from '../schema/documents.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { proceeding } from '../schema/proceedings.ts';
 import {
@@ -133,19 +133,13 @@ async function newGraph(s: Transaction, workspaceId: string): Promise<Graph> {
       .returning({ id: proceeding.id }),
     'proceeding',
   );
-  const { id: documentId } = one(
-    await s
-      .insert(document)
-      .values({
-        workspaceId,
-        matterId,
-        kind: 'order',
-        storageKey: `ws/${workspaceId}/document/${randomUUID()}`,
-        sha256: 'c'.repeat(64),
-      })
-      .returning({ id: document.id }),
-    'document',
-  );
+  // Explicit columns: the 0041 test runs this on a database migrated only through 0040, and a
+  // Drizzle insert would list document columns added by later migrations (0058 and on).
+  const storageKey = `ws/${workspaceId}/document/${randomUUID()}`;
+  const [inserted] = (await s.execute(
+    sql`insert into document (workspace_id, matter_id, kind, storage_key, sha256) values (${workspaceId}, ${matterId}, 'order', ${storageKey}, ${'c'.repeat(64)}) returning id`,
+  )) as unknown as { id: string }[];
+  const { id: documentId } = one(inserted === undefined ? [] : [inserted], 'document');
   const { id: anchorId } = one(
     await s
       .insert(anchor)
@@ -280,7 +274,8 @@ describe('docket tables in the catalog (#347)', () => {
       expect(row, table).toEqual({
         enabled: true,
         forced: true,
-        policies: ['ws_isolation'],
+        // listing also carries the owner-only definer read that app_board_poll_targets (0074, #493) needs.
+        policies: table === 'listing' ? ['owner_definer_read', 'ws_isolation'] : ['ws_isolation'],
         app: true,
         clerk: true,
       });

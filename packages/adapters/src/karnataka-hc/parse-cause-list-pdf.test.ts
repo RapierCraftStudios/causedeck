@@ -243,12 +243,12 @@ describe('parseKarnatakaCauseListPdf (#405)', () => {
       ]),
     );
     // Time the parser alone (schema validation is the test's, not the parse's), after one full
-    // warm-up run, and keep the best of three: a shared CI runner's scheduling stalls and GC pauses
+    // warm-up run, and keep the best of seven: a shared CI runner's scheduling stalls and GC pauses
     // inflate single samples (the parse itself takes well under 100 ms on a developer machine).
     const list = parse(pages);
     expect(list.rows).toHaveLength(1200);
     let best = Number.POSITIVE_INFINITY;
-    for (let run = 0; run < 3; run += 1) {
+    for (let run = 0; run < 7; run += 1) {
       const started = performance.now();
       parseRaw(pages);
       best = Math.min(best, performance.now() - started);

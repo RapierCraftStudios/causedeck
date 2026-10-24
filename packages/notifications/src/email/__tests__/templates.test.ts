@@ -34,6 +34,25 @@ const FIXTURES: { [K in TemplateName]: TemplateProps[K] } = {
     appUrl: APP,
     preferencesUrl: PREFS,
   },
+  'end-of-day-digest': {
+    l3Count: 3,
+    pendingL2Count: 2,
+    activityUrl: `${APP}/w/iyer/activity?day=2026-10-20`,
+    inboxUrl: `${APP}/w/iyer/inbox`,
+    preferencesUrl: PREFS,
+  },
+  'news-digest': {
+    items: [
+      {
+        title: 'SC on s.138 NI Act',
+        url: 'https://example.org/sc-138',
+        sourceName: 'Example Legal',
+        excerpt: 'Cheque bounce.',
+      },
+    ],
+    newsUrl: `${APP}/w/iyer/news`,
+    preferencesUrl: PREFS,
+  },
   'billing-notice': {
     title: 'Payment received',
     body: 'Your subscription renewed.',
@@ -89,12 +108,16 @@ describe.each(TEMPLATE_NAMES)('template %s', (name) => {
     }
   });
 
-  it('matches the English snapshot', async () => {
-    const email = await renderEmail(name, FIXTURES[name] as never, 'en');
-    expect(email.subject).toMatchSnapshot('subject');
-    expect(email.text).toMatchSnapshot('text');
-    expect(email.html).toMatchSnapshot('html');
-  });
+  // The end-of-day digest has its own preview test (digest/end-of-day.test.ts).
+  it.skipIf(name === 'end-of-day-digest' || name === 'news-digest')(
+    'matches the English snapshot',
+    async () => {
+      const email = await renderEmail(name, FIXTURES[name] as never, 'en');
+      expect(email.subject).toMatchSnapshot('subject');
+      expect(email.text).toMatchSnapshot('text');
+      expect(email.html).toMatchSnapshot('html');
+    },
+  );
 });
 
 describe('category mapping', () => {

@@ -1,19 +1,88 @@
-{"status":"fixed","summary":"Coverage matrix, ranked gap list, live watch demand definer function and weekly staff report delivered; V1-V5 pass on rerun","requirements":[
-{"id":"R1","status":"implemented","evidence":"apps/admin/app/(console)/coverage/page.tsx"},
-{"id":"R2","status":"implemented","evidence":"packages/core/src/sources/coverage.ts"},
-{"id":"R3","status":"implemented","evidence":"packages/core/src/jobs/definitions/coverage-weekly.ts"},
-{"id":"R4","status":"implemented","evidence":"packages/core/src/sources/__tests__/coverage.test.ts"},
-{"id":"R5","status":"implemented","evidence":"packages/core/src/sources/__tests__/coverage.test.ts"}],
-"validation":[
-{"id":"V1","command":"pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts","exit":0},
-{"id":"V2","command":"pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts","exit":0},
-{"id":"V3","command":"pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts","exit":0},
-{"id":"V4","command":"pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing","exit":0},
-{"id":"V5","command":"node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network","exit":0}],
-"tests":[{"command":"core coverage.test.ts + coverage-weekly.test.ts, admin coverage-page.test.tsx","result":"pass","fails_without_fix":true}],
-"self_review":[
-{"question":"1","answer":"yes","evidence":"R1-R5 each mapped in implementation.md to file:line"},
-{"question":"2","answer":"yes","evidence":"V2-V4 existing guard/registry tests pass"},
-{"question":"3","answer":"yes","evidence":"V1-V5 exit 0; preserve guard tests in V2 pass"},
-{"question":"4","answer":"yes","evidence":"git diff --name-only: deliverables plus tests and the D3 snapshot only"}],
-"amendments":[]}
+{
+ "status": "fixed",
+ "summary": "Coverage matrix, ranked gap list, live watch demand definer function and weekly staff report delivered; V1-V5 pass on rerun; merge recheck: turbo exit 127 is only turbo missing from PATH; pnpm exec turbo typecheck 23/23 pass, V1-V4 pass, no code change",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "apps/admin/app/(console)/coverage/page.tsx"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/core/src/sources/coverage.ts"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/coverage-weekly.ts"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "packages/core/src/sources/__tests__/coverage.test.ts"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "packages/core/src/sources/__tests__/coverage.test.ts"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "core coverage.test.ts + coverage-weekly.test.ts, admin coverage-page.test.tsx",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R5 each mapped in implementation.md to file:line"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V2-V4 existing guard/registry tests pass"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V5 exit 0; preserve guard tests in V2 pass"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "git diff --name-only: deliverables plus tests and the D3 snapshot only"
+  }
+ ],
+ "amendments": []
+}

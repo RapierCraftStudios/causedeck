@@ -39,3 +39,6 @@ A pure coverage model in core (forum x data type levels, freshness, volume, rank
 
 - Merge recheck 3 (#517): `turbo: command not found` (exit 127) is a PATH issue only. `pnpm exec turbo run typecheck --filter=...[base]` 23/23 pass; V1-V4 pass. No code change.
 - Merge recheck: the `turbo: command not found` (exit 127) is only turbo missing from PATH, not a code conflict. `pnpm exec turbo run typecheck --filter=...[86d14f7]` passes 23/23; V1-V4 re-run on the merged tree pass (27, 55, 11, 4 tests). No code change.
+
+## Merge recheck 2
+The check failure (exit 127) was `turbo` missing from PATH, not a code conflict. `pnpm exec turbo run typecheck` passes (23/23) and V1-V4 pass. No code change.

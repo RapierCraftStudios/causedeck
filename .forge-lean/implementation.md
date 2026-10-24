@@ -1,27 +1,27 @@
 ### Approach
-Register one eCourts district status source per state, seed uncleared registry rows, and add a per-host budget in the fetcher shared by every source on a host.
+A pure coverage model in core (forum x data type levels, freshness, volume, ranked gaps, week-over-week diff derived from `source.cleared_at`), a SECURITY DEFINER `app_staff_watch_demand()` for live watch counts, an audited admin data function and Coverage page, and a weekly email job.
 
 ### Changes
-- packages/core/src/case-watch/lookup.ts: `STATUS_SOURCES` gains `in.{tn,ka,mh,dl,up}.district:case_status`.
-- packages/fetch/src/fetcher.ts: per-host sliding-window budget (`DEFAULT_HOST_REQUESTS_PER_MINUTE` = 30, `hostRequestsPerMinute` dep), checked before any slot is spent.
-- packages/db/migrations/20261024090000_ecourts_district_status_sources.sql (+ journal, snapshot): five uncleared court source rows.
-- packages/i18n messages (en/ta/kn, generated files, d.ts): labels. apps/web/lib/case-watch/source-key.ts: key union (added as an amendment).
-- Tests: fetcher.test.ts, case-watch.test.ts, source-registry.test.ts.
+- packages/core/src/sources/coverage.ts (+ index.ts export): model, reader, `staffCoverageInputs`, `coverageReport`.
+- packages/db/migrations/20261024100000_staff_watch_demand.sql (+ journal, snapshot): definer function, aggregates only.
+- apps/admin: `lib/data/index.ts` `coverageOverview`, `app/(console)/coverage/page.tsx` (force-added: `.gitignore` ignores `coverage/`), nav item, `coverage` capability for ops/admin.
+- packages/core/src/jobs/definitions/coverage-weekly.ts + registry: `system.coverage.weekly`, cron `30 9 * * 1`.
+- Registries/tests: worker registry and schedules tests, cross-tenant registry, staff-console-schema test, coverage unit/page/job tests.
 
 ### Acceptance Criteria Status
-- R1 ✅ lookup.ts STATUS_SOURCES, migration SQL
-- R2 ✅ fetcher.ts per-host budget
-- R3 ✅ existing provenance storage (lookup.ts), asserted in case-watch.test.ts
-- R4 ✅ case-watch.test.ts "refreshes a watched district matter"
+- R1 ✅ apps/admin/app/(console)/coverage/page.tsx, __tests__/coverage-page.test.tsx
+- R2 ✅ packages/core/src/sources/coverage.ts rankGaps
+- R3 ✅ packages/core/src/jobs/definitions/coverage-weekly.ts
+- R4 ✅ coverage.test.ts "gives every catalogue forum a level for every data type"
+- R5 ✅ coverage.test.ts "ranks by live watch demand" (order flips with demand)
 
 ### Verification
-- fetch fetcher+static-checks tests: pass; the two new host tests fail without the fetcher change.
-- core case-watch.test.ts, db source-registry.test.ts, web case-watch-actions.test.ts, i18n catalog.test.ts: pass.
-- turbo typecheck scoped: pass. eslint on changed core/fetch files: clean.
+- V1 core vitest, V2 admin vitest, V3 worker vitest, V4 db vitest, V5 checks.mjs: pass (`forgedock check` PASS).
+- core and admin `tsc --noEmit`: clean; eslint on changed files runs clean via the pre-commit hook.
+- New tests exercise new code, so they fail without the change (modules absent).
 
 ### Notes
-- A host-budget denial throws the new `host_rate_limited` reason (declared in types.ts); poll.ts defers on it like `source_rate_limited`.
-- Rows stay uncleared; counsel must clear before any fetch. The default host budget is 30 requests per minute for every source host.
+- The weekly job reads watch demand as the first enabled ops/admin staff user.
+- New `coverage` capability: ops and admin only.
 
-### CI fix
-- i18n:check failed: translation-status.json lacked draft entries for the 5 new ta/kn caseWatch.source keys. Added them; i18n:check and catalog test pass.
+- Added coverageOverview to the READS list (with staffCoverageInputs/coverageReport mocks) in apps/admin/__tests__/server-actions-audit.test.ts.

@@ -53,7 +53,7 @@ jobs:
   storybook:
     name: storybook
     if: ${{ (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
-    runs-on: ubuntu-24.04  # Playwright chromium does not support ubuntu-latest (26.04) yet
+    runs-on: ubuntu-24.04 # Playwright chromium does not support ubuntu-latest (26.04) yet
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -82,7 +82,7 @@ jobs:
   storybook-web:
     name: storybook (web)
     if: ${{ (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
-    runs-on: ubuntu-24.04  # Playwright chromium does not support ubuntu-latest (26.04) yet
+    runs-on: ubuntu-24.04 # Playwright chromium does not support ubuntu-latest (26.04) yet
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -1,0 +1,12 @@
+{
+  "template": "karnataka-hc",
+  "status": "unrecognised",
+  "cnr": null,
+  "caseNumber": null,
+  "nextHearingDate": null,
+  "lastHearingDate": null,
+  "stage": null,
+  "bench": null,
+  "orders": [],
+  "quotes": {}
+}

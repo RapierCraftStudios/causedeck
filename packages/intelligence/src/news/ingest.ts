@@ -20,7 +20,7 @@ export class FeedFetchFailed extends Error {
     readonly sourceId: string,
     readonly status: number,
   ) {
-    super(`News feed of source ${sourceId} answered ${status}`);
+    super(`News feed of source ${sourceId} answered ${String(status)}`);
     this.name = 'FeedFetchFailed';
   }
 }

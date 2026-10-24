@@ -14,16 +14,18 @@ export const STAFF_CAPABILITIES = [
   'overview',
   'adapters',
   'sources',
+  'data-ops',
   'flags',
   'workspaces',
   'support',
   'audit',
+  'business',
 ] as const;
 export type StaffCapability = (typeof STAFF_CAPABILITIES)[number];
 
 export const STAFF_ROLE_MATRIX: Readonly<Record<StaffRole, readonly StaffCapability[]>> = {
   support: ['overview', 'workspaces', 'support', 'audit'],
-  ops: ['overview', 'adapters', 'sources', 'flags', 'audit'],
+  ops: ['overview', 'adapters', 'sources', 'data-ops', 'flags', 'audit'],
   admin: STAFF_CAPABILITIES,
 };
 

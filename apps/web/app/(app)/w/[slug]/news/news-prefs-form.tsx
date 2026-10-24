@@ -1,6 +1,7 @@
 'use client';
 // Digest preferences panel of the News page (#481): the practice areas and forums the member
 // follows and the time the daily digest arrives. Saves through `saveNewsPreferencesAction`.
+import type { NewsForum, NewsPracticeArea } from '@causedeck/core/news';
 import { Alert } from '@causedeck/ui/alert';
 import { Button } from '@causedeck/ui/button';
 import { useTranslations } from 'next-intl';
@@ -12,8 +13,8 @@ import type { NewsPrefView } from './actions.ts';
 
 interface NewsPrefsFormProps {
   workspaceId: string;
-  areas: readonly string[];
-  forums: readonly string[];
+  areas: readonly NewsPracticeArea[];
+  forums: readonly NewsForum[];
   initial: NewsPrefView;
   save: (raw: unknown) => Promise<Result<NewsPrefView>>;
 }
@@ -23,7 +24,7 @@ const TIMES = Array.from({ length: 48 }, (_, i) => {
   return `${hour}:${i % 2 === 0 ? '00' : '30'}`;
 });
 
-function toggle(list: string[], value: string): string[] {
+function toggle<T extends string>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 

@@ -698,6 +698,26 @@
           "label": "New proposals",
           "description": "When CauseDeck prepares something for you to review."
         },
+        "courtBoard": {
+          "label": "Court-day alerts",
+          "description": "When an item of yours is a few items away, now being heard, or the court rises or passes it over."
+        },
+        "judgmentAlert": {
+          "label": "Relevant judgments",
+          "description": "When a new judgment cites a statute section confirmed on one of your matters."
+        },
+        "statusNextDate": {
+          "label": "Next hearing date",
+          "description": "When a watched case shows a new next hearing date."
+        },
+        "statusOrder": {
+          "label": "New orders",
+          "description": "When a watched case lists a new order."
+        },
+        "statusStage": {
+          "label": "Stage changes",
+          "description": "When a watched case moves to a new stage."
+        },
         "digestDaily": {
           "label": "Daily digest",
           "description": "One email at 6:30 pm with the day's updates."
@@ -1016,7 +1036,8 @@
       "usage": "Usage",
       "audit": "Audit log",
       "support": "Support access",
-      "more": "More"
+      "more": "More",
+      "court-watch": "Court watch"
     },
     "placeholder": {
       "export": "Download a copy of everything in this workspace.",
@@ -1320,6 +1341,10 @@
           "label": "Restrict sensitive matters by default",
           "description": "New matters marked sensitive start open only to the people listed on them."
         },
+        "contributePublicCourtDocuments": {
+          "label": "Share public court documents",
+          "description": "Share public court documents (cause lists and published orders) so every workspace can use them. Only the public text is shared, with no workspace, matter or client information and nothing that identifies you. Sensitive and restricted matters are never shared. Your contributions are withdrawn when you delete the workspace."
+        },
         "retentionAudioDays": {
           "label": "Keep raw audio for",
           "description": "Voice recordings are deleted after this many days. Transcripts stay until you delete them.",
@@ -1552,6 +1577,25 @@
           "google": "Google"
         }
       }
+    },
+    "courtWatch": {
+      "title": "Court watch",
+      "description": "Watch your name or Bar Registration Number on the Karnataka High Court public cause list. Matches arrive in your Inbox as proposals; nothing is confirmed for you.",
+      "kind": {
+        "name": "Advocate name",
+        "brn": "BRN"
+      },
+      "value": "Name or BRN",
+      "add": "Add watch",
+      "remove": "Remove",
+      "empty": "You are not watching anything yet.",
+      "flagOff": "Court watch is not switched on for this workspace.",
+      "uncleared": "The Karnataka HC list source is not cleared yet, so nothing is fetched.",
+      "cleared": "The Karnataka HC list source is cleared.",
+      "added": "Watch added.",
+      "removed": "Watch removed.",
+      "failed": "Could not save. Try again.",
+      "loading": "Loading court watch"
     }
   },
   "lifecycle": {
@@ -1897,6 +1941,7 @@
         "duplicate_merge": "Duplicate merge",
         "memory_item": "Memory",
         "fee_entry": "Fee entry",
+        "case_status_change": "Next date from court status",
         "outward_draft": "Draft for you to send"
       },
       "matter": "Matter",
@@ -2276,6 +2321,30 @@
       "failed": "The roster was not saved. Try again."
     }
   },
+  "courtDay": {
+    "liveHalls": {
+      "title": "Live halls",
+      "description": "Where each hall you have an item in has reached, from the court's display board.",
+      "hall": "Hall {hallNo}",
+      "itemNow": "Now hearing item {item}",
+      "noItem": "No item shown",
+      "status": {
+        "sitting": "Sitting",
+        "risen": "Risen",
+        "passed_over": "Passed over",
+        "lunch": "Lunch"
+      },
+      "yourItem": "Your item {item}",
+      "away": "{count, plural, =0 {Being heard now} one {1 item away} other {# items away}}",
+      "window": "Likely between {from} and {to}",
+      "confidence": {
+        "low": "Low confidence",
+        "medium": "Medium confidence",
+        "high": "High confidence"
+      },
+      "updated": "Board read at {time}"
+    }
+  },
   "matters": {
     "metaTitle": "Matters",
     "title": "Matters",
@@ -2386,7 +2455,8 @@
         "proceedings": "Proceedings",
         "timeline": "Timeline",
         "people": "People",
-        "documents": "Documents"
+        "documents": "Documents",
+        "research": "Research"
       },
       "status": {
         "active": "Active",
@@ -2769,6 +2839,29 @@
           "conflict": "Something changed since. Nothing was undone.",
           "failed": "Couldn't undo. Try again."
         }
+      },
+      "research": {
+        "title": "Relevant judgments",
+        "metaTitle": "Relevant judgments",
+        "intro": "Tag the statute sections this matter turns on. A new judgment that cites a confirmed tag appears here, linked to the court record.",
+        "tagsHeading": "Issue tags",
+        "tagsEmpty": "No tags yet. Add a statute and section to be alerted to new judgments.",
+        "statute": "Statute",
+        "section": "Section (optional)",
+        "issue": "Issue (optional)",
+        "add": "Add tag",
+        "confirm": "Confirm",
+        "dismiss": "Dismiss",
+        "status": {
+          "proposed": "Proposed",
+          "confirmed": "Confirmed",
+          "dismissed": "Dismissed"
+        },
+        "judgmentsHeading": "Judgments",
+        "judgmentsEmpty": "No relevant judgments yet.",
+        "cites": "Cites {section} {statute} on page {page}",
+        "open": "Open the judgment",
+        "saveError": "Could not save the tag."
       }
     }
   },
@@ -3121,6 +3214,7 @@
         "duplicate_merge": "Possible duplicate",
         "memory_item": "Memory",
         "fee_entry": "Fee entry",
+        "case_status_change": "Court status date",
         "outward_draft": "Outward draft"
       },
       "matter": "{matter} · {caseNumber}",
@@ -3235,6 +3329,9 @@
       "sections": "Switch section",
       "help": "Show this sheet",
       "open": "Shortcuts"
+    },
+    "sourceChip": {
+      "khcList": "Fetched from the KHC public list at {time}"
     }
   },
   "pwa": {

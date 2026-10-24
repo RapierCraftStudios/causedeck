@@ -100,6 +100,7 @@ const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/em
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
+const courtWatch = await import('../app/(app)/w/[slug]/settings/court-watch/actions.ts');
 const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
 const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
 const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
@@ -107,6 +108,7 @@ const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
+const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
@@ -164,6 +166,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   revokeSupportSessionAction: support,
   requestExportAction: exports,
   listExportsAction: exports,
+  listCourtWatchesAction: courtWatch,
+  addCourtWatchAction: courtWatch,
+  removeCourtWatchAction: courtWatch,
   requestWorkspaceDeletionAction: danger,
   cancelWorkspaceDeletionAction: danger,
   requestAccountDeletionAction: account,
@@ -176,6 +181,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
+  addTagAction: research,
+  confirmTagAction: research,
+  dismissTagAction: research,
   chooseNextDateSourceAction: matterWorkspace,
   createProceedingAction: proceedingsTab,
   updateProceedingAction: proceedingsTab,
@@ -501,6 +509,9 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Lifecycle (#305): ub, owner of B, may not export, delete or cancel A's deletion.
     requestExportAction: { workspaceId },
     listExportsAction: { workspaceId },
+    listCourtWatchesAction: { workspaceId },
+    addCourtWatchAction: { workspaceId, kind: 'brn', value: 'KAR/1/1900' },
+    removeCourtWatchAction: { workspaceId, watchId: randomUUID() },
     requestWorkspaceDeletionAction: { workspaceId, confirmName: t.a.name },
     cancelWorkspaceDeletionAction: { workspaceId, jobId: aDeletionId },
     // Courts (#402): ub, owner of B, may not add a forum to A.
@@ -604,6 +615,18 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Research tab (#497): ub may not tag A's matter or confirm A's tag.
+    addTagAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId, statute: 'ipc' },
+    confirmTagAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      tagId: t.a.rows.matter_issue_tag?.id,
+    },
+    dismissTagAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      tagId: t.a.rows.matter_issue_tag?.id,
+    },
     chooseNextDateSourceAction: {
       workspaceId,
       currentListingId: t.a.rows.listing?.listingId,
@@ -1024,6 +1047,9 @@ describe('cross-tenant server actions', () => {
       'setSensitiveAction',
       'confirmNextDateAction',
       'chooseNextDateSourceAction',
+      'addTagAction',
+      'confirmTagAction',
+      'dismissTagAction',
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',

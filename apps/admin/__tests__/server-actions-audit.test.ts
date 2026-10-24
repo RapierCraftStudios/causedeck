@@ -8,6 +8,7 @@ import path from 'node:path';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as Business from '@causedeck/core/business';
 import type * as FlagKeys from '@causedeck/flags/keys';
 
 import type * as DataLayer from '../lib/data/index.ts';
@@ -81,11 +82,19 @@ vi.mock('@causedeck/core/sources', () => {
     SourceAdminError: class SourceAdminError extends Error {},
     asSourceStaff: (userId: string) => ({ userId }),
     listSources: () => Promise.resolve([]),
+    sourceFetchLogs: () => Promise.resolve([]),
+    sourceOpsOverview: () => Promise.resolve([]),
+    staffParseYield: () => Promise.resolve([]),
     createSource: audited,
     updateSource: audited,
     setSourceKillSwitch: audited,
   };
 });
+vi.mock('@causedeck/core/business', async (importOriginal) => ({
+  ...(await importOriginal<typeof Business>()),
+  staffBusinessSnapshot: () =>
+    Promise.resolve({ plans: [], shared: { fetchDollars: 0, captchaDollars: 0 } }),
+}));
 vi.mock('@causedeck/core/workspaces', () => ({
   WorkspaceError: class WorkspaceError extends Error {
     constructor(readonly code: string) {
@@ -194,7 +203,22 @@ function form(values: Record<string, string>): FormData {
   return data;
 }
 
+const FIXTURE_FIELDS = {
+  adapterId: 'echo',
+  format: 'text',
+  name: 'list-80-audit',
+  document: 'ECHO TEST COURT (FICTIONAL)\nCAUSE LIST FOR 21.10.2026\nCOURT HALL 1\nFOR ADMISSION\n',
+};
+
 const ACTIONS: Record<string, () => Promise<unknown>> = {
+  'app/(console)/fixtures/actions.ts#previewFixtureAction': async () => {
+    const { previewFixtureAction } = await import('../app/(console)/fixtures/actions.ts');
+    return previewFixtureAction({}, form(FIXTURE_FIELDS));
+  },
+  'app/(console)/fixtures/actions.ts#buildFixtureAction': async () => {
+    const { buildFixtureAction } = await import('../app/(console)/fixtures/actions.ts');
+    return buildFixtureAction({}, form(FIXTURE_FIELDS));
+  },
   'app/(console)/flags/actions.ts#setFlagAction': async () => {
     const { setFlagAction } = await import('../app/(console)/flags/actions.ts');
     return setFlagAction({}, form({ key: 'pwa.offline', enabled: 'true' }));
@@ -364,9 +388,19 @@ describe('admin data layer reads', () => {
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),
     workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
+    dataOpsOverview: (d) => d.dataOpsOverview(staff),
+    dataOpsFetchLogs: (d) => d.dataOpsFetchLogs(staff, 'court.test'),
+    businessMetrics: (d) =>
+      d.businessMetrics(staff, {
+        usdInr: 85,
+        infraCostPaiseMonthly: 0,
+        costAlertPaisePerUser: 4000,
+      }),
   };
+  // Reads made of more than one audited step: parse yield (definer function), then the tables.
+  const READ_EVENTS: Record<string, number> = { dataOpsOverview: 2 };
   // The building blocks every read goes through, not reads themselves.
-  const PRIMITIVES = ['staffCall', 'staffQuery', 'StaffQueryDeniedError'];
+  const PRIMITIVES = ['staffCall', 'staffQuery', 'StaffQueryDeniedError', 'businessConfigFromEnv'];
 
   it('are all registered here', async () => {
     const data = await import('../lib/data/index.ts');
@@ -377,8 +411,11 @@ describe('admin data layer reads', () => {
   it.each(Object.keys(READS))('%s records staff.read with actor kind staff', async (name) => {
     const data = await import('../lib/data/index.ts');
     await READS[name]?.(data);
-    expect(staffEvents()).toEqual([
-      { actor: { kind: 'staff', userId: STAFF_ID }, action: 'staff.read' },
-    ]);
+    expect(staffEvents()).toEqual(
+      Array.from({ length: READ_EVENTS[name] ?? 1 }, () => ({
+        actor: { kind: 'staff', userId: STAFF_ID },
+        action: 'staff.read',
+      })),
+    );
   });
 });

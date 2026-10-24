@@ -15,13 +15,18 @@ describe('category registry', () => {
     expect([...CATEGORY_KEYS].sort()).toEqual(
       [
         'billing.notice',
+        'court.board',
         'digest.daily',
         'digest.end_of_day',
         'digest.news',
+        'judgment.alert',
         'member.joined',
         'proposal.new',
         'reminder.hearing',
         'security.alert',
+        'status.next_date',
+        'status.order',
+        'status.stage',
         'system.notice',
         'workspace.invite',
       ].sort(),

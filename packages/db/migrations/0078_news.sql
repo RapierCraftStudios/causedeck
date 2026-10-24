@@ -1,4 +1,4 @@
--- Migration 0067_news: generated shape (tables, indexes, keys, check), grants, RLS and seed rows hand-written, reviewed before commit.
+-- Migration 0078_news: generated shape (tables, indexes, keys, check), grants, RLS and seed rows hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #481)
 -- The legal news digest (#481, D-048).
 --   * news_item is global (GLOBAL_TABLES, no workspace, no RLS): feed-provided headline, link, date,

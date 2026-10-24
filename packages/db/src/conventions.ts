@@ -32,8 +32,13 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * court-adapter configs, one `active` row per adapter; staff manage it through the app role like
  * `access_mode_registry`. `source` (#478, D-048) is the global source registry that generalises
  * `access_mode_registry` to every external source; staff write it through the app role (no DELETE).
+ * `contributed_document` (#485, D-048) holds the public court documents workspaces opted in to share;
+ * it has no workspace column by design, the link to a contributor is the tenant table `contribution_ledger`.
  * `fetch_log` (#479) is the global, content-free log of governed fetches: the app role may only SELECT and INSERT.
  * `news_item` (#481) holds feed-provided news headlines, links and excerpts, never article bodies; staff-cleared sources only.
+ * `cause_list_publication` (#482) is the global, content-free cache of fetched list publications (no body).
+ * `board_observation` (#493) is the global, content-free hall display-board history (hall, item, state); the app role may SELECT and INSERT it.
+ * `notice` (#584, D-048) is the global official notices feed read from cleared sources; the app role may SELECT, INSERT and UPDATE it (no DELETE).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -59,8 +64,13 @@ export const GLOBAL_TABLES: readonly string[] = [
   'catalogue_meta',
   'adapter_version',
   'source',
+  'contributed_document',
   'fetch_log',
   'news_item',
+  'judgment',
+  'cause_list_publication',
+  'board_observation',
+  'notice',
 ];
 
 /**

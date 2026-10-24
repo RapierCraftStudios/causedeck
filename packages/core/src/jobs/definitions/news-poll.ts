@@ -1,13 +1,12 @@
 // Legal news polling (#481, D-048). Two jobs:
 // - `system.news.poll` runs hourly and enqueues `system.news.poll-source` for every cleared, not killed `news` or
 //   `licensed` source. It has no workspace; `source` and `news_item` are global tables.
-// - `system.news.poll-source` (one source) reads the source's feed through the governed fetch layer: the registry
+// - `system.news.poll-source` (one source) reads the source's feed through the governed fetch layer (core never
+//   imports `@causedeck/fetch`: the worker wires it through `setNewsFetcherFactory`): the registry
 //   decides on every call (`policyFor` fails closed), so an uncleared or killed source is skipped
 //   and nothing is fetched. The feed URL is the source's `base_url`. Only feed-provided fields are
 //   stored (headline, link, date, capped excerpt) with the fetch's provenance; tags come from the
 //   deterministic keyword tagger because a global job has no workspace to bill an AI call to.
-import { serverEnv } from '@causedeck/config/env';
-import { createFetcher, createProvider, type Fetcher } from '@causedeck/fetch';
 import {
   createKeywordTagger,
   FeedFetchFailed,
@@ -17,7 +16,7 @@ import {
 import { z } from 'zod';
 
 import { listNewsSourceIds, upsertNewsItems } from '../../news/index.ts';
-import { createFetchLogSink, policyFor, SourceNotCleared } from '../../sources/index.ts';
+import { policyFor, SourceNotCleared } from '../../sources/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 import { RetryableError } from '../errors.ts';
@@ -31,31 +30,26 @@ export type NewsPollPayload = z.output<typeof newsPollSchema>;
 
 const pollKey = (p: NewsPollPayload) => `news-poll:${p.sourceId}`;
 
-let override: Pick<Fetcher, 'fetchSource'> | null = null;
-let shared: Fetcher | undefined;
-
-/** Test hook: replace the governed fetcher (`null` restores the env-built one). */
-export function setNewsFetcher(fetcher: Pick<Fetcher, 'fetchSource'> | null): void {
-  override = fetcher;
+/** The governed fetch the poll needs, structurally `Fetcher.fetchSource` of `@causedeck/fetch`, which core does not import. */
+export interface NewsFetcher {
+  fetchSource: FeedFetcher;
 }
 
-/**
- * The governed fetcher: the source registry decides, the AlterLab provider (the offline mock when
- * `ALTERLAB_API_KEY` is unset) reads, and every call is logged content-free in `fetch_log`. One
- * instance per process so the per-source rate limit holds across polls.
- */
-function newsFetcher(ctx: Pick<JobContext, 'db'>): Pick<Fetcher, 'fetchSource'> {
-  if (override !== null) return override;
-  shared ??= createFetcher({
-    registry: { policyFor: (id) => policyFor(id, { db: ctx.db }) },
-    alterlab: createProvider({ apiKey: serverEnv().ALTERLAB_API_KEY }),
-    clock: { now: () => new Date() },
-    // The fetch layer has no workspace: cost is in `fetch_log`, usage keys stay with workspace callers.
-    usage: { record: () => Promise.resolve() },
-    log: createFetchLogSink(ctx.db),
-  });
-  return shared;
+/** Builds the governed fetcher for one poll from the job's db (the worker supplies it at startup). */
+export type NewsFetcherFactory = (db: JobContext['db']) => NewsFetcher;
+
+let fetcherFactory: NewsFetcherFactory | null = null;
+
+/** Wiring point: the worker passes a factory over `@causedeck/fetch`; `null` unwires it (tests). */
+export function setNewsFetcherFactory(factory: NewsFetcherFactory | null): void {
+  fetcherFactory = factory;
 }
+
+/** Without a wired fetcher a poll fails loudly rather than reaching a feed any other way. */
+const unwiredFetcher: NewsFetcher = {
+  fetchSource: () =>
+    Promise.reject(new Error('news poll: no fetcher wired (setNewsFetcherFactory)')),
+};
 
 export type NewsPollOutcome = 'stored' | 'skipped';
 
@@ -66,7 +60,7 @@ export async function runNewsPoll(
 ): Promise<{ outcome: NewsPollOutcome; items: number }> {
   try {
     const policy = await policyFor(sourceId, { db: ctx.db });
-    const fetcher = newsFetcher(ctx);
+    const fetcher = fetcherFactory?.(ctx.db) ?? unwiredFetcher;
     const fetchSource: FeedFetcher = (id, url) => fetcher.fetchSource(id, url);
     const items = await ingestFeed({
       sourceId,

@@ -19,15 +19,22 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `audit` | `@causedeck/core/audit` | audit writer, chain verification, feed query and export ([audit.md](audit.md)) |
 | `workspaces` | `@causedeck/core/workspaces` | workspaces, members, invitations, offboarding ([workspaces.md](workspaces.md)) |
 | `matters` | `@causedeck/core/matters` | matter restrictions |
-| `court` | `@causedeck/core/court` | forum catalogue reads, custom workspace forums and official deep links (#34, [ADR 0014](../adr/0014-forum-catalogue-and-deep-links.md)), the tenant-free adapter parse-health summary (#372), and the courts read models `getCourtsIndex`, `getForumDetail`, `getAdapterStatus` and `listHallsSeen` (#397; access-mode rows with counsel notes via `@causedeck/flags/access-mode`), the roster services (#385, #387), and bench-change detection and alerts `detectBenchChanges`, `listAlerts`, `dismissAlert` with the `CourtEvents` port (`bench.changed`) and `notify()` delivery (#389), and the rosters page read model `getRostersPage` (#434) |
+| `court` | `@causedeck/core/court` | forum catalogue reads, custom workspace forums and official deep links (#34, [ADR 0014](../adr/0014-forum-catalogue-and-deep-links.md)), the tenant-free adapter parse-health summary (#372), and the courts read models `getCourtsIndex`, `getForumDetail`, `getAdapterStatus` and `listHallsSeen` (#397; access-mode rows with counsel notes via `@causedeck/flags/access-mode`), the roster services (#385, #387), and bench-change detection and alerts `detectBenchChanges`, `listAlerts`, `dismissAlert` with the `CourtEvents` port (`bench.changed`) and `notify()` delivery (#389), and the rosters page read model `getRostersPage` (#434), and the KHC cause-list watches `addCauseListWatch`, `listCauseListWatches`, `removeCauseListWatch` and `pollCauseList` (#482: one fetch per list publication shared by every workspace, matched rows staged as L2 proposals) |
 | `matter-graph` | `@causedeck/core/matter-graph` | matter-graph services (#362): matters, proceedings, documents, the duplicate finder, the proceeding state machine (#363, ADR 0016), the canonical next date (#364: propose, confirm, read; the only writer of `listing.list_date` and `canonical`), merges and splits with `UndoPayload` (#365) and their read-only previews (#392), the cross-proceeding matter timeline (#366, read-only), the matters read models (#386) and the document preview read model `getDocumentPreview` (#393: one page's text and the version chain, for `DocumentPreviewSheet`), and the `GraphEvents` port they emit through |
 | `automation` | `@causedeck/core/automation` | the automation engine (#47, [ADR 0023](../adr/0023-automation-ladder-and-undo.md)): the L1-L4 ladder, the approval matrix as data and `decideLevel`, proposals (`submitProposals`, `acceptProposal`, `editAndAccept`, `dismissProposal`, `applyAutomatically`, `expireProposals`), the kind handlers that write through the matter-graph services, the 7-day cascading undo (`undoActivity`, `undoCapture`, `reassignCapture`), the ask-first dial, threshold learning, the activity feed read model (#49: `listActivities` keyset-paged with filters and search, `getActivityDetail`, `countByDay`, and `countDigestActivities` for the end-of-day digest; a row about a matter the member may not read is returned redacted, a clerk gets only `CLERK_ACTIVITY_KINDS`) and the activity export (owners the workspace, everyone else their own activity, audited as `audit.exported`). It has no send, file, pay or advise path (`scripts/check-no-l5.ts`) |
+| `case-watch` | `@causedeck/core/case-watch` | case-status watches (#591, D-048, #483 part 3): `addCaseWatch`, `listCaseWatches`, `removeCaseWatch` (an advocate's own watches on proceedings they can read), `runCaseStatusLookup` (the server path: only the advocate's own watch, always through `@causedeck/fetch` with `delegatedFor`, so a bulk or unscoped lookup cannot be made; parsed with the `@causedeck/adapters` status parsers) and `recordDeviceSnapshot` (a device-read status), snapshots with provenance (tier used, cost, device or server; an unchanged page writes no second row) and `diffStatus`, which stages a new next hearing date as an L2 `case_status_change` proposal confirmed through the matter-graph next-date services; `pollCaseWatches` (#592, the body of `system.status.poll`: due watches through `app_case_watch_due`, each run as its own advocate with per-advocate and per-source caps, a killed source skipped) and `notifyStatusChanges` (new date, new order and stage change alerts to the advocate, never on the first snapshot or a sensitive matter) |
+| `notices` | `@causedeck/core/notices` | the official notices feed (#586, D-048, part 3 of #480): `pollNotices` (fetches each cleared `notice` source once through the governed fetch layer via a structural `NoticeFetcher` port, parses it with the source's parser, stores new notices once with provenance, never fetches an uncleared source) and `matchNotices` (matches notices to the workspaces and matters with a proceeding before the forums they name, through the owner-defined `app_notice_match_targets`), run hourly by `system.notices.poll` |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
 | `ai` | `@causedeck/core/ai` | the AI gateway wiring (#44, [ADR 0022](../adr/0022-ai-gateway-implementation.md)): the ports `@causedeck/ai` declares, implemented on usage budgets, `workspace_settings.india_only_ai`, `matter.sensitive`, the `ai_call` writer and the 24 h `ai_call_result` store |
 | `sources` | `@causedeck/core/sources` | the source registry (D-048): `policyFor` / `isCleared` fail closed, and audited staff changes to every external data source |
 | `news` | `@causedeck/core/news` | the legal news digest (#481, D-048): `upsertNewsItems` (global `news_item`, idempotent on source and URL, feed-provided fields only), the member's `news_pref` (`getNewsPref`, `setNewsPref`), `listNewsForMember` and `selectNewsDigestItems` (tagged items first, then recency, with source attribution and the link to the original) |
+| `citations` | `@causedeck/core/citations` | citation verification (#484, D-004): `verifyCitation` resolves a neutral citation (Madras HC, Karnataka HC, Supreme Court) to a stored judgment in the global raw corpus with page anchors, or marks it UNVERIFIED |
+| `court-day` | `@causedeck/core/court-day` | court-day display-board tracking (#493, D-048): `pollBoards` (one governed fetch per High Court board per run, only in court hours and only for halls where a workspace has an item listed today; content-free `board_observation` rows; `court.board` alerts through `notify()` at 5 away, 2 away, now, risen and passed over, deduped per listing and threshold), the `getLiveHalls` read model and the call-time estimate `estimateCallWindow` / `backtestEta` (a range with a confidence level, never a promise) |
+| `research` | `@causedeck/core/research` | judgment alerts (#497, D-048): per-matter issue tags (`listTags`, `addTag`, `proposeTags`, `confirmTag`, `dismissTag`; only confirmed tags drive alerts), `scanJudgments` (matches new corpus judgments to confirmed tags by statute and section, writes `judgment_alert` rows and notifies advocates who may read the matter; sensitive matters never alert) and `listRelevantJudgments` (keeps only alerts whose judgment `verifyCitation` resolves, D-004) |
+| `network` | `@causedeck/core/network` | the court document network (#485, D-048 tier 3): opt-in contribution of public court documents (cause lists, published orders) stored once globally, `findContributed` reads, and withdrawal on workspace erase |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
+| `business` | `@causedeck/core/business` | the internal business dashboard (#519, D-049): `staffBusinessSnapshot` / `readBusinessSnapshot` (aggregates from the owner-defined `app_business_snapshot` functions), the pure MRR, ARR, churn, conversion, cost-per-user and margin maths, the cost-per-user threshold and the founders' digest and alert emails |
 | `capture` | `@causedeck/core/capture` | the capture inbox (#43, [ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)): `createCapture` / `completeUpload` / `createManualCapture`, per-channel opt-in, discard and pin, raw-object retention, `deleteRecording` (a voice recording and its transcript, #542), the diary-photo step of `capture.process` for channel `camera` (#52, [ADR 0030](../adr/0030-diary-photo-capture-and-image-anchors.md)), and the bodies of `capture.scan`, `capture.process` and `capture.retention`; jobs arrive as the `CaptureJobs` port. Not re-exported from the package root |
 | `calendar` | `@causedeck/core/calendar` | calendar interop (#53, [ADR 0024](../adr/0024-ics-import-and-private-feed.md)): the private ICS feed (`createFeed` / `rotateFeed` / `revokeFeed`, the unauthenticated `serveFeed`) and the ICS import (`runIcsImport`, the `capture.process` body for channel `ics`, and its review). Pure parsing and rendering is `@causedeck/capture` `ics/`. Not re-exported from the package root |
 | `email-intake` | `@causedeck/core/email-intake` | email forward-in intake (#54): the per-user intake address (`createAddress`, `rotateAddress`, `revokeAddress`, `getActiveAddress`, `resolveAddress` with no oracle), the sender allow-list (`addAllowlistEntry`, `removeAllowlistEntry`, `listAllowlist`) and `enableEmailChannel`, and the inbound side (#530): `receiveInboundEmail` (record once per message id, enqueue `email.intake`), `runEmailIntake` (the job body: sender trust, parser registry, captures, proposals) and `sweepExpiredRawMime`. Not re-exported from the package root |
@@ -72,6 +79,11 @@ graph LR
   matters --> workspaces
   matters --> audit
   court --> workspaces
+  court --> automation
+  court --> import
+  court --> matter-graph
+  court --> sources
+  court-day --> sources
   matter-graph --> workspaces
   matter-graph --> matters
   automation --> workspaces
@@ -88,11 +100,18 @@ graph LR
   ai --> usage
   lifecycle --> audit
   lifecycle --> workspaces
+  lifecycle --> network
   sources --> audit
   jobs --> news
   jobs --> sources
+  research --> workspaces
+  research --> citations
+  network --> audit
+  network --> sources
   support --> workspaces
   support --> audit
+  business --> usage
+  business --> workspaces
   capture --> audit
   capture --> workspaces
   capture --> ai
@@ -109,6 +128,7 @@ graph LR
   jobs --> usage
   jobs --> lifecycle
   jobs --> support
+  jobs --> business
   jobs --> capture
   jobs --> calendar
   jobs --> automation
@@ -117,6 +137,12 @@ graph LR
   jobs --> email-intake
   jobs --> extraction
   jobs --> import
+  jobs --> court
+  jobs --> court-day
+  jobs --> sources
+  jobs --> notices
+  notices --> sources
+  jobs --> research
   calendar --> audit
   calendar --> workspaces
   calendar --> capture
@@ -156,16 +182,23 @@ graph LR
 | `audit` | nothing (only `shared/`) |
 | `workspaces` | `audit` |
 | `matters` | `workspaces`, `audit` |
-| `court` | `workspaces` |
+| `court` | `workspaces`, `automation`, `import`, `matter-graph`, `sources` |
+| `court-day` | `sources` |
+| `case-watch` | `workspaces`, `automation`, `matter-graph`, `sources` |
+| `notices` | `sources` |
 | `matter-graph` | `workspaces`, `matters` |
 | `automation` | `workspaces`, `audit`, `matter-graph` |
 | `billing` | `workspaces`, `audit` |
 | `usage` | `audit`, `billing` |
 | `ai` | `audit`, `usage` |
-| `lifecycle` | `audit`, `workspaces` |
+| `lifecycle` | `audit`, `workspaces`, `network` |
 | `sources` | `audit` |
 | `news` | nothing |
+| `citations` | none |
+| `research` | `workspaces`, `citations` |
+| `network` | `audit`, `sources` |
 | `support` | `workspaces`, `audit` |
+| `business` | `usage`, `workspaces` |
 | `capture` | `audit`, `workspaces`, `ai`, `automation`, `matter-graph` |
 | `calendar` | `audit`, `workspaces`, `capture`, `automation`, `matter-graph` |
 | `email-intake` | `audit`, `capture`, `automation`, `matter-graph`, `workspaces` |
@@ -174,6 +207,7 @@ graph LR
 | `extraction` | `workspaces`, `ai`, `automation`, `matter-graph` |
 | `import` | `matter-graph`, `usage`, `automation` |
 | `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `news`, `sources` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `sources`, `research`, `business`, `case-watch`, `notices` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

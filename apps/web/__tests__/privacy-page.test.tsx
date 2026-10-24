@@ -32,6 +32,7 @@ const workspaces = vi.hoisted(() => ({
           indiaOnlyAi: true,
           sensitiveDefaultRestricted: true,
           retentionAudioDays: 30,
+          contributePublicCourtDocuments: false,
         }),
   ),
 }));
@@ -63,7 +64,12 @@ const { PrivacyForm } = await import('../app/(app)/w/[slug]/settings/privacy/pri
 
 const en = catalogs.en.settings.privacy;
 const WORKSPACE_ID = '00000000-0000-4000-8000-00000000a001';
-const DEFAULTS = { indiaOnlyAi: true, sensitiveDefaultRestricted: true, retentionAudioDays: 30 };
+const DEFAULTS = {
+  indiaOnlyAi: true,
+  sensitiveDefaultRestricted: true,
+  retentionAudioDays: 30,
+  contributePublicCourtDocuments: false,
+};
 
 const withIntl = (ui: ReactNode) =>
   render(
@@ -104,10 +110,16 @@ describe('PrivacyForm', () => {
 
   function form({
     save = vi.fn<Save>((input) => {
-      const { sensitiveDefaultRestricted, retentionAudioDays } = input as typeof DEFAULTS;
+      const { sensitiveDefaultRestricted, retentionAudioDays, contributePublicCourtDocuments } =
+        input as typeof DEFAULTS;
       return Promise.resolve({
         ok: true,
-        data: { indiaOnlyAi: true, sensitiveDefaultRestricted, retentionAudioDays },
+        data: {
+          indiaOnlyAi: true,
+          sensitiveDefaultRestricted,
+          retentionAudioDays,
+          contributePublicCourtDocuments,
+        },
       });
     }),
     canEdit = true,
@@ -139,9 +151,9 @@ describe('PrivacyForm', () => {
     expect(ai.getAttribute('aria-checked')).toBe('true');
   });
 
-  it('offers no control other than the two settings, so nothing can turn India-only AI off', () => {
+  it('offers no control other than the three settings, so nothing can turn India-only AI off', () => {
     form();
-    expect(screen.getAllByRole('switch')).toHaveLength(2);
+    expect(screen.getAllByRole('switch')).toHaveLength(3);
     expect(screen.queryByRole('button', { name: /override/i })).toBeNull();
   });
 
@@ -155,6 +167,7 @@ describe('PrivacyForm', () => {
       workspaceId: WORKSPACE_ID,
       sensitiveDefaultRestricted: false,
       retentionAudioDays: 30,
+      contributePublicCourtDocuments: false,
     });
     expect(sensitive().getAttribute('aria-checked')).toBe('false');
     expect(screen.getByRole('status').textContent).toContain(en.saved);
@@ -174,8 +187,30 @@ describe('PrivacyForm', () => {
       workspaceId: WORKSPACE_ID,
       sensitiveDefaultRestricted: true,
       retentionAudioDays: 30,
+      contributePublicCourtDocuments: false,
     });
     expect(sensitive().getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('explains court document sharing and saves the opt-in (off by default)', async () => {
+    const { save } = form();
+    const sharing = screen.getByRole('switch', {
+      name: en.settings.contributePublicCourtDocuments.label,
+    });
+    expect(sharing.getAttribute('aria-checked')).toBe('false');
+    const describedBy = sharing.getAttribute('aria-describedby') ?? '';
+    expect(document.getElementById(describedBy)?.textContent).toBe(
+      en.settings.contributePublicCourtDocuments.description,
+    );
+    fireEvent.click(sharing);
+    await waitFor(() => {
+      expect(save).toHaveBeenCalledWith({
+        workspaceId: WORKSPACE_ID,
+        sensitiveDefaultRestricted: true,
+        retentionAudioDays: 30,
+        contributePublicCourtDocuments: true,
+      });
+    });
   });
 
   it('rolls back and says so when the save fails', async () => {

@@ -61,6 +61,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   saas_invoice: DB_TABLES_TEST,
   saas_invoice_line: DB_TABLES_TEST,
   matter_restriction: DB_TABLES_TEST,
+  contribution_ledger: DB_TABLES_TEST,
   export_job: DB_TABLES_TEST,
   deletion_job: DB_TABLES_TEST,
   support_session: DB_TABLES_TEST,
@@ -115,6 +116,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   ics_feed_event: DB_TABLES_TEST,
   ics_import_event: DB_TABLES_TEST,
 
+  // Case-status watch (#589).
+  case_watch: DB_TABLES_TEST,
+  case_status_snapshot: DB_TABLES_TEST,
+
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
 
@@ -125,6 +130,14 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,
+
+  // Karnataka HC cause-list watches (#482).
+  cause_list_watch: DB_TABLES_TEST,
+  // Judgment alerts (#497).
+  matter_issue_tag: DB_TABLES_TEST,
+  judgment_alert: DB_TABLES_TEST,
+  // Official notices feed (#584).
+  notice_match: DB_TABLES_TEST,
 };
 
 /**
@@ -221,6 +234,15 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'sends the payload as given; runJob scopes the handler to the payload workspace',
   },
   retentionSweep: selfScoped,
+  // KHC cause-list watches (#482)
+  addCauseListWatch: selfScoped,
+  matchNotices: selfScoped,
+  listCauseListWatches: selfScoped,
+  removeCauseListWatch: selfScoped,
+  // Case-status watches (#591)
+  addCaseWatch: selfScoped,
+  listCaseWatches: selfScoped,
+  removeCaseWatch: selfScoped,
   runBillingProcessEvent: {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
@@ -325,6 +347,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'inserts under withWorkspace; ws_isolation rejects a row for another workspace',
   },
   restrictMatter: denies,
+  // court document network (#485): a contribution reads the caller's own document under RLS
+  checkEligibility: denies,
+  contributeDocument: denies,
+  withdrawContributions: denies,
   assertMatterReadable: denies,
   listMatterRestrictions: denies,
   // court (#34): catalogue rows are global by design; custom forums stay in their workspace
@@ -386,6 +412,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
   // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that
   // name a row of another workspace, and undos handed a payload of A's ids
+  // court day (#493): the live halls read model opens withWorkspace on the given actor
+  getLiveHalls: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -451,6 +479,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setSensitive: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
+  // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
+  staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -676,11 +706,38 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'deletes inside withWorkspace on the given id; RLS keeps every other workspace out',
   },
+  // judgment alerts (#497)
+  listTags: denies,
+  addTag: denies,
+  proposeTags: denies,
+  confirmTag: denies,
+  dismissTag: denies,
+  listRelevantJudgments: denies,
+  scanJudgments: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
+  },
+  // citations (#484): the global corpus, one answer for every workspace
+  verifyCitation: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments, the same answer in every workspace; reads nothing tenant-scoped',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // business dashboard (#519): pure maths and rendering over aggregates
+  parseBusinessSnapshot: 'pure',
+  buildBusinessReport: 'pure',
+  businessConfigFromEnv: 'pure',
+  evaluateCostThresholds: 'pure',
+  renderBusinessDigest: 'pure',
+  renderCostAlert: 'pure',
+  readBusinessSnapshot:
+    'system read of app_business_snapshot (job use, no staff user): plan ids and counts, sums and dollar totals only, never a workspace id, email or content',
   // source registry (#478): a global table of external-source policy, no tenant rows to leak
   SOURCE_KINDS: 'constant',
   SOURCE_ACCESS_MODES: 'constant',
@@ -704,10 +761,26 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
   setSourceKillSwitch:
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  // court document network (#485): `findContributed` reads the global `contributed_document` table (no
+  // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
+  findContributed:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): public text only, no contributor field; the tenant link is `contribution_ledger`',
+  CONTRIBUTABLE_DOCUMENT_KINDS: 'constant',
+  isContributableKind: 'pure',
+  ContributionRefused: 'error class',
   recordFetchLog:
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
   createFetchLogSink:
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
+  sourceOpsOverview:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  sourceFetchLogs:
+    'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
+  topFailingSources: 'pure',
+  isFetchError: 'pure',
+  FRESHNESS_SLA_HOURS: 'constant',
+  staffParseYield:
+    'app_staff_parse_yield() returns per-adapter counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',
@@ -844,6 +917,67 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   AiCallContractError: 'error class',
   hashUserAgent: 'pure',
   truncateIpForDisplay: 'pure',
+  // court: KHC cause-list watch (#482)
+  KHC_CAUSE_LIST_SOURCE_ID: 'constant',
+  COURT_KHC_A2_FLAG: 'constant',
+  KHC_LIST_PATHS: 'constant',
+  PUBLICATION_REF_PREFIX: 'constant',
+  createKhcListParser: 'pure (builds the KHC adapter parser; no database access)',
+  getPublicationForRef:
+    'global table `cause_list_publication` (GLOBAL_TABLES, no workspace_id, no RLS): content-free list publication metadata (URL, fetch time, hash), never tenant data',
+  pollCauseList:
+    'system job body: no workspace; reads watches only through the owner-defined app_cause_list_watch_targets and writes proposals under each watching workspace scope; covered by list-watch.test.ts',
+  CAUSELIST_POLL_CRON: 'constant',
+  causelistPoll: 'job definition (handler is runCauselistPoll)',
+  runCauselistPoll: 'system job body: see pollCauseList',
+  // court day: display-board tracking and the call-time estimate (#493)
+  COURT_LIVE_TRACKING_FLAG: 'constant',
+  BOARD_SOURCES: 'constant',
+  DEFAULT_AWAY_THRESHOLDS: 'constant',
+  isCourtHours: 'pure (clock arithmetic in IST)',
+  planBoardAlert: 'pure (decides the one alert a listed item earns from a board row)',
+  pollBoards:
+    'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
+  itemNumber: 'pure',
+  paceSamples: 'pure',
+  estimateCallWindow: 'pure',
+  backtestEta: 'pure',
+  BOARD_POLL_CRON: 'constant',
+  boardPoll: 'job definition (handler is runBoardPoll)',
+  runBoardPoll: 'system job body: see pollBoards',
+  setBoardFetcherFactory: 'wiring point for the governed fetcher (worker startup)',
+  // notices: the official notices feed (#586)
+  NOTICE_PARSERS: 'constant',
+  pollNotices:
+    'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
+  NOTICES_POLL_CRON: 'constant',
+  noticesPoll: 'job definition (handler is runNoticesPoll)',
+  runNoticesPoll: 'system job body: see pollNotices',
+  setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
+  // case-watch: delegated status lookups (#591)
+  STATUS_SOURCES: 'constant',
+  hashStatusFields: 'pure',
+  diffStatus: 'pure',
+  hasChanges: 'pure',
+  statusChangeDraft: 'pure (builds a draft; submitting it goes through submitProposals)',
+  runCaseStatusLookup:
+    "actor-scoped in withWorkspace: loads only the actor's own watch (advocate_user_id = actor) and proceeds as delegatedFor that advocate on that matter; another advocate or workspace gets NOT_FOUND before any fetch; covered by case-watch.test.ts",
+  recordDeviceSnapshot:
+    "actor-scoped in withWorkspace: stores a snapshot only on the actor's own watch; covered by case-watch.test.ts",
+  // case-watch: the status poll and change alerts (#592)
+  MAX_PER_ADVOCATE_PER_RUN: 'constant',
+  MAX_PER_SOURCE_PER_RUN: 'constant',
+  MAX_WATCHES_PER_RUN: 'constant',
+  pollCaseWatches:
+    "system job body: no workspace; lists due watches only through the owner-defined app_case_watch_due and runs each as the watch's own advocate through runCaseStatusLookup (own watch only, delegatedFor); covered by status-poll.test.ts",
+  touchWatchPolled:
+    "actor-scoped in withWorkspace: updates last_polled_at only on the actor's own watch; covered by status-poll.test.ts",
+  notifyStatusChanges:
+    "actor-scoped in withWorkspace: reads the matter under the actor's workspace and notifies only the actor; covered by status-poll.test.ts",
+  STATUS_POLL_CRON: 'constant',
+  statusPoll: 'job definition (handler is runStatusPoll)',
+  runStatusPoll: 'system job body: see pollCaseWatches',
+  setStatusFetcherFactory: 'setter (worker wires the governed fetcher, #592)',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',
@@ -925,7 +1059,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   newsPollSchema: 'zod schema',
   runNewsPoll: 'system job: fetches one global source and writes the global news_item table',
   runNewsPollSchedule: 'system job: lists cleared global sources only',
-  setNewsFetcher: 'test hook',
+  setNewsFetcherFactory: 'wiring setter for the governed fetcher: no database access',
   activityDigest: 'job definition (handler is runActivityDigest)',
   activityDigestMember: 'job definition (handler is runActivityDigestMember)',
   activityDigestSchedule: 'job definition (handler is runActivityDigestSchedule)',
@@ -941,6 +1075,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   digestInstant: 'pure (time zone math)',
   notificationJobDeps: 'transport wiring (no database access)',
   setNotificationJobDeps: 'setter',
+  setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
   // usage: keys and periods (#219)
   USAGE_KEYS: 'constant',
   USAGE_KEY_KINDS: 'constant',

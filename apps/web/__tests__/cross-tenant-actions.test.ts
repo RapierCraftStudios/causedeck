@@ -91,6 +91,7 @@ const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
+const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
@@ -143,6 +144,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
   updateWorkspacePrivacyAction: privacy,
@@ -182,6 +184,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   dismissBenchChangeAlertAction: rosters,
   createMatterAction: matters,
   searchMattersAction: matters,
+  checkConflictsAction: matters,
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
@@ -449,6 +452,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    saveNewsPreferencesAction: {
+      workspaceId,
+      practiceAreas: ['tax'],
+      forums: [],
+      digestTime: '08:00',
+    },
     updateWorkspaceProfileAction: {
       workspaceId,
       name: 'Cross-tenant probe',
@@ -631,6 +640,10 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
+    checkConflictsAction: {
+      workspaceId,
+      parties: [{ name: 'Cross-tenant probe party', side: 'adverse' }],
+    },
     // Matter workspace (#390): ub may not change A's matter or resolve A's next dates.
     updateMatterAction: {
       workspaceId,
@@ -882,6 +895,21 @@ describe('cross-tenant server actions', () => {
     expect(mine(inB.settings)).toHaveLength(1);
   });
 
+  it('saveNewsPreferencesAction under B’s own workspace saves only ub’s row in B (#481)', async () => {
+    const before = await snapshotA();
+    const input = inputs(t.b.id).saveNewsPreferencesAction;
+    expect(await action('saveNewsPreferencesAction')(input)).toMatchObject({
+      ok: true,
+      data: { practiceAreas: ['tax'], digestTime: '08:00' },
+    });
+    expect(await snapshotA()).toEqual(before);
+    const inB = await withWorkspace(testAppDb(), { workspaceId: t.b.id }, (tx) =>
+      tx.select().from(schema.newsPref),
+    );
+    expect(inB.filter((row) => row.userId === t.ub && row.workspaceId === t.b.id)).toHaveLength(1);
+    expect(inB.every((row) => row.workspaceId === t.b.id)).toBe(true);
+  });
+
   it('updateWorkspaceProfileAction under B’s own workspace changes only B', async () => {
     const before = await snapshotA();
     // B's slug stays: later tests confirm transfers with it.
@@ -1045,6 +1073,12 @@ describe('cross-tenant server actions', () => {
     expect(found.ok).toBe(true);
     const aIds = new Set(before.matters.map((row) => row.id));
     expect(found.data.filter((hit) => aIds.has(hit.id))).toEqual([]);
+    // The conflict check (#500) under B's own workspace finds none of A's parties.
+    const checked = (await action('checkConflictsAction')(own.checkConflictsAction)) as {
+      ok: boolean;
+      data: unknown[];
+    };
+    expect(checked).toEqual({ ok: true, data: [] });
     expect(await snapshotA()).toEqual(before);
   });
 

@@ -19,6 +19,7 @@ describe('category registry', () => {
         'court.board',
         'digest.daily',
         'digest.end_of_day',
+        'digest.news',
         'judgment.alert',
         'member.joined',
         'notices',

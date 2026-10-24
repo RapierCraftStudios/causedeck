@@ -113,6 +113,12 @@ export const FLAGS = {
     false,
     [31, 288],
   ),
+  'conflicts.check': flag(
+    'conflicts.check',
+    'Conflict-of-interest check on new-matter intake (counsel sign-off required).',
+    true,
+    [500, 486],
+  ),
 } as const;
 
 /** A registered flag key. Anything else is a compile error. */

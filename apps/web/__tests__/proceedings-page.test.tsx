@@ -105,6 +105,7 @@ vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
 vi.mock('../app/(app)/w/[slug]/matters/actions.ts', () => ({
   searchMattersAction: vi.fn(),
   createMatterAction: vi.fn(),
+  checkConflictsAction: vi.fn(),
 }));
 vi.mock('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts', () => ({
   createProceedingAction: vi.fn(),

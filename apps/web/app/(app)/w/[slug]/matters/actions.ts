@@ -8,12 +8,15 @@
 // - `searchMattersAction`: `matter.read`. The command palette's matter search (⌘K): title, party or
 //   case number in any punctuation (`searchMatters` normalises it), 8 results, each with only what
 //   the palette row shows (title, forum, next date, sensitive).
+// - `checkConflictsAction`: `matter.read`, behind the legal-gated `conflicts.check` flag (#500, D-048;
+//   NOT_FOUND while it is off). The New matter dialog's conflict check: names against the
+//   workspace's own matters and parties, audited, and advisory only.
 import { revalidatePath } from 'next/cache';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { z } from 'zod';
 
 import { graphDeps } from '../../../../../lib/matters/graph-deps.ts';
-import type { Result } from '../../../../../lib/safe-action.ts';
+import { ActionError, type Result } from '../../../../../lib/safe-action.ts';
 import { WorkspaceScoped, workspaceAction } from '../../../../../lib/workspace-action.ts';
 
 const CreateMatter = WorkspaceScoped.extend({
@@ -109,4 +112,58 @@ const search = workspaceAction(
 
 export async function searchMattersAction(raw: unknown): Promise<Result<MatterSearchHit[]>> {
   return search(raw);
+}
+
+const CheckConflicts = WorkspaceScoped.extend({
+  parties: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(300),
+        side: z.enum(['client', 'adverse']),
+      }),
+    )
+    .min(1)
+    .max(20),
+});
+
+export interface ConflictHitView {
+  checked: string;
+  side: 'client' | 'adverse';
+  matterId: string;
+  matterTitle: string;
+  matchedName: string;
+  source: 'name' | 'alias';
+  existingRole: 'client' | 'adverse';
+}
+
+const checkConflictsRun = workspaceAction(
+  CheckConflicts,
+  async (input, ctx): Promise<ConflictHitView[]> => {
+    const { isEnabled } = await import('@causedeck/flags/server');
+    const on = await isEnabled('conflicts.check', {
+      workspaceId: ctx.workspaceId,
+      userId: ctx.userId,
+    });
+    if (!on) throw new ActionError('NOT_FOUND', '');
+    const { checkConflicts } = await import('@causedeck/core/conflicts');
+    const result = await checkConflicts(
+      { db: ctx.tx },
+      { workspaceId: ctx.workspaceId, userId: ctx.userId },
+      { parties: input.parties },
+    );
+    return result.hits.map((hit) => ({
+      checked: hit.checked,
+      side: hit.side,
+      matterId: hit.matterId,
+      matterTitle: hit.matterTitle,
+      matchedName: hit.matchedName,
+      source: hit.source,
+      existingRole: hit.existingRole,
+    }));
+  },
+  { action: 'matter.read' },
+);
+
+export async function checkConflictsAction(raw: unknown): Promise<Result<ConflictHitView[]>> {
+  return checkConflictsRun(raw);
 }

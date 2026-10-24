@@ -24,6 +24,7 @@ Every flag is off by default and ships dark. ⚖ marks a legal-gated flag. A leg
 | `billing.razorpay` | no | `KILL_BILLING_RAZORPAY` | #28 Razorpay subscriptions, #111 Razorpay account |
 | `insights.enabled` | no | `KILL_INSIGHTS_ENABLED` | #85 insights dashboard |
 | `workspace.export` | no | `KILL_WORKSPACE_EXPORT` | #31 export service, #288 export settings page (enables `Export workspace`) |
+| `conflicts.check` | ⚖ yes | `KILL_CONFLICTS_CHECK` | #500 conflict-of-interest check on new-matter intake, counsel sign-off through #486 |
 
 ## Evaluation
 

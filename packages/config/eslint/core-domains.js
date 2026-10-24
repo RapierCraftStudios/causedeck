@@ -31,6 +31,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
   // tables and the owner-defined match function only.
   notices: Object.freeze(['workspaces', 'sources']),
+  // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
+  conflicts: Object.freeze(['audit']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.
@@ -40,6 +42,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   lifecycle: Object.freeze(['audit', 'workspaces', 'network']),
   // The source registry (#478, D-048): staff changes record `source.changed` through audit.
   sources: Object.freeze(['audit']),
+  // The legal news digest (#481): global items and the member's own prefs, no other domain.
+  news: Object.freeze([]),
   // Citation verification (#484, D-004): resolves a neutral citation against the global `judgment`
   // corpus; reads tables and `@causedeck/intelligence` only, no other domain.
   citations: Object.freeze([]),
@@ -105,6 +109,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'email-intake',
     'extraction',
     'import',
+    'news',
+    'sources',
     'data-ops',
     'court',
     'court-day',

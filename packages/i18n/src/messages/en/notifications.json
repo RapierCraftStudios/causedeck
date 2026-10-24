@@ -60,6 +60,14 @@
         "subject": "{title}",
         "preview": "An update from your CauseDeck workspace",
         "cta": "Open in CauseDeck"
+      },
+      "newsDigest": {
+        "subject": "Legal news for you today",
+        "preview": "Headlines from the courts and tribunals you follow",
+        "heading": "Legal news for you today",
+        "source": "From {source}",
+        "cta": "Open the news page",
+        "note": "Headlines link to the original article. We show only what the publisher's feed provides."
       }
     },
     "push": {
@@ -171,6 +179,10 @@
         "systemNotice": {
           "label": "Service notices",
           "description": "Updates about CauseDeck itself."
+        },
+        "digestNews": {
+          "label": "Legal news digest",
+          "description": "One daily digest of legal news, with the items for your practice areas and forums first."
         }
       },
       "mandatory": "Security alerts are always sent in the app and by email so you never miss a sign-in or account change.",
@@ -196,6 +208,54 @@
       "retry": "Try again",
       "loading": "Loading notification preferences",
       "empty": "No notification settings are available for this workspace yet."
+    },
+    "news": {
+      "metaTitle": "Legal news",
+      "title": "Legal news",
+      "description": "Headlines from cleared sources, with your practice areas and forums first.",
+      "empty": "No news yet. Items appear once staff clear a news source.",
+      "matched": "For you",
+      "source": "Source: {source}",
+      "readOriginal": "Read the original",
+      "prefs": {
+        "title": "Daily digest",
+        "description": "Choose what you follow and when the digest arrives.",
+        "areas": "Practice areas",
+        "forums": "Forums",
+        "time": "Digest time",
+        "save": "Save",
+        "saved": "Saved.",
+        "error": "Could not save. Try again."
+      },
+      "areas": {
+        "civil": "Civil",
+        "criminal": "Criminal",
+        "constitutional": "Constitutional",
+        "corporate": "Corporate",
+        "tax": "Tax",
+        "ibc": "Insolvency (IBC)",
+        "arbitration": "Arbitration",
+        "family": "Family",
+        "labour": "Labour",
+        "property": "Property",
+        "ip": "IP",
+        "consumer": "Consumer",
+        "environment": "Environment",
+        "banking": "Banking",
+        "service": "Service"
+      },
+      "forums": {
+        "supreme_court": "Supreme Court",
+        "high_court": "High Court",
+        "district_court": "District court",
+        "nclt": "NCLT",
+        "nclat": "NCLAT",
+        "itat": "ITAT",
+        "drt": "DRT",
+        "consumer_forum": "Consumer forum",
+        "tribunal": "Tribunal",
+        "regulator": "Regulator"
+      }
     }
   }
 }

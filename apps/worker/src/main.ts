@@ -5,6 +5,7 @@ import {
   registry,
   setBoardFetcherFactory,
   setCauseListFetcherFactory,
+  setNewsFetcherFactory,
   setNoticeFetcherFactory,
   setStatusFetcherFactory,
   type CauseListFetcherFactory,
@@ -50,6 +51,8 @@ setCauseListFetcherFactory(governedFetcher);
 // core's `BoardFetcher` and `NoticeFetcher` shapes.
 setBoardFetcherFactory(governedFetcher);
 setNoticeFetcherFactory(governedFetcher);
+// The news digest (#481, D-048): feeds of cleared `news` or `licensed` sources only, through the same fetcher.
+setNewsFetcherFactory(governedFetcher);
 
 // The same governed fetcher for `system.status.poll` (#592): delegated case-status lookups only.
 setStatusFetcherFactory((jobDb) =>

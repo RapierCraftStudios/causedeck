@@ -16,9 +16,11 @@ import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { createMemoryObjectStore } from '@causedeck/storage';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
+import { captureConfigFromProcess } from '../../capture/index.ts';
 import * as core from '../../index.ts';
 
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
@@ -569,6 +571,67 @@ const CASES: Record<string, Case> = {
     const own = await core.listHolidayListings(f.tx, f.b.id, range);
     expect(own.map((r) => [r.listingId, r.noticeId])).toEqual([[listingId, noticeId]]);
     expect(await core.listHolidayListings(f.tx, f.a.id, range)).toEqual([]);
+  },
+  loadCourtCalendar: async (f) => {
+    // A holiday notice matched to B is on B's calendar and absent from A's.
+    const forumCode = 'in.tn.madras-hc.madurai';
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, forumCode));
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: [forumCode],
+        kind: 'holiday',
+        title: 'XT calendar holiday',
+        issuedOn: '2026-11-02',
+        effectiveOn: '2026-12-25',
+        url: `https://notices.example.test/xt/calendar/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    await inWorkspace(f.tx, f.b.id, (s) =>
+      s.insert(schema.noticeMatch).values({
+        workspaceId: f.b.id,
+        noticeId: noticeRow?.id ?? '',
+        forumId: forum?.id ?? '',
+        reason: 'forum',
+      }),
+    );
+    const range = { forumCode, from: '2026-12-01', to: '2026-12-31' };
+    const own = await core.loadCourtCalendar(f.tx, f.b.id, range);
+    expect([...own.holidays]).toEqual([['2026-12-25', 'XT calendar holiday']]);
+    const other = await core.loadCourtCalendar(f.tx, f.a.id, range);
+    expect([...other.holidays]).toEqual([]);
+  },
+  pollOrders: async (f) => {
+    // A watch that is not A's own (here B's) yields nothing in A: no fetch, no capture.
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.capture));
+    const fetchSource = vi.fn();
+    const report = await core.pollOrders({
+      db: f.tx,
+      fetcher: { fetchSource },
+      store: createMemoryObjectStore(),
+      config: captureConfigFromProcess(),
+      jobs: { scan: vi.fn(), process: vi.fn() },
+      policy: () => Promise.resolve({ baseUrl: 'https://xt.example.test' }),
+      listDue: () =>
+        Promise.resolve([
+          {
+            watchId: randomUUID(),
+            workspaceId: f.a.id,
+            advocateUserId: f.ub,
+            sourceId: 'xt.case-watch',
+          },
+        ]),
+    });
+    expect(report).toMatchObject({ captured: 0, failed: 0 });
+    expect(fetchSource).not.toHaveBeenCalled();
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.capture));
+    expect(after).toEqual(before);
   },
   listCauseListWatches: async (f) => {
     // ub sees exactly B's own seeded watch, never A's.

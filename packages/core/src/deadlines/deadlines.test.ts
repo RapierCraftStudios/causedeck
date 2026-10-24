@@ -54,7 +54,9 @@ const TABLE: Row[] = [
     from: '2027-05-10',
     n: 2,
     unit: 'week',
-    cal: calendar({ vacations: [{ from: '2027-05-24', to: '2027-06-06', name: 'Summer vacation' }] }),
+    cal: calendar({
+      vacations: [{ from: '2027-05-24', to: '2027-06-06', name: 'Summer vacation' }],
+    }),
     due: '2027-06-07',
     rule: '2 weeks from 10 May; court closed 24 May to 6 Jun, so 7 Jun',
   },

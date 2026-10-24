@@ -234,13 +234,16 @@ export async function runOrderExtraction(
             });
           }
         }
-        const drafts = toProposalDrafts({ ...found, directions }, {
-          captureId: cap?.id ?? null,
-          matterId,
-          proceedingId,
-          aiCallId: result.aiCallId,
-          anchorIds,
-        });
+        const drafts = toProposalDrafts(
+          { ...found, directions },
+          {
+            captureId: cap?.id ?? null,
+            matterId,
+            proceedingId,
+            aiCallId: result.aiCallId,
+            anchorIds,
+          },
+        );
         if (drafts.length > 0) {
           const graph: MatterGraphDeps = {
             db: tx,

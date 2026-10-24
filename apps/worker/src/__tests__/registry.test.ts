@@ -161,6 +161,7 @@ describe('enqueue', () => {
       'system.notices.poll',
       'system.judgment-alert.scan',
       'system.status.poll',
+      'system.orders.poll',
     ]);
   });
 });

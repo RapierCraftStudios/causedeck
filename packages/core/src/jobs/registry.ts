@@ -25,6 +25,7 @@ import { captureRetention, systemCaptureRetention } from './definitions/capture-
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { ordersPoll } from './definitions/orders-poll.ts';
 import { statusPoll } from './definitions/status-poll.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
@@ -195,6 +196,7 @@ export const registry = createRegistry([
   noticesPoll,
   judgmentAlertScan,
   statusPoll,
+  ordersPoll,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -244,6 +246,7 @@ export type JobMap = RegistryMap<
     typeof noticesPoll,
     typeof judgmentAlertScan,
     typeof statusPoll,
+    typeof ordersPoll,
   ]
 >;
 export type JobName = keyof JobMap;

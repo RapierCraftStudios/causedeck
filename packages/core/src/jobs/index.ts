@@ -133,6 +133,12 @@ export {
   type NoticeFetcherFactory,
 } from './definitions/notices-poll.ts';
 export {
+  ORDERS_POLL_CRON,
+  ordersPoll,
+  runOrdersPoll,
+  type OrdersPollDeps,
+} from './definitions/orders-poll.ts';
+export {
   runStatusPoll,
   setStatusFetcherFactory,
   STATUS_POLL_CRON,

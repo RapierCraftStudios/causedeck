@@ -20,6 +20,7 @@
     "./citations": "./src/citations/index.ts",
     "./capture": "./src/capture/index.ts",
     "./case-watch": "./src/case-watch/index.ts",
+    "./deadlines": "./src/deadlines/index.ts",
     "./notices": "./src/notices/index.ts",
     "./conflicts": "./src/conflicts/index.ts",
     "./matter-graph": "./src/matter-graph/index.ts",

@@ -168,6 +168,13 @@ describe('row-level security catalog', () => {
         'portfolio_case',
         'portfolio_panel_advocate',
 
+        // Enterprise onboarding (#682).
+        'sso_provider',
+        'scim_token',
+        'provisioning_run',
+        'migration_run',
+        'migration_run_row',
+
         // Case-status watch (#589).
         'case_watch',
         'case_status_snapshot',

@@ -20,5 +20,5 @@ Register one eCourts district status source per state, seed uncleared registry r
 - turbo typecheck scoped: pass. eslint on changed core/fetch files: clean.
 
 ### Notes
-- A host-budget denial reuses `source_rate_limited` (types.ts is not a deliverable; poll.ts defers on that reason), instead of a new `host_rate_limited`.
+- A host-budget denial throws the new `host_rate_limited` reason (declared in types.ts); poll.ts defers on it like `source_rate_limited`.
 - Rows stay uncleared; counsel must clear before any fetch. The default host budget is 30 requests per minute for every source host.

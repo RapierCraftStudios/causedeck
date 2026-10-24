@@ -115,10 +115,9 @@ export function createFetcher(deps: FetcherDeps): Fetcher {
       throw new FetchDenied('source_rate_limited', sourceId);
     }
     // Per-host budget: sources of one portal (e.g. every state's eCourts district source) share it.
-    // Denied as `source_rate_limited` so callers that defer on a rate limit treat it the same way.
     const hostKey = `host:${new URL(url).host}`;
     if (!limiter.canAcquire(hostKey, perHost, MINUTE_MS)) {
-      throw new FetchDenied('source_rate_limited', sourceId);
+      throw new FetchDenied('host_rate_limited', sourceId);
     }
     if (advocateKey !== null && !limiter.canAcquire(advocateKey, perAdvocate, HOUR_MS)) {
       throw new FetchDenied('advocate_rate_limited', sourceId);

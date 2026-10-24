@@ -2,262 +2,108 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "A check on a new party finds existing matters where the chamber appears for an adverse party, including transliterated names.",
+   "quote": "Import every eCourts establishment as a forum (code, state, district, establishment) at adapter level A0 from the portal's own option lists, as generated typed seed data under `packages/db/src/seed/forum-catalogue/`",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "The feature is behind a flag until counsel signs off (#486).",
+   "quote": "bump FORUM_CATALOGUE_VERSION; keep codes unique and valid; per-state upgrade to A1/A2 is a data flag.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/conflicts/`: name matching (transliteration-aware for Tamil and Kannada, organisation aliases) against the chamber's matters and parties, and optionally its cause-list history.",
+   "quote": "Acceptance: the forum catalogue contains every eCourts establishment, with codes [type:integration].",
    "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R4",
-   "quote": "`apps/web`: a conflict check on new-matter intake, showing results with sources; it never auto-blocks, and the advocate decides.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "Audit: every check is logged; no data leaves the chamber's workspace.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "and optionally its cause-list history.",
-   "disposition": "defer",
-   "why": "Optional in the issue; `listing` (packages/db/src/schema/docket.ts:50) carries no party names, so history matching needs a separate data source and counsel review of processing cause-list parties. Follow-up issue.",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/conflicts/normalize.ts",
-   "change": "Name normaliser: NFKC, case-fold, strip honorifics (Sri/Smt/Dr/M/S) and company suffixes (Pvt Ltd/Limited), organisation alias table, Tamil (U+0B80-0BFF) and Kannada (U+0C80-0CFF) to Latin phonetic key, collapse vowel length/aspirates/doubled letters, token-order independent key.",
+   "path": "packages/db/scripts/generate-ecourts-catalogue.ts",
+   "change": "Generator that reads state, district and establishment option lists from services.ecourts.gov.in (session and app_token aware) and writes per-state typed seed files plus a manifest of counts. Run manually, not at seed time.",
    "requirements": [
-    "R1",
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/conflicts/check.ts",
-   "change": "checkConflicts(deps, actor, input): loads person/organisation (name+aliases) and role_edge to matters inside the caller's workspace transaction; a hit is a new adverse party equal to an existing client, or a new client equal to an existing adverse party; returns hits with matter id/title, matched name, role and source; always records one audit event (ids and counts, no names); never touches network or other workspaces.",
+   "path": "packages/db/src/seed/forum-catalogue/ecourts/index.ts",
+   "change": "Export ECOURTS_DISTRICT (ForumSeed[]) from generated per-state files (same directory); each row has adapterLevel 'A0', jurisdictionKind 'district', host services.ecourts.gov.in, code in.\u003cstate>.\u003cdistrict>.\u003cest-slug>-\u003cest-code>; a per-state level map is the A1/A2 upgrade data flag; skip establishments already hand-listed in chennai-district.ts and bengaluru-district.ts.",
    "requirements": [
     "R1",
-    "R3",
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/conflicts/index.ts",
-   "change": "Domain barrel exporting checkConflicts, normaliser and types.",
+   "path": "packages/db/src/seed/forum-catalogue/index.ts",
+   "change": "Spread ECOURTS_DISTRICT into FORUM_CATALOGUE, bump FORUM_CATALOGUE_VERSION, chunk the upsert insert if the row count would exceed the Postgres parameter limit.",
    "requirements": [
-    "R3"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/package.json",
-   "change": "Add `./conflicts` export mirroring `./case-watch` (line 22). No dependency changes.",
+   "path": "packages/db/src/seed/forum-catalogue/forum-catalogue.test.ts",
+   "change": "Update the pinned enabled-code list and A1 count to ignore the imported rows; add tests: unique and valid codes, every state present, counts match the manifest, all imported rows A0, seed idempotent with the larger catalogue.",
    "requirements": [
+    "R2",
     "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/index.ts",
-   "change": "Export the conflicts domain as the other domains are exported.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "Register `conflict.checked` audit action (security:true so a check cannot run unlogged).",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/flags/src/keys.ts",
-   "change": "Add legal-gated flag `conflicts.check` (owners [500, 486]).",
+   "path": "packages/db/src/seed/README.md",
+   "change": "Document the generated ecourts data, how to regenerate it, and the per-state level flag.",
    "requirements": [
     "R2"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "docs/engineering/flags.md",
-   "change": "Add the `conflicts.check` row (⚖, KILL_CONFLICTS_CHECK, #500) to match the registry.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/matters/actions.ts",
-   "change": "Add `checkConflictsAction` (workspaceAction, `matter.read`, requireFlag('conflicts.check') -> NOT_FOUND when off) calling core checkConflicts.",
-   "requirements": [
-    "R2",
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/web/components/matters/new-matter-dialog.tsx",
-   "change": "Optional conflict-check step on intake: when the flag is on, show hits with sources; submission is never blocked, the advocate decides.",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/i18n/src/messages/en/matters.json",
-   "change": "Conflict check strings under matters.new (also kn and ta matters.json and the generated message files, per the i18n catalog test).",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "CORE_DOMAIN_DEPENDENCIES: `conflicts: ['audit']`.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Add conflicts row, dependency table row and graph edge.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entry for checkConflicts (workspace B check sees nothing of A) and NOT_A_SERVICE for pure normaliser exports.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real case: B checking A's client name gets no hits; A's data unchanged.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Register checkConflictsAction in ACTIONS with probe input.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/core/src/conflicts/conflicts.test.ts",
-   "change": "Integration test (R1: adverse party matches existing client incl. Tamil/Kannada spelling vs Latin, organisation alias, no hit across workspaces, audit event written) and normaliser unit tests.",
-   "requirements": [
-    "R1",
-    "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "apps/web/__tests__/conflicts-action.test.ts",
-   "change": "Unit test: action returns NOT_FOUND with flag off, results with flag on; legal-gated flag registered (R2).",
-   "requirements": [
-    "R2",
-    "R4"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "createMatterAction behaviour and result shape (apps/web/app/(app)/w/[slug]/matters/actions.ts:50): the conflict check must never block or alter matter creation."
+   "what": "Existing hand-written forum codes and rows (Madras HC, Karnataka HC, Chennai and Bengaluru district, tribunals) in packages/db/src/seed/forum-catalogue/*.ts stay unchanged"
   },
   {
    "id": "P2",
-   "what": "Flag precedence and legal-ack rules (packages/flags/src/evaluate.ts:47-60); every flag default stays false."
+   "what": "seedForumCatalogue idempotence, soft-disable and catalogue_meta behaviour (packages/db/src/seed/forum-catalogue/index.ts)"
   },
   {
    "id": "P3",
-   "what": "Tenant isolation: no cross-workspace reads, no new SECURITY DEFINER function, no migration."
-  },
-  {
-   "id": "P4",
-   "what": "Existing audit action registry entries and AUDIT_ACTIONS shape (packages/core/src/audit/events.ts)."
+   "what": "resolveDeepLink behaviour over the catalogue (packages/core/src/court/forums.test.ts:81)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/conflicts src/__tests__/cross-tenant/services.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/forum-catalogue --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/flags exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/court/forums.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/conflicts-action.test.ts __tests__/cross-tenant-actions.test.ts __tests__/matters-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db run typecheck"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "No migration and no SECURITY DEFINER function: the check runs entirely inside the caller's withWorkspace transaction over tenant tables.",
-   "justification": "Tenant tables are FORCE RLS (packages/db/src/schema/people.ts:1-3), which satisfies 'no data leaves the chamber's workspace' by construction.",
+   "choice": "Generated data is committed as typed seed files; the generator is never run at seed or migrate time",
+   "justification": "packages/db/src/seed/forum-catalogue/index.ts:1-9 says the catalogue is typed, versioned seed data re-applied on every deploy; network calls there would break that",
    "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "Self-contained Tamil/Kannada phonetic normaliser in core instead of a new dependency.",
-   "justification": "No transliteration library exists in the repo (advocate-keys.ts:3-5 keeps names raw); avoids a new package dependency.",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "`conflict.checked` is a security (fail-closed) audit action.",
-   "justification": "Issue requires every check logged; fail-closed (packages/core/src/audit/events.ts:1-5) guarantees a check cannot run unaudited.",
+   "choice": "Codes embed the establishment code so they stay unique and valid",
+   "justification": "parseForumCatalogue rejects duplicates (index.ts:28-37) and FORUM_CODE_PATTERN (packages/validators/src/forum.ts:24) allows digits and hyphens",
    "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Flag gating follows requireFlag -> NOT_FOUND.",
-   "justification": "apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts:50-57.",
-   "source": "precedent"
-  },
-  {
-   "id": "K5",
-   "choice": "Core conflicts depends only on audit; matter/person rows are read directly with the caller's tx.",
-   "justification": "CORE_DOMAIN_DEPENDENCIES rule (packages/config/eslint/core-domains.js) allows only registered imports via index.ts.",
-   "source": "lint"
   }
  ]
 }

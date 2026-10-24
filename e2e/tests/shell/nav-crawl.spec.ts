@@ -77,9 +77,12 @@ test.describe('shell nav crawl', () => {
     test.setTimeout(120_000);
     await openShell(page, asUser, { path: 'settings/profile' });
     const hrefs = await hrefsIn(page.locator('[data-slot="settings-nav"]'));
-    // Ten sections, plus Support access for owners (#313).
-    expect(hrefs).toHaveLength(11);
+    // Ten sections, plus Support access for owners (#313) and Court watch for anyone who can write
+    // matters (#482). Court watch's flag (`court.khc-a2`) is off in the e2e seed: the section still
+    // renders (title and the flag-off explanation), so the crawl expects the flag-off state.
+    expect(hrefs).toHaveLength(12);
     expect(hrefs).toContain(`/w/${SHELL_WORKSPACE}/settings/support`);
+    expect(hrefs).toContain(`/w/${SHELL_WORKSPACE}/settings/court-watch`);
     for (const href of hrefs) {
       const response = await page.goto(href);
       expect(response?.status() ?? 0, href).toBeLessThan(400);
@@ -88,6 +91,11 @@ test.describe('shell nav crawl', () => {
         'Page not found',
       );
     }
+    await page.goto(`/w/${SHELL_WORKSPACE}/settings/court-watch`);
+    await expect(page.locator('[data-route="settings-court-watch"]')).toBeVisible();
+    await expect(
+      page.getByText('Court watch is not switched on for this workspace.'),
+    ).toBeVisible();
   });
 
   test('the palette Settings command opens the settings profile', async ({ page, asUser }) => {

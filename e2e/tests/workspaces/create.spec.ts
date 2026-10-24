@@ -1,7 +1,7 @@
 // Create a workspace (#179): `/onboarding` is a single card with `Just me` / `A chamber`, a name
 // and `Create workspace`; creating lands on the new workspace's Today with the creator as owner.
 import { expect, test } from '../../fixtures/index.ts';
-import { shellReady, switcherList, switcherTrigger } from '../shell/helpers.ts';
+import { contentReady, shellReady, switcherList, switcherTrigger } from '../shell/helpers.ts';
 
 test.describe('create workspace', () => {
   test('signed out, /onboarding goes to sign-in with `next`', async ({ page }) => {
@@ -27,6 +27,9 @@ test.describe('create workspace', () => {
   test('creates a chamber, lands on its Today and lists it as Owner', async ({ page, asUser }) => {
     await asUser('viewer');
     await page.goto('/onboarding');
+    // Hydrated first: a click before it submits the form natively and reloads /onboarding (CI
+    // flake: the URL stayed /onboarding on the first attempt).
+    await contentReady(page);
     await page.getByText('A chamber').click();
     await expect(page.getByRole('radio', { name: 'A chamber' })).toBeChecked();
     await page.getByRole('textbox', { name: /Workspace name/ }).fill('Mylapore Chambers');

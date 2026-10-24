@@ -48,7 +48,13 @@ test.describe('settings shell', () => {
     async ({ page, asUser }) => {
       await openSettings(page, asUser, 'owner');
       await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/settings/profile$`));
-      expect(await navLabels(page)).toEqual([...SECTIONS, 'Usage', 'Audit log', 'Support access']);
+      expect(await navLabels(page)).toEqual([
+        ...SECTIONS,
+        'Usage',
+        'Audit log',
+        'Support access',
+        'Court watch',
+      ]);
       await expect(subNav(page).getByRole('link', { name: 'Profile' })).toHaveAttribute(
         'aria-current',
         'page',
@@ -81,6 +87,7 @@ test.describe('settings shell', () => {
       'Integrations',
       'Privacy',
       'Audit log',
+      'Court watch',
     ]);
     await page.goto(`/w/${SHELL_WORKSPACE}/settings/danger`);
     await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('No access');
@@ -175,6 +182,8 @@ test.describe('settings shell', () => {
   for (const section of ['members', 'export', 'danger']) {
     test(`offline: ${section} is read-only under one banner`, async ({ page, asUser }) => {
       await openSettings(page, asUser, 'owner', `settings/${section}`);
+      // Hydrated first: the banner and the disabled actions follow the browser's offline event.
+      await shellReady(page);
       await page.context().setOffline(true);
       // One banner. Disabled actions also carry the same reason as screen-reader text, so count
       // the banner element, not every occurrence of the sentence.

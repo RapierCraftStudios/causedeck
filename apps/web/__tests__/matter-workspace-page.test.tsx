@@ -57,7 +57,25 @@ const court = vi.hoisted(() => ({
     page.benchError === null ? Promise.resolve(page.bench) : Promise.reject(page.benchError),
   ),
 }));
-const logger = vi.hoisted(() => ({ error: vi.fn() }));
+const facts = vi.hoisted(() => {
+  const agree = {
+    status: 'agree',
+    sources: [{ sourceType: 'adapter', sourceRef: null, value: '2026-05-14', confidence: 0.9 }],
+    value: '2026-05-14',
+    confidence: 0.9,
+    groups: [],
+  };
+  return {
+    error: null as Error | null,
+    getNextDateAgreement: vi.fn(() =>
+      facts.error === null ? Promise.resolve(agree) : Promise.reject(facts.error),
+    ),
+    getStageAgreement: vi.fn(() =>
+      facts.error === null ? Promise.resolve(agree) : Promise.reject(facts.error),
+    ),
+  };
+});
+const logger = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn() }));
 const reportError = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
@@ -82,6 +100,7 @@ vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/matter-graph', () => graph);
 vi.mock('@causedeck/core/notices', () => notices);
 vi.mock('@causedeck/core/court', () => court);
+vi.mock('@causedeck/core/facts', () => facts);
 vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
   updateMatterAction: vi.fn(),
   setSensitiveAction: vi.fn(),
@@ -249,6 +268,7 @@ beforeEach(() => {
   page.noticesError = null;
   page.bench = [];
   page.benchError = null;
+  facts.error = null;
   setOnline(true);
 });
 
@@ -509,6 +529,17 @@ describe('matter workspace Overview (#390)', () => {
     withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
     expect(document.querySelector('[data-slot="bench-notice-alerts"]')).toBeNull();
     expect(document.querySelector('[data-slot="matter-overview"]')).not.toBeNull();
+  });
+
+  it('shows the confidence chip, and still loads the Overview without it when the agreement read fails (#499)', async () => {
+    await renderRoute();
+    expect(document.querySelector('[data-confidence-chip="date"]')).not.toBeNull();
+    cleanup();
+    facts.error = new Error('db down');
+    await renderRoute();
+    expect(document.querySelector('[data-slot="matter-overview"]')).not.toBeNull();
+    expect(document.querySelector('[data-confidence-chip]')).toBeNull();
+    expect(logger.warn).toHaveBeenCalled();
   });
 
   it('previews the states in development only', async () => {

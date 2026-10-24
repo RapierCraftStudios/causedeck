@@ -5,17 +5,160 @@
       "template": "ecourts-district",
       "file": "status-01-evidence.input.html",
       "origin": "synthetic",
-      "classification": "FICTIONAL"
+      "classification": "FICTIONAL",
+      "page": "status"
     },
     {
       "template": "ecourts-district",
       "file": "status-02-not-found.input.html",
       "origin": "synthetic",
-      "classification": "FICTIONAL"
+      "classification": "FICTIONAL",
+      "page": "status"
     },
     {
       "template": "ecourts-district",
       "file": "status-03-disposed.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "page": "status"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "status-tn.input.html",
+      "page": "status",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "orders-tn.input.html",
+      "page": "orders",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "cause-list-tn.input.html",
+      "page": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "options-tn.input.html",
+      "page": "options",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "status-ka.input.html",
+      "page": "status",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "orders-ka.input.html",
+      "page": "orders",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "cause-list-ka.input.html",
+      "page": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "options-ka.input.html",
+      "page": "options",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "status-mh.input.html",
+      "page": "status",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "orders-mh.input.html",
+      "page": "orders",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "cause-list-mh.input.html",
+      "page": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "options-mh.input.html",
+      "page": "options",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "status-dl.input.html",
+      "page": "status",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "orders-dl.input.html",
+      "page": "orders",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "cause-list-dl.input.html",
+      "page": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "options-dl.input.html",
+      "page": "options",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "status-up.input.html",
+      "page": "status",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "orders-up.input.html",
+      "page": "orders",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "cause-list-up.input.html",
+      "page": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "template": "ecourts-district",
+      "file": "options-up.input.html",
+      "page": "options",
       "origin": "synthetic",
       "classification": "FICTIONAL"
     },

@@ -21,7 +21,7 @@ export interface Cell {
 export type Row = Cell[];
 
 const SKIPPED = new Set(['script', 'style', 'noscript', 'template', 'head']);
-const collapse = (text: string) => text.replace(/\s+/g, ' ').trim();
+export const collapse = (text: string) => text.replace(/\s+/g, ' ').trim();
 const isElement = (node: Node): node is Element => 'tagName' in node;
 const childrenOf = (node: Node): Node[] => ('childNodes' in node ? node.childNodes : []);
 
@@ -109,7 +109,7 @@ export const STATUS_STAGE_MAP: readonly StageMapEntry[] = [
 const CNR = /\b[A-Z]{4}\d{2}\d{6}\d{4}\b/;
 const NOT_FOUND = /\b(no records? found|record not found|no data found|case not found|invalid)\b/i;
 
-const labelOf = (text: string) =>
+export const labelOf = (text: string) =>
   collapse(text)
     .replace(/\s*:\s*$/, '')
     .toLowerCase();
@@ -133,7 +133,7 @@ function pairValue(rows: Row[], pattern: RegExp): Cell | null {
   return null;
 }
 
-function readOrders(tables: Row[][], columns: PageSpec['orderColumns']): CaseStatusOrder[] {
+export function readOrders(tables: Row[][], columns: PageSpec['orderColumns']): CaseStatusOrder[] {
   for (const rows of tables) {
     const header = rows[0];
     if (header === undefined) continue;
@@ -153,6 +153,20 @@ function readOrders(tables: Row[][], columns: PageSpec['orderColumns']): CaseSta
     return orders;
   }
   return [];
+}
+
+/** The tables of a saved page (rows per table, document order) and its text; never throws. */
+export function readHtmlTables(html: string): { tables: Row[][]; pageText: string } {
+  const tables: Row[][] = [];
+  let pageText = '';
+  try {
+    const tree = parse(html);
+    readTables(tree, tables);
+    pageText = collapse(textOf(tree));
+  } catch {
+    // unreadable markup yields no tables
+  }
+  return { tables, pageText };
 }
 
 /** Reads one status result page; never throws, whatever `html` holds. */

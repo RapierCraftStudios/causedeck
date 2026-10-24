@@ -89,10 +89,10 @@ async function matterListed(
       }),
     );
   }
-  const [forum] = await tx
-    .select({ id: schema.forum.id })
-    .from(schema.forum)
-    .where(eq(schema.forum.code, code));
+  // Read inside the workspace: a workspace-scoped forum is invisible outside it (RLS).
+  const [forum] = await inWorkspace(tx, workspaceId, (s) =>
+    s.select({ id: schema.forum.id }).from(schema.forum).where(eq(schema.forum.code, code)),
+  );
   const matterId = await inWorkspace(tx, workspaceId, async (s) => {
     const [m] = await s
       .insert(schema.matter)
@@ -221,7 +221,7 @@ describe('listBenchNoticeAlerts', () => {
       ).toEqual([]);
 
       const forum = await matterListed(tx, BENGALURU);
-      await noticeFor(tx, forum, 'Special bench for W.P. matters');
+      await noticeFor(tx, forum, 'Special bench for W.P. matters', [MADURAI]);
       expect(
         await listBenchNoticeAlerts(tx, { workspaceId: forum.workspaceId, userId: forum.ownerId }),
       ).toEqual([]);

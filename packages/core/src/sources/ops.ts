@@ -36,6 +36,11 @@ export interface SourceOpsWindow {
   tierMix: Record<SourceMaxTier, number>;
   /** Rows anchored / rows parsed by the source's adapter; `null` without parse runs. */
   parseYield: number | null;
+  /**
+   * Listings from this source that disagree with the proceeding's canonical date / all its
+   * listings (#499); `null` without any. Feeds adapter health.
+   */
+  conflictRate: number | null;
 }
 
 export interface SourceOpsDay {
@@ -76,6 +81,19 @@ export interface ParseYields {
   week: readonly ParseYieldRow[];
 }
 
+/** Date readings and the ones that disagree with the canonical date, per source key (#499). */
+export interface ConflictRateRow {
+  /** The host of the readings' source reference, or their source type without one. */
+  sourceKey: string;
+  observations: number;
+  conflicts: number;
+}
+
+export interface ConflictRates {
+  day: readonly ConflictRateRow[];
+  week: readonly ConflictRateRow[];
+}
+
 /** One `fetch_log` row as the console may see it: no URL hash, no advocate. */
 export interface SourceFetchLogEntry {
   id: string;
@@ -101,6 +119,7 @@ const emptyWindow = (): SourceOpsWindow => ({
   captchaSolveRate: null,
   tierMix: emptyMix(),
   parseYield: null,
+  conflictRate: null,
 });
 
 const ratio = (part: number, whole: number): number | null => (whole === 0 ? null : part / whole);
@@ -142,6 +161,42 @@ export async function staffParseYield(
   }
 }
 
+/** Staff-only conflict counts per source since `since`, via `app_staff_conflict_rate` (refuses non-staff). */
+export async function staffConflictRate(
+  db: Queryable,
+  staffUserId: string,
+  since: Date,
+): Promise<ConflictRateRow[]> {
+  try {
+    const rows = await withUser(db, { userId: staffUserId }, (tx) =>
+      tx.execute<{ source_key: string; observations: string; conflicts: string }>(
+        sql`select * from app_staff_conflict_rate(${since.toISOString()}::timestamptz)`,
+      ),
+    );
+    return rows.map((r) => ({
+      sourceKey: r.source_key,
+      observations: Number(r.observations),
+      conflicts: Number(r.conflicts),
+    }));
+  } catch (error) {
+    const code = (error as { code?: string; cause?: { code?: string } }).code;
+    const causeCode = (error as { cause?: { code?: string } }).cause?.code;
+    if (code === '42501' || causeCode === '42501') {
+      throw new SourceAdminError('FORBIDDEN', 'Only enabled staff can read the Data Ops console');
+    }
+    throw error;
+  }
+}
+
+/** The host of a URL, or null when it is not one. */
+function hostOf(url: string): string | null {
+  try {
+    return new URL(url).host;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Every registered source (or just `sourceId`) with its 24 hour and 7 day health, ordered by id.
  * Reads the global tables `source` and `fetch_log` only.
@@ -151,12 +206,14 @@ export async function sourceOpsOverview(
   now: Date,
   parseYields: ParseYields = { day: [], week: [] },
   sourceId?: string,
+  conflictRates: ConflictRates = { day: [], week: [] },
 ): Promise<SourceOpsRow[]> {
   const since24 = new Date(now.getTime() - DAY_MS);
   const since7 = new Date(now.getTime() - 7 * DAY_MS);
   const sources = await db
     .select({
       id: source.id,
+      baseUrl: source.baseUrl,
       kind: source.kind,
       accessMode: source.accessMode,
       clearedAt: source.clearedAt,
@@ -205,6 +262,15 @@ export async function sourceOpsOverview(
     const row = rows.find((r) => r.adapterId === id);
     return row === undefined ? null : ratio(row.rowsAnchored, row.rowsParsed);
   };
+  const conflictOf = (rows: readonly ConflictRateRow[], baseUrl: string): number | null => {
+    const host = hostOf(baseUrl);
+    const mine = rows.filter((r) => host !== null && r.sourceKey === host);
+    const observations = mine.reduce((n, r) => n + r.observations, 0);
+    return ratio(
+      mine.reduce((n, r) => n + r.conflicts, 0),
+      observations,
+    );
+  };
   const days = lastSevenDays(now);
 
   return sources.map((s) => {
@@ -247,6 +313,8 @@ export async function sourceOpsOverview(
       w.captchaSolveRate = ratio(ok, w.captchaCalls);
       w.parseYield = yieldOf(rows, s.id);
     }
+    day.conflictRate = conflictOf(conflictRates.day, s.baseUrl);
+    week.conflictRate = conflictOf(conflictRates.week, s.baseUrl);
     const lastSuccessAt = lastById.get(s.id) ?? null;
     const freshnessHours =
       lastSuccessAt === null ? null : (now.getTime() - lastSuccessAt.getTime()) / HOUR_MS;

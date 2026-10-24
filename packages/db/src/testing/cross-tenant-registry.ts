@@ -131,6 +131,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,
 
+  // Public API keys (#624).
+  api_key: DB_TABLES_TEST,
+
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
   // Judgment alerts (#497).
@@ -243,6 +246,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   removeCauseListWatch: selfScoped,
   // Conflict-of-interest checks (#500): B's check sees none of A's parties
   checkConflicts: empty,
+  // Cross-checked facts (#499): B's agreement for A's proceeding is empty
+  getNextDateAgreement: empty,
+  getStageAgreement: empty,
   // Case-status watches (#591)
   addCaseWatch: selfScoped,
   listCaseWatches: selfScoped,
@@ -593,6 +599,41 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
   },
+  createApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; a non-member is FORBIDDEN and a nested scope throws TenancyError',
+  },
+  listApiKeys: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; keys are tenant rows under RLS',
+  },
+  revokeApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; another workspace key id is NOT_FOUND',
+  },
+  authenticateApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'the bearer token is the credential: reads one key through the owner-defined app_api_key_by_hash, by hash only (never lists)',
+  },
+  findApiKeyIssuer: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'reads one user row by id for the key issuer (the user table has no workspace column); the caller passes the issuer id from an authenticated key',
+  },
+  apiKeyCallsThisPeriod: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  consumeApiCall: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
   getUsage: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -740,6 +781,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
   // business dashboard (#519): pure maths and rendering over aggregates
+  assessAgreement: 'pure',
+  UNKNOWN_CONFIDENCE: 'constant',
   nameKey: 'pure',
   nameSimilarity: 'pure',
   nameTokens: 'pure',
@@ -805,6 +848,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   topFailingSources: 'pure',
   isFetchError: 'pure',
   FRESHNESS_SLA_HOURS: 'constant',
+  staffConflictRate:
+    'app_staff_conflict_rate() returns per-source counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   staffParseYield:
     'app_staff_parse_yield() returns per-adapter counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   // automation: pure helpers, constants and error classes (#47)
@@ -1106,6 +1151,15 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   notificationJobDeps: 'transport wiring (no database access)',
   setNotificationJobDeps: 'setter',
   setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
+  // public API keys (#624)
+  API_KEY_SCOPES: 'constant',
+  API_CALLS_USAGE_KEY: 'constant',
+  API_KEY_TOKEN_PATTERN: 'constant',
+  DEFAULT_API_KEY_RATE_LIMIT_PER_MINUTE: 'constant',
+  ApiKeyError: 'error class',
+  isApiKeyScope: 'pure',
+  hashApiKeyToken: 'pure (sha256)',
+  generateApiKeyToken: 'pure (random token)',
   // usage: keys and periods (#219)
   USAGE_KEYS: 'constant',
   USAGE_KEY_KINDS: 'constant',

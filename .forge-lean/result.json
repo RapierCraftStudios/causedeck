@@ -1,0 +1,92 @@
+{
+ "status": "fixed",
+ "summary": "Bench-notice alerts delivered (R1,R2,R3,R5,R6); merged base; V1-V5 pass",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "apps/web/components/matters/date-conflict-card.tsx"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "apps/admin/app/(console)/data-ops/page.tsx"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/facts/agreement.ts"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "apps/web/components/matters/date-conflict-card.tsx"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "apps/web/components/matters/next-date-card.tsx"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/core/src/sources/ops.ts"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "",
+   "ci": true,
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "",
+   "ci": true,
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "",
+   "ci": true,
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "",
+   "ci": true,
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "V1-V5",
+   "result": "pass (V1 31 tests, V2 6, V3 exit 0 with 2 bench cases verified via -t BenchNoticeAlerts, V4 21, V5 20)",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "V1-V5 pass; diff limited to deliverables, tests and amended payload.ts"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V1-V5 pass; diff limited to deliverables, tests and amended payload.ts"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V5 pass; diff limited to deliverables, tests and amended payload.ts"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "V1-V5 pass; diff limited to deliverables, tests and amended payload.ts"
+  }
+ ],
+ "amendments": []
+}

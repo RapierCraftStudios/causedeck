@@ -52,15 +52,21 @@ describe('checkConflicts', () => {
             name: 'Murugan Ilango',
             aliases: ['M. Ilango'],
             kind: 'client',
+            sourceType: 'manual',
           })
           .returning({ id: schema.person.id });
         const [other] = await s
           .insert(schema.person)
-          .values({ workspaceId: a.id, name: 'Kumar Raja', kind: 'party' })
+          .values({ workspaceId: a.id, name: 'Kumar Raja', kind: 'party', sourceType: 'manual' })
           .returning({ id: schema.person.id });
         const [secret] = await s
           .insert(schema.person)
-          .values({ workspaceId: a.id, name: 'Secret Client', kind: 'client' })
+          .values({
+            workspaceId: a.id,
+            name: 'Secret Client',
+            kind: 'client',
+            sourceType: 'manual',
+          })
           .returning({ id: schema.person.id });
         await s.insert(schema.roleEdge).values([
           {

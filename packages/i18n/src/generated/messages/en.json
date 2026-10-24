@@ -2351,7 +2351,7 @@
         "check": "Check for conflicts",
         "none": "No conflict found in your matters.",
         "failed": "Couldn't run the conflict check. Try again.",
-        "hit": "“{checked}” matches {matched} ({source, select, alias {alias} other {name}}) in {matter}, where this is {role, select, client {your client} other {an adverse party}}."
+        "hit": "“{checked}” matches {matched} ({source, select, alias {as an alias} other {by name}}) in {matter}, where this is {role, select, client {your client} other {an adverse party}}."
       }
     },
     "search": {

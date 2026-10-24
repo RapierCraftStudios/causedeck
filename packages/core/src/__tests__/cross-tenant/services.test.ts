@@ -528,7 +528,12 @@ const CASES: Record<string, Case> = {
         .returning({ matterId: schema.matter.id });
       const [p] = await s
         .insert(schema.person)
-        .values({ workspaceId: f.a.id, name: 'Murugan Ilango', kind: 'client' })
+        .values({
+          workspaceId: f.a.id,
+          name: 'Murugan Ilango',
+          kind: 'client',
+          sourceType: 'manual',
+        })
         .returning({ id: schema.person.id });
       await s.insert(schema.roleEdge).values({
         workspaceId: f.a.id,

@@ -2,31 +2,37 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add per-workspace API keys (hashed at rest, shown once), scopes, per-key quotas and rate limits",
+   "quote": "Two disagreeing sources produce one conflict card; agreeing sources raise confidence.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "a usage key for billed calls via the #30 usage service",
+   "quote": "Adapter health reports the conflict rate per source.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "and a BearerResolver (apps/api/src/middleware/auth.ts) that resolves keys to a principal.",
+   "quote": "`packages/core/src/facts/agreement.ts`: for each fact, the set of sources, agreement status (agree, conflict, single source) and a confidence score.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Register in cross-tenant, core-domains and db test lists.",
+   "quote": "A conflict card generalised to every source pair; the lawyer resolves, and the resolution is kept.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Acceptance: keys, scopes and quotas are enforced and usage is billed per call [integration].",
+   "quote": "`apps/web`: a confidence chip on dates and stages, with the sources listed on hover.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "Metrics: the conflict rate per source, which feeds adapter health.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -34,265 +40,178 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/api-keys.ts",
-   "change": "New workspace-scoped `api_key` table (hash only, prefix, scopes, monthly quota, per-minute rate limit, expiry, revoked_at, created_by) with tenant RLS; export from schema/index.ts",
+   "path": "packages/core/src/facts/agreement.ts",
+   "change": "Pure assessAgreement(observations) -> {sources, status: agree|conflict|single, confidence}; plus getNextDateAgreement reader over a proceeding's listings (provenance sourceType/sourceRef/confidence)",
    "requirements": [
-    "R1"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/index.ts",
-   "change": "Export the api-keys schema",
+   "path": "packages/core/src/facts/index.ts",
+   "change": "Public barrel for the facts domain",
    "requirements": [
-    "R1"
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations/0080_api_keys.sql",
-   "change": "Create api_key table, RLS policies and owner-defined SECURITY DEFINER lookup `app_api_key_by_hash(text)`; regenerate meta snapshot and journal (renumber if base took 0080)",
+   "path": "packages/core/package.json",
+   "change": "Add ./facts export",
    "requirements": [
-    "R1",
     "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/api-keys/index.ts",
-   "change": "New domain: createApiKey (plaintext returned once, sha256 stored), listApiKeys, revokeApiKey (audited, owner/admin), authenticateApiKey (hash lookup, expiry/revoked checks, constant-time), scope vocabulary, consumeApiCall (monthly quota check + increment('api.calls') idempotent per request)",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/core/src/usage/keys.ts",
-   "change": "Add counter key 'api.calls' to USAGE_KEYS and USAGE_KEY_KINDS",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/core/package.json",
-   "change": "Add ./api-keys subpath export mirroring ./usage",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/core/src/index.ts",
-   "change": "Re-export the api-keys domain if other domains are re-exported there",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "apps/api/src/middleware/auth.ts",
-   "change": "Add createApiKeyResolver(db): BearerResolver mapping a valid key to a Principal carrying apiKey {id, workspaceId, scopes, limits}",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add facts domain dependency edges (matter-graph if reader uses it)",
    "requirements": [
     "R3"
    ]
   },
   {
-   "id": "D9",
-   "path": "apps/api/src/lib/openapi.ts",
-   "change": "Extend Principal with optional apiKey; add requireScope(scope) route middleware (403 FORBIDDEN on missing scope)",
+   "id": "D5",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document facts domain and edges",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register facts exports in SERVICE_TESTS or NOT_A_SERVICE",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cross-tenant case for getNextDateAgreement",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "apps/web/components/matters/date-conflict-card.tsx",
+   "change": "Generalise card to N sources/every source pair, still never preselecting; resolution via existing chooseNextDateSource path",
    "requirements": [
     "R1",
+    "R4"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "apps/web/lib/matters/workspace.ts",
+   "change": "Expose agreement (status, confidence, sources) on the overview view models",
+   "requirements": [
     "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/api/src/middleware/api-key.ts",
-   "change": "New middleware: reject header/path workspace differing from key workspace, per-key rate limit (429 RATE_LIMITED), quota exhaustion (429 QUOTA_EXCEEDED), bill one api.calls per request",
+   "path": "apps/web/components/matters/next-date-card.tsx",
+   "change": "Confidence chip on next date (and stage where shown) with sources on hover",
    "requirements": [
-    "R1",
-    "R2",
     "R5"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/api/src/middleware/rate-limit.ts",
-   "change": "Key counters by api key id when the principal carries one, using the key's per-minute limit",
+   "path": "packages/i18n/src/messages/en/matters.json",
+   "change": "New strings for chip/card (and kn/ta + generated copies per i18n catalog rules)",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D12",
-   "path": "apps/api/src/app.ts",
-   "change": "Default bearer resolver to the API-key resolver; wire the api-key middleware",
+   "path": "packages/db/migrations/0082_staff_conflict_rate.sql",
+   "change": "Security-definer app_staff_conflict_rate(since) mirroring 0072: per-source counts of listings/proposals vs corrected conflicts, staff only (renumbered to 0082 after base took 0080 and 0081; regenerate snapshot)",
    "requirements": [
-    "R3"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Add 'api-keys' domain dependencies (audit, usage, workspaces)",
+   "path": "packages/core/src/sources/ops.ts",
+   "change": "staffConflictRate + conflictRate field on SourceOpsRow",
    "requirements": [
-    "R4"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D14",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Document the api-keys domain and its dependencies",
+   "path": "apps/admin/app/(console)/data-ops/page.tsx",
+   "change": "Show conflict rate per source in adapter health",
    "requirements": [
-    "R4"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register api-keys exports in SERVICE_TESTS (or NOT_A_SERVICE with reason) and the api_key table",
+   "path": "packages/db/src/__tests__/staff-console-schema.test.ts",
+   "change": "Cover the new staff function (refuses non-staff, per-source counts only)",
    "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cases: B cannot list or revoke A's keys; A's keys unchanged",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add api_key to the root table list",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add api_key to the RLS catalog (and TABLE_TESTS/seeders if the guard requires)",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/core/src/api-keys/__tests__/api-keys.test.ts",
-   "change": "Integration tests: shown once and hashed at rest, revoked/expired rejected, scopes, quota exhaustion, one api.calls per call, idempotent on request id",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/api/src/__tests__/api-keys.test.ts",
-   "change": "End-to-end through createApp: valid key 200, bad key 401, missing scope 403, per-key rate limit 429, quota 429 and usage counter incremented",
-   "requirements": [
-    "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/core/src/api-keys/index.ts",
-   "change": "CI fix: apiKeyCallsThisPeriod (:289) passes a Date into a raw sql`` template (ERR_INVALID_ARG_TYPE, also the 500s in apps/api api-keys tests); use drizzle gte(usageEvent.createdAt, usagePeriod(at).start) instead",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "packages/core/src/lifecycle/export/exporters.ts",
-   "change": "CI fix: export api_key via ws('api_key',{exclude:['token_hash'],userColumn:'created_by'}) in the exporter that holds workspace_integration (:173); secrets never leave",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "packages/core/src/lifecycle/deletion/erase.ts",
-   "change": "CI fix: add 'api_key' to PURGE_ORDER (purge-coverage test), next to workspace_integration",
-   "requirements": [
-    "R4"
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Cookie-session auth and `GET /v1/me` behaviour; Principal.apiKey is optional (apps/api/src/__tests__/auth.test.ts, authorize.test.ts)"
+   "what": "chooseNextDateSource semantics: a person chooses, loser stays as `corrected` history (packages/core/src/matter-graph/next-date.ts)"
   },
   {
    "id": "P2",
-   "what": "Existing usage keys, meter idempotency and `increment` signature (packages/core/src/usage/meter.ts, usage tests)"
+   "what": "proposeNextDate/confirmNextDate remain the only writers of listing.list_date/canonical (no-direct-listing-update architecture test)"
   },
   {
    "id": "P3",
-   "what": "Default per-user/IP rate limit behaviour and headers (apps/api/src/__tests__/rate-limit.test.ts)"
+   "what": "getAdapterHealthSummary and sourceOpsOverview existing fields and callers (packages/core/src/court/adapter-health.ts, packages/core/src/sources/ops.ts, apps/admin data-ops page)"
   },
   {
    "id": "P4",
-   "what": "requireWorkspace membership check semantics (apps/api/src/middleware/workspace.ts); cross-tenant route list in apps/api/src/__tests__/cross-tenant.test.ts"
+   "what": "Staff console aggregates stay content-free: no workspace, party or URL data leaves ops.ts"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node /home/dev/.local/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/facts src/matter-graph/__tests__/next-date.test.ts src/sources/__tests__/ops.test.ts src/__tests__/domains.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/api-keys src/usage src/domains.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/matter-workspace-components.test.tsx __tests__/matter-workspace-page.test.tsx __tests__/cross-tenant-actions.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/api-keys.test.ts src/__tests__/auth.test.ts src/__tests__/rate-limit.test.ts src/__tests__/authorize.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/staff-console-schema.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/export-coverage.test.ts src/lifecycle/__tests__/purge-coverage.test.ts src/api-keys --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
-  },
-  {
-   "id": "V6",
-   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/api-keys.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Principal for an API key carries `user` = the key's creator plus an optional `apiKey` field, so requireWorkspace and authorize keep working unchanged",
-   "justification": "apps/api/src/lib/openapi.ts:12-16 requires a SessionUser and middleware/workspace.ts:50 checks membership; a removed creator then invalidates the key",
+   "choice": "Reuse listing provenance and the `corrected` state as the kept resolution instead of a new tenant table",
+   "justification": "Avoids RLS/seeder registry churn; next-date.ts:13-17 already keeps the losing proposal as corrected history",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Key lookup by hash through an owner-defined SECURITY DEFINER function",
-   "justification": "api_key is tenant FORCE RLS and the workspace is unknown before authentication; same pattern as app_cause_list_watch_targets in migrations/0068_cause_list_watch.sql",
+   "choice": "Staff conflict-rate via a security-definer function like app_staff_parse_yield",
+   "justification": "packages/db/migrations/0072_staff_parse_yield.sql and packages/core/src/sources/ops.ts:118 give the cross-tenant, content-free pattern",
    "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "sha256 + random secret, token shown once",
-   "justification": "packages/core/src/workspaces/invitations.ts:4,40-41 hashes high-entropy tokens this way; slow hashes are unnecessary for 256-bit secrets",
-   "source": "precedent"
-  },
-  {
-   "id": "K4",
-   "choice": "New core domain 'api-keys' depending on audit, usage, workspaces only",
-   "justification": "core-domains.js:55 map and docs/engineering/core-domains.md require declared domain deps through index.ts",
-   "source": "doc"
   }
  ]
 }

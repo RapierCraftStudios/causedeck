@@ -1,39 +1,38 @@
 **Verdict**: CONFIRMED
-**Confidence**: high
-**Severity**: medium (greenfield; part 1 of 4 of #487, blocks #625/#626; nothing is exposed publicly yet)
+**Confidence**: medium
+**Severity**: low (P3 greenfield, ships additive; no behaviour change to existing writers)
 **Task Type**: feature
 
 ### What Was Claimed
-Part of #487: per-workspace API keys (hashed at rest, shown once), scopes, per-key quotas and rate limits, a usage key for billed calls through the #30 usage service, and a `BearerResolver` (`apps/api/src/middleware/auth.ts`) that resolves keys to a principal. Register in cross-tenant, core-domains and db test lists. Acceptance: keys, scopes and quotas enforced and usage billed per call [integration].
-Note: the "Investigation Report" comment already on #624 is for #586 (notices poll), not this issue; ignored.
+Facts (next date, stage, bench) can come from a fetched page, a shared document and a voice-note outcome. Add `packages/core/src/facts/agreement.ts` (per fact: source set, agree|conflict|single status, confidence), generalise the date conflict card to every source pair (resolution kept), show a confidence chip with sources on hover in `apps/web`, and report a per-source conflict rate into adapter health. Acceptance: two disagreeing sources give one conflict card and agreeing sources raise confidence (unit); adapter health reports conflict rate per source (integration).
 
 ### What We Found
-- `apps/api/src/middleware/auth.ts:12-14` defines `BearerResolver` and `rejectAllBearerTokens`; `principalFrom` (:25-38) calls it and stamps `via:'bearer'`. `apps/api/src/app.ts:42,111` takes an optional `bearer` dep; nothing supplies one (the comment at auth.ts:3 says "API keys arrive later").
-- `Principal` (`apps/api/src/lib/openapi.ts:12-16`) is `{user, via}` only: no workspace, scopes or key id. `requireWorkspace` (`middleware/workspace.ts:34-68`) derives workspace from path/header and checks `memberRole`.
-- No API key table: `packages/db/src/schema/` has none (`auth.ts` has only user/session/org). Latest migration is `0079_source_data_class.sql`.
-- Usage: `packages/core/src/usage/keys.ts:4-12,16-24` lists `USAGE_KEYS` and counter/gauge kinds; `meter.ts` `increment(ctx,key,amount,{idempotencyKey})` is idempotent per workspace. Key pattern `^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*$` (`packages/db/src/schema/usage.ts:26`). `packages/core/src/runtime/index.ts:233` iterates `USAGE_KEYS` (new key shows up automatically); `fair-use.ts:20` and `billing/src/entitlements.ts` are plan caps, not needed for a billed-per-call key.
-- Rate limiting: `middleware/rate-limit.ts` is per user / IP with prefix groups (`RateLimitOptions.groups`, :48-55); in-memory store. No per-key limit.
-- Token hashing precedent: `packages/core/src/workspaces/invitations.ts:4,40-41` (`randomBytes` + sha256 hex).
-- Registries: `config/eslint/core-domains.js:55` (`usage: ['audit','billing']`), `packages/db/src/index.test.ts:69` and `__tests__/rls/sql.test.ts:41` (table lists, e.g. `budget_override`), `db/src/testing/cross-tenant-registry.ts:181` (`SERVICE_TESTS`) with `core/src/__tests__/cross-tenant/services.test.ts`; `apps/api/src/__tests__/cross-tenant.test.ts:89` lists /v1 routes.
+- No `packages/core/src/facts/` exists (verified on base `42236bb6`). Deps #478 (source registry, `packages/core/src/sources/registry.ts`) and #483's schema parts (#589/#591: `packages/db/src/schema/case-watch.ts`, `packages/core/src/case-watch/`) are merged, so not blocked. #483 itself is closed not_planned, but the pieces needed are on base.
+- Every fact table carries provenance (`sourceType`, `sourceRef`, `anchorId`, `confidence`, `confirmationState`) via `provenance()` at `packages/db/src/columns.ts:75-85`; `listing` uses it at `packages/db/src/schema/docket.ts:70`.
+- Today's conflict model is next-date only and two-sided: `proposeNextDate` returns a `NextDateConflict` {current, proposed} and stores the proposal as non-canonical `proposed` (`packages/core/src/matter-graph/next-date.ts:5-9,53-58`); `chooseNextDateSource` resolves it and marks the loser `corrected` (kept as history) (`next-date.ts:13-17`).
+- UI: `apps/web/components/matters/date-conflict-card.tsx:1-60` (A/B columns, `ConflictView` at `apps/web/lib/matters/workspace.ts:79-83`, wired at `apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx:35,75,131`); provenance chip `packages/ui/src/patterns/provenance-chip/provenance-chip.tsx`; `useProvenance` in `next-date-card.tsx`.
+- Adapter health today: `getAdapterHealthSummary` reads the tenant-free view over `adapter_parse_run` (`packages/core/src/court/adapter-health.ts:20-26`, `packages/db/src/schema/adapters.ts:116-125`); staff per-source health is `sourceOpsOverview` / `staffParseYield` (`packages/core/src/sources/ops.ts:118-148`) using a staff definer function (`packages/db/migrations/0072_staff_parse_yield.sql`), shown at `apps/admin/app/(console)/data-ops/page.tsx`. Neither carries conflict counts.
+- Registries to update: `CORE_DOMAIN_DEPENDENCIES` (`packages/config/eslint/core-domains.js:28-36`) + `docs/engineering/core-domains.md`; cross-tenant `SERVICE_TESTS`/`NOT_A_SERVICE` (`packages/db/src/testing/cross-tenant-registry.ts`) and `packages/core/src/__tests__/cross-tenant/services.test.ts`; `apps/web/__tests__/cross-tenant-actions.test.ts` if a new action is added.
+- `.forge-lean/*` and an earlier issue comment on #499 describe #500 (conflict-of-interest); they are not about this issue and were ignored/overwritten.
 
 ### Root Cause
-Greenfield: the bearer seam was left open (#14) and there is no key store, scope model, per-key limit or `api.*` usage key.
+Greenfield: provenance is stored per row but nothing compares rows across sources, and `ConflictView` only models current-vs-proposed next date.
 
 ### Affected Files
-- `packages/db/src/schema/api-keys.ts` (new), `schema/index.ts`, migration `0080_api_keys.sql` + `meta` snapshot/journal
-- `packages/core/src/api-keys/{index,keys,scopes,authenticate,quota}.ts` (new domain) + tests; `packages/core/package.json` `./api-keys` export (mirror `./usage`); `packages/core/src/index.ts`
-- `packages/core/src/usage/keys.ts` (`api.calls`)
-- `apps/api/src/middleware/auth.ts`, `lib/openapi.ts` (Principal), `middleware/api-key.ts` (new: scope check, per-key rate limit, quota + metering), `app.ts` wiring
-- Registries: `config/eslint/core-domains.js`, `docs/engineering/core-domains.md`, `db/src/testing/cross-tenant-registry.ts`, `core/src/__tests__/cross-tenant/services.test.ts`, `db/src/index.test.ts`, `db/src/__tests__/rls/sql.test.ts` (+ seeders if required)
+- new `packages/core/src/facts/{index,agreement}.ts` (pure `assessAgreement` over observations; `getNextDateAgreement` reader over a proceeding's listings), `packages/core/package.json` export map, `packages/core/src/index.ts` if domains are barrelled
+- `packages/core/src/matter-graph/` read model only if the overview must surface agreement (additive)
+- `apps/web/components/matters/` (confidence chip with sources on hover, conflict card generalised to N sources), `apps/web/lib/matters/workspace.ts`, i18n `packages/i18n/src/messages/{en,kn,ta}/matters.json` (+generated)
+- staff conflict-rate: new migration (next free number; 0082 after the base took 0080 and 0081) with a security-definer `app_staff_conflict_rate(since)` mirroring 0072, `packages/core/src/sources/ops.ts` (+ `SourceOpsRow` field), `apps/admin/app/(console)/data-ops/page.tsx`; `packages/db/src/__tests__/staff-console-schema.test.ts`
+- registries listed above
 
 ### Sibling Sweep
-Other hashed one-time secrets: invitation tokens (`workspaces/invitations.ts`) and whatsapp tokens; reuse the sha256 + `timingSafeEqual` pattern. Bearer consumers: only `app.ts`. Existing cookie/session callers of `Principal` must keep working (new fields optional).
+Same pattern (cross-source facts with provenance) exists for `hearing`, `order`, `obligation`, `task` in `packages/db/src/schema/docket.ts` and case-status snapshots (`case_status_snapshot.fields`: next date, stage, bench). Plan covers next date and stage/bench from snapshots; hearings/orders out of scope. `automation/handlers/next-date.ts` and `case-status-change.ts` are the existing propose paths and must keep working.
 
 ### History
-Seam introduced by #14 (`auth.ts` header comment). Usage service by #30. No prior API key attempt; #487 was closed not_planned and split into #624-#627.
+Conflict card introduced by #390 (see header of `next-date.ts`/`date-conflict-card.tsx`); source registry #478; case-watch #589/#591. No prior attempt at #499.
 
 ### Recommendation
-New workspace-scoped table `api_key` (id, workspace_id, created_by user id, name, prefix, token_hash unique, scopes text[], monthly_quota int null, rate_limit_per_minute int, expires_at, revoked_at, last_used_at; tenant RLS like other workspace tables). Token format `cdk_<prefix>_<secret>`; only sha256 stored; plaintext returned once by `createApiKey`. Core `api-keys` domain: create/list/revoke (owner/admin via workspaces `requireCan`-style check, audited through `audit`), `authenticateApiKey(db, token)` using an owner-defined SECURITY DEFINER lookup by hash (tenant table is FORCE RLS and workspace is unknown at that point), scope vocabulary (`cases:read`, `causelists:read`, `orders:read`, `notices:read`, `webhooks:write`), `consumeApiCall(ctx,key)` which checks the monthly quota against `getUsage` and bills via `increment('api.calls',1,{idempotencyKey:requestId})`. API: `bearer` resolver returns a Principal with `apiKey:{id,workspaceId,scopes,rateLimitPerMinute,quota}` and `user` = the key creator (so `requireWorkspace` membership still gates revoked/removed creators; header workspace must equal key workspace); new `requireScope(scope)` and a per-key rate-limit key (`key:<id>`) in `rate-limit.ts`; quota exhaustion -> 429 `QUOTA_EXCEEDED`; metering after successful auth. Register everything in the lists above.
+Implement a pure agreement model first (fully unit-testable), a thin DB reader, then UI chip, then the staff conflict-rate path. Keep `chooseNextDateSource` semantics (a person chooses; loser stays `corrected`) as the "resolution is kept" mechanism; do not auto-resolve. Confidence rule: base from per-source confidence, boosted per additional agreeing independent source, capped at 1; conflict caps it low. Medium confidence because per-source attribution of a listing (`source_ref` URL host vs `source.base_url`) needs checking during implementation.
 
 ### Related Issues
-#487 (parent, closed not_planned), #625 (endpoints use `requireScope`), #626 (webhooks), #627 (docs), #30 (usage service), #14 (API), #486 (posture doc).
+#478 (source registry), #483/#589/#591 (case-watch), #390 (conflict card), #514 (Data Ops), #500 (unrelated, conflict of interest).

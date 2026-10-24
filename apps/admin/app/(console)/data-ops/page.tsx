@@ -88,6 +88,7 @@ export default async function DataOpsPage() {
               <th scope="col">Fetches 24h / 7d</th>
               <th scope="col">Error rate 24h / 7d</th>
               <th scope="col">Parse yield 24h / 7d</th>
+              <th scope="col">Conflict rate 24h / 7d</th>
               <th scope="col">Captcha solve rate 7d</th>
               <th scope="col">Tier mix 7d</th>
               <th scope="col">Cost 24h / 7d</th>
@@ -117,6 +118,9 @@ export default async function DataOpsPage() {
                 </td>
                 <td>
                   {percent(r.day.parseYield)} / {percent(r.week.parseYield)}
+                </td>
+                <td>
+                  {percent(r.day.conflictRate)} / {percent(r.week.conflictRate)}
                 </td>
                 <td>{percent(r.week.captchaSolveRate)}</td>
                 <td>{tierMix(r.week)}</td>

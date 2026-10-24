@@ -30,6 +30,7 @@ export const NAMESPACES = [
   'pwa',
   'whatsapp-import',
   'bootstrap-import',
+  'onboarding-discovery',
   'email-intake',
   'import',
   'camera',

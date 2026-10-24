@@ -113,6 +113,7 @@ const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/act
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
+const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
@@ -222,6 +223,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveImportPlanEditsAction: importer,
   applyImportPlanAction: importer,
   undoImportBatchAction: importer,
+  discoverAdvocateCasesAction: discovery,
+  discoveryProgressAction: discovery,
+  recordOnboardingStepAction: discovery,
   createCalendarFeedAction: calendar,
   rotateCalendarFeedAction: calendar,
   revokeCalendarFeedAction: calendar,
@@ -609,6 +613,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       captureIds: [t.a.rows.capture?.id],
     },
     importProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    // Zero-entry onboarding (#501): ub may not search into A's workspace, read A's batch progress or record a step there.
+    discoverAdvocateCasesAction: {
+      workspaceId,
+      sourceIds: ['in.tn.madras-hc.chennai:advocate_search'],
+      enrolmentNumbers: ['KAR/1/2020'],
+      names: [],
+      batchId: t.a.rows.import_batch?.id,
+    },
+    discoveryProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    recordOnboardingStepAction: { workspaceId, step: 'confirm_grid_done' },
     getImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     saveImportPlanEditsAction: {
       workspaceId,

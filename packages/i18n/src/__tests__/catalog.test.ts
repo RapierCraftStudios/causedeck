@@ -113,6 +113,7 @@ describe('namespaced catalogs (#174)', () => {
         'notices',
         'notifications',
         'offline',
+        'onboardingDiscovery',
         'palette',
         'portfolio',
         'pwa',

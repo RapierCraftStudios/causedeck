@@ -597,6 +597,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'caller-checked',
     note: 'the bearer token is the credential: reads one key through the owner-defined app_api_key_by_hash, by hash only (never lists)',
   },
+  findApiKeyIssuer: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'reads one user row by id for the key issuer (the user table has no workspace column); the caller passes the issuer id from an authenticated key',
+  },
   apiKeyCallsThisPeriod: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',

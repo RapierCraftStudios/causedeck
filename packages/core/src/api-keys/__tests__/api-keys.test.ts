@@ -48,6 +48,19 @@ describe('api keys: issue and store', () => {
     });
   });
 
+  it('audits issuing and revoking a key', async () => {
+    await withTestDb(async (tx) => {
+      const { a, ua, key } = await issue(tx);
+      await revokeApiKey(tx, a.id, ua, key.id);
+      const actions = await inWorkspace(tx, a.id, (s) =>
+        s.select({ action: schema.auditEvent.action }).from(schema.auditEvent),
+      );
+      const names = actions.map((r) => r.action);
+      expect(names).toContain('api_key.created');
+      expect(names).toContain('api_key.revoked');
+    });
+  });
+
   it('rejects unknown scopes, empty scopes and a negative quota', async () => {
     await withTestDb(async (tx) => {
       for (const overrides of [
@@ -90,7 +103,9 @@ describe('api keys: authenticate', () => {
     await withTestDb(async (tx) => {
       const { a, ua, key, token } = await issue(tx);
       expect(await authenticateApiKey(tx, 'nope')).toBeNull();
-      expect(await authenticateApiKey(tx, token.slice(0, -1) + (token.endsWith('A') ? 'B' : 'A'))).toBeNull();
+      expect(
+        await authenticateApiKey(tx, token.slice(0, -1) + (token.endsWith('A') ? 'B' : 'A')),
+      ).toBeNull();
       const past = new Date(Date.now() - 60_000);
       const expired = await createApiKey(tx, {
         workspaceId: a.id,

@@ -9,6 +9,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 
+import { record } from '../audit/index.ts';
 import { increment, usagePeriod, type UsageContext } from '../usage/index.ts';
 import { requireCan } from '../workspaces/index.ts';
 
@@ -102,7 +103,10 @@ export interface CreatedApiKey {
 }
 
 /** Issue a key. Throws `ApiKeyError` INVALID for bad input and `FORBIDDEN` for a non-manager. */
-export async function createApiKey(db: Queryable, input: CreateApiKeyInput): Promise<CreatedApiKey> {
+export async function createApiKey(
+  db: Queryable,
+  input: CreateApiKeyInput,
+): Promise<CreatedApiKey> {
   const name = input.name.trim();
   const scopes = [...new Set(input.scopes)];
   if (name.length === 0 || name.length > 100) {
@@ -116,7 +120,11 @@ export async function createApiKey(db: Queryable, input: CreateApiKeyInput): Pro
     throw new ApiKeyError('INVALID', 'The monthly quota must be a non-negative integer.');
   }
   const rateLimitPerMinute = input.rateLimitPerMinute ?? DEFAULT_API_KEY_RATE_LIMIT_PER_MINUTE;
-  if (!Number.isInteger(rateLimitPerMinute) || rateLimitPerMinute < 1 || rateLimitPerMinute > 10_000) {
+  if (
+    !Number.isInteger(rateLimitPerMinute) ||
+    rateLimitPerMinute < 1 ||
+    rateLimitPerMinute > 10_000
+  ) {
     throw new ApiKeyError('INVALID', 'The rate limit is 1 to 10000 requests per minute.');
   }
   const { token, prefix } = generateApiKeyToken();
@@ -140,6 +148,18 @@ export async function createApiKey(db: Queryable, input: CreateApiKeyInput): Pro
         })
         .returning(summaryColumns);
       if (!row) throw new Error('api key insert returned no row');
+      await record(
+        {
+          db: tx,
+          workspaceId: input.workspaceId,
+          actor: { userId: input.actorUserId, kind: 'user' },
+        },
+        {
+          action: 'api_key.created',
+          target: { kind: 'api_key', id: row.id },
+          metadata: { scopes },
+        },
+      );
       return row;
     },
   );
@@ -181,8 +201,14 @@ export function revokeApiKey(
     const [row] = await tx
       .update(apiKey)
       .set({ revokedAt: now })
-      .where(and(eq(apiKey.workspaceId, workspaceId), eq(apiKey.id, keyId), isNull(apiKey.revokedAt)))
+      .where(
+        and(eq(apiKey.workspaceId, workspaceId), eq(apiKey.id, keyId), isNull(apiKey.revokedAt)),
+      )
       .returning(summaryColumns);
+    await record(
+      { db: tx, workspaceId, actor: { userId: actorUserId, kind: 'user' } },
+      { action: 'api_key.revoked', target: { kind: 'api_key', id: keyId } },
+    );
     return row ?? existing;
   });
 }
@@ -231,9 +257,23 @@ export async function authenticateApiKey(
   };
 }
 
+/** The user row of the member who issued a key, as the API's principal needs it; null if gone. */
+export async function findApiKeyIssuer(db: Queryable, userId: string) {
+  const [row] = await db
+    .select({
+      id: schema.user.id,
+      email: schema.user.email,
+      name: schema.user.name,
+      image: schema.user.image,
+      locale: schema.user.locale,
+    })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId));
+  return row ?? null;
+}
+
 export type ApiCallResult =
-  | { allowed: true; used: number }
-  | { allowed: false; used: number; quota: number };
+  { allowed: true; used: number } | { allowed: false; used: number; quota: number };
 
 /** Calls billed to `keyId` in the IST month of `at` (counted from the usage ledger). */
 export function apiKeyCallsThisPeriod(ctx: UsageContext, keyId: string, at: Date): Promise<number> {

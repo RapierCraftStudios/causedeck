@@ -2353,9 +2353,9 @@ const CASES: Record<string, Case> = {
     const before = await aApiKeys(f);
     const keyId = before[0]?.id ?? '';
     await expectDenied(core.revokeApiKey(f.tx, f.a.id, f.ub, keyId));
-    await expect(
-      f.asB((s) => core.revokeApiKey(s, f.a.id, f.ub, keyId)),
-    ).rejects.toBeInstanceOf(TenancyError);
+    await expect(f.asB((s) => core.revokeApiKey(s, f.a.id, f.ub, keyId))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
     // B's own workspace with A's key id: not found, and A's key is untouched.
     await expect(f.asB((s) => core.revokeApiKey(s, f.b.id, f.ub, keyId))).rejects.toMatchObject({
       reason: 'NOT_FOUND',
@@ -2372,11 +2372,19 @@ const CASES: Record<string, Case> = {
     });
     const identity = await f.asB((s) => core.authenticateApiKey(s, token));
     expect(identity).toMatchObject({ id: key.id, workspaceId: f.a.id });
-    expect(await f.asB((s) => core.authenticateApiKey(s, core.generateApiKeyToken().token))).toBeNull();
+    expect(
+      await f.asB((s) => core.authenticateApiKey(s, core.generateApiKeyToken().token)),
+    ).toBeNull();
+  },
+  findApiKeyIssuer: async (f) => {
+    expect(await f.asB((s) => core.findApiKeyIssuer(s, f.ua))).toMatchObject({ id: f.ua });
+    expect(await f.asB((s) => core.findApiKeyIssuer(s, randomUUID()))).toBeNull();
   },
   apiKeyCallsThisPeriod: async (f) => {
     await expect(
-      f.asB((s) => core.apiKeyCallsThisPeriod({ db: s, workspaceId: f.a.id }, randomUUID(), new Date())),
+      f.asB((s) =>
+        core.apiKeyCallsThisPeriod({ db: s, workspaceId: f.a.id }, randomUUID(), new Date()),
+      ),
     ).rejects.toBeInstanceOf(TenancyError);
   },
   consumeApiCall: async (f) => {

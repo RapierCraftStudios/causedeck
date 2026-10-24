@@ -2,31 +2,31 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/admin` Coverage: a matrix of forums (grouped by state and court type) against data types, each cell showing the level, freshness and volume, filterable by state.",
+   "quote": "Add tenant tables `portfolio`, `portfolio_case` (proceeding or CNR/case number, source, status fields, next date, last adverse order) and `portfolio_panel_advocate` (advocate user delegated for the institution)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "A gap list ranked by demand (watches and users in that forum) times missing level.",
+   "quote": "plus a workspace kind for institutions",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "A weekly coverage report (email to staff) with the change since last week.",
+   "quote": "a migration (next free number), FORCE RLS via tenantTable()",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Every forum in the catalogue appears with a level per data type. [type:integration]",
+   "quote": "update packages/db/src/index.test.ts, the RLS catalog in packages/db/src/__tests__/rls/sql.test.ts, TABLE_TESTS/registry and the two-tenant seeders",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "The gap ranking uses live demand (watch counts). [type:unit]",
+   "quote": "Acceptance: RLS tests prove tenant B sees nothing of A.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -34,201 +34,138 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/sources/coverage.ts",
-   "change": "New. Pure functions: sourcesForForum (source id `\u003cprefix>:\u003ctype>`; prefix equals forum code, is a dotted ancestor, or is `in.\u003cst>.district` for district-kind forums of state \u003cst>), buildCoverage (every enabled catalogue forum with workspace_id null x data types cause_list, case_status, order, display_board, notice; level = highest access_mode of cleared, non-killed matching sources else 'none'; freshness = latest successful fetch_log fetch (status 200-399); volume = successful fetches in 7 days), rankGaps (score = demand watches/users x (3 - level index, none lowest); deterministic tie-break by forum code), diffCoverage (week-over-week change derived from source cleared_at / first fetch, no snapshot table), plus a reader over source, forum, fetch_log, notice and the demand function. Export from packages/core/src/sources/index.ts.",
+   "path": "packages/db/src/schema/portfolio.ts",
+   "change": "New file. portfolio (id, name, timestamps), portfolio_case (portfolio composite FK (workspace_id,portfolio_id); optional composite FK to proceeding; cnr with CNR_PATTERN check; case_number; source_id FK to source; status text, status_fields jsonb or columns, next_date date, last_adverse_order_at/id; target check cnr or case_number or proceeding; unique per portfolio+cnr), portfolio_panel_advocate (portfolio composite FK, advocate_user_id FK user cascade, unique (workspace_id,portfolio_id,advocate_user_id)). All via tenantTable() with (workspace_id,id) unique and explicit workspace FK cascade, modelled on schema/webhooks.ts and schema/case-watch.ts.",
    "requirements": [
     "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/sources/index.ts",
-   "change": "Add `export * from './coverage.ts'`.",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the three tables and constants/types.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations/20261024100000_staff_watch_demand.sql",
-   "change": "New hand-written migration (use next free timestamp after 20261024090000_ecourts_district_status_sources; rename if base took it): SECURITY DEFINER app_staff_watch_demand() returning source_id, watches, users over case_watch (enabled) and cause_list_watch; calls app_staff_require_caller(); REVOKE FROM PUBLIC, GRANT to causedeck_app, causedeck_clerk; aggregates only, modelled on 0082_staff_conflict_rate.sql. Add the matching entry to migrations/meta/_journal.json and a snapshot file.",
-   "requirements": [
-    "R2",
-    "R5"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/db/migrations/meta/_journal.json",
-   "change": "Journal entry for D3 (idx 86).",
+   "path": "packages/db/src/schema/auth.ts",
+   "change": "Add 'institution' to WORKSPACE_KINDS (organization_kind_chk follows via inList); update doc comment.",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D5",
-   "path": "apps/admin/lib/data/index.ts",
-   "change": "Add audited coverageOverview(staff, now?, db?) using staffCall (function app_staff_watch_demand) and staffQuery (tables forum, source, fetch_log, notice) with purpose `coverage.overview`; never import withoutWorkspace elsewhere.",
+   "id": "D4",
+   "path": "packages/db/migrations/20261024110000_portfolio.sql",
+   "change": "Use next free timestamp after 20261024100000 (renumber if base took it). CREATE the 3 tables, FKs, indexes, ENABLE+FORCE RLS and ws_isolation policies as in 20261024063416_webhooks.sql; drop and re-add organization_kind_chk with ('solo','chamber','institution'). Include the header comments the migration linter requires.",
    "requirements": [
-    "R1",
     "R2",
-    "R4"
+    "R3"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "Append idx 87 entry with tag matching D4 and increasing 'when'. Add matching snapshot migrations/meta/\u003cts>_snapshot.json (run pnpm --filter @causedeck/db db:generate then adjust SQL header, or hand-produce).",
+   "requirements": [
+    "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/admin/app/(console)/coverage/page.tsx",
-   "change": "New server component, requireStaff capability for coverage: matrix grouped by state then court type x 5 data types (level, freshness, volume per cell), `?state=` filter, ranked gap list. Counts, ids, levels and times only (no content fields).",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add portfolio, portfolio_case, portfolio_panel_advocate to the root table list.",
    "requirements": [
-    "R1",
-    "R2",
     "R4"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/admin/components/console-nav.tsx",
-   "change": "Add Coverage nav item (/coverage) and extend the href union; update header comment.",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add the three tables to the RLS catalog.",
    "requirements": [
-    "R1"
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/admin/lib/roles.ts",
-   "change": "Add `coverage` staff capability for ops and admin (or reuse data-ops if lint/guard tests prefer); keep support without it.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Add the three tables to the DB_TABLES_TEST registry.",
    "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/core/src/jobs/definitions/coverage-weekly.ts",
-   "change": "New job `system.coverage.weekly`, cron `30 9 * * 1`, singleton key, injectable email/now/recipients deps; recipients are enabled ops/admin staff emails; emails top gaps and change since last week; nothing sent when no recipients.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Import and register coverageWeekly in the definitions list and the type map.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add `system.coverage.weekly` to the expected job names.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "Add `system.coverage.weekly` to the expected schedules.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/core/src/sources/__tests__/coverage.test.ts",
-   "change": "New unit tests: mapping rule, level selection (uncleared/killed => none), freshness/volume, every catalogue forum has 5 cells (R4), rankGaps reorders when stubbed watch counts change (R5), diffCoverage.",
-   "requirements": [
-    "R4",
-    "R5",
-    "R3"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/admin/__tests__/coverage-page.test.tsx",
-   "change": "New page test with mocked lib/data: matrix renders every forum with five data-type cells, state filter narrows, gap list order, access denied for support role.",
-   "requirements": [
-    "R1",
-    "R2",
     "R4"
    ]
   },
   {
-   "id": "D15",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register new runtime core exports from coverage.ts in NOT_A_SERVICE (pure functions) or SERVICE_TESTS for the reader, with a reason; add a real case in packages/core/src/__tests__/cross-tenant/services.test.ts if SERVICE_TESTS is chosen.",
+   "id": "D9",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "Add TENANT_SEEDERS for portfolio, portfolio_case, portfolio_panel_advocate (seed a portfolio per tenant; case and panel advocate seeders create their own parent portfolio, as webhook_delivery does).",
+   "requirements": [
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/db/src/__tests__/auth-schema.test.ts",
+   "change": "Update WORKSPACE_KINDS expectation to include 'institution'.",
    "requirements": [
     "R2"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/db/src/__tests__/portfolio-schema.test.ts",
+   "change": "New schema test: tables are tenant tables, checks (CNR, target), uniques, institution kind accepted by organization_kind_chk.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R5"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "sourceOpsOverview, staffParseYield, staffConflictRate and Data Ops page behaviour in packages/core/src/sources/ops.ts and apps/admin/app/(console)/data-ops/page.tsx."
+   "what": "WORKSPACE_KIND_VALUES in packages/validators/src/workspace.ts and the onboarding/profile forms stay solo|chamber: institutions are not self-serve selectable."
   },
   {
    "id": "P2",
-   "what": "Admin guard tests: pages never import withoutWorkspace, no content fields (apps/admin/__tests__/{data-layer,server-component-imports,no-content-fields,no-without-workspace-outside-data}.test.ts)."
+   "what": "Existing organization rows and the solo/chamber behaviour of organization_kind_chk (packages/db/migrations/0004_workspaces.sql:46) remain valid."
   },
   {
    "id": "P3",
-   "what": "Tenant isolation: staff see only aggregate counts of case_watch/cause_list_watch through the definer function; no workspace, proceeding, party or user id leaves it."
-  },
-  {
-   "id": "P4",
-   "what": "Existing job schedules and business digest in packages/core/src/jobs/definitions/business-digest.ts and registry ordering/typing in packages/core/src/jobs/registry.ts."
+   "what": "Existing tenant tables (webhook_*, case_watch) and their RLS policies are untouched; no new runtime exports of @causedeck/core."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/portfolio-schema.test.ts src/__tests__/auth-schema.test.ts src/index.test.ts src/__tests__/conventions.test.ts src/__tests__/lint-migrations.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/rls src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing"
-  },
-  {
-   "id": "V5",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/db db:check"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Derive 'change since last week' from source.cleared_at and fetch_log history instead of a new coverage_snapshot table.",
-   "justification": "A new global table triggers the db root-table list, GLOBAL_TABLES, grants and RLS catalogue updates (CLAUDE.md registries table); source.cleared_at (schema/source-registry.ts:60) and fetch_log (schema/fetch-log.ts:9) already hold the dates.",
+   "choice": "Add 'institution' only to the DB WORKSPACE_KINDS, not to validators/UI kind lists.",
+   "justification": "validators/src/workspace.ts:31 drives the self-serve onboarding and profile forms; institutions are provisioned by staff (#498 B2B) so they must not be user-selectable.",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Read tenant watch demand only through a new SECURITY DEFINER function, like app_staff_conflict_rate.",
-   "justification": "case_watch and cause_list_watch are tenant tables under FORCE RLS (schema/case-watch.ts:1-6); precedent migrations/0082_staff_conflict_rate.sql and core sources/ops.ts:165.",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "Model the weekly email on system.business.digest (defineJob, cron, injected deps).",
-   "justification": "packages/core/src/jobs/definitions/business-digest.ts:56-67; registered at jobs/registry.ts:177-178.",
-   "source": "precedent"
-  },
-  {
-   "id": "K4",
-   "choice": "Source-to-forum mapping by id prefix (forum code, dotted ancestor, or in.\u003cst>.district for district forums) in one tested function.",
-   "justification": "Source ids are `\u003cscope>:\u003ctype>` with state-wide district ids (migrations 20261024090000_ecourts_district_status_sources.sql) and per-forum ids (0076_display_board.sql:49-71); forum codes per schema/court.ts:41 and ecourts/snapshot.ts.",
+   "choice": "Model portfolio_case after case_watch (composite FKs, CNR_PATTERN check, target check).",
+   "justification": "packages/db/src/schema/case-watch.ts:31-70 is the established shape for CNR/case-number lookups against source and proceeding.",
    "source": "precedent"
   }
  ]

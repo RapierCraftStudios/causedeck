@@ -44,6 +44,8 @@ export const CATEGORIES = {
   'status.next_date': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'status.order': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'status.stage': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  // Official court and bar notices matched to the member's forums and matters (#587, D-048).
+  notices: { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'digest.daily': { defaultChannels: ['email'], mandatory: false, lockedChannels: [] },
   // "What CauseDeck did today" (#49): counts of what the system did on its own, once per local day.
   'digest.end_of_day': {

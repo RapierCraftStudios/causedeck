@@ -2,37 +2,31 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "quote": "Sign-up and sign-in by phone OTP work end to end; OTPs are rate-limited and expire. [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "dashboard (next dates, stage, adverse orders)",
+   "quote": "A phone account can link an email and Google later. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "exception alert settings",
+   "quote": "`packages/auth`: a phone-number plugin with OTP over SMS through an Indian DLT-registered provider (template registration), rate limits and abuse controls.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "exception alert settings, exports",
+   "quote": "`apps/web`: phone-first sign-in, with email as an alternative; account linking.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "i18n namespace and catalog test",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "cross-tenant-actions test entries for each 'use server' action.",
+   "quote": "Env and processor entries (SMS provider), with mock-safe defaults.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -40,185 +34,198 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/portfolio/portfolio.ts",
-   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
+   "path": "packages/db/src/schema/auth.ts",
+   "change": "Add nullable unique phoneNumber (phone_number) and phoneNumberVerified boolean default false to user.",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "Export listPortfolios and createPortfolio.",
+   "path": "packages/db/migrations/\u003cnext-timestamp>_user_phone_number.sql",
+   "change": "Migration adding the two user columns and unique index; also regenerate migrations/meta snapshot and append _journal.json entry (timestamp later than 20261024182641).",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/config/src/env/providers.ts",
+   "change": "Add SMS_PROVIDER (console default, msg91) and SMS_AUTH_KEY (secret), SMS_SENDER_ID, SMS_DLT_ENTITY_ID, SMS_OTP_TEMPLATE_ID with requiredWhen SMS_PROVIDER=msg91; extend env tests if they enumerate keys.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "docs/engineering/env.md",
+   "change": "Document the SMS env keys (and .env.example / .env.ci entries with mock-safe console default).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/auth/src/sms.ts",
+   "change": "New SmsSender interface, console sender (never prints OTP in production), DLT provider sender, createSmsSender(env). Export ./sms in package.json.",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/auth/package.json",
+   "change": "Add ./sms export (no new dependencies; better-auth already ships the phone-number plugin).",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/auth/src/server.ts",
+   "change": "Add phoneNumber plugin (6-digit OTP, 5 min expiry, 3 attempts, signUpOnVerification with temp email, honouring disableSignUp), per-phone-hash and per-IP rate limits, security events with a phone method, account.accountLinking for google and signed-in email/phone linking; sms dep optional in CreateAuthDeps.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/auth/src/rate-limit.ts",
+   "change": "Add phone OTP limit constants and phoneOtpKey (hashed) helpers.",
+   "requirements": [
+    "R1",
+    "R3"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/auth/src/client.ts",
+   "change": "Add phoneNumberClient plugin.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "apps/web/lib/auth.ts",
+   "change": "Pass createSmsSender(env) into createAuth.",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "apps/web/app/(public)/sign-in/sign-in-form.tsx",
+   "change": "Phone-first sign-in: new phone-otp-form component (+91 default, send, verify, resend cooldown) above the existing email/magic-link, Google and passkey options.",
+   "requirements": [
+    "R4",
+    "R1"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "apps/web/app/(app)/account",
+   "change": "Linking UI so a phone account can add an email and link Google (new component(s) under this route).",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/i18n/src/messages/en/auth.json",
+   "change": "Add phone sign-in and linking strings; mirror keys in kn/auth.json and ta/auth.json.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/auth/src/__tests__/phone-otp.test.ts",
+   "change": "Regression tests: sign-up and sign-in by OTP, expiry, attempt limit, per-phone/IP rate limit, disableSignUp, linking email and Google to a phone account.",
    "requirements": [
     "R1",
     "R2"
    ]
   },
   {
-   "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/core/src/portfolio/portfolio.test.ts",
-   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "id": "D15",
+   "path": "e2e/tests/auth/phone-sign-in.spec.ts",
+   "change": "E2E phone OTP sign-up/sign-in with console SMS sender (CI-only; not run locally).",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
-   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
+   "id": "D16",
+   "path": "docs/engineering/auth.md",
+   "change": "Document phone OTP, SMS provider, limits and linking.",
    "requirements": [
-    "R1",
-    "R4"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
-   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
-   "change": "Skeleton loading state.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
-   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/web/components/portfolio/portfolio-view.tsx",
-   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'portfolio' to NAMESPACES.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/i18n/src/messages/en/portfolio.json",
-   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'portfolio' to the expected namespace list.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
-   "requirements": [
-    "R6"
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+   "what": "Magic-link, passkey, Google and 2FA sign-in behaviour and rate limits in packages/auth/src/server.ts (existing server.test.ts passes)."
   },
   {
    "id": "P2",
-   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+   "what": "createAuth callers (apps/web/lib/auth.ts, apps/admin, packages/auth/src/__tests__/helpers.ts, apps/api tests) keep compiling: new sms dep is optional; admin disableSignUp still blocks sign-up."
   },
   {
    "id": "P3",
-   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+   "what": "user.email stays notNull unique; phone-only users get a non-deliverable temp email."
+  },
+  {
+   "id": "P4",
+   "what": "Raw phone numbers and OTPs are never logged in production or stored in security events (hash like email)."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/__tests__/phone-otp.test.ts src/__tests__/server.test.ts src/__tests__/security-events.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/config exec vitest run src/env --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/sign-in.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__ -t auth --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
-   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
+   "choice": "Use Better Auth's bundled phoneNumber plugin; no new dependency.",
+   "justification": "better-auth already a catalog dep (packages/auth/package.json:33) and ships plugins/phone-number.",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
-   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
+   "choice": "Per-phone rate limit via consumeRateLimit with a hashed key, same as magic-link email.",
+   "justification": "packages/auth/src/rate-limit.ts:12-60 and server.ts hooks.before; Better Auth only keys by IP.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
-   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
+   "choice": "SMS provider selected by SMS_PROVIDER env with console default, mirroring EMAIL_PROVIDER.",
+   "justification": "packages/config/src/env/providers.ts:221-245 and packages/auth/src/mailer.ts header.",
    "source": "precedent"
   }
  ]

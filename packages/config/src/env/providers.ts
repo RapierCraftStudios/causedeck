@@ -54,6 +54,44 @@ export const providerKeys = {
     credentialIssue: 110,
     secret: true,
   },
+  SMS_PROVIDER: {
+    domain: 'sms',
+    type: 'enum(console|msg91)',
+    description:
+      'SMS transport for phone sign-in OTPs. `console` logs messages outside production; `msg91` sends through a DLT-registered template.',
+    default: 'console',
+    requiredWhen: 'never (defaults to console)',
+    ownerIssue: 503,
+  },
+  SMS_AUTH_KEY: {
+    domain: 'sms',
+    type: 'secret',
+    description: 'MSG91 auth key.',
+    requiredWhen: 'SMS_PROVIDER=msg91',
+    ownerIssue: 503,
+    secret: true,
+  },
+  SMS_SENDER_ID: {
+    domain: 'sms',
+    type: 'string',
+    description: 'DLT-registered six-character sender id (header).',
+    requiredWhen: 'SMS_PROVIDER=msg91',
+    ownerIssue: 503,
+  },
+  SMS_DLT_ENTITY_ID: {
+    domain: 'sms',
+    type: 'string',
+    description: 'DLT principal entity id registered with the operator.',
+    requiredWhen: 'SMS_PROVIDER=msg91',
+    ownerIssue: 503,
+  },
+  SMS_OTP_TEMPLATE_ID: {
+    domain: 'sms',
+    type: 'string',
+    description: 'MSG91 template id of the DLT-registered OTP template.',
+    requiredWhen: 'SMS_PROVIDER=msg91',
+    ownerIssue: 503,
+  },
   AI_PROVIDER: {
     domain: 'ai',
     type: 'enum(mock|bedrock|sarvam)',
@@ -279,6 +317,17 @@ export const emailProvider = z.discriminatedUnion('EMAIL_PROVIDER', [
   }),
 ]);
 
+export const smsProvider = z.discriminatedUnion('SMS_PROVIDER', [
+  z.object({ SMS_PROVIDER: z.literal('console').describe(d('SMS_PROVIDER')) }),
+  z.object({
+    SMS_PROVIDER: z.literal('msg91'),
+    SMS_AUTH_KEY: secret(required).describe(d('SMS_AUTH_KEY')),
+    SMS_SENDER_ID: required.describe(d('SMS_SENDER_ID')),
+    SMS_DLT_ENTITY_ID: required.describe(d('SMS_DLT_ENTITY_ID')),
+    SMS_OTP_TEMPLATE_ID: required.describe(d('SMS_OTP_TEMPLATE_ID')),
+  }),
+]);
+
 const aiCommon = {
   AI_MAX_CONCURRENCY_PER_WORKSPACE: z.coerce
     .number()
@@ -357,6 +406,7 @@ export const sentry = z.discriminatedUnion('SENTRY_ENABLED', [
 
 export const providerSchemas = [
   emailProvider,
+  smsProvider,
   aiProvider,
   storageProvider,
   billingProvider,
@@ -370,6 +420,7 @@ export const BOOLEAN_SWITCHES = ['AUTH_GOOGLE_ENABLED', 'SENTRY_ENABLED'] as con
 /** Provider values that only simulate an integration; rejected in production by default. */
 export const MOCK_PROVIDERS = {
   EMAIL_PROVIDER: 'console',
+  SMS_PROVIDER: 'console',
   AI_PROVIDER: 'mock',
   BILLING_PROVIDER: 'mock',
 } as const;

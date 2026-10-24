@@ -46,3 +46,6 @@ The merged-tree typecheck failed with exit 127 (`turbo: command not found`): an 
 
 ### Merge verification
 After merging the base, the scoped typecheck (`pnpm exec turbo run typecheck --filter='...[e39ede8b]'`, 23 tasks) passes. The earlier failure (exit 127) was `turbo` missing from PATH on the check host, not a code defect (the binary is `node_modules/.bin/turbo`, run through `pnpm exec`). No duplicate keys or same-named symbols were found; no source change was needed. V1-V3 pass again.
+
+## CI `test` failure (run 40088051117): not reproduced
+No log was available. V1-V3, the full intelligence and i18n suites and the courts/messages web tests pass. Scoped `turbo run test` fails only in container-backed packages (db, adapters, etc.) with testcontainers "Log stream ended and message /.*Started.*/ was not received": no Docker on this host, not a code defect. No source change made.

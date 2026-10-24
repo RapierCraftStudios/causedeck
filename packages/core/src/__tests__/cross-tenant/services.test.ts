@@ -1884,6 +1884,82 @@ const CASES: Record<string, Case> = {
     expect(JSON.stringify(inB)).not.toContain(seeded.matterId);
     expect(inB.map((h) => h.hallNo)).not.toContain('xt-live-hall');
   },
+  getBenchCard: async (f) => {
+    // The card is a flagged per-workspace read: seed a bench and a listing in A, prove A's member
+    // sees the bench (control), and that ub naming A, or reading from B, gets nothing of A's.
+    const deps = { flagEnabled: () => Promise.resolve(true) };
+    const seeded = await inWorkspace(f.tx, f.a.id, async (s) => {
+      const [fo] = await s
+        .insert(schema.forum)
+        .values({
+          workspaceId: f.a.id,
+          code: `in.ka.karnataka-hc.xt-${randomUUID().slice(0, 8)}`,
+          court: 'Seed High Court',
+          jurisdictionKind: 'high_court',
+        })
+        .returning({ id: schema.forum.id });
+      const [b] = await s
+        .insert(schema.bench)
+        .values({
+          workspaceId: f.a.id,
+          forumId: fo?.id ?? '',
+          judges: ['XT BENCH JUDGE'],
+          benchKind: 'single',
+        })
+        .returning({ id: schema.bench.id });
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.a.id, title: 'XT bench card', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.a.id,
+          matterId: m?.id ?? '',
+          forumId: fo?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: `F-bench-${randomUUID().slice(0, 8)}`,
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      await s.insert(schema.listing).values({
+        workspaceId: f.a.id,
+        proceedingId: p?.id ?? '',
+        benchId: b?.id,
+        listDate: '2026-01-05',
+        itemNo: '1',
+        listType: 'daily',
+        stageRaw: 'FOR ADMISSION',
+        canonical: true,
+        sourceType: 'manual',
+      });
+      return { matterId: m?.id ?? '' };
+    });
+    const own = await core.getBenchCard(
+      { ...deps, db: f.tx },
+      { workspaceId: f.a.id, userId: f.ua },
+      seeded.matterId,
+    );
+    expect(own?.sat).toEqual(['XT BENCH JUDGE']);
+
+    const asA = { workspaceId: f.a.id, userId: f.ub };
+    await expect(
+      f.asB((s) => core.getBenchCard({ ...deps, db: s }, asA, seeded.matterId)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    const inB = await f.asB((s) =>
+      core.getBenchCard({ ...deps, db: s }, { workspaceId: f.b.id, userId: f.ub }, seeded.matterId),
+    );
+    expect(inB).toBeNull();
+    // A's card is unchanged.
+    expect(
+      await core.getBenchCard(
+        { ...deps, db: f.tx },
+        { workspaceId: f.a.id, userId: f.ua },
+        seeded.matterId,
+      ),
+    ).toEqual(own);
+  },
   // Matter graph (#362): A's matter, proceeding and document ids, as ub.
   createMatter: async (f) => {
     const { deps, events } = graphDeps(f.tx);
@@ -3059,6 +3135,48 @@ const CASES: Record<string, Case> = {
       core.listWorkspaceNotices(s, { workspaceId: f.b.id, userId: f.ub }),
     );
     expect(own.map((n) => n.id)).not.toContain(noticeId);
+  },
+  getPublicCase: async (f) => {
+    // B's key asking for A's case: nothing, whatever the CNR (A's workspace is never B's scope).
+    const cnr = 'KABC010000012024';
+    const asA = await f
+      .asB((s) => core.getPublicCase(s, { workspaceId: f.a.id, userId: f.ub }, cnr))
+      .catch(() => null);
+    expect(asA).toBeNull();
+    expect(
+      await f.asB((s) => core.getPublicCase(s, { workspaceId: f.b.id, userId: f.ub }, cnr)),
+    ).toBeNull();
+  },
+  listPublicCauseLists: async (f) => {
+    const asA = await f
+      .asB((s) =>
+        core.listPublicCauseLists(s, { workspaceId: f.a.id, userId: f.ub }, { advocate: 'x' }),
+      )
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const own = await f.asB((s) =>
+      core.listPublicCauseLists(s, { workspaceId: f.b.id, userId: f.ub }, { advocate: 'x' }),
+    );
+    expect(own).toEqual([]);
+  },
+  listPublicOrders: async (f) => {
+    const cnr = 'KABC010000012024';
+    const asA = await f
+      .asB((s) => core.listPublicOrders(s, { workspaceId: f.a.id, userId: f.ub }, { caseCnr: cnr }))
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const own = await f.asB((s) =>
+      core.listPublicOrders(s, { workspaceId: f.b.id, userId: f.ub }, { caseCnr: cnr }),
+    );
+    expect(own).toEqual([]);
+  },
+  listPublicNotices: async (f) => {
+    // Global notices only: no record names a workspace, and the seeded personal-class sources give none.
+    const notices = await f.asB((s) => core.listPublicNotices(s, {}));
+    expect(JSON.stringify(notices)).not.toContain(f.a.id);
+    expect(notices.every((n) => n.sourceLicense.length > 0 && n.provenance.sourceId !== '')).toBe(
+      true,
+    );
   },
   listMatterNotices: async (f) => {
     const matterId = f.a.rows.notice_match?.matterId ?? '';

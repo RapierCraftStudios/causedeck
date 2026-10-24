@@ -52,7 +52,7 @@ describe('static guards', () => {
       const text = readFileSync(file, 'utf8');
       for (const pattern of SQL_IN_ROUTES) expect(text, String(pattern)).not.toMatch(pattern);
       expect(text).toMatch(
-        /from '@causedeck\/core\/(workspaces|billing|email-intake|webhooks)'|from '\.\/(me|workspaces)\.ts'/,
+        /from '@causedeck\/core\/(workspaces|billing|email-intake|court-day|webhooks)'|from '\.\/(me|workspaces)\.ts'/,
       );
     },
   );

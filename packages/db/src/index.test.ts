@@ -64,6 +64,7 @@ describe('@causedeck/db root entry point', () => {
       'bench_change_alert',
       'bench_roster',
       'bench_roster_entry',
+      'bench_sitting_fact',
       'billing_event',
       'blob',
       'board_observation',

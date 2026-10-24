@@ -248,6 +248,7 @@ export {
   boardObservation,
   type BoardObservationStatus,
 } from './display-board.ts';
+export { benchSittingFact } from './bench-facts.ts';
 export {
   CAUSE_LIST_WATCH_KINDS,
   causeListPublication,

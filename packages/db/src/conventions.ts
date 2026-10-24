@@ -40,6 +40,7 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * data-operations tables: per-source health and backoff, parse yield, the alert ledger and the on-call rotation.
  * `cause_list_publication` (#482) is the global, content-free cache of fetched list publications (no body).
  * `board_observation` (#493) is the global, content-free hall display-board history (hall, item, state); the app role may SELECT and INSERT it.
+ * `bench_sitting_fact` (#521, D-050) is the global, staff-only bench-facts store (neutral counts and pace per hall and day); the app and clerk roles have no table grants and reach it only through the owner-defined `app_bench_*` functions.
  * `notice` (#584, D-048) is the global official notices feed read from cleared sources; the app role may SELECT, INSERT and UPDATE it (no DELETE).
  */
 export const GLOBAL_TABLES: readonly string[] = [
@@ -77,6 +78,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'cause_list_publication',
   'board_observation',
   'notice',
+  'bench_sitting_fact',
 ];
 
 /**

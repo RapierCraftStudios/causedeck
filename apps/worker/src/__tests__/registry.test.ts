@@ -166,6 +166,7 @@ describe('enqueue', () => {
       'system.board.poll',
       'system.notices.poll',
       'system.judgment-alert.scan',
+      'system.portfolio-alert.scan',
       'system.status.poll',
       'webhook.deliver',
       'system.webhook.sweep',

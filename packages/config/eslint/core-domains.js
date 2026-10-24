@@ -145,6 +145,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'sources',
     'notices',
     'research',
+    'portfolio',
     'business',
     'case-watch',
     'webhooks',

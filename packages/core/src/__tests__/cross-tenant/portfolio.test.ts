@@ -73,6 +73,29 @@ const CASES: Record<string, Case> = {
     });
     expect(own.trim().split('\r\n')).toHaveLength(1);
   },
+  scanPortfolioAlerts: async (f) => {
+    const now = new Date('2026-11-01T00:00:00Z');
+    const deps = { db: f.tx, enqueueDelivery: () => Promise.resolve(null), now: () => now };
+    const mark = (workspaceId: string) =>
+      inWorkspace(f.tx, workspaceId, (s) =>
+        s
+          .update(schema.portfolioCase)
+          .set({ lastAdverseOrderAt: new Date('2026-10-31T00:00:00Z') }),
+      );
+    const notices = (workspaceId: string) =>
+      inWorkspace(f.tx, workspaceId, (s) => s.select().from(schema.notification));
+    // B has an adverse order only in its own workspace: scanning B alerts B's members and not A's.
+    await mark(f.a.id);
+    const aBefore = await notices(f.a.id);
+    const report = await core.scanPortfolioAlerts(deps, f.b.id);
+    expect(report.adverse).toBe(0);
+    expect(await notices(f.a.id)).toEqual(aBefore);
+    // Scanning A alerts A's members only; B gets nothing.
+    const bBefore = await notices(f.b.id);
+    const own = await core.scanPortfolioAlerts(deps, f.a.id);
+    expect(own.adverse).toBeGreaterThan(0);
+    expect(await notices(f.b.id)).toEqual(bBefore);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)

@@ -44,6 +44,17 @@ export const CATEGORIES = {
   'status.next_date': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'status.order': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'status.stage': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  // Institution portfolio exception alerts (#665, #498): a new adverse order, a missed next date.
+  'portfolio.adverse_order': {
+    defaultChannels: ['in_app', 'email', 'push'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  'portfolio.missed_date': {
+    defaultChannels: ['in_app', 'email', 'push'],
+    mandatory: false,
+    lockedChannels: [],
+  },
   // Official court and bar notices matched to the member's forums and matters (#587, D-048).
   // Bench-notice alerts (#496): a leave, special bench or roster notice affects a listed matter.
   bench_change: { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },

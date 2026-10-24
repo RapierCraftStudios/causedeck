@@ -25,3 +25,9 @@ export {
   type PortfolioCsvError,
   type PortfolioCsvRow,
 } from './csv.ts';
+export {
+  PORTFOLIO_ALERT_MAX_CASES,
+  scanPortfolioAlerts,
+  type PortfolioAlertDeps,
+  type PortfolioAlertReport,
+} from './alerts.ts';

@@ -86,6 +86,8 @@ const CATEGORY_MESSAGE = {
   'status.order': 'statusOrder',
   'status.stage': 'statusStage',
   bench_change: 'benchChange',
+  'portfolio.adverse_order': 'portfolioAdverseOrder',
+  'portfolio.missed_date': 'portfolioMissedDate',
   notices: 'notices',
   'digest.daily': 'digestDaily',
   'digest.end_of_day': 'digestEndOfDay',

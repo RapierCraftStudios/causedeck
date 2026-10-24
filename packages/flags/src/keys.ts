@@ -67,6 +67,12 @@ export const FLAGS = {
     true,
     [482, 118],
   ),
+  'court.case-status': flag(
+    'court.case-status',
+    'Case-status watch and refresh.',
+    true,
+    [483, 118],
+  ),
   'court.sanctioned-push': flag(
     'court.sanctioned-push',
     'Sanctioned push ingestion from courts.',

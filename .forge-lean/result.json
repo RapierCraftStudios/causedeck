@@ -89,5 +89,10 @@
    "test": "apps/admin/__tests__/growth-page.test.tsx",
    "why": "growth-page.test.tsx:6 is the Growth page's hoisted mock state holding only growthFunnel; it is not a list of the data layer's exports. The data layer list is READS/PRIMITIVES in server-actions-audit.test.ts, where these are registered."
   }
- ]
+ ],
+ "facts": {
+  "decisions": [
+   "Post-merge typecheck failure (turbo exit 127) is a missing turbo on PATH, not a code conflict; verified with tsc --noEmit in config, admin and core."
+  ]
+ }
 }

@@ -30,3 +30,8 @@ The four new data-layer symbols are not members of growth-page.test.tsx's data m
 
 ## Post-merge typecheck failure
 The reported failure (`turbo: command not found`, exit 127) was a missing binary on the host, not a code conflict. The merged tree typechecks (`tsc --noEmit` in core, admin and config) and V1-V3 pass. The only change is removing the tracked `packages/core/.eslintcache` that the merge still carried.
+
+
+## Re-check after second merge
+Exit 127 again came from `turbo` missing on PATH, not code. Re-ran tsc --noEmit (core, admin) clean and V1-V3 pass; no code change needed.
+- After the base merge, `turbo run typecheck` exited 127 (`turbo` is not on PATH in the check shell): a toolchain problem, not a code conflict. No merged-tree duplicate or same-named symbol was found. `tsc --noEmit` is clean for packages/config, apps/admin and packages/core; the V1-V3 tests pass.

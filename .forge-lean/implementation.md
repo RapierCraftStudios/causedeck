@@ -1,38 +1,36 @@
 ### Approach
-Resumed from the checkpoint. The feature was already in place; this session fixed the conformance failures. It restored the `api-keys` row the earlier session had dropped from `docs/engineering/core-domains.md`, and it declared the two unlisted files as `add-deliverable` amendments.
-
+eCourts establishment snapshot (JSON) is validated, mapped to A0 `ForumSeed`s and spread into `FORUM_CATALOGUE`; the shipped snapshot is empty (real data is #640). Nothing is fetched.
 ### Changes
-- packages/core/src/court/bench-alerts.ts (+ test, index.ts): classifier, read model and notifier.
-- packages/core/src/notices/poll.ts, jobs/definitions/notices-poll.ts: `onMatched` hook, wired to `notifyBenchNoticeAlerts`.
-- packages/notifications/src/categories.ts (+ test): `bench_change` category.
-- packages/notifications/src/push/payload.ts: generic push title (amendment, required by `Record<CategoryKey,string>`).
-- packages/db/src/testing/cross-tenant-registry.ts and core `cross-tenant/services.test.ts`: registrations and real cases.
-- apps/web: `bench-notice-alerts.tsx` (+ test, stories), `matter-overview.tsx`, matter page, today page, preferences form.
-- packages/i18n: notices and notifications copy in en, ta and kn; generated files and translation status.
-- docs/engineering/core-domains.md: court and notices rows. The `api-keys` row is restored.
-
+- packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts: types, `validateSnapshot`, `snapshotToForumSeeds` (A0, per-state level flag)
+- ecourts/snapshot.json: empty reviewed snapshot with provenance
+- ecourts/index.ts: `ECOURTS_DISTRICT`
+- forum-catalogue/index.ts: spread, version 2026-10-24.1, chunked upsert (2000 rows)
+- ecourts/snapshot.test.ts, ecourts/import.test.ts: unit and DB integration tests (import test fixed to use drizzle `TransactionRollbackError`)
+- packages/db/src/seed/README.md: documented
 ### Acceptance Criteria Status
-- R1 ✅ packages/core/src/court/bench-alerts.ts (notifyBenchNoticeAlerts, dedupeKey `bench-notice:<id>`)
-- R2 ✅ packages/core/src/court/bench-alerts.test.ts (category-based assignment)
-- R3 ✅ packages/core/src/court/bench-alerts.ts
-- R4 deferred (judge matching, contract amendment already in the contract)
-- R5 ✅ packages/notifications/src/categories.ts
-- R6 ✅ apps/web/components/courts/bench-notice-alerts.tsx, matter page, today page
-
+- R1 ✅ snapshot.ts validateSnapshot
+- R2 ✅ forum-catalogue/index.ts:23
+- R3 ✅ snapshot.ts per-state level map
+- R4 ✅ snapshot.json, no fetching
+- R5 ✅ ecourts/import.test.ts
+- R6 ✅ ecourts/snapshot.test.ts
+- R7 ✅ version bump + determinism tests
 ### Verification
-V1 to V5 pass, run with TESTCONTAINERS_RYUK_DISABLED=true because Ryuk cannot start on this host. V3's `-t bench` is case-sensitive and skips all 180 cases, so I also ran `-t Bench`: 2 passed. `forgedock check` passes. The new tests fail without the fix because they import the new module.
-
+- V1 db vitest src/seed/forum-catalogue: pass (24 tests); import test failed before the rollback fix
+- V2 core vitest forums.test.ts: pass
+- V3 db tsc --noEmit: pass
 ### Notes
-No migration, no new dependency, no env vars. Judges are never read.
+In this sandbox Testcontainers' Ryuk log wait fails; validate commands pass with `TESTCONTAINERS_RYUK_DISABLED=true`. No behaviour change to shipped catalogue content except the version bump.
 
-### Follow-up
-e2e/tests/courts/courts.spec.ts:99 does not enumerate courts components; recorded bench-notice-alerts and its stories as not_members in result.json. No code change.
+## Merge check (turbo missing)
+The merge-check failure was `turbo: command not found` (host tooling), not a code conflict. No code change needed; V1-V3 re-run green on the merged tree (testcontainers needs TESTCONTAINERS_RYUK_DISABLED=true).
+- Post-merge: `pnpm exec turbo run typecheck --filter='...[72a44a11]'` passes (23/23 packages). The earlier exit 127 was `turbo` missing from PATH (use `pnpm exec turbo`), not a code conflict; no symbol clashes with the base, so no code change.
+- Re-verified at base 9820df68: `pnpm exec turbo run typecheck --filter='...[9820df68]'` 23/23 green; db tsc clean. Exit 127 was turbo missing from PATH; no code change.
+- Re-checked against base 9820df68: `pnpm exec turbo run typecheck --filter='...[9820df68]'` passes (23/23, turbo cache hit on identical inputs). Exit 127 is `turbo` not on the check shell's PATH; no code change.
 
-### Merge re-check
-The post-merge typecheck failure was `turbo: command not found` (PATH only, exit 127), not a code clash. `pnpm exec turbo run typecheck --filter='...[9820df68]'` passes (23/23 tasks). No source change was needed. Vitest suites need the Postgres testcontainer global setup, which is unavailable on this host; they run in CI.
+## Post-merge typecheck fix
+The reported failure (`turbo: command not found`, exit 127) was environmental: turbo is not on PATH. No merged-tree conflict exists. Re-ran via `pnpm exec turbo run typecheck --filter=...[9820df68]` (23/23 ok), db tsc, db forum-catalogue tests (24 pass) and core forums.test.ts (11 pass). No code changes.
 
-## Post-merge typecheck fix (#496)
-The reported failure was `turbo: command not found` (exit 127), a PATH problem, not a code conflict. Ran `pnpm exec turbo run typecheck --filter='...[9820df68]'`: 23/23 packages pass, so no rename was needed. Web tests (bench-notice-alerts, matter-workspace-page) pass 21/21. The core and notifications vitest runs could not start here: the Postgres testcontainer global setup exits ("Log stream ended ... Started"), a host issue that predates this change. They are left to CI.
-
-### Post-merge verification
-After merging the base, `pnpm exec turbo run typecheck --filter='...[<base>]'` passes (23 of 23 tasks). The earlier exit 127 was `turbo` missing from PATH, not a code fault, so no source change was needed. No duplicate keys or symbol collisions were found. V1 to V5 and `forgedock check` pass.
+- Re-verified at base fa74649a: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` 23/23 green; db forum-catalogue tests (24) and core forums.test.ts (11) pass. Exit 127 was `turbo` not on PATH; no code change.
+- Re-checked against base fa74649a: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` passes (23/23, shared turbo cache hit); direct `tsc --noEmit` on core and db also clean. Exit 127 is `turbo` not on the check shell's PATH; no code change.
+- Re-verified at base fa74649a again: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` 23/23 green. Exit 127 is `turbo` not on PATH; no code change.

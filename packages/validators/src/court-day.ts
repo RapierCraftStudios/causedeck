@@ -17,7 +17,12 @@ export const COURT_DAY_SOURCE_TYPES = [
   'import',
   'system',
 ] as const;
-export const COURT_DAY_CONFIRMATION_STATES = ['proposed', 'confirmed', 'rejected'] as const;
+export const COURT_DAY_CONFIRMATION_STATES = [
+  'proposed',
+  'confirmed',
+  'auto_applied',
+  'corrected',
+] as const;
 export const APPEARANCE_CAPACITY_VALUES = [
   'aor',
   'arguing',

@@ -76,7 +76,7 @@ export async function insertCourtDayFixture(
     .values(
       Array.from({ length: 20 }, (_, i) => ({
         workspaceId,
-        title: `${PETITIONERS[i % PETITIONERS.length]} v. ${RESPONDENTS[i % RESPONDENTS.length]}`,
+        title: `${PETITIONERS[i % PETITIONERS.length] ?? 'P'} v. ${RESPONDENTS[i % RESPONDENTS.length] ?? 'R'}`,
         practiceArea: 'writ',
         ownerMemberId,
       })),
@@ -124,10 +124,7 @@ export async function insertCourtDayFixture(
       },
     ];
   });
-  const listings = await tx
-    .insert(listing)
-    .values(values)
-    .returning({ id: listing.id });
+  const listings = await tx.insert(listing).values(values).returning({ id: listing.id });
   return {
     forumIds: { madras: madras.id, karnataka: karnataka.id },
     hallIds,

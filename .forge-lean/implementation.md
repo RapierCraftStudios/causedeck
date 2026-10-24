@@ -29,3 +29,6 @@ Exit 127 is environmental. `pnpm exec turbo run typecheck --concurrency=$FORGE_H
 
 ### Follow-up: merged-tree typecheck
 `turbo run typecheck` exited 127 because `turbo` is not on PATH (a local-tool lookup issue, no code fault). `pnpm exec turbo run typecheck` on the merged tree: 24/24 packages pass. No source change was needed.
+
+## CI lint fix
+- `require-authorization` flagged the three webhook-endpoints routes; annotated them `// authz: public — gated by requireScope(...)`, core asserts `workspace.manage`. Removed the accidentally committed `.eslintcache`.

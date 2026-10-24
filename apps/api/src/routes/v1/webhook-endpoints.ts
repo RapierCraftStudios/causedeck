@@ -50,7 +50,7 @@ const IdParamSchema = z.object({ id: z.uuid() });
 
 const SCOPE = 'webhooks:write';
 
-// authz: requireScope('webhooks:write') for a key; `workspace.manage` in core for the member.
+// authz: public — gated by requireScope('webhooks:write') for a key; core asserts `workspace.manage` for the member.
 export const createWebhookEndpointRoute = defineRoute({
   method: 'post',
   path: '/webhook-endpoints',
@@ -68,7 +68,7 @@ export const createWebhookEndpointRoute = defineRoute({
   },
 });
 
-// authz: requireScope('webhooks:write') for a key; `workspace.manage` in core for the member.
+// authz: public — gated by requireScope('webhooks:write') for a key; core asserts `workspace.manage` for the member.
 export const listWebhookEndpointsRoute = defineRoute({
   method: 'get',
   path: '/webhook-endpoints',
@@ -85,7 +85,7 @@ export const listWebhookEndpointsRoute = defineRoute({
   },
 });
 
-// authz: requireScope('webhooks:write') for a key; `workspace.manage` in core for the member.
+// authz: public — gated by requireScope('webhooks:write') for a key; core asserts `workspace.manage` for the member.
 export const deleteWebhookEndpointRoute = defineRoute({
   method: 'delete',
   path: '/webhook-endpoints/{id}',

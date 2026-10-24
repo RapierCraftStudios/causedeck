@@ -1105,7 +1105,6 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   detectClashes: 'pure (groups already-loaded items by date and member)',
   diffLists: 'pure',
   hashRows: 'pure',
-  itemOrdinal: 'pure',
   itemNumber: 'pure',
   paceSamples: 'pure',
   estimateCallWindow: 'pure',

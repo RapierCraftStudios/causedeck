@@ -101,6 +101,10 @@ export const PURGE_ORDER = [
   // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
   'case_status_snapshot',
   'case_watch',
+  // Court day (#58): the marker cites a hall and the snapshot a forum and a capture; all three
+  // are purged later, so both go before them.
+  'court_day_marker',
+  'list_snapshot',
   'review_correction',
   'proceeding_state_change',
   'proceeding_link',

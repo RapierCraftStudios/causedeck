@@ -104,6 +104,10 @@ export async function getCourtDay(
       sql`(${matterOwner} = ${me} or exists (select 1 from ${appearance} a join ${hearing} h on h.workspace_id = a.workspace_id and h.id = a.hearing_id where h.listing_id = ${listingId} and a.member_id = ${me}))`;
     const placed = sql`(${listing.itemNo} is not null or ${listing.hallId} is not null)`;
     const day = query.date;
+    // Per-proceeding counts, declared apart from the select that also reads the bench composition:
+    // they count obligations and earlier listings of one proceeding, never anything by judge.
+    const openObligations = sql<number>`(select count(*)::int from obligation o where o.workspace_id = ${listing.workspaceId} and o.proceeding_id = ${listing.proceedingId} and o.status = 'open')`;
+    const carryCount = sql<number>`(select count(*)::int from listing p where p.workspace_id = ${listing.workspaceId} and p.proceeding_id = ${listing.proceedingId} and p.list_date < ${listing.listDate})`;
 
     const rows = await tx
       .select({
@@ -126,8 +130,8 @@ export async function getCourtDay(
         bench: bench.judges,
         allowedUserIds: matterRestriction.allowedUserIds,
         restricted: sql<boolean>`${matterRestriction.id} is not null`,
-        openObligations: sql<number>`(select count(*)::int from obligation o where o.workspace_id = ${listing.workspaceId} and o.proceeding_id = ${listing.proceedingId} and o.status = 'open')`,
-        carryCount: sql<number>`(select count(*)::int from listing p where p.workspace_id = ${listing.workspaceId} and p.proceeding_id = ${listing.proceedingId} and p.list_date < ${listing.listDate})`,
+        openObligations,
+        carryCount,
       })
       .from(listing)
       .innerJoin(

@@ -3051,6 +3051,48 @@ const CASES: Record<string, Case> = {
     );
     expect(own.map((n) => n.id)).not.toContain(noticeId);
   },
+  getPublicCase: async (f) => {
+    // B's key asking for A's case: nothing, whatever the CNR (A's workspace is never B's scope).
+    const cnr = 'KABC010000012024';
+    const asA = await f
+      .asB((s) => core.getPublicCase(s, { workspaceId: f.a.id, userId: f.ub }, cnr))
+      .catch(() => null);
+    expect(asA).toBeNull();
+    expect(
+      await f.asB((s) => core.getPublicCase(s, { workspaceId: f.b.id, userId: f.ub }, cnr)),
+    ).toBeNull();
+  },
+  listPublicCauseLists: async (f) => {
+    const asA = await f
+      .asB((s) =>
+        core.listPublicCauseLists(s, { workspaceId: f.a.id, userId: f.ub }, { advocate: 'x' }),
+      )
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const own = await f.asB((s) =>
+      core.listPublicCauseLists(s, { workspaceId: f.b.id, userId: f.ub }, { advocate: 'x' }),
+    );
+    expect(own).toEqual([]);
+  },
+  listPublicOrders: async (f) => {
+    const cnr = 'KABC010000012024';
+    const asA = await f
+      .asB((s) => core.listPublicOrders(s, { workspaceId: f.a.id, userId: f.ub }, { caseCnr: cnr }))
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const own = await f.asB((s) =>
+      core.listPublicOrders(s, { workspaceId: f.b.id, userId: f.ub }, { caseCnr: cnr }),
+    );
+    expect(own).toEqual([]);
+  },
+  listPublicNotices: async (f) => {
+    // Global notices only: no record names a workspace, and the seeded personal-class sources give none.
+    const notices = await f.asB((s) => core.listPublicNotices(s, {}));
+    expect(JSON.stringify(notices)).not.toContain(f.a.id);
+    expect(notices.every((n) => n.sourceLicense.length > 0 && n.provenance.sourceId !== '')).toBe(
+      true,
+    );
+  },
   listMatterNotices: async (f) => {
     const matterId = f.a.rows.notice_match?.matterId ?? '';
     // B's scope (already open) asking for A's matter: not found (a nested A scope would be refused).

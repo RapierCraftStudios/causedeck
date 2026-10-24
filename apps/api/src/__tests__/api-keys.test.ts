@@ -16,7 +16,7 @@ function withProbeRoutes(v1: AppRouter): void {
   v1.openapi(
     defineRoute({
       method: 'get',
-      path: '/cases/probe',
+      path: '/cases/probe/ping',
       middleware: [requireScope('cases:read')],
       responses: { 200: { description: 'Probe' } },
     }),
@@ -25,7 +25,7 @@ function withProbeRoutes(v1: AppRouter): void {
   v1.openapi(
     defineRoute({
       method: 'get',
-      path: '/orders/probe',
+      path: '/orders/probe/ping',
       middleware: [requireScope('orders:read')],
       responses: { 200: { description: 'Probe' } },
     }),
@@ -49,16 +49,18 @@ async function issue(options: { monthlyQuota?: number; rateLimitPerMinute?: numb
 describe('API key bearer tokens', () => {
   it('rejects an unknown or malformed key with 401', async () => {
     const app = makeApp({ routes: withProbeRoutes });
-    expect((await call(app, '/v1/cases/probe', { bearer: 'cdk_00000000_nope' })).status).toBe(401);
+    expect((await call(app, '/v1/cases/probe/ping', { bearer: 'cdk_00000000_nope' })).status).toBe(
+      401,
+    );
     const unknown = `cdk_00000000_${'A'.repeat(43)}`;
-    expect((await call(app, '/v1/cases/probe', { bearer: unknown })).status).toBe(401);
+    expect((await call(app, '/v1/cases/probe/ping', { bearer: unknown })).status).toBe(401);
   });
 
   it('serves a key with the scope and bills one api.calls per call', async () => {
     const { workspace, token } = await issue();
     const app = makeApp({ routes: withProbeRoutes });
     for (let i = 1; i <= 2; i += 1) {
-      const response = await call(app, '/v1/cases/probe', { bearer: token });
+      const response = await call(app, '/v1/cases/probe/ping', { bearer: token });
       expect(response.status).toBe(200);
       expect(response.headers.get('x-quota-used')).toBe(String(i));
     }
@@ -68,7 +70,7 @@ describe('API key bearer tokens', () => {
   it('answers 403 for a missing scope and for routes outside the public API', async () => {
     const { token } = await issue();
     const app = makeApp({ routes: withProbeRoutes });
-    expect((await call(app, '/v1/orders/probe', { bearer: token })).status).toBe(403);
+    expect((await call(app, '/v1/orders/probe/ping', { bearer: token })).status).toBe(403);
     const me = await call(app, '/v1/me', { bearer: token });
     expect(me.status).toBe(403);
     expect((await problemOf(me)).code).toBe('FORBIDDEN');
@@ -78,7 +80,7 @@ describe('API key bearer tokens', () => {
     const { token } = await issue();
     const other = await issue();
     const app = makeApp({ routes: withProbeRoutes });
-    const response = await call(app, '/v1/cases/probe', {
+    const response = await call(app, '/v1/cases/probe/ping', {
       bearer: token,
       headers: { 'x-workspace-id': other.workspace.id },
     });
@@ -88,16 +90,16 @@ describe('API key bearer tokens', () => {
   it('stops serving a revoked key', async () => {
     const { user, workspace, key, token } = await issue();
     const app = makeApp({ routes: withProbeRoutes });
-    expect((await call(app, '/v1/cases/probe', { bearer: token })).status).toBe(200);
+    expect((await call(app, '/v1/cases/probe/ping', { bearer: token })).status).toBe(200);
     await revokeApiKey(testAppDb(), workspace.id, user.id, key.id);
-    expect((await call(app, '/v1/cases/probe', { bearer: token })).status).toBe(401);
+    expect((await call(app, '/v1/cases/probe/ping', { bearer: token })).status).toBe(401);
   });
 
   it('enforces the monthly quota with 429 and does not bill the refused call', async () => {
     const { workspace, token } = await issue({ monthlyQuota: 1 });
     const app = makeApp({ routes: withProbeRoutes });
-    expect((await call(app, '/v1/cases/probe', { bearer: token })).status).toBe(200);
-    const refused = await call(app, '/v1/cases/probe', { bearer: token });
+    expect((await call(app, '/v1/cases/probe/ping', { bearer: token })).status).toBe(200);
+    const refused = await call(app, '/v1/cases/probe/ping', { bearer: token });
     expect(refused.status).toBe(429);
     expect(refused.headers.get('x-quota-limit')).toBe('1');
     expect(await getUsage({ db: testAppDb(), workspaceId: workspace.id }, 'api.calls')).toBe(1);
@@ -108,7 +110,7 @@ describe('API key bearer tokens', () => {
     const app = makeApp({ routes: withProbeRoutes });
     const statuses: number[] = [];
     for (let i = 0; i < 4; i += 1) {
-      statuses.push((await call(app, '/v1/cases/probe', { bearer: token })).status);
+      statuses.push((await call(app, '/v1/cases/probe/ping', { bearer: token })).status);
     }
     expect(statuses).toEqual([200, 200, 429, 429]);
     expect(await getUsage({ db: testAppDb(), workspaceId: workspace.id }, 'api.calls')).toBe(2);

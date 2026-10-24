@@ -9,9 +9,9 @@
     "sourceLabel": "ಸ್ಥಿತಿ ಮೂಲ",
     "watch": "ಸ್ಥಿತಿ ವೀಕ್ಷಿಸಿ",
     "source": {
-      "in.tn.chennai-district:case_status": "ಚೆನ್ನೈ ಜಿಲ್ಲಾ ನ್ಯಾಯಾಲಯಗಳು",
-      "in.tn.madras-hc.chennai:case_status": "ಮದ್ರಾಸ್ ಹೈಕೋರ್ಟ್",
-      "in.ka.karnataka-hc.bengaluru:case_status": "ಕರ್ನಾಟಕ ಹೈಕೋರ್ಟ್"
+      "in_tn_chennai-district_case_status": "ಚೆನ್ನೈ ಜಿಲ್ಲಾ ನ್ಯಾಯಾಲಯಗಳು",
+      "in_tn_madras-hc_chennai_case_status": "ಮದ್ರಾಸ್ ಹೈಕೋರ್ಟ್",
+      "in_ka_karnataka-hc_bengaluru_case_status": "ಕರ್ನಾಟಕ ಹೈಕೋರ್ಟ್"
     },
     "remove": "ತೆಗೆದುಹಾಕಿ",
     "added": "ವೀಕ್ಷಣೆ ಸೇರಿಸಲಾಗಿದೆ.",

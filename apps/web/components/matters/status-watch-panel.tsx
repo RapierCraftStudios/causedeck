@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 
 import type { DeviceLookup, RefreshActions } from '../../lib/case-watch/refresh.ts';
+import { sourceKey } from '../../lib/case-watch/source-key.ts';
 import type { Result } from '../../lib/safe-action.ts';
 
 import { RefreshStatusButton } from './refresh-status-button.tsx';
@@ -64,7 +65,7 @@ export function StatusWatchPanel({
       >
         {sources.map((id) => (
           <option key={id} value={id}>
-            {t(`source.${id}`)}
+            {t(`source.${sourceKey(id)}`)}
           </option>
         ))}
       </select>

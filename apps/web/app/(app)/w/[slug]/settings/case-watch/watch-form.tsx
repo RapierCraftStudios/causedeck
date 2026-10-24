@@ -9,6 +9,7 @@ import { useState, useTransition } from 'react';
 
 import { RefreshStatusButton } from '../../../../../../components/matters/refresh-status-button.tsx';
 import type { DeviceLookup, RefreshActions } from '../../../../../../lib/case-watch/refresh.ts';
+import { sourceKey } from '../../../../../../lib/case-watch/source-key.ts';
 import type { Result } from '../../../../../../lib/safe-action.ts';
 
 import type { CaseWatchView } from './actions.ts';
@@ -48,7 +49,7 @@ export function CaseWatchForm({
                 {watch.cnr ?? watch.caseNumber}
                 <span className="text-ink-muted">
                   {' · '}
-                  {t(`source.${watch.sourceId}`)}
+                  {t(`source.${sourceKey(watch.sourceId)}`)}
                 </span>
               </span>
               <span className="inline-flex items-center gap-2">

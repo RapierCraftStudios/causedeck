@@ -9,9 +9,9 @@
     "sourceLabel": "நிலை மூலம்",
     "watch": "நிலையைக் கண்காணி",
     "source": {
-      "in.tn.chennai-district:case_status": "சென்னை மாவட்ட நீதிமன்றங்கள்",
-      "in.tn.madras-hc.chennai:case_status": "சென்னை உயர் நீதிமன்றம்",
-      "in.ka.karnataka-hc.bengaluru:case_status": "கர்நாடக உயர் நீதிமன்றம்"
+      "in_tn_chennai-district_case_status": "சென்னை மாவட்ட நீதிமன்றங்கள்",
+      "in_tn_madras-hc_chennai_case_status": "சென்னை உயர் நீதிமன்றம்",
+      "in_ka_karnataka-hc_bengaluru_case_status": "கர்நாடக உயர் நீதிமன்றம்"
     },
     "remove": "நீக்கு",
     "added": "கண்காணிப்பு சேர்க்கப்பட்டது.",

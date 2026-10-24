@@ -9,9 +9,9 @@
     "sourceLabel": "Status source",
     "watch": "Watch status",
     "source": {
-      "in.tn.chennai-district:case_status": "Chennai district courts",
-      "in.tn.madras-hc.chennai:case_status": "Madras High Court",
-      "in.ka.karnataka-hc.bengaluru:case_status": "Karnataka High Court"
+      "in_tn_chennai-district_case_status": "Chennai district courts",
+      "in_tn_madras-hc_chennai_case_status": "Madras High Court",
+      "in_ka_karnataka-hc_bengaluru_case_status": "Karnataka High Court"
     },
     "remove": "Remove",
     "added": "Watch added.",

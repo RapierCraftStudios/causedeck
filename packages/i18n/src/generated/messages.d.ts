@@ -2268,9 +2268,9 @@ export type Messages = {
     sourceLabel: string;
     watch: string;
     source: {
-      'in.tn.chennai-district:case_status': string;
-      'in.tn.madras-hc.chennai:case_status': string;
-      'in.ka.karnataka-hc.bengaluru:case_status': string;
+      'in_tn_chennai-district_case_status': string;
+      'in_tn_madras-hc_chennai_case_status': string;
+      'in_ka_karnataka-hc_bengaluru_case_status': string;
     };
     remove: string;
     added: string;

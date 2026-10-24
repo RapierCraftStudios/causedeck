@@ -88,19 +88,24 @@ afterEach(() => {
 describe('case-watch actions', () => {
   it('is NOT_FOUND for every action while court.case-status is off, and core never runs', async () => {
     state.flag = false;
-    const results = await Promise.all([
-      actions.listCaseWatchesAction({ workspaceId: WS }),
-      actions.removeCaseWatchAction({ workspaceId: WS, watchId: WATCH }),
-      actions.refreshCaseStatusAction({ workspaceId: WS, watchId: WATCH }),
-      actions.recordDeviceStatusAction({ workspaceId: WS, watchId: WATCH, status: STATUS }),
-      actions.addCaseWatchAction({
+    // Sequential: concurrent first imports of the mocked auth module race in vitest.
+    const results = [];
+    results.push(await actions.listCaseWatchesAction({ workspaceId: WS }));
+    results.push(await actions.removeCaseWatchAction({ workspaceId: WS, watchId: WATCH }));
+    results.push(await actions.refreshCaseStatusAction({ workspaceId: WS, watchId: WATCH }));
+    results.push(
+      await actions.recordDeviceStatusAction({ workspaceId: WS, watchId: WATCH, status: STATUS }),
+    );
+    results.push(
+      await actions.addCaseWatchAction({
         workspaceId: WS,
         proceedingId: PROCEEDING,
         sourceId: 'in.tn.chennai-district:case_status',
         cnr: 'KABC010012342024',
       }),
-    ]);
-    for (const result of results) expect(result).toMatchObject({ ok: false, code: 'NOT_FOUND' });
+    );
+    for (const result of results)
+      expect(result).toMatchObject({ ok: false, error: { code: 'NOT_FOUND' } });
     expect(core.runCaseStatusLookup).not.toHaveBeenCalled();
     expect(core.recordDeviceSnapshot).not.toHaveBeenCalled();
     expect(core.addCaseWatch).not.toHaveBeenCalled();
@@ -126,7 +131,7 @@ describe('case-watch actions', () => {
       await actions.refreshCaseStatusAction({ workspaceId: WS, watchId: WATCH }),
     ).toMatchObject({
       ok: false,
-      code: 'FORBIDDEN',
+      error: { code: 'FORBIDDEN' },
     });
   });
 
@@ -138,7 +143,7 @@ describe('case-watch actions', () => {
         sourceId: 'nope',
         cnr: 'KABC010012342024',
       }),
-    ).toMatchObject({ ok: false, code: 'VALIDATION' });
+    ).toMatchObject({ ok: false, error: { code: 'VALIDATION' } });
     const bad = await actions.recordDeviceStatusAction({
       workspaceId: WS,
       watchId: WATCH,

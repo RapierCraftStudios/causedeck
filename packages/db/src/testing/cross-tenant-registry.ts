@@ -146,6 +146,13 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   portfolio_case: DB_TABLES_TEST,
   portfolio_panel_advocate: DB_TABLES_TEST,
 
+  // Enterprise onboarding (#682).
+  sso_provider: DB_TABLES_TEST,
+  scim_token: DB_TABLES_TEST,
+  provisioning_run: DB_TABLES_TEST,
+  migration_run: DB_TABLES_TEST,
+  migration_run_row: DB_TABLES_TEST,
+
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
   // Judgment alerts (#497).

@@ -30,6 +30,9 @@ export const TERMINAL_SUBSCRIPTION_STATUSES = ['cancelled', 'expired'] as const;
 /** Chamber plans are sold per seat with at least this many seats. */
 export const MIN_CHAMBER_SEATS = 3;
 
+/** An enterprise firm plan is sold per seat with at least this many seats. */
+export const ENTERPRISE_MIN_SEATS = 10;
+
 /** A clerk seat on a chamber plan, per month, ex-GST. */
 export const CLERK_SEAT_PRICE_PAISE = 19_900;
 
@@ -45,6 +48,9 @@ export const UPI_AUTOPAY_MANDATE_CAP_PAISE = 1_500_000;
  * The charge is this price times the number of tracked cases.
  */
 export const TRACKED_CASE_PRICE_PAISE = 4_900;
+
+/** An enterprise firm seat, per month, ex-GST. */
+export const ENTERPRISE_SEAT_PRICE_PAISE = 99_900;
 
 /** Prices are ex-GST; #29 applies GST at this rate (basis points) on the invoice. */
 export const GST_RATE_BPS = 1_800;
@@ -187,6 +193,20 @@ export const PLAN_CATALOGUE: readonly Readonly<Plan>[] = Object.freeze([
     perTrackedCase: true,
     clerkSeatPricePaise: null,
     minSeats: 1,
+    active: false,
+    limits: PAID,
+  }),
+  // Seat-based firm plan for enterprises, provisioned not self-serve (#686): stays inactive. Monthly
+  // only: an annual per-seat minimum charge would exceed the UPI mandate cap.
+  freeze<Plan>({
+    id: 'enterprise-firm-seat-monthly',
+    name: 'Enterprise firm (per seat, monthly)',
+    kind: 'dedicated',
+    interval: 'month',
+    pricePaise: ENTERPRISE_SEAT_PRICE_PAISE,
+    perSeat: true,
+    clerkSeatPricePaise: CLERK_SEAT_PRICE_PAISE,
+    minSeats: ENTERPRISE_MIN_SEATS,
     active: false,
     limits: PAID,
   }),

@@ -18,6 +18,7 @@
     "@causedeck/db": "workspace:*",
     "@causedeck/storage": "workspace:*",
     "@causedeck/validators": "workspace:*",
+    "fflate": "catalog:",
     "ical.js": "catalog:",
     "postal-mime": "catalog:"
   },

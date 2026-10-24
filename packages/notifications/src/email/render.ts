@@ -21,7 +21,11 @@ import {
   endOfDayDigestSubject,
   type EndOfDayDigestProps,
 } from './templates/end-of-day-digest.tsx';
-import { NewsDigestEmail, newsDigestSubject, type NewsDigestProps } from './templates/news-digest.tsx';
+import {
+  NewsDigestEmail,
+  newsDigestSubject,
+  type NewsDigestProps,
+} from './templates/news-digest.tsx';
 import {
   InvitationEmail,
   invitationSubject,

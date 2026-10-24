@@ -8,7 +8,7 @@ const BODY = 'FULL ARTICLE BODY '.repeat(400);
 const RSS = `<?xml version="1.0"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
 <item>
-  <title>Supreme Court on &amp; tax appeals</title>
+  <title>Supreme Court &amp; tax appeals</title>
   <link>https://example.test/a</link>
   <pubDate>Mon, 19 Oct 2026 09:00:00 GMT</pubDate>
   <description><![CDATA[<p>Feed <b>excerpt</b> only.</p>]]></description>

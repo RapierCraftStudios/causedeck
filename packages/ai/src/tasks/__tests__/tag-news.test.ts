@@ -13,13 +13,13 @@ describe('tag_news task', () => {
   });
 
   it('accepts only closed tag values, never free text', () => {
-    expect(task.output.safeParse({ practiceAreas: ['tax'], forums: ['supreme_court'] }).success).toBe(
-      true,
-    );
+    expect(
+      task.output.safeParse({ practiceAreas: ['tax'], forums: ['supreme_court'] }).success,
+    ).toBe(true);
     expect(task.output.safeParse({ practiceAreas: ['made up'], forums: [] }).success).toBe(false);
-    expect(task.output.safeParse({ practiceAreas: [], forums: ['a free text forum'] }).success).toBe(
-      false,
-    );
+    expect(
+      task.output.safeParse({ practiceAreas: [], forums: ['a free text forum'] }).success,
+    ).toBe(false);
     expect(task.output.safeParse({ practiceAreas: [], forums: [], summary: 'x' }).success).toBe(
       true,
     );

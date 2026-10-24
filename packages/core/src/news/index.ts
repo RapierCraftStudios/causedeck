@@ -266,8 +266,7 @@ export function rankNewsItems<T extends { tags: NewsTags; publishedAt: Date }>(
   return items
     .map((item) => ({ item, score: newsMatchScore(item.tags, pref) }))
     .sort(
-      (a, b) =>
-        b.score - a.score || b.item.publishedAt.getTime() - a.item.publishedAt.getTime(),
+      (a, b) => b.score - a.score || b.item.publishedAt.getTime() - a.item.publishedAt.getTime(),
     )
     .map(({ item }) => item);
 }

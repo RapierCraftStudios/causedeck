@@ -410,7 +410,8 @@ describe('preferences page: digest selector and court hours (#199)', () => {
       for (const p of prefs.filter((x) => x.channel === 'email')) {
         if (p.category === 'security.alert') {
           expect(p).toMatchObject({ enabled: true, digest: 'instant', locked: true });
-        } else if (p.category === 'digest.daily' ||
+        } else if (
+          p.category === 'digest.daily' ||
           p.category === 'digest.end_of_day' ||
           p.category === 'digest.news'
         ) {

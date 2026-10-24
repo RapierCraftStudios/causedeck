@@ -38,8 +38,13 @@ const FORUM_KEYWORDS: Readonly<Record<schema.NewsForum, readonly string[]>> = {
   regulator: ['sebi', 'rbi', 'irdai', 'trai', 'cci ', 'ministry', 'notification'],
 };
 
-function matching<K extends string>(haystack: string, table: Readonly<Record<K, readonly string[]>>): K[] {
-  return (Object.keys(table) as K[]).filter((key) => table[key].some((word) => haystack.includes(word)));
+function matching<K extends string>(
+  haystack: string,
+  table: Readonly<Record<K, readonly string[]>>,
+): K[] {
+  return (Object.keys(table) as K[]).filter((key) =>
+    table[key].some((word) => haystack.includes(word)),
+  );
 }
 
 /** Deterministic tagging by whole-word-ish keywords in the headline and excerpt. */
@@ -65,7 +70,9 @@ export function closedTags(output: TagOutput): NewsTags {
   const areas = new Set<string>(schema.NEWS_PRACTICE_AREAS);
   const forums = new Set<string>(schema.NEWS_FORUMS);
   return {
-    practiceAreas: [...new Set(output.practiceAreas.filter((a) => areas.has(a)))] as schema.NewsPracticeArea[],
+    practiceAreas: [
+      ...new Set(output.practiceAreas.filter((a) => areas.has(a))),
+    ] as schema.NewsPracticeArea[],
     forums: [...new Set(output.forums.filter((f) => forums.has(f)))] as schema.NewsForum[],
   };
 }

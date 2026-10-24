@@ -109,12 +109,15 @@ describe.each(TEMPLATE_NAMES)('template %s', (name) => {
   });
 
   // The end-of-day digest has its own preview test (digest/end-of-day.test.ts).
-  it.skipIf(name === 'end-of-day-digest' || name === 'news-digest')('matches the English snapshot', async () => {
-    const email = await renderEmail(name, FIXTURES[name] as never, 'en');
-    expect(email.subject).toMatchSnapshot('subject');
-    expect(email.text).toMatchSnapshot('text');
-    expect(email.html).toMatchSnapshot('html');
-  });
+  it.skipIf(name === 'end-of-day-digest' || name === 'news-digest')(
+    'matches the English snapshot',
+    async () => {
+      const email = await renderEmail(name, FIXTURES[name] as never, 'en');
+      expect(email.subject).toMatchSnapshot('subject');
+      expect(email.text).toMatchSnapshot('text');
+      expect(email.html).toMatchSnapshot('html');
+    },
+  );
 });
 
 describe('category mapping', () => {

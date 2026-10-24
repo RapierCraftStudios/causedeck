@@ -35,11 +35,7 @@ import { RetryableError } from '../errors.ts';
 import { once } from '../idempotency.ts';
 import { getProducer } from '../producer.ts';
 
-import {
-  appLink,
-  notificationJobDeps,
-  type NotificationJobDeps,
-} from './notification-deliver.ts';
+import { appLink, notificationJobDeps, type NotificationJobDeps } from './notification-deliver.ts';
 
 const { member, organization, user } = schema;
 
@@ -63,10 +59,7 @@ const workspaceKey = (p: NewsDigestPayload) => `news:${p.workspaceId}:${p.localD
 const memberKey = (p: NewsDigestMemberPayload) => `news-digest:${p.userId}:${p.localDate}`;
 
 /** The local date and the half hour (`HH:00` or `HH:30`) `now` falls in, in `timeZone`. */
-export function newsDigestSlot(
-  now: Date,
-  timeZone: string,
-): { localDate: string; slot: string } {
+export function newsDigestSlot(now: Date, timeZone: string): { localDate: string; slot: string } {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone,
     hourCycle: 'h23',

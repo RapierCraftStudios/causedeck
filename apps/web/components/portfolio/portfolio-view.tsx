@@ -62,7 +62,11 @@ export function PortfolioSummaryCards({ summary }: { summary: PortfolioSummaryVi
     ['adverse', summary.withAdverseOrder],
   ] as const;
   return (
-    <section aria-label={t('summary.label')} data-portfolio-summary="" className="flex flex-col gap-3">
+    <section
+      aria-label={t('summary.label')}
+      data-portfolio-summary=""
+      className="flex flex-col gap-3"
+    >
       <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {cards.map(([key, value]) => (
           <div key={key} data-summary={key} className="border-line rounded-md border p-3">
@@ -126,7 +130,12 @@ export function PortfolioFilters({
         <Input type="date" name="to" defaultValue={values.nextTo ?? ''} />
       </label>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="adverse" value="1" defaultChecked={values.adverseOnly === true} />
+        <input
+          type="checkbox"
+          name="adverse"
+          value="1"
+          defaultChecked={values.adverseOnly === true}
+        />
         {t('filters.adverseOnly')}
       </label>
       <Button type="submit">{t('filters.apply')}</Button>
@@ -350,7 +359,9 @@ export function PortfolioExportButton({
       toast.error(t('export.failed'));
       return;
     }
-    const url = URL.createObjectURL(new Blob([result.data.csv], { type: 'text/csv;charset=utf-8' }));
+    const url = URL.createObjectURL(
+      new Blob([result.data.csv], { type: 'text/csv;charset=utf-8' }),
+    );
     const link = document.createElement('a');
     link.href = url;
     link.download = result.data.filename;
@@ -371,7 +382,10 @@ export function PortfolioExportButton({
   );
 }
 
-export const PORTFOLIO_ALERT_CATEGORIES = ['portfolio.adverse_order', 'portfolio.missed_date'] as const;
+export const PORTFOLIO_ALERT_CATEGORIES = [
+  'portfolio.adverse_order',
+  'portfolio.missed_date',
+] as const;
 export type PortfolioAlertCategory = (typeof PORTFOLIO_ALERT_CATEGORIES)[number];
 const CATEGORY_MESSAGE = {
   'portfolio.adverse_order': 'adverseOrder',
@@ -401,7 +415,9 @@ export function PortfolioAlertSettings({
   }) => Promise<Result<unknown>>;
 }) {
   const t = useTranslations('portfolio');
-  const [state, setState] = useState(() => new Map(cells.map((c) => [`${c.category}|${c.channel}`, c.enabled])));
+  const [state, setState] = useState(
+    () => new Map(cells.map((c) => [`${c.category}|${c.channel}`, c.enabled])),
+  );
 
   async function toggle(cell: PortfolioAlertCell, enabled: boolean) {
     const key = `${cell.category}|${cell.channel}`;
@@ -419,7 +435,11 @@ export function PortfolioAlertSettings({
   }
 
   return (
-    <section aria-label={t('alerts.title')} data-portfolio-alerts="" className="flex flex-col gap-3">
+    <section
+      aria-label={t('alerts.title')}
+      data-portfolio-alerts=""
+      className="flex flex-col gap-3"
+    >
       <p className="text-ink-muted max-w-prose text-sm">{t('alerts.hint')}</p>
       {PORTFOLIO_ALERT_CATEGORIES.map((category) => (
         <div key={category} data-alert-category={category} className="flex flex-col gap-2">

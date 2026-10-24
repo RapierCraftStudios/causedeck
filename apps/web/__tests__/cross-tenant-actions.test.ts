@@ -105,6 +105,7 @@ const caseWatch = await import('../app/(app)/w/[slug]/settings/case-watch/action
 const danger = await import('../app/(app)/w/[slug]/settings/danger/actions.ts');
 const courts = await import('../app/(app)/w/[slug]/courts/actions.ts');
 const rosters = await import('../app/(app)/w/[slug]/courts/rosters/actions.ts');
+const portfolioActions = await import('../app/(app)/w/[slug]/portfolio/actions.ts');
 const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
@@ -182,6 +183,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   previewRosterImportAction: rosters,
   confirmRosterImportAction: rosters,
   dismissBenchChangeAlertAction: rosters,
+  createPortfolioAction: portfolioActions,
+  importPortfolioAction: portfolioActions,
+  exportPortfolioCsvAction: portfolioActions,
   createMatterAction: matters,
   searchMattersAction: matters,
   checkConflictsAction: matters,
@@ -583,6 +587,14 @@ function inputs(workspaceId: string): Record<string, unknown> {
       workspaceId,
       alertId: t.a.rows.bench_change_alert?.alertId,
     },
+    // Portfolios (#666): A's portfolio id under B's workspace is not found; creation is B's own.
+    createPortfolioAction: { workspaceId, name: 'Cross-tenant probe book' },
+    importPortfolioAction: {
+      workspaceId,
+      portfolioId: t.a.rows.portfolio?.id,
+      csv: 'cnr\nMHAU019999992026\n',
+    },
+    exportPortfolioCsvAction: { workspaceId, portfolioId: t.a.rows.portfolio?.id },
     // Capture inbox (#43): ub, owner of B, may not enable a channel on A, nor discard or pin A's capture.
     enableChannelAction: { workspaceId, channel: 'email', disclosureVersion: '2026-10-v1' },
     discardCaptureAction: { workspaceId, captureId: t.a.rows.capture?.id },
@@ -1180,6 +1192,27 @@ describe('cross-tenant server actions', () => {
     }
     expect(await snapshotA()).toEqual(before);
     expect(await aAlerts()).toEqual(alertsBefore);
+  });
+
+  it('portfolio actions under B’s own workspace find none of A’s portfolio (#666)', async () => {
+    const before = await snapshotA();
+    const aPortfolios = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.portfolio).orderBy(schema.portfolio.id),
+      );
+    const portfoliosBefore = await aPortfolios();
+    const own = inputs(t.b.id);
+    for (const name of ['importPortfolioAction', 'exportPortfolioCsvAction'] as const) {
+      expect(await action(name)(own[name]), name).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    expect(await action('createPortfolioAction')(own.createPortfolioAction)).toMatchObject({
+      ok: true,
+    });
+    expect(await aPortfolios()).toEqual(portfoliosBefore);
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('capture actions under B’s own workspace find none of A’s captures and change only B (#43)', async () => {

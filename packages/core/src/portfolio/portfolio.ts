@@ -38,7 +38,8 @@ export async function createPortfolio(
   input: { name: string },
 ): Promise<PortfolioSummaryRow> {
   const name = input.name.trim();
-  if (name.length < 1 || name.length > 200) throw invalid('A portfolio name is 1 to 200 characters');
+  if (name.length < 1 || name.length > 200)
+    throw invalid('A portfolio name is 1 to 200 characters');
   await requirePortfolioAccess(deps.db, actor, { ownerOnly: true });
   return withWorkspace(deps.db, actor, async (tx) => {
     const existing = await tx

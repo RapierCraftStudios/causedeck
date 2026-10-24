@@ -248,7 +248,9 @@ describe('listPortfolios and createPortfolio (#666)', () => {
       const made = await createPortfolio({ db: tx }, owner, { name: '  Recovery book  ' });
       expect(made.name).toBe('Recovery book');
       expect((await listPortfolios({ db: tx }, clerk)).map((p) => p.id)).toEqual([made.id]);
-      await expect(createPortfolio({ db: tx }, owner, { name: 'Recovery book' })).rejects.toMatchObject({
+      await expect(
+        createPortfolio({ db: tx }, owner, { name: 'Recovery book' }),
+      ).rejects.toMatchObject({
         code: 'CONFLICT',
       });
     });

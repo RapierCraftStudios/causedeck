@@ -5,6 +5,7 @@ import {
   BarChart3,
   BookOpen,
   Brain,
+  Briefcase,
   CalendarDays,
   CalendarClock,
   ClipboardCheck,
@@ -37,6 +38,7 @@ export const WORKSPACE_ROUTES = [
   'people',
   'courts',
   'notices',
+  'portfolio',
   'activity',
   'billing',
   'invoices',
@@ -96,6 +98,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   item('people', Users, 'practice'),
   item('courts', Landmark, 'practice'),
   item('notices', BookOpen, 'practice'),
+  item('portfolio', Briefcase, 'practice'),
   item('billing', Wallet, 'practice', { requires: 'billing.read' }),
   item('invoices', ReceiptIndianRupee, 'practice', {
     requires: 'invoices.read',

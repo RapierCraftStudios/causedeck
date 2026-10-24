@@ -143,6 +143,9 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
   courts: (await import('../app/(app)/w/[slug]/courts/page.tsx')).default,
   // The notices feed since #588, not a placeholder.
   notices: (await import('../app/(app)/w/[slug]/notices/page.tsx')).default,
+  // The institution portfolio since #666.
+  portfolio: (await import('../app/(app)/w/[slug]/portfolio/page.tsx'))
+    .default as unknown as PageComponent,
   activity: (await import('../app/(app)/w/[slug]/activity/page.tsx')).default,
   billing: (await import('../app/(app)/w/[slug]/billing/page.tsx')).default,
   invoices: (await import('../app/(app)/w/[slug]/invoices/page.tsx')).default,
@@ -163,6 +166,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'courts',
   // Its own page test since #588 (components/notices/__tests__/notice-list.test.tsx).
   'notices',
+  // Its own component test since #666 (components/portfolio/__tests__/portfolio-view.test.tsx).
+  'portfolio',
   // Its own page test since #388 (matters-page.test.tsx).
   'matters',
   // Its own page and shell test since #48 (components/inbox/__tests__/inbox-shell.test.tsx).

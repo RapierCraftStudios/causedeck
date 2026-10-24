@@ -61,6 +61,11 @@
         "empty": "No notices matched yet.",
         "hint": "Notices appear when a court publishes one for a forum you use."
       },
+      "portfolio": {
+        "description": "The cases your institution tracks.",
+        "empty": "No portfolio yet.",
+        "hint": "Create a portfolio and import a CSV of cases to start."
+      },
       "activity": {
         "description": "Everything that happened, with undo.",
         "empty": "No activity yet.",

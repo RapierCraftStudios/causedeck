@@ -4,7 +4,7 @@
 // and only for halls where a workspace has an item listed today. It has no workspace, so it is
 // `system.*` by rule and reads the halls through the owner-defined `app_board_poll_targets` (0074).
 // It does nothing while the flag `court.live-tracking` is off or a board source is uncleared. Only
-// counts are logged. Core never imports `@causedeck/fetch`: the worker wires the governed fetcher
+// counts are logged. The worker wires the governed fetcher
 // through `setBoardFetcherFactory`.
 import { z } from 'zod';
 

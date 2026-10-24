@@ -26,6 +26,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `case-watch` | `@causedeck/core/case-watch` | case-status watches (#591, D-048, #483 part 3): `addCaseWatch`, `listCaseWatches`, `removeCaseWatch` (an advocate's own watches on proceedings they can read), `runCaseStatusLookup` (the server path: only the advocate's own watch, always through `@causedeck/fetch` with `delegatedFor`, so a bulk or unscoped lookup cannot be made; parsed with the `@causedeck/adapters` status parsers) and `recordDeviceSnapshot` (a device-read status), snapshots with provenance (tier used, cost, device or server; an unchanged page writes no second row) and `diffStatus`, which stages a new next hearing date as an L2 `case_status_change` proposal confirmed through the matter-graph next-date services; `pollCaseWatches` (#592, the body of `system.status.poll`: due watches through `app_case_watch_due`, each run as its own advocate with per-advocate and per-source caps, a killed source skipped) and `notifyStatusChanges` (new date, new order and stage change alerts to the advocate, never on the first snapshot or a sensitive matter) |
 | `notices` | `@causedeck/core/notices` | the official notices feed (#586, D-048, part 3 of #480): `pollNotices` (fetches each cleared `notice` source once through the governed fetch layer via a structural `NoticeFetcher` port, parses it with the source's parser, stores new notices once with provenance, never fetches an uncleared source) and `matchNotices` (matches notices to the workspaces and matters with a proceeding before the forums they name, through the owner-defined `app_notice_match_targets`), `notifyNoticeMatches` (#587: one `notices` alert per active member who may read matters, per notice, deduplicated by notification `dedupeKey`) and `listHolidayListings` (#587: the workspace's listings that fall on the `effective_on` date of a matched `holiday` notice for their forum), run hourly by `system.notices.poll`; `pollNotices` takes an optional `onMatched` hook (#496) that the job wires to `notifyBenchNoticeAlerts`, so `notices` does not import `court` |
 | `api-keys` | `@causedeck/core/api-keys` | public API keys (#624, #487 part 1): `createApiKey` (the token is shown once, only its SHA-256 is stored), `listApiKeys`, `revokeApiKey` (both audited), `authenticateApiKey` (reads one key by hash through the owner-defined `app_api_key_by_hash`), scopes, and `consumeApiCall` (per-key monthly quota, one billed `api.calls` usage unit per request) |
+| `webhooks` | `@causedeck/core/webhooks` | change webhooks (#626, #487 part 3): `createWebhookEndpoint` (the HMAC secret is returned once, audited), `listWebhookEndpoints`, `deleteWebhookEndpoint` (all need `workspace.manage`), `signWebhook` / `verifyWebhookSignature` (HMAC-SHA256 over `timestamp.body`) and `emitWebhookEvent` (one pending delivery per matching active endpoint of the workspace; a content-free payload of ids, CNR, kinds of change, provenance and source licensor; none for a sensitive matter). The `webhook.deliver` job sends through `@causedeck/fetch` `deliverWebhook`; `system.webhook.sweep` re-enqueues due deliveries |
 | `conflicts` | `@causedeck/core/conflicts` | conflict-of-interest checks (#500, D-048, counsel-gated by #486): `checkConflicts` matches the names on a new matter against the chamber's own matters and parties, in the caller's workspace transaction only, transliteration-aware for Tamil and Kannada and tolerant of organisation abbreviations; every check is audited as `conflict.checked` (counts, never names) and nothing blocks the advocate |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
@@ -36,6 +37,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `court-day` | `@causedeck/core/court-day` | court-day display-board tracking (#493, D-048): `pollBoards` (one governed fetch per High Court board per run, only in court hours and only for halls where a workspace has an item listed today; content-free `board_observation` rows; `court.board` alerts through `notify()` at 5 away, 2 away, now, risen and passed over, deduped per listing and threshold), the `getLiveHalls` read model and the call-time estimate `estimateCallWindow` / `backtestEta` (a range with a confidence level, never a promise) |
 | `research` | `@causedeck/core/research` | judgment alerts (#497, D-048): per-matter issue tags (`listTags`, `addTag`, `proposeTags`, `confirmTag`, `dismissTag`; only confirmed tags drive alerts), `scanJudgments` (matches new corpus judgments to confirmed tags by statute and section, writes `judgment_alert` rows and notifies advocates who may read the matter; sensitive matters never alert) and `listRelevantJudgments` (keeps only alerts whose judgment `verifyCitation` resolves, D-004) |
 | `network` | `@causedeck/core/network` | the court document network (#485, D-048 tier 3): opt-in contribution of public court documents (cause lists, published orders) stored once globally, `findContributed` reads, and withdrawal on workspace erase |
+| `public-api` | `@causedeck/core/public-api` | the public developer API reads (#625, D-048, D-050): `getPublicCase`, `listPublicCauseLists`, `listPublicOrders` and `listPublicNotices` return records with provenance and a derived `sourceLicense`; a record is served only when its source is cleared and, for shared (global) data, `non-personal` (`exposableThroughApi`); personal data only for the caller's own non-sensitive matters under the workspace scope; no contributor, rating, ranking or prediction fields |
 | `support` | `@causedeck/core/support` | consented, time-boxed staff support sessions and the read-only support context ([audit.md](audit.md)) |
 | `business` | `@causedeck/core/business` | the internal business dashboard (#519, D-049): `staffBusinessSnapshot` / `readBusinessSnapshot` (aggregates from the owner-defined `app_business_snapshot` functions), the pure MRR, ARR, churn, conversion, cost-per-user and margin maths, the cost-per-user threshold and the founders' digest and alert emails |
 | `capture` | `@causedeck/core/capture` | the capture inbox (#43, [ADR 0021](../adr/0021-capture-inbox-and-upload-pipeline.md)): `createCapture` / `completeUpload` / `createManualCapture`, per-channel opt-in, discard and pin, raw-object retention, `deleteRecording` (a voice recording and its transcript, #542), the diary-photo step of `capture.process` for channel `camera` (#52, [ADR 0030](../adr/0030-diary-photo-capture-and-image-anchors.md)), and the bodies of `capture.scan`, `capture.process` and `capture.retention`; jobs arrive as the `CaptureJobs` port. Not re-exported from the package root |
@@ -108,10 +110,12 @@ graph LR
   sources --> audit
   jobs --> news
   jobs --> sources
+  jobs --> webhooks
   research --> workspaces
   research --> citations
   network --> audit
   network --> sources
+  public-api --> sources
   support --> workspaces
   support --> audit
   business --> usage
@@ -151,6 +155,8 @@ graph LR
   api-keys --> audit
   api-keys --> usage
   api-keys --> workspaces
+  webhooks --> audit
+  webhooks --> workspaces
   conflicts --> audit
   jobs --> research
   calendar --> audit
@@ -197,6 +203,7 @@ graph LR
 | `case-watch` | `workspaces`, `automation`, `matter-graph`, `sources` |
 | `notices` | `workspaces`, `sources` |
 | `api-keys` | `audit`, `usage`, `workspaces` |
+| `webhooks` | `audit`, `workspaces` |
 | `conflicts` | `audit` |
 | `facts` | none |
 | `matter-graph` | `workspaces`, `matters` |
@@ -220,7 +227,7 @@ graph LR
 | `voice` | `workspaces`, `capture`, `ai`, `automation`, `matter-graph` |
 | `extraction` | `workspaces`, `ai`, `automation`, `matter-graph` |
 | `import` | `matter-graph`, `usage`, `automation` |
-| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `sources`, `research`, `business`, `case-watch`, `notices`, `data-ops`, `news` |
+| `jobs` | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `sources`, `research`, `business`, `case-watch`, `webhooks`, `notices`, `data-ops`, `news` |
 | `runtime` | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation` |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

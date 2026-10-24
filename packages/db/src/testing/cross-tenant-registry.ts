@@ -134,6 +134,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Public API keys (#624).
   api_key: DB_TABLES_TEST,
 
+  // Change webhooks (#626).
+  webhook_endpoint: DB_TABLES_TEST,
+  webhook_delivery: DB_TABLES_TEST,
+
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
   // Judgment alerts (#497).
@@ -424,6 +428,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // name a row of another workspace, and undos handed a payload of A's ids
   // court day (#493): the live halls read model opens withWorkspace on the given actor
   getLiveHalls: denies,
+  // bench card (#521): the flagged read model opens withWorkspace on the given actor
+  getBenchCard: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -634,6 +640,26 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
   },
+  createWebhookEndpoint: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; a non-member is FORBIDDEN and a nested scope throws TenancyError',
+  },
+  listWebhookEndpoints: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; endpoints are tenant rows under RLS',
+  },
+  deleteWebhookEndpoint: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; another workspace endpoint id is NOT_FOUND',
+  },
+  emitWebhookEvent: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on input.workspaceId and fans out only to that workspace endpoints; nested in another workspace scope it throws TenancyError',
+  },
   getUsage: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -760,6 +786,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listRelevantJudgments: denies,
   // notices page and matter card (#588)
   listWorkspaceNotices: empty,
+  getPublicCase: empty,
+  listPublicCauseLists: empty,
+  listPublicOrders: empty,
+  listPublicNotices: selfScoped,
   listMatterNotices: denies,
   // bench-notice alerts (#496)
   listBenchNoticeAlerts: empty,
@@ -841,6 +871,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   MIN_ERASURE_SUBJECT_LENGTH: 'constant',
   SOURCE_DATA_CLASSES: 'constant',
   exposableThroughApi: 'pure',
+  PUBLIC_API_MAX_LIMIT: 'constant',
+  PUBLIC_API_DEFAULT_LIMIT: 'constant',
+  sourceLicense: 'pure',
   sourceOpsOverview:
     'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
   sourceFetchLogs:
@@ -1006,6 +1039,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   runCauselistPoll: 'system job body: see pollCauseList',
   // court day: display-board tracking and the call-time estimate (#493)
   COURT_LIVE_TRACKING_FLAG: 'constant',
+  BENCH_FACTS_FLAG: 'constant',
   BOARD_SOURCES: 'constant',
   DEFAULT_AWAY_THRESHOLDS: 'constant',
   isCourtHours: 'pure (clock arithmetic in IST)',
@@ -1150,6 +1184,23 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   digestInstant: 'pure (time zone math)',
   notificationJobDeps: 'transport wiring (no database access)',
   setNotificationJobDeps: 'setter',
+  // change webhooks (#626)
+  MAX_WEBHOOK_ENDPOINTS_PER_WORKSPACE: 'constant',
+  MAX_WEBHOOK_URL_LENGTH: 'constant',
+  WEBHOOK_DISABLE_AFTER_FAILURES: 'constant',
+  WEBHOOK_HEADERS: 'constant',
+  WEBHOOK_RETRY_LIMIT: 'constant',
+  WEBHOOK_SWEEP_CRON: 'constant',
+  WebhookError: 'error class',
+  generateWebhookSecret: 'pure (random secret)',
+  signWebhook: 'pure (HMAC-SHA256)',
+  verifyWebhookSignature: 'pure (HMAC-SHA256, constant time)',
+  webhookDeliver: 'job definition (handler is runWebhookDeliver)',
+  runWebhookDeliver:
+    'job body: re-reads the delivery and its endpoint inside the payload workspace scope',
+  webhookDeliverSchema: 'job payload schema',
+  systemWebhookSweep: 'job definition (handler is runWebhookSweep)',
+  runWebhookSweep: 'system job body: lists ids through app_webhook_delivery_due and enqueues',
   setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
   // public API keys (#624)
   API_KEY_SCOPES: 'constant',

@@ -794,6 +794,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listPublicOrders: empty,
   listPublicNotices: selfScoped,
   listMatterNotices: denies,
+  // bench-notice alerts (#496)
+  listBenchNoticeAlerts: empty,
+  notifyBenchNoticeAlerts: selfScoped,
   scanJudgments: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -941,6 +944,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   normaliseJudgeName: 'pure',
   // court: bench-change alerts (#389)
   portfolioRuleMatches: 'pure (matches a portfolio rule against a case type and year)',
+  classifyBenchNotice: 'pure (reads a notice title; no data access)',
+  BENCH_NOTICE_TYPES: 'constant',
+  BENCH_NOTICE_WINDOW_DAYS: 'constant',
   benchChangeDay: 'pure (formats an ISO date as "05 Oct")',
   benchChangeTitle: 'pure (the counts-only notification title)',
   // court: roster lookup statements (#387), exported for the plan and budget test

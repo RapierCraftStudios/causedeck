@@ -1,28 +1,23 @@
 ### Approach
-Recovery pass for ci.red. Three CI causes fixed on top of the earlier #499 work; nothing re-derived.
+Resumed the interrupted branch. The engine, orders poll, extraction hook, registries and docs were already in place; this pass added the missing `period.ts` named by D1 and declared the `status-poll.ts` accessor as an amendment.
 
 ### Changes
-- apps/web/lib/matters/workspace.ts: `agreement` accepts `undefined` (exactOptionalPropertyTypes typecheck error).
-- apps/web/components/matters/next-date-card.tsx: chip keys resolve under the `matters` namespace (`workspace.confidence.*`), so the matters i18n key guard finds them.
-- apps/web/__tests__/matter-workspace-page.test.tsx: mock `@causedeck/core/facts` and give the logger mock `warn`; a failed agreement load now degrades to no chip instead of failing the page.
-- Prettier applied to apps/admin/lib/data/index.ts, date-conflict-card.tsx, 0080_snapshot.json, staff-console-schema.test.ts.
+- packages/core/src/deadlines/period.ts: new, period arithmetic (days/weeks/months, month-end clamp).
+- packages/core/src/deadlines/compute.ts: uses period.ts.
+- packages/core/src/jobs/definitions/status-poll.ts: `getStatusFetcherFactory` accessor so orders.poll shares the wired fetcher (amendment add-deliverable).
+- Earlier commits: deadlines domain, case-watch/orders.ts, jobs/definitions/orders-poll.ts, extraction/run.ts, registries, eslint core-domains, docs, cross-tenant tests, worker registry/schedule tests.
 
 ### Acceptance Criteria Status
-- R1 ✅ apps/web/components/matters/date-conflict-card.tsx
-- R2 ✅ apps/admin/app/(console)/data-ops/page.tsx
-- R3 ✅ packages/core/src/facts/agreement.ts
-- R4 ✅ apps/web/components/matters/date-conflict-card.tsx
-- R5 ✅ apps/web/components/matters/next-date-card.tsx
-- R6 ✅ packages/core/src/sources/ops.ts
+- R1 ✅ packages/core/src/deadlines/calendar.ts
+- R2 ✅ packages/core/src/jobs/definitions/orders-poll.ts, case-watch/orders.ts
+- R3 ✅ packages/core/src/extraction/run.ts
+- R4 ✅ packages/core/src/deadlines/direction.test.ts
+- R5 ✅ packages/core/src/deadlines/deadlines.test.ts
+- R6 ✅ packages/core/src/case-watch/orders.test.ts
+- R7 ✅ packages/core/src/deadlines/compute.ts
 
 ### Verification
-V1-V4 not run locally (verify.mode ci); CI runs them. Prettier 3.9.10 with the repo config was run on the changed files. The page-test regression (logger.warn mock) is the existing matter-workspace-page suite, which failed on CI before this fix.
+V1, V2: could not run. Vitest globalSetup fails to start the Postgres testcontainer ("Log stream ended ... Started"), a toolchain/environment problem. V3 not run. Prettier and eslint pass via the commit hook.
 
 ### Notes
-No behaviour or env changes.
-
-## Migration renumber
-Base took 0080 (news) and 0081 (api_keys). Lane migration renumbered to 0082_staff_conflict_rate (SQL byte-identical). Snapshot 0082 is the 0081 snapshot with new id/prevId (custom SQL-only migration); journal entry idx 82 appended. drizzle-kit/pnpm were unavailable offline, so the generator was not run.
-
-### Update after conformance feedback
-Merged origin/milestone/court-data-network (47 commits, one conflict set in .forge-lean only). tsc clean for core and worker after the merge. V1 and V2 still exit 1, with identical cause before and after the merge: vitest globalSetup loads undici 8, which needs node >=22.19 (pinned 22.12 lacks zlib.createZstdDecompress). With a scratch zstd shim in $TMPDIR, the Postgres testcontainer then fails to start ("Log stream ended and message Started was not received"). No code defect found; non-DB subset (21 tests) passes. V3 passes.
+No env vars. Vacations come from a static per-forum table (R8 deferred).

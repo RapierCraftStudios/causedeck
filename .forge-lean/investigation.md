@@ -1,44 +1,42 @@
 **Verdict**: CONFIRMED
 **Confidence**: medium
-**Severity**: medium (greenfield feature, part 6 of #498; last UI slice)
+**Severity**: medium (greenfield feature, part of #508; no regression)
 **Task Type**: feature
 
 ### What Was Claimed
-Add `apps/web/app/(app)/w/[slug]/portfolio/`: CSV import, dashboard (next dates, stage, adverse orders), exception alert settings, exports; an i18n namespace with catalog test; cross-tenant-actions test entries for every `'use server'` action. Depends on #663 (service), #664 (billing), #665 (alerts).
+#685: a core migration domain on top of `packages/core/src/import` (upload a portfolio file, column mapping, dry-run reporting mapping issues for 5,000 matters without writing, resumable chunked import with progress, rollback via `undoImportBatch`) plus an `apps/admin` console section. Acceptance: a 5,000-matter dry-run writes nothing; the real import is resumable. Depends on #682 (merged).
 
 ### What We Found
-- No portfolio route exists: `apps/web/app/(app)/w/[slug]/` has no `portfolio/` (listing checked at origin/milestone/court-data-network, 5906e366).
-- Core service is done and exported from the root: `packages/core/src/index.ts:22` -> `packages/core/src/portfolio/index.ts:5-27` (`importPortfolioCases`, `listPortfolioCases`, `portfolioSummary`, `exportPortfolioCsv`, `parsePortfolioCsv`, `scanPortfolioAlerts`). Import is owner-only, reads for any active member (`access.ts:16-24`). `packages/core/package.json` has no `./portfolio` subpath (only root and per-domain subpaths, lines 25-45).
-- There is NO core function to create or list portfolios: `schema.portfolio` is only inserted by tests/seeders (`packages/db/src/testing/two-tenants.ts`, `portfolio.test.ts`). The UI cannot get a `portfolioId` without one -> small core addition needed (see Recommendation).
-- Dashboard data shape: `dashboard.ts:20-36` (filters stage, nextFrom/nextTo, adverseOnly, limit<=500), `:72-81` (`PortfolioSummary`: total, byStage, withAdverseOrder, upcoming, overdue). Import report shape: `import.ts:39-51`. Export returns a CSV string: `export.ts:22-27`.
-- Alert categories exist: `packages/notifications/src/categories.ts:47-58` (`portfolio.adverse_order`, `portfolio.missed_date`); the notification preferences form already maps them (`settings/notifications/preferences-form.tsx:89-90`), so "alert settings" can reuse `setNotificationPreferenceAction` (`settings/notifications/actions.ts:97`) rather than a new action.
-- Billing #664 closed `needs-human conformance.unimplemented`, but `packages/billing/src/plans.ts:23,56-61` already has `TRACKED_CASE_PRICE_PAISE`/`trackedCaseChargePaise`; the UI does not need it.
-- Precedent for the page/action pattern: `courts/rosters/{page,actions,loading,error}.tsx` and `workspaceAction` (`apps/web/lib/workspace-action.ts`), actions wrapped as async exports (`rosters/actions.ts:120-135`).
-- Workspace kind `institution` exists (`packages/db/src/schema/auth.ts:44`); nav routes are the `WORKSPACE_ROUTES` list in `apps/web/lib/nav.ts:26-45` with `nav.test.ts` guarding it.
-- i18n: namespaces in `packages/i18n/src/catalog.ts:7-38` (e.g. `courts-rosters` at :20), JSON per locale in `packages/i18n/src/messages/{en,kn,ta}/`, expected list in `packages/i18n/src/__tests__/catalog.test.ts:~95-100` (camelCase names).
-- Cross-tenant actions guard: `apps/web/__tests__/cross-tenant-actions.test.ts` `ACTIONS` (:123) and probe inputs (:565-), final check that exported == ACTIONS (:798).
+- The schema exists (merged #682): `packages/db/src/schema/enterprise.ts:37-41` (`MIGRATION_MODES` dry_run|import, row states pending|ok|skipped|error|rolled_back), `:129-163` `migration_run` (status, totalRows, processedRows, errorRows, `resumeFrom`, `report` jsonb, rolledBackAt), `:165-192` `migration_run_row` (rowIndex, state, entityKind/entityId, error). Registered in `packages/db/src/testing/cross-tenant-registry.ts:153-154`.
+- No migration domain: `packages/core/src` has no `migration/` folder; `CORE_DOMAINS` and `CORE_DOMAIN_DEPENDENCIES` in `packages/config/eslint/core-domains.js` have no entry (`import` is at :124).
+- Import domain pieces to reuse (`packages/core/src/import/index.ts`): `createImportBatch`/`finishImportBatch` (`batch.ts:155,653`), `buildPlanFromDrafts` (`bootstrap.ts:164`, pure, takes `PlanDraftInput[]`, `bootstrap.ts:50`), `applyImportPlan` (`apply.ts:122`, one transaction over a `ready` batch with a stored `import_plan`; writes in CHUNK=25 savepoints, `apply.ts:43,278`; idempotent by plan hash), `undoImportBatch` (`undo.ts:33`, applied batch only, 7-day window `apply.ts:42`). Core exposes it as `@causedeck/core/import`, not the root (`package.json:19`).
+- `applyImportPlan` is not resumable across a failure, and it only takes a batch built from captures/proposals. Resume and per-row state must come from the new run tables, so a run is split into chunks, each applied as its own import batch. Chunk size is about 250 matters.
+- Admin app: pages under `apps/admin/app/(console)/*` call `requireStaff(<capability>)` (`data-ops/page.tsx:~57`). Capabilities and roles are in `apps/admin/lib/roles.ts:18-31`, nav in `components/console-nav.tsx:29-50`. Reads go through `lib/data/index.ts` and `staffCall`/`staffQuery` (`lib/data/scope.ts`); admin never value-imports `@causedeck/db`. Every `'use server'` export is listed in `apps/admin/__tests__/server-actions-audit.test.ts` (`ACTIONS`); `no-content-fields.test.ts` and `server-component-imports.test.ts` also guard pages. Staff action precedent: `workspaces/[id]/actions.ts`.
+- Staff have no tenant-write path today: support sessions are `view` or `usage` scope only (`packages/core/src/support/sessions.ts:129-137`). The concierge needs to write matters in a customer workspace, so the run executes as a workspace owner actor through the core service, audited with the staff id.
+- Stale `.forge-lean/*` files from a different issue (portfolio UI) were present and are overwritten.
 
 ### Root Cause
-Part 6 of a staged build: the data model (#661), adapters (#662), service (#663) and alerts (#665) landed, but nothing in `apps/web` surfaces them, and the service lacks a way to create/list a workspace's portfolio.
+Missing feature. Parts of #508 (schema #682, plans #686) landed. Nothing orchestrates a validated, chunked, resumable, reversible bulk matter import, and the admin console has no surface for it.
 
 ### Affected Files
-- New: `apps/web/app/(app)/w/[slug]/portfolio/{page.tsx,loading.tsx,error.tsx,actions.ts}`, components under `apps/web/components/portfolio/`.
-- `packages/core/src/portfolio/{portfolio.ts (new),index.ts}`, registry `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts` (or `portfolio.test.ts` the registry points to).
-- `packages/i18n/src/{catalog.ts,messages/{en,kn,ta}/portfolio.json,__tests__/catalog.test.ts}` (+ generated types if checked in: `generated/messages.d.ts`).
-- `apps/web/lib/nav.ts` (+ nav test), `apps/web/__tests__/cross-tenant-actions.test.ts`.
+- New domain `packages/core/src/migration/{index.ts,csv.ts,run.ts}`; register in `packages/config/eslint/core-domains.js` (deps: `import`, `matter-graph`, `workspaces`, `audit` as needed) and `docs/engineering/core-domains.md`; `packages/core/package.json` subpath `./migration`.
+- `packages/db/src/testing/cross-tenant-registry.ts` `SERVICE_TESTS` and `packages/core/src/__tests__/cross-tenant/services.test.ts` (only if a root export is added; the import domain is a subpath, so probably `NOT_A_SERVICE` or nothing).
+- `apps/admin`: `lib/roles.ts`, `components/console-nav.tsx`, new `app/(console)/migrations/{page.tsx,[id]/page.tsx,actions.ts}`, `lib/data/index.ts`, plus guard tests.
 
 ### Sibling Sweep
-Every new core runtime export and every `'use server'` action needs a registry entry (CLAUDE.md table). Other pages' `loading/error` files and `__state` dev previews follow rosters; mirror them. No existing code path creates portfolios, so the same gap applies to any API surface (out of scope).
+Same registries as every new feature: admin `ACTIONS` audit test, `no-content-fields` (the admin report must show counts, row numbers and issue codes, never row content), core-domain boundaries, i18n is not needed (admin is English-only, as the other console pages). Siblings #683 (SSO) and #684 (provisioning) share `enterprise.ts` and the admin nav, so expect merge conflicts in `roles.ts` and `console-nav.tsx`.
 
 ### History
-Parent #498 (closed not_planned umbrella). Siblings #661-#665 merged on milestone/court-data-network. This is the first web slice.
+Schema foundation #682 (be0f4b12), seat plans #686 (f2ee4075). Import engine #548-#551. Parent #508 closed as not_planned (umbrella).
 
 ### Recommendation
-1. Core: add `listPortfolios` (any member) and `createPortfolio` (owner-only, name 1-200 chars, unique per workspace -> CONFLICT) in `packages/core/src/portfolio/portfolio.ts`, exported via index; register both as `denies` in the cross-tenant registry with real cases.
-2. Actions (`workspaceAction`, zod, `WorkspaceScoped`): `createPortfolioAction`, `importPortfolioAction` (owner; CSV text up to a size cap, optional sourceId), `exportPortfolioCsvAction` (members; returns CSV string for a client download). Core functions take `{db}` deps; use the actor's `ctx.tx`-compatible db like other actions. Alert settings reuse the existing preference action (no new action), linking/embedding the two categories.
-3. Page: server component with summary cards, filters (stage, next-date window, adverse only via search params), table of cases, import form (owner only), export button, alerts card; loading/error states; read-only for non-owners; empty state when no portfolio.
-4. i18n namespace `portfolio` in en/kn/ta + catalog tests; nav item `portfolio` shown for `institution` kind workspaces.
-5. Cross-tenant: ACTIONS + probes for each new action.
+1. Core `migration` domain. `parseMigrationCsv(text, mapping)`: pure; accepts header-to-field mapping (title, case type, number, year, forum code, CNR, parties, stage, next date); rows over 5,000 are rejected; returns rows plus per-row issue codes.
+2. `startMigrationRun`: dry_run does validation only (mapping issues, bad dates, unknown forum, duplicate CNR vs existing proceedings) into `migration_run.report` and row states, and writes no matter, proceeding or import batch. An import run stores rows as `pending`.
+3. `runMigrationChunk`/`resumeMigrationRun`: processes `resumeFrom..+250`, builds drafts to a plan (`buildPlanFromDrafts`), stores one `import_batch` per chunk and applies it via `applyImportPlan`. It marks rows ok/error, advances `resume_from` and `processed_rows` in the same transaction, and is safe to re-call after a crash (idempotent by plan hash). `getMigrationProgress` returns counts.
+4. `rollbackMigrationRun`: `undoImportBatch` for each chunk batch (chunk batch ids kept in `report`), rows to `rolled_back`, `rolled_back_at` set; refuse after the 7-day window.
+5. Admin section with upload, mapping, dry-run report, import with progress, resume, rollback; staff-only, audited actions.
+6. Tests: a 5,000-row dry-run asserts zero rows in matter/proceeding/import_batch; an import interrupted mid-way then resumed ends with exactly 5,000 and no duplicates; rollback.
+Medium confidence: the exact way to store chunk plans (import_plan without captures) and the staff-as-owner actor need verification while implementing.
 
 ### Related Issues
-#498 (parent), #663, #664, #665, #661, #662.
+#508 (parent), #682 (schema, done), #683 and #684 (siblings, nav/roles overlap), #686.

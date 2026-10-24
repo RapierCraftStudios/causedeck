@@ -2,37 +2,19 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "quote": "Core migration domain on top of packages/core/src/import (upload portfolio file, column mapping, dry-run reporting mapping issues for 5,000 matters without writing, resumable chunked import with progress, rollback via undoImportBatch)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "dashboard (next dates, stage, adverse orders)",
+   "quote": "an apps/admin console section",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "exception alert settings",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R4",
-   "quote": "exception alert settings, exports",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "i18n namespace and catalog test",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "cross-tenant-actions test entries for each 'use server' action.",
+   "quote": "Acceptance: dry-run of 5,000 matters writes nothing; real import resumable. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -40,185 +22,178 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/portfolio/portfolio.ts",
-   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
+   "path": "packages/core/src/migration/csv.ts",
+   "change": "New pure parseMigrationCsv(text, mapping): header-to-field mapping, max 5,000 rows, per-row issue codes (missing title, bad date, unknown forum, etc.), no row content in issues.",
    "requirements": [
-    "R1",
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "Export listPortfolios and createPortfolio.",
+   "path": "packages/core/src/migration/run.ts",
+   "change": "startMigrationRun (dry_run writes only migration_run/migration_run_row and report; import mode stores pending rows), runMigrationChunk/resumeMigrationRun (250 rows per chunk from resume_from, each chunk an import batch via buildPlanFromDrafts + applyImportPlan, row states and counters advanced in the same transaction, idempotent on retry), getMigrationProgress, rollbackMigrationRun (undoImportBatch per chunk batch, rows to rolled_back, rolled_back_at set, refuse past the 7-day window).",
    "requirements": [
     "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
+   "path": "packages/core/src/migration/index.ts",
+   "change": "Domain public index exporting the above; not re-exported from the package root.",
    "requirements": [
-    "R6"
+    "R1"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
+   "path": "packages/core/package.json",
+   "change": "Add the './migration' subpath export next to './import'.",
    "requirements": [
-    "R6"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/portfolio/portfolio.test.ts",
-   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add migration to CORE_DOMAIN_DEPENDENCIES (import, matter-graph, and workspaces/audit only if used); keep the map acyclic.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
-   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Add the migration domain row.",
    "requirements": [
-    "R1",
-    "R4"
+    "R1"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
-   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
+   "path": "packages/core/src/migration/__tests__/migration.test.ts",
+   "change": "Integration tests: 5,000-row dry-run leaves matter, proceeding and import_batch counts unchanged and reports mapping issues; import interrupted after N chunks and resumed ends with exactly the expected matters and no duplicates; rollback reverses; another workspace cannot read or run it.",
    "requirements": [
     "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
-   "change": "Skeleton loading state.",
+   "path": "apps/admin/lib/roles.ts",
+   "change": "Add a 'migrations' staff capability for the roles that run onboarding (ops/admin); update roles test expectations.",
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
-   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
+   "path": "apps/admin/components/console-nav.tsx",
+   "change": "Add the Migrations nav entry and its href to the route union.",
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/portfolio/portfolio-view.tsx",
-   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
+   "path": "apps/admin/lib/data/index.ts",
+   "change": "Audited staffCall/staffQuery reads: list runs for a workspace, run progress and report.",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4"
+    "R2"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
+   "path": "apps/admin/app/(console)/migrations/page.tsx",
+   "change": "Server page: pick workspace, upload CSV, column mapping, list runs; counts and issue codes only, no matter content.",
    "requirements": [
-    "R1",
     "R2"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'portfolio' to NAMESPACES.",
+   "path": "apps/admin/app/(console)/migrations/[id]/page.tsx",
+   "change": "Run detail: dry-run report, progress, resume and rollback controls.",
    "requirements": [
-    "R5"
+    "R2",
+    "R3"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/i18n/src/messages/en/portfolio.json",
-   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
+   "path": "apps/admin/app/(console)/migrations/actions.ts",
+   "change": "'use server' actions: startDryRun, startImport, resumeRun, rollbackRun; requireStaff('migrations'), staff-audited, run as the workspace owner actor.",
    "requirements": [
-    "R5"
+    "R2",
+    "R3"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'portfolio' to the expected namespace list.",
+   "path": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "change": "Register the four new actions in ACTIONS with success-path invocations.",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
+   "path": "apps/admin/__tests__/migrations-page.test.tsx",
+   "change": "Page render and gating test (role without capability is denied; no row content rendered).",
    "requirements": [
-    "R6"
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+   "what": "applyImportPlan, undoImportBatch, createImportBatch signatures and behaviour in packages/core/src/import (used by apps/web and jobs)."
   },
   {
    "id": "P2",
-   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+   "what": "The enterprise schema and migrations from #682 (packages/db/src/schema/enterprise.ts): no table or column change; the registry/RLS tests stay green."
   },
   {
    "id": "P3",
-   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+   "what": "The admin guard tests (server-actions-audit, no-content-fields, server-component-imports, no-without-workspace-outside-data): admin never value-imports @causedeck/db outside lib/data."
+  },
+  {
+   "id": "P4",
+   "what": "packages/core/src/index.ts root exports: the migration domain is reached only as @causedeck/core/migration."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/migration src/domains.test.ts src/import/__tests__/apply-import-plan.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/config exec vitest run test/core-domain-boundaries.test.ts test/eslint-boundaries.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
-  },
-  {
-   "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/migrations-page.test.tsx __tests__/server-actions-audit.test.ts __tests__/roles.test.ts __tests__/no-content-fields.test.ts __tests__/server-component-imports.test.ts __tests__/no-without-workspace-outside-data.test.ts __tests__/console-layout.test.tsx"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
-   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
+   "choice": "Run writes execute through core services as the workspace owner actor, with the staff id audited, because staff support sessions are view/usage only.",
+   "justification": "packages/core/src/support/sessions.ts:129-137 (no write scope); precedent for staff actions calling core services that audit with actor kind staff: apps/admin/app/(console)/workspaces/[id]/actions.ts",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
-   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
-   "source": "precedent"
+   "choice": "Each 250-row chunk is its own import batch applied with applyImportPlan, so rollback reuses undoImportBatch and resume is chunk-granular.",
+   "justification": "apply.ts:122 applies one whole batch in one transaction and is idempotent by plan hash; undo.ts:33 reverses one batch; the issue names undoImportBatch for rollback.",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
-   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
+   "choice": "New core domain 'migration' reached as a subpath, not a root export, so no cross-tenant SERVICE_TESTS registry entry is needed.",
+   "justification": "packages/core/package.json:19 pattern for import; packages/core/src/domains.test.ts root-index rule",
    "source": "precedent"
   }
  ]

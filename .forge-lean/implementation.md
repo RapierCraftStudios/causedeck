@@ -34,3 +34,5 @@ NOTICES_POLL_CRON, noticesPoll, runNoticesPoll and setNoticeFetcherFactory are n
 - Recovery: merged origin/milestone/court-data-network again; the base took 0075 (status_poll), so the notice match migration is now 0076_notice_match_targets (same SQL, snapshot chained after 0075, journal idx 76). Jobs exports, worker main, and core-domains docs keep both sides (status.poll and notices.poll).
 
 - CI fix: migration 0076 adds the owner_definer_read policy on proceeding (backs app_notice_match_targets), so proceeding-schema.test.ts now expects policies owner_definer_read + ws_isolation for proceeding (ws_isolation only for proceeding_link). Not run locally (db tests need a database; CI re-verifies).
+
+- CI fix: the test db does not carry the forum catalogue (`pnpm db:migrate` seeds it), so the forum lookup returned nothing and the proceeding insert got an empty uuid. `notices.test.ts` and the cross-tenant `matchNotices` case now run `seedForumCatalogue` on an owner connection in `beforeAll`, as `court/forums.test.ts` does. Both files pass locally (160 tests).

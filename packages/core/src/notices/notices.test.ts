@@ -2,15 +2,28 @@
 // cleared"; a cleared source is fetched once per run, its notices are stored once (a repeat poll
 // inserts nothing) with provenance; a source without a parser is skipped; matching reaches only the
 // workspaces and matters with a proceeding before a forum the notice names.
+import { Secret } from '@causedeck/config/env';
 import { schema, type Transaction } from '@causedeck/db';
-import { inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
+import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { newWorkspace } from '../__tests__/fixtures.ts';
 import { runNoticesPoll } from '../jobs/index.ts';
 
 import { pollNotices, type NoticeFetcher, type PollNoticesDeps } from './poll.ts';
+
+const owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
+
+beforeAll(async () => {
+  // Committed, as `pnpm db:migrate` leaves it: the test db does not carry the forum catalogue.
+  await seedForumCatalogue(owner);
+});
+
+afterAll(async () => {
+  await owner.$client.end();
+});
 
 const SOURCE = 'in.tn.madras-hc.notices';
 const MADURAI = 'in.tn.madras-hc.madurai';

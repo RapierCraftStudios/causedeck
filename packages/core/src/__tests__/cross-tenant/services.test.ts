@@ -8,13 +8,15 @@ import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
+import { Secret } from '@causedeck/config/env';
 import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
-import { inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
+import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import * as core from '../../index.ts';
@@ -429,6 +431,7 @@ const CASES: Record<string, Case> = {
       .select({ id: schema.forum.id })
       .from(schema.forum)
       .where(eq(schema.forum.code, 'in.tn.madras-hc.madurai'));
+    expect(forum?.id).toBeDefined();
     const [noticeRow] = await f.tx
       .insert(schema.notice)
       .values({
@@ -2520,6 +2523,17 @@ const CASES: Record<string, Case> = {
 const registered = Object.entries(SERVICE_TESTS)
   .filter(([, entry]) => entry.test === THIS_FILE)
   .map(([name]) => name);
+
+const owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
+
+beforeAll(async () => {
+  // Committed, as `pnpm db:migrate` leaves it: the test db does not carry the forum catalogue.
+  await seedForumCatalogue(owner);
+});
+
+afterAll(async () => {
+  await owner.$client.end();
+});
 
 afterEach(() => {
   core.setNotificationJobDeps(null);

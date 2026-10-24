@@ -246,6 +246,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   matchNotices: selfScoped,
   notifyNoticeMatches: selfScoped,
   listHolidayListings: selfScoped,
+  // Deadline engine and orders poll (#494): B's matched notices and B's watch never reach A
+  loadCourtCalendar: selfScoped,
+  pollOrders: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
   // Conflict-of-interest checks (#500): B's check sees none of A's parties
@@ -1087,6 +1090,19 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   statusPoll: 'job definition (handler is runStatusPoll)',
   runStatusPoll: 'system job body: see pollCaseWatches',
   setStatusFetcherFactory: 'setter (worker wires the governed fetcher, #592)',
+  // deadlines (#494, D-048): court calendars and calendar-aware due dates
+  closedReason: 'pure',
+  computeDueDate: 'pure',
+  DEFAULT_WEEKLY_OFFS: 'constant',
+  FORUM_VACATIONS: 'constant',
+  deadlineForDirection: 'reads only the calendar of the given workspace (loadCourtCalendar)',
+  applyDeadlineRules:
+    'pure over its directions plus the given workspace calendar (loadCourtCalendar)',
+  // case-watch: the orders poll (#494)
+  MAX_ORDERS_PER_WATCH_PER_RUN: 'constant',
+  ORDERS_POLL_CRON: 'constant',
+  ordersPoll: 'job definition (handler is runOrdersPoll)',
+  runOrdersPoll: 'system job body: see pollOrders',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',

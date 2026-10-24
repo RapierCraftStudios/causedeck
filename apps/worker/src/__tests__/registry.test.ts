@@ -168,6 +168,7 @@ describe('enqueue', () => {
       'system.status.poll',
       'webhook.deliver',
       'system.webhook.sweep',
+      'system.orders.poll',
     ]);
   });
 });

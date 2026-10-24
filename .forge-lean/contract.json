@@ -2,83 +2,172 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Register eCourts status and list sources per state in the sources registry and `STATUS_SOURCES` (`packages/core/src/case-watch/lookup.ts`)",
+   "quote": "`packages/core/src/deadlines/`: a rule engine (period types: days, weeks, months; exclusions; the next working day; vacations) with court calendars per forum, built from the notices feed (holiday lists, vacation notifications).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "route through `packages/fetch` with `delegatedFor` and per-host rate budgets",
+   "quote": "`apps/worker`: an `orders.poll` job for watched matters (delegated lookups or cleared sources) that ingests new daily orders as soon as they are uploaded.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "record provenance.",
+   "quote": "Directions become proposed obligations with the computed due date, the rule applied and the source anchor; the lawyer confirms (D-017 L2).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Acceptance: a watched district matter refreshes through a delegated lookup, with provenance [type:integration].",
+   "quote": "Tests: a table of real direction phrasings and expected due dates across holidays and vacations.",
    "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "Due dates are computed correctly for the fixture table, including vacations and the next-working-day rule. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "A new order on a watched matter produces proposed obligations within one poll interval, with a page anchor. [type:integration]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "Each obligation shows the rule used (\"4 weeks from 22 Oct; court closed 19 Nov, so 20 Nov\"). [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "Due dates need court holidays, vacations and Limitation Act rules (for example, the next working day when the court is closed).",
+   "disposition": "defer",
+   "why": "Counsel-owned Limitation Act rule tables are tracked separately under the limitation.enabled flag (#84); this change delivers the next-working-day rule only. Vacation ranges are not in the notices data (notice has a single effective_on), so vacations come from a static per-forum table in code; parsing vacation ranges from notice documents is separate work.",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/case-watch/lookup.ts",
-   "change": "Add STATUS_SOURCES entries `in.\u003cst>.district:case_status` for tn, ka, mh, dl, up (template ecourts-district, path case-status); keep the existing Chennai id. No new export.",
+   "path": "packages/core/src/deadlines/",
+   "change": "New domain: index.ts, period.ts (days/weeks/months arithmetic), calendar.ts (CourtCalendar: weekly offs, holiday dates from matched holiday notices via the notices tables, per-forum vacation ranges from a static table), compute.ts (computeDueDate with next-working-day rolling, returns {date, rule} where rule is a sentence like '4 weeks from 22 Oct; court closed 19 Nov, so 20 Nov'). Tests include the fixture table of real phrasings across holidays, vacations, month-end clamping and weekends.",
    "requirements": [
-    "R1"
+    "R1",
+    "R4",
+    "R5",
+    "R7"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/fetch/src/fetcher.ts",
-   "change": "Add a per-host sliding-window budget keyed `host:\u003curl host>` (default constant, overridable via FetcherDeps), checked with canAcquire alongside the source and advocate checks before any tryAcquire; deny with FetchDenied reason host_rate_limited (add the reason where FetchDenied reasons are declared).",
+   "path": "packages/core/src/extraction/run.ts",
+   "change": "Before submitProposals, recompute dueDate of dated 'within' obligation_from_direction drafts through the deadlines engine using the proceeding's forum calendar and order date, and write the rule sentence into payload.basis (\u003c=500 chars); keep the extracted date and basis when the phrase or forum cannot be resolved. Level stays L2; anchors unchanged.",
+   "requirements": [
+    "R3",
+    "R7"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/core/src/case-watch/orders.ts",
+   "change": "New: for watches whose latest snapshot lists orders with an href not yet captured, fetch each as a delegated lookup (delegatedFor advocate+matter) through the StatusFetcher, create a capture from the bytes (sha256 dedupe per workspace) so extraction.extract-order runs. Reuse pollCaseWatches caps and skip semantics (uncleared/killed source skipped, never a call without delegatedFor). Export from case-watch/index.ts.",
+   "requirements": [
+    "R2",
+    "R6"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/core/src/jobs/definitions/orders-poll.ts",
+   "change": "New job system.orders.poll (hourly, singleton, no workspace) calling D3 with the fetcher wired through setStatusFetcherFactory; logs ids and counts only. Register in jobs/registry.ts and jobs/index.ts.",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D3",
-   "path": "packages/db/migrations/20261024090000_ecourts_district_status_sources.sql",
-   "change": "Hand-written migration inserting five uncleared `source` rows (kind court, access_mode A0, max_tier http, base_url https://services.ecourts.gov.in/, low rate_limit_per_minute, notes naming terms to confirm), ON CONFLICT (id) DO NOTHING. Add the matching meta/_journal.json entry and snapshot (copy the previous snapshot, same schema). Use the next free tag if the base took the timestamp.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/i18n/src/messages/en/case-watch.json",
-   "change": "Add `source.\u003ckey>` labels for the new ids (key = id with '.'->'_', see sourceKey) in en, ta, kn case-watch.json, then regenerate generated/messages*, messages.d.ts and translation-status.json with the repo's i18n generator.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
    "id": "D5",
-   "path": "packages/core/src/case-watch/case-watch.test.ts",
-   "change": "Add a test: a watch on a new state district source refreshes through a stub delegated fetcher; assert delegatedFor, stored snapshot provenance (tierUsed, costDollars, sourceRef) and the 5 ids are registered.",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Add ordersPoll to the registry list and its type tuple; export from jobs/index.ts.",
    "requirements": [
-    "R4",
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/fetch/src/__tests__/fetcher.test.ts",
-   "change": "Add tests: two sources on one host share the host budget (second denied host_rate_limited, no provider call, no slot spent); different hosts are independent.",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Expect 'system.orders.poll' in the registered job names.",
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/db/src/__tests__/source-registry.test.ts",
-   "change": "Assert the five district case_status rows are seeded uncleared.",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "Expect the system.orders.poll schedule.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add deadlines domain (deps: notices only if it imports the notices index; else reads tables directly) and add deadlines to extraction's allowed imports.",
+   "requirements": [
+    "R1",
+    "R3"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the deadlines domain and the new dependency edges in the same shape as the existing rows.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register the new runtime exports of @causedeck/core (deadlines, orders poll) in SERVICE_TESTS with real cases, or NOT_A_SERVICE with a reason for pure functions.",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cross-tenant cases for loadCourtCalendar (B's matched notices do not affect A's calendar) and for the orders poll (workspace B's watch never produces captures in A).",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/core/src/index.ts",
+   "change": "Export the deadlines and orders-poll surface the same way sibling domains are exported.",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "docs/engineering/jobs.md",
+   "change": "Add the system.orders.poll row (cron, singleton, purpose) to the jobs table.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/core/package.json",
+   "change": "Add a ./deadlines export map entry if sibling domains each have one.",
    "requirements": [
     "R1"
    ]
@@ -87,57 +176,53 @@
  "preserve": [
   {
    "id": "P1",
-   "what": "runCaseStatusLookup always passes delegatedFor and enforces own-watch scoping (packages/core/src/case-watch/lookup.ts)"
+   "what": "RELATIVE_RULE and resolveRelative in packages/intelligence/src/extract/relative.ts keep their plain-calendar behaviour (next dates and 'list after' stay unadjusted); intelligence still never imports @causedeck/core."
   },
   {
    "id": "P2",
-   "what": "Existing Chennai/HC STATUS_SOURCES ids and the sources' fail-closed policy: new rows stay uncleared (packages/core/src/sources/registry.ts)"
+   "what": "system.status.poll and pollCaseWatches caps, kill switch, delegatedFor-only fetching (packages/core/src/case-watch/poll.ts, lookup.ts) are unchanged."
   },
   {
    "id": "P3",
-   "what": "Existing per-source and per-advocate limits and tier caps in packages/fetch/src/fetcher.ts; apps/web/__tests__/case-watch-actions.test.ts mock list of core exports"
+   "what": "obligation_from_direction stays an always-L2 proposal (packages/core/src/automation/matrix.ts:54); nothing is applied without the lawyer's confirmation."
+  },
+  {
+   "id": "P4",
+   "what": "listHolidayListings (packages/core/src/notices/holidays.ts) signature and behaviour."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/fetch exec vitest run src/__tests__/fetcher.test.ts src/__tests__/static-checks.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/deadlines src/case-watch src/extraction src/jobs/definitions/orders-poll.test.ts src/domains.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1} --reporter=dot"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/case-watch/case-watch.test.ts"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1} --reporter=dot"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/source-registry.test.ts"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/case-watch-actions.test.ts"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/extract/relative.test.ts src/extract/to-proposals.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1} --reporter=dot"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Source ids `in.\u003cst>.district:case_status` per state, matching the forum adapterId `in.\u003cst>.district`.",
-   "justification": "packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts adapterId convention; STATUS_SOURCES key format at lookup.ts:42",
+   "choice": "Adjustment lives in core (extraction/run.ts), not in packages/intelligence.",
+   "justification": "intelligence imports nothing from core (packages/intelligence/src/extract/index.ts:1-3) and the calendar needs DB reads of matched notices (packages/core/src/notices/holidays.ts).",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Per-host budget lives in the fetcher (not the registry row) because many per-state sources share services.ecourts.gov.in.",
-   "justification": "fetcher.ts:107-114 limits only `source:\u003cid>`; district forums share one host (snapshot.ts:151)",
-   "source": "precedent"
+   "choice": "No migration: vacation ranges come from a static per-forum table in code, holidays from existing notice.effective_on.",
+   "justification": "notice has a single effective_on date and no range column (packages/db/src/schema/notices.ts:61); schema work would need counsel-sourced data and a migration number outside this scope.",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Rows are seeded uncleared with max_tier http; delegated calls raise the cap to captcha in code.",
-   "justification": "0076_display_board.sql:49-71 pattern; fetcher.ts tierCap",
-   "source": "precedent"
+   "choice": "orders.poll reuses the delegated StatusFetcher and pollCaseWatches caps instead of a new fetch path.",
+   "justification": "All external reads must go through the governed fetch layer with delegatedFor (packages/core/src/case-watch/lookup.ts:1-8, poll.ts:1-8).",
+   "source": "doc"
   }
  ]
 }

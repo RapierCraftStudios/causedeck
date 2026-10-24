@@ -1,25 +1,16 @@
 ### Approach
-Recovery pass for ci.red. Three CI causes fixed on top of the earlier #499 work; nothing re-derived.
-
+Continued the checkpointed branch. With node 22.23 on PATH the validate commands could run; they exposed three test/import defects, fixed here. Testcontainers' ryuk reaper cannot start on this host, so tests ran with `TESTCONTAINERS_RYUK_DISABLED=true` (env only).
 ### Changes
-- apps/web/lib/matters/workspace.ts: `agreement` accepts `undefined` (exactOptionalPropertyTypes typecheck error).
-- apps/web/components/matters/next-date-card.tsx: chip keys resolve under the `matters` namespace (`workspace.confidence.*`), so the matters i18n key guard finds them.
-- apps/web/__tests__/matter-workspace-page.test.tsx: mock `@causedeck/core/facts` and give the logger mock `warn`; a failed agreement load now degrades to no chip instead of failing the page.
-- Prettier applied to apps/admin/lib/data/index.ts, date-conflict-card.tsx, 0080_snapshot.json, staff-console-schema.test.ts.
-
+- packages/core/src/jobs/definitions/webhook-deliver.ts: import the webhooks domain through its index.ts (core-domain boundary); lint-safe error text.
+- packages/core/src/webhooks/__tests__/webhooks.test.ts: jobs imports via jobs/index.ts; clear the two-tenant seeder's webhook rows; run the delivery job inside a workspace scope as the runner does.
+- packages/core/src/__tests__/cross-tenant/services.test.ts: clear seeded webhook rows before the list and emit cases.
 ### Acceptance Criteria Status
-- R1 ✅ apps/web/components/matters/date-conflict-card.tsx
-- R2 ✅ apps/admin/app/(console)/data-ops/page.tsx
-- R3 ✅ packages/core/src/facts/agreement.ts
-- R4 ✅ apps/web/components/matters/date-conflict-card.tsx
-- R5 ✅ apps/web/components/matters/next-date-card.tsx
-- R6 ✅ packages/core/src/sources/ops.ts
-
+- R1 ✅ packages/core/src/webhooks/events.ts, jobs/definitions/webhook-deliver.ts, apps/worker/src/__tests__/registry.test.ts:169, schedules.test.ts:45
+- R2 ✅ packages/core/src/webhooks/__tests__/webhooks.test.ts (emit + deliver on the test database)
+- R3 ✅ apps/api/src/routes/v1/webhook-endpoints.ts:60 requireScope
+- R4 ✅ apps/api/src/__tests__/webhook-endpoints.test.ts:26
+- R5 ✅ content-free payload asserted in webhooks.test.ts; no judge data
 ### Verification
-V1-V4 not run locally (verify.mode ci); CI runs them. Prettier 3.9.10 with the repo config was run on the changed files. The page-test regression (logger.warn mock) is the existing matter-workspace-page suite, which failed on CI before this fix.
-
+V1–V5 all pass (`forgedock check` PASS, run with TESTCONTAINERS_RYUK_DISABLED=true). The domains.test.ts, webhooks and cross-tenant cases failed before these fixes and pass now.
 ### Notes
-No behaviour or env changes.
-
-## Migration renumber
-Base took 0080 (news) and 0081 (api_keys). Lane migration renumbered to 0082_staff_conflict_rate (SQL byte-identical). Snapshot 0082 is the 0081 snapshot with new id/prevId (custom SQL-only migration); journal entry idx 82 appended. drizzle-kit/pnpm were unavailable offline, so the generator was not run.
+No behaviour change in production code. Env: TESTCONTAINERS_RYUK_DISABLED=true needed locally only.

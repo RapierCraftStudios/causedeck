@@ -23,3 +23,6 @@ Added provisionMembersCsvAction to the members-page actions mock and scim to the
 
 ### Post-merge typecheck failure
 The reported failure (`turbo: command not found`, exit 127) was an environment PATH issue, not a code conflict. No source change was needed. `node_modules/.bin/turbo run typecheck` on core, web, i18n and db plus their dependencies passes (19 tasks).
+
+### Post-merge
+Merged the base (journal idx 94, snapshot chained to the base's latest, review header added to the migration). `turbo` is not on the bare PATH; `pnpm exec turbo run typecheck` (core, web, db, i18n) passes, and `tsc --noEmit` is clean for core, web, i18n, db and auth. No duplicate-symbol conflicts were found, so no code change was needed.

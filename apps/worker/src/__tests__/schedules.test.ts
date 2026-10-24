@@ -34,6 +34,7 @@ describe('registerSchedules', () => {
       'system.support.session-expire',
       'system.deletion.tick',
       'system.capture.retention',
+      'system.data-ops.evaluate',
       'system.corpus.poll',
       'system.causelist.poll',
       'system.board.poll',
@@ -96,6 +97,8 @@ describe('registerSchedules', () => {
       ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
       // Capture raw-object retention: daily 02:00 IST.
       ['system.capture.retention', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
+      // Data-ops evaluation (#515): every 15 minutes; 05:45 IST is 00:15 UTC.
+      ['system.data-ops.evaluate', '*/15 * * * *', '2026-10-18T00:15:00.000Z'],
       // KHC cause-list poll (#482): 07:30 and 18:30 IST; 07:30 IST is 02:00 UTC.
       ['system.causelist.poll', '30 7,18 * * *', '2026-10-18T02:00:00.000Z'],
       // Board poll (#493): every five minutes 10:00-16:55 IST on weekdays; 2026-10-18 is a Sunday, so

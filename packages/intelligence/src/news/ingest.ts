@@ -28,7 +28,8 @@ export class FeedFetchFailed extends Error {
 export async function ingestFeed(options: IngestFeedOptions): Promise<NewsItemInput[]> {
   const { sourceId, feedUrl, fetchSource, tagger = createKeywordTagger(), limit = 50 } = options;
   const result = await fetchSource(sourceId, feedUrl);
-  if (result.status < 200 || result.status >= 300) throw new FeedFetchFailed(sourceId, result.status);
+  if (result.status < 200 || result.status >= 300)
+    throw new FeedFetchFailed(sourceId, result.status);
   const fetchedAt = new Date(result.provenance.fetchedAt);
   const seen = new Set<string>();
   const items: NewsItemInput[] = [];

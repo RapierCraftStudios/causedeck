@@ -33,6 +33,8 @@ export const CORE_DEPENDENCIES = [
   'validators',
   'observability',
   'config',
+  // The one sanctioned external-host sender (#479, #515): data-ops posts Slack through postWebhook.
+  'fetch',
 ];
 
 /** Packages that `observability` may depend on: no domain packages (#13). */

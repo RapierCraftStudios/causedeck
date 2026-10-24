@@ -14,7 +14,8 @@ import { toActionError } from '../../../../lib/workspace-action.ts';
 export type AcceptRejection = InvitationErrorReason | 'ALREADY_MEMBER' | 'SEAT_LIMIT';
 
 export type AcceptOutcome =
-  { status: 'accepted'; slug: string } | { status: 'rejected'; reason: AcceptRejection };
+  | { status: 'accepted'; slug: string; next: string }
+  | { status: 'rejected'; reason: AcceptRejection };
 
 const REASONS: readonly InvitationErrorReason[] = [
   'INVALID',
@@ -51,7 +52,13 @@ const accept = safeAction(
     const { acceptInvitationFor } = await import('@causedeck/core/runtime');
     try {
       const accepted = await acceptInvitationFor({ userId: session.user.id, token });
-      return { status: 'accepted', slug: accepted.workspaceSlug };
+      // A clerk lands on the clerk-led setup (#505); everyone else on the court day.
+      const landing = accepted.role === 'clerk' ? 'welcome' : 'today';
+      return {
+        status: 'accepted',
+        slug: accepted.workspaceSlug,
+        next: `/w/${encodeURIComponent(accepted.workspaceSlug)}/${landing}`,
+      };
     } catch (error) {
       const reason = rejectionOf(error);
       if (reason) return { status: 'rejected', reason };

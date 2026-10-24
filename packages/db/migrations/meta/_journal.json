@@ -649,8 +649,29 @@
     {
       "idx": 92,
       "version": "7",
-      "when": 1792874594481,
-      "tag": "20261024204314_whatsapp_link",
+      "when": 1792870066550,
+      "tag": "20261024193000_user_phone_number",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1792876056927,
+      "tag": "20261024210736_clerk_setup",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1792886400000,
+      "tag": "20261025000000_scim_token_lookup",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1792886703269,
+      "tag": "20261025000503_whatsapp_link",
       "breakpoints": true
     }
   ]

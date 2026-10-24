@@ -303,6 +303,24 @@ export type Messages = {
         offline: string;
         accessDenied: string;
       };
+      phone: {
+        label: string;
+        placeholder: string;
+        submit: string;
+        codeSent: string;
+        codeLabel: string;
+        verify: string;
+        differentNumber: string;
+        resend: string;
+        resendIn: string;
+        errors: {
+          invalidNumber: string;
+          sendFailed: string;
+          invalidCode: string;
+          expiredCode: string;
+          tooManyAttempts: string;
+        };
+      };
     };
     checkEmail: {
       title: string;
@@ -320,6 +338,18 @@ export type Messages = {
         subject: string;
         body: string;
       };
+    };
+    link: {
+      title: string;
+      description: string;
+      emailLabel: string;
+      submit: string;
+      added: string;
+      error: string;
+      googleTitle: string;
+      googleDescription: string;
+      googleButton: string;
+      googleError: string;
     };
   };
   workspace: {
@@ -349,6 +379,48 @@ export type Messages = {
         nameInvalid: string;
         offline: string;
         signedOut: string;
+        generic: string;
+      };
+    };
+    welcome: {
+      metaTitle: string;
+      title: string;
+      clerkIntro: string;
+      steps: {
+        language: {
+          title: string;
+          body: string;
+        };
+        import: {
+          title: string;
+          body: string;
+          action: string;
+        };
+        today: {
+          title: string;
+          body: string;
+          action: string;
+        };
+      };
+      approval: {
+        title: string;
+        body: string;
+        request: string;
+        requesting: string;
+        pending: string;
+        approved: string;
+      };
+      senior: {
+        title: string;
+        empty: string;
+        item: string;
+        approve: string;
+        approving: string;
+        approved: string;
+      };
+      notForRole: string;
+      errors: {
+        offline: string;
         generic: string;
       };
     };
@@ -568,6 +640,47 @@ export type Messages = {
       continue: string;
       cancel: string;
       none: string;
+    };
+  };
+  provisioning: {
+    trigger: string;
+    title: string;
+    description: string;
+    fileLabel: string;
+    csvLabel: string;
+    csvPlaceholder: string;
+    dryRun: string;
+    confirm: string;
+    close: string;
+    working: string;
+    offline: string;
+    tooLarge: string;
+    empty: string;
+    failed: string;
+    forbidden: string;
+    report: {
+      dryRunTitle: string;
+      doneTitle: string;
+      summary: string;
+      summaryDone: string;
+      line: string;
+      noEmail: string;
+      outcome: {
+        invited: string;
+        skipped: string;
+        error: string;
+      };
+      reason: {
+        alreadyMember: string;
+        forbidden: string;
+        conflict: string;
+        invalid: string;
+        seatLimit: string;
+        failed: string;
+      };
+    };
+    toast: {
+      done: string;
     };
   };
   notifications: {

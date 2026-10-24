@@ -1,6 +1,6 @@
 {
-  "id": "6648e219-96d4-4c08-954e-3cfe28ea3365",
-  "prevId": "86fdfe22-d839-4645-a98a-46a00ef705d1",
+  "id": "21ef5a42-3f8e-48e6-8dcb-473243d7d828",
+  "prevId": "95e95fbf-8ec2-4391-8be6-ec5e62a4930c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -9680,6 +9680,18 @@
           "notNull": true,
           "default": "now()"
         },
+        "clerk_setup_status": {
+          "name": "clerk_setup_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clerk_setup_decided_at": {
+          "name": "clerk_setup_decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -9778,6 +9790,10 @@
         "member_status_chk": {
           "name": "member_status_chk",
           "value": "status in ('active', 'suspended', 'removed')"
+        },
+        "member_clerk_setup_status_chk": {
+          "name": "member_clerk_setup_status_chk",
+          "value": "clerk_setup_status is null or clerk_setup_status in ('pending', 'approved')"
         }
       },
       "isRLSEnabled": false
@@ -17078,6 +17094,19 @@
           "notNull": true,
           "default": false
         },
+        "phone_number": {
+          "name": "phone_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone_number_verified": {
+          "name": "phone_number_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "image": {
           "name": "image",
           "type": "text",
@@ -17121,6 +17150,11 @@
           "name": "user_email_uq",
           "nullsNotDistinct": false,
           "columns": ["email"]
+        },
+        "user_phone_number_uq": {
+          "name": "user_phone_number_uq",
+          "nullsNotDistinct": false,
+          "columns": ["phone_number"]
         }
       },
       "policies": {},

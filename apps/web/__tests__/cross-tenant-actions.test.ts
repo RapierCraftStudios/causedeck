@@ -87,6 +87,7 @@ vi.mock('next-intl/server', () => ({
 
 const members = await import('../app/(app)/w/[slug]/settings/members/actions.ts');
 const invite = await import('../app/(public)/invite/[token]/actions.ts');
+const welcome = await import('../app/(app)/w/[slug]/welcome/actions.ts');
 const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
@@ -123,6 +124,7 @@ const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 /** Every exported server action and the module it comes from. */
 const ACTIONS: Record<string, Record<string, unknown>> = {
   inviteMembersAction: members,
+  provisionMembersCsvAction: members,
   changeRoleAction: members,
   openWorkAction: members,
   removeMemberAction: members,
@@ -148,6 +150,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  requestClerkSetupApprovalAction: welcome,
+  approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
@@ -263,7 +267,12 @@ function signInAs(userId: string): void {
 function snapshotA() {
   return withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => ({
     members: await tx
-      .select({ id: schema.member.id, role: schema.member.role, status: schema.member.status })
+      .select({
+        id: schema.member.id,
+        role: schema.member.role,
+        status: schema.member.status,
+        clerkSetupStatus: schema.member.clerkSetupStatus,
+      })
       .from(schema.member)
       .orderBy(schema.member.id),
     invitations: await tx
@@ -442,6 +451,11 @@ afterAll(closeTestDb);
 function inputs(workspaceId: string): Record<string, unknown> {
   return {
     inviteMembersAction: { workspaceId, emails: ['xt-probe@example.test'], role: 'junior' },
+    provisionMembersCsvAction: {
+      workspaceId,
+      csv: 'email,role\nxt-probe-csv@example.test,viewer\n',
+      dryRun: false,
+    },
     changeRoleAction: { workspaceId, memberId: aMember.memberId, role: 'owner' },
     openWorkAction: { workspaceId, memberId: aMember.memberId },
     removeMemberAction: { workspaceId, memberId: aMember.memberId },
@@ -481,6 +495,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
       practiceCity: 'Probe City',
       slug: `xt-probe-${workspaceId.slice(0, 8)}`,
     },
+    requestClerkSetupApprovalAction: { workspaceId },
+    approveClerkSetupAction: { workspaceId, memberId: randomUUID() },
     updateRoleSettingsAction: {
       workspaceId,
       advocatesCanInvite: false,

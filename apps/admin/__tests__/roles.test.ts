@@ -23,7 +23,17 @@ describe('staff role matrix', () => {
   it('gives support metadata and sessions, ops adapters, sources and flags, admin everything', () => {
     expect(STAFF_ROLE_MATRIX).toEqual({
       support: ['overview', 'workspaces', 'support', 'audit'],
-      ops: ['overview', 'adapters', 'sources', 'data-ops', 'coverage', 'flags', 'audit', 'growth'],
+      ops: [
+        'overview',
+        'adapters',
+        'sources',
+        'data-ops',
+        'coverage',
+        'flags',
+        'audit',
+        'growth',
+        'migrations',
+      ],
       admin: STAFF_CAPABILITIES,
     });
     expect(canStaff('support', 'flags')).toBe(false);
@@ -39,6 +49,8 @@ describe('staff role matrix', () => {
     expect(canStaff('admin', 'business')).toBe(true);
     expect(canStaff('ops', 'growth')).toBe(true);
     expect(canStaff('support', 'growth')).toBe(false);
+    expect(canStaff('ops', 'migrations')).toBe(true);
+    expect(canStaff('support', 'migrations')).toBe(false);
     for (const capability of STAFF_CAPABILITIES) expect(canStaff('admin', capability)).toBe(true);
     expect(canStaff('owner' as never, 'overview')).toBe(false);
   });

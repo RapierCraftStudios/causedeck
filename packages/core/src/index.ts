@@ -19,6 +19,7 @@ export * from './matter-graph/index.ts';
 export * from './matters/index.ts';
 export * from './news/index.ts';
 export * from './network/index.ts';
+export * from './portfolio/index.ts';
 export * from './public-api/index.ts';
 export * from './research/index.ts';
 export * from './sources/index.ts';

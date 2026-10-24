@@ -29,6 +29,7 @@ const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-pr
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
+const CORE_PORTFOLIO_TEST = 'packages/core/src/__tests__/cross-tenant/portfolio.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -267,6 +268,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   addCaseWatch: selfScoped,
   listCaseWatches: selfScoped,
   removeCaseWatch: selfScoped,
+  // Institution portfolios (#663): B's call on A's portfolio is denied; B's lists are empty
+  importPortfolioCases: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  listPortfolioCases: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  portfolioSummary: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  exportPortfolioCsv: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   runBillingProcessEvent: {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
@@ -820,6 +826,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // portfolio (#663): pure CSV reader and constants
+  parsePortfolioCsv: 'pure',
+  MAX_PORTFOLIO_IMPORT_ROWS: 'constant',
+  MAX_PORTFOLIO_WATCHES_PER_ADVOCATE: 'constant',
+  PORTFOLIO_WATCH_CADENCE_MINUTES: 'constant',
+  PORTFOLIO_EXPORT_HEADER: 'constant',
   // business dashboard (#519): pure maths and rendering over aggregates
   assessAgreement: 'pure',
   UNKNOWN_CONFIDENCE: 'constant',
@@ -1515,6 +1527,24 @@ export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'pure (binds the app db, env config and job producer into a CaptureCtx; capture routes check membership and authorize gates each capture call, covered by packages/core/src/capture/__tests__/cross-tenant.test.ts)',
 };
 
+/**
+ * Tracked-case metering (#664) lives in the `@causedeck/core/billing` subpath, which the root
+ * index does not re-export, so the root registry above never sees it. These entries are checked
+ * for staleness against that subpath's exports and for an existing test file.
+ */
+export const BILLING_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  countTrackedCases: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'counts portfolio_case rows for the given workspace id on the caller transaction; RLS hides other workspaces rows',
+  },
+  getTrackedCaseCharge: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'reads the entitlement row and portfolio_case count for the given workspace id on the caller transaction; naming another workspace reads nothing and charges 0',
+  },
+};
+
 /** The storage presign cross-tenant test (#21). */
 export const STORAGE_PRESIGN_TEST = 'packages/storage/src/__tests__/cross-tenant-presign.test.ts';
 
@@ -1559,6 +1589,7 @@ export function registeredTestFiles(): string[] {
       ...Object.values(SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(NOTIFICATION_SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(RUNTIME_SERVICE_TESTS).map((entry) => entry.test),
+      ...Object.values(BILLING_SERVICE_TESTS).map((entry) => entry.test),
       STORAGE_PRESIGN_TEST,
     ]),
   ].sort();

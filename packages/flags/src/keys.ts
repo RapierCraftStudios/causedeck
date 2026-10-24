@@ -69,7 +69,7 @@ export const FLAGS = {
   ),
   'court.case-status': flag(
     'court.case-status',
-    'Delegated case-status watch, refresh and on-device captcha solver (D-048 tier 4).',
+    'Case-status watch and refresh.',
     true,
     [483, 118],
   ),

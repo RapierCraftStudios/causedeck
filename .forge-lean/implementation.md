@@ -28,3 +28,6 @@ Followed the frozen contract: new tenant tables modelled on `case_watch` and `we
 
 ### Stale-list follow-up
 The 30 flagged (symbol, test) pairs are not members: none of the 10 tests lists @causedeck/db schema tables (flagged lines are hoisted mock state or fixtures; the db mocks only expose db/withWorkspace/withoutWorkspace). Recorded under `not_members` in result.json; no test edits needed.
+
+## Merge-check fix (turbo exit 127)
+The merged-tree failure was `turbo: command not found` (bare `turbo` not on PATH), not a symbol/key conflict. No source change needed. Re-verified on the merged tree: `pnpm exec turbo run typecheck --filter='...[base]'` 23/23 pass; V1 (45 tests), V2 (144 tests), V3 db:check all pass.

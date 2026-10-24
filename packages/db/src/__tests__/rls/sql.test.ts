@@ -92,6 +92,7 @@ describe('row-level security catalog', () => {
         'audit_event',
         'ai_call',
         'ai_call_result',
+        'news_pref',
         'notification',
         'notification_pref',
         'notification_setting',

@@ -41,7 +41,7 @@ const loadOverview = cache(
       const overview: MatterOverviewWithAgreement = await inWorkspace(scope, (tx) =>
         getMatterOverview(graphDeps(tx), scope, { matterId }),
       );
-      overview.agreement = await loadAgreement(workspaceId, userId, overview);
+      overview.agreement = (await loadAgreement(workspaceId, userId, overview)) ?? null;
       return { kind: 'overview', overview };
     } catch (error) {
       const code = domainErrorCode(error);

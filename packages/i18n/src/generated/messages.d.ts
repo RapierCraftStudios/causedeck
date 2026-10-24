@@ -626,6 +626,14 @@ export type Messages = {
         preview: string;
         cta: string;
       };
+      newsDigest: {
+        subject: string;
+        preview: string;
+        heading: string;
+        source: string;
+        cta: string;
+        note: string;
+      };
     };
     push: {
       card: {
@@ -733,6 +741,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        digestNews: {
+          label: string;
+          description: string;
+        };
       };
       mandatory: string;
       lockedLabel: string;
@@ -757,6 +769,54 @@ export type Messages = {
       retry: string;
       loading: string;
       empty: string;
+    };
+    news: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      empty: string;
+      matched: string;
+      source: string;
+      readOriginal: string;
+      prefs: {
+        title: string;
+        description: string;
+        areas: string;
+        forums: string;
+        time: string;
+        save: string;
+        saved: string;
+        error: string;
+      };
+      areas: {
+        civil: string;
+        criminal: string;
+        constitutional: string;
+        corporate: string;
+        tax: string;
+        ibc: string;
+        arbitration: string;
+        family: string;
+        labour: string;
+        property: string;
+        ip: string;
+        consumer: string;
+        environment: string;
+        banking: string;
+        service: string;
+      };
+      forums: {
+        supreme_court: string;
+        high_court: string;
+        district_court: string;
+        nclt: string;
+        nclat: string;
+        itat: string;
+        drt: string;
+        consumer_forum: string;
+        tribunal: string;
+        regulator: string;
+      };
     };
   };
   billing: {

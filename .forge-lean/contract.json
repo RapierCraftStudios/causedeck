@@ -2,43 +2,25 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Define a snapshot format (JSON) for establishments: code, state, district, establishment name, and provenance (source and licence). Add a validator (unique and valid codes, known states).",
+   "quote": "Register eCourts status and list sources per state in the sources registry and `STATUS_SOURCES` (`packages/core/src/case-watch/lookup.ts`)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Import a snapshot into the forum catalogue under `packages/db/src/seed/forum-catalogue/` as generated typed seed data at adapter level **A0**, and bump `FORUM_CATALOGUE_VERSION`. Re-running is idempotent; it never touches workspace forums.",
+   "quote": "route through `packages/fetch` with `delegatedFor` and per-host rate budgets",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Per-state upgrade to A1/A2 is a data flag.",
+   "quote": "record provenance.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Ship with the existing catalogue plus a small **fictional or test** snapshot for tests. **No fetching** from the eCourts portal, and no data from an uncleared source.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "Importing a valid snapshot adds every establishment at A0 with unique codes. Re-importing changes nothing. [type:integration]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "An invalid snapshot (duplicate codes, unknown state, missing provenance) is rejected with a clear error. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "`FORUM_CATALOGUE_VERSION` is bumped, and the seed stays deterministic. [type:unit]",
+   "quote": "Acceptance: a watched district matter refreshes through a delegated lookup, with provenance [type:integration].",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -46,109 +28,116 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts",
-   "change": "Snapshot types, hand-written validateSnapshot (collects all problems: duplicate codes, invalid code pattern, unknown state against a fixed state/UT code list, missing or blank source/licence, empty names), snapshotToForumSeeds (A0 by default, per-state level map as the A1 upgrade flag, host services.ecourts.gov.in, adapterId in.\u003cstate>.district, code in.\u003cstate>.\u003cdistrict-slug>.\u003cest-slug>-\u003cest-code>, skips codes already hand-listed). No network access.",
+   "path": "packages/core/src/case-watch/lookup.ts",
+   "change": "Add STATUS_SOURCES entries `in.\u003cst>.district:case_status` for tn, ka, mh, dl, up (template ecourts-district, path case-status); keep the existing Chennai id. No new export.",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/seed/forum-catalogue/ecourts/snapshot.json",
-   "change": "Committed reviewed snapshot with provenance and an empty establishments list (real data is #640); no data from any uncleared source.",
-   "requirements": [
-    "R1",
-    "R4"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/db/src/seed/forum-catalogue/ecourts/index.ts",
-   "change": "Export ECOURTS_DISTRICT = snapshotToForumSeeds(validateSnapshot(snapshot.json)).",
+   "path": "packages/fetch/src/fetcher.ts",
+   "change": "Add a per-host sliding-window budget keyed `host:\u003curl host>` (default constant, overridable via FetcherDeps), checked with canAcquire alongside the source and advocate checks before any tryAcquire; deny with FetchDenied reason host_rate_limited (add the reason where FetchDenied reasons are declared).",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D4",
-   "path": "packages/db/src/seed/forum-catalogue/index.ts",
-   "change": "Spread ECOURTS_DISTRICT into FORUM_CATALOGUE, bump FORUM_CATALOGUE_VERSION to 2026-10-24.1, chunk the upsert insert (e.g. 2000 rows per statement, same transaction) keeping the idempotence, setWhere and soft-disable logic unchanged.",
+   "id": "D3",
+   "path": "packages/db/migrations/20261024090000_ecourts_district_status_sources.sql",
+   "change": "Hand-written migration inserting five uncleared `source` rows (kind court, access_mode A0, max_tier http, base_url https://services.ecourts.gov.in/, low rate_limit_per_minute, notes naming terms to confirm), ON CONFLICT (id) DO NOTHING. Add the matching meta/_journal.json entry and snapshot (copy the previous snapshot, same schema). Use the next free tag if the base took the timestamp.",
    "requirements": [
-    "R2",
-    "R5",
-    "R7"
+    "R1"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/i18n/src/messages/en/case-watch.json",
+   "change": "Add `source.\u003ckey>` labels for the new ids (key = id with '.'->'_', see sourceKey) in en, ta, kn case-watch.json, then regenerate generated/messages*, messages.d.ts and translation-status.json with the repo's i18n generator.",
+   "requirements": [
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/db/src/seed/forum-catalogue/ecourts/snapshot.test.ts",
-   "change": "Unit tests for invalid snapshots (duplicate codes, unknown state, missing provenance, bad code) with clear messages; mapping test with an inline fictional snapshot (all A0, unique valid codes, per-state level flag, deterministic order); DB integration test seeding the catalogue plus the fictional rows twice (second run: all unchanged, same ids/updated_at; workspace forums untouched); version-bump assertion; chunked insert with more rows than one chunk.",
+   "path": "packages/core/src/case-watch/case-watch.test.ts",
+   "change": "Add a test: a watch on a new state district source refreshes through a stub delegated fetcher; assert delegatedFor, stored snapshot provenance (tierUsed, costDollars, sourceRef) and the 5 ids are registered.",
    "requirements": [
-    "R5",
-    "R6",
-    "R7"
+    "R4",
+    "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/seed/README.md",
-   "change": "Document the snapshot format, validator, empty shipped snapshot (#640), per-state level flag, and that nothing is fetched.",
+   "path": "packages/fetch/src/__tests__/fetcher.test.ts",
+   "change": "Add tests: two sources on one host share the host budget (second denied host_rate_limited, no provider call, no slot spent); different hosts are independent.",
    "requirements": [
-    "R1",
-    "R3",
-    "R4"
+    "R2"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/db/src/__tests__/source-registry.test.ts",
+   "change": "Assert the five district case_status rows are seeded uncleared.",
+   "requirements": [
+    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing hand-written forum rows and codes (packages/db/src/seed/forum-catalogue/{madras-hc,karnataka-hc,chennai-district,bengaluru-district,tribunals}.ts) and the pinned lists in forum-catalogue.test.ts:80-138 stay valid; the shipped snapshot is empty so FORUM_CATALOGUE content is unchanged"
+   "what": "runCaseStatusLookup always passes delegatedFor and enforces own-watch scoping (packages/core/src/case-watch/lookup.ts)"
   },
   {
    "id": "P2",
-   "what": "seedForumCatalogue idempotence, soft-disable of only null-workspace rows, and catalogue_meta behaviour (packages/db/src/seed/forum-catalogue/index.ts:63-135)"
+   "what": "Existing Chennai/HC STATUS_SOURCES ids and the sources' fail-closed policy: new rows stay uncleared (packages/core/src/sources/registry.ts)"
   },
   {
    "id": "P3",
-   "what": "resolveDeepLink behaviour over the catalogue (packages/core/src/court/forums.test.ts:81)"
+   "what": "Existing per-source and per-advocate limits and tier caps in packages/fetch/src/fetcher.ts; apps/web/__tests__/case-watch-actions.test.ts mock list of core exports"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/forum-catalogue --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/fetch exec vitest run src/__tests__/fetcher.test.ts src/__tests__/static-checks.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/court/forums.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/case-watch/case-watch.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec tsc --noEmit"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/source-registry.test.ts"
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/case-watch-actions.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "The fictional snapshot lives only in tests; the shipped snapshot.json is empty",
-   "justification": "forum-catalogue.test.ts:80-87 pins exact catalogue codes and fake courts must not be seeded into production; the issue asks for a test snapshot for tests",
-   "source": "spec"
+   "choice": "Source ids `in.\u003cst>.district:case_status` per state, matching the forum adapterId `in.\u003cst>.district`.",
+   "justification": "packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts adapterId convention; STATUS_SOURCES key format at lookup.ts:42",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Validator is hand-written, no zod import in @causedeck/db",
-   "justification": "packages/db/package.json declares no zod dependency (only @causedeck/validators at :42); output rows are still checked by ForumSeedSchema via parseForumCatalogue (index.ts:28)",
+   "choice": "Per-host budget lives in the fetcher (not the registry row) because many per-state sources share services.ecourts.gov.in.",
+   "justification": "fetcher.ts:107-114 limits only `source:\u003cid>`; district forums share one host (snapshot.ts:151)",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Codes embed the establishment code",
-   "justification": "keeps codes unique under parseForumCatalogue (index.ts:28-37) and valid under FORUM_CODE_PATTERN (packages/validators/src/forum.ts:24)",
-   "source": "spec"
+   "choice": "Rows are seeded uncleared with max_tier http; delegated calls raise the cap to captcha in code.",
+   "justification": "0076_display_board.sql:49-71 pattern; fetcher.ts tierCap",
+   "source": "precedent"
   }
  ]
 }

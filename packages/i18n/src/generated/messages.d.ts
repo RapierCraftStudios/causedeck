@@ -2394,6 +2394,11 @@ export type Messages = {
       'in_tn_chennai-district_case_status': string;
       'in_tn_madras-hc_chennai_case_status': string;
       'in_ka_karnataka-hc_bengaluru_case_status': string;
+      in_tn_district_case_status: string;
+      in_ka_district_case_status: string;
+      in_mh_district_case_status: string;
+      in_dl_district_case_status: string;
+      in_up_district_case_status: string;
     };
     remove: string;
     added: string;

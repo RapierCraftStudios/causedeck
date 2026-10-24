@@ -1,39 +1,45 @@
 **Verdict**: CONFIRMED
-**Confidence**: high
-**Severity**: low (P3 greenfield data importer; part 2 of #495)
+**Confidence**: medium
+**Severity**: medium (P2, part 3 of #495: district matters outside Chennai cannot be watched)
 **Task Type**: feature
 
 ### What Was Claimed
-Rescoped 2026-10-24: build the importer, not the data. Define a JSON snapshot format for eCourts establishments (code, state, district, establishment, provenance), a validator (unique/valid codes, known states, provenance required), and an import into the forum catalogue as generated typed seed data at A0, bumping `FORUM_CATALOGUE_VERSION`. Idempotent; per-state A1/A2 is a data flag. Ship with a small fictional/test snapshot. No fetching from the portal and no uncleared data (the real list is #640).
+Register eCourts status sources per state in the sources registry and `STATUS_SOURCES`, route through `packages/fetch` with `delegatedFor` and per-host rate budgets, record provenance. Acceptance: a watched district matter refreshes through a delegated lookup, with provenance [type:integration]. Depends on #634 and #635 (both merged; the stale `.forge-lean` files from #635 are superseded).
 
 ### What We Found
-- The previous run (checkpoint 7fd3037b) planned against the old scope (fetch from the portal) and stopped needs-human; its investigation and contract are superseded. The rescope removes that blocker.
-- Catalogue assembled at `packages/db/src/seed/forum-catalogue/index.ts:22-44`: version `'2026-10-21.3'` (:22); `parseForumCatalogue` (:28) validates with `ForumSeedSchema` and rejects duplicate codes; list is a spread of per-forum files (:36-42).
-- Seed shape `packages/validators/src/forum.ts:93-108`: `FORUM_CODE_PATTERN` (:24), `adapterLevel` limited to A0/A1 (:102), `config.hosts` >= 1 bare hostname (:70).
-- A0 precedent `chennai-district.ts:1-63` (shared `DISTRICT` base, host `services.ecourts.gov.in`, `jurisdictionKind:'district'`).
-- `@causedeck/db` has no direct `zod` dependency (`packages/db/package.json:42` has only `@causedeck/validators`), so the snapshot validator is hand-written TypeScript, not zod.
-- Tests pin the catalogue: `forum-catalogue.test.ts:80-87` (exact enabled/disabled code lists), `:137-138` (A1 count). Shipping a fictional snapshot into the real FORUM_CATALOGUE would break those pins and seed fake courts into production, so the fictional snapshot is test-only; the shipped committed snapshot is empty.
-- Upsert is one insert (`index.ts:63-110`); with a real list of thousands of rows the 65535-parameter limit matters (12 cols => ~5400 rows). Chunking is cheap and in scope for a bulk importer.
-- Workspace forums are rows with non-null `workspace_id`; seed inserts `workspaceId:null` only and soft-disables only `isNull(workspaceId)` rows (`index.ts:113-126`), so workspace forums are untouched.
+- `STATUS_SOURCES` has one district entry only, `in.tn.chennai-district:case_status` (`packages/core/src/case-watch/lookup.ts:41-45`), template `ecourts-district`.
+- The lookup is already delegated and records provenance: `fetchSource(..., {delegatedFor})` (`lookup.ts:262-269`), then stores `via:'server'`, `tierUsed`, `costDollars`, `sourceRef` (`lookup.ts:285-291`). The new states only need registry entries.
+- Server action rejects any source not in `STATUS_SOURCES` (`apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts:142`). The proceedings page lists `Object.keys(STATUS_SOURCES)` (`.../proceedings/page.tsx:98`). The label is `t('source.'+sourceKey(id))` (`apps/web/components/matters/status-watch-panel.tsx:68`), so each new id needs en/ta/kn labels in `packages/i18n/src/messages/*/case-watch.json:11-12`, plus the generated files.
+- No `source` table row exists for any `:case_status` id: rows are seeded in migrations, uncleared (pattern `packages/db/migrations/0076_display_board.sql:49-71`, `ON CONFLICT DO NOTHING`; notice rows `0071_notices.sql:72-76`). `policyFor` fails closed on unknown rows, so a new id gets no fetch until a row exists and counsel clears it.
+- Rate limiting is per source id (`source:<id>`, `packages/fetch/src/fetcher.ts:107-114`, `rate-limit.ts`) plus per-advocate for captcha. All district states share the host `services.ecourts.gov.in` (`db/src/seed/forum-catalogue/ecourts/snapshot.ts:151`), so N per-state sources would multiply the budget against one host. There is no per-host budget today.
+- `checkUrl` already pins the URL host to the source `base_url` (`fetcher.ts:50-61`).
+- Parsers and fixtures for 5 states exist (#634: `packages/adapters/src/ecourts/`, `adapters/fixtures/status/manifest.json`, template `ecourts-district`).
+- The migrations dir mixes numbered (`0082_staff_conflict_rate`) and timestamped (`20261024063416_webhooks`) names; the latest journal tag is `20261024063416_webhooks` (`db/migrations/meta/_journal.json:597`).
 
 ### Root Cause
-Greenfield: no snapshot format or importer exists; only hand-written Chennai/Bengaluru district forums.
+Only Chennai is registered as a district status source; there are no registry rows for the other states, and the fetch layer limits per source, not per host.
 
 ### Affected Files
-- new `packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts` (types, validator, `snapshotToForumSeeds`, per-state level map)
-- new `packages/db/src/seed/forum-catalogue/ecourts/snapshot.json` (committed reviewed snapshot; empty `establishments` until #640)
-- new `packages/db/src/seed/forum-catalogue/ecourts/index.ts` (`ECOURTS_DISTRICT`, built from the committed snapshot)
-- `packages/db/src/seed/forum-catalogue/index.ts` (spread in, bump version, chunk insert)
-- new `packages/db/src/seed/forum-catalogue/ecourts/snapshot.test.ts` (+ fictional fixture inside the test file), `packages/db/src/seed/README.md`
+- `packages/core/src/case-watch/lookup.ts`: add `in.<st>.district:case_status` for tn, ka, mh, dl, up (keep the Chennai id).
+- `packages/fetch/src/fetcher.ts` (+ `types.ts` if the policy gains a field, `__tests__/fetcher.test.ts`): per-host sliding-window budget, key `host:<host>`, checked with `canAcquire` before any `tryAcquire`, so a denial spends nothing. Deny with a new `FetchDenied` reason `host_rate_limited`; check where reasons are enumerated.
+- New migration (hand-written SQL plus a journal entry and snapshot, next tag after `20261024063416_webhooks`): insert the 5 uncleared `source` rows (kind `court`, access mode A0, max_tier `http` because the DB CHECK keeps court rows off `captcha`, base_url `https://services.ecourts.gov.in/`, low rate limit, notes naming the terms to confirm). Do not clear them.
+- `packages/i18n/src/messages/{en,ta,kn}/case-watch.json` + generated `messages/*.json`, `generated/messages.d.ts`, `translation-status.json`. Run the i18n generator, which produces the generated files.
+- Tests: `packages/core/src/case-watch/case-watch.test.ts` (a Karnataka-district watch refreshes through a stubbed delegated fetcher, asserting `delegatedFor` and the stored provenance); `packages/db/src/__tests__/source-registry.test.ts` (rows seeded uncleared).
+- Enumerating tests touched: `apps/web/__tests__/case-watch-actions.test.ts:29` mocks `STATUS_SOURCES` as a literal and lists the core export names. No new core export is added, so it should need no change. Run it to confirm. `packages/i18n/src/__tests__/catalog.test.ts` checks locale parity.
 
 ### Sibling Sweep
-Other enumerators of the catalogue (`packages/core/src/court/forums.test.ts:81`, `intelligence/src/generic-a0/__tests__/config.test.ts`) are unaffected while the shipped snapshot is empty; they stay valid when #640 lands real rows as long as rows are A0 with hosts only.
+`STATUS_SOURCES` entries for the HCs (`madras-hc`, `karnataka-hc`) have the same missing-row situation; leave them. Anything that enumerates the source table: `source-registry.test.ts`, which checks court rows are uncleared and covered by `access_mode_registry` (`:40-46`). The new rows must satisfy that check.
 
 ### History
-`FORUM_CATALOGUE` from #34 (ADR 0014); Chennai/Bengaluru A0 forums hand-written then. Parent #495 closed not_planned, split into #634, #635, #636; data is #640.
+Case-watch lookup was introduced by #591 (PR #612). The Chennai-only registry dates from #483. #634 added the template parsers, #635 the forum importer.
 
 ### Recommendation
-Snapshot JSON: `{version, source, licence, retrievedOn, establishments:[{code, state, district, establishment}]}`; states keyed by a fixed list of 36 states/UTs with codes (`tn`, `ka`, ...), `levels` map in snapshot.ts (`Partial<Record<StateCode,'A0'|'A1'>>`, default A0) as the per-state data flag. `validateSnapshot(raw)` throws an error listing every problem: duplicate establishment codes, unknown state, bad code pattern, missing/blank provenance (source, licence). `snapshotToForumSeeds` maps to ForumSeed: code `in.<state>.<district-slug>.<est-slug>-<est-code>`, court `<District> District Courts`, adapterId `in.<state>.district`, A0, enabled, host services.ecourts.gov.in, languageProfile `{primary:'en'}`; skip establishments whose code collides with an existing hand-written catalogue code. Bump version to `2026-10-24.1`. Chunk the insert (e.g. 2000 rows) inside the same transaction. No network calls anywhere.
+1. Add the five state entries. State ids are an explicit choice: `in.<st>.district:case_status`, matching the `in.<st>.district` adapterId.
+2. Add the per-host budget in `createFetcher`, default e.g. 30/min per host, injectable through `FetcherDeps`.
+3. Seed the uncleared rows by migration.
+4. Add the labels.
+5. Test the end-to-end refresh with an injected fetcher and policy (no network).
+Risk: the per-host budget changes the fetch behaviour of every source, so keep the default generous and covered by the existing fetcher tests. Medium confidence because the real status paths and base URLs per state need counsel review. Rows stay uncleared.
 
 ### Related Issues
-#495 (parent), #640 (real data, needs a person), #634, #636, #34.
+#495 (parent), #634, #635, #640 (establishment data), #483/#591/#592 (watch, lookup, poll job).

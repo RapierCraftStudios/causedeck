@@ -87,6 +87,7 @@ vi.mock('@causedeck/core/sources', () => {
     sourceFetchLogs: () => Promise.resolve([]),
     sourceOpsOverview: () => Promise.resolve([]),
     staffParseYield: () => Promise.resolve([]),
+    staffConflictRate: () => Promise.resolve([]),
     createSource: audited,
     updateSource: audited,
     setSourceKillSwitch: audited,

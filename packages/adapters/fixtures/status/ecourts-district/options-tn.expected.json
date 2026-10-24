@@ -1,0 +1,26 @@
+{
+  "state": [
+    {
+      "code": "24",
+      "label": "Tamil Nadu"
+    }
+  ],
+  "district": [
+    {
+      "code": "4",
+      "label": "Chennai"
+    }
+  ],
+  "establishment": [
+    {
+      "code": "TNCH01",
+      "label": "City Civil Court, Chennai (FICTIONAL)"
+    }
+  ],
+  "caseType": [
+    {
+      "code": "11",
+      "label": "Original Suit - OS"
+    }
+  ]
+}

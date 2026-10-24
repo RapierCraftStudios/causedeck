@@ -15,6 +15,7 @@ export default defineProject({
       'src/karnataka-hc/fixtures.test.ts',
       'src/nclt-blr/**/*.test.ts',
       'src/status/**/*.test.ts',
+      'src/ecourts/**/*.test.ts',
     ],
     testTimeout: 60_000,
   },

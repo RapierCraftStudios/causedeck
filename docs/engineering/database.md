@@ -303,8 +303,11 @@ metadata?)`, which returns `(id, hash)`. A non-null workspace must be the pinned
 ## Writing a migration (reviewed SQL)
 
 1. Change or add tables under `packages/db/src/schema/` and export them from `schema/index.ts`.
-2. `pnpm db:generate`. drizzle-kit writes `migrations/NNNN_<name>.sql` plus its snapshot, and the
-   script stamps a header ending in `-- Reviewed-by: <unreviewed>`.
+2. `pnpm db:generate`. drizzle-kit writes `migrations/<YYYYMMDDHHMMSS>_<name>.sql` plus its snapshot,
+   and the script stamps a header ending in `-- Reviewed-by: <unreviewed>`. Since D-051, names are
+   timestamps (files up to `0082` keep their index), so parallel branches never pick the same name.
+   A hand-written migration with no schema change: `pnpm --filter @causedeck/db exec drizzle-kit
+   generate --custom --name <name>`, then write the SQL into the new file.
 3. Read the SQL. Check locks, defaults on large tables, index creation and backward
    compatibility (below). Edit it if needed (for example `CREATE INDEX CONCURRENTLY` in its own
    migration, or a backfill), then replace `<unreviewed>` with your name.

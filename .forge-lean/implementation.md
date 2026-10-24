@@ -21,3 +21,7 @@ eCourts establishment snapshot (JSON) is validated, mapped to A0 `ForumSeed`s an
 - V3 db tsc --noEmit: pass
 ### Notes
 In this sandbox Testcontainers' Ryuk log wait fails; validate commands pass with `TESTCONTAINERS_RYUK_DISABLED=true`. No behaviour change to shipped catalogue content except the version bump.
+
+## Merge check (turbo missing)
+The merge-check failure was `turbo: command not found` (host tooling), not a code conflict. No code change needed; V1-V3 re-run green on the merged tree (testcontainers needs TESTCONTAINERS_RYUK_DISABLED=true).
+- Post-merge: `pnpm exec turbo run typecheck --filter='...[72a44a11]'` passes (23/23 packages). The earlier exit 127 was `turbo` missing from PATH (use `pnpm exec turbo`), not a code conflict; no symbol clashes with the base, so no code change.

@@ -33,3 +33,6 @@ The reported failure (`turbo: command not found`, exit 127) is a PATH issue in t
 
 ### Post-merge (2)
 Merged the base again (adds core `migration` domain and admin pages). `turbo` is not on the bare PATH; `pnpm exec turbo run typecheck` for core, web, admin, db and i18n passes (20 tasks). No duplicate or same-named symbols, so no code change.
+
+### Post-merge (3)
+Re-ran full `turbo run typecheck` with node_modules/.bin on PATH: 24/24 tasks pass. The exit 127 is a runner PATH issue; no source change.

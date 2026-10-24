@@ -26,3 +26,10 @@ The reported failure (`turbo: command not found`, exit 127) was an environment P
 
 ### Post-merge
 Merged the base (journal idx 94, snapshot chained to the base's latest, review header added to the migration). `turbo` is not on the bare PATH; `pnpm exec turbo run typecheck` (core, web, db, i18n) passes, and `tsc --noEmit` is clean for core, web, i18n, db and auth. No duplicate-symbol conflicts were found, so no code change was needed.
+
+
+## Post-merge typecheck (re-verified)
+The reported failure (`turbo: command not found`, exit 127) is a PATH issue in the check runner, not a code conflict. `node_modules/.bin/turbo run typecheck` on the merged tree passes (19/19 tasks). No source change needed.
+
+### Post-merge (2)
+Merged the base again (adds core `migration` domain and admin pages). `turbo` is not on the bare PATH; `pnpm exec turbo run typecheck` for core, web, admin, db and i18n passes (20 tasks). No duplicate or same-named symbols, so no code change.

@@ -209,7 +209,8 @@ export async function dataOpsOverview(
   return staffQuery(
     staff,
     { purpose: 'data_ops.overview', capability: 'data-ops', tables: ['fetch_log', 'source'] },
-    (tx) => sourceOpsOverview(tx, now, { day, week }, sourceId, { day: conflictDay, week: conflictWeek }),
+    (tx) =>
+      sourceOpsOverview(tx, now, { day, week }, sourceId, { day: conflictDay, week: conflictWeek }),
     db,
   );
 }

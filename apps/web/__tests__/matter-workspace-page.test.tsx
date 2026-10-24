@@ -50,7 +50,11 @@ const notices = vi.hoisted(() => ({
     page.noticesError === null ? Promise.resolve(page.notices) : Promise.reject(page.noticesError),
   ),
 }));
-const logger = vi.hoisted(() => ({ error: vi.fn() }));
+const facts = vi.hoisted(() => ({
+  getNextDateAgreement: vi.fn(() => Promise.reject(new Error('no agreement in this test'))),
+  getStageAgreement: vi.fn(() => Promise.reject(new Error('no agreement in this test'))),
+}));
+const logger = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn() }));
 const reportError = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
@@ -74,6 +78,7 @@ vi.mock('../lib/report-error.ts', () => ({ reportError }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/matter-graph', () => graph);
 vi.mock('@causedeck/core/notices', () => notices);
+vi.mock('@causedeck/core/facts', () => facts);
 vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
   updateMatterAction: vi.fn(),
   setSensitiveAction: vi.fn(),

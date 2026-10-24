@@ -164,7 +164,11 @@ describe('staff conflict rate (0080)', () => {
         ),
       );
       expect(rows).toHaveLength(1);
-      expect(Object.keys(rows[0] ?? {}).sort()).toEqual(['conflicts', 'observations', 'source_key']);
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual([
+        'conflicts',
+        'observations',
+        'source_key',
+      ]);
       expect(rows[0]).toMatchObject({ observations: '1', conflicts: '1' });
     });
   });

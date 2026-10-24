@@ -22,7 +22,7 @@ import { domainErrorCode, graphDeps } from './graph-deps.ts';
 
 /** The overview plus how well the sources agree on its next date and stage (#499). */
 export type MatterOverviewWithAgreement = MatterOverview & {
-  agreement?: { date: Agreement; stage: Agreement } | null;
+  agreement?: { date: Agreement; stage: Agreement } | null | undefined;
 };
 
 export type MatterOverviewLoad =

@@ -164,12 +164,7 @@ export function DateConflictCard({
         {side('A', conflict.current, t('current', { date: conflict.current.text }))}
         {side('B', conflict.proposed, t('proposed', { date: conflict.proposed.text }))}
         {conflict.others.map((other, index) =>
-          side(
-            String.fromCharCode(67 + index),
-            other,
-            t('proposed', { date: other.text }),
-            other,
-          ),
+          side(String.fromCharCode(67 + index), other, t('proposed', { date: other.text }), other),
         )}
       </div>
       {error === null ? null : (

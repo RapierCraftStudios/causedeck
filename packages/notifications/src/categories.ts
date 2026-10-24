@@ -36,6 +36,8 @@ export const CATEGORIES = {
     mandatory: false,
     lockedChannels: [],
   },
+  // Court-day display-board alerts (#493): N away, now, risen, passed over.
+  'court.board': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'proposal.new': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'judgment.alert': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   // Case-status change alerts (#592): a watched case shows a new next date, a new order or a new stage.

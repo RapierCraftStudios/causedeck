@@ -11,7 +11,7 @@ Every flag is off by default and ships dark. ⚖ marks a legal-gated flag. A leg
 | `invoices.enabled` | ⚖ yes | `KILL_INVOICES_ENABLED` | #83 fees and invoices, #120 counsel unlock; hides the `invoices` route (#11) |
 | `limitation.enabled` | ⚖ yes | `KILL_LIMITATION_ENABLED` | #84 limitation tracker, #120 counsel unlock; hides the `limitation` route (#11) |
 | `court.a2.retrieval` | ⚖ yes | `KILL_COURT_A2_RETRIEVAL` | #35 adapter framework, #120 counsel unlock |
-| `court.live-tracking` | ⚖ yes | `KILL_COURT_LIVE_TRACKING` | #35 adapter framework, #120 counsel unlock |
+| `court.live-tracking` | ⚖ yes | `KILL_COURT_LIVE_TRACKING` | #35 adapter framework, #493 display-board tracking, #120 counsel unlock |
 | `court.khc-a2` | ⚖ yes | `KILL_COURT_KHC_A2` | #482 Karnataka HC cause-list watch (A2), #118 counsel clearance |
 | `court.case-status` | ⚖ yes | `KILL_COURT_CASE_STATUS` | #483 case-status watch, refresh and on-device captcha solver (D-048 tier 4), #118 counsel clearance |
 | `court.sanctioned-push` | ⚖ yes | `KILL_COURT_SANCTIONED_PUSH` | #35 adapter framework, #120 counsel unlock |

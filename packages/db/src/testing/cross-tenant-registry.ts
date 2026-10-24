@@ -235,6 +235,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   retentionSweep: selfScoped,
   // KHC cause-list watches (#482)
   addCauseListWatch: selfScoped,
+  matchNotices: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
   // Case-status watches (#591)
@@ -396,6 +397,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
   // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that
   // name a row of another workspace, and undos handed a payload of A's ids
+  // court day (#493): the live halls read model opens withWorkspace on the given actor
+  getLiveHalls: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -912,6 +915,30 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   CAUSELIST_POLL_CRON: 'constant',
   causelistPoll: 'job definition (handler is runCauselistPoll)',
   runCauselistPoll: 'system job body: see pollCauseList',
+  // court day: display-board tracking and the call-time estimate (#493)
+  COURT_LIVE_TRACKING_FLAG: 'constant',
+  BOARD_SOURCES: 'constant',
+  DEFAULT_AWAY_THRESHOLDS: 'constant',
+  isCourtHours: 'pure (clock arithmetic in IST)',
+  planBoardAlert: 'pure (decides the one alert a listed item earns from a board row)',
+  pollBoards:
+    'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
+  itemNumber: 'pure',
+  paceSamples: 'pure',
+  estimateCallWindow: 'pure',
+  backtestEta: 'pure',
+  BOARD_POLL_CRON: 'constant',
+  boardPoll: 'job definition (handler is runBoardPoll)',
+  runBoardPoll: 'system job body: see pollBoards',
+  setBoardFetcherFactory: 'wiring point for the governed fetcher (worker startup)',
+  // notices: the official notices feed (#586)
+  NOTICE_PARSERS: 'constant',
+  pollNotices:
+    'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
+  NOTICES_POLL_CRON: 'constant',
+  noticesPoll: 'job definition (handler is runNoticesPoll)',
+  runNoticesPoll: 'system job body: see pollNotices',
+  setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
   // case-watch: delegated status lookups (#591)
   STATUS_SOURCES: 'constant',
   hashStatusFields: 'pure',

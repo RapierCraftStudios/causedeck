@@ -691,6 +691,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        courtBoard: {
+          label: string;
+          description: string;
+        };
         judgmentAlert: {
           label: string;
           description: string;
@@ -2291,6 +2295,30 @@ export type Messages = {
         not_found: string;
         unrecognised: string;
       };
+    };
+  };
+  courtDay: {
+    liveHalls: {
+      title: string;
+      description: string;
+      hall: string;
+      itemNow: string;
+      noItem: string;
+      status: {
+        sitting: string;
+        risen: string;
+        passed_over: string;
+        lunch: string;
+      };
+      yourItem: string;
+      away: string;
+      window: string;
+      confidence: {
+        low: string;
+        medium: string;
+        high: string;
+      };
+      updated: string;
     };
   };
   matters: {

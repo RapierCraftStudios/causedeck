@@ -690,6 +690,10 @@
           "label": "New proposals",
           "description": "When CauseDeck prepares something for you to review."
         },
+        "courtBoard": {
+          "label": "Court-day alerts",
+          "description": "When an item of yours is a few items away, now being heard, or the court rises or passes it over."
+        },
         "judgmentAlert": {
           "label": "Relevant judgments",
           "description": "When a new judgment cites a statute section confirmed on one of your matters."
@@ -2290,6 +2294,30 @@
         "not_found": "The court page does not list this case.",
         "unrecognised": "The court page could not be read."
       }
+    }
+  },
+  "courtDay": {
+    "liveHalls": {
+      "title": "Live halls",
+      "description": "Where each hall you have an item in has reached, from the court's display board.",
+      "hall": "Hall {hallNo}",
+      "itemNow": "Now hearing item {item}",
+      "noItem": "No item shown",
+      "status": {
+        "sitting": "Sitting",
+        "risen": "Risen",
+        "passed_over": "Passed over",
+        "lunch": "Lunch"
+      },
+      "yourItem": "Your item {item}",
+      "away": "{count, plural, =0 {Being heard now} one {1 item away} other {# items away}}",
+      "window": "Likely between {from} and {to}",
+      "confidence": {
+        "low": "Low confidence",
+        "medium": "Medium confidence",
+        "high": "High confidence"
+      },
+      "updated": "Board read at {time}"
     }
   },
   "matters": {

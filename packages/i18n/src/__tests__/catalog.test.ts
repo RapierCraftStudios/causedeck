@@ -93,6 +93,7 @@ describe('namespaced catalogs (#174)', () => {
         'camera',
         'caseWatch',
         'common',
+        'courtDay',
         'courts',
         'courtsRosters',
         'emailIntake',

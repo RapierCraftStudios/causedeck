@@ -2,31 +2,19 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add tenant tables `portfolio`, `portfolio_case` (proceeding or CNR/case number, source, status fields, next date, last adverse order) and `portfolio_panel_advocate` (advocate user delegated for the institution)",
+   "quote": "Add a per-tracked-case plan kind to the plan catalogue",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "plus a workspace kind for institutions",
+   "quote": "metering of tracked cases in packages/billing and core billing entitlements",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "a migration (next free number), FORCE RLS via tenantTable()",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R4",
-   "quote": "update packages/db/src/index.test.ts, the RLS catalog in packages/db/src/__tests__/rls/sql.test.ts, TABLE_TESTS/registry and the two-tenant seeders",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "Acceptance: RLS tests prove tenant B sees nothing of A.",
+   "quote": "Acceptance: charge computed from tracked case count with tests.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -34,139 +22,132 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/portfolio.ts",
-   "change": "New file. portfolio (id, name, timestamps), portfolio_case (portfolio composite FK (workspace_id,portfolio_id); optional composite FK to proceeding; cnr with CNR_PATTERN check; case_number; source_id FK to source; status text, status_fields jsonb or columns, next_date date, last_adverse_order_at/id; target check cnr or case_number or proceeding; unique per portfolio+cnr), portfolio_panel_advocate (portfolio composite FK, advocate_user_id FK user cascade, unique (workspace_id,portfolio_id,advocate_user_id)). All via tenantTable() with (workspace_id,id) unique and explicit workspace FK cascade, modelled on schema/webhooks.ts and schema/case-watch.ts.",
-   "requirements": [
-    "R1",
-    "R3"
-   ]
-  },
-  {
-   "id": "D2",
-   "path": "packages/db/src/schema/index.ts",
-   "change": "Export the three tables and constants/types.",
+   "path": "packages/validators/src/plans.ts",
+   "change": "Add optional `perTrackedCase?: boolean` to Plan, export TRACKED_CASE_PRICE_PAISE (integer paise per case per month, ex-GST), and an `active:false` catalogue row id `institution-case-monthly`, kind 'dedicated', interval month, perSeat false, perTrackedCase true, limits PAID. No new PlanKind (no migration).",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D3",
-   "path": "packages/db/src/schema/auth.ts",
-   "change": "Add 'institution' to WORKSPACE_KINDS (organization_kind_chk follows via inList); update doc comment.",
+   "id": "D2",
+   "path": "packages/billing/src/plans.ts",
+   "change": "Add pure `trackedCaseChargePaise(plan, trackedCases)`; extend mandateChargeNotice counts with optional `trackedCases` (charge = pricePaise*trackedCases when plan.perTrackedCase); checkPlanConfig: invalid if perSeat and perTrackedCase both set, minimum charge 0 for per-case plans; re-export TRACKED_CASE_PRICE_PAISE.",
    "requirements": [
-    "R2"
+    "R1",
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/billing/src/service.ts",
+   "change": "Extend SeatCounts/cycleChargePaise (and quote counts) with optional trackedCases so per-case plans price from the count.",
+   "requirements": [
+    "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/db/migrations/20261024110000_portfolio.sql",
-   "change": "Use next free timestamp after 20261024100000 (renumber if base took it). CREATE the 3 tables, FKs, indexes, ENABLE+FORCE RLS and ws_isolation policies as in 20261024063416_webhooks.sql; drop and re-add organization_kind_chk with ('solo','chamber','institution'). Include the header comments the migration linter requires.",
+   "path": "packages/billing/src/invoice/on-payment.ts",
+   "change": "Invoice line quantity and description use tracked cases for perTrackedCase plans (input gains optional trackedCases).",
    "requirements": [
-    "R2",
     "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/db/migrations/meta/_journal.json",
-   "change": "Append idx 87 entry with tag matching D4 and increasing 'when'. Add matching snapshot migrations/meta/\u003cts>_snapshot.json (run pnpm --filter @causedeck/db db:generate then adjust SQL header, or hand-produce).",
+   "path": "packages/core/src/billing/entitlements.ts",
+   "change": "Add `countTrackedCases(db, workspaceId)` (count of portfolio_case rows via the caller's workspace-scoped queryable) and `getTrackedCaseCharge(db, workspaceId, now?)` returning {plan id, trackedCases, chargePaise} from the current subscription's plan (0 for non per-case plans).",
    "requirements": [
+    "R2",
     "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add portfolio, portfolio_case, portfolio_panel_advocate to the root table list.",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add the three tables to the RLS catalog.",
-   "requirements": [
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D8",
    "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Add the three tables to the DB_TABLES_TEST registry.",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/db/src/testing/two-tenants.ts",
-   "change": "Add TENANT_SEEDERS for portfolio, portfolio_case, portfolio_panel_advocate (seed a portfolio per tenant; case and panel advocate seeders create their own parent portfolio, as webhook_delivery does).",
-   "requirements": [
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/db/src/__tests__/auth-schema.test.ts",
-   "change": "Update WORKSPACE_KINDS expectation to include 'institution'.",
+   "change": "Register countTrackedCases and getTrackedCaseCharge in SERVICE_TESTS pointing at the services.test.ts case.",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D11",
-   "path": "packages/db/src/__tests__/portfolio-schema.test.ts",
-   "change": "New schema test: tables are tenant tables, checks (CNR, target), uniques, institution kind accepted by organization_kind_chk.",
+   "id": "D7",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real two-tenant case: B's count/charge ignore A's portfolio_case rows; A unchanged.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/billing/src/__tests__/plans.test.ts",
+   "change": "Tests: per-case charge from count (0, 1, 1000), config check, catalogue row inactive and frozen, not offered by active list. Also add cases to service.test.ts and on-payment.test.ts for D3/D4.",
    "requirements": [
     "R1",
+    "R3"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/core/src/billing/__tests__/entitlements.test.ts",
+   "change": "DB test: workspace on institution plan with N portfolio_case rows gets chargePaise = N*price; Junior gets 0.",
+   "requirements": [
     "R2",
-    "R5"
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "WORKSPACE_KIND_VALUES in packages/validators/src/workspace.ts and the onboarding/profile forms stay solo|chamber: institutions are not self-serve selectable."
+   "what": "Existing seat and fixed plan charges: mandateChargeNotice/cycleChargePaise outputs for junior, advocate, chamber unchanged (packages/billing/src/plans.ts, service.ts)"
   },
   {
    "id": "P2",
-   "what": "Existing organization rows and the solo/chamber behaviour of organization_kind_chk (packages/db/migrations/0004_workspaces.sql:46) remain valid."
+   "what": "PLAN_KINDS and the plan_kind_chk DB check unchanged; no migration (packages/db/src/schema/billing.ts:53)"
   },
   {
    "id": "P3",
-   "what": "Existing tenant tables (webhook_*, case_watch) and their RLS policies are untouched; no new runtime exports of @causedeck/core."
+   "what": "GET /v1/billing/plans and the web plan picker list only active plans; the institution plan is not self-serve (apps/api/src/routes/v1/billing.ts:55, billing-view.ts:240)"
+  },
+  {
+   "id": "P4",
+   "what": "Plan seed maps catalogue rows to plan table columns only (packages/db/src/seed/plans.ts); perTrackedCase is not a DB column"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/portfolio-schema.test.ts src/__tests__/auth-schema.test.ts src/index.test.ts src/__tests__/conventions.test.ts src/__tests__/lint-migrations.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/billing exec vitest run src/__tests__/plans.test.ts src/__tests__/service.test.ts src/__tests__/on-payment.test.ts src/__tests__/entitlements.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/rls src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/billing/__tests__/entitlements.test.ts src/__tests__/cross-tenant/services.test.ts src/usage/__tests__/fairness.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db db:check"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/__tests__/plans-seed.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add 'institution' only to the DB WORKSPACE_KINDS, not to validators/UI kind lists.",
-   "justification": "validators/src/workspace.ts:31 drives the self-serve onboarding and profile forms; institutions are provisioned by staff (#498 B2B) so they must not be user-selectable.",
+   "choice": "Reuse existing PlanKind 'dedicated' for the per-case plan instead of adding 'institution'",
+   "justification": "A new kind needs a plan_kind_chk migration and snapshot (packages/db/src/schema/billing.ts:53), API enum (validators/src/api/billing.ts:9) and fairness map (core/src/usage/fairness.ts:12); 'dedicated' already exists everywhere and no row uses it",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Model portfolio_case after case_watch (composite FKs, CNR_PATTERN check, target check).",
-   "justification": "packages/db/src/schema/case-watch.ts:31-70 is the established shape for CNR/case-number lookups against source and proceeding.",
+   "choice": "Plan row is active:false",
+   "justification": "Institutions are provisioned, not self-served; active plans feed the picker (billing-view.ts:240) and public API (api/routes/v1/billing.ts:55)",
    "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "New core exports are registered in SERVICE_TESTS",
+   "justification": "CLAUDE.md registry table for runtime exports of @causedeck/core",
+   "source": "doc"
   }
  ]
 }

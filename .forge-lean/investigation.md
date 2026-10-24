@@ -1,38 +1,38 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (P2 greenfield data model; blocks #662-#666 B2B portfolio work)
+**Severity**: medium (P2 greenfield; B2B institution billing, part 4 of #498)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 1 of #498: add tenant tables `portfolio`, `portfolio_case`, `portfolio_panel_advocate`, an institution workspace kind, a migration (next free number), FORCE RLS via `tenantTable()`, and the registry/test updates (`packages/db/src/index.test.ts`, RLS catalog in `rls/sql.test.ts`, TABLE_TESTS/registry, two-tenant seeders). Acceptance: RLS tests prove tenant B sees nothing of A.
+Part 4 of #498: "Add a per-tracked-case plan kind to the plan catalogue and metering of tracked cases in packages/billing and core billing entitlements. Acceptance: charge computed from tracked case count with tests." Depends on #661 (merged; `portfolio_case` exists).
 
 ### What We Found
-- No portfolio code exists anywhere (`grep -ril portfolio packages apps` is empty). The earlier "Investigation Report" comment on #661 and the old `.forge-lean/*` files describe a different issue (coverage tracker) and are stale; ignore them.
-- Workspace kind is `organization.kind` text with `organization_kind_chk` (`packages/db/src/schema/auth.ts:44,77,85`); `WORKSPACE_KINDS = ['solo','chamber']`. The check was created in `packages/db/migrations/0004_workspaces.sql:46`. Asserted by `packages/db/src/__tests__/auth-schema.test.ts:93`.
-- UI/validators mirror kinds separately (`packages/validators/src/workspace.ts:31`, profile form, onboarding form); they are user-selectable lists, so the institution kind should NOT be added there (institutions are provisioned, not self-served).
-- Tenant-table template: `packages/db/src/schema/webhooks.ts` (tenantTable, `(workspace_id,id)` unique, explicit workspace FK cascade) and `case_watch` (`schema/case-watch.ts:31-70`, composite FK to `proceeding` and `source`, CNR check using `CNR_PATTERN` from `proceedings.ts:38`).
-- Migration template `migrations/20261024063416_webhooks.sql`; latest migration is `20261024100000_staff_watch_demand.sql` (journal idx 86, `when` 1792830000000), with snapshot `migrations/meta/20261024100000_snapshot.json`.
-- Registration lists to update, each already listing webhook tables: `src/index.test.ts:155`, `src/__tests__/rls/sql.test.ts:162`, `src/testing/cross-tenant-registry.ts:137` (`DB_TABLES_TEST`), `src/testing/two-tenants.ts:326` (`TENANT_SEEDERS`, seeder example at `:964`), `src/schema/index.ts` exports.
+- `PLAN_KINDS = ['junior','advocate','chamber','dedicated']` and the catalogue live in `packages/validators/src/plans.ts:12,92`; no plan is priced per tracked case. `kind 'dedicated'` is in the DB check (`packages/db/src/schema/billing.ts:53`, `migrations/0005_billing.sql:41`), the API enum (`packages/validators/src/api/billing.ts:9`) and `FAIRNESS_CONCURRENCY_BY_PLAN` (`packages/core/src/usage/fairness.ts:12-17`) but no catalogue row uses it.
+- Charge is computed by `mandateChargeNotice` (`packages/billing/src/plans.ts:60-69`) and `cycleChargePaise` (`packages/billing/src/service.ts:88-93`): only seats and clerk seats; `checkPlanConfig` (`plans.ts:88-133`) assumes per-seat or fixed.
+- Invoice line quantity is seats-only (`packages/billing/src/invoice/on-payment.ts:66-67`).
+- `portfolio_case` is a tenant table (`packages/db/src/schema/portfolio.ts:37`); there is no count of tracked cases anywhere in core billing (`packages/core/src/billing/entitlements.ts`, seat count via `countBillableSeats` only).
+- Web plan picker filters `p.active` (`apps/web/app/(app)/w/[slug]/billing/billing-view.ts:240-246`) and the API lists active plans only (`apps/api/src/routes/v1/billing.ts:55`), so an `active:false` institution plan is not self-serve (matches institutions being provisioned).
+- Plan `kind` is a DB check; reusing existing `'dedicated'` avoids a migration plus a 17k-line snapshot and the fairness/API enum churn.
 
 ### Root Cause
-Greenfield: institutions (banks, NBFCs, ARCs) have no workspace kind and no tables to hold a tracked-case portfolio or delegate panel advocates.
+Pricing model supports only flat and per-seat plans; no per-case price, no tracked-case count, no charge function.
 
 ### Affected Files
-- `packages/db/src/schema/auth.ts` (add `'institution'` to `WORKSPACE_KINDS`)
-- `packages/db/src/schema/portfolio.ts` (new), `packages/db/src/schema/index.ts`
-- `packages/db/migrations/<next>_portfolio.sql`, `migrations/meta/_journal.json`, new snapshot
-- `packages/db/src/index.test.ts`, `src/__tests__/rls/sql.test.ts`, `src/testing/cross-tenant-registry.ts`, `src/testing/two-tenants.ts`, `src/__tests__/auth-schema.test.ts`, new `src/__tests__/portfolio-schema.test.ts`
+- `packages/validators/src/plans.ts` (Plan flag, price constant, catalogue row)
+- `packages/billing/src/plans.ts`, `src/service.ts`, `src/invoice/on-payment.ts`, `src/entitlements.ts` (only if derive needs it)
+- `packages/core/src/billing/entitlements.ts` (count tracked cases, charge), `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`
+- tests: `packages/billing/src/__tests__/plans.test.ts`, `service.test.ts`, `on-payment.test.ts`; `packages/db/src/seed/__tests__/plans-seed.test.ts` (maps catalogue, should keep passing); `packages/core/src/billing/__tests__/entitlements.test.ts`
 
 ### Sibling Sweep
-- Other `kind in (...)` checks: only `organization_kind_chk`. Plans use a separate `PLAN_KINDS` (`packages/validators/src/plans.ts:11`), untouched.
-- `workspace_integration`, `webhook_*`, `case_watch` all follow the same register-in-four-places pattern; do the same.
-- Core runtime exports: none added, so no `SERVICE_TESTS`/`NOT_A_SERVICE` change is needed unless schema constants get re-exported from core (they are not).
+- Catalogue consumers: `apps/api/src/routes/v1/billing.ts:55`, `billing-view.ts:240`, `db/src/seed/plans.ts:15`, `service.ts:198`, `entitlements.ts:118`: all tolerate a new optional-flag row; inactive row stays out of lists.
+- `kind` switch sites: `fairness.ts:12` (Record, already has `dedicated`), API enum `api/billing.ts:9` (has `dedicated`).
+- Other per-unit charge paths: `mandateChargeNotice`, `cycleChargePaise`, `quoteChange` counts (`service.ts:~130`) share `SeatCounts`; extend them together.
 
 ### History
-Kind check introduced by #177 (0004_workspaces). Recent tenant-table additions: webhooks (#626), case_watch (#589). Siblings #662-#666 depend on these tables.
+Catalogue from #28/#200; seat metering #203; `dedicated` kind reserved since 0005_billing. Portfolio tables landed in #661 (f4450766).
 
 ### Recommendation
-Add `portfolio` (id, name, owner timestamps), `portfolio_case` (portfolio_id composite FK, optional proceeding_id composite FK to `proceeding`, `cnr` with CNR check, `case_number`, `source_id` FK to `source`, status text fields, `next_date`, `last_adverse_order_at`/id, unique per portfolio+cnr or case number, target check like `case_watch_target_chk`), and `portfolio_panel_advocate` (portfolio_id, advocate_user_id FK user, unique pair). All via `tenantTable()`. Write migration SQL generated shape plus RLS/policies matching webhooks migration; extend the organization check constraint in the migration (drop and re-add with `'institution'`). Register in all lists and add two-tenant seeders (portfolio, portfolio_case, portfolio_panel_advocate). Add a schema test and cover the RLS acceptance via the existing generic two-tenant RLS harness (TENANT_SEEDERS).
+Reuse kind `dedicated` (no migration). Add `perTrackedCase?: boolean` to `Plan`, `TRACKED_CASE_PRICE_PAISE`, and an inactive monthly catalogue row `institution-case-monthly`. Pure `trackedCaseChargePaise(plan, n)`; extend `mandateChargeNotice`/`cycleChargePaise` counts with optional `trackedCases` so the charge = price × cases for such plans; `checkPlanConfig` rejects perSeat+perTrackedCase and does not flag the cap on a zero-case minimum. Core: `countTrackedCases(db, workspaceId)` (RLS-scoped count of `portfolio_case`) and `getTrackedCaseCharge` combining it with the subscription's plan; register in `SERVICE_TESTS` with a two-tenant case. Invoice line quantity uses tracked cases for such plans.
 
 ### Related Issues
-#498 (parent), #662-#666 (siblings), #626, #589, #177.
+#498 (parent), #661 (dependency, merged), #662, #663, #665, #666.

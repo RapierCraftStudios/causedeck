@@ -3,7 +3,16 @@
 // short `prefix` identifies a key in lists. The API resolves a bearer token before it knows the
 // workspace, so it reads a key through `app_api_key_by_hash` (owner-defined, 0080_api_keys).
 import { sql } from 'drizzle-orm';
-import { check, foreignKey, index, integer, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  foreignKey,
+  index,
+  integer,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { id } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';

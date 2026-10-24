@@ -44,10 +44,9 @@ export function apiKeyEnforcement({
     if (longestPrefixMatch(c.req.path, allowed) === undefined) {
       throw new ForbiddenError('API keys can only call the public API.');
     }
-    const requested = [
-      c.req.header(WORKSPACE_HEADER),
-      WORKSPACE_PATH.exec(c.req.path)?.[1],
-    ].filter((value) => value !== undefined);
+    const requested = [c.req.header(WORKSPACE_HEADER), WORKSPACE_PATH.exec(c.req.path)?.[1]].filter(
+      (value) => value !== undefined,
+    );
     if (requested.some((workspaceId) => workspaceId !== apiKey.workspaceId)) {
       throw new ForbiddenError('This API key belongs to another workspace.');
     }

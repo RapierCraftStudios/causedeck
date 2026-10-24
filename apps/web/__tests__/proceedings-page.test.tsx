@@ -91,6 +91,7 @@ vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),
 }));
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
+vi.mock('../lib/flags.ts', () => ({ workspaceFlagCheck: () => Promise.resolve(() => false) }));
 vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/matter-graph', () => graph);

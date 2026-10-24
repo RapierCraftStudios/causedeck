@@ -17,6 +17,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { MattersPermissionDenied } from '../../../../../../../components/matters/matters-list.tsx';
 import { ProceedingTree } from '../../../../../../../components/matters/proceeding-tree.tsx';
 import { isDev } from '../../../../../../../lib/env.ts';
+import { workspaceFlagCheck } from '../../../../../../../lib/flags.ts';
 import type { SearchParams } from '../../../../../../../lib/matters/list-params.ts';
 import {
   loadProceedingsTab,
@@ -26,6 +27,12 @@ import { loadMatterOverview } from '../../../../../../../lib/matters/workspace.t
 import { can } from '../../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../../lib/workspace-loader.ts';
 import { searchMattersAction } from '../../actions.ts';
+import {
+  addCaseWatchAction,
+  listCaseWatchesAction,
+  recordDeviceStatusAction,
+  refreshCaseStatusAction,
+} from '../../../settings/case-watch/actions.ts';
 
 import {
   createProceedingAction,
@@ -74,6 +81,29 @@ async function pageLocale() {
   return isLocale(requested) ? requested : DEFAULT_LOCALE;
 }
 
+/** The case-status watch panel's data (#593); absent while `court.case-status` is off. */
+async function loadStatusWatch(
+  context: NonNullable<Awaited<ReturnType<typeof getWorkspaceContext>>>,
+  rows: unknown[],
+) {
+  if (rows.length === 0 || !(await workspaceFlagCheck(context))('court.case-status')) {
+    return undefined;
+  }
+  const [{ STATUS_SOURCES }, listed] = await Promise.all([
+    import('@causedeck/core/case-watch'),
+    listCaseWatchesAction({ workspaceId: context.workspace.id }),
+  ]);
+  if (!listed.ok) return undefined;
+  return {
+    sources: Object.keys(STATUS_SOURCES),
+    watches: Object.fromEntries(listed.data.map((w) => [w.proceedingId, w.id])),
+    actions: {
+      add: addCaseWatchAction,
+      refresh: { server: refreshCaseStatusAction, recordDevice: recordDeviceStatusAction },
+    },
+  };
+}
+
 export default async function MatterProceedingsPage({
   params,
   searchParams,
@@ -99,8 +129,10 @@ export default async function MatterProceedingsPage({
     canWrite,
     transitions: loaded.transitions,
   });
+  const statusWatch = canWrite ? await loadStatusWatch(context, rows) : undefined;
   return (
     <ProceedingTree
+      statusWatch={statusWatch}
       workspaceId={context.workspace.id}
       slug={slug}
       matterId={id}

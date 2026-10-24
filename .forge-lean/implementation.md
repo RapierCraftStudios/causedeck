@@ -42,3 +42,6 @@ Registry lists conflicted (core jobs/registry.ts, worker registry/schedules test
 
 ### Merge fix (third check)
 `turbo: command not found` (exit 127) is again a PATH problem, not a code clash. With `node_modules/.bin` on PATH, `tsc --noEmit` over core, worker and db is clean. Vitest could not start on this host (Postgres container "Started" log never arrives), so V1/V2 were not re-run. No source change.
+
+### Merge fix (fourth check)
+`turbo: command not found` (exit 127) is a PATH problem, not a code clash. With `node_modules/.bin` on PATH, `turbo run typecheck --filter=@causedeck/core --filter=@causedeck/worker` passes (17/17). Vitest still cannot start on this host (Postgres container), so V1/V2 were not re-run. No source change.

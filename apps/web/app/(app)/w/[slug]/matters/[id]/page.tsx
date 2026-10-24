@@ -14,7 +14,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 
-import { toNoticeView, type NoticeView } from '../../../../../../components/notices/notice-list.tsx';
+import {
+  toNoticeView,
+  type NoticeView,
+} from '../../../../../../components/notices/notice-list.tsx';
 import { MatterOverview } from '../../../../../../components/matters/matter-overview.tsx';
 import { MattersPermissionDenied } from '../../../../../../components/matters/matters-list.tsx';
 import { isDev } from '../../../../../../lib/env.ts';
@@ -79,7 +82,10 @@ function emptied(view: MatterOverviewView): MatterOverviewView {
 }
 
 /** The notices affecting the matter (#588). A failed read leaves the card empty, never the page. */
-async function loadMatterNotices(context: WorkspaceContext, matterId: string): Promise<NoticeView[]> {
+async function loadMatterNotices(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<NoticeView[]> {
   try {
     const { inWorkspace } = await import('@causedeck/core/runtime');
     const { listMatterNotices } = await import('@causedeck/core/notices');
@@ -87,7 +93,10 @@ async function loadMatterNotices(context: WorkspaceContext, matterId: string): P
     const rows = await inWorkspace(actor, (tx) => listMatterNotices(tx, actor, matterId));
     return rows.map(toNoticeView);
   } catch (error) {
-    logger.error({ err: error }, 'matter overview: could not load the notices affecting the matter');
+    logger.error(
+      { err: error },
+      'matter overview: could not load the notices affecting the matter',
+    );
     return [];
   }
 }

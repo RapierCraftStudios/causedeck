@@ -34,6 +34,8 @@ export interface NoticeRow {
   recordedAt: Date;
   /** Matters of the workspace the notice affects (`matter_forum` matches). */
   matterCount: number;
+  /** Why the notice matched (`forum` or `matter_forum` style reasons), sorted. */
+  reasons: string[];
 }
 
 const columns = {
@@ -48,6 +50,7 @@ const columns = {
   sourceName: source.owner,
   recordedAt: notice.createdAt,
   matterCount: sql<number>`count(${noticeMatch.matterId})::int`,
+  reasons: sql<string[]>`array_agg(distinct ${noticeMatch.reason} order by ${noticeMatch.reason})`,
 };
 
 /** The workspace's notices (matched to its forums or matters), newest issued first. */
@@ -66,7 +69,12 @@ export async function listWorkspaceNotices(
         matter,
         and(eq(matter.workspaceId, noticeMatch.workspaceId), eq(matter.id, noticeMatch.matterId)),
       )
-      .where(and(eq(noticeMatch.workspaceId, actor.workspaceId), sql`coalesce(not ${matter.sensitive}, true)`))
+      .where(
+        and(
+          eq(noticeMatch.workspaceId, actor.workspaceId),
+          sql`coalesce(not ${matter.sensitive}, true)`,
+        ),
+      )
       .groupBy(notice.id, source.owner)
       .orderBy(desc(notice.issuedOn), desc(notice.id))
       .limit(NOTICES_LIST_LIMIT),
@@ -94,7 +102,9 @@ export async function listMatterNotices(
       .from(noticeMatch)
       .innerJoin(notice, eq(notice.id, noticeMatch.noticeId))
       .innerJoin(source, eq(source.id, notice.sourceId))
-      .where(and(eq(noticeMatch.workspaceId, actor.workspaceId), eq(noticeMatch.matterId, matterId)))
+      .where(
+        and(eq(noticeMatch.workspaceId, actor.workspaceId), eq(noticeMatch.matterId, matterId)),
+      )
       .groupBy(notice.id, source.owner)
       .orderBy(desc(notice.issuedOn), desc(notice.id))
       .limit(NOTICES_LIST_LIMIT);

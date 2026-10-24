@@ -453,11 +453,15 @@ describe('matter workspace Overview (#390)', () => {
 
   it('shows an empty notices card, and still renders the matter when notices fail to load (#588)', async () => {
     withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
-    expect(document.querySelector('[data-slot="matter-notices"] [data-notices="empty"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-slot="matter-notices"] [data-notices="empty"]'),
+    ).not.toBeNull();
     cleanup();
     page.noticesError = new Error('db down');
     withIntl(await MatterPage({ params, searchParams: Promise.resolve({}) }));
-    expect(document.querySelector('[data-slot="matter-notices"] [data-notices="empty"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-slot="matter-notices"] [data-notices="empty"]'),
+    ).not.toBeNull();
     expect(document.querySelector('[data-slot="matter-overview"]')).not.toBeNull();
     expect(logger.error).toHaveBeenCalled();
   });

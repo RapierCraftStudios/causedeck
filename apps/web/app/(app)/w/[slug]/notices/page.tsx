@@ -12,7 +12,11 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import { NoticeList, toNoticeView, type NoticeView } from '../../../../../components/notices/notice-list.tsx';
+import {
+  NoticeList,
+  toNoticeView,
+  type NoticeView,
+} from '../../../../../components/notices/notice-list.tsx';
 import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
 import { isDev } from '../../../../../lib/env.ts';
 import type { WorkspaceContext } from '../../../../../lib/workspace-context.ts';

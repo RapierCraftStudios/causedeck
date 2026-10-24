@@ -137,6 +137,11 @@
         "empty": "Choose your courts to get started.",
         "hint": "Your forums decide which cause lists CauseDeck reads for you."
       },
+      "notices": {
+        "description": "Official notices for your forums and matters.",
+        "empty": "No notices matched yet.",
+        "hint": "Notices appear when a court publishes one for a forum you use."
+      },
       "activity": {
         "description": "Everything that happened, with undo.",
         "empty": "No activity yet.",

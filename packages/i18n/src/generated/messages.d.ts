@@ -138,6 +138,11 @@ export type Messages = {
         empty: string;
         hint: string;
       };
+      notices: {
+        description: string;
+        empty: string;
+        hint: string;
+      };
       activity: {
         description: string;
         empty: string;

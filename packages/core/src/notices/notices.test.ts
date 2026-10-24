@@ -194,15 +194,18 @@ describe('listing notices (#588)', () => {
       const other = await usesForum(tx, 'in.ka.karnataka-hc.bengaluru');
       await pollNotices(deps(tx, fakeFetcher()));
 
-      const mine = await listWorkspaceNotices(tx, { workspaceId: user.workspaceId, userId: user.ownerId });
+      const mine = await listWorkspaceNotices(tx, {
+        workspaceId: user.workspaceId,
+        userId: user.ownerId,
+      });
       // The holiday notice matched by a forum row and a matter row is one entry.
       expect(mine).toHaveLength(1);
       expect(mine[0]).toMatchObject({
         kind: 'holiday',
         sourceId: SOURCE,
         matterCount: 1,
-        url: expect.stringContaining('/notices/holiday-2027.pdf'),
       });
+      expect(mine[0]?.url).toContain('/notices/holiday-2027.pdf');
       expect(mine[0]?.sourceName).toBeTruthy();
       expect(mine[0]?.recordedAt).toBeInstanceOf(Date);
 

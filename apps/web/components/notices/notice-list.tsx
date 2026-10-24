@@ -68,7 +68,9 @@ export function NoticeList({ notices, compact = false }: NoticeListProps) {
           <h3 className="text-sm font-medium">{notice.title}</h3>
           {compact ? null : (
             <p className="text-ink-muted text-xs">
-              {notice.forumCodes.length > 0 ? t('forums', { codes: notice.forumCodes.join(', ') }) : null}
+              {notice.forumCodes.length > 0
+                ? t('forums', { codes: notice.forumCodes.join(', ') })
+                : null}
               {notice.forumCodes.length > 0 && notice.matterCount > 0 ? ' · ' : null}
               {notice.matterCount > 0 ? t('matters', { count: notice.matterCount }) : null}
             </p>

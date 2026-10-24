@@ -59,7 +59,7 @@ export function BenchNoticeAlerts({ alerts, slug }: BenchNoticeAlertsProps) {
               {slug === undefined ? null : (
                 <Link
                   href={`/w/${slug}/matters/${alert.matterId}`}
-                  className="text-accent underline-offset-2 hover:underline"
+                  className="text-accent underline underline-offset-2"
                 >
                   {alert.matterTitle}
                 </Link>

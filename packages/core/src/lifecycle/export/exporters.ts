@@ -235,6 +235,8 @@ export const blobsExporter = tablesExporter('blobs', [
   // Case-status watch (#589): the advocate's watches and the status snapshots they took.
   ws('case_watch', { userColumn: 'advocate_user_id' }),
   ws('case_status_snapshot'),
+  // Corrections CauseDeck review fanned out to this workspace's watched proceedings (#518).
+  ws('review_correction'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [

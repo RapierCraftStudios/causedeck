@@ -101,6 +101,7 @@ vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
   setSensitiveAction: vi.fn(),
   confirmNextDateAction: vi.fn(),
   chooseNextDateSourceAction: vi.fn(),
+  reportRecordErrorAction: vi.fn(),
 }));
 vi.mock('../app/(app)/w/[slug]/matters/actions.ts', () => ({
   searchMattersAction: vi.fn(),

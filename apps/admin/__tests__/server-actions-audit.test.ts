@@ -51,6 +51,21 @@ vi.mock('@causedeck/core/audit', () => ({
 }));
 // Core audits a support session's lifecycle (`support.session_*`) with the staff actor it is handed
 // (#314); the mocks below stand in for core and record the same staff-actor event.
+// Core's review service audits each call with the staff it is handed (queue.ts); stand in for it.
+vi.mock('@causedeck/core/review', () => {
+  const audited = (_db: unknown, staff: { userId: string }) =>
+    mocks.record({ actor: { userId: staff.userId, kind: 'staff' } }, { action: 'staff.read' });
+  return {
+    REVIEW_FIELDS: ['next_date', 'stage', 'bench'],
+    assignReviewItem: audited,
+    dismissReviewItem: audited,
+    markFixtureExported: audited,
+    resolveReviewItem: async (d: unknown, staff: { userId: string }) => {
+      await audited(d, staff);
+      return { propagated: 0 };
+    },
+  };
+});
 vi.mock('@causedeck/core/runtime', () => ({
   db: {},
   requestSupportSessionFor: async (ctx: { staffUserId: string }) => {
@@ -215,7 +230,25 @@ const FIXTURE_FIELDS = {
   document: 'ECHO TEST COURT (FICTIONAL)\nCAUSE LIST FOR 21.10.2026\nCOURT HALL 1\nFOR ADMISSION\n',
 };
 
+const REVIEW_ID = '0192d3b0-0000-7000-8000-000000000518';
+
 const ACTIONS: Record<string, () => Promise<unknown>> = {
+  'app/(console)/review/actions.ts#assignReviewAction': async () => {
+    const { assignReviewAction } = await import('../app/(console)/review/actions.ts');
+    return assignReviewAction(form({ id: REVIEW_ID }));
+  },
+  'app/(console)/review/actions.ts#dismissReviewAction': async () => {
+    const { dismissReviewAction } = await import('../app/(console)/review/actions.ts');
+    return dismissReviewAction(form({ id: REVIEW_ID }));
+  },
+  'app/(console)/review/actions.ts#submitFixAction': async () => {
+    const { submitFixAction } = await import('../app/(console)/review/actions.ts');
+    return submitFixAction(form({ id: REVIEW_ID, correctedValue: 'Final hearing' }));
+  },
+  'app/(console)/review/actions.ts#sendToWorkbenchAction': async () => {
+    const { sendToWorkbenchAction } = await import('../app/(console)/review/actions.ts');
+    return sendToWorkbenchAction({}, form({ ...FIXTURE_FIELDS, id: REVIEW_ID }));
+  },
   'app/(console)/fixtures/actions.ts#previewFixtureAction': async () => {
     const { previewFixtureAction } = await import('../app/(console)/fixtures/actions.ts');
     return previewFixtureAction({}, form(FIXTURE_FIELDS));

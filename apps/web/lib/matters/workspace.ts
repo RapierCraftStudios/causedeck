@@ -304,3 +304,36 @@ export function toOverviewView(
     synopsisDenied: overview.synopsisDenied,
   };
 }
+
+/** A fix from CauseDeck review shown on the matter: "corrected by CauseDeck review" (#518). */
+export interface ReviewCorrectionView {
+  id: string;
+  field: 'next_date' | 'stage' | 'bench';
+  value: string;
+  correctedAt: string;
+}
+
+/** The corrections review fanned out to this proceeding, newest first. A failed read shows none. */
+export async function loadReviewCorrections(
+  context: WorkspaceContext,
+  proceedingId: string,
+  locale: Locale,
+): Promise<ReviewCorrectionView[]> {
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { listReviewCorrections } = await import('@causedeck/core/review');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    const rows = await inWorkspace(actor, (tx) =>
+      listReviewCorrections(tx, actor.workspaceId, proceedingId),
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      field: r.field,
+      value: r.value,
+      correctedAt: formatDate(r.correctedAt, { locale }),
+    }));
+  } catch (error) {
+    logger.warn({ err: error }, 'matter workspace: could not load the review corrections');
+    return [];
+  }
+}

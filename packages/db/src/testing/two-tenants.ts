@@ -23,6 +23,7 @@ import { billingEvent, entitlement, plan, subscription, usageCounter } from '../
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
+import { reviewCorrection, reviewItem } from '../schema/review.ts';
 import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
 import { apiKey } from '../schema/api-keys.ts';
@@ -913,6 +914,38 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: caseStatusSnapshot.id });
     return { watchId, id: first(rows, 'case_status_snapshot').id };
+  },
+  review_correction: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const items = await tx
+      .insert(reviewItem)
+      .values({
+        kind: 'user_report',
+        sourceId: 'xt.case-watch',
+        cnr: 'TNCH010012342024',
+        field: 'stage',
+        consent: true,
+        status: 'fixed',
+        correctedValue: 'Final hearing',
+        resolvedAt: new Date(),
+        dueAt: new Date(),
+      })
+      .returning({ id: reviewItem.id });
+    const reviewItemId = first(items, 'review_item').id;
+    const rows = await tx
+      .insert(reviewCorrection)
+      .values({
+        workspaceId,
+        proceedingId,
+        reviewItemId,
+        field: 'stage',
+        value: 'Final hearing',
+        sourceType: 'system',
+        sourceRef: `causedeck-review:${reviewItemId}`,
+        confirmationState: 'corrected',
+      })
+      .returning({ id: reviewCorrection.id });
+    return { proceedingId, reviewItemId, id: first(rows, 'review_correction').id };
   },
   advocate_profile: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

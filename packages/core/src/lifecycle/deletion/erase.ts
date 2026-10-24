@@ -101,6 +101,7 @@ export const PURGE_ORDER = [
   // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
   'case_status_snapshot',
   'case_watch',
+  'review_correction',
   'proceeding_state_change',
   'proceeding_link',
   'proceeding',

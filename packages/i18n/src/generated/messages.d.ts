@@ -733,6 +733,14 @@ export type Messages = {
           label: string;
           description: string;
         };
+        portfolioAdverseOrder: {
+          label: string;
+          description: string;
+        };
+        portfolioMissedDate: {
+          label: string;
+          description: string;
+        };
         digestDaily: {
           label: string;
           description: string;

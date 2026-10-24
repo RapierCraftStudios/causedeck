@@ -27,6 +27,8 @@ export const GENERIC_PUSH_TITLES: Record<CategoryKey, string> = {
   'status.order': 'New order on a watched case',
   'status.stage': 'Stage changed on a watched case',
   bench_change: 'Bench change affecting one of your matters',
+  'portfolio.adverse_order': 'New adverse order in your portfolio',
+  'portfolio.missed_date': 'Missed hearing date in your portfolio',
   notices: 'New court notice for your forums',
   'digest.daily': 'Your daily digest is ready',
   'digest.end_of_day': 'What CauseDeck did today',

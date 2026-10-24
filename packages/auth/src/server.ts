@@ -427,7 +427,13 @@ export function createAuth({
           if (body?.providerId !== undefined || body?.organizationSlug !== undefined) {
             throw new APIError('BAD_REQUEST', { message: 'Sign in with your work email' });
           }
-          const domain = ssoDomainOf(String(body?.email ?? body?.domain ?? ''));
+          const domain = ssoDomainOf(
+            typeof body?.email === 'string'
+              ? body.email
+              : typeof body?.domain === 'string'
+                ? body.domain
+                : '',
+          );
           if (domain === null) {
             throw new APIError('BAD_REQUEST', { message: 'Sign in with your work email' });
           }

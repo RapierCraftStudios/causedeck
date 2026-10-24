@@ -51,10 +51,7 @@ export function ssoDomainOf(value: string): string | null {
   return DOMAIN.test(domain) ? domain : null;
 }
 
-const https = z
-  .string()
-  .url()
-  .refine((value) => value.startsWith('https://'), 'must be an https URL');
+const https = z.url().refine((value) => value.startsWith('https://'), 'must be an https URL');
 
 const OidcInput = z.object({
   clientId: z.string().trim().min(1).max(500),

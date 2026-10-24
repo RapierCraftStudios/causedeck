@@ -125,6 +125,13 @@ export {
   type CauseListFetcherFactory,
 } from './definitions/causelist-poll.ts';
 export {
+  NOTICES_POLL_CRON,
+  noticesPoll,
+  runNoticesPoll,
+  setNoticeFetcherFactory,
+  type NoticeFetcherFactory,
+} from './definitions/notices-poll.ts';
+export {
   runStatusPoll,
   setStatusFetcherFactory,
   STATUS_POLL_CRON,

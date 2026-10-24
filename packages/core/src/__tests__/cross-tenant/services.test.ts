@@ -8,13 +8,15 @@ import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
+import { Secret } from '@causedeck/config/env';
 import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
-import { inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
+import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import * as core from '../../index.ts';
@@ -421,6 +423,61 @@ const CASES: Record<string, Case> = {
     );
     const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
     expect(aWatches.map((w) => w.value)).toEqual(['KAR/1/1900']);
+  },
+  matchNotices: async (f) => {
+    // Only B has a proceeding before the catalogue forum the notice names: B gets the matches, and
+    // A's rows are exactly as they were.
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, 'in.tn.madras-hc.madurai'));
+    expect(forum?.id).toBeDefined();
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'circular',
+        title: 'XT match notice',
+        issuedOn: '2026-11-02',
+        url: `https://notices.example.test/xt/match/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    const matterId = await inWorkspace(f.tx, f.b.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.b.id, title: 'XT notice matter', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      await s.insert(schema.proceeding).values({
+        workspaceId: f.b.id,
+        matterId: m?.id ?? '',
+        forumId: forum?.id ?? '',
+        caseTypeCode: 'WP',
+        caseTypeRaw: 'W.P.',
+        filingNo: 'F-XT-NOTICE',
+        sourceType: 'manual',
+      });
+      return m?.id ?? '';
+    });
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    const report = await core.matchNotices({ db: f.tx }, [
+      { id: noticeId, forumCodes: ['in.tn.madras-hc.madurai'] },
+    ]);
+    expect(report.matches).toBeGreaterThanOrEqual(2);
+    const bRows = await inWorkspace(f.tx, f.b.id, (s) =>
+      s.select().from(schema.noticeMatch).where(eq(schema.noticeMatch.noticeId, noticeId)),
+    );
+    expect(bRows.map((r) => [r.reason, r.matterId]).sort()).toEqual(
+      [
+        ['forum', null],
+        ['matter_forum', matterId],
+      ].sort(),
+    );
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    expect(aAfter).toEqual(aBefore);
   },
   listCauseListWatches: async (f) => {
     // ub sees exactly B's own seeded watch, never A's.
@@ -2553,6 +2610,17 @@ const CASES: Record<string, Case> = {
 const registered = Object.entries(SERVICE_TESTS)
   .filter(([, entry]) => entry.test === THIS_FILE)
   .map(([name]) => name);
+
+const owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
+
+beforeAll(async () => {
+  // Committed, as `pnpm db:migrate` leaves it: the test db does not carry the forum catalogue.
+  await seedForumCatalogue(owner);
+});
+
+afterAll(async () => {
+  await owner.$client.end();
+});
 
 afterEach(() => {
   core.setNotificationJobDeps(null);

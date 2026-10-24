@@ -35,6 +35,7 @@ describe('registerSchedules', () => {
       'system.corpus.poll',
       'system.causelist.poll',
       'system.board.poll',
+      'system.notices.poll',
       'system.judgment-alert.scan',
       'system.status.poll',
     ]);
@@ -94,6 +95,8 @@ describe('registerSchedules', () => {
       // Board poll (#493): every five minutes 10:00-16:55 IST on weekdays; 2026-10-18 is a Sunday, so
       // the first run is Monday 10:00 IST (04:30 UTC).
       ['system.board.poll', '*/5 10-16 * * 1-5', '2026-10-19T04:30:00.000Z'],
+      // Notices poll (#586): hourly on the hour IST; 06:00 IST is 00:30 UTC.
+      ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
     ] as const;
     for (const [name, cron, firstRun] of others) {
       const row = await worker.boss.getSchedule(name);

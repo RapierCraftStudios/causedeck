@@ -540,6 +540,13 @@
       "when": 1792800214246,
       "tag": "0076_display_board",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1792802051821,
+      "tag": "0077_notice_match_targets",
+      "breakpoints": true
     }
   ]
 }

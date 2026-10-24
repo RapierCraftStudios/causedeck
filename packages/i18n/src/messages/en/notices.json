@@ -31,6 +31,17 @@
     "matterCard": {
       "title": "Affecting this matter",
       "empty": "No official notice affects this matter."
+    },
+    "benchAlerts": {
+      "title": "Bench changes",
+      "type": {
+        "leave": "Judge on leave",
+        "special_bench": "Special bench",
+        "roster_reassignment": "Roster change"
+      },
+      "listed": "{count, plural, one {Listed on {dates}} other {Listed on {dates}}}",
+      "source": "Source: {source}",
+      "open": "Open the official notice"
     }
   }
 }

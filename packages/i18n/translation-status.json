@@ -2828,6 +2828,8 @@
     "notifications.preferences.categories.statusStage.description": "draft",
     "notifications.preferences.categories.notices.label": "draft",
     "notifications.preferences.categories.notices.description": "draft",
+    "notifications.preferences.categories.benchChange.label": "draft",
+    "notifications.preferences.categories.benchChange.description": "draft",
     "matters.workspace.tabs.research": "draft",
     "matters.workspace.research.title": "draft",
     "matters.workspace.research.metaTitle": "draft",
@@ -2918,7 +2920,14 @@
     "notices.provenance": "draft",
     "notices.open": "draft",
     "notices.matterCard.title": "draft",
-    "notices.matterCard.empty": "draft"
+    "notices.matterCard.empty": "draft",
+    "notices.benchAlerts.title": "draft",
+    "notices.benchAlerts.type.leave": "draft",
+    "notices.benchAlerts.type.special_bench": "draft",
+    "notices.benchAlerts.type.roster_reassignment": "draft",
+    "notices.benchAlerts.listed": "draft",
+    "notices.benchAlerts.source": "draft",
+    "notices.benchAlerts.open": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -5740,6 +5749,8 @@
     "notifications.preferences.categories.statusStage.description": "draft",
     "notifications.preferences.categories.notices.label": "draft",
     "notifications.preferences.categories.notices.description": "draft",
+    "notifications.preferences.categories.benchChange.label": "draft",
+    "notifications.preferences.categories.benchChange.description": "draft",
     "matters.workspace.tabs.research": "draft",
     "matters.workspace.research.title": "draft",
     "matters.workspace.research.metaTitle": "draft",
@@ -5830,6 +5841,13 @@
     "notices.provenance": "draft",
     "notices.open": "draft",
     "notices.matterCard.title": "draft",
-    "notices.matterCard.empty": "draft"
+    "notices.matterCard.empty": "draft",
+    "notices.benchAlerts.title": "draft",
+    "notices.benchAlerts.type.leave": "draft",
+    "notices.benchAlerts.type.special_bench": "draft",
+    "notices.benchAlerts.type.roster_reassignment": "draft",
+    "notices.benchAlerts.listed": "draft",
+    "notices.benchAlerts.source": "draft",
+    "notices.benchAlerts.open": "draft"
   }
 }

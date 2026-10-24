@@ -85,6 +85,7 @@ const CATEGORY_MESSAGE = {
   'status.next_date': 'statusNextDate',
   'status.order': 'statusOrder',
   'status.stage': 'statusStage',
+  bench_change: 'benchChange',
   notices: 'notices',
   'digest.daily': 'digestDaily',
   'digest.end_of_day': 'digestEndOfDay',

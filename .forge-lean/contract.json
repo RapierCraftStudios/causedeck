@@ -2,243 +2,242 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "apps/web: Notices page listing notices matched to the member's forums and matters with provenance and source links",
+   "quote": "A roster or leave notice that affects a listed matter produces exactly one alert per watcher, with the notice linked.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "and a matter-level 'affecting this matter' card",
+   "quote": "Unaffected matters get no alert, and a test covers category-based roster assignment.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "register any server actions in apps/web/__tests__/cross-tenant-actions.test.ts",
-   "disposition": "not-applicable",
-   "evidence": "apps/web/__tests__/cross-tenant-actions.test.ts:122 (ACTIONS lists 'use server' exports only; the page and card are read-only and add none)",
+   "quote": "`packages/core/src/court/bench-alerts.ts`: map roster changes and notices (leave, special bench, roster reassignment) to affected listings and matters (forum, hall, judge, case category).",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R4",
+   "quote": "(forum, hall, judge, case category)",
+   "disposition": "defer",
+   "why": "Judge-based mapping needs bench.judges; PX-9, ME-6 and D-050 (docs/product/03-prd.md:278,319, docs/adr/0017-effective-dated-rosters.md:15) make judge-level data internal-only and need counsel clearance. This change maps by forum, hall and case category; judge-name matching is separate work after clearance.",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "`packages/notifications`: a `bench_change` category with in-app and push alerts and a daily summary.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "`apps/web`: an alert card on the matter and court-day view, with the notice as its source.",
+   "disposition": "deliver",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/notices/list.ts",
-   "change": "New read services listWorkspaceNotices(tx, scope) and listMatterNotices(tx, scope, matterId): select notice_match joined to notice and source inside the given workspace tx, dedupe per notice, newest issuedOn first, bounded limit; return id,title,kind,issuedOn,effectiveOn,url,forumCodes,sourceName,recordedAt and the match reason; matter variant throws/NOT_FOUND for another workspace's matter like listRelevantJudgments",
+   "path": "packages/core/src/court/bench-alerts.ts",
+   "change": "New. Pure classifyBenchNotice(title) -> {type: leave|special_bench|roster_reassignment, hallNos, caseTypes}|null (rules, no AI; null when it names neither a hall nor a case type). listBenchNoticeAlerts(db, actor, {matterId?, from?, to?}) read model over notice_match(matter_forum) x notice x listing x proceeding x court_hall in the actor's workspace, filtered by forum, hall number and portfolioRuleMatches, with matterVisibilityPredicate, returning notice id/title/url/kind/source name and the affected matter/listing. notifyBenchNoticeAlerts(deps, matched) notifies each active member who may read an affected matter once per notice via notify() category bench_change, dedupeKey bench-notice:\u003cnoticeId>, counts-only body. Judges are never read.",
    "requirements": [
     "R1",
-    "R2"
+    "R2",
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/notices/index.ts",
-   "change": "Export the two list functions and their types",
+   "path": "packages/core/src/court/index.ts",
+   "change": "export * from './bench-alerts.ts' and update the header comment",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/notices/notices.test.ts",
-   "change": "Tests for the list functions (dedupe, order, matter filter, empty)",
+   "path": "packages/core/src/court/bench-alerts.test.ts",
+   "change": "New tests: classifier cases (leave, special bench, reassignment, unrelated, hall-less); one alert per member and notice on re-run and replay; unaffected hall/case type/forum/date gets nothing; category-based roster assignment affects only the named case types; a member who cannot read the matter is not notified; read model hides other matters",
    "requirements": [
     "R1",
-    "R2"
+    "R2",
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries for listWorkspaceNotices and listMatterNotices",
+   "path": "packages/core/src/notices/poll.ts",
+   "change": "Add optional onMatched?(matched: MatchedNotice[]) to PollNoticesDeps and await it after notifyNoticeMatches, errors caught so a failing hook does not stop the poll",
    "requirements": [
-    "R1",
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cases: B on A's matter is denied / sees nothing from A's notice_match; A unchanged",
+   "path": "packages/core/src/jobs/definitions/notices-poll.ts",
+   "change": "Pass onMatched that calls notifyBenchNoticeAlerts with the job db and the existing enqueueDelivery (jobs may import court)",
    "requirements": [
-    "R1",
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/notices/page.tsx",
-   "change": "Server page: getWorkspaceContext, inWorkspace + listWorkspaceNotices via dynamic import; states loading/error/empty/denied; generateMetadata; dev ?__state preview like courts/page.tsx",
+   "path": "packages/notifications/src/categories.ts",
+   "change": "Add 'bench_change' with defaultChannels ['in_app','push'], not mandatory; daily summary is the existing per-category digest preference",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/notices/loading.tsx",
-   "change": "Skeleton",
+   "path": "packages/notifications/src/__tests__/categories.test.ts",
+   "change": "Add 'bench_change' to the expected category list and assert its defaults",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/notices/error.tsx",
-   "change": "Route error boundary with retry (copy courts/error.tsx)",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register listBenchNoticeAlerts and notifyBenchNoticeAlerts in SERVICE_TESTS (real cases) and classifyBenchNotice (and any other pure export) in NOT_A_SERVICE with a reason",
    "requirements": [
-    "R1"
+    "R3"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/components/notices/notice-list.tsx",
-   "change": "List component: title, kind badge, issued/effective dates, forum codes, provenance line (source name, recorded date), external source link (target=_blank rel=noopener noreferrer); exports a compact variant used by the matter card",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: B on A's matter sees nothing from A's notice_match / listings; A unchanged",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/notices/__tests__/notice-list.test.tsx",
-   "change": "Component tests: rows, provenance, source link attributes, empty state",
+   "path": "apps/web/components/courts/bench-notice-alerts.tsx",
+   "change": "New card listing affected matters with the notice title as an external rel=noopener noreferrer link, source name and kind; renders nothing when empty; plus a test file beside it",
    "requirements": [
-    "R1",
-    "R2"
+    "R6"
    ]
   },
   {
    "id": "D11",
    "path": "apps/web/components/matters/matter-overview.tsx",
-   "change": "Render an 'Affecting this matter' card slot fed by notices passed from the page",
+   "change": "Add an optional benchNotices slot rendering the card on the matter overview",
    "requirements": [
-    "R2"
+    "R6"
    ]
   },
   {
    "id": "D12",
    "path": "apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx",
-   "change": "Load listMatterNotices in the member's scope (failure degrades to an empty card, never breaks the overview) and pass to MatterOverview",
+   "change": "Load listBenchNoticeAlerts for the matter in the existing inWorkspace read and pass it to MatterOverview; a failure renders no card",
    "requirements": [
-    "R2"
+    "R6"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'notices' to WORKSPACE_ROUTES and NAV_ITEMS (practice group, no permission), with an icon",
+   "path": "apps/web/app/(app)/w/[slug]/today/page.tsx",
+   "change": "Render the card for today's and upcoming court days (court-day view), hidden when empty",
    "requirements": [
-    "R1"
+    "R6"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/web/__tests__/nav.test.ts",
-   "change": "Add 'notices' to SPIKE_ROUTES; adjust any other route-enumerating tests (sidebar-nav, mobile-nav, workspace-shell, placeholder-page map) as typecheck/tests dictate",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/preferences-form.tsx",
+   "change": "Map the bench_change category to its i18n key",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D15",
    "path": "packages/i18n/src/messages/en/notices.json",
-   "change": "New namespace: page title/intro/empty/error, kind labels, provenance and link text, matter card strings; mirror in ta and kn (packages/i18n/src/messages/{ta,kn}/notices.json)",
+   "change": "Add benchAlerts copy; mirror in ta and kn notices.json, add the category label and description to en/ta/kn notifications.json, regenerate generated/*, update translation-status.json and packages/i18n/src/__tests__/catalog.test.ts if keys or namespaces are enumerated there",
    "requirements": [
-    "R1",
-    "R2"
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/i18n/src/messages/en/nav.json",
-   "change": "Add nav.notices label (and ta/kn nav.json)",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Add the bench-alerts functions and the notices onMatched hook to the court and notices rows",
    "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Register the notices namespace; regenerate packages/i18n/src/generated/* and update translation-status.json (draft entries for ta/kn) with the repo's i18n generate script",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'notices' to the expected namespace list",
-   "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "packages/core/src/notices/poll.ts and match.ts behaviour and exports (#586) unchanged"
+   "what": "detectBenchChanges, listAlerts, dismissAlert and the reminder.hearing notification with dedupeKey bench-change:\u003crosterId> in packages/core/src/court/bench-change.ts"
   },
   {
    "id": "P2",
-   "what": "Tenant isolation: notice_match is read only inside inWorkspace/withWorkspace for the member's workspace; no owner-role bypass, no new migration"
+   "what": "notifyNoticeMatches output (category notices, dedupeKey notice:\u003cid>) in packages/core/src/notices/alerts.ts, and pollNotices behaviour when onMatched is absent"
   },
   {
    "id": "P3",
-   "what": "apps/web/__tests__/cross-tenant-actions.test.ts ACTIONS stays equal to the exported 'use server' set (no action added)"
+   "what": "Domain boundary: packages/core/src/notices must not import court (packages/config/eslint/core-domains.js:33); no new workspace package dependency; no migration"
   },
   {
    "id": "P4",
-   "what": "Matter overview still renders when notices fail to load (apps/web/components/matters/matter-overview.tsx, matters/[id]/page.tsx)"
-  },
-  {
-   "id": "P5",
-   "what": "packages/notifications and alert code (#587) untouched"
+   "what": "No judge reading, grouping or ranking (PX-9, ME-6); notification bodies carry no party names"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/notices/notices.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/court/bench-alerts.test.ts src/court/bench-change.test.ts src/notices/notices.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/web exec vitest run components/notices __tests__/nav.test.ts components/shell/__tests__/sidebar-nav.test.tsx components/shell/__tests__/mobile-nav.test.tsx __tests__/workspace-shell.test.tsx __tests__/matter-workspace-page.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__/categories.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts -t bench"
   },
   {
    "id": "V4",
-   "command": "node /home/dev/.local/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/web exec vitest run components/courts/__tests__/bench-notice-alerts.test.tsx __tests__/matter-workspace-page.test.tsx"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Read-only core services in packages/core/src/notices/list.ts instead of querying tables from apps/web",
-   "justification": "Web reads go through core in inWorkspace (apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx:36-45); keeps RLS scope and the registry guard",
+   "choice": "Compute bench-notice alerts on read from notice_match, listing and proceeding; no new table or migration",
+   "justification": "Same read-time pattern as listHolidayListings (packages/core/src/notices/holidays.ts:1-30); a notice arriving after the listing still alerts, and no RLS catalog or seeder changes are needed",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "No server actions, so cross-tenant-actions.test.ts is unchanged; cross-tenant coverage comes from SERVICE_TESTS cases for the two list functions",
-   "justification": "packages/db/src/testing/cross-tenant-registry.ts:700 and services.test.ts:2592 (listRelevantJudgments)",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "No new workspace-package dependency and no migration",
-   "justification": "notices domain already imports only db schema; core-domains.js:33 allows sources only and the list reads source via the db schema",
+   "choice": "Add a PollNoticesDeps.onMatched hook instead of importing court from notices",
+   "justification": "notices may import only workspaces and sources (packages/config/eslint/core-domains.js:33) while jobs may import both (:93-116)",
    "source": "lint"
   },
   {
+   "id": "K3",
+   "choice": "Classify notice titles with deterministic rules, not AI, and ignore judge names",
+   "justification": "Tagging stays kind/forum only (packages/intelligence/src/notices/tag.ts:1-5); judge data is prohibited without clearance (docs/product/03-prd.md:278,319)",
+   "source": "spec"
+  },
+  {
    "id": "K4",
-   "choice": "Add a 'notices' nav item and a new i18n namespace, mirroring how #593 added case-watch",
-   "justification": "i18n registration pattern: packages/i18n/src/catalog.ts and __tests__/catalog.test.ts:85-125; nav: apps/web/lib/nav.ts:26-43",
+   "choice": "Watcher means an active member who may read an affected matter (matter.read plus visibility predicate)",
+   "justification": "Same audience rule as notices/alerts.ts:44-109 and court/bench-change.ts noticesFor",
    "source": "precedent"
   }
  ]

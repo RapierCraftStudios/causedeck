@@ -45,6 +45,8 @@ export const CATEGORIES = {
   'status.order': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'status.stage': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   // Official court and bar notices matched to the member's forums and matters (#587, D-048).
+  // Bench-notice alerts (#496): a leave, special bench or roster notice affects a listed matter.
+  bench_change: { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   notices: { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'digest.daily': { defaultChannels: ['email'], mandatory: false, lockedChannels: [] },
   // "What CauseDeck did today" (#49): counts of what the system did on its own, once per local day.

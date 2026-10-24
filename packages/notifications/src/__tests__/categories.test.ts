@@ -14,6 +14,7 @@ describe('category registry', () => {
   it('has exactly the specified categories', () => {
     expect([...CATEGORY_KEYS].sort()).toEqual(
       [
+        'bench_change',
         'billing.notice',
         'court.board',
         'digest.daily',
@@ -42,6 +43,10 @@ describe('category registry', () => {
       expect(CATEGORIES[key].mandatory, key).toBe(false);
       expect(CATEGORIES[key].lockedChannels, key).toEqual([]);
     }
+  });
+
+  it('sends bench-change alerts in the app and by push by default', () => {
+    expect(CATEGORIES.bench_change.defaultChannels).toEqual(['in_app', 'push']);
   });
 
   it('uses known channels; locked channels are on by default', () => {

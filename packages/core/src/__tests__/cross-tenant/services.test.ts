@@ -1422,6 +1422,93 @@ const CASES: Record<string, Case> = {
     expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
     expect(await aParseRuns(f)).toEqual(probe.before);
   },
+  getLiveHalls: async (f) => {
+    // getLiveHalls is a per-member read model, not a write: a user with no seat in the workspace
+    // they name gets nothing back (the listing query is scoped to the workspace and to matters the
+    // actor owns), not a thrown error. So the property is "no row of A's reaches ub", and it is only
+    // meaningful against real data: seed a listing of A's owner on a board forum, listed today, with a
+    // board observation, and prove ua sees it before asserting ub does not.
+    const deps = { flagEnabled: () => Promise.resolve(true) };
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    const seeded = await inWorkspace(f.tx, f.a.id, async (s) => {
+      const [owner] = await s
+        .select({ id: schema.member.id })
+        .from(schema.member)
+        .where(and(eq(schema.member.organizationId, f.a.id), eq(schema.member.userId, f.ua)));
+      const [fo] = await s
+        .insert(schema.forum)
+        .values({
+          workspaceId: f.a.id,
+          code: `in.ka.karnataka-hc.xt-${randomUUID().slice(0, 8)}`,
+          court: 'Seed High Court',
+          jurisdictionKind: 'high_court',
+        })
+        .returning({ id: schema.forum.id });
+      const [hall] = await s
+        .insert(schema.courtHall)
+        .values({ workspaceId: f.a.id, forumId: fo?.id ?? '', hallNo: 'xt-live-hall' })
+        .returning({ id: schema.courtHall.id });
+      const [m] = await s
+        .insert(schema.matter)
+        .values({
+          workspaceId: f.a.id,
+          title: 'XT live hall',
+          practiceArea: 'civil',
+          ownerMemberId: owner?.id,
+        })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.a.id,
+          matterId: m?.id ?? '',
+          forumId: fo?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: `F-live-${randomUUID().slice(0, 8)}`,
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      await s.insert(schema.listing).values({
+        workspaceId: f.a.id,
+        proceedingId: p?.id ?? '',
+        hallId: hall?.id,
+        listDate: today,
+        itemNo: '9',
+        listType: 'daily',
+        stageRaw: 'FOR ADMISSION',
+        canonical: true,
+        sourceType: 'manual',
+      });
+      return { matterId: m?.id ?? '' };
+    });
+    await f.tx.insert(schema.boardObservation).values({
+      sourceId: 'in.ka.karnataka-hc.bengaluru:display_board',
+      hallNo: 'xt-live-hall',
+      itemNo: '5',
+      status: 'sitting',
+    });
+
+    // Control: A's owner, in A, sees the seeded item (so the empty answers below are not vacuous).
+    const own = await core.getLiveHalls(
+      { ...deps, db: f.tx },
+      { workspaceId: f.a.id, userId: f.ua },
+    );
+    expect(own.flatMap((h) => h.items.map((i) => i.matterId))).toContain(seeded.matterId);
+
+    // ub naming A's workspace, with and without B's scope: nothing of A's comes back.
+    const asA = { workspaceId: f.a.id, userId: f.ub };
+    expect(await core.getLiveHalls({ ...deps, db: f.tx }, asA)).toEqual([]);
+    await expect(f.asB((s) => core.getLiveHalls({ ...deps, db: s }, asA))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    // ub in B (their own workspace) sees none of A's halls or matters either.
+    const inB = await f.asB((s) =>
+      core.getLiveHalls({ ...deps, db: s }, { workspaceId: f.b.id, userId: f.ub }),
+    );
+    expect(JSON.stringify(inB)).not.toContain(seeded.matterId);
+    expect(inB.map((h) => h.hallNo)).not.toContain('xt-live-hall');
+  },
   // Matter graph (#362): A's matter, proceeding and document ids, as ub.
   createMatter: async (f) => {
     const { deps, events } = graphDeps(f.tx);

@@ -3,8 +3,10 @@
 import { serverEnv } from '@causedeck/config/env';
 import {
   registry,
+  setBoardFetcherFactory,
   setCauseListFetcherFactory,
   setStatusFetcherFactory,
+  type CauseListFetcherFactory,
 } from '@causedeck/core/jobs';
 import { closeAppDb, db } from '@causedeck/core/runtime';
 import { createFetchLogSink, policyFor } from '@causedeck/core/sources';
@@ -33,15 +35,17 @@ if (ownerUrl === undefined) {
 // The governed fetch layer (D-048) for `system.causelist.poll` (#482). Core sees only its `ListFetcher`
 // shape and never imports `@causedeck/fetch` (spike §2). Per-workspace usage stays with callers that
 // know a workspace; this system job records none.
-setCauseListFetcherFactory((jobDb) =>
+const governedFetcher = ((jobDb) =>
   createFetcher({
     registry: { policyFor: (id) => policyFor(id, { db: jobDb }) },
     alterlab: createProvider({ apiKey: env.ALTERLAB_API_KEY?.reveal() }),
     clock: { now: () => new Date() },
     usage: { record: () => Promise.resolve() },
     log: createFetchLogSink(jobDb),
-  }),
-);
+  })) satisfies CauseListFetcherFactory;
+setCauseListFetcherFactory(governedFetcher);
+// The display boards (#493) use the same governed fetcher through core's `BoardFetcher` shape.
+setBoardFetcherFactory(governedFetcher);
 
 // The same governed fetcher for `system.status.poll` (#592): delegated case-status lookups only.
 setStatusFetcherFactory((jobDb) =>

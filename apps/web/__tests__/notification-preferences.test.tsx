@@ -93,6 +93,7 @@ function defaults(): PreferenceView[] {
     'security.alert': ['in_app', 'email', 'push'],
     'billing.notice': ['in_app', 'email'],
     'reminder.hearing': ['in_app', 'email', 'push'],
+    'court.board': ['in_app', 'push'],
     'proposal.new': ['in_app', 'push'],
     'judgment.alert': ['in_app', 'push'],
     'status.next_date': ['in_app', 'push'],

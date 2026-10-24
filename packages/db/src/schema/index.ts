@@ -11,6 +11,14 @@ export {
 } from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
 export { apiKey } from './api-keys.ts';
+export {
+  WEBHOOK_DELIVERY_STATUSES,
+  WEBHOOK_EVENT_TYPES,
+  webhookDelivery,
+  webhookEndpoint,
+  type WebhookDeliveryStatus,
+  type WebhookEventType,
+} from './webhooks.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,

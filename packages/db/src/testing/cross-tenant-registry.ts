@@ -134,6 +134,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Public API keys (#624).
   api_key: DB_TABLES_TEST,
 
+  // Change webhooks (#626).
+  webhook_endpoint: DB_TABLES_TEST,
+  webhook_delivery: DB_TABLES_TEST,
+
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
   // Judgment alerts (#497).

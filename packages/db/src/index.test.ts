@@ -151,6 +151,8 @@ describe('@causedeck/db root entry point', () => {
       'usage_reservation',
       'user',
       'verification',
+      'webhook_delivery',
+      'webhook_endpoint',
       'workspace_capture_channel',
       'workspace_feature_flag',
       'workspace_integration',

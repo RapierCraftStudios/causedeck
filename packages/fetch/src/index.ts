@@ -3,6 +3,15 @@ export * from './fetcher.ts';
 export * from './rate-limit.ts';
 export * from './block-signature.ts';
 export { postWebhook, WEBHOOK_HOSTS, type WebhookPayload } from './webhook.ts';
+export {
+  deliverWebhook,
+  isBlockedAddress,
+  WEBHOOK_DELIVERY_TIMEOUT_MS,
+  WebhookDeliveryError,
+  type DeliverWebhookOptions,
+  type WebhookDeliveryErrorReason,
+  type WebhookRequest,
+} from './webhook-delivery.ts';
 export { createMockProvider, type MockFixture } from './providers/mock.ts';
 export {
   createAlterlabProvider,

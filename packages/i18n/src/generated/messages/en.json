@@ -690,9 +690,25 @@
           "label": "New proposals",
           "description": "When CauseDeck prepares something for you to review."
         },
+        "courtBoard": {
+          "label": "Court-day alerts",
+          "description": "When an item of yours is a few items away, now being heard, or the court rises or passes it over."
+        },
         "judgmentAlert": {
           "label": "Relevant judgments",
           "description": "When a new judgment cites a statute section confirmed on one of your matters."
+        },
+        "statusNextDate": {
+          "label": "Next hearing date",
+          "description": "When a watched case shows a new next hearing date."
+        },
+        "statusOrder": {
+          "label": "New orders",
+          "description": "When a watched case lists a new order."
+        },
+        "statusStage": {
+          "label": "Stage changes",
+          "description": "When a watched case moves to a new stage."
         },
         "digestDaily": {
           "label": "Daily digest",
@@ -1865,6 +1881,7 @@
         "duplicate_merge": "Duplicate merge",
         "memory_item": "Memory",
         "fee_entry": "Fee entry",
+        "case_status_change": "Next date from court status",
         "outward_draft": "Draft for you to send"
       },
       "matter": "Matter",
@@ -2242,6 +2259,65 @@
       "alerts": "{count, plural, =0 {No bench changes on your matters.} one {The bench changed on # matter.} other {The bench changed on # matters.}}",
       "detectionFailed": "The roster is saved, but bench changes could not be checked yet.",
       "failed": "The roster was not saved. Try again."
+    }
+  },
+  "caseWatch": {
+    "title": "Case status watch",
+    "description": "Watch the status of your own cases on the court status pages. Lookups run in the background and you never see a captcha. A changed next date arrives as a proposal; nothing is confirmed for you.",
+    "flagOff": "Case status watch is not switched on for this workspace.",
+    "empty": "You are not watching any case status yet. Add a watch from a matter's Proceedings tab.",
+    "panelTitle": "Case status watch",
+    "proceeding": "Proceeding",
+    "sourceLabel": "Status source",
+    "watch": "Watch status",
+    "source": {
+      "in_tn_chennai-district_case_status": "Chennai district courts",
+      "in_tn_madras-hc_chennai_case_status": "Madras High Court",
+      "in_ka_karnataka-hc_bengaluru_case_status": "Karnataka High Court"
+    },
+    "remove": "Remove",
+    "added": "Watch added.",
+    "removed": "Watch removed.",
+    "failed": "Could not save. Try again.",
+    "loading": "Loading case status watch",
+    "refresh": {
+      "label": "Refresh status",
+      "running": "Checking",
+      "failed": "Could not check the status. Try again later.",
+      "via": {
+        "device": "Read on this device.",
+        "server": "Read on the server (tier {tier}, cost ${cost})."
+      },
+      "outcome": {
+        "changed": "{count, plural, =0 {The status changed.} one {The status changed; 1 proposal is waiting for you.} other {The status changed; # proposals are waiting for you.}}",
+        "unchanged": "No change.",
+        "not_found": "The court page does not list this case.",
+        "unrecognised": "The court page could not be read."
+      }
+    }
+  },
+  "courtDay": {
+    "liveHalls": {
+      "title": "Live halls",
+      "description": "Where each hall you have an item in has reached, from the court's display board.",
+      "hall": "Hall {hallNo}",
+      "itemNow": "Now hearing item {item}",
+      "noItem": "No item shown",
+      "status": {
+        "sitting": "Sitting",
+        "risen": "Risen",
+        "passed_over": "Passed over",
+        "lunch": "Lunch"
+      },
+      "yourItem": "Your item {item}",
+      "away": "{count, plural, =0 {Being heard now} one {1 item away} other {# items away}}",
+      "window": "Likely between {from} and {to}",
+      "confidence": {
+        "low": "Low confidence",
+        "medium": "Medium confidence",
+        "high": "High confidence"
+      },
+      "updated": "Board read at {time}"
     }
   },
   "matters": {
@@ -3113,6 +3189,7 @@
         "duplicate_merge": "Possible duplicate",
         "memory_item": "Memory",
         "fee_entry": "Fee entry",
+        "case_status_change": "Court status date",
         "outward_draft": "Outward draft"
       },
       "matter": "{matter} · {caseNumber}",

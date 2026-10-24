@@ -54,6 +54,7 @@
     "@causedeck/core": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/drafting": "workspace:*",
+    "@causedeck/fetch": "workspace:*",
     "@causedeck/flags": "workspace:*",
     "@causedeck/i18n": "workspace:*",
     "@causedeck/intelligence": "workspace:*",
@@ -78,6 +79,7 @@
     "react-dom": "catalog:",
     "serwist": "catalog:",
     "sonner": "catalog:",
+    "tesseract.js": "^6.0.1",
     "uqr": "catalog:",
     "zod": "catalog:"
   }

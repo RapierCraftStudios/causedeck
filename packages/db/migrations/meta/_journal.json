@@ -523,8 +523,43 @@
     {
       "idx": 74,
       "version": "7",
-      "when": 1792794630265,
-      "tag": "0074_source_data_class",
+      "when": 1792796249532,
+      "tag": "0074_staff_business_metrics",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1792797370620,
+      "tag": "0075_status_poll",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1792800214246,
+      "tag": "0076_display_board",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1792802051821,
+      "tag": "0077_notice_match_targets",
+      "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1792804938627,
+      "tag": "0078_data_ops_alerting",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1792806716181,
+      "tag": "0079_source_data_class",
       "breakpoints": true
     }
   ]

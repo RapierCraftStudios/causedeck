@@ -65,11 +65,11 @@ Staff accounts exist only through the operator CLI (#308):
 `pnpm --filter @causedeck/admin staff:add <email> --role support|ops|admin`. The matrix lives in
 `apps/admin/lib/roles.ts` and filters the nav and the pages:
 
-| Role      | Overview | Adapters | Data Ops | Flags | Workspaces | Support sessions | Audit |
-| --------- | -------- | -------- | -------- | ----- | ---------- | ---------------- | ----- |
-| `support` | yes      |          |          |       | metadata   | yes              | yes   |
-| `ops`     | yes      | yes      | yes      | yes   |            |                  | yes   |
-| `admin`   | yes      | yes      | yes      | yes   | yes        | yes              | yes   |
+| Role      | Overview | Adapters | Data Ops | Flags | Workspaces | Support sessions | Audit | Business |
+| --------- | -------- | -------- | -------- | ----- | ---------- | ---------------- | ----- | -------- |
+| `support` | yes      |          |          |       | metadata   | yes              | yes   |          |
+| `ops`     | yes      | yes      | yes      | yes   |            |                  | yes   |          |
+| `admin`   | yes      | yes      | yes      | yes   | yes        | yes              | yes   | yes      |
 
 Within Workspaces, setting or expiring an AI budget override is `admin` only
 (`canOverrideBudget`); `support` sees the usage section read-only.
@@ -239,6 +239,19 @@ edits stay on `/sources` (audited as `source.changed`).
   page with an "Older" cursor: time, staff id, action, workspace, session id (the support or auth
   session the event targets, else `metadata.supportSessionId`) and outcome. No metadata, IP or
   user agent.
+- **Business** (`/business`, `admin` only, #519, D-049): this IST month's MRR and ARR (annual
+  plans count a twelfth, per-seat plans their seats), daily and weekly active users, free-to-paid
+  conversion, paid churn over 30 days, and a per-plan table of cost to serve per active user split
+  into fetch, captcha, AI and infrastructure, with gross margin and an "Over threshold" marker for a
+  plan above `BUSINESS_COST_PER_USER_ALERT_PAISE`. `businessMetrics` in `lib/data` reads it through
+  the owner-defined `app_staff_business_snapshot` (migration 0071), which refuses (`42501`) anyone
+  but an enabled staff member and returns plan ids and numbers only; the maths is
+  `@causedeck/core/business`. AI cost is the metered `ai.spend_paise`; fetch and captcha cost is
+  `fetch_log` dollars (converted at `BUSINESS_USD_INR`) charged to the delegating advocate's plan,
+  with scheduled and shared fetches spread over active users; infrastructure is the configured
+  `BUSINESS_INFRA_COST_PAISE_MONTHLY` spread over active users. Active users come from session
+  activity. The daily `system.business.cost-alert` job and the Monday `system.business.digest` job
+  email `BUSINESS_FOUNDER_EMAILS` from the same figures.
 
 `__tests__/no-content-fields.test.ts` reads fully seeded workspaces through the data layer and the
 pages and fails on any content field or another member's email.

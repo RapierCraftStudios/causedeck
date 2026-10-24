@@ -691,7 +691,23 @@ export type Messages = {
           label: string;
           description: string;
         };
+        courtBoard: {
+          label: string;
+          description: string;
+        };
         judgmentAlert: {
+          label: string;
+          description: string;
+        };
+        statusNextDate: {
+          label: string;
+          description: string;
+        };
+        statusOrder: {
+          label: string;
+          description: string;
+        };
+        statusStage: {
           label: string;
           description: string;
         };
@@ -1866,6 +1882,7 @@ export type Messages = {
         duplicate_merge: string;
         memory_item: string;
         fee_entry: string;
+        case_status_change: string;
         outward_draft: string;
       };
       matter: string;
@@ -2243,6 +2260,65 @@ export type Messages = {
       alerts: string;
       detectionFailed: string;
       failed: string;
+    };
+  };
+  caseWatch: {
+    title: string;
+    description: string;
+    flagOff: string;
+    empty: string;
+    panelTitle: string;
+    proceeding: string;
+    sourceLabel: string;
+    watch: string;
+    source: {
+      'in_tn_chennai-district_case_status': string;
+      'in_tn_madras-hc_chennai_case_status': string;
+      'in_ka_karnataka-hc_bengaluru_case_status': string;
+    };
+    remove: string;
+    added: string;
+    removed: string;
+    failed: string;
+    loading: string;
+    refresh: {
+      label: string;
+      running: string;
+      failed: string;
+      via: {
+        device: string;
+        server: string;
+      };
+      outcome: {
+        changed: string;
+        unchanged: string;
+        not_found: string;
+        unrecognised: string;
+      };
+    };
+  };
+  courtDay: {
+    liveHalls: {
+      title: string;
+      description: string;
+      hall: string;
+      itemNow: string;
+      noItem: string;
+      status: {
+        sitting: string;
+        risen: string;
+        passed_over: string;
+        lunch: string;
+      };
+      yourItem: string;
+      away: string;
+      window: string;
+      confidence: {
+        low: string;
+        medium: string;
+        high: string;
+      };
+      updated: string;
     };
   };
   matters: {
@@ -3114,6 +3190,7 @@ export type Messages = {
         duplicate_merge: string;
         memory_item: string;
         fee_entry: string;
+        case_status_change: string;
         outward_draft: string;
       };
       matter: string;

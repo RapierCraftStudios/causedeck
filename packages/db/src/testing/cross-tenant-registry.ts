@@ -235,8 +235,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   retentionSweep: selfScoped,
   // KHC cause-list watches (#482)
   addCauseListWatch: selfScoped,
+  matchNotices: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
+  // Case-status watches (#591)
+  addCaseWatch: selfScoped,
+  listCaseWatches: selfScoped,
+  removeCaseWatch: selfScoped,
   runBillingProcessEvent: {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
@@ -392,6 +397,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // matter graph (#362): A's ids from B, or ub claiming A, are NOT_FOUND; links across workspaces
   // fail with CrossWorkspaceError (a NOT_FOUND WorkspaceError); so do merges and splits (#365) that
   // name a row of another workspace, and undos handed a payload of A's ids
+  // court day (#493): the live halls read model opens withWorkspace on the given actor
+  getLiveHalls: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -457,6 +464,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setSensitive: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
+  // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
+  staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -705,6 +714,15 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // business dashboard (#519): pure maths and rendering over aggregates
+  parseBusinessSnapshot: 'pure',
+  buildBusinessReport: 'pure',
+  businessConfigFromEnv: 'pure',
+  evaluateCostThresholds: 'pure',
+  renderBusinessDigest: 'pure',
+  renderCostAlert: 'pure',
+  readBusinessSnapshot:
+    'system read of app_business_snapshot (job use, no staff user): plan ids and counts, sums and dollar totals only, never a workspace id, email or content',
   // source registry (#478): a global table of external-source policy, no tenant rows to leak
   SOURCE_KINDS: 'constant',
   SOURCE_ACCESS_MODES: 'constant',
@@ -909,6 +927,54 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   CAUSELIST_POLL_CRON: 'constant',
   causelistPoll: 'job definition (handler is runCauselistPoll)',
   runCauselistPoll: 'system job body: see pollCauseList',
+  // court day: display-board tracking and the call-time estimate (#493)
+  COURT_LIVE_TRACKING_FLAG: 'constant',
+  BOARD_SOURCES: 'constant',
+  DEFAULT_AWAY_THRESHOLDS: 'constant',
+  isCourtHours: 'pure (clock arithmetic in IST)',
+  planBoardAlert: 'pure (decides the one alert a listed item earns from a board row)',
+  pollBoards:
+    'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
+  itemNumber: 'pure',
+  paceSamples: 'pure',
+  estimateCallWindow: 'pure',
+  backtestEta: 'pure',
+  BOARD_POLL_CRON: 'constant',
+  boardPoll: 'job definition (handler is runBoardPoll)',
+  runBoardPoll: 'system job body: see pollBoards',
+  setBoardFetcherFactory: 'wiring point for the governed fetcher (worker startup)',
+  // notices: the official notices feed (#586)
+  NOTICE_PARSERS: 'constant',
+  pollNotices:
+    'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
+  NOTICES_POLL_CRON: 'constant',
+  noticesPoll: 'job definition (handler is runNoticesPoll)',
+  runNoticesPoll: 'system job body: see pollNotices',
+  setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
+  // case-watch: delegated status lookups (#591)
+  STATUS_SOURCES: 'constant',
+  hashStatusFields: 'pure',
+  diffStatus: 'pure',
+  hasChanges: 'pure',
+  statusChangeDraft: 'pure (builds a draft; submitting it goes through submitProposals)',
+  runCaseStatusLookup:
+    "actor-scoped in withWorkspace: loads only the actor's own watch (advocate_user_id = actor) and proceeds as delegatedFor that advocate on that matter; another advocate or workspace gets NOT_FOUND before any fetch; covered by case-watch.test.ts",
+  recordDeviceSnapshot:
+    "actor-scoped in withWorkspace: stores a snapshot only on the actor's own watch; covered by case-watch.test.ts",
+  // case-watch: the status poll and change alerts (#592)
+  MAX_PER_ADVOCATE_PER_RUN: 'constant',
+  MAX_PER_SOURCE_PER_RUN: 'constant',
+  MAX_WATCHES_PER_RUN: 'constant',
+  pollCaseWatches:
+    "system job body: no workspace; lists due watches only through the owner-defined app_case_watch_due and runs each as the watch's own advocate through runCaseStatusLookup (own watch only, delegatedFor); covered by status-poll.test.ts",
+  touchWatchPolled:
+    "actor-scoped in withWorkspace: updates last_polled_at only on the actor's own watch; covered by status-poll.test.ts",
+  notifyStatusChanges:
+    "actor-scoped in withWorkspace: reads the matter under the actor's workspace and notifies only the actor; covered by status-poll.test.ts",
+  STATUS_POLL_CRON: 'constant',
+  statusPoll: 'job definition (handler is runStatusPoll)',
+  runStatusPoll: 'system job body: see pollCaseWatches',
+  setStatusFetcherFactory: 'setter (worker wires the governed fetcher, #592)',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',

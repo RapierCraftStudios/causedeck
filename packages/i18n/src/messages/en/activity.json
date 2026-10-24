@@ -128,6 +128,7 @@
         "duplicate_merge": "Duplicate merge",
         "memory_item": "Memory",
         "fee_entry": "Fee entry",
+        "case_status_change": "Next date from court status",
         "outward_draft": "Draft for you to send"
       },
       "matter": "Matter",

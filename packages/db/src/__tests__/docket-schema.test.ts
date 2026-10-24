@@ -274,7 +274,8 @@ describe('docket tables in the catalog (#347)', () => {
       expect(row, table).toEqual({
         enabled: true,
         forced: true,
-        policies: ['ws_isolation'],
+        // listing also carries the owner-only definer read that app_board_poll_targets (0074, #493) needs.
+        policies: table === 'listing' ? ['owner_definer_read', 'ws_isolation'] : ['ws_isolation'],
         app: true,
         clerk: true,
       });

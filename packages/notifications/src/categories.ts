@@ -36,8 +36,14 @@ export const CATEGORIES = {
     mandatory: false,
     lockedChannels: [],
   },
+  // Court-day display-board alerts (#493): N away, now, risen, passed over.
+  'court.board': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'proposal.new': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'judgment.alert': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  // Case-status change alerts (#592): a watched case shows a new next date, a new order or a new stage.
+  'status.next_date': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  'status.order': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  'status.stage': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'digest.daily': { defaultChannels: ['email'], mandatory: false, lockedChannels: [] },
   // "What CauseDeck did today" (#49): counts of what the system did on its own, once per local day.
   'digest.end_of_day': {

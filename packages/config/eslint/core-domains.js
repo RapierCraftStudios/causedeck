@@ -17,12 +17,20 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
   // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
   court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
+  // Court-day display-board tracking (#493): the board source's clearance through sources.
+  'court-day': Object.freeze(['sources']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),
   // The automation engine (#47): membership roles through workspaces, its audit events through
   // audit, and every graph write through the matter-graph services (imports `index.ts` only).
   automation: Object.freeze(['workspaces', 'audit', 'matter-graph']),
+  // Case-status watches (#591, D-048): a lookup needs a cleared source through sources, the next-date
+  // proposal goes through automation and every proceeding read through matter-graph.
+  'case-watch': Object.freeze(['workspaces', 'automation', 'matter-graph', 'sources']),
+  // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
+  // tables and the owner-defined match function only.
+  notices: Object.freeze(['sources']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.
@@ -43,6 +51,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   research: Object.freeze(['workspaces', 'citations']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
+  // The business dashboard (#519): the IST month through usage's `periodStart`, FORBIDDEN through workspaces.
+  business: Object.freeze(['usage', 'workspaces']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
   // arrive as a port (it never imports jobs). The diary-photo step (#52) runs in the pipeline's
   // transaction: the `structure_diary` call through ai, member roles through workspaces, proposals
@@ -69,6 +79,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // automation, graph reads through matter-graph (imports `index.ts` only), member roles through
   // workspaces.
   extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
+  // Data-ops alerting (#515, D-049): detectors, the alert ledger, routing and auto-response read the
+  // global tables directly and import no other domain.
+  'data-ops': Object.freeze([]),
   // Bootstrap import (#57, #548, #549): the plan reads proposals from the tables directly; apply
   // writes every graph row through matter-graph, meters the OCR cap through usage and refuses an
   // expired or edited undo with automation's errors (imports `index.ts` only). The batch (#550)
@@ -92,9 +105,14 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'email-intake',
     'extraction',
     'import',
+    'data-ops',
     'court',
+    'court-day',
     'sources',
+    'notices',
     'research',
+    'business',
+    'case-watch',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

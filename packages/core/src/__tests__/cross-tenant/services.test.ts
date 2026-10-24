@@ -8,13 +8,15 @@ import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
+import { Secret } from '@causedeck/config/env';
 import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
-import { inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
+import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import * as core from '../../index.ts';
@@ -391,6 +393,23 @@ async function emailOf(f: Fixture, userId: string): Promise<string> {
   return row.email;
 }
 
+/** A's own case-status watch (on top of any the fixture seeds), added through the service as A's owner. */
+async function addAWatch(f: Fixture) {
+  await f.tx
+    .insert(schema.source)
+    .values({ id: 'xt.case-watch', kind: 'court', baseUrl: 'https://xt.example.test', owner: 'xt' })
+    .onConflictDoNothing();
+  return core.addCaseWatch(
+    { db: f.tx },
+    { userId: f.ua, workspaceId: f.a.id, role: 'owner' },
+    {
+      proceedingId: f.a.rows.proceeding?.proceedingId ?? '',
+      sourceId: 'xt.case-watch',
+      cnr: 'TNCH010012342024',
+    },
+  );
+}
+
 const CASES: Record<string, Case> = {
   addCauseListWatch: async (f) => {
     // ub's watch lands in B; A has no watch from it.
@@ -404,6 +423,61 @@ const CASES: Record<string, Case> = {
     );
     const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
     expect(aWatches.map((w) => w.value)).toEqual(['KAR/1/1900']);
+  },
+  matchNotices: async (f) => {
+    // Only B has a proceeding before the catalogue forum the notice names: B gets the matches, and
+    // A's rows are exactly as they were.
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, 'in.tn.madras-hc.madurai'));
+    expect(forum?.id).toBeDefined();
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'circular',
+        title: 'XT match notice',
+        issuedOn: '2026-11-02',
+        url: `https://notices.example.test/xt/match/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    const matterId = await inWorkspace(f.tx, f.b.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.b.id, title: 'XT notice matter', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      await s.insert(schema.proceeding).values({
+        workspaceId: f.b.id,
+        matterId: m?.id ?? '',
+        forumId: forum?.id ?? '',
+        caseTypeCode: 'WP',
+        caseTypeRaw: 'W.P.',
+        filingNo: 'F-XT-NOTICE',
+        sourceType: 'manual',
+      });
+      return m?.id ?? '';
+    });
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    const report = await core.matchNotices({ db: f.tx }, [
+      { id: noticeId, forumCodes: ['in.tn.madras-hc.madurai'] },
+    ]);
+    expect(report.matches).toBeGreaterThanOrEqual(2);
+    const bRows = await inWorkspace(f.tx, f.b.id, (s) =>
+      s.select().from(schema.noticeMatch).where(eq(schema.noticeMatch.noticeId, noticeId)),
+    );
+    expect(bRows.map((r) => [r.reason, r.matterId]).sort()).toEqual(
+      [
+        ['forum', null],
+        ['matter_forum', matterId],
+      ].sort(),
+    );
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    expect(aAfter).toEqual(aBefore);
   },
   listCauseListWatches: async (f) => {
     // ub sees exactly B's own seeded watch, never A's.
@@ -431,6 +505,42 @@ const CASES: Record<string, Case> = {
     );
     const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.causeListWatch));
     expect(after).toHaveLength(1);
+  },
+  addCaseWatch: async (f) => {
+    // ub cannot watch A's proceeding; A gains no watch.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    await expectDenied(
+      core.addCaseWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+        { proceedingId: aProceeding, sourceId: 'xt.case-watch', cnr: 'TNCH010012342024' },
+      ),
+    );
+    const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
+    expect(aWatches.some((w) => w.advocateUserId === f.ub)).toBe(false);
+  },
+  listCaseWatches: async (f) => {
+    // ub lists nothing of A's: A's own watch is not in B's list.
+    const aWatch = await addAWatch(f);
+    const own = await core.listCaseWatches(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+    );
+    expect(own.some((w) => w.id === aWatch.id)).toBe(false);
+  },
+  removeCaseWatch: async (f) => {
+    const aWatch = await addAWatch(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
+    await expectDenied(
+      core.removeCaseWatch(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.b.id, role: 'owner' },
+        aWatch.id,
+      ),
+    );
+    const after = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
+    expect(after.map((w) => w.id).sort()).toEqual(before.map((w) => w.id).sort());
+    expect(after.some((w) => w.id === aWatch.id)).toBe(true);
   },
   record: async (f) => {
     const before = await auditIds(f, f.a.id);
@@ -1369,6 +1479,93 @@ const CASES: Record<string, Case> = {
     expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
     expect(await aParseRuns(f)).toEqual(probe.before);
   },
+  getLiveHalls: async (f) => {
+    // getLiveHalls is a per-member read model, not a write: a user with no seat in the workspace
+    // they name gets nothing back (the listing query is scoped to the workspace and to matters the
+    // actor owns), not a thrown error. So the property is "no row of A's reaches ub", and it is only
+    // meaningful against real data: seed a listing of A's owner on a board forum, listed today, with a
+    // board observation, and prove ua sees it before asserting ub does not.
+    const deps = { flagEnabled: () => Promise.resolve(true) };
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    const seeded = await inWorkspace(f.tx, f.a.id, async (s) => {
+      const [owner] = await s
+        .select({ id: schema.member.id })
+        .from(schema.member)
+        .where(and(eq(schema.member.organizationId, f.a.id), eq(schema.member.userId, f.ua)));
+      const [fo] = await s
+        .insert(schema.forum)
+        .values({
+          workspaceId: f.a.id,
+          code: `in.ka.karnataka-hc.xt-${randomUUID().slice(0, 8)}`,
+          court: 'Seed High Court',
+          jurisdictionKind: 'high_court',
+        })
+        .returning({ id: schema.forum.id });
+      const [hall] = await s
+        .insert(schema.courtHall)
+        .values({ workspaceId: f.a.id, forumId: fo?.id ?? '', hallNo: 'xt-live-hall' })
+        .returning({ id: schema.courtHall.id });
+      const [m] = await s
+        .insert(schema.matter)
+        .values({
+          workspaceId: f.a.id,
+          title: 'XT live hall',
+          practiceArea: 'civil',
+          ownerMemberId: owner?.id,
+        })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.a.id,
+          matterId: m?.id ?? '',
+          forumId: fo?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: `F-live-${randomUUID().slice(0, 8)}`,
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      await s.insert(schema.listing).values({
+        workspaceId: f.a.id,
+        proceedingId: p?.id ?? '',
+        hallId: hall?.id,
+        listDate: today,
+        itemNo: '9',
+        listType: 'daily',
+        stageRaw: 'FOR ADMISSION',
+        canonical: true,
+        sourceType: 'manual',
+      });
+      return { matterId: m?.id ?? '' };
+    });
+    await f.tx.insert(schema.boardObservation).values({
+      sourceId: 'in.ka.karnataka-hc.bengaluru:display_board',
+      hallNo: 'xt-live-hall',
+      itemNo: '5',
+      status: 'sitting',
+    });
+
+    // Control: A's owner, in A, sees the seeded item (so the empty answers below are not vacuous).
+    const own = await core.getLiveHalls(
+      { ...deps, db: f.tx },
+      { workspaceId: f.a.id, userId: f.ua },
+    );
+    expect(own.flatMap((h) => h.items.map((i) => i.matterId))).toContain(seeded.matterId);
+
+    // ub naming A's workspace, with and without B's scope: nothing of A's comes back.
+    const asA = { workspaceId: f.a.id, userId: f.ub };
+    expect(await core.getLiveHalls({ ...deps, db: f.tx }, asA)).toEqual([]);
+    await expect(f.asB((s) => core.getLiveHalls({ ...deps, db: s }, asA))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    // ub in B (their own workspace) sees none of A's halls or matters either.
+    const inB = await f.asB((s) =>
+      core.getLiveHalls({ ...deps, db: s }, { workspaceId: f.b.id, userId: f.ub }),
+    );
+    expect(JSON.stringify(inB)).not.toContain(seeded.matterId);
+    expect(inB.map((h) => h.hallNo)).not.toContain('xt-live-hall');
+  },
   // Matter graph (#362): A's matter, proceeding and document ids, as ub.
   createMatter: async (f) => {
     const { deps, events } = graphDeps(f.tx);
@@ -2043,6 +2240,13 @@ const CASES: Record<string, Case> = {
     await expectDenied(core.staffWorkspaceUsage(f.tx, f.ub, 'not-a-uuid'));
     expect(await aBudgetState(f)).toEqual(before);
   },
+  staffBusinessSnapshot: async (f) => {
+    // ub is not staff: the definer function refuses, for a malformed id as well; A is unchanged.
+    const before = await aWorkspaceRow(f);
+    await expectDenied(core.staffBusinessSnapshot(f.tx, f.ub));
+    await expectDenied(core.staffBusinessSnapshot(f.tx, 'not-a-uuid'));
+    expect(await aWorkspaceRow(f)).toEqual(before);
+  },
   staffAuditEvents: async (f) => {
     const before = await aWorkspaceRow(f);
     await expectDenied(core.staffAuditEvents(f.tx, f.ub));
@@ -2406,6 +2610,17 @@ const CASES: Record<string, Case> = {
 const registered = Object.entries(SERVICE_TESTS)
   .filter(([, entry]) => entry.test === THIS_FILE)
   .map(([name]) => name);
+
+const owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
+
+beforeAll(async () => {
+  // Committed, as `pnpm db:migrate` leaves it: the test db does not carry the forum catalogue.
+  await seedForumCatalogue(owner);
+});
+
+afterAll(async () => {
+  await owner.$client.end();
+});
 
 afterEach(() => {
   core.setNotificationJobDeps(null);

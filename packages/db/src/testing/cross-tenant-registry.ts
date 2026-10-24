@@ -121,6 +121,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   case_watch: DB_TABLES_TEST,
   case_status_snapshot: DB_TABLES_TEST,
 
+  // Court-day marker and list snapshots (#58).
+  court_day_marker: DB_TABLES_TEST,
+  list_snapshot: DB_TABLES_TEST,
+
   // Review and correction queue (#518).
   review_correction: DB_TABLES_TEST,
 

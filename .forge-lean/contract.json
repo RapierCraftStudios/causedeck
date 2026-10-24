@@ -2,37 +2,103 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "quote": "`getCourtDay(ctx, {date, scope})` returns items grouped complex -> hall -> list type -> item number, each item carrying proceeding, matter, stage heading (raw and normalised), bench, appearance capacity, assignee, open-obligation count, carry-count and provenance (`source_type`, `anchor_id`, `confidence`, `confirmation_state`). [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "dashboard (next dates, stage, adverse orders)",
+   "quote": "Scope `mine` returns only items for the calling member's matters and appearances; scope `workspace` returns all items and is rejected for roles without `court_day:view_all` (owner, advocate per owner setting). [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "exception alert settings",
+   "quote": "Items are ordered by item number within a hall list as numeric, not lexicographic (item 9 before item 10); supplementary lists sort after the daily list; ties are broken by serial. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "exception alert settings, exports",
+   "quote": "`detectClashes` flags two or more listings on the same date for the same appearing member in different halls or different complexes, and returns both items, the member and the kind (`hall`, `complex`). Same-hall multi-item listings are never a clash. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "i18n namespace and catalog test",
+   "quote": "Clash detection never claims a predicted time overlap; output carries only the factual statement (same date, different hall) so the UI cannot imply a prediction. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "cross-tenant-actions test entries for each 'use server' action.",
+   "quote": "`snapshotList` stores an immutable hash and row list of each list ingestion; `diffLists(prev, next)` returns `added`, `removed`, `moved` (hall or item changed) and `stage_changed` entries and is idempotent for identical input. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "A diff between a daily list and its later supplementary list is labelled `supplementary` and sorts new rows first; the diff is computed only from lawyer-supplied or forwarded lists (no fetching). [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "`setCurrentItem` stores the lawyer's manual marker per hall and date with the setter and time; it is an internal note, writes an `audit_event`, and never changes any listing. [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "Exactly one canonical next date per proceeding is preserved: `proposeNextDate` creates a proposal (L2) and, when it disagrees with an existing confirmed date, a conflict card holding both sources; a confirmed date is never overwritten automatically. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "A partial unique index `listing(proceeding_id) where canonical` is asserted by a test that attempts two canonical rows and expects a constraint violation. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "Matters expected but not listed (a proceeding whose confirmed next date equals D but has no listing) are returned in `expectedNotListed`. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "Roles: clerk can read court-day items but strategy-bearing fields (court notes, matter memory snippets) are absent from the clerk payload (column-scoped view). [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "Performance: `getCourtDay` p95 \u003c 150 ms on the seeded chamber dataset (about 40 listings) and issues no more than 6 SQL statements (no N+1). [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Sensitive matters (AI-off flag) are still listed but expose no AI-derived fields. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both. [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R17",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -40,185 +106,349 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/portfolio/portfolio.ts",
-   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
+   "path": "packages/validators/src/court-day.ts",
+   "change": "zod CourtDayQuery, CourtDayItem, CourtDay, Clash, ListDiff, CurrentItemMarker, SnapshotRow; no any",
    "requirements": [
     "R1",
-    "R2"
+    "R4",
+    "R6",
+    "R17"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "Export listPortfolios and createPortfolio.",
+   "path": "packages/validators/src/index.ts",
+   "change": "export court-day schemas",
    "requirements": [
-    "R1",
-    "R2"
+    "R17"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
+   "path": "packages/db/src/schema/court-day.ts",
+   "change": "tenantTable court_day_marker (unique workspace,hall,list_date) and list_snapshot (content_hash, rows jsonb, forum_id, list_date, list_type, source_capture_id nullable, immutable)",
    "requirements": [
-    "R6"
+    "R6",
+    "R8",
+    "R16"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "export the new schema",
    "requirements": [
-    "R6"
+    "R16"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/portfolio/portfolio.test.ts",
-   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "path": "packages/db/migrations/20261024170000_court_day.sql",
+   "change": "review-headed migration creating both tables with ENABLE+FORCE RLS ws_isolation on app.workspace_id, grants, snapshot immutability trigger; use the next free timestamp if taken",
    "requirements": [
-    "R1"
+    "R16"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
-   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "journal entry plus regenerated snapshot JSON file for D5 in packages/db/migrations/meta/",
    "requirements": [
-    "R1",
-    "R4"
+    "R16"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
-   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
+   "path": "packages/db/src/index.test.ts",
+   "change": "add both tables to the root table list",
+   "requirements": [
+    "R16"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "add both tables to the RLS catalog and TABLE_TESTS",
+   "requirements": [
+    "R15",
+    "R16"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "seed marker and snapshot rows for both tenants",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "register new core exports: setCurrentItem, clearCurrentItem, getCourtDay, snapshotList, listConflictCards, proposeNextDate(court-day) in SERVICE_TESTS; pure detectClashes/diffLists in NOT_A_SERVICE with reason",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "real B-on-A cases for each SERVICE_TESTS entry, including a user belonging to both workspaces",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/db/src/seed/court-day-fixtures.ts",
+   "change": "synthetic Madras HC and Karnataka HC chamber lists (~40 listings), fictional parties, valid domain values",
+   "requirements": [
+    "R13"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/core/src/court-day/query.ts",
+   "change": "getCourtDay: grouping, ordering, scopes, role-scoped payload, sensitive handling, expectedNotListed, freshness, \u003c=6 statements",
    "requirements": [
     "R1",
     "R2",
     "R3",
+    "R11",
+    "R12",
+    "R13",
+    "R14"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/core/src/court-day/clashes.ts",
+   "change": "pure detectClashes returning factual same-date different-hall/complex clashes only",
+   "requirements": [
     "R4",
     "R5"
    ]
   },
   {
-   "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
-   "change": "Skeleton loading state.",
+   "id": "D15",
+   "path": "packages/core/src/court-day/diff.ts",
+   "change": "snapshotList (hash, immutable rows) and diffLists incl. supplementary labelling, no fetching",
    "requirements": [
-    "R2"
+    "R6",
+    "R7"
    ]
   },
   {
-   "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
-   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
+   "id": "D16",
+   "path": "packages/core/src/court-day/markers.ts",
+   "change": "setCurrentItem/clearCurrentItem with audit event, no listing writes",
    "requirements": [
-    "R2"
+    "R8"
    ]
   },
   {
-   "id": "D10",
-   "path": "apps/web/components/portfolio/portfolio-view.tsx",
-   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
+   "id": "D17",
+   "path": "packages/core/src/court-day/next-date.ts",
+   "change": "proposeNextDate and listConflictCards wrapping matter-graph proposeNextDate/conflict view via matter-graph index only",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/core/src/court-day/index.ts",
+   "change": "export new modules next to board/eta/bench-card (watch export name clashes)",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/core/src/court-day/query.test.ts",
+   "change": "tests for R1,R2,R3,R11,R12,R13,R14 (colocated, Testcontainers like board.test.ts)",
    "requirements": [
     "R1",
     "R2",
     "R3",
-    "R4"
+    "R11",
+    "R12",
+    "R13",
+    "R14"
    ]
   },
   {
-   "id": "D11",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
+   "id": "D20",
+   "path": "packages/core/src/court-day/clashes.test.ts",
+   "change": "tests for R4,R5",
    "requirements": [
-    "R1",
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/court-day/diff.test.ts",
+   "change": "tests for R6,R7",
+   "requirements": [
+    "R6",
+    "R7"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/core/src/court-day/markers.test.ts",
+   "change": "tests for R8",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/core/src/court-day/next-date.test.ts",
+   "change": "tests for R9 and the two-canonical-rows constraint test for R10",
+   "requirements": [
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/auth/src/policy/actions.ts",
+   "change": "add court_day domain with court_day.view_all; update matrix.ts, can.ts (setting advocatesCanViewAllCourtDay default true, mirrors advocatesCanReadAudit), docs.ts and policy tests (files: packages/auth/src/policy/matrix.ts, can.ts, docs.ts, __tests__)",
+   "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'portfolio' to NAMESPACES.",
+   "id": "D25",
+   "path": "packages/auth/src/policy/matrix.ts",
+   "change": "map court_day.view_all to advocate (owner outranks)",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "packages/auth/src/policy/can.ts",
+   "change": "owner-setting gate for advocates",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "packages/auth/src/policy/docs.ts",
+   "change": "document the new action and setting",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "court-day deps: add matter-graph, workspaces, audit, matters as needed",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "docs/engineering/core-domains.md",
+   "change": "mirror the dependency change",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "docs/adr/0037-court-day-read-model.md",
+   "change": "ADR for the read model, markers, snapshots, no-prediction clash rule",
    "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D13",
-   "path": "packages/i18n/src/messages/en/portfolio.json",
-   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
+   "id": "D31",
+   "path": "docs/adr/README.md",
+   "change": "index entry for ADR 0037",
    "requirements": [
     "R5"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'portfolio' to the expected namespace list.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
-   "requirements": [
-    "R6"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+   "what": "Existing live-board exports of packages/core/src/court-day (pollBoards, getLiveHalls, estimateCallWindow, backtestEta, getBenchCard) and board.test.ts/eta.test.ts/bench-card.test.ts behaviour"
   },
   {
    "id": "P2",
-   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+   "what": "matter-graph proposeNextDate/confirmNextDate/getCanonicalNextDate semantics and signatures (packages/core/src/matter-graph/next-date.ts); court-day wraps, never edits them"
   },
   {
    "id": "P3",
-   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+   "what": "Existing listing/hearing/appearance/obligation schema and the listing_one_canonical_uq index (packages/db/src/schema/docket.ts); no changes to those tables"
+  },
+  {
+   "id": "P4",
+   "what": "Existing policy matrix semantics for current actions (packages/auth/src/policy/matrix.ts, can.ts)"
+  },
+  {
+   "id": "P5",
+   "what": "Core never imports @causedeck/fetch or any HTTP client in the new court-day files (no fetching of lists)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/court-day src/domains.test.ts src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/court-day.test.ts"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm adr:lint"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
-   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
+   "choice": "Gate scope=workspace with a new policy action court_day.view_all rather than a role check in core",
+   "justification": "policy actions are the single authorisation surface (packages/auth/src/policy/actions.ts:8-15); owner-setting precedent advocatesCanReadAudit (can.ts:38,84-86)",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
-   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
-   "source": "precedent"
+   "choice": "Reuse matter-graph proposeNextDate and conflict view instead of reimplementing; court-day imports matter-graph via its index.ts",
+   "justification": "matter-graph/next-date.ts:134 already implements proposal/conflict/never-overwrite; CLAUDE.md requires imports through index.ts and a CORE_DOMAIN_DEPENDENCIES update",
+   "source": "doc"
   },
   {
    "id": "K3",
-   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
-   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
+   "choice": "Migration goes in packages/db/migrations with a timestamp name, seeds in packages/db/src/seed, tests colocated, ignoring the issue's drizzle/, seeds/, __tests__ paths",
+   "justification": "actual repo layout (migrations/20261024160052_review_queue.sql, core/src/court-day/board.test.ts)",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "court_day.list_changed is emitted through an injected events port; no pg-boss job registered",
+   "justification": "matter-graph/context.ts emits via injected GraphEvents; a job would need registry.test.ts/schedules.test.ts and its consumers are #59/#64",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "No new listing index or canonical index migration",
+   "justification": "docket.ts:73-77 already defines listing_one_canonical_uq and listing_workspace_date_hall_idx",
    "source": "precedent"
   }
  ]

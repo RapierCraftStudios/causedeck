@@ -21,6 +21,7 @@ import {
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
+import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { reviewCorrection, reviewItem } from '../schema/review.ts';
@@ -1038,6 +1039,34 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, name: `Seed portfolio ${tag}`, createdBy: ownerId })
       .returning({ id: portfolio.id });
     return { id: first(rows, 'portfolio').id };
+  },
+  court_day_marker: async (tx, { workspaceId, ownerId, tag }) => {
+    const forumId = await seedForum(tx, workspaceId, `${tag}-marker`);
+    const halls = await tx
+      .insert(courtHall)
+      .values({ forumId, workspaceId, hallNo: '5B', label: 'Court Hall 5B' })
+      .returning({ id: courtHall.id });
+    const hallId = first(halls, 'court_hall').id;
+    const rows = await tx
+      .insert(courtDayMarker)
+      .values({ workspaceId, hallId, listDate: '2026-11-02', currentItem: 7, setBy: ownerId })
+      .returning({ id: courtDayMarker.id });
+    return { hallId, id: first(rows, 'court_day_marker').id };
+  },
+  list_snapshot: async (tx, { workspaceId, tag }) => {
+    const forumId = await seedForum(tx, workspaceId, `${tag}-snapshot`);
+    const rows = await tx
+      .insert(listSnapshot)
+      .values({
+        workspaceId,
+        forumId,
+        listDate: '2026-11-02',
+        listType: 'daily',
+        contentHash: 'b'.repeat(64),
+        rows: [],
+      })
+      .returning({ id: listSnapshot.id });
+    return { forumId, id: first(rows, 'list_snapshot').id };
   },
   portfolio_case: async (tx, { workspaceId, tag }) => {
     const parents = await tx

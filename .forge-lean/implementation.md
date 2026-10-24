@@ -33,3 +33,4 @@ The reported failure (`turbo: command not found`, exit 127) was environmental: t
 
 - Re-verified at base fa74649a: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` 23/23 green; db forum-catalogue tests (24) and core forums.test.ts (11) pass. Exit 127 was `turbo` not on PATH; no code change.
 - Re-checked against base fa74649a: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` passes (23/23, shared turbo cache hit); direct `tsc --noEmit` on core and db also clean. Exit 127 is `turbo` not on the check shell's PATH; no code change.
+- Re-verified at base fa74649a again: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` 23/23 green. Exit 127 is `turbo` not on PATH; no code change.

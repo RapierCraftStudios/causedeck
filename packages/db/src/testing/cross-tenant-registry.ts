@@ -29,6 +29,7 @@ const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-pr
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
+const CORE_PORTFOLIO_TEST = 'packages/core/src/__tests__/cross-tenant/portfolio.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
 
@@ -264,6 +265,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   addCaseWatch: selfScoped,
   listCaseWatches: selfScoped,
   removeCaseWatch: selfScoped,
+  // Institution portfolios (#663): B's call on A's portfolio is denied; B's lists are empty
+  importPortfolioCases: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  listPortfolioCases: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  portfolioSummary: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  exportPortfolioCsv: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   runBillingProcessEvent: {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
@@ -817,6 +823,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // portfolio (#663): pure CSV reader and constants
+  parsePortfolioCsv: 'pure',
+  MAX_PORTFOLIO_IMPORT_ROWS: 'constant',
+  MAX_PORTFOLIO_WATCHES_PER_ADVOCATE: 'constant',
+  PORTFOLIO_WATCH_CADENCE_MINUTES: 'constant',
+  PORTFOLIO_EXPORT_HEADER: 'constant',
   // business dashboard (#519): pure maths and rendering over aggregates
   assessAgreement: 'pure',
   UNKNOWN_CONFIDENCE: 'constant',

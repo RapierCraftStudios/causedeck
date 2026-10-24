@@ -2,19 +2,19 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add DRT/DRAT status and cause-list parsers and NCLT benches nationally (extending nclt-blr, #38) with golden fixtures, registered in the adapter registry and forum catalogue config.",
+   "quote": "Add a per-tracked-case plan kind to the plan catalogue",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "SARFAESI DM/CMM matters are tracked through eCourts sources already present.",
-   "disposition": "not-applicable",
-   "evidence": "packages/db/migrations/20261024090000_ecourts_district_status_sources.sql:4; packages/adapters/src/ecourts/index.ts:1-6"
+   "quote": "metering of tracked cases in packages/billing and core billing entitlements",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Acceptance: parsers pass golden fixtures offline.",
+   "quote": "Acceptance: charge computed from tracked case count with tests.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -22,67 +22,67 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/adapters/src/status/types.ts",
-   "change": "add 'drt' and 'nclt' to CASE_STATUS_TEMPLATES",
+   "path": "packages/validators/src/plans.ts",
+   "change": "Add optional `perTrackedCase?: boolean` to Plan, export TRACKED_CASE_PRICE_PAISE (integer paise per case per month, ex-GST), and an `active:false` catalogue row id `institution-case-monthly`, kind 'dedicated', interval month, perSeat false, perTrackedCase true, limits PAID. No new PlanKind (no migration).",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/adapters/src/status/drt.ts",
-   "change": "new parseDrtStatus: PageSpec label map over readStatusPage (DRT and DRAT status page)",
+   "path": "packages/billing/src/plans.ts",
+   "change": "Add pure `trackedCaseChargePaise(plan, trackedCases)`; extend mandateChargeNotice counts with optional `trackedCases` (charge = pricePaise*trackedCases when plan.perTrackedCase); checkPlanConfig: invalid if perSeat and perTrackedCase both set, minimum charge 0 for per-case plans; re-export TRACKED_CASE_PRICE_PAISE.",
    "requirements": [
     "R1",
+    "R2",
     "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/adapters/src/status/nclt.ts",
-   "change": "new parseNcltStatus: PageSpec label map over readStatusPage",
+   "path": "packages/billing/src/service.ts",
+   "change": "Extend SeatCounts/cycleChargePaise (and quote counts) with optional trackedCases so per-case plans price from the count.",
    "requirements": [
-    "R1",
     "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/adapters/src/status/index.ts",
-   "change": "export and dispatch the two new parsers in PARSERS",
+   "path": "packages/billing/src/invoice/on-payment.ts",
+   "change": "Invoice line quantity and description use tracked cases for perTrackedCase plans (input gains optional trackedCases).",
    "requirements": [
-    "R1"
+    "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/adapters/src/status/fixtures.test.ts",
-   "change": "cover the new templates; stays offline",
+   "path": "packages/core/src/billing/entitlements.ts",
+   "change": "Add `countTrackedCases(db, workspaceId)` (count of portfolio_case rows via the caller's workspace-scoped queryable) and `getTrackedCaseCharge(db, workspaceId, now?)` returning {plan id, trackedCases, chargePaise} from the current subscription's plan (0 for non per-case plans).",
    "requirements": [
+    "R2",
     "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/adapters/fixtures/status/manifest.json",
-   "change": "list the new drt and nclt status fixture inputs (synthetic, FICTIONAL)",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register countTrackedCases and getTrackedCaseCharge in SERVICE_TESTS pointing at the services.test.ts case.",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/adapters/src/drt/index.ts",
-   "change": "new DRT/DRAT adapter: DRT_ADAPTER_ID 'in.drt', forum code list, access modes (user_supplied/none, counsel note), config, createDrtAdapter with an HTML cause-list parseCauseList modelled on ecourts/cause-list.ts, bundled config",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real two-tenant case: B's count/charge ignore A's portfolio_case rows; A unchanged.",
    "requirements": [
-    "R1",
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/adapters/src/drt/cause-list.ts",
-   "change": "new DRT cause-list HTML parser (anchored rows, unparsed rows, halls), pure",
+   "path": "packages/billing/src/__tests__/plans.test.ts",
+   "change": "Tests: per-case charge from count (0, 1, 1000), config check, catalogue row inactive and frozen, not offered by active list. Also add cases to service.test.ts and on-payment.test.ts for D3/D4.",
    "requirements": [
     "R1",
     "R3"
@@ -90,146 +90,63 @@
   },
   {
    "id": "D9",
-   "path": "packages/adapters/src/drt/drt.test.ts",
-   "change": "new tests: registry resolves every DRT/DRAT forum code, config matches bundled, parser unit cases",
+   "path": "packages/core/src/billing/__tests__/entitlements.test.ts",
+   "change": "DB test: workspace on institution plan with N portfolio_case rows gets chargePaise = N*price; Junior gets 0.",
    "requirements": [
+    "R2",
     "R3"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/adapters/fixtures/in.drt/manifest.json",
-   "change": "new golden fixtures dir for in.drt: manifest plus *.input.html and *.expected.json (synthetic, FICTIONAL)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/adapters/src/nclt-blr/config/benches.ts",
-   "change": "new list of national NCLT bench forum codes",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/adapters/src/nclt-blr/index.ts",
-   "change": "forumCodes = Bengaluru plus the national benches; id, version and config unchanged",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/adapters/src/config/loader.ts",
-   "change": "add DRT bundled config to BUNDLED_ADAPTER_CONFIGS",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/adapters/src/workbench/index.ts",
-   "change": "add 'in.drt' to WORKBENCH_ADAPTERS so the fixture regression gate covers it",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/adapters/fixtures/accuracy-baseline.json",
-   "change": "add in.drt baseline entry",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/adapters/src/index.ts",
-   "change": "export ./drt/index.ts and update the header comment",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/db/src/seed/forum-catalogue/tribunals.ts",
-   "change": "seed national NCLT benches and DRT/DRAT forums (adapterId set, level A1); existing in.drt.bengaluru-1/-2 get adapterId in.drt, A1",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/db/src/seed/forum-catalogue/index.ts",
-   "change": "bump FORUM_CATALOGUE_VERSION",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/db/src/seed/forum-catalogue/forum-catalogue.test.ts",
-   "change": "update expected code list and A1 count, assert each new forum's adapterId resolves to a registered adapter id",
-   "requirements": [
-    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "NCLT adapter id, version, config and checksum stay in.nclt.bengaluru 1.0.0 so migration 0052 and packages/adapters/src/nclt-blr/config.test.ts still pass"
+   "what": "Existing seat and fixed plan charges: mandateChargeNotice/cycleChargePaise outputs for junior, advocate, chamber unchanged (packages/billing/src/plans.ts, service.ts)"
   },
   {
    "id": "P2",
-   "what": "parseCaseStatus behaviour for ecourts-district, madras-hc and karnataka-hc (packages/adapters/src/status/index.ts) and its consumer packages/core/src/case-watch/lookup.ts"
+   "what": "PLAN_KINDS and the plan_kind_chk DB check unchanged; no migration (packages/db/src/schema/billing.ts:53)"
   },
   {
    "id": "P3",
-   "what": "adapters register no network access: packages/adapters/src/__tests__/no-network-lint.test.ts; parsers stay pure"
+   "what": "GET /v1/billing/plans and the web plan picker list only active plans; the institution plan is not self-serve (apps/api/src/routes/v1/billing.ts:55, billing-view.ts:240)"
   },
   {
    "id": "P4",
-   "what": "Existing fixtures accuracy baseline entries (packages/adapters/fixtures/accuracy-baseline.json) must not drop"
+   "what": "Plan seed maps catalogue rows to plan table columns only (packages/db/src/seed/plans.ts); perTrackedCase is not a DB column"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/adapters exec vitest run --config vitest.golden.config.ts src/status src/nclt-blr src/__tests__/fixture-regression.test.ts src/__tests__/workbench.test.ts src/__tests__/golden.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/billing exec vitest run src/__tests__/plans.test.ts src/__tests__/service.test.ts src/__tests__/on-payment.test.ts src/__tests__/entitlements.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/adapters exec vitest run src/drt src/__tests__/registry.test.ts src/__tests__/no-network-lint.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/billing/__tests__/entitlements.test.ts src/__tests__/cross-tenant/services.test.ts src/usage/__tests__/fairness.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/forum-catalogue/forum-catalogue.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/adapters --filter @causedeck/db --filter @causedeck/core run typecheck"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/__tests__/plans-seed.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Reuse adapter id in.nclt.bengaluru for all national NCLT benches instead of a new id",
-   "justification": "id is pinned by migration 0052 (packages/db/migrations/0052_nclt_adapter_v1.sql), the loader (config/loader.ts:67) and the accuracy baseline; registry allows one adapter per forum code (registry.ts:44-48) and one adapter can list many forumCodes",
+   "choice": "Reuse existing PlanKind 'dedicated' for the per-case plan instead of adding 'institution'",
+   "justification": "A new kind needs a plan_kind_chk migration and snapshot (packages/db/src/schema/billing.ts:53), API enum (validators/src/api/billing.ts:9) and fairness map (core/src/usage/fairness.ts:12); 'dedicated' already exists everywhere and no row uses it",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "One in.drt adapter for DRT and DRAT forums, HTML cause-list parser copied from the eCourts one; no adapter_version/access_mode migration",
-   "justification": "drt.gov.in pages are HTML tables (tribunals.ts:14-18 notes unverified); loader falls back to bundled configs (config/loader.ts:63-68); modes stay user_supplied/none until counsel review (#118, nclt-blr/index.ts:35-46)",
+   "choice": "Plan row is active:false",
+   "justification": "Institutions are provisioned, not self-served; active plans feed the picker (billing-view.ts:240) and public API (api/routes/v1/billing.ts:55)",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Fixtures are synthetic FICTIONAL pages",
-   "justification": "real DRT/NCLT layouts are unverified and project fixtures are classified FICTIONAL (fixtures/README.md, fixtures/status/manifest.json:2)",
+   "choice": "New core exports are registered in SERVICE_TESTS",
+   "justification": "CLAUDE.md registry table for runtime exports of @causedeck/core",
    "source": "doc"
   }
  ]

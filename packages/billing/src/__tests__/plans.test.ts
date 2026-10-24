@@ -12,8 +12,11 @@ import {
   MIN_CHAMBER_SEATS,
   PLAN_CATALOGUE,
   UPI_AUTOPAY_MANDATE_CAP_PAISE,
+  TRACKED_CASE_PRICE_PAISE,
+  trackedCaseChargePaise,
   type Plan,
 } from '../plans';
+import { cycleChargePaise } from '../service';
 
 const fixed = (over: Partial<Plan>): Plan => ({
   id: 'test',
@@ -151,6 +154,16 @@ describe('plan catalogue', () => {
           19900,
           3,
           true,
+        ],
+        [
+          "institution-case-monthly",
+          "dedicated",
+          "month",
+          4900,
+          false,
+          null,
+          1,
+          false,
         ],
       ]
     `);
@@ -324,5 +337,63 @@ describe('mandateChargeNotice', () => {
 
   it('names the i18n copy the mandate flow renders', () => {
     expect(MANDATE_ADDITIONAL_AUTH_MESSAGE_KEY).toBe('billing.mandate.additionalAuth');
+  });
+});
+
+describe('per-tracked-case plan (#664)', () => {
+  const plan = getPlan('institution-case-monthly');
+
+  it('is an inactive, frozen catalogue row billed per case', () => {
+    expect(plan).toMatchObject({
+      kind: 'dedicated',
+      interval: 'month',
+      perSeat: false,
+      perTrackedCase: true,
+      pricePaise: TRACKED_CASE_PRICE_PAISE,
+      active: false,
+    });
+    expect(Object.isFrozen(plan)).toBe(true);
+    expect(PLAN_CATALOGUE.filter((p) => p.active).map((p) => p.id)).not.toContain(plan?.id);
+    expect(checkPlanConfig()).toEqual(checkPlanConfig(PLAN_CATALOGUE.filter((p) => p !== plan)));
+  });
+
+  it('computes the charge from the tracked case count', () => {
+    if (!plan) throw new Error('missing plan');
+    expect(trackedCaseChargePaise(plan, 0)).toBe(0);
+    expect(trackedCaseChargePaise(plan, 1)).toBe(TRACKED_CASE_PRICE_PAISE);
+    expect(trackedCaseChargePaise(plan, 1_000)).toBe(1_000 * TRACKED_CASE_PRICE_PAISE);
+    expect(() => trackedCaseChargePaise(plan, -1)).toThrow(RangeError);
+    expect(() => trackedCaseChargePaise(plan, 1.5)).toThrow(RangeError);
+  });
+
+  it('feeds the mandate notice and the cycle charge, ignoring seats', () => {
+    if (!plan) throw new Error('missing plan');
+    const counts = { seats: 5, clerkSeats: 2, trackedCases: 100 };
+    expect(cycleChargePaise(plan, counts)).toBe(100 * TRACKED_CASE_PRICE_PAISE);
+    expect(mandateChargeNotice(plan, counts)).toEqual({
+      chargePaise: 100 * TRACKED_CASE_PRICE_PAISE,
+      requiresAdditionalAuth: false,
+    });
+    expect(mandateChargeNotice(plan, { seats: 1, clerkSeats: 0, trackedCases: 4_000 })).toEqual({
+      chargePaise: 4_000 * TRACKED_CASE_PRICE_PAISE,
+      requiresAdditionalAuth: true,
+    });
+    expect(cycleChargePaise(plan, { seats: 1, clerkSeats: 0 })).toBe(0);
+  });
+
+  it('flags a plan that is both per seat and per tracked case', () => {
+    if (!plan) throw new Error('missing plan');
+    const findings = checkPlanConfig([{ ...plan, perSeat: true, minSeats: 3 }]);
+    expect(findings.map((f) => f.code)).toEqual(['invalid']);
+  });
+
+  it('leaves seat and fixed plan charges unchanged', () => {
+    const chamber = getPlan('chamber-seat-1');
+    const advocate = getPlan('advocate-monthly-1');
+    if (!chamber || !advocate) throw new Error('missing plan');
+    expect(cycleChargePaise(chamber, { seats: 3, clerkSeats: 1, trackedCases: 99 })).toBe(
+      3 * chamber.pricePaise + CLERK_SEAT_PRICE_PAISE,
+    );
+    expect(cycleChargePaise(advocate, { seats: 1, clerkSeats: 0 })).toBe(advocate.pricePaise);
   });
 });

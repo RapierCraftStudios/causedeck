@@ -1,49 +1,27 @@
 ### Approach
-Followed the frozen contract: new tenant tables modelled on `case_watch` and `webhooks`, a new `institution` workspace kind in the DB only, one migration with FORCE RLS, and the registration lists.
+Reuse the existing `dedicated` plan kind (no migration) for an inactive `institution-case-monthly` plan flagged `perTrackedCase`. The charge is price times tracked cases, computed purely in billing and fed by a core count of `portfolio_case` rows.
 
 ### Changes
-- packages/db/src/schema/portfolio.ts: `portfolio`, `portfolio_case`, `portfolio_panel_advocate` via `tenantTable()`.
-- packages/db/src/schema/index.ts: exports.
-- packages/db/src/schema/auth.ts: `'institution'` in `WORKSPACE_KINDS`.
-- packages/db/migrations/20261024110000_portfolio.sql, meta/_journal.json (idx 87), meta/20261024110000_snapshot.json: tables, FKs, kind check re-added, ENABLE/FORCE RLS and `ws_isolation`.
-- packages/db/src/index.test.ts, src/__tests__/rls/sql.test.ts, src/testing/cross-tenant-registry.ts, src/testing/two-tenants.ts (three seeders), src/__tests__/auth-schema.test.ts: registrations.
-- packages/db/src/__tests__/portfolio-schema.test.ts: new schema test.
+- packages/validators/src/plans.ts: `TRACKED_CASE_PRICE_PAISE`, optional `Plan.perTrackedCase`, the inactive catalogue row.
+- packages/billing/src/plans.ts: `trackedCaseChargePaise`; `mandateChargeNotice` takes optional `trackedCases`; `checkPlanConfig` rejects per-seat plus per-case and skips the cap on the zero minimum.
+- packages/billing/src/service.ts: `ChargeCounts`, used by `cycleChargePaise` and `quoteChange`.
+- packages/billing/src/invoice/on-payment.ts: per-case invoice line (null with no cases).
+- packages/core/src/billing/entitlements.ts: `countTrackedCases`, `getTrackedCaseCharge`.
+- Tests: billing plans (snapshot updated for the new row) and on-payment; core billing entitlements (DB).
 
 ### Acceptance Criteria Status
-- R1 ✅ packages/db/src/schema/portfolio.ts:20-110
-- R2 ✅ packages/db/src/schema/auth.ts:44, migration kind check
-- R3 ✅ migrations/20261024110000_portfolio.sql (RLS statements at end)
-- R4 ✅ index.test.ts, rls/sql.test.ts, cross-tenant-registry.ts, two-tenants.ts
-- R5 ✅ the generic cross-tenant SQL suite runs per registered table and passes with the new seeders
+- R1 ✅ packages/validators/src/plans.ts (institution-case-monthly row)
+- R2 ✅ packages/core/src/billing/entitlements.ts (countTrackedCases, getTrackedCaseCharge), packages/billing/src/plans.ts (trackedCaseChargePaise)
+- R3 ✅ charge from count, tested in packages/billing/src/__tests__/plans.test.ts and packages/core/src/billing/__tests__/entitlements.test.ts
 
 ### Verification
-- V1 (schema, auth, index, conventions, lint-migrations tests): pass. The new test fails without the change (imports the missing portfolio.ts).
-- V2 (rls and cross-tenant suites, 144 tests): pass.
-- V3 `db:check`: pass.
-- `tsc --noEmit` for @causedeck/db and eslint on changed files: clean.
+- V1 billing vitest (plans, service, on-payment, entitlements): 79 passed.
+- V2 core vitest (billing entitlements, cross-tenant services, fairness): 200 passed.
+- V3 db plans-seed: passed.
+- turbo typecheck on changed packages and dependents: 23/23 successful. eslint on changed files: clean.
+- New tests would fail without the fix (the functions and the plan row do not exist).
 
 ### Notes
-- No behaviour change for existing kinds; validators and UI still offer solo and chamber only.
-- No env vars. scripts/check-devdocs-freshness.sh does not exist in this repo.
-
-### Stale-list follow-up
-The 30 flagged (symbol, test) pairs are not members: none of the 10 tests lists @causedeck/db schema tables (flagged lines are hoisted mock state or fixtures; the db mocks only expose db/withWorkspace/withoutWorkspace). Recorded under `not_members` in result.json; no test edits needed.
-
-## Merge-check fix (turbo exit 127)
-The merged-tree failure was `turbo: command not found` (bare `turbo` not on PATH), not a symbol/key conflict. No source change needed. Re-verified on the merged tree: `pnpm exec turbo run typecheck --filter='...[base]'` 23/23 pass; V1 (45 tests), V2 (144 tests), V3 db:check all pass.
-
-### Merge recheck
-Typecheck failure after the base merge was exit 127 `turbo: command not found` (turbo is not on PATH on this host; a toolchain problem, not a code defect). `pnpm exec turbo run typecheck --filter='...[41ce83bd]'` passes 23/23. No duplicate keys or symbols found; no code change. V1-V3 re-run and pass.
-
-## CI tenancy fix
-- `test:export-coverage` (part of the tenancy job) failed: portfolio, portfolio_case, portfolio_panel_advocate had no exporter. Added `portfoliosExporter` (not exported) in core lifecycle/export/exporters.ts and erase order entries in lifecycle/deletion/erase.ts.
-- Migration: `portfolio_case_proceeding_fk` is `ON DELETE SET NULL ("proceeding_id")` so a deleted proceeding does not null workspace_id (repo precedent: 0038).
-- Verified: export-coverage, purge/deletion/export/cross-tenant core tests, db rls + cross-tenant + lint-migrations, db:check, core tsc.
-
-### Merge recheck (#662)
-The failing check was exit 127, `turbo: command not found` (turbo is not on PATH on this host), not a duplicate-key or symbol conflict. No source change. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[67683bb1]'` passes 23/23. V1 (115 tests), V2 (33 tests) and V3 (15 tests) pass.
-
-## Merge recheck (#662, turbo 127)
-Exit 127 was only `turbo` missing from PATH, not a code conflict. With node_modules/.bin on PATH, typecheck passes 23/23 and V1-V3 pass. No code change.
-### Post-second-merge
-After merging the base again, `forgedock check` re-ran V1-V4: all PASS (V4 typecheck for adapters, db, core included).
+- D6 (SERVICE_TESTS registry entry) is not delivered: `@causedeck/core/billing` is a subpath export, not in `packages/core/src/index.ts`, so the guard does not cover it and an entry would reference a non-existent `core.*` export (recorded as an amendment).
+- D7 delivered as a standalone two-tenant case in `services.test.ts`: B's count/charge ignore A's portfolio_case rows (RLS), and A's count is unchanged.
+- `scripts/check-devdocs-freshness.sh` and `lane-check.sh` do not exist here.

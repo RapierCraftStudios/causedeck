@@ -30,3 +30,9 @@ The reported `turbo: command not found` (exit 127) was a PATH problem, not a cod
 Merged-tree typecheck: the reported failure (`turbo: command not found`, exit 127) is a toolchain/PATH problem on the checking host, not a code defect: the branch already contains the base (0 commits behind) and has no duplicate keys or same-named symbols. `pnpm exec turbo run typecheck --filter` for core, db, admin, web and i18n passes (20 of 20 tasks). Bare `turbo` is not on PATH and I did not alter PATH.
 
 Re-verified: `pnpm exec turbo run typecheck --filter=...[origin/milestone/court-data-network]` passes (24/24 tasks); core review/data-ops/facts/domains and admin roles/audit/console-layout tests pass. No source change needed.
+
+### Recovery pass (ci.red)
+- apps/admin review actions/page: `z.uuid()`, and `REVIEW_FIELDS` now re-exported from `@causedeck/core/review` (no `@causedeck/db/schema` import in apps).
+- `review_correction` added to `PURGE_ORDER` (lifecycle/deletion/erase.ts); translation-status entries for the ta/kn `reviewReport` keys; audit test mock gained `REVIEW_FIELDS`.
+- Passing locally: core review + purge-coverage, admin no-without-workspace/server-actions-audit/console-layout, i18n catalog. Not verified locally: V1 rest and V4 within 300s (host load); ESLint OOMs on this host, CI lints.
+- Non-deliverable files are declared via add-deliverable amendments in result.json.

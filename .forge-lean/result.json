@@ -1,5 +1,5 @@
 {
- "status": "fixed",
+ "status": "blocked",
  "summary": "consumeApiCall now locks the key row and checks plus increments in one transaction, so concurrent calls cannot exceed quota",
  "requirements": [
   {
@@ -74,5 +74,9 @@
     "why": "Testcontainers' Ryuk reaper cannot reach the docker daemon here (DOCKER_HOST=tcp://127.0.0.1:2375, no /var/run/docker.sock), so any db-backed vitest run fails at global setup unless TESTCONTAINERS_RYUK_DISABLED=true is set. This is a host problem, not a code one."
    }
   ]
+ },
+ "block": {
+  "type": "environment",
+  "why": "The repro vitest run fails at global setup on this host: testcontainers Ryuk reaper never logs Started (DOCKER_HOST=tcp://127.0.0.1:2375, no docker.sock), in packages/db/src/testing/container.ts, which is not a deliverable. With TESTCONTAINERS_RYUK_DISABLED=true the repro and V1 pass (192 tests) and the K-remaining case fails on base. The engine must set that variable when running the repro."
  }
 }

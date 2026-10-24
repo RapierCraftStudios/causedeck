@@ -1094,6 +1094,9 @@ importers:
       '@causedeck/validators':
         specifier: workspace:*
         version: link:../validators
+      fflate:
+        specifier: 'catalog:'
+        version: 0.8.3
       ical.js:
         specifier: 'catalog:'
         version: 2.2.1

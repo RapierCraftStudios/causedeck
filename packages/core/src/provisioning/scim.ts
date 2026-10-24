@@ -127,8 +127,8 @@ const FILTER = /^userName\s+eq\s+"([^"]+)"$/i;
 
 export interface ListScimUsersQuery {
   filter?: string | null;
-  startIndex?: number;
-  count?: number;
+  startIndex?: number | undefined;
+  count?: number | undefined;
 }
 
 /** `GET /Users`: members that are not removed; the only filter is `userName eq "<email>"`. */
@@ -140,7 +140,8 @@ export async function listScimUsers(
   let email: string | null = null;
   if (query.filter) {
     const match = FILTER.exec(query.filter.trim());
-    if (!match?.[1]) throw new ScimError(400, 'Only `userName eq "<value>"` is supported', 'invalidFilter');
+    if (!match?.[1])
+      throw new ScimError(400, 'Only `userName eq "<value>"` is supported', 'invalidFilter');
     email = match[1].toLowerCase();
   }
   const startIndex = Math.max(1, Math.trunc(query.startIndex ?? 1));
@@ -203,7 +204,8 @@ function grantable(role: string): 'advocate' | 'junior' | 'clerk' | 'viewer' {
 
 function flag(value: unknown): boolean | null {
   if (typeof value === 'boolean') return value;
-  if (typeof value === 'string' && /^(true|false)$/i.test(value)) return value.toLowerCase() === 'true';
+  if (typeof value === 'string' && /^(true|false)$/i.test(value))
+    return value.toLowerCase() === 'true';
   return null;
 }
 
@@ -233,7 +235,10 @@ export async function createScimUser(
   });
   if (added.outcome === 'exists') throw new ScimError(409, 'User already exists', 'uniqueness');
   if (flag(input.active) === false) {
-    await deactivateProvisionedMember(tx, { workspaceId: identity.workspaceId, userId: added.userId });
+    await deactivateProvisionedMember(tx, {
+      workspaceId: identity.workspaceId,
+      userId: added.userId,
+    });
   }
   await audit(tx, identity, 'member.provisioned', added.userId, added.outcome);
   return { status: 201, body: toScimUser(await findUser(tx, identity, added.userId)) };
@@ -348,7 +353,11 @@ export async function deleteScimUser(
   userId: string,
 ): Promise<ScimResult> {
   await findUser(tx, identity, userId);
-  await deactivateProvisionedMember(tx, { workspaceId: identity.workspaceId, userId, remove: true });
+  await deactivateProvisionedMember(tx, {
+    workspaceId: identity.workspaceId,
+    userId,
+    remove: true,
+  });
   await audit(tx, identity, 'member.deprovisioned', userId, 'removed');
   return { status: 204 };
 }
@@ -366,7 +375,11 @@ export function scimServiceProviderConfig(): ScimResult {
       sort: { supported: false },
       etag: { supported: false },
       authenticationSchemes: [
-        { type: 'oauthbearertoken', name: 'Bearer token', description: 'A SCIM token issued by a workspace owner' },
+        {
+          type: 'oauthbearertoken',
+          name: 'Bearer token',
+          description: 'A SCIM token issued by a workspace owner',
+        },
       ],
     },
   };
@@ -375,7 +388,12 @@ export function scimServiceProviderConfig(): ScimResult {
 export function scimError(status: number, detail: string, scimType?: string): ScimResult {
   return {
     status,
-    body: { schemas: [SCIM_ERROR_SCHEMA], status: String(status), detail, ...(scimType ? { scimType } : {}) },
+    body: {
+      schemas: [SCIM_ERROR_SCHEMA],
+      status: String(status),
+      detail,
+      ...(scimType ? { scimType } : {}),
+    },
   };
 }
 

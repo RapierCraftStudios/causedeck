@@ -34,9 +34,7 @@ async function serve(
   const { id } = await params;
   return respond(
     await handleScim(db, request.headers.get('authorization'), (tx, identity) =>
-      UUID.test(id)
-        ? run(tx, identity, id)
-        : Promise.resolve(scimError(404, 'User not found')),
+      UUID.test(id) ? run(tx, identity, id) : Promise.resolve(scimError(404, 'User not found')),
     ),
   );
 }

@@ -55,7 +55,10 @@ describe('provisioning CSV', () => {
 
   it('provisions 100 users from a CSV as invitations', async () => {
     await withTestDb(async (tx) => {
-      const lines = Array.from({ length: 100 }, (_, i) => `user${i}@csv.example.test,User ${i},viewer`);
+      const lines = Array.from(
+        { length: 100 },
+        (_, i) => `user${String(i)}@csv.example.test,User ${String(i)},viewer`,
+      );
       const { a, report, seeded } = await run(tx, ['email,name,role', ...lines].join('\n'), false);
       expect(report).toMatchObject({ totalRows: 100, created: 100, skipped: 0, errors: 0 });
       expect(await invitations(tx, a.id)).toHaveLength(seeded + 100);
@@ -152,12 +155,16 @@ describe('SCIM', () => {
             s
               .select({ status: schema.member.status })
               .from(schema.member)
-              .where(and(eq(schema.member.userId, user.id), eq(schema.member.organizationId, a.id))),
+              .where(
+                and(eq(schema.member.userId, user.id), eq(schema.member.organizationId, a.id)),
+              ),
           )
         )[0]?.status;
       expect(await status()).toBe('suspended');
 
-      expect((await handleScim(tx, auth, (s, id) => deleteScimUser(s, id, user.id))).status).toBe(204);
+      expect((await handleScim(tx, auth, (s, id) => deleteScimUser(s, id, user.id))).status).toBe(
+        204,
+      );
       expect(await status()).toBe('removed');
       expect((await handleScim(tx, auth, (s, id) => getScimUser(s, id, user.id))).status).toBe(404);
     });
@@ -181,7 +188,10 @@ describe('SCIM', () => {
     await withTestDb(async (tx) => {
       const { auth, b } = await setup(tx);
       const [other] = await inWorkspace(tx, b.id, (s) =>
-        s.select({ userId: schema.member.userId }).from(schema.member).where(eq(schema.member.organizationId, b.id)),
+        s
+          .select({ userId: schema.member.userId })
+          .from(schema.member)
+          .where(eq(schema.member.organizationId, b.id)),
       );
       const result = await handleScim(tx, auth, (s, id) => getScimUser(s, id, other?.userId ?? ''));
       expect(result.status).toBe(404);

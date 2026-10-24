@@ -110,7 +110,10 @@ export const AUDIT_ACTIONS = {
   'api_key.revoked': { security: true, description: 'An owner or admin revoked a public API key' },
   // Bulk provisioning (#684): fail-closed. A run's metadata holds its source, counts and a dry-run
   // flag (never the addresses); a provisioned or deprovisioned member names the source and change.
-  'provisioning.run': { security: true, description: 'A bulk member provisioning run (CSV) finished' },
+  'provisioning.run': {
+    security: true,
+    description: 'A bulk member provisioning run (CSV) finished',
+  },
   'member.provisioned': {
     security: true,
     description: 'A member was added, reactivated or changed by SCIM provisioning',
@@ -119,8 +122,14 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member was suspended or removed by SCIM provisioning',
   },
-  'scim_token.created': { security: true, description: 'An owner issued a SCIM provisioning token' },
-  'scim_token.revoked': { security: true, description: 'An owner revoked a SCIM provisioning token' },
+  'scim_token.created': {
+    security: true,
+    description: 'An owner issued a SCIM provisioning token',
+  },
+  'scim_token.revoked': {
+    security: true,
+    description: 'An owner revoked a SCIM provisioning token',
+  },
   // Change webhooks (#626): fail-closed. Metadata holds the subscribed event types (created) or nothing.
   'webhook_endpoint.created': {
     security: true,

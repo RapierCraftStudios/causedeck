@@ -47,7 +47,7 @@ function records(text: string): { line: number; fields: string[] }[] {
     fields = [];
     field = '';
   };
-  const source = text.replace(/^﻿/u, '');
+  const source = text.replace(/^\uFEFF/u, '');
   for (let i = 0; i < source.length; i += 1) {
     const char = source[i];
     if (quoted) {
@@ -58,7 +58,7 @@ function records(text: string): { line: number; fields: string[] }[] {
         quoted = false;
       } else {
         if (char === '\n') line += 1;
-        field += char;
+        field += char ?? '';
       }
     } else if (char === '"' && field === '') {
       quoted = true;
@@ -71,7 +71,7 @@ function records(text: string): { line: number; fields: string[] }[] {
       line += 1;
       start = line;
     } else {
-      field += char;
+      field += char ?? '';
     }
   }
   if (field !== '' || fields.length > 0) endRecord();
@@ -86,14 +86,18 @@ export function parseProvisioningCsv(text: string): ParsedProvisioningCsv {
   if (!header) return { rows, errors: [{ line: 1, message: 'The file is empty' }] };
   const columns = header.fields.map((f) => f.trim().toLowerCase());
   const emailAt = columns.indexOf('email');
-  if (emailAt < 0) return { rows, errors: [{ line: header.line, message: 'Missing "email" column' }] };
+  if (emailAt < 0)
+    return { rows, errors: [{ line: header.line, message: 'Missing "email" column' }] };
   const nameAt = columns.indexOf('name');
   const roleAt = columns.indexOf('role');
 
   const seen = new Set<string>();
   for (const { line, fields } of data) {
     if (rows.length + errors.length >= MAX_PROVISIONING_ROWS) {
-      errors.push({ line, message: `More than ${MAX_PROVISIONING_ROWS} rows; split the file` });
+      errors.push({
+        line,
+        message: `More than ${String(MAX_PROVISIONING_ROWS)} rows; split the file`,
+      });
       break;
     }
     const email = (fields[emailAt] ?? '').trim().toLowerCase();

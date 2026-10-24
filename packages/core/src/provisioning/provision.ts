@@ -28,12 +28,7 @@ export type ProvisioningRowOutcome = 'invited' | 'skipped' | 'error';
 
 /** Why a row was skipped or failed; the dialog shows a translated line per reason. */
 export type ProvisioningRowReason =
-  | 'alreadyMember'
-  | 'forbidden'
-  | 'conflict'
-  | 'invalid'
-  | 'seatLimit'
-  | 'failed';
+  'alreadyMember' | 'forbidden' | 'conflict' | 'invalid' | 'seatLimit' | 'failed';
 
 export interface ProvisioningReportRow {
   line: number;

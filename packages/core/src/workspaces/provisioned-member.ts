@@ -102,16 +102,17 @@ export async function deactivateProvisionedMember(
     const [target] = await tx
       .select({ id: member.id, role: member.role, status: member.status })
       .from(member)
-      .where(
-        and(eq(member.organizationId, request.workspaceId), eq(member.userId, request.userId)),
-      )
+      .where(and(eq(member.organizationId, request.workspaceId), eq(member.userId, request.userId)))
       .for('update');
     if (!target || target.status === 'removed') throw notFound('Member not found');
     if (target.role === 'owner') throw conflict('An owner cannot be deprovisioned');
     await tx
       .delete(session)
       .where(
-        and(eq(session.userId, request.userId), eq(session.activeOrganizationId, request.workspaceId)),
+        and(
+          eq(session.userId, request.userId),
+          eq(session.activeOrganizationId, request.workspaceId),
+        ),
       );
     await tx
       .update(member)

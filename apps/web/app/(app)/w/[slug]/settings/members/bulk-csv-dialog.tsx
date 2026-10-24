@@ -69,7 +69,9 @@ export function BulkCsvDialog({ workspaceId, provision }: BulkCsvDialogProps) {
     setPending(false);
     if (!result.ok) {
       const { code } = result.error;
-      setError(code === 'FORBIDDEN' ? t('forbidden') : code === 'VALIDATION' ? t('tooLarge') : t('failed'));
+      setError(
+        code === 'FORBIDDEN' ? t('forbidden') : code === 'VALIDATION' ? t('tooLarge') : t('failed'),
+      );
       return;
     }
     setReport(result.data);
@@ -137,7 +139,11 @@ export function BulkCsvDialog({ workspaceId, provision }: BulkCsvDialogProps) {
                 </p>
                 <ul className="flex max-h-60 flex-col gap-1 overflow-y-auto text-sm">
                   {report.rows.map((row) => (
-                    <li key={row.line} data-outcome={row.outcome} className="flex flex-wrap gap-x-2">
+                    <li
+                      key={row.line}
+                      data-outcome={row.outcome}
+                      className="flex flex-wrap gap-x-2"
+                    >
                       <span className="text-ink-muted">{t('report.line', { line: row.line })}</span>
                       <span>{row.email ?? t('report.noEmail')}</span>
                       <span className="font-medium">{t(`report.outcome.${row.outcome}`)}</span>

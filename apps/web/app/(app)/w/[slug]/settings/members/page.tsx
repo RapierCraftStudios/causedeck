@@ -142,31 +142,28 @@ async function MembersSection({
     <>
       {canProvision ? (
         <div className="flex justify-end">
-          <BulkCsvDialog
-            workspaceId={context.workspace.id}
-            provision={provisionMembersCsvAction}
-          />
+          <BulkCsvDialog workspaceId={context.workspace.id} provision={provisionMembersCsvAction} />
         </div>
       ) : null}
-    <MembersView
-      workspace={context.workspace}
-      viewer={{ userId: context.user.id, role: context.role }}
-      members={data.members}
-      invitations={data.invitations}
-      seats={data.seats}
-      openTransfer={openTransfer}
-      policySettings={data.policySettings}
-      actions={{
-        invite: inviteMembersAction,
-        changeRole: changeRoleAction,
-        prepareTransfer: prepareTransferAction,
-        confirmTransfer: confirmTransferAction,
-        openWork: openWorkAction,
-        removeMember: removeMemberAction,
-        resendInvitation: resendInvitationAction,
-        revokeInvitation: revokeInvitationAction,
-      }}
-    />
+      <MembersView
+        workspace={context.workspace}
+        viewer={{ userId: context.user.id, role: context.role }}
+        members={data.members}
+        invitations={data.invitations}
+        seats={data.seats}
+        openTransfer={openTransfer}
+        policySettings={data.policySettings}
+        actions={{
+          invite: inviteMembersAction,
+          changeRole: changeRoleAction,
+          prepareTransfer: prepareTransferAction,
+          confirmTransfer: confirmTransferAction,
+          openWork: openWorkAction,
+          removeMember: removeMemberAction,
+          resendInvitation: resendInvitationAction,
+          revokeInvitation: revokeInvitationAction,
+        }}
+      />
     </>
   );
 }

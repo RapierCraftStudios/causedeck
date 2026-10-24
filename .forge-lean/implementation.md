@@ -1,36 +1,24 @@
 ### Approach
-eCourts establishment snapshot (JSON) is validated, mapped to A0 `ForumSeed`s and spread into `FORUM_CATALOGUE`; the shipped snapshot is empty (real data is #640). Nothing is fetched.
+Register one eCourts district status source per state, seed uncleared registry rows, and add a per-host budget in the fetcher shared by every source on a host.
+
 ### Changes
-- packages/db/src/seed/forum-catalogue/ecourts/snapshot.ts: types, `validateSnapshot`, `snapshotToForumSeeds` (A0, per-state level flag)
-- ecourts/snapshot.json: empty reviewed snapshot with provenance
-- ecourts/index.ts: `ECOURTS_DISTRICT`
-- forum-catalogue/index.ts: spread, version 2026-10-24.1, chunked upsert (2000 rows)
-- ecourts/snapshot.test.ts, ecourts/import.test.ts: unit and DB integration tests (import test fixed to use drizzle `TransactionRollbackError`)
-- packages/db/src/seed/README.md: documented
+- packages/core/src/case-watch/lookup.ts: `STATUS_SOURCES` gains `in.{tn,ka,mh,dl,up}.district:case_status`.
+- packages/fetch/src/fetcher.ts: per-host sliding-window budget (`DEFAULT_HOST_REQUESTS_PER_MINUTE` = 30, `hostRequestsPerMinute` dep), checked before any slot is spent.
+- packages/db/migrations/20261024090000_ecourts_district_status_sources.sql (+ journal, snapshot): five uncleared court source rows.
+- packages/i18n messages (en/ta/kn, generated files, d.ts): labels. apps/web/lib/case-watch/source-key.ts: key union (added as an amendment).
+- Tests: fetcher.test.ts, case-watch.test.ts, source-registry.test.ts.
+
 ### Acceptance Criteria Status
-- R1 ✅ snapshot.ts validateSnapshot
-- R2 ✅ forum-catalogue/index.ts:23
-- R3 ✅ snapshot.ts per-state level map
-- R4 ✅ snapshot.json, no fetching
-- R5 ✅ ecourts/import.test.ts
-- R6 ✅ ecourts/snapshot.test.ts
-- R7 ✅ version bump + determinism tests
+- R1 ✅ lookup.ts STATUS_SOURCES, migration SQL
+- R2 ✅ fetcher.ts per-host budget
+- R3 ✅ existing provenance storage (lookup.ts), asserted in case-watch.test.ts
+- R4 ✅ case-watch.test.ts "refreshes a watched district matter"
+
 ### Verification
-- V1 db vitest src/seed/forum-catalogue: pass (24 tests); import test failed before the rollback fix
-- V2 core vitest forums.test.ts: pass
-- V3 db tsc --noEmit: pass
+- fetch fetcher+static-checks tests: pass; the two new host tests fail without the fetcher change.
+- core case-watch.test.ts, db source-registry.test.ts, web case-watch-actions.test.ts, i18n catalog.test.ts: pass.
+- turbo typecheck scoped: pass. eslint on changed core/fetch files: clean.
+
 ### Notes
-In this sandbox Testcontainers' Ryuk log wait fails; validate commands pass with `TESTCONTAINERS_RYUK_DISABLED=true`. No behaviour change to shipped catalogue content except the version bump.
-
-## Merge check (turbo missing)
-The merge-check failure was `turbo: command not found` (host tooling), not a code conflict. No code change needed; V1-V3 re-run green on the merged tree (testcontainers needs TESTCONTAINERS_RYUK_DISABLED=true).
-- Post-merge: `pnpm exec turbo run typecheck --filter='...[72a44a11]'` passes (23/23 packages). The earlier exit 127 was `turbo` missing from PATH (use `pnpm exec turbo`), not a code conflict; no symbol clashes with the base, so no code change.
-- Re-verified at base 9820df68: `pnpm exec turbo run typecheck --filter='...[9820df68]'` 23/23 green; db tsc clean. Exit 127 was turbo missing from PATH; no code change.
-- Re-checked against base 9820df68: `pnpm exec turbo run typecheck --filter='...[9820df68]'` passes (23/23, turbo cache hit on identical inputs). Exit 127 is `turbo` not on the check shell's PATH; no code change.
-
-## Post-merge typecheck fix
-The reported failure (`turbo: command not found`, exit 127) was environmental: turbo is not on PATH. No merged-tree conflict exists. Re-ran via `pnpm exec turbo run typecheck --filter=...[9820df68]` (23/23 ok), db tsc, db forum-catalogue tests (24 pass) and core forums.test.ts (11 pass). No code changes.
-
-- Re-verified at base fa74649a: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` 23/23 green; db forum-catalogue tests (24) and core forums.test.ts (11) pass. Exit 127 was `turbo` not on PATH; no code change.
-- Re-checked against base fa74649a: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` passes (23/23, shared turbo cache hit); direct `tsc --noEmit` on core and db also clean. Exit 127 is `turbo` not on the check shell's PATH; no code change.
-- Re-verified at base fa74649a again: `pnpm exec turbo run typecheck --filter='...[fa74649a]'` 23/23 green. Exit 127 is `turbo` not on PATH; no code change.
+- A host-budget denial reuses `source_rate_limited` (types.ts is not a deliverable; poll.ts defers on that reason), instead of a new `host_rate_limited`.
+- Rows stay uncleared; counsel must clear before any fetch. The default host budget is 30 requests per minute for every source host.

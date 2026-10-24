@@ -32,7 +32,7 @@ const URL_OK = 'https://nclt.gov.in/cause-list';
 function setup(
   policy: Partial<FetchPolicy> | 'denied' = {},
   response: Partial<ProviderResponse> = {},
-  extra: { delegatedCaptchaPerHour?: number } = {},
+  extra: { delegatedCaptchaPerHour?: number; hostRequestsPerMinute?: number } = {},
 ) {
   const requests: ProviderRequest[] = [];
   const logs: FetchLogEntry[] = [];
@@ -282,6 +282,39 @@ describe('fetchSource: rate limit', () => {
     advance(60_001);
     await fetcher.fetchSource('in.nclt.bengaluru', URL_OK);
     expect(requests).toHaveLength(3);
+  });
+});
+
+describe('fetchSource: per-host budget (#636)', () => {
+  it('shares one budget across sources on a host and spends nothing on a denial', async () => {
+    const { fetcher, requests, logs, advance } = setup(
+      { rateLimitPerMinute: 10 },
+      {},
+      { hostRequestsPerMinute: 2 },
+    );
+
+    await fetcher.fetchSource('in.a.district', URL_OK);
+    await fetcher.fetchSource('in.b.district', URL_OK);
+    await expect(fetcher.fetchSource('in.c.district', URL_OK)).rejects.toMatchObject({
+      reason: 'source_rate_limited',
+    });
+    expect(requests).toHaveLength(2);
+    expect(logs).toHaveLength(2);
+
+    advance(60_001);
+    await fetcher.fetchSource('in.c.district', URL_OK);
+    expect(requests).toHaveLength(3);
+  });
+
+  it('keeps hosts independent', async () => {
+    const { fetcher, requests } = setup(
+      { rateLimitPerMinute: 10, baseUrl: 'https://nclt.gov.in' },
+      {},
+      { hostRequestsPerMinute: 1 },
+    );
+    await fetcher.fetchSource('in.a.district', URL_OK);
+    await expect(fetcher.fetchSource('in.b.district', URL_OK)).rejects.toBeInstanceOf(FetchDenied);
+    expect(requests).toHaveLength(1);
   });
 });
 

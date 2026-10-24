@@ -2392,7 +2392,12 @@
     "source": {
       "in_tn_chennai-district_case_status": "ಚೆನ್ನೈ ಜಿಲ್ಲಾ ನ್ಯಾಯಾಲಯಗಳು",
       "in_tn_madras-hc_chennai_case_status": "ಮದ್ರಾಸ್ ಹೈಕೋರ್ಟ್",
-      "in_ka_karnataka-hc_bengaluru_case_status": "ಕರ್ನಾಟಕ ಹೈಕೋರ್ಟ್"
+      "in_ka_karnataka-hc_bengaluru_case_status": "ಕರ್ನಾಟಕ ಹೈಕೋರ್ಟ್",
+      "in_tn_district_case_status": "ತಮಿಳುನಾಡು ಜಿಲ್ಲಾ ನ್ಯಾಯಾಲಯಗಳು",
+      "in_ka_district_case_status": "ಕರ್ನಾಟಕ ಜಿಲ್ಲಾ ನ್ಯಾಯಾಲಯಗಳು",
+      "in_mh_district_case_status": "ಮಹಾರಾಷ್ಟ್ರ ಜಿಲ್ಲಾ ನ್ಯಾಯಾಲಯಗಳು",
+      "in_dl_district_case_status": "ದೆಹಲಿ ಜಿಲ್ಲಾ ನ್ಯಾಯಾಲಯಗಳು",
+      "in_up_district_case_status": "ಉತ್ತರ ಪ್ರದೇಶ ಜಿಲ್ಲಾ ನ್ಯಾಯಾಲಯಗಳು"
     },
     "remove": "ತೆಗೆದುಹಾಕಿ",
     "added": "ವೀಕ್ಷಣೆ ಸೇರಿಸಲಾಗಿದೆ.",

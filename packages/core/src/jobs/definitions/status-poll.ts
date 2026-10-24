@@ -37,6 +37,11 @@ export function setStatusFetcherFactory(factory: StatusFetcherFactory | null): v
   fetcherFactory = factory;
 }
 
+/** The wired factory, for sibling jobs that read the same delegated source (`system.orders.poll`). */
+export function getStatusFetcherFactory(): StatusFetcherFactory | null {
+  return fetcherFactory;
+}
+
 /** Without a wired fetcher the poll fails loudly, and only when a lookup must fetch. */
 const unwiredFetcher: StatusFetcher = {
   fetchSource: () =>

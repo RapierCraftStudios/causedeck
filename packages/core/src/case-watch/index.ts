@@ -38,3 +38,9 @@ export {
   type PollCaseWatchesReport,
 } from './poll.ts';
 export { notifyStatusChanges, type StatusAlertDeps, type StatusAlertInput } from './alerts.ts';
+export {
+  MAX_ORDERS_PER_WATCH_PER_RUN,
+  pollOrders,
+  type PollOrdersDeps,
+  type PollOrdersReport,
+} from './orders.ts';

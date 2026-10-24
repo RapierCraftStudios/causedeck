@@ -6,7 +6,14 @@
 import { isUuid, schema, withWorkspace } from '@causedeck/db';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 
-import { applyImportPlan, istDay, undoImportBatch, type ApplyDeps } from '../import/index.ts';
+import {
+  applyImportPlan,
+  istDay,
+  undoImportBatch,
+  type ApplyDeps,
+  type ImportPlan,
+  type PlanMatter,
+} from '../import/index.ts';
 import { conflict, forbidden, invalid, notFound } from '../shared/errors.ts';
 import { memberRole } from '../workspaces/index.ts';
 
@@ -18,8 +25,6 @@ import {
   type MigrationIssueCode,
   type MigrationRow,
 } from './csv.ts';
-
-import type { ImportPlan, PlanMatter } from '../import/index.ts';
 
 const { migrationRun, migrationRunRow, importBatch, importPlan, forum } = schema;
 
@@ -145,7 +150,10 @@ export async function startMigrationRun(
     throw error;
   }
   const { rows, missingColumns } = parsed;
-  const chunkSize = Math.min(Math.max(input.chunkSize ?? MIGRATION_CHUNK_SIZE, 1), MIGRATION_CHUNK_SIZE);
+  const chunkSize = Math.min(
+    Math.max(input.chunkSize ?? MIGRATION_CHUNK_SIZE, 1),
+    MIGRATION_CHUNK_SIZE,
+  );
   if (rows.length === 0) throw invalid('The file has no rows');
   const { workspaceId, userId } = actor;
   const runId = await withWorkspace(deps.db, actor, async (tx) => {
@@ -153,12 +161,9 @@ export async function startMigrationRun(
     const known = new Set(
       codes.length === 0
         ? []
-        : (
-            await tx
-              .select({ code: forum.code })
-              .from(forum)
-              .where(inArray(forum.code, codes))
-          ).map((f) => f.code),
+        : (await tx.select({ code: forum.code }).from(forum).where(inArray(forum.code, codes))).map(
+            (f) => f.code,
+          ),
     );
     for (const row of rows) {
       if (row.forumCode !== null && !known.has(row.forumCode)) row.issues.push('unknown_forum');
@@ -198,9 +203,11 @@ export async function startMigrationRun(
           obligations: [],
           counts: { matchedRows: part.length, unmatchedRowsCount: 0 },
         };
-        await tx
-          .insert(importPlan)
-          .values({ workspaceId, batchId: batch.id, plan: plan as unknown as Record<string, unknown> });
+        await tx.insert(importPlan).values({
+          workspaceId,
+          batchId: batch.id,
+          plan: plan as unknown as Record<string, unknown>,
+        });
         chunks.push({
           kind: 'chunk',
           index: chunks.length,
@@ -244,7 +251,12 @@ export async function startMigrationRun(
   return getMigrationProgress(deps, actor, { runId });
 }
 
-async function loadRun(tx: Parameters<Parameters<typeof withWorkspace>[2]>[0], actor: MigrationActor, runId: string, lock = false) {
+async function loadRun(
+  tx: Parameters<Parameters<typeof withWorkspace>[2]>[0],
+  actor: MigrationActor,
+  runId: string,
+  lock = false,
+) {
   if (!isUuid(runId)) throw notFound('Migration run not found');
   const query = tx
     .select()
@@ -401,9 +413,20 @@ export async function runMigrationChunk(
           ),
         );
     };
-    await mark('error', chunk.rows.filter((i) => unresolved.has(i)), 'unresolved_proceeding');
-    await mark('skipped', chunk.rows.filter((i) => skipped.has(i) && !unresolved.has(i)), 'duplicate_or_excluded');
-    await mark('ok', chunk.rows.filter((i) => !skipped.has(i) && !unresolved.has(i)));
+    await mark(
+      'error',
+      chunk.rows.filter((i) => unresolved.has(i)),
+      'unresolved_proceeding',
+    );
+    await mark(
+      'skipped',
+      chunk.rows.filter((i) => skipped.has(i) && !unresolved.has(i)),
+      'duplicate_or_excluded',
+    );
+    await mark(
+      'ok',
+      chunk.rows.filter((i) => !skipped.has(i) && !unresolved.has(i)),
+    );
     chunk.done = true;
     const finished = chunksOf(report).every((c) => c.done);
     await tx
@@ -465,7 +488,9 @@ export async function rollbackMigrationRun(
       tx
         .select({ status: importBatch.status })
         .from(importBatch)
-        .where(and(eq(importBatch.workspaceId, actor.workspaceId), eq(importBatch.id, chunk.batchId)))
+        .where(
+          and(eq(importBatch.workspaceId, actor.workspaceId), eq(importBatch.id, chunk.batchId)),
+        )
         .orderBy(asc(importBatch.createdAt)),
     );
     if (batch?.status === 'applied') await undoImportBatch(deps, actor, { batchId: chunk.batchId });
@@ -488,6 +513,32 @@ export async function rollbackMigrationRun(
   });
   deps.log?.('migration.rolled_back', { chunks: done.length });
   return getMigrationProgress(deps, actor, input);
+}
+
+/**
+ * The workspace's owner, for the staff console to run a migration as (#685). Null when the
+ * workspace has no active owner. Read inside the workspace's own scope, so no other tenant's rows
+ * are visible.
+ */
+export async function findMigrationOwner(
+  deps: MigrationDeps,
+  workspaceId: string,
+): Promise<string | null> {
+  if (!isUuid(workspaceId)) return null;
+  const [owner] = await withWorkspace(deps.db, { workspaceId }, (tx) =>
+    tx
+      .select({ userId: schema.member.userId })
+      .from(schema.member)
+      .where(
+        and(
+          eq(schema.member.organizationId, workspaceId),
+          eq(schema.member.role, 'owner'),
+          eq(schema.member.status, 'active'),
+        ),
+      )
+      .limit(1),
+  );
+  return owner?.userId ?? null;
 }
 
 export { MAX_MIGRATION_ROWS };

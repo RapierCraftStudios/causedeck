@@ -73,7 +73,7 @@ export function readCsvRecords(text: string): string[][] {
     if (record.some((cell) => cell.trim() !== '')) records.push(record);
     record = [];
   };
-  const source = text.replace(/^﻿/, '');
+  const source = text.replace(/^\uFEFF/, '');
   for (let i = 0; i < source.length; i++) {
     const ch = source.charAt(i);
     if (quoted) {

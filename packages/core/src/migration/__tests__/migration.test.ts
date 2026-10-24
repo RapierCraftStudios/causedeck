@@ -51,8 +51,9 @@ async function world(tx: Transaction) {
 
 const counts = (tx: Transaction, workspaceId: string) =>
   inWorkspace(tx, workspaceId, async (s) => ({
-    matters: (await s.select().from(schema.matter).where(eq(schema.matter.workspaceId, workspaceId)))
-      .length,
+    matters: (
+      await s.select().from(schema.matter).where(eq(schema.matter.workspaceId, workspaceId))
+    ).length,
     proceedings: (
       await s.select().from(schema.proceeding).where(eq(schema.proceeding.workspaceId, workspaceId))
     ).length,
@@ -78,9 +79,9 @@ describe('parseMigrationCsv', () => {
   });
 
   it('refuses a file over the row cap', () => {
-    expect(() => parseMigrationCsv(csvOf('HC', MAX_MIGRATION_ROWS + 1), MAPPING, '2026-11-10')).toThrow(
-      RangeError,
-    );
+    expect(() =>
+      parseMigrationCsv(csvOf('HC', MAX_MIGRATION_ROWS + 1), MAPPING, '2026-11-10'),
+    ).toThrow(RangeError);
   });
 });
 
@@ -104,9 +105,9 @@ describe('migration runs', () => {
       const report = await getMigrationReport(w.deps, w.actor, { runId: run.runId });
       expect(report.issueCounts).toEqual({ bad_date: 7 });
       expect(report.issues[0]).toEqual({ row: 1, code: 'bad_date' });
-      await expect(
-        runMigrationChunk(w.deps, w.actor, { runId: run.runId }),
-      ).rejects.toMatchObject({ code: 'CONFLICT' });
+      await expect(runMigrationChunk(w.deps, w.actor, { runId: run.runId })).rejects.toMatchObject({
+        code: 'CONFLICT',
+      });
     });
   });
 
@@ -114,7 +115,11 @@ describe('migration runs', () => {
     await withTestDb(async (tx) => {
       const w = await world(tx);
       const csv = `${csvOf('NO-SUCH-COURT', 1)}\n${csvOf(w.forum.code, 1).split('\n')[1] ?? ''}\n${csvOf(w.forum.code, 1).split('\n')[1] ?? ''}`;
-      const run = await startMigrationRun(w.deps, w.actor, { mode: 'dry_run', csv, mapping: MAPPING });
+      const run = await startMigrationRun(w.deps, w.actor, {
+        mode: 'dry_run',
+        csv,
+        mapping: MAPPING,
+      });
       const report = await getMigrationReport(w.deps, w.actor, { runId: run.runId });
       expect(report.issueCounts).toEqual({ unknown_forum: 1, duplicate_in_file: 1 });
     });
@@ -172,11 +177,19 @@ describe('migration runs', () => {
         getMigrationProgress(a.deps, intruder, { runId: run.runId }),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
       await expect(
-        startMigrationRun(a.deps, intruder, { mode: 'dry_run', csv: csvOf('x', 1), mapping: MAPPING }),
+        startMigrationRun(a.deps, intruder, {
+          mode: 'dry_run',
+          csv: csvOf('x', 1),
+          mapping: MAPPING,
+        }),
       ).rejects.toBeDefined();
       const stranger = { userId: await newUser(tx), workspaceId: b.workspaceId };
       await expect(
-        getMigrationProgress(a.deps, { ...stranger, workspaceId: b.workspaceId }, { runId: run.runId }),
+        getMigrationProgress(
+          a.deps,
+          { ...stranger, workspaceId: b.workspaceId },
+          { runId: run.runId },
+        ),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     });
   });

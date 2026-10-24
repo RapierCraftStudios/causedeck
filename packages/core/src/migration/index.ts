@@ -17,6 +17,7 @@ export {
   type ParsedMigrationFile,
 } from './csv.ts';
 export {
+  findMigrationOwner,
   getMigrationProgress,
   getMigrationReport,
   listMigrationRuns,

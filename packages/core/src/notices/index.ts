@@ -17,3 +17,10 @@ export {
 } from './match.ts';
 export { notifyNoticeMatches, type NoticeAlertDeps } from './alerts.ts';
 export { listHolidayListings, type HolidayListing, type HolidayListingsRange } from './holidays.ts';
+export {
+  listMatterNotices,
+  listWorkspaceNotices,
+  NOTICES_LIST_LIMIT,
+  type NoticeActor,
+  type NoticeRow,
+} from './list.ts';

@@ -2,114 +2,107 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "packages/notifications: `notices` preferences category and alerts (in-app, email digest, push) by forum and matter",
+   "quote": "apps/web: Notices page listing notices matched to the member's forums and matters with provenance and source links",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "a new notice for a forum the workspace uses yields exactly one alert per member per their preferences (AC, integration)",
+   "quote": "and a matter-level 'affecting this matter' card",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Holiday-list notices feed the court calendar so listings on a holiday are flagged (AC, integration).",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R4",
-   "quote": "i18n namespace/catalog entries.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "Holiday-list notices feed the court calendar so listings on a holiday are flagged (AC, integration).",
-   "disposition": "defer",
-   "why": "Only a holiday notice with a single machine-readable effective_on date is flagged here; reading every date out of a holiday-list PDF needs document parsing that no parser does yet. Separate work.",
+   "quote": "register any server actions in apps/web/__tests__/cross-tenant-actions.test.ts",
+   "disposition": "not-applicable",
+   "evidence": "apps/web/__tests__/cross-tenant-actions.test.ts:122 (ACTIONS lists 'use server' exports only; the page and card are read-only and add none)",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/notifications/src/categories.ts",
-   "change": "Add category 'notices' ({defaultChannels:['in_app','push'], mandatory:false, lockedChannels:[]}) with a comment citing #587",
+   "path": "packages/core/src/notices/list.ts",
+   "change": "New read services listWorkspaceNotices(tx, scope) and listMatterNotices(tx, scope, matterId): select notice_match joined to notice and source inside the given workspace tx, dedupe per notice, newest issuedOn first, bounded limit; return id,title,kind,issuedOn,effectiveOn,url,forumCodes,sourceName,recordedAt and the match reason; matter variant throws/NOT_FOUND for another workspace's matter like listRelevantJudgments",
    "requirements": [
-    "R1"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/notifications/src/push/payload.ts",
-   "change": "Add the 'notices' entry to the push title map (e.g. 'New court notice for your forums')",
+   "path": "packages/core/src/notices/index.ts",
+   "change": "Export the two list functions and their types",
    "requirements": [
-    "R1"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/notifications/src/__tests__/categories.test.ts",
-   "change": "Add 'notices' to the expected category list",
+   "path": "packages/core/src/notices/notices.test.ts",
+   "change": "Tests for the list functions (dedupe, order, matter filter, empty)",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entries for listWorkspaceNotices and listMatterNotices",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: B on A's matter is denied / sees nothing from A's notice_match; A unchanged",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "apps/web/app/(app)/w/[slug]/notices/page.tsx",
+   "change": "Server page: getWorkspaceContext, inWorkspace + listWorkspaceNotices via dynamic import; states loading/error/empty/denied; generateMetadata; dev ?__state preview like courts/page.tsx",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D4",
-   "path": "packages/i18n/src/messages/en/notifications.json",
-   "change": "Add category 'notices' label and description next to judgmentAlert/statusStage",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/i18n/src/messages/ta/notifications.json",
-   "change": "Same keys as en, Tamil text",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/i18n/src/messages/kn/notifications.json",
-   "change": "Same keys as en, Kannada text",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/preferences-form.tsx",
-   "change": "Add 'notices': 'notices' to the category-to-message-key map (line ~84) only",
+   "path": "apps/web/app/(app)/w/[slug]/notices/loading.tsx",
+   "change": "Skeleton",
    "requirements": [
-    "R1",
-    "R4"
+    "R1"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "Add 'notices': ['in_app','push'] to the expected defaults",
+   "path": "apps/web/app/(app)/w/[slug]/notices/error.tsx",
+   "change": "Route error boundary with retry (copy courts/error.tsx)",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/notices/match.ts",
-   "change": "MatchNoticesReport gains matched: {workspaceId, noticeId}[] of newly inserted rows (deduped per workspace and notice)",
+   "path": "apps/web/components/notices/notice-list.tsx",
+   "change": "List component: title, kind badge, issued/effective dates, forum codes, provenance line (source name, recorded date), external source link (target=_blank rel=noopener noreferrer); exports a compact variant used by the matter card",
    "requirements": [
+    "R1",
     "R2"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/notices/alerts.ts",
-   "change": "New notifyNoticeMatches(deps:{db,enqueueDelivery}, matches): per workspace notify every active member with matter.read once per notice via notify() category 'notices', dedupeKey notice:\u003cid>, title = public notice title, body = counts of the member's matters before the forum, no party names, href /w/\u003cslug>/courts; a failed notify is skipped",
+   "path": "apps/web/components/notices/__tests__/notice-list.test.tsx",
+   "change": "Component tests: rows, provenance, source link attributes, empty state",
    "requirements": [
     "R1",
     "R2"
@@ -117,152 +110,135 @@
   },
   {
    "id": "D11",
-   "path": "packages/core/src/notices/holidays.ts",
-   "change": "New listHolidayListings(db, workspaceId, {from,to}): within withWorkspace, listings in range whose proceeding forum code is in a matched holiday notice's forum_codes and list_date = notice.effective_on; returns listing, proceeding, matter ids and notice id/title",
+   "path": "apps/web/components/matters/matter-overview.tsx",
+   "change": "Render an 'Affecting this matter' card slot fed by notices passed from the page",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/core/src/notices/poll.ts",
-   "change": "PollNoticesDeps gains optional enqueueDelivery; after matchNotices call notifyNoticeMatches when given; report gains alerts count",
+   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx",
+   "change": "Load listMatterNotices in the member's scope (failure degrades to an empty card, never breaks the overview) and pass to MatterOverview",
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/src/notices/index.ts",
-   "change": "Export notifyNoticeMatches and listHolidayListings with their types",
+   "path": "apps/web/lib/nav.ts",
+   "change": "Add 'notices' to WORKSPACE_ROUTES and NAV_ITEMS (practice group, no permission), with an icon",
    "requirements": [
-    "R2",
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/core/src/jobs/definitions/notices-poll.ts",
-   "change": "Build enqueueDelivery as judgment-alert-scan.ts:19-34 does and pass it to pollNotices",
+   "path": "apps/web/__tests__/nav.test.ts",
+   "change": "Add 'notices' to SPIKE_ROUTES; adjust any other route-enumerating tests (sidebar-nav, mobile-nav, workspace-shell, placeholder-page map) as typecheck/tests dictate",
    "requirements": [
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/core/src/notices/notices.test.ts",
-   "change": "Integration tests: one alert per member per notice and none on a re-poll; preferences off/daily respected; non-member workspace gets nothing; holiday listing flagged, other-date and other-forum listings not, other tenant sees nothing",
+   "path": "packages/i18n/src/messages/en/notices.json",
+   "change": "New namespace: page title/intro/empty/error, kind labels, provenance and link text, matter card strings; mirror in ta and kn (packages/i18n/src/messages/{ta,kn}/notices.json)",
    "requirements": [
-    "R2",
-    "R3"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "notices dependencies gain 'workspaces' (members and role settings for the alert audience)",
-   "requirements": [
+    "R1",
     "R2"
    ]
   },
   {
-   "id": "D17",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Document alerts/holidays in the notices row and add notices -> workspaces to the graph and the dependency table",
+   "id": "D16",
+   "path": "packages/i18n/src/messages/en/nav.json",
+   "change": "Add nav.notices label (and ta/kn nav.json)",
    "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Register the notices namespace; regenerate packages/i18n/src/generated/* and update translation-status.json (draft entries for ta/kn) with the repo's i18n generate script",
+   "requirements": [
+    "R1",
     "R2"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register notifyNoticeMatches and listHolidayListings in SERVICE_TESTS (self-scoped)",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add 'notices' to the expected namespace list",
    "requirements": [
-    "R2",
-    "R3"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real B-on-A cases for notifyNoticeMatches and listHolidayListings",
-   "requirements": [
-    "R2",
-    "R3"
+    "R1",
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "pollNotices behaviour when enqueueDelivery is not supplied, and uncleared sources never fetched with log 'skipped: not cleared' (packages/core/src/notices/poll.ts:92-99)"
+   "what": "packages/core/src/notices/poll.ts and match.ts behaviour and exports (#586) unchanged"
   },
   {
    "id": "P2",
-   "what": "notify() semantics and every existing category's default channels (packages/notifications/src/service.ts:212-250, categories.ts)"
+   "what": "Tenant isolation: notice_match is read only inside inWorkspace/withWorkspace for the member's workspace; no owner-role bypass, no new migration"
   },
   {
    "id": "P3",
-   "what": "packages/core must not import @causedeck/fetch and core/package.json dependencies stay unchanged; matter-graph must not import notices"
+   "what": "apps/web/__tests__/cross-tenant-actions.test.ts ACTIONS stays equal to the exported 'use server' set (no action added)"
   },
   {
    "id": "P4",
-   "what": "No migration and no change to packages/db/src/schema/notices.ts"
+   "what": "Matter overview still renders when notices fail to load (apps/web/components/matters/matter-overview.tsx, matters/[id]/page.tsx)"
+  },
+  {
+   "id": "P5",
+   "what": "packages/notifications and alert code (#587) untouched"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/notices src/jobs/definitions/notices-poll.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/notices/notices.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__/categories.test.ts src/__tests__/service.test.ts src/push --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/web exec vitest run components/notices __tests__/nav.test.ts components/shell/__tests__/sidebar-nav.test.tsx components/shell/__tests__/mobile-nav.test.tsx __tests__/workspace-shell.test.tsx __tests__/matter-workspace-page.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/notification-preferences.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/testing src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V6",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V7",
    "command": "node /home/dev/.local/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Alert dedupe uses notify()'s per-member dedupeKey 'notice:\u003cnoticeId>' rather than a new 'notified' column on notice_match",
-   "justification": "No migration needed and a re-poll or replay cannot double-send; same approach as case-watch/alerts.ts:60-100 and bench-change.ts:387-395",
+   "choice": "Read-only core services in packages/core/src/notices/list.ts instead of querying tables from apps/web",
+   "justification": "Web reads go through core in inWorkspace (apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx:36-45); keeps RLS scope and the registry guard",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "notices gains a dependency on the workspaces domain (member list, role settings) via its index.ts",
-   "justification": "court does the same for bench-change member audience (packages/config/eslint/core-domains.js:19); CORE_DOMAIN_DEPENDENCIES and core-domains.md updated in the same change",
-   "source": "doc"
+   "choice": "No server actions, so cross-tenant-actions.test.ts is unchanged; cross-tenant coverage comes from SERVICE_TESTS cases for the two list functions",
+   "justification": "packages/db/src/testing/cross-tenant-registry.ts:700 and services.test.ts:2592 (listRelevantJudgments)",
+   "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Holiday flag is a computed read in core/notices (not a stored column or a matter-graph change), keyed on effective_on of matched holiday notices",
-   "justification": "Notices can arrive after listings, so a computed read never goes stale; matter-graph cannot import notices (core-domains.md); listing schema stays unchanged (docket.ts:50-97)",
-   "source": "spec"
+   "choice": "No new workspace-package dependency and no migration",
+   "justification": "notices domain already imports only db schema; core-domains.js:33 allows sources only and the list reads source via the db schema",
+   "source": "lint"
   },
   {
    "id": "K4",
-   "choice": "Alert href points at /w/\u003cslug>/courts, which exists, not a /notices page",
-   "justification": "The Notices page is #588 and does not exist yet; bench-change.ts uses the same courts href",
+   "choice": "Add a 'notices' nav item and a new i18n namespace, mirroring how #593 added case-watch",
+   "justification": "i18n registration pattern: packages/i18n/src/catalog.ts and __tests__/catalog.test.ts:85-125; nav: apps/web/lib/nav.ts:26-43",
    "source": "precedent"
   }
  ]

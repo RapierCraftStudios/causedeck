@@ -1,42 +1,41 @@
 **Verdict**: CONFIRMED
-**Confidence**: medium
-**Severity**: medium (greenfield feature, part 4 of 5 of #480: matched notices exist but nobody is told and holidays are not flagged)
+**Confidence**: high
+**Severity**: medium (greenfield UI; last part of #480, the stored notices and matches are not visible to anyone)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 4 of #480: `packages/notifications` gets a `notices` preferences category and alerts (in-app, email digest, push) by forum and matter; a new notice for a forum the workspace uses yields exactly one alert per member per their preferences (AC, integration); holiday-list notices feed the court calendar so listings on a holiday are flagged (AC, integration); i18n namespace/catalog entries.
+Part 5 of #480: an `apps/web` Notices page listing notices matched to the member's forums and matters, with provenance and source links; a matter-level "affecting this matter" card; register any server actions in `apps/web/__tests__/cross-tenant-actions.test.ts`.
 
 ### What We Found
-- #586 is merged on base: `packages/core/src/notices/{poll,match,index}.ts` poll, store (`poll.ts:127-143`) and match (`match.ts:30-77`, writes `notice_match` per workspace inside `withWorkspace`). `matchNotices` returns only counts (`match.ts:15-20`), and `pollNotices` discards which notice matched which workspace (`poll.ts:144-149`). Nothing sends an alert. The job `jobs/definitions/notices-poll.ts:56-66` has no `enqueueDelivery`.
-- Notification registry: `packages/notifications/src/categories.ts:30-50` has no `notices` category. A new category must also be added to `push/payload.ts:25-28` (title map), `__tests__/categories.test.ts:21-28`, the web preferences form map `apps/web/app/(app)/w/[slug]/settings/notifications/preferences-form.tsx:84-87`, `apps/web/__tests__/notification-preferences.test.tsx:98-101`, and i18n `packages/i18n/src/messages/{en,ta,kn}/notifications.json:139-151` (category label and description). `notifications` is already a catalogued i18n namespace (`catalog.ts:14`), so no new namespace is needed.
-- `notify()` (`packages/notifications/src/service.ts:212-250`) does preference resolution and in-app/email/push channels, with `dedupeKey` unique per (workspace, user): a repeated key writes nothing, which gives "exactly one alert per member" even when the poll repeats. Email "digest" is the existing member `digest` preference (`service.ts:241-244`: only `instant` is enqueued, `daily` waits for the digest job), so no new digest code is needed.
-- Best precedent for a core producer: `packages/core/src/court/bench-change.ts:387-440` (active members, `can(reader,'matter.read')`, `notify` per member, one failed notify never stops the rest) and `case-watch/alerts.ts:60-100` (no party names in titles, `dedupeKey`). `jobs/definitions/judgment-alert-scan.ts:19-34` shows how a job builds `enqueueDelivery` from `getProducer()` + `notificationDeliverSchema`.
-- Holiday flag: `listing` (`packages/db/src/schema/docket.ts:50-97`: `proceeding_id`, `list_date`, canonical) joins to `proceeding.forum_id` (`proceedings.ts:46`). `notice` carries `kind='holiday'`, `forum_codes`, `effective_on` (`schema/notices.ts:64-71`). The parsers set `effectiveOn` only from a "w.e.f." phrase in the title (`intelligence/src/notices/types.ts:53-56`); the contents of a holiday-list document are not parsed, so only a holiday notice with one `effective_on` date is machine-readable today. There is no holiday table and no existing read that flags listings (`matter-graph/read-models.ts:407-431` selects next dates without it). The calendar UI is #588/web and out of scope.
-- Registries: `packages/db/src/testing/cross-tenant-registry.ts:238` (`matchNotices: selfScoped`) and `:935-941` (`NOT_A_SERVICE` entries for notices) show where new core exports go; test case at `packages/core/src/__tests__/cross-tenant/services.test.ts:427`. `packages/config/eslint/core-domains.js:33` has `notices: ['sources']` and `docs/engineering/core-domains.md:26,187` must change if notices imports `workspaces` (members, role settings).
-- Base ref checked: HEAD f0fb0e86 equals the base for this lane; latest migration is 0078, and this plan needs none.
+- Dependency #586 is present on the base: `packages/core/src/notices/{index,poll,match}.ts` exist (`index.ts:4-14` exports only `pollNotices`, `matchNotices` and types); nothing reads `notice`/`notice_match` for a page. No core list/read function exists.
+- Data model: `packages/db/src/schema/notices.ts:50-80` (`notice`: global, `title`, `kind`, `issuedOn`, `effectiveOn`, `url`, provenance columns, `forumCodes`) and `:84-118` (`notice_match`: tenant RLS, `matterId`, `forumId`, `reason` forum|matter_forum). `notice.sourceId` -> `source` gives the source name/terms for the provenance line.
+- No `apps/web` file references notices: `apps/web/app/(app)/w/[slug]/` has no `notices` route; `apps/web/lib/nav.ts:26-43` `WORKSPACE_ROUTES` has no `notices`; the matter overview `matters/[id]/page.tsx:80-109` renders `MatterOverview` with no notices card.
+- Page pattern to copy: `courts/page.tsx:1-80` (server component, `getWorkspaceContext`, dynamic `import('@causedeck/core/runtime')` + `inWorkspace`, loading/error/empty/denied states, `loading.tsx`/`error.tsx`) and `matters/[id]/research/page.tsx:20-45` (matter-scoped read via core in `inWorkspace`, `can(role,'matter.read')`, another workspace's matter -> `notFound()`).
+- Read-only: no mutation is needed, so no `'use server'` action is added and `apps/web/__tests__/cross-tenant-actions.test.ts:122` `ACTIONS` is unchanged.
+- A new runtime export of `@causedeck/core` needs a `SERVICE_TESTS` entry plus a real case in `packages/core/src/__tests__/cross-tenant/services.test.ts` (pattern: `listRelevantJudgments: denies` at `cross-tenant-registry.ts:700`, case at `services.test.ts:2592`); notice_match seeder exists at `packages/db/src/testing/two-tenants.ts:921`.
+- Core domain `notices` already allowed to import `sources` only (`packages/config/eslint/core-domains.js:33`); a source-name join must be done with the `source` table from `@causedeck/db` schema, not by importing another domain.
+- i18n: a new namespace needs en/ta/kn json, `packages/i18n/src/catalog.ts`, generated files, `translation-status.json` and the expected list at `packages/i18n/src/__tests__/catalog.test.ts:85-125` (#593 did the same for `case-watch`).
+- Nav: `apps/web/__tests__/nav.test.ts:9-39` asserts `WORKSPACE_ROUTES` equals `SPIKE_ROUTES`, and shell/nav tests enumerate routes; adding a route touches them. `packages/i18n/src/messages/en/nav.json:18` holds labels. The shell bundle budget was raised in #593 (42 KB): watch it.
 
 ### Root Cause
-Greenfield: #584-#586 built storage, parsing and matching; the alert producer, the `notices` category and the holiday-listing read are the remaining piece.
+Greenfield: parts 1-4 store, parse, poll, match (and alert, #587) notices, but no read path or UI exists.
 
 ### Affected Files
-- `packages/notifications/src/{categories,push/payload}.ts` and `__tests__/categories.test.ts` (category `notices`, default `in_app` + `push`)
-- `packages/i18n/src/messages/{en,ta,kn}/notifications.json`; `apps/web/app/(app)/w/[slug]/settings/notifications/preferences-form.tsx` (category-to-key map only), `apps/web/__tests__/notification-preferences.test.tsx`
-- `packages/core/src/notices/match.ts` (report which notice matched which workspace), `notices/alerts.ts` (new `notifyNoticeMatches`), `notices/holidays.ts` (new `listHolidayListings`), `notices/poll.ts`, `notices/index.ts`, tests in `notices/notices.test.ts`
-- `packages/core/src/jobs/definitions/notices-poll.ts` (wire `enqueueDelivery`), `packages/core/src/jobs/registry.ts` only if the job test lists deps
-- `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md` (notices -> workspaces), `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts` (new core exports)
+- `packages/core/src/notices/list.ts` (new; `listWorkspaceNotices`, `listMatterNotices`), `packages/core/src/notices/index.ts`, test in `notices.test.ts`
+- `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`
+- `apps/web/app/(app)/w/[slug]/notices/{page,loading,error}.tsx`, `apps/web/components/notices/*` (list + matter card, tests)
+- `apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx` and `components/matters/matter-overview.tsx` (card slot)
+- `apps/web/lib/nav.ts`, nav/sidebar/mobile/workspace-shell tests, `placeholder-page.tsx` if it keys on `WorkspaceRoute`
+- `packages/i18n/src/{catalog.ts,messages/{en,ta,kn}/notices.json,messages/*/nav.json,generated/*,__tests__/catalog.test.ts}`, `translation-status.json`
 
 ### Sibling Sweep
-Same producer pattern: `notifyStatusChanges` (#592), `notifyBenchChange` (#590), `scanJudgments` (#497). Every category addition touches the same six lists (`status.*` in #592, commit 321fdae1). A grep for each existing category key (`judgment.alert`) shows the full list; the plan follows it. Holiday detection must not be added to `matter-graph` (domain boundary); keep it in `notices`.
+Same read-page shape as courts, research and case-watch pages; all use `inWorkspace` and core read services. Alerts (#587) are separate and untouched. Document blobs (`documentKey`) are not served here: link only to the official `url`.
 
 ### History
-`notice`/`notice_match` schema: #584 (0071). Parsers: #585. Poll/match/job: #586 (merged, 522be10b). No prior attempt at #587. Category-addition precedent: 321fdae1 (#592).
+Schema #584, parsers #585, poll/match #586 (merged on base), alerts #587 (open). Case-watch UI (#593) is the closest i18n/nav precedent.
 
 ### Recommendation
-1. Add category `notices` (in-app + push by default; email opt-in via preferences; daily digest via the existing `digest` preference), with push title, i18n label/description in en/ta/kn, form map entry and test lists.
-2. `matchNotices` also returns `matched: {workspaceId, noticeId}[]` for newly inserted rows only. New `notifyNoticeMatches(deps, matches)` in `notices/alerts.ts`: per workspace, load notice title/kind and matched matters count, then notify every active member who may `matter.read` (`can` + role settings, as bench-change does) once per notice with `dedupeKey: notice:<noticeId>`. Title is the public notice title; the body says how many of the member's matters are before that forum (counts only, never party names; sensitive matters are not named). A failed notify is skipped. `pollNotices` calls it when `deps.enqueueDelivery` is given and reports `alerts`.
-3. `listHolidayListings(db, workspaceId, {from,to})` in `notices/holidays.ts`: under `withWorkspace`, listings dated in range whose proceeding forum code is in a matched `holiday` notice's `forum_codes` and whose `list_date` equals that notice's `effective_on`; returns listing, proceeding, matter ids and the notice (id, title) so the calendar can flag them. Documented limitation: multi-date holiday lists need document parsing (separate work).
-4. Worker/job: `runNoticesPoll` builds `enqueueDelivery` like `judgment-alert-scan.ts`.
-5. Register the new exports in the cross-tenant registry and add real B-on-A cases; update domain deps/docs.
+Add core read functions (join `notice_match` to `notice` and `source` inside the caller's `inWorkspace` tx; dedupe a notice matched by both forum and matter rows; newest `issuedOn` first; cap rows), a `/w/[slug]/notices` server page with the usual states and every role reading it, a matter overview card using `listMatterNotices` (hidden/empty state when none), source link as external `rel="noopener noreferrer"` anchor, provenance line (source name, fetched/recorded date). Add nav item and i18n in all three locales.
 
 ### Related Issues
-#480 (parent), #586 (done, dependency), #585, #584, #588 (UI consumes `listHolidayListings` and matches), #592/#590 (precedents).
+#480 (parent), #586 (dependency, done), #587 (alerts), #584, #585, #593.

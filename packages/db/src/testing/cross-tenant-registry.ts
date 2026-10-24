@@ -700,6 +700,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // notices page and matter card (#588)
+  listWorkspaceNotices: empty,
+  listMatterNotices: denies,
   scanJudgments: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -950,6 +953,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   pollNotices:
     'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
   NOTICES_POLL_CRON: 'constant',
+  NOTICES_LIST_LIMIT: 'constant',
   noticesPoll: 'job definition (handler is runNoticesPoll)',
   runNoticesPoll: 'system job body: see pollNotices',
   setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',

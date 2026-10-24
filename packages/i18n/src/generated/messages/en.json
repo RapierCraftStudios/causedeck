@@ -31,6 +31,7 @@
     "memory": "Memory",
     "people": "People",
     "courts": "Courts",
+    "notices": "Notices",
     "activity": "Activity",
     "billing": "Billing",
     "invoices": "Invoices",
@@ -135,6 +136,11 @@
         "description": "Your forums, halls and rosters.",
         "empty": "Choose your courts to get started.",
         "hint": "Your forums decide which cause lists CauseDeck reads for you."
+      },
+      "notices": {
+        "description": "Official notices for your forums and matters.",
+        "empty": "No notices matched yet.",
+        "hint": "Notices appear when a court publishes one for a forum you use."
       },
       "activity": {
         "description": "Everything that happened, with undo.",
@@ -2263,6 +2269,40 @@
       "alerts": "{count, plural, =0 {No bench changes on your matters.} one {The bench changed on # matter.} other {The bench changed on # matters.}}",
       "detectionFailed": "The roster is saved, but bench changes could not be checked yet.",
       "failed": "The roster was not saved. Try again."
+    }
+  },
+  "notices": {
+    "metaTitle": "Notices",
+    "title": "Notices",
+    "description": "Official court and bar notices that name a forum you use, listed with the source they came from.",
+    "loading": "Loading notices",
+    "empty": {
+      "title": "No notices yet",
+      "hint": "Notices appear here when an official source publishes one that names a court where you have a matter."
+    },
+    "error": {
+      "title": "Could not load notices.",
+      "retry": "Try again"
+    },
+    "kind": {
+      "circular": "Circular",
+      "practice_direction": "Practice direction",
+      "roster": "Roster",
+      "holiday": "Holiday list",
+      "registry": "Registry notice",
+      "bar_council": "Bar Council",
+      "gazette": "Gazette",
+      "other": "Notice"
+    },
+    "issued": "Issued {date}",
+    "effective": "Effective {date}",
+    "forums": "Forums: {codes}",
+    "matters": "{count, plural, one {Affects # of your matters} other {Affects # of your matters}}",
+    "provenance": "Source: {source}, recorded {date}",
+    "open": "Open the official notice",
+    "matterCard": {
+      "title": "Affecting this matter",
+      "empty": "No official notice affects this matter."
     }
   },
   "caseWatch": {

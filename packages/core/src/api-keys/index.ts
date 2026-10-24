@@ -157,7 +157,7 @@ export async function createApiKey(
         {
           action: 'api_key.created',
           target: { kind: 'api_key', id: row.id },
-          metadata: { scopes },
+          metadata: { scopes: scopes.join(',') },
         },
       );
       return row;

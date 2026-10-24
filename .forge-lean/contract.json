@@ -2,31 +2,38 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Webhook endpoints per workspace, signed delivery with retries, fired on status, cause-list and order changes for watched items; worker delivery job registered in apps/worker registry and schedules tests.",
+   "quote": "A roster or leave notice that affects a listed matter produces exactly one alert per watcher, with the notice linked.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Acceptance: webhooks fire on changes for watched items [integration].",
+   "quote": "Unaffected matters get no alert, and a test covers category-based roster assignment.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "every route added under the public API prefixes (`/v1/cases`, `/v1/causelists`, `/v1/orders`, `/v1/notices`, `/v1/webhook-endpoints`) must call `requireScope` with its scope and stay workspace-scoped.",
+   "quote": "`packages/core/src/court/bench-alerts.ts`: map roster changes and notices (leave, special bench, roster reassignment) to affected listings and matters (forum, hall, judge, case category).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Add a test that a key without the scope gets 403.",
-   "disposition": "deliver",
+   "quote": "(forum, hall, judge, case category)",
+   "disposition": "defer",
+   "why": "Judge-based mapping needs bench.judges; PX-9, ME-6 and D-050 (docs/product/03-prd.md:278,319, docs/adr/0017-effective-dated-rosters.md:15) make judge-level data internal-only and need counsel clearance. This change maps by forum, hall and case category; judge-name matching is separate work after clearance.",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "D-048 applies to what each route exposes (no resale of personal data); D-050 applies too (no judge ratings, rankings or predictions in any response).",
+   "quote": "`packages/notifications`: a `bench_change` category with in-app and push alerts and a daily summary.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "`apps/web`: an alert card on the matter and court-day view, with the notice as its source.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -34,277 +41,203 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/webhooks.ts",
-   "change": "New tenantTable()s webhook_endpoint and webhook_delivery (FORCE RLS, workspace FK cascade, CHECKs for status and https url length); export from packages/db/src/schema/index.ts.",
+   "path": "packages/core/src/court/bench-alerts.ts",
+   "change": "New. Pure classifyBenchNotice(title) -> {type: leave|special_bench|roster_reassignment, hallNos, caseTypes}|null (rules, no AI; null when it names neither a hall nor a case type). listBenchNoticeAlerts(db, actor, {matterId?, from?, to?}) read model over notice_match(matter_forum) x notice x listing x proceeding x court_hall in the actor's workspace, filtered by forum, hall number and portfolioRuleMatches, with matterVisibilityPredicate, returning notice id/title/url/kind/source name and the affected matter/listing. notifyBenchNoticeAlerts(deps, matched) notifies each active member who may read an affected matter once per notice via notify() category bench_change, dedupeKey bench-notice:\u003cnoticeId>, counts-only body. Judges are never read.",
    "requirements": [
-    "R1"
+    "R1",
+    "R2",
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/index.ts",
-   "change": "Export the webhooks schema.",
+   "path": "packages/core/src/court/index.ts",
+   "change": "export * from './bench-alerts.ts' and update the header comment",
    "requirements": [
-    "R1"
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations",
-   "change": "Generate with pnpm db:generate (timestamp-named per D-051, not 0083): the two tables, RLS policies and owner-defined app_webhook_delivery_due(); Reviewed-by header; snapshot and journal.",
+   "path": "packages/core/src/court/bench-alerts.test.ts",
+   "change": "New tests: classifier cases (leave, special bench, reassignment, unrelated, hall-less); one alert per member and notice on re-run and replay; unaffected hall/case type/forum/date gets nothing; category-based roster assignment affects only the named case types; a member who cannot read the matter is not notified; read model hides other matters",
    "requirements": [
-    "R1"
+    "R1",
+    "R2",
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/fetch/src/webhook-delivery.ts",
-   "change": "deliverWebhook(url, body, headers): https only, refuse private/loopback/link-local addresses and redirects, timeout and response cap; export from packages/fetch/src/index.ts. Leave postWebhook (Slack) unchanged.",
+   "path": "packages/core/src/notices/poll.ts",
+   "change": "Add optional onMatched?(matched: MatchedNotice[]) to PollNoticesDeps and await it after notifyNoticeMatches, errors caught so a failing hook does not stop the poll",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/fetch/src/index.ts",
-   "change": "Export deliverWebhook.",
+   "path": "packages/core/src/jobs/definitions/notices-poll.ts",
+   "change": "Pass onMatched that calls notifyBenchNoticeAlerts with the job db and the existing enqueueDelivery (jobs may import court)",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/webhooks/index.ts",
-   "change": "New core domain webhooks: createWebhookEndpoint (secret returned once, audited), listWebhookEndpoints, deleteWebhookEndpoint, signWebhook (HMAC-SHA256 over timestamp.body), emitWebhookEvent (fan out to matching active endpoints in the workspace, content-free payload with ids, CNR, change kind, provenance and source_license; no party names, order text or judge ratings/rankings/predictions; no event for sensitive matters). Split into endpoints.ts, events.ts, sign.ts as needed.",
+   "path": "packages/notifications/src/categories.ts",
+   "change": "Add 'bench_change' with defaultChannels ['in_app','push'], not mandatory; daily summary is the existing per-category digest preference",
    "requirements": [
-    "R1",
     "R5"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/src/jobs/definitions/webhook-deliver.ts",
-   "change": "Job webhook.deliver: re-read delivery and endpoint in the payload's workspace, sign, call deliverWebhook, record outcome; RetryableError for retryable failures (backoff), permanent failure marked failed, endpoint disabled after consecutive failures; once() against double send. Plus system.webhook.sweep (webhook-sweep.ts) that re-enqueues due pending deliveries via app_webhook_delivery_due on a cron.",
+   "path": "packages/notifications/src/__tests__/categories.test.ts",
+   "change": "Add 'bench_change' to the expected category list and assert its defaults",
    "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Register webhook.deliver and system.webhook.sweep; export from packages/core/src/jobs/index.ts.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/core/src/jobs/index.ts",
-   "change": "Export the new job definitions and schemas.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/core/src/case-watch/poll.ts",
-   "change": "Add an optional injected onChange/emit dep called after a changed snapshot (status, new order), skipped for the first snapshot; no new core-domain import. Wire it in packages/core/src/jobs/definitions/status-poll.ts.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/core/src/jobs/definitions/status-poll.ts",
-   "change": "Wire emitWebhookEvent into pollCaseWatches deps.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/core/src/court/list-watch.ts",
-   "change": "Add an optional injected emit dep for new cause-list matches of a watch; wire in packages/core/src/jobs/definitions/causelist-poll.ts.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/core/src/jobs/definitions/causelist-poll.ts",
-   "change": "Wire emitWebhookEvent into the cause-list poll deps.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/api/src/routes/v1/webhook-endpoints.ts",
-   "change": "POST/GET/DELETE /v1/webhook-endpoints via defineRoute, each with requireScope('webhooks:write'), workspace taken from the principal (never from the body); responses never echo the secret after creation.",
-   "requirements": [
-    "R3",
     "R5"
    ]
   },
   {
-   "id": "D15",
-   "path": "apps/api/src/routes/v1/index.ts",
-   "change": "Mount the webhook-endpoints router.",
+   "id": "D8",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register listBenchNoticeAlerts and notifyBenchNoticeAlerts in SERVICE_TESTS (real cases) and classifyBenchNotice (and any other pure export) in NOT_A_SERVICE with a reason",
    "requirements": [
     "R3"
    ]
   },
   {
-   "id": "D16",
-   "path": "apps/api/src/__tests__/webhook-endpoints.test.ts",
-   "change": "Tests: key without webhooks:write gets 403 on every method, key with it works, a key cannot see or delete another workspace's endpoint, secret shown once.",
+   "id": "D9",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: B on A's matter sees nothing from A's notice_match / listings; A unchanged",
    "requirements": [
-    "R3",
-    "R4"
+    "R3"
    ]
   },
   {
-   "id": "D17",
-   "path": "packages/core/src/webhooks/__tests__/webhooks.test.ts",
-   "change": "Integration tests: a change on a watched item creates a signed delivery for a matching endpoint and not for another workspace or sensitive matter; signature verifies; payload has no personal data or ratings; deliver job retries then succeeds, permanent failure stops.",
+   "id": "D10",
+   "path": "apps/web/components/courts/bench-notice-alerts.tsx",
+   "change": "New card listing affected matters with the notice title as an external rel=noopener noreferrer link, source name and kind; renders nothing when empty; plus a test file beside it",
    "requirements": [
-    "R1",
-    "R2",
+    "R6"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "apps/web/components/matters/matter-overview.tsx",
+   "change": "Add an optional benchNotices slot rendering the card on the matter overview",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx",
+   "change": "Load listBenchNoticeAlerts for the matter in the existing inWorkspace read and pass it to MatterOverview; a failure renders no card",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/web/app/(app)/w/[slug]/today/page.tsx",
+   "change": "Render the card for today's and upcoming court days (court-day view), hidden when empty",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/preferences-form.tsx",
+   "change": "Map the bench_change category to its i18n key",
+   "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D18",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Add SERVICE_TESTS entries (or NOT_A_SERVICE with reason for pure helpers like signWebhook) for each new @causedeck/core export; add real cases in packages/core/src/__tests__/cross-tenant/services.test.ts.",
+   "id": "D15",
+   "path": "packages/i18n/src/messages/en/notices.json",
+   "change": "Add benchAlerts copy; mirror in ta and kn notices.json, add the category label and description to en/ta/kn notifications.json, regenerate generated/*, update translation-status.json and packages/i18n/src/__tests__/catalog.test.ts if keys or namespaces are enumerated there",
    "requirements": [
-    "R1"
+    "R5",
+    "R6"
    ]
   },
   {
-   "id": "D19",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Cross-tenant cases: B cannot list or delete A's endpoints; emit in B never delivers to A's endpoint.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add webhook_endpoint and webhook_delivery to the root table list.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add both tables to the RLS catalog; add TABLE_TESTS/registry entries and two-tenant seeders where the rls suite requires them.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Add the webhooks domain to CORE_DOMAIN_DEPENDENCIES (audit, workspaces as needed) and add webhooks to the jobs dependency list; mirror in docs/engineering/core-domains.md.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D23",
+   "id": "D16",
    "path": "docs/engineering/core-domains.md",
-   "change": "Document the webhooks domain, its edges and the jobs dependency.",
+   "change": "Add the bench-alerts functions and the notices onMatched hook to the court and notices rows",
    "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add webhook.deliver and system.webhook.sweep to the expected job names (in registry order).",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D25",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "Add system.webhook.sweep to the expected schedules.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D26",
-   "path": "packages/fetch/src/__tests__/webhook-delivery.test.ts",
-   "change": "Tests: refuses http, private/loopback addresses and redirects; times out; posts signed headers to an https public host.",
-   "requirements": [
-    "R1"
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Slack postWebhook and its WEBHOOK_HOSTS allow-list in packages/fetch/src/webhook.ts stay unchanged; deliverWebhook is a separate function."
+   "what": "detectBenchChanges, listAlerts, dismissAlert and the reminder.hearing notification with dedupeKey bench-change:\u003crosterId> in packages/core/src/court/bench-change.ts"
   },
   {
    "id": "P2",
-   "what": "notifyStatusChanges behaviour (no alert on first snapshot or sensitive matter, dedupeKey) in packages/core/src/case-watch/alerts.ts and the PollCaseWatchesReport counts in poll.ts; new deps are optional."
+   "what": "notifyNoticeMatches output (category notices, dedupeKey notice:\u003cid>) in packages/core/src/notices/alerts.ts, and pollNotices behaviour when onMatched is absent"
   },
   {
    "id": "P3",
-   "what": "apiKeyEnforcement and API_KEY_ROUTE_PREFIXES in apps/api/src/middleware/api-key.ts, and requireScope semantics in apps/api/src/lib/openapi.ts (cookie callers unaffected)."
+   "what": "Domain boundary: packages/core/src/notices must not import court (packages/config/eslint/core-domains.js:33); no new workspace package dependency; no migration"
   },
   {
    "id": "P4",
-   "what": "Existing migrations 0001-0082 and their snapshots; no edits to shipped migrations."
+   "what": "No judge reading, grouping or ranking (PX-9, ME-6); notification bodies carry no party names"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/webhook-endpoints.test.ts src/__tests__/api-keys.test.ts src/__tests__/static-guards.test.ts src/__tests__/security.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/court/bench-alerts.test.ts src/court/bench-change.test.ts src/notices/notices.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/webhooks src/case-watch src/court/list-watch.test.ts src/jobs/registry.test.ts src/domains.test.ts src/__tests__/cross-tenant/services.test.ts"
+   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__/categories.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/fetch exec vitest run src/__tests__/webhook-delivery.test.ts src/__tests__/static-checks.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts -t bench"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run components/courts/__tests__/bench-notice-alerts.test.tsx __tests__/matter-workspace-page.test.tsx"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Outbound customer-URL delivery lives in @causedeck/fetch as a new deliverWebhook with SSRF guards, not an inline fetch in core.",
-   "justification": "packages/fetch/src/webhook.ts:1-4 says only that package may call fetch on an external host (#479); core already depends on it, so no new workspace dependency is added.",
-   "source": "doc"
-  },
-  {
-   "id": "K2",
-   "choice": "Change events reach the webhooks domain through optional injected deps wired in the job definitions, not a case-watch -> webhooks import.",
-   "justification": "Mirrors StatusAlertDeps.enqueueDelivery (packages/core/src/case-watch/alerts.ts:18-22) and avoids a new CORE_DOMAIN_DEPENDENCIES edge (packages/config/eslint/core-domains.js:30).",
+   "choice": "Compute bench-notice alerts on read from notice_match, listing and proceeding; no new table or migration",
+   "justification": "Same read-time pattern as listHolidayListings (packages/core/src/notices/holidays.ts:1-30); a notice arriving after the listing still alerts, and no RLS catalog or seeder changes are needed",
    "source": "precedent"
   },
   {
+   "id": "K2",
+   "choice": "Add a PollNoticesDeps.onMatched hook instead of importing court from notices",
+   "justification": "notices may import only workspaces and sources (packages/config/eslint/core-domains.js:33) while jobs may import both (:93-116)",
+   "source": "lint"
+  },
+  {
    "id": "K3",
-   "choice": "Retries use RetryableError + pg-boss backoff plus a cron sweep over an owner-defined due function; migration is timestamp-named.",
-   "justification": "notification-deliver.ts retry pattern; app_case_watch_due/app_api_key_by_hash for cross-workspace reads (0081_api_keys.sql); D-051 in DECISIONS.md and packages/db/drizzle.config.ts for naming.",
+   "choice": "Classify notice titles with deterministic rules, not AI, and ignore judge names",
+   "justification": "Tagging stays kind/forum only (packages/intelligence/src/notices/tag.ts:1-5); judge data is prohibited without clearance (docs/product/03-prd.md:278,319)",
+   "source": "spec"
+  },
+  {
+   "id": "K4",
+   "choice": "Watcher means an active member who may read an affected matter (matter.read plus visibility predicate)",
+   "justification": "Same audience rule as notices/alerts.ts:44-109 and court/bench-change.ts noticesFor",
    "source": "precedent"
   }
  ]

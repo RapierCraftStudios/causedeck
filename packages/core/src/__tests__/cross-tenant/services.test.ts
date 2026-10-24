@@ -3185,6 +3185,89 @@ const CASES: Record<string, Case> = {
       f.asB((s) => core.listMatterNotices(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
     );
   },
+  listBenchNoticeAlerts: async (f) => {
+    const matterId = f.a.rows.notice_match?.matterId ?? '';
+    // B asking for A's workspace or A's matter gets nothing (or is refused); A's rows are unchanged.
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    const asA = await f
+      .asB((s) => core.listBenchNoticeAlerts(s, { workspaceId: f.a.id, userId: f.ub }))
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const onMatter = await f.asB((s) =>
+      core.listBenchNoticeAlerts(s, { workspaceId: f.b.id, userId: f.ub }, { matterId }),
+    );
+    expect(onMatter).toEqual([]);
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.noticeMatch));
+    expect(aAfter).toEqual(aBefore);
+  },
+  notifyBenchNoticeAlerts: async (f) => {
+    // A notice matched to B alerts B's members only; A's notifications are exactly as they were.
+    const [forum] = await f.tx
+      .select({ id: schema.forum.id })
+      .from(schema.forum)
+      .where(eq(schema.forum.code, 'in.tn.madras-hc.madurai'));
+    const [noticeRow] = await f.tx
+      .insert(schema.notice)
+      .values({
+        sourceId: 'in.tn.madras-hc.notices',
+        forumCodes: ['in.tn.madras-hc.madurai'],
+        kind: 'circular',
+        title: 'Special bench for W.P. matters',
+        issuedOn: '2026-11-02',
+        url: `https://notices.example.test/xt/bench/${randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'xt',
+      })
+      .returning({ id: schema.notice.id });
+    const noticeId = noticeRow?.id ?? '';
+    await inWorkspace(f.tx, f.b.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.b.id, title: 'XT bench matter', practiceArea: 'civil' })
+        .returning({ id: schema.matter.id });
+      const [p] = await s
+        .insert(schema.proceeding)
+        .values({
+          workspaceId: f.b.id,
+          matterId: m?.id ?? '',
+          forumId: forum?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          filingNo: 'F-XT-BENCH',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.proceeding.id });
+      await s.insert(schema.listing).values({
+        workspaceId: f.b.id,
+        proceedingId: p?.id ?? '',
+        listDate: '2026-11-05',
+        listType: 'daily',
+        stageRaw: 'For Orders',
+        sourceType: 'manual',
+      });
+      await s.insert(schema.noticeMatch).values({
+        workspaceId: f.b.id,
+        noticeId,
+        forumId: forum?.id ?? '',
+        matterId: m?.id ?? '',
+        reason: 'matter_forum',
+      });
+    });
+    const aBefore = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.notification));
+    const sent = await core.notifyBenchNoticeAlerts(
+      { db: f.tx, enqueueDelivery: () => Promise.resolve() },
+      [{ workspaceId: f.b.id, noticeId }],
+    );
+    const bRows = await inWorkspace(f.tx, f.b.id, (s) =>
+      s
+        .select()
+        .from(schema.notification)
+        .where(eq(schema.notification.dedupeKey, `bench-notice:${noticeId}`)),
+    );
+    expect(bRows).toHaveLength(sent);
+    const aAfter = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.notification));
+    expect(aAfter).toEqual(aBefore);
+  },
   scanJudgments: async (f) => {
     const deps = { db: f.tx, enqueueDelivery: () => Promise.resolve() };
     // B's scan sees none of A's tags; a malformed workspace id finds nothing.

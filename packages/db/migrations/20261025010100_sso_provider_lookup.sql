@@ -1,4 +1,4 @@
--- Migration 20261024210000_sso_provider_auth_view: hand-written (one policy, one function, one grant), no table changes; reviewed before commit.
+-- Migration 20261025010100_sso_provider_lookup: hand-written (one policy, one function, one grant), no table changes; reviewed before commit.
 -- Reviewed-by: Claude (agent, #683)
 -- SSO sign-in (#683, #508 part 2). The Better Auth SSO plugin resolves a provider by email domain
 -- or provider id before any workspace is known, so the app role cannot read the FORCE RLS table
@@ -9,6 +9,8 @@
 -- gets no SELECT on the table and no view over it. The one caller that needs the protocol settings
 -- is the auth server finishing a sign-in, which names the provider by its unguessable id (or the
 -- domain the user typed); the core service that edits providers never returns `config`.
+-- Only a provider whose domain was proven by DNS (`domain_verified_at`) is returned, so an
+-- organisation can never sign in, or link existing accounts, for a domain it does not control.
 -- Providers are written through the owner-only core service only. Expand only.
 CREATE POLICY "owner_definer_read" ON "sso_provider" AS PERMISSIVE FOR SELECT TO causedeck_owner
   USING (true);--> statement-breakpoint
@@ -33,7 +35,7 @@ CREATE FUNCTION "app_sso_provider_lookup"(p_provider_id text, p_domain text)
       p.workspace_id::text,
       p.created_by::text
     FROM sso_provider p
-    WHERE p.enabled
+    WHERE p.enabled AND p.domain_verified_at IS NOT NULL
       AND ((p_provider_id IS NOT NULL AND p.id::text = p_provider_id)
         OR (p_provider_id IS NULL AND p_domain IS NOT NULL AND p.domain = lower(btrim(p_domain))))
     LIMIT 1

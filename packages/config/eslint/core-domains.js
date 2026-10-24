@@ -53,6 +53,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Change webhooks (#626, #487 part 3): managing endpoints checks the member's role through workspaces and is
   // audited; delivery goes through `@causedeck/fetch`, and events arrive as injected deps (no case-watch import).
   webhooks: Object.freeze(['audit', 'workspaces']),
+  // Bulk seat provisioning (#684, #508): CSV runs and SCIM Users are audited and add or remove members through workspaces.
+  provisioning: Object.freeze(['audit', 'workspaces']),
   // The public developer API reads (#625, D-048): every record is gated on source clearance and data class through sources.
   'public-api': Object.freeze(['sources']),
   // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
@@ -122,6 +124,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // stages list rows as proposals through automation; it reads captures and documents from the
   // tables and never imports capture or jobs (the job bodies in jobs wrap it).
   import: Object.freeze(['matter-graph', 'usage', 'automation']),
+  // The migration concierge (#685): runs matter imports through the import domain's apply and undo
+  // (imports `index.ts` only) and checks the actor's role through workspaces.
+  migration: Object.freeze(['import', 'workspaces']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([

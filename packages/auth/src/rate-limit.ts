@@ -58,3 +58,15 @@ export async function consumeRateLimit(
     .returning({ count: rateLimit.count });
   return (row?.count ?? 1) <= limit.max;
 }
+
+/** Phone OTP limits (#503): sends per number per 15 minutes, and per IP per hour. */
+export const PHONE_OTP_PHONE_LIMIT = { max: 5, windowSeconds: 15 * 60 } as const;
+export const PHONE_OTP_IP_LIMIT = { max: 20, windowSeconds: 60 * 60 } as const;
+/** Code checks per IP per hour; the per-code attempt cap is the plugin's `allowedAttempts`. */
+export const PHONE_VERIFY_IP_LIMIT = { max: 30, windowSeconds: 60 * 60 } as const;
+
+/** Hashed like the email key, so no plaintext number is stored in `rate_limit`. */
+export function phoneOtpKey(phoneNumber: string): string {
+  const digest = createHash('sha256').update(phoneNumber.replace(/\s+/g, '')).digest('hex');
+  return `phone-otp:phone:${digest}`;
+}

@@ -87,6 +87,7 @@ vi.mock('next-intl/server', () => ({
 
 const members = await import('../app/(app)/w/[slug]/settings/members/actions.ts');
 const invite = await import('../app/(public)/invite/[token]/actions.ts');
+const welcome = await import('../app/(app)/w/[slug]/welcome/actions.ts');
 const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
@@ -124,6 +125,7 @@ const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 /** Every exported server action and the module it comes from. */
 const ACTIONS: Record<string, Record<string, unknown>> = {
   inviteMembersAction: members,
+  provisionMembersCsvAction: members,
   changeRoleAction: members,
   openWorkAction: members,
   removeMemberAction: members,
@@ -151,6 +153,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateRoleSettingsAction: roles,
   saveSsoProviderAction: sso,
   deleteSsoProviderAction: sso,
+  verifySsoDomainAction: sso,
+  requestClerkSetupApprovalAction: welcome,
+  approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
@@ -266,7 +271,12 @@ function signInAs(userId: string): void {
 function snapshotA() {
   return withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => ({
     members: await tx
-      .select({ id: schema.member.id, role: schema.member.role, status: schema.member.status })
+      .select({
+        id: schema.member.id,
+        role: schema.member.role,
+        status: schema.member.status,
+        clerkSetupStatus: schema.member.clerkSetupStatus,
+      })
       .from(schema.member)
       .orderBy(schema.member.id),
     invitations: await tx
@@ -445,6 +455,11 @@ afterAll(closeTestDb);
 function inputs(workspaceId: string): Record<string, unknown> {
   return {
     inviteMembersAction: { workspaceId, emails: ['xt-probe@example.test'], role: 'junior' },
+    provisionMembersCsvAction: {
+      workspaceId,
+      csv: 'email,role\nxt-probe-csv@example.test,viewer\n',
+      dryRun: false,
+    },
     changeRoleAction: { workspaceId, memberId: aMember.memberId, role: 'owner' },
     openWorkAction: { workspaceId, memberId: aMember.memberId },
     removeMemberAction: { workspaceId, memberId: aMember.memberId },
@@ -484,6 +499,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
       practiceCity: 'Probe City',
       slug: `xt-probe-${workspaceId.slice(0, 8)}`,
     },
+    requestClerkSetupApprovalAction: { workspaceId },
+    approveClerkSetupAction: { workspaceId, memberId: randomUUID() },
     updateRoleSettingsAction: {
       workspaceId,
       advocatesCanInvite: false,
@@ -494,10 +511,11 @@ function inputs(workspaceId: string): Record<string, unknown> {
       protocol: 'oidc',
       issuer: 'https://idp.example.com',
       domain: `xt-${workspaceId.slice(0, 8)}.example.com`,
-      enabled: true,
+      enabled: false,
       settings: { clientId: 'probe', clientSecret: 'probe-secret' },
     },
     deleteSsoProviderAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
+    verifySsoDomainAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
     updateWorkspacePrivacyAction: {
       workspaceId,
       sensitiveDefaultRestricted: false,
@@ -983,7 +1001,10 @@ describe('cross-tenant server actions', () => {
   it('saveSsoProviderAction and deleteSsoProviderAction under B’s own workspace change only B', async () => {
     const before = await snapshotA();
     const saved = await action('saveSsoProviderAction')(inputs(t.b.id).saveSsoProviderAction);
-    expect(saved).toMatchObject({ ok: true, data: { protocol: 'oidc', enabled: true } });
+    expect(saved).toMatchObject({
+      ok: true,
+      data: { protocol: 'oidc', enabled: false, domainVerified: false },
+    });
     // The result never carries the provider's settings.
     expect(JSON.stringify(saved)).not.toContain('probe-secret');
     expect(await snapshotA()).toEqual(before);

@@ -137,6 +137,11 @@ export interface InviteMemberRequest extends SendOptions {
   workspaceId: string;
   actorUserId: string;
   input: InviteInput;
+  /**
+   * Skip the per-actor hourly cap (`INVITE_RATE_LIMIT`). Only for bulk callers that cap their own
+   * batch (CSV provisioning, #684); the role and seat checks still apply.
+   */
+  bypassRateLimit?: boolean | undefined;
 }
 
 /**
@@ -155,12 +160,14 @@ export async function inviteMember(
 
   const issued = await db.transaction(async (tx) => {
     await requireInviter(tx, request.workspaceId, request.actorUserId, role);
-    await withinLimit(
-      tx,
-      `invite:${request.workspaceId}:${request.actorUserId}`,
-      INVITE_RATE_LIMIT,
-      now,
-    );
+    if (request.bypassRateLimit !== true) {
+      await withinLimit(
+        tx,
+        `invite:${request.workspaceId}:${request.actorUserId}`,
+        INVITE_RATE_LIMIT,
+        now,
+      );
+    }
     await entitlements.assertCanAddSeat(tx, request.workspaceId, role);
 
     const token = generateInvitationToken();

@@ -145,6 +145,32 @@ RP ID.
 Auth emails carry i18n keys (`auth.email.magicLink.subject`, `auth.email.magicLink.body`) and the
 recipient's locale, never English prose. The templated transport in #23 resolves the keys.
 
+## Phone OTP (#503)
+
+Phone-first sign-in: a +91 mobile number and a six-digit code by SMS (Better Auth `phoneNumber`
+plugin, mounted only when `createAuth` gets an `sms` sender). Codes expire after 5 minutes and allow
+3 wrong attempts. The first verification creates the account (never when `disableSignUp`, as in the
+admin console) with the placeholder email `<digits>@phone.causedeck.invalid`; `user.email` stays
+required and unique.
+
+`createSmsSender(env)` (`@causedeck/auth/sms`) picks the transport from `SMS_PROVIDER`:
+
+- `console` (default): logs the message; the code is logged only outside production, and the number
+  is masked to its last four digits in production.
+- `msg91`: MSG91 Flow API with the DLT-registered OTP template. Needs `SMS_AUTH_KEY`,
+  `SMS_SENDER_ID`, `SMS_DLT_ENTITY_ID` and `SMS_OTP_TEMPLATE_ID` (DLT template registration is a
+  human step with the operator).
+
+| Limit | Where |
+|---|---|
+| OTP send: 5 per phone number per 15 minutes | `hooks.before` counter under `phone-otp:phone:<sha256(number)>` |
+| OTP send: 20 per IP per hour; verify: 30 per IP per hour | Better Auth `customRules` |
+| Wrong codes: 3 per code | plugin `allowedAttempts` |
+
+Linking: a phone-only account can add an email on `/account` (`/change-email`: the address changes only after the emailed link is opened; refused for accounts
+that already have a real email) and link Google (`account.accountLinking`, Google trusted). Security
+events record the method `phone_otp`.
+
 ## Rate limits
 
 Rate limiting is always on, with storage `database` (the `rate_limit` table).
@@ -168,16 +194,31 @@ Per-organisation SSO uses the Better Auth `@better-auth/sso` plugin (OIDC and SA
   service `@causedeck/core/workspaces` (`saveSsoProvider`, `deleteSsoProvider`) and the page
   `/w/<slug>/settings/sso`. The plugin's own registration, listing and delete endpoints answer 404.
 - **Domain lookup.** The plugin's `ssoProvider` model is answered by the keyed SECURITY DEFINER
-  function `app_sso_provider_lookup` (migration `20261024210000`, the `app_slug_taken` pattern):
-  one enabled provider for an exact provider id or domain, never a list. The app role has no
+  function `app_sso_provider_lookup` (migration `20261025010100`, the `app_slug_taken` pattern):
+  one enabled provider with a verified domain for an exact provider id or domain, never a list. The app role has no
   SELECT on `sso_provider` and no view over it, so RLS and the "config is never exported" rule hold;
   the settings are read only to finish a sign-in for a provider named by its id or the typed
   domain. Unknown and disabled domains fail identically, so the form cannot enumerate
   organisations.
+- **Secrets.** The OIDC client secret is sealed (AES-256-GCM, key derived from `BETTER_AUTH_SECRET`,
+  bound to the workspace and provider id) before it is stored in `sso_provider.config`, and opened
+  only inside the sign-in lookup. No API returns `config`, and the export excludes it. SAML keeps
+  only the IdP's public certificate. For SAML the plugin verifies the assertion signature
+  (`wantAssertionsSigned`) and the audience (this SP's entity id); we do not relax either.
+- **Domain binding and takeover guard.** A provider signs nobody in until its domain is verified:
+  the owner publishes the DNS TXT record `_better-auth-token-<providerId>.<domain>` (the plugin's
+  convention) and `verifySsoDomain` checks it (owner-only, audited as `sso.domain_verified`). Only
+  one organisation can hold a verified domain (partial unique index), changing the domain drops the
+  proof, and a provider cannot be enabled before it. The plugin runs with
+  `domainVerification.enabled`, so it links an existing account by email only when the IdP-asserted
+  email is at the provider's verified domain. On top, `databaseHooks` on `user.create` and
+  `account.create` refuse any user or account created or linked on an SSO return whose email is
+  outside that domain, so no provider can mint or capture an account at another organisation's or a
+  personal address.
 - **Provisioning.** A first SSO sign-in creates the user and makes them a `viewer` of the
   organisation, never an owner; an owner raises the role afterwards.
 - **Audit.** Provider changes write `sso.provider_created`, `sso.provider_updated` and
-  `sso.provider_deleted` (fail-closed, metadata without settings). Sign-in success and failure go
+  `sso.provider_deleted` and `sso.domain_verified` (fail-closed, metadata without settings). Sign-in success and failure go
   through the `SecurityEventRecorder` with method `sso`.
 
 ## Threat notes

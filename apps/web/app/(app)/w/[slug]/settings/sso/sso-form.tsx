@@ -31,9 +31,16 @@ export interface SsoProviderFormProps {
   providers: SsoProviderView[];
   save: (input: unknown) => Promise<Result<SsoProviderView>>;
   remove: (input: unknown) => Promise<Result<{ id: string }>>;
+  verify: (input: unknown) => Promise<Result<SsoProviderView>>;
 }
 
-export function SsoProviderForm({ workspaceId, providers, save, remove }: SsoProviderFormProps) {
+export function SsoProviderForm({
+  workspaceId,
+  providers,
+  save,
+  remove,
+  verify,
+}: SsoProviderFormProps) {
   const t = useTranslations('settings.sso');
   const id = useId();
   const router = useRouter();
@@ -41,7 +48,7 @@ export function SsoProviderForm({ workspaceId, providers, save, remove }: SsoPro
   const [protocol, setProtocol] = useState<'oidc' | 'saml'>('oidc');
   const [pending, setPending] = useState(false);
 
-  async function run<T>(call: () => Promise<Result<T>>, done: 'saved' | 'removed') {
+  async function run<T>(call: () => Promise<Result<T>>, done: 'saved' | 'removed' | 'verified') {
     setPending(true);
     let result: Result<T>;
     try {
@@ -51,7 +58,15 @@ export function SsoProviderForm({ workspaceId, providers, save, remove }: SsoPro
     }
     setPending(false);
     if (!result.ok) {
-      toast(t(result.error.code === 'FORBIDDEN' ? 'toast.forbidden' : 'toast.failed'));
+      toast(
+        t(
+          result.error.code === 'FORBIDDEN'
+            ? 'toast.forbidden'
+            : done === 'verified'
+              ? 'toast.verifyFailed'
+              : 'toast.failed',
+        ),
+      );
       return false;
     }
     toast(t(`toast.${done}`));
@@ -78,7 +93,8 @@ export function SsoProviderForm({ workspaceId, providers, save, remove }: SsoPro
           protocol,
           issuer: field('issuer'),
           domain: field('domain'),
-          enabled: true,
+          // A new provider starts off: it is enabled once its domain is verified.
+          enabled: false,
           settings,
         }),
       'saved',
@@ -96,42 +112,76 @@ export function SsoProviderForm({ workspaceId, providers, save, remove }: SsoPro
         <SettingSection id={`${id}-providers`} title={t('title')} description={t('description')}>
           <ul className="flex flex-col gap-3">
             {providers.map((provider) => (
-              <li key={provider.id} className="flex items-center justify-between gap-3">
-                <span className="min-w-0 text-sm">
-                  <span className="block truncate font-medium">{provider.domain}</span>
-                  <span className="text-ink-muted block truncate">
-                    {provider.protocol.toUpperCase()} · {provider.issuer}
+              <li key={provider.id} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 text-sm">
+                    <span className="block truncate font-medium">{provider.domain}</span>
+                    <span className="text-ink-muted block truncate">
+                      {provider.protocol.toUpperCase()} · {provider.issuer}
+                    </span>
                   </span>
-                </span>
-                <Switch
-                  checked={provider.enabled}
-                  readOnly={!online || pending}
-                  aria-label={`${provider.domain}: ${t(provider.enabled ? 'status.enabled' : 'status.disabled')}`}
-                  onCheckedChange={(enabled) => {
-                    void run(
-                      () =>
-                        save({
-                          workspaceId,
-                          providerId: provider.id,
-                          protocol: provider.protocol,
-                          issuer: provider.issuer,
-                          domain: provider.domain,
-                          enabled,
-                        }),
-                      'saved',
-                    );
-                  }}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={!online || pending}
-                  onClick={() => {
-                    void run(() => remove({ workspaceId, providerId: provider.id }), 'removed');
-                  }}
-                >
-                  {t('form.delete')}
-                </Button>
+                  <Switch
+                    checked={provider.enabled}
+                    readOnly={!online || pending || !provider.domainVerified}
+                    aria-label={`${provider.domain}: ${t(provider.enabled ? 'status.enabled' : 'status.disabled')}`}
+                    onCheckedChange={(enabled) => {
+                      void run(
+                        () =>
+                          save({
+                            workspaceId,
+                            providerId: provider.id,
+                            protocol: provider.protocol,
+                            issuer: provider.issuer,
+                            domain: provider.domain,
+                            enabled,
+                          }),
+                        'saved',
+                      );
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={!online || pending}
+                    onClick={() => {
+                      void run(() => remove({ workspaceId, providerId: provider.id }), 'removed');
+                    }}
+                  >
+                    {t('form.delete')}
+                  </Button>
+                </div>
+                {provider.domainVerified ? null : (
+                  <div className="text-sm" data-testid={`sso-verify-${provider.id}`}>
+                    <p className="font-medium">
+                      {t('verify.title')} · {t('status.unverified')}
+                    </p>
+                    <p className="text-ink-muted">
+                      {t('verify.instructions', { domain: provider.domain })}
+                    </p>
+                    {provider.domainVerification === null ? null : (
+                      <dl className="mt-1 grid gap-1">
+                        <dt className="text-ink-muted">{t('verify.name')}</dt>
+                        <dd className="font-mono break-all">{provider.domainVerification.name}</dd>
+                        <dt className="text-ink-muted">{t('verify.value')}</dt>
+                        <dd className="font-mono break-all">{provider.domainVerification.value}</dd>
+                      </dl>
+                    )}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-2"
+                      disabled={!online || pending}
+                      onClick={() => {
+                        void run(
+                          () => verify({ workspaceId, providerId: provider.id }),
+                          'verified',
+                        );
+                      }}
+                    >
+                      {t('verify.button')}
+                    </Button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

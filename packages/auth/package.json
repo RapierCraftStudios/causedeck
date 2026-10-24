@@ -10,6 +10,7 @@
     "./client": "./src/client.ts",
     "./session": "./src/session.ts",
     "./mailer": "./src/mailer.ts",
+    "./sms": "./src/sms.ts",
     "./messages": "./src/messages.ts",
     "./rate-limit": "./src/rate-limit.ts",
     "./step-up": "./src/step-up.ts",

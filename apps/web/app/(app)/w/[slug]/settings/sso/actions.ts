@@ -4,7 +4,6 @@
 // fail-closed `sso.provider_*` audit event in the same transaction. Nothing returned carries the
 // provider's `config` (client secret, certificate).
 import { assertCan } from '@causedeck/auth/policy';
-import type { SsoProviderSummary } from '@causedeck/core/workspaces';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -12,7 +11,9 @@ import { serverEnv } from '../../../../../../lib/env.ts';
 import type { Result } from '../../../../../../lib/safe-action.ts';
 import { WorkspaceScoped, workspaceAction } from '../../../../../../lib/workspace-action.ts';
 
-export type SsoProviderView = Omit<SsoProviderSummary, 'createdAt' | 'updatedAt'>;
+import { toView, type SsoProviderView } from './view.ts';
+
+export type { SsoProviderView };
 
 const SaveProvider = WorkspaceScoped.extend({
   providerId: z.uuid().optional(),
@@ -41,16 +42,28 @@ const save = workspaceAction(
       enabled: input.enabled,
       ...(input.settings === undefined ? {} : { settings: input.settings }),
       baseUrl: serverEnv().APP_URL,
+      sealingSecret: serverEnv().BETTER_AUTH_SECRET.reveal(),
       requestId: ctx.requestId,
     });
     revalidatePath('/w/[slug]/settings/sso', 'page');
-    return {
-      id: row.id,
-      protocol: row.protocol,
-      issuer: row.issuer,
-      domain: row.domain,
-      enabled: row.enabled,
-    };
+    return toView(row);
+  },
+  { action: 'member.role' },
+);
+
+const verify = workspaceAction(
+  DeleteProvider,
+  async ({ providerId }, ctx) => {
+    assertCan(ctx.actor, 'member.role');
+    const { verifySsoDomain } = await import('@causedeck/core/workspaces');
+    const row = await verifySsoDomain(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      providerId,
+      requestId: ctx.requestId,
+    });
+    revalidatePath('/w/[slug]/settings/sso', 'page');
+    return toView(row);
   },
   { action: 'member.role' },
 );
@@ -74,6 +87,10 @@ const remove = workspaceAction(
 
 export async function saveSsoProviderAction(raw: unknown): Promise<Result<SsoProviderView>> {
   return save(raw);
+}
+
+export async function verifySsoDomainAction(raw: unknown): Promise<Result<SsoProviderView>> {
+  return verify(raw);
 }
 
 export async function deleteSsoProviderAction(raw: unknown): Promise<Result<{ id: string }>> {

@@ -8,7 +8,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { BrowserContextOptions, Page } from '@playwright/test';
+import postgres from 'postgres';
 
+import { databaseUrl } from '../support/db-reset.ts';
 import { MAILPIT_URL } from '../support/server-pool.ts';
 
 import { test as dbTest } from './db.ts';
@@ -36,6 +38,16 @@ export interface AuthFixtures {
    * from the Mailpit API (the console mailer's log redacts the token, by design).
    */
   readMagicLink: (email: string) => Promise<string>;
+  /**
+   * The six-digit code the worker's server most recently issued to `phone` (E.164). The console SMS
+   * sender only logs it, so the helper reads it from the worker database, where Better Auth's
+   * phone-number plugin keeps it as `verification.value = '<code>:<attempts>'` under the phone as
+   * identifier. Nothing is added to the app for this, so there is no test-only path to disable in
+   * production.
+   */
+  readPhoneOtp: (phone: string) => Promise<string>;
+  /** Move the pending code for `phone` into the past, as if its five minutes had run out. */
+  expirePhoneOtp: (phone: string) => Promise<void>;
 }
 
 type StorageState = Exclude<BrowserContextOptions['storageState'], string | undefined>;
@@ -82,6 +94,36 @@ export const test = dbTest.extend<AuthFixtures>({
         await new Promise((resolve) => setTimeout(resolve, 200));
       }
       throw new Error(`e2e: no magic link for ${email} in Mailpit (${MAILPIT_URL})`);
+    });
+  },
+  readPhoneOtp: async ({ workerDb }, use) => {
+    await use(async (phone) => {
+      const sql = postgres(databaseUrl(workerDb.name, 'owner'), { max: 1, connect_timeout: 5 });
+      try {
+        const deadline = Date.now() + 10_000;
+        while (Date.now() < deadline) {
+          const rows = await sql<{ value: string }[]>`
+            select value from verification where identifier = ${phone}
+            order by created_at desc limit 1`;
+          const code = /^(\d{6}):\d+$/.exec(rows[0]?.value ?? '')?.[1];
+          if (code) return code;
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+        throw new Error(`e2e: no phone OTP for ${phone} in ${workerDb.name}`);
+      } finally {
+        await sql.end();
+      }
+    });
+  },
+  expirePhoneOtp: async ({ workerDb }, use) => {
+    await use(async (phone) => {
+      const sql = postgres(databaseUrl(workerDb.name, 'owner'), { max: 1, connect_timeout: 5 });
+      try {
+        await sql`update verification set expires_at = now() - interval '1 minute'
+          where identifier = ${phone}`;
+      } finally {
+        await sql.end();
+      }
     });
   },
 });

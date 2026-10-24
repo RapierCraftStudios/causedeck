@@ -1085,6 +1085,28 @@ const CASES: Record<string, Case> = {
       .where(eq(schema.session.id, sessionId));
     expect(still?.id).toBe(sessionId);
   },
+  addProvisionedMember: async (f) => {
+    const before = await aMembers(f);
+    await expect(
+      f.asB((s) =>
+        core.addProvisionedMember(s, {
+          workspaceId: f.a.id,
+          email: 'xt-provisioned@example.com',
+          role: 'viewer',
+        }),
+      ),
+    ).rejects.toBeDefined();
+    expect(await aMembers(f)).toEqual(before);
+  },
+  deactivateProvisionedMember: async (f) => {
+    const before = await aMembers(f);
+    await expect(
+      f.asB((s) =>
+        core.deactivateProvisionedMember(s, { workspaceId: f.a.id, userId: f.aMember.userId }),
+      ),
+    ).rejects.toBeDefined();
+    expect(await aMembers(f)).toEqual(before);
+  },
   prepareOwnershipTransfer: async (f) => {
     await expectDenied(
       f.asB((s) =>
@@ -1242,6 +1264,46 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getWorkspaceProfile(f.tx, f.a.id)).toEqual(before);
   },
+  getClerkSetup: async (f) => {
+    const [clerkUser] = await f.tx
+      .insert(schema.user)
+      .values({ name: 'Clerk A', email: `clerk-a-${f.a.id}@example.test` })
+      .returning({ id: schema.user.id });
+    await inWorkspace(f.tx, f.a.id, (s) =>
+      s.insert(schema.member).values({
+        organizationId: f.a.id,
+        userId: clerkUser?.id ?? '',
+        role: 'clerk',
+        clerkSetupStatus: 'pending',
+      }),
+    );
+    // Under B's scope A's clerks are invisible; under A's they are listed.
+    expect(await f.asB((s) => core.getClerkSetup(s, f.a.id))).toEqual([]);
+    expect((await inWorkspace(f.tx, f.a.id, (s) => core.getClerkSetup(s, f.a.id)))[0]?.status).toBe(
+      'pending',
+    );
+  },
+  requestClerkSetupApproval: async (f) => {
+    // B's owner is not a clerk of A: denied, and A's clerks stay as they were.
+    const before = await core.getClerkSetup(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) => core.requestClerkSetupApproval(s, { workspaceId: f.a.id, actorUserId: f.ub })),
+    );
+    expect(await core.getClerkSetup(f.tx, f.a.id)).toEqual(before);
+  },
+  approveClerkSetup: async (f) => {
+    const before = await core.getClerkSetup(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.approveClerkSetup(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          memberId: before[0]?.memberId ?? f.a.id,
+        }),
+      ),
+    );
+    expect(await core.getClerkSetup(f.tx, f.a.id)).toEqual(before);
+  },
   getRoleSettings: async (f) => {
     await f.tx
       .update(schema.workspaceSettings)
@@ -1292,6 +1354,7 @@ const CASES: Record<string, Case> = {
           settings: { clientId: 'id', clientSecret: 'secret' },
           enabled: true,
           baseUrl: 'https://app.example.com',
+          sealingSecret: 'x'.repeat(32),
         }),
       ),
     );
@@ -1318,16 +1381,54 @@ const CASES: Record<string, Case> = {
     );
     await expectDenied(
       f.asB((s) =>
-        core.deleteSsoProvider(s, { workspaceId: f.a.id, actorUserId: f.ub, providerId: row!.id }),
+        core.deleteSsoProvider(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          providerId: row?.id ?? '',
+        }),
       ),
     );
     const left = await inWorkspace(f.tx, f.a.id, (s) =>
       s
         .select({ id: schema.ssoProvider.id })
         .from(schema.ssoProvider)
-        .where(eq(schema.ssoProvider.id, row!.id)),
+        .where(eq(schema.ssoProvider.id, row?.id ?? '')),
     );
     expect(left).toHaveLength(1);
+  },
+  verifySsoDomain: async (f) => {
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .insert(schema.ssoProvider)
+        .values({
+          workspaceId: f.a.id,
+          protocol: 'oidc',
+          issuer: 'https://idp.a.example',
+          domain: 'a-verify.example.com',
+          domainVerificationToken: 'token',
+          config: {},
+          createdBy: f.ua,
+        })
+        .returning({ id: schema.ssoProvider.id }),
+    );
+    // B cannot verify (and so bind) A's provider domain, even if the DNS record is there.
+    await expectDenied(
+      f.asB((s) =>
+        core.verifySsoDomain(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          providerId: row?.id ?? '',
+          resolver: () => Promise.resolve([[`_better-auth-token-${row?.id ?? ''}=token`]]),
+        }),
+      ),
+    );
+    const left = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .select({ at: schema.ssoProvider.domainVerifiedAt })
+        .from(schema.ssoProvider)
+        .where(eq(schema.ssoProvider.id, row?.id ?? '')),
+    );
+    expect(left).toEqual([{ at: null }]);
   },
   getPrivacySettings: async (f) => {
     await f.tx

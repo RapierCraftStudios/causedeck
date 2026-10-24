@@ -10,12 +10,14 @@ import { and, eq, sql } from 'drizzle-orm';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { RATE_LIMIT_MESSAGE, SSO_DOMAIN_LIMIT } from '../rate-limit';
+import { sealSsoSecret } from '../sso';
 import type { SecurityEventRecorder } from '../server';
 import {
   authRequest,
   cookieHeader,
   makeAuth,
   sessionSetCookie,
+  TEST_SECRET,
   uniqueEmail,
   uniqueIp,
 } from './helpers';
@@ -56,7 +58,7 @@ function stubIdp(profile: { sub: string; email: string }) {
   });
 }
 
-async function seedProvider(options: { enabled?: boolean } = {}) {
+async function seedProvider(options: { enabled?: boolean; verified?: boolean } = {}) {
   const workspaceId = randomUUID();
   const ownerId = randomUUID();
   const providerId = randomUUID();
@@ -85,12 +87,14 @@ async function seedProvider(options: { enabled?: boolean } = {}) {
       issuer: IDP,
       domain,
       enabled: options.enabled ?? true,
+      domainVerificationToken: 'token',
+      domainVerifiedAt: options.verified === false ? null : new Date(),
       createdBy: ownerId,
       config: {
         issuer: IDP,
         pkce: true,
         clientId: CLIENT_ID,
-        clientSecret: 'client-secret',
+        clientSecret: sealSsoSecret(TEST_SECRET, workspaceId, providerId, 'client-secret'),
         authorizationEndpoint: `${IDP}/authorize`,
         tokenEndpoint: `${IDP}/token`,
         jwksEndpoint: `${IDP}/jwks`,
@@ -228,6 +232,99 @@ describe('SSO sign-in', () => {
     await vi.waitFor(() => {
       expect(events).toContainEqual({ kind: 'failed', method: 'sso' });
     });
+  });
+});
+
+/** Runs the whole redirect dance for `email` as asserted by the IdP; returns the callback response. */
+async function signInThroughIdp(
+  auth: ReturnType<typeof makeAuth>['auth'],
+  seed: { domain: string; providerId: string },
+  startEmail: string,
+  assertedEmail: string,
+) {
+  stubIdp({ sub: `idp-${randomUUID()}`, email: assertedEmail });
+  const start = await startSignIn(auth, startEmail);
+  expect(start.status).toBe(200);
+  const { url } = (await start.json()) as { url: string };
+  const state = new URL(url).searchParams.get('state') ?? '';
+  return authRequest(auth, `/sso/callback/${seed.providerId}?code=abc&state=${state}`, {
+    method: 'GET',
+    cookie: cookieHeader(start),
+  });
+}
+
+const userByEmail = (email: string) =>
+  testAppDb().select({ id: schema.user.id }).from(schema.user).where(eq(schema.user.email, email));
+
+describe('SSO domain binding and takeover guard', () => {
+  it('rejects an IdP-asserted email outside the provider domain and creates no account', async () => {
+    const seed = await seedProvider();
+    const { auth } = makeAuth();
+    const asserted = `victim-${randomUUID().slice(0, 8)}@gmail.com`;
+    const callback = await signInThroughIdp(auth, seed, `a@${seed.domain}`, asserted);
+    expect(callback.status).toBeGreaterThanOrEqual(300);
+    expect(sessionSetCookie(callback)).toBeUndefined();
+    expect(await userByEmail(asserted)).toHaveLength(0);
+  });
+
+  it('does not link or sign in an existing user of another organisation by email', async () => {
+    const seed = await seedProvider();
+    const other = await seedProvider();
+    const { auth } = makeAuth();
+    // The victim already has an account at the other organisation's domain.
+    const victimEmail = `victim@${other.domain}`;
+    const [victim] = await testAppDb()
+      .insert(schema.user)
+      .values({ id: randomUUID(), name: 'Victim', email: victimEmail, emailVerified: true })
+      .returning({ id: schema.user.id });
+    // This organisation's IdP asserts the victim's address.
+    const callback = await signInThroughIdp(auth, seed, `a@${seed.domain}`, victimEmail);
+    expect(sessionSetCookie(callback)).toBeUndefined();
+    expect(callback.headers.get('location') ?? '').toContain('error');
+    const accounts = await testAppDb()
+      .select({ id: schema.account.id })
+      .from(schema.account)
+      .where(eq(schema.account.userId, victim?.id ?? ''));
+    expect(accounts).toHaveLength(0);
+    const memberships = await withWorkspace(
+      testAppDb(),
+      { workspaceId: seed.workspaceId, userId: victim?.id ?? '' },
+      (tx) =>
+        tx
+          .select({ id: schema.member.id })
+          .from(schema.member)
+          .where(eq(schema.member.userId, victim?.id ?? '')),
+    );
+    expect(memberships).toHaveLength(0);
+  });
+
+  it('links an existing user whose email is at the verified domain', async () => {
+    const seed = await seedProvider();
+    const { auth } = makeAuth();
+    const email = `grace@${seed.domain}`;
+    const [existing] = await testAppDb()
+      .insert(schema.user)
+      .values({ id: randomUUID(), name: 'Grace', email, emailVerified: true })
+      .returning({ id: schema.user.id });
+    const callback = await signInThroughIdp(auth, seed, email, email);
+    expect(callback.headers.get('location') ?? '').not.toContain('error');
+    expect(sessionSetCookie(callback)).toBeDefined();
+    expect(await userByEmail(email)).toEqual([{ id: existing?.id }]);
+  });
+
+  it('refuses sign-in on a provider whose domain is not verified', async () => {
+    const seed = await seedProvider({ verified: false });
+    const { auth } = makeAuth();
+    const response = await startSignIn(auth, `a@${seed.domain}`);
+    expect(response.status).toBeGreaterThanOrEqual(400);
+  });
+
+  it('keeps the client secret sealed in the database', async () => {
+    const seed = await seedProvider();
+    const rows = await testAppDb().execute<{ oidc_config: string }>(
+      sql`select oidc_config from app_sso_provider_lookup(${seed.providerId}, null)`,
+    );
+    expect(rows[0]?.oidc_config).not.toContain('"client-secret"');
   });
 });
 

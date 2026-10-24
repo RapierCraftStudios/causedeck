@@ -4,7 +4,13 @@ import { describe, expect, it } from 'vitest';
 
 import { checkSchemaConventions, GLOBAL_TABLES, tablesOf } from '../conventions.ts';
 import { workspace } from '../index.ts';
-import { LOCALES, MEMBER_STATUSES, WORKSPACE_KINDS, WORKSPACE_ROLES } from '../schema/auth.ts';
+import {
+  CLERK_SETUP_STATUSES,
+  LOCALES,
+  MEMBER_STATUSES,
+  WORKSPACE_KINDS,
+  WORKSPACE_ROLES,
+} from '../schema/auth.ts';
 import * as schema from '../schema/index.ts';
 
 const GLOBAL_AUTH_TABLES = [
@@ -116,10 +122,18 @@ describe('workspace data model (#177)', () => {
     );
   });
 
+  it('adds the nullable clerk setup columns with a closed status check (#505)', () => {
+    const { member } = schema;
+    expect(CLERK_SETUP_STATUSES).toEqual(['pending', 'approved']);
+    expect(member.clerkSetupStatus.notNull).toBe(false);
+    expect(member.clerkSetupDecidedAt.notNull).toBe(false);
+    expect(Object.keys(checksOf(member))).toContain('member_clerk_setup_status_chk');
+  });
+
   it('keeps every added Better Auth column nullable or defaulted', () => {
     const added = {
       organization: ['kind', 'plan_id', 'created_by', 'deleted_at'],
-      member: ['status', 'joined_at'],
+      member: ['status', 'joined_at', 'clerk_setup_status', 'clerk_setup_decided_at'],
       invitation: ['token_hash', 'accepted_at', 'revoked_at'],
     };
     for (const table of [schema.organization, schema.member, schema.invitation]) {

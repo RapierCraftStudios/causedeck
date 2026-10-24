@@ -814,11 +814,21 @@
         "saved": "Provider saved.",
         "removed": "Provider removed.",
         "failed": "Could not save the provider.",
-        "forbidden": "Only owners can change SSO."
+        "forbidden": "Only owners can change SSO.",
+        "verified": "Domain verified.",
+        "verifyFailed": "We could not find the DNS record yet."
       },
       "status": {
         "enabled": "Enabled",
-        "disabled": "Disabled"
+        "disabled": "Disabled",
+        "unverified": "Domain not verified"
+      },
+      "verify": {
+        "title": "Verify your domain",
+        "instructions": "Add this DNS TXT record to {domain}, then check it. SSO cannot be turned on until the domain is verified.",
+        "name": "Record name",
+        "value": "Record value",
+        "button": "Check record"
       }
     }
   }

@@ -72,6 +72,8 @@ test('owner sees today', { tag: '@smoke' }, async ({ page, asUser }) => {
 | `asUser(role, { workspace, path })`| the page, signed in as that seeded role, on `/w/<workspace>/<path>`    |
 | `db`                               | the worker database (`url`, `reset()`, `seed()`), already reset         |
 | `readMagicLink(email)`             | the newest magic link this worker's server emailed during the test     |
+| `readPhoneOtp(phone)`              | the code issued to an E.164 number, read from the worker DB (`verification`) |
+| `expirePhoneOtp(phone)`            | ages that code past its five minutes                                   |
 | `a11y.expectNoViolations(page)`    | axe; fails on serious/critical violations and lists every node         |
 | `clock.freeze(at?)`                | `page.clock` pinned to `2026-03-12T09:30:00+05:30`                     |
 

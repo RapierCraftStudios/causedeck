@@ -649,8 +649,36 @@
     {
       "idx": 92,
       "version": "7",
-      "when": 1792873000000,
-      "tag": "20261024210000_sso_provider_auth_view",
+      "when": 1792870066550,
+      "tag": "20261024193000_user_phone_number",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1792876056927,
+      "tag": "20261024210736_clerk_setup",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1792886400000,
+      "tag": "20261025000000_scim_token_lookup",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1792890000000,
+      "tag": "20261025010000_sso_domain_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1792890060000,
+      "tag": "20261025010100_sso_provider_lookup",
       "breakpoints": true
     }
   ]

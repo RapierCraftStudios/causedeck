@@ -11,9 +11,14 @@ import { canOpenSettings } from '../../../../../../lib/settings-nav.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
 
-import { deleteSsoProviderAction, saveSsoProviderAction, type SsoProviderView } from './actions.ts';
+import {
+  deleteSsoProviderAction,
+  saveSsoProviderAction,
+  verifySsoDomainAction,
+} from './actions.ts';
 import { SsoError } from './error.tsx';
 import { SsoProviderForm, SsoSkeleton } from './sso-form.tsx';
+import { toView, type SsoProviderView } from './view.ts';
 
 interface SsoPageProps {
   params: Promise<{ slug: string }>;
@@ -32,13 +37,7 @@ async function SsoSection({ workspaceId, userId }: { workspaceId: string; userId
     const rows = await inWorkspace({ workspaceId, userId }, (tx) =>
       listSsoProviders(tx, { workspaceId, actorUserId: userId }),
     );
-    providers = rows.map(({ id, protocol, issuer, domain, enabled }) => ({
-      id,
-      protocol,
-      issuer,
-      domain,
-      enabled,
-    }));
+    providers = rows.map(toView);
   } catch (error) {
     logger.error({ err: error }, 'sso page: could not load providers');
     return <SsoError />;
@@ -49,6 +48,7 @@ async function SsoSection({ workspaceId, userId }: { workspaceId: string; userId
       providers={providers}
       save={saveSsoProviderAction}
       remove={deleteSsoProviderAction}
+      verify={verifySsoDomainAction}
     />
   );
 }

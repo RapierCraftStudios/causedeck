@@ -60,6 +60,7 @@ const PRODUCTION = {
   SES_SECRET_ACCESS_KEY: 'prod-ses-secret-value',
   AI_PROVIDER: 'sarvam',
   SARVAM_API_KEY: 'prod-sarvam-api-key',
+  SARVAM_NO_TRAINING_CONFIRMED: 'true',
   STORAGE_PROVIDER: 's3',
   S3_BUCKET: 'causedeck-prod',
   S3_ACCESS_KEY: 'AKIAPRODS3',

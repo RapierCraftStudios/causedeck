@@ -1,0 +1,19 @@
+{
+  "id": "en-47",
+  "language": "en",
+  "hearingDate": "2025-07-10",
+  "text": "In case 43820 of 2025 today. Arguments were heard and the matter stands adjourned. The bench was not available. Next hearing on twenty ninth of September. The court directed the petitioner to file the rejoinder next saturday.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-09-29",
+      "phrase": "twenty ninth of September"
+    },
+    "directions": [
+      {
+        "text": "The court directed the petitioner to file the rejoinder next saturday.",
+        "dueDate": "2025-07-12"
+      }
+    ],
+    "tasks": []
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "adapterId": "in.drt",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.drt.bengaluru-1",
+  "listDate": "2026-10-22",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "OA/412/2025",
+        "rowIndex": 0
+      },
+      "confidence": 0.9,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "OA",
+      "caseType": "OA",
+      "caseNumber": "412",
+      "caseYear": 2025,
+      "matchKey": "OA/412/2025",
+      "parties": "Madeup Bank vs A. Pretend",
+      "bench": "DRT-1 Bengaluru - Presiding Officer (FICTIONAL)",
+      "stageRaw": "Evidence",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "SA/18/2026",
+        "rowIndex": 1
+      },
+      "confidence": 0.9,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "SA",
+      "caseType": "SA",
+      "caseNumber": "18",
+      "caseYear": 2026,
+      "matchKey": "SA/18/2026",
+      "parties": "B. Notreal vs Example Bank",
+      "bench": "DRT-1 Bengaluru - Presiding Officer (FICTIONAL)",
+      "stageRaw": "Admission",
+      "stageNorm": "admission"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "IA/9/2026",
+        "rowIndex": 2
+      },
+      "confidence": 0.9,
+      "hallNo": "2",
+      "itemNo": "1",
+      "caseTypeRaw": "IA",
+      "caseType": "IA",
+      "caseNumber": "9",
+      "caseYear": 2026,
+      "matchKey": "IA/9/2026",
+      "parties": "C. Fiction vs Sample ARC",
+      "bench": "DRT-2 Bengaluru - Presiding Officer (FICTIONAL)",
+      "stageRaw": "For Orders",
+      "stageNorm": "orders"
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1", "2"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "1",
+      "bench": "DRT-1 Bengaluru - Presiding Officer (FICTIONAL)",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "OA/412/2025",
+                "rowIndex": 0
+              },
+              "confidence": 0.9,
+              "hallNo": "1",
+              "itemNo": "1",
+              "caseTypeRaw": "OA",
+              "caseType": "OA",
+              "caseNumber": "412",
+              "caseYear": 2025,
+              "matchKey": "OA/412/2025",
+              "parties": "Madeup Bank vs A. Pretend",
+              "bench": "DRT-1 Bengaluru - Presiding Officer (FICTIONAL)",
+              "stageRaw": "Evidence",
+              "stageNorm": "evidence"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "SA/18/2026",
+                "rowIndex": 1
+              },
+              "confidence": 0.9,
+              "hallNo": "1",
+              "itemNo": "2",
+              "caseTypeRaw": "SA",
+              "caseType": "SA",
+              "caseNumber": "18",
+              "caseYear": 2026,
+              "matchKey": "SA/18/2026",
+              "parties": "B. Notreal vs Example Bank",
+              "bench": "DRT-1 Bengaluru - Presiding Officer (FICTIONAL)",
+              "stageRaw": "Admission",
+              "stageNorm": "admission"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "hallNo": "2",
+      "bench": "DRT-2 Bengaluru - Presiding Officer (FICTIONAL)",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "IA/9/2026",
+                "rowIndex": 2
+              },
+              "confidence": 0.9,
+              "hallNo": "2",
+              "itemNo": "1",
+              "caseTypeRaw": "IA",
+              "caseType": "IA",
+              "caseNumber": "9",
+              "caseYear": 2026,
+              "matchKey": "IA/9/2026",
+              "parties": "C. Fiction vs Sample ARC",
+              "bench": "DRT-2 Bengaluru - Presiding Officer (FICTIONAL)",
+              "stageRaw": "For Orders",
+              "stageNorm": "orders"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "not a number",
+        "rowIndex": 3
+      },
+      "text": "not a number",
+      "reason": "no case number"
+    }
+  ],
+  "status": "ok",
+  "source": "html",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "Cause List for 22-10-2026",
+    "rowIndex": 0
+  }
+}

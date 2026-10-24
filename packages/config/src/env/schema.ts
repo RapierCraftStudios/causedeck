@@ -309,6 +309,75 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 371,
   },
+  ALTERLAB_API_KEY: {
+    domain: 'server',
+    type: 'secret',
+    description:
+      'AlterLab API key for the governed fetch layer. Unset means the offline mock provider serves fixtures.',
+    requiredWhen: 'never (the mock provider is used when unset)',
+    ownerIssue: 479,
+    secret: true,
+  },
+  DATA_OPS_SLACK_WEBHOOK_URL: {
+    domain: 'server',
+    type: 'secret',
+    description:
+      'Slack incoming-webhook URL for data-ops alerts. Unset means alerts go to the email mailbox or the log.',
+    requiredWhen: 'never (alerts are logged when unset)',
+    ownerIssue: 515,
+    secret: true,
+  },
+  DATA_OPS_ALERT_EMAIL: {
+    domain: 'server',
+    type: 'email',
+    description:
+      'Mailbox that receives data-ops alerts, besides the on-call staff member. Unset means no mailbox.',
+    requiredWhen: 'never (alerts are logged when unset)',
+    ownerIssue: 515,
+  },
+  FETCH_DELEGATED_CAPTCHA_PER_HOUR: {
+    domain: 'server',
+    type: 'integer (1-1000)',
+    description:
+      'Per-advocate hourly allowance for delegated captcha-tier lookups in the governed fetch layer.',
+    default: '10',
+    requiredWhen: 'never (defaults to 10)',
+    ownerIssue: 479,
+  },
+  BUSINESS_FOUNDER_EMAILS: {
+    domain: 'server',
+    type: 'list (comma-separated emails)',
+    description:
+      'Founders who receive the weekly business digest and cost-per-user alerts. Unset sends nothing.',
+    requiredWhen: 'never (set per deployment)',
+    ownerIssue: 519,
+  },
+  BUSINESS_INFRA_COST_PAISE_MONTHLY: {
+    domain: 'server',
+    type: 'integer (paise)',
+    description:
+      'Monthly infrastructure cost in paise, spread over active users in the business dashboard (infra is not metered).',
+    default: '0',
+    requiredWhen: 'never (defaults to 0)',
+    ownerIssue: 519,
+  },
+  BUSINESS_COST_PER_USER_ALERT_PAISE: {
+    domain: 'server',
+    type: 'integer (paise)',
+    description:
+      'Monthly cost to serve per active user, in paise, above which a plan raises a business alert.',
+    default: '4000',
+    requiredWhen: 'never (defaults to 4000)',
+    ownerIssue: 519,
+  },
+  BUSINESS_USD_INR: {
+    domain: 'server',
+    type: 'number (INR per USD)',
+    description: 'Exchange rate used to turn fetch_log dollar costs into paise.',
+    default: '85',
+    requiredWhen: 'never (defaults to 85)',
+    ownerIssue: 519,
+  },
 } satisfies KeyMetaRecord;
 
 export const killSwitchKeys = {
@@ -431,6 +500,38 @@ export const serverShape = {
     .min(1)
     .optional()
     .describe(d(serverKeys.ADAPTER_PRIVATE_FIXTURES_DIR)),
+  // The governed fetch layer (#479, D-048): no key means the mock provider.
+  ALTERLAB_API_KEY: secret(z.string().min(1)).optional().describe(d(serverKeys.ALTERLAB_API_KEY)),
+  // Data-ops alert routing (#515, D-049): both unset means alerts are logged.
+  DATA_OPS_SLACK_WEBHOOK_URL: secret(z.url())
+    .optional()
+    .describe(d(serverKeys.DATA_OPS_SLACK_WEBHOOK_URL)),
+  DATA_OPS_ALERT_EMAIL: z.email().optional().describe(d(serverKeys.DATA_OPS_ALERT_EMAIL)),
+  FETCH_DELEGATED_CAPTCHA_PER_HOUR: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1000)
+    .describe(d(serverKeys.FETCH_DELEGATED_CAPTCHA_PER_HOUR)),
+  BUSINESS_FOUNDER_EMAILS: z
+    .string()
+    .refine(
+      (v) => v.split(',').every((e) => z.email().safeParse(e.trim()).success),
+      'must be comma-separated email addresses',
+    )
+    .optional()
+    .describe(d(serverKeys.BUSINESS_FOUNDER_EMAILS)),
+  BUSINESS_INFRA_COST_PAISE_MONTHLY: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .describe(d(serverKeys.BUSINESS_INFRA_COST_PAISE_MONTHLY)),
+  BUSINESS_COST_PER_USER_ALERT_PAISE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .describe(d(serverKeys.BUSINESS_COST_PER_USER_ALERT_PAISE)),
+  BUSINESS_USD_INR: z.coerce.number().positive().describe(d(serverKeys.BUSINESS_USD_INR)),
 };
 
 const baseSchema = z.object({ ...sharedShape, ...serverShape, ...clientShape });
@@ -510,6 +611,17 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
     add(
       'AI_INDIA_ONLY_OVERRIDE_ACK',
       `must be ${OVERRIDE_ACK} to set AI_INDIA_ONLY=false in production`,
+    );
+  }
+  if (
+    env.AI_PROVIDER === 'sarvam' &&
+    env.SARVAM_API_KEY !== undefined &&
+    env.SARVAM_API_KEY !== '' &&
+    env.SARVAM_NO_TRAINING_CONFIRMED !== 'true'
+  ) {
+    add(
+      'SARVAM_NO_TRAINING_CONFIRMED',
+      'must be true in production when a real Sarvam key is set (contract no-training term)',
     );
   }
   if (parsed.ALLOW_MOCK_PROVIDERS !== true) {

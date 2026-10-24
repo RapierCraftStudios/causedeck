@@ -158,7 +158,7 @@ afterEach(() => {
 describe('settings nav manifest', () => {
   const ids = (role: Role) => nav.visibleSettingsItems(role).map((item) => item.id);
 
-  it('lists the eight sections in order, then usage, the audit log and support access', () => {
+  it('lists the eight sections in order, then usage, the audit log, support access and court watch', () => {
     expect(nav.SETTINGS_NAV.filter((i) => i.group === 'sections').map((i) => i.id)).toEqual([
       'profile',
       'members',
@@ -169,7 +169,13 @@ describe('settings nav manifest', () => {
       'export',
       'danger',
     ]);
-    expect(ids('owner')).toEqual([...nav.SETTINGS_SECTIONS, 'usage', 'audit', 'support']);
+    expect(ids('owner')).toEqual([
+      ...nav.SETTINGS_SECTIONS,
+      'usage',
+      'audit',
+      'support',
+      'court-watch',
+    ]);
   });
 
   it('hides the sections a role cannot open', () => {
@@ -181,8 +187,10 @@ describe('settings nav manifest', () => {
       'integrations',
       'privacy',
       'audit',
+      'court-watch',
     ]);
-    expect(ids('junior')).toEqual(['profile', 'members', 'roles', 'notifications']);
+    // Court watch (#482) needs matter.write: juniors have it, clerks and viewers do not.
+    expect(ids('junior')).toEqual(['profile', 'members', 'roles', 'notifications', 'court-watch']);
     expect(ids('clerk')).toEqual(['profile', 'members', 'roles', 'notifications']);
     expect(ids('viewer')).toEqual(['members', 'notifications']);
   });
@@ -232,6 +240,7 @@ describe('settings shell', () => {
       en.nav.usage,
       en.nav.audit,
       en.nav.support,
+      en.nav['court-watch'],
     ]);
     expect(links[0]?.getAttribute('href')).toBe('/w/demo/settings/profile');
     expect(links[0]?.getAttribute('aria-current')).toBe('page');

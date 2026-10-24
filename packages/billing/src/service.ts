@@ -84,10 +84,13 @@ export interface BillingService {
   withdrawCancellation(snapshot: SubscriptionSnapshot): Promise<BillingOperationResult>;
 }
 
+/** Seat counts, plus the tracked cases a per-tracked-case plan (#664) is billed on. */
+export type ChargeCounts = SeatCounts & { trackedCases?: number };
+
 /** One cycle's charge for `plan` at these seat counts, integer paise, ex-GST. */
 export function cycleChargePaise(
-  plan: Pick<Plan, 'pricePaise' | 'perSeat' | 'clerkSeatPricePaise'>,
-  counts: SeatCounts,
+  plan: Pick<Plan, 'pricePaise' | 'perSeat' | 'clerkSeatPricePaise' | 'perTrackedCase'>,
+  counts: ChargeCounts,
 ): number {
   return mandateChargeNotice(plan, counts).chargePaise;
 }
@@ -120,8 +123,8 @@ export function proratePlanChange(input: {
 }
 
 export interface QuoteChangeInput {
-  current: { plan: Plan; counts: SeatCounts };
-  target: { plan: Plan; counts: SeatCounts };
+  current: { plan: Plan; counts: ChargeCounts };
+  target: { plan: Plan; counts: ChargeCounts };
   periodStart: Date | null;
   periodEnd: Date | null;
   at: Date;

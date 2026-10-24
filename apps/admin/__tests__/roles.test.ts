@@ -20,16 +20,23 @@ describe('staff role matrix', () => {
     expect(DEV_STAFF_EMAIL).toBe(support.DEV_STAFF_EMAIL);
   });
 
-  it('gives support metadata and sessions, ops adapters and flags, admin everything', () => {
+  it('gives support metadata and sessions, ops adapters, sources and flags, admin everything', () => {
     expect(STAFF_ROLE_MATRIX).toEqual({
       support: ['overview', 'workspaces', 'support', 'audit'],
-      ops: ['overview', 'adapters', 'flags', 'audit', 'growth'],
+      ops: ['overview', 'adapters', 'sources', 'data-ops', 'coverage', 'flags', 'audit', 'growth'],
       admin: STAFF_CAPABILITIES,
     });
     expect(canStaff('support', 'flags')).toBe(false);
     expect(canStaff('support', 'support')).toBe(true);
     expect(canStaff('ops', 'workspaces')).toBe(false);
     expect(canStaff('ops', 'flags')).toBe(true);
+    expect(canStaff('ops', 'sources')).toBe(true);
+    expect(canStaff('support', 'sources')).toBe(false);
+    expect(canStaff('ops', 'data-ops')).toBe(true);
+    expect(canStaff('support', 'data-ops')).toBe(false);
+    expect(canStaff('support', 'business')).toBe(false);
+    expect(canStaff('ops', 'business')).toBe(false);
+    expect(canStaff('admin', 'business')).toBe(true);
     expect(canStaff('ops', 'growth')).toBe(true);
     expect(canStaff('support', 'growth')).toBe(false);
     for (const capability of STAFF_CAPABILITIES) expect(canStaff('admin', capability)).toBe(true);

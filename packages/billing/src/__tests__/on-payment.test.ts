@@ -116,6 +116,26 @@ describe('invoiceOnPayment', () => {
   });
 });
 
+describe('chargeLines per tracked case (#664)', () => {
+  const base = {
+    planId: 'institution-case-monthly',
+    seats: 1,
+    clerkSeats: 0,
+    periodStart: '2026-10-01',
+    periodEnd: '2026-10-31',
+  };
+
+  it('bills one line of tracked cases at the case price', () => {
+    expect(chargeLines({ ...base, trackedCases: 250 })).toEqual([
+      expect.objectContaining({ quantity: 250, unitPricePaise: 4_900 }),
+    ]);
+  });
+
+  it('bills nothing with no tracked cases', () => {
+    expect(chargeLines(base)).toBeNull();
+  });
+});
+
 describe('chargeLines', () => {
   it('bills a flat plan once and skips clerk seats it does not sell', () => {
     expect(

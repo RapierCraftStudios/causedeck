@@ -1,0 +1,16 @@
+{
+  "adapterId": "in.tn.chennai.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "listDate": null,
+  "status": "needs_ocr",
+  "rows": [],
+  "source": "pdf",
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": [],
+    "hallsUnreadable": []
+  }
+}

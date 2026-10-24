@@ -57,6 +57,8 @@ export interface UploadIntentInput {
   filename: string;
   size: number;
   mime: string;
+  /** Presigned URL lifetime, 1 to 600 seconds; defaults to 5 minutes (#43 asks for 10). */
+  uploadTtlSeconds?: number;
 }
 
 export interface UploadIntent {
@@ -157,6 +159,7 @@ export async function createUploadIntent(
       key,
       contentType: allowed.mime,
       contentLength: input.size,
+      ...(input.uploadTtlSeconds === undefined ? {} : { expiresInSeconds: input.uploadTtlSeconds }),
     });
     return { blobId, key, upload };
   });

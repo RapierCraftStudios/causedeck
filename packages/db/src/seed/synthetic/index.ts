@@ -10,6 +10,8 @@
 import { isProd } from '@causedeck/config/env';
 
 import { withWorkspace } from '../../rls.ts';
+import { proposal } from '../../schema/automation.ts';
+import { capture } from '../../schema/capture.ts';
 import { hearing, listing, obligation, order } from '../../schema/docket.ts';
 import { anchor, document } from '../../schema/documents.ts';
 import { matter } from '../../schema/matter-graph.ts';
@@ -17,8 +19,17 @@ import { person, roleEdge } from '../../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../../schema/proceedings.ts';
 import type { SeedDb } from '../index.ts';
 
+import type { SyntheticInbox } from './inbox.ts';
 import type { SyntheticMatterTimeline } from './matter-timeline.ts';
 import type { SyntheticMatterSet } from './matters.ts';
+
+export {
+  SYNTHETIC_INBOX_CAPTURES,
+  SYNTHETIC_INBOX_PROPOSALS,
+  syntheticInbox,
+  type SyntheticInbox,
+  type SyntheticInboxOptions,
+} from './inbox.ts';
 
 export {
   SYNTHETIC_TIMELINE_EVENTS,
@@ -103,5 +114,14 @@ export async function insertSyntheticMatterTimeline(
     await tx.insert(order).values(set.orders).onConflictDoNothing();
     await tx.insert(obligation).values(set.obligations).onConflictDoNothing();
     await tx.insert(proceedingStateChange).values(set.stateChanges).onConflictDoNothing();
+  });
+}
+
+/** Insert the synthetic inbox (#48) into its workspace. A second run writes nothing. */
+export async function insertSyntheticInbox(db: SeedDb, set: SyntheticInbox): Promise<void> {
+  if (isProd()) throw new SyntheticSeedInProductionError();
+  await withWorkspace(db, { workspaceId: set.workspaceId }, async (tx) => {
+    await tx.insert(capture).values(set.captures).onConflictDoNothing();
+    await tx.insert(proposal).values(set.proposals).onConflictDoNothing();
   });
 }

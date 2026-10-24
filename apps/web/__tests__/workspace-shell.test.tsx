@@ -141,6 +141,10 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
   people: (await import('../app/(app)/w/[slug]/people/page.tsx')).default,
   // The courts index since #399, not a placeholder.
   courts: (await import('../app/(app)/w/[slug]/courts/page.tsx')).default,
+  // The notices feed since #588, not a placeholder.
+  notices: (await import('../app/(app)/w/[slug]/notices/page.tsx')).default,
+  // The institution portfolio since #666.
+  portfolio: (await import('../app/(app)/w/[slug]/portfolio/page.tsx')).default,
   activity: (await import('../app/(app)/w/[slug]/activity/page.tsx')).default,
   billing: (await import('../app/(app)/w/[slug]/billing/page.tsx')).default,
   invoices: (await import('../app/(app)/w/[slug]/invoices/page.tsx')).default,
@@ -159,8 +163,14 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'settings',
   // Its own page test since #399 (courts-page.test.tsx).
   'courts',
+  // Its own page test since #588 (components/notices/__tests__/notice-list.test.tsx).
+  'notices',
+  // Its own component test since #666 (components/portfolio/__tests__/portfolio-view.test.tsx).
+  'portfolio',
   // Its own page test since #388 (matters-page.test.tsx).
   'matters',
+  // Its own page and shell test since #48 (components/inbox/__tests__/inbox-shell.test.tsx).
+  'inbox',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
@@ -513,7 +523,6 @@ describe('placeholder pages', () => {
   it('uses the #11 design-spec empty copy verbatim', async () => {
     const spec: Partial<Record<PlaceholderId, string>> = {
       today: 'No hearings today. Forward a cause list to see your court day.',
-      inbox: 'Your inbox is clear.',
       obligations: 'No open obligations.',
     };
     for (const [route, copy] of Object.entries(spec)) {
@@ -599,7 +608,7 @@ describe('placeholder pages', () => {
   });
 
   it('renders no offline banner when online', async () => {
-    withIntl(await PAGES.inbox(props('demo')));
+    withIntl(await PAGES.today(props('demo')));
     expect(document.querySelector('[data-pattern-state="offline"]')).toBeNull();
   });
 });

@@ -27,6 +27,7 @@ import {
   type Channel,
   type Digest,
 } from './categories.ts';
+import { DEFAULT_END_OF_DAY_TIME, isDigestTimeOfDay } from './digest/schedule.ts';
 import { forbidden, invalid, notFound } from './errors.ts';
 
 const { member, notification, notificationPref, notificationSetting, organization } = schema;
@@ -509,7 +510,11 @@ export async function setCourtHoursQuiet(
 
 /** Categories the digest selector drives: email, not locked, not the digest email itself. */
 const DIGEST_CATEGORIES = CATEGORY_KEYS.filter(
-  (key) => key !== 'digest.daily' && !isLockedChannel(key, 'email'),
+  (key) =>
+    key !== 'digest.daily' &&
+    key !== 'digest.end_of_day' &&
+    key !== 'digest.news' &&
+    !isLockedChannel(key, 'email'),
 );
 
 /**
@@ -566,5 +571,106 @@ export async function setDigest(
         },
       });
     return digest;
+  });
+}
+
+/** The member's end-of-day digest preference (#49): `digest.end_of_day {enabled, time, includeNames}`. */
+export interface EndOfDayPreference {
+  enabled: boolean;
+  time: string;
+  includeNames: boolean;
+}
+
+const endOfDaySchema = z.strictObject({
+  userId: uuid,
+  enabled: z.boolean().optional(),
+  time: z
+    .string()
+    .refine(isDigestTimeOfDay, 'time must be HH:00 or HH:30 between 18:00 and 23:00')
+    .optional(),
+  includeNames: z.boolean().optional(),
+});
+
+async function readEndOfDay(
+  tx: Transaction,
+  workspaceId: string,
+  userId: string,
+): Promise<EndOfDayPreference> {
+  const [row] = await tx
+    .select({
+      time: notificationSetting.endOfDayTime,
+      includeNames: notificationSetting.endOfDayIncludeNames,
+    })
+    .from(notificationSetting)
+    .where(
+      and(eq(notificationSetting.workspaceId, workspaceId), eq(notificationSetting.userId, userId)),
+    );
+  const prefs = await prefRows(tx, workspaceId, userId);
+  const enabled = (['in_app', 'email'] as const).some(
+    (channel) => resolve('digest.end_of_day', channel, prefs).enabled,
+  );
+  return {
+    enabled,
+    time: row?.time ?? DEFAULT_END_OF_DAY_TIME,
+    includeNames: row?.includeNames ?? false,
+  };
+}
+
+/** The member's end-of-day digest preference in the context workspace, defaults filled in. */
+export async function getEndOfDayPreference(
+  ctx: NotificationContext,
+  input: { userId: string },
+): Promise<EndOfDayPreference> {
+  const { userId } = parse(userSchema, input);
+  return asMember(ctx, userId, (tx) => readEndOfDay(tx, ctx.workspaceId, userId));
+}
+
+/**
+ * Change the member's end-of-day digest preference. `enabled` turns the in-app and email channels
+ * of `digest.end_of_day` together; `time` and `includeNames` live on `notification_setting`.
+ */
+export async function setEndOfDayPreference(
+  ctx: NotificationContext,
+  input: { userId: string; enabled?: boolean; time?: string; includeNames?: boolean },
+): Promise<EndOfDayPreference> {
+  const p = parse(endOfDaySchema, input);
+  return asMember(ctx, p.userId, async (tx) => {
+    const set = {
+      ...(p.time === undefined ? {} : { endOfDayTime: p.time }),
+      ...(p.includeNames === undefined ? {} : { endOfDayIncludeNames: p.includeNames }),
+    };
+    if (Object.keys(set).length > 0) {
+      await tx
+        .insert(notificationSetting)
+        .values({ workspaceId: ctx.workspaceId, userId: p.userId, ...set })
+        .onConflictDoUpdate({
+          target: [notificationSetting.workspaceId, notificationSetting.userId],
+          set: { ...set, updatedAt: new Date() },
+        });
+    }
+    if (p.enabled !== undefined) {
+      for (const channel of ['in_app', 'email'] as const) {
+        await tx
+          .insert(notificationPref)
+          .values({
+            workspaceId: ctx.workspaceId,
+            userId: p.userId,
+            category: 'digest.end_of_day',
+            channel,
+            enabled: p.enabled,
+            digest: 'instant',
+          })
+          .onConflictDoUpdate({
+            target: [
+              notificationPref.workspaceId,
+              notificationPref.userId,
+              notificationPref.category,
+              notificationPref.channel,
+            ],
+            set: { enabled: p.enabled, updatedAt: new Date() },
+          });
+      }
+    }
+    return readEndOfDay(tx, ctx.workspaceId, p.userId);
   });
 }

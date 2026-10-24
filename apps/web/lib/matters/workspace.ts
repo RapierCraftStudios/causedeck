@@ -5,6 +5,7 @@
 // The layout (header) and the Overview page (cards) both need it; React `cache` makes them share
 // one read per request. `toOverviewView` turns the read model into what the client cards render,
 // with dates already formatted for the locale (court style: weekday first, IST days).
+import type { Agreement } from '@causedeck/core/facts';
 import type {
   ListingDetail,
   MatterDocumentRow,
@@ -19,8 +20,13 @@ import type { WorkspaceContext } from '../workspace-context.ts';
 
 import { domainErrorCode, graphDeps } from './graph-deps.ts';
 
+/** The overview plus how well the sources agree on its next date and stage (#499). */
+export type MatterOverviewWithAgreement = MatterOverview & {
+  agreement?: { date: Agreement; stage: Agreement } | null | undefined;
+};
+
 export type MatterOverviewLoad =
-  | { kind: 'overview'; overview: MatterOverview }
+  | { kind: 'overview'; overview: MatterOverviewWithAgreement }
   | { kind: 'not-found' }
   | { kind: 'denied' }
   | { kind: 'error' };
@@ -32,9 +38,10 @@ const loadOverview = cache(
       const { inWorkspace } = await import('@causedeck/core/runtime');
       const { getMatterOverview } = await import('@causedeck/core/matter-graph');
       const scope = { workspaceId, userId };
-      const overview = await inWorkspace(scope, (tx) =>
+      const overview: MatterOverviewWithAgreement = await inWorkspace(scope, (tx) =>
         getMatterOverview(graphDeps(tx), scope, { matterId }),
       );
+      overview.agreement = (await loadAgreement(workspaceId, userId, overview)) ?? null;
       return { kind: 'overview', overview };
     } catch (error) {
       const code = domainErrorCode(error);
@@ -46,6 +53,30 @@ const loadOverview = cache(
     }
   },
 );
+
+/**
+ * How the sources agree on the next-date proceeding's date and stage. It only decorates the cards:
+ * any failure (or no next date) leaves the chip out and never fails the page.
+ */
+async function loadAgreement(
+  workspaceId: string,
+  userId: string,
+  overview: MatterOverview,
+): Promise<MatterOverviewWithAgreement['agreement']> {
+  const proceedingId = overview.nextDate?.proceedingId;
+  if (proceedingId === undefined) return null;
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { getNextDateAgreement, getStageAgreement } = await import('@causedeck/core/facts');
+    return await inWorkspace({ workspaceId, userId }, async (tx) => ({
+      date: await getNextDateAgreement(tx, workspaceId, proceedingId),
+      stage: await getStageAgreement(tx, workspaceId, proceedingId),
+    }));
+  } catch (error) {
+    logger.warn({ err: error }, 'matter workspace: could not load the source agreement');
+    return null;
+  }
+}
 
 /** The matter's Overview for the signed-in member, shared by the layout and the page. */
 export function loadMatterOverview(
@@ -63,6 +94,15 @@ export interface SourceView {
   confidence: number | null;
 }
 
+/** One fact's source agreement as the chip renders it (#499). */
+export interface AgreementView {
+  status: Agreement['status'];
+  /** Whole percent, 0..100. */
+  percent: number;
+  /** Every distinct source, leading value first; `kind` is the provenance source type. */
+  sources: { kind: ListingDetail['provenance']['sourceType']; ref: string | null; value: string }[];
+}
+
 export interface ListingView {
   listingId: string;
   proceedingId: string;
@@ -74,12 +114,30 @@ export interface ListingView {
   proposed: boolean;
   stage: string | null;
   source: SourceView;
+  /** The sources' agreement on the date; set on the next-date card only. */
+  dateAgreement?: AgreementView;
+  /** The sources' agreement on the stage; set on the next-date card only. */
+  stageAgreement?: AgreementView;
 }
 
 export interface ConflictView {
   proceedingId: string;
   current: ListingView;
   proposed: ListingView;
+  /** Further disagreeing sources of the same proceeding: one card per fact, resolved pair by pair. */
+  others: ListingView[];
+}
+
+function agreementView(agreement: Agreement): AgreementView {
+  return {
+    status: agreement.status,
+    percent: Math.round(agreement.confidence * 100),
+    sources: agreement.sources.map((s) => ({
+      kind: s.sourceType as AgreementView['sources'][number]['kind'],
+      ref: s.sourceRef,
+      value: s.value,
+    })),
+  };
 }
 
 type ProceedingState = keyof MatterOverview['proceedings']['byState'];
@@ -159,12 +217,29 @@ function conflictView(conflict: NextDateConflictView, locale: Locale, now: Date)
     proceedingId: conflict.proceedingId,
     current: listingView(conflict.current, locale, now),
     proposed: listingView(conflict.proposed, locale, now),
+    others: [],
   };
+}
+
+/** One card per proceeding: its first disagreeing source is B, the rest are listed as `others`. */
+function groupConflicts(
+  conflicts: readonly NextDateConflictView[],
+  locale: Locale,
+  now: Date,
+): ConflictView[] {
+  const cards = new Map<string, ConflictView>();
+  for (const conflict of conflicts) {
+    const view = conflictView(conflict, locale, now);
+    const card = cards.get(view.proceedingId);
+    if (card === undefined) cards.set(view.proceedingId, view);
+    else card.others.push(view.proposed);
+  }
+  return [...cards.values()];
 }
 
 /** The read model as the Overview cards render it. */
 export function toOverviewView(
-  overview: MatterOverview,
+  overview: MatterOverviewWithAgreement,
   { locale, now }: { locale: Locale; now: Date },
 ): MatterOverviewView {
   const { header, proceedings } = overview;
@@ -176,8 +251,19 @@ export function toOverviewView(
     sensitive: header.sensitive,
     owner: header.owner?.name ?? null,
     clients: header.clients.map((person) => ({ id: person.id, name: person.name })),
-    nextDate: overview.nextDate === null ? null : listingView(overview.nextDate, locale, now),
-    conflicts: overview.conflicts.map((conflict) => conflictView(conflict, locale, now)),
+    nextDate:
+      overview.nextDate === null
+        ? null
+        : {
+            ...listingView(overview.nextDate, locale, now),
+            ...(overview.agreement
+              ? {
+                  dateAgreement: agreementView(overview.agreement.date),
+                  stageAgreement: agreementView(overview.agreement.stage),
+                }
+              : {}),
+          },
+    conflicts: groupConflicts(overview.conflicts, locale, now),
     proceedings: {
       count: proceedings.count,
       byState: (Object.keys(proceedings.byState) as ProceedingState[]).map((state) => ({
@@ -217,4 +303,37 @@ export function toOverviewView(
     synopsis: overview.synopsis?.text ?? null,
     synopsisDenied: overview.synopsisDenied,
   };
+}
+
+/** A fix from CauseDeck review shown on the matter: "corrected by CauseDeck review" (#518). */
+export interface ReviewCorrectionView {
+  id: string;
+  field: 'next_date' | 'stage' | 'bench';
+  value: string;
+  correctedAt: string;
+}
+
+/** The corrections review fanned out to this proceeding, newest first. A failed read shows none. */
+export async function loadReviewCorrections(
+  context: WorkspaceContext,
+  proceedingId: string,
+  locale: Locale,
+): Promise<ReviewCorrectionView[]> {
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { listReviewCorrections } = await import('@causedeck/core/review');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    const rows = await inWorkspace(actor, (tx) =>
+      listReviewCorrections(tx, actor.workspaceId, proceedingId),
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      field: r.field,
+      value: r.value,
+      correctedAt: formatDate(r.correctedAt, { locale }),
+    }));
+  } catch (error) {
+    logger.warn({ err: error }, 'matter workspace: could not load the review corrections');
+    return [];
+  }
 }

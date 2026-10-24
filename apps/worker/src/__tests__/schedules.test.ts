@@ -19,15 +19,33 @@ describe('registerSchedules', () => {
     const worker = await startTestWorker(scheduled);
     expect(await registerSchedules(worker.boss, registry)).toEqual([
       'system.retention.sweep',
+      'system.court-data.retention',
       'system.billing.reconcile',
       'system.billing.dunning-tick',
       'system.notification.digest',
+      'system.activity.digest',
+      'system.news.digest',
+      'system.news.poll',
       'system.usage.rollup',
+      'system.business.cost-alert',
+      'system.business.digest',
+      'system.coverage.weekly',
       'system.audit.verify',
       'system.audit.retention',
       'system.export.expire',
       'system.support.session-expire',
       'system.deletion.tick',
+      'system.capture.retention',
+      'system.data-ops.evaluate',
+      'system.corpus.poll',
+      'system.causelist.poll',
+      'system.board.poll',
+      'system.notices.poll',
+      'system.judgment-alert.scan',
+      'system.portfolio-alert.scan',
+      'system.status.poll',
+      'system.webhook.sweep',
+      'system.orders.poll',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -67,12 +85,34 @@ describe('registerSchedules', () => {
     const others = [
       // Dunning tick: daily 04:30 IST.
       ['system.billing.dunning-tick', '30 4 * * *', '2026-10-18T23:00:00.000Z'],
+      // End-of-day digest scheduler (#49): every half hour from 18:00 to 23:30 IST; 18:00 IST is 12:30 UTC.
+      ['system.activity.digest', '0,30 18-23 * * *', '2026-10-18T12:30:00.000Z'],
+      // News digest scheduler (#481): every half hour, like the notification digest; 06:00 IST is 00:30 UTC.
+      ['system.news.digest', '0,30 * * * *', '2026-10-18T00:30:00.000Z'],
+      // News poll fan-out (#481): hourly at :10 IST, which is :40 UTC.
+      ['system.news.poll', '10 * * * *', '2026-10-18T00:40:00.000Z'],
       // Usage rollup: hourly at :15 IST, which is :45 UTC.
       ['system.usage.rollup', '15 * * * *', '2026-10-18T00:45:00.000Z'],
+      // Business cost alert (#519): daily 08:00 IST; digest: Mondays 09:00 IST (2026-10-19 is a Monday).
+      ['system.business.cost-alert', '0 8 * * *', '2026-10-18T02:30:00.000Z'],
+      ['system.business.digest', '0 9 * * 1', '2026-10-19T03:30:00.000Z'],
       // Audit chain verification: daily 02:00 IST.
       ['system.audit.verify', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // Audit retention: daily 03:00 IST.
       ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
+      // Court data retention: daily 04:15 IST.
+      ['system.court-data.retention', '15 4 * * *', '2026-10-18T22:45:00.000Z'],
+      // Capture raw-object retention: daily 02:00 IST.
+      ['system.capture.retention', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
+      // Data-ops evaluation (#515): every 15 minutes; 05:45 IST is 00:15 UTC.
+      ['system.data-ops.evaluate', '*/15 * * * *', '2026-10-18T00:15:00.000Z'],
+      // KHC cause-list poll (#482): 07:30 and 18:30 IST; 07:30 IST is 02:00 UTC.
+      ['system.causelist.poll', '30 7,18 * * *', '2026-10-18T02:00:00.000Z'],
+      // Board poll (#493): every five minutes 10:00-16:55 IST on weekdays; 2026-10-18 is a Sunday, so
+      // the first run is Monday 10:00 IST (04:30 UTC).
+      ['system.board.poll', '*/5 10-16 * * 1-5', '2026-10-19T04:30:00.000Z'],
+      // Notices poll (#586): hourly on the hour IST; 06:00 IST is 00:30 UTC.
+      ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
     ] as const;
     for (const [name, cron, firstRun] of others) {
       const row = await worker.boss.getSchedule(name);

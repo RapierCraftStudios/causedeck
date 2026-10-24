@@ -91,6 +91,7 @@ vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),
 }));
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
+vi.mock('../lib/flags.ts', () => ({ workspaceFlagCheck: () => Promise.resolve(() => false) }));
 vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/matter-graph', () => graph);
@@ -100,10 +101,12 @@ vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
   setSensitiveAction: vi.fn(),
   confirmNextDateAction: vi.fn(),
   chooseNextDateSourceAction: vi.fn(),
+  reportRecordErrorAction: vi.fn(),
 }));
 vi.mock('../app/(app)/w/[slug]/matters/actions.ts', () => ({
   searchMattersAction: vi.fn(),
   createMatterAction: vi.fn(),
+  checkConflictsAction: vi.fn(),
 }));
 vi.mock('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts', () => ({
   createProceedingAction: vi.fn(),

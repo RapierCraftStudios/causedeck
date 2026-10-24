@@ -11,17 +11,21 @@ Every flag is off by default and ships dark. ⚖ marks a legal-gated flag. A leg
 | `invoices.enabled` | ⚖ yes | `KILL_INVOICES_ENABLED` | #83 fees and invoices, #120 counsel unlock; hides the `invoices` route (#11) |
 | `limitation.enabled` | ⚖ yes | `KILL_LIMITATION_ENABLED` | #84 limitation tracker, #120 counsel unlock; hides the `limitation` route (#11) |
 | `court.a2.retrieval` | ⚖ yes | `KILL_COURT_A2_RETRIEVAL` | #35 adapter framework, #120 counsel unlock |
-| `court.live-tracking` | ⚖ yes | `KILL_COURT_LIVE_TRACKING` | #35 adapter framework, #120 counsel unlock |
+| `court.live-tracking` | ⚖ yes | `KILL_COURT_LIVE_TRACKING` | #35 adapter framework, #493 display-board tracking, #120 counsel unlock |
+| `court.khc-a2` | ⚖ yes | `KILL_COURT_KHC_A2` | #482 Karnataka HC cause-list watch (A2), #118 counsel clearance |
+| `court.case-status` | ⚖ yes | `KILL_COURT_CASE_STATUS` | #483 case-status watch, refresh and on-device captcha solver (D-048 tier 4), #118 counsel clearance |
 | `court.sanctioned-push` | ⚖ yes | `KILL_COURT_SANCTIONED_PUSH` | #35 adapter framework, #120 counsel unlock |
 | `ai.bedrock` | no | `KILL_AI_BEDROCK` | #44 AI gateway, #112 Bedrock credentials |
 | `ai.sarvam` | no | `KILL_AI_SARVAM` | #44 AI gateway, #51 voice capture, #113 Sarvam key |
-| `capture.whatsapp-import` | no | `KILL_CAPTURE_WHATSAPP_IMPORT` | #55 WhatsApp export importer |
+| `capture.whatsapp-import` | ⚖ yes | `KILL_CAPTURE_WHATSAPP_IMPORT` | #55 WhatsApp export importer (#525 parser and server checks), #120 counsel unlock |
 | `capture.email-forward` | no | `KILL_CAPTURE_EMAIL_FORWARD` | #54 email forward-in intake, #287 intake address card in settings integrations |
-| `capture.ics-feed` | no | `KILL_CAPTURE_ICS_FEED` | #53 private ICS feed, #287 feed URL card in settings integrations |
+| `capture.ics-feed` | no | `KILL_CAPTURE_ICS_FEED` | #53 private ICS feed (`/api/ics/[token]`, the calendar settings page and its actions), #287 card in settings integrations (links to the calendar page) |
 | `pwa.offline` | no | `KILL_PWA_OFFLINE` | #50 offline outbox, #65 offline cache |
 | `billing.razorpay` | no | `KILL_BILLING_RAZORPAY` | #28 Razorpay subscriptions, #111 Razorpay account |
 | `insights.enabled` | no | `KILL_INSIGHTS_ENABLED` | #85 insights dashboard |
 | `workspace.export` | no | `KILL_WORKSPACE_EXPORT` | #31 export service, #288 export settings page (enables `Export workspace`) |
+| `conflicts.check` | ⚖ yes | `KILL_CONFLICTS_CHECK` | #500 conflict-of-interest check on new-matter intake, counsel sign-off through #486 |
+| `bench_facts` | ⚖ yes | `KILL_BENCH_FACTS` | #521 factual bench card (D-050), off until counsel clears it, #118 counsel clearance |
 
 ## Evaluation
 
@@ -66,7 +70,7 @@ Each server process caches every workspace's flag rows in an LRU with a 15 s TTL
 3. Add a row to the table above. A test checks it.
 4. Gate the server path with `requireFlag`. Gate the UI with `useFlag` or `<Feature>`, or with a nav item's `flag`.
 
-**Naming.** Use `<area>.<capability>`, lower case, with dot-separated segments and hyphens inside a segment (`court.live-tracking`). Use `.enabled` for a whole area (`invoices.enabled`).
+**Naming.** Use `<area>.<capability>`, lower case (`bench_facts` is the one legacy underscore key, named by D-050), with dot-separated segments and hyphens inside a segment (`court.live-tracking`). Use `.enabled` for a whole area (`invoices.enabled`).
 
 **Removing a flag.** Once its feature is launched and the flag is no longer needed, delete it from the registry, the kill-switch list and this table, and delete its rows in a migration.
 

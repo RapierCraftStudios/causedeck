@@ -93,7 +93,8 @@ test.describe('matter timeline', () => {
     await openMatters(page, asUser, { path: timelinePath() });
     await page.locator('body').click();
     await page.keyboard.press('t');
-    await expect(page.locator('[data-event-id^="listing:"]')).toBeFocused();
+    // Focus lands on the row (`li[data-row-id]`) that wraps the event card, not on the card.
+    await expect(page.locator('[data-row-id^="listing:"]')).toBeFocused();
     await page.keyboard.press('?');
     await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
     await page.keyboard.press('Escape');
@@ -126,9 +127,7 @@ test.describe('matter timeline', () => {
       'Showing saved timeline from',
     );
     await page.goto(`/w/${MATTERS_WORKSPACE}/${timelinePath('__state=denied')}`);
-    await expect(
-      page.locator('[data-pattern-state="denied"], main [role="alert"]').first(),
-    ).toBeVisible();
+    await expect(page.locator('main [data-pattern-state="permission-denied"]')).toBeVisible();
     await page.goto(`/w/${MATTERS_WORKSPACE}/${timelinePath('__state=error')}`);
     await expect(page.locator('main').getByRole('button', { name: 'Retry' })).toBeVisible({
       timeout: 15_000,
@@ -141,6 +140,6 @@ test.describe('matter timeline', () => {
   }) => {
     await openMatters(page, asUser, { role: 'clerk', path: timelinePath() });
     await expect(page.getByRole('tree', { name: 'Proceedings of this matter' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /add|edit|delete/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^(add|edit|delete)\b/i })).toHaveCount(0);
   });
 });

@@ -65,11 +65,11 @@ Staff accounts exist only through the operator CLI (#308):
 `pnpm --filter @causedeck/admin staff:add <email> --role support|ops|admin`. The matrix lives in
 `apps/admin/lib/roles.ts` and filters the nav and the pages:
 
-| Role      | Overview | Adapters | Flags | Workspaces | Support sessions | Audit |
-| --------- | -------- | -------- | ----- | ---------- | ---------------- | ----- |
-| `support` | yes      |          |       | metadata   | yes              | yes   |
-| `ops`     | yes      | yes      | yes   |            |                  | yes   |
-| `admin`   | yes      | yes      | yes   | yes        | yes              | yes   |
+| Role      | Overview | Adapters | Data Ops | Flags | Workspaces | Support sessions | Audit | Business |
+| --------- | -------- | -------- | -------- | ----- | ---------- | ---------------- | ----- | -------- |
+| `support` | yes      |          |          |       | metadata   | yes              | yes   |          |
+| `ops`     | yes      | yes      | yes      | yes   |            |                  | yes   |          |
+| `admin`   | yes      | yes      | yes      | yes   | yes        | yes              | yes   | yes      |
 
 Within Workspaces, setting or expiring an AI budget override is `admin` only
 (`canOverrideBudget`); `support` sees the usage section read-only.
@@ -176,6 +176,47 @@ then `registryHealthSource` reads `access_mode_registry` through the data layer
 checked. The page shows `No adapters registered yet.` when the registry is empty, and a
 `No health data yet` notice when no row has been checked.
 
+## Fixtures workbench
+
+`/fixtures` (#516, `ops` and `admin`, the `adapters` capability) turns a contributed document into
+a redacted adapter fixture. Staff pick an adapter and format, paste or upload the document, and run
+the adapter's parser. The page shows the parsed rows (hall, bench, item, case number, case type,
+year, parties, stage) and the list date in a form; corrections are applied by row anchor and
+validated against the parser output schema. "Redact and build fixture" returns a bundle (input,
+expected JSON, manifest entry) for download.
+
+Redaction (`@causedeck/adapters/workbench`): party names (from the parser output, plus names the
+labeler lists) become deterministic synthetic names, and emails, phone numbers, Aadhaar and PAN
+numbers become placeholders; layout, page breaks and anchors are kept. The builder runs a leak
+detector over the result and refuses to return a bundle that still holds a known name or personal
+data. The contributed document lives only in the request: it is never stored or logged, and both
+actions record `staff.read` (purpose `adapters.fixture_workbench`, actor kind `staff`).
+
+Export to a PR: `pnpm --filter @causedeck/adapters fixtures:export <bundle.json>` writes the files
+into `packages/adapters/fixtures/<adapter>/`, a person commits them and opens a PR. Fetched
+documents are not offered: `fetch_log` keeps no bodies.
+
+## Data Ops
+
+`/data-ops` (#514, `data-ops` capability: `ops` and `admin`) shows, per registered source, its
+kind, access mode, status, last success, freshness against an SLA, fetches, error rate, parse yield,
+cost and tier mix for the last 24 hours and 7 days, the captcha solve rate (captcha-tier calls that
+succeeded), the top failing sources, and daily volume and cost bars. `/data-ops/<source id>` lists
+the newest `fetch_log` rows: time, status, tier and cost only. Source ids are court ids for
+`court` sources, so the per-source charts are the per-court charts. Kill switch and rate-limit
+edits stay on `/sources` (audited as `source.changed`).
+
+- Read model: `sourceOpsOverview` and `sourceFetchLogs` in `packages/core/src/sources/ops.ts`, read
+  through the data layer (`dataOpsOverview`, `dataOpsFetchLogs`; purposes `data_ops.*`).
+- Freshness SLA: `FRESHNESS_SLA_HOURS` per source kind (court and notice 24h, news 6h, licensed 24h,
+  corpus 168h) since the last successful fetch. A source that never succeeded is stale.
+- Parse yield (rows anchored / rows parsed) comes from `app_staff_parse_yield` (migration 0072), a
+  staff-only definer function over `adapter_parse_run` returning per-adapter counts; the adapter id
+  is the source id. Conflict rate (#499) comes from `app_staff_conflict_rate` (migration 0082): per
+  source host, the share of date readings that disagree with the proceeding's canonical date, counts
+  only; it is matched to a source by the host of its base URL.
+- Errors are status 0 or >= 400. No URL, URL hash, advocate, document or party data is read.
+
 ## Workspaces and audit pages
 
 - **Workspaces** (`/workspaces`, roles `support` and `admin`): a GET search (`?q=`) by slug prefix
@@ -200,6 +241,19 @@ checked. The page shows `No adapters registered yet.` when the registry is empty
   page with an "Older" cursor: time, staff id, action, workspace, session id (the support or auth
   session the event targets, else `metadata.supportSessionId`) and outcome. No metadata, IP or
   user agent.
+- **Business** (`/business`, `admin` only, #519, D-049): this IST month's MRR and ARR (annual
+  plans count a twelfth, per-seat plans their seats), daily and weekly active users, free-to-paid
+  conversion, paid churn over 30 days, and a per-plan table of cost to serve per active user split
+  into fetch, captcha, AI and infrastructure, with gross margin and an "Over threshold" marker for a
+  plan above `BUSINESS_COST_PER_USER_ALERT_PAISE`. `businessMetrics` in `lib/data` reads it through
+  the owner-defined `app_staff_business_snapshot` (migration 0071), which refuses (`42501`) anyone
+  but an enabled staff member and returns plan ids and numbers only; the maths is
+  `@causedeck/core/business`. AI cost is the metered `ai.spend_paise`; fetch and captcha cost is
+  `fetch_log` dollars (converted at `BUSINESS_USD_INR`) charged to the delegating advocate's plan,
+  with scheduled and shared fetches spread over active users; infrastructure is the configured
+  `BUSINESS_INFRA_COST_PAISE_MONTHLY` spread over active users. Active users come from session
+  activity. The daily `system.business.cost-alert` job and the Monday `system.business.digest` job
+  email `BUSINESS_FOUNDER_EMAILS` from the same figures.
 
 `__tests__/no-content-fields.test.ts` reads fully seeded workspaces through the data layer and the
 pages and fails on any content field or another member's email.

@@ -11,20 +11,42 @@ import type { Database, Transaction } from '../client.ts';
 import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
 import { withWorkspace } from '../rls.ts';
 import { adapterParseRun } from '../schema/adapters.ts';
-import { aiCall } from '../schema/audit.ts';
+import { aiCall, aiCallResult } from '../schema/audit.ts';
+import {
+  activity,
+  automationPreference,
+  automationThreshold,
+  proposal,
+} from '../schema/automation.ts';
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
+import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
+import { reviewCorrection, reviewItem } from '../schema/review.ts';
+import { extraction } from '../schema/extraction.ts';
+import { advocateProfile } from '../schema/advocate-profile.ts';
+import { apiKey } from '../schema/api-keys.ts';
+import { portfolio, portfolioCase, portfolioPanelAdvocate } from '../schema/portfolio.ts';
+import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
+import { causeListWatch } from '../schema/cause-list-watch.ts';
+import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
+import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
+import { notice, noticeMatch } from '../schema/notices.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
+import { judgment } from '../schema/corpus.ts';
 import { matter } from '../schema/matter-graph.ts';
+import { judgmentAlert, matterIssueTag } from '../schema/matter-issue.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
 import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
+import { newsPref } from '../schema/news.ts';
+import { contributedDocument, contributionLedger } from '../schema/network.ts';
+import { source } from '../schema/source-registry.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
 import {
   budgetOverride,
@@ -34,7 +56,9 @@ import {
 } from '../schema/usage.ts';
 import { saasInvoice, saasInvoiceLine } from '../schema/saas-invoice.ts';
 import { supportSession } from '../schema/staff.ts';
+import { capture, workspaceCaptureChannel } from '../schema/capture.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
+import { intakeAddress, intakeAllowlist, intakeMessage } from '../schema/email-intake.ts';
 import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
@@ -56,6 +80,70 @@ export type SeedRow = Record<string, string>;
 
 /** Writes one row into its table for `ctx.workspaceId`, on a transaction scoped to it. */
 export type TenantSeeder = (tx: Transaction, ctx: SeedContext) => Promise<SeedRow>;
+
+/** A pending import batch (#546), the parent of `import_batch_file` and `import_plan` seeds. */
+async function seedImportBatch(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+): Promise<string> {
+  const rows = await tx
+    .insert(importBatch)
+    .values({ workspaceId, createdBy: ownerId })
+    .returning({ id: importBatch.id });
+  return first(rows, 'import_batch').id;
+}
+
+/** A watch of a fresh proceeding at the shared `xt.case-watch` source (#589), owned by the advocate. */
+async function seedCaseWatch(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<string> {
+  const proceedingId = await seedProceeding(tx, workspaceId, tag);
+  await tx
+    .insert(source)
+    .values({
+      id: 'xt.case-watch',
+      kind: 'court',
+      baseUrl: 'https://xt.example.test',
+      owner: 'xt',
+    })
+    .onConflictDoNothing();
+  const rows = await tx
+    .insert(caseWatch)
+    .values({
+      workspaceId,
+      proceedingId,
+      sourceId: 'xt.case-watch',
+      cnr: 'TNCH010012342024',
+      advocateUserId: ownerId,
+    })
+    .returning({ id: caseWatch.id });
+  return first(rows, 'case_watch').id;
+}
+
+/** A confirmed issue tag on a fresh matter of the workspace (#497), the parent of `judgment_alert` seeds. */
+async function seedIssueTag(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<{ matterId: string; tagId: string }> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(matterIssueTag)
+    .values({
+      workspaceId,
+      matterId,
+      statute: 'arbitration and conciliation act',
+      section: '34',
+      status: 'confirmed',
+      source: 'manual',
+    })
+    .returning({ id: matterIssueTag.id });
+  return { matterId, tagId: first(rows, 'matter_issue_tag').id };
+}
 
 /** A draft SaaS invoice for the workspace (the seed for `saas_invoice` and `saas_invoice_line`). */
 async function seedDraftInvoice(tx: Transaction, workspaceId: string): Promise<string> {
@@ -328,6 +416,19 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: aiCall.id });
     return { aiCallId: first(rows, 'ai_call').id };
   },
+  ai_call_result: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(aiCallResult)
+      .values({
+        workspaceId,
+        idempotencyKey: `xt-${randomUUID()}`,
+        aiCallId: randomUUID(),
+        output: {},
+        expiresAt: new Date(Date.now() + 86_400_000),
+      })
+      .returning({ id: aiCallResult.id });
+    return { aiCallResultId: first(rows, 'ai_call_result').id };
+  },
   notification: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx
       .insert(notification)
@@ -344,6 +445,10 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       enabled: false,
     });
     return { userId: ownerId, category: 'system.notice', channel: 'email' };
+  },
+  news_pref: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(newsPref).values({ workspaceId, userId: ownerId, practiceAreas: ['tax'] });
+    return { userId: ownerId };
   },
   notification_setting: async (tx, { workspaceId, ownerId }) => {
     await tx
@@ -420,6 +525,35 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     );
     return { id: row.id, matterId: row.matterId };
   },
+  contribution_ledger: async (tx, { workspaceId }) => {
+    // The shared copy is a global row (no workspace); only the ledger link is tenant data.
+    const sourceId = `xt.seed.${randomUUID()}`;
+    await tx
+      .insert(source)
+      .values({ id: sourceId, kind: 'court', baseUrl: `urn:xt:${sourceId}`, owner: 'xt' });
+    const content = `xt cause list ${randomUUID()}`;
+    const copy = first(
+      await tx
+        .insert(contributedDocument)
+        .values({
+          sourceId,
+          kind: 'cause_list',
+          content,
+          sha256: createHash('sha256').update(content).digest('hex'),
+          retentionUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        })
+        .returning({ id: contributedDocument.id }),
+      'contributed_document',
+    );
+    const row = first(
+      await tx
+        .insert(contributionLedger)
+        .values({ workspaceId, contributedDocumentId: copy.id })
+        .returning({ id: contributionLedger.id }),
+      'contribution_ledger',
+    );
+    return { id: row.id };
+  },
   support_session: async (tx, { workspaceId, ownerId }) => {
     // A pending request; the requester's staff_user row is not needed at the SQL level.
     const row = first(
@@ -428,6 +562,48 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
         .values({ workspaceId, requestedByStaff: ownerId, reason: 'Seed support request' })
         .returning({ id: supportSession.id }),
       'support_session',
+    );
+    return { id: row.id };
+  },
+  intake_address: async (tx, { workspaceId, ownerId }) => {
+    // `u-` + 10 base32 characters (a-z, 2-7), as the core service generates them.
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+    const localPart = `u-${[...randomBytes(10)].map((byte) => alphabet[byte % 32]).join('')}`;
+    const row = first(
+      await tx
+        .insert(intakeAddress)
+        .values({ workspaceId, userId: ownerId, localPart, domain: 'intake.test' })
+        .returning({ id: intakeAddress.id }),
+      'intake_address',
+    );
+    return { id: row.id };
+  },
+  intake_allowlist: async (tx, { workspaceId, ownerId }) => {
+    const row = first(
+      await tx
+        .insert(intakeAllowlist)
+        .values({
+          workspaceId,
+          pattern: `xt-${randomUUID().slice(0, 8)}.court.test`,
+          kind: 'court',
+          addedBy: ownerId,
+        })
+        .returning({ id: intakeAllowlist.id }),
+      'intake_allowlist',
+    );
+    return { id: row.id };
+  },
+  intake_message: async (tx, { workspaceId }) => {
+    const row = first(
+      await tx
+        .insert(intakeMessage)
+        .values({
+          workspaceId,
+          messageId: `<xt-${randomUUID()}@mail.test>`,
+          rawExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        })
+        .returning({ id: intakeMessage.id }),
+      'intake_message',
     );
     return { id: row.id };
   },
@@ -546,6 +722,401 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, proceedingId, rosterId, newBenchId: benchId, reason: 'hall' })
       .returning({ id: benchChangeAlert.id });
     return { proceedingId, rosterId, alertId: first(rows, 'bench_change_alert').id };
+  },
+  proposal: async (tx, { workspaceId, tag }) => {
+    const rows = await tx
+      .insert(proposal)
+      .values({
+        workspaceId,
+        kind: 'task',
+        level: 'L2',
+        payload: { title: `Seed ${tag}` },
+        idempotencyKey: `seed-${tag}-${randomUUID()}`,
+      })
+      .returning({ id: proposal.id });
+    return { proposalId: first(rows, 'proposal').id };
+  },
+  activity: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(activity)
+      .values({
+        workspaceId,
+        kind: 'task',
+        level: 'L3',
+        actor: 'user',
+        actorUserId: ownerId,
+        summary: `Seed activity ${tag}`,
+        undoExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      })
+      .returning({ id: activity.id });
+    return { activityId: first(rows, 'activity').id };
+  },
+  automation_preference: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(automationPreference)
+      .values({ workspaceId, userId: ownerId, kind: 'task', askFirst: true })
+      .returning({ id: automationPreference.id });
+    return { preferenceId: first(rows, 'automation_preference').id, userId: ownerId };
+  },
+  automation_threshold: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(automationThreshold)
+      .values({ workspaceId, kind: 'task', patternKey: 'undated', threshold: '0.820' })
+      .returning({ id: automationThreshold.id });
+    return { thresholdId: first(rows, 'automation_threshold').id };
+  },
+  capture: async (tx, { workspaceId, ownerId, tag }) => {
+    // A received upload row; the raw object never exists in a SQL-only suite.
+    const rows = await tx
+      .insert(capture)
+      .values({
+        workspaceId,
+        channel: 'upload',
+        mime: 'application/pdf',
+        sizeBytes: 8,
+        originalFilename: `xt-${tag}.pdf`,
+        createdBy: ownerId,
+      })
+      .returning({ id: capture.id });
+    return { id: first(rows, 'capture').id };
+  },
+  workspace_capture_channel: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(workspaceCaptureChannel).values({
+      workspaceId,
+      channel: 'email',
+      enabled: true,
+      enabledBy: ownerId,
+      enabledAt: new Date(),
+      disclosureVersion: 'v1',
+    });
+    return { workspaceId };
+  },
+  ics_feed: async (tx, { workspaceId, ownerId }) => {
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const row = first(
+      await tx
+        .insert(icsFeed)
+        // Revoked, so the owner can still create an active feed in the action suites.
+        .values({
+          workspaceId,
+          userId: ownerId,
+          tokenHash,
+          disclosureVersion: 'v1',
+          revokedAt: new Date(),
+        })
+        .returning({ id: icsFeed.id }),
+      'ics_feed',
+    );
+    return { id: row.id };
+  },
+  ics_feed_event: async (tx, { workspaceId, ownerId, tag }) => {
+    const tokenHash = createHash('sha256').update(randomBytes(32)).digest('hex');
+    const feed = first(
+      await tx
+        .insert(icsFeed)
+        .values({
+          workspaceId,
+          userId: ownerId,
+          tokenHash,
+          disclosureVersion: 'v1',
+          revokedAt: new Date(),
+        })
+        .returning({ id: icsFeed.id }),
+      'ics_feed',
+    );
+    await tx.insert(icsFeedEvent).values({
+      workspaceId,
+      feedId: feed.id,
+      uid: `listing-${tag}@causedeck`,
+      contentHash: 'h',
+      changedAt: new Date(),
+      snapshot: { date: '2026-12-01', summary: 'Hearing', location: null, description: null },
+    });
+    return { feedId: feed.id };
+  },
+  ics_import_event: async (tx, { workspaceId, ownerId, tag }) => {
+    const cap = first(
+      await tx
+        .insert(capture)
+        .values({
+          workspaceId,
+          channel: 'ics',
+          mime: 'text/calendar',
+          sizeBytes: 8,
+          originalFilename: `xt-${tag}.ics`,
+          createdBy: ownerId,
+        })
+        .returning({ id: capture.id }),
+      'capture',
+    );
+    const row = first(
+      await tx
+        .insert(icsImportEvent)
+        .values({
+          workspaceId,
+          uid: `xt-${tag}`,
+          captureId: cap.id,
+          status: 'unmatched',
+          summary: 'Hearing',
+          eventDate: '2026-12-01',
+          score: '0.800',
+        })
+        .returning({ id: icsImportEvent.id }),
+      'ics_import_event',
+    );
+    return { id: row.id };
+  },
+  extraction: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(extraction)
+      .values({ workspaceId, documentId, pipelineVersion: 'xt', result: { seeded: true } })
+      .returning({ id: extraction.id });
+    return { documentId, extractionId: first(rows, 'extraction').id };
+  },
+  import_batch: async (tx, { workspaceId, ownerId }) => ({
+    id: await seedImportBatch(tx, workspaceId, ownerId),
+  }),
+  import_batch_file: async (tx, { workspaceId, ownerId, tag }) => {
+    const batchId = await seedImportBatch(tx, workspaceId, ownerId);
+    const captures = await tx
+      .insert(capture)
+      .values({
+        workspaceId,
+        channel: 'upload',
+        mime: 'application/pdf',
+        sizeBytes: 8,
+        originalFilename: `xt-${tag}.pdf`,
+        createdBy: ownerId,
+      })
+      .returning({ id: capture.id });
+    const captureId = first(captures, 'capture').id;
+    const rows = await tx
+      .insert(importBatchFile)
+      .values({ workspaceId, batchId, captureId })
+      .returning({ id: importBatchFile.id });
+    return { batchId, captureId, id: first(rows, 'import_batch_file').id };
+  },
+  case_watch: async (tx, { workspaceId, ownerId, tag }) => ({
+    id: await seedCaseWatch(tx, workspaceId, ownerId, tag),
+  }),
+  case_status_snapshot: async (tx, { workspaceId, ownerId, tag }) => {
+    const watchId = await seedCaseWatch(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(caseStatusSnapshot)
+      .values({
+        workspaceId,
+        watchId,
+        fields: { nextDate: '2026-11-02' },
+        contentHash: 'a'.repeat(64),
+        via: 'device',
+        sourceType: 'manual',
+      })
+      .returning({ id: caseStatusSnapshot.id });
+    return { watchId, id: first(rows, 'case_status_snapshot').id };
+  },
+  review_correction: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const items = await tx
+      .insert(reviewItem)
+      .values({
+        kind: 'user_report',
+        sourceId: 'xt.case-watch',
+        cnr: 'TNCH010012342024',
+        field: 'stage',
+        consent: true,
+        status: 'fixed',
+        correctedValue: 'Final hearing',
+        resolvedAt: new Date(),
+        dueAt: new Date(),
+      })
+      .returning({ id: reviewItem.id });
+    const reviewItemId = first(items, 'review_item').id;
+    const rows = await tx
+      .insert(reviewCorrection)
+      .values({
+        workspaceId,
+        proceedingId,
+        reviewItemId,
+        field: 'stage',
+        value: 'Final hearing',
+        sourceType: 'system',
+        sourceRef: `causedeck-review:${reviewItemId}`,
+        confirmationState: 'corrected',
+      })
+      .returning({ id: reviewCorrection.id });
+    return { proceedingId, reviewItemId, id: first(rows, 'review_correction').id };
+  },
+  advocate_profile: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(advocateProfile)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        enrolmentNumbers: ['MS/1/1900'],
+        aliases: ['XT, ADV.'],
+      })
+      .returning({ id: advocateProfile.id });
+    return { id: first(rows, 'advocate_profile').id };
+  },
+  notice_match: async (tx, { workspaceId, tag }) => {
+    // The global notice comes from a migration-seeded source (0067), one URL per seed.
+    const notices = await tx
+      .insert(notice)
+      .values({
+        sourceId: 'in.sc.notices',
+        kind: 'circular',
+        title: `XT notice ${tag}`,
+        issuedOn: '2026-11-01',
+        url: `https://notices.example.test/xt/${tag}`,
+        sourceType: 'system',
+        sourceRef: 'xt',
+      })
+      .returning({ id: notice.id });
+    const noticeId = first(notices, 'notice').id;
+    const matterId = await seedMatter(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(noticeMatch)
+      .values({ workspaceId, noticeId, matterId, reason: 'matter_forum' })
+      .returning({ id: noticeMatch.id });
+    return { noticeId, matterId, id: first(rows, 'notice_match').id };
+  },
+  api_key: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(apiKey)
+      .values({
+        workspaceId,
+        name: 'seed key',
+        prefix: 'seed',
+        tokenHash: `seed-hash-${tag}`,
+        scopes: ['cases:read'],
+        createdBy: ownerId,
+      })
+      .returning({ id: apiKey.id });
+    return { id: first(rows, 'api_key').id };
+  },
+  webhook_endpoint: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(webhookEndpoint)
+      .values({
+        workspaceId,
+        url: `https://hooks.example.com/${tag}`,
+        secret: `whsec_seed_${tag}`,
+        events: ['status.changed'],
+        createdBy: ownerId,
+      })
+      .returning({ id: webhookEndpoint.id });
+    return { id: first(rows, 'webhook_endpoint').id };
+  },
+  webhook_delivery: async (tx, { workspaceId, ownerId, tag }) => {
+    const endpoints = await tx
+      .insert(webhookEndpoint)
+      .values({
+        workspaceId,
+        url: `https://hooks.example.com/delivery-${tag}`,
+        secret: `whsec_seed_delivery_${tag}`,
+        events: ['status.changed'],
+        createdBy: ownerId,
+      })
+      .returning({ id: webhookEndpoint.id });
+    const endpointId = first(endpoints, 'webhook_endpoint').id;
+    const rows = await tx
+      .insert(webhookDelivery)
+      .values({
+        workspaceId,
+        endpointId,
+        eventType: 'status.changed',
+        eventKey: `seed-${tag}`,
+        payload: { seed: true },
+      })
+      .returning({ id: webhookDelivery.id });
+    return { endpointId, id: first(rows, 'webhook_delivery').id };
+  },
+  portfolio: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(portfolio)
+      .values({ workspaceId, name: `Seed portfolio ${tag}`, createdBy: ownerId })
+      .returning({ id: portfolio.id });
+    return { id: first(rows, 'portfolio').id };
+  },
+  portfolio_case: async (tx, { workspaceId, tag }) => {
+    const parents = await tx
+      .insert(portfolio)
+      .values({ workspaceId, name: `Seed case portfolio ${tag}` })
+      .returning({ id: portfolio.id });
+    const portfolioId = first(parents, 'portfolio').id;
+    const rows = await tx
+      .insert(portfolioCase)
+      .values({ workspaceId, portfolioId, caseNumber: `OA/1/2026-${tag}` })
+      .returning({ id: portfolioCase.id });
+    return { portfolioId, id: first(rows, 'portfolio_case').id };
+  },
+  portfolio_panel_advocate: async (tx, { workspaceId, ownerId, tag }) => {
+    const parents = await tx
+      .insert(portfolio)
+      .values({ workspaceId, name: `Seed panel portfolio ${tag}` })
+      .returning({ id: portfolio.id });
+    const portfolioId = first(parents, 'portfolio').id;
+    const rows = await tx
+      .insert(portfolioPanelAdvocate)
+      .values({ workspaceId, portfolioId, advocateUserId: ownerId })
+      .returning({ id: portfolioPanelAdvocate.id });
+    return { portfolioId, id: first(rows, 'portfolio_panel_advocate').id };
+  },
+  cause_list_watch: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(causeListWatch)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        sourceId: 'in.ka.karnataka-hc.bengaluru:cause_list',
+        kind: 'brn',
+        value: 'KAR/1/1900',
+      })
+      .returning({ id: causeListWatch.id });
+    return { id: first(rows, 'cause_list_watch').id };
+  },
+  matter_issue_tag: async (tx, { workspaceId, tag }) => {
+    const { matterId, tagId } = await seedIssueTag(tx, workspaceId, tag);
+    return { matterId, id: tagId };
+  },
+  judgment_alert: async (tx, { workspaceId, tag }) => {
+    const { matterId, tagId } = await seedIssueTag(tx, workspaceId, tag);
+    // The corpus is global: one judgment row per seeding run (sha256 is unique).
+    const judgments = await tx
+      .insert(judgment)
+      .values({
+        sourceId: 'xt.judgment-alert',
+        court: 'INSC',
+        sha256: createHash('sha256').update(`xt-judgment-${tag}-${randomUUID()}`).digest('hex'),
+        provenance: {
+          url: 'https://xt.example.test/j.pdf',
+          fetchedAt: '2026-10-23T00:00:00.000Z',
+          sha256: 'a'.repeat(64),
+          sourceId: 'xt.judgment-alert',
+          sourceVersion: '1',
+          tierUsed: 'http',
+          costDollars: 0,
+        },
+        pageText: [{ pageNo: 1, text: 'Section 34 of the Arbitration and Conciliation Act' }],
+      })
+      .returning({ id: judgment.id });
+    const rows = await tx
+      .insert(judgmentAlert)
+      .values({
+        workspaceId,
+        matterId,
+        tagId,
+        judgmentId: first(judgments, 'judgment').id,
+        pageNo: 1,
+      })
+      .returning({ id: judgmentAlert.id });
+    return { matterId, tagId, id: first(rows, 'judgment_alert').id };
+  },
+  import_plan: async (tx, { workspaceId, ownerId }) => {
+    const batchId = await seedImportBatch(tx, workspaceId, ownerId);
+    await tx.insert(importPlan).values({ workspaceId, batchId, plan: { rows: [] } });
+    return { batchId };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

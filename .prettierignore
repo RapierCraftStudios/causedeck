@@ -30,3 +30,7 @@ packages/adapters/fixtures/in.ka.karnataka-hc.bengaluru/list-10-broken-html.inpu
 
 # Kept byte-for-byte (its document index is maintained by hand).
 README.md
+
+# Golden eCourts page fixtures (#634): saved-page markup and parser output kept as written.
+packages/adapters/fixtures/status/ecourts-district/*.input.html
+packages/adapters/fixtures/status/ecourts-district/cause-list-*.expected.json

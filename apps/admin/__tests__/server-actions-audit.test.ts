@@ -8,6 +8,7 @@ import path from 'node:path';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as Business from '@causedeck/core/business';
 import type * as FlagKeys from '@causedeck/flags/keys';
 
 import type * as DataLayer from '../lib/data/index.ts';
@@ -50,6 +51,21 @@ vi.mock('@causedeck/core/audit', () => ({
 }));
 // Core audits a support session's lifecycle (`support.session_*`) with the staff actor it is handed
 // (#314); the mocks below stand in for core and record the same staff-actor event.
+// Core's review service audits each call with the staff it is handed (queue.ts); stand in for it.
+vi.mock('@causedeck/core/review', () => {
+  const audited = (_db: unknown, staff: { userId: string }) =>
+    mocks.record({ actor: { userId: staff.userId, kind: 'staff' } }, { action: 'staff.read' });
+  return {
+    REVIEW_FIELDS: ['next_date', 'stage', 'bench'],
+    assignReviewItem: audited,
+    dismissReviewItem: audited,
+    markFixtureExported: audited,
+    resolveReviewItem: async (d: unknown, staff: { userId: string }) => {
+      await audited(d, staff);
+      return { propagated: 0 };
+    },
+  };
+});
 vi.mock('@causedeck/core/runtime', () => ({
   db: {},
   requestSupportSessionFor: async (ctx: { staffUserId: string }) => {
@@ -68,6 +84,36 @@ vi.mock('@causedeck/core/runtime', () => ({
     );
     return { id: SUPPORT_SESSION_ID };
   },
+}));
+// The source registry audits `source.changed` in its own transaction with the staff actor (#478).
+vi.mock('@causedeck/core/sources', () => {
+  const audited = (_db: unknown, actor: { userId: string }) =>
+    mocks.record({ actor: { userId: actor.userId, kind: 'staff' } }, { action: 'source.changed' });
+  return {
+    SOURCE_KINDS: ['court', 'notice', 'news', 'licensed', 'corpus'],
+    SOURCE_ACCESS_MODES: ['A0', 'A1', 'A2', 'A3'],
+    SOURCE_MAX_TIERS: ['http', 'headless', 'proxy', 'captcha'],
+    SOURCE_REVIEW_STATUSES: ['pending', 'cleared', 'rejected'],
+    SOURCE_DATA_CLASSES: ['personal', 'non-personal', 'mixed'],
+    exposableThroughApi: (dataClass: string) => dataClass === 'non-personal',
+    SourceAdminError: class SourceAdminError extends Error {},
+    asSourceStaff: (userId: string) => ({ userId }),
+    listSources: () => Promise.resolve([]),
+    sourceFetchLogs: () => Promise.resolve([]),
+    sourceOpsOverview: () => Promise.resolve([]),
+    staffParseYield: () => Promise.resolve([]),
+    staffConflictRate: () => Promise.resolve([]),
+    staffCoverageInputs: () => Promise.resolve({}),
+    coverageReport: () => ({ coverage: [], gaps: [], changes: [] }),
+    createSource: audited,
+    updateSource: audited,
+    setSourceKillSwitch: audited,
+  };
+});
+vi.mock('@causedeck/core/business', async (importOriginal) => ({
+  ...(await importOriginal<typeof Business>()),
+  staffBusinessSnapshot: () =>
+    Promise.resolve({ plans: [], shared: { fetchDollars: 0, captchaDollars: 0 } }),
 }));
 vi.mock('@causedeck/core/workspaces', () => ({
   WorkspaceError: class WorkspaceError extends Error {
@@ -182,7 +228,40 @@ function form(values: Record<string, string>): FormData {
   return data;
 }
 
+const FIXTURE_FIELDS = {
+  adapterId: 'echo',
+  format: 'text',
+  name: 'list-80-audit',
+  document: 'ECHO TEST COURT (FICTIONAL)\nCAUSE LIST FOR 21.10.2026\nCOURT HALL 1\nFOR ADMISSION\n',
+};
+
+const REVIEW_ID = '0192d3b0-0000-7000-8000-000000000518';
+
 const ACTIONS: Record<string, () => Promise<unknown>> = {
+  'app/(console)/review/actions.ts#assignReviewAction': async () => {
+    const { assignReviewAction } = await import('../app/(console)/review/actions.ts');
+    return assignReviewAction(form({ id: REVIEW_ID }));
+  },
+  'app/(console)/review/actions.ts#dismissReviewAction': async () => {
+    const { dismissReviewAction } = await import('../app/(console)/review/actions.ts');
+    return dismissReviewAction(form({ id: REVIEW_ID }));
+  },
+  'app/(console)/review/actions.ts#submitFixAction': async () => {
+    const { submitFixAction } = await import('../app/(console)/review/actions.ts');
+    return submitFixAction(form({ id: REVIEW_ID, correctedValue: 'Final hearing' }));
+  },
+  'app/(console)/review/actions.ts#sendToWorkbenchAction': async () => {
+    const { sendToWorkbenchAction } = await import('../app/(console)/review/actions.ts');
+    return sendToWorkbenchAction({}, form({ ...FIXTURE_FIELDS, id: REVIEW_ID }));
+  },
+  'app/(console)/fixtures/actions.ts#previewFixtureAction': async () => {
+    const { previewFixtureAction } = await import('../app/(console)/fixtures/actions.ts');
+    return previewFixtureAction({}, form(FIXTURE_FIELDS));
+  },
+  'app/(console)/fixtures/actions.ts#buildFixtureAction': async () => {
+    const { buildFixtureAction } = await import('../app/(console)/fixtures/actions.ts');
+    return buildFixtureAction({}, form(FIXTURE_FIELDS));
+  },
   'app/(console)/flags/actions.ts#setFlagAction': async () => {
     const { setFlagAction } = await import('../app/(console)/flags/actions.ts');
     return setFlagAction({}, form({ key: 'pwa.offline', enabled: 'true' }));
@@ -216,6 +295,32 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
   'app/(console)/support/actions.ts#endSupportSessionAction': async () => {
     const { endSupportSessionAction } = await import('../app/(console)/support/actions.ts');
     return endSupportSessionAction(form({ sessionId: SUPPORT_SESSION_ID }));
+  },
+  'app/(console)/sources/actions.ts#saveSourceAction': async () => {
+    const { saveSourceAction } = await import('../app/(console)/sources/actions.ts');
+    return saveSourceAction(
+      form({
+        mode: 'update',
+        id: 'in.nclt.bengaluru',
+        kind: 'court',
+        baseUrl: 'https://nclt.gov.in',
+        owner: 'NCLT',
+        accessMode: 'A1',
+        termsStatus: 'pending',
+        counselStatus: 'pending',
+        rateLimitPerMinute: '2',
+        retentionDays: '30',
+        residency: 'in',
+        maxTier: 'http',
+        maxCostDollars: '0',
+        killSwitch: 'false',
+        notes: '',
+      }),
+    );
+  },
+  'app/(console)/sources/actions.ts#setSourceKillSwitchAction': async () => {
+    const { setSourceKillSwitchAction } = await import('../app/(console)/sources/actions.ts');
+    return setSourceKillSwitchAction(form({ id: 'in.nclt.bengaluru', killSwitch: 'true' }));
   },
   'app/verify-2fa/actions.ts#verifyTwoFactor': async () => {
     const { verifyTwoFactor } = await import('../app/verify-2fa/actions.ts');
@@ -321,17 +426,30 @@ describe('admin data layer reads', () => {
   const READS: Record<string, (data: typeof DataLayer) => Promise<unknown>> = {
     activeStaffCount: (d) => d.activeStaffCount(staff),
     adapterRegistry: (d) => d.adapterRegistry(staff),
+    sourceRegistry: (d) => d.sourceRegistry(staff),
     searchWorkspaces: (d) => d.searchWorkspaces(staff, 'chambers'),
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),
     workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
+    dataOpsOverview: (d) => d.dataOpsOverview(staff),
+    dataOpsFetchLogs: (d) => d.dataOpsFetchLogs(staff, 'court.test'),
+    coverageOverview: (d) => d.coverageOverview(staff),
+    businessMetrics: (d) =>
+      d.businessMetrics(staff, {
+        usdInr: 85,
+        infraCostPaiseMonthly: 0,
+        costAlertPaisePerUser: 4000,
+      }),
     growthFunnel: (d) => d.growthFunnel(staff),
   };
+  // Reads made of more than one audited step: parse yield (definer function), then the tables.
+  const READ_EVENTS: Record<string, number> = { dataOpsOverview: 2 };
   // The building blocks every read goes through, and the activation catalogues, not reads themselves.
   const PRIMITIVES = [
     'staffCall',
     'staffQuery',
     'StaffQueryDeniedError',
+    'businessConfigFromEnv',
     'ACTIVATION_CHANNELS',
     'ACTIVATION_STEPS',
   ];
@@ -345,8 +463,11 @@ describe('admin data layer reads', () => {
   it.each(Object.keys(READS))('%s records staff.read with actor kind staff', async (name) => {
     const data = await import('../lib/data/index.ts');
     await READS[name]?.(data);
-    expect(staffEvents()).toEqual([
-      { actor: { kind: 'staff', userId: STAFF_ID }, action: 'staff.read' },
-    ]);
+    expect(staffEvents()).toEqual(
+      Array.from({ length: READ_EVENTS[name] ?? 1 }, () => ({
+        actor: { kind: 'staff', userId: STAFF_ID },
+        action: 'staff.read',
+      })),
+    );
   });
 });

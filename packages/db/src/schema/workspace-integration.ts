@@ -1,5 +1,6 @@
-// Integration tokens (#287, part of #25): the private email intake address
-// (`intake+<token>@<domain>`) and the private ICS feed URL shown on the settings integrations page.
+// Integration tokens (#287, part of #25): the private ICS feed URL shown on the settings
+// integrations page. (The email intake address moved to the per-user `intake_address` table in
+// #54 part 2; migration 0059 removed the `email_intake` kind.)
 // One row per (workspace, kind). Only the sha256 hex of the token is stored (`token_hash`, unique
 // across workspaces so the Capture milestone can resolve a token by its hash); the token itself is
 // shown once when it is created or rotated. Rotating replaces the hash, so the old token stops
@@ -15,7 +16,7 @@ import { tenantTable } from '../schema-helpers/tenant-table.ts';
 
 import { inList, organization } from './auth.ts';
 
-export const INTEGRATION_KINDS = ['email_intake', 'ics_feed'] as const;
+export const INTEGRATION_KINDS = ['ics_feed'] as const;
 export type IntegrationKind = (typeof INTEGRATION_KINDS)[number];
 
 export const workspaceIntegration = tenantTable(

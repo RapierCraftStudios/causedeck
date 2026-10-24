@@ -40,6 +40,7 @@ The system forum catalogue (`forum-catalogue/`, #34, ADR 0014) is **not** in thi
 - the entries are typed `ForumSeed[]` per market (`madras-hc.ts`, `karnataka-hc.ts`, `chennai-district.ts`, `bengaluru-district.ts`, `tribunals.ts`), parsed with `ForumSeedSchema` from `@causedeck/validators/forum`; hosts and deep-link templates are data, never constants in code;
 - the upsert is keyed by `forum_scope_code_uq` and touches only rows whose data changed (unchanged rows keep `updated_at`); a catalogue row no longer listed is soft-disabled (`enabled = false`, `config.disabledReason`), never deleted;
 - bump `FORUM_CATALOGUE_VERSION` with every data change; the seed records it in `catalogue_meta` (key `forum_catalogue`).
+- eCourts district establishments (#635) come from a reviewed snapshot, `forum-catalogue/ecourts/snapshot.json`: `{source, licence, retrievedOn, establishments: [{code, state, district, establishment}]}`. `validateSnapshot` (`ecourts/snapshot.ts`) rejects duplicate codes, unknown states, invalid codes and missing provenance with one error listing every problem; `snapshotToForumSeeds` maps each establishment to an A0 district forum coded `in.<state>.<district>.<establishment>-<code>`. The per-state A1 upgrade is the `ECOURTS_STATE_LEVELS` data flag in the same file. Nothing is fetched from the portal; the shipped snapshot is empty until a cleared list lands (#640). Bump the version when the snapshot changes.
 
 Each issue that adds tables registers its own:
 

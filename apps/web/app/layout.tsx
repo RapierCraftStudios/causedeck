@@ -16,10 +16,17 @@ import './globals.css';
 export const metadata: Metadata = {
   title: { default: 'CauseDeck', template: '%s · CauseDeck' },
   description: 'Your court day, prepared.',
+  icons: { apple: '/icons/apple-touch-icon.png' },
+  appleWebApp: { capable: true, title: 'CauseDeck', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
   colorScheme: 'light dark',
+  // Browser chrome colour of the installed app, per theme (the manifest holds the light one).
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FBFAF6' },
+    { media: '(prefers-color-scheme: dark)', color: '#0E1116' },
+  ],
   // Lets `env(safe-area-inset-*)` resolve, so the phone bottom bar clears the home indicator.
   viewportFit: 'cover',
 };

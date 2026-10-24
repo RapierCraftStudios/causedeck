@@ -6,8 +6,8 @@ import { getSessionCookie } from 'better-auth/cookies';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { LOCALE_COOKIE } from './i18n/routing.ts';
-import { buildCsp, createNonce, negotiateLocale } from './lib/csp.ts';
-import { isDev } from './lib/env.ts';
+import { buildCsp, createNonce, negotiateLocale, uploadOriginOf } from './lib/csp.ts';
+import { isDev, serverEnv } from './lib/env.ts';
 import { signInPathFor } from './lib/safe-next.ts';
 import { LAST_WORKSPACE_COOKIE } from './lib/workspace-context.ts';
 
@@ -31,9 +31,23 @@ function pathWithSearch(request: NextRequest): string {
   return `${request.nextUrl.pathname}${request.nextUrl.search}`;
 }
 
+/** Where the browser may PUT presigned uploads; `undefined` when the storage env is unavailable. */
+function uploadOrigin(): string | undefined {
+  try {
+    return uploadOriginOf(serverEnv());
+  } catch {
+    return undefined;
+  }
+}
+
 export function proxy(request: NextRequest): NextResponse {
+  // A share that reached the server (no service worker yet) has no page to POST to: the files were
+  // never read, so send the person to the share screen's "share from another app" empty state.
+  if (request.method === 'POST' && request.nextUrl.pathname === '/share-target') {
+    return NextResponse.redirect(new URL('/share-target', request.url), 303);
+  }
   const nonce = createNonce();
-  const csp = buildCsp(nonce, { dev: isDev() });
+  const csp = buildCsp(nonce, { dev: isDev(), uploadOrigin: uploadOrigin() });
 
   let response: NextResponse;
   if (isProtectedPath(request.nextUrl.pathname) && !getSessionCookie(request)) {
@@ -75,7 +89,8 @@ export const config = {
   matcher: [
     {
       // Static assets and the health probes need neither a nonce nor a locale.
-      source: '/((?!_next/static|_next/image|favicon.ico|healthz|readyz).*)',
+      source:
+        '/((?!_next/static|_next/image|favicon.ico|healthz|readyz|sw.js|manifest.webmanifest|icons/|screenshots/).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

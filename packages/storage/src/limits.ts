@@ -5,10 +5,12 @@
 export const OBJECT_KINDS = ['document', 'audio', 'image', 'zip'] as const;
 
 /**
- * Kinds only the server writes (#301): workspace export ZIPs. They have no upload allow-list
- * entry, so an upload intent for one is refused, and `/api/uploads` only accepts `OBJECT_KINDS`.
+ * Kinds only the server writes: workspace export ZIPs (#301) and quarantined captures (#43), the
+ * raw objects a virus scan flagged, moved out of their kind's prefix. They have no upload
+ * allow-list entry, so an upload intent for one is refused, and `/api/uploads` only accepts
+ * `OBJECT_KINDS`.
  */
-export const SERVER_OBJECT_KINDS = ['export'] as const;
+export const SERVER_OBJECT_KINDS = ['export', 'quarantine'] as const;
 
 /** Every kind a key may carry; also the third key segment. */
 export type ObjectKind = (typeof OBJECT_KINDS)[number] | (typeof SERVER_OBJECT_KINDS)[number];
@@ -25,6 +27,8 @@ export const MAX_OBJECT_BYTES: Readonly<Record<ObjectKind, number>> = Object.fre
   zip: 200 * MB,
   // Streamed in parts (`putStream`), never held in memory.
   export: 20 * GB,
+  // The largest capture cap (ZIP, 100 MB) with room for the other kinds' caps.
+  quarantine: 200 * MB,
 });
 
 export class ObjectTooLargeError extends Error {

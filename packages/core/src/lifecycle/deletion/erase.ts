@@ -1,7 +1,7 @@
 // Workspace erase (#302, part 2 of #31; docs/engineering/data-lifecycle.md). Runs as the
 // `deletion.erase` job once the 14-day cool-off has ended, in this order:
 //   1. revoke   mark `organization.deleted_at`, delete the workspace's sessions and its
-//               integration tokens (`workspace_integration`: email intake and ICS feed, the
+//               integration tokens (`workspace_integration`: the ICS feed, the
 //               workspace's API tokens), cancel pending invitations and end support sessions.
 //   2. dek      `destroyWorkspaceKey`: without the DEK no stored ciphertext can be decrypted.
 //   3. blobs    delete every object under the workspace's storage prefix (`ws/<id>/`).
@@ -27,6 +27,7 @@ import { destroyWorkspaceKey, type ObjectStore } from '@causedeck/storage';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { record } from '../../audit/index.ts';
+import { withdrawContributions } from '../../network/index.ts';
 
 import { retainInvoicesForLegalHold } from './legal-hold.ts';
 import { buildDeletionReceipt, receiptHash, type DeletionReceipt } from './receipt.ts';
@@ -53,8 +54,23 @@ export const PURGE_ORDER = [
   'notification',
   'notification_pref',
   'notification_setting',
+  // News digest (#481): the member's followed areas and digest time (news_item is global).
+  'news_pref',
   'invitation',
   'support_session',
+  // Court document network (#485): the link to a shared public copy; the rows step withdraws first.
+  'contribution_ledger',
+  // Official notices feed (#584): matches cite a matter or forum; before both.
+  'notice_match',
+  // Change webhooks (#626): deliveries before the endpoint they cite; both cite only the workspace
+  // and the creating user, so they go before the workspace and the members.
+  'webhook_delivery',
+  'webhook_endpoint',
+  // Institution portfolios (#661): cases and panel advocates before their portfolio; the portfolio
+  // cites only the workspace and its creating user, and cases cite proceedings, so before both.
+  'portfolio_case',
+  'portfolio_panel_advocate',
+  'portfolio',
   // The matter graph (#345-#348): appearances before their hearing, hearings before their
   // listing; tasks before the obligations they fulfil, obligations before their source order;
   // listings, orders and obligations before the proceedings, documents, anchors and matters they
@@ -65,6 +81,11 @@ export const PURGE_ORDER = [
   // docket) before the members their member columns name. Bench rosters (#384): alerts before
   // the rosters and proceedings they cite, entries before their roster, rosters before the
   // documents, members and court rows they cite.
+  // The automation engine (#47): activities before the proposals they cite; neither cites the graph.
+  'activity',
+  'proposal',
+  'automation_preference',
+  'automation_threshold',
   'appearance',
   'hearing',
   'task',
@@ -77,14 +98,39 @@ export const PURGE_ORDER = [
   'role_edge',
   'person',
   'organisation',
+  // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
+  'case_status_snapshot',
+  'case_watch',
+  'review_correction',
   'proceeding_state_change',
   'proceeding_link',
   'proceeding',
   'adapter_parse_run',
+  // Anchored order extractions (#46) cite their document; before it.
+  'extraction',
   'anchor',
   'document_page',
   'document',
+  // Calendar interop (#53): the import ledger cites captures, so it goes before them; feed events
+  // before their feed.
+  'ics_import_event',
+  'ics_feed_event',
+  'ics_feed',
+  // Bootstrap import (#546): plan and files before their batch, all before the captures they cite.
+  'import_plan',
+  'import_batch_file',
+  'import_batch',
+  // The importing member's identifiers (#550): cites no capture, only the user.
+  'advocate_profile',
+  // Court watches (#482): cite the member's user and the organization only.
+  'cause_list_watch',
+  // The capture inbox (#43): after the documents that cite a capture, before the matters it hints.
+  'capture',
+  'workspace_capture_channel',
   'matter_restriction',
+  // Judgment alerts (#497): alerts before the tag they cite, both before their matter.
+  'judgment_alert',
+  'matter_issue_tag',
   'matter',
   // Custom court reference rows (#344): halls and benches before their forum; the catalogue
   // (null workspace_id) is never matched.
@@ -104,8 +150,15 @@ export const PURGE_ORDER = [
   'subscription',
   'workspace_feature_flag',
   'workspace_integration',
+  'api_key',
+  // Email intake (#54): the ledger, then the allow-list and the members' addresses.
+  'intake_message',
+  'intake_allowlist',
+  'intake_address',
   'workspace_slug_history',
   'workspace_settings',
+  // AI gateway retry cache (#44): holds model output, unlike the append-only ai_call it points at.
+  'ai_call_result',
   'job_effect',
   'member',
 ] as const;
@@ -336,6 +389,8 @@ export async function runWorkspaceErase(
         ? state.legalHoldInvoices
         : await withWorkspace(ctx.db, scope, (tx) => retainInvoicesForLegalHold(tx, workspaceId));
     await save('rows', { ...state, tables, legalHoldInvoices });
+    // Withdraw this workspace's contributed court documents (#485) before its ledger rows go.
+    await withdrawContributions(ctx.db, workspaceId);
     for (const table of PURGE_ORDER) {
       for (;;) {
         const name = sql.identifier(table);

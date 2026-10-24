@@ -1,0 +1,12 @@
+{
+  "template": "ecourts-district",
+  "status": "not_found",
+  "cnr": null,
+  "caseNumber": null,
+  "nextHearingDate": null,
+  "lastHearingDate": null,
+  "stage": null,
+  "bench": null,
+  "orders": [],
+  "quotes": {}
+}

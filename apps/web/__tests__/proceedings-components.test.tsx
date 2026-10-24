@@ -522,6 +522,32 @@ describe('ProceedingForm (#392)', () => {
     });
   });
 
+  it('names every select of the proceeding form by its label', async () => {
+    withIntl(
+      <ProceedingForm
+        workspaceId={WS}
+        matterId={MATTER}
+        forums={FORUMS}
+        rows={[{ id: 'p0', label: 'WP 1/2020' }]}
+        actions={actions()}
+        onClose={vi.fn()}
+      />,
+    );
+    const dialog = await screen.findByRole('dialog');
+    for (const label of [
+      tab.form.forum,
+      tab.form.parent,
+      tab.form.connected,
+      tab.form.appealFrom,
+      tab.form.lowerCourt,
+    ]) {
+      // The label's `for` must resolve to the native select: found by label text, then by name.
+      const select = within(dialog).getByLabelText(new RegExp(`^${label}`), { selector: 'select' });
+      expect(select.tagName, label).toBe('SELECT');
+      expect(select.getAttribute('id'), label).toBeTruthy();
+    }
+  });
+
   it('shows the duplicate prompt with Merge for a proceeding of another matter', async () => {
     const acts = actions({
       findDuplicates: vi.fn(() =>

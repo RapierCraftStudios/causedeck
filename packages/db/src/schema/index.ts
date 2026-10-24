@@ -8,9 +8,37 @@ export {
   type ActivationStep,
 } from './activation.ts';
 export { adapterHealthSummary, adapterParseRun, adapterVersion } from './adapters.ts';
-export { aiCall, auditActorKind, auditActorSalt, auditEvent, auditOutcome } from './audit.ts';
+export {
+  aiCall,
+  aiCallResult,
+  auditActorKind,
+  auditActorSalt,
+  auditEvent,
+  auditOutcome,
+} from './audit.ts';
 export { apiIdempotencyKey, type StoredApiResponse } from './api-idempotency.ts';
+export { apiKey } from './api-keys.ts';
+export {
+  WEBHOOK_DELIVERY_STATUSES,
+  WEBHOOK_EVENT_TYPES,
+  webhookDelivery,
+  webhookEndpoint,
+  type WebhookDeliveryStatus,
+  type WebhookEventType,
+} from './webhooks.ts';
+export { portfolio, portfolioCase, portfolioPanelAdvocate } from './portfolio.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
+export {
+  CAPTURE_CHANNELS,
+  CAPTURE_SCAN_STATUSES,
+  CAPTURE_STATUSES,
+  capture,
+  workspaceCaptureChannel,
+  type CaptureChannel,
+  type CaptureRow,
+  type CaptureScanStatus,
+  type CaptureStatus,
+} from './capture.ts';
 export { catalogueMeta } from './catalogue-meta.ts';
 export {
   account,
@@ -34,6 +62,57 @@ export {
   workspaceFeatureFlag,
   type FlagChangeRequestStatus,
 } from './flags.ts';
+export { fetchLog } from './fetch-log.ts';
+export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
+export {
+  NEWS_EXCERPT_MAX,
+  NEWS_FORUMS,
+  NEWS_PRACTICE_AREAS,
+  newsItem,
+  newsPref,
+  type NewsForum,
+  type NewsPracticeArea,
+  type NewsTags,
+} from './news.ts';
+export {
+  DATA_OPS_ALERT_STATUSES,
+  DATA_OPS_ALERT_TYPES,
+  SOURCE_HEALTH_STATES,
+  dataOpsAlert,
+  dataOpsAlertStatus,
+  dataOpsAlertType,
+  dataOpsOncall,
+  sourceHealth,
+  sourceHealthState,
+  sourceParseRun,
+  type DataOpsAlertStatus,
+  type DataOpsAlertType,
+  type SourceHealthState,
+} from './data-ops.ts';
+export {
+  NO_CAPTCHA_KINDS,
+  SOURCE_ACCESS_MODES,
+  SOURCE_DATA_CLASSES,
+  SOURCE_KINDS,
+  SOURCE_MAX_TIERS,
+  SOURCE_REVIEW_STATUSES,
+  source,
+  sourceAccessMode,
+  sourceKind,
+  sourceMaxTier,
+  sourceReviewStatus,
+  type SourceAccessMode,
+  type SourceDataClass,
+  type SourceKind,
+  type SourceMaxTier,
+  type SourceReviewStatus,
+} from './source-registry.ts';
+export {
+  CONTRIBUTABLE_KINDS,
+  contributedDocument,
+  contributionLedger,
+  type ContributableKind,
+} from './network.ts';
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export {
   ANCHOR_KINDS,
@@ -44,7 +123,20 @@ export {
   type AnchorBbox,
   type AnchorKind,
   type AnchorTranscriptSpan,
+  type OcrLine,
 } from './documents.ts';
+export {
+  ACTIVITY_ACTORS,
+  activity,
+  AUTOMATION_LEVELS,
+  automationPreference,
+  automationThreshold,
+  PROPOSAL_STATUSES,
+  proposal,
+  type ActivityActor,
+  type AutomationLevelValue,
+  type ProposalStatus,
+} from './automation.ts';
 export { jobEffect } from './job-effect.ts';
 export {
   DELETION_KINDS,
@@ -132,7 +224,84 @@ export { budgetOverride, usageEvent, usagePeriodSummary, usageReservation } from
 export { workspaceSettings, workspaceSlugHistory } from './workspace.ts';
 export { schemaInfo } from './_meta.ts';
 export {
+  ICS_FEED_SCOPES,
+  ICS_IMPORT_STATUSES,
+  icsFeed,
+  icsFeedEvent,
+  icsImportEvent,
+  type IcsFeedScope,
+  type IcsFeedSnapshot,
+  type IcsImportStatus,
+} from './ics.ts';
+export {
   INTEGRATION_KINDS,
   workspaceIntegration,
   type IntegrationKind,
 } from './workspace-integration.ts';
+export {
+  INTAKE_ADDRESS_STATUSES,
+  INTAKE_ALLOWLIST_KINDS,
+  INTAKE_MESSAGE_STATUSES,
+  intakeAddress,
+  intakeAllowlist,
+  intakeMessage,
+  type IntakeAddressStatus,
+  type IntakeAllowlistKind,
+  type IntakeMessageStatus,
+} from './email-intake.ts';
+export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';
+export { advocateProfile } from './advocate-profile.ts';
+export {
+  BOARD_OBSERVATION_STATUSES,
+  boardObservation,
+  type BoardObservationStatus,
+} from './display-board.ts';
+export { benchSittingFact } from './bench-facts.ts';
+export {
+  CAUSE_LIST_WATCH_KINDS,
+  causeListPublication,
+  causeListWatch,
+  type CauseListWatchKind,
+} from './cause-list-watch.ts';
+export {
+  IMPORT_BATCH_FILE_STATUSES,
+  IMPORT_BATCH_STATUSES,
+  importBatch,
+  importBatchFile,
+  importPlan,
+  type ImportBatchFileStatus,
+  type ImportBatchStatus,
+} from './import-batch.ts';
+export {
+  NOTICE_KINDS,
+  NOTICE_MATCH_REASONS,
+  notice,
+  noticeKind,
+  noticeMatch,
+  type NoticeKind,
+  type NoticeMatchReason,
+} from './notices.ts';
+export {
+  CASE_STATUS_VIA,
+  caseStatusSnapshot,
+  caseWatch,
+  type CaseStatusVia,
+} from './case-watch.ts';
+export {
+  ISSUE_TAG_SOURCES,
+  ISSUE_TAG_STATUSES,
+  judgmentAlert,
+  matterIssueTag,
+  type IssueTagSource,
+  type IssueTagStatus,
+} from './matter-issue.ts';
+export {
+  REVIEW_FIELDS,
+  REVIEW_KINDS,
+  REVIEW_STATUSES,
+  reviewCorrection,
+  reviewItem,
+  type ReviewField,
+  type ReviewKind,
+  type ReviewStatus,
+} from './review.ts';

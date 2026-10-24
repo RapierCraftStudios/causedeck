@@ -95,10 +95,16 @@ test.describe('admin staff gate', () => {
     await expect(page.getByRole('navigation', { name: 'Console' }).getByRole('link')).toHaveText([
       'Overview',
       'Adapters',
+      'Sources',
+      'Data Ops',
+      'Review queue',
+      'Coverage',
       'Flags',
       'Workspaces',
       'Support sessions',
       'Audit',
+      'Business',
+      'Growth',
     ]);
     const headers = (await page.request.get('/flags')).headers();
     expect(headers['x-robots-tag']).toBe('noindex, nofollow');

@@ -104,6 +104,10 @@ export const notificationSetting = tenantTable(
     lockScreenDetails: boolean('lock_screen_details').notNull().default(false),
     /** Bench-change alerts (#389) name the parties; off, they carry counts only. */
     benchAlertPartyNames: boolean('bench_alert_party_names').notNull().default(false),
+    /** The end-of-day digest (#49) goes out at this local `HH:MM` (:00 or :30, 18:00-23:00). */
+    endOfDayTime: text('end_of_day_time').notNull().default('20:30'),
+    /** The end-of-day digest names matters; off (the default) it carries counts only. */
+    endOfDayIncludeNames: boolean('end_of_day_include_names').notNull().default(false),
     ...timestamps(),
   },
   (t) => [

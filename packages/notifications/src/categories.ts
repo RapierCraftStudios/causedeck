@@ -36,8 +36,42 @@ export const CATEGORIES = {
     mandatory: false,
     lockedChannels: [],
   },
+  // Court-day display-board alerts (#493): N away, now, risen, passed over.
+  'court.board': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'proposal.new': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  'judgment.alert': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  // Case-status change alerts (#592): a watched case shows a new next date, a new order or a new stage.
+  'status.next_date': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  'status.order': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  'status.stage': { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  // Institution portfolio exception alerts (#665, #498): a new adverse order, a missed next date.
+  'portfolio.adverse_order': {
+    defaultChannels: ['in_app', 'email', 'push'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  'portfolio.missed_date': {
+    defaultChannels: ['in_app', 'email', 'push'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  // Official court and bar notices matched to the member's forums and matters (#587, D-048).
+  // Bench-notice alerts (#496): a leave, special bench or roster notice affects a listed matter.
+  bench_change: { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
+  notices: { defaultChannels: ['in_app', 'push'], mandatory: false, lockedChannels: [] },
   'digest.daily': { defaultChannels: ['email'], mandatory: false, lockedChannels: [] },
+  // "What CauseDeck did today" (#49): counts of what the system did on its own, once per local day.
+  'digest.end_of_day': {
+    defaultChannels: ['in_app', 'email'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  // The legal news digest (#481): headlines and links to the original, at most one a day.
+  'digest.news': {
+    defaultChannels: ['in_app', 'email', 'push'],
+    mandatory: false,
+    lockedChannels: [],
+  },
   'system.notice': { defaultChannels: ['in_app'], mandatory: false, lockedChannels: [] },
 } as const satisfies Record<string, CategoryDefinition>;
 

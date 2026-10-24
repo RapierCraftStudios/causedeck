@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import {
+  BILLING_SERVICE_TESTS,
   NOT_A_SERVICE,
   registeredTestFiles,
   RUNTIME_NOT_A_SERVICE,
@@ -54,6 +55,16 @@ describe('cross-tenant registry: core services', () => {
     expect(
       Object.keys(RUNTIME_SERVICE_TESTS).filter((name) => name in RUNTIME_NOT_A_SERVICE),
     ).toEqual([]);
+  });
+
+  it('registers tracked-case metering from @causedeck/core/billing (#664)', async () => {
+    const mod: Record<string, unknown> = await import('@causedeck/core/billing');
+    const names = Object.keys(mod).sort();
+    expect(Object.keys(BILLING_SERVICE_TESTS).sort()).toEqual([
+      'countTrackedCases',
+      'getTrackedCaseCharge',
+    ]);
+    expect(staleEntries(BILLING_SERVICE_TESTS, names)).toEqual([]);
   });
 
   it('points only at test files that exist', () => {

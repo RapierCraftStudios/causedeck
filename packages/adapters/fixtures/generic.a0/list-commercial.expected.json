@@ -1,0 +1,180 @@
+{
+  "adapterId": "generic.a0",
+  "adapterVersion": "1.0.0",
+  "forumCode": "generic.a0",
+  "listDate": "2026-07-15",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. Com.Misc. No. 5135/2026    Sample Bank Ltd vs Made-up Farmer",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "40",
+      "itemNo": "1",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "5135",
+      "caseYear": 2026,
+      "matchKey": "COMMISC/5135/2026",
+      "parties": "Sample Bank Ltd vs Made-up Farmer",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Com.A.A. No. 7918/2024    Made-up Farmer vs Sample Bank Ltd",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "40",
+      "itemNo": "2",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "7918",
+      "caseYear": 2024,
+      "matchKey": "COMAA/7918/2024",
+      "parties": "Made-up Farmer vs Sample Bank Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. Com.Misc. No. 8578/2026    Fictional Traders Pvt Ltd vs Pretend Housing Society",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "40",
+      "itemNo": "3",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "8578",
+      "caseYear": 2026,
+      "matchKey": "COMMISC/8578/2026",
+      "parties": "Fictional Traders Pvt Ltd vs Pretend Housing Society",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. Com.FDP No. 2323/2023    Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "40",
+      "itemNo": "4",
+      "caseTypeRaw": "Com.FDP",
+      "caseType": "COMFDP",
+      "caseNumber": "2323",
+      "caseYear": 2023,
+      "matchKey": "COMFDP/2323/2023",
+      "parties": "Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. Com.A.A. No. 9819/2019    Imaginary Textiles vs Pretend Housing Society",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "40",
+      "itemNo": "5",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "9819",
+      "caseYear": 2019,
+      "matchKey": "COMAA/9819/2019",
+      "parties": "Imaginary Textiles vs Pretend Housing Society",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. Com.Ex. No. 3612/2021    Imaginary Textiles vs Invented Motors",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "6",
+      "caseTypeRaw": "Com.Ex.",
+      "caseType": "COMEX",
+      "caseNumber": "3612",
+      "caseYear": 2021,
+      "matchKey": "COMEX/3612/2021",
+      "parties": "Imaginary Textiles vs Invented Motors",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. Com.A.P. No. 5014/2021    Pretend Housing Society vs Invented Motors",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "7",
+      "caseTypeRaw": "Com.A.P.",
+      "caseType": "COMAP",
+      "caseNumber": "5014",
+      "caseYear": 2021,
+      "matchKey": "COMAP/5014/2021",
+      "parties": "Pretend Housing Society vs Invented Motors",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. Com.Misc. No. 2056/2020    Invented Motors vs Sample Bank Ltd",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "8",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "2056",
+      "caseYear": 2020,
+      "matchKey": "COMMISC/2056/2020",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. Com.O.S. No. 8652/2021    Fictional Traders Pvt Ltd vs Made-up Farmer",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "9",
+      "caseTypeRaw": "Com.O.S.",
+      "caseType": "COMOS",
+      "caseNumber": "8652",
+      "caseYear": 2021,
+      "matchKey": "COMOS/8652/2021",
+      "parties": "Fictional Traders Pvt Ltd vs Made-up Farmer",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "15.07.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["40", "21"],
+    "hallsUnreadable": []
+  }
+}

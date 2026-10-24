@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.ka.bengaluru-urban.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "listDate": "2026-07-04",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. C.C. No. 2476/2023    Pretend Housing Society vs Imaginary Textiles    CNR: KABG029992662023",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "1",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "2476",
+      "caseYear": 2023,
+      "matchKey": "CC/2476/2023",
+      "parties": "Pretend Housing Society vs Imaginary Textiles",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. M.V.C. No. 3637/2023    Imaginary Textiles vs Fictional Traders Pvt Ltd    CNR: KABG042343062023",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "2",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "3637",
+      "caseYear": 2023,
+      "matchKey": "MVC/3637/2023",
+      "parties": "Imaginary Textiles vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. CCCA No. 8641/2021    Sample Bank Ltd vs Imaginary Textiles    CNR: KABG020562792021",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "3",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "8641",
+      "caseYear": 2021,
+      "matchKey": "CCCA/8641/2021",
+      "parties": "Sample Bank Ltd vs Imaginary Textiles",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. M.V.C. No. 5725/2025    Fictional Traders Pvt Ltd vs Made-up Farmer    CNR: KABG038715952025",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "4",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "5725",
+      "caseYear": 2025,
+      "matchKey": "MVC/5725/2025",
+      "parties": "Fictional Traders Pvt Ltd vs Made-up Farmer",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. Ex.P. No. 4671/2025    Fictional Traders Pvt Ltd vs Invented Motors    CNR: KABG023018272025",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "29",
+      "itemNo": "5",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "4671",
+      "caseYear": 2025,
+      "matchKey": "EXP/4671/2025",
+      "parties": "Fictional Traders Pvt Ltd vs Invented Motors",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. O.S. No. 8698/2020    Pretend Housing Society vs Fictional Traders Pvt Ltd    CNR: KABG061050842020",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "6",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "8698",
+      "caseYear": 2020,
+      "matchKey": "OS/8698/2020",
+      "parties": "Pretend Housing Society vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. S.C. No. 6274/2020    Made-up Farmer vs Invented Motors    CNR: KABG024919922020",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "7",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "6274",
+      "caseYear": 2020,
+      "matchKey": "SC/6274/2020",
+      "parties": "Made-up Farmer vs Invented Motors",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. C.C. No. 9728/2025    Imaginary Textiles vs Sample Bank Ltd    CNR: KABG018127192025",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "8",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "9728",
+      "caseYear": 2025,
+      "matchKey": "CC/9728/2025",
+      "parties": "Imaginary Textiles vs Sample Bank Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. C.C. No. 710/2025    Fictional Traders Pvt Ltd vs Sample Bank Ltd    CNR: KABG084137472025",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "10",
+      "itemNo": "9",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "710",
+      "caseYear": 2025,
+      "matchKey": "CC/710/2025",
+      "parties": "Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "04.07.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["29", "10"],
+    "hallsUnreadable": []
+  }
+}

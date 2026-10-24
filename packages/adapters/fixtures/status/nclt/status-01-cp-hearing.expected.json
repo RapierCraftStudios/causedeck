@@ -1,0 +1,28 @@
+{
+  "template": "nclt",
+  "status": "ok",
+  "cnr": null,
+  "caseNumber": "CP(IB)/233/BB/2025",
+  "nextHearingDate": "2026-11-05",
+  "lastHearingDate": "2026-09-10",
+  "stage": {
+    "raw": "Final Hearing",
+    "norm": "hearing"
+  },
+  "bench": "Bench I (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2026-09-10",
+      "number": "1",
+      "summary": "Hearing order (FICTIONAL)",
+      "href": null
+    }
+  ],
+  "quotes": {
+    "caseNumber": "CP(IB)/233/BB/2025",
+    "stage": "Final Hearing",
+    "bench": "Bench I (FICTIONAL)",
+    "nextHearingDate": "05-11-2026",
+    "lastHearingDate": "10-09-2026"
+  }
+}

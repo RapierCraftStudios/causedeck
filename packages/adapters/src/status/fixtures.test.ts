@@ -98,6 +98,19 @@ describe('eCourts fixtures (#634)', () => {
   });
 });
 
+describe('DRT and NCLT status fixtures (#662)', () => {
+  it('cover a hearing page, a second layout and a not-found page for each template', () => {
+    for (const template of ['drt', 'nclt'] as const) {
+      const entries = manifest.fixtures.filter((entry) => entry.template === template);
+      expect(entries.map((entry) => entry.file)).toContain('status-03-not-found.input.html');
+      const results = entries.map(
+        (entry) => parseCaseStatus(template, read(template, entry.file)).status,
+      );
+      expect(results.sort()).toEqual(['not_found', 'ok', 'ok']);
+    }
+  });
+});
+
 describe('case status parsers', () => {
   const templates: readonly CaseStatusTemplate[] = CASE_STATUS_TEMPLATES;
 

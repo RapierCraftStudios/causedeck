@@ -2,224 +2,170 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "quote": "A clerk can complete onboarding on mobile in Tamil or Kannada and the senior approves with one tap. [type:e2e]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "CI Playwright e2e job (ship PRs and nightly) runs e2e/tests/workspaces/clerk-onboarding.spec.ts; component and action tests run in lane"
   },
   {
    "id": "R2",
-   "quote": "dashboard (next dates, stage, adverse orders)",
+   "quote": "Clerk permissions are unchanged (no strategy notes). [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "exception alert settings",
+   "quote": "The senior gets a one-tap approval of the clerk's setup.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "exception alert settings, exports",
+   "quote": "The UI is localised Tamil and Kannada first and mobile-first.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "i18n namespace and catalog test",
+   "quote": "the clerk can import, confirm listings and run the court-day view; strategy notes stay hidden (existing rule).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "cross-tenant-actions test entries for each 'use server' action.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "The clerk is invited by the senior, or the clerk starts and invites the senior to confirm.",
+   "disposition": "defer",
+   "why": "The senior-invites-clerk path is delivered. A clerk-started workspace would have no owner, and the clerk must not get owner, so this needs a product decision on ownerless or draft workspaces."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/portfolio/portfolio.ts",
-   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
+   "path": "packages/db/src/schema/auth.ts",
+   "change": "Add nullable member.clerk_setup_status ('pending'|'approved', check constraint) and clerk_setup_decided_at",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "Export listPortfolios and createPortfolio.",
+   "path": "packages/db/migrations/\u003cnext free timestamp>_clerk_setup.sql",
+   "change": "Migration adding the columns (locate the migrations dir next to 20261024182641_activation_event.sql, regenerate the snapshot) and update the db schema tests that list member columns",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
+   "path": "packages/core/src/workspaces/clerk-setup.ts",
+   "change": "requestClerkSetupApproval(clerk) sets pending; approveClerkSetup(actor needs workspace.manage) sets approved; getClerkSetup. Export from workspaces/index.ts; add to SERVICE_TESTS in packages/db/src/testing/cross-tenant-registry.ts with a real case in packages/core/src/__tests__/cross-tenant/services.test.ts",
    "requirements": [
-    "R6"
+    "R3",
+    "R2"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
+   "path": "packages/core/src/workspaces/index.ts",
+   "change": "Export clerk-setup",
    "requirements": [
-    "R6"
+    "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/portfolio/portfolio.test.ts",
-   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "path": "apps/web/app/(app)/w/[slug]/welcome/page.tsx",
+   "change": "Mobile-first clerk welcome flow (language pick ta/kn/en via existing locale mechanism, links to import, listing confirmation, today) plus actions.ts with requestApproval and approve 'use server' actions (workspaceAction); register both in apps/web/__tests__/cross-tenant-actions.test.ts ACTIONS",
+   "requirements": [
+    "R1",
+    "R4",
+    "R5",
+    "R3"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "apps/web/app/(public)/invite/[token]/actions.ts",
+   "change": "After accepting a clerk invite, redirect to /w/\u003cslug>/welcome instead of /today",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
-   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
-   "requirements": [
-    "R1",
-    "R4"
-   ]
-  },
-  {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
-   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
+   "path": "packages/i18n/src/messages/en/workspace.json",
+   "change": "Add clerk welcome and approval strings in en, plus ta and kn files; update the catalog test only if a namespace is added (prefer extending workspace)",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5"
+    "R4"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
-   "change": "Skeleton loading state.",
+   "path": "e2e/tests/workspaces/clerk-onboarding.spec.ts",
+   "change": "Mobile viewport e2e: clerk accepts the invite, completes the Tamil flow, the senior approves with one tap",
    "requirements": [
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
-   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
+   "path": "apps/web/__tests__/clerk-welcome.test.tsx",
+   "change": "Unit tests for the welcome page, approval action and a clerk-cannot-read-strategy assertion",
    "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/web/components/portfolio/portfolio-view.tsx",
-   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
-   "requirements": [
-    "R1",
     "R2",
     "R3",
     "R4"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'portfolio' to NAMESPACES.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/i18n/src/messages/en/portfolio.json",
-   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'portfolio' to the expected namespace list.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
-   "requirements": [
-    "R6"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+   "what": "packages/auth/src/policy/matrix.ts and roles.ts: no clerk permission changes (strategy.read and memory.* stay at junior)"
   },
   {
    "id": "P2",
-   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+   "what": "createWorkspaceFor and the existing /onboarding page behaviour (apps/web/app/(app)/onboarding)"
   },
   {
    "id": "P3",
-   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+   "what": "inviteMember and acceptInvitation signatures and error reasons in packages/core/src/workspaces/invitations.ts; owner is still never invitable"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/clerk-welcome.test.tsx __tests__/invite.test.tsx __tests__/invite-actions.test.ts __tests__/onboarding.test.tsx __tests__/cross-tenant-actions.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/workspaces src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/auth-schema.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
-   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
+   "choice": "Store approval on member columns, not a new table",
+   "justification": "Avoids the new-table registries (RLS catalog, root table list) listed in CLAUDE.md; member is already tenant-scoped (packages/db/src/schema/auth.ts:223 region)",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
-   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
-   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
-   "source": "precedent"
+   "choice": "Reuse role clerk and the invitation flow; no new role or matrix entry",
+   "justification": "Matrix is the single source of truth (packages/auth/src/policy/matrix.ts:1) and the issue requires unchanged clerk permissions",
+   "source": "spec"
   }
  ]
 }

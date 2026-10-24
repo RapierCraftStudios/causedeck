@@ -638,6 +638,13 @@
       "when": 1792866401767,
       "tag": "20261024182641_activation_event",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1792869760379,
+      "tag": "20261024192240_clerk_setup",
+      "breakpoints": true
     }
   ]
 }

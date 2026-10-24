@@ -87,6 +87,7 @@ vi.mock('next-intl/server', () => ({
 
 const members = await import('../app/(app)/w/[slug]/settings/members/actions.ts');
 const invite = await import('../app/(public)/invite/[token]/actions.ts');
+const welcome = await import('../app/(app)/w/[slug]/welcome/actions.ts');
 const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
@@ -148,6 +149,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  requestClerkSetupApprovalAction: welcome,
+  approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
@@ -481,6 +484,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
       practiceCity: 'Probe City',
       slug: `xt-probe-${workspaceId.slice(0, 8)}`,
     },
+    requestClerkSetupApprovalAction: { workspaceId },
+    approveClerkSetupAction: { workspaceId, memberId: randomUUID() },
     updateRoleSettingsAction: {
       workspaceId,
       advocatesCanInvite: false,

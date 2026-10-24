@@ -141,11 +141,23 @@ describe('AcceptForm', () => {
 
   it('accepts and lands on the workspace Today', async () => {
     const action = vi.fn<AcceptInvitation>(() =>
-      Promise.resolve({ ok: true, data: { status: 'accepted', slug: 'hebbal' } }),
+      Promise.resolve({ ok: true, data: { status: 'accepted', slug: 'hebbal', next: '/w/hebbal/today' },
+      }),
     );
     await accept(action);
     expect(action).toHaveBeenCalledWith({ token: TOKEN });
     expect(router.push).toHaveBeenCalledWith('/w/hebbal/today');
+  });
+
+  it('follows the landing the action chose: a clerk goes to the setup (#505)', async () => {
+    const action = vi.fn<AcceptInvitation>(() =>
+      Promise.resolve({
+        ok: true,
+        data: { status: 'accepted', slug: 'hebbal', next: '/w/hebbal/welcome' },
+      }),
+    );
+    await accept(action);
+    expect(router.push).toHaveBeenCalledWith('/w/hebbal/welcome');
   });
 
   it('shows the state of a token that went stale since the page rendered', async () => {

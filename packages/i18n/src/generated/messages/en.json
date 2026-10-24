@@ -2392,7 +2392,12 @@
     "source": {
       "in_tn_chennai-district_case_status": "Chennai district courts",
       "in_tn_madras-hc_chennai_case_status": "Madras High Court",
-      "in_ka_karnataka-hc_bengaluru_case_status": "Karnataka High Court"
+      "in_ka_karnataka-hc_bengaluru_case_status": "Karnataka High Court",
+      "in_tn_district_case_status": "Tamil Nadu district courts",
+      "in_ka_district_case_status": "Karnataka district courts",
+      "in_mh_district_case_status": "Maharashtra district courts",
+      "in_dl_district_case_status": "Delhi district courts",
+      "in_up_district_case_status": "Uttar Pradesh district courts"
     },
     "remove": "Remove",
     "added": "Watch added.",

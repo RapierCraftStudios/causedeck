@@ -25,6 +25,7 @@ import {
   hashStatusFields,
   recordDeviceSnapshot,
   runCaseStatusLookup,
+  STATUS_SOURCES,
   type CaseStatusLookupDeps,
   type StatusFetcher,
 } from './lookup.ts';
@@ -234,6 +235,57 @@ describe('runCaseStatusLookup', () => {
       await acceptProposal(w.deps, w.owner, { proposalId: latest?.id ?? '' });
       const next = await getCanonicalNextDate(w.deps, w.owner, { proceedingId: w.proceedingId });
       expect(String(next?.listDate)).toContain('2027-01-21');
+    });
+  });
+});
+
+describe('district sources (#636)', () => {
+  const DISTRICT_PAGE = readFileSync(
+    path.resolve(
+      import.meta.dirname,
+      '../../../adapters/fixtures/status/ecourts-district/status-01-evidence.input.html',
+    ),
+    'utf8',
+  );
+
+  it('registers a status source for each district state', () => {
+    for (const st of ['tn', 'ka', 'mh', 'dl', 'up'])
+      expect(STATUS_SOURCES[`in.${st}.district:case_status`]).toEqual({
+        template: 'ecourts-district',
+        path: 'case-status',
+      });
+  });
+
+  it('refreshes a watched district matter through a delegated lookup, with provenance', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx);
+      const sourceId = 'in.ka.district:case_status';
+      const watch = await addCaseWatch({ db: tx }, w.owner, {
+        proceedingId: w.proceedingId,
+        sourceId,
+        cnr: CNR,
+      });
+      const fetcher = fakeFetcher(() => DISTRICT_PAGE);
+      const report = await runCaseStatusLookup(
+        {
+          db: tx,
+          fetcher,
+          events: w.deps.events,
+          now: () => NOW,
+          policy: () => Promise.resolve({ baseUrl: 'https://services.ecourts.gov.in/' }),
+        },
+        w.owner,
+        { watchId: watch.id },
+      );
+      expect(report.outcome).toBe('changed');
+      expect(fetcher.calls[0]?.delegatedFor).toEqual({
+        advocateId: w.ownerId,
+        matterId: w.matterId,
+      });
+      expect(fetcher.calls[0]?.url).toContain('https://services.ecourts.gov.in/case-status');
+      const [row] = await snapshots(w);
+      expect(row).toMatchObject({ via: 'server', tierUsed: 'captcha', watchId: watch.id });
+      expect(row?.sourceRef).toContain('services.ecourts.gov.in');
     });
   });
 });

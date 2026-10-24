@@ -117,6 +117,7 @@ export type FetchDeniedReason =
   | 'url_outside_source'
   | 'invalid_delegation'
   | 'source_rate_limited'
+  | 'host_rate_limited'
   | 'advocate_rate_limited'
   | 'source_backed_off';
 

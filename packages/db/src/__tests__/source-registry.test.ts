@@ -67,4 +67,17 @@ describe('source', () => {
         expect(ids).toContain(id);
     });
   });
+
+  it('seeds the district case-status sources per state uncleared (#636)', async () => {
+    await withTestDb(async (tx) => {
+      const rows = await tx.execute<{ id: string }>(sql`
+        select id from source
+         where id like 'in.%.district:case_status' and kind = 'court'
+           and cleared_at is null and max_tier <> 'captcha'
+         order by id`);
+      expect(rows.map((r) => r.id)).toEqual(
+        ['dl', 'ka', 'mh', 'tn', 'up'].map((st) => `in.${st}.district:case_status`),
+      );
+    });
+  });
 });

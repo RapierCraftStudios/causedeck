@@ -177,7 +177,7 @@ export async function pollCaseWatches(deps: PollCaseWatchesDeps): Promise<PollCa
         killedSources.add(watch.sourceId);
         report.skipped += 1;
         deps.log?.('status poll source not cleared', { sourceId: watch.sourceId });
-      } else if (denied === 'source_rate_limited') {
+      } else if (denied === 'source_rate_limited' || denied === 'host_rate_limited') {
         limitedSources.add(watch.sourceId);
         report.deferred += 1;
       } else if (denied === 'advocate_rate_limited') {

@@ -40,6 +40,12 @@ export interface StatusSource {
 /** The status sources a watch can read (their rows are seeded uncleared, counsel clears them). */
 export const STATUS_SOURCES: Readonly<Record<string, StatusSource>> = {
   'in.tn.chennai-district:case_status': { template: 'ecourts-district', path: 'case-status' },
+  // National district courts (#636): one eCourts template, a source per state.
+  'in.tn.district:case_status': { template: 'ecourts-district', path: 'case-status' },
+  'in.ka.district:case_status': { template: 'ecourts-district', path: 'case-status' },
+  'in.mh.district:case_status': { template: 'ecourts-district', path: 'case-status' },
+  'in.dl.district:case_status': { template: 'ecourts-district', path: 'case-status' },
+  'in.up.district:case_status': { template: 'ecourts-district', path: 'case-status' },
   'in.tn.madras-hc.chennai:case_status': { template: 'madras-hc', path: 'case-status' },
   'in.ka.karnataka-hc.bengaluru:case_status': { template: 'karnataka-hc', path: 'case-status' },
 };

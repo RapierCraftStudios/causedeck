@@ -1,43 +1,54 @@
 {
- "status": "blocked",
- "summary": "consumeApiCall now locks the key row and checks plus increments in one transaction, so concurrent calls cannot exceed quota",
+ "status": "fixed",
+ "summary": "Institution workspace kind plus portfolio, portfolio_case and portfolio_panel_advocate tenant tables with FORCE RLS, migration and registrations; V1-V3 pass; merge recheck: turbo exit 127 is only turbo missing from PATH; pnpm exec turbo typecheck 23/23 pass, V1-V3 pass, no code change; CI tenancy fix: export-coverage guard needed exporter+erase registration for the 3 tables, and portfolio_case_proceeding_fk now SET NULL (proceeding_id)",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "packages/core/src/api-keys/index.ts:310",
-   "instrumented": false
+   "evidence": "packages/db/src/schema/portfolio.ts:20"
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "packages/core/src/api-keys/index.ts:310-330",
-   "instrumented": false
+   "evidence": "packages/db/src/schema/auth.ts:44"
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "packages/core/src/api-keys/__tests__/concurrency.test.ts:54",
-   "instrumented": false
+   "evidence": "packages/db/migrations/20261024110000_portfolio.sql"
   },
   {
    "id": "R4",
    "status": "implemented",
-   "evidence": "packages/core/src/api-keys/__tests__/concurrency.test.ts:70,81",
-   "instrumented": false
+   "evidence": "packages/db/src/testing/two-tenants.ts (portfolio seeders), rls/sql.test.ts, index.test.ts, cross-tenant-registry.ts"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "cross-tenant SQL suite passes for the three tables (src/__tests__/cross-tenant)"
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/api-keys/__tests__/concurrency.test.ts src/api-keys/__tests__/api-keys.test.ts src/usage/__tests__/concurrency.test.ts src/__tests__/cross-tenant/services.test.ts",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/portfolio-schema.test.ts src/__tests__/auth-schema.test.ts src/index.test.ts src/__tests__/conventions.test.ts src/__tests__/lint-migrations.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/rls src/__tests__/cross-tenant",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/db db:check",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "vitest run (4 files, TESTCONTAINERS_RYUK_DISABLED=true)",
-   "result": "pass with TESTCONTAINERS_RYUK_DISABLED=true; base fails the K-remaining case, head passes",
+   "command": "vitest run src/__tests__/portfolio-schema.test.ts",
+   "result": "pass",
    "fails_without_fix": true
   }
  ],
@@ -45,38 +56,175 @@
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "index.ts:310; concurrency.test.ts:54"
+   "evidence": "R1-R5 implemented; portfolio.ts, migration, seeders, RLS suites pass"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "api-keys.test.ts and cross-tenant services.test.ts pass (192 tests)"
+   "evidence": "db typecheck clean; no other user of db WORKSPACE_KINDS; V1/V2 pass"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "V1 exit 0; forgedock check PASS"
+   "evidence": "D1-D11 changed as described; P1-P3 untouched (validators not edited); V1-V3 pass via forgedock check"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "diff touches only index.ts, concurrency.test.ts and .forge-lean files"
+   "evidence": "git diff touches only packages/db deliverable paths and tests"
   }
  ],
  "amendments": [],
- "facts": {
-  "conventions": [
-   "Run vitest with TESTCONTAINERS_RYUK_DISABLED=true on this host: the Ryuk container fails to start"
-  ],
-  "hotspots": [
-   {
-    "at": "packages/db/src/testing/container.ts:67",
-    "why": "Testcontainers' Ryuk reaper cannot reach the docker daemon here (DOCKER_HOST=tcp://127.0.0.1:2375, no /var/run/docker.sock), so any db-backed vitest run fails at global setup unless TESTCONTAINERS_RYUK_DISABLED=true is set. This is a host problem, not a code one."
-   }
-  ]
- },
- "block": {
-  "type": "environment",
-  "why": "The repro vitest run fails at global setup on this host: testcontainers Ryuk reaper never logs Started (DOCKER_HOST=tcp://127.0.0.1:2375, no docker.sock), in packages/db/src/testing/container.ts, which is not a deliverable. With TESTCONTAINERS_RYUK_DISABLED=true the repro and V1 pass (192 tests) and the K-remaining case fails on base. The engine must set that variable when running the repro."
- }
+ "not_members": [
+  {
+   "symbol": "portfolio",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolio",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioCase",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  },
+  {
+   "symbol": "portfolioPanelAdvocate",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports (its list at the flagged line is unrelated: hoisted mock state, fixtures or core mocks); @causedeck/db is either unmocked or mocked with only db/withWorkspace/withoutWorkspace, so a new table is not a member."
+  }
+ ]
 }

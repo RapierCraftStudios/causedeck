@@ -163,6 +163,11 @@ describe('row-level security catalog', () => {
         'webhook_endpoint',
         'webhook_delivery',
 
+        // Institution portfolios (#661).
+        'portfolio',
+        'portfolio_case',
+        'portfolio_panel_advocate',
+
         // Case-status watch (#589).
         'case_watch',
         'case_status_snapshot',

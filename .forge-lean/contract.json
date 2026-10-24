@@ -2,25 +2,31 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Concurrent requests on one key can each pass the check before any of them increments, so a key can exceed its quota slightly under load.",
+   "quote": "Add tenant tables `portfolio`, `portfolio_case` (proceeding or CNR/case number, source, status fields, next date, last adverse order) and `portfolio_panel_advocate` (advocate user delegated for the institution)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "reserve atomically, either with a single conditional `UPDATE … SET used = used + 1 WHERE used \u003c quota RETURNING` or with a row lock, so the check and the increment are one statement.",
+   "quote": "plus a workspace kind for institutions",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "N concurrent requests against a key with K remaining calls succeed exactly K times. [type:integration]",
+   "quote": "a migration (next free number), FORCE RLS via tenantTable()",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "A quota of 0 still blocks every call, and errors still fail closed. [type:unit]",
+   "quote": "update packages/db/src/index.test.ts, the RLS catalog in packages/db/src/__tests__/rls/sql.test.ts, TABLE_TESTS/registry and the two-tenant seeders",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "Acceptance: RLS tests prove tenant B sees nothing of A.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -28,59 +34,139 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/api-keys/index.ts",
-   "change": "Rewrite consumeApiCall as one withWorkspace tx: SELECT api_key row FOR UPDATE, count this period's api.calls for the key, refuse at/over quota, else run incrementSql (from ../usage/meter.ts) and update last_used_at in the same tx. Keep ApiCallResult shape; add no new export.",
+   "path": "packages/db/src/schema/portfolio.ts",
+   "change": "New file. portfolio (id, name, timestamps), portfolio_case (portfolio composite FK (workspace_id,portfolio_id); optional composite FK to proceeding; cnr with CNR_PATTERN check; case_number; source_id FK to source; status text, status_fields jsonb or columns, next_date date, last_adverse_order_at/id; target check cnr or case_number or proceeding; unique per portfolio+cnr), portfolio_panel_advocate (portfolio composite FK, advocate_user_id FK user cascade, unique (workspace_id,portfolio_id,advocate_user_id)). All via tenantTable() with (workspace_id,id) unique and explicit workspace FK cascade, modelled on schema/webhooks.ts and schema/case-watch.ts.",
    "requirements": [
     "R1",
-    "R2",
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/api-keys/__tests__/concurrency.test.ts",
-   "change": "New committed-pool test (pattern of usage/__tests__/concurrency.test.ts): key with quota K, N>K concurrent consumeApiCall with distinct request ids -> exactly K allowed, ledger count K; quota 0 blocks every concurrent call; a throwing db rejects (fail closed).",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the three tables and constants/types.",
    "requirements": [
-    "R3",
+    "R1"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/db/src/schema/auth.ts",
+   "change": "Add 'institution' to WORKSPACE_KINDS (organization_kind_chk follows via inList); update doc comment.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/db/migrations/20261024110000_portfolio.sql",
+   "change": "Use next free timestamp after 20261024100000 (renumber if base took it). CREATE the 3 tables, FKs, indexes, ENABLE+FORCE RLS and ws_isolation policies as in 20261024063416_webhooks.sql; drop and re-add organization_kind_chk with ('solo','chamber','institution'). Include the header comments the migration linter requires.",
+   "requirements": [
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "Append idx 87 entry with tag matching D4 and increasing 'when'. Add matching snapshot migrations/meta/\u003cts>_snapshot.json (run pnpm --filter @causedeck/db db:generate then adjust SQL header, or hand-produce).",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add portfolio, portfolio_case, portfolio_panel_advocate to the root table list.",
+   "requirements": [
     "R4"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add the three tables to the RLS catalog.",
+   "requirements": [
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Add the three tables to the DB_TABLES_TEST registry.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "Add TENANT_SEEDERS for portfolio, portfolio_case, portfolio_panel_advocate (seed a portfolio per tenant; case and panel advocate seeders create their own parent portfolio, as webhook_delivery does).",
+   "requirements": [
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/db/src/__tests__/auth-schema.test.ts",
+   "change": "Update WORKSPACE_KINDS expectation to include 'institution'.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/db/src/__tests__/portfolio-schema.test.ts",
+   "change": "New schema test: tables are tenant tables, checks (CNR, target), uniques, institution kind accepted by organization_kind_chk.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R5"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "consumeApiCall signature and ApiCallResult shape ({allowed:true,used}|{allowed:false,used,quota}); sole caller apps/api/src/middleware/api-key.ts"
+   "what": "WORKSPACE_KIND_VALUES in packages/validators/src/workspace.ts and the onboarding/profile forms stay solo|chamber: institutions are not self-serve selectable."
   },
   {
    "id": "P2",
-   "what": "Idempotent billing per request id and per-key (not per-workspace) quota, as tested in packages/core/src/api-keys/__tests__/api-keys.test.ts"
+   "what": "Existing organization rows and the solo/chamber behaviour of organization_kind_chk (packages/db/migrations/0004_workspaces.sql:46) remain valid."
   },
   {
    "id": "P3",
-   "what": "usage increment/incrementSql behaviour in packages/core/src/usage/meter.ts (unchanged)"
-  },
-  {
-   "id": "P4",
-   "what": "Export list of packages/core/src/api-keys/index.ts (enumerated by packages/core/src/__tests__/cross-tenant/services.test.ts:2625)"
+   "what": "Existing tenant tables (webhook_*, case_watch) and their RLS policies are untouched; no new runtime exports of @causedeck/core."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/api-keys/__tests__/concurrency.test.ts src/api-keys/__tests__/api-keys.test.ts src/usage/__tests__/concurrency.test.ts src/__tests__/cross-tenant/services.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/portfolio-schema.test.ts src/__tests__/auth-schema.test.ts src/index.test.ts src/__tests__/conventions.test.ts src/__tests__/lint-migrations.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/rls src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/db db:check"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Row lock (SELECT ... FOR UPDATE on the api_key row) rather than a conditional UPDATE on a counter",
-   "justification": "Quota is counted from the usage_event ledger (api-keys/index.ts:279-295); there is no used column, and the issue allows a row lock. Reuses exported incrementSql (usage/meter.ts:106) in the same tx.",
-   "source": "spec"
+   "choice": "Add 'institution' only to the DB WORKSPACE_KINDS, not to validators/UI kind lists.",
+   "justification": "validators/src/workspace.ts:31 drives the self-serve onboarding and profile forms; institutions are provisioned by staff (#498 B2B) so they must not be user-selectable.",
+   "source": "precedent"
+  },
+  {
+   "id": "K2",
+   "choice": "Model portfolio_case after case_watch (composite FKs, CNR_PATTERN check, target check).",
+   "justification": "packages/db/src/schema/case-watch.ts:31-70 is the established shape for CNR/case-number lookups against source and proceeding.",
+   "source": "precedent"
   }
- ],
- "repro_test": {
-  "path": "packages/core/src/api-keys/__tests__/concurrency.test.ts",
-  "id": "api key quota: concurrent calls",
-  "command": "pnpm --filter @causedeck/core exec vitest run src/api-keys/__tests__/concurrency.test.ts"
- }
+ ]
 }

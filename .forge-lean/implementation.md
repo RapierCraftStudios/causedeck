@@ -1,5 +1,23 @@
 ### Approach
-#486 DPDP posture for the global court-data layer: posture doc (docs/legal/court-data-posture.md, linked from D-048), `source.data_class` tag with `exposableThroughApi` (API wiring deferred to #487), `expireCourtData` retention job `system.court-data.retention`, and `eraseCourtDataSubject` with audit events `court_data.expired` / `court_data.erased`.
-### Recovery
-- Merged origin/milestone/court-data-network; the base took 0074 to 0078, so the migration is now 0079_source_data_class (SQL byte-identical apart from the header name). The base's 0074 snapshot and journal were restored, then the 0079 snapshot and journal entry were regenerated with drizzle-kit generate and `lint-migrations --stamp`. `drizzle-kit check` and migration lint pass.
-- Not run locally: db and core tests (need a database; CI re-verifies).
+Public API keys (#624): a tenant `api_key` table (sha256 hash only, token shown once), a core `api-keys` domain, an API-key `BearerResolver`, per-key rate limit and monthly quota, and one billed `api.calls` usage unit per request.
+
+### Changes
+- packages/db: `schema/api-keys.ts`, `schema/index.ts`, migration `0080_api_keys.sql` (+ snapshot, journal) with RLS and owner-defined `app_api_key_by_hash`; registry/test lists (`index.test.ts`, `rls/sql.test.ts`, `cross-tenant-registry.ts`, `two-tenants.ts`).
+- packages/core: `api-keys/index.ts` (create/list/revoke audited, authenticate, consumeApiCall), `usage/keys.ts` (`api.calls`), `package.json`, `index.ts`, audit actions `api_key.created`/`api_key.revoked` (`audit/events.ts`, docs/engineering/audit.md), cross-tenant cases, domain tests.
+- apps/api: `createApiKeyResolver` (auth.ts), `Principal.apiKey` and `requireScope` (openapi.ts), `middleware/api-key.ts`, per-key rate-limit counters (rate-limit.ts), wiring (app.ts), end-to-end test.
+- core-domains.js and docs/engineering/core-domains.md: `api-keys` depends on audit, usage, workspaces.
+
+### Acceptance Criteria Status
+- R1 ✅ packages/core/src/api-keys/index.ts, packages/db/src/schema/api-keys.ts
+- R2 ✅ packages/core/src/usage/keys.ts:12
+- R3 ✅ apps/api/src/middleware/auth.ts (createApiKeyResolver)
+- R4 ✅ cross-tenant-registry.ts, core-domains.js, index.test.ts, rls/sql.test.ts
+- R5 ✅ apps/api/src/__tests__/api-keys.test.ts, packages/core/src/api-keys/__tests__/api-keys.test.ts
+
+### Verification
+Verify mode is CI: V1 to V4 were not run locally (formatter and linter only). The new tests are expected to fail without the fix (the module does not exist).
+
+### Notes
+- Quota exhaustion answers 429 with code `RATE_LIMITED` (no `QUOTA_EXCEEDED` code exists in apps/api/src/errors.ts); `x-quota-limit` and `x-quota-used` headers distinguish it.
+- Added audit actions (events.ts, audit.md) to audit key issue and revoke, as the contract requires.
+- Sibling-list check: apiKey/api-keys are not members of the listed apps/web and apps/admin tests (no UI, route or server action added); recorded in result.json not_members.

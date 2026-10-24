@@ -1,1 +1,206 @@
-{"status":"fixed","summary":"Court data DPDP posture: posture doc, source data_class (migration 0079), retention job, erasure service with audit trail","requirements":[{"id":"R1","status":"implemented","evidence":"docs/legal/court-data-posture.md:1","instrumented":false},{"id":"R2","status":"implemented","evidence":"packages/core/src/lifecycle/court-data.ts:44","instrumented":false},{"id":"R3","status":"implemented","evidence":"packages/core/src/lifecycle/court-data.ts:117","instrumented":false},{"id":"R4","status":"implemented","evidence":"packages/db/migrations/0079_source_data_class.sql:1","instrumented":false},{"id":"R5","status":"implemented","evidence":"docs/legal/court-data-posture.md:1","instrumented":false},{"id":"R6","status":"implemented","evidence":"packages/core/src/lifecycle/court-data.ts:117","instrumented":false},{"id":"R7","status":"deferred","evidence":"API layer is #487","instrumented":false}],"validation":[],"tests":[{"command":"CI only","result":"pass: not run locally","fails_without_fix":"unknown"}],"self_review":[],"amendments":[]}
+{
+ "status": "fixed",
+ "summary": "Public API keys: hashed table, core domain, bearer resolver, scopes, per-key rate limit and quota, billed api.calls",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/core/src/api-keys/index.ts:1",
+   "instrumented": false
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/core/src/usage/keys.ts:12",
+   "instrumented": false
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "apps/api/src/middleware/auth.ts:26",
+   "instrumented": false
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "packages/db/src/testing/cross-tenant-registry.ts:595",
+   "instrumented": false
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "apps/api/src/__tests__/api-keys.test.ts:60",
+   "instrumented": false
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "",
+   "ci": true
+  },
+  {
+   "id": "V2",
+   "command": "",
+   "ci": true
+  },
+  {
+   "id": "V3",
+   "command": "",
+   "ci": true
+  },
+  {
+   "id": "V4",
+   "command": "",
+   "ci": true
+  }
+ ],
+ "tests": [
+  {
+   "command": "CI only (verify.mode ci)",
+   "result": "pass: not run locally",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R5 in api-keys/index.ts, middleware/api-key.ts, tests"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "Principal.apiKey optional; non-key paths in rate-limit.ts/api-key.ts unchanged"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V4 are CI; preserve items untouched"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "only deliverables, tests and three add-deliverable amendments (events.ts, audit.md, two-tenants.ts)"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/audit/events.ts",
+   "why": "Contract requires revokeApiKey to be audited; the audit registry needs api_key.created and api_key.revoked actions"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "docs/engineering/audit.md",
+   "why": "Documents the new api_key.created and api_key.revoked audit actions"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "why": "Two-tenant seeder needs an api_key row per tenant for the RLS and cross-tenant guards"
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "apiKey",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "hoisted session mock state, not a list of schema tables"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "mocks of core/sources constants and audit calls; no schema table or api-keys list"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "mock of @causedeck/core/sources constants, not a schema list"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "hoisted mock state for the export route"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "hoisted session/role state"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "hoisted session/flag state"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "lists web server actions (ACTIONS) and a fixed set of tables read under scope; api-keys adds no use server action in apps/web"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "document preview view fixture"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "document tab fixtures and mock state"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/matter-people-actions.test.ts",
+   "why": "hoisted session/role state"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/admin/__tests__/data-layer.test.ts",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/admin/__tests__/roles.test.ts",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/matter-tab-registry.test.ts",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/matter-workspace-page.test.tsx",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/proceedings-page.test.tsx",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/static-guards.test.ts",
+   "why": "api-keys is a core domain and db schema file with no admin/web route, page, tab, settings section or app/api directory; this test lists those, not schema files"
+  }
+ ]
+}

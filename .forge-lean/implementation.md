@@ -33,3 +33,9 @@ The eight flagged symbols are not members of the named lists (partial mocks in c
 
 ### Post-merge
 Merged origin/milestone/court-data-network (only .forge-lean files conflicted; kept this branch's). `turbo` is not on PATH here (exit 127 is environmental); `pnpm exec turbo run typecheck` over core, worker, api, db, flags and intelligence passes (18 tasks), and V1-V3 pass on the merged tree. No duplicate keys or symbol clashes found.
+
+## Merge fix (turbo not found)
+The merged-tree failure was `turbo: command not found` (exit 127), an environment PATH issue, not a code conflict. With `node_modules/.bin` on PATH, `turbo run typecheck --filter=@causedeck/core --filter=@causedeck/worker --filter=@causedeck/db` passes (17/17). No source change was needed. Vitest suites could not run on this host (the global setup's Postgres container did not start: "Log stream ended and message /.*Started.*/ was not received"), so V1/V2 were not re-run after the merge.
+
+### Post-merge (second base merge)
+Registry lists conflicted (core jobs/registry.ts, worker registry/schedules tests); kept both the base's webhook jobs and `system.orders.poll`. `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.

@@ -144,8 +144,7 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
   // The notices feed since #588, not a placeholder.
   notices: (await import('../app/(app)/w/[slug]/notices/page.tsx')).default,
   // The institution portfolio since #666.
-  portfolio: (await import('../app/(app)/w/[slug]/portfolio/page.tsx'))
-    .default as unknown as PageComponent,
+  portfolio: (await import('../app/(app)/w/[slug]/portfolio/page.tsx')).default,
   activity: (await import('../app/(app)/w/[slug]/activity/page.tsx')).default,
   billing: (await import('../app/(app)/w/[slug]/billing/page.tsx')).default,
   invoices: (await import('../app/(app)/w/[slug]/invoices/page.tsx')).default,

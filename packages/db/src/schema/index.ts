@@ -33,6 +33,7 @@ export {
   provisioningRun,
   scimToken,
   ssoProvider,
+  ssoProviderAuth,
 } from './enterprise.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {

@@ -108,6 +108,11 @@ export const AUDIT_ACTIONS = {
   // Public API keys (#624): fail-closed. Metadata holds the key's scopes (created) or nothing.
   'api_key.created': { security: true, description: 'An owner or admin issued a public API key' },
   'api_key.revoked': { security: true, description: 'An owner or admin revoked a public API key' },
+  // Per-organisation SSO (#683): fail-closed. Metadata holds the protocol, domain and enabled flag,
+  // never the provider settings (client secrets, certificates).
+  'sso.provider_created': { security: true, description: 'An owner added an SSO provider' },
+  'sso.provider_updated': { security: true, description: 'An owner changed an SSO provider' },
+  'sso.provider_deleted': { security: true, description: 'An owner removed an SSO provider' },
   // Change webhooks (#626): fail-closed. Metadata holds the subscribed event types (created) or nothing.
   'webhook_endpoint.created': {
     security: true,

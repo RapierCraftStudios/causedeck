@@ -13,6 +13,7 @@
     "./messages": "./src/messages.ts",
     "./rate-limit": "./src/rate-limit.ts",
     "./step-up": "./src/step-up.ts",
+    "./sso": "./src/sso.ts",
     "./dev-provider": "./src/dev-provider.ts",
     "./policy": "./src/policy/index.ts",
     "./policy/visibility": "./src/policy/visibility.ts",
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "@better-auth/passkey": "catalog:",
+    "@better-auth/sso": "catalog:",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
     "@causedeck/notifications": "workspace:*",

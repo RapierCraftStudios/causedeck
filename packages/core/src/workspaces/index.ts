@@ -19,6 +19,7 @@ export * from './profile.ts';
 export * from './role-settings.ts';
 export * from './service.ts';
 export * from './slug.ts';
+export * from './sso.ts';
 
 export type Queryable = Database | Transaction;
 

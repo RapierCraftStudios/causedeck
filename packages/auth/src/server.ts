@@ -5,6 +5,7 @@ import type { Secret, ServerEnv } from '@causedeck/config/env';
 import type { Database } from '@causedeck/db';
 import { schema } from '@causedeck/db';
 import { passkey } from '@better-auth/passkey';
+import { sso } from '@better-auth/sso';
 import { betterAuth, type BetterAuthPlugin } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, isAPIError } from 'better-auth/api';
@@ -19,8 +20,12 @@ import {
   MAGIC_LINK_IP_LIMIT,
   magicLinkEmailKey,
   RATE_LIMIT_MESSAGE,
+  SSO_DOMAIN_LIMIT,
+  SSO_IP_LIMIT,
+  ssoDomainKey,
 } from './rate-limit';
 import { ac, isRole, roles } from './roles';
+import { isBlockedSsoPath, isSsoPath, provisionSsoMember, ssoDomainOf } from './sso';
 import { markStepUp } from './step-up';
 
 export const MAGIC_LINK_PATH = '/sign-in/magic-link';
@@ -35,7 +40,7 @@ type GoogleEnv =
 /** The env keys auth reads. Secrets arrive only as #4 `Secret` values. */
 export type AuthEnv = Pick<ServerEnv, 'NODE_ENV' | 'APP_URL' | 'BETTER_AUTH_SECRET'> & GoogleEnv;
 
-export type SignInMethod = 'magic_link' | 'passkey' | 'google' | 'two_factor' | 'dev' | 'unknown';
+export type SignInMethod = 'magic_link' | 'passkey' | 'google' | 'sso' | 'two_factor' | 'dev' | 'unknown';
 
 /** One auth security event as plain data; `@causedeck/core` turns it into an audit row (#228). */
 export interface SecurityEventInput {
@@ -100,6 +105,8 @@ export function sessionUpdateAgeFor(expiresInSeconds: number): number {
 }
 
 const MAGIC_LINK_VERIFY_PATH = '/magic-link/verify';
+export const SSO_SIGN_IN_PATH = '/sign-in/sso';
+const SSO_CALLBACK_RULE = { window: SSO_IP_LIMIT.windowSeconds, max: SSO_IP_LIMIT.max };
 const PASSKEY_SIGN_IN_PATH = '/passkey/verify-authentication';
 const TWO_FACTOR_VERIFY_PATHS: ReadonlySet<string> = new Set([
   '/two-factor/verify-totp',
@@ -121,6 +128,7 @@ const REVOKE_PATHS: ReadonlySet<string> = new Set([
 export function signInMethod(path: string | undefined): SignInMethod {
   if (path === MAGIC_LINK_VERIFY_PATH) return 'magic_link';
   if (path === PASSKEY_SIGN_IN_PATH) return 'passkey';
+  if (path !== undefined && isSsoPath(path)) return 'sso';
   if (path?.startsWith('/callback/')) return 'google';
   if (path !== undefined && TWO_FACTOR_VERIFY_PATHS.has(path)) return 'two_factor';
   // Literal `process.env.NODE_ENV` so production bundles drop the dev path string with the dev provider.
@@ -201,7 +209,8 @@ export function securityEventHook(securityEvents: SecurityEventRecorder, logger:
       if (
         ctx.path === MAGIC_LINK_VERIFY_PATH ||
         ctx.path === PASSKEY_SIGN_IN_PATH ||
-        TWO_FACTOR_VERIFY_PATHS.has(ctx.path)
+        TWO_FACTOR_VERIFY_PATHS.has(ctx.path) ||
+        (isSsoPath(ctx.path) && ctx.path !== SSO_SIGN_IN_PATH)
       ) {
         await securityEvents
           .signInFailed({ ...info, userId, method: signInMethod(ctx.path) })
@@ -318,6 +327,21 @@ export function createAuth({
     // Accounts have no password (magic link, passkeys, Google), so enabling and disabling 2FA rely on
     // the session alone (#289); a user who somehow has a credential password is still asked for it.
     twoFactor({ issuer: 'CauseDeck', allowPasswordless: true }),
+    // Per-organisation SAML and OIDC (#683). The plugin only reads the enabled providers of the
+    // `sso_provider_auth` view; the owner-only core service edits them, so its own provider
+    // endpoints are refused in `hooks.before`. Membership is ours (`provisionSsoMember`), not the
+    // plugin's organisation provisioning, because `member` is under row-level security.
+    sso({
+      modelName: 'ssoProviderAuth',
+      organizationProvisioning: { disabled: true },
+      provisionUserOnEveryLogin: true,
+      provisionUser: async ({ user, provider }) => {
+        const organizationId = (provider as { organizationId?: unknown }).organizationId;
+        if (typeof organizationId === 'string') {
+          await provisionSsoMember(db, organizationId, user.id);
+        }
+      },
+    }),
   ] satisfies BetterAuthPlugin[];
 
   // Literal `process.env.NODE_ENV` so production bundles drop the dev provider entirely.
@@ -366,6 +390,9 @@ export function createAuth({
           window: MAGIC_LINK_IP_LIMIT.windowSeconds,
           max: MAGIC_LINK_IP_LIMIT.max,
         },
+        [SSO_SIGN_IN_PATH]: { window: SSO_IP_LIMIT.windowSeconds, max: SSO_IP_LIMIT.max },
+        '/sso/callback/*': SSO_CALLBACK_RULE,
+        '/sso/saml2/sp/acs/*': SSO_CALLBACK_RULE,
       },
     },
     logger: {
@@ -377,6 +404,7 @@ export function createAuth({
     },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
+        if (isBlockedSsoPath(ctx.path)) throw new APIError('NOT_FOUND', { message: 'Not found' });
         const body = ctx.body as Record<string, unknown> | undefined;
         if (ctx.path === MAGIC_LINK_PATH && typeof body?.email === 'string') {
           const allowed = await consumeRateLimit(
@@ -385,6 +413,20 @@ export function createAuth({
             MAGIC_LINK_EMAIL_LIMIT,
           );
           if (!allowed) throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
+        }
+        if (ctx.path === SSO_SIGN_IN_PATH) {
+          // Only the email domain picks a provider: a provider or organisation id would let a
+          // caller probe which organisations use SSO.
+          if (body?.providerId !== undefined || body?.organizationSlug !== undefined) {
+            throw new APIError('BAD_REQUEST', { message: 'Sign in with your work email' });
+          }
+          const domain = ssoDomainOf(String(body?.email ?? body?.domain ?? ''));
+          if (domain === null) {
+            throw new APIError('BAD_REQUEST', { message: 'Sign in with your work email' });
+          }
+          if (!(await consumeRateLimit(db, ssoDomainKey(domain), SSO_DOMAIN_LIMIT))) {
+            throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
+          }
         }
       }),
       // Security events (#228); session, 2FA and revocation events come from `databaseHooks`.

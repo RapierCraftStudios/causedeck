@@ -645,6 +645,13 @@
       "when": 1792870066549,
       "tag": "20261024192746_enterprise_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1792873000000,
+      "tag": "20261024210000_sso_provider_auth_view",
+      "breakpoints": true
     }
   ]
 }

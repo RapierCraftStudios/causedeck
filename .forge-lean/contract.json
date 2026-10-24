@@ -2,37 +2,37 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "quote": "Add the better-auth SSO plugin (new catalog dependency in pnpm-workspace.yaml and packages/auth/package.json)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "dashboard (next dates, stage, adverse orders)",
+   "quote": "organisation-scoped provider config using sso_provider",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "exception alert settings",
+   "quote": "SSO sign-in entry on the web sign-in page",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "exception alert settings, exports",
+   "quote": "an owner settings page to configure it",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "i18n namespace and catalog test",
+   "quote": "rate limits and audit rows",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "cross-tenant-actions test entries for each 'use server' action.",
+   "quote": "Acceptance: an organisation can sign in through SSO. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -40,185 +40,196 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/portfolio/portfolio.ts",
-   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D2",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "Export listPortfolios and createPortfolio.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/core/src/portfolio/portfolio.test.ts",
-   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "path": "pnpm-workspace.yaml",
+   "change": "Add catalog entry for @better-auth/sso pinned to the version matching better-auth 1.7.10 (verify on the registry).",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
-   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
+   "id": "D2",
+   "path": "packages/auth/package.json",
+   "change": "Add \"@better-auth/sso\": \"catalog:\" to dependencies; update pnpm-lock.yaml via pnpm install (delete node_modules first if EACCES).",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "pnpm-lock.yaml",
+   "change": "Lockfile update for the new dependency.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/auth/src/server.ts",
+   "change": "Register the sso plugin in createAuth mapped onto sso_provider (organisation-scoped, enabled-only), add 'sso' to SignInMethod and signInMethod() for the SSO callback paths, add SSO rate-limit customRules and a hooks.before per-domain limit, record sso sign-in success/failure through the SecurityEventRecorder, provision SSO users as plain members (never owner).",
    "requirements": [
     "R1",
-    "R4"
+    "R2",
+    "R5",
+    "R6"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/auth/src/client.ts",
+   "change": "Add ssoClient() plugin to createCauseDeckAuthClient.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/auth/src/rate-limit.ts",
+   "change": "Add SSO limits (per IP per window, per domain-hash key via consumeRateLimit) and a key helper.",
+   "requirements": [
+    "R5"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
-   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
+   "path": "packages/auth/src/sso.ts",
+   "change": "New: SSO helpers (domain normalisation, provider config validation, plugin schema mapping) with unit tests in packages/auth/src/__tests__/sso.test.ts.",
    "requirements": [
-    "R1",
     "R2",
-    "R3",
+    "R6"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/db/src/schema/enterprise.ts",
+   "change": "Only if the installed plugin schema cannot map onto the table: additive nullable columns (plus migration with next free number and regenerated snapshot) and a narrow domain-lookup function exposing id/protocol/enabled but never config. Update packages/db/src/index.test.ts and RLS catalog tests if touched.",
+   "requirements": [
+    "R2",
+    "R6"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/core/src/audit/events.ts",
+   "change": "Add audit event types for SSO provider create/update/delete/enable and an sso sign-in method; update packages/core/src/audit/security-events.ts accordingly and their tests.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/core/src/workspaces/sso.ts",
+   "change": "New owner-only core service (list/upsert/delete/enable provider for a workspace, writes audit row, never returns config secrets), exported via workspaces index; register in packages/db/src/testing/cross-tenant-registry.ts SERVICE_TESTS with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts; update docs/engineering/core-domains.md only if a cross-domain import is added.",
+   "requirements": [
+    "R2",
     "R4",
     "R5"
    ]
   },
   {
-   "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
-   "change": "Skeleton loading state.",
+   "id": "D11",
+   "path": "apps/web/app/(public)/sign-in/sso-form.tsx",
+   "change": "New SSO entry (work email -> start SSO) rendered from sign-in-form.tsx/page.tsx; same response for unknown domains (no enumeration); test in apps/web/__tests__/sign-in.test.tsx.",
    "requirements": [
-    "R2"
+    "R3"
    ]
   },
   {
-   "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
-   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
+   "id": "D12",
+   "path": "apps/web/app/(app)/w/[slug]/settings/sso/page.tsx",
+   "change": "New owner-only settings page with actions.ts (workspaceAction, zod), loading.tsx, error.tsx; add its actions to ACTIONS and probe inputs in apps/web/__tests__/cross-tenant-actions.test.ts; link from settings nav.",
    "requirements": [
-    "R2"
+    "R4"
    ]
   },
   {
-   "id": "D10",
-   "path": "apps/web/components/portfolio/portfolio-view.tsx",
-   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
+   "id": "D13",
+   "path": "packages/i18n/src/messages/en/auth.json",
+   "change": "Add SSO copy for sign-in and settings in en, kn and ta message files (use the existing auth namespace, or a new namespace registered in packages/i18n/src/catalog.ts and __tests__/catalog.test.ts).",
    "requirements": [
-    "R1",
-    "R2",
     "R3",
     "R4"
    ]
   },
   {
-   "id": "D11",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'portfolio' to NAMESPACES.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/i18n/src/messages/en/portfolio.json",
-   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
    "id": "D14",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'portfolio' to the expected namespace list.",
+   "path": "docs/engineering/auth.md",
+   "change": "Document the SSO plugin, domain lookup, provisioning role, rate limits (rate-limit table section) and audit events.",
    "requirements": [
-    "R5"
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
+   "path": "packages/auth/src/__tests__/sso-sign-in.test.ts",
+   "change": "Integration test: mocked OIDC IdP, a user at a configured, enabled domain signs in via SSO and becomes a member of the organisation; disabled/unknown domain fails; rate limit returns 429; audit row recorded.",
    "requirements": [
-    "R6"
+    "R6",
+    "R5"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+   "what": "Magic link, passkey, Google and 2FA sign-in behaviour and rate limits in packages/auth/src/server.ts (existing packages/auth/src/__tests__/server.test.ts must pass unchanged)."
   },
   {
    "id": "P2",
-   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+   "what": "createAuth(CreateAuthDeps) signature and the Auth type used by apps/web/lib/auth.ts and the admin console (disableSignUp, sessionExpiresInSeconds)."
   },
   {
    "id": "P3",
-   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+   "what": "sso_provider table contract from #682: workspace_id RLS isolation, unique domain, config never exported (packages/db/src/schema/enterprise.ts, packages/db/src/__tests__/enterprise-schema.test.ts)."
+  },
+  {
+   "id": "P4",
+   "what": "Existing SecurityEventRecorder interface consumers (packages/core/src/audit/security-events.ts) stay backward compatible; new methods have no-op defaults in noopSecurityEventRecorder."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/__tests__/sso.test.ts src/__tests__/sso-sign-in.test.ts src/__tests__/server.test.ts src/__tests__/security-events.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/audit --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/sign-in.test.tsx __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/enterprise-schema.test.ts src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V6",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
-   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
-   "source": "precedent"
+   "choice": "New dependency @better-auth/sso added to the pnpm catalog and packages/auth only (third-party, not a workspace package).",
+   "justification": "Issue text mandates it; sibling plugin precedent @better-auth/passkey at pnpm-workspace.yaml:55 and packages/auth/package.json:29.",
+   "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
-   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
+   "choice": "Provider writes go through an owner-only core service, not the plugin's registration endpoint; the plugin is mapped onto the existing sso_provider table.",
+   "justification": "Table is tenant-scoped under FORCE RLS with secret config (packages/db/src/schema/enterprise.ts:45-70); workspace-scoped audit and owner policy live in core (packages/auth/src/policy/matrix.ts:10).",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
-   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
+   "choice": "Per-domain SSO rate limit reuses consumeRateLimit with a hashed key in the rate_limit table.",
+   "justification": "Same mechanism as magic-link per-email limit, packages/auth/src/rate-limit.ts:21-50 and docs/engineering/auth.md:148-158.",
    "source": "precedent"
   }
  ]

@@ -25,3 +25,6 @@ Renamed case-watch `WatchForm` to `CaseWatchForm` (and its props type) to avoid 
 
 ## Dotted message keys fix (CI web shard: sign-in.test.tsx and 6 more files)
 The `caseWatch.source` messages were keyed by status source ids (`in.tn.…:case_status`), and next-intl rejects "." in keys (INVALID_KEY logged for every provider using the full catalog). Keys are now `in_tn_chennai-district_case_status` etc. (source JSON, generated JSON and d.ts), looked up via `lib/case-watch/source-key.ts`. Added the ta/kn `caseWatch.*` draft entries to translation-status.json (i18n:check was failing). Fixed case-watch-actions.test.ts: the result shape is `error.code`, and calls run sequentially because concurrent first imports of the mocked auth module race in vitest.
+
+## CI @causedeck/intelligence#test failure (no code change)
+The failing shard test is `packages/intelligence/src/pipeline/pipeline.test.ts > text-layer PDF > processes 20 text pages in under 5 seconds…` (a wall-clock performance test, 30s timeout). This branch changes nothing in packages/intelligence or its dependencies' behaviour. Run locally under load: 290 pass, only that timing test times out. Treated as a flaky, load-sensitive test; no change made. The `build` job log was not available.

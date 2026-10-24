@@ -49,7 +49,9 @@ const approve = workspaceAction(
   { action: 'workspace.manage' },
 );
 
-export async function requestClerkSetupApprovalAction(raw: unknown): Promise<Result<ClerkSetupView>> {
+export async function requestClerkSetupApprovalAction(
+  raw: unknown,
+): Promise<Result<ClerkSetupView>> {
   return request(raw);
 }
 

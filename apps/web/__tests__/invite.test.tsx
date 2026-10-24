@@ -141,7 +141,9 @@ describe('AcceptForm', () => {
 
   it('accepts and lands on the workspace Today', async () => {
     const action = vi.fn<AcceptInvitation>(() =>
-      Promise.resolve({ ok: true, data: { status: 'accepted', slug: 'hebbal', next: '/w/hebbal/today' },
+      Promise.resolve({
+        ok: true,
+        data: { status: 'accepted', slug: 'hebbal', next: '/w/hebbal/today' },
       }),
     );
     await accept(action);

@@ -50,7 +50,9 @@ export default async function WelcomePage({ params }: WorkspacePageProps) {
       className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-6 outline-none md:py-10"
     >
       <header className="flex flex-col gap-1.5">
-        <h1 className="font-serif text-2xl font-medium">{t('title', { workspace: workspace.name })}</h1>
+        <h1 className="font-serif text-2xl font-medium">
+          {t('title', { workspace: workspace.name })}
+        </h1>
         {isClerk ? <p className="text-ink-muted text-sm">{t('clerkIntro')}</p> : null}
       </header>
 
@@ -81,7 +83,11 @@ export default async function WelcomePage({ params }: WorkspacePageProps) {
               <Link href={`${base}/today`}>{t('steps.today.action')}</Link>
             </Button>
           </section>
-          <section aria-labelledby="step-approval" className={card} data-clerk-setup-status={own?.status ?? 'none'}>
+          <section
+            aria-labelledby="step-approval"
+            className={card}
+            data-clerk-setup-status={own?.status ?? 'none'}
+          >
             <h2 id="step-approval" className="text-base font-medium">
               {t('approval.title')}
             </h2>

@@ -129,7 +129,9 @@ export async function approveClerkSetup(
         .set({ clerkSetupStatus: 'approved', clerkSetupDecidedAt: request.now ?? new Date() })
         .where(eq(member.id, target.id));
     }
-    const entry = (await getClerkSetup(tx, request.workspaceId)).find((c) => c.memberId === target.id);
+    const entry = (await getClerkSetup(tx, request.workspaceId)).find(
+      (c) => c.memberId === target.id,
+    );
     if (!entry) throw conflict(NOTHING_WAITING);
     return entry;
   });

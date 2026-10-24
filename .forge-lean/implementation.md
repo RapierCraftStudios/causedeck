@@ -27,3 +27,6 @@ No env vars. Vacations come from a static per-forum table (R8 deferred).
 
 ### Stale-list follow-up
 The eight flagged symbols are not members of the named lists (partial mocks in case-watch-actions and status-poll tests; services.test.ts CASES is per-service, and the constants/job symbols are already in NOT_A_SERVICE). Recorded under `not_members` in result.json; no code changed, so V1-V3 results stand.
+
+### Merge typecheck failure
+`turbo run typecheck` exited 127 (`turbo: command not found`): an environment PATH issue, not a code or merge conflict. Ran `pnpm exec turbo run typecheck --filter=@causedeck/core --filter=@causedeck/worker` (core, worker and their dependencies, 17 tasks): all pass. No code changed.

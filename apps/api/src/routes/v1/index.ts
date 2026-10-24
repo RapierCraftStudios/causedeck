@@ -11,6 +11,7 @@ import { createRouter, type AppEnv, type AppRouter } from '../../lib/openapi.ts'
 import { inboundEmailRouter, type InboundEmailDeps } from '../inbound-email.ts';
 import { razorpayWebhookRouter, type RazorpayWebhookDeps } from '../webhooks/razorpay.ts';
 
+import { benchCardRouter } from './bench-card.ts';
 import { billingRouter } from './billing.ts';
 import { meRouter } from './me.ts';
 import { workspacesRouter } from './workspaces.ts';
@@ -35,6 +36,7 @@ export function v1Router({ db, middleware, billing, inboundEmail, routes }: V1Op
   v1.route('/', meRouter(db));
   v1.route('/', workspacesRouter(db));
   v1.route('/', billingRouter(db));
+  v1.route('/', benchCardRouter(db));
   v1.route(
     '/',
     razorpayWebhookRouter({

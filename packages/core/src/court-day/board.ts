@@ -16,6 +16,7 @@ import {
 } from '@causedeck/adapters';
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { isEnabled } from '@causedeck/flags';
+import { loadBenchPace, refreshBenchFacts } from '@causedeck/intelligence';
 import { COURT_HOURS, notify, type NotifyContext } from '@causedeck/notifications';
 import { and, desc, eq, gte, inArray, ne, sql } from 'drizzle-orm';
 
@@ -261,6 +262,17 @@ export async function pollBoards(deps: PollBoardsDeps): Promise<PollBoardsReport
         })),
       );
       report.observed += changed.length;
+      try {
+        // Internal bench facts (#521, D-050): derived counts and pace, never a reason to fail a poll.
+        await refreshBenchFacts(deps.db, {
+          sourceId: board.sourceId,
+          forumPrefix: board.forumPrefix,
+          hallNos: changed.map((row) => row.hallNo),
+          now,
+        });
+      } catch {
+        log('bench_facts.refresh_failed', { halls: changed.length });
+      }
     }
 
     for (const target of mine) {
@@ -293,6 +305,31 @@ export async function pollBoards(deps: PollBoardsDeps): Promise<PollBoardsReport
   if (boards > 0 && notCleared === boards) return { ...report, outcome: 'source_not_cleared' };
   log('board.poll', { fetched: report.fetched, observed: report.observed, alerts: report.alerts });
   return report;
+}
+
+/** Days of stored bench-fact pace that can back an estimate. */
+const BENCH_PACE_DAYS = 180;
+/** With fewer own samples than this, the stored internal pace (`bench_sitting_fact`) backs the estimate. */
+const OWN_SAMPLES_ENOUGH = 3;
+
+/**
+ * The pace samples behind a hall's call-time estimate: the hall's own recent samples, topped up
+ * with the internal per-day pace from the staff-only bench-facts store (#521, D-050) while the
+ * recent history is thin.
+ */
+async function withBenchPace(
+  db: Db,
+  hall: { sourceId: string; hallNo: string },
+  own: number[],
+  now: Date,
+): Promise<number[]> {
+  if (own.length >= OWN_SAMPLES_ENOUGH) return own;
+  const stored = await loadBenchPace(db, {
+    sourceId: hall.sourceId,
+    hallNo: hall.hallNo,
+    since: new Date(now.getTime() - BENCH_PACE_DAYS * 24 * 3_600_000),
+  });
+  return [...stored, ...own];
 }
 
 // --- the live halls read model -----------------------------------------------------------------
@@ -411,7 +448,7 @@ export async function getLiveHalls(
       hall.status = latest.status;
       hall.observedAt = latest.observedAt;
     }
-    const samples = paceSamples(history);
+    const samples = await withBenchPace(deps.db, hall, paceSamples(history), now);
     const current = itemNumber(hall.itemNow);
     for (const item of hall.items) {
       const mineNo = itemNumber(item.itemNo);

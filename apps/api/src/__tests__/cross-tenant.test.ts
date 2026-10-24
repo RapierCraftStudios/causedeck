@@ -31,6 +31,8 @@ const ROUTES: Record<string, string> = {
   'GET /v1/workspaces': 'never lists another user’s workspace',
   'GET /v1/billing/plans': 'global catalogue only, no tenant data',
   'GET /v1/billing/subscription': 'B gets 403 for A’s id and only its own subscription',
+  'GET /v1/workspaces/:workspaceId/matters/:matterId/bench-card':
+    'flag-gated 404 when off; workspace membership checked; reads under the workspace scope (bench-card.test.ts)',
   'POST /v1/webhooks/razorpay':
     'signature-gated; workspace from the stored provider id only (razorpay-webhook.test.ts)',
   'POST /v1/inbound/email':

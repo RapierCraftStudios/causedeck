@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import type { ListingView, SourceView } from '../../lib/matters/workspace.ts';
+import type { AgreementView, ListingView, SourceView } from '../../lib/matters/workspace.ts';
 import type { Result } from '../../lib/safe-action.ts';
 
 import { useMatterAnnounce } from './matter-announcer.tsx';
@@ -51,6 +51,33 @@ export function useProvenanceLabels() {
     viewOnly: t('workspace.provenance.viewOnly'),
     offline: t('workspace.provenance.offline'),
   };
+}
+
+/**
+ * How well the sources agree on a date or a stage (#499): a percentage chip whose hover (title)
+ * lists every source and what it says. The status is a word, not colour alone.
+ */
+export function ConfidenceChip({
+  agreement,
+  fact,
+}: {
+  agreement: AgreementView;
+  fact: 'date' | 'stage';
+}) {
+  const t = useTranslations('matters.workspace');
+  const list = agreement.sources
+    .map((source) => `${t(`source.${source.kind}`)}: ${source.value}`)
+    .join('; ');
+  return (
+    <Badge
+      tone={agreement.status === 'conflict' ? 'warning' : 'neutral'}
+      data-confidence-chip={fact}
+      data-agreement={agreement.status}
+      title={`${t(`confidence.${agreement.status}`)}. ${t('confidence.sources', { list })}`}
+    >
+      {t('confidence.chip', { percent: agreement.percent })}
+    </Badge>
+  );
 }
 
 export interface NextDateCardProps {
@@ -121,7 +148,13 @@ export function NextDateCard({
             >
               {nextDate.proposed ? t('nextDate.toConfirm') : t('nextDate.confirmed')}
             </Badge>
+            {nextDate.dateAgreement ? (
+              <ConfidenceChip agreement={nextDate.dateAgreement} fact="date" />
+            ) : null}
             <MatterStage stage={nextDate.stage} />
+            {nextDate.stageAgreement && nextDate.stage !== null ? (
+              <ConfidenceChip agreement={nextDate.stageAgreement} fact="stage" />
+            ) : null}
             <ProvenanceChip
               source={provenanceOf(nextDate.source)}
               viewOnly

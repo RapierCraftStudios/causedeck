@@ -67,7 +67,7 @@ export function DateConflictCard({
   const [dateError, setDateError] = useState<string | undefined>(undefined);
   const titleId = `${id}-title`;
 
-  async function choose(choice: NextDateChoice, typed?: string) {
+  async function choose(choice: NextDateChoice, typed?: string, rival?: ListingView) {
     if (pending || offline) return;
     setPending(true);
     setError(null);
@@ -76,7 +76,7 @@ export function DateConflictCard({
       result = await action({
         workspaceId,
         currentListingId: conflict.current.listingId,
-        proposedListingId: conflict.proposed.listingId,
+        proposedListingId: (rival ?? conflict.proposed).listingId,
         choice,
         ...(typed === undefined ? {} : { date: typed }),
       });
@@ -89,7 +89,7 @@ export function DateConflictCard({
         choice === 'current'
           ? conflict.current.text
           : choice === 'proposed'
-            ? conflict.proposed.text
+            ? (rival ?? conflict.proposed).text
             : result.data.date;
       announce(t('announce', { date: text }));
       router.refresh();
@@ -113,13 +113,14 @@ export function DateConflictCard({
     void choose('manual', date);
   }
 
-  const side = (letter: 'A' | 'B', view: ListingView, heading: string) => (
+  // Every further disagreeing source is another side (C, D, ...); each is chosen against A.
+  const side = (letter: string, view: ListingView, heading: string, rival?: ListingView) => (
     <div
       data-conflict-side={letter}
       className="border-line bg-surface flex flex-1 flex-col gap-2 rounded-md border p-3"
     >
       <p className="text-ink-muted text-xs font-medium">
-        {letter === 'A' ? t('sideA') : t('sideB')}
+        {letter === 'A' ? t('sideA') : letter === 'B' ? t('sideB') : letter}
       </p>
       <p className="text-lg font-semibold tabular-nums">{heading}</p>
       <div className="flex flex-wrap items-center gap-2">
@@ -137,9 +138,9 @@ export function DateConflictCard({
           variant="secondary"
           data-conflict-choose={letter}
           disabled={pending || offline}
-          onClick={() => void choose(letter === 'A' ? 'current' : 'proposed')}
+          onClick={() => void choose(letter === 'A' ? 'current' : 'proposed', undefined, rival)}
         >
-          {letter === 'A' ? t('chooseA') : t('chooseB')}
+          {letter === 'A' ? t('chooseA') : letter === 'B' ? t('chooseB') : t('chooseN', { letter })}
         </Button>
       ) : null}
     </div>
@@ -159,9 +160,17 @@ export function DateConflictCard({
         </h2>
         <p className="text-ink-muted text-sm">{t('body')}</p>
       </div>
-      <div className="flex flex-col gap-3 md:flex-row">
+      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap">
         {side('A', conflict.current, t('current', { date: conflict.current.text }))}
         {side('B', conflict.proposed, t('proposed', { date: conflict.proposed.text }))}
+        {conflict.others.map((other, index) =>
+          side(
+            String.fromCharCode(67 + index),
+            other,
+            t('proposed', { date: other.text }),
+            other,
+          ),
+        )}
       </div>
       {error === null ? null : (
         <Alert tone="danger" role="alert">

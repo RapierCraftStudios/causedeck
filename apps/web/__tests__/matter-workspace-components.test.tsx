@@ -65,6 +65,7 @@ const conflict: ConflictView = {
     proposed: true,
     source: { kind: 'ai', state: 'proposed', sourceRef: 'order', confidence: 0.8 },
   }),
+  others: [],
 };
 
 const ok = <T,>(data: T) => Promise.resolve({ ok: true as const, data });
@@ -130,6 +131,56 @@ describe('NextDateCard (#390)', () => {
     expect(
       screen.getByRole<HTMLButtonElement>('button', { name: ws.nextDate.confirm }).disabled,
     ).toBe(true);
+  });
+});
+
+describe('confidence chip and N-source conflict (#499)', () => {
+  it('shows the confidence chip with the sources on hover', () => {
+    withIntl(
+      <NextDateCard
+        workspaceId={WS}
+        nextDate={view({
+          dateAgreement: {
+            status: 'agree',
+            percent: 90,
+            sources: [
+              { kind: 'adapter', ref: 'list', value: '2099-11-14' },
+              { kind: 'import', ref: null, value: '2099-11-14' },
+            ],
+          },
+        })}
+        canWrite
+        action={vi.fn()}
+      />,
+    );
+    const chip = document.querySelector('[data-confidence-chip="date"]') as HTMLElement;
+    expect(chip.textContent).toBe('Confidence 90%');
+    expect(chip.getAttribute('title')).toContain(ws.source.adapter);
+    expect(chip.getAttribute('title')).toContain(ws.source.import);
+  });
+
+  it('offers a third source as its own side, chosen against A', async () => {
+    const action = vi.fn(() =>
+      ok({ listingId: 'l', date: '2099-11-14', confirmationState: 'confirmed' }),
+    );
+    const third = view({ listingId: 'l-third', text: 'Mon, 23 Nov 2099', proposed: true });
+    withIntl(
+      <DateConflictCard
+        workspaceId={WS}
+        conflict={{ ...conflict, others: [third] }}
+        canWrite
+        action={action}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose C' }));
+    await waitFor(() => {
+      expect(action).toHaveBeenCalledWith({
+        workspaceId: WS,
+        currentListingId: 'l-current',
+        proposedListingId: 'l-third',
+        choice: 'proposed',
+      });
+    });
   });
 });
 

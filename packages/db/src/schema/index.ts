@@ -48,6 +48,21 @@ export {
 export { fetchLog } from './fetch-log.ts';
 export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
 export {
+  DATA_OPS_ALERT_STATUSES,
+  DATA_OPS_ALERT_TYPES,
+  SOURCE_HEALTH_STATES,
+  dataOpsAlert,
+  dataOpsAlertStatus,
+  dataOpsAlertType,
+  dataOpsOncall,
+  sourceHealth,
+  sourceHealthState,
+  sourceParseRun,
+  type DataOpsAlertStatus,
+  type DataOpsAlertType,
+  type SourceHealthState,
+} from './data-ops.ts';
+export {
   NO_CAPTCHA_KINDS,
   SOURCE_ACCESS_MODES,
   SOURCE_KINDS,

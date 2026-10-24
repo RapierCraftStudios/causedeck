@@ -11,6 +11,7 @@ import {
 } from './definitions/activity-digest.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
+import { systemDataOpsEvaluate } from './definitions/data-ops-evaluate.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
 import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
 import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
@@ -185,6 +186,7 @@ export const registry = createRegistry([
   extractOrder,
   importBatch,
   importFile,
+  systemDataOpsEvaluate,
   corpusPoll,
   causelistPoll,
   boardPoll,
@@ -232,6 +234,7 @@ export type JobMap = RegistryMap<
     typeof extractOrder,
     typeof importBatch,
     typeof importFile,
+    typeof systemDataOpsEvaluate,
     typeof corpusPoll,
     typeof causelistPoll,
     typeof boardPoll,

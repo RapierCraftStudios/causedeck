@@ -2,6 +2,8 @@
 // workspace: the registry, provider, clock, usage and log sinks are injected as structural types
 // (the core `policyFor` and `SourcePolicy` satisfy `FetchRegistry` and `FetchPolicy`).
 
+import type { BlockSignature } from './block-signature.ts';
+
 /** AlterLab fetch tiers in ascending cost; mirrors `SOURCE_MAX_TIERS` in `@causedeck/db`. */
 export const FETCH_TIERS = ['http', 'headless', 'proxy', 'captcha'] as const;
 export type FetchTier = (typeof FETCH_TIERS)[number];
@@ -97,6 +99,14 @@ export interface FetchUsageEvent {
   delegatedFor?: DelegatedFor;
 }
 
+/** The evaluator's view of a source (#515): optional, so the fetcher works without it. */
+export interface FetchHealth {
+  /** The instant before which the source must not be fetched (block backoff), or `null`. */
+  backoffUntil(sourceId: string): Promise<Date | null>;
+  /** A block signature seen in a response; the evaluator backs the source off and alerts once. */
+  reportBlock?(event: { sourceId: string; signature: BlockSignature; at: Date }): Promise<void>;
+}
+
 export interface FetchSinks {
   usage: { record(event: FetchUsageEvent): Promise<void> };
   log: { record(entry: FetchLogEntry): Promise<void> };
@@ -107,7 +117,8 @@ export type FetchDeniedReason =
   | 'url_outside_source'
   | 'invalid_delegation'
   | 'source_rate_limited'
-  | 'advocate_rate_limited';
+  | 'advocate_rate_limited'
+  | 'source_backed_off';
 
 /** The fetcher refused before any network call. */
 export class FetchDenied extends Error {

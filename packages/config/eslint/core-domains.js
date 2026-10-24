@@ -79,6 +79,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // automation, graph reads through matter-graph (imports `index.ts` only), member roles through
   // workspaces.
   extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
+  // Data-ops alerting (#515, D-049): detectors, the alert ledger, routing and auto-response read the
+  // global tables directly and import no other domain.
+  'data-ops': Object.freeze([]),
   // Bootstrap import (#57, #548, #549): the plan reads proposals from the tables directly; apply
   // writes every graph row through matter-graph, meters the OCR cap through usage and refuses an
   // expired or edited undo with automation's errors (imports `index.ts` only). The batch (#550)
@@ -102,6 +105,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'email-intake',
     'extraction',
     'import',
+    'data-ops',
     'court',
     'court-day',
     'sources',

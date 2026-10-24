@@ -14,3 +14,9 @@ Continued the checkpointed branch. With node 22.23 on PATH the validate commands
 V1–V5 all pass (`forgedock check` PASS, run with TESTCONTAINERS_RYUK_DISABLED=true). The domains.test.ts, webhooks and cross-tenant cases failed before these fixes and pass now.
 ### Notes
 No behaviour change in production code. Env: TESTCONTAINERS_RYUK_DISABLED=true needed locally only.
+
+## Stale-list follow-up
+Flagged job/schema symbols are already in cross-tenant-registry NOT_A_SERVICE / table list; the flagged app and services tests enumerate no sibling schema or job symbols, so recorded as not_members in result.json.
+
+### Follow-up: sibling lists
+The flagged tests do not enumerate job exports or schema tables (no sibling symbol appears in them); recorded as `not_members` in result.json. The registries that do enumerate them (cross-tenant-registry.ts, db index.test.ts, rls sql.test.ts) already name the webhook symbols. V1-V5 were passing on the previous commit; no code changed.

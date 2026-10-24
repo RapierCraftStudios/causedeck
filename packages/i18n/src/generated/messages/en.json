@@ -3024,6 +3024,25 @@
         "cites": "Cites {section} {statute} on page {page}",
         "open": "Open the judgment",
         "saveError": "Could not save the tag."
+      },
+      "reviewReport": {
+        "title": "Report an error",
+        "open": "Report an error",
+        "corrections": "Corrections from CauseDeck review",
+        "correction": "{field}: {value} (corrected by CauseDeck review, {date})",
+        "field": "What is wrong",
+        "shown": "What CauseDeck shows",
+        "reported": "What it should be",
+        "consent": "I agree to share this record with CauseDeck staff so they can correct it.",
+        "send": "Send report",
+        "cancel": "Cancel",
+        "sent": "Thanks. CauseDeck review will check it and send back a correction.",
+        "error": "The report was not sent. Check the fields and try again.",
+        "fields": {
+          "next_date": "Next date",
+          "stage": "Stage",
+          "bench": "Bench"
+        }
       }
     }
   },

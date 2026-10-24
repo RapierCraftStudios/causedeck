@@ -7,6 +7,7 @@ import {
   Building2,
   Grid3x3,
   CircleDollarSign,
+  ClipboardCheck,
   Globe,
   LayoutDashboard,
   LifeBuoy,
@@ -25,6 +26,7 @@ export interface ConsoleNavItem {
     | '/adapters'
     | '/sources'
     | '/data-ops'
+    | '/review'
     | '/coverage'
     | '/flags'
     | '/workspaces'
@@ -40,6 +42,7 @@ export const CONSOLE_NAV: readonly ConsoleNavItem[] = [
   { capability: 'adapters', href: '/adapters', label: 'Adapters', icon: Activity },
   { capability: 'sources', href: '/sources', label: 'Sources', icon: Globe },
   { capability: 'data-ops', href: '/data-ops', label: 'Data Ops', icon: BarChart3 },
+  { capability: 'data-ops', href: '/review', label: 'Review queue', icon: ClipboardCheck },
   { capability: 'coverage', href: '/coverage', label: 'Coverage', icon: Grid3x3 },
   { capability: 'flags', href: '/flags', label: 'Flags', icon: ToggleLeft },
   { capability: 'workspaces', href: '/workspaces', label: 'Workspaces', icon: Building2 },

@@ -106,6 +106,7 @@ vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
   setSensitiveAction: vi.fn(),
   confirmNextDateAction: vi.fn(),
   chooseNextDateSourceAction: vi.fn(),
+  reportRecordErrorAction: vi.fn(),
 }));
 
 const { default: MatterLayout } = await import('../app/(app)/w/[slug]/matters/[id]/layout.tsx');

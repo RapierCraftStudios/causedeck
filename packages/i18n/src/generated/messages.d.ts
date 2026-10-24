@@ -3026,6 +3026,25 @@ export type Messages = {
         open: string;
         saveError: string;
       };
+      reviewReport: {
+        title: string;
+        open: string;
+        corrections: string;
+        correction: string;
+        field: string;
+        shown: string;
+        reported: string;
+        consent: string;
+        send: string;
+        cancel: string;
+        sent: string;
+        error: string;
+        fields: {
+          next_date: string;
+          stage: string;
+          bench: string;
+        };
+      };
     };
   };
   matterTimeline: {

@@ -31,6 +31,7 @@
     "./network": "./src/network/index.ts",
     "./public-api": "./src/public-api/index.ts",
     "./research": "./src/research/index.ts",
+    "./review": "./src/review/index.ts",
     "./runtime": "./src/runtime/index.ts",
     "./voice": "./src/voice/index.ts",
     "./whatsapp": "./src/whatsapp/index.ts",

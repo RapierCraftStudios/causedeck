@@ -12,7 +12,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { newWorkspace } from '../__tests__/fixtures.ts';
 import { runNoticesPoll } from '../jobs/index.ts';
 
+import { listHolidayListings } from './holidays.ts';
 import { listMatterNotices, listWorkspaceNotices } from './list.ts';
+import { matchNotices } from './match.ts';
 import { pollNotices, type NoticeFetcher, type PollNoticesDeps } from './poll.ts';
 
 const owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
@@ -168,6 +170,122 @@ describe('pollNotices', () => {
       // A repeat poll writes no second match.
       await pollNotices(deps(tx, fakeFetcher()));
       expect(await matchesOf(tx, user.workspaceId)).toHaveLength(2);
+    });
+  });
+});
+
+describe('notice alerts', () => {
+  const notificationsOf = (tx: Transaction, workspaceId: string) =>
+    inWorkspace(tx, workspaceId, (s) => s.select().from(schema.notification));
+
+  it('alerts each member once per matched notice and never twice on a re-poll', async () => {
+    await withTestDb(async (tx) => {
+      const user = await usesForum(tx, MADURAI);
+      const other = await usesForum(tx, 'in.ka.karnataka-hc.bengaluru');
+      const deliveries: unknown[] = [];
+      const enqueueDelivery = (job: unknown) => Promise.resolve(deliveries.push(job));
+
+      const first = await pollNotices(deps(tx, fakeFetcher(), { enqueueDelivery }));
+      // One notice (the Madurai holiday list) names the user's forum; the owner is the only member.
+      expect(first.alerts).toBe(1);
+      const mine = await notificationsOf(tx, user.workspaceId);
+      expect(mine).toHaveLength(1);
+      expect(mine[0]?.category).toBe('notices');
+      expect(mine[0]?.title).toContain('Madurai');
+      expect(mine[0]?.body).toContain('1 of your matters');
+      expect(mine[0]?.href).toContain('/courts');
+      // `notices` defaults to in-app and push: one push delivery job, no email.
+      expect(deliveries).toHaveLength(1);
+      expect(deliveries[0]).toMatchObject({ channel: 'push' });
+      expect(await notificationsOf(tx, other.workspaceId)).toEqual([]);
+
+      const again = await pollNotices(deps(tx, fakeFetcher(), { enqueueDelivery }));
+      expect(again.alerts).toBe(0);
+      expect(await notificationsOf(tx, user.workspaceId)).toHaveLength(1);
+      expect(deliveries).toHaveLength(1);
+    });
+  });
+
+  it('sends no alert when no delivery port is given', async () => {
+    await withTestDb(async (tx) => {
+      const user = await usesForum(tx, MADURAI);
+      const report = await pollNotices(deps(tx, fakeFetcher()));
+      expect(report.alerts).toBe(0);
+      expect(await notificationsOf(tx, user.workspaceId)).toEqual([]);
+    });
+  });
+});
+
+describe('listHolidayListings', () => {
+  async function holidayNotice(tx: Transaction, kind: 'holiday' | 'circular', codes: string[]) {
+    const [row] = await tx
+      .insert(schema.notice)
+      .values({
+        sourceId: SOURCE,
+        forumCodes: codes,
+        kind,
+        title: 'Court holiday',
+        issuedOn: '2026-11-02',
+        effectiveOn: '2026-12-25',
+        url: `https://notices.example.test/holiday/${crypto.randomUUID()}`,
+        sourceType: 'adapter',
+        sourceRef: 'test',
+      })
+      .returning({ id: schema.notice.id, forumCodes: schema.notice.forumCodes });
+    return { id: row?.id ?? '', forumCodes: row?.forumCodes ?? [] };
+  }
+
+  async function listOn(tx: Transaction, workspaceId: string, matterId: string, date: string) {
+    return inWorkspace(tx, workspaceId, async (s) => {
+      const [p] = await s
+        .select({ id: schema.proceeding.id })
+        .from(schema.proceeding)
+        .where(eq(schema.proceeding.matterId, matterId));
+      const [l] = await s
+        .insert(schema.listing)
+        .values({
+          workspaceId,
+          proceedingId: p?.id ?? '',
+          listDate: date,
+          listType: 'daily',
+          stageRaw: 'For Orders',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.listing.id });
+      return l?.id ?? '';
+    });
+  }
+
+  const range = { from: '2026-12-01', to: '2026-12-31' };
+
+  it('flags a listing on the date of a matched holiday notice for its forum only', async () => {
+    await withTestDb(async (tx) => {
+      const user = await usesForum(tx, MADURAI);
+      const other = await usesForum(tx, 'in.ka.karnataka-hc.bengaluru');
+      const onHoliday = await listOn(tx, user.workspaceId, user.matterId, '2026-12-25');
+      await listOn(tx, user.workspaceId, user.matterId, '2026-12-26');
+      await listOn(tx, other.workspaceId, other.matterId, '2026-12-25');
+      const holiday = await holidayNotice(tx, 'holiday', [MADURAI]);
+      await matchNotices({ db: tx }, [holiday]);
+
+      const flagged = await listHolidayListings(tx, user.workspaceId, range);
+      expect(flagged.map((f) => [f.listingId, f.listDate, f.noticeId, f.matterId])).toEqual([
+        [onHoliday, '2026-12-25', holiday.id, user.matterId],
+      ]);
+      // Another forum's workspace has a listing on the same day but no matched notice.
+      expect(await listHolidayListings(tx, other.workspaceId, range)).toEqual([]);
+      expect(
+        await listHolidayListings(tx, user.workspaceId, { from: '2026-12-26', to: '2026-12-31' }),
+      ).toEqual([]);
+    });
+  });
+
+  it('ignores a notice that is not a holiday', async () => {
+    await withTestDb(async (tx) => {
+      const user = await usesForum(tx, MADURAI);
+      await listOn(tx, user.workspaceId, user.matterId, '2026-12-25');
+      await matchNotices({ db: tx }, [await holidayNotice(tx, 'circular', [MADURAI])]);
+      expect(await listHolidayListings(tx, user.workspaceId, range)).toEqual([]);
     });
   });
 });

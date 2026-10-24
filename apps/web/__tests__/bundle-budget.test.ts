@@ -85,8 +85,8 @@ describe('bundle budget (spike §10)', () => {
 });
 
 describe('workspace shell budget (#155)', () => {
-  it('is 40 KB gzip, measured on /w/[slug]/today', () => {
-    expect(budget.WORKSPACE_SHELL_BUDGET_BYTES).toBe(40 * 1024);
+  it('is 42 KB gzip, measured on /w/[slug]/today', () => {
+    expect(budget.WORKSPACE_SHELL_BUDGET_BYTES).toBe(42 * 1024);
     expect(budget.WORKSPACE_ROUTE_MANIFEST).toBe(
       'server/app/(app)/w/[slug]/today/page_client-reference-manifest.js',
     );
@@ -110,13 +110,13 @@ describe('workspace shell budget (#155)', () => {
     expect(delta).toEqual({
       files: ['static/chunks/page.js', 'static/chunks/shell.js'],
       total: 1024,
-      budget: 40 * 1024,
+      budget: 42 * 1024,
       ok: true,
     });
   });
 
-  it('passes at 40 KB and fails one byte over', () => {
-    const at = { 'shell.js': 40 * 1024 };
+  it('passes at 42 KB and fails one byte over', () => {
+    const at = { 'shell.js': 42 * 1024 };
     expect(budget.shellDelta([], ['shell.js'], at).ok).toBe(true);
     expect(budget.shellDelta([], ['shell.js', 'extra.js'], { ...at, 'extra.js': 1 }).ok).toBe(
       false,

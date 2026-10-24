@@ -717,6 +717,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        notices: {
+          label: string;
+          description: string;
+        };
         digestDaily: {
           label: string;
           description: string;
@@ -2300,6 +2304,41 @@ export type Messages = {
     matterCard: {
       title: string;
       empty: string;
+    };
+  };
+  caseWatch: {
+    title: string;
+    description: string;
+    flagOff: string;
+    empty: string;
+    panelTitle: string;
+    proceeding: string;
+    sourceLabel: string;
+    watch: string;
+    source: {
+      'in_tn_chennai-district_case_status': string;
+      'in_tn_madras-hc_chennai_case_status': string;
+      'in_ka_karnataka-hc_bengaluru_case_status': string;
+    };
+    remove: string;
+    added: string;
+    removed: string;
+    failed: string;
+    loading: string;
+    refresh: {
+      label: string;
+      running: string;
+      failed: string;
+      via: {
+        device: string;
+        server: string;
+      };
+      outcome: {
+        changed: string;
+        unchanged: string;
+        not_found: string;
+        unrecognised: string;
+      };
     };
   };
   courtDay: {

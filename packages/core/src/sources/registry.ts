@@ -14,10 +14,17 @@ export const SOURCE_KINDS = schema.SOURCE_KINDS;
 export const SOURCE_ACCESS_MODES = schema.SOURCE_ACCESS_MODES;
 export const SOURCE_REVIEW_STATUSES = schema.SOURCE_REVIEW_STATUSES;
 export const SOURCE_MAX_TIERS = schema.SOURCE_MAX_TIERS;
+export const SOURCE_DATA_CLASSES = schema.SOURCE_DATA_CLASSES;
 export type SourceKind = schema.SourceKind;
+export type SourceDataClass = schema.SourceDataClass;
 export type SourceAccessMode = schema.SourceAccessMode;
 export type SourceReviewStatus = schema.SourceReviewStatus;
 export type SourceMaxTier = schema.SourceMaxTier;
+
+/** Whether records of a source with this data class may be served through the API (D-048): only `non-personal`. */
+export function exposableThroughApi(dataClass: SourceDataClass): boolean {
+  return dataClass === 'non-personal';
+}
 
 /** Why a source gave no policy. */
 export type SourceDenial = 'unknown' | 'uncleared' | 'killed';
@@ -58,6 +65,8 @@ export interface SourcePolicy {
   rateLimitPerMinute: number;
   retentionDays: number;
   residency: string;
+  /** DPDP data class of the source's records. */
+  dataClass: SourceDataClass;
   /** The costliest AlterLab tier the fetch layer may use. */
   maxTier: SourceMaxTier;
   maxCostDollars: number;
@@ -126,6 +135,7 @@ export async function policyFor(
     rateLimitPerMinute: row.rateLimitPerMinute,
     retentionDays: row.retentionDays,
     residency: row.residency,
+    dataClass: row.dataClass,
     maxTier: row.maxTier,
     maxCostDollars: Number(row.maxCostDollars),
     captchaBulkCleared: row.captchaBulkCleared,
@@ -156,6 +166,7 @@ function toRecord(row: typeof source.$inferSelect): SourceRecord {
     rateLimitPerMinute: row.rateLimitPerMinute,
     retentionDays: row.retentionDays,
     residency: row.residency,
+    dataClass: row.dataClass,
     maxTier: row.maxTier,
     maxCostDollars: Number(row.maxCostDollars),
     captchaBulkCleared: row.captchaBulkCleared,
@@ -182,6 +193,8 @@ export interface SourceInput {
   rateLimitPerMinute: number;
   retentionDays: number;
   residency: string;
+  /** Defaults to the stored value on update and to `personal` on create. */
+  dataClass?: SourceDataClass;
   maxTier: SourceMaxTier;
   maxCostDollars: number;
   killSwitch: boolean;
@@ -210,6 +223,7 @@ const FIELDS = [
   'rateLimitPerMinute',
   'retentionDays',
   'residency',
+  'dataClass',
   'maxTier',
   'maxCostDollars',
   'killSwitch',
@@ -231,6 +245,9 @@ export function validateSourceInput(input: SourceInput): void {
   }
   if (!Number.isFinite(input.maxCostDollars) || input.maxCostDollars < 0) {
     invalid('The cost cap must be 0 or more');
+  }
+  if (input.dataClass !== undefined && !SOURCE_DATA_CLASSES.includes(input.dataClass)) {
+    invalid('The data class must be personal, non-personal or mixed');
   }
   if (input.owner.trim() === '' || input.residency.trim() === '') {
     invalid('Owner and residency are required');
@@ -282,6 +299,7 @@ function inputOf(row: SourceRecord): SourceInput {
     rateLimitPerMinute: row.rateLimitPerMinute,
     retentionDays: row.retentionDays,
     residency: row.residency,
+    dataClass: row.dataClass,
     maxTier: row.maxTier,
     maxCostDollars: row.maxCostDollars,
     killSwitch: row.killSwitch,

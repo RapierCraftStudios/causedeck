@@ -13,10 +13,12 @@ import {
   type NoticeParseResult,
 } from '@causedeck/intelligence';
 import { schema, type Database, type Transaction } from '@causedeck/db';
+import type { DeliveryJob } from '@causedeck/notifications';
 import { asc, eq } from 'drizzle-orm';
 
 import { policyFor, SourceNotCleared } from '../sources/index.ts';
 
+import { notifyNoticeMatches } from './alerts.ts';
 import { matchNotices } from './match.ts';
 
 const { notice, source } = schema;
@@ -47,6 +49,8 @@ export interface PollNoticesDeps {
   /** The source's policy; throws `SourceNotCleared` when it may not be fetched. Defaults to the registry. */
   policy?: (sourceId: string) => Promise<{ baseUrl: string }>;
   parsers?: Readonly<Record<string, NoticeParser>>;
+  /** Sends one `notification.deliver` job; when given, newly matched notices alert the members (#587). */
+  enqueueDelivery?: (job: DeliveryJob) => Promise<unknown>;
 }
 
 export interface PollNoticesReport {
@@ -64,6 +68,8 @@ export interface PollNoticesReport {
   unreadable: number;
   /** `notice_match` rows written. */
   matches: number;
+  /** Notifications sent to members for newly matched notices. */
+  alerts: number;
 }
 
 /** Fetch, store and match the notices of every cleared `notice` source. */
@@ -79,6 +85,7 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
     duplicates: 0,
     unreadable: 0,
     matches: 0,
+    alerts: 0,
   };
   const ids =
     deps.sourceId !== undefined
@@ -146,6 +153,12 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
       inserted.map((row) => ({ id: row.id, forumCodes: row.forumCodes })),
     );
     report.matches += matched.matches;
+    if (deps.enqueueDelivery !== undefined) {
+      report.alerts += await notifyNoticeMatches(
+        { db: deps.db, enqueueDelivery: deps.enqueueDelivery },
+        matched.matched,
+      );
+    }
   }
   return report;
 }

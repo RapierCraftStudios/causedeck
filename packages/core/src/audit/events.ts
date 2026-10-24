@@ -47,6 +47,15 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: "A workspace's contributions to the court document network were withdrawn",
   },
+  // Global court-data controls (#486, D-048). Metadata holds counts, source ids and a subject hash only.
+  'court_data.expired': {
+    security: false,
+    description: "Court documents past their source's retention were blanked",
+  },
+  'court_data.erased': {
+    security: true,
+    description: "Staff masked a person's name in the shared court-data stores on request",
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },

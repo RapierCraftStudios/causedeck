@@ -14,11 +14,19 @@ export interface NoticeToMatch {
   forumCodes: readonly string[];
 }
 
+/** A notice newly matched to a workspace: the unit of one alert round. */
+export interface MatchedNotice {
+  workspaceId: string;
+  noticeId: string;
+}
+
 export interface MatchNoticesReport {
   /** Workspaces that received at least one match row. */
   workspaces: number;
   /** `notice_match` rows inserted (a row that already existed is not counted). */
   matches: number;
+  /** Each (workspace, notice) that received at least one new row, in match order. */
+  matched: MatchedNotice[];
 }
 
 // A `type`, not an interface: `db.execute<T>` needs a row type assignable to `Record<string, unknown>`.
@@ -67,13 +75,20 @@ export async function matchNotices(
     }
   }
 
-  const report: MatchNoticesReport = { workspaces: 0, matches: 0 };
+  const report: MatchNoticesReport = { workspaces: 0, matches: 0, matched: [] };
   for (const [workspaceId, values] of byWorkspace) {
     const inserted = await withWorkspace(deps.db, { workspaceId }, (tx) =>
-      tx.insert(noticeMatch).values(values).onConflictDoNothing().returning({ id: noticeMatch.id }),
+      tx
+        .insert(noticeMatch)
+        .values(values)
+        .onConflictDoNothing()
+        .returning({ id: noticeMatch.id, noticeId: noticeMatch.noticeId }),
     );
     if (inserted.length > 0) report.workspaces += 1;
     report.matches += inserted.length;
+    for (const noticeId of new Set(inserted.map((row) => row.noticeId))) {
+      report.matched.push({ workspaceId, noticeId });
+    }
   }
   return report;
 }

@@ -19,6 +19,7 @@ describe('registerSchedules', () => {
     const worker = await startTestWorker(scheduled);
     expect(await registerSchedules(worker.boss, registry)).toEqual([
       'system.retention.sweep',
+      'system.court-data.retention',
       'system.billing.reconcile',
       'system.billing.dunning-tick',
       'system.notification.digest',
@@ -89,6 +90,8 @@ describe('registerSchedules', () => {
       ['system.audit.verify', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // Audit retention: daily 03:00 IST.
       ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
+      // Court data retention: daily 04:15 IST.
+      ['system.court-data.retention', '15 4 * * *', '2026-10-18T22:45:00.000Z'],
       // Capture raw-object retention: daily 02:00 IST.
       ['system.capture.retention', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // Data-ops evaluation (#515): every 15 minutes; 05:45 IST is 00:15 UTC.

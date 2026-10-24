@@ -8,6 +8,7 @@ export * from './case-watch/index.ts';
 export * from './notices/index.ts';
 export * from './citations/index.ts';
 export * from './court/index.ts';
+export * from './court-day/index.ts';
 export * from './jobs/index.ts';
 export * from './lifecycle/index.ts';
 export * from './matter-graph/index.ts';

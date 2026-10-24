@@ -208,6 +208,11 @@ export {
 export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';
 export { advocateProfile } from './advocate-profile.ts';
 export {
+  BOARD_OBSERVATION_STATUSES,
+  boardObservation,
+  type BoardObservationStatus,
+} from './display-board.ts';
+export {
   CAUSE_LIST_WATCH_KINDS,
   causeListPublication,
   causeListWatch,

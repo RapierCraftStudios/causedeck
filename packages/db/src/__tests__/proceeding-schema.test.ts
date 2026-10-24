@@ -159,6 +159,7 @@ describe('proceeding tables in the catalog (#346)', () => {
       expect(row, table).toEqual({
         enabled: true,
         forced: true,
+        // proceeding also carries the owner-only definer read that app_board_poll_targets (0074, #493) needs.
         policies:
           table === 'proceeding' ? ['owner_definer_read', 'ws_isolation'] : ['ws_isolation'],
         app: true,

@@ -80,6 +80,7 @@ const CATEGORY_MESSAGE = {
   'billing.notice': 'billingNotice',
   'reminder.hearing': 'reminderHearing',
   'proposal.new': 'proposalNew',
+  'court.board': 'courtBoard',
   'judgment.alert': 'judgmentAlert',
   'status.next_date': 'statusNextDate',
   'status.order': 'statusOrder',

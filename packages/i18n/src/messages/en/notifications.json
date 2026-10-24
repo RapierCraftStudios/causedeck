@@ -132,6 +132,10 @@
           "label": "New proposals",
           "description": "When CauseDeck prepares something for you to review."
         },
+        "courtBoard": {
+          "label": "Court-day alerts",
+          "description": "When an item of yours is a few items away, now being heard, or the court rises or passes it over."
+        },
         "judgmentAlert": {
           "label": "Relevant judgments",
           "description": "When a new judgment cites a statute section confirmed on one of your matters."

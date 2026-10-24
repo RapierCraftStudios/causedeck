@@ -111,6 +111,13 @@ export {
   type NotificationDigestPayload,
 } from './definitions/notification-digest.ts';
 export {
+  BOARD_POLL_CRON,
+  boardPoll,
+  runBoardPoll,
+  setBoardFetcherFactory,
+  type BoardFetcherFactory,
+} from './definitions/board-poll.ts';
+export {
   CAUSELIST_POLL_CRON,
   causelistPoll,
   runCauselistPoll,

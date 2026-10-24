@@ -155,6 +155,7 @@ describe('enqueue', () => {
       'import.file',
       'system.corpus.poll',
       'system.causelist.poll',
+      'system.board.poll',
       'system.notices.poll',
       'system.judgment-alert.scan',
       'system.status.poll',

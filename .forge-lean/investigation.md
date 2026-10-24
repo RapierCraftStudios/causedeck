@@ -1,40 +1,35 @@
-**Verdict**: CONFIRMED
+**Verdict**: BLOCKED
 **Confidence**: high
-**Severity**: low (P3 greenfield, legal-gated; ships dark)
+**Severity**: P1 feature, legal-gated (ships dark); too large for one lane
 **Task Type**: feature
 
 ### What Was Claimed
-Before taking a matter, a chamber must check whether it appears for the opposite party in any matter. Needs a `packages/core/src/conflicts/` name matcher (transliteration-aware for Tamil and Kannada, organisation aliases) over the chamber's own matters and parties (optionally cause-list history), a conflict check on new-matter intake in `apps/web` that never auto-blocks, an audit log of every check, no data leaving the workspace, and a flag that stays off until counsel signs off (#486).
+National district-court coverage through one eCourts template adapter (`packages/adapters/src/ecourts/`: status, cause list, orders parsers; state/district/establishment codes and case-type maps from the portal's option lists), a forum catalogue holding every eCourts establishment at A0 (upgraded to A1/A2 per state once fixtures pass), golden fixtures for 5 states (TN, KA, MH, DL, UP), and delegated lookups (#483) with per-host rate budgets.
 
 ### What We Found
-- Dependency #486 is merged on base (`7afc0e6d`), so the issue is not blocked.
-- No `packages/core/src/conflicts` exists; no conflict flag in `packages/flags/src/keys.ts:38-115` (registry ends at `workspace.export`, :110).
-- Party data: `person` (`name`, `aliases[]`, `kind` incl. `party`/`client`) and `organisation` (`name`, `aliases[]`) at `packages/db/src/schema/people.ts:34-90`; `role_edge` kinds `represents|appears_for|opposes` at `packages/db/src/schema/enums.ts:93-99`, targeting a matter at `people.ts:92-100`. All tenant tables under FORCE RLS, so a check inside `withWorkspace` cannot see another workspace.
-- Cause-list history in a workspace is `listing` (`packages/db/src/schema/docket.ts:50`); it holds no party names, so history matching can only go through proceedings/people. Treat as out of this change (issue says "optionally").
-- No transliteration utility exists. Adapters keep Karnataka names "never transliterated" (`packages/adapters/src/karnataka-hc/advocate-keys.ts:3-5`), `packages/intelligence/src/structure/match-matter.ts` ranks case numbers only.
-- Flag gating pattern: `requireFlag` -> `isEnabled(key, {workspaceId,userId})` -> `ActionError('NOT_FOUND')` (`apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts:50-57`). Legal-gated flags need `legal_ack_by` (`packages/flags/src/evaluate.ts:6-8,47-60`); `flag(key, desc, true, [owners])` at `keys.ts:28`; table mirrored in `docs/engineering/flags.md:25-26` (checked by `packages/flags/src/__tests__/docs.test.ts`).
-- Intake: `createMatterAction` / `searchMattersAction` at `apps/web/app/(app)/w/[slug]/matters/actions.ts:50,110`, dialog `apps/web/components/matters/new-matter-dialog.tsx:39-57`, messages in `packages/i18n/src/messages/{en,kn,ta}/matters.json` (generated copies under `src/generated`).
-- Audit: actions registered in `packages/core/src/audit/events.ts` (`AUDIT_ACTIONS`); writer `record` exported from `packages/core/src/audit/index.ts:65`.
-- Registries: `packages/config/eslint/core-domains.js:28-36` and `docs/engineering/core-domains.md:25-26,186-187`; cross-tenant `SERVICE_TESTS`/`NOT_A_SERVICE` in `packages/db/src/testing/cross-tenant-registry.ts` (~:181, :946); `apps/web/__tests__/cross-tenant-actions.test.ts:103-184` (`ACTIONS`); `packages/core/package.json:22` export map.
+- Dependencies are closed: #479 (`packages/fetch`) and #483's sub-issues #589-#593 (`packages/core/src/case-watch/` exists, `lookup.ts:42-44` has `STATUS_SOURCES`). Not blocked on upstream.
+- No `packages/adapters/src/ecourts/` exists. The only eCourts code is the status page parser `packages/adapters/src/status/ecourts-district.ts:1-21` (status + orders table of one template, no cause list parser, no state/district/case-type maps).
+- Status fixtures cover only 3 templates, fictional: `packages/adapters/fixtures/status/{ecourts-district,madras-hc,karnataka-hc}`, enumerated by `packages/adapters/src/status/fixtures.test.ts:20-46` and `manifest.json`. `CASE_STATUS_TEMPLATES` is a closed 3-value list (`status/types.ts:8`).
+- Forum catalogue lists only Chennai and Bengaluru districts: `packages/db/src/seed/forum-catalogue/index.ts:44-50`, `chennai-district.ts`, `bengaluru-district.ts`; all A0 with hand-written entries; version `FORUM_CATALOGUE_VERSION` at `index.ts:20` must be bumped on any data change.
+- Delegated lookup wires only one eCourts source: `packages/core/src/case-watch/lookup.ts:42` (`in.tn.chennai-district:case_status`); sources registry in `packages/core/src/sources/registry.ts`. Per-host rate budgets live in `packages/fetch/src/rate-limit.ts`.
+- Cause-list contract (`ParsedCauseList`, `packages/adapters/src/types.ts:231`) and the Madras/Karnataka cause-list parsers are the pattern for a new cause-list reader.
 
 ### Root Cause
-Greenfield. No matcher, flag, action or UI exists.
+Greenfield. District courts are A0 (generic parsing) and the eCourts template cluster (cause list, orders, state/district maps, national establishment list) has not been built.
 
 ### Affected Files
-- new `packages/core/src/conflicts/{index,normalize,match,check}.ts` (+ tests); `packages/core/src/index.ts`, `packages/core/package.json` (`./conflicts` export)
-- `packages/flags/src/keys.ts`, `docs/engineering/flags.md`
-- `packages/core/src/audit/events.ts` (+ `docs/engineering/audit.md` if its table is test-checked)
-- `apps/web/app/(app)/w/[slug]/matters/actions.ts`, `apps/web/components/matters/new-matter-dialog.tsx` (+ story), `packages/i18n/src/messages/{en,kn,ta}/matters.json` and generated copies
-- `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`, `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`, `apps/web/__tests__/cross-tenant-actions.test.ts`
+- new `packages/adapters/src/ecourts/**` (+ registry/index wiring, fixtures for 5 states x 3 page types, tests)
+- `packages/db/src/seed/forum-catalogue/` (new generated establishment data, `index.ts` version bump, tests)
+- `packages/core/src/case-watch/lookup.ts`, `packages/core/src/sources/*`, `packages/fetch` rate budgets, registries (cross-tenant, `docs/engineering/core-domains.md` if needed)
 
 ### Sibling Sweep
-Other legal-gated features follow the same shape (`court.case-status` in case-watch actions, `invoices.enabled`, `limitation.enabled`): flag in registry + docs table, `requireFlag` in each action. Same registries apply as for `case-watch`/`notices` domains. No migration needed (reads existing tables).
+Same shape as the Chennai/Bengaluru district catalogues and the Madras/Karnataka adapters; those hand-written patterns do not scale to ~3000+ establishments, so the catalogue needs a generated, data-driven file. Fixtures must remain FICTIONAL per the manifest classification check (`fixtures.test.ts:30-33`).
 
 ### History
-Related data layer: `person`/`role_edge` #348; DPDP posture #486 (merged, `docs/legal/court-data-posture.md`). The comment on the issue titled "Investigation Report" describes #586 (notices), not this issue; ignored. No prior attempt at #500.
+Status parsers: #590; case-watch core/worker/web: #591-#593; fetch layer: #479. Decomposed tracker #483 closed not_planned in favour of its sub-issues. No prior attempt at #495 in tree (the stale `.forge-lean` files from #500 were removed).
 
 ### Recommendation
-Add `conflicts.check` legal-gated flag (owner [500, 486]). Core `checkConflicts(deps, actor, {parties:[{name, role: 'client'|'adverse', kind: 'person'|'organisation'}]})` runs in the caller's workspace transaction: loads `person`/`organisation` with names/aliases and their `role_edge` to matters (respecting matter restriction via existing matter-graph read helpers where available), normalises names (NFKC, case-fold, honorific and `M/S`, `Pvt Ltd`/`Limited` suffix stripping with organisation alias table, Tamil U+0B80-0BFF and Kannada U+0C80-0CFF to a Latin phonetic key, vowel-length/aspirate collapse, token-order independent) and scores matches. A hit is: new adverse party equals an existing matter's client (chamber represents them) or new client equals an existing adverse party. Return hits with matter id/title, matched name, role, and `source` (person/organisation/alias). Always write one audit event (ids and counts, no names). Web: `checkConflictsAction` (flag-gated, workspace-scoped, no external calls) invoked from the new-matter dialog; results shown with sources, never blocks submission. Cause-list history deferred.
+Split into three sub-issues with disjoint files: (0) eCourts template adapter, parsers and 5-state fixtures; (1) forum catalogue import of all establishments (generated data, from the portal's own option lists, with codes); (2) delegated lookup wiring, sources registry rows and per-host rate budgets, depending on 0 and 1. Estimated 45+ files, 4000+ lines, above the 25 files / 1500 lines budget.
 
 ### Related Issues
-#486 (merged dependency), #480, #348, #311.
+#479, #483, #589-#593, #590, #34 (forum catalogue).

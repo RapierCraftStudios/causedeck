@@ -138,6 +138,7 @@ export const PURGE_ORDER = [
   'subscription',
   'workspace_feature_flag',
   'workspace_integration',
+  'api_key',
   // Email intake (#54): the ledger, then the allow-list and the members' addresses.
   'intake_message',
   'intake_allowlist',

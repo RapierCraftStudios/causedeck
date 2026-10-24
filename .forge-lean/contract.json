@@ -199,6 +199,30 @@
     "R3",
     "R5"
    ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/api-keys/index.ts",
+   "change": "CI fix: apiKeyCallsThisPeriod (:289) passes a Date into a raw sql`` template (ERR_INVALID_ARG_TYPE, also the 500s in apps/api api-keys tests); use drizzle gte(usageEvent.createdAt, usagePeriod(at).start) instead",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/core/src/lifecycle/export/exporters.ts",
+   "change": "CI fix: export api_key via ws('api_key',{exclude:['token_hash'],userColumn:'created_by'}) in the exporter that holds workspace_integration (:173); secrets never leave",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/core/src/lifecycle/deletion/erase.ts",
+   "change": "CI fix: add 'api_key' to PURGE_ORDER (purge-coverage test), next to workspace_integration",
+   "requirements": [
+    "R4"
+   ]
   }
  ],
  "preserve": [
@@ -235,6 +259,14 @@
   {
    "id": "V4",
    "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/export-coverage.test.ts src/lifecycle/__tests__/purge-coverage.test.ts src/api-keys --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/api-keys.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   }
  ],
  "decisions": [

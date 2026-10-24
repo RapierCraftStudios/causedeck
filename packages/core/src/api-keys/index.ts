@@ -7,7 +7,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
 import { increment, usagePeriod, type UsageContext } from '../usage/index.ts';
@@ -286,7 +286,7 @@ export function apiKeyCallsThisPeriod(ctx: UsageContext, keyId: string, at: Date
           eq(usageEvent.workspaceId, ctx.workspaceId),
           eq(usageEvent.key, API_CALLS_USAGE_KEY),
           sql`${usageEvent.metadata}->>'api_key_id' = ${keyId}`,
-          sql`${usageEvent.createdAt} >= ${usagePeriod(at).start}`,
+          gte(usageEvent.createdAt, usagePeriod(at).start),
         ),
       );
     return row?.n ?? 0;

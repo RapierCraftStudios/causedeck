@@ -22,3 +22,6 @@ Register one eCourts district status source per state, seed uncleared registry r
 ### Notes
 - A host-budget denial throws the new `host_rate_limited` reason (declared in types.ts); poll.ts defers on it like `source_rate_limited`.
 - Rows stay uncleared; counsel must clear before any fetch. The default host budget is 30 requests per minute for every source host.
+
+### CI fix
+- i18n:check failed: translation-status.json lacked draft entries for the 5 new ta/kn caseWatch.source keys. Added them; i18n:check and catalog test pass.

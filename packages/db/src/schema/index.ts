@@ -28,6 +28,13 @@ export {
 } from './webhooks.ts';
 export { portfolio, portfolioCase, portfolioPanelAdvocate } from './portfolio.ts';
 export {
+  migrationRun,
+  migrationRunRow,
+  provisioningRun,
+  scimToken,
+  ssoProvider,
+} from './enterprise.ts';
+export {
   WHATSAPP_E164_PATTERN,
   WHATSAPP_OTP_MAX_ATTEMPTS,
   whatsappLink,

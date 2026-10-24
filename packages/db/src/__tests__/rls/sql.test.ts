@@ -171,6 +171,12 @@ describe('row-level security catalog', () => {
         // WhatsApp number link and OTP challenge (#678).
         'whatsapp_link',
         'whatsapp_otp_challenge',
+        // Enterprise onboarding (#682).
+        'sso_provider',
+        'scim_token',
+        'provisioning_run',
+        'migration_run',
+        'migration_run_row',
 
         // Case-status watch (#589).
         'case_watch',

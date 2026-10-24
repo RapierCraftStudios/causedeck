@@ -150,6 +150,12 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // WhatsApp number link and OTP challenge (#678).
   whatsapp_link: DB_TABLES_TEST,
   whatsapp_otp_challenge: DB_TABLES_TEST,
+  // Enterprise onboarding (#682).
+  sso_provider: DB_TABLES_TEST,
+  scim_token: DB_TABLES_TEST,
+  provisioning_run: DB_TABLES_TEST,
+  migration_run: DB_TABLES_TEST,
+  migration_run_row: DB_TABLES_TEST,
 
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,

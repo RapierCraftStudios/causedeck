@@ -320,6 +320,16 @@ const whatsappLinkExporter = tablesExporter('whatsapp-link', [
   ws('whatsapp_link', { userColumn: 'user_id' }),
 ]);
 
+// Enterprise onboarding (#682): SSO providers without their config (client secrets), SCIM tokens
+// without the hash, and the provisioning and migration runs with their per-row state.
+const enterpriseExporter = tablesExporter('enterprise', [
+  ws('sso_provider', { exclude: ['config'], userColumn: 'created_by' }),
+  ws('scim_token', { exclude: ['token_hash'], userColumn: 'created_by' }),
+  ws('provisioning_run', { userColumn: 'created_by' }),
+  ws('migration_run', { userColumn: 'created_by' }),
+  ws('migration_run_row'),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -336,6 +346,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   webhooksExporter,
   portfoliosExporter,
   whatsappLinkExporter,
+  enterpriseExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

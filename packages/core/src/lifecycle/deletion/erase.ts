@@ -74,6 +74,13 @@ export const PURGE_ORDER = [
   'portfolio_case',
   'portfolio_panel_advocate',
   'portfolio',
+  // Enterprise onboarding (#682): run rows before their run; all cite only the workspace and the
+  // creating user, so they go before the workspace and the members.
+  'migration_run_row',
+  'migration_run',
+  'provisioning_run',
+  'scim_token',
+  'sso_provider',
   // The matter graph (#345-#348): appearances before their hearing, hearings before their
   // listing; tasks before the obligations they fulfil, obligations before their source order;
   // listings, orders and obligations before the proceedings, documents, anchors and matters they

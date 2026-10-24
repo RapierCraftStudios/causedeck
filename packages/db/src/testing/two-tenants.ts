@@ -27,6 +27,13 @@ import { reviewCorrection, reviewItem } from '../schema/review.ts';
 import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
 import { apiKey } from '../schema/api-keys.ts';
+import {
+  migrationRun,
+  migrationRunRow,
+  provisioningRun,
+  scimToken,
+  ssoProvider,
+} from '../schema/enterprise.ts';
 import { portfolio, portfolioCase, portfolioPanelAdvocate } from '../schema/portfolio.ts';
 import { whatsappLink, whatsappOtpChallenge } from '../schema/whatsapp-link.ts';
 import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
@@ -1092,6 +1099,58 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: whatsappOtpChallenge.id });
     return { id: first(rows, 'whatsapp_otp_challenge').id };
+  },
+  sso_provider: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(ssoProvider)
+      .values({
+        workspaceId,
+        protocol: 'oidc',
+        issuer: `https://idp.example/${tag}`,
+        domain: `sso-${tag}.example`.toLowerCase(),
+        createdBy: ownerId,
+      })
+      .returning({ id: ssoProvider.id });
+    return { id: first(rows, 'sso_provider').id };
+  },
+  scim_token: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(scimToken)
+      .values({
+        workspaceId,
+        name: 'Seed SCIM token',
+        prefix: 'scim',
+        tokenHash: createHash('sha256').update(`scim-${tag}`).digest('hex'),
+        createdBy: ownerId,
+      })
+      .returning({ id: scimToken.id });
+    return { id: first(rows, 'scim_token').id };
+  },
+  provisioning_run: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(provisioningRun)
+      .values({ workspaceId, source: 'csv', createdBy: ownerId })
+      .returning({ id: provisioningRun.id });
+    return { id: first(rows, 'provisioning_run').id };
+  },
+  migration_run: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(migrationRun)
+      .values({ workspaceId, mode: 'dry_run', createdBy: ownerId })
+      .returning({ id: migrationRun.id });
+    return { id: first(rows, 'migration_run').id };
+  },
+  migration_run_row: async (tx, { workspaceId, ownerId }) => {
+    const parents = await tx
+      .insert(migrationRun)
+      .values({ workspaceId, mode: 'import', createdBy: ownerId })
+      .returning({ id: migrationRun.id });
+    const runId = first(parents, 'migration_run').id;
+    const rows = await tx
+      .insert(migrationRunRow)
+      .values({ workspaceId, runId, rowIndex: 0 })
+      .returning({ id: migrationRunRow.id });
+    return { runId, id: first(rows, 'migration_run_row').id };
   },
   cause_list_watch: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

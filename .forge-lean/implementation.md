@@ -50,3 +50,6 @@ Cause was environmental: `turbo` was not on PATH. With `node_modules/.bin` on PA
 
 ### Post-merge typecheck
 The `turbo: command not found` failure (exit 127) was an environment problem: turbo is not on PATH. I ran it as `pnpm exec turbo`. The base had added the `fflate` dependency in `packages/capture`, and the worktree's node_modules was stale, so `capture`, `core` and `web` failed typecheck with `fflate` errors. `pnpm install --offline --frozen-lockfile` fixed that with no source change. Typecheck of core, web, i18n and db (19 tasks) now passes, and V1–V4 pass.
+
+### Post-merge typecheck (turbo exit 127, again)
+`turbo` was not on PATH (it is in `node_modules/.bin`); no merge conflict or duplicate symbol. With it on PATH, `turbo run typecheck` for core, web and i18n passes (19 tasks), and the V1-V4 test files pass. No source change.

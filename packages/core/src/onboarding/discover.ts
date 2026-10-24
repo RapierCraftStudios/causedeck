@@ -201,7 +201,8 @@ export const DISCOVERY_SOURCES: Readonly<Record<string, DiscoverySource>> = (() 
       sourceId: 'in.tn.district:advocate_search',
       courtCode: 'in.tn.district',
       searchUrl: searchUrlFor('advocate-search'),
-      parse: (html) => Promise.resolve(parseEcourtsCauseList(html, { forumCode: 'in.tn.district' })),
+      parse: (html) =>
+        Promise.resolve(parseEcourtsCauseList(html, { forumCode: 'in.tn.district' })),
     },
   ];
   return Object.fromEntries(sources.map((source) => [source.sourceId, source]));
@@ -209,7 +210,10 @@ export const DISCOVERY_SOURCES: Readonly<Record<string, DiscoverySource>> = (() 
 
 /** The inclusive IST date window: `windowDays` back (30 to 90) to `UPCOMING_DAYS` ahead. */
 export function discoveryWindow(now: Date, windowDays?: number): { from: string; to: string } {
-  const days = Math.min(MAX_WINDOW_DAYS, Math.max(MIN_WINDOW_DAYS, windowDays ?? DEFAULT_WINDOW_DAYS));
+  const days = Math.min(
+    MAX_WINDOW_DAYS,
+    Math.max(MIN_WINDOW_DAYS, windowDays ?? DEFAULT_WINDOW_DAYS),
+  );
   return {
     from: istDay(new Date(now.getTime() - days * DAY_MS)),
     to: istDay(new Date(now.getTime() + UPCOMING_DAYS * DAY_MS)),

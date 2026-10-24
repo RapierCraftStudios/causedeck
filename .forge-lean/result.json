@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Review queue (#518): report-error action, queue with assignment/SLA/fix form, propagation as corrections, one-action fixture export; conflict markers resolved",
+ "summary": "Review queue (#518): report-error action, queue with assignment/SLA/fix form, propagation as corrections, one-action fixture export; conflict markers resolved; merged-tree typecheck failure was bare `turbo` missing from PATH (environment), typecheck passes via pnpm exec turbo",
  "requirements": [
   {
    "id": "R1",
@@ -70,6 +70,11 @@
    "command": "V1-V5",
    "result": "pass",
    "fails_without_fix": true
+  },
+  {
+   "command": "pnpm exec turbo run typecheck (core,db,admin,web,i18n)",
+   "result": "pass",
+   "fails_without_fix": "unknown"
   }
  ],
  "self_review": [

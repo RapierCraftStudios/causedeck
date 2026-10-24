@@ -23,3 +23,8 @@ V1 core, V2 db, V3 admin, V4 web, V5 i18n: all exit 0 (forgedock check PASS). Th
 
 ### Notes
 No new env vars. Migration adds `app_review_propagate` (staff-only).
+
+### Merge re-check
+The reported `turbo: command not found` (exit 127) was a PATH problem, not a code conflict. The base is already merged into this branch. With the repo's `node_modules/.bin` on PATH, `turbo run typecheck` for core, db, admin, web and i18n passes (20/20 tasks). Targeted V1, V2, V4 and V5 pass. No source change was needed.
+
+Merged-tree typecheck: the reported failure (`turbo: command not found`, exit 127) is a toolchain/PATH problem on the checking host, not a code defect: the branch already contains the base (0 commits behind) and has no duplicate keys or same-named symbols. `pnpm exec turbo run typecheck --filter` for core, db, admin, web and i18n passes (20 of 20 tasks). Bare `turbo` is not on PATH and I did not alter PATH.

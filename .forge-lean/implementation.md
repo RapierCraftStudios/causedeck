@@ -25,3 +25,5 @@ In this sandbox Testcontainers' Ryuk log wait fails; validate commands pass with
 ## Merge check (turbo missing)
 The merge-check failure was `turbo: command not found` (host tooling), not a code conflict. No code change needed; V1-V3 re-run green on the merged tree (testcontainers needs TESTCONTAINERS_RYUK_DISABLED=true).
 - Post-merge: `pnpm exec turbo run typecheck --filter='...[72a44a11]'` passes (23/23 packages). The earlier exit 127 was `turbo` missing from PATH (use `pnpm exec turbo`), not a code conflict; no symbol clashes with the base, so no code change.
+- Re-verified at base 9820df68: `pnpm exec turbo run typecheck --filter='...[9820df68]'` 23/23 green; db tsc clean. Exit 127 was turbo missing from PATH; no code change.
+- Re-checked against base 9820df68: `pnpm exec turbo run typecheck --filter='...[9820df68]'` passes (23/23, turbo cache hit on identical inputs). Exit 127 is `turbo` not on the check shell's PATH; no code change.

@@ -22,4 +22,5 @@ export * from './research/index.ts';
 export * from './sources/index.ts';
 export * from './support/index.ts';
 export * from './usage/index.ts';
+export * from './webhooks/index.ts';
 export * from './workspaces/index.ts';

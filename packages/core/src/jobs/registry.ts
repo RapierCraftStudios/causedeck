@@ -28,6 +28,8 @@ import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
 import { statusPoll } from './definitions/status-poll.ts';
+import { webhookDeliver } from './definitions/webhook-deliver.ts';
+import { systemWebhookSweep } from './definitions/webhook-sweep.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
@@ -202,6 +204,8 @@ export const registry = createRegistry([
   noticesPoll,
   judgmentAlertScan,
   statusPoll,
+  webhookDeliver,
+  systemWebhookSweep,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -256,6 +260,8 @@ export type JobMap = RegistryMap<
     typeof noticesPoll,
     typeof judgmentAlertScan,
     typeof statusPoll,
+    typeof webhookDeliver,
+    typeof systemWebhookSweep,
   ]
 >;
 export type JobName = keyof JobMap;

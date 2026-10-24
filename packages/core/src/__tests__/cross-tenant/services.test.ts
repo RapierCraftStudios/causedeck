@@ -266,6 +266,15 @@ async function aWorkspace(f: Fixture) {
 }
 
 /** A's API keys, with revocation state. */
+async function aWebhookEndpoints(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ id: schema.webhookEndpoint.id })
+      .from(schema.webhookEndpoint)
+      .orderBy(schema.webhookEndpoint.id),
+  );
+}
+
 async function aApiKeys(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s
@@ -2690,6 +2699,70 @@ const CASES: Record<string, Case> = {
       f.asB((s) => core.consumeApiCall({ db: s, workspaceId: f.a.id }, identity, randomUUID())),
     ).rejects.toBeInstanceOf(TenancyError);
     expect(await aUsage(f)).toEqual(before);
+  },
+  createWebhookEndpoint: async (f) => {
+    const before = await aWebhookEndpoints(f);
+    const input = { workspaceId: f.a.id, url: 'https://hooks.example.com/xt' };
+    await expectDenied(core.createWebhookEndpoint(f.tx, { ...input, actorUserId: f.ub }));
+    await expect(
+      f.asB((s) => core.createWebhookEndpoint(s, { ...input, actorUserId: f.ub })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aWebhookEndpoints(f)).toEqual(before);
+  },
+  listWebhookEndpoints: async (f) => {
+    await core.createWebhookEndpoint(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      url: 'https://hooks.example.com/a',
+    });
+    await expectDenied(core.listWebhookEndpoints(f.tx, f.a.id, f.ub));
+    await expect(f.asB((s) => core.listWebhookEndpoints(s, f.a.id, f.ub))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    expect(await f.asB((s) => core.listWebhookEndpoints(s, f.b.id, f.ub))).toEqual([]);
+  },
+  deleteWebhookEndpoint: async (f) => {
+    const { endpoint } = await core.createWebhookEndpoint(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      url: 'https://hooks.example.com/a',
+    });
+    const before = await aWebhookEndpoints(f);
+    await expectDenied(core.deleteWebhookEndpoint(f.tx, f.a.id, f.ub, endpoint.id));
+    await expect(
+      f.asB((s) => core.deleteWebhookEndpoint(s, f.a.id, f.ub, endpoint.id)),
+    ).rejects.toBeInstanceOf(TenancyError);
+    // B's own workspace with A's endpoint id: not found, and A's endpoint is untouched.
+    await expect(
+      f.asB((s) => core.deleteWebhookEndpoint(s, f.b.id, f.ub, endpoint.id)),
+    ).rejects.toMatchObject({ reason: 'NOT_FOUND' });
+    expect(await aWebhookEndpoints(f)).toEqual(before);
+  },
+  emitWebhookEvent: async (f) => {
+    await core.createWebhookEndpoint(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      url: 'https://hooks.example.com/a',
+    });
+    const deliveries = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s.select({ id: schema.webhookDelivery.id }).from(schema.webhookDelivery),
+      );
+    const before = await deliveries();
+    const event = {
+      type: 'status.changed' as const,
+      eventKey: 'xt-event',
+      sourceId: 'xt-source',
+      changes: ['stage'],
+    };
+    // B has no endpoint: an event in B reaches nobody, and from B's scope A's workspace is a tenancy violation.
+    expect(
+      await f.asB((s) => core.emitWebhookEvent({ db: s }, { ...event, workspaceId: f.b.id })),
+    ).toBe(0);
+    await expect(
+      f.asB((s) => core.emitWebhookEvent({ db: s }, { ...event, workspaceId: f.a.id })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await deliveries()).toEqual(before);
   },
   getUsage: async (f) => {
     await core.increment({ db: f.tx, workspaceId: f.a.id }, 'ocr.pages', 9, {

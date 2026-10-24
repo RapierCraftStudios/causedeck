@@ -108,6 +108,15 @@ export const AUDIT_ACTIONS = {
   // Public API keys (#624): fail-closed. Metadata holds the key's scopes (created) or nothing.
   'api_key.created': { security: true, description: 'An owner or admin issued a public API key' },
   'api_key.revoked': { security: true, description: 'An owner or admin revoked a public API key' },
+  // Change webhooks (#626): fail-closed. Metadata holds the subscribed event types (created) or nothing.
+  'webhook_endpoint.created': {
+    security: true,
+    description: 'A workspace manager registered a webhook endpoint',
+  },
+  'webhook_endpoint.deleted': {
+    security: true,
+    description: 'A workspace manager removed a webhook endpoint',
+  },
   'billing.subscription_changed': {
     security: true,
     description: 'An owner changed the plan or seats, or cancelled or resumed the subscription',

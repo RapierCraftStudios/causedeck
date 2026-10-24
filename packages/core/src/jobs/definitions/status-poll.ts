@@ -16,11 +16,13 @@ import {
   type PollCaseWatchesReport,
   type StatusFetcher,
 } from '../../case-watch/index.ts';
+import { emitWebhookEvent } from '../../webhooks/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 import { getProducer } from '../producer.ts';
 
 import { deliveryKey, notificationDeliverSchema } from './notification-deliver.ts';
+import { enqueueWebhookDelivery } from './causelist-poll.ts';
 
 /** Hourly at :15 (Asia/Kolkata, evaluated by the worker); a watch cannot be set to poll faster than hourly. */
 export const STATUS_POLL_CRON = '15 * * * *';
@@ -52,7 +54,7 @@ async function enqueueDelivery(job: DeliveryJob): Promise<unknown> {
 }
 
 export type StatusPollDeps = Partial<
-  Pick<PollCaseWatchesDeps, 'fetcher' | 'policy' | 'listDue' | 'caps' | 'now' | 'enqueueDelivery'>
+  Pick<PollCaseWatchesDeps, 'fetcher' | 'policy' | 'listDue' | 'caps' | 'now' | 'enqueueDelivery' | 'onChange'>
 >;
 
 /** The job body. Exported for tests. */
@@ -64,9 +66,24 @@ export async function runStatusPoll(
     db: ctx.db,
     fetcher: deps.fetcher ?? fetcherFactory?.(ctx.db) ?? unwiredFetcher,
     enqueueDelivery: deps.enqueueDelivery ?? enqueueDelivery,
+    onChange: (change) =>
+      emitWebhookEvent(
+        { db: ctx.db, enqueue: enqueueWebhookDelivery },
+        {
+          workspaceId: change.workspaceId,
+          type: change.kinds.includes('order') ? 'order.added' : 'status.changed',
+          eventKey: `status:${change.snapshotId}`,
+          sourceId: change.sourceId,
+          changes: change.kinds,
+          matterId: change.matterId,
+          watchId: change.watchId,
+          snapshotId: change.snapshotId,
+        },
+      ),
     log: (event, fields) => {
       ctx.log.warn({ ...fields }, event);
     },
+    ...(deps.onChange === undefined ? {} : { onChange: deps.onChange }),
     ...(deps.policy === undefined ? {} : { policy: deps.policy }),
     ...(deps.listDue === undefined ? {} : { listDue: deps.listDue }),
     ...(deps.caps === undefined ? {} : { caps: deps.caps }),

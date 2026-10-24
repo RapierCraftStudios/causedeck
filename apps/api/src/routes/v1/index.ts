@@ -13,6 +13,7 @@ import { razorpayWebhookRouter, type RazorpayWebhookDeps } from '../webhooks/raz
 
 import { billingRouter } from './billing.ts';
 import { meRouter } from './me.ts';
+import { webhookEndpointsRouter } from './webhook-endpoints.ts';
 import { workspacesRouter } from './workspaces.ts';
 
 export interface V1Options {
@@ -35,6 +36,7 @@ export function v1Router({ db, middleware, billing, inboundEmail, routes }: V1Op
   v1.route('/', meRouter(db));
   v1.route('/', workspacesRouter(db));
   v1.route('/', billingRouter(db));
+  v1.route('/', webhookEndpointsRouter(db));
   v1.route(
     '/',
     razorpayWebhookRouter({

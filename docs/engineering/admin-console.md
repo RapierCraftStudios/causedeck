@@ -212,7 +212,7 @@ edits stay on `/sources` (audited as `source.changed`).
   corpus 168h) since the last successful fetch. A source that never succeeded is stale.
 - Parse yield (rows anchored / rows parsed) comes from `app_staff_parse_yield` (migration 0072), a
   staff-only definer function over `adapter_parse_run` returning per-adapter counts; the adapter id
-  is the source id. Conflict rate (#499) comes from `app_staff_conflict_rate` (migration 0080): per
+  is the source id. Conflict rate (#499) comes from `app_staff_conflict_rate` (migration 0082): per
   source host, the share of date readings that disagree with the proceeding's canonical date, counts
   only; it is matched to a source by the host of its base URL.
 - Errors are status 0 or >= 400. No URL, URL hash, advocate, document or party data is read.

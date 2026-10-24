@@ -130,8 +130,8 @@
   },
   {
    "id": "D12",
-   "path": "packages/db/migrations/0080_staff_conflict_rate.sql",
-   "change": "Security-definer app_staff_conflict_rate(since) mirroring 0072: per-source counts of listings/proposals vs corrected conflicts, staff only (renumber if base took 0080; regenerate snapshot)",
+   "path": "packages/db/migrations/0082_staff_conflict_rate.sql",
+   "change": "Security-definer app_staff_conflict_rate(since) mirroring 0072: per-source counts of listings/proposals vs corrected conflicts, staff only (renumbered to 0082 after base took 0080 and 0081; regenerate snapshot)",
    "requirements": [
     "R2",
     "R6"

@@ -25,6 +25,7 @@ pnpm --filter @causedeck/core exec vitest run src/domains.test.ts
 | `automation` | `@causedeck/core/automation` | the automation engine (#47, [ADR 0023](../adr/0023-automation-ladder-and-undo.md)): the L1-L4 ladder, the approval matrix as data and `decideLevel`, proposals (`submitProposals`, `acceptProposal`, `editAndAccept`, `dismissProposal`, `applyAutomatically`, `expireProposals`), the kind handlers that write through the matter-graph services, the 7-day cascading undo (`undoActivity`, `undoCapture`, `reassignCapture`), the ask-first dial, threshold learning, the activity feed read model (#49: `listActivities` keyset-paged with filters and search, `getActivityDetail`, `countByDay`, and `countDigestActivities` for the end-of-day digest; a row about a matter the member may not read is returned redacted, a clerk gets only `CLERK_ACTIVITY_KINDS`) and the activity export (owners the workspace, everyone else their own activity, audited as `audit.exported`). It has no send, file, pay or advise path (`scripts/check-no-l5.ts`) |
 | `case-watch` | `@causedeck/core/case-watch` | case-status watches (#591, D-048, #483 part 3): `addCaseWatch`, `listCaseWatches`, `removeCaseWatch` (an advocate's own watches on proceedings they can read), `runCaseStatusLookup` (the server path: only the advocate's own watch, always through `@causedeck/fetch` with `delegatedFor`, so a bulk or unscoped lookup cannot be made; parsed with the `@causedeck/adapters` status parsers) and `recordDeviceSnapshot` (a device-read status), snapshots with provenance (tier used, cost, device or server; an unchanged page writes no second row) and `diffStatus`, which stages a new next hearing date as an L2 `case_status_change` proposal confirmed through the matter-graph next-date services; `pollCaseWatches` (#592, the body of `system.status.poll`: due watches through `app_case_watch_due`, each run as its own advocate with per-advocate and per-source caps, a killed source skipped) and `notifyStatusChanges` (new date, new order and stage change alerts to the advocate, never on the first snapshot or a sensitive matter) |
 | `notices` | `@causedeck/core/notices` | the official notices feed (#586, D-048, part 3 of #480): `pollNotices` (fetches each cleared `notice` source once through the governed fetch layer via a structural `NoticeFetcher` port, parses it with the source's parser, stores new notices once with provenance, never fetches an uncleared source) and `matchNotices` (matches notices to the workspaces and matters with a proceeding before the forums they name, through the owner-defined `app_notice_match_targets`), `notifyNoticeMatches` (#587: one `notices` alert per active member who may read matters, per notice, deduplicated by notification `dedupeKey`) and `listHolidayListings` (#587: the workspace's listings that fall on the `effective_on` date of a matched `holiday` notice for their forum), run hourly by `system.notices.poll` |
+| `api-keys` | `@causedeck/core/api-keys` | public API keys (#624, #487 part 1): `createApiKey` (the token is shown once, only its SHA-256 is stored), `listApiKeys`, `revokeApiKey` (both audited), `authenticateApiKey` (reads one key by hash through the owner-defined `app_api_key_by_hash`), scopes, and `consumeApiCall` (per-key monthly quota, one billed `api.calls` usage unit per request) |
 | `conflicts` | `@causedeck/core/conflicts` | conflict-of-interest checks (#500, D-048, counsel-gated by #486): `checkConflicts` matches the names on a new matter against the chamber's own matters and parties, in the caller's workspace transaction only, transliteration-aware for Tamil and Kannada and tolerant of organisation abbreviations; every check is audited as `conflict.checked` (counts, never names) and nothing blocks the advocate |
 | `billing` | `@causedeck/core/billing` | entitlements, subscriptions, invoices ([billing.md](billing.md)) |
 | `usage` | `@causedeck/core/usage` | metering, AI budget, fair use ([usage-metering.md](usage-metering.md)) |
@@ -147,6 +148,9 @@ graph LR
   jobs --> notices
   notices --> workspaces
   notices --> sources
+  api-keys --> audit
+  api-keys --> usage
+  api-keys --> workspaces
   conflicts --> audit
   jobs --> research
   calendar --> audit
@@ -192,6 +196,7 @@ graph LR
 | `court-day` | `sources` |
 | `case-watch` | `workspaces`, `automation`, `matter-graph`, `sources` |
 | `notices` | `workspaces`, `sources` |
+| `api-keys` | `audit`, `usage`, `workspaces` |
 | `conflicts` | `audit` |
 | `facts` | none |
 | `matter-graph` | `workspaces`, `matters` |

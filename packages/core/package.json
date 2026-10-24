@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./ai": "./src/ai/index.ts",
     "./audit": "./src/audit/index.ts",
+    "./api-keys": "./src/api-keys/index.ts",
     "./automation": "./src/automation/index.ts",
     "./billing": "./src/billing/index.ts",
     "./calendar": "./src/calendar/index.ts",

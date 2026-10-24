@@ -64,18 +64,18 @@ export function ConfidenceChip({
   agreement: AgreementView;
   fact: 'date' | 'stage';
 }) {
-  const t = useTranslations('matters.workspace');
+  const t = useTranslations('matters');
   const list = agreement.sources
-    .map((source) => `${t(`source.${source.kind}`)}: ${source.value}`)
+    .map((source) => `${t(`workspace.source.${source.kind}`)}: ${source.value}`)
     .join('; ');
   return (
     <Badge
       tone={agreement.status === 'conflict' ? 'warning' : 'neutral'}
       data-confidence-chip={fact}
       data-agreement={agreement.status}
-      title={`${t(`confidence.${agreement.status}`)}. ${t('confidence.sources', { list })}`}
+      title={`${t(`workspace.confidence.${agreement.status}`)}. ${t('workspace.confidence.sources', { list })}`}
     >
-      {t('confidence.chip', { percent: agreement.percent })}
+      {t('workspace.confidence.chip', { percent: agreement.percent })}
     </Badge>
   );
 }

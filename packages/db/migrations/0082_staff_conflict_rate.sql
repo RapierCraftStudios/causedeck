@@ -1,4 +1,4 @@
--- Migration 0080_staff_conflict_rate: hand-written (no schema diff for drizzle-kit), reviewed before commit.
+-- Migration 0082_staff_conflict_rate: hand-written (no schema diff for drizzle-kit), reviewed before commit.
 -- Reviewed-by: Claude (agent, #499)
 -- The conflict rate per source that feeds adapter health (#499, D-026). listing is a tenant table
 -- under FORCE RLS, so, as with app_staff_parse_yield (0072), staff reach it only through a SECURITY

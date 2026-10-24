@@ -134,7 +134,7 @@ describe('staff parse yield (0072)', () => {
   });
 });
 
-describe('staff conflict rate (0080)', () => {
+describe('staff conflict rate (0082)', () => {
   it('counts per-source readings that disagree with the canonical date, and names no tenant', async () => {
     await withTestDb(async (tx) => {
       const t = await seedTwoTenants(tx);
@@ -164,7 +164,11 @@ describe('staff conflict rate (0080)', () => {
         ),
       );
       expect(rows).toHaveLength(1);
-      expect(Object.keys(rows[0] ?? {}).sort()).toEqual(['conflicts', 'observations', 'source_key']);
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual([
+        'conflicts',
+        'observations',
+        'source_key',
+      ]);
       expect(rows[0]).toMatchObject({ observations: '1', conflicts: '1' });
     });
   });

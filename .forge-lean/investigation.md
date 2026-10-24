@@ -22,7 +22,7 @@ Greenfield: provenance is stored per row but nothing compares rows across source
 - new `packages/core/src/facts/{index,agreement}.ts` (pure `assessAgreement` over observations; `getNextDateAgreement` reader over a proceeding's listings), `packages/core/package.json` export map, `packages/core/src/index.ts` if domains are barrelled
 - `packages/core/src/matter-graph/` read model only if the overview must surface agreement (additive)
 - `apps/web/components/matters/` (confidence chip with sources on hover, conflict card generalised to N sources), `apps/web/lib/matters/workspace.ts`, i18n `packages/i18n/src/messages/{en,kn,ta}/matters.json` (+generated)
-- staff conflict-rate: new migration (next free number, 0080 at time of writing) with a security-definer `app_staff_conflict_rate(since)` mirroring 0072, `packages/core/src/sources/ops.ts` (+ `SourceOpsRow` field), `apps/admin/app/(console)/data-ops/page.tsx`; `packages/db/src/__tests__/staff-console-schema.test.ts`
+- staff conflict-rate: new migration (next free number; 0082 after the base took 0080 and 0081) with a security-definer `app_staff_conflict_rate(since)` mirroring 0072, `packages/core/src/sources/ops.ts` (+ `SourceOpsRow` field), `apps/admin/app/(console)/data-ops/page.tsx`; `packages/db/src/__tests__/staff-console-schema.test.ts`
 - registries listed above
 
 ### Sibling Sweep

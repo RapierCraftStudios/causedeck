@@ -131,6 +131,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,
 
+  // Public API keys (#624).
+  api_key: DB_TABLES_TEST,
+
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
   // Judgment alerts (#497).
@@ -592,6 +595,41 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     note: 'notify() enqueues for its own checked workspace; the deliver job runs scoped to it',
   },
   increment: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  createApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; a non-member is FORBIDDEN and a nested scope throws TenancyError',
+  },
+  listApiKeys: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; keys are tenant rows under RLS',
+  },
+  revokeApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'denies',
+    note: 'requireCan inside the workspace scope; another workspace key id is NOT_FOUND',
+  },
+  authenticateApiKey: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'the bearer token is the credential: reads one key through the owner-defined app_api_key_by_hash, by hash only (never lists)',
+  },
+  findApiKeyIssuer: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'reads one user row by id for the key issuer (the user table has no workspace column); the caller passes the issuer id from an authenticated key',
+  },
+  apiKeyCallsThisPeriod: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
+  },
+  consumeApiCall: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
     note: 'opens withWorkspace on ctx.workspaceId; nested in another workspace scope it throws TenancyError',
@@ -1107,6 +1145,15 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   notificationJobDeps: 'transport wiring (no database access)',
   setNotificationJobDeps: 'setter',
   setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
+  // public API keys (#624)
+  API_KEY_SCOPES: 'constant',
+  API_CALLS_USAGE_KEY: 'constant',
+  API_KEY_TOKEN_PATTERN: 'constant',
+  DEFAULT_API_KEY_RATE_LIMIT_PER_MINUTE: 'constant',
+  ApiKeyError: 'error class',
+  isApiKeyScope: 'pure',
+  hashApiKeyToken: 'pure (sha256)',
+  generateApiKeyToken: 'pure (random token)',
   // usage: keys and periods (#219)
   USAGE_KEYS: 'constant',
   USAGE_KEY_KINDS: 'constant',

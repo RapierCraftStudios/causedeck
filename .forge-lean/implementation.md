@@ -1,74 +1,51 @@
 ### Approach
-Resumed the interrupted branch. The engine, orders poll, extraction hook, registries and docs were already in place; this pass added the missing `period.ts` named by D1 and declared the `status-poll.ts` accessor as an amendment.
+Own-workspace aggregates: `getCourtInsights` reads proceedings, listings, hearings and disposal state changes inside the caller's RLS transaction. A pure `summariseCells` computes the metrics and withholds any metric with fewer than `MIN_CELL_SIZE` (5) observations. A static guard pins that no judge, bench or party word and no internal bench store appears in the user-facing code.
 
 ### Changes
-- packages/core/src/deadlines/period.ts: new, period arithmetic (days/weeks/months, month-end clamp).
-- packages/core/src/deadlines/compute.ts: uses period.ts.
-- packages/core/src/jobs/definitions/status-poll.ts: `getStatusFetcherFactory` accessor so orders.poll shares the wired fetcher (amendment add-deliverable).
-- Earlier commits: deadlines domain, case-watch/orders.ts, jobs/definitions/orders-poll.ts, extraction/run.ts, registries, eslint core-domains, docs, cross-tenant tests, worker registry/schedule tests.
+- packages/intelligence/src/analytics/index.ts: aggregation, query and `MIN_CELL_SIZE`.
+- packages/intelligence/src/analytics/analytics.test.ts, static-guard.test.ts: unit tests and the guard with a mutation case.
+- packages/intelligence/src/index.ts: export.
+- apps/web/app/(app)/w/[slug]/courts/insights/page.tsx, apps/web/components/courts/court-insights.tsx (+ test): the page and view.
+- packages/i18n: `court-insights` namespace in en/ta/kn, catalog list, generated files, translation-status, catalog test.
+- docs/engineering/court-analytics.md: definitions and rules.
 
 ### Acceptance Criteria Status
-- R1 ✅ packages/core/src/deadlines/calendar.ts
-- R2 ✅ packages/core/src/jobs/definitions/orders-poll.ts, case-watch/orders.ts
-- R3 ✅ packages/core/src/extraction/run.ts
-- R4 ✅ packages/core/src/deadlines/direction.test.ts
-- R5 ✅ packages/core/src/deadlines/deadlines.test.ts
-- R6 ✅ packages/core/src/case-watch/orders.test.ts
-- R7 ✅ packages/core/src/deadlines/compute.ts
+- R1 ✅ packages/intelligence/src/analytics/static-guard.test.ts:30
+- R2 ✅ packages/intelligence/src/analytics/index.ts (summariseCells, getCourtInsights)
+- R3 ✅ static-guard.test.ts (internal stores check); query selects no bench columns
+- R4 ✅ index.ts MIN_CELL_SIZE; no title or party columns read
+- R5 ✅ apps/web/app/(app)/w/[slug]/courts/insights/page.tsx
+- R6 ⏭ deferred in the contract (#487 closed not planned)
+- R7 ✅ static-guard.test.ts
+- R8 ✅ analytics.test.ts (boundary 5 shown, 4 withheld)
+- R9 ✅ apps/web/components/courts/__tests__/court-insights.test.tsx (values, window, coverage)
+- R10 ⏭ deferred by amendment
 
 ### Verification
-Run with TESTCONTAINERS_RYUK_DISABLED=true (the Ryuk reaper container never logs Started here).
-- V1 core vitest: pass (9 files, 217 tests); deadlines/orders tests fail without the new modules.
-- V2 worker registry/schedules: pass (11 tests); fails without the orders.poll registration.
-- V3 intelligence: pass (14 tests).
+- V1 intelligence vitest: pass (24 tests); new tests fail without the fix (the module does not exist).
+- V2 web vitest: pass (11 tests).
+- V3 i18n catalog test: pass (20 tests).
+- tsc --noEmit for intelligence, i18n and web: clean. eslint on changed files: clean (web needed a larger heap; the pre-commit eslint hook ran out of memory, so the commit used LEFTHOOK_EXCLUDE=eslint after a manual lint). forgedock check: PASS.
 
 ### Notes
-No env vars. Vacations come from a static per-forum table (R8 deferred).
+- No env vars, tables or migrations. D8 (court-nav link) not changed: the nav lists no sibling pages. The page has no menu entry yet, so it is reached by URL.
+- The ta and kn strings are marked draft in translation-status.json.
+- The data scope is the caller's own workspace only; network aggregates are not built.
 
 ### Stale-list follow-up
-The eight flagged symbols are not members of the named lists (partial mocks in case-watch-actions and status-poll tests; services.test.ts CASES is per-service, and the constants/job symbols are already in NOT_A_SERVICE). Recorded under `not_members` in result.json; no code changed, so V1-V3 results stand.
+- catalog.test.ts already lists courtInsights. The other flagged tests enumerate unrelated things (nav, actions, routes, packages); recorded as not_members in result.json.
 
-### Merge typecheck failure
-`turbo run typecheck` exited 127 (`turbo: command not found`): an environment PATH issue, not a code or merge conflict. Ran `pnpm exec turbo run typecheck --filter=@causedeck/core --filter=@causedeck/worker` (core, worker and their dependencies, 17 tasks): all pass. No code changed.
+## CI fix
+Added apps/web/components/courts/court-insights.stories.tsx (courts-stories guard requires a stories file per courts component).
 
-### Post-merge
-Merged origin/milestone/court-data-network (only .forge-lean files conflicted; kept this branch's). `turbo` is not on PATH here (exit 127 is environmental); `pnpm exec turbo run typecheck` over core, worker, api, db, flags and intelligence passes (18 tasks), and V1-V3 pass on the merged tree. No duplicate keys or symbol clashes found.
+## Merge-check follow-up
+The reported failure (`turbo: command not found`, exit 127) was an environment PATH issue, not a code conflict. Re-ran via `pnpm turbo run typecheck --filter=...[base]`: 23/23 pass. V1-V3 pass. No source change needed.
 
-## Merge fix (turbo not found)
-The merged-tree failure was `turbo: command not found` (exit 127), an environment PATH issue, not a code conflict. With `node_modules/.bin` on PATH, `turbo run typecheck --filter=@causedeck/core --filter=@causedeck/worker --filter=@causedeck/db` passes (17/17). No source change was needed. Vitest suites could not run on this host (the global setup's Postgres container did not start: "Log stream ended and message /.*Started.*/ was not received"), so V1/V2 were not re-run after the merge.
+## Merge-check rerun (turbo not found)
+The merged-tree typecheck failed with exit 127 (`turbo: command not found`): an environment PATH problem, not a code or symbol conflict. No source change was needed. With `node_modules/.bin` on PATH, scoped `turbo run typecheck` passes (23/23) and V1-V3 pass.
 
-### Post-merge (second base merge)
-Registry lists conflicted (core jobs/registry.ts, worker registry/schedules tests); kept both the base's webhook jobs and `system.orders.poll`. `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.
+### Merge verification
+After merging the base, the scoped typecheck (`pnpm exec turbo run typecheck --filter='...[e39ede8b]'`, 23 tasks) passes. The earlier failure (exit 127) was `turbo` missing from PATH on the check host, not a code defect (the binary is `node_modules/.bin/turbo`, run through `pnpm exec`). No duplicate keys or same-named symbols were found; no source change was needed. V1-V3 pass again.
 
-### Merge fix (third check)
-`turbo: command not found` (exit 127) is again a PATH problem, not a code clash. With `node_modules/.bin` on PATH, `tsc --noEmit` over core, worker and db is clean. Vitest could not start on this host (Postgres container "Started" log never arrives), so V1/V2 were not re-run. No source change.
-
-### Merge fix (fourth check)
-`turbo: command not found` (exit 127) is a PATH problem, not a code clash. With `node_modules/.bin` on PATH, `turbo run typecheck --filter=@causedeck/core --filter=@causedeck/worker` passes (17/17). Vitest still cannot start on this host (Postgres container), so V1/V2 were not re-run. No source change.
-
-### Merge fix (fifth check)
-`turbo: command not found` (exit 127) is again a PATH problem, not a code clash. With `node_modules/.bin` on PATH, `turbo run typecheck --filter=@causedeck/core` passes (16/16). The worker vitest run (V2) still fails to start on this host (no Postgres container), so it was not re-verified. No source change.
-
-### Post-merge (third base merge)
-core-domains.md conflicted; kept the `deadlines` and extended `case-watch` rows plus the base's `notices` row (onMatched hook). `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.
-
-## CI fix (test job)
-CI log was unavailable and no Postgres exists on the host, so DB-backed tests could not run. Reviewed the diff against the guard lists (registries, domains, worker tests: consistent) and ran the pure tests (deadlines, orders-poll, domains: pass). Found one real defect: `storeOrder` created captures without `ttlAt`, so retention would never expire them (createCapture sets `initialTtl`). Fixed in case-watch/orders.ts. Not confirmed to be the CI failure.
-
-### Post-merge recheck (turbo exit 127)
-Again `turbo: command not found` only: no code clash. `tsc --noEmit` is clean in core, db and worker; targeted vitest (deadlines, case-watch, extraction, orders-poll, domains, worker registry/schedules) passes. No code change needed.
-
-## Merge recheck (turbo exit 127)
-`turbo: command not found` was a PATH problem, not a code clash. No source change needed. Ran `tsc --noEmit` for core, worker and db (pass) and the V1/V2 vitest subsets (core 37 tests, worker 11 tests; pass).
-
-### Post-merge (fourth base merge)
-Only .forge-lean files conflicted (kept this branch's). `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.
-
-### CI fix (intelligence test, run 40084029731)
-The only failed task was `@causedeck/intelligence#test`; the log excerpt shows no failing assertion. This branch changes nothing under packages/intelligence (`git diff origin/milestone/court-data-network...HEAD -- packages/intelligence` is empty, P1 preserved). `vitest run --coverage` for the package passes locally (exit 0, no threshold error). Treated as a CI-load flake unrelated to this change; no code change.
-
-## Merge recheck (3)
-turbo not found (exit 127) is a host PATH issue, not a merge conflict. tsc --noEmit clean for core, worker, db; core V1 and worker V2 subsets pass. No code change.
-
-## Merge recheck (4)
-`turbo: command not found` (exit 127) is again a PATH problem: turbo is in `node_modules/.bin`. With it on PATH, `tsc --noEmit` is clean for core, worker and db, and the V1 (39 tests) and V2 (11 tests) subsets pass. No code change.
+## CI `test` failure (run 40088051117): not reproduced
+No log was available. V1-V3, the full intelligence and i18n suites and the courts/messages web tests pass. Scoped `turbo run test` fails only in container-backed packages (db, adapters, etc.) with testcontainers "Log stream ended and message /.*Started.*/ was not received": no Docker on this host, not a code defect. No source change made.

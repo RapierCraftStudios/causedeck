@@ -1,38 +1,45 @@
 **Verdict**: CONFIRMED
 **Confidence**: medium
-**Severity**: medium (P2 feature; core follow-up-loop pain, but ships behind existing clearance/kill-switch gating)
+**Severity**: medium (P2 feature; greenfield court and process analytics, with a legal guardrail: no judge dimensions)
 **Task Type**: feature
 
 ### What Was Claimed
-Directions in orders must become obligations with exact due dates computed with court holidays, vacations and next-working-day rules. Needs a `packages/core/src/deadlines/` rule engine with per-forum calendars built from the notices feed, an `orders.poll` worker job ingesting new orders for watched matters, proposed obligations (lawyer confirms, L2) carrying the rule and a page anchor, and a fixture table of real phrasings.
+Add user-facing court and process analytics (listing delay, adjournments per hearing, time to disposal, backlog by forum, case type, stage and period) with no judge or bench dimension (static test), k-anonymity cell suppression, a forum and case-type insights page, expected timelines on a matter, and institution API aggregate endpoints. Depends on #483, #484, #495. All three are closed (#483 and #495 as not_planned, #484 merged); their case-watch and corpus tables are in the base, and this feature does not need them.
 
 ### What We Found
-- Dependencies: #479 closed/completed; #480 and #483 closed not_planned, but their code landed under other numbers: notices (`packages/core/src/notices/{poll,holidays,match}.ts`, #586/#587) and case-watch (`packages/core/src/case-watch/{poll,lookup,diff}.ts`, #591/#592). Not blocked.
-- No `packages/core/src/deadlines/` exists.
-- Relative dates are computed in `packages/intelligence/src/extract/relative.ts:1-4,15-16` with calendar days/weeks/months and explicitly "no holiday or vacation adjustment" (`RELATIVE_RULE`). `to-proposals.ts:111-123` turns a dated direction into an `obligation_from_direction` draft with `basis = dueExpression`. That is the only rule text stored today. intelligence must not import core (`extract/index.ts:1-3`).
-- Drafts are staged in `packages/core/src/extraction/run.ts:219-237` via `submitProposals`; `obligation_from_direction` is always L2 (`packages/core/src/automation/matrix.ts:54`); the handler writes `obligation.basis` (`automation/handlers/obligation-from-direction.ts:34-38`, schema `packages/db/src/schema/docket.ts:240-244`). `basis` is shown in `apps/web/components/matters/proceeding-row.tsx`.
-- Calendar data: `notice` has a single `effective_on` date, no end date (`packages/db/src/schema/notices.ts:61`); `listHolidayListings` only matches exact-date holiday notices (`notices/holidays.ts:1-6,40-66`). The holiday-list document's dates are not parsed ("not parsed yet"), and `packages/intelligence/src/notices/types.ts:37` classifies "vacation" as `holiday`. So there is no vacation range data anywhere.
-- Order fetching: case-watch snapshots record `orders` with hrefs and `diffStatus` yields `newOrders` (`case-watch/diff.ts:11-32`), but nothing downloads the order document. Job `system.status.poll` (`jobs/definitions/status-poll.ts:56-90`, `case-watch/poll.ts`) polls status only; caps, kill switch and `delegatedFor` live in `pollCaseWatches`. Fetcher wiring via `setStatusFetcherFactory` (`status-poll.ts:29`, `apps/worker/src/main.ts:54`). Capture ingestion (`capture/create.ts`: `createCapture`/`completeUpload`, sha256 dedupe per workspace) feeds `extraction.extract-order` (`jobs/definitions/extraction-extract-order.ts`).
-- Job registration points: `packages/core/src/jobs/{registry.ts:28,197,246,index.ts:139}`, `apps/worker/src/__tests__/{registry,schedules}.test.ts`.
+- No analytics code exists: `packages/intelligence/src/analytics/` is absent (`packages/intelligence/src/index.ts:6-8` barrel lists no analytics).
+- Source data is already in tenant tables under RLS: `proceeding` (forum_id, case_type_code, filing_date, state: `packages/db/src/schema/proceedings.ts:40-70`), `listing` (list_date, stage_norm, proceeding_id, bench_id, hall_id: `packages/db/src/schema/docket.ts:38-60`), `hearing` (held_on, adjournment_reason, next_date_*: `docket.ts:106-115`) and `proceeding_state_change` (to_state, changed_at: `proceedings.ts:171-186`).
+- `listing.bench_id` and `bench_sitting_fact.bench_id` are the bench-level data that the user-facing layer must not read. `bench_sitting_fact` is staff-only and has no app grant (`packages/db/src/schema/bench-facts.ts:1-9`). The only user surface for it is the flagged bench card (`apps/api/src/routes/v1/bench-card.ts`).
+- A precedent static guard exists: `packages/intelligence/src/bench-facts/static-guard.test.ts:12-30`. It scans comment-stripped source against a prohibited regex, with a planted-offender mutation case.
+- `/w/[slug]/insights` is a placeholder (`apps/web/app/(app)/w/[slug]/insights/page.tsx:1-3`, nav `requires: 'insights.read'` at `apps/web/lib/nav.ts:108`). It is a practice-insights slot, so the court page should be a new route under courts: `courts/` has a `[code]` dynamic segment (`apps/web/app/(app)/w/[slug]/courts/`), and a static `insights` segment takes precedence over it.
+- `apps/web` already depends on `@causedeck/intelligence` (`apps/web/package.json:60`). Workspace-scoped reads use `withWorkspace` from `@causedeck/db` (`packages/core/src/court/rosters.ts:109`).
+- The public API app has v1 routes (`apps/api/src/routes/v1/index.ts`), but #487 (public developer API with quotas) was closed not_planned, so there is no institution API or quota framework to extend.
+- Grep for k-anonymity or minimum-cell code finds nothing. This is the first aggregate-publication code.
 
 ### Root Cause
-Greenfield on two axes: (1) no calendar-aware deadline engine; the only date arithmetic ignores holidays, vacations and the next-working-day rule and has no per-forum calendar; (2) no pipeline from a newly listed order on a watched matter to a fetched order document and its extraction.
+Greenfield: nothing computes process aggregates, and there is no guard that keeps judge and bench fields out of user-facing analytics.
 
 ### Affected Files
-- new `packages/core/src/deadlines/{index,period,calendar,compute}.ts` + tests (fixture table)
-- `packages/core/src/extraction/run.ts` (re-derive `obligation_from_direction` due date and `basis` through the engine before `submitProposals`)
-- new `packages/core/src/case-watch/orders.ts` (fetch new orders delegated, create capture) + `packages/core/src/jobs/definitions/orders-poll.ts`, `jobs/registry.ts`, `jobs/index.ts`
-- `apps/worker/src/__tests__/{registry,schedules}.test.ts`, `apps/worker/src/main.ts` if wiring needed
-- `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`, `docs/engineering/jobs.md`, `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`, `packages/core/package.json` export map
+- `packages/intelligence/src/analytics/` (new): pure aggregation, workspace-scoped query, `MIN_CELL_SIZE`, static guard test.
+- `packages/intelligence/src/index.ts`: export.
+- `apps/web/app/(app)/w/[slug]/courts/insights/page.tsx` (new) and a component under `apps/web/components/courts/`.
+- `packages/i18n/src/messages/{en,ta,kn}/court-insights.json` (new namespace) plus generated files, and `packages/i18n/src/__tests__/catalog.test.ts`.
+- No new table or migration. No `@causedeck/core` export (it would trigger the cross-tenant registry).
 
 ### Sibling Sweep
-`RELATIVE_RULE` consumers (`extract/validate.ts`, `preparse.ts`, `generic-a0/synthetic/generate.ts`) keep the plain rule for next dates ("list after N weeks" is a listing date, not a compliance deadline; the court sits on the date it names). Only "within"/compliance durations get adjusted. `apps/web` calendar (`calendar/`) and `listHolidayListings` stay unchanged. Limitation tables stay under the separate `limitation.enabled` flag (#84).
+- Other places that touch bench or judge data: `packages/core/src/court-day/bench-card.ts`, `apps/api/src/routes/v1/bench-card.ts`, `court/rosters.ts`. They are flagged or internal and out of scope. The new guard must not break their existing guard (`bench-facts/static-guard.test.ts`).
+- No other analytics surface exists to harden.
 
 ### History
-Introduced by #46 (relative dates, plain rule by design); #47 (obligation handler); #586/#587 notices and holiday flagging; #591/#592 case-watch. No prior attempt at #494 in this tree.
+- `bench-facts` (#521) introduced the guard pattern. D-049 and D-050 (`DECISIONS.md:394-426`) set the guardrails. No prior analytics attempt. The `.forge-lean` files in the worktree on arrival were stale (from #636) and are overwritten.
 
 ### Recommendation
-One lane, no migration. (1) Pure engine: `computeDueDate({anchorDate, n, unit, calendar, adjust:'next_working_day'})` returning `{date, rule}` where `rule` is a human string ("4 weeks from 22 Oct; court closed 19 Nov, so 20 Nov"). `CourtCalendar` = weekly offs + holiday dates + vacation ranges per forum code; `loadCourtCalendar(db, workspaceId, forumCode, range)` reads matched `holiday` notices (`effective_on`) and accepts vacation ranges from a typed counsel-reviewed static table in code (empty/seeded minimal; notices carry no ranges, so vacations from notices are deferred). Saturdays/Sundays treated as off by a per-forum weekly-off setting, default Sunday only (counsel to refine). (2) In `runOrderExtraction`, for dated "within" directions of a proceeding with a forum, recompute through the engine; keep the extracted date if the phrase cannot be parsed; write rule into `basis`; remain L2. (3) `system.orders.poll` job: for watches whose latest snapshot lists orders with `href` not yet captured, fetch each with `delegatedFor` through the same `StatusFetcher`, create a capture (dedupe by sha256), which queues extraction; same caps/kill-switch/skipped semantics as `pollCaseWatches`; singleton, hourly. Integration test with fakes proves a new order yields proposals with an anchor within one poll.
+Implement own-workspace aggregates (the caller's RLS scope), so no cross-tenant data leaves a workspace and k-anonymity is a cell-size floor. Cross-workspace network aggregates need an owner-defined function and a counsel/privacy decision, so defer them.
+- Metrics: listing delay is the median days from `proceeding.filing_date` to its first `listing.list_date`. Adjournment rate is the share of hearings with `adjournment_reason` not null. Time to disposal is the median days from `filing_date` to the `proceeding_state_change` row with `to_state='disposed'`. Backlog is the count of non-disposed proceedings.
+- Dimensions are only forum, case type, stage and period.
+- A cell with n < `MIN_CELL_SIZE` (5) has its values withheld, and the page states "not enough data".
+- The page states the data window and coverage (proceedings and hearings counted).
+- Defer the matter "expected timelines" (R10) and the institution API (R6).
 
 ### Related Issues
-#479, #480, #483, #586, #587, #591, #592, #84 (limitation), #46, #47.
+#483, #484, #495 (dependencies, closed), #487 (API, closed not_planned), #521 (bench facts, guard precedent), D-049, D-050.

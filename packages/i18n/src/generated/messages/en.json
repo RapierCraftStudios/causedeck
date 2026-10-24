@@ -641,6 +641,47 @@
       "none": "Invite another member before you transfer ownership."
     }
   },
+  "provisioning": {
+    "trigger": "Import CSV",
+    "title": "Import members from CSV",
+    "description": "Paste or upload a CSV with the columns email, name (optional) and role (optional, default viewer). Check it with a dry run first; new addresses get an invitation email.",
+    "fileLabel": "CSV file",
+    "csvLabel": "CSV contents",
+    "csvPlaceholder": "email,name,role\nasha@example.com,Asha Rao,junior",
+    "dryRun": "Check (dry run)",
+    "confirm": "Provision members",
+    "close": "Close",
+    "working": "Working…",
+    "offline": "You are offline. Reconnect to continue.",
+    "tooLarge": "The file is too large. Split it into smaller files.",
+    "empty": "Add a CSV first.",
+    "failed": "Could not process the CSV. Try again.",
+    "forbidden": "You do not have permission to invite members.",
+    "report": {
+      "dryRunTitle": "Dry run: nothing was changed",
+      "doneTitle": "Provisioning finished",
+      "summary": "{created} to invite, {skipped} skipped, {errors} with errors (of {total} rows).",
+      "summaryDone": "{created} invited, {skipped} skipped, {errors} with errors (of {total} rows).",
+      "line": "Line {line}",
+      "noEmail": "(no address)",
+      "outcome": {
+        "invited": "Invited",
+        "skipped": "Skipped",
+        "error": "Error"
+      },
+      "reason": {
+        "alreadyMember": "Already an active member",
+        "forbidden": "You cannot grant this role",
+        "conflict": "Already invited or conflicting",
+        "invalid": "Not valid",
+        "seatLimit": "No seat left on the plan for this role",
+        "failed": "Something went wrong"
+      }
+    },
+    "toast": {
+      "done": "Provisioned {created} members"
+    }
+  },
   "notifications": {
     "email": {
       "layout": {

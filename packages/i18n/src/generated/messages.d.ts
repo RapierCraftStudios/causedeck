@@ -642,6 +642,47 @@ export type Messages = {
       none: string;
     };
   };
+  provisioning: {
+    trigger: string;
+    title: string;
+    description: string;
+    fileLabel: string;
+    csvLabel: string;
+    csvPlaceholder: string;
+    dryRun: string;
+    confirm: string;
+    close: string;
+    working: string;
+    offline: string;
+    tooLarge: string;
+    empty: string;
+    failed: string;
+    forbidden: string;
+    report: {
+      dryRunTitle: string;
+      doneTitle: string;
+      summary: string;
+      summaryDone: string;
+      line: string;
+      noEmail: string;
+      outcome: {
+        invited: string;
+        skipped: string;
+        error: string;
+      };
+      reason: {
+        alreadyMember: string;
+        forbidden: string;
+        conflict: string;
+        invalid: string;
+        seatLimit: string;
+        failed: string;
+      };
+    };
+    toast: {
+      done: string;
+    };
+  };
   notifications: {
     email: {
       layout: {

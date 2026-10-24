@@ -76,6 +76,7 @@ vi.mock('@causedeck/core/billing', () => ({
 }));
 vi.mock('../app/(app)/w/[slug]/settings/members/actions.ts', () => ({
   inviteMembersAction: vi.fn(),
+  provisionMembersCsvAction: vi.fn(),
   changeRoleAction: vi.fn(),
   prepareTransferAction: vi.fn(),
   confirmTransferAction: vi.fn(),

@@ -1085,6 +1085,28 @@ const CASES: Record<string, Case> = {
       .where(eq(schema.session.id, sessionId));
     expect(still?.id).toBe(sessionId);
   },
+  addProvisionedMember: async (f) => {
+    const before = await aMembers(f);
+    await expect(
+      f.asB((s) =>
+        core.addProvisionedMember(s, {
+          workspaceId: f.a.id,
+          email: 'xt-provisioned@example.com',
+          role: 'viewer',
+        }),
+      ),
+    ).rejects.toBeDefined();
+    expect(await aMembers(f)).toEqual(before);
+  },
+  deactivateProvisionedMember: async (f) => {
+    const before = await aMembers(f);
+    await expect(
+      f.asB((s) =>
+        core.deactivateProvisionedMember(s, { workspaceId: f.a.id, userId: f.aMember.userId }),
+      ),
+    ).rejects.toBeDefined();
+    expect(await aMembers(f)).toEqual(before);
+  },
   prepareOwnershipTransfer: async (f) => {
     await expectDenied(
       f.asB((s) =>

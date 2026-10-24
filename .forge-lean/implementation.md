@@ -35,3 +35,6 @@ The reported failure (`turbo: command not found`, exit 127) was a missing binary
 ## Re-check after second merge
 Exit 127 again came from `turbo` missing on PATH, not code. Re-ran tsc --noEmit (core, admin) clean and V1-V3 pass; no code change needed.
 - After the base merge, `turbo run typecheck` exited 127 (`turbo` is not on PATH in the check shell): a toolchain problem, not a code conflict. No merged-tree duplicate or same-named symbol was found. `tsc --noEmit` is clean for packages/config, apps/admin and packages/core; the V1-V3 tests pass.
+
+## CI fix (lint)
+The `// authz: as startDryRunAction.` comments on startImportAction, resumeRunAction and rollbackRunAction did not match the `causedeck/require-authorization` rule, which needs `// authz: public <reason>`. Rewrote them to that form. The `@causedeck/intelligence` test-shard failure is in a package this branch does not touch, so no change was made for it.

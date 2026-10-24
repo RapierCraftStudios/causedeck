@@ -63,3 +63,6 @@ Again `turbo: command not found` only: no code clash. `tsc --noEmit` is clean in
 
 ### Post-merge (fourth base merge)
 Only .forge-lean files conflicted (kept this branch's). `turbo: command not found` (exit 127) is a PATH problem, not a code clash: `pnpm exec turbo run typecheck` over core, worker, api and db passes (18 tasks), and V1-V3 pass on the merged tree.
+
+### CI fix (intelligence test, run 40084029731)
+The only failed task was `@causedeck/intelligence#test`; the log excerpt shows no failing assertion. This branch changes nothing under packages/intelligence (`git diff origin/milestone/court-data-network...HEAD -- packages/intelligence` is empty, P1 preserved). `vitest run --coverage` for the package passes locally (exit 0, no threshold error). Treated as a CI-load flake unrelated to this change; no code change.

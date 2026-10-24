@@ -92,7 +92,8 @@
  ],
  "facts": {
   "decisions": [
-   "Post-merge typecheck failure (turbo exit 127) is a missing turbo on PATH, not a code conflict; verified with tsc --noEmit in config, admin and core."
+   "Post-merge typecheck failure (turbo exit 127) is a missing turbo on PATH, not a code conflict; verified with tsc --noEmit in config, admin and core.",
+   "Second post-merge turbo typecheck failure (exit 127) is again a missing turbo on PATH; tsc --noEmit clean in core and admin."
   ]
  }
 }

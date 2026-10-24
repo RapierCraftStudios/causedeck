@@ -1,0 +1,39 @@
+{
+  "courtInsights": {
+    "metaTitle": "Court insights",
+    "title": "Court insights",
+    "description": "How long matters take to be listed and disposed, and how often hearings are adjourned, by forum and case type.",
+    "filters": {
+      "label": "Filter insights",
+      "forum": "Forum",
+      "allForums": "All forums",
+      "caseType": "Case type",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply"
+    },
+    "table": {
+      "label": "Process figures by forum and case type",
+      "forum": "Forum",
+      "caseType": "Case type",
+      "stage": "Stage",
+      "period": "Year",
+      "listingDelay": "Median listing delay",
+      "adjournmentRate": "Adjournment rate",
+      "disposalTime": "Median time to disposal",
+      "backlog": "Pending matters"
+    },
+    "days": "{count, plural, one {# day} other {# days}}",
+    "rate": "{value, number, percent}",
+    "count": "{count, number}",
+    "notEnough": "Not enough data",
+    "unlisted": "Not listed yet",
+    "window": "Data window: {from} to {to}.",
+    "coverage": "Based on {proceedings, plural, one {# matter} other {# matters}} and {hearings, plural, one {# hearing} other {# hearings}} in this workspace.",
+    "minimum": "Figures from fewer than {min} observations are withheld.",
+    "empty": {
+      "title": "No figures yet",
+      "hint": "Figures appear once matters in this workspace have filing dates, listings and hearings."
+    }
+  }
+}

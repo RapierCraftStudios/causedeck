@@ -28,3 +28,6 @@ The merged-tree failure was `turbo: command not found` (PATH), not a code confli
 
 ### Post-merge check (turbo exit 127)
 `turbo: command not found` is an environment issue (not on PATH), not a code conflict. Ran `pnpm exec turbo run typecheck` scoped to db, core, admin, web and i18n: 20/20 tasks pass. `forgedock check`: V1-V5 pass. No code change needed.
+
+### Post-merge check (turbo exit 127, again)
+Still `turbo: command not found` (PATH), not a code conflict. `pnpm exec turbo run typecheck` scoped to db, core, admin, web, i18n and adapters: all tasks pass. `forgedock check`: V1-V5 pass. No code change.

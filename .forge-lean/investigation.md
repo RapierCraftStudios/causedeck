@@ -1,41 +1,40 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield UI; last part of #480, the stored notices and matches are not visible to anyone)
+**Severity**: low (P3 greenfield, legal-gated; ships dark)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 5 of #480: an `apps/web` Notices page listing notices matched to the member's forums and matters, with provenance and source links; a matter-level "affecting this matter" card; register any server actions in `apps/web/__tests__/cross-tenant-actions.test.ts`.
+Before taking a matter, a chamber must check whether it appears for the opposite party in any matter. Needs a `packages/core/src/conflicts/` name matcher (transliteration-aware for Tamil and Kannada, organisation aliases) over the chamber's own matters and parties (optionally cause-list history), a conflict check on new-matter intake in `apps/web` that never auto-blocks, an audit log of every check, no data leaving the workspace, and a flag that stays off until counsel signs off (#486).
 
 ### What We Found
-- Dependency #586 is present on the base: `packages/core/src/notices/{index,poll,match}.ts` exist (`index.ts:4-14` exports only `pollNotices`, `matchNotices` and types); nothing reads `notice`/`notice_match` for a page. No core list/read function exists.
-- Data model: `packages/db/src/schema/notices.ts:50-80` (`notice`: global, `title`, `kind`, `issuedOn`, `effectiveOn`, `url`, provenance columns, `forumCodes`) and `:84-118` (`notice_match`: tenant RLS, `matterId`, `forumId`, `reason` forum|matter_forum). `notice.sourceId` -> `source` gives the source name/terms for the provenance line.
-- No `apps/web` file references notices: `apps/web/app/(app)/w/[slug]/` has no `notices` route; `apps/web/lib/nav.ts:26-43` `WORKSPACE_ROUTES` has no `notices`; the matter overview `matters/[id]/page.tsx:80-109` renders `MatterOverview` with no notices card.
-- Page pattern to copy: `courts/page.tsx:1-80` (server component, `getWorkspaceContext`, dynamic `import('@causedeck/core/runtime')` + `inWorkspace`, loading/error/empty/denied states, `loading.tsx`/`error.tsx`) and `matters/[id]/research/page.tsx:20-45` (matter-scoped read via core in `inWorkspace`, `can(role,'matter.read')`, another workspace's matter -> `notFound()`).
-- Read-only: no mutation is needed, so no `'use server'` action is added and `apps/web/__tests__/cross-tenant-actions.test.ts:122` `ACTIONS` is unchanged.
-- A new runtime export of `@causedeck/core` needs a `SERVICE_TESTS` entry plus a real case in `packages/core/src/__tests__/cross-tenant/services.test.ts` (pattern: `listRelevantJudgments: denies` at `cross-tenant-registry.ts:700`, case at `services.test.ts:2592`); notice_match seeder exists at `packages/db/src/testing/two-tenants.ts:921`.
-- Core domain `notices` already allowed to import `sources` only (`packages/config/eslint/core-domains.js:33`); a source-name join must be done with the `source` table from `@causedeck/db` schema, not by importing another domain.
-- i18n: a new namespace needs en/ta/kn json, `packages/i18n/src/catalog.ts`, generated files, `translation-status.json` and the expected list at `packages/i18n/src/__tests__/catalog.test.ts:85-125` (#593 did the same for `case-watch`).
-- Nav: `apps/web/__tests__/nav.test.ts:9-39` asserts `WORKSPACE_ROUTES` equals `SPIKE_ROUTES`, and shell/nav tests enumerate routes; adding a route touches them. `packages/i18n/src/messages/en/nav.json:18` holds labels. The shell bundle budget was raised in #593 (42 KB): watch it.
+- Dependency #486 is merged on base (`7afc0e6d`), so the issue is not blocked.
+- No `packages/core/src/conflicts` exists; no conflict flag in `packages/flags/src/keys.ts:38-115` (registry ends at `workspace.export`, :110).
+- Party data: `person` (`name`, `aliases[]`, `kind` incl. `party`/`client`) and `organisation` (`name`, `aliases[]`) at `packages/db/src/schema/people.ts:34-90`; `role_edge` kinds `represents|appears_for|opposes` at `packages/db/src/schema/enums.ts:93-99`, targeting a matter at `people.ts:92-100`. All tenant tables under FORCE RLS, so a check inside `withWorkspace` cannot see another workspace.
+- Cause-list history in a workspace is `listing` (`packages/db/src/schema/docket.ts:50`); it holds no party names, so history matching can only go through proceedings/people. Treat as out of this change (issue says "optionally").
+- No transliteration utility exists. Adapters keep Karnataka names "never transliterated" (`packages/adapters/src/karnataka-hc/advocate-keys.ts:3-5`), `packages/intelligence/src/structure/match-matter.ts` ranks case numbers only.
+- Flag gating pattern: `requireFlag` -> `isEnabled(key, {workspaceId,userId})` -> `ActionError('NOT_FOUND')` (`apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts:50-57`). Legal-gated flags need `legal_ack_by` (`packages/flags/src/evaluate.ts:6-8,47-60`); `flag(key, desc, true, [owners])` at `keys.ts:28`; table mirrored in `docs/engineering/flags.md:25-26` (checked by `packages/flags/src/__tests__/docs.test.ts`).
+- Intake: `createMatterAction` / `searchMattersAction` at `apps/web/app/(app)/w/[slug]/matters/actions.ts:50,110`, dialog `apps/web/components/matters/new-matter-dialog.tsx:39-57`, messages in `packages/i18n/src/messages/{en,kn,ta}/matters.json` (generated copies under `src/generated`).
+- Audit: actions registered in `packages/core/src/audit/events.ts` (`AUDIT_ACTIONS`); writer `record` exported from `packages/core/src/audit/index.ts:65`.
+- Registries: `packages/config/eslint/core-domains.js:28-36` and `docs/engineering/core-domains.md:25-26,186-187`; cross-tenant `SERVICE_TESTS`/`NOT_A_SERVICE` in `packages/db/src/testing/cross-tenant-registry.ts` (~:181, :946); `apps/web/__tests__/cross-tenant-actions.test.ts:103-184` (`ACTIONS`); `packages/core/package.json:22` export map.
 
 ### Root Cause
-Greenfield: parts 1-4 store, parse, poll, match (and alert, #587) notices, but no read path or UI exists.
+Greenfield. No matcher, flag, action or UI exists.
 
 ### Affected Files
-- `packages/core/src/notices/list.ts` (new; `listWorkspaceNotices`, `listMatterNotices`), `packages/core/src/notices/index.ts`, test in `notices.test.ts`
-- `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`
-- `apps/web/app/(app)/w/[slug]/notices/{page,loading,error}.tsx`, `apps/web/components/notices/*` (list + matter card, tests)
-- `apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx` and `components/matters/matter-overview.tsx` (card slot)
-- `apps/web/lib/nav.ts`, nav/sidebar/mobile/workspace-shell tests, `placeholder-page.tsx` if it keys on `WorkspaceRoute`
-- `packages/i18n/src/{catalog.ts,messages/{en,ta,kn}/notices.json,messages/*/nav.json,generated/*,__tests__/catalog.test.ts}`, `translation-status.json`
+- new `packages/core/src/conflicts/{index,normalize,match,check}.ts` (+ tests); `packages/core/src/index.ts`, `packages/core/package.json` (`./conflicts` export)
+- `packages/flags/src/keys.ts`, `docs/engineering/flags.md`
+- `packages/core/src/audit/events.ts` (+ `docs/engineering/audit.md` if its table is test-checked)
+- `apps/web/app/(app)/w/[slug]/matters/actions.ts`, `apps/web/components/matters/new-matter-dialog.tsx` (+ story), `packages/i18n/src/messages/{en,kn,ta}/matters.json` and generated copies
+- `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`, `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`, `apps/web/__tests__/cross-tenant-actions.test.ts`
 
 ### Sibling Sweep
-Same read-page shape as courts, research and case-watch pages; all use `inWorkspace` and core read services. Alerts (#587) are separate and untouched. Document blobs (`documentKey`) are not served here: link only to the official `url`.
+Other legal-gated features follow the same shape (`court.case-status` in case-watch actions, `invoices.enabled`, `limitation.enabled`): flag in registry + docs table, `requireFlag` in each action. Same registries apply as for `case-watch`/`notices` domains. No migration needed (reads existing tables).
 
 ### History
-Schema #584, parsers #585, poll/match #586 (merged on base), alerts #587 (open). Case-watch UI (#593) is the closest i18n/nav precedent.
+Related data layer: `person`/`role_edge` #348; DPDP posture #486 (merged, `docs/legal/court-data-posture.md`). The comment on the issue titled "Investigation Report" describes #586 (notices), not this issue; ignored. No prior attempt at #500.
 
 ### Recommendation
-Add core read functions (join `notice_match` to `notice` and `source` inside the caller's `inWorkspace` tx; dedupe a notice matched by both forum and matter rows; newest `issuedOn` first; cap rows), a `/w/[slug]/notices` server page with the usual states and every role reading it, a matter overview card using `listMatterNotices` (hidden/empty state when none), source link as external `rel="noopener noreferrer"` anchor, provenance line (source name, fetched/recorded date). Add nav item and i18n in all three locales.
+Add `conflicts.check` legal-gated flag (owner [500, 486]). Core `checkConflicts(deps, actor, {parties:[{name, role: 'client'|'adverse', kind: 'person'|'organisation'}]})` runs in the caller's workspace transaction: loads `person`/`organisation` with names/aliases and their `role_edge` to matters (respecting matter restriction via existing matter-graph read helpers where available), normalises names (NFKC, case-fold, honorific and `M/S`, `Pvt Ltd`/`Limited` suffix stripping with organisation alias table, Tamil U+0B80-0BFF and Kannada U+0C80-0CFF to a Latin phonetic key, vowel-length/aspirate collapse, token-order independent) and scores matches. A hit is: new adverse party equals an existing matter's client (chamber represents them) or new client equals an existing adverse party. Return hits with matter id/title, matched name, role, and `source` (person/organisation/alias). Always write one audit event (ids and counts, no names). Web: `checkConflictsAction` (flag-gated, workspace-scoped, no external calls) invoked from the new-matter dialog; results shown with sources, never blocks submission. Cause-list history deferred.
 
 ### Related Issues
-#480 (parent), #586 (dependency, done), #587 (alerts), #584, #585, #593.
+#486 (merged dependency), #480, #348, #311.

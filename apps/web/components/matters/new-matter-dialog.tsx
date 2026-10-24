@@ -36,9 +36,27 @@ export type CreateMatterAction = (
   input: NewMatterInput,
 ) => Promise<Result<{ id: string; title: string }>>;
 
+/** One stored party that a name on the new matter matches (#500). */
+export interface ConflictHit {
+  checked: string;
+  side: 'client' | 'adverse';
+  matterId: string;
+  matterTitle: string;
+  matchedName: string;
+  source: 'name' | 'alias';
+  existingRole: 'client' | 'adverse';
+}
+
+export type CheckConflictsAction = (input: {
+  workspaceId: string;
+  parties: { name: string; side: 'client' | 'adverse' }[];
+}) => Promise<Result<ConflictHit[]>>;
+
 export interface NewMatterDialogProps {
   workspaceId: string;
   action: CreateMatterAction;
+  /** The conflict check (#500): given only while the legal-gated flag is on, else the section is hidden. */
+  checkConflictsAction?: CheckConflictsAction | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Offline: the form shows why and cannot be submitted. */
@@ -50,6 +68,7 @@ export interface NewMatterDialogProps {
 export function NewMatterDialog({
   workspaceId,
   action,
+  checkConflictsAction,
   open,
   onOpenChange,
   offline = false,
@@ -64,8 +83,41 @@ export function NewMatterDialog({
   const [titleError, setTitleError] = useState<string | undefined>(undefined);
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [clientName, setClientName] = useState('');
+  const [adverseName, setAdverseName] = useState('');
+  const [hits, setHits] = useState<ConflictHit[] | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [conflictError, setConflictError] = useState(false);
+
+  /** Advisory only: the result never blocks creating the matter. */
+  async function onCheckConflicts() {
+    if (checkConflictsAction === undefined || checking || offline) return;
+    const parties = [
+      { name: clientName.trim(), side: 'client' as const },
+      { name: adverseName.trim(), side: 'adverse' as const },
+    ].filter((party) => party.name !== '');
+    if (parties.length === 0) return;
+    setChecking(true);
+    setConflictError(false);
+    let result: Result<ConflictHit[]>;
+    try {
+      result = await checkConflictsAction({ workspaceId, parties });
+    } catch {
+      result = { ok: false, error: { code: 'INTERNAL', message: '' } };
+    }
+    setChecking(false);
+    if (result.ok) setHits(result.data);
+    else {
+      setHits(null);
+      setConflictError(true);
+    }
+  }
 
   function reset() {
+    setClientName('');
+    setAdverseName('');
+    setHits(null);
+    setConflictError(false);
     setTitle('');
     setPracticeArea('');
     setSensitive(false);
@@ -191,6 +243,79 @@ export function NewMatterDialog({
               </p>
             </div>
           </div>
+          {checkConflictsAction === undefined ? null : (
+            <section
+              aria-labelledby={`${id}-conflicts`}
+              data-slot="conflict-check"
+              className="flex flex-col gap-3"
+            >
+              <h3 id={`${id}-conflicts`} className="text-sm font-medium">
+                {t('conflicts.heading')}
+              </h3>
+              <p className="text-ink-muted text-sm">{t('conflicts.hint')}</p>
+              <Field label={t('conflicts.clientLabel')}>
+                <Input
+                  autoComplete="off"
+                  value={clientName}
+                  maxLength={300}
+                  onChange={(event) => {
+                    setClientName(event.target.value);
+                    setHits(null);
+                  }}
+                />
+              </Field>
+              <Field label={t('conflicts.adverseLabel')}>
+                <Input
+                  autoComplete="off"
+                  value={adverseName}
+                  maxLength={300}
+                  onChange={(event) => {
+                    setAdverseName(event.target.value);
+                    setHits(null);
+                  }}
+                />
+              </Field>
+              <div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={checking}
+                  disabled={
+                    checking || offline || (clientName.trim() === '' && adverseName.trim() === '')
+                  }
+                  onClick={() => void onCheckConflicts()}
+                >
+                  {t('conflicts.check')}
+                </Button>
+              </div>
+              {conflictError ? (
+                <Alert tone="danger" role="alert">
+                  {t('conflicts.failed')}
+                </Alert>
+              ) : null}
+              {hits === null ? null : hits.length === 0 ? (
+                <p role="status" className="text-ink-muted text-sm">
+                  {t('conflicts.none')}
+                </p>
+              ) : (
+                <ul role="status" className="flex flex-col gap-2 text-sm">
+                  {hits.map((hit) => (
+                    <li key={`${hit.side}-${hit.checked}-${hit.matterId}`}>
+                      <Alert tone="warning">
+                        {t('conflicts.hit', {
+                          checked: hit.checked,
+                          matched: hit.matchedName,
+                          source: hit.source,
+                          matter: hit.matterTitle,
+                          role: hit.existingRole,
+                        })}
+                      </Alert>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
         </form>
 
         <DialogFooter>

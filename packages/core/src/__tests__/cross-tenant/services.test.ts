@@ -610,6 +610,47 @@ const CASES: Record<string, Case> = {
     const aWatches = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.caseWatch));
     expect(aWatches.some((w) => w.advocateUserId === f.ub)).toBe(false);
   },
+  checkConflicts: async (f) => {
+    // A's client is a stored party of A only: B's check for the same name finds nothing, A's does.
+    const { matterId } = await inWorkspace(f.tx, f.a.id, async (s) => {
+      const [m] = await s
+        .insert(schema.matter)
+        .values({ workspaceId: f.a.id, title: 'XT conflict matter', practiceArea: 'civil' })
+        .returning({ matterId: schema.matter.id });
+      const [p] = await s
+        .insert(schema.person)
+        .values({
+          workspaceId: f.a.id,
+          name: 'Murugan Ilango',
+          kind: 'client',
+          sourceType: 'manual',
+        })
+        .returning({ id: schema.person.id });
+      await s.insert(schema.roleEdge).values({
+        workspaceId: f.a.id,
+        kind: 'represents',
+        fromPersonId: p?.id ?? '',
+        matterId: m?.matterId ?? '',
+        sourceType: 'manual',
+      });
+      return { matterId: m?.matterId ?? '' };
+    });
+    const parties = [{ name: 'முருகன் இளங்கோ', side: 'adverse' as const }];
+    const asB = await core.checkConflicts(
+      { db: f.tx },
+      { workspaceId: f.b.id, userId: f.ub },
+      { parties },
+    );
+    expect(asB.hits).toEqual([]);
+    const asA = await core.checkConflicts(
+      { db: f.tx },
+      { workspaceId: f.a.id, userId: f.ua },
+      { parties },
+    );
+    expect(asA.hits.map((h) => h.matterId)).toEqual([matterId]);
+    const aMatters = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.matter));
+    expect(aMatters.filter((m) => m.id === matterId)).toHaveLength(1);
+  },
   listCaseWatches: async (f) => {
     // ub lists nothing of A's: A's own watch is not in B's list.
     const aWatch = await addAWatch(f);

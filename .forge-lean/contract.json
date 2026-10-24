@@ -2,244 +2,262 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "apps/web: Notices page listing notices matched to the member's forums and matters with provenance and source links",
+   "quote": "A check on a new party finds existing matters where the chamber appears for an adverse party, including transliterated names.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "and a matter-level 'affecting this matter' card",
+   "quote": "The feature is behind a flag until counsel signs off (#486).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "register any server actions in apps/web/__tests__/cross-tenant-actions.test.ts",
-   "disposition": "not-applicable",
-   "evidence": "apps/web/__tests__/cross-tenant-actions.test.ts:122 (ACTIONS lists 'use server' exports only; the page and card are read-only and add none)",
+   "quote": "`packages/core/src/conflicts/`: name matching (transliteration-aware for Tamil and Kannada, organisation aliases) against the chamber's matters and parties, and optionally its cause-list history.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R4",
+   "quote": "`apps/web`: a conflict check on new-matter intake, showing results with sources; it never auto-blocks, and the advocate decides.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "Audit: every check is logged; no data leaves the chamber's workspace.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "and optionally its cause-list history.",
+   "disposition": "defer",
+   "why": "Optional in the issue; `listing` (packages/db/src/schema/docket.ts:50) carries no party names, so history matching needs a separate data source and counsel review of processing cause-list parties. Follow-up issue.",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/notices/list.ts",
-   "change": "New read services listWorkspaceNotices(tx, scope) and listMatterNotices(tx, scope, matterId): select notice_match joined to notice and source inside the given workspace tx, dedupe per notice, newest issuedOn first, bounded limit; return id,title,kind,issuedOn,effectiveOn,url,forumCodes,sourceName,recordedAt and the match reason; matter variant throws/NOT_FOUND for another workspace's matter like listRelevantJudgments",
+   "path": "packages/core/src/conflicts/normalize.ts",
+   "change": "Name normaliser: NFKC, case-fold, strip honorifics (Sri/Smt/Dr/M/S) and company suffixes (Pvt Ltd/Limited), organisation alias table, Tamil (U+0B80-0BFF) and Kannada (U+0C80-0CFF) to Latin phonetic key, collapse vowel length/aspirates/doubled letters, token-order independent key.",
    "requirements": [
     "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/notices/index.ts",
-   "change": "Export the two list functions and their types",
+   "path": "packages/core/src/conflicts/check.ts",
+   "change": "checkConflicts(deps, actor, input): loads person/organisation (name+aliases) and role_edge to matters inside the caller's workspace transaction; a hit is a new adverse party equal to an existing client, or a new client equal to an existing adverse party; returns hits with matter id/title, matched name, role and source; always records one audit event (ids and counts, no names); never touches network or other workspaces.",
    "requirements": [
     "R1",
-    "R2"
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/notices/notices.test.ts",
-   "change": "Tests for the list functions (dedupe, order, matter filter, empty)",
+   "path": "packages/core/src/conflicts/index.ts",
+   "change": "Domain barrel exporting checkConflicts, normaliser and types.",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries for listWorkspaceNotices and listMatterNotices",
+   "path": "packages/core/package.json",
+   "change": "Add `./conflicts` export mirroring `./case-watch` (line 22). No dependency changes.",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cases: B on A's matter is denied / sees nothing from A's notice_match; A unchanged",
+   "path": "packages/core/src/index.ts",
+   "change": "Export the conflicts domain as the other domains are exported.",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/notices/page.tsx",
-   "change": "Server page: getWorkspaceContext, inWorkspace + listWorkspaceNotices via dynamic import; states loading/error/empty/denied; generateMetadata; dev ?__state preview like courts/page.tsx",
+   "path": "packages/core/src/audit/events.ts",
+   "change": "Register `conflict.checked` audit action (security:true so a check cannot run unlogged).",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/notices/loading.tsx",
-   "change": "Skeleton",
+   "path": "packages/flags/src/keys.ts",
+   "change": "Add legal-gated flag `conflicts.check` (owners [500, 486]).",
    "requirements": [
-    "R1"
+    "R2"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/notices/error.tsx",
-   "change": "Route error boundary with retry (copy courts/error.tsx)",
+   "path": "docs/engineering/flags.md",
+   "change": "Add the `conflicts.check` row (⚖, KILL_CONFLICTS_CHECK, #500) to match the registry.",
    "requirements": [
-    "R1"
+    "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/components/notices/notice-list.tsx",
-   "change": "List component: title, kind badge, issued/effective dates, forum codes, provenance line (source name, recorded date), external source link (target=_blank rel=noopener noreferrer); exports a compact variant used by the matter card",
+   "path": "apps/web/app/(app)/w/[slug]/matters/actions.ts",
+   "change": "Add `checkConflictsAction` (workspaceAction, `matter.read`, requireFlag('conflicts.check') -> NOT_FOUND when off) calling core checkConflicts.",
    "requirements": [
-    "R1",
-    "R2"
+    "R2",
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/notices/__tests__/notice-list.test.tsx",
-   "change": "Component tests: rows, provenance, source link attributes, empty state",
+   "path": "apps/web/components/matters/new-matter-dialog.tsx",
+   "change": "Optional conflict-check step on intake: when the flag is on, show hits with sources; submission is never blocked, the advocate decides.",
    "requirements": [
-    "R1",
-    "R2"
+    "R4"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/web/components/matters/matter-overview.tsx",
-   "change": "Render an 'Affecting this matter' card slot fed by notices passed from the page",
+   "path": "packages/i18n/src/messages/en/matters.json",
+   "change": "Conflict check strings under matters.new (also kn and ta matters.json and the generated message files, per the i18n catalog test).",
    "requirements": [
-    "R2"
+    "R4"
    ]
   },
   {
    "id": "D12",
-   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx",
-   "change": "Load listMatterNotices in the member's scope (failure degrades to an empty card, never breaks the overview) and pass to MatterOverview",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "CORE_DOMAIN_DEPENDENCIES: `conflicts: ['audit']`.",
    "requirements": [
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'notices' to WORKSPACE_ROUTES and NAV_ITEMS (practice group, no permission), with an icon",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Add conflicts row, dependency table row and graph edge.",
    "requirements": [
-    "R1"
+    "R3"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/web/__tests__/nav.test.ts",
-   "change": "Add 'notices' to SPIKE_ROUTES; adjust any other route-enumerating tests (sidebar-nav, mobile-nav, workspace-shell, placeholder-page map) as typecheck/tests dictate",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entry for checkConflicts (workspace B check sees nothing of A) and NOT_A_SERVICE for pure normaliser exports.",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/i18n/src/messages/en/notices.json",
-   "change": "New namespace: page title/intro/empty/error, kind labels, provenance and link text, matter card strings; mirror in ta and kn (packages/i18n/src/messages/{ta,kn}/notices.json)",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real case: B checking A's client name gets no hits; A's data unchanged.",
    "requirements": [
-    "R1",
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/i18n/src/messages/en/nav.json",
-   "change": "Add nav.notices label (and ta/kn nav.json)",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Register checkConflictsAction in ACTIONS with probe input.",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D17",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Register the notices namespace; regenerate packages/i18n/src/generated/* and update translation-status.json (draft entries for ta/kn) with the repo's i18n generate script",
+   "path": "packages/core/src/conflicts/conflicts.test.ts",
+   "change": "Integration test (R1: adverse party matches existing client incl. Tamil/Kannada spelling vs Latin, organisation alias, no hit across workspaces, audit event written) and normaliser unit tests.",
    "requirements": [
     "R1",
-    "R2"
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'notices' to the expected namespace list",
+   "path": "apps/web/__tests__/conflicts-action.test.ts",
+   "change": "Unit test: action returns NOT_FOUND with flag off, results with flag on; legal-gated flag registered (R2).",
    "requirements": [
-    "R1",
-    "R2"
+    "R2",
+    "R4"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "packages/core/src/notices/poll.ts and match.ts behaviour and exports (#586) unchanged"
+   "what": "createMatterAction behaviour and result shape (apps/web/app/(app)/w/[slug]/matters/actions.ts:50): the conflict check must never block or alter matter creation."
   },
   {
    "id": "P2",
-   "what": "Tenant isolation: notice_match is read only inside inWorkspace/withWorkspace for the member's workspace; no owner-role bypass, no new migration"
+   "what": "Flag precedence and legal-ack rules (packages/flags/src/evaluate.ts:47-60); every flag default stays false."
   },
   {
    "id": "P3",
-   "what": "apps/web/__tests__/cross-tenant-actions.test.ts ACTIONS stays equal to the exported 'use server' set (no action added)"
+   "what": "Tenant isolation: no cross-workspace reads, no new SECURITY DEFINER function, no migration."
   },
   {
    "id": "P4",
-   "what": "Matter overview still renders when notices fail to load (apps/web/components/matters/matter-overview.tsx, matters/[id]/page.tsx)"
-  },
-  {
-   "id": "P5",
-   "what": "packages/notifications and alert code (#587) untouched"
+   "what": "Existing audit action registry entries and AUDIT_ACTIONS shape (packages/core/src/audit/events.ts)."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/notices/notices.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/conflicts src/__tests__/cross-tenant/services.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/web exec vitest run components/notices __tests__/nav.test.ts components/shell/__tests__/sidebar-nav.test.tsx components/shell/__tests__/mobile-nav.test.tsx __tests__/workspace-shell.test.tsx __tests__/matter-workspace-page.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/flags exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/conflicts-action.test.ts __tests__/cross-tenant-actions.test.ts __tests__/matters-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V4",
-   "command": "node /home/dev/.local/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Read-only core services in packages/core/src/notices/list.ts instead of querying tables from apps/web",
-   "justification": "Web reads go through core in inWorkspace (apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx:36-45); keeps RLS scope and the registry guard",
-   "source": "precedent"
+   "choice": "No migration and no SECURITY DEFINER function: the check runs entirely inside the caller's withWorkspace transaction over tenant tables.",
+   "justification": "Tenant tables are FORCE RLS (packages/db/src/schema/people.ts:1-3), which satisfies 'no data leaves the chamber's workspace' by construction.",
+   "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "No server actions, so cross-tenant-actions.test.ts is unchanged; cross-tenant coverage comes from SERVICE_TESTS cases for the two list functions",
-   "justification": "packages/db/src/testing/cross-tenant-registry.ts:700 and services.test.ts:2592 (listRelevantJudgments)",
+   "choice": "Self-contained Tamil/Kannada phonetic normaliser in core instead of a new dependency.",
+   "justification": "No transliteration library exists in the repo (advocate-keys.ts:3-5 keeps names raw); avoids a new package dependency.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "No new workspace-package dependency and no migration",
-   "justification": "notices domain already imports only db schema; core-domains.js:33 allows sources only and the list reads source via the db schema",
-   "source": "lint"
+   "choice": "`conflict.checked` is a security (fail-closed) audit action.",
+   "justification": "Issue requires every check logged; fail-closed (packages/core/src/audit/events.ts:1-5) guarantees a check cannot run unaudited.",
+   "source": "spec"
   },
   {
    "id": "K4",
-   "choice": "Add a 'notices' nav item and a new i18n namespace, mirroring how #593 added case-watch",
-   "justification": "i18n registration pattern: packages/i18n/src/catalog.ts and __tests__/catalog.test.ts:85-125; nav: apps/web/lib/nav.ts:26-43",
+   "choice": "Flag gating follows requireFlag -> NOT_FOUND.",
+   "justification": "apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts:50-57.",
    "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "Core conflicts depends only on audit; matter/person rows are read directly with the caller's tx.",
+   "justification": "CORE_DOMAIN_DEPENDENCIES rule (packages/config/eslint/core-domains.js) allows only registered imports via index.ts.",
+   "source": "lint"
   }
  ]
 }

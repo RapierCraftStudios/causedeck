@@ -94,5 +94,97 @@
    "evidence": "git diff: 3 core files, deliverables D21-D23; eslint clean"
   }
  ],
- "amendments": []
+ "amendments": [],
+ "not_members": [
+  {
+   "symbol": "apiKey",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "hoisted session mock for response headers; no table list"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "mocks @causedeck/core/sources and audit recording; not a schema table list"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "mocks @causedeck/core/sources constants; not a schema table list"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "hoisted session/guard mock"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "hoisted billing session state"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "hoisted mocks; no table list"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "UI component test"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "UI component test"
+  },
+  {
+   "symbol": "apiKey",
+   "test": "apps/web/__tests__/matter-people-actions.test.ts",
+   "why": "hoisted mocks; no table list"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/admin/__tests__/data-layer.test.ts",
+   "why": "admin data-layer query stubs; no per-table enumeration"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/admin/__tests__/roles.test.ts",
+   "why": "staff role/capability matrix; unrelated to tables"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "mocks @causedeck/core/sources and audit recording; not a schema table list"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "UI component test"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/matter-tab-registry.test.ts",
+   "why": "matter tab registry ids"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/matter-workspace-page.test.tsx",
+   "why": "UI page test"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/proceedings-page.test.tsx",
+   "why": "UI page test"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "settings navigation shell; API keys have no web page yet"
+  },
+  {
+   "symbol": "api-keys",
+   "test": "apps/web/__tests__/static-guards.test.ts",
+   "why": "lists apps/web/app/api route directories; api-keys adds none"
+  }
+ ]
 }

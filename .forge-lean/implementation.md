@@ -18,3 +18,6 @@ Only prettier and eslint (lane-check lint, 22 files) were run on this host. All 
 
 ### Notes
 No behaviour change beyond the fix; api_key rows are now exported (minus hash) and purged on erase.
+
+## Stale sibling lists
+Registered `apiKey` in the `cross-tenant-actions` snapshot (`apiKeys`, id/token_hash/revoked_at) so web actions are shown not to touch A's keys. All other flagged tests are not lists of schema tables or core domains; recorded in result.json `not_members`.

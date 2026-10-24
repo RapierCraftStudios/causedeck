@@ -1,1 +1,99 @@
-{"status":"blocked","summary":"Deadlines engine, orders.poll and extraction hook complete; validate commands cannot run because the vitest Postgres testcontainer fails to start","requirements":[{"id":"R1","status":"implemented","evidence":"packages/core/src/deadlines/calendar.ts"},{"id":"R2","status":"implemented","evidence":"packages/core/src/jobs/definitions/orders-poll.ts"},{"id":"R3","status":"implemented","evidence":"packages/core/src/extraction/run.ts"},{"id":"R4","status":"implemented","evidence":"packages/core/src/deadlines/direction.test.ts"},{"id":"R5","status":"implemented","evidence":"packages/core/src/deadlines/deadlines.test.ts"},{"id":"R6","status":"implemented","evidence":"packages/core/src/case-watch/orders.test.ts"},{"id":"R7","status":"implemented","evidence":"packages/core/src/deadlines/compute.ts"}],"validation":[{"id":"V1","command":"vitest core","exit":1},{"id":"V2","command":"vitest worker","exit":1}],"tests":[{"command":"vitest run src/deadlines","result":"fail: testcontainer globalSetup did not start","fails_without_fix":"unknown"}],"self_review":[{"question":"1","answer":"yes","evidence":"R1-R7 in diff"},{"question":"2","answer":"yes","evidence":"additive; getStatusFetcherFactory is a new accessor"},{"question":"3","answer":"no","evidence":"validate commands could not run (toolchain)"},{"question":"4","answer":"yes","evidence":"status-poll.ts declared via amendment"}],"amendments":[{"kind":"add-deliverable","path":"packages/core/src/jobs/definitions/status-poll.ts","why":"orders.poll must reuse the fetcher wired through setStatusFetcherFactory; a getStatusFetcherFactory accessor is added"}],"block":{"kind":"toolchain","why":"vitest globalSetup cannot start the Postgres testcontainer (Log stream ended, 'Started' not received), so V1/V2 fail before any test runs"}}
+{
+ "status": "fixed",
+ "summary": "Deadlines engine, orders.poll and extraction hook delivered; V1-V3 pass",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/core/src/deadlines/calendar.ts"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/orders-poll.ts"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/extraction/run.ts"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "packages/core/src/deadlines/direction.test.ts"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "packages/core/src/deadlines/deadlines.test.ts"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/core/src/case-watch/orders.test.ts"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "packages/core/src/deadlines/compute.ts"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "vitest core (contract V1)",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "vitest worker registry/schedules",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "vitest intelligence relative/to-proposals",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "core V1 (217 tests, incl. deadlines, orders, cross-tenant)",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R7 in diff"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "additive; getStatusFetcherFactory is a new accessor"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V3 exit 0; forgedock check"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "status-poll.ts declared via amendment"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/jobs/definitions/status-poll.ts",
+   "why": "orders.poll must reuse the fetcher wired through setStatusFetcherFactory; a getStatusFetcherFactory accessor is added"
+  }
+ ],
+ "facts": {
+  "conventions": [
+   "Run vitest with TESTCONTAINERS_RYUK_DISABLED=true on this host (Ryuk never logs Started)"
+  ]
+ }
+}

@@ -17,7 +17,10 @@ Resumed the interrupted branch. The engine, orders poll, extraction hook, regist
 - R7 ✅ packages/core/src/deadlines/compute.ts
 
 ### Verification
-V1, V2: could not run. Vitest globalSetup fails to start the Postgres testcontainer ("Log stream ended ... Started"), a toolchain/environment problem. V3 not run. Prettier and eslint pass via the commit hook.
+Run with TESTCONTAINERS_RYUK_DISABLED=true (the Ryuk reaper container never logs Started here).
+- V1 core vitest: pass (9 files, 217 tests); deadlines/orders tests fail without the new modules.
+- V2 worker registry/schedules: pass (11 tests); fails without the orders.poll registration.
+- V3 intelligence: pass (14 tests).
 
 ### Notes
 No env vars. Vacations come from a static per-forum table (R8 deferred).

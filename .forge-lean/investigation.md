@@ -1,44 +1,50 @@
 **Verdict**: CONFIRMED
 **Confidence**: medium
-**Severity**: medium (greenfield feature, part 6 of #498; last UI slice)
+**Severity**: medium (greenfield feature, part 2 of #508; data model #682 already merged)
 **Task Type**: feature
 
 ### What Was Claimed
-Add `apps/web/app/(app)/w/[slug]/portfolio/`: CSV import, dashboard (next dates, stage, adverse orders), exception alert settings, exports; an i18n namespace with catalog test; cross-tenant-actions test entries for every `'use server'` action. Depends on #663 (service), #664 (billing), #665 (alerts).
+Add a core `provisioning` domain (parse CSV, validate roles, dry-run, invite or add members, audit), a bulk CSV dialog on `settings/members`, and SCIM v2 Users endpoints under `apps/web/app/api/scim` authenticated by `scim_token`. Register core exports, actions, i18n namespace and the core-domains doc. Acceptance: provision 100 users from CSV (integration).
+(Note: the FORGE:INVESTIGATION comment on the issue describes a portfolio UI and belongs to another issue; it was ignored.)
 
 ### What We Found
-- No portfolio route exists: `apps/web/app/(app)/w/[slug]/` has no `portfolio/` (listing checked at origin/milestone/court-data-network, 5906e366).
-- Core service is done and exported from the root: `packages/core/src/index.ts:22` -> `packages/core/src/portfolio/index.ts:5-27` (`importPortfolioCases`, `listPortfolioCases`, `portfolioSummary`, `exportPortfolioCsv`, `parsePortfolioCsv`, `scanPortfolioAlerts`). Import is owner-only, reads for any active member (`access.ts:16-24`). `packages/core/package.json` has no `./portfolio` subpath (only root and per-domain subpaths, lines 25-45).
-- There is NO core function to create or list portfolios: `schema.portfolio` is only inserted by tests/seeders (`packages/db/src/testing/two-tenants.ts`, `portfolio.test.ts`). The UI cannot get a `portfolioId` without one -> small core addition needed (see Recommendation).
-- Dashboard data shape: `dashboard.ts:20-36` (filters stage, nextFrom/nextTo, adverseOnly, limit<=500), `:72-81` (`PortfolioSummary`: total, byStage, withAdverseOrder, upcoming, overdue). Import report shape: `import.ts:39-51`. Export returns a CSV string: `export.ts:22-27`.
-- Alert categories exist: `packages/notifications/src/categories.ts:47-58` (`portfolio.adverse_order`, `portfolio.missed_date`); the notification preferences form already maps them (`settings/notifications/preferences-form.tsx:89-90`), so "alert settings" can reuse `setNotificationPreferenceAction` (`settings/notifications/actions.ts:97`) rather than a new action.
-- Billing #664 closed `needs-human conformance.unimplemented`, but `packages/billing/src/plans.ts:23,56-61` already has `TRACKED_CASE_PRICE_PAISE`/`trackedCaseChargePaise`; the UI does not need it.
-- Precedent for the page/action pattern: `courts/rosters/{page,actions,loading,error}.tsx` and `workspaceAction` (`apps/web/lib/workspace-action.ts`), actions wrapped as async exports (`rosters/actions.ts:120-135`).
-- Workspace kind `institution` exists (`packages/db/src/schema/auth.ts:44`); nav routes are the `WORKSPACE_ROUTES` list in `apps/web/lib/nav.ts:26-45` with `nav.test.ts` guarding it.
-- i18n: namespaces in `packages/i18n/src/catalog.ts:7-38` (e.g. `courts-rosters` at :20), JSON per locale in `packages/i18n/src/messages/{en,kn,ta}/`, expected list in `packages/i18n/src/__tests__/catalog.test.ts:~95-100` (camelCase names).
-- Cross-tenant actions guard: `apps/web/__tests__/cross-tenant-actions.test.ts` `ACTIONS` (:123) and probe inputs (:565-), final check that exported == ACTIONS (:798).
+- Tables exist, no behaviour: `packages/db/src/schema/enterprise.ts:69-91` (`scim_token`: `tokenHash` unique, `prefix`, `expiresAt`, `revokedAt`, `lastUsedAt`), `:93-122` (`provisioning_run`: source csv|scim, status, dryRun, counts, `report` jsonb). Registry entries for them are `DB_TABLES_TEST` (`packages/db/src/testing/cross-tenant-registry.ts:151`), two-tenant seeder `packages/db/src/testing/two-tenants.ts:1086`.
+- No `provisioning` core domain: `ls packages/core/src` has none; `CORE_DOMAIN_DEPENDENCIES` is `packages/config/eslint/core-domains.js` (e.g. `'api-keys'` at :52); `docs/engineering/core-domains.md` has a table row (:31 for api-keys), mermaid edges (:160), and a dependency table (:214). "Adding a domain" steps at :246-254.
+- No SCIM route: `apps/web/app/api/` has only activity, audit, auth, captures, exports, ics, push, uploads.
+- SCIM bearer auth needs a pre-workspace lookup: `scim_token` is FORCE-RLS, so a token hash cannot be read before the workspace is known. Precedent: `app_api_key_by_hash` (owner-defined SECURITY DEFINER, `packages/db/migrations/0081_api_keys.sql:34-46`) and `authenticateApiKey` (`packages/core/src/api-keys/index.ts:239-256`, registry `caller-checked` at `cross-tenant-registry.ts:655`). The #682 migration (`20261024192746_enterprise_onboarding.sql`) did not add an equivalent, so a new migration is required.
+- Existing members service: `inviteMember` (`packages/core/src/workspaces/invitations.ts:147`) enforces `INVITE_RATE_LIMIT` 20/hour per actor (`:33`, applied in the call at ~:158), so 100 CSV rows cannot go through it as is. It also needs a `Mailer`+`appUrl` (`:136-142`). Seat gate: `entitlements.assertCanAddSeat` (`members.ts:303-322`). Permission: `requireCan(tx, ws, user, 'member.invite')` (`members.ts:32`; actions in `packages/auth/src/policy/actions.ts:6`).
+- No workspaces function adds a user + active `member` row without an invitation acceptance (needed by SCIM POST and "add members"); `user` has `email` unique (`packages/db/src/schema/auth.ts:54-67`).
+- Audit actions are a closed registry: `packages/core/src/audit/events.ts:17-` (`api_key.created` at :109); new events must be added.
+- Members page: `apps/web/app/(app)/w/[slug]/settings/members/{page.tsx,actions.ts,invite-dialog.tsx}`; actions go through `workspaceAction` (`apps/web/lib/workspace-action.ts`) and are listed in `apps/web/__tests__/cross-tenant-actions.test.ts` `ACTIONS`.
+- CSV precedent: `packages/core/src/portfolio/csv.ts` (RFC 4180 reader, row cap) can be copied; cross-domain imports must go through `index.ts` only.
+- i18n: namespaces in `packages/i18n/src/catalog.ts`, JSON per locale (`packages/i18n/src/messages/{en,kn,ta}/`), expected list in `packages/i18n/src/__tests__/catalog.test.ts`.
+- Route precedent for token-credential route handlers: `apps/web/app/api/ics/[token]/route.ts` (uses `db` from `@causedeck/core/runtime`).
 
 ### Root Cause
-Part 6 of a staged build: the data model (#661), adapters (#662), service (#663) and alerts (#665) landed, but nothing in `apps/web` surfaces them, and the service lacks a way to create/list a workspace's portfolio.
+Feature gap: #682 landed schema only. No provisioning service, no SCIM surface, no bulk UI, and the workspaces domain lacks a bulk-safe, non-email way to add a member.
 
 ### Affected Files
-- New: `apps/web/app/(app)/w/[slug]/portfolio/{page.tsx,loading.tsx,error.tsx,actions.ts}`, components under `apps/web/components/portfolio/`.
-- `packages/core/src/portfolio/{portfolio.ts (new),index.ts}`, registry `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts` (or `portfolio.test.ts` the registry points to).
-- `packages/i18n/src/{catalog.ts,messages/{en,kn,ta}/portfolio.json,__tests__/catalog.test.ts}` (+ generated types if checked in: `generated/messages.d.ts`).
-- `apps/web/lib/nav.ts` (+ nav test), `apps/web/__tests__/cross-tenant-actions.test.ts`.
+- New domain `packages/core/src/provisioning/{index.ts,csv.ts,provision.ts,scim-token.ts,scim.ts}` + tests.
+- `packages/core/src/workspaces/{invitations.ts,members.ts or new provisioned-member.ts,index.ts}`: bulk-safe invite (skip per-actor rate limit) and `addProvisionedMember`/deactivate helper.
+- `packages/core/src/audit/events.ts` (new actions), `packages/core/package.json` (`./provisioning` export), `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`.
+- New migration `packages/db/migrations/<next>_scim_token_lookup.sql` (+ `meta/_journal.json`, snapshot) defining `app_scim_token_by_hash`; `packages/db/src/schema/enterprise.ts` header comment.
+- `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`.
+- `apps/web/app/(app)/w/[slug]/settings/members/{actions.ts,bulk-csv-dialog.tsx,page.tsx,members-table or header wiring}`; `apps/web/__tests__/cross-tenant-actions.test.ts`.
+- `apps/web/app/api/scim/v2/{Users/route.ts,Users/[id]/route.ts,ServiceProviderConfig/route.ts}`.
+- `packages/i18n/src/{catalog.ts,messages/{en,kn,ta}/provisioning.json,__tests__/catalog.test.ts}` (+ generated types if checked in).
 
 ### Sibling Sweep
-Every new core runtime export and every `'use server'` action needs a registry entry (CLAUDE.md table). Other pages' `loading/error` files and `__state` dev previews follow rosters; mirror them. No existing code path creates portfolios, so the same gap applies to any API surface (out of scope).
+Same pattern as `api-keys` (hashed token, definer lookup, registry `caller-checked`); every new `@causedeck/core` runtime export needs a `SERVICE_TESTS`/`NOT_A_SERVICE` entry. #683 (SSO) and #685 (migration concierge) are siblings that will add their own domains/namespaces; keep provisioning self-contained to avoid shared-hub conflicts.
 
 ### History
-Parent #498 (closed not_planned umbrella). Siblings #661-#665 merged on milestone/court-data-network. This is the first web slice.
+Parent #508 (closed not_planned umbrella). #682 (schema, merged, be0f4b12) and #686 (seat plans, f2ee4075). No prior provisioning code.
 
 ### Recommendation
-1. Core: add `listPortfolios` (any member) and `createPortfolio` (owner-only, name 1-200 chars, unique per workspace -> CONFLICT) in `packages/core/src/portfolio/portfolio.ts`, exported via index; register both as `denies` in the cross-tenant registry with real cases.
-2. Actions (`workspaceAction`, zod, `WorkspaceScoped`): `createPortfolioAction`, `importPortfolioAction` (owner; CSV text up to a size cap, optional sourceId), `exportPortfolioCsvAction` (members; returns CSV string for a client download). Core functions take `{db}` deps; use the actor's `ctx.tx`-compatible db like other actions. Alert settings reuse the existing preference action (no new action), linking/embedding the two categories.
-3. Page: server component with summary cards, filters (stage, next-date window, adverse only via search params), table of cases, import form (owner only), export button, alerts card; loading/error states; read-only for non-owners; empty state when no portfolio.
-4. i18n namespace `portfolio` in en/kn/ta + catalog tests; nav item `portfolio` shown for `institution` kind workspaces.
-5. Cross-tenant: ACTIONS + probes for each new action.
+1. workspaces: add an option to `inviteMember` to bypass the per-actor hourly cap for bulk callers (provisioning enforces its own row cap, e.g. 500) and add `addProvisionedMember` (find-or-create user, insert active member, seat gate, role never `owner`) plus a `deactivateProvisionedMember` (SCIM DELETE/active=false, reuse `removeMember` rules).
+2. provisioning domain: `parseProvisioningCsv` (header email,name?,role; BOM/CRLF/quoted; dedupe; role validation against invite roles), `provisionFromCsv({dryRun})` (plan: create/skip-existing/error per row; dry-run writes only a `provisioning_run` row with report and changes nothing else; real run adds existing users directly and invites new emails; one audit event per run), `createScimToken`/`listScimTokens`/`revokeScimToken` (owner only, token shown once, sha256 stored), `authenticateScimToken` (via `app_scim_token_by_hash`, updates `lastUsedAt`), SCIM user mapping (`listScimUsers`, `createScimUser`, `getScimUser`, `patchScimUser`, `deleteScimUser`) returning SCIM v2 schema JSON with a SCIM error envelope.
+3. Migration for `app_scim_token_by_hash` mirroring 0081; new migration number is the next free timestamp on the milestone branch.
+4. Web: server action `provisionMembersCsvAction` (dryRun flag; `workspaceAction`, owner/inviter policy), `bulk-csv-dialog.tsx` (upload/paste, dry-run report, confirm), wired from the members page header; SCIM route handlers that return `application/scim+json`, 401 on a bad token.
+5. Register everything (core-domains map + doc, i18n `provisioning` namespace in en/kn/ta, catalog test, cross-tenant registry + services test, ACTIONS probes). Integration test: provisioning 100 CSV rows creates 100 members/invitations, dry-run writes none.
 
 ### Related Issues
-#498 (parent), #663, #664, #665, #661, #662.
+#508 (parent), #682 (schema, done), #683 (SSO), #685 (migration concierge), #686 (seat plans).

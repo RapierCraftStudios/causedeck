@@ -2,37 +2,31 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "quote": "Core provisioning domain (parse CSV, validate roles, dry-run, invite or add members, audit)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "dashboard (next dates, stage, adverse orders)",
+   "quote": "a bulk CSV dialog on settings/members",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "exception alert settings",
+   "quote": "SCIM v2 Users endpoints under apps/web/app/api/scim authenticated by scim_token",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "exception alert settings, exports",
+   "quote": "Register core exports, actions, i18n namespace and core-domains doc.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "i18n namespace and catalog test",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "cross-tenant-actions test entries for each 'use server' action.",
+   "quote": "Acceptance: provision 100 users from CSV. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -40,185 +34,317 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/portfolio/portfolio.ts",
-   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D2",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "Export listPortfolios and createPortfolio.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/core/src/portfolio/portfolio.test.ts",
-   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "path": "packages/core/src/provisioning/csv.ts",
+   "change": "RFC 4180 CSV parser (BOM, CRLF, quoted fields; columns email, name optional, role) with row cap 500, email normalisation and dedupe, role validation against invitable roles (never owner); per-line errors.",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
-   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
+   "id": "D2",
+   "path": "packages/core/src/provisioning/provision.ts",
+   "change": "provisionFromCsv({dryRun}): requireCan member.invite, plan per row (create/invite/skip existing/error), dry-run writes only a provisioning_run row with report, real run adds existing users via workspaces addProvisionedMember and invites new emails, seat gate, updates run counts, one audit event per run.",
+   "requirements": [
+    "R1",
+    "R5"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/core/src/provisioning/scim-token.ts",
+   "change": "createScimToken (owner only, plaintext shown once, sha256 stored), listScimTokens, revokeScimToken, authenticateScimToken via app_scim_token_by_hash (rejects revoked/expired, touches lastUsedAt); audited.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/core/src/provisioning/scim.ts",
+   "change": "SCIM v2 Users service: listScimUsers (filter userName eq, startIndex/count), createScimUser, getScimUser, patchScimUser (active, role), deleteScimUser; schema JSON mapping and SCIM error envelope; all scoped to the token's workspace.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/core/src/provisioning/index.ts",
+   "change": "Public entry point exporting the provisioning services and types.",
    "requirements": [
     "R1",
     "R4"
    ]
   },
   {
-   "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
-   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
+   "id": "D6",
+   "path": "packages/core/src/workspaces/invitations.ts",
+   "change": "Add an opt-in option on inviteMember to bypass the per-actor hourly INVITE_RATE_LIMIT for bulk callers; default behaviour unchanged.",
    "requirements": [
     "R1",
-    "R2",
-    "R3",
-    "R4",
     "R5"
    ]
   },
   {
-   "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
-   "change": "Skeleton loading state.",
+   "id": "D7",
+   "path": "packages/core/src/workspaces/provisioned-member.ts",
+   "change": "New: addProvisionedMember (find-or-create user by email, insert active member, never owner, seat gate, idempotent) and deactivateProvisionedMember (reuses removeMember rules); also export from packages/core/src/workspaces/index.ts.",
    "requirements": [
-    "R2"
+    "R1",
+    "R3"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/core/src/workspaces/index.ts",
+   "change": "Re-export provisioned-member.ts.",
+   "requirements": [
+    "R1"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
-   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
+   "path": "packages/core/src/audit/events.ts",
+   "change": "Add audit actions for provisioning runs, provisioned members and scim token created/revoked.",
    "requirements": [
-    "R2"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/portfolio/portfolio-view.tsx",
-   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
+   "path": "packages/core/package.json",
+   "change": "Add the ./provisioning subpath export.",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
     "R4"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add provisioning: audit, workspaces to CORE_DOMAIN_DEPENDENCIES.",
    "requirements": [
-    "R1",
-    "R2"
+    "R4"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'portfolio' to NAMESPACES.",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Add provisioning row to the domain table, the mermaid edges and the dependency table.",
    "requirements": [
-    "R5"
+    "R4"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/i18n/src/messages/en/portfolio.json",
-   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
+   "path": "packages/db/migrations/20261025000000_scim_token_lookup.sql",
+   "change": "New owner-defined SECURITY DEFINER app_scim_token_by_hash(p_token_hash) plus causedeck_owner read policy on scim_token and EXECUTE grant to causedeck_app, mirroring 0081_api_keys.sql:34-46; use the next free number/timestamp if the base took it.",
    "requirements": [
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'portfolio' to the expected namespace list.",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "Journal entry for the new migration (with regenerated snapshot meta/20261025000000_snapshot.json).",
    "requirements": [
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
+   "path": "packages/db/migrations/meta/20261025000000_snapshot.json",
+   "change": "Snapshot for the new migration (copy of the previous snapshot; no table change).",
    "requirements": [
-    "R6"
+    "R3"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register every new runtime export of @causedeck/core: SERVICE_TESTS (denies/caller-checked) with real cases, or NOT_A_SERVICE with a reason.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cross-tenant cases for the new provisioning and workspaces services (B on A denied or sees nothing; A unchanged).",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/core/src/provisioning/__tests__/provisioning.test.ts",
+   "change": "Integration test: 100 CSV rows provision 100 members/invitations; dry-run writes nothing but the run row; invalid role and duplicate rows reported; SCIM create/get/patch/delete and token auth (revoked/expired rejected).",
+   "requirements": [
+    "R5",
+    "R1",
+    "R3"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/web/app/(app)/w/[slug]/settings/members/actions.ts",
+   "change": "Add provisionMembersCsvAction (workspaceAction, zod, dryRun flag, size cap) returning the run report, and SCIM token create/revoke actions only if surfaced in the UI.",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/web/app/(app)/w/[slug]/settings/members/bulk-csv-dialog.tsx",
+   "change": "Client dialog: paste/upload CSV, dry-run report, confirm to provision; all strings from the provisioning namespace.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "apps/web/app/(app)/w/[slug]/settings/members/page.tsx",
+   "change": "Render the bulk CSV dialog trigger next to invite for roles that may invite.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "apps/web/app/api/scim/v2/Users/route.ts",
+   "change": "GET list and POST create; bearer scim_token auth, application/scim+json, 401 with SCIM error envelope on a bad token.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "apps/web/app/api/scim/v2/Users/[id]/route.ts",
+   "change": "GET, PATCH, PUT, DELETE a user.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "apps/web/app/api/scim/v2/ServiceProviderConfig/route.ts",
+   "change": "Static SCIM discovery document (authenticated).",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Add new 'use server' actions to ACTIONS with probe inputs.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Register the provisioning namespace.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "packages/i18n/src/messages/en/provisioning.json",
+   "change": "English strings for the dialog and run report.",
+   "requirements": [
+    "R4",
+    "R2"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "packages/i18n/src/messages/kn/provisioning.json",
+   "change": "Kannada strings (same keys).",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "packages/i18n/src/messages/ta/provisioning.json",
+   "change": "Tamil strings (same keys).",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add provisioning to the expected namespace list.",
+   "requirements": [
+    "R4"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+   "what": "inviteMember default behaviour (rate limit 20/hour per actor, seat gate, email) in packages/core/src/workspaces/invitations.ts and the existing members actions in apps/web/app/(app)/w/[slug]/settings/members/actions.ts"
   },
   {
    "id": "P2",
-   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+   "what": "RLS on scim_token and provisioning_run (schema packages/db/src/schema/enterprise.ts): the new definer function reads one row by hash only and never lists; existing policies unchanged"
   },
   {
    "id": "P3",
-   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+   "what": "@causedeck/core root index exports (packages/core/src/index.ts) stay unchanged unless the new exports are registered; the new domain is a subpath export like api-keys"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/provisioning src/domains.test.ts src/workspaces --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
+   "command": "pnpm --filter @causedeck/config exec vitest run test/core-domain-boundaries.test.ts test/eslint-boundaries.test.ts"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
-   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
+   "choice": "New migration defining app_scim_token_by_hash (SECURITY DEFINER lookup by hash)",
+   "justification": "SCIM requests carry only a bearer token and the workspace is unknown before it resolves; scim_token is FORCE RLS. Same pattern as app_api_key_by_hash in packages/db/migrations/0081_api_keys.sql:34-46 and authenticateApiKey packages/core/src/api-keys/index.ts:239",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
-   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
-   "source": "precedent"
+   "choice": "Provisioning bypasses inviteMember's per-actor hourly cap via an opt-in option and enforces its own 500-row cap",
+   "justification": "INVITE_RATE_LIMIT is 20/hour (packages/core/src/workspaces/invitations.ts:33) so 100 CSV users could never be provisioned through it unchanged",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
-   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
+   "choice": "provisioning domain depends only on audit and workspaces; other domains imported through index.ts",
+   "justification": "docs/engineering/core-domains.md 'Adding a domain' (:246-254) and the api-keys entry (packages/config/eslint/core-domains.js:52) as precedent; new domain exposed as a subpath export, not from the root index",
+   "source": "doc"
+  },
+  {
+   "id": "K4",
+   "choice": "No new workspace-package dependency in any package.json",
+   "justification": "apps/web already depends on @causedeck/core and @causedeck/i18n (members page imports @causedeck/core/workspaces)",
    "source": "precedent"
   }
  ]

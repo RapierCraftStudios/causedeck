@@ -15,6 +15,7 @@ export * from './invitations.ts';
 export * from './members.ts';
 export * from './offboarding.ts';
 export * from './privacy-settings.ts';
+export * from './provisioned-member.ts';
 export * from './profile.ts';
 export * from './role-settings.ts';
 export * from './service.ts';

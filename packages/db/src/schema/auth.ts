@@ -40,8 +40,8 @@ export const WORKSPACE_ROLES = ['owner', 'advocate', 'junior', 'clerk', 'viewer'
 /** UI locales, owned by `@causedeck/i18n`; re-exported for the `user_locale_chk` check. */
 export { LOCALES };
 
-/** A solo practice or a shared chamber with seats (#18). */
-export const WORKSPACE_KINDS = ['solo', 'chamber'] as const;
+/** A solo practice, a shared chamber with seats (#18), or a bank, NBFC or ARC (#661). */
+export const WORKSPACE_KINDS = ['solo', 'chamber', 'institution'] as const;
 
 /** Membership lifecycle; only `active` members see the workspace or count as seats. */
 export const MEMBER_STATUSES = ['active', 'suspended', 'removed'] as const;

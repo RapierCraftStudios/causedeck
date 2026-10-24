@@ -26,6 +26,7 @@ import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
 import { apiKey } from '../schema/api-keys.ts';
+import { portfolio, portfolioCase, portfolioPanelAdvocate } from '../schema/portfolio.ts';
 import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
@@ -997,6 +998,37 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: webhookDelivery.id });
     return { endpointId, id: first(rows, 'webhook_delivery').id };
+  },
+  portfolio: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(portfolio)
+      .values({ workspaceId, name: `Seed portfolio ${tag}`, createdBy: ownerId })
+      .returning({ id: portfolio.id });
+    return { id: first(rows, 'portfolio').id };
+  },
+  portfolio_case: async (tx, { workspaceId, tag }) => {
+    const parents = await tx
+      .insert(portfolio)
+      .values({ workspaceId, name: `Seed case portfolio ${tag}` })
+      .returning({ id: portfolio.id });
+    const portfolioId = first(parents, 'portfolio').id;
+    const rows = await tx
+      .insert(portfolioCase)
+      .values({ workspaceId, portfolioId, caseNumber: `OA/1/2026-${tag}` })
+      .returning({ id: portfolioCase.id });
+    return { portfolioId, id: first(rows, 'portfolio_case').id };
+  },
+  portfolio_panel_advocate: async (tx, { workspaceId, ownerId, tag }) => {
+    const parents = await tx
+      .insert(portfolio)
+      .values({ workspaceId, name: `Seed panel portfolio ${tag}` })
+      .returning({ id: portfolio.id });
+    const portfolioId = first(parents, 'portfolio').id;
+    const rows = await tx
+      .insert(portfolioPanelAdvocate)
+      .values({ workspaceId, portfolioId, advocateUserId: ownerId })
+      .returning({ id: portfolioPanelAdvocate.id });
+    return { portfolioId, id: first(rows, 'portfolio_panel_advocate').id };
   },
   cause_list_watch: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

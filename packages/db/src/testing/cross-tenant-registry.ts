@@ -759,6 +759,18 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
   createFetchLogSink:
     'global table `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free log of external fetches (ids, URL hash, status, tier, cost), never tenant data; the app role may only SELECT and INSERT',
+  // global court-data controls (#486): act on the global `contributed_document` table, never on tenant rows
+  expireCourtData:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): blanks copies past their source retention; a system job, no tenant input',
+  eraseCourtDataSubject:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): staff-only (enabled ops or admin staff_user) masking of a person name; no tenant input, the tenant link `contribution_ledger` is untouched',
+  courtDataRetention:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): system job (system.court-data.retention) with no workspace payload',
+  CourtDataErasureError: 'error class',
+  MASKED_NAME: 'constant',
+  MIN_ERASURE_SUBJECT_LENGTH: 'constant',
+  SOURCE_DATA_CLASSES: 'constant',
+  exposableThroughApi: 'pure',
   sourceOpsOverview:
     'global tables `source` and `fetch_log` (GLOBAL_TABLES, no workspace_id, no RLS): content-free counts, ids, status, tier and cost, never tenant data',
   sourceFetchLogs:

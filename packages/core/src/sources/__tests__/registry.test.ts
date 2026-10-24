@@ -12,6 +12,7 @@ import {
   asSourceStaff,
   createSource,
   decideSourceClearance,
+  exposableThroughApi,
   isCleared,
   policyFor,
   setSourceKillSwitch,
@@ -70,6 +71,31 @@ describe('decideSourceClearance', () => {
     expect(decideSourceClearance({ ...ok, clearedAt: null })).toBe('uncleared');
     expect(decideSourceClearance({ ...ok, killSwitch: true })).toBe('killed');
     expect(decideSourceClearance(ok)).toBeNull();
+  });
+});
+
+describe('data class (#486)', () => {
+  it('exposes only non-personal sources through the API', () => {
+    expect(exposableThroughApi('non-personal')).toBe(true);
+    expect(exposableThroughApi('personal')).toBe(false);
+    expect(exposableThroughApi('mixed')).toBe(false);
+  });
+
+  it('defaults to personal, reaches the policy and can be changed by staff', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never;
+      const actor = await staffTx();
+      const created = await createSource(db, actor, 'test.dataclass', input);
+      expect(created.dataClass).toBe('personal');
+      expect(await policyFor('test.dataclass', { db })).toMatchObject({ dataClass: 'personal' });
+      const updated = await updateSource(db, actor, 'test.dataclass', {
+        dataClass: 'non-personal',
+      });
+      expect(updated.dataClass).toBe('non-personal');
+      await expect(
+        updateSource(db, actor, 'test.dataclass', { dataClass: 'secret' as never }),
+      ).rejects.toMatchObject({ code: 'INVALID' });
+    });
   });
 });
 

@@ -2265,6 +2265,41 @@
       "failed": "The roster was not saved. Try again."
     }
   },
+  "caseWatch": {
+    "title": "Case status watch",
+    "description": "Watch the status of your own cases on the court status pages. Lookups run in the background and you never see a captcha. A changed next date arrives as a proposal; nothing is confirmed for you.",
+    "flagOff": "Case status watch is not switched on for this workspace.",
+    "empty": "You are not watching any case status yet. Add a watch from a matter's Proceedings tab.",
+    "panelTitle": "Case status watch",
+    "proceeding": "Proceeding",
+    "sourceLabel": "Status source",
+    "watch": "Watch status",
+    "source": {
+      "in_tn_chennai-district_case_status": "Chennai district courts",
+      "in_tn_madras-hc_chennai_case_status": "Madras High Court",
+      "in_ka_karnataka-hc_bengaluru_case_status": "Karnataka High Court"
+    },
+    "remove": "Remove",
+    "added": "Watch added.",
+    "removed": "Watch removed.",
+    "failed": "Could not save. Try again.",
+    "loading": "Loading case status watch",
+    "refresh": {
+      "label": "Refresh status",
+      "running": "Checking",
+      "failed": "Could not check the status. Try again later.",
+      "via": {
+        "device": "Read on this device.",
+        "server": "Read on the server (tier {tier}, cost ${cost})."
+      },
+      "outcome": {
+        "changed": "{count, plural, =0 {The status changed.} one {The status changed; 1 proposal is waiting for you.} other {The status changed; # proposals are waiting for you.}}",
+        "unchanged": "No change.",
+        "not_found": "The court page does not list this case.",
+        "unrecognised": "The court page could not be read."
+      }
+    }
+  },
   "courtDay": {
     "liveHalls": {
       "title": "Live halls",

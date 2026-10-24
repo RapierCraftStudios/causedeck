@@ -9,6 +9,7 @@ import {
   activityDigestMember,
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
+import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { systemDataOpsEvaluate } from './definitions/data-ops-evaluate.ts';
@@ -151,6 +152,7 @@ export function createRegistry<const D extends readonly AnyJobDefinition[]>(
 export const registry = createRegistry([
   systemPing,
   retentionSweep,
+  courtDataRetention,
   billingReconcile,
   billingDunningTick,
   billingProcessEvent,
@@ -199,6 +201,7 @@ export type JobMap = RegistryMap<
   readonly [
     typeof systemPing,
     typeof retentionSweep,
+    typeof courtDataRetention,
     typeof billingReconcile,
     typeof billingDunningTick,
     typeof billingProcessEvent,

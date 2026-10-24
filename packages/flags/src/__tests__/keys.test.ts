@@ -19,6 +19,7 @@ const LEGAL = [
   'court.a2.retrieval',
   'court.live-tracking',
   'court.khc-a2',
+  'court.case-status',
   'court.sanctioned-push',
   'capture.whatsapp-import',
 ];

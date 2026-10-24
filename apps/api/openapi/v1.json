@@ -534,6 +534,659 @@
         }
       }
     },
+    "/v1/cases/{cnr}": {
+      "get": {
+        "operationId": "getPublicCase",
+        "tags": ["Public API"],
+        "summary": "Latest status of one of the workspace’s own cases",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{16}$"
+            },
+            "required": true,
+            "name": "cnr",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The case status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cnr": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": ["string", "null"]
+                    },
+                    "next_hearing_date": {
+                      "type": ["string", "null"]
+                    },
+                    "last_hearing_date": {
+                      "type": ["string", "null"]
+                    },
+                    "stage": {
+                      "type": ["string", "null"]
+                    },
+                    "bench": {
+                      "type": ["string", "null"]
+                    },
+                    "fetched_at": {
+                      "type": "string"
+                    },
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": ["string", "null"]
+                          },
+                          "number": {
+                            "type": ["string", "null"]
+                          },
+                          "summary": {
+                            "type": ["string", "null"]
+                          },
+                          "url": {
+                            "type": ["string", "null"]
+                          }
+                        },
+                        "required": ["date", "number", "summary", "url"]
+                      }
+                    },
+                    "provenance": {
+                      "type": "object",
+                      "properties": {
+                        "source_id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": ["fetched", "contributed"]
+                        },
+                        "ref": {
+                          "type": ["string", "null"]
+                        },
+                        "captured_at": {
+                          "type": "string"
+                        },
+                        "confidence": {
+                          "type": ["number", "null"]
+                        }
+                      },
+                      "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
+                    },
+                    "source_license": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "cnr",
+                    "status",
+                    "next_hearing_date",
+                    "last_hearing_date",
+                    "stage",
+                    "bench",
+                    "fetched_at",
+                    "orders",
+                    "provenance",
+                    "source_license"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/causelists": {
+      "get": {
+        "operationId": "listPublicCauseLists",
+        "tags": ["Public API"],
+        "summary": "Shared cause lists from cleared, non-personal sources",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "forum",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "name": "date",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "advocate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cause lists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "forum": {
+                            "type": ["string", "null"]
+                          },
+                          "listing_date": {
+                            "type": ["string", "null"]
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "provenance": {
+                            "type": "object",
+                            "properties": {
+                              "source_id": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": ["fetched", "contributed"]
+                              },
+                              "ref": {
+                                "type": ["string", "null"]
+                              },
+                              "captured_at": {
+                                "type": "string"
+                              },
+                              "confidence": {
+                                "type": ["number", "null"]
+                              }
+                            },
+                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
+                          },
+                          "source_license": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "forum",
+                          "listing_date",
+                          "content",
+                          "provenance",
+                          "source_license"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders": {
+      "get": {
+        "operationId": "listPublicOrders",
+        "tags": ["Public API"],
+        "summary": "Orders of an own case, or shared published orders from cleared non-personal sources",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{16}$"
+            },
+            "required": false,
+            "name": "case",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "case": {
+                            "type": ["string", "null"]
+                          },
+                          "date": {
+                            "type": ["string", "null"]
+                          },
+                          "number": {
+                            "type": ["string", "null"]
+                          },
+                          "summary": {
+                            "type": ["string", "null"]
+                          },
+                          "url": {
+                            "type": ["string", "null"]
+                          },
+                          "content": {
+                            "type": ["string", "null"]
+                          },
+                          "forum": {
+                            "type": ["string", "null"]
+                          },
+                          "provenance": {
+                            "type": "object",
+                            "properties": {
+                              "source_id": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": ["fetched", "contributed"]
+                              },
+                              "ref": {
+                                "type": ["string", "null"]
+                              },
+                              "captured_at": {
+                                "type": "string"
+                              },
+                              "confidence": {
+                                "type": ["number", "null"]
+                              }
+                            },
+                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
+                          },
+                          "source_license": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "case",
+                          "date",
+                          "number",
+                          "summary",
+                          "url",
+                          "content",
+                          "forum",
+                          "provenance",
+                          "source_license"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/notices": {
+      "get": {
+        "operationId": "listPublicNotices",
+        "tags": ["Public API"],
+        "summary": "Official notices from cleared, non-personal sources",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "forum",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string"
+                          },
+                          "issued_on": {
+                            "type": "string"
+                          },
+                          "effective_on": {
+                            "type": ["string", "null"]
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "forum_codes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "provenance": {
+                            "type": "object",
+                            "properties": {
+                              "source_id": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": ["fetched", "contributed"]
+                              },
+                              "ref": {
+                                "type": ["string", "null"]
+                              },
+                              "captured_at": {
+                                "type": "string"
+                              },
+                              "confidence": {
+                                "type": ["number", "null"]
+                              }
+                            },
+                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
+                          },
+                          "source_license": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "kind",
+                          "issued_on",
+                          "effective_on",
+                          "url",
+                          "forum_codes",
+                          "provenance",
+                          "source_license"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/webhooks/razorpay": {
       "post": {
         "operationId": "receiveRazorpayWebhook",

@@ -86,7 +86,7 @@ beforeAll(async () => {
     await tx
       .update(schema.caseWatch)
       .set({ sourceId: ids.personal })
-      .where(eq(schema.caseWatch.id, t.a.rows.case_watch?.id ?? ''));
+      .where(eq(schema.caseWatch.id, t.a.rows.case_status_snapshot?.watchId ?? ''));
   });
   keyA = await keyFor(t.a.id, t.ua, [
     'cases:read',
@@ -164,7 +164,7 @@ describe('cases', () => {
   });
 
   it('is a 404 once the source is no longer cleared', async () => {
-    const watchId = t.a.rows.case_watch?.id ?? '';
+    const watchId = t.a.rows.case_status_snapshot?.watchId ?? '';
     const point = (sourceId: string) =>
       withWorkspace(testAppDb(), { workspaceId: t.a.id, userId: t.ua }, (tx) =>
         tx.update(schema.caseWatch).set({ sourceId }).where(eq(schema.caseWatch.id, watchId)),

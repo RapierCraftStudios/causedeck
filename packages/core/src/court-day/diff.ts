@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 
 import { schema } from '@causedeck/db';
 import {
-  ListDiff,
+  type ListDiff,
   SnapshotListInput,
   type ListDiffEntry,
   type SnapshotRow,
@@ -17,7 +17,7 @@ import { notFound } from '../shared/errors.ts';
 
 import {
   inCourtDayScope,
-  parseInput,
+  parseCourtDayInput,
   requireAction,
   type CourtDayActor,
   type CourtDayDeps,
@@ -45,10 +45,6 @@ function compareItems(a: SnapshotRow | null, b: SnapshotRow | null): number {
   const y = itemOrdinal(b?.itemNo ?? null);
   if (x !== y) return x === null ? 1 : y === null ? -1 : x - y;
   return (a?.itemNo ?? '').localeCompare(b?.itemNo ?? '');
-}
-
-function sameRow(a: SnapshotRow, b: SnapshotRow): boolean {
-  return a.hallNo === b.hallNo && a.itemNo === b.itemNo && a.stage === b.stage;
 }
 
 function byKey(rows: readonly SnapshotRow[]): Map<string, SnapshotRow> {
@@ -137,7 +133,7 @@ export async function snapshotList(
   actor: CourtDayActor,
   input: SnapshotListInput,
 ): Promise<SnapshotResult> {
-  const data = parseInput(SnapshotListInput, input);
+  const data = parseCourtDayInput(SnapshotListInput, input);
   const contentHash = hashRows(data.rows);
   return inCourtDayScope(deps, actor, async (scope) => {
     const { tx } = scope;

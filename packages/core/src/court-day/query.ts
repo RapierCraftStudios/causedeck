@@ -16,12 +16,17 @@ import {
   type CourtDayList,
   type ExpectedNotListed,
 } from '@causedeck/validators';
-import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
 import { forbidden } from '../shared/errors.ts';
 
 import { itemOrdinal } from './diff.ts';
-import { inCourtDayScope, parseInput, type CourtDayActor, type CourtDayDeps } from './scope.ts';
+import {
+  inCourtDayScope,
+  parseCourtDayInput,
+  type CourtDayActor,
+  type CourtDayDeps,
+} from './scope.ts';
 
 const {
   appearance,
@@ -50,7 +55,7 @@ function caseLabel(p: {
   year: number | null;
 }): string {
   const no = p.number === null ? '' : ` ${p.number}`;
-  return `${p.caseTypeCode}${no}${p.year === null ? '' : `/${p.year}`}`;
+  return `${p.caseTypeCode}${no}${p.year === null ? '' : `/${String(p.year)}`}`;
 }
 
 /** Item number order within a hall list: numeric (9 before 10), unnumbered last, ties by serial. */
@@ -78,7 +83,7 @@ export async function getCourtDay(
   actor: CourtDayActor,
   input: CourtDayQuery,
 ): Promise<CourtDay> {
-  const query = parseInput(CourtDayQuery, input);
+  const query = parseCourtDayInput(CourtDayQuery, input);
   return inCourtDayScope(deps, actor, async (scope) => {
     const { tx } = scope;
     const { workspaceId, userId } = scope.actor;

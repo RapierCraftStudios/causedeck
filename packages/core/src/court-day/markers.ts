@@ -10,7 +10,7 @@ import { notFound } from '../shared/errors.ts';
 
 import {
   inCourtDayScope,
-  parseInput,
+  parseCourtDayInput,
   requireAction,
   type CourtDayActor,
   type CourtDayDeps,
@@ -44,7 +44,7 @@ export async function setCurrentItem(
   actor: CourtDayActor,
   input: CurrentItemMarker,
 ): Promise<MarkerRow> {
-  const data = parseInput(CurrentItemMarker, input);
+  const data = parseCourtDayInput(CurrentItemMarker, input);
   return inCourtDayScope(deps, actor, async (scope) => {
     const { tx } = scope;
     const { workspaceId, userId } = scope.actor;
@@ -85,7 +85,7 @@ export async function clearCurrentItem(
   actor: CourtDayActor,
   input: ClearCurrentItemInput,
 ): Promise<boolean> {
-  const data = parseInput(ClearCurrentItemInput, input);
+  const data = parseCourtDayInput(ClearCurrentItemInput, input);
   return inCourtDayScope(deps, actor, async (scope) => {
     const { tx } = scope;
     const { workspaceId, userId } = scope.actor;

@@ -60,7 +60,7 @@ export interface CourtDayScope {
 }
 
 /** The parsed input, or VALIDATION with the first issue's message. */
-export function parseInput<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
+export function parseCourtDayInput<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
   const parsed = schemaOf.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];

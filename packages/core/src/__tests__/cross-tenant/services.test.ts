@@ -1242,6 +1242,46 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getWorkspaceProfile(f.tx, f.a.id)).toEqual(before);
   },
+  getClerkSetup: async (f) => {
+    const [clerkUser] = await f.tx
+      .insert(schema.user)
+      .values({ name: 'Clerk A', email: `clerk-a-${f.a.id}@example.test` })
+      .returning({ id: schema.user.id });
+    await inWorkspace(f.tx, f.a.id, (s) =>
+      s.insert(schema.member).values({
+        organizationId: f.a.id,
+        userId: clerkUser?.id ?? '',
+        role: 'clerk',
+        clerkSetupStatus: 'pending',
+      }),
+    );
+    // Under B's scope A's clerks are invisible; under A's they are listed.
+    expect(await f.asB((s) => core.getClerkSetup(s, f.a.id))).toEqual([]);
+    expect((await inWorkspace(f.tx, f.a.id, (s) => core.getClerkSetup(s, f.a.id)))[0]?.status).toBe(
+      'pending',
+    );
+  },
+  requestClerkSetupApproval: async (f) => {
+    // B's owner is not a clerk of A: denied, and A's clerks stay as they were.
+    const before = await core.getClerkSetup(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) => core.requestClerkSetupApproval(s, { workspaceId: f.a.id, actorUserId: f.ub })),
+    );
+    expect(await core.getClerkSetup(f.tx, f.a.id)).toEqual(before);
+  },
+  approveClerkSetup: async (f) => {
+    const before = await core.getClerkSetup(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.approveClerkSetup(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          memberId: before[0]?.memberId ?? f.a.id,
+        }),
+      ),
+    );
+    expect(await core.getClerkSetup(f.tx, f.a.id)).toEqual(before);
+  },
   getRoleSettings: async (f) => {
     await f.tx
       .update(schema.workspaceSettings)

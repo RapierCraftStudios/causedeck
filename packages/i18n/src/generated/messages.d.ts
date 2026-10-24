@@ -382,6 +382,48 @@ export type Messages = {
         generic: string;
       };
     };
+    welcome: {
+      metaTitle: string;
+      title: string;
+      clerkIntro: string;
+      steps: {
+        language: {
+          title: string;
+          body: string;
+        };
+        import: {
+          title: string;
+          body: string;
+          action: string;
+        };
+        today: {
+          title: string;
+          body: string;
+          action: string;
+        };
+      };
+      approval: {
+        title: string;
+        body: string;
+        request: string;
+        requesting: string;
+        pending: string;
+        approved: string;
+      };
+      senior: {
+        title: string;
+        empty: string;
+        item: string;
+        approve: string;
+        approving: string;
+        approved: string;
+      };
+      notForRole: string;
+      errors: {
+        offline: string;
+        generic: string;
+      };
+    };
   };
   invite: {
     metaTitle: string;

@@ -2445,6 +2445,43 @@ export type Messages = {
       updated: string;
     };
   };
+  courtInsights: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    filters: {
+      label: string;
+      forum: string;
+      allForums: string;
+      caseType: string;
+      from: string;
+      to: string;
+      apply: string;
+    };
+    table: {
+      label: string;
+      forum: string;
+      caseType: string;
+      stage: string;
+      period: string;
+      listingDelay: string;
+      adjournmentRate: string;
+      disposalTime: string;
+      backlog: string;
+    };
+    days: string;
+    rate: string;
+    count: string;
+    notEnough: string;
+    unlisted: string;
+    window: string;
+    coverage: string;
+    minimum: string;
+    empty: {
+      title: string;
+      hint: string;
+    };
+  };
   matters: {
     metaTitle: string;
     title: string;

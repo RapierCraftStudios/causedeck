@@ -31,3 +31,6 @@ The 30 flagged (symbol, test) pairs are not members: none of the 10 tests lists 
 
 ## Merge-check fix (turbo exit 127)
 The merged-tree failure was `turbo: command not found` (bare `turbo` not on PATH), not a symbol/key conflict. No source change needed. Re-verified on the merged tree: `pnpm exec turbo run typecheck --filter='...[base]'` 23/23 pass; V1 (45 tests), V2 (144 tests), V3 db:check all pass.
+
+### Merge recheck
+Typecheck failure after the base merge was exit 127 `turbo: command not found` (turbo is not on PATH on this host; a toolchain problem, not a code defect). `pnpm exec turbo run typecheck --filter='...[41ce83bd]'` passes 23/23. No duplicate keys or symbols found; no code change. V1-V3 re-run and pass.

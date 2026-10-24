@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from '@causedeck/ui/sonner';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type SyntheticEvent } from 'react';
 
 import type {
   CreatedPortfolio,
@@ -203,7 +203,7 @@ export function PortfolioCreateForm({
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
 
-  async function submit(event: FormEvent) {
+  async function submit(event: SyntheticEvent) {
     event.preventDefault();
     setBusy(true);
     setFailed(null);
@@ -276,7 +276,7 @@ export function PortfolioImportForm({
     setCsv(await file.text());
   }
 
-  async function submit(event: FormEvent) {
+  async function submit(event: SyntheticEvent) {
     event.preventDefault();
     if (csv === null) return;
     setBusy(true);

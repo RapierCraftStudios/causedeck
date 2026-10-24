@@ -2,215 +2,248 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Two disagreeing sources produce one conflict card; agreeing sources raise confidence.",
+   "quote": "Under apps/api/src/public/v1/: GET /v1/cases/{cnr}, /v1/causelists, /v1/orders, /v1/notices.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Adapter health reports the conflict rate per source.",
+   "quote": "Every record carries provenance and source_license;",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/facts/agreement.ts`: for each fact, the set of sources, agreement status (agree, conflict, single source) and a confidence score.",
+   "quote": "serve only cleared sources or contributed copies and only data_class non-personal via exposableThroughApi (packages/core/src/sources/registry.ts:25), personal data only for the caller's own matters, per docs/legal/court-data-posture.md.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "A conflict card generalised to every source pair; the lawyer resolves, and the resolution is kept.",
+   "quote": "Acceptance: only cleared-source data with provenance on every record [integration].",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "`apps/web`: a confidence chip on dates and stages, with the sources listed on hover.",
+   "quote": "every route added under the public API prefixes (/v1/cases, /v1/causelists, /v1/orders, /v1/notices, /v1/webhook-endpoints) must call requireScope with its scope and stay workspace-scoped.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Metrics: the conflict rate per source, which feeds adapter health.",
+   "quote": "Add a test that a key without the scope gets 403.",
    "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "D-048 applies to what each route exposes (no resale of personal data); D-050 applies too (no judge ratings, rankings or predictions in any response).",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "every route added under the public API prefixes (/v1/cases, /v1/causelists, /v1/orders, /v1/notices, /v1/webhook-endpoints)",
+   "disposition": "defer",
+   "why": "/v1/webhook-endpoints routes belong to sibling #626 (webhooks); this change adds the four data routes and a reusable per-route requireScope pattern.",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/facts/agreement.ts",
-   "change": "Pure assessAgreement(observations) -> {sources, status: agree|conflict|single, confidence}; plus getNextDateAgreement reader over a proceeding's listings (provenance sourceType/sourceRef/confidence)",
+   "path": "packages/core/src/public-api/index.ts",
+   "change": "New core domain: gated reads getPublicCase(db, {workspaceId, cnr}), listPublicCauseLists, listPublicOrders, listPublicNotices and pure sourceLicense(source). Gate = decideSourceClearance(row)===null and, for global/shared records, exposableThroughApi(dataClass). Own-matter case data read via workspace scope. Returns provenance {sourceId, kind fetched|contributed, ref, capturedAt, confidence} plus source_license; never contributor workspace, party analytics or judge metrics. Split into read.ts if large.",
    "requirements": [
-    "R1",
-    "R3"
+    "R2",
+    "R3",
+    "R4",
+    "R7"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/facts/index.ts",
-   "change": "Public barrel for the facts domain",
+   "path": "packages/core/package.json",
+   "change": "Add export './public-api': './src/public-api/index.ts'.",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/package.json",
-   "change": "Add ./facts export",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Register public-api in CORE_DOMAIN_DEPENDENCIES depending on sources only (import via its index.ts).",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Add facts domain dependency edges (matter-graph if reader uses it)",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the public-api domain and its dependency on sources.",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Document facts domain and edges",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register new core runtime exports: workspace-scoped reads in SERVICE_TESTS, pure sourceLicense in NOT_A_SERVICE with a reason.",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register facts exports in SERVICE_TESTS or NOT_A_SERVICE",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: workspace B on A's cnr/own-matter data gets nothing; A unchanged.",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cross-tenant case for getNextDateAgreement",
+   "path": "apps/api/src/public/v1/index.ts",
+   "change": "publicV1Router(db) mounting the four routes; shared schemas.ts with Provenance and source_license response schemas.",
    "requirements": [
-    "R3"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/components/matters/date-conflict-card.tsx",
-   "change": "Generalise card to N sources/every source pair, still never preselecting; resolution via existing chooseNextDateSource path",
+   "path": "apps/api/src/public/v1/cases.ts",
+   "change": "GET /v1/cases/{cnr}: defineRoute with middleware [requireScope('cases:read')], workspace from the key (principal.apiKey.workspaceId) else requireWorkspace, call getPublicCase, 404 when not own matter or source not cleared.",
    "requirements": [
     "R1",
-    "R4"
+    "R5",
+    "R3"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/lib/matters/workspace.ts",
-   "change": "Expose agreement (status, confidence, sources) on the overview view models",
+   "path": "apps/api/src/public/v1/causelists.ts",
+   "change": "GET /v1/causelists?forum&date&advocate with requireScope('causelists:read'); shared copies only from non-personal cleared sources; advocate filter only the caller's own watches.",
    "requirements": [
-    "R5"
+    "R1",
+    "R5",
+    "R3",
+    "R7"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/matters/next-date-card.tsx",
-   "change": "Confidence chip on next date (and stage where shown) with sources on hover",
+   "path": "apps/api/src/public/v1/orders.ts",
+   "change": "GET /v1/orders?case with requireScope('orders:read'); own-matter orders from the workspace snapshot plus non-personal cleared contributed orders.",
    "requirements": [
-    "R5"
+    "R1",
+    "R5",
+    "R3",
+    "R7"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/messages/en/matters.json",
-   "change": "New strings for chip/card (and kn/ta + generated copies per i18n catalog rules)",
+   "path": "apps/api/src/public/v1/notices.ts",
+   "change": "GET /v1/notices?forum with requireScope('notices:read'); cleared non-personal sources only.",
    "requirements": [
-    "R5"
+    "R1",
+    "R5",
+    "R3"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/db/migrations/0082_staff_conflict_rate.sql",
-   "change": "Security-definer app_staff_conflict_rate(since) mirroring 0072: per-source counts of listings/proposals vs corrected conflicts, staff only (renumbered to 0082 after base took 0080 and 0081; regenerate snapshot)",
+   "path": "apps/api/src/routes/v1/index.ts",
+   "change": "Mount publicV1Router after the built-in routers.",
    "requirements": [
-    "R2",
-    "R6"
+    "R1"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/src/sources/ops.ts",
-   "change": "staffConflictRate + conflictRate field on SourceOpsRow",
+   "path": "apps/api/src/__tests__/public-api.test.ts",
+   "change": "Integration test: 403 per route for a key lacking its scope, 200 with it; personal/mixed/uncleared/killed sources are never served; every record has provenance and source_license; workspace B's key never sees A; no rating/ranking/prediction keys in responses.",
    "requirements": [
-    "R2",
-    "R6"
+    "R4",
+    "R6",
+    "R7",
+    "R5"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/admin/app/(console)/data-ops/page.tsx",
-   "change": "Show conflict rate per source in adapter health",
+   "path": "apps/api/src/__tests__/cross-tenant.test.ts",
+   "change": "Add the four GET /v1 routes to the ROUTES coverage map with how each is covered.",
    "requirements": [
-    "R2",
-    "R6"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/db/src/__tests__/staff-console-schema.test.ts",
-   "change": "Cover the new staff function (refuses non-staff, per-source counts only)",
-   "requirements": [
-    "R2"
+    "R5"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "chooseNextDateSource semantics: a person chooses, loser stays as `corrected` history (packages/core/src/matter-graph/next-date.ts)"
+   "what": "apiKeyEnforcement, API_KEY_ROUTE_PREFIXES and per-call billing in apps/api/src/middleware/api-key.ts"
   },
   {
    "id": "P2",
-   "what": "proposeNextDate/confirmNextDate remain the only writers of listing.list_date/canonical (no-direct-listing-update architecture test)"
+   "what": "requireScope semantics in apps/api/src/lib/openapi.ts:78 (scopes limit keys only; cookie callers unaffected)"
   },
   {
    "id": "P3",
-   "what": "getAdapterHealthSummary and sourceOpsOverview existing fields and callers (packages/core/src/court/adapter-health.ts, packages/core/src/sources/ops.ts, apps/admin data-ops page)"
+   "what": "packages/core/src/sources/registry.ts exports unchanged, so the literal export lists in apps/admin/__tests__/server-actions-audit.test.ts:78 and sources-actions.test.ts:12 stay valid"
   },
   {
    "id": "P4",
-   "what": "Staff console aggregates stay content-free: no workspace, party or URL data leaves ops.ts"
+   "what": "findContributed (packages/core/src/network/read.ts) and listWorkspaceNotices (packages/core/src/notices/list.ts) behaviour for existing callers"
+  },
+  {
+   "id": "P5",
+   "what": "assertRouteSecurity guard in apps/api (all /v1 routes via defineRoute) and the OpenAPI document tests"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/facts src/matter-graph/__tests__/next-date.test.ts src/sources/__tests__/ops.test.ts src/__tests__/domains.test.ts"
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/public-api.test.ts src/__tests__/api-keys.test.ts src/__tests__/cross-tenant.test.ts src/__tests__/openapi.test.ts src/__tests__/static-guards.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/matter-workspace-components.test.tsx __tests__/matter-workspace-page.test.tsx __tests__/cross-tenant-actions.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/public-api src/sources --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/staff-console-schema.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/server-actions-audit.test.ts __tests__/sources-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Reuse listing provenance and the `corrected` state as the kept resolution instead of a new tenant table",
-   "justification": "Avoids RLS/seeder registry churn; next-date.ts:13-17 already keeps the losing proposal as corrected history",
+   "choice": "Add a new core domain public-api (depends only on sources) instead of querying from apps/api.",
+   "justification": "Core owns data access and apps import it via package exports (apps/api/src/routes/v1/billing.ts:6, me.ts:2); new domains register in CORE_DOMAIN_DEPENDENCIES and core-domains.md per CLAUDE.md.",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Staff conflict-rate via a security-definer function like app_staff_parse_yield",
-   "justification": "packages/db/migrations/0072_staff_parse_yield.sql and packages/core/src/sources/ops.ts:118 give the cross-tenant, content-free pattern",
+   "choice": "Derive source_license (no schema/migration): contributed copies 'contributed-public-document', fetched records '\u003csource.owner> public record (terms and counsel cleared)'.",
+   "justification": "source has no licence column (packages/db/src/schema/source-registry.ts:54-76); avoiding a migration keeps the change in-lane. Revisit if counsel wants per-source licence text.",
+   "source": "spec"
+  },
+  {
+   "id": "K3",
+   "choice": "Gate fails closed: unknown/uncleared/killed or non-'non-personal' source means the record is omitted; own-matter case data is exempt from the data-class rule only because it is the caller's workspace data.",
+   "justification": "docs/legal/court-data-posture.md lawful-basis table and 'No resale of personal data'; exposableThroughApi at packages/core/src/sources/registry.ts:25; decideSourceClearance at registry.ts:~105.",
+   "source": "doc"
+  },
+  {
+   "id": "K4",
+   "choice": "Do not reuse findContributed or listWorkspaceNotices unfiltered.",
+   "justification": "Neither checks clearance or data class (network/read.ts:36-60, notices/list.ts:55-70).",
    "source": "precedent"
   }
  ]

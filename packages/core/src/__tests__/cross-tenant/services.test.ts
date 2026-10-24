@@ -1269,15 +1269,13 @@ const CASES: Record<string, Case> = {
   },
   // News digest (#481): B's member never reads, writes or marks A's preferences or digest.
   getNewsPref: async (f) => {
-    await expectNewsDenied(
-      core.getNewsPref({ db: f.tx as unknown as Database, workspaceId: f.a.id }, { userId: f.ub }),
-    );
+    await expectNewsDenied(core.getNewsPref({ db: f.tx, workspaceId: f.a.id }, { userId: f.ub }));
   },
   setNewsPref: async (f) => {
     const before = await aNewsPref(f);
     await expectNewsDenied(
       core.setNewsPref(
-        { db: f.tx as unknown as Database, workspaceId: f.a.id },
+        { db: f.tx, workspaceId: f.a.id },
         { userId: f.ub, practiceAreas: ['tax'], forums: [], digestTime: '08:00' },
       ),
     );
@@ -1287,7 +1285,7 @@ const CASES: Record<string, Case> = {
     const before = await aNewsPref(f);
     await expectNewsDenied(
       core.markNewsDigestSent(
-        { db: f.tx as unknown as Database, workspaceId: f.a.id },
+        { db: f.tx, workspaceId: f.a.id },
         { userId: f.ub, localDate: '2026-10-19' },
       ),
     );
@@ -1296,7 +1294,7 @@ const CASES: Record<string, Case> = {
   listNewsForMember: async (f) => {
     await expectNewsDenied(
       core.listNewsForMember(
-        { db: f.tx as unknown as Database, workspaceId: f.a.id },
+        { db: f.tx, workspaceId: f.a.id },
         { userId: f.ub, since: new Date('2026-10-01T00:00:00Z') },
       ),
     );
@@ -1304,7 +1302,7 @@ const CASES: Record<string, Case> = {
   selectNewsDigestItems: async (f) => {
     await expectNewsDenied(
       core.selectNewsDigestItems(
-        { db: f.tx as unknown as Database, workspaceId: f.a.id },
+        { db: f.tx, workspaceId: f.a.id },
         { userId: f.ub, since: new Date('2026-10-01T00:00:00Z') },
       ),
     );
@@ -1312,7 +1310,7 @@ const CASES: Record<string, Case> = {
   listNewsDigestRecipients: async (f) => {
     // B's recipients are B's members only: A's owner never appears.
     const users = await core.listNewsDigestRecipients(
-      { db: f.tx as unknown as Database, workspaceId: f.b.id },
+      { db: f.tx, workspaceId: f.b.id },
       { slot: '07:30', localDate: '2026-10-19' },
     );
     expect(users).not.toContain(f.ua);

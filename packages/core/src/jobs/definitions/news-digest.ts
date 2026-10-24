@@ -35,7 +35,26 @@ import { RetryableError } from '../errors.ts';
 import { once } from '../idempotency.ts';
 import { getProducer } from '../producer.ts';
 
-import { appLink, notificationJobDeps, type NotificationJobDeps } from './notification-deliver.ts';
+import {
+  appLink,
+  deliveryKey,
+  notificationDeliverSchema,
+  notificationJobDeps,
+  type NotificationJobDeps,
+} from './notification-deliver.ts';
+
+/**
+ * Send one `notification.deliver` job as the registry's `enqueue` does (schema, singleton key,
+ * workspace fairness group). The registry imports this file, so it cannot be imported here.
+ */
+async function enqueueDelivery(job: unknown): Promise<unknown> {
+  const data = notificationDeliverSchema.parse(job);
+  const sender = await getProducer();
+  return sender.send('notification.deliver', data, {
+    singletonKey: deliveryKey(data),
+    group: { id: data.workspaceId },
+  });
+}
 
 const { member, organization, user } = schema;
 
@@ -255,13 +274,12 @@ export async function runNewsDigestMember(
     );
     if (channelOn('in_app') || channelOn('push')) {
       const t = await getTranslator(locale);
-      const { enqueueNotificationDelivery } = await import('../registry.ts');
       // `notify` queues the push; the email is this digest's own (the deliver job skips the
       // generic one for `digest.news`).
       await notify(
         {
           ...newsCtx,
-          enqueueDelivery: deps.enqueueDelivery ?? ((job) => enqueueNotificationDelivery(job)),
+          enqueueDelivery: deps.enqueueDelivery ?? enqueueDelivery,
         },
         {
           userId,

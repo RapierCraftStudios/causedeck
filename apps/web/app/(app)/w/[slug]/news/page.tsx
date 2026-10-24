@@ -22,6 +22,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('metaTitle') };
 }
 
+/** The start of the news window (a function so the clock is not read during render). */
+function windowStart(): Date {
+  return new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000);
+}
+
 export default async function NewsPage({ params }: NewsPageProps) {
   const { slug } = await params;
   const context = await getWorkspaceContext(slug);
@@ -37,7 +42,7 @@ export default async function NewsPage({ params }: NewsPageProps) {
     getNewsPref,
     listNewsForMember,
   } = await import('@causedeck/core/news');
-  const since = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const since = windowStart();
   const { items, pref } = await inWorkspace({ workspaceId, userId }, async (tx) => ({
     items: await listNewsForMember({ db: tx, workspaceId }, { userId, since }),
     pref: await getNewsPref({ db: tx, workspaceId }, { userId }),

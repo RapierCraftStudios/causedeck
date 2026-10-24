@@ -35,8 +35,7 @@ export function NewsPrefsForm({ workspaceId, areas, forums, initial, save }: New
   const [time, setTime] = useState(initial.digestTime);
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [pending, startTransition] = useTransition();
-
-  const onSave = () =>
+  const onSave = () => {
     startTransition(async () => {
       const result = await save({
         workspaceId,
@@ -46,6 +45,7 @@ export function NewsPrefsForm({ workspaceId, areas, forums, initial, save }: New
       });
       setStatus(result.ok ? 'saved' : 'error');
     });
+  };
 
   return (
     <section aria-labelledby="news-prefs-title" className="flex flex-col gap-4">
@@ -63,7 +63,9 @@ export function NewsPrefsForm({ workspaceId, areas, forums, initial, save }: New
               <input
                 type="checkbox"
                 checked={selectedAreas.includes(area)}
-                onChange={() => setAreas((prev) => toggle(prev, area))}
+                onChange={() => {
+                  setAreas((prev) => toggle(prev, area));
+                }}
               />
               {t(`areas.${area}`)}
             </label>
@@ -78,7 +80,9 @@ export function NewsPrefsForm({ workspaceId, areas, forums, initial, save }: New
               <input
                 type="checkbox"
                 checked={selectedForums.includes(forum)}
-                onChange={() => setForums((prev) => toggle(prev, forum))}
+                onChange={() => {
+                  setForums((prev) => toggle(prev, forum));
+                }}
               />
               {t(`forums.${forum}`)}
             </label>
@@ -89,7 +93,9 @@ export function NewsPrefsForm({ workspaceId, areas, forums, initial, save }: New
         <span className="font-medium">{t('prefs.time')}</span>
         <select
           value={time}
-          onChange={(e) => setTime(e.target.value)}
+          onChange={(e) => {
+            setTime(e.target.value);
+          }}
           className="rounded border px-2 py-1"
         >
           {TIMES.map((value) => (

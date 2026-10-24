@@ -21,3 +21,6 @@ Verify mode is CI: V1 to V4 were not run locally (formatter and linter only). Th
 - Quota exhaustion answers 429 with code `RATE_LIMITED` (no `QUOTA_EXCEEDED` code exists in apps/api/src/errors.ts); `x-quota-limit` and `x-quota-used` headers distinguish it.
 - Added audit actions (events.ts, audit.md) to audit key issue and revoke, as the contract requires.
 - Sibling-list check: apiKey/api-keys are not members of the listed apps/web and apps/admin tests (no UI, route or server action added); recorded in result.json not_members.
+
+### CI fix (web shard)
+- `apps/web/__tests__/usage-page.test.tsx` asserted `getUsage` is called once per usage key (7); the new `api.calls` key makes it 8. Updated the expectation. The usage page still shows no `api.calls` row (the table rows are hard-coded).

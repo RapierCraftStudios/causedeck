@@ -121,7 +121,7 @@ export const FLAGS = {
   ),
   bench_facts: flag(
     'bench_facts',
-    'User-facing factual bench facts (a matter\'s bench card); internal bench data is never behind this flag (D-050).',
+    "User-facing factual bench facts (a matter's bench card); internal bench data is never behind this flag (D-050).",
     true,
     [521, 118],
   ),

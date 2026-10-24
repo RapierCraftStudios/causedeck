@@ -9,7 +9,7 @@ import { schema, withWorkspace, type Database, type Transaction } from '@causede
 import { isEnabled } from '@causedeck/flags';
 import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
 
-const { bench, listing } = schema;
+const { bench, listing, proceeding } = schema;
 
 export const BENCH_FACTS_FLAG = 'bench_facts';
 
@@ -47,14 +47,13 @@ interface CardRow {
   minutes_per_item: string | null;
 }
 
-/** The bench card of a proceeding, or null when the flag is off or no bench is known. */
+/** The bench card of a matter (its latest listed bench), or null when the flag is off or no bench is known. */
 export async function getBenchCard(
   deps: BenchCardDeps,
   actor: { workspaceId: string; userId: string },
-  proceedingId: string,
+  matterId: string,
 ): Promise<BenchCard | null> {
-  const flag =
-    deps.flagEnabled ?? ((id) => isEnabled(BENCH_FACTS_FLAG, { workspaceId: id }));
+  const flag = deps.flagEnabled ?? ((id) => isEnabled(BENCH_FACTS_FLAG, { workspaceId: id }));
   if (!(await flag(actor.workspaceId))) return null;
 
   const [latest] = await withWorkspace(deps.db, actor, (tx) =>
@@ -62,7 +61,8 @@ export async function getBenchCard(
       .select({ benchId: bench.id, sat: bench.judges })
       .from(listing)
       .innerJoin(bench, eq(bench.id, listing.benchId))
-      .where(and(eq(listing.proceedingId, proceedingId), isNotNull(listing.benchId)))
+      .innerJoin(proceeding, eq(proceeding.id, listing.proceedingId))
+      .where(and(eq(proceeding.matterId, matterId), isNotNull(listing.benchId)))
       .orderBy(desc(listing.listDate))
       .limit(1),
   );

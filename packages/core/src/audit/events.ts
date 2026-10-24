@@ -32,6 +32,36 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A legal-gated feature flag enable request was rejected or withdrawn',
   },
+  // The source registry in the staff console (#478, D-048). Metadata holds the old and new value of
+  // every changed field (`old_<field>`, `new_<field>`).
+  'source.changed': {
+    security: true,
+    description: 'Staff created or changed an external data source or flipped its kill switch',
+  },
+  // The court document network (#485, D-048). Metadata holds ids and counts only, never content.
+  'network.contributed': {
+    security: false,
+    description: 'A public court document was contributed to the shared court document network',
+  },
+  'network.withdrawn': {
+    security: false,
+    description: "A workspace's contributions to the court document network were withdrawn",
+  },
+  // Global court-data controls (#486, D-048). Metadata holds counts, source ids and a subject hash only.
+  'court_data.expired': {
+    security: false,
+    description: "Court documents past their source's retention were blanked",
+  },
+  'court_data.erased': {
+    security: true,
+    description: "Staff masked a person's name in the shared court-data stores on request",
+  },
+  // The conflict-of-interest check (#500, D-048). Fail-closed: a check that cannot be audited is not
+  // run. Metadata holds counts only, never names.
+  'conflict.checked': {
+    security: true,
+    description: 'A member checked new matter parties for a conflict of interest',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },
@@ -74,6 +104,18 @@ export const AUDIT_ACTIONS = {
   'audit.retention_purged': {
     security: true,
     description: 'Audit events older than the retention window were purged',
+  },
+  // Public API keys (#624): fail-closed. Metadata holds the key's scopes (created) or nothing.
+  'api_key.created': { security: true, description: 'An owner or admin issued a public API key' },
+  'api_key.revoked': { security: true, description: 'An owner or admin revoked a public API key' },
+  // Change webhooks (#626): fail-closed. Metadata holds the subscribed event types (created) or nothing.
+  'webhook_endpoint.created': {
+    security: true,
+    description: 'A workspace manager registered a webhook endpoint',
+  },
+  'webhook_endpoint.deleted': {
+    security: true,
+    description: 'A workspace manager removed a webhook endpoint',
   },
   'billing.subscription_changed': {
     security: true,

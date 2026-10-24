@@ -1,0 +1,26 @@
+{
+  "state": [
+    {
+      "code": "26",
+      "label": "Delhi"
+    }
+  ],
+  "district": [
+    {
+      "code": "1",
+      "label": "Central"
+    }
+  ],
+  "establishment": [
+    {
+      "code": "DLCT01",
+      "label": "Tis Hazari Courts (FICTIONAL)"
+    }
+  ],
+  "caseType": [
+    {
+      "code": "7",
+      "label": "Civil Suit - CS"
+    }
+  ]
+}

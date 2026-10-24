@@ -66,6 +66,7 @@
         "duplicate_merge": "ನಕಲು ಇರಬಹುದು",
         "memory_item": "ನೆನಪು",
         "fee_entry": "ಶುಲ್ಕದ ನಮೂದು",
+        "case_status_change": "ನ್ಯಾಯಾಲಯದ ಸ್ಥಿತಿ ದಿನಾಂಕ",
         "outward_draft": "ಹೊರಗೆ ಕಳುಹಿಸುವ ಕರಡು"
       },
       "matter": "{matter} · {caseNumber}",
@@ -180,6 +181,9 @@
       "sections": "ವಿಭಾಗ ಬದಲಿಸಿ",
       "help": "ಈ ಹಾಳೆ ತೋರಿಸಿ",
       "open": "ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು"
+    },
+    "sourceChip": {
+      "khcList": "KHC ಸಾರ್ವಜನಿಕ ಪಟ್ಟಿಯಿಂದ {time} ಕ್ಕೆ ಪಡೆಯಲಾಗಿದೆ"
     }
   }
 }

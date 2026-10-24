@@ -99,6 +99,7 @@ vi.mock('@causedeck/core/court', () => court);
 vi.mock('../app/(app)/w/[slug]/matters/actions.ts', () => ({
   createMatterAction: vi.fn(),
   searchMattersAction: vi.fn(),
+  checkConflictsAction: vi.fn(),
 }));
 
 const { default: MattersPage } = await import('../app/(app)/w/[slug]/matters/page.tsx');

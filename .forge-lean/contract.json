@@ -1,0 +1,225 @@
+{
+ "requirements": [
+  {
+   "id": "R1",
+   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R2",
+   "quote": "dashboard (next dates, stage, adverse orders)",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R3",
+   "quote": "exception alert settings",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R4",
+   "quote": "exception alert settings, exports",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "i18n namespace and catalog test",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "cross-tenant-actions test entries for each 'use server' action.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  }
+ ],
+ "deliverables": [
+  {
+   "id": "D1",
+   "path": "packages/core/src/portfolio/portfolio.ts",
+   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D2",
+   "path": "packages/core/src/portfolio/index.ts",
+   "change": "Export listPortfolios and createPortfolio.",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
+   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/core/src/portfolio/portfolio.test.ts",
+   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
+   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
+   "requirements": [
+    "R1",
+    "R4"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
+   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
+   "change": "Skeleton loading state.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
+   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "apps/web/components/portfolio/portfolio-view.tsx",
+   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "apps/web/lib/nav.ts",
+   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Add 'portfolio' to NAMESPACES.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/i18n/src/messages/en/portfolio.json",
+   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add 'portfolio' to the expected namespace list.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
+   "requirements": [
+    "R6"
+   ]
+  }
+ ],
+ "preserve": [
+  {
+   "id": "P1",
+   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+  },
+  {
+   "id": "P2",
+   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+  },
+  {
+   "id": "P3",
+   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+  }
+ ],
+ "validate": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
+  },
+  {
+   "id": "V4",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "K1",
+   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
+   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
+   "source": "precedent"
+  },
+  {
+   "id": "K2",
+   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
+   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
+   "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
+   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
+   "source": "precedent"
+  }
+ ]
+}

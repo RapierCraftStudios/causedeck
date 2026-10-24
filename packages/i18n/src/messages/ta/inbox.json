@@ -66,6 +66,7 @@
         "duplicate_merge": "இரட்டிப்பாக இருக்கலாம்",
         "memory_item": "நினைவகம்",
         "fee_entry": "கட்டண உள்ளீடு",
+        "case_status_change": "நீதிமன்ற நிலை தேதி",
         "outward_draft": "வெளிச்செல்லும் வரைவு"
       },
       "matter": "{matter} · {caseNumber}",
@@ -180,6 +181,9 @@
       "sections": "பிரிவை மாற்று",
       "help": "இந்தத் தாளைக் காட்டு",
       "open": "குறுக்குவழிகள்"
+    },
+    "sourceChip": {
+      "khcList": "KHC பொதுப் பட்டியலிலிருந்து {time} மணிக்குப் பெறப்பட்டது"
     }
   }
 }

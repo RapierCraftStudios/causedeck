@@ -13,6 +13,8 @@ import * as core from '../../workspaces/index.ts';
 import { acceptInvitation, createWorkspace, setEntitlements } from '../../workspaces/index.ts';
 import {
   assertEntitled,
+  countTrackedCases,
+  getTrackedCaseCharge,
   getWorkspaceEntitlements,
   installBillingEntitlements,
   invalidateEntitlements,
@@ -174,6 +176,62 @@ describe('workspace entitlements', () => {
       );
       invalidateEntitlements(workspaceId);
       expect(await read()).toMatchObject({ planId: 'junior', readOnly: true });
+    });
+  });
+});
+
+describe('tracked-case metering (#664)', () => {
+  async function track(tx: Transaction, workspaceId: string, n: number) {
+    await inWorkspace(tx, workspaceId, async (s) => {
+      const [p] = await s
+        .insert(schema.portfolio)
+        .values({ workspaceId, name: `Bank book ${randomUUID().slice(0, 8)}` })
+        .returning({ id: schema.portfolio.id });
+      const portfolioId = p?.id ?? '';
+      await s.insert(schema.portfolioCase).values(
+        Array.from({ length: n }, (_, i) => ({
+          workspaceId,
+          portfolioId,
+          caseNumber: `OA/${String(i + 1)}/2026`,
+        })),
+      );
+    });
+  }
+
+  it('charges the per-case plan price times the tracked cases', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId } = await setup(tx);
+      await track(tx, workspaceId, 3);
+      await subscribe(tx, workspaceId, {
+        planId: 'institution-case-monthly',
+        seats: 1,
+        clerkSeats: 0,
+      });
+      invalidateEntitlements(workspaceId);
+      const read = () => inWorkspace(tx, workspaceId, (s) => getTrackedCaseCharge(s, workspaceId));
+      expect(await inWorkspace(tx, workspaceId, (s) => countTrackedCases(s, workspaceId))).toBe(3);
+      expect(await read()).toEqual({
+        planId: 'institution-case-monthly',
+        trackedCases: 3,
+        chargePaise: 3 * 4_900,
+      });
+      await track(tx, workspaceId, 2);
+      expect((await read()).chargePaise).toBe(5 * 4_900);
+    });
+  });
+
+  it('charges nothing on a plan that is not per tracked case', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId } = await setup(tx);
+      await track(tx, workspaceId, 2);
+      invalidateEntitlements(workspaceId);
+      expect(
+        await inWorkspace(tx, workspaceId, (s) => getTrackedCaseCharge(s, workspaceId)),
+      ).toEqual({
+        planId: 'junior',
+        trackedCases: 0,
+        chargePaise: 0,
+      });
     });
   });
 });

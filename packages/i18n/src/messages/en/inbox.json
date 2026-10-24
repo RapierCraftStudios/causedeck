@@ -66,6 +66,7 @@
         "duplicate_merge": "Possible duplicate",
         "memory_item": "Memory",
         "fee_entry": "Fee entry",
+        "case_status_change": "Court status date",
         "outward_draft": "Outward draft"
       },
       "matter": "{matter} · {caseNumber}",
@@ -180,6 +181,9 @@
       "sections": "Switch section",
       "help": "Show this sheet",
       "open": "Shortcuts"
+    },
+    "sourceChip": {
+      "khcList": "Fetched from the KHC public list at {time}"
     }
   }
 }

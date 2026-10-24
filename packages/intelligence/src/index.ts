@@ -3,8 +3,11 @@
 // imports `@causedeck/core`.
 export const packageName: string = '@causedeck/intelligence';
 
+export * from './analytics/index.ts';
+export * from './bench-facts/index.ts';
 export * from './classify/index.ts';
 export * from './events.ts';
+export * from './news/index.ts';
 export {
   detectDocumentLanguage,
   detectLanguage,
@@ -145,3 +148,6 @@ export {
   type TranscriptSegment,
 } from './transcribe/transcribe.ts';
 export * from './generic-a0/index.ts';
+export * from './corpus/index.ts';
+export * from './notices/index.ts';
+export * from './issues/index.ts';

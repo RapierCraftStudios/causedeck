@@ -15,11 +15,12 @@ import type { SeedDb } from '../index.ts';
 
 import { BENGALURU_DISTRICT } from './bengaluru-district.ts';
 import { CHENNAI_DISTRICT } from './chennai-district.ts';
+import { ECOURTS_DISTRICT } from './ecourts/index.ts';
 import { KARNATAKA_HC } from './karnataka-hc.ts';
 import { MADRAS_HC } from './madras-hc.ts';
 import { TRIBUNALS } from './tribunals.ts';
 
-export const FORUM_CATALOGUE_VERSION = '2026-10-21.3';
+export const FORUM_CATALOGUE_VERSION = '2026-10-24.2';
 
 /** The `catalogue_meta` key holding FORUM_CATALOGUE_VERSION. */
 export const FORUM_CATALOGUE_META_KEY = 'forum_catalogue';
@@ -43,8 +44,12 @@ export const FORUM_CATALOGUE: readonly ForumSeed[] = parseForumCatalogue([
   ...KARNATAKA_HC,
   ...CHENNAI_DISTRICT,
   ...BENGALURU_DISTRICT,
+  ...ECOURTS_DISTRICT,
   ...TRIBUNALS,
 ]);
+
+/** Rows per insert statement: 12 columns each, well under Postgres's 65535-parameter limit. */
+const INSERT_CHUNK = 2000;
 
 export interface ForumCatalogueSeedResult {
   version: string;
@@ -84,36 +89,37 @@ export async function seedForumCatalogue(
     enabled: s.enabled,
   }));
   return db.transaction(async (tx) => {
-    const written =
-      rows.length === 0
-        ? []
-        : await tx
-            .insert(forum)
-            .values(rows)
-            .onConflictDoUpdate({
-              target: [forum.workspaceId, forum.code],
-              set: {
-                court: sql`excluded.court`,
-                establishment: sql`excluded.establishment`,
-                seat: sql`excluded.seat`,
-                side: sql`excluded.side`,
-                jurisdictionKind: sql`excluded.jurisdiction_kind`,
-                languageProfile: sql`excluded.language_profile`,
-                adapterId: sql`excluded.adapter_id`,
-                adapterLevel: sql`excluded.adapter_level`,
-                config: sql`excluded.config`,
-                enabled: sql`excluded.enabled`,
-                updatedAt: sql`statement_timestamp()`,
-              },
-              // Only rows whose data changed: an unchanged row keeps its updated_at.
-              setWhere: sql`(${forum.court}, ${forum.establishment}, ${forum.seat}, ${forum.side},
+    const written: { inserted: boolean }[] = [];
+    for (let i = 0; i < rows.length; i += INSERT_CHUNK) {
+      const chunk = await tx
+        .insert(forum)
+        .values(rows.slice(i, i + INSERT_CHUNK))
+        .onConflictDoUpdate({
+          target: [forum.workspaceId, forum.code],
+          set: {
+            court: sql`excluded.court`,
+            establishment: sql`excluded.establishment`,
+            seat: sql`excluded.seat`,
+            side: sql`excluded.side`,
+            jurisdictionKind: sql`excluded.jurisdiction_kind`,
+            languageProfile: sql`excluded.language_profile`,
+            adapterId: sql`excluded.adapter_id`,
+            adapterLevel: sql`excluded.adapter_level`,
+            config: sql`excluded.config`,
+            enabled: sql`excluded.enabled`,
+            updatedAt: sql`statement_timestamp()`,
+          },
+          // Only rows whose data changed: an unchanged row keeps its updated_at.
+          setWhere: sql`(${forum.court}, ${forum.establishment}, ${forum.seat}, ${forum.side},
                 ${forum.jurisdictionKind}, ${forum.languageProfile}, ${forum.adapterId},
                 ${forum.adapterLevel}, ${forum.config}, ${forum.enabled})
                 is distinct from (excluded.court, excluded.establishment, excluded.seat,
                 excluded.side, excluded.jurisdiction_kind, excluded.language_profile,
                 excluded.adapter_id, excluded.adapter_level, excluded.config, excluded.enabled)`,
-            })
-            .returning({ inserted: sql<boolean>`(xmax = 0)` });
+        })
+        .returning({ inserted: sql<boolean>`(xmax = 0)` });
+      written.push(...chunk);
+    }
     const inserted = written.filter((r) => r.inserted).length;
     const disabled = await tx
       .update(forum)

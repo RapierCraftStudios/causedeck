@@ -1,0 +1,35 @@
+{
+  "template": "ecourts-district",
+  "status": "ok",
+  "cnr": "DLCT010123452025",
+  "caseNumber": "CS/845/2025",
+  "nextHearingDate": "2026-11-14",
+  "lastHearingDate": "2025-03-21",
+  "stage": {
+    "raw": "Admission",
+    "norm": "admission"
+  },
+  "bench": "ADJ-05 (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2025-03-21",
+      "number": "1",
+      "summary": "Order issue summons",
+      "href": "/orders/dl-1.pdf"
+    },
+    {
+      "date": "2026-09-19",
+      "number": "2",
+      "summary": "Order posted for hearing",
+      "href": "/orders/dl-2.pdf"
+    }
+  ],
+  "quotes": {
+    "cnr": "DLCT010123452025",
+    "caseNumber": "CS/845/2025",
+    "stage": "Admission",
+    "bench": "ADJ-05 (FICTIONAL)",
+    "nextHearingDate": "14.11.2026",
+    "lastHearingDate": "21.03.2025"
+  }
+}

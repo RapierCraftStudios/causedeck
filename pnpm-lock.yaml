@@ -180,6 +180,9 @@ catalogs:
     '@vitest/coverage-v8':
       specifier: 3.2.7
       version: 3.2.7
+    alterlab:
+      specifier: 2.4.0
+      version: 2.4.0
     apca-w3:
       specifier: 0.1.9
       version: 0.1.9
@@ -474,6 +477,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@causedeck/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@causedeck/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -677,6 +683,9 @@ importers:
       '@causedeck/drafting':
         specifier: workspace:*
         version: link:../../packages/drafting
+      '@causedeck/fetch':
+        specifier: workspace:*
+        version: link:../../packages/fetch
       '@causedeck/flags':
         specifier: workspace:*
         version: link:../../packages/flags
@@ -749,6 +758,9 @@ importers:
       sonner:
         specifier: 'catalog:'
         version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      tesseract.js:
+        specifier: ^6.0.1
+        version: 6.0.1
       uqr:
         specifier: 'catalog:'
         version: 0.1.3
@@ -840,6 +852,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@causedeck/fetch':
+        specifier: workspace:*
+        version: link:../../packages/fetch
       '@causedeck/observability':
         specifier: workspace:*
         version: link:../../packages/observability
@@ -1183,6 +1198,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
+      '@causedeck/fetch':
+        specifier: workspace:*
+        version: link:../fetch
       '@causedeck/flags':
         specifier: workspace:*
         version: link:../flags
@@ -1283,6 +1301,28 @@ importers:
         version: 3.2.7(@types/node@22.20.5)(@vitest/browser@3.2.7)(jiti@2.7.0)(jsdom@27.0.1)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
 
   packages/drafting:
+    devDependencies:
+      '@causedeck/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.5
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.7(@types/node@22.20.5)(@vitest/browser@3.2.7)(jiti@2.7.0)(jsdom@27.0.1)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
+
+  packages/fetch:
+    dependencies:
+      alterlab:
+        specifier: 'catalog:'
+        version: 2.4.0
     devDependencies:
       '@causedeck/config':
         specifier: workspace:*
@@ -6340,6 +6380,9 @@ packages:
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
 
+  alterlab@2.4.0:
+    resolution: {integrity: sha512-2LQa4fM4IUAfrwrY0H4+VLuloFKQetslVvrPo5tk637Gzu3MSWFdxQOBMIXNMrXkBVbmUjvoMybny0loFdiIhQ==}
+
   ansi-colors@4.1.3:
     resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
     engines: {node: '>=6'}
@@ -6617,6 +6660,9 @@ packages:
 
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
+
+  bmp-js@0.1.0:
+    resolution: {integrity: sha512-vHdS19CnY3hwiNdkaqk93DvjVLfbEcI8mys4UjuWrlX1haDmroo8o4xCzh4wD6DGV6HxRCyauwhHRqMTfERtjw==}
 
   bn.js@4.12.5:
     resolution: {integrity: sha512-3aRg6/JxfffFD+OlOjOFR3Vo79l39ooBTFucxx+MT3dhCtzn3EmiUPQo+6/OZuI2jbXi3YKgmiTFBgChQMwIRQ==}
@@ -7958,6 +8004,9 @@ packages:
   icu-minify@4.14.9:
     resolution: {integrity: sha512-PmO+fNnC3K3mfPKTnm3RrPERrhQZnjm1AlpyZQ0ShbXi8Y/kYZ3YOde8TEjCLz9k3P2DmzkBn8lykGrCAi1Ajw==}
 
+  idb-keyval@6.3.0:
+    resolution: {integrity: sha512-um+2dgAWmYsu615EXpWVwSmapJhON0G43t3Ka/EVaohzPQXSMqKEqeDK/oIW3Ow+BXaF2PvSc+oBTFp793A5Ow==}
+
   idb@8.0.3:
     resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
 
@@ -8831,6 +8880,10 @@ packages:
   openapi3-ts@4.6.1:
     resolution: {integrity: sha512-XW9MOldkhoICNeXVzzmXzmOW5G73ppOEGmh7fLCqHjgfdEYCGGN+00MlVCeUZgovjjfC56j9tvtDt1zGabNjjA==}
 
+  opencollective-postinstall@2.0.3:
+    resolution: {integrity: sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==}
+    hasBin: true
+
   opener@1.5.2:
     resolution: {integrity: sha512-ur5UIdyw5Y7yEj9wLzhqXiy6GZ3Mwx0yGI+5sMn2r0N0v3cKJvUmFH5yPP+WXh9e0xfyzyJX95D8l088DNFj7A==}
     hasBin: true
@@ -9432,6 +9485,9 @@ packages:
   reflect-metadata@0.2.2:
     resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
 
+  regenerator-runtime@0.13.11:
+    resolution: {integrity: sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==}
+
   regenerator-runtime@0.14.1:
     resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
 
@@ -9902,6 +9958,12 @@ packages:
   temporal-spec@1.0.1:
     resolution: {integrity: sha512-wxVoanmDeavXie1vu2JaQ3WIc3JZnWAOYFBsJyATaVsXsycKYUflGsyBmrRSnoCpZJpwPyr38VpgSUlQ8CbFxg==}
 
+  tesseract.js-core@6.1.2:
+    resolution: {integrity: sha512-pv4GjmramjdObhDyR1q85Td8X60Puu/lGQn7Kw2id05LLgHhAcWgnz6xSdMCSxBMWjQDmMyDXPTC2aqADdpiow==}
+
+  tesseract.js@6.0.1:
+    resolution: {integrity: sha512-/sPvMvrCtgxnNRCjbTYbr7BRu0yfWDsMZQ2a/T5aN/L1t8wUQN6tTWv6p6FwzpoEBA0jrN2UD2SX4QQFRdoDbA==}
+
   test-exclude@7.0.2:
     resolution: {integrity: sha512-u9E6A+ZDYdp7a4WnarkXPZOx8Ilz46+kby6p1yZ8zsGTz9gYa6FIS7lj2oezzNKmtdyyJNNmmXDppga5GB7kSw==}
     engines: {node: '>=18'}
@@ -10352,6 +10414,9 @@ packages:
     resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
     engines: {node: '>=18'}
 
+  wasm-feature-detect@1.9.0:
+    resolution: {integrity: sha512-zonE+xlIIYtxPy++L24ow0hAD8CICb4+FgPyROd3buyXIqsJvUEDkBgfCCoXOd1Hu3DUr0GOfnPIdcGV+YpNaA==}
+
   web-push@3.6.7:
     resolution: {integrity: sha512-OpiIUe8cuGjrj3mMBFWY+e4MMIkW3SVT+7vEIjvD9kejGUypv8GPDf84JdPWskK8zMRIJ6xYGm+Kxr8YkPyA0A==}
     engines: {node: '>= 16'}
@@ -10553,6 +10618,9 @@ packages:
   zip-stream@6.0.1:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
+
+  zlibjs@0.3.1:
+    resolution: {integrity: sha512-+J9RrgTKOmlxFSDHo0pI1xM6BLVUv+o0ZT9ANtCxGkjIVCCUdx9alUF8Gm+dGLKbkkkidWIHFDZHDMpfITt4+w==}
 
   zod-validation-error@4.0.2:
     resolution: {integrity: sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==}
@@ -15028,6 +15096,13 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
+  alterlab@2.4.0:
+    dependencies:
+      axios: 1.20.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   ansi-colors@4.1.3: {}
 
   ansi-escapes@3.2.0: {}
@@ -15258,6 +15333,8 @@ snapshots:
       buffer: 5.7.1
       inherits: 2.0.4
       readable-stream: 3.6.2
+
+  bmp-js@0.1.0: {}
 
   bn.js@4.12.5: {}
 
@@ -16675,6 +16752,8 @@ snapshots:
     dependencies:
       '@formatjs/icu-messageformat-parser': 3.5.21
 
+  idb-keyval@6.3.0: {}
+
   idb@8.0.3: {}
 
   ieee754@1.2.1: {}
@@ -17469,6 +17548,8 @@ snapshots:
     dependencies:
       yaml: 2.9.1
 
+  opencollective-postinstall@2.0.3: {}
+
   opener@1.5.2: {}
 
   option@0.2.4: {}
@@ -18146,6 +18227,8 @@ snapshots:
 
   reflect-metadata@0.2.2: {}
 
+  regenerator-runtime@0.13.11: {}
+
   regenerator-runtime@0.14.1: {}
 
   regjsparser@0.13.4:
@@ -18691,6 +18774,22 @@ snapshots:
 
   temporal-spec@1.0.1: {}
 
+  tesseract.js-core@6.1.2: {}
+
+  tesseract.js@6.0.1:
+    dependencies:
+      bmp-js: 0.1.0
+      idb-keyval: 6.3.0
+      is-url: 1.2.4
+      node-fetch: 2.7.0
+      opencollective-postinstall: 2.0.3
+      regenerator-runtime: 0.13.11
+      tesseract.js-core: 6.1.2
+      wasm-feature-detect: 1.9.0
+      zlibjs: 0.3.1
+    transitivePeerDependencies:
+      - encoding
+
   test-exclude@7.0.2:
     dependencies:
       '@istanbuljs/schema': 0.1.6
@@ -19177,6 +19276,8 @@ snapshots:
     dependencies:
       xml-name-validator: 5.0.0
 
+  wasm-feature-detect@1.9.0: {}
+
   web-push@3.6.7:
     dependencies:
       asn1.js: 5.4.1
@@ -19375,6 +19476,8 @@ snapshots:
       archiver-utils: 5.0.2
       compress-commons: 6.0.2
       readable-stream: 4.8.0
+
+  zlibjs@0.3.1: {}
 
   zod-validation-error@4.0.2(zod@4.6.7):
     dependencies:

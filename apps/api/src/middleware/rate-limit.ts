@@ -77,9 +77,17 @@ export function rateLimit(options: RateLimitOptions = {}): MiddlewareHandler<App
 
   return async (c, next) => {
     const match = longestPrefixMatch(c.req.path, options.groups);
-    const [group, rule] = match ?? ['default', fallback];
     const principal = c.get('principal');
-    const subject = principal ? `user:${principal.user.id}` : `ip:${clientIp(c, trustProxy)}`;
+    // An API key (#624) has its own counter and per-minute limit, whatever the route group.
+    const apiKey = principal?.apiKey;
+    const [group, rule]: [string, RateLimitRule] = apiKey
+      ? ['api-key', { limit: apiKey.rateLimitPerMinute, windowMs: 60_000 }]
+      : (match ?? ['default', fallback]);
+    const subject = apiKey
+      ? `key:${apiKey.id}`
+      : principal
+        ? `user:${principal.user.id}`
+        : `ip:${clientIp(c, trustProxy)}`;
     const at = now();
     const { count, resetAt } = await store.hit(`${group}|${subject}`, rule.windowMs, at);
     const resetSeconds = Math.max(0, Math.ceil((resetAt - at) / 1000));

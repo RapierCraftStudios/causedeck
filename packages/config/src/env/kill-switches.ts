@@ -23,6 +23,7 @@ export const FLAG_KILL_SWITCHES = [
   'KILL_INSIGHTS_ENABLED',
   'KILL_WORKSPACE_EXPORT',
   'KILL_CONFLICTS_CHECK',
+  'KILL_BENCH_FACTS',
 ] as const;
 
 export type FlagKillSwitch = (typeof FLAG_KILL_SWITCHES)[number];

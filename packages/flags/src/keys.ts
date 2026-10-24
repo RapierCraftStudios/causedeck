@@ -119,6 +119,12 @@ export const FLAGS = {
     true,
     [500, 486],
   ),
+  bench_facts: flag(
+    'bench_facts',
+    'User-facing factual bench facts (a matter\'s bench card); internal bench data is never behind this flag (D-050).',
+    true,
+    [521, 118],
+  ),
 } as const;
 
 /** A registered flag key. Anything else is a compile error. */

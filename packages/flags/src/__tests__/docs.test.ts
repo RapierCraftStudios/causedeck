@@ -13,7 +13,7 @@ const DOC = readFileSync(
 
 /** The flag table rows: `| \`key\` | ... |`. */
 const rows = new Map(
-  [...DOC.matchAll(/^\| `([a-z0-9.-]+)` \|(.*)$/gm)].map((m) => [m[1] ?? '', m[2] ?? '']),
+  [...DOC.matchAll(/^\| `([a-z0-9._-]+)` \|(.*)$/gm)].map((m) => [m[1] ?? '', m[2] ?? '']),
 );
 
 describe('docs/engineering/flags.md', () => {

@@ -2,31 +2,61 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add per-workspace API keys (hashed at rest, shown once), scopes, per-key quotas and rate limits",
+   "quote": "`packages/db/src/schema/bench-facts.ts` and a migration: an internal, staff-only schema (bench, sitting date, hall, items listed, items heard, items disposed, minutes per item), global and not tenant data.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "a usage key for billed calls via the #30 usage service",
+   "quote": "The app role has no grants on it; only the worker and internal roles do.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "and a BearerResolver (apps/api/src/middleware/auth.ts) that resolves keys to a principal.",
+   "quote": "`packages/intelligence/src/bench-facts/`: aggregation from rosters, display boards and status.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Register in cross-tenant, core-domains and db test lists.",
+   "quote": "Internal uses: call-time estimates (#493), roster reconciliation, coverage (#517) and the data ops console (#514).",
+   "disposition": "defer",
+   "why": "Call-time estimates are delivered here (R9, D10). Roster reconciliation, the coverage tracker (#517 is open and has no code) and the data ops console wiring have no consumer yet and belong to separate work."
+  },
+  {
+   "id": "R5",
+   "quote": "A user-facing `bench_facts` surface (a matter's bench card: who sat, dates, listing pace, counts) behind the feature flag `bench_facts`, **off** until counsel clears it; neutral wording only.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R5",
-   "quote": "Acceptance: keys, scopes and quotas are enforced and usage is billed per call [integration].",
+   "id": "R6",
+   "quote": "Static guards: no field, query or UI string for ratings, rankings, comparisons between judges, outcome rates (grant, dismissal or bail percentages), predictions or sentiment.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "The app database role can't read the internal bench-facts tables (a grants test). [type:integration]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "With `bench_facts` off, no user-facing route or API returns judge-level data. [type:integration]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8b",
+   "quote": "A static test fails on any outcome-rate, ranking, comparison or prediction field or string. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "Call-time estimates use the internal pace data. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -34,8 +64,8 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/api-keys.ts",
-   "change": "New workspace-scoped `api_key` table (hash only, prefix, scopes, monthly quota, per-minute rate limit, expiry, revoked_at, created_by) with tenant RLS; export from schema/index.ts",
+   "path": "packages/db/src/schema/bench-facts.ts",
+   "change": "New global table bench_sitting_fact (bench_id nullable FK to bench, source_id, hall_no, sitting_date, items_listed, items_heard, items_disposed, minutes_per_item numeric, computed_at; unique(source_id,hall_no,sitting_date)). No judge, rating, outcome or rate column.",
    "requirements": [
     "R1"
    ]
@@ -43,256 +73,272 @@
   {
    "id": "D2",
    "path": "packages/db/src/schema/index.ts",
-   "change": "Export the api-keys schema",
+   "change": "Export the bench-facts schema.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations/0080_api_keys.sql",
-   "change": "Create api_key table, RLS policies and owner-defined SECURITY DEFINER lookup `app_api_key_by_hash(text)`; regenerate meta snapshot and journal (renumber if base took 0080)",
+   "path": "packages/db/migrations/0082_bench_facts.sql",
+   "change": "CREATE TABLE; REVOKE ALL FROM PUBLIC, causedeck_app, causedeck_clerk; owner-defined SECURITY DEFINER functions app_bench_fact_record, app_bench_pace, a neutral bench-card read and an ids-only active-roster hall-to-bench lookup, each with REVOKE FROM PUBLIC and GRANT EXECUTE TO causedeck_app. Expand only. If 0082 is taken on the base, use the next free number and regenerate the snapshot.",
    "requirements": [
     "R1",
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/api-keys/index.ts",
-   "change": "New domain: createApiKey (plaintext returned once, sha256 stored), listApiKeys, revokeApiKey (audited, owner/admin), authenticateApiKey (hash lookup, expiry/revoked checks, constant-time), scope vocabulary, consumeApiCall (monthly quota check + increment('api.calls') idempotent per request)",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "Add the 0082 entry (and meta/0082_snapshot.json, regenerated).",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/usage/keys.ts",
-   "change": "Add counter key 'api.calls' to USAGE_KEYS and USAGE_KEY_KINDS",
+   "path": "packages/db/src/conventions.ts",
+   "change": "Add bench_sitting_fact to GLOBAL_TABLES with a doc line saying the app role has no table grants.",
    "requirements": [
+    "R1",
     "R2"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/package.json",
-   "change": "Add ./api-keys subpath export mirroring ./usage",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add bench_sitting_fact to the root table list.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/src/index.ts",
-   "change": "Re-export the api-keys domain if other domains are re-exported there",
+   "path": "packages/db/src/__tests__/bench-facts-grants.test.ts",
+   "change": "Integration test: as the app role, SELECT/INSERT/UPDATE/DELETE on bench_sitting_fact fail with 42501; the definer functions work; no function returns a judge name.",
    "requirements": [
-    "R1"
+    "R2",
+    "R7"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/api/src/middleware/auth.ts",
-   "change": "Add createApiKeyResolver(db): BearerResolver mapping a valid key to a Principal carrying apiKey {id, workspaceId, scopes, limits}",
+   "path": "packages/intelligence/src/bench-facts/index.ts",
+   "change": "Pure aggregation (board observations, resolved roster bench, status facts) to per-bench-hall-day facts, plus persistence through the definer function; add bench-facts.test.ts beside it; export from packages/intelligence/src/index.ts.",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/api/src/lib/openapi.ts",
-   "change": "Extend Principal with optional apiKey; add requireScope(scope) route middleware (403 FORBIDDEN on missing scope)",
-   "requirements": [
-    "R1",
-    "R5"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/api/src/middleware/api-key.ts",
-   "change": "New middleware: reject header/path workspace differing from key workspace, per-key rate limit (429 RATE_LIMITED), quota exhaustion (429 QUOTA_EXCEEDED), bill one api.calls per request",
-   "requirements": [
-    "R1",
-    "R2",
-    "R5"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "apps/api/src/middleware/rate-limit.ts",
-   "change": "Key counters by api key id when the principal carries one, using the key's per-minute limit",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "apps/api/src/app.ts",
-   "change": "Default bearer resolver to the API-key resolver; wire the api-key middleware",
+   "path": "packages/intelligence/src/index.ts",
+   "change": "Export the bench-facts module.",
    "requirements": [
     "R3"
    ]
   },
   {
-   "id": "D13",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Add 'api-keys' domain dependencies (audit, usage, workspaces)",
+   "id": "D10",
+   "path": "packages/core/src/court-day/board.ts",
+   "change": "Prefer bench-facts pace (app_bench_pace) over raw per-hall observations when building the CallWindow samples, falling back to raw observations; test in court-day/board.test.ts.",
    "requirements": [
-    "R4"
+    "R4",
+    "R9"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/core/src/court-day/bench-card.ts",
+   "change": "New getBenchCard: checks flag bench_facts first and returns null when off; otherwise returns neutral counts and pace only. Export from court-day/index.ts; add bench-card.test.ts.",
+   "requirements": [
+    "R5",
+    "R8"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/core/src/court-day/index.ts",
+   "change": "Export bench-card.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/api/src/routes/v1/bench-card.ts",
+   "change": "New GET /workspaces/{workspaceId}/matters/{matterId}/bench-card route (404 when the flag is off); mount it in routes/v1/index.ts and add it to apps/api/src/__tests__/cross-tenant.test.ts ROUTES; integration test that flag off returns no judge-level data.",
+   "requirements": [
+    "R5",
+    "R8"
    ]
   },
   {
    "id": "D14",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Document the api-keys domain and its dependencies",
+   "path": "apps/api/src/routes/v1/index.ts",
+   "change": "Mount the bench-card router.",
    "requirements": [
-    "R4"
+    "R5"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register api-keys exports in SERVICE_TESTS (or NOT_A_SERVICE with reason) and the api_key table",
+   "path": "apps/api/src/__tests__/cross-tenant.test.ts",
+   "change": "Add the new route to ROUTES.",
    "requirements": [
-    "R4"
+    "R5"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cases: B cannot list or revoke A's keys; A's keys unchanged",
+   "path": "packages/flags/src/keys.ts",
+   "change": "Add legal-gated flag bench_facts, owner [521, 118]; update flags keys.test.ts (key and LEGAL lists), docs.test.ts regex to allow underscore, and docs/engineering/flags.md row.",
    "requirements": [
-    "R4"
+    "R5",
+    "R8"
    ]
   },
   {
    "id": "D17",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add api_key to the root table list",
+   "path": "packages/flags/src/__tests__/keys.test.ts",
+   "change": "Add bench_facts to LEGAL and the expected key list.",
    "requirements": [
-    "R4"
+    "R5"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add api_key to the RLS catalog (and TABLE_TESTS/seeders if the guard requires)",
+   "path": "packages/flags/src/__tests__/docs.test.ts",
+   "change": "Allow underscore in the flag-key row regex.",
    "requirements": [
-    "R4"
+    "R5"
    ]
   },
   {
    "id": "D19",
-   "path": "packages/core/src/api-keys/__tests__/api-keys.test.ts",
-   "change": "Integration tests: shown once and hashed at rest, revoked/expired rejected, scopes, quota exhaustion, one api.calls per call, idempotent on request id",
+   "path": "docs/engineering/flags.md",
+   "change": "Add the bench_facts row marked legal-gated.",
    "requirements": [
     "R5"
    ]
   },
   {
    "id": "D20",
-   "path": "apps/api/src/__tests__/api-keys.test.ts",
-   "change": "End-to-end through createApp: valid key 200, bad key 401, missing scope 403, per-key rate limit 429, quota 429 and usage counter incremented",
+   "path": "packages/config/src/env.ts",
+   "change": "Declare the KILL_BENCH_FACTS kill switch in FLAG_KILL_SWITCHES (locate the actual env module under packages/config/src/env* and the env doc if it lists switches).",
    "requirements": [
-    "R3",
     "R5"
    ]
   },
   {
    "id": "D21",
-   "path": "packages/core/src/api-keys/index.ts",
-   "change": "CI fix: apiKeyCallsThisPeriod (:289) passes a Date into a raw sql`` template (ERR_INVALID_ARG_TYPE, also the 500s in apps/api api-keys tests); use drizzle gte(usageEvent.createdAt, usagePeriod(at).start) instead",
+   "path": "packages/intelligence/src/bench-facts/static-guard.test.ts",
+   "change": "Static test: no schema column, source identifier or string literal in the bench-facts schema, intelligence, core court-day bench-card, API route or flag text matches rating/ranking/rank/compare/outcome-rate/grant-rate/dismissal/bail percent/predict/sentiment; mutation case proves it fails on a planted offender.",
+   "requirements": [
+    "R6",
+    "R8b"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register new core runtime exports (getBenchCard, any new court-day exports) in SERVICE_TESTS with a real case in core/src/__tests__/cross-tenant/services.test.ts, or NOT_A_SERVICE with a reason.",
    "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D22",
-   "path": "packages/core/src/lifecycle/export/exporters.ts",
-   "change": "CI fix: export api_key via ws('api_key',{exclude:['token_hash'],userColumn:'created_by'}) in the exporter that holds workspace_integration (:173); secrets never leave",
+   "id": "D23",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Add the cross-tenant case for getBenchCard (B on A sees nothing; A unchanged).",
    "requirements": [
-    "R4"
+    "R5"
    ]
   },
   {
-   "id": "D23",
-   "path": "packages/core/src/lifecycle/deletion/erase.ts",
-   "change": "CI fix: add 'api_key' to PURGE_ORDER (purge-coverage test), next to workspace_integration",
+   "id": "D24",
+   "path": "docs/adr/0036-bench-facts.md",
+   "change": "ADR: internal bench facts, no worker or internal DB role so access is via definer functions, flag bench_facts, prohibited-content guard. Update docs/adr/README.md index if it lists ADRs.",
    "requirements": [
-    "R4"
+    "R2",
+    "R5",
+    "R6"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Cookie-session auth and `GET /v1/me` behaviour; Principal.apiKey is optional (apps/api/src/__tests__/auth.test.ts, authorize.test.ts)"
+   "what": "The no-judge-aggregation guard stays green: bench.judges is still the only judge column and no view is added (packages/db/src/__tests__/judge-aggregation-guard.test.ts)."
   },
   {
    "id": "P2",
-   "what": "Existing usage keys, meter idempotency and `increment` signature (packages/core/src/usage/meter.ts, usage tests)"
+   "what": "estimateCallWindow/paceSamples signatures and the CallWindow output shape (packages/core/src/court-day/eta.ts) and the existing pollBoards/getLiveHalls behaviour and tests (court-day/board.test.ts, eta.test.ts); bench pace is only an additional source, with the raw-observation fallback."
   },
   {
    "id": "P3",
-   "what": "Default per-user/IP rate limit behaviour and headers (apps/api/src/__tests__/rate-limit.test.ts)"
+   "what": "board_observation grants and the existing app_board_poll_targets function (migration 0076) are unchanged; earlier migrations are not edited."
   },
   {
    "id": "P4",
-   "what": "requireWorkspace membership check semantics (apps/api/src/middleware/workspace.ts); cross-tenant route list in apps/api/src/__tests__/cross-tenant.test.ts"
+   "what": "Existing /v1 routes and the Principal/cookie-session behaviour in apps/api; the Principal and app.ts bearer wiring from #624 are untouched."
+  },
+  {
+   "id": "P5",
+   "what": "With bench_facts off (the default, packages/flags default snapshot), no behaviour changes for any user."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node /home/dev/.local/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/bench-facts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/api-keys src/usage src/domains.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/bench-facts-grants.test.ts src/__tests__/judge-aggregation-guard.test.ts src/index.test.ts src/__tests__/lint-migrations.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/api-keys.test.ts src/__tests__/auth.test.ts src/__tests__/rate-limit.test.ts src/__tests__/authorize.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/court-day src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/flags exec vitest run"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/export-coverage.test.ts src/lifecycle/__tests__/purge-coverage.test.ts src/api-keys --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
-  },
-  {
-   "id": "V6",
-   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/api-keys.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/cross-tenant.test.ts src/routes"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Principal for an API key carries `user` = the key's creator plus an optional `apiKey` field, so requireWorkspace and authorize keep working unchanged",
-   "justification": "apps/api/src/lib/openapi.ts:12-16 requires a SessionUser and middleware/workspace.ts:50 checks membership; a removed creator then invalidates the key",
+   "choice": "Restrict the table with REVOKE plus SECURITY DEFINER functions instead of new worker/internal DB roles.",
+   "justification": "Only owner/app/clerk roles exist (packages/db/src/client.ts:10) and the worker and web both connect as the app role; a new role needs infra and credentials. Precedent: migrations/0072_staff_parse_yield.sql and 0033_staff_console_reads.sql:21.",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Key lookup by hash through an owner-defined SECURITY DEFINER function",
-   "justification": "api_key is tenant FORCE RLS and the workspace is unknown before authentication; same pattern as app_cause_list_watch_targets in migrations/0068_cause_list_watch.sql",
-   "source": "precedent"
+   "choice": "Keep the flag key literally `bench_facts` and relax the docs test regex to allow underscore.",
+   "justification": "The issue names the flag `bench_facts`; the docs row regex at packages/flags/src/__tests__/docs.test.ts:16 only allows [a-z0-9.-].",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "sha256 + random secret, token shown once",
-   "justification": "packages/core/src/workspaces/invitations.ts:4,40-41 hashes high-entropy tokens this way; slow hashes are unnecessary for 256-bit secrets",
+   "choice": "Resolve hall to bench through an owner-defined, ids-only function over active rosters rather than reading tenant roster tables from the worker.",
+   "justification": "bench_roster_entry is FORCE-RLS tenant data (packages/db/src/schema/roster.ts:107); precedent app_board_poll_targets in 0076_display_board.sql:45-46.",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "New core domain 'api-keys' depending on audit, usage, workspaces only",
-   "justification": "core-domains.js:55 map and docs/engineering/core-domains.md require declared domain deps through index.ts",
+   "choice": "bench_id is nullable and no judge identity is stored; facts are per bench and hall.",
+   "justification": "D-050 (DECISIONS.md:418-426) and the judge-aggregation guard (judge-aggregation-guard.test.ts:25-27).",
    "source": "doc"
+  },
+  {
+   "id": "K5",
+   "choice": "The user-facing surface is delivered as the flagged core service plus API route; web card rendering is not built here.",
+   "justification": "Legal-gated (#118), ships dark; web UI would add an i18n namespace, stories and actions registry entries with no consumer while the flag is off. If the reviewer wants the card, add a web deliverable under R5.",
+   "source": "spec"
   }
  ]
 }

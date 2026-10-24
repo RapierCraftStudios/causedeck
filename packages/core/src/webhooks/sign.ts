@@ -14,7 +14,9 @@ export function generateWebhookSecret(): string {
 
 /** `v1=<hex>`: HMAC-SHA256 of `<unix seconds>.<body>` under the endpoint secret. */
 export function signWebhook(secret: string, timestamp: number, body: string): string {
-  return `v1=${createHmac('sha256', secret).update(`${String(timestamp)}.${body}`).digest('hex')}`;
+  return `v1=${createHmac('sha256', secret)
+    .update(`${String(timestamp)}.${body}`)
+    .digest('hex')}`;
 }
 
 /** Whether `signature` is the signature of this timestamp and body (constant time); for receivers and tests. */

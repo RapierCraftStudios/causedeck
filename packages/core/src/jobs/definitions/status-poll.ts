@@ -54,7 +54,10 @@ async function enqueueDelivery(job: DeliveryJob): Promise<unknown> {
 }
 
 export type StatusPollDeps = Partial<
-  Pick<PollCaseWatchesDeps, 'fetcher' | 'policy' | 'listDue' | 'caps' | 'now' | 'enqueueDelivery' | 'onChange'>
+  Pick<
+    PollCaseWatchesDeps,
+    'fetcher' | 'policy' | 'listDue' | 'caps' | 'now' | 'enqueueDelivery' | 'onChange'
+  >
 >;
 
 /** The job body. Exported for tests. */

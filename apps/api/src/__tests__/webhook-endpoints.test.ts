@@ -28,7 +28,11 @@ describe('/v1/webhook-endpoints', () => {
     const app = makeApp();
     const id = '00000000-0000-4000-8000-000000000001';
     const responses = [
-      await call(app, '/v1/webhook-endpoints', { method: 'POST', bearer: token, body: { url: URL_A } }),
+      await call(app, '/v1/webhook-endpoints', {
+        method: 'POST',
+        bearer: token,
+        body: { url: URL_A },
+      }),
       await call(app, '/v1/webhook-endpoints', { bearer: token }),
       await call(app, `/v1/webhook-endpoints/${id}`, { method: 'DELETE', bearer: token }),
     ];
@@ -87,7 +91,9 @@ describe('/v1/webhook-endpoints', () => {
     });
     const { id } = (await created.json()) as { id: string };
 
-    const seenByB = (await (await call(app, '/v1/webhook-endpoints', { bearer: b.token })).json()) as {
+    const seenByB = (await (
+      await call(app, '/v1/webhook-endpoints', { bearer: b.token })
+    ).json()) as {
       data: unknown[];
     };
     expect(seenByB.data).toEqual([]);
@@ -96,7 +102,9 @@ describe('/v1/webhook-endpoints', () => {
       bearer: b.token,
     });
     expect(deleted.status).toBe(404);
-    const stillThere = (await (await call(app, '/v1/webhook-endpoints', { bearer: a.token })).json()) as {
+    const stillThere = (await (
+      await call(app, '/v1/webhook-endpoints', { bearer: a.token })
+    ).json()) as {
       data: unknown[];
     };
     expect(stillThere.data).toHaveLength(1);

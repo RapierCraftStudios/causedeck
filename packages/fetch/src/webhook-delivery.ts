@@ -9,11 +9,7 @@ import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 
 export type WebhookDeliveryErrorReason =
-  | 'invalid_url'
-  | 'blocked_address'
-  | 'unresolvable'
-  | 'timeout'
-  | 'network';
+  'invalid_url' | 'blocked_address' | 'unresolvable' | 'timeout' | 'network';
 
 /** The delivery was refused or never got an HTTP response; `status` of a response is a result, not an error. */
 export class WebhookDeliveryError extends Error {

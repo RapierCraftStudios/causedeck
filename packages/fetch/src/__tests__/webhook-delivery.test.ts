@@ -82,7 +82,9 @@ describe('deliverWebhook', () => {
 
   it('returns a redirect as a status and never follows it', async () => {
     const fetchImpl = vi.fn(() =>
-      Promise.resolve(new Response(null, { status: 302, headers: { location: 'https://10.0.0.1' } })),
+      Promise.resolve(
+        new Response(null, { status: 302, headers: { location: 'https://10.0.0.1' } }),
+      ),
     );
     await expect(
       deliverWebhook('https://hooks.example.com/in', request, {

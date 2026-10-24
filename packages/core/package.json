@@ -24,6 +24,7 @@
     "./case-watch": "./src/case-watch/index.ts",
     "./deadlines": "./src/deadlines/index.ts",
     "./notices": "./src/notices/index.ts",
+    "./onboarding": "./src/onboarding/index.ts",
     "./conflicts": "./src/conflicts/index.ts",
     "./facts": "./src/facts/index.ts",
     "./matter-graph": "./src/matter-graph/index.ts",

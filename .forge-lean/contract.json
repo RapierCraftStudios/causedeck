@@ -2,224 +2,226 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "quote": "run delegated advocate searches (Madras HC advocate or enrolment search, KHC list by name or BRN, eCourts advocate search) for the last 30 to 90 days and upcoming lists, then build proposed matters and proceedings.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "dashboard (next dates, stage, adverse orders)",
+   "quote": "`apps/web` onboarding: identifiers, then courts, then a live progress view (\"found 38 listings in 3 courts\"), then the one confirm grid (approve, merge, split; existing UJ-1 grid), then the court-day view.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "exception alert settings",
+   "quote": "Name disambiguation: common names are confirmed by enrolment number or BRN and by sample matters before anything is saved.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "exception alert settings, exports",
+   "quote": "Instrumentation: time to first court-day view, and matters discovered against matters confirmed.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "i18n namespace and catalog test",
+   "quote": "An advocate with identifiers at both launch High Courts reaches a populated court-day view in under 10 minutes in staging fixtures. [type:e2e]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Playwright e2e runs in CI (ship PRs and nightly), never locally per CLAUDE.md; the in-lane fixture-driven integration test covers the flow offline."
+  },
+  {
+   "id": "R6",
+   "quote": "Nothing is saved before the confirm grid; discovered matters carry provenance. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R6",
-   "quote": "cross-tenant-actions test entries for each 'use server' action.",
+   "id": "R7",
+   "quote": "Ambiguous names prompt for disambiguation, never a silent merge. [type:unit]",
    "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "matters discovered against matters confirmed",
+   "disposition": "defer",
+   "why": "This change records the activation steps and logs discovered/confirmed counts; a persisted metric and a Growth page panel is separate admin work.",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/portfolio/portfolio.ts",
-   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
+   "path": "packages/core/src/onboarding/discover.ts",
+   "change": "New discoverAdvocateCases(deps,input): per-court DiscoverySource ports fetched via the governed fetcher with delegatedFor, parsed in memory, matched with createAdvocateMatcher (exact only), staged as proposals only (no matter-graph writes), returns progress counts, skipped uncleared courts, provenance on each draft, and needsDisambiguation for name-only/ambiguous identifiers (no staging until confirmed). Window 30-90 days back plus upcoming.",
    "requirements": [
     "R1",
-    "R2"
+    "R3",
+    "R6",
+    "R7"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "Export listPortfolios and createPortfolio.",
+   "path": "packages/core/src/onboarding/index.ts",
+   "change": "Public index exporting the discovery API.",
    "requirements": [
-    "R1",
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
+   "path": "packages/core/src/onboarding/discover.test.ts",
+   "change": "Unit/integration tests with mock fetcher: advocate search per court, ambiguity prompts, nothing in matter graph before apply, provenance, uncleared source skipped, counts logged.",
    "requirements": [
-    "R6"
+    "R1",
+    "R3",
+    "R6",
+    "R7",
+    "R4"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Register the onboarding domain and its allowed imports (import, automation, sources, court via index only).",
    "requirements": [
-    "R6"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/portfolio/portfolio.test.ts",
-   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the onboarding domain row.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
-   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
+   "path": "packages/core/src/domains.test.ts",
+   "change": "Only if the guard test lists domains: add onboarding to the expected list.",
    "requirements": [
-    "R1",
-    "R4"
+    "R1"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
-   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register each new runtime export of @causedeck/core (SERVICE_TESTS with real case, or NOT_A_SERVICE with reason) .",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
-   "change": "Skeleton loading state.",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Cross-tenant cases for the registered discovery services (B on A denied/sees nothing; A unchanged).",
    "requirements": [
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
-   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
+   "path": "packages/db/migrations",
+   "change": "New migration (timestamp naming like 20261024182641_activation_event.sql, regenerated meta snapshot) seeding uncleared advocate-search source rows for Madras HC, KHC and eCourts, kind court, captcha only via delegated lookup; if the migration dir needs a root-table test update, update packages/db/src/index.test.ts.",
    "requirements": [
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/portfolio/portfolio-view.tsx",
-   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
+   "path": "apps/web/app/(app)/w/[slug]/onboarding/actions.ts",
+   "change": "workspaceAction server actions: start discovery, poll progress, confirm disambiguation, feeding the existing import plan actions; record identifiers_entered, discovery_found, confirm_grid_done, first_court_day_view via recordActivation (never failing the action) and log discovered vs confirmed counts.",
    "requirements": [
-    "R1",
     "R2",
     "R3",
-    "R4"
+    "R4",
+    "R6"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
+   "path": "apps/web/app/(app)/w/[slug]/onboarding/page.tsx",
+   "change": "Server page plus client steps (identifiers, courts, live progress, disambiguation, existing confirm-grid, redirect to court-day view); also loading.tsx and error.tsx beside it.",
    "requirements": [
-    "R1",
-    "R2"
+    "R2",
+    "R3"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'portfolio' to NAMESPACES.",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Add ACTIONS entries and probe inputs for each new 'use server' action.",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/i18n/src/messages/en/portfolio.json",
-   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Add an onboarding-discovery namespace (en/kn/ta JSON under packages/i18n/src/messages/*/) and update packages/i18n/src/__tests__/catalog.test.ts (and generated types if checked in).",
    "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'portfolio' to the expected namespace list.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
-   "requirements": [
-    "R6"
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+   "what": "Existing import actions and plan semantics: apps/web/app/(app)/w/[slug]/import/actions.ts and packages/core/src/import/{bootstrap,apply,plan-edit}.ts; nothing reaches the matter graph before applyImportPlan."
   },
   {
    "id": "P2",
-   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+   "what": "createWorkspaceAction behaviour and the /onboarding workspace creation page (apps/web/app/(app)/onboarding/*), including its workspace_created activation record."
   },
   {
    "id": "P3",
-   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+   "what": "Matched-only/exact-match rule in packages/core/src/import/identifiers.ts and court/list-watch.ts; fail-closed sourcing via policyFor in packages/core/src/sources; fetch layer contracts in packages/fetch/src/types.ts."
+  },
+  {
+   "id": "P4",
+   "what": "Activation steps list in packages/db/src/schema/activation.ts (no new step unless the check constraint migration is added)."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/onboarding/discover.test.ts src/import src/court/list-watch.test.ts src/activation --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
-   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
+   "choice": "Discovery is built on injected DiscoverySource/fetcher ports rather than hard-wiring adapters.",
+   "justification": "Same structural-port pattern as court/list-watch.ts:181 (ListFetcher) and case-watch/lookup.ts:53 (StatusFetcher), which keeps domains acyclic and tests offline.",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
-   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
+   "choice": "Stage discovered matters as proposals and reuse buildImportPlan/applyImportPlan and the existing confirm grid.",
+   "justification": "import/bootstrap.ts:317 and import/apply.ts:122 already guarantee nothing is written before apply; list-watch.ts stages through submitProposals.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
-   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
-   "source": "precedent"
+   "choice": "Advocate-search sources are seeded uncleared.",
+   "justification": "policyFor fails closed and D-048 requires DPDP clearance before production fetches (issue #479 context).",
+   "source": "spec"
   }
  ]
 }

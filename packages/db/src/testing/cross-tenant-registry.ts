@@ -273,6 +273,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listPortfolioCases: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   portfolioSummary: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   exportPortfolioCsv: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  // Portfolio list and create (#666): B cannot list or create in A's workspace; B's list has no A row.
+  listPortfolios: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  createPortfolio: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   // Exception alerts (#665): the scan opens withWorkspace on the given workspace id only.
   scanPortfolioAlerts: {
     test: CORE_PORTFOLIO_TEST,

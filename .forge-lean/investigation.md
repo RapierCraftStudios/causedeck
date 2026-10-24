@@ -1,41 +1,44 @@
 **Verdict**: CONFIRMED
 **Confidence**: medium
-**Severity**: medium (P1 label; greenfield and additive: new tables, a staff queue and one web action; no existing writer changes)
+**Severity**: medium (greenfield feature, part 6 of #498; last UI slice)
 **Task Type**: feature
 
 ### What Was Claimed
-Reliable data needs a human-in-the-loop queue for low-confidence parses, cross-source conflicts (#499) and user-reported errors. Conflicts only reach the lawyer's own workspace, and there is no report-an-error path. Wanted: (1) a "report an error" action on a fetched fact in `apps/web`, with consent to share the record with staff; (2) an `apps/admin` Review queue (low parse confidence, conflicts, reports) with assignment, SLA, a fix form and send-to-workbench for a regression fixture; (3) fixes to global records propagate to watchers as corrections with provenance "corrected by CauseDeck review". Acceptance: report reaches the queue and its fix reaches every watcher (integration); a fixed item becomes a fixture in one action (integration); reviewers see only the record under review and access is logged (unit).
+Add `apps/web/app/(app)/w/[slug]/portfolio/`: CSV import, dashboard (next dates, stage, adverse orders), exception alert settings, exports; an i18n namespace with catalog test; cross-tenant-actions test entries for every `'use server'` action. Depends on #663 (service), #664 (billing), #665 (alerts).
 
 ### What We Found
-- Base (`e89a069f`, lane `milestone/court-data-network`) has no review queue: no `review_*` table in `packages/db/src/schema/`, no `apps/admin/app/(console)/review`. Dependency #499 is merged: `packages/core/src/facts/agreement.ts` (`assessAgreement`), `packages/db/migrations/0082_staff_conflict_rate.sql` (`app_staff_conflict_rate`).
-- Data Ops already has global, content-free tables and detectors: `packages/db/src/schema/data-ops.ts:39-123` (`source_health`, `source_parse_run` with `conflicts`, `data_ops_alert` incl. `parse_yield` and `conflict_rate` types at :23-30), `packages/core/src/data-ops/index.ts:20-33` (`recordParseRun`), `detectors.ts`. These are the natural producers of low-confidence and conflict queue items (source-level, no content).
-- Conflicts are workspace-local: `proposeNextDate`/`chooseNextDateSource` in `packages/core/src/matter-graph/next-date.ts:1-17`; `listing` is a tenant table under FORCE RLS, staff reach tenant data only via SECURITY DEFINER functions guarded by `app_staff_require_caller()` (`packages/db/migrations/0033_staff_console_reads.sql:21`, pattern in `0072_staff_parse_yield.sql`, `0082_staff_conflict_rate.sql:11-35`) or a consented support session (`packages/core/src/support/access.ts:1-30`).
-- Fetched facts a user could report: `case_status_snapshot.fields` (next date, stage, bench) keyed to `case_watch` (source_id + cnr) in `packages/db/src/schema/case-watch.ts:31-110`; `listing` provenance via `provenance()` at `packages/db/src/columns.ts:75-85`. Watchers of the same record = `case_watch` rows with same `source_id` and `cnr` across workspaces.
-- Allowed `source_type` values (`columns.ts:14-22`) and `confirmation_state` (`columns.ts:30`: includes `corrected`) have no "CauseDeck review" value; provenance text can be carried in `source_ref` (e.g. `causedeck-review:<id>`) with `source_type='system'`.
-- Staff console: capability matrix `apps/admin/lib/roles.ts:11-30` (`data-ops` capability is ops+admin), `requireStaff` at `apps/admin/lib/staff.ts:36`; staff reads are audited with `record(...)` and event `staff.read` (`packages/core/src/audit/events.ts:88`, used in `apps/admin/app/(console)/fixtures/actions.ts:1-20`). Fixture creation exists: `buildFixture`, `previewDocument`, `correctionsFromEdits` in `packages/adapters/src/workbench/` and `fixtures/actions.ts:119,148` (document lives only in the request, never stored).
-- Registries that will fail CI if skipped: `packages/config/eslint/core-domains.js:93` (`'data-ops': []` today; a review domain needing `audit` must be declared) + `docs/engineering/core-domains.md`; `packages/db/src/testing/cross-tenant-registry.ts` (new runtime exports of `@causedeck/core`, new global/tenant tables), `packages/db/src/index.test.ts`, `packages/db/src/__tests__/rls/sql.test.ts`, `apps/web/__tests__/cross-tenant-actions.test.ts` (new `'use server'` action), `apps/admin/__tests__/server-actions-audit.test.ts` and `no-content-fields.test.ts` (admin actions must audit; no content fields).
-- Stale `.forge-lean/*` and the investigation comment on the issue describe #499, not #518; ignored.
+- No portfolio route exists: `apps/web/app/(app)/w/[slug]/` has no `portfolio/` (listing checked at origin/milestone/court-data-network, 5906e366).
+- Core service is done and exported from the root: `packages/core/src/index.ts:22` -> `packages/core/src/portfolio/index.ts:5-27` (`importPortfolioCases`, `listPortfolioCases`, `portfolioSummary`, `exportPortfolioCsv`, `parsePortfolioCsv`, `scanPortfolioAlerts`). Import is owner-only, reads for any active member (`access.ts:16-24`). `packages/core/package.json` has no `./portfolio` subpath (only root and per-domain subpaths, lines 25-45).
+- There is NO core function to create or list portfolios: `schema.portfolio` is only inserted by tests/seeders (`packages/db/src/testing/two-tenants.ts`, `portfolio.test.ts`). The UI cannot get a `portfolioId` without one -> small core addition needed (see Recommendation).
+- Dashboard data shape: `dashboard.ts:20-36` (filters stage, nextFrom/nextTo, adverseOnly, limit<=500), `:72-81` (`PortfolioSummary`: total, byStage, withAdverseOrder, upcoming, overdue). Import report shape: `import.ts:39-51`. Export returns a CSV string: `export.ts:22-27`.
+- Alert categories exist: `packages/notifications/src/categories.ts:47-58` (`portfolio.adverse_order`, `portfolio.missed_date`); the notification preferences form already maps them (`settings/notifications/preferences-form.tsx:89-90`), so "alert settings" can reuse `setNotificationPreferenceAction` (`settings/notifications/actions.ts:97`) rather than a new action.
+- Billing #664 closed `needs-human conformance.unimplemented`, but `packages/billing/src/plans.ts:23,56-61` already has `TRACKED_CASE_PRICE_PAISE`/`trackedCaseChargePaise`; the UI does not need it.
+- Precedent for the page/action pattern: `courts/rosters/{page,actions,loading,error}.tsx` and `workspaceAction` (`apps/web/lib/workspace-action.ts`), actions wrapped as async exports (`rosters/actions.ts:120-135`).
+- Workspace kind `institution` exists (`packages/db/src/schema/auth.ts:44`); nav routes are the `WORKSPACE_ROUTES` list in `apps/web/lib/nav.ts:26-45` with `nav.test.ts` guarding it.
+- i18n: namespaces in `packages/i18n/src/catalog.ts:7-38` (e.g. `courts-rosters` at :20), JSON per locale in `packages/i18n/src/messages/{en,kn,ta}/`, expected list in `packages/i18n/src/__tests__/catalog.test.ts:~95-100` (camelCase names).
+- Cross-tenant actions guard: `apps/web/__tests__/cross-tenant-actions.test.ts` `ACTIONS` (:123) and probe inputs (:565-), final check that exported == ACTIONS (:798).
 
 ### Root Cause
-Greenfield. Provenance and conflict detection exist, but conflicts and parse quality live in tenant workspaces or content-free global counters; there is no consented path to move one record to staff, no staff work queue (assignment, SLA, status), and no cross-workspace correction write-back.
+Part 6 of a staged build: the data model (#661), adapters (#662), service (#663) and alerts (#665) landed, but nothing in `apps/web` surfaces them, and the service lacks a way to create/list a workspace's portfolio.
 
 ### Affected Files
-- `packages/db/src/schema/review.ts` (new), `packages/db/src/schema/index.ts`, migration `packages/db/migrations/<next free>_review_queue.sql` + snapshot/journal: global `review_item` (kind low_confidence|conflict|user_report, source_id, cnr/record key, field, shown/corrected value, consent flag, status, assignee, due_at, fixture_exported_at, no workspace id); tenant `review_correction` (workspace_id, proceeding_id, field, value, provenance, review_item_id); SECURITY DEFINER `app_review_propagate(item_id)` fanning a fix to every `case_watch` of the same source+cnr.
-- `packages/core/src/review/{index,queue,propagate}.ts` (new) + `packages/core/package.json` export; `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`.
-- `packages/core/src/data-ops/` evaluator hook to enqueue low-confidence / conflict items (content-free, dedup per source+kind).
-- `apps/web`: report-error action + button on the fetched fact (consent checkbox), `apps/web/lib/matters/workspace.ts` read of `review_correction` shown as "corrected by CauseDeck review"; i18n `packages/i18n/src/messages/{en,kn,ta}/matters.json`.
-- `apps/admin/app/(console)/review/{page.tsx,[id]/page.tsx,actions.ts}`, `apps/admin/lib/roles.ts` (add `review` capability to ops+admin, nav in `components/console-nav.tsx`).
-- Registries and tests listed above.
+- New: `apps/web/app/(app)/w/[slug]/portfolio/{page.tsx,loading.tsx,error.tsx,actions.ts}`, components under `apps/web/components/portfolio/`.
+- `packages/core/src/portfolio/{portfolio.ts (new),index.ts}`, registry `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts` (or `portfolio.test.ts` the registry points to).
+- `packages/i18n/src/{catalog.ts,messages/{en,kn,ta}/portfolio.json,__tests__/catalog.test.ts}` (+ generated types if checked in: `generated/messages.d.ts`).
+- `apps/web/lib/nav.ts` (+ nav test), `apps/web/__tests__/cross-tenant-actions.test.ts`.
 
 ### Sibling Sweep
-- Same defect class (staff cannot see or fix tenant-held facts) exists for hearings, orders and notices (`packages/db/src/schema/docket.ts`, `notices.ts`, `cause-list-watch.ts` global publications). Scope the first cut to case-status fields (next date, stage, bench) with a field enum that can grow; note the others in a follow-up rather than silently dropping.
-- `data_ops_alert` `conflict_rate`/`parse_yield` alerts are the only existing automatic signals; they are source-level, so queue items from them carry no record content.
+Every new core runtime export and every `'use server'` action needs a registry entry (CLAUDE.md table). Other pages' `loading/error` files and `__state` dev previews follow rosters; mirror them. No existing code path creates portfolios, so the same gap applies to any API surface (out of scope).
 
 ### History
-Conflict card #390; cross-source agreement and `app_staff_conflict_rate` #499 (0082); Data Ops #514/#515; fixture workbench #516; case-watch #589/#591/#592. No prior attempt at #518 (state `committed: []`).
+Parent #498 (closed not_planned umbrella). Siblings #661-#665 merged on milestone/court-data-network. This is the first web slice.
 
 ### Recommendation
-One lane, ordered: (1) schema + migration + registries; (2) core `review` domain (enqueue, assign, SLA, fix, propagate, audit) with unit tests; (3) admin Review queue pages and actions (audited `staff.read`, a reviewer sees one item's record only); (4) web report action with consent; (5) send-to-workbench action reusing `buildFixture`. Propagation writes tenant `review_correction` rows through the definer function (no direct `listing` writes: the `no-direct-listing-update` guard in `packages/core/src/__tests__/` stays green). Medium confidence because "global record" is not a table in this repo: it is modelled as source+CNR+field, and the one-action fixture needs the consented document stored on the item (retention limited to the item's life).
+1. Core: add `listPortfolios` (any member) and `createPortfolio` (owner-only, name 1-200 chars, unique per workspace -> CONFLICT) in `packages/core/src/portfolio/portfolio.ts`, exported via index; register both as `denies` in the cross-tenant registry with real cases.
+2. Actions (`workspaceAction`, zod, `WorkspaceScoped`): `createPortfolioAction`, `importPortfolioAction` (owner; CSV text up to a size cap, optional sourceId), `exportPortfolioCsvAction` (members; returns CSV string for a client download). Core functions take `{db}` deps; use the actor's `ctx.tx`-compatible db like other actions. Alert settings reuse the existing preference action (no new action), linking/embedding the two categories.
+3. Page: server component with summary cards, filters (stage, next-date window, adverse only via search params), table of cases, import form (owner only), export button, alerts card; loading/error states; read-only for non-owners; empty state when no portfolio.
+4. i18n namespace `portfolio` in en/kn/ta + catalog tests; nav item `portfolio` shown for `institution` kind workspaces.
+5. Cross-tenant: ACTIONS + probes for each new action.
 
 ### Related Issues
-#499 (dependency, merged), #514, #515, #516 (workbench), #478, #589/#591/#592, #390.
+#498 (parent), #663, #664, #665, #661, #662.

@@ -91,6 +91,7 @@ describe('mobile bottom navigation', () => {
       'people',
       'courts',
       'notices',
+      'portfolio',
       'billing',
       'insights',
       'settings',

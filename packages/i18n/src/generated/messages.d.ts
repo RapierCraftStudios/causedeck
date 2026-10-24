@@ -33,6 +33,7 @@ export type Messages = {
     people: string;
     courts: string;
     notices: string;
+    portfolio: string;
     activity: string;
     billing: string;
     invoices: string;
@@ -139,6 +140,11 @@ export type Messages = {
         hint: string;
       };
       notices: {
+        description: string;
+        empty: string;
+        hint: string;
+      };
+      portfolio: {
         description: string;
         empty: string;
         hint: string;
@@ -2387,6 +2393,83 @@ export type Messages = {
       listed: string;
       source: string;
       open: string;
+    };
+  };
+  portfolio: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    error: {
+      title: string;
+      retry: string;
+    };
+    readOnly: string;
+    picker: {
+      label: string;
+    };
+    empty: {
+      title: string;
+      hint: string;
+    };
+    create: {
+      label: string;
+      placeholder: string;
+      submit: string;
+      created: string;
+    };
+    summary: {
+      label: string;
+      total: string;
+      upcoming: string;
+      overdue: string;
+      adverse: string;
+      stages: string;
+      noStage: string;
+    };
+    filters: {
+      stage: string;
+      anyStage: string;
+      from: string;
+      to: string;
+      adverseOnly: string;
+      apply: string;
+      reset: string;
+    };
+    table: {
+      label: string;
+      reference: string;
+      stage: string;
+      nextDate: string;
+      adverse: string;
+      adverseOrder: string;
+      empty: string;
+    };
+    import: {
+      title: string;
+      hint: string;
+      file: string;
+      submit: string;
+      done: string;
+      report: string;
+      errorLine: string;
+    };
+    export: {
+      button: string;
+      failed: string;
+    };
+    alerts: {
+      title: string;
+      hint: string;
+      adverseOrder: string;
+      missedDate: string;
+      switchLabel: string;
+      failed: string;
+      channels: {
+        inApp: string;
+        email: string;
+        push: string;
+      };
     };
   };
   caseWatch: {

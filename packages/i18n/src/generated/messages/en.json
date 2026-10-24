@@ -32,6 +32,7 @@
     "people": "People",
     "courts": "Courts",
     "notices": "Notices",
+    "portfolio": "Portfolio",
     "activity": "Activity",
     "billing": "Billing",
     "invoices": "Invoices",
@@ -141,6 +142,11 @@
         "description": "Official notices for your forums and matters.",
         "empty": "No notices matched yet.",
         "hint": "Notices appear when a court publishes one for a forum you use."
+      },
+      "portfolio": {
+        "description": "The cases your institution tracks.",
+        "empty": "No portfolio yet.",
+        "hint": "Create a portfolio and import a CSV of cases to start."
       },
       "activity": {
         "description": "Everything that happened, with undo.",
@@ -2386,6 +2392,83 @@
       "listed": "{count, plural, one {Listed on {dates}} other {Listed on {dates}}}",
       "source": "Source: {source}",
       "open": "Open the official notice"
+    }
+  },
+  "portfolio": {
+    "metaTitle": "Portfolio",
+    "title": "Portfolio",
+    "description": "The recovery cases your institution tracks: next dates, stage and adverse orders, as the courts last published them.",
+    "loading": "Loading portfolio",
+    "error": {
+      "title": "Could not load the portfolio.",
+      "retry": "Try again"
+    },
+    "readOnly": "Only owners can create portfolios and import cases.",
+    "picker": {
+      "label": "Portfolios"
+    },
+    "empty": {
+      "title": "No portfolio yet",
+      "hint": "Create a portfolio, then import a CSV of CNRs or case numbers to start tracking."
+    },
+    "create": {
+      "label": "Portfolio name",
+      "placeholder": "Recovery book",
+      "submit": "Create portfolio",
+      "created": "Portfolio created"
+    },
+    "summary": {
+      "label": "Portfolio summary",
+      "total": "Cases",
+      "upcoming": "Next date within 7 days",
+      "overdue": "Next date passed",
+      "adverse": "With an adverse order",
+      "stages": "Cases by stage",
+      "noStage": "No stage yet"
+    },
+    "filters": {
+      "stage": "Stage",
+      "anyStage": "Any stage",
+      "from": "Next date from",
+      "to": "Next date to",
+      "adverseOnly": "Adverse orders only",
+      "apply": "Apply filters",
+      "reset": "Clear filters"
+    },
+    "table": {
+      "label": "Tracked cases",
+      "reference": "CNR or case number",
+      "stage": "Stage",
+      "nextDate": "Next date",
+      "adverse": "Adverse order",
+      "adverseOrder": "Adverse order on {date}",
+      "empty": "No cases match."
+    },
+    "import": {
+      "title": "Import cases",
+      "hint": "Upload a CSV with a CNR or Case Number column (up to 1,000 rows). Watches are created under your panel advocates; nothing is fetched at import.",
+      "file": "CSV file",
+      "submit": "Import cases",
+      "done": "{created, plural, one {# case imported} other {# cases imported}}",
+      "report": "{created} imported, {duplicates} already tracked, {invalid} invalid. {watched} watched, {unwatched} without a watch.",
+      "errorLine": "Line {line}: {message}"
+    },
+    "export": {
+      "button": "Export CSV",
+      "failed": "Could not export the portfolio."
+    },
+    "alerts": {
+      "title": "Exception alerts",
+      "hint": "Choose how you hear about a new adverse order or a missed next date on a portfolio case.",
+      "adverseOrder": "New adverse order",
+      "missedDate": "Missed next date",
+      "switchLabel": "{category} by {channel}",
+      "failed": "Could not save the alert setting.",
+      "channels": {
+        "inApp": "In-app",
+        "email": "Email",
+        "push": "Push"
+      }
     }
   },
   "caseWatch": {

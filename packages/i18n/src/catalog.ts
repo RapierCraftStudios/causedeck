@@ -19,6 +19,7 @@ export const NAMESPACES = [
   'courts',
   'courts-rosters',
   'notices',
+  'portfolio',
   'case-watch',
   'court-day',
   'court-insights',

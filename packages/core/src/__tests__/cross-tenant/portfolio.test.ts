@@ -73,6 +73,19 @@ const CASES: Record<string, Case> = {
     });
     expect(own.trim().split('\r\n')).toHaveLength(1);
   },
+  listPortfolios: async (f) => {
+    await expectDenied(core.listPortfolios({ db: f.tx }, asBInA(f)));
+    const own = await core.listPortfolios({ db: f.tx }, asB(f));
+    expect(own.map((p) => p.id)).toContain(f.bPortfolioId);
+    expect(own.map((p) => p.id)).not.toContain(f.aPortfolioId);
+  },
+  createPortfolio: async (f) => {
+    const before = await core.listPortfolios({ db: f.tx }, { userId: f.ua, workspaceId: f.a.id });
+    await expectDenied(core.createPortfolio({ db: f.tx }, asBInA(f), { name: 'Probe book' }));
+    expect(await core.listPortfolios({ db: f.tx }, { userId: f.ua, workspaceId: f.a.id })).toEqual(
+      before,
+    );
+  },
   scanPortfolioAlerts: async (f) => {
     const now = new Date('2026-11-01T00:00:00Z');
     const deps = { db: f.tx, enqueueDelivery: () => Promise.resolve(null), now: () => now };

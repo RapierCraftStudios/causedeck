@@ -15,9 +15,11 @@ import { addMember, newWorkspace } from '../__tests__/fixtures.ts';
 
 import { parsePortfolioCsv, toCsv } from './csv.ts';
 import {
+  createPortfolio,
   exportPortfolioCsv,
   importPortfolioCases,
   listPortfolioCases,
+  listPortfolios,
   MAX_PORTFOLIO_WATCHES_PER_ADVOCATE,
   portfolioSummary,
 } from './index.ts';
@@ -233,6 +235,42 @@ describe('dashboard and export', () => {
       expect(lines).toHaveLength(5);
       expect(lines[1]).toContain('Order 7');
       expect(lines[4]).toContain(",'=cmd|calc,");
+    });
+  });
+});
+
+describe('listPortfolios and createPortfolio (#666)', () => {
+  it('lets an owner create a portfolio that every member lists, and refuses a repeat name', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const owner = { userId: ownerId, workspaceId };
+      const clerk = { userId: await addMember(tx, workspaceId, 'clerk'), workspaceId };
+      const made = await createPortfolio({ db: tx }, owner, { name: '  Recovery book  ' });
+      expect(made.name).toBe('Recovery book');
+      expect((await listPortfolios({ db: tx }, clerk)).map((p) => p.id)).toEqual([made.id]);
+      await expect(
+        createPortfolio({ db: tx }, owner, { name: 'Recovery book' }),
+      ).rejects.toMatchObject({
+        code: 'CONFLICT',
+      });
+    });
+  });
+
+  it('refuses a non-owner, a blank name and a stranger', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const owner = { userId: ownerId, workspaceId };
+      const advocate = { userId: await addMember(tx, workspaceId, 'advocate'), workspaceId };
+      await expect(createPortfolio({ db: tx }, advocate, { name: 'X' })).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      });
+      await expect(createPortfolio({ db: tx }, owner, { name: '   ' })).rejects.toMatchObject({
+        code: 'VALIDATION',
+      });
+      const other = await newWorkspace(tx);
+      await expect(
+        listPortfolios({ db: tx }, { userId: other.ownerId, workspaceId }),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     });
   });
 });

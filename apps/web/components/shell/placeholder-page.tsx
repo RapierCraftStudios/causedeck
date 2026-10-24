@@ -34,6 +34,7 @@ export const EMPTY_ACTION_TARGET: Record<PlaceholderRoute, WorkspaceRoute | 'acc
   people: 'matters',
   courts: 'calendar',
   notices: 'courts',
+  portfolio: 'courts',
   activity: 'today',
   billing: 'matters',
   invoices: 'matters',

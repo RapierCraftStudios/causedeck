@@ -44,3 +44,9 @@ The `// authz: as startDryRunAction.` comments on startImportAction, resumeRunAc
 - After the second base merge `turbo run typecheck` again exited 127 (`turbo` is not on PATH): toolchain, not code. `tsc --noEmit` is clean for packages/core and apps/admin on the merged tree; no duplicate keys or same-named symbols found.
 
 - Post-merge re-check: `turbo: command not found` (exit 127) is an environment PATH issue, not a merge conflict. `tsc --noEmit` is clean in core and admin; V1-V3 pass. No code change.
+
+## Post-merge typecheck failure (turbo exit 127)
+Cause was environmental: `turbo` was not on PATH. With `node_modules/.bin` on PATH, `tsc --noEmit` in core and web reports only `fflate` not installed (declared by packages/capture on the base; no sibling symbol or key collision). No code change needed. Core discover/domains tests and i18n catalog test pass; cross-tenant services test cannot load because `fflate` is missing from this worktree's node_modules.
+
+### Post-merge typecheck
+The `turbo: command not found` failure (exit 127) was an environment problem: turbo is not on PATH. I ran it as `pnpm exec turbo`. The base had added the `fflate` dependency in `packages/capture`, and the worktree's node_modules was stale, so `capture`, `core` and `web` failed typecheck with `fflate` errors. `pnpm install --offline --frozen-lockfile` fixed that with no source change. Typecheck of core, web, i18n and db (19 tasks) now passes, and V1–V4 pass.

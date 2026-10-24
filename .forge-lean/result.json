@@ -1,64 +1,43 @@
 {
- "status": "fixed",
- "summary": "Coverage matrix, ranked gap list, live watch demand definer function and weekly staff report delivered; V1-V5 pass on rerun; merge recheck: turbo exit 127 is only turbo missing from PATH; pnpm exec turbo typecheck 23/23 pass, V1-V4 pass, no code change",
+ "status": "blocked",
+ "summary": "consumeApiCall now locks the key row and checks plus increments in one transaction, so concurrent calls cannot exceed quota",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "apps/admin/app/(console)/coverage/page.tsx"
+   "evidence": "packages/core/src/api-keys/index.ts:310",
+   "instrumented": false
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "packages/core/src/sources/coverage.ts"
+   "evidence": "packages/core/src/api-keys/index.ts:310-330",
+   "instrumented": false
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "packages/core/src/jobs/definitions/coverage-weekly.ts"
+   "evidence": "packages/core/src/api-keys/__tests__/concurrency.test.ts:54",
+   "instrumented": false
   },
   {
    "id": "R4",
    "status": "implemented",
-   "evidence": "packages/core/src/sources/__tests__/coverage.test.ts"
-  },
-  {
-   "id": "R5",
-   "status": "implemented",
-   "evidence": "packages/core/src/sources/__tests__/coverage.test.ts"
+   "evidence": "packages/core/src/api-keys/__tests__/concurrency.test.ts:70,81",
+   "instrumented": false
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V2",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V3",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing",
-   "exit": 0
-  },
-  {
-   "id": "V5",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/api-keys/__tests__/concurrency.test.ts src/api-keys/__tests__/api-keys.test.ts src/usage/__tests__/concurrency.test.ts src/__tests__/cross-tenant/services.test.ts",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "core coverage.test.ts + coverage-weekly.test.ts, admin coverage-page.test.tsx",
-   "result": "pass",
+   "command": "vitest run (4 files, TESTCONTAINERS_RYUK_DISABLED=true)",
+   "result": "pass with TESTCONTAINERS_RYUK_DISABLED=true; base fails the K-remaining case, head passes",
    "fails_without_fix": true
   }
  ],
@@ -66,23 +45,38 @@
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "R1-R5 each mapped in implementation.md to file:line"
+   "evidence": "index.ts:310; concurrency.test.ts:54"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "V2-V4 existing guard/registry tests pass"
+   "evidence": "api-keys.test.ts and cross-tenant services.test.ts pass (192 tests)"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "V1-V5 exit 0; preserve guard tests in V2 pass"
+   "evidence": "V1 exit 0; forgedock check PASS"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "git diff --name-only: deliverables plus tests and the D3 snapshot only"
+   "evidence": "diff touches only index.ts, concurrency.test.ts and .forge-lean files"
   }
  ],
- "amendments": []
+ "amendments": [],
+ "facts": {
+  "conventions": [
+   "Run vitest with TESTCONTAINERS_RYUK_DISABLED=true on this host: the Ryuk container fails to start"
+  ],
+  "hotspots": [
+   {
+    "at": "packages/db/src/testing/container.ts:67",
+    "why": "Testcontainers' Ryuk reaper cannot reach the docker daemon here (DOCKER_HOST=tcp://127.0.0.1:2375, no /var/run/docker.sock), so any db-backed vitest run fails at global setup unless TESTCONTAINERS_RYUK_DISABLED=true is set. This is a host problem, not a code one."
+   }
+  ]
+ },
+ "block": {
+  "type": "environment",
+  "why": "The repro vitest run fails at global setup on this host: testcontainers Ryuk reaper never logs Started (DOCKER_HOST=tcp://127.0.0.1:2375, no docker.sock), in packages/db/src/testing/container.ts, which is not a deliverable. With TESTCONTAINERS_RYUK_DISABLED=true the repro and V1 pass (192 tests) and the K-remaining case fails on base. The engine must set that variable when running the repro."
+ }
 }

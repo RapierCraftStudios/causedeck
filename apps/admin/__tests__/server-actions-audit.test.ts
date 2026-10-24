@@ -56,6 +56,7 @@ vi.mock('@causedeck/core/review', () => {
   const audited = (_db: unknown, staff: { userId: string }) =>
     mocks.record({ actor: { userId: staff.userId, kind: 'staff' } }, { action: 'staff.read' });
   return {
+    REVIEW_FIELDS: ['next_date', 'stage', 'bench'],
     assignReviewItem: audited,
     dismissReviewItem: audited,
     markFixtureExported: audited,

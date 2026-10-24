@@ -1,10 +1,9 @@
 // One review item (#518): the record under review (the view is audited), assignment, the fix form
 // and, once fixed, send-to-workbench.
 import { WORKBENCH_ADAPTERS } from '@causedeck/adapters/workbench';
-import { getReviewItem } from '@causedeck/core/review';
+import { getReviewItem, REVIEW_FIELDS } from '@causedeck/core/review';
 import { db } from '@causedeck/core/runtime';
 import { WorkspaceError } from '@causedeck/core/workspaces';
-import { REVIEW_FIELDS } from '@causedeck/db/schema';
 import { Button } from '@causedeck/ui/button';
 import { Input } from '@causedeck/ui/input';
 import { Label } from '@causedeck/ui/label';

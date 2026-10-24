@@ -16,10 +16,10 @@ import {
   dismissReviewItem,
   markFixtureExported,
   resolveReviewItem,
+  REVIEW_FIELDS,
 } from '@causedeck/core/review';
 import { db } from '@causedeck/core/runtime';
 import { WorkspaceError } from '@causedeck/core/workspaces';
-import { REVIEW_FIELDS } from '@causedeck/db/schema';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -36,7 +36,7 @@ const text = (formData: FormData, key: string): string => {
   return typeof value === 'string' ? value : '';
 };
 
-const idOf = (formData: FormData): string => z.string().uuid().parse(text(formData, 'id'));
+const idOf = (formData: FormData): string => z.uuid().parse(text(formData, 'id'));
 
 function back(id: string): never {
   revalidatePath('/review');

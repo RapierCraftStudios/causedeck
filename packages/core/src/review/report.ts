@@ -10,6 +10,9 @@ import { dueAtFor } from './queue.ts';
 
 const { caseWatch, reviewItem } = schema;
 
+/** The record fields a review can correct (for apps, which do not import `@causedeck/db`). */
+export const REVIEW_FIELDS = schema.REVIEW_FIELDS;
+
 export interface ReportErrorInput {
   proceedingId: string;
   field: schema.ReviewField;

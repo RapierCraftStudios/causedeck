@@ -99,5 +99,146 @@
    "evidence": "V1-V5 pass; diff limited to deliverables, tests, docs"
   }
  ],
- "amendments": []
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/app/(console)/review/[id]/page.tsx",
+   "why": "Review item page: record under review, assignment, fix form (R2, R6)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/app/(console)/review/page.tsx",
+   "why": "Review queue list page (R2)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/components/console-nav.tsx",
+   "why": "Nav entry for the Review queue (R2)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/components/review-fixture-form.tsx",
+   "why": "One-action send-to-workbench form (R5)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/actions.ts",
+   "why": "Server action for the report-an-error button (R1)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/components/matters/report-error.stories.tsx",
+   "why": "Storybook story required for the new UI component."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/components/matters/report-error.tsx",
+   "why": "Report-an-error UI with consent checkbox (R1)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/lib/matters/workspace.ts",
+   "why": "Loads review corrections for the matter workspace (R3)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/vitest.config.ts",
+   "why": "Coverage/alias config needed by the new web component tests."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "docs/engineering/core-domains.md",
+   "why": "Register the review core domain (CLAUDE.md registry)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/package.json",
+   "why": "Add the ./review export the contract D3 requires."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/data-ops/response.ts",
+   "why": "Enqueue review items from parse-confidence/conflict signals (R2)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/lifecycle/deletion/erase.ts",
+   "why": "Add review_correction to PURGE_ORDER; purge-coverage guard test fails otherwise."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/lifecycle/export/exporters.ts",
+   "why": "Export review_correction in the workspace export; tenancy CI guard."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/review/corrections.ts",
+   "why": "review domain module: list corrections (R3)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/review/queue.ts",
+   "why": "review domain module: queue (R2, R6)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/review/report.ts",
+   "why": "review domain module: reportRecordError and REVIEW_FIELDS re-export so apps avoid @causedeck/db (R1)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/conventions.ts",
+   "why": "Register new tables in db conventions."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/schema/index.ts",
+   "why": "Export review schema (D1 requires)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "why": "Two-tenant seeder for review_correction (CLAUDE.md registry)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages.d.ts",
+   "why": "Generated i18n types for reviewReport keys."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/en.json",
+   "why": "Generated catalog for reviewReport keys."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/kn.json",
+   "why": "Generated catalog for reviewReport keys."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/ta.json",
+   "why": "Generated catalog for reviewReport keys."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/en/matters.json",
+   "why": "reviewReport strings (R1)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/kn/matters.json",
+   "why": "reviewReport strings (R1)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/ta/matters.json",
+   "why": "reviewReport strings (R1)."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/translation-status.json",
+   "why": "Status entries for new ta/kn keys; check-catalogs fails otherwise."
+  }
+ ]
 }

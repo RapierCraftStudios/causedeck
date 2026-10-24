@@ -19,7 +19,7 @@ type Queryable = Database | Transaction;
 
 const { ssoProvider } = schema;
 
-export type SsoProtocol = typeof ssoProvider.$inferSelect['protocol'];
+export type SsoProtocol = (typeof ssoProvider.$inferSelect)['protocol'];
 
 /** What the settings page may know about a provider: never `config`. */
 export interface SsoProviderSummary {

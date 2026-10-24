@@ -1187,6 +1187,155 @@
         }
       }
     },
+    "/v1/workspaces/{workspaceId}/matters/{matterId}/bench-card": {
+      "get": {
+        "operationId": "getMatterBenchCard",
+        "tags": ["Court day"],
+        "summary": "The matter’s bench card: neutral sitting facts (flag-gated)",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "matterId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bench card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "benchId": {
+                          "type": "string"
+                        },
+                        "sat": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "sittings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "sittingDate": {
+                                "type": "string"
+                              },
+                              "hallNo": {
+                                "type": "string"
+                              },
+                              "itemsListed": {
+                                "type": "number"
+                              },
+                              "itemsHeard": {
+                                "type": "number"
+                              },
+                              "itemsDisposed": {
+                                "type": "number"
+                              },
+                              "minutesPerItem": {
+                                "type": ["number", "null"]
+                              }
+                            },
+                            "required": [
+                              "sittingDate",
+                              "hallNo",
+                              "itemsListed",
+                              "itemsHeard",
+                              "itemsDisposed",
+                              "minutesPerItem"
+                            ]
+                          }
+                        }
+                      },
+                      "required": ["benchId", "sat", "sittings"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/webhooks/razorpay": {
       "post": {
         "operationId": "receiveRazorpayWebhook",

@@ -66,3 +66,6 @@ Only .forge-lean files conflicted (kept this branch's). `turbo: command not foun
 
 ### CI fix (intelligence test, run 40084029731)
 The only failed task was `@causedeck/intelligence#test`; the log excerpt shows no failing assertion. This branch changes nothing under packages/intelligence (`git diff origin/milestone/court-data-network...HEAD -- packages/intelligence` is empty, P1 preserved). `vitest run --coverage` for the package passes locally (exit 0, no threshold error). Treated as a CI-load flake unrelated to this change; no code change.
+
+## Merge recheck (3)
+turbo not found (exit 127) is a host PATH issue, not a merge conflict. tsc --noEmit clean for core, worker, db; core V1 and worker V2 subsets pass. No code change.

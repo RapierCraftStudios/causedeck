@@ -1,0 +1,125 @@
+{
+ "status": "fixed",
+ "summary": "Review queue (#518): report-error action, queue with assignment/SLA/fix form, propagation as corrections, one-action fixture export; V1-V5 pass after merge",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "apps/web/app/(app)/w/[slug]/matters/[id]/actions.ts:187"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "apps/admin/app/(console)/review/page.tsx:1"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/review/corrections.ts:1"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "packages/core/src/review/__tests__/review.test.ts"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "apps/admin/app/(console)/review/actions.ts; review.test.ts:217"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/core/src/review/queue.ts:124; review.test.ts:185"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "packages/core/src/data-ops/response.ts:212; apps/admin/app/(console)/review/actions.ts"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/review src/data-ops src/facts src/__tests__/cross-tenant/services.test.ts src/__tests__/no-direct-listing-update.test.ts src/domains.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/roles.test.ts __tests__/server-actions-audit.test.ts __tests__/no-content-fields.test.ts __tests__/fixtures-workbench.test.ts __tests__/data-ops.test.tsx",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "core review.test.ts; web cross-tenant-actions.test.ts",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R7 mapped to file:line"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V1-V5 pass"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V5 exit 0"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "extra paths declared via amendments"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/data-ops/response.ts",
+   "why": "applyResponses lives here, not index.ts; enqueues review items on breaches"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/components/matters/report-error.tsx",
+   "why": "consent form component"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/components/review-fixture-form.tsx",
+   "why": "one-action send-to-workbench form"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "why": "two-tenant seeder for review_correction"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/vitest.config.ts",
+   "why": "a named cross-tenant suite now runs with the tenancy global setup"
+  }
+ ],
+ "not_members": []
+}

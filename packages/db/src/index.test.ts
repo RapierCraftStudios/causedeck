@@ -132,6 +132,8 @@ describe('@causedeck/db root entry point', () => {
       'proposal',
       'push_subscription',
       'rate_limit',
+      'review_correction',
+      'review_item',
       'role_edge',
       'saas_invoice',
       'saas_invoice_line',

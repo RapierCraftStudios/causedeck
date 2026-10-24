@@ -2,37 +2,43 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Two disagreeing sources produce one conflict card; agreeing sources raise confidence.",
+   "quote": "A \"report an error\" action on any fetched fact in `apps/web` (with the user's consent to share that record with CauseDeck staff for correction).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Adapter health reports the conflict rate per source.",
+   "quote": "`apps/admin` Review queue: items from low parse confidence, conflicts and reports, with assignment, SLA, a fix form, and send-to-workbench (#fixture workbench) to create a regression fixture.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/facts/agreement.ts`: for each fact, the set of sources, agreement status (agree, conflict, single source) and a confidence score.",
+   "quote": "Fixes to global records propagate to watchers as corrections with provenance (\"corrected by CauseDeck review\").",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "A conflict card generalised to every source pair; the lawyer resolves, and the resolution is kept.",
+   "quote": "A user report reaches the queue and its fix propagates to every watcher of that record. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "`apps/web`: a confidence chip on dates and stages, with the sources listed on hover.",
+   "quote": "Each fixed item can become a fixture with one action. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Metrics: the conflict rate per source, which feeds adapter health.",
+   "quote": "Reviewers see only the record under review; access is logged. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "Reliable data needs a human-in-the-loop queue for low-confidence parses, cross-source conflicts (#499) and errors reported by users (\"this date is wrong\"). Each correction should also improve the parser, as a new fixture.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -40,177 +46,157 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/facts/agreement.ts",
-   "change": "Pure assessAgreement(observations) -> {sources, status: agree|conflict|single, confidence}; plus getNextDateAgreement reader over a proceeding's listings (provenance sourceType/sourceRef/confidence)",
+   "path": "packages/db/src/schema/review.ts",
+   "change": "New global `review_item` (kind low_confidence|conflict|user_report, source_id, record key cnr+field, shown/corrected value, consent boolean required true for user_report, status open|in_review|fixed|dismissed, assignee, due_at, fixture_exported_at; no workspace id) and tenant `review_correction` via tenantTable (proceeding, field, value, review_item_id, provenance source_type system, source_ref `causedeck-review:\u003cid>`, confirmation_state corrected). Export from packages/db/src/schema/index.ts.",
    "requirements": [
     "R1",
-    "R3"
+    "R2",
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/facts/index.ts",
-   "change": "Public barrel for the facts domain",
+   "path": "packages/db/migrations/",
+   "change": "New migration at the next free timestamp/number (check `ls packages/db/migrations | tail` at implement time; renumber if the base took it) with regenerated snapshot/journal: both tables, RLS for review_correction, SECURITY DEFINER `app_review_propagate(item_id)` guarded by app_staff_require_caller() (pattern 0072/0082) that inserts one review_correction per case_watch with same source_id+cnr, REVOKE PUBLIC, GRANT causedeck_app/causedeck_clerk.",
    "requirements": [
-    "R3"
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/package.json",
-   "change": "Add ./facts export",
+   "path": "packages/core/src/review/index.ts",
+   "change": "New `review` domain (queue.ts, propagate.ts): reportError (needs consent), enqueueFromSignal (dedup per source+kind, content-free), list/get (get returns only that item's record and records `staff.read` audit), assign, setSla by kind, resolveWithFix (calls propagate), markFixtureExported. Add `./review` export in packages/core/package.json.",
    "requirements": [
-    "R3"
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Add facts domain dependency edges (matter-graph if reader uses it)",
+   "path": "packages/core/src/data-ops/index.ts",
+   "change": "Enqueue low_confidence and conflict review items from the existing parse_yield and conflict_rate detections (source-level, no record content). Keep recordParseRun and alert behaviour unchanged.",
    "requirements": [
-    "R3"
+    "R2",
+    "R7"
    ]
   },
   {
    "id": "D5",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Document facts domain and edges",
+   "path": "apps/admin/app/(console)/review/actions.ts",
+   "change": "Audited staff actions (requireStaff('data-ops'), record staff.read/other event): assign, set status, submit fix (propagates), sendToWorkbench (reuses @causedeck/adapters/workbench buildFixture and returns the bundle in one action, sets fixture_exported_at). Add page.tsx and [id]/page.tsx for the queue (kind, SLA, assignee) and fix form; add nav entry in apps/admin/components/console-nav.tsx and keep apps/admin/lib/roles.ts matrix (ops+admin).",
    "requirements": [
-    "R3"
+    "R2",
+    "R5",
+    "R6",
+    "R7"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register facts exports in SERVICE_TESTS or NOT_A_SERVICE",
+   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx",
+   "change": "Report-error action (use server) with consent checkbox on the fetched next date/stage/bench, and show review_correction rows as 'corrected by CauseDeck review' via apps/web/lib/matters/workspace.ts; i18n strings in packages/i18n/src/messages/{en,kn,ta}/matters.json (+ generated catalog).",
    "requirements": [
+    "R1",
     "R3"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cross-tenant case for getNextDateAgreement",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add `review` to CORE_DOMAIN_DEPENDENCIES (audit; matter-graph only if used, through its index.ts) and document it in docs/engineering/core-domains.md; update data-ops entry if it now imports review.",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/components/matters/date-conflict-card.tsx",
-   "change": "Generalise card to N sources/every source pair, still never preselecting; resolution via existing chooseNextDateSource path",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register review exports (SERVICE_TESTS with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts, or NOT_A_SERVICE with reason), review_item in GLOBAL_TABLES and review_correction in the RLS catalog/two-tenant seeders (packages/db/src/index.test.ts, packages/db/src/__tests__/rls/sql.test.ts); add the web action to ACTIONS in apps/web/__tests__/cross-tenant-actions.test.ts.",
    "requirements": [
-    "R1",
-    "R4"
+    "R4",
+    "R6"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/lib/matters/workspace.ts",
-   "change": "Expose agreement (status, confidence, sources) on the overview view models",
+   "path": "packages/core/src/review/__tests__/review.test.ts",
+   "change": "New tests: report without consent rejected; report reaches queue; fix propagates to every watcher in two workspaces and not to a non-watcher; reviewer get returns only the item's record and writes an audit event; fixture export in one action.",
    "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/web/components/matters/next-date-card.tsx",
-   "change": "Confidence chip on next date (and stage where shown) with sources on hover",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/i18n/src/messages/en/matters.json",
-   "change": "New strings for chip/card (and kn/ta + generated copies per i18n catalog rules)",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/db/migrations/0082_staff_conflict_rate.sql",
-   "change": "Security-definer app_staff_conflict_rate(since) mirroring 0072: per-source counts of listings/proposals vs corrected conflicts, staff only (renumbered to 0082 after base took 0080 and 0081; regenerate snapshot)",
-   "requirements": [
-    "R2",
+    "R4",
+    "R5",
     "R6"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/core/src/sources/ops.ts",
-   "change": "staffConflictRate + conflictRate field on SourceOpsRow",
-   "requirements": [
-    "R2",
-    "R6"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/admin/app/(console)/data-ops/page.tsx",
-   "change": "Show conflict rate per source in adapter health",
-   "requirements": [
-    "R2",
-    "R6"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/db/src/__tests__/staff-console-schema.test.ts",
-   "change": "Cover the new staff function (refuses non-staff, per-source counts only)",
-   "requirements": [
-    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "chooseNextDateSource semantics: a person chooses, loser stays as `corrected` history (packages/core/src/matter-graph/next-date.ts)"
+   "what": "matter-graph next-date services (proposeNextDate, chooseNextDateSource) and the no-direct-listing-update guard: no new direct writes to listing (packages/core/src/matter-graph/next-date.ts)"
   },
   {
    "id": "P2",
-   "what": "proposeNextDate/confirmNextDate remain the only writers of listing.list_date/canonical (no-direct-listing-update architecture test)"
+   "what": "Data Ops global tables stay content-free and recordParseRun/alert ledger behaviour (packages/core/src/data-ops/index.ts, packages/db/src/schema/data-ops.ts)"
   },
   {
    "id": "P3",
-   "what": "getAdapterHealthSummary and sourceOpsOverview existing fields and callers (packages/core/src/court/adapter-health.ts, packages/core/src/sources/ops.ts, apps/admin data-ops page)"
+   "what": "Existing fixture workbench actions and their no-persistence rule for the contributed document (apps/admin/app/(console)/fixtures/actions.ts)"
   },
   {
    "id": "P4",
-   "what": "Staff console aggregates stay content-free: no workspace, party or URL data leaves ops.ts"
+   "what": "Staff role matrix and tests (apps/admin/lib/roles.ts, apps/admin/__tests__/roles.test.ts); #499 agreement model and app_staff_conflict_rate (packages/core/src/facts, migration 0082)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/facts src/matter-graph/__tests__/next-date.test.ts src/sources/__tests__/ops.test.ts src/__tests__/domains.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/review src/data-ops src/facts src/__tests__/cross-tenant/services.test.ts src/__tests__/no-direct-listing-update.test.ts src/domains.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/matter-workspace-components.test.tsx __tests__/matter-workspace-page.test.tsx __tests__/cross-tenant-actions.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/staff-console-schema.test.ts"
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/roles.test.ts __tests__/server-actions-audit.test.ts __tests__/no-content-fields.test.ts __tests__/fixtures-workbench.test.ts __tests__/data-ops.test.tsx"
   },
   {
    "id": "V4",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts"
+  },
+  {
+   "id": "V5",
    "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Reuse listing provenance and the `corrected` state as the kept resolution instead of a new tenant table",
-   "justification": "Avoids RLS/seeder registry churn; next-date.ts:13-17 already keeps the losing proposal as corrected history",
+   "choice": "Model the 'global record' as source_id + cnr + field and fan fixes out through a staff-guarded SECURITY DEFINER function writing tenant review_correction rows",
+   "justification": "Tenant data is FORCE RLS; staff reach it only through definer functions (packages/db/migrations/0072_staff_parse_yield.sql, 0082_staff_conflict_rate.sql:11-35); no global fact table exists for case status (packages/db/src/schema/case-watch.ts:31-110)",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Staff conflict-rate via a security-definer function like app_staff_parse_yield",
-   "justification": "packages/db/migrations/0072_staff_parse_yield.sql and packages/core/src/sources/ops.ts:118 give the cross-tenant, content-free pattern",
+   "choice": "Do not write listing directly for propagated corrections",
+   "justification": "next-date.ts header (lines 1-3) makes it the only writer of listing.canonical/list_date, enforced by the no-direct-listing-update architecture test",
+   "source": "lint"
+  },
+  {
+   "id": "K3",
+   "choice": "Review items store no workspace id and a user_report requires consent=true; low-confidence and conflict items come from source-level Data Ops signals only",
+   "justification": "Data Ops tables are global and content-free (packages/db/src/schema/data-ops.ts:1-3); 'with the user's consent to share that record' in the issue",
+   "source": "spec"
+  },
+  {
+   "id": "K4",
+   "choice": "Provenance text 'corrected by CauseDeck review' carried as source_type system + source_ref causedeck-review:\u003cid> + confirmation_state corrected, no new enum value",
+   "justification": "SOURCE_TYPES/CONFIRMATION_STATES at packages/db/src/columns.ts:14-30 already cover it; avoids an enum migration",
    "source": "precedent"
   }
  ]

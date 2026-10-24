@@ -278,3 +278,13 @@ export {
   type IssueTagSource,
   type IssueTagStatus,
 } from './matter-issue.ts';
+export {
+  REVIEW_FIELDS,
+  REVIEW_KINDS,
+  REVIEW_STATUSES,
+  reviewCorrection,
+  reviewItem,
+  type ReviewField,
+  type ReviewKind,
+  type ReviewStatus,
+} from './review.ts';

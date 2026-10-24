@@ -163,6 +163,9 @@ describe('row-level security catalog', () => {
         'case_watch',
         'case_status_snapshot',
 
+        // Review and correction queue (#518).
+        'review_correction',
+
         // Anchored order extraction (#46).
         'extraction',
 

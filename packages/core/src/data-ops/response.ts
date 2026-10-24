@@ -6,6 +6,8 @@
 import { schema, type Queryable } from '@causedeck/db';
 import { eq, isNotNull, or } from 'drizzle-orm';
 
+import { enqueueReviewSignal } from '../review/index.ts';
+
 import { reconcileDetection, type ReconcileDeps } from './alerts.ts';
 import type { SourceMetrics } from './detectors.ts';
 
@@ -204,6 +206,18 @@ export async function applyResponses(
       } else {
         await clearBlockBackoff(db, metrics.sourceId, now);
       }
+    }
+    if (d.breached && (d.type === 'parse_yield' || d.type === 'conflict_rate')) {
+      // A person looks at it: content-free item, one open per source and kind (#518).
+      await enqueueReviewSignal(
+        db,
+        {
+          kind: d.type === 'parse_yield' ? 'low_confidence' : 'conflict',
+          sourceId: metrics.sourceId,
+          detail: d.detail,
+        },
+        now,
+      );
     }
     if (d.type === 'parse_yield') {
       if (d.breached && d.parserVersion !== undefined) {

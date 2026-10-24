@@ -38,6 +38,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   conflicts: Object.freeze(['audit']),
   // Cross-checked facts (#499): source agreement and confidence over listing provenance; tables only.
   facts: Object.freeze([]),
+  // The review and correction queue (#518, D-049): every staff read of an item's record is audited.
+  review: Object.freeze(['audit']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.
@@ -90,7 +92,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
   // Data-ops alerting (#515, D-049): detectors, the alert ledger, routing and auto-response read the
   // global tables directly and import no other domain.
-  'data-ops': Object.freeze([]),
+  // Data operations (#515, D-049): a breached parse-yield or conflict-rate detection opens a review
+  // item (#518), through review.
+  'data-ops': Object.freeze(['review']),
   // Bootstrap import (#57, #548, #549): the plan reads proposals from the tables directly; apply
   // writes every graph row through matter-graph, meters the OCR cap through usage and refuses an
   // expired or edited undo with automation's errors (imports `index.ts` only). The batch (#550)

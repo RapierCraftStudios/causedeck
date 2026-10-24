@@ -77,6 +77,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'cause_list_publication',
   'board_observation',
   'notice',
+  'review_item',
 ];
 
 /**

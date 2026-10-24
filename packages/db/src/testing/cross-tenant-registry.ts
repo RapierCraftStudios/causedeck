@@ -120,6 +120,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   case_watch: DB_TABLES_TEST,
   case_status_snapshot: DB_TABLES_TEST,
 
+  // Review and correction queue (#518).
+  review_correction: DB_TABLES_TEST,
+
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
 

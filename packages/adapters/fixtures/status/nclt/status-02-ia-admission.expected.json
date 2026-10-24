@@ -1,0 +1,28 @@
+{
+  "template": "nclt",
+  "status": "ok",
+  "cnr": null,
+  "caseNumber": "IA/77/2026",
+  "nextHearingDate": "2026-11-19",
+  "lastHearingDate": "2026-10-29",
+  "stage": {
+    "raw": "Admission",
+    "norm": "admission"
+  },
+  "bench": "Court II Mumbai Bench (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2026-10-29",
+      "number": "1",
+      "summary": "Hearing order (FICTIONAL)",
+      "href": null
+    }
+  ],
+  "quotes": {
+    "caseNumber": "IA/77/2026",
+    "stage": "Admission",
+    "bench": "Court II Mumbai Bench (FICTIONAL)",
+    "nextHearingDate": "19-11-2026",
+    "lastHearingDate": "29-10-2026"
+  }
+}

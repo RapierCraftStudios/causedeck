@@ -39,3 +39,11 @@ Typecheck failure after the base merge was exit 127 `turbo: command not found` (
 - `test:export-coverage` (part of the tenancy job) failed: portfolio, portfolio_case, portfolio_panel_advocate had no exporter. Added `portfoliosExporter` (not exported) in core lifecycle/export/exporters.ts and erase order entries in lifecycle/deletion/erase.ts.
 - Migration: `portfolio_case_proceeding_fk` is `ON DELETE SET NULL ("proceeding_id")` so a deleted proceeding does not null workspace_id (repo precedent: 0038).
 - Verified: export-coverage, purge/deletion/export/cross-tenant core tests, db rls + cross-tenant + lint-migrations, db:check, core tsc.
+
+### Merge recheck (#662)
+The failing check was exit 127, `turbo: command not found` (turbo is not on PATH on this host), not a duplicate-key or symbol conflict. No source change. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[67683bb1]'` passes 23/23. V1 (115 tests), V2 (33 tests) and V3 (15 tests) pass.
+
+## Merge recheck (#662, turbo 127)
+Exit 127 was only `turbo` missing from PATH, not a code conflict. With node_modules/.bin on PATH, typecheck passes 23/23 and V1-V3 pass. No code change.
+### Post-second-merge
+After merging the base again, `forgedock check` re-ran V1-V4: all PASS (V4 typecheck for adapters, db, core included).

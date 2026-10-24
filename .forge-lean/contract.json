@@ -2,31 +2,19 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add tenant tables `portfolio`, `portfolio_case` (proceeding or CNR/case number, source, status fields, next date, last adverse order) and `portfolio_panel_advocate` (advocate user delegated for the institution)",
+   "quote": "Add DRT/DRAT status and cause-list parsers and NCLT benches nationally (extending nclt-blr, #38) with golden fixtures, registered in the adapter registry and forum catalogue config.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "plus a workspace kind for institutions",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "SARFAESI DM/CMM matters are tracked through eCourts sources already present.",
+   "disposition": "not-applicable",
+   "evidence": "packages/db/migrations/20261024090000_ecourts_district_status_sources.sql:4; packages/adapters/src/ecourts/index.ts:1-6"
   },
   {
    "id": "R3",
-   "quote": "a migration (next free number), FORCE RLS via tenantTable()",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R4",
-   "quote": "update packages/db/src/index.test.ts, the RLS catalog in packages/db/src/__tests__/rls/sql.test.ts, TABLE_TESTS/registry and the two-tenant seeders",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "Acceptance: RLS tests prove tenant B sees nothing of A.",
+   "quote": "Acceptance: parsers pass golden fixtures offline.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -34,139 +22,215 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/portfolio.ts",
-   "change": "New file. portfolio (id, name, timestamps), portfolio_case (portfolio composite FK (workspace_id,portfolio_id); optional composite FK to proceeding; cnr with CNR_PATTERN check; case_number; source_id FK to source; status text, status_fields jsonb or columns, next_date date, last_adverse_order_at/id; target check cnr or case_number or proceeding; unique per portfolio+cnr), portfolio_panel_advocate (portfolio composite FK, advocate_user_id FK user cascade, unique (workspace_id,portfolio_id,advocate_user_id)). All via tenantTable() with (workspace_id,id) unique and explicit workspace FK cascade, modelled on schema/webhooks.ts and schema/case-watch.ts.",
+   "path": "packages/adapters/src/status/types.ts",
+   "change": "add 'drt' and 'nclt' to CASE_STATUS_TEMPLATES",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D2",
+   "path": "packages/adapters/src/status/drt.ts",
+   "change": "new parseDrtStatus: PageSpec label map over readStatusPage (DRT and DRAT status page)",
    "requirements": [
     "R1",
     "R3"
    ]
   },
   {
-   "id": "D2",
-   "path": "packages/db/src/schema/index.ts",
-   "change": "Export the three tables and constants/types.",
+   "id": "D3",
+   "path": "packages/adapters/src/status/nclt.ts",
+   "change": "new parseNcltStatus: PageSpec label map over readStatusPage",
+   "requirements": [
+    "R1",
+    "R3"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/adapters/src/status/index.ts",
+   "change": "export and dispatch the two new parsers in PARSERS",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D3",
-   "path": "packages/db/src/schema/auth.ts",
-   "change": "Add 'institution' to WORKSPACE_KINDS (organization_kind_chk follows via inList); update doc comment.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/db/migrations/20261024110000_portfolio.sql",
-   "change": "Use next free timestamp after 20261024100000 (renumber if base took it). CREATE the 3 tables, FKs, indexes, ENABLE+FORCE RLS and ws_isolation policies as in 20261024063416_webhooks.sql; drop and re-add organization_kind_chk with ('solo','chamber','institution'). Include the header comments the migration linter requires.",
-   "requirements": [
-    "R2",
-    "R3"
-   ]
-  },
-  {
    "id": "D5",
-   "path": "packages/db/migrations/meta/_journal.json",
-   "change": "Append idx 87 entry with tag matching D4 and increasing 'when'. Add matching snapshot migrations/meta/\u003cts>_snapshot.json (run pnpm --filter @causedeck/db db:generate then adjust SQL header, or hand-produce).",
+   "path": "packages/adapters/src/status/fixtures.test.ts",
+   "change": "cover the new templates; stays offline",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add portfolio, portfolio_case, portfolio_panel_advocate to the root table list.",
+   "path": "packages/adapters/fixtures/status/manifest.json",
+   "change": "list the new drt and nclt status fixture inputs (synthetic, FICTIONAL)",
    "requirements": [
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add the three tables to the RLS catalog.",
+   "path": "packages/adapters/src/drt/index.ts",
+   "change": "new DRT/DRAT adapter: DRT_ADAPTER_ID 'in.drt', forum code list, access modes (user_supplied/none, counsel note), config, createDrtAdapter with an HTML cause-list parseCauseList modelled on ecourts/cause-list.ts, bundled config",
    "requirements": [
-    "R4",
-    "R5"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Add the three tables to the DB_TABLES_TEST registry.",
+   "path": "packages/adapters/src/drt/cause-list.ts",
+   "change": "new DRT cause-list HTML parser (anchored rows, unparsed rows, halls), pure",
    "requirements": [
-    "R4"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/db/src/testing/two-tenants.ts",
-   "change": "Add TENANT_SEEDERS for portfolio, portfolio_case, portfolio_panel_advocate (seed a portfolio per tenant; case and panel advocate seeders create their own parent portfolio, as webhook_delivery does).",
+   "path": "packages/adapters/src/drt/drt.test.ts",
+   "change": "new tests: registry resolves every DRT/DRAT forum code, config matches bundled, parser unit cases",
    "requirements": [
-    "R4",
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/db/src/__tests__/auth-schema.test.ts",
-   "change": "Update WORKSPACE_KINDS expectation to include 'institution'.",
+   "path": "packages/adapters/fixtures/in.drt/manifest.json",
+   "change": "new golden fixtures dir for in.drt: manifest plus *.input.html and *.expected.json (synthetic, FICTIONAL)",
    "requirements": [
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/db/src/__tests__/portfolio-schema.test.ts",
-   "change": "New schema test: tables are tenant tables, checks (CNR, target), uniques, institution kind accepted by organization_kind_chk.",
+   "path": "packages/adapters/src/nclt-blr/config/benches.ts",
+   "change": "new list of national NCLT bench forum codes",
    "requirements": [
-    "R1",
-    "R2",
-    "R5"
+    "R1"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/adapters/src/nclt-blr/index.ts",
+   "change": "forumCodes = Bengaluru plus the national benches; id, version and config unchanged",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/adapters/src/config/loader.ts",
+   "change": "add DRT bundled config to BUNDLED_ADAPTER_CONFIGS",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/adapters/src/workbench/index.ts",
+   "change": "add 'in.drt' to WORKBENCH_ADAPTERS so the fixture regression gate covers it",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/adapters/fixtures/accuracy-baseline.json",
+   "change": "add in.drt baseline entry",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/adapters/src/index.ts",
+   "change": "export ./drt/index.ts and update the header comment",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/db/src/seed/forum-catalogue/tribunals.ts",
+   "change": "seed national NCLT benches and DRT/DRAT forums (adapterId set, level A1); existing in.drt.bengaluru-1/-2 get adapterId in.drt, A1",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/src/seed/forum-catalogue/index.ts",
+   "change": "bump FORUM_CATALOGUE_VERSION",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/db/src/seed/forum-catalogue/forum-catalogue.test.ts",
+   "change": "update expected code list and A1 count, assert each new forum's adapterId resolves to a registered adapter id",
+   "requirements": [
+    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "WORKSPACE_KIND_VALUES in packages/validators/src/workspace.ts and the onboarding/profile forms stay solo|chamber: institutions are not self-serve selectable."
+   "what": "NCLT adapter id, version, config and checksum stay in.nclt.bengaluru 1.0.0 so migration 0052 and packages/adapters/src/nclt-blr/config.test.ts still pass"
   },
   {
    "id": "P2",
-   "what": "Existing organization rows and the solo/chamber behaviour of organization_kind_chk (packages/db/migrations/0004_workspaces.sql:46) remain valid."
+   "what": "parseCaseStatus behaviour for ecourts-district, madras-hc and karnataka-hc (packages/adapters/src/status/index.ts) and its consumer packages/core/src/case-watch/lookup.ts"
   },
   {
    "id": "P3",
-   "what": "Existing tenant tables (webhook_*, case_watch) and their RLS policies are untouched; no new runtime exports of @causedeck/core."
+   "what": "adapters register no network access: packages/adapters/src/__tests__/no-network-lint.test.ts; parsers stay pure"
+  },
+  {
+   "id": "P4",
+   "what": "Existing fixtures accuracy baseline entries (packages/adapters/fixtures/accuracy-baseline.json) must not drop"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/portfolio-schema.test.ts src/__tests__/auth-schema.test.ts src/index.test.ts src/__tests__/conventions.test.ts src/__tests__/lint-migrations.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/adapters exec vitest run --config vitest.golden.config.ts src/status src/nclt-blr src/__tests__/fixture-regression.test.ts src/__tests__/workbench.test.ts src/__tests__/golden.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/rls src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/adapters exec vitest run src/drt src/__tests__/registry.test.ts src/__tests__/no-network-lint.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db db:check"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/forum-catalogue/forum-catalogue.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/adapters --filter @causedeck/db --filter @causedeck/core run typecheck"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add 'institution' only to the DB WORKSPACE_KINDS, not to validators/UI kind lists.",
-   "justification": "validators/src/workspace.ts:31 drives the self-serve onboarding and profile forms; institutions are provisioned by staff (#498 B2B) so they must not be user-selectable.",
+   "choice": "Reuse adapter id in.nclt.bengaluru for all national NCLT benches instead of a new id",
+   "justification": "id is pinned by migration 0052 (packages/db/migrations/0052_nclt_adapter_v1.sql), the loader (config/loader.ts:67) and the accuracy baseline; registry allows one adapter per forum code (registry.ts:44-48) and one adapter can list many forumCodes",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Model portfolio_case after case_watch (composite FKs, CNR_PATTERN check, target check).",
-   "justification": "packages/db/src/schema/case-watch.ts:31-70 is the established shape for CNR/case-number lookups against source and proceeding.",
+   "choice": "One in.drt adapter for DRT and DRAT forums, HTML cause-list parser copied from the eCourts one; no adapter_version/access_mode migration",
+   "justification": "drt.gov.in pages are HTML tables (tribunals.ts:14-18 notes unverified); loader falls back to bundled configs (config/loader.ts:63-68); modes stay user_supplied/none until counsel review (#118, nclt-blr/index.ts:35-46)",
    "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "Fixtures are synthetic FICTIONAL pages",
+   "justification": "real DRT/NCLT layouts are unverified and project fixtures are classified FICTIONAL (fixtures/README.md, fixtures/status/manifest.json:2)",
+   "source": "doc"
   }
  ]
 }

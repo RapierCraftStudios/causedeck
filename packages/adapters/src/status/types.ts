@@ -3,7 +3,13 @@
 // verbatim cell text it came from in `quotes`, so a status diff can show its provenance.
 import { z } from 'zod';
 
-export const CASE_STATUS_TEMPLATES = ['ecourts-district', 'madras-hc', 'karnataka-hc'] as const;
+export const CASE_STATUS_TEMPLATES = [
+  'ecourts-district',
+  'madras-hc',
+  'karnataka-hc',
+  'drt',
+  'nclt',
+] as const;
 export type CaseStatusTemplate = (typeof CASE_STATUS_TEMPLATES)[number];
 
 export const CASE_STATUS_RESULTS = ['ok', 'not_found', 'unrecognised'] as const;

@@ -1,38 +1,49 @@
 **Verdict**: CONFIRMED
-**Confidence**: high
-**Severity**: medium (P2 greenfield data model; blocks #662-#666 B2B portfolio work)
+**Confidence**: medium
+**Severity**: medium (P2 feature: roadmap work for the #498 B2B portfolio product, no existing defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 1 of #498: add tenant tables `portfolio`, `portfolio_case`, `portfolio_panel_advocate`, an institution workspace kind, a migration (next free number), FORCE RLS via `tenantTable()`, and the registry/test updates (`packages/db/src/index.test.ts`, RLS catalog in `rls/sql.test.ts`, TABLE_TESTS/registry, two-tenant seeders). Acceptance: RLS tests prove tenant B sees nothing of A.
+#662 (part 2 of #498): add DRT/DRAT status and cause-list parsers and NCLT benches nationally (extending nclt-blr, #38) with golden fixtures, registered in the adapter registry and forum catalogue config. SARFAESI DM/CMM matters use the eCourts sources already present. Acceptance: parsers pass golden fixtures offline.
 
 ### What We Found
-- No portfolio code exists anywhere (`grep -ril portfolio packages apps` is empty). The earlier "Investigation Report" comment on #661 and the old `.forge-lean/*` files describe a different issue (coverage tracker) and are stale; ignore them.
-- Workspace kind is `organization.kind` text with `organization_kind_chk` (`packages/db/src/schema/auth.ts:44,77,85`); `WORKSPACE_KINDS = ['solo','chamber']`. The check was created in `packages/db/migrations/0004_workspaces.sql:46`. Asserted by `packages/db/src/__tests__/auth-schema.test.ts:93`.
-- UI/validators mirror kinds separately (`packages/validators/src/workspace.ts:31`, profile form, onboarding form); they are user-selectable lists, so the institution kind should NOT be added there (institutions are provisioned, not self-served).
-- Tenant-table template: `packages/db/src/schema/webhooks.ts` (tenantTable, `(workspace_id,id)` unique, explicit workspace FK cascade) and `case_watch` (`schema/case-watch.ts:31-70`, composite FK to `proceeding` and `source`, CNR check using `CNR_PATTERN` from `proceedings.ts:38`).
-- Migration template `migrations/20261024063416_webhooks.sql`; latest migration is `20261024100000_staff_watch_demand.sql` (journal idx 86, `when` 1792830000000), with snapshot `migrations/meta/20261024100000_snapshot.json`.
-- Registration lists to update, each already listing webhook tables: `src/index.test.ts:155`, `src/__tests__/rls/sql.test.ts:162`, `src/testing/cross-tenant-registry.ts:137` (`DB_TABLES_TEST`), `src/testing/two-tenants.ts:326` (`TENANT_SEEDERS`, seeder example at `:964`), `src/schema/index.ts` exports.
+- The `.forge-lean/*` files present at start described #517 (coverage tracker). They were stale and have been replaced.
+- Only NCLT Bengaluru has an adapter: `packages/adapters/src/nclt-blr/index.ts:31-33` (id, forum code and version are all `in.nclt.bengaluru`) and `:155-158` (`forumCodes: [NCLT_FORUM_CODE]`). It parses cause lists only; status is `none` (`:41-46`) and `parseOrderHeader` is a stub.
+- No DRT/DRAT code exists in `packages/adapters`. The catalogue lists only `in.drt.bengaluru-1/-2` at A0 with no `adapterId` (`packages/db/src/seed/forum-catalogue/tribunals.ts:45-67`). There are no DRAT forums and only one NCLT bench (`tribunals.ts:28-43`).
+- Status parsers are HTML label/value specs over `readStatusPage` (`packages/adapters/src/status/ecourts-district.ts:7-21`, `status/html.ts:84`). The template list is closed (`status/types.ts:8`). The dispatcher is `status/index.ts:12-16`, and `core/src/case-watch/lookup.ts:13,36` consumes the type.
+- The eCourts cause-list parser is an HTML table parser, anchored on the case-number cell (`ecourts/cause-list.ts:1-60`). It is the template for a DRT cause-list parser.
+- Registration points:
+  - `adapters/src/registry.ts:25-51` rejects a duplicate id or forum code, so each forum code can map to only one adapter.
+  - `config/loader.ts:63-68` (`BUNDLED_ADAPTER_CONFIGS`).
+  - `workbench/index.ts:13-18` (`WORKBENCH_ADAPTERS`). `src/__tests__/fixture-regression.test.ts:30-32` requires `fixtures/accuracy-baseline.json` to list exactly these adapters.
+  - `core/src/import/batch.ts:107-111`.
+- Fixture conventions: `fixtures/README.md`; `fixtures/<adapter-id>/manifest.json` plus `*.input.*`/`*.expected.json`, run by `runGolden`. Status fixtures live in `fixtures/status/manifest.json`, run by `src/status/fixtures.test.ts`. Both are in `vitest.golden.config.ts`, so they run offline with no database.
+- Catalogue guard tests: `forum-catalogue.test.ts:45-47` (expected codes), `:138` (exactly 4 forums at A1), `:167` (every forum has hosts). The version string is `FORUM_CATALOGUE_VERSION` in `forum-catalogue/index.ts:25`. The catalogue is seeded on deploy, so no migration is needed for forum rows.
+- SARFAESI DM/CMM: covered by the eCourts district sources and parsers already merged (#634-#636); no work needed.
 
 ### Root Cause
-Greenfield: institutions (banks, NBFCs, ARCs) have no workspace kind and no tables to hold a tracked-case portfolio or delegate panel advocates.
+Not a defect. The adapter framework, the NCLT table parser and the HTML status/cause-list patterns exist for 4 forum families, but nothing covers DRT/DRAT, and NCLT is bound to the Bengaluru bench.
 
 ### Affected Files
-- `packages/db/src/schema/auth.ts` (add `'institution'` to `WORKSPACE_KINDS`)
-- `packages/db/src/schema/portfolio.ts` (new), `packages/db/src/schema/index.ts`
-- `packages/db/migrations/<next>_portfolio.sql`, `migrations/meta/_journal.json`, new snapshot
-- `packages/db/src/index.test.ts`, `src/__tests__/rls/sql.test.ts`, `src/testing/cross-tenant-registry.ts`, `src/testing/two-tenants.ts`, `src/__tests__/auth-schema.test.ts`, new `src/__tests__/portfolio-schema.test.ts`
+- New: `packages/adapters/src/status/{drt,nclt}.ts` (label specs), `src/drt/` (cause-list parser, `createDrtAdapter`, forum code list, config), `src/nclt-blr/config/benches.ts` (national bench codes), and fixtures under `fixtures/status/{drt,nclt}/` and `fixtures/in.drt/`.
+- Edit: `status/{types,index,fixtures.test}.ts`, `src/index.ts`, `nclt-blr/index.ts` (forumCodes), `config/loader.ts`, `workbench/index.ts`, `fixtures/accuracy-baseline.json`, `fixtures/status/manifest.json`.
+- Catalogue: `packages/db/src/seed/forum-catalogue/tribunals.ts` (or a new file imported by `index.ts`), `index.ts` (version bump), `forum-catalogue.test.ts`.
+- Check: `packages/core/src/case-watch/lookup.ts` (it must still typecheck if the template union grows).
 
 ### Sibling Sweep
-- Other `kind in (...)` checks: only `organization_kind_chk`. Plans use a separate `PLAN_KINDS` (`packages/validators/src/plans.ts:11`), untouched.
-- `workspace_integration`, `webhook_*`, `case_watch` all follow the same register-in-four-places pattern; do the same.
-- Core runtime exports: none added, so no `SERVICE_TESTS`/`NOT_A_SERVICE` change is needed unless schema constants get re-exported from core (they are not).
+- Other code that maps a forum or adapter to its parsers: `core/src/import/batch.ts:107` (the dedicated parser list; DRT is HTML, so add it only if a layout input can reach it) and `core/src/court/forums.test.ts` (uses `in.nclt.bengaluru` and DRT codes).
+- `grep CaseStatusTemplate` found only `lookup.ts` and the status package.
+- The `adapter_version` and `access_mode_registry` DB rows for new adapter ids (cf. migration `0052_nclt_adapter_v1.sql`) are not required for parsing. The loader falls back to `BUNDLED_ADAPTER_CONFIGS`. Adding them is a follow-up if activation through the DB is wanted.
 
 ### History
-Kind check introduced by #177 (0004_workspaces). Recent tenant-table additions: webhooks (#626), case_watch (#589). Siblings #662-#666 depend on these tables.
+NCLT adapter #38 (merge 2b5b4eea, migration 0052, ADR 0020). eCourts template parsers #634 (fc5b3844), status parsers #590, district status sources #636. Parent #498 was closed not_planned, but its parts #661 and #663-#666 stay open.
 
 ### Recommendation
-Add `portfolio` (id, name, owner timestamps), `portfolio_case` (portfolio_id composite FK, optional proceeding_id composite FK to `proceeding`, `cnr` with CNR check, `case_number`, `source_id` FK to `source`, status text fields, `next_date`, `last_adverse_order_at`/id, unique per portfolio+cnr or case number, target check like `case_watch_target_chk`), and `portfolio_panel_advocate` (portfolio_id, advocate_user_id FK user, unique pair). All via `tenantTable()`. Write migration SQL generated shape plus RLS/policies matching webhooks migration; extend the organization check constraint in the migration (drop and re-add with `'institution'`). Register in all lists and add two-tenant seeders (portfolio, portfolio_case, portfolio_panel_advocate). Add a schema test and cover the RLS acceptance via the existing generic two-tenant RLS harness (TENANT_SEEDERS).
+1. Keep the NCLT adapter id `in.nclt.bengaluru` (it is pinned by migration 0052, the loader and the baseline). Extend its `forumCodes` with the national bench codes (`in.nclt.<bench>`) and seed those forums at A1 with `adapterId: 'in.nclt.bengaluru'`. Add one test that every bench resolves through the registry.
+2. Add a `drt` adapter (id `in.drt`, forum codes: the DRT and DRAT forums seeded). It provides an HTML cause-list parser modelled on `ecourts/cause-list.ts`, access modes `user_supplied` or `none` as for NCLT (terms unread), and a bundled config.
+3. Add `drt` and `nclt` status templates (`PageSpec` label maps) and parsers, with synthetic FICTIONAL fixtures and expected JSON.
+4. Register in the loader, the workbench and the accuracy baseline, and add the DRT/DRAT/NCLT forums to the catalogue. Update the catalogue guard tests and bump the catalogue version.
+5. Real DRT/NCLT page layouts are unverified, so fixtures are synthetic. This is the main risk (hence medium confidence).
 
 ### Related Issues
-#498 (parent), #662-#666 (siblings), #626, #589, #177.
+#498 (parent), #38, #634, #635, #636, #590, #661, #663, #664, #665, #666.

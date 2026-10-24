@@ -100,6 +100,6 @@ describe('snapshotToForumSeeds (#635)', () => {
 
   it('ships an empty reviewed snapshot: the catalogue gains no rows until #640', () => {
     expect(ECOURTS_DISTRICT).toEqual([]);
-    expect(FORUM_CATALOGUE_VERSION).toBe('2026-10-24.1');
+    expect(FORUM_CATALOGUE_VERSION).toBe('2026-10-24.2');
   });
 });

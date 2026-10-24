@@ -197,6 +197,48 @@
       "file": "status-03-unrecognised.input.html",
       "origin": "synthetic",
       "classification": "FICTIONAL"
+    },
+    {
+      "template": "drt",
+      "file": "status-01-oa-hearing.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "page": "status"
+    },
+    {
+      "template": "drt",
+      "file": "status-02-sa-appeal.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "page": "status"
+    },
+    {
+      "template": "drt",
+      "file": "status-03-not-found.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "page": "status"
+    },
+    {
+      "template": "nclt",
+      "file": "status-01-cp-hearing.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "page": "status"
+    },
+    {
+      "template": "nclt",
+      "file": "status-02-ia-admission.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "page": "status"
+    },
+    {
+      "template": "nclt",
+      "file": "status-03-not-found.input.html",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "page": "status"
     }
   ]
 }

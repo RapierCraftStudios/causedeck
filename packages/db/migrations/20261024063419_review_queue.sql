@@ -68,6 +68,8 @@ ALTER TABLE "review_correction" FORCE ROW LEVEL SECURITY;--> statement-breakpoin
 CREATE POLICY "ws_isolation" ON "review_correction" AS PERMISSIVE FOR ALL TO PUBLIC USING (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid) WITH CHECK (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid);--> statement-breakpoint
 CREATE POLICY "owner_definer_write" ON "review_correction" AS PERMISSIVE FOR INSERT TO causedeck_owner
   WITH CHECK (true);--> statement-breakpoint
+CREATE POLICY "owner_definer_read" ON "review_correction" AS PERMISSIVE FOR SELECT TO causedeck_owner
+  USING (true);--> statement-breakpoint
 CREATE POLICY "owner_definer_read" ON "case_watch" AS PERMISSIVE FOR SELECT TO causedeck_owner
   USING (true);--> statement-breakpoint
 CREATE FUNCTION app_review_propagate(item uuid)
@@ -89,7 +91,7 @@ CREATE FUNCTION app_review_propagate(item uuid)
           (workspace_id, proceeding_id, review_item_id, field, value, source_type, source_ref,
            confirmation_state)
         SELECT DISTINCT w.workspace_id, w.proceeding_id, r.id, r.field, r.corrected_value,
-               'system', 'causedeck-review:' || r.id::text, 'corrected'
+               'system'::source_type, 'causedeck-review:' || r.id::text, 'corrected'::confirmation_state
           FROM case_watch w
          WHERE w.source_id = r.source_id AND w.cnr = r.cnr
         ON CONFLICT (workspace_id, proceeding_id, review_item_id) DO NOTHING;

@@ -1,11 +1,19 @@
 // The review and correction queue against the database (#518): a report needs consent, reaches the
 // queue, and its fix reaches every workspace watching the record and no other; a reviewer sees one
 // item's record and the read is audited; a fixed item becomes a fixture with one action.
-import { schema, type Transaction } from '@causedeck/db';
-import { closeTestDb, inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { Secret } from '@causedeck/config/env';
+import {
+  createDb,
+  schema,
+  withUser,
+  withWorkspace,
+  type Database,
+  type Transaction,
+} from '@causedeck/db';
+import { closeTestDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { and, eq } from 'drizzle-orm';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   assignReviewItem,
@@ -18,7 +26,24 @@ import {
   resolveReviewItem,
 } from '../index.ts';
 
-afterAll(closeTestDb);
+let owner: Database;
+let staffId: string;
+
+// staff_user is owner-only, so the reviewer is committed outside the rolled-back test transaction.
+beforeAll(async () => {
+  owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
+  staffId = crypto.randomUUID();
+  await owner
+    .insert(schema.user)
+    .values({ id: staffId, name: 'reviewer', email: `reviewer-${staffId}@causedeck.test` });
+  await owner.insert(schema.staffUser).values({ userId: staffId, role: 'ops' });
+});
+
+afterAll(async () => {
+  await owner.delete(schema.user).where(eq(schema.user.id, staffId));
+  await owner.$client.end();
+  await closeTestDb();
+});
 
 const NOW = new Date('2026-10-24T09:00:00Z');
 
@@ -33,8 +58,6 @@ async function newUser(tx: Transaction, label: string): Promise<string> {
 
 async function setup(tx: Transaction) {
   const t = await seedTwoTenants(tx);
-  const staffId = await newUser(tx, 'reviewer');
-  await tx.insert(schema.staffUser).values({ userId: staffId, role: 'ops' });
   const watchOf = (ws: TwoTenants['a']) =>
     inWorkspace(tx, ws.id, (s) =>
       s.select().from(schema.caseWatch).where(eq(schema.caseWatch.workspaceId, ws.id)),
@@ -90,7 +113,8 @@ describe('review queue', () => {
 
       await assignReviewItem(tx, staff, id, staff.userId);
       const result = await resolveReviewItem(tx, staff, id, { correctedValue: '2026-11-09' }, NOW);
-      expect(result.propagated).toBe(2);
+      // The two-tenant seed gives each workspace two watches on this record.
+      expect(result.propagated).toBe(4);
 
       for (const [ws, watch] of [
         [t.a, a],
@@ -174,12 +198,15 @@ describe('review queue', () => {
       const item = await getReviewItem(tx, staff, one.id);
       expect(item.id).toBe(one.id);
       expect(item.id).not.toBe(two.id);
-      const events = await tx
-        .select()
-        .from(schema.auditEvent)
-        .where(
-          and(eq(schema.auditEvent.action, 'staff.read'), eq(schema.auditEvent.targetId, one.id)),
-        );
+      // Account-level events are visible only to their actor (RLS `account_self`).
+      const events = await withUser(tx, { userId: staff.userId }, (s) =>
+        s
+          .select()
+          .from(schema.auditEvent)
+          .where(
+            and(eq(schema.auditEvent.action, 'staff.read'), eq(schema.auditEvent.targetId, one.id)),
+          ),
+      );
       expect(events).toHaveLength(1);
       expect(events[0]).toMatchObject({ actorUserId: staff.userId, actorKind: 'staff' });
       // Ids only: no record value reaches the audit metadata.
@@ -208,11 +235,15 @@ describe('review queue', () => {
 
 /** A workspace with no case watch: the control that a fix does not reach non-watchers. */
 async function seedOtherWatcherFree(tx: Transaction): Promise<{ workspaceId: string }> {
-  await newUser(tx, 'nowatch');
-  const [org] = await tx
-    .insert(schema.organization)
-    .values({ name: 'No watch', slug: `nw-${crypto.randomUUID().slice(0, 8)}` })
-    .returning({ id: schema.organization.id });
-  if (org === undefined) throw new Error('org not created');
-  return { workspaceId: org.id };
+  const ownerId = await newUser(tx, 'nowatch');
+  const workspaceId = crypto.randomUUID();
+  await withWorkspace(tx, { workspaceId, userId: ownerId }, async (s) => {
+    await s.insert(schema.organization).values({
+      id: workspaceId,
+      name: 'No watch',
+      slug: `nw-${workspaceId.slice(0, 8)}`,
+      createdBy: ownerId,
+    });
+  });
+  return { workspaceId };
 }

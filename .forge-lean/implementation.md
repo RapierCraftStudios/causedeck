@@ -27,3 +27,6 @@ The four new data-layer symbols are not members of growth-page.test.tsx's data m
 
 ## Duplicate export fix
 `MAX_MIGRATION_ROWS` is defined and exported only in `migration/csv.ts` (re-exported by `index.ts`); the redundant re-export in `run.ts` and its unused import were removed. Removed the stray `packages/core/.eslintcache` from the index.
+
+## Post-merge typecheck failure
+The reported failure (`turbo: command not found`, exit 127) was a missing binary on the host, not a code conflict. The merged tree typechecks (`tsc --noEmit` in core, admin and config) and V1-V3 pass. The only change is removing the tracked `packages/core/.eslintcache` that the merge still carried.

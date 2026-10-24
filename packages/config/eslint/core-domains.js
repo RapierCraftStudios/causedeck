@@ -17,8 +17,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
   // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
   court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
-  // Court-day display-board tracking (#493): the board source's clearance through sources.
-  'court-day': Object.freeze(['sources']),
+  // Court-day display-board tracking (#493): the board source's clearance through sources. The court
+  // day (#58) reads roles through workspaces, audits the hall marker through audit and wraps the
+  // canonical next-date proposal and conflict view of matter-graph (imports `index.ts` only).
+  'court-day': Object.freeze(['sources', 'matter-graph', 'workspaces', 'audit']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),

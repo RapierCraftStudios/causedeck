@@ -29,6 +29,8 @@ export const MATRIX: Readonly<Record<Action, Role>> = {
   'listing.read': 'viewer',
   'draft.write': 'junior',
   'audit.read': 'advocate',
+  // Advocates see every item of the day unless the workspace turns `advocatesCanViewAllCourtDay` off.
+  'court_day.view_all': 'advocate',
   'export.run': 'owner',
   // Only the owner grants, denies or revokes support sessions (#313); staff never can, since
   // `STAFF_READ_ONLY` denies every action that is not a `.read`.

@@ -102,6 +102,19 @@ describe('role rules', () => {
     expect(can(actor('advocate'), 'member.invite', undefined, off)).toEqual({ allow: true });
   });
 
+  it('advocate views the whole court day by default, not when the workspace turns it off (#58)', () => {
+    expect(can(actor('advocate'), 'court_day.view_all')).toEqual({ allow: true });
+    const off = { advocatesCanViewAllCourtDay: false };
+    expect(reasonOf(can(actor('advocate'), 'court_day.view_all', undefined, off))).toBe(
+      'ROLE_DENIED',
+    );
+    expect(can(actor('owner'), 'court_day.view_all', undefined, off)).toEqual({ allow: true });
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(reasonOf(can(actor(role), 'court_day.view_all')), role).toBe('ROLE_DENIED');
+    }
+    expect(can(actor('advocate'), 'audit.read', undefined, off)).toEqual({ allow: true });
+  });
+
   it('junior is limited to assigned, shared or own matters', () => {
     const junior = actor('junior', { assignedMatterIds: new Set(['matter-assigned']) });
     expect(can(junior, 'matter.read', matter({ matterId: 'matter-assigned' }))).toEqual({

@@ -45,3 +45,5 @@ The failing check was exit 127, `turbo: command not found` (turbo is not on PATH
 
 ## Merge recheck (#662, turbo 127)
 Exit 127 was only `turbo` missing from PATH, not a code conflict. With node_modules/.bin on PATH, typecheck passes 23/23 and V1-V3 pass. No code change.
+### Post-second-merge
+After merging the base again, `forgedock check` re-ran V1-V4: all PASS (V4 typecheck for adapters, db, core included).

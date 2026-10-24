@@ -12,6 +12,7 @@ import {
   Hourglass,
   Inbox,
   Landmark,
+  Megaphone,
   ReceiptIndianRupee,
   Scale,
   Settings,
@@ -36,6 +37,7 @@ export const WORKSPACE_ROUTES = [
   'memory',
   'people',
   'courts',
+  'notices',
   'activity',
   'billing',
   'invoices',
@@ -94,6 +96,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   item('activity', Activity, 'followup'),
   item('people', Users, 'practice'),
   item('courts', Landmark, 'practice'),
+  item('notices', Megaphone, 'practice'),
   item('billing', Wallet, 'practice', { requires: 'billing.read' }),
   item('invoices', ReceiptIndianRupee, 'practice', {
     requires: 'invoices.read',

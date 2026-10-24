@@ -32,6 +32,7 @@ export type Messages = {
     memory: string;
     people: string;
     courts: string;
+    notices: string;
     activity: string;
     billing: string;
     invoices: string;
@@ -2260,6 +2261,40 @@ export type Messages = {
       alerts: string;
       detectionFailed: string;
       failed: string;
+    };
+  };
+  notices: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    empty: {
+      title: string;
+      hint: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    kind: {
+      circular: string;
+      practice_direction: string;
+      roster: string;
+      holiday: string;
+      registry: string;
+      bar_council: string;
+      gazette: string;
+      other: string;
+    };
+    issued: string;
+    effective: string;
+    forums: string;
+    matters: string;
+    provenance: string;
+    open: string;
+    matterCard: {
+      title: string;
+      empty: string;
     };
   };
   courtDay: {

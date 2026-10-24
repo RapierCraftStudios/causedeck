@@ -2,259 +2,244 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "packages/core/src/notices (poll via @causedeck/fetch createFetcher, persist notices with provenance, dedupe, match to workspaces by forums used and to matters)",
+   "quote": "apps/web: Notices page listing notices matched to the member's forums and matters with provenance and source links",
    "disposition": "deliver",
-   "why": "",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "a scheduled `notices.poll` pg-boss job per cleared source honouring registry rate limits",
+   "quote": "and a matter-level 'affecting this matter' card",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "uncleared sources are never polled and the job logs 'skipped: not cleared' (AC)",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R4",
-   "quote": "Add @causedeck/fetch to core dependencies with reason",
+   "quote": "register any server actions in apps/web/__tests__/cross-tenant-actions.test.ts",
    "disposition": "not-applicable",
-   "evidence": "packages/core/package.json:48 already lists @causedeck/fetch; core must not import it (packages/config/test/eslint-rules.test.ts:35), so the worker wires the fetcher as in apps/worker/src/main.ts:29-39",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "CORE_DOMAIN_DEPENDENCIES + docs/engineering/core-domains.md",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "cross-tenant registry/services test",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "worker registry.test.ts and schedules.test.ts",
-   "disposition": "deliver",
+   "evidence": "apps/web/__tests__/cross-tenant-actions.test.ts:122 (ACTIONS lists 'use server' exports only; the page and card are read-only and add none)",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/notices/poll.ts",
-   "change": "pollNotices(deps): list source rows kind='notice'; policyFor per source (SourceNotCleared -> log 'skipped: not cleared', no fetch); structural NoticeFetcher port fetchSource(sourceId,url); parse with parseMadrasHcNotices/parseKarnatakaHcNotices by source id (no parser -> counted skipped); upsert notice ON CONFLICT (source_id,url) DO NOTHING with provenance (source_type 'adapter', source_ref url, kind = kindHint ?? 'other', document columns null); return counts only",
+   "path": "packages/core/src/notices/list.ts",
+   "change": "New read services listWorkspaceNotices(tx, scope) and listMatterNotices(tx, scope, matterId): select notice_match joined to notice and source inside the given workspace tx, dedupe per notice, newest issuedOn first, bounded limit; return id,title,kind,issuedOn,effectiveOn,url,forumCodes,sourceName,recordedAt and the match reason; matter variant throws/NOT_FOUND for another workspace's matter like listRelevantJudgments",
    "requirements": [
     "R1",
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/notices/match.ts",
-   "change": "matchNotices: for newly inserted notices call the owner-defined function to find (workspace, matter, forum) using the forum codes, then insert notice_match rows inside withWorkspace per workspace (reason 'forum' once per workspace, 'matter_forum' per matter), ON CONFLICT DO NOTHING",
+   "path": "packages/core/src/notices/index.ts",
+   "change": "Export the two list functions and their types",
    "requirements": [
-    "R1"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/notices/index.ts",
-   "change": "barrel exporting the public notices services and types; add ./notices export in packages/core/package.json and export from packages/core/src/index.ts (no dependency changes)",
+   "path": "packages/core/src/notices/notices.test.ts",
+   "change": "Tests for the list functions (dedupe, order, matter filter, empty)",
    "requirements": [
-    "R1"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/package.json",
-   "change": "add only the \"./notices\" subpath export next to \"./case-watch\"; no dependencies changed",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entries for listWorkspaceNotices and listMatterNotices",
    "requirements": [
-    "R1"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/index.ts",
-   "change": "export * from './notices/index.ts'",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: B on A's matter is denied / sees nothing from A's notice_match; A unchanged",
    "requirements": [
-    "R1"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/jobs/definitions/notices-poll.ts",
-   "change": "defineJob system.notices.poll (workspaceId null, concurrency 1, singleton, hourly cron) with setNoticeFetcherFactory like causelist-poll.ts; unwired fetcher rejects only when a fetch is needed; logs counts",
-   "requirements": [
-    "R2",
-    "R3"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "register noticesPoll in definitions list and the type tuple; export from packages/core/src/jobs/index.ts",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/core/src/jobs/index.ts",
-   "change": "export noticesPoll, runNoticesPoll, setNoticeFetcherFactory",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/db/migrations/",
-   "change": "new migration at the next free number (0074 on this base; renumber if the lane took it): SECURITY DEFINER function app_notice_match_targets(p_forum_codes text[]) returning workspace_id, matter_id, forum_id from proceeding join forum on forum.code = any(p_forum_codes), excluding deleted organizations; REVOKE FROM PUBLIC, GRANT EXECUTE TO causedeck_app; plus regenerated meta snapshot and journal entry; header comment per 0068 convention. Update any db test that enumerates owner functions or migrations",
+   "path": "apps/web/app/(app)/w/[slug]/notices/page.tsx",
+   "change": "Server page: getWorkspaceContext, inWorkspace + listWorkspaceNotices via dynamic import; states loading/error/empty/denied; generateMetadata; dev ?__state preview like courts/page.tsx",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D10",
-   "path": "apps/worker/src/main.ts",
-   "change": "wire setNoticeFetcherFactory with createFetcher exactly as the causelist factory",
+   "id": "D7",
+   "path": "apps/web/app/(app)/w/[slug]/notices/loading.tsx",
+   "change": "Skeleton",
    "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "apps/web/app/(app)/w/[slug]/notices/error.tsx",
+   "change": "Route error boundary with retry (copy courts/error.tsx)",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "apps/web/components/notices/notice-list.tsx",
+   "change": "List component: title, kind badge, issued/effective dates, forum codes, provenance line (source name, recorded date), external source link (target=_blank rel=noopener noreferrer); exports a compact variant used by the matter card",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "apps/web/components/notices/__tests__/notice-list.test.tsx",
+   "change": "Component tests: rows, provenance, source link attributes, empty state",
+   "requirements": [
+    "R1",
     "R2"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "add system.notices.poll to the expected names",
+   "path": "apps/web/components/matters/matter-overview.tsx",
+   "change": "Render an 'Affecting this matter' card slot fed by notices passed from the page",
    "requirements": [
-    "R7"
+    "R2"
    ]
   },
   {
    "id": "D12",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "add system.notices.poll cron and first-run expectation",
+   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx",
+   "change": "Load listMatterNotices in the member's scope (failure degrades to an empty card, never breaks the overview) and pass to MatterOverview",
    "requirements": [
-    "R7"
+    "R2"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add notices domain dependencies (sources only, plus whatever is imported through index.ts) and list it in the other required arrays like case-watch",
+   "path": "apps/web/lib/nav.ts",
+   "change": "Add 'notices' to WORKSPACE_ROUTES and NAV_ITEMS (practice group, no permission), with an icon",
    "requirements": [
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D14",
-   "path": "docs/engineering/core-domains.md",
-   "change": "add a notices row: pollNotices, matchNotices, system.notices.poll",
+   "path": "apps/web/__tests__/nav.test.ts",
+   "change": "Add 'notices' to SPIKE_ROUTES; adjust any other route-enumerating tests (sidebar-nav, mobile-nav, workspace-shell, placeholder-page map) as typecheck/tests dictate",
    "requirements": [
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "register new core runtime exports: matching with a real SERVICE_TESTS case (workspace B proceedings never produce a notice_match in A; A unchanged), pollNotices and runNoticesPoll/setNoticeFetcherFactory in NOT_A_SERVICE with reasons (global system job)",
+   "path": "packages/i18n/src/messages/en/notices.json",
+   "change": "New namespace: page title/intro/empty/error, kind labels, provenance and link text, matter card strings; mirror in ta and kn (packages/i18n/src/messages/{ta,kn}/notices.json)",
    "requirements": [
-    "R6"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "add the two-tenant matchNotices case",
+   "path": "packages/i18n/src/messages/en/nav.json",
+   "change": "Add nav.notices label (and ta/kn nav.json)",
    "requirements": [
-    "R6"
+    "R1"
    ]
   },
   {
    "id": "D17",
-   "path": "packages/core/src/notices/notices.test.ts",
-   "change": "regression tests: uncleared source not fetched and 'skipped: not cleared' logged; cleared Madras fixture inserts notices once and a second poll inserts none (dedupe); no-parser source skipped; matching creates forum and matter_forum rows only for workspaces with proceedings in the forum; rate limit is not bypassed (one fetch per source per run)",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Register the notices namespace; regenerate packages/i18n/src/generated/* and update translation-status.json (draft entries for ta/kn) with the repo's i18n generate script",
    "requirements": [
     "R1",
-    "R2",
-    "R3"
+    "R2"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add 'notices' to the expected namespace list",
+   "requirements": [
+    "R1",
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "core must not import @causedeck/fetch (packages/config/test/eslint-rules.test.ts:35); use a structural port"
+   "what": "packages/core/src/notices/poll.ts and match.ts behaviour and exports (#586) unchanged"
   },
   {
    "id": "P2",
-   "what": "packages/core/package.json dependencies unchanged"
+   "what": "Tenant isolation: notice_match is read only inside inWorkspace/withWorkspace for the member's workspace; no owner-role bypass, no new migration"
   },
   {
    "id": "P3",
-   "what": "existing jobs system.causelist.poll and system.corpus.poll behaviour and cron (packages/core/src/jobs/definitions/causelist-poll.ts, corpus-poll.ts)"
+   "what": "apps/web/__tests__/cross-tenant-actions.test.ts ACTIONS stays equal to the exported 'use server' set (no action added)"
   },
   {
    "id": "P4",
-   "what": "notice and notice_match schema from #584 (packages/db/src/schema/notices.ts, migration 0071) unchanged"
+   "what": "Matter overview still renders when notices fail to load (apps/web/components/matters/matter-overview.tsx, matters/[id]/page.tsx)"
   },
   {
    "id": "P5",
-   "what": "out of scope: packages/notifications alerts (#587), apps/web UI (#588), court calendar holiday flagging"
+   "what": "packages/notifications and alert code (#587) untouched"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/notices src/jobs/registry.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/notices/notices.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/web exec vitest run components/notices __tests__/nav.test.ts components/shell/__tests__/sidebar-nav.test.tsx components/shell/__tests__/mobile-nav.test.tsx __tests__/workspace-shell.test.tsx __tests__/matter-workspace-page.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/config exec vitest run test/eslint-rules.test.ts"
-  },
-  {
-   "id": "V5",
    "command": "node /home/dev/.local/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Do not add @causedeck/fetch to core dependencies (already present); take the fetcher as a structural port wired by the worker",
-   "justification": "packages/core/package.json:48 already lists it; core must not import it (packages/config/test/eslint-rules.test.ts:35); precedent causelist-poll.ts:8-9 and #591/PR #612",
+   "choice": "Read-only core services in packages/core/src/notices/list.ts instead of querying tables from apps/web",
+   "justification": "Web reads go through core in inWorkspace (apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx:36-45); keeps RLS scope and the registry guard",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Cross-workspace matching reads tenant proceedings through a new owner-defined SECURITY DEFINER function, then writes notice_match per workspace via withWorkspace",
-   "justification": "FORCE RLS on tenant tables; precedent app_cause_list_watch_targets in packages/db/migrations/0068_cause_list_watch.sql",
+   "choice": "No server actions, so cross-tenant-actions.test.ts is unchanged; cross-tenant coverage comes from SERVICE_TESTS cases for the two list functions",
+   "justification": "packages/db/src/testing/cross-tenant-registry.ts:700 and services.test.ts:2592 (listRelevantJudgments)",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Store notice metadata only (document columns null); kind = parser kindHint else 'other'; AI tagging not invoked in the poll",
-   "justification": "Parsers already give kindHint (packages/intelligence/src/notices/types.ts:12-13); metadata-only matches K2 of PR #596; tagNotice stays available for a later pass",
-   "source": "precedent"
+   "choice": "No new workspace-package dependency and no migration",
+   "justification": "notices domain already imports only db schema; core-domains.js:33 allows sources only and the list reads source via the db schema",
+   "source": "lint"
   },
   {
    "id": "K4",
-   "choice": "Only Madras HC and Karnataka HC sources have parsers; other notice sources are skipped with a log",
-   "justification": "packages/intelligence/src/notices/index.ts:4-12 exports only those two parsers",
-   "source": "spec"
+   "choice": "Add a 'notices' nav item and a new i18n namespace, mirroring how #593 added case-watch",
+   "justification": "i18n registration pattern: packages/i18n/src/catalog.ts and __tests__/catalog.test.ts:85-125; nav: apps/web/lib/nav.ts:26-43",
+   "source": "precedent"
   }
  ]
 }

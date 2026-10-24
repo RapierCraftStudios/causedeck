@@ -108,6 +108,7 @@ describe('namespaced catalogs (#174)', () => {
         'members',
         'nav',
         'notFound',
+        'notices',
         'notifications',
         'offline',
         'palette',

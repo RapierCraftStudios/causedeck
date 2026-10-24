@@ -939,6 +939,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   noticesPoll: 'job definition (handler is runNoticesPoll)',
   runNoticesPoll: 'system job body: see pollNotices',
   setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
+  // notices page and matter card (#588)
+  listWorkspaceNotices: empty,
+  listMatterNotices: denies,
   // case-watch: delegated status lookups (#591)
   STATUS_SOURCES: 'constant',
   hashStatusFields: 'pure',

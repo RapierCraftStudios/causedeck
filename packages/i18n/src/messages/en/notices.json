@@ -1,0 +1,36 @@
+{
+  "notices": {
+    "metaTitle": "Notices",
+    "title": "Notices",
+    "description": "Official court and bar notices that name a forum you use, listed with the source they came from.",
+    "loading": "Loading notices",
+    "empty": {
+      "title": "No notices yet",
+      "hint": "Notices appear here when an official source publishes one that names a court where you have a matter."
+    },
+    "error": {
+      "title": "Could not load notices.",
+      "retry": "Try again"
+    },
+    "kind": {
+      "circular": "Circular",
+      "practice_direction": "Practice direction",
+      "roster": "Roster",
+      "holiday": "Holiday list",
+      "registry": "Registry notice",
+      "bar_council": "Bar Council",
+      "gazette": "Gazette",
+      "other": "Notice"
+    },
+    "issued": "Issued {date}",
+    "effective": "Effective {date}",
+    "forums": "Forums: {codes}",
+    "matters": "{count, plural, one {Affects # of your matters} other {Affects # of your matters}}",
+    "provenance": "Source: {source}, recorded {date}",
+    "open": "Open the official notice",
+    "matterCard": {
+      "title": "Affecting this matter",
+      "empty": "No official notice affects this matter."
+    }
+  }
+}

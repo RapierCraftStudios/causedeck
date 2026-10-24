@@ -141,6 +141,8 @@ const PAGES: Record<PlaceholderRoute, PageComponent> = {
   people: (await import('../app/(app)/w/[slug]/people/page.tsx')).default,
   // The courts index since #399, not a placeholder.
   courts: (await import('../app/(app)/w/[slug]/courts/page.tsx')).default,
+  // The notices feed since #588, not a placeholder.
+  notices: (await import('../app/(app)/w/[slug]/notices/page.tsx')).default,
   activity: (await import('../app/(app)/w/[slug]/activity/page.tsx')).default,
   billing: (await import('../app/(app)/w/[slug]/billing/page.tsx')).default,
   invoices: (await import('../app/(app)/w/[slug]/invoices/page.tsx')).default,
@@ -159,6 +161,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'settings',
   // Its own page test since #399 (courts-page.test.tsx).
   'courts',
+  // Its own page test since #588 (components/notices/__tests__/notice-list.test.tsx).
+  'notices',
   // Its own page test since #388 (matters-page.test.tsx).
   'matters',
   // Its own page and shell test since #48 (components/inbox/__tests__/inbox-shell.test.tsx).

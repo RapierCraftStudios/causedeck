@@ -10,3 +10,10 @@ export {
   type PollNoticesReport,
 } from './poll.ts';
 export { matchNotices, type MatchNoticesReport, type NoticeToMatch } from './match.ts';
+export {
+  listMatterNotices,
+  listWorkspaceNotices,
+  NOTICES_LIST_LIMIT,
+  type NoticeActor,
+  type NoticeRow,
+} from './list.ts';

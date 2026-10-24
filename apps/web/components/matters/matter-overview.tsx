@@ -8,12 +8,14 @@
 import { Badge } from '@causedeck/ui/badge';
 import { buttonVariants } from '@causedeck/ui/button';
 import { EmptyState } from '@causedeck/ui/empty-state';
-import { FileText, Inbox, Scale, Users } from 'lucide-react';
+import { FileText, Inbox, Megaphone, Scale, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 import type { MatterOverviewView } from '../../lib/matters/workspace.ts';
+
+import { NoticeList, type NoticeView } from '../notices/notice-list.tsx';
 
 import { DateConflictCard, type ChooseNextDateSourceAction } from './date-conflict-card.tsx';
 import { useOnline } from './matters-offline-banner.tsx';
@@ -35,6 +37,8 @@ export interface MatterOverviewProps {
   actions: MatterOverviewActions;
   /** Dev preview of the offline state. */
   forcedOffline?: boolean;
+  /** Official notices that affect this matter (#588); empty when none or when they could not load. */
+  notices?: readonly NoticeView[];
 }
 
 function Card({ title, slot, children }: { title: string; slot: string; children: ReactNode }) {
@@ -175,6 +179,26 @@ function DocumentsCard({ matter, slug }: { matter: MatterOverviewView; slug: str
   );
 }
 
+/** "Affecting this matter" (#588, D-048): the official notices matched to this matter's forums. */
+function NoticesCard({ notices }: { notices: readonly NoticeView[] }) {
+  const t = useTranslations('notices');
+  return (
+    <Card title={t('matterCard.title')} slot="matter-notices">
+      {notices.length === 0 ? (
+        <EmptyState
+          data-pattern-state="empty"
+          data-notices="empty"
+          icon={<Megaphone />}
+          title={t('matterCard.empty')}
+          className="py-6"
+        />
+      ) : (
+        <NoticeList notices={notices} compact />
+      )}
+    </Card>
+  );
+}
+
 function ObligationsCard({ matter }: { matter: MatterOverviewView }) {
   const t = useTranslations('matters.workspace');
   return (
@@ -193,6 +217,7 @@ export function MatterOverview({
   canWrite,
   actions,
   forcedOffline = false,
+  notices = [],
 }: MatterOverviewProps) {
   const online = useOnline();
   const offline = forcedOffline || !online;
@@ -220,6 +245,7 @@ export function MatterOverview({
           />
         ))}
         <ProceedingsCard matter={matter} />
+        <NoticesCard notices={notices} />
         <SynopsisEditor
           workspaceId={workspaceId}
           matterId={matter.id}

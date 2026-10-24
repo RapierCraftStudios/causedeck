@@ -2595,6 +2595,27 @@ const CASES: Record<string, Case> = {
       f.asB((s) => core.listRelevantJudgments(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
     );
   },
+  listWorkspaceNotices: async (f) => {
+    const noticeId = f.a.rows.notice_match?.noticeId ?? '';
+    // B asking for A's workspace gets nothing (or is refused); B's own list never holds A's match.
+    const asA = await f
+      .asB((s) => core.listWorkspaceNotices(s, { workspaceId: f.a.id, userId: f.ub }))
+      .catch(() => []);
+    expect(asA).toEqual([]);
+    const own = await f.asB((s) =>
+      core.listWorkspaceNotices(s, { workspaceId: f.b.id, userId: f.ub }),
+    );
+    expect(own.map((n) => n.id)).not.toContain(noticeId);
+  },
+  listMatterNotices: async (f) => {
+    const matterId = f.a.rows.notice_match?.matterId ?? '';
+    await expectDenied(
+      f.asB((s) => core.listMatterNotices(s, { workspaceId: f.a.id, userId: f.ub }, matterId)),
+    );
+    await expectDenied(
+      f.asB((s) => core.listMatterNotices(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
+    );
+  },
   scanJudgments: async (f) => {
     const deps = { db: f.tx, enqueueDelivery: () => Promise.resolve() };
     // B's scan sees none of A's tags; a malformed workspace id finds nothing.

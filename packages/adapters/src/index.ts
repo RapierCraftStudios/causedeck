@@ -2,7 +2,7 @@
 // registry, normalisers, access-mode enforcement, the `ListUnreadable` signal, the echo adapter, the
 // PDF, HTML and text layout readers (#370), config checksums and the pure parse-health monitor
 // (#372), the Madras HC adapter (#395), the Karnataka HC adapter (#404) and the NCLT Bengaluru
-// table adapter (#38, ADR 0020) and the case-status page parsers (#590) and the eCourts template parsers and code maps (#634). The versioned-config loader, activation and run recorder need the
+// table adapter (#38, ADR 0020) and the case-status page parsers (#590) and the eCourts template parsers and code maps (#634) and the DRT/DRAT adapter with the national NCLT benches (#662). The versioned-config loader, activation and run recorder need the
 // database and live in `@causedeck/adapters/server`. Nothing in this package makes a network
 // request (lint-enforced in eslint.config.js).
 export const packageName: string = '@causedeck/adapters';
@@ -11,6 +11,7 @@ export * from './access/enforce.ts';
 export * from './config/checksum.ts';
 export * from './config/schema.ts';
 export * from './display-board/index.ts';
+export * from './drt/index.ts';
 export * from './ecourts/index.ts';
 export * from './example/echo-adapter.ts';
 export * from './health/monitor.ts';

@@ -28,3 +28,9 @@ The `caseWatch.source` messages were keyed by status source ids (`in.tn.…:case
 
 ## CI @causedeck/intelligence#test failure (no code change)
 The failing shard test is `packages/intelligence/src/pipeline/pipeline.test.ts > text-layer PDF > processes 20 text pages in under 5 seconds…` (a wall-clock performance test, 30s timeout). This branch changes nothing in packages/intelligence or its dependencies' behaviour. Run locally under load: 290 pass, only that timing test times out. Treated as a flaky, load-sensitive test; no change made. The `build` job log was not available.
+
+## CI recovery (flags + build)
+- `KILL_COURT_CASE_STATUS` added to `packages/config/src/env/kill-switches.ts` (keys.test.ts asserts the kill-switch list matches the flag registry).
+- `legal-gate.test.ts` legal flag count 7 -> 8.
+- `proceedings-page.test.tsx` mocks `lib/flags.ts` (the page now evaluates `court.case-status`; the test workspace id is not a uuid).
+- Build: the web bundle budget reported the `/w/[slug]/today` shell delta at 40.9 KB vs 40.0 KB (base lane was 40.0 KB). The shell bundles the flag registry, so the new flag description was shortened; the effect could not be measured locally (no builds) and the next CI run decides.

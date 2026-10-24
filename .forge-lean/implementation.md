@@ -30,3 +30,6 @@ New daily job at 06:00. Migration adds a SELECT policy for `causedeck_owner` on 
 
 ## Fix: stale-list guard
 PORTFOLIO_ALERT_MAX_CASES is a constant already in NOT_A_SERVICE, so it is not a member of the cross-tenant portfolio CASES list; recorded in result.json not_members.
+
+## CI fix
+Migration lint required a `-- Reviewed-by:` header on 20261024120000_portfolio_alert_targets.sql; added it. lint-migrations test passes.

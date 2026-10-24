@@ -463,6 +463,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setSensitive: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
+  // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
+  staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
   grantSession: denies,
@@ -711,6 +713,15 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // business dashboard (#519): pure maths and rendering over aggregates
+  parseBusinessSnapshot: 'pure',
+  buildBusinessReport: 'pure',
+  businessConfigFromEnv: 'pure',
+  evaluateCostThresholds: 'pure',
+  renderBusinessDigest: 'pure',
+  renderCostAlert: 'pure',
+  readBusinessSnapshot:
+    'system read of app_business_snapshot (job use, no staff user): plan ids and counts, sums and dollar totals only, never a workspace id, email or content',
   // source registry (#478): a global table of external-source policy, no tenant rows to leak
   SOURCE_KINDS: 'constant',
   SOURCE_ACCESS_MODES: 'constant',
@@ -929,6 +940,20 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     "actor-scoped in withWorkspace: loads only the actor's own watch (advocate_user_id = actor) and proceeds as delegatedFor that advocate on that matter; another advocate or workspace gets NOT_FOUND before any fetch; covered by case-watch.test.ts",
   recordDeviceSnapshot:
     "actor-scoped in withWorkspace: stores a snapshot only on the actor's own watch; covered by case-watch.test.ts",
+  // case-watch: the status poll and change alerts (#592)
+  MAX_PER_ADVOCATE_PER_RUN: 'constant',
+  MAX_PER_SOURCE_PER_RUN: 'constant',
+  MAX_WATCHES_PER_RUN: 'constant',
+  pollCaseWatches:
+    "system job body: no workspace; lists due watches only through the owner-defined app_case_watch_due and runs each as the watch's own advocate through runCaseStatusLookup (own watch only, delegatedFor); covered by status-poll.test.ts",
+  touchWatchPolled:
+    "actor-scoped in withWorkspace: updates last_polled_at only on the actor's own watch; covered by status-poll.test.ts",
+  notifyStatusChanges:
+    "actor-scoped in withWorkspace: reads the matter under the actor's workspace and notifies only the actor; covered by status-poll.test.ts",
+  STATUS_POLL_CRON: 'constant',
+  statusPoll: 'job definition (handler is runStatusPoll)',
+  runStatusPoll: 'system job body: see pollCaseWatches',
+  setStatusFetcherFactory: 'setter (worker wires the governed fetcher, #592)',
   // jobs: definitions, schemas and constants
   DEFAULT_CONCURRENCY: 'constant',
   DEFAULT_FAIRNESS_CONCURRENCY: 'constant',

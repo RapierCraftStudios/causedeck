@@ -5,6 +5,7 @@ import {
   registry,
   setBoardFetcherFactory,
   setCauseListFetcherFactory,
+  setStatusFetcherFactory,
   type CauseListFetcherFactory,
 } from '@causedeck/core/jobs';
 import { closeAppDb, db } from '@causedeck/core/runtime';
@@ -45,6 +46,17 @@ const governedFetcher = ((jobDb) =>
 setCauseListFetcherFactory(governedFetcher);
 // The display boards (#493) use the same governed fetcher through core's `BoardFetcher` shape.
 setBoardFetcherFactory(governedFetcher);
+
+// The same governed fetcher for `system.status.poll` (#592): delegated case-status lookups only.
+setStatusFetcherFactory((jobDb) =>
+  createFetcher({
+    registry: { policyFor: (id) => policyFor(id, { db: jobDb }) },
+    alterlab: createProvider({ apiKey: env.ALTERLAB_API_KEY?.reveal() }),
+    clock: { now: () => new Date() },
+    usage: { record: () => Promise.resolve() },
+    log: createFetchLogSink(jobDb),
+  }),
+);
 
 const worker = createWorker({ connectionString: ownerUrl.reveal(), db, logger, registry });
 const server = await startHealthServer({ port: env.WORKER_PORT, checks: workerChecks(worker) });

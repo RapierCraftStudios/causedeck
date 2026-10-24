@@ -698,6 +698,18 @@
           "label": "Relevant judgments",
           "description": "When a new judgment cites a statute section confirmed on one of your matters."
         },
+        "statusNextDate": {
+          "label": "Next hearing date",
+          "description": "When a watched case shows a new next hearing date."
+        },
+        "statusOrder": {
+          "label": "New orders",
+          "description": "When a watched case lists a new order."
+        },
+        "statusStage": {
+          "label": "Stage changes",
+          "description": "When a watched case moves to a new stage."
+        },
         "digestDaily": {
           "label": "Daily digest",
           "description": "One email at 6:30 pm with the day's updates."

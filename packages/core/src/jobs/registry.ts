@@ -16,11 +16,14 @@ import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
 import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { businessCostAlert } from './definitions/business-cost-alert.ts';
+import { businessDigest } from './definitions/business-digest.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { statusPoll } from './definitions/status-poll.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
@@ -158,6 +161,8 @@ export const registry = createRegistry([
   activityDigest,
   activityDigestMember,
   usageRollup,
+  businessCostAlert,
+  businessDigest,
   systemAuditVerify,
   auditVerify,
   auditRetention,
@@ -183,6 +188,7 @@ export const registry = createRegistry([
   causelistPoll,
   boardPoll,
   judgmentAlertScan,
+  statusPoll,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -201,6 +207,8 @@ export type JobMap = RegistryMap<
     typeof activityDigest,
     typeof activityDigestMember,
     typeof usageRollup,
+    typeof businessCostAlert,
+    typeof businessDigest,
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
@@ -226,6 +234,7 @@ export type JobMap = RegistryMap<
     typeof causelistPoll,
     typeof boardPoll,
     typeof judgmentAlertScan,
+    typeof statusPoll,
   ]
 >;
 export type JobName = keyof JobMap;

@@ -699,6 +699,18 @@ export type Messages = {
           label: string;
           description: string;
         };
+        statusNextDate: {
+          label: string;
+          description: string;
+        };
+        statusOrder: {
+          label: string;
+          description: string;
+        };
+        statusStage: {
+          label: string;
+          description: string;
+        };
         digestDaily: {
           label: string;
           description: string;

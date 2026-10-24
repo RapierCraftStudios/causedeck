@@ -130,6 +130,8 @@ describe('enqueue', () => {
       'activity.digest',
       'activity.digest.member',
       'system.usage.rollup',
+      'system.business.cost-alert',
+      'system.business.digest',
       'system.audit.verify',
       'audit.verify',
       'system.audit.retention',
@@ -155,6 +157,7 @@ describe('enqueue', () => {
       'system.causelist.poll',
       'system.board.poll',
       'system.judgment-alert.scan',
+      'system.status.poll',
     ]);
   });
 });

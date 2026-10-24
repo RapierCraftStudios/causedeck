@@ -13,6 +13,7 @@ export {
   recordDeviceSnapshot,
   runCaseStatusLookup,
   STATUS_SOURCES,
+  touchWatchPolled,
   type CaseStatusLookupDeps,
   type CaseStatusLookupOutcome,
   type CaseStatusLookupReport,
@@ -26,3 +27,13 @@ export {
   type StatusChanges,
   type StatusDraftInput,
 } from './diff.ts';
+export {
+  MAX_PER_ADVOCATE_PER_RUN,
+  MAX_PER_SOURCE_PER_RUN,
+  MAX_WATCHES_PER_RUN,
+  pollCaseWatches,
+  type DueWatch,
+  type PollCaseWatchesDeps,
+  type PollCaseWatchesReport,
+} from './poll.ts';
+export { notifyStatusChanges, type StatusAlertDeps, type StatusAlertInput } from './alerts.ts';

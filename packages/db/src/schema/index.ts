@@ -27,6 +27,12 @@ export {
   type WebhookEventType,
 } from './webhooks.ts';
 export { portfolio, portfolioCase, portfolioPanelAdvocate } from './portfolio.ts';
+export {
+  WHATSAPP_E164_PATTERN,
+  WHATSAPP_OTP_MAX_ATTEMPTS,
+  whatsappLink,
+  whatsappOtpChallenge,
+} from './whatsapp-link.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,

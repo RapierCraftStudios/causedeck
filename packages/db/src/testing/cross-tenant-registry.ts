@@ -29,6 +29,7 @@ const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-pr
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
+const CORE_WHATSAPP_LINK_TEST = 'packages/core/src/__tests__/cross-tenant/whatsapp-link.test.ts';
 const CORE_PORTFOLIO_TEST = 'packages/core/src/__tests__/cross-tenant/portfolio.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
@@ -145,6 +146,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   portfolio: DB_TABLES_TEST,
   portfolio_case: DB_TABLES_TEST,
   portfolio_panel_advocate: DB_TABLES_TEST,
+
+  // WhatsApp number link and OTP challenge (#678).
+  whatsapp_link: DB_TABLES_TEST,
+  whatsapp_otp_challenge: DB_TABLES_TEST,
 
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
@@ -276,6 +281,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // Portfolio list and create (#666): B cannot list or create in A's workspace; B's list has no A row.
   listPortfolios: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   createPortfolio: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  // WhatsApp link (#678): B cannot request, verify, unlink or read A's link, challenge or target.
+  requestWhatsAppOtp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  verifyWhatsAppOtp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  unlinkWhatsApp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  setWhatsAppCategories: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  getWhatsAppLink: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  getWhatsAppSendTarget: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
   // Exception alerts (#665): the scan opens withWorkspace on the given workspace id only.
   scanPortfolioAlerts: {
     test: CORE_PORTFOLIO_TEST,
@@ -835,6 +847,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // whatsapp-link (#678): constants
+  WHATSAPP_OTP_TTL_MS: 'constant',
+  WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',
+  WHATSAPP_OTP_MAX_ATTEMPTS: 'constant',
   // portfolio (#663): pure CSV reader and constants
   parsePortfolioCsv: 'pure',
   MAX_PORTFOLIO_IMPORT_ROWS: 'constant',

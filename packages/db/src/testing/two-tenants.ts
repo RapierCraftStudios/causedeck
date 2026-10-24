@@ -28,6 +28,7 @@ import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
 import { apiKey } from '../schema/api-keys.ts';
 import { portfolio, portfolioCase, portfolioPanelAdvocate } from '../schema/portfolio.ts';
+import { whatsappLink, whatsappOtpChallenge } from '../schema/whatsapp-link.ts';
 import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
@@ -1062,6 +1063,35 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, portfolioId, advocateUserId: ownerId })
       .returning({ id: portfolioPanelAdvocate.id });
     return { portfolioId, id: first(rows, 'portfolio_panel_advocate').id };
+  },
+  whatsapp_link: async (tx, { workspaceId, ownerId, tag }) => {
+    const now = new Date();
+    const rows = await tx
+      .insert(whatsappLink)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        e164: `+9198${tag.replace(/\D/g, '').padEnd(8, '0').slice(0, 8)}`,
+        verifiedAt: now,
+        consentAt: now,
+      })
+      .returning({ id: whatsappLink.id });
+    return { id: first(rows, 'whatsapp_link').id };
+  },
+  whatsapp_otp_challenge: async (tx, { workspaceId, ownerId }) => {
+    const now = new Date();
+    const rows = await tx
+      .insert(whatsappOtpChallenge)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        e164: '+919800000001',
+        codeHash: 'seed-hash',
+        consentAt: now,
+        expiresAt: new Date(now.getTime() + 600_000),
+      })
+      .returning({ id: whatsappOtpChallenge.id });
+    return { id: first(rows, 'whatsapp_otp_challenge').id };
   },
   cause_list_watch: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

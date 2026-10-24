@@ -314,6 +314,12 @@ const portfoliosExporter = tablesExporter('portfolios', [
   ws('portfolio_panel_advocate', { userColumn: 'advocate_user_id' }),
 ]);
 
+// WhatsApp number link (#678): the member's own linked number, opt-in time and chosen categories.
+// The pending challenge holds only a code hash and is never exported.
+const whatsappLinkExporter = tablesExporter('whatsapp-link', [
+  ws('whatsapp_link', { userColumn: 'user_id' }),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -329,6 +335,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   automationExporter,
   webhooksExporter,
   portfoliosExporter,
+  whatsappLinkExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

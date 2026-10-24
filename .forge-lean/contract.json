@@ -2,37 +2,43 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
+   "quote": "Add a `whatsapp_link` table (user, workspace, E.164 number, verified_at, consent_at, categories) and an OTP challenge table with expiry and attempt limits",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "dashboard (next dates, stage, adverse orders)",
+   "quote": "add `whatsapp` to the `notification_channel` enum (migration, next free number)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "exception alert settings",
+   "quote": "Core service: request OTP, verify, unlink (unlink stops all messages), set categories.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "exception alert settings, exports",
+   "quote": "Messages may only ever target the verified number of the owning user (D-029).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "i18n namespace and catalog test",
+   "quote": "Register tables (db index test, RLS catalog, seeders) and core exports (cross-tenant registry with real cases).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "cross-tenant-actions test entries for each 'use server' action.",
+   "quote": "Add `'whatsapp'` to CHANNELS in packages/notifications/src/categories.ts.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "Acceptance: opt-in and verification required before any message; unlink stops messages; cross-tenant tests pass.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -40,186 +46,201 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/portfolio/portfolio.ts",
-   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D2",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "Export listPortfolios and createPortfolio.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/core/src/portfolio/portfolio.test.ts",
-   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
+   "path": "packages/db/src/schema/whatsapp-link.ts",
+   "change": "New tenantTable whatsapp_link (workspace_id, user_id, e164 with CHECK, verified_at, consent_at, unlinked_at, categories text[], unique per workspace+user) and whatsapp_otp_challenge (code hash, expires_at, attempts with CHECK cap, consumed_at). Export from schema/index.ts.",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D6",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
-   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
+   "id": "D2",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the new tables.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/db/src/schema/notifications.ts",
+   "change": "Add 'whatsapp' to NOTIFICATION_CHANNELS.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/db/migrations",
+   "change": "Next free migration (renumber if base took it) creating both tables with FORCE RLS ws_isolation and grants, plus ALTER TYPE notification_channel ADD VALUE IF NOT EXISTS 'whatsapp'; update meta/_journal.json and snapshot (drizzle-kit generate, then hand-add grants/RLS as in 20261024110000_portfolio.sql).",
    "requirements": [
     "R1",
-    "R4"
+    "R2"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/notifications/src/categories.ts",
+   "change": "Add 'whatsapp' to CHANNELS; no category lists it as default.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/core/src/whatsapp-link/index.ts",
+   "change": "New domain (plus sibling files): requestWhatsAppOtp, verifyWhatsAppOtp, unlinkWhatsApp, setWhatsAppCategories, getWhatsAppSendTarget (only verified+consented+not-unlinked number of the owning user). OTP hashed, constant-time compare, expiry, attempt cap, resend cooldown; sender injected.",
+   "requirements": [
+    "R3",
+    "R4",
+    "R7"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
-   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
+   "path": "packages/core/package.json",
+   "change": "Add ./whatsapp-link subpath export; also export from packages/core/src/index.ts.",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
     "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
-   "change": "Skeleton loading state.",
+   "path": "packages/core/src/index.ts",
+   "change": "Re-export whatsapp-link.",
    "requirements": [
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
-   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "TABLE_TESTS for both tables; SERVICE_TESTS for each service export, NOT_A_SERVICE for pure ones.",
    "requirements": [
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/portfolio/portfolio-view.tsx",
-   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: B on A's link/OTP is denied or sees nothing; A unchanged.",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4"
+    "R5",
+    "R7"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/web/lib/nav.ts",
-   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "Seeders for whatsapp_link and whatsapp_otp_challenge.",
    "requirements": [
-    "R1",
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'portfolio' to NAMESPACES.",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add both tables to the RLS catalog.",
    "requirements": [
     "R5"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/i18n/src/messages/en/portfolio.json",
-   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add both tables to the root table list.",
    "requirements": [
     "R5"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'portfolio' to the expected namespace list.",
+   "path": "packages/core/src/lifecycle/deletion/erase.ts",
+   "change": "Add both tables to PURGE_ORDER (challenge before link if cited).",
    "requirements": [
     "R5"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
+   "path": "packages/core/src/lifecycle/export/exporters.ts",
+   "change": "Export whatsapp_link (number masked or included, categories, timestamps); exclude code hashes / challenge table.",
    "requirements": [
-    "R6"
+    "R5"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the whatsapp-link domain and its dependencies.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/core/src/domains.test.ts",
+   "change": "Add whatsapp-link to CORE_DOMAIN_DEPENDENCIES (audit only if audited).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts",
+   "change": "Regression tests: no send target before verify/consent, OTP expiry, attempt cap, wrong code, unlink stops target, categories, number is E.164, target never another user's number.",
+   "requirements": [
+    "R3",
+    "R4",
+    "R7"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
+   "what": "packages/notifications/src/service.ts fan-out stays email/push only (line ~239); whatsapp sends are #679, no message is sent by this change"
   },
   {
    "id": "P2",
-   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
+   "what": "Existing notification preference behaviour: categories' defaultChannels unchanged, so whatsapp defaults off (service.ts resolve)"
   },
   {
    "id": "P3",
-   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
+   "what": "packages/core/src/whatsapp/ chat-import domain is untouched"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/whatsapp-link src/__tests__/cross-tenant/services.test.ts src/__tests__/cross-tenant/registry.test.ts src/domains.test.ts src/lifecycle --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
-  },
-  {
-   "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__ --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
-   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
-   "source": "precedent"
+   "choice": "New core domain `whatsapp-link` rather than extending `whatsapp` (chat import)",
+   "justification": "Separate concern and dependency set; domains registered via CORE_DOMAIN_DEPENDENCIES and docs/engineering/core-domains.md:211-240",
+   "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
-   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
+   "choice": "Hand-add RLS/grants to the generated migration",
+   "justification": "Pattern in packages/db/migrations/20261024182641_activation_event.sql and 20261024110000_portfolio.sql",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
-   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
-   "source": "precedent"
+   "choice": "OTP sender is injected; no provider dependency",
+   "justification": "Provider and residency review belong to #679/#502 item 4",
+   "source": "spec"
   }
  ]
 }

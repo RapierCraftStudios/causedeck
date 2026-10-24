@@ -168,6 +168,10 @@ describe('row-level security catalog', () => {
         'portfolio_case',
         'portfolio_panel_advocate',
 
+        // WhatsApp number link and OTP challenge (#678).
+        'whatsapp_link',
+        'whatsapp_otp_challenge',
+
         // Case-status watch (#589).
         'case_watch',
         'case_status_snapshot',

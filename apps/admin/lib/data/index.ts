@@ -16,6 +16,7 @@ import {
   listSources,
   sourceFetchLogs,
   sourceOpsOverview,
+  staffConflictRate,
   staffParseYield,
   type SourceFetchLogEntry,
   type SourceOpsRow,
@@ -189,24 +190,26 @@ export async function dataOpsOverview(
   now: Date = new Date(),
   db?: Database,
 ): Promise<SourceOpsRow[]> {
-  const [day, week] = await staffCall(
+  const [day, week, conflictDay, conflictWeek] = await staffCall(
     staff,
     {
       purpose: 'data_ops.parse_yield',
       capability: 'data-ops',
-      functions: ['app_staff_parse_yield'],
+      functions: ['app_staff_parse_yield', 'app_staff_conflict_rate'],
     },
     (handle) =>
       Promise.all([
         staffParseYield(handle, staff.userId, new Date(now.getTime() - DAY_MS)),
         staffParseYield(handle, staff.userId, new Date(now.getTime() - 7 * DAY_MS)),
+        staffConflictRate(handle, staff.userId, new Date(now.getTime() - DAY_MS)),
+        staffConflictRate(handle, staff.userId, new Date(now.getTime() - 7 * DAY_MS)),
       ]),
     db,
   );
   return staffQuery(
     staff,
     { purpose: 'data_ops.overview', capability: 'data-ops', tables: ['fetch_log', 'source'] },
-    (tx) => sourceOpsOverview(tx, now, { day, week }, sourceId),
+    (tx) => sourceOpsOverview(tx, now, { day, week }, sourceId, { day: conflictDay, week: conflictWeek }),
     db,
   );
 }

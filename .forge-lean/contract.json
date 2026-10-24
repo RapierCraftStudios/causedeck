@@ -2,47 +2,46 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "A check on a new party finds existing matters where the chamber appears for an adverse party, including transliterated names.",
+   "quote": "Two disagreeing sources produce one conflict card; agreeing sources raise confidence.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "The feature is behind a flag until counsel signs off (#486).",
+   "quote": "Adapter health reports the conflict rate per source.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/conflicts/`: name matching (transliteration-aware for Tamil and Kannada, organisation aliases) against the chamber's matters and parties, and optionally its cause-list history.",
+   "quote": "`packages/core/src/facts/agreement.ts`: for each fact, the set of sources, agreement status (agree, conflict, single source) and a confidence score.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "`apps/web`: a conflict check on new-matter intake, showing results with sources; it never auto-blocks, and the advocate decides.",
+   "quote": "A conflict card generalised to every source pair; the lawyer resolves, and the resolution is kept.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Audit: every check is logged; no data leaves the chamber's workspace.",
+   "quote": "`apps/web`: a confidence chip on dates and stages, with the sources listed on hover.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "and optionally its cause-list history.",
-   "disposition": "defer",
-   "why": "Optional in the issue; `listing` (packages/db/src/schema/docket.ts:50) carries no party names, so history matching needs a separate data source and counsel review of processing cause-list parties. Follow-up issue.",
+   "quote": "Metrics: the conflict rate per source, which feeds adapter health.",
+   "disposition": "deliver",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/conflicts/normalize.ts",
-   "change": "Name normaliser: NFKC, case-fold, strip honorifics (Sri/Smt/Dr/M/S) and company suffixes (Pvt Ltd/Limited), organisation alias table, Tamil (U+0B80-0BFF) and Kannada (U+0C80-0CFF) to Latin phonetic key, collapse vowel length/aspirates/doubled letters, token-order independent key.",
+   "path": "packages/core/src/facts/agreement.ts",
+   "change": "Pure assessAgreement(observations) -> {sources, status: agree|conflict|single, confidence}; plus getNextDateAgreement reader over a proceeding's listings (provenance sourceType/sourceRef/confidence)",
    "requirements": [
     "R1",
     "R3"
@@ -50,214 +49,169 @@
   },
   {
    "id": "D2",
-   "path": "packages/core/src/conflicts/check.ts",
-   "change": "checkConflicts(deps, actor, input): loads person/organisation (name+aliases) and role_edge to matters inside the caller's workspace transaction; a hit is a new adverse party equal to an existing client, or a new client equal to an existing adverse party; returns hits with matter id/title, matched name, role and source; always records one audit event (ids and counts, no names); never touches network or other workspaces.",
+   "path": "packages/core/src/facts/index.ts",
+   "change": "Public barrel for the facts domain",
    "requirements": [
-    "R1",
-    "R3",
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/conflicts/index.ts",
-   "change": "Domain barrel exporting checkConflicts, normaliser and types.",
+   "path": "packages/core/package.json",
+   "change": "Add ./facts export",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/package.json",
-   "change": "Add `./conflicts` export mirroring `./case-watch` (line 22). No dependency changes.",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add facts domain dependency edges (matter-graph if reader uses it)",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/index.ts",
-   "change": "Export the conflicts domain as the other domains are exported.",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document facts domain and edges",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "Register `conflict.checked` audit action (security:true so a check cannot run unlogged).",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register facts exports in SERVICE_TESTS or NOT_A_SERVICE",
    "requirements": [
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/flags/src/keys.ts",
-   "change": "Add legal-gated flag `conflicts.check` (owners [500, 486]).",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cross-tenant case for getNextDateAgreement",
    "requirements": [
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D8",
-   "path": "docs/engineering/flags.md",
-   "change": "Add the `conflicts.check` row (⚖, KILL_CONFLICTS_CHECK, #500) to match the registry.",
+   "path": "apps/web/components/matters/date-conflict-card.tsx",
+   "change": "Generalise card to N sources/every source pair, still never preselecting; resolution via existing chooseNextDateSource path",
    "requirements": [
-    "R2"
+    "R1",
+    "R4"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/matters/actions.ts",
-   "change": "Add `checkConflictsAction` (workspaceAction, `matter.read`, requireFlag('conflicts.check') -> NOT_FOUND when off) calling core checkConflicts.",
+   "path": "apps/web/lib/matters/workspace.ts",
+   "change": "Expose agreement (status, confidence, sources) on the overview view models",
    "requirements": [
-    "R2",
-    "R4",
     "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/matters/new-matter-dialog.tsx",
-   "change": "Optional conflict-check step on intake: when the flag is on, show hits with sources; submission is never blocked, the advocate decides.",
+   "path": "apps/web/components/matters/next-date-card.tsx",
+   "change": "Confidence chip on next date (and stage where shown) with sources on hover",
    "requirements": [
-    "R4"
+    "R5"
    ]
   },
   {
    "id": "D11",
    "path": "packages/i18n/src/messages/en/matters.json",
-   "change": "Conflict check strings under matters.new (also kn and ta matters.json and the generated message files, per the i18n catalog test).",
+   "change": "New strings for chip/card (and kn/ta + generated copies per i18n catalog rules)",
    "requirements": [
-    "R4"
+    "R5"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "CORE_DOMAIN_DEPENDENCIES: `conflicts: ['audit']`.",
+   "path": "packages/db/migrations/0080_staff_conflict_rate.sql",
+   "change": "Security-definer app_staff_conflict_rate(since) mirroring 0072: per-source counts of listings/proposals vs corrected conflicts, staff only (renumber if base took 0080; regenerate snapshot)",
    "requirements": [
-    "R3"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D13",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Add conflicts row, dependency table row and graph edge.",
+   "path": "packages/core/src/sources/ops.ts",
+   "change": "staffConflictRate + conflictRate field on SourceOpsRow",
    "requirements": [
-    "R3"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entry for checkConflicts (workspace B check sees nothing of A) and NOT_A_SERVICE for pure normaliser exports.",
+   "path": "apps/admin/app/(console)/data-ops/page.tsx",
+   "change": "Show conflict rate per source in adapter health",
    "requirements": [
-    "R5"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real case: B checking A's client name gets no hits; A's data unchanged.",
+   "path": "packages/db/src/__tests__/staff-console-schema.test.ts",
+   "change": "Cover the new staff function (refuses non-staff, per-source counts only)",
    "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Register checkConflictsAction in ACTIONS with probe input.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/core/src/conflicts/conflicts.test.ts",
-   "change": "Integration test (R1: adverse party matches existing client incl. Tamil/Kannada spelling vs Latin, organisation alias, no hit across workspaces, audit event written) and normaliser unit tests.",
-   "requirements": [
-    "R1",
-    "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "apps/web/__tests__/conflicts-action.test.ts",
-   "change": "Unit test: action returns NOT_FOUND with flag off, results with flag on; legal-gated flag registered (R2).",
-   "requirements": [
-    "R2",
-    "R4"
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "createMatterAction behaviour and result shape (apps/web/app/(app)/w/[slug]/matters/actions.ts:50): the conflict check must never block or alter matter creation."
+   "what": "chooseNextDateSource semantics: a person chooses, loser stays as `corrected` history (packages/core/src/matter-graph/next-date.ts)"
   },
   {
    "id": "P2",
-   "what": "Flag precedence and legal-ack rules (packages/flags/src/evaluate.ts:47-60); every flag default stays false."
+   "what": "proposeNextDate/confirmNextDate remain the only writers of listing.list_date/canonical (no-direct-listing-update architecture test)"
   },
   {
    "id": "P3",
-   "what": "Tenant isolation: no cross-workspace reads, no new SECURITY DEFINER function, no migration."
+   "what": "getAdapterHealthSummary and sourceOpsOverview existing fields and callers (packages/core/src/court/adapter-health.ts, packages/core/src/sources/ops.ts, apps/admin data-ops page)"
   },
   {
    "id": "P4",
-   "what": "Existing audit action registry entries and AUDIT_ACTIONS shape (packages/core/src/audit/events.ts)."
+   "what": "Staff console aggregates stay content-free: no workspace, party or URL data leaves ops.ts"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/conflicts src/__tests__/cross-tenant/services.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/facts src/matter-graph/__tests__/next-date.test.ts src/sources/__tests__/ops.test.ts src/__tests__/domains.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/flags exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/matter-workspace-components.test.tsx __tests__/matter-workspace-page.test.tsx __tests__/cross-tenant-actions.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/conflicts-action.test.ts __tests__/cross-tenant-actions.test.ts __tests__/matters-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/staff-console-schema.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "No migration and no SECURITY DEFINER function: the check runs entirely inside the caller's withWorkspace transaction over tenant tables.",
-   "justification": "Tenant tables are FORCE RLS (packages/db/src/schema/people.ts:1-3), which satisfies 'no data leaves the chamber's workspace' by construction.",
-   "source": "doc"
+   "choice": "Reuse listing provenance and the `corrected` state as the kept resolution instead of a new tenant table",
+   "justification": "Avoids RLS/seeder registry churn; next-date.ts:13-17 already keeps the losing proposal as corrected history",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Self-contained Tamil/Kannada phonetic normaliser in core instead of a new dependency.",
-   "justification": "No transliteration library exists in the repo (advocate-keys.ts:3-5 keeps names raw); avoids a new package dependency.",
+   "choice": "Staff conflict-rate via a security-definer function like app_staff_parse_yield",
+   "justification": "packages/db/migrations/0072_staff_parse_yield.sql and packages/core/src/sources/ops.ts:118 give the cross-tenant, content-free pattern",
    "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "`conflict.checked` is a security (fail-closed) audit action.",
-   "justification": "Issue requires every check logged; fail-closed (packages/core/src/audit/events.ts:1-5) guarantees a check cannot run unaudited.",
-   "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Flag gating follows requireFlag -> NOT_FOUND.",
-   "justification": "apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts:50-57.",
-   "source": "precedent"
-  },
-  {
-   "id": "K5",
-   "choice": "Core conflicts depends only on audit; matter/person rows are read directly with the caller's tx.",
-   "justification": "CORE_DOMAIN_DEPENDENCIES rule (packages/config/eslint/core-domains.js) allows only registered imports via index.ts.",
-   "source": "lint"
   }
  ]
 }

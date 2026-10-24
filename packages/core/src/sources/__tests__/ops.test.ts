@@ -132,6 +132,23 @@ describe('sourceOpsOverview', () => {
     });
   });
 
+  it('reports the conflict rate of the source whose host the readings carry (#499)', async () => {
+    await withTestDb(async (tx) => {
+      const id = `ops.${randomUUID().slice(0, 8)}`;
+      await seedSource(tx, id);
+      const rates = {
+        day: [],
+        week: [
+          { sourceKey: 'example.test', observations: 8, conflicts: 2 },
+          { sourceKey: 'other.test', observations: 4, conflicts: 4 },
+        ],
+      };
+      const [row] = await sourceOpsOverview(tx, NOW, undefined, id, rates);
+      expect(row?.day.conflictRate).toBeNull();
+      expect(row?.week.conflictRate).toBe(0.25);
+    });
+  });
+
   it('ranks the top failing sources by 24 hour errors', async () => {
     await withTestDb(async (tx) => {
       const [a, b, c] = ['a', 'b', 'c'].map((k) => `ops.${k}.${randomUUID().slice(0, 8)}`);

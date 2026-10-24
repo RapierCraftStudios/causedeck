@@ -651,6 +651,60 @@ const CASES: Record<string, Case> = {
     const aMatters = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.matter));
     expect(aMatters.filter((m) => m.id === matterId)).toHaveLength(1);
   },
+  getStageAgreement: async (f) => {
+    // Covered with getNextDateAgreement below: one query, B sees none of A's readings.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const asB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getStageAgreement(s, f.b.id, aProceeding),
+    );
+    expect(asB.sources).toEqual([]);
+  },
+  getNextDateAgreement: async (f) => {
+    // A's two disagreeing proposals are a conflict for A and invisible to B; A's rows are unchanged.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    await inWorkspace(f.tx, f.a.id, async (s) => {
+      await s.insert(schema.listing).values([
+        {
+          workspaceId: f.a.id,
+          proceedingId: aProceeding,
+          listDate: '2031-03-03',
+          listType: 'daily',
+          stageRaw: 'XT agreement',
+          sourceType: 'manual',
+          confirmationState: 'proposed',
+        },
+        {
+          workspaceId: f.a.id,
+          proceedingId: aProceeding,
+          listDate: '2031-03-04',
+          listType: 'daily',
+          stageRaw: 'XT agreement',
+          sourceType: 'document',
+          sourceRef: 'xt-agreement-doc',
+          confirmationState: 'proposed',
+        },
+      ]);
+    });
+    const asB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getNextDateAgreement(s, f.b.id, aProceeding),
+    );
+    expect(asB.sources).toEqual([]);
+    const asA = await inWorkspace(f.tx, f.a.id, (s) =>
+      core.getNextDateAgreement(s, f.a.id, aProceeding),
+    );
+    expect(asA.status).toBe('conflict');
+    expect(asA.groups.map((g) => g.value).sort()).toEqual(
+      expect.arrayContaining(['2031-03-03', '2031-03-04']),
+    );
+    const stageB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getStageAgreement(s, f.b.id, aProceeding),
+    );
+    expect(stageB.sources).toEqual([]);
+    const stageA = await inWorkspace(f.tx, f.a.id, (s) =>
+      core.getStageAgreement(s, f.a.id, aProceeding),
+    );
+    expect(stageA.sources.length).toBeGreaterThan(0);
+  },
   listCaseWatches: async (f) => {
     // ub lists nothing of A's: A's own watch is not in B's list.
     const aWatch = await addAWatch(f);

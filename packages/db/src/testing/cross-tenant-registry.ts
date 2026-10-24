@@ -242,6 +242,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   removeCauseListWatch: selfScoped,
   // Conflict-of-interest checks (#500): B's check sees none of A's parties
   checkConflicts: empty,
+  // Cross-checked facts (#499): B's agreement for A's proceeding is empty
+  getNextDateAgreement: empty,
+  getStageAgreement: empty,
   // Case-status watches (#591)
   addCaseWatch: selfScoped,
   listCaseWatches: selfScoped,
@@ -722,6 +725,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
   // business dashboard (#519): pure maths and rendering over aggregates
+  assessAgreement: 'pure',
+  UNKNOWN_CONFIDENCE: 'constant',
   nameKey: 'pure',
   nameSimilarity: 'pure',
   nameTokens: 'pure',
@@ -787,6 +792,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   topFailingSources: 'pure',
   isFetchError: 'pure',
   FRESHNESS_SLA_HOURS: 'constant',
+  staffConflictRate:
+    'app_staff_conflict_rate() returns per-source counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   staffParseYield:
     'app_staff_parse_yield() returns per-adapter counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
   // automation: pure helpers, constants and error classes (#47)

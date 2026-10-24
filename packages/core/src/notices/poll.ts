@@ -19,7 +19,7 @@ import { asc, eq } from 'drizzle-orm';
 import { policyFor, SourceNotCleared } from '../sources/index.ts';
 
 import { notifyNoticeMatches } from './alerts.ts';
-import { matchNotices } from './match.ts';
+import { matchNotices, type MatchedNotice } from './match.ts';
 
 const { notice, source } = schema;
 
@@ -51,6 +51,11 @@ export interface PollNoticesDeps {
   parsers?: Readonly<Record<string, NoticeParser>>;
   /** Sends one `notification.deliver` job; when given, newly matched notices alert the members (#587). */
   enqueueDelivery?: (job: DeliveryJob) => Promise<unknown>;
+  /**
+   * Called with each (workspace, notice) newly matched, after the notice alerts (#496: the job
+   * wires the bench-notice alerts here, so `notices` does not import `court`). A throw is ignored.
+   */
+  onMatched?: (matched: readonly MatchedNotice[]) => Promise<void>;
 }
 
 export interface PollNoticesReport {
@@ -158,6 +163,13 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
         { db: deps.db, enqueueDelivery: deps.enqueueDelivery },
         matched.matched,
       );
+    }
+    if (deps.onMatched !== undefined && matched.matched.length > 0) {
+      try {
+        await deps.onMatched(matched.matched);
+      } catch {
+        // A failing hook must not stop the poll of the other sources.
+      }
     }
   }
   return report;

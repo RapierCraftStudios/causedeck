@@ -29,6 +29,7 @@ describe('registerSchedules', () => {
       'system.usage.rollup',
       'system.business.cost-alert',
       'system.business.digest',
+      'system.coverage.weekly',
       'system.audit.verify',
       'system.audit.retention',
       'system.export.expire',
@@ -42,6 +43,8 @@ describe('registerSchedules', () => {
       'system.notices.poll',
       'system.judgment-alert.scan',
       'system.status.poll',
+      'system.webhook.sweep',
+      'system.orders.poll',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');

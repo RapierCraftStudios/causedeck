@@ -729,6 +729,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        benchChange: {
+          label: string;
+          description: string;
+        };
         digestDaily: {
           label: string;
           description: string;
@@ -2365,6 +2369,17 @@ export type Messages = {
       title: string;
       empty: string;
     };
+    benchAlerts: {
+      title: string;
+      type: {
+        leave: string;
+        special_bench: string;
+        roster_reassignment: string;
+      };
+      listed: string;
+      source: string;
+      open: string;
+    };
   };
   caseWatch: {
     title: string;
@@ -2379,6 +2394,11 @@ export type Messages = {
       'in_tn_chennai-district_case_status': string;
       'in_tn_madras-hc_chennai_case_status': string;
       'in_ka_karnataka-hc_bengaluru_case_status': string;
+      in_tn_district_case_status: string;
+      in_ka_district_case_status: string;
+      in_mh_district_case_status: string;
+      in_dl_district_case_status: string;
+      in_up_district_case_status: string;
     };
     remove: string;
     added: string;
@@ -2423,6 +2443,43 @@ export type Messages = {
         high: string;
       };
       updated: string;
+    };
+  };
+  courtInsights: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    filters: {
+      label: string;
+      forum: string;
+      allForums: string;
+      caseType: string;
+      from: string;
+      to: string;
+      apply: string;
+    };
+    table: {
+      label: string;
+      forum: string;
+      caseType: string;
+      stage: string;
+      period: string;
+      listingDelay: string;
+      adjournmentRate: string;
+      disposalTime: string;
+      backlog: string;
+    };
+    days: string;
+    rate: string;
+    count: string;
+    notEnough: string;
+    unlisted: string;
+    window: string;
+    coverage: string;
+    minimum: string;
+    empty: {
+      title: string;
+      hint: string;
     };
   };
   matters: {

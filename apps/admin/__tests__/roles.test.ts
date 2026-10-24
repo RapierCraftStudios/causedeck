@@ -23,7 +23,7 @@ describe('staff role matrix', () => {
   it('gives support metadata and sessions, ops adapters, sources and flags, admin everything', () => {
     expect(STAFF_ROLE_MATRIX).toEqual({
       support: ['overview', 'workspaces', 'support', 'audit'],
-      ops: ['overview', 'adapters', 'sources', 'data-ops', 'flags', 'audit'],
+      ops: ['overview', 'adapters', 'sources', 'data-ops', 'coverage', 'flags', 'audit'],
       admin: STAFF_CAPABILITIES,
     });
     expect(canStaff('support', 'flags')).toBe(false);

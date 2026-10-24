@@ -27,13 +27,29 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   automation: Object.freeze(['workspaces', 'audit', 'matter-graph']),
   // Case-status watches (#591, D-048): a lookup needs a cleared source through sources, the next-date
   // proposal goes through automation and every proceeding read through matter-graph.
-  'case-watch': Object.freeze(['workspaces', 'automation', 'matter-graph', 'sources']),
+  // The orders poll (#494) stores a fetched order as a capture (the `CaptureJobs` port) and audits it.
+  'case-watch': Object.freeze([
+    'workspaces',
+    'automation',
+    'matter-graph',
+    'sources',
+    'audit',
+    'capture',
+  ]),
+  // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
+  // read as `listHolidayListings`) and the day arithmetic is the extraction's own, from intelligence.
+  deadlines: Object.freeze([]),
   // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
   // tables and the owner-defined match function only.
   notices: Object.freeze(['workspaces', 'sources']),
   // Public API keys (#624, #487): issuing and revoking check the member's role through workspaces and are audited; a
   // billed call increments the `api.calls` key through usage.
   'api-keys': Object.freeze(['audit', 'usage', 'workspaces']),
+  // Change webhooks (#626, #487 part 3): managing endpoints checks the member's role through workspaces and is
+  // audited; delivery goes through `@causedeck/fetch`, and events arrive as injected deps (no case-watch import).
+  webhooks: Object.freeze(['audit', 'workspaces']),
+  // The public developer API reads (#625, D-048): every record is gated on source clearance and data class through sources.
+  'public-api': Object.freeze(['sources']),
   // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
   conflicts: Object.freeze(['audit']),
   // Cross-checked facts (#499): source agreement and confidence over listing provenance; tables only.
@@ -87,7 +103,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Anchored order extraction (#46): the `extract_order` call through ai, proposals through
   // automation, graph reads through matter-graph (imports `index.ts` only), member roles through
   // workspaces.
-  extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
+  extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph', 'deadlines']),
   // Data-ops alerting (#515, D-049): detectors, the alert ledger, routing and auto-response read the
   // global tables directly and import no other domain.
   'data-ops': Object.freeze([]),
@@ -124,6 +140,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'research',
     'business',
     'case-watch',
+    'webhooks',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

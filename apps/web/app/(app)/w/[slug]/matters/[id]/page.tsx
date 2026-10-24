@@ -14,6 +14,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 
+import { type BenchNoticeAlertView } from '../../../../../../components/courts/bench-notice-alerts.tsx';
 import {
   toNoticeView,
   type NoticeView,
@@ -101,6 +102,22 @@ async function loadMatterNotices(
   }
 }
 
+/** The bench-notice alerts affecting the matter (#496). A failed read renders no card, never breaks the page. */
+async function loadBenchNotices(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<BenchNoticeAlertView[]> {
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { listBenchNoticeAlerts } = await import('@causedeck/core/court');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    return await inWorkspace(actor, (tx) => listBenchNoticeAlerts(tx, actor, { matterId }));
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load the bench-notice alerts');
+    return [];
+  }
+}
+
 export default async function MatterOverviewPage({ params, searchParams }: MatterPageProps) {
   const [{ slug, id }, query] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
@@ -117,6 +134,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   if (loaded.kind === 'error') throw new Error('Matter could not be loaded');
 
   const notices = dev === 'empty' ? [] : await loadMatterNotices(context, id);
+  const benchNotices = dev === 'empty' ? [] : await loadBenchNotices(context, id);
   const view = toOverviewView(loaded.overview, { locale: await pageLocale(), now: new Date() });
   return (
     <MatterOverview
@@ -126,6 +144,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
       canWrite={can(context.role, 'matter.write')}
       forcedOffline={dev === 'offline'}
       notices={notices}
+      benchNotices={benchNotices}
       actions={{
         confirmNextDate: confirmNextDateAction,
         chooseNextDateSource: chooseNextDateSourceAction,

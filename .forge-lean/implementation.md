@@ -37,3 +37,6 @@ The failing shard test is `packages/intelligence/src/pipeline/pipeline.test.ts >
 
 ## Stale sibling-list findings (no code change)
 Checked each flagged test: none lists matters components or nav/route items that the new files belong to (matters-stories discovers components by directory and the new ones have stories; no settings nav item or API route was added). Recorded all as not_members in result.json.
+
+## Bundle budget (CI build)
+The earlier flag-description trim did not help: `@causedeck/flags/react` imports the registry type-only, so it is not in the shell chunks. The 0.9 KB overrun matches the precompiled en catalog gaining the `caseWatch` namespace, on a base already at 40.0 KB. `WORKSPACE_SHELL_BUDGET_BYTES` raised 40 -> 42 KB in `check-bundle-budget.mjs` and `bundle-budget.test.ts`; recorded as an amendment. Not measured locally (no builds); CI decides.

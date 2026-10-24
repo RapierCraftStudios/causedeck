@@ -46,6 +46,7 @@ export {
   type FlagChangeRequestStatus,
 } from './flags.ts';
 export { fetchLog } from './fetch-log.ts';
+export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
 export {
   DATA_OPS_ALERT_STATUSES,
   DATA_OPS_ALERT_TYPES,
@@ -77,6 +78,12 @@ export {
   type SourceMaxTier,
   type SourceReviewStatus,
 } from './source-registry.ts';
+export {
+  CONTRIBUTABLE_KINDS,
+  contributedDocument,
+  contributionLedger,
+  type ContributableKind,
+} from './network.ts';
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export {
   ANCHOR_KINDS,
@@ -216,6 +223,17 @@ export {
 export { EXTRACTION_STATUSES, extraction, type ExtractionStatus } from './extraction.ts';
 export { advocateProfile } from './advocate-profile.ts';
 export {
+  BOARD_OBSERVATION_STATUSES,
+  boardObservation,
+  type BoardObservationStatus,
+} from './display-board.ts';
+export {
+  CAUSE_LIST_WATCH_KINDS,
+  causeListPublication,
+  causeListWatch,
+  type CauseListWatchKind,
+} from './cause-list-watch.ts';
+export {
   IMPORT_BATCH_FILE_STATUSES,
   IMPORT_BATCH_STATUSES,
   importBatch,
@@ -224,3 +242,26 @@ export {
   type ImportBatchFileStatus,
   type ImportBatchStatus,
 } from './import-batch.ts';
+export {
+  NOTICE_KINDS,
+  NOTICE_MATCH_REASONS,
+  notice,
+  noticeKind,
+  noticeMatch,
+  type NoticeKind,
+  type NoticeMatchReason,
+} from './notices.ts';
+export {
+  CASE_STATUS_VIA,
+  caseStatusSnapshot,
+  caseWatch,
+  type CaseStatusVia,
+} from './case-watch.ts';
+export {
+  ISSUE_TAG_SOURCES,
+  ISSUE_TAG_STATUSES,
+  judgmentAlert,
+  matterIssueTag,
+  type IssueTagSource,
+  type IssueTagStatus,
+} from './matter-issue.ts';

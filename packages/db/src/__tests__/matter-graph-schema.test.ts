@@ -90,7 +90,8 @@ describe('matter graph tables in the catalog (#345)', () => {
       expect(row, table).toEqual({
         enabled: true,
         forced: true,
-        policies: ['ws_isolation'],
+        // matter also carries the owner-only definer read that app_board_poll_targets (0074, #493) needs.
+        policies: table === 'matter' ? ['owner_definer_read', 'ws_isolation'] : ['ws_isolation'],
         app: true,
         clerk: true,
       });

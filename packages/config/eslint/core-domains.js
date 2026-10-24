@@ -15,23 +15,44 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   workspaces: Object.freeze(['audit']),
   matters: Object.freeze(['workspaces', 'audit']),
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
-  court: Object.freeze(['workspaces']),
+  // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
+  court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
+  // Court-day display-board tracking (#493): the board source's clearance through sources.
+  'court-day': Object.freeze(['sources']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),
   // The automation engine (#47): membership roles through workspaces, its audit events through
   // audit, and every graph write through the matter-graph services (imports `index.ts` only).
   automation: Object.freeze(['workspaces', 'audit', 'matter-graph']),
+  // Case-status watches (#591, D-048): a lookup needs a cleared source through sources, the next-date
+  // proposal goes through automation and every proceeding read through matter-graph.
+  'case-watch': Object.freeze(['workspaces', 'automation', 'matter-graph', 'sources']),
+  // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
+  // tables and the owner-defined match function only.
+  notices: Object.freeze(['sources']),
   billing: Object.freeze(['workspaces', 'audit']),
   usage: Object.freeze(['audit', 'billing']),
   // The AI gateway wiring (#44): budgets through usage, the ai_call writer through audit.
   ai: Object.freeze(['audit', 'usage']),
   // Data lifecycle (#301): export reads audit and checks owners through workspaces.
-  lifecycle: Object.freeze(['audit', 'workspaces']),
+  // Workspace erase also withdraws the workspace's contributed court documents (#485) through network.
+  lifecycle: Object.freeze(['audit', 'workspaces', 'network']),
   // The source registry (#478, D-048): staff changes record `source.changed` through audit.
   sources: Object.freeze(['audit']),
+  // Citation verification (#484, D-004): resolves a neutral citation against the global `judgment`
+  // corpus; reads tables and `@causedeck/intelligence` only, no other domain.
+  citations: Object.freeze([]),
+  // The court document network (#485, D-048): contributions need a cleared source through sources and
+  // record their events through audit; opt-in, matter and document reads go to the tables directly.
+  network: Object.freeze(['audit', 'sources']),
+  // Judgment alerts (#497, D-048): member roles and role settings through workspaces; an alert is
+  // shown only if `verifyCitation` resolves its judgment (D-004), through citations.
+  research: Object.freeze(['workspaces', 'citations']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
+  // The business dashboard (#519): the IST month through usage's `periodStart`, FORBIDDEN through workspaces.
+  business: Object.freeze(['usage', 'workspaces']),
   // Capture inbox (#43): file intake, channels, scan and retention; events through audit, jobs
   // arrive as a port (it never imports jobs). The diary-photo step (#52) runs in the pipeline's
   // transaction: the `structure_diary` call through ai, member roles through workspaces, proposals
@@ -85,6 +106,13 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'extraction',
     'import',
     'data-ops',
+    'court',
+    'court-day',
+    'sources',
+    'notices',
+    'research',
+    'business',
+    'case-watch',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

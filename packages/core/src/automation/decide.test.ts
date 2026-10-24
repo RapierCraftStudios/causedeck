@@ -300,6 +300,7 @@ const CASES: Case[] = [
   // Money, memory, messages.
   { name: 'fee entry', draft: draft('fee_entry'), level: 'L2' },
   { name: 'memory item', draft: draft('memory_item'), level: 'L2' },
+  { name: 'case status change', draft: draft('case_status_change'), level: 'L2' },
   {
     name: 'a client, senior or third-party message is a draft (L4)',
     draft: draft('outward_draft'),
@@ -347,6 +348,7 @@ describe('decideLevel: the 09 §4.2 approval matrix', () => {
       'order_record',
       'fee_entry',
       'memory_item',
+      'case_status_change',
     ];
     for (const kind of always) {
       const d = draft(kind, {

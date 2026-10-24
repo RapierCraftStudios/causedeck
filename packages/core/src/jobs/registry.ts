@@ -17,9 +17,14 @@ import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
 import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
 import { billingProcessEvent } from './definitions/billing-process-event.ts';
 import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { businessCostAlert } from './definitions/business-cost-alert.ts';
+import { businessDigest } from './definitions/business-digest.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
+import { corpusPoll } from './definitions/corpus-poll.ts';
+import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { statusPoll } from './definitions/status-poll.ts';
 import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
@@ -28,6 +33,9 @@ import { emailIntake } from './definitions/email-intake.ts';
 import { emailRawExpire } from './definitions/email-raw-expire.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
 import { deletionTick } from './definitions/deletion-tick.ts';
+import { boardPoll } from './definitions/board-poll.ts';
+import { causelistPoll } from './definitions/causelist-poll.ts';
+import { noticesPoll } from './definitions/notices-poll.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { memoryErase } from './definitions/memory-erase.ts';
@@ -155,6 +163,8 @@ export const registry = createRegistry([
   activityDigest,
   activityDigestMember,
   usageRollup,
+  businessCostAlert,
+  businessDigest,
   systemAuditVerify,
   auditVerify,
   auditRetention,
@@ -177,6 +187,12 @@ export const registry = createRegistry([
   importBatch,
   importFile,
   systemDataOpsEvaluate,
+  corpusPoll,
+  causelistPoll,
+  boardPoll,
+  noticesPoll,
+  judgmentAlertScan,
+  statusPoll,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -195,6 +211,8 @@ export type JobMap = RegistryMap<
     typeof activityDigest,
     typeof activityDigestMember,
     typeof usageRollup,
+    typeof businessCostAlert,
+    typeof businessDigest,
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
@@ -217,6 +235,12 @@ export type JobMap = RegistryMap<
     typeof importBatch,
     typeof importFile,
     typeof systemDataOpsEvaluate,
+    typeof corpusPoll,
+    typeof causelistPoll,
+    typeof boardPoll,
+    typeof noticesPoll,
+    typeof judgmentAlertScan,
+    typeof statusPoll,
   ]
 >;
 export type JobName = keyof JobMap;

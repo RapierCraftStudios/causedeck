@@ -87,6 +87,10 @@ export const APPROVAL_MATRIX: Readonly<Record<ProposalKind, MatrixRule>> = {
   },
   fee_entry: { defaultLevel: 'L2', reason: 'Money is always a proposal' },
   memory_item: { defaultLevel: 'L2', reason: 'Memory is saved only after the lawyer confirms' },
+  case_status_change: {
+    defaultLevel: 'L2',
+    reason: 'A next date read from a court status page is date-critical: always a proposal',
+  },
   outward_draft: {
     defaultLevel: 'L4',
     reason:

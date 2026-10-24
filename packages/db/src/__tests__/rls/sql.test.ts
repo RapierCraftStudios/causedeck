@@ -155,6 +155,10 @@ describe('row-level security catalog', () => {
         'ics_feed_event',
         'ics_import_event',
 
+        // Case-status watch (#589).
+        'case_watch',
+        'case_status_snapshot',
+
         // Anchored order extraction (#46).
         'extraction',
 
@@ -165,6 +169,17 @@ describe('row-level security catalog', () => {
 
         // Advocate identifiers for the bootstrap import (#57, #550).
         'advocate_profile',
+
+        // Karnataka HC cause-list watches (#482).
+        'cause_list_watch',
+        // Judgment alerts (#497).
+        'matter_issue_tag',
+        'judgment_alert',
+        // Court document network (#485).
+        'contribution_ledger',
+
+        // Official notices feed (#584).
+        'notice_match',
       ].sort(),
     );
     for (const row of rows)

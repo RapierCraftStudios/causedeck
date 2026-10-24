@@ -42,3 +42,10 @@ The governed fetch layer (ADR 0034) reads external sources that block, change la
 
 - Core gains a dependency on `@causedeck/fetch` for `postWebhook` only.
 - Challenge pages are detected on the live response only; `fetch_log` keeps status codes, so the block detector sees 403 and 429 from history and challenge pages through `source_health`.
+
+## Revisit when
+
+- A second alert channel (pager, SMS) is needed, or Slack and email prove too noisy to route by alert type alone.
+- Per-source objectives need history or per-court overrides (move the SLO columns to their own table).
+- The staff Data Ops console (`/data-ops`) should own acknowledgement and snooze of alerts, not only display them.
+- Counsel clears alerting that quotes any source content (today an alert carries counts and source ids only).

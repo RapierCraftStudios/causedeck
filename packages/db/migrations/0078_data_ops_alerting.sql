@@ -1,4 +1,4 @@
--- Migration 0067_data_ops_alerting: generated shape (enums, tables, columns, checks, indexes), grants hand-written, reviewed before commit.
+-- Migration 0078_data_ops_alerting: generated shape (enums, tables, columns, checks, indexes), grants hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #515)
 -- Data operations alerting (#515, D-049). Four global, content-free tables (GLOBAL_TABLES, no RLS):
 -- source_health (degraded state, block backoff, quarantined parser version), source_parse_run (parse

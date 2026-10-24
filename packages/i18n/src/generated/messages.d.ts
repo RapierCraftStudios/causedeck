@@ -691,6 +691,26 @@ export type Messages = {
           label: string;
           description: string;
         };
+        courtBoard: {
+          label: string;
+          description: string;
+        };
+        judgmentAlert: {
+          label: string;
+          description: string;
+        };
+        statusNextDate: {
+          label: string;
+          description: string;
+        };
+        statusOrder: {
+          label: string;
+          description: string;
+        };
+        statusStage: {
+          label: string;
+          description: string;
+        };
         digestDaily: {
           label: string;
           description: string;
@@ -958,6 +978,7 @@ export type Messages = {
       audit: string;
       support: string;
       more: string;
+      'court-watch': string;
     };
     placeholder: {
       export: string;
@@ -1261,6 +1282,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        contributePublicCourtDocuments: {
+          label: string;
+          description: string;
+        };
         retentionAudioDays: {
           label: string;
           description: string;
@@ -1493,6 +1518,25 @@ export type Messages = {
           google: string;
         };
       };
+    };
+    courtWatch: {
+      title: string;
+      description: string;
+      kind: {
+        name: string;
+        brn: string;
+      };
+      value: string;
+      add: string;
+      remove: string;
+      empty: string;
+      flagOff: string;
+      uncleared: string;
+      cleared: string;
+      added: string;
+      removed: string;
+      failed: string;
+      loading: string;
     };
   };
   lifecycle: {
@@ -1838,6 +1882,7 @@ export type Messages = {
         duplicate_merge: string;
         memory_item: string;
         fee_entry: string;
+        case_status_change: string;
         outward_draft: string;
       };
       matter: string;
@@ -2217,6 +2262,30 @@ export type Messages = {
       failed: string;
     };
   };
+  courtDay: {
+    liveHalls: {
+      title: string;
+      description: string;
+      hall: string;
+      itemNow: string;
+      noItem: string;
+      status: {
+        sitting: string;
+        risen: string;
+        passed_over: string;
+        lunch: string;
+      };
+      yourItem: string;
+      away: string;
+      window: string;
+      confidence: {
+        low: string;
+        medium: string;
+        high: string;
+      };
+      updated: string;
+    };
+  };
   matters: {
     metaTitle: string;
     title: string;
@@ -2328,6 +2397,7 @@ export type Messages = {
         timeline: string;
         people: string;
         documents: string;
+        research: string;
       };
       status: {
         active: string;
@@ -2711,6 +2781,29 @@ export type Messages = {
           failed: string;
         };
       };
+      research: {
+        title: string;
+        metaTitle: string;
+        intro: string;
+        tagsHeading: string;
+        tagsEmpty: string;
+        statute: string;
+        section: string;
+        issue: string;
+        add: string;
+        confirm: string;
+        dismiss: string;
+        status: {
+          proposed: string;
+          confirmed: string;
+          dismissed: string;
+        };
+        judgmentsHeading: string;
+        judgmentsEmpty: string;
+        cites: string;
+        open: string;
+        saveError: string;
+      };
     };
   };
   matterTimeline: {
@@ -3062,6 +3155,7 @@ export type Messages = {
         duplicate_merge: string;
         memory_item: string;
         fee_entry: string;
+        case_status_change: string;
         outward_draft: string;
       };
       matter: string;
@@ -3176,6 +3270,9 @@ export type Messages = {
       sections: string;
       help: string;
       open: string;
+    };
+    sourceChip: {
+      khcList: string;
     };
   };
   pwa: {

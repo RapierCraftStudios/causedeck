@@ -1,39 +1,38 @@
 ### Approach
-Pure detectors over fetch_log and a new source_parse_run table, evaluated by a scheduled core job; alerts deduped in a ledger, routed to Slack/email, with auto-responses (block backoff, parser quarantine). The fetcher takes an optional injected health port.
+`pollNotices` fetches each cleared `notice` source once through a structural `NoticeFetcher` port (the worker wires the governed `@causedeck/fetch` fetcher; core never imports it), parses with the source parser, stores notices once (unique source+url) with provenance, then matches new ones via the owner-defined `app_notice_match_targets` and writes `notice_match` per workspace inside `withWorkspace`. `system.notices.poll` runs it hourly.
+
 ### Changes
-- packages/db: SLO columns on source, new data-ops tables, migration 0067 plus snapshot, GLOBAL_TABLES, index test.
-- packages/core/src/data-ops: detectors, alerts, routing, response, runbooks, index (recordParseRun) and tests; job data-ops-evaluate registered.
-- packages/fetch: block-signature, health port in fetcher/types, webhook sender (Slack host allow-list; the only external call, inside packages/fetch), tests.
-- config env keys, docs (core-domains, env, ADR 0035), runbook, worker registry/schedule tests.
+- packages/core/src/notices/{poll,match,index}.ts: poll, match, barrel.
+- packages/core/src/jobs/definitions/notices-poll.ts, jobs/registry.ts, jobs/index.ts: the `system.notices.poll` job and `setNoticeFetcherFactory`.
+- packages/core/package.json, src/index.ts: `./notices` export only (no dependency changes).
+- packages/db/migrations/0075_notice_match_targets.sql, meta snapshot and journal: SECURITY DEFINER function plus owner read policy on `proceeding`.
+- apps/worker/src/main.ts: wires the fetcher factory for notices.
+- packages/config/eslint/core-domains.js, docs/engineering/core-domains.md: `notices` domain.
+- packages/db/src/testing/cross-tenant-registry.ts, core cross-tenant services.test.ts: `matchNotices` case and NOT_A_SERVICE entries.
+- apps/worker registry.test.ts, schedules.test.ts: job and cron expectations.
+- packages/core/src/notices/notices.test.ts: regression tests.
+
 ### Acceptance Criteria Status
-- R1 ✅ packages/db/src/schema/source-registry.ts
-- R2 ✅ packages/core/src/data-ops/detectors.ts
-- R3 ✅ packages/core/src/data-ops/alerts.ts, routing.ts
-- R4 ✅ packages/core/src/data-ops/response.ts
-- R5 ✅ data-ops/__tests__/detectors.test.ts
-- R6 ✅ data-ops/__tests__/alerts.test.ts, fetch/src/__tests__/health.test.ts
-- R7 ✅ data-ops/__tests__/detectors.test.ts (runbooks)
+- R1 ✅ packages/core/src/notices/poll.ts, match.ts
+- R2 ✅ packages/core/src/jobs/definitions/notices-poll.ts
+- R3 ✅ packages/core/src/notices/poll.ts ("skipped: not cleared")
+- R4 n/a: core already lists `@causedeck/fetch` and must not import it
+- R5 ✅ packages/config/eslint/core-domains.js, docs/engineering/core-domains.md
+- R6 ✅ packages/core/src/__tests__/cross-tenant/services.test.ts (matchNotices)
+- R7 ✅ apps/worker/src/__tests__/registry.test.ts, schedules.test.ts
+
 ### Verification
-V1-V4 not run locally (CI mode); recorded ci:true. Lint (lane-check) on changed files and prettier passed. forgedock check: PASS. V5 widened to full because packages/core/package.json changed; not run.
+Verification runs on CI (verify.mode ci): V1-V4 were not run locally. Prettier and the changed-files ESLint (lane-check lint) pass. V5 (checks.mjs) widens to full turbo because packages/core/package.json changed, so it was not run. The new notices tests are expected to fail without the fix, since the module does not exist.
+
 ### Notes
-New optional env DATA_OPS_SLACK_WEBHOOK_URL and DATA_OPS_ALERT_EMAIL (unset: console routing). Core root does not re-export data-ops, so no cross-tenant service registration is needed.
+New job `system.notices.poll`, hourly. New migration 0075 (function plus owner read policy on `proceeding`). No env vars.
 
-## Stale-list follow-up
-The 30 flagged (symbol, test) pairs in apps/admin/__tests__ (headers, server-actions-audit, sources-actions) are not list members: those tests mock admin modules and enumerate no `@causedeck/db` schema exports. Recorded under `not_members` in result.json; no test edits.
+## Follow-up
+NOTICES_POLL_CRON, noticesPoll, runNoticesPoll and setNoticeFetcherFactory are not members of the services.test.ts CASES list; they are registered in NOT_A_SERVICE and recorded under not_members in result.json.
+- The cross-tenant services test lists only `SERVICE_TESTS` members. `NOTICES_POLL_CRON`, `noticesPoll`, `runNoticesPoll` and `setNoticeFetcherFactory` are in `NOT_A_SERVICE` (`cross-tenant-registry.ts:909-912`), so they are recorded as `not_members` in `result.json`.
 
-### Sibling-list check
-The admin tests headers, server-actions-audit and sources-actions do not list db schema exports; their mocks cover the `@causedeck/core/sources` surface only. The new data-ops schema symbols are recorded as `not_members` in result.json; no test edits needed.
+- Recovery: merged origin/milestone/court-data-network again; the base took 0075 (status_poll), so the notice match migration is now 0076_notice_match_targets (same SQL, snapshot chained after 0075, journal idx 76). Jobs exports, worker main, and core-domains docs keep both sides (status.poll and notices.poll).
 
-## Duplicate export fix
-`response.ts` re-exported `detectBlockSignature` from `detectors.ts`, so the data-ops barrel exported it twice. Removed the re-export and the now-unneeded value import; `detectors.ts` stays the only owner. No other references.
+- CI fix: migration 0076 adds the owner_definer_read policy on proceeding (backs app_notice_match_targets), so proceeding-schema.test.ts now expects policies owner_definer_read + ws_isolation for proceeding (ws_isolation only for proceeding_link). Not run locally (db tests need a database; CI re-verifies).
 
-## Prettier fix
-CI `format:check` flagged `packages/db/migrations/meta/0067_snapshot.json` (generated snapshot not Prettier-formatted). Ran `prettier --write` on it; content is unchanged, only whitespace/line layout. `prettier --check` passes on it and `_journal.json`.
-
-## Lint fix
-CI lint failed (log unavailable); reproduced with lane-check lint on changed files and fixed:
-- `schema.ts`: `z.url()` / `z.email()` replace the deprecated `z.string().url()/.email()`.
-- `detectors.ts`, `webhook.ts`: numbers in template literals wrapped in `String()` (restrict-template-expressions).
-- `health.test.ts`: dropped an unnecessary `as never` assertion.
-- `boundaries.js`: `fetch` added to `CORE_DEPENDENCIES`; core imports `postWebhook` from `@causedeck/fetch` (ADR 0035, the sanctioned external-host sender).
-lane-check lint is clean on the 26 changed files.
+- CI fix: the test db does not carry the forum catalogue (`pnpm db:migrate` seeds it), so the forum lookup returned nothing and the proceeding insert got an empty uuid. `notices.test.ts` and the cross-tenant `matchNotices` case now run `seedForumCatalogue` on an owner connection in `beforeAll`, as `court/forums.test.ts` does. Both files pass locally (160 tests).

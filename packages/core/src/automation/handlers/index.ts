@@ -13,6 +13,7 @@ import {
   memoryItemHandler,
   outwardDraftHandler,
 } from './disabled.ts';
+import { caseStatusChangeHandler } from './case-status-change.ts';
 import { duplicateMergeHandler } from './duplicate-merge.ts';
 import { listingUpdateHandler } from './listing-update.ts';
 import { newMatterHandler } from './new-matter.ts';
@@ -72,6 +73,7 @@ export const HANDLERS = buildHandlerRegistry([
   memoryItemHandler,
   feeEntryHandler,
   outwardDraftHandler,
+  caseStatusChangeHandler,
 ] as unknown as readonly ProposalHandler<never>[]);
 
 /** The handler of `kind`, typed loosely: the engine passes it the payload its own `validate` parsed. */

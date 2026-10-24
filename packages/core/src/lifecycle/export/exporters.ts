@@ -227,6 +227,10 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('import_plan', { keys: ['batch_id'] }),
   // The importing member's own identifiers (#550).
   ws('advocate_profile', { userColumn: 'user_id' }),
+  ws('cause_list_watch', { userColumn: 'user_id' }),
+  // Case-status watch (#589): the advocate's watches and the status snapshots they took.
+  ws('case_watch', { userColumn: 'advocate_user_id' }),
+  ws('case_status_snapshot'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [
@@ -270,6 +274,11 @@ export const mattersExporter = tablesExporter('matters', [
   ws('anchor'),
   // Anchored order extractions (#46): the validated result and what was rejected, with quotes.
   ws('extraction'),
+  // Judgment alerts (#497): the lawyer's own issue tags on a matter (statute, section, issue) and
+  // the alerts raised against confirmed tags. The alert carries ids and a page number only; the
+  // judgment itself is global corpus data, not the workspace's.
+  ws('matter_issue_tag'),
+  ws('judgment_alert'),
 ]);
 
 // What the automation engine did and proposed (#47): proposals, the activity feed with its undo

@@ -16,7 +16,11 @@ A pure coverage model in core (forum x data type levels, freshness, volume, rank
 - R5 ✅ coverage.test.ts "ranks by live watch demand" (order flips with demand)
 
 ### Verification
-- V1 core vitest, V2 admin vitest, V3 worker vitest, V4 db vitest, V5 checks.mjs: pass (`forgedock check` PASS).
+- V1 `pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts`: pass (exit 0)
+- V2 `pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts`: pass (exit 0)
+- V3 `pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts`: pass (exit 0)
+- V4 `pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing`: pass (exit 0)
+- V5 `node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network`: pass (exit 0); `forgedock check` PASS on the merged tree.
 - core and admin `tsc --noEmit`: clean; eslint on changed files runs clean via the pre-commit hook.
 - New tests exercise new code, so they fail without the change (modules absent).
 

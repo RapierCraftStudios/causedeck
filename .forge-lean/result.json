@@ -41,23 +41,48 @@
  "validation": [
   {
    "id": "V1",
-   "command": "vitest core (contract V1)",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "vitest worker registry/schedules",
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "vitest intelligence relative/to-proposals",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "core V1 (217 tests, incl. deadlines, orders, cross-tenant)",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing",
    "result": "pass",
    "fails_without_fix": true
   }

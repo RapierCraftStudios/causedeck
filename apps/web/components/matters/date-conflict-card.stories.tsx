@@ -31,6 +31,7 @@ const conflict: ConflictView = {
     proposed: true,
     source: { kind: 'adapter', state: 'proposed', sourceRef: 'cause-list', confidence: 0.8 },
   }),
+  others: [],
 };
 
 const meta = {

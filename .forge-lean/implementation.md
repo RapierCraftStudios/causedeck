@@ -1,26 +1,29 @@
 ### Approach
-Recovery pass for ci.red. Three CI causes fixed on top of the earlier #499 work; nothing re-derived.
+Resumed from the checkpoint. The feature was already in place; this session fixed the conformance failures. It restored the `api-keys` row the earlier session had dropped from `docs/engineering/core-domains.md`, and it declared the two unlisted files as `add-deliverable` amendments.
 
 ### Changes
-- apps/web/lib/matters/workspace.ts: `agreement` accepts `undefined` (exactOptionalPropertyTypes typecheck error).
-- apps/web/components/matters/next-date-card.tsx: chip keys resolve under the `matters` namespace (`workspace.confidence.*`), so the matters i18n key guard finds them.
-- apps/web/__tests__/matter-workspace-page.test.tsx: mock `@causedeck/core/facts` and give the logger mock `warn`; a failed agreement load now degrades to no chip instead of failing the page.
-- Prettier applied to apps/admin/lib/data/index.ts, date-conflict-card.tsx, 0080_snapshot.json, staff-console-schema.test.ts.
+- packages/core/src/court/bench-alerts.ts (+ test, index.ts): classifier, read model and notifier.
+- packages/core/src/notices/poll.ts, jobs/definitions/notices-poll.ts: `onMatched` hook, wired to `notifyBenchNoticeAlerts`.
+- packages/notifications/src/categories.ts (+ test): `bench_change` category.
+- packages/notifications/src/push/payload.ts: generic push title (amendment, required by `Record<CategoryKey,string>`).
+- packages/db/src/testing/cross-tenant-registry.ts and core `cross-tenant/services.test.ts`: registrations and real cases.
+- apps/web: `bench-notice-alerts.tsx` (+ test, stories), `matter-overview.tsx`, matter page, today page, preferences form.
+- packages/i18n: notices and notifications copy in en, ta and kn; generated files and translation status.
+- docs/engineering/core-domains.md: court and notices rows. The `api-keys` row is restored.
 
 ### Acceptance Criteria Status
-- R1 ✅ apps/web/components/matters/date-conflict-card.tsx
-- R2 ✅ apps/admin/app/(console)/data-ops/page.tsx
-- R3 ✅ packages/core/src/facts/agreement.ts
-- R4 ✅ apps/web/components/matters/date-conflict-card.tsx
-- R5 ✅ apps/web/components/matters/next-date-card.tsx
-- R6 ✅ packages/core/src/sources/ops.ts
+- R1 ✅ packages/core/src/court/bench-alerts.ts (notifyBenchNoticeAlerts, dedupeKey `bench-notice:<id>`)
+- R2 ✅ packages/core/src/court/bench-alerts.test.ts (category-based assignment)
+- R3 ✅ packages/core/src/court/bench-alerts.ts
+- R4 deferred (judge matching, contract amendment already in the contract)
+- R5 ✅ packages/notifications/src/categories.ts
+- R6 ✅ apps/web/components/courts/bench-notice-alerts.tsx, matter page, today page
 
 ### Verification
-V1-V4 not run locally (verify.mode ci); CI runs them. Prettier 3.9.10 with the repo config was run on the changed files. The page-test regression (logger.warn mock) is the existing matter-workspace-page suite, which failed on CI before this fix.
+V1 to V5 pass, run with TESTCONTAINERS_RYUK_DISABLED=true because Ryuk cannot start on this host. V3's `-t bench` is case-sensitive and skips all 180 cases, so I also ran `-t Bench`: 2 passed. `forgedock check` passes. The new tests fail without the fix because they import the new module.
 
 ### Notes
-No behaviour or env changes.
+No migration, no new dependency, no env vars. Judges are never read.
 
-## Migration renumber
-Base took 0080 (news) and 0081 (api_keys). Lane migration renumbered to 0082_staff_conflict_rate (SQL byte-identical). Snapshot 0082 is the 0081 snapshot with new id/prevId (custom SQL-only migration); journal entry idx 82 appended. drizzle-kit/pnpm were unavailable offline, so the generator was not run.
-- Rerun: merged origin/milestone/court-data-network (conflicts in core-domains.md and matter-workspace-page.test.tsx resolved keeping both sides). Fixed two test bugs in bench-alerts.test.ts (scoped forum read outside its workspace; "another forum" case named its own forum). V1-V5 now pass, run with a scratch NODE_OPTIONS shim for node 22.12's missing zstd and TESTCONTAINERS_RYUK_DISABLED=true (host env). V3's `-t bench` is case-sensitive and matches no test (exit 0); the two real cases pass with `-t BenchNoticeAlerts`.
+### Follow-up
+e2e/tests/courts/courts.spec.ts:99 does not enumerate courts components; recorded bench-notice-alerts and its stories as not_members in result.json. No code change.

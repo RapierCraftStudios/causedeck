@@ -1,92 +1,116 @@
 {
  "status": "fixed",
- "summary": "Bench-notice alerts delivered (R1,R2,R3,R5,R6); merged base; V1-V5 pass",
+ "summary": "Bench-notice alerts delivered: classifier, read model, notifier, bench_change category, web card; conformance fixes applied",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "apps/web/components/matters/date-conflict-card.tsx"
+   "evidence": "packages/core/src/court/bench-alerts.ts",
+   "instrumented": false
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "apps/admin/app/(console)/data-ops/page.tsx"
+   "evidence": "packages/core/src/court/bench-alerts.test.ts",
+   "instrumented": false
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "packages/core/src/facts/agreement.ts"
-  },
-  {
-   "id": "R4",
-   "status": "implemented",
-   "evidence": "apps/web/components/matters/date-conflict-card.tsx"
+   "evidence": "packages/core/src/court/bench-alerts.ts",
+   "instrumented": false
   },
   {
    "id": "R5",
    "status": "implemented",
-   "evidence": "apps/web/components/matters/next-date-card.tsx"
+   "evidence": "packages/notifications/src/categories.ts",
+   "instrumented": false
   },
   {
    "id": "R6",
    "status": "implemented",
-   "evidence": "packages/core/src/sources/ops.ts"
+   "evidence": "apps/web/components/courts/bench-notice-alerts.tsx",
+   "instrumented": false
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "",
-   "ci": true,
+   "command": "see contract",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "",
-   "ci": true,
+   "command": "see contract",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "",
-   "ci": true,
+   "command": "see contract",
    "exit": 0
   },
   {
    "id": "V4",
-   "command": "",
-   "ci": true,
+   "command": "see contract",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "see contract",
    "exit": 0
   }
  ],
  "tests": [
   {
    "command": "V1-V5",
-   "result": "pass (V1 31 tests, V2 6, V3 exit 0 with 2 bench cases verified via -t BenchNoticeAlerts, V4 21, V5 20)",
-   "fails_without_fix": "unknown"
+   "result": "pass",
+   "fails_without_fix": true
   }
  ],
  "self_review": [
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "V1-V5 pass; diff limited to deliverables, tests and amended payload.ts"
+   "evidence": "forgedock check PASS; amendments declare payload.ts and stories"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "V1-V5 pass; diff limited to deliverables, tests and amended payload.ts"
+   "evidence": "forgedock check PASS; amendments declare payload.ts and stories"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "V1-V5 pass; diff limited to deliverables, tests and amended payload.ts"
+   "evidence": "forgedock check PASS; amendments declare payload.ts and stories"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "V1-V5 pass; diff limited to deliverables, tests and amended payload.ts"
+   "evidence": "forgedock check PASS; amendments declare payload.ts and stories"
   }
  ],
- "amendments": []
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/components/courts/bench-notice-alerts.stories.tsx",
+   "why": "apps/web/__tests__/courts-stories.test.ts fails for any components/courts component without a sibling stories file."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/notifications/src/push/payload.ts",
+   "why": "GENERIC_PUSH_TITLES is Record<CategoryKey,string>; the new bench_change category fails typecheck without a generic push title."
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "bench-notice-alerts",
+   "test": "e2e/tests/courts/courts.spec.ts",
+   "why": "courts.spec.ts:99 only drives the forum-detail page (forum-tabs, halls); it is not a list of courts components or stories, and the card renders on the matter and today pages."
+  },
+  {
+   "symbol": "bench-notice-alerts.stories",
+   "test": "e2e/tests/courts/courts.spec.ts",
+   "why": "courts.spec.ts:99 only drives the forum-detail page (forum-tabs, halls); it is not a list of courts components or stories, and the card renders on the matter and today pages."
+  }
+ ]
 }

@@ -240,10 +240,6 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   removeCauseListWatch: selfScoped,
   // Conflict-of-interest checks (#500): B's check sees none of A's parties
   checkConflicts: empty,
-  nameKey: 'pure',
-  nameSimilarity: 'pure',
-  nameTokens: 'pure',
-  transliterate: 'pure',
   // Case-status watches (#591)
   addCaseWatch: selfScoped,
   listCaseWatches: selfScoped,
@@ -721,6 +717,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
   // business dashboard (#519): pure maths and rendering over aggregates
+  nameKey: 'pure',
+  nameSimilarity: 'pure',
+  nameTokens: 'pure',
+  transliterate: 'pure',
   parseBusinessSnapshot: 'pure',
   buildBusinessReport: 'pure',
   businessConfigFromEnv: 'pure',

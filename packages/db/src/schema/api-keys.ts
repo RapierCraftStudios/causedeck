@@ -1,7 +1,7 @@
 // Public API keys (#624, #487 part 1). A tenant table under FORCE RLS: one row per key a workspace
 // issued. Only the sha256 of the token is stored (the plaintext is shown once, at creation); the
 // short `prefix` identifies a key in lists. The API resolves a bearer token before it knows the
-// workspace, so it reads a key through `app_api_key_by_hash` (owner-defined, 0080_api_keys).
+// workspace, so it reads a key through `app_api_key_by_hash` (owner-defined, 0081_api_keys).
 import { sql } from 'drizzle-orm';
 import {
   check,

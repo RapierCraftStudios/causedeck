@@ -19,7 +19,6 @@ import { memberRole } from '../workspaces/index.ts';
 
 import {
   BLOCKING_ISSUES,
-  MAX_MIGRATION_ROWS,
   parseMigrationCsv,
   type ColumnMapping,
   type MigrationIssueCode,
@@ -540,5 +539,3 @@ export async function findMigrationOwner(
   );
   return owner?.userId ?? null;
 }
-
-export { MAX_MIGRATION_ROWS };

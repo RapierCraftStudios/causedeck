@@ -28,6 +28,7 @@ import { captureRetention, systemCaptureRetention } from './definitions/capture-
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { ordersPoll } from './definitions/orders-poll.ts';
 import { statusPoll } from './definitions/status-poll.ts';
 import { webhookDeliver } from './definitions/webhook-deliver.ts';
 import { systemWebhookSweep } from './definitions/webhook-sweep.ts';
@@ -208,6 +209,7 @@ export const registry = createRegistry([
   statusPoll,
   webhookDeliver,
   systemWebhookSweep,
+  ordersPoll,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -265,6 +267,7 @@ export type JobMap = RegistryMap<
     typeof statusPoll,
     typeof webhookDeliver,
     typeof systemWebhookSweep,
+    typeof ordersPoll,
   ]
 >;
 export type JobName = keyof JobMap;

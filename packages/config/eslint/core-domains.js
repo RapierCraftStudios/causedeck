@@ -27,7 +27,18 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   automation: Object.freeze(['workspaces', 'audit', 'matter-graph']),
   // Case-status watches (#591, D-048): a lookup needs a cleared source through sources, the next-date
   // proposal goes through automation and every proceeding read through matter-graph.
-  'case-watch': Object.freeze(['workspaces', 'automation', 'matter-graph', 'sources']),
+  // The orders poll (#494) stores a fetched order as a capture (the `CaptureJobs` port) and audits it.
+  'case-watch': Object.freeze([
+    'workspaces',
+    'automation',
+    'matter-graph',
+    'sources',
+    'audit',
+    'capture',
+  ]),
+  // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
+  // read as `listHolidayListings`) and the day arithmetic is the extraction's own, from intelligence.
+  deadlines: Object.freeze([]),
   // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
   // tables and the owner-defined match function only.
   notices: Object.freeze(['workspaces', 'sources']),
@@ -92,7 +103,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Anchored order extraction (#46): the `extract_order` call through ai, proposals through
   // automation, graph reads through matter-graph (imports `index.ts` only), member roles through
   // workspaces.
-  extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph']),
+  extraction: Object.freeze(['workspaces', 'ai', 'automation', 'matter-graph', 'deadlines']),
   // Data-ops alerting (#515, D-049): detectors, the alert ledger, routing and auto-response read the
   // global tables directly and import no other domain.
   'data-ops': Object.freeze([]),

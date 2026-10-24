@@ -21,11 +21,12 @@ import { and, asc, eq } from 'drizzle-orm';
 
 import { createCoreAiGateway } from '../ai/index.ts';
 import { submitProposals } from '../automation/index.ts';
+import { applyDeadlineRules } from '../deadlines/index.ts';
 import type { GraphEvents, MatterGraphDeps } from '../matter-graph/index.ts';
 import { forbidden } from '../shared/errors.ts';
 import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
 
-const { anchor, capture, document, documentPage, extraction, matter, proceeding } = schema;
+const { anchor, capture, document, documentPage, extraction, forum, matter, proceeding } = schema;
 
 const NO_EVENTS: GraphEvents = {
   emit() {
@@ -216,13 +217,33 @@ export async function runOrderExtraction(
             .limit(2);
           if (rows.length === 1) proceedingId = rows[0]?.id ?? null;
         }
-        const drafts = toProposalDrafts(found, {
-          captureId: cap?.id ?? null,
-          matterId,
-          proceedingId,
-          aiCallId: result.aiCallId,
-          anchorIds,
-        });
+        // A dated "within" direction rolls past the forum's closed days; the rule goes into its basis.
+        let directions = found.directions;
+        if (proceedingId !== null) {
+          const [forumRow] = await tx
+            .select({ code: forum.code })
+            .from(proceeding)
+            .innerJoin(forum, eq(forum.id, proceeding.forumId))
+            .where(and(eq(proceeding.id, proceedingId), eq(proceeding.workspaceId, workspaceId)));
+          if (forumRow !== undefined) {
+            directions = await applyDeadlineRules(tx, {
+              workspaceId,
+              forumCode: forumRow.code,
+              orderDate: found.orderDate?.date,
+              directions,
+            });
+          }
+        }
+        const drafts = toProposalDrafts(
+          { ...found, directions },
+          {
+            captureId: cap?.id ?? null,
+            matterId,
+            proceedingId,
+            aiCallId: result.aiCallId,
+            anchorIds,
+          },
+        );
         if (drafts.length > 0) {
           const graph: MatterGraphDeps = {
             db: tx,

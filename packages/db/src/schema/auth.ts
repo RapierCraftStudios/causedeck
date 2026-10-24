@@ -60,6 +60,9 @@ export const user = pgTable(
     name: text('name').notNull(),
     email: text('email').notNull().unique('user_email_uq'),
     emailVerified: boolean('email_verified').notNull().default(false),
+    /** E.164, set when the user signs up or in with a phone OTP (#503); unique when present. */
+    phoneNumber: text('phone_number').unique('user_phone_number_uq'),
+    phoneNumberVerified: boolean('phone_number_verified').notNull().default(false),
     image: text('image'),
     twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
     locale: text('locale').notNull().default('en'),

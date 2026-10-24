@@ -2,27 +2,18 @@
  "requirements": [
   {
    "id": "R1",
-<<<<<<< HEAD
    "quote": "A \"report an error\" action on any fetched fact in `apps/web` (with the user's consent to share that record with CauseDeck staff for correction).",
-=======
-   "quote": "Add a per-tracked-case plan kind to the plan catalogue",
->>>>>>> origin/milestone/court-data-network
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-<<<<<<< HEAD
    "quote": "`apps/admin` Review queue: items from low parse confidence, conflicts and reports, with assignment, SLA, a fix form, and send-to-workbench (#fixture workbench) to create a regression fixture.",
-=======
-   "quote": "metering of tracked cases in packages/billing and core billing entitlements",
->>>>>>> origin/milestone/court-data-network
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-<<<<<<< HEAD
    "quote": "Fixes to global records propagate to watchers as corrections with provenance (\"corrected by CauseDeck review\").",
    "disposition": "deliver",
    "verify": "in_lane"
@@ -48,9 +39,6 @@
   {
    "id": "R7",
    "quote": "Reliable data needs a human-in-the-loop queue for low-confidence parses, cross-source conflicts (#499) and errors reported by users (\"this date is wrong\"). Each correction should also improve the parser, as a new fixture.",
-=======
-   "quote": "Acceptance: charge computed from tracked case count with tests.",
->>>>>>> origin/milestone/court-data-network
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -58,13 +46,8 @@
  "deliverables": [
   {
    "id": "D1",
-<<<<<<< HEAD
    "path": "packages/db/src/schema/review.ts",
    "change": "New global `review_item` (kind low_confidence|conflict|user_report, source_id, record key cnr+field, shown/corrected value, consent boolean required true for user_report, status open|in_review|fixed|dismissed, assignee, due_at, fixture_exported_at; no workspace id) and tenant `review_correction` via tenantTable (proceeding, field, value, review_item_id, provenance source_type system, source_ref `causedeck-review:\u003cid>`, confirmation_state corrected). Export from packages/db/src/schema/index.ts.",
-=======
-   "path": "packages/validators/src/plans.ts",
-   "change": "Add optional `perTrackedCase?: boolean` to Plan, export TRACKED_CASE_PRICE_PAISE (integer paise per case per month, ex-GST), and an `active:false` catalogue row id `institution-case-monthly`, kind 'dedicated', interval month, perSeat false, perTrackedCase true, limits PAID. No new PlanKind (no migration).",
->>>>>>> origin/milestone/court-data-network
    "requirements": [
     "R1",
     "R2",
@@ -74,25 +57,15 @@
   },
   {
    "id": "D2",
-<<<<<<< HEAD
    "path": "packages/db/migrations/",
    "change": "New migration at the next free timestamp/number (check `ls packages/db/migrations | tail` at implement time; renumber if the base took it) with regenerated snapshot/journal: both tables, RLS for review_correction, SECURITY DEFINER `app_review_propagate(item_id)` guarded by app_staff_require_caller() (pattern 0072/0082) that inserts one review_correction per case_watch with same source_id+cnr, REVOKE PUBLIC, GRANT causedeck_app/causedeck_clerk.",
    "requirements": [
     "R3",
     "R4"
-=======
-   "path": "packages/billing/src/plans.ts",
-   "change": "Add pure `trackedCaseChargePaise(plan, trackedCases)`; extend mandateChargeNotice counts with optional `trackedCases` (charge = pricePaise*trackedCases when plan.perTrackedCase); checkPlanConfig: invalid if perSeat and perTrackedCase both set, minimum charge 0 for per-case plans; re-export TRACKED_CASE_PRICE_PAISE.",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3"
->>>>>>> origin/milestone/court-data-network
    ]
   },
   {
    "id": "D3",
-<<<<<<< HEAD
    "path": "packages/core/src/review/index.ts",
    "change": "New `review` domain (queue.ts, propagate.ts): reportError (needs consent), enqueueFromSignal (dedup per source+kind, content-free), list/get (get returns only that item's record and records `staff.read` audit), assign, setSla by kind, resolveWithFix (calls propagate), markFixtureExported. Add `./review` export in packages/core/package.json.",
    "requirements": [
@@ -102,33 +75,19 @@
     "R4",
     "R5",
     "R6"
-=======
-   "path": "packages/billing/src/service.ts",
-   "change": "Extend SeatCounts/cycleChargePaise (and quote counts) with optional trackedCases so per-case plans price from the count.",
-   "requirements": [
-    "R3"
->>>>>>> origin/milestone/court-data-network
    ]
   },
   {
    "id": "D4",
-<<<<<<< HEAD
    "path": "packages/core/src/data-ops/index.ts",
    "change": "Enqueue low_confidence and conflict review items from the existing parse_yield and conflict_rate detections (source-level, no record content). Keep recordParseRun and alert behaviour unchanged.",
    "requirements": [
     "R2",
     "R7"
-=======
-   "path": "packages/billing/src/invoice/on-payment.ts",
-   "change": "Invoice line quantity and description use tracked cases for perTrackedCase plans (input gains optional trackedCases).",
-   "requirements": [
-    "R3"
->>>>>>> origin/milestone/court-data-network
    ]
   },
   {
    "id": "D5",
-<<<<<<< HEAD
    "path": "apps/admin/app/(console)/review/actions.ts",
    "change": "Audited staff actions (requireStaff('data-ops'), record staff.read/other event): assign, set status, submit fix (propagates), sendToWorkbench (reuses @causedeck/adapters/workbench buildFixture and returns the bundle in one action, sets fixture_exported_at). Add page.tsx and [id]/page.tsx for the queue (kind, SLA, assignee) and fix form; add nav entry in apps/admin/components/console-nav.tsx and keep apps/admin/lib/roles.ts matrix (ops+admin).",
    "requirements": [
@@ -136,53 +95,29 @@
     "R5",
     "R6",
     "R7"
-=======
-   "path": "packages/core/src/billing/entitlements.ts",
-   "change": "Add `countTrackedCases(db, workspaceId)` (count of portfolio_case rows via the caller's workspace-scoped queryable) and `getTrackedCaseCharge(db, workspaceId, now?)` returning {plan id, trackedCases, chargePaise} from the current subscription's plan (0 for non per-case plans).",
-   "requirements": [
-    "R2",
-    "R3"
->>>>>>> origin/milestone/court-data-network
    ]
   },
   {
    "id": "D6",
-<<<<<<< HEAD
    "path": "apps/web/app/(app)/w/[slug]/matters/[id]/page.tsx",
    "change": "Report-error action (use server) with consent checkbox on the fetched next date/stage/bench, and show review_correction rows as 'corrected by CauseDeck review' via apps/web/lib/matters/workspace.ts; i18n strings in packages/i18n/src/messages/{en,kn,ta}/matters.json (+ generated catalog).",
    "requirements": [
     "R1",
     "R3"
-=======
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register countTrackedCases and getTrackedCaseCharge in SERVICE_TESTS pointing at the services.test.ts case.",
-   "requirements": [
-    "R2"
->>>>>>> origin/milestone/court-data-network
    ]
   },
   {
    "id": "D7",
-<<<<<<< HEAD
    "path": "packages/config/eslint/core-domains.js",
    "change": "Add `review` to CORE_DOMAIN_DEPENDENCIES (audit; matter-graph only if used, through its index.ts) and document it in docs/engineering/core-domains.md; update data-ops entry if it now imports review.",
-=======
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real two-tenant case: B's count/charge ignore A's portfolio_case rows; A unchanged.",
->>>>>>> origin/milestone/court-data-network
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D8",
-<<<<<<< HEAD
    "path": "packages/db/src/testing/cross-tenant-registry.ts",
    "change": "Register review exports (SERVICE_TESTS with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts, or NOT_A_SERVICE with reason), review_item in GLOBAL_TABLES and review_correction in the RLS catalog/two-tenant seeders (packages/db/src/index.test.ts, packages/db/src/__tests__/rls/sql.test.ts); add the web action to ACTIONS in apps/web/__tests__/cross-tenant-actions.test.ts.",
-=======
-   "path": "packages/billing/src/__tests__/plans.test.ts",
-   "change": "Tests: per-case charge from count (0, 1, 1000), config check, catalogue row inactive and frozen, not offered by active list. Also add cases to service.test.ts and on-payment.test.ts for D3/D4.",
->>>>>>> origin/milestone/court-data-network
    "requirements": [
     "R4",
     "R6"
@@ -190,27 +125,18 @@
   },
   {
    "id": "D9",
-<<<<<<< HEAD
    "path": "packages/core/src/review/__tests__/review.test.ts",
    "change": "New tests: report without consent rejected; report reaches queue; fix propagates to every watcher in two workspaces and not to a non-watcher; reviewer get returns only the item's record and writes an audit event; fixture export in one action.",
    "requirements": [
     "R4",
     "R5",
     "R6"
-=======
-   "path": "packages/core/src/billing/__tests__/entitlements.test.ts",
-   "change": "DB test: workspace on institution plan with N portfolio_case rows gets chargePaise = N*price; Junior gets 0.",
-   "requirements": [
-    "R2",
-    "R3"
->>>>>>> origin/milestone/court-data-network
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-<<<<<<< HEAD
    "what": "matter-graph next-date services (proposeNextDate, chooseNextDateSource) and the no-direct-listing-update guard: no new direct writes to listing (packages/core/src/matter-graph/next-date.ts)"
   },
   {
@@ -224,27 +150,11 @@
   {
    "id": "P4",
    "what": "Staff role matrix and tests (apps/admin/lib/roles.ts, apps/admin/__tests__/roles.test.ts); #499 agreement model and app_staff_conflict_rate (packages/core/src/facts, migration 0082)"
-=======
-   "what": "Existing seat and fixed plan charges: mandateChargeNotice/cycleChargePaise outputs for junior, advocate, chamber unchanged (packages/billing/src/plans.ts, service.ts)"
-  },
-  {
-   "id": "P2",
-   "what": "PLAN_KINDS and the plan_kind_chk DB check unchanged; no migration (packages/db/src/schema/billing.ts:53)"
-  },
-  {
-   "id": "P3",
-   "what": "GET /v1/billing/plans and the web plan picker list only active plans; the institution plan is not self-serve (apps/api/src/routes/v1/billing.ts:55, billing-view.ts:240)"
-  },
-  {
-   "id": "P4",
-   "what": "Plan seed maps catalogue rows to plan table columns only (packages/db/src/seed/plans.ts); perTrackedCase is not a DB column"
->>>>>>> origin/milestone/court-data-network
   }
  ],
  "validate": [
   {
    "id": "V1",
-<<<<<<< HEAD
    "command": "pnpm --filter @causedeck/core exec vitest run src/review src/data-ops src/facts src/__tests__/cross-tenant/services.test.ts src/__tests__/no-direct-listing-update.test.ts src/domains.test.ts"
   },
   {
@@ -262,34 +172,17 @@
   {
    "id": "V5",
    "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
-=======
-   "command": "pnpm --filter @causedeck/billing exec vitest run src/__tests__/plans.test.ts src/__tests__/service.test.ts src/__tests__/on-payment.test.ts src/__tests__/entitlements.test.ts"
-  },
-  {
-   "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/billing/__tests__/entitlements.test.ts src/__tests__/cross-tenant/services.test.ts src/usage/__tests__/fairness.test.ts"
-  },
-  {
-   "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/__tests__/plans-seed.test.ts"
->>>>>>> origin/milestone/court-data-network
   }
  ],
  "decisions": [
   {
    "id": "K1",
-<<<<<<< HEAD
    "choice": "Model the 'global record' as source_id + cnr + field and fan fixes out through a staff-guarded SECURITY DEFINER function writing tenant review_correction rows",
    "justification": "Tenant data is FORCE RLS; staff reach it only through definer functions (packages/db/migrations/0072_staff_parse_yield.sql, 0082_staff_conflict_rate.sql:11-35); no global fact table exists for case status (packages/db/src/schema/case-watch.ts:31-110)",
-=======
-   "choice": "Reuse existing PlanKind 'dedicated' for the per-case plan instead of adding 'institution'",
-   "justification": "A new kind needs a plan_kind_chk migration and snapshot (packages/db/src/schema/billing.ts:53), API enum (validators/src/api/billing.ts:9) and fairness map (core/src/usage/fairness.ts:12); 'dedicated' already exists everywhere and no row uses it",
->>>>>>> origin/milestone/court-data-network
    "source": "precedent"
   },
   {
    "id": "K2",
-<<<<<<< HEAD
    "choice": "Do not write listing directly for propagated corrections",
    "justification": "next-date.ts header (lines 1-3) makes it the only writer of listing.canonical/list_date, enforced by the no-direct-listing-update architecture test",
    "source": "lint"
@@ -305,17 +198,6 @@
    "choice": "Provenance text 'corrected by CauseDeck review' carried as source_type system + source_ref causedeck-review:\u003cid> + confirmation_state corrected, no new enum value",
    "justification": "SOURCE_TYPES/CONFIRMATION_STATES at packages/db/src/columns.ts:14-30 already cover it; avoids an enum migration",
    "source": "precedent"
-=======
-   "choice": "Plan row is active:false",
-   "justification": "Institutions are provisioned, not self-served; active plans feed the picker (billing-view.ts:240) and public API (api/routes/v1/billing.ts:55)",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "New core exports are registered in SERVICE_TESTS",
-   "justification": "CLAUDE.md registry table for runtime exports of @causedeck/core",
-   "source": "doc"
->>>>>>> origin/milestone/court-data-network
   }
  ]
 }

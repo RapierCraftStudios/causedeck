@@ -23,3 +23,6 @@ No behaviour or env changes.
 
 ## Migration renumber
 Base took 0080 (news) and 0081 (api_keys). Lane migration renumbered to 0082_staff_conflict_rate (SQL byte-identical). Snapshot 0082 is the 0081 snapshot with new id/prevId (custom SQL-only migration); journal entry idx 82 appended. drizzle-kit/pnpm were unavailable offline, so the generator was not run.
+
+### Update after conformance feedback
+Merged origin/milestone/court-data-network (47 commits, one conflict set in .forge-lean only). tsc clean for core and worker after the merge. V1 and V2 still exit 1, with identical cause before and after the merge: vitest globalSetup loads undici 8, which needs node >=22.19 (pinned 22.12 lacks zlib.createZstdDecompress). With a scratch zstd shim in $TMPDIR, the Postgres testcontainer then fails to start ("Log stream ended and message Started was not received"). No code defect found; non-DB subset (21 tests) passes. V3 passes.

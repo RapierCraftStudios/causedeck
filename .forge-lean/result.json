@@ -1,166 +1,19 @@
-{
- "status": "fixed",
- "summary": "Deadlines engine, orders.poll and extraction hook delivered; V1-V3 pass; merged base, typecheck of affected packages passes; merge fix: turbo-not-found was a PATH issue, typecheck passes with node_modules/.bin on PATH; vitest V1/V2 not re-run (no Postgres container on host); CI fix: orders poll captures now set ttlAt (initialTtl) like createCapture; CI log unavailable and DB tests not runnable locally, so unconfirmed against the failing test; second merge recheck: turbo exit 127 is a PATH issue, tsc for core/worker/db and V1/V2 subsets pass; CI fix (run 40084029731): failing task was @causedeck/intelligence#test, which this branch does not touch; it passes locally with coverage, so no code change (flake under CI load); third merge recheck: turbo exit 127 is again only a missing turbo on PATH (no code conflict); tsc for core/worker/db clean, V1/V2 subsets pass (39 + 11 tests); merge recheck (coverage lane): turbo exit 127 is only turbo missing from PATH; pnpm exec turbo typecheck 23/23 pass, V1-V4 pass, no code change; coverage lane merge recheck 2: turbo exit 127 is only turbo missing from PATH; pnpm exec turbo typecheck 23/23 pass, V1-V3 pass, no code change",
- "requirements": [
-  {
-   "id": "R1",
-   "status": "implemented",
-   "evidence": "packages/core/src/deadlines/calendar.ts"
-  },
-  {
-   "id": "R2",
-   "status": "implemented",
-   "evidence": "packages/core/src/jobs/definitions/orders-poll.ts"
-  },
-  {
-   "id": "R3",
-   "status": "implemented",
-   "evidence": "packages/core/src/extraction/run.ts"
-  },
-  {
-   "id": "R4",
-   "status": "implemented",
-   "evidence": "packages/core/src/deadlines/direction.test.ts"
-  },
-  {
-   "id": "R5",
-   "status": "implemented",
-   "evidence": "packages/core/src/deadlines/deadlines.test.ts"
-  },
-  {
-   "id": "R6",
-   "status": "implemented",
-   "evidence": "packages/core/src/case-watch/orders.test.ts"
-  },
-  {
-   "id": "R7",
-   "status": "implemented",
-   "evidence": "packages/core/src/deadlines/compute.ts"
-  }
- ],
- "validation": [
-  {
-   "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V2",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V3",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing",
-   "exit": 0
-  },
-  {
-   "id": "V5",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network",
-   "exit": 0
-  }
- ],
- "tests": [
-  {
-   "command": "pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts",
-   "result": "pass",
-   "fails_without_fix": true
-  },
-  {
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts",
-   "result": "pass",
-   "fails_without_fix": true
-  },
-  {
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts",
-   "result": "pass",
-   "fails_without_fix": true
-  },
-  {
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing",
-   "result": "pass",
-   "fails_without_fix": true
-  }
- ],
- "self_review": [
-  {
-   "question": "1",
-   "answer": "yes",
-   "evidence": "R1-R7 in diff"
-  },
-  {
-   "question": "2",
-   "answer": "yes",
-   "evidence": "additive; getStatusFetcherFactory is a new accessor"
-  },
-  {
-   "question": "3",
-   "answer": "yes",
-   "evidence": "V1-V3 exit 0; forgedock check"
-  },
-  {
-   "question": "4",
-   "answer": "yes",
-   "evidence": "status-poll.ts declared via amendment"
-  }
- ],
- "amendments": [
-  {
-   "kind": "add-deliverable",
-   "path": "packages/core/src/jobs/definitions/status-poll.ts",
-   "why": "orders.poll must reuse the fetcher wired through setStatusFetcherFactory; a getStatusFetcherFactory accessor is added"
-  }
- ],
- "facts": {
-  "conventions": [
-   "Run vitest with TESTCONTAINERS_RYUK_DISABLED=true on this host (Ryuk never logs Started)"
-  ]
- },
- "not_members": [
-  {
-   "symbol": "MAX_ORDERS_PER_WATCH_PER_RUN",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "partial vi.hoisted mock of only the core functions the web actions call; no sibling export (pollCaseWatches, notifyStatusChanges, caps) is listed either"
-  },
-  {
-   "symbol": "pollOrders",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "partial vi.hoisted mock of only the core functions the web actions call; no sibling export (pollCaseWatches, notifyStatusChanges, caps) is listed either"
-  },
-  {
-   "symbol": "MAX_ORDERS_PER_WATCH_PER_RUN",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "why": "CASES holds one case per service; constants, job definitions and job bodies are registered in NOT_A_SERVICE in cross-tenant-registry.ts, where this symbol is already named"
-  },
-  {
-   "symbol": "MAX_ORDERS_PER_WATCH_PER_RUN",
-   "test": "packages/core/src/jobs/definitions/status-poll.test.ts",
-   "why": "mocks only the modules status-poll.ts imports (case-watch/lookup.ts, alerts.ts); orders poll is a separate job with its own test, and no sibling export is listed here"
-  },
-  {
-   "symbol": "pollOrders",
-   "test": "packages/core/src/jobs/definitions/status-poll.test.ts",
-   "why": "mocks only the modules status-poll.ts imports (case-watch/lookup.ts, alerts.ts); orders poll is a separate job with its own test, and no sibling export is listed here"
-  },
-  {
-   "symbol": "ORDERS_POLL_CRON",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "why": "CASES holds one case per service; constants, job definitions and job bodies are registered in NOT_A_SERVICE in cross-tenant-registry.ts, where this symbol is already named"
-  },
-  {
-   "symbol": "ordersPoll",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "why": "CASES holds one case per service; constants, job definitions and job bodies are registered in NOT_A_SERVICE in cross-tenant-registry.ts, where this symbol is already named"
-  },
-  {
-   "symbol": "runOrdersPoll",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "why": "CASES holds one case per service; constants, job definitions and job bodies are registered in NOT_A_SERVICE in cross-tenant-registry.ts, where this symbol is already named"
-  }
- ]
-}
+{"status":"fixed","summary":"Coverage matrix, ranked gap list, live watch demand definer function and weekly staff report delivered; V1-V5 pass on rerun","requirements":[
+{"id":"R1","status":"implemented","evidence":"apps/admin/app/(console)/coverage/page.tsx"},
+{"id":"R2","status":"implemented","evidence":"packages/core/src/sources/coverage.ts"},
+{"id":"R3","status":"implemented","evidence":"packages/core/src/jobs/definitions/coverage-weekly.ts"},
+{"id":"R4","status":"implemented","evidence":"packages/core/src/sources/__tests__/coverage.test.ts"},
+{"id":"R5","status":"implemented","evidence":"packages/core/src/sources/__tests__/coverage.test.ts"}],
+"validation":[
+{"id":"V1","command":"pnpm --filter @causedeck/core exec vitest run src/sources/__tests__/coverage.test.ts src/sources/__tests__/ src/jobs/definitions/coverage-weekly.test.ts","exit":0},
+{"id":"V2","command":"pnpm --filter @causedeck/admin exec vitest run __tests__/coverage-page.test.tsx __tests__/console-layout.test.tsx __tests__/roles.test.ts __tests__/data-layer.test.ts __tests__/server-component-imports.test.ts __tests__/no-content-fields.test.ts __tests__/no-without-workspace-outside-data.test.ts","exit":0},
+{"id":"V3","command":"pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts","exit":0},
+{"id":"V4","command":"pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/testing","exit":0},
+{"id":"V5","command":"node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network","exit":0}],
+"tests":[{"command":"core coverage.test.ts + coverage-weekly.test.ts, admin coverage-page.test.tsx","result":"pass","fails_without_fix":true}],
+"self_review":[
+{"question":"1","answer":"yes","evidence":"R1-R5 each mapped in implementation.md to file:line"},
+{"question":"2","answer":"yes","evidence":"V2-V4 existing guard/registry tests pass"},
+{"question":"3","answer":"yes","evidence":"V1-V5 exit 0; preserve guard tests in V2 pass"},
+{"question":"4","answer":"yes","evidence":"git diff --name-only: deliverables plus tests and the D3 snapshot only"}],
+"amendments":[]}

@@ -1,4 +1,4 @@
--- Migration 0074_display_board: generated shape (one table, one index, one check), grants, owner read policies, function and source seed hand-written, reviewed before commit.
+-- Migration 0076_display_board: generated shape (one table, one index, one check), grants, owner read policies, function and source seed hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #493)
 -- Court-day display boards (#493, D-048). board_observation is global and content-free (hall, item now
 -- being heard, state, items passed over; never a party, case or advocate): one row each time a hall's

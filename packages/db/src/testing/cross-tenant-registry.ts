@@ -239,6 +239,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // KHC cause-list watches (#482)
   addCauseListWatch: selfScoped,
   matchNotices: selfScoped,
+  notifyNoticeMatches: selfScoped,
+  listHolidayListings: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
   // Case-status watches (#591)
@@ -736,6 +738,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // notices page and matter card (#588)
+  listWorkspaceNotices: empty,
+  listMatterNotices: denies,
   scanJudgments: {
     test: CORE_SERVICES_TEST,
     kind: 'self-scoped',
@@ -986,6 +991,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   pollNotices:
     'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
   NOTICES_POLL_CRON: 'constant',
+  NOTICES_LIST_LIMIT: 'constant',
   noticesPoll: 'job definition (handler is runNoticesPoll)',
   runNoticesPoll: 'system job body: see pollNotices',
   setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',

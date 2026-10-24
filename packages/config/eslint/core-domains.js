@@ -30,7 +30,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   'case-watch': Object.freeze(['workspaces', 'automation', 'matter-graph', 'sources']),
   // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
   // tables and the owner-defined match function only.
-  notices: Object.freeze(['sources']),
+  notices: Object.freeze(['workspaces', 'sources']),
   // Public API keys (#624, #487): issuing and revoking check the member's role through workspaces and are audited; a
   // billed call increments the `api.calls` key through usage.
   'api-keys': Object.freeze(['audit', 'usage', 'workspaces']),

@@ -9,4 +9,18 @@ export {
   type PollNoticesDeps,
   type PollNoticesReport,
 } from './poll.ts';
-export { matchNotices, type MatchNoticesReport, type NoticeToMatch } from './match.ts';
+export {
+  matchNotices,
+  type MatchedNotice,
+  type MatchNoticesReport,
+  type NoticeToMatch,
+} from './match.ts';
+export { notifyNoticeMatches, type NoticeAlertDeps } from './alerts.ts';
+export { listHolidayListings, type HolidayListing, type HolidayListingsRange } from './holidays.ts';
+export {
+  listMatterNotices,
+  listWorkspaceNotices,
+  NOTICES_LIST_LIMIT,
+  type NoticeActor,
+  type NoticeRow,
+} from './list.ts';

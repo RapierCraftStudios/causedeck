@@ -77,3 +77,11 @@ NOTICES_POLL_CRON, noticesPoll, runNoticesPoll and setNoticeFetcherFactory are n
 - CI fix: migration 0076 adds the owner_definer_read policy on proceeding (backs app_notice_match_targets), so proceeding-schema.test.ts now expects policies owner_definer_read + ws_isolation for proceeding (ws_isolation only for proceeding_link). Not run locally (db tests need a database; CI re-verifies).
 
 - CI fix: the test db does not carry the forum catalogue (`pnpm db:migrate` seeds it), so the forum lookup returned nothing and the proceeding insert got an empty uuid. `notices.test.ts` and the cross-tenant `matchNotices` case now run `seedForumCatalogue` on an owner connection in `beforeAll`, as `court/forums.test.ts` does. Both files pass locally (160 tests).
+
+## Acceptance Criteria Status (case-watch lane #593, after merge)
+- R1 ✅ apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts; registered in apps/web/__tests__/cross-tenant-actions.test.ts
+- R2 ✅ apps/web/components/matters/status-watch-panel.tsx (parsed fields and proposals only; no captcha or framing)
+- R3 ✅ apps/web/lib/case-watch/refresh.ts, apps/web/workers/captcha-solver.worker.ts (device first, server fallback with via/tier/cost)
+- R4 ✅ packages/i18n/src/catalog.ts:21 (`case-watch` namespace), packages/i18n/src/messages/{en,ta,kn}/case-watch.json, packages/i18n/src/__tests__/catalog.test.ts
+
+Note: the merge brought another lane's `.forge-lean/contract.json` and `result.json` into this worktree from the base; this lane's result is rewritten below in result.json.

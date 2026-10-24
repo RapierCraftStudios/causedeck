@@ -64,6 +64,8 @@ interface World {
   workspaceId: string;
   ownerId: string;
   matterId: string;
+  /** The code of the forum the matter's proceedings sit before. */
+  forumCode: string;
 }
 
 /** A matter before `forumCode`, a `caseType` proceeding, and a listing on `listDate` in `hallNo`. */
@@ -72,12 +74,25 @@ async function matterListed(
   forumCode: string,
   opts: { caseType?: string; hallNo?: string; listDate?: string; world?: World } = {},
 ): Promise<World> {
-  const base = opts.world ?? { ...(await newWorkspace(tx)), matterId: '' };
+  const base = opts.world ?? { ...(await newWorkspace(tx)), matterId: '', forumCode };
   const { workspaceId, ownerId } = base;
+  // A hall's forum must share its workspace scope, so a hall needs a workspace-scoped forum.
+  let code = base.forumCode;
+  if (opts.hallNo !== undefined && opts.world === undefined) {
+    code = `${forumCode}.xt-${crypto.randomUUID().slice(0, 8)}`;
+    await inWorkspace(tx, workspaceId, (s) =>
+      s.insert(schema.forum).values({
+        workspaceId,
+        code,
+        court: 'Bench Test Court',
+        jurisdictionKind: 'high_court',
+      }),
+    );
+  }
   const [forum] = await tx
     .select({ id: schema.forum.id })
     .from(schema.forum)
-    .where(eq(schema.forum.code, forumCode));
+    .where(eq(schema.forum.code, code));
   const matterId = await inWorkspace(tx, workspaceId, async (s) => {
     const [m] = await s
       .insert(schema.matter)
@@ -114,11 +129,16 @@ async function matterListed(
     });
     return m?.id ?? '';
   });
-  return { workspaceId, ownerId, matterId };
+  return { workspaceId, ownerId, matterId, forumCode: code };
 }
 
 /** A notice for `forumCodes`, matched to every matter of `world` (as `matchNotices` would). */
-async function noticeFor(tx: Transaction, world: World, title: string, forumCodes = [MADURAI]) {
+async function noticeFor(
+  tx: Transaction,
+  world: World,
+  title: string,
+  forumCodes = [world.forumCode],
+) {
   const [row] = await tx
     .insert(schema.notice)
     .values({

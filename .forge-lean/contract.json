@@ -2,192 +2,225 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "A check on a new party finds existing matters where the chamber appears for an adverse party, including transliterated names.",
+   "quote": "Add per-workspace API keys (hashed at rest, shown once), scopes, per-key quotas and rate limits",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "The feature is behind a flag until counsel signs off (#486).",
+   "quote": "a usage key for billed calls via the #30 usage service",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/conflicts/`: name matching (transliteration-aware for Tamil and Kannada, organisation aliases) against the chamber's matters and parties, and optionally its cause-list history.",
+   "quote": "and a BearerResolver (apps/api/src/middleware/auth.ts) that resolves keys to a principal.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "`apps/web`: a conflict check on new-matter intake, showing results with sources; it never auto-blocks, and the advocate decides.",
+   "quote": "Register in cross-tenant, core-domains and db test lists.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Audit: every check is logged; no data leaves the chamber's workspace.",
+   "quote": "Acceptance: keys, scopes and quotas are enforced and usage is billed per call [integration].",
    "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "and optionally its cause-list history.",
-   "disposition": "defer",
-   "why": "Optional in the issue; `listing` (packages/db/src/schema/docket.ts:50) carries no party names, so history matching needs a separate data source and counsel review of processing cause-list parties. Follow-up issue.",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/conflicts/normalize.ts",
-   "change": "Name normaliser: NFKC, case-fold, strip honorifics (Sri/Smt/Dr/M/S) and company suffixes (Pvt Ltd/Limited), organisation alias table, Tamil (U+0B80-0BFF) and Kannada (U+0C80-0CFF) to Latin phonetic key, collapse vowel length/aspirates/doubled letters, token-order independent key.",
+   "path": "packages/db/src/schema/api-keys.ts",
+   "change": "New workspace-scoped `api_key` table (hash only, prefix, scopes, monthly quota, per-minute rate limit, expiry, revoked_at, created_by) with tenant RLS; export from schema/index.ts",
    "requirements": [
-    "R1",
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/conflicts/check.ts",
-   "change": "checkConflicts(deps, actor, input): loads person/organisation (name+aliases) and role_edge to matters inside the caller's workspace transaction; a hit is a new adverse party equal to an existing client, or a new client equal to an existing adverse party; returns hits with matter id/title, matched name, role and source; always records one audit event (ids and counts, no names); never touches network or other workspaces.",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the api-keys schema",
    "requirements": [
-    "R1",
-    "R3",
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/conflicts/index.ts",
-   "change": "Domain barrel exporting checkConflicts, normaliser and types.",
+   "path": "packages/db/migrations/0080_api_keys.sql",
+   "change": "Create api_key table, RLS policies and owner-defined SECURITY DEFINER lookup `app_api_key_by_hash(text)`; regenerate meta snapshot and journal (renumber if base took 0080)",
    "requirements": [
+    "R1",
     "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/package.json",
-   "change": "Add `./conflicts` export mirroring `./case-watch` (line 22). No dependency changes.",
+   "path": "packages/core/src/api-keys/index.ts",
+   "change": "New domain: createApiKey (plaintext returned once, sha256 stored), listApiKeys, revokeApiKey (audited, owner/admin), authenticateApiKey (hash lookup, expiry/revoked checks, constant-time), scope vocabulary, consumeApiCall (monthly quota check + increment('api.calls') idempotent per request)",
    "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/core/src/index.ts",
-   "change": "Export the conflicts domain as the other domains are exported.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "Register `conflict.checked` audit action (security:true so a check cannot run unlogged).",
-   "requirements": [
+    "R1",
+    "R2",
+    "R3",
     "R5"
    ]
   },
   {
-   "id": "D7",
-   "path": "packages/flags/src/keys.ts",
-   "change": "Add legal-gated flag `conflicts.check` (owners [500, 486]).",
+   "id": "D5",
+   "path": "packages/core/src/usage/keys.ts",
+   "change": "Add counter key 'api.calls' to USAGE_KEYS and USAGE_KEY_KINDS",
    "requirements": [
     "R2"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/core/package.json",
+   "change": "Add ./api-keys subpath export mirroring ./usage",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/core/src/index.ts",
+   "change": "Re-export the api-keys domain if other domains are re-exported there",
+   "requirements": [
+    "R1"
    ]
   },
   {
    "id": "D8",
-   "path": "docs/engineering/flags.md",
-   "change": "Add the `conflicts.check` row (⚖, KILL_CONFLICTS_CHECK, #500) to match the registry.",
+   "path": "apps/api/src/middleware/auth.ts",
+   "change": "Add createApiKeyResolver(db): BearerResolver mapping a valid key to a Principal carrying apiKey {id, workspaceId, scopes, limits}",
    "requirements": [
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/matters/actions.ts",
-   "change": "Add `checkConflictsAction` (workspaceAction, `matter.read`, requireFlag('conflicts.check') -> NOT_FOUND when off) calling core checkConflicts.",
+   "path": "apps/api/src/lib/openapi.ts",
+   "change": "Extend Principal with optional apiKey; add requireScope(scope) route middleware (403 FORBIDDEN on missing scope)",
    "requirements": [
-    "R2",
-    "R4",
+    "R1",
     "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/web/components/matters/new-matter-dialog.tsx",
-   "change": "Optional conflict-check step on intake: when the flag is on, show hits with sources; submission is never blocked, the advocate decides.",
+   "path": "apps/api/src/middleware/api-key.ts",
+   "change": "New middleware: reject header/path workspace differing from key workspace, per-key rate limit (429 RATE_LIMITED), quota exhaustion (429 QUOTA_EXCEEDED), bill one api.calls per request",
    "requirements": [
-    "R4"
+    "R1",
+    "R2",
+    "R5"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/messages/en/matters.json",
-   "change": "Conflict check strings under matters.new (also kn and ta matters.json and the generated message files, per the i18n catalog test).",
+   "path": "apps/api/src/middleware/rate-limit.ts",
+   "change": "Key counters by api key id when the principal carries one, using the key's per-minute limit",
    "requirements": [
-    "R4"
+    "R1"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "CORE_DOMAIN_DEPENDENCIES: `conflicts: ['audit']`.",
+   "path": "apps/api/src/app.ts",
+   "change": "Default bearer resolver to the API-key resolver; wire the api-key middleware",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D13",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Add conflicts row, dependency table row and graph edge.",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add 'api-keys' domain dependencies (audit, usage, workspaces)",
    "requirements": [
-    "R3"
+    "R4"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entry for checkConflicts (workspace B check sees nothing of A) and NOT_A_SERVICE for pure normaliser exports.",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the api-keys domain and its dependencies",
    "requirements": [
-    "R5"
+    "R4"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real case: B checking A's client name gets no hits; A's data unchanged.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register api-keys exports in SERVICE_TESTS (or NOT_A_SERVICE with reason) and the api_key table",
    "requirements": [
-    "R5"
+    "R4"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Register checkConflictsAction in ACTIONS with probe input.",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: B cannot list or revoke A's keys; A's keys unchanged",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add api_key to the root table list",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add api_key to the RLS catalog (and TABLE_TESTS/seeders if the guard requires)",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/core/src/api-keys/__tests__/api-keys.test.ts",
+   "change": "Integration tests: shown once and hashed at rest, revoked/expired rejected, scopes, quota exhaustion, one api.calls per call, idempotent on request id",
    "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D17",
-   "path": "packages/core/src/conflicts/conflicts.test.ts",
-   "change": "Integration test (R1: adverse party matches existing client incl. Tamil/Kannada spelling vs Latin, organisation alias, no hit across workspaces, audit event written) and normaliser unit tests.",
+   "id": "D20",
+   "path": "apps/api/src/__tests__/api-keys.test.ts",
+   "change": "End-to-end through createApp: valid key 200, bad key 401, missing scope 403, per-key rate limit 429, quota 429 and usage counter incremented",
    "requirements": [
-    "R1",
     "R3",
     "R5"
    ]
   },
   {
-   "id": "D18",
-   "path": "apps/web/__tests__/conflicts-action.test.ts",
-   "change": "Unit test: action returns NOT_FOUND with flag off, results with flag on; legal-gated flag registered (R2).",
+   "id": "D21",
+   "path": "packages/core/src/api-keys/index.ts",
+   "change": "CI fix: apiKeyCallsThisPeriod (:289) passes a Date into a raw sql`` template (ERR_INVALID_ARG_TYPE, also the 500s in apps/api api-keys tests); use drizzle gte(usageEvent.createdAt, usagePeriod(at).start) instead",
    "requirements": [
-    "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/core/src/lifecycle/export/exporters.ts",
+   "change": "CI fix: export api_key via ws('api_key',{exclude:['token_hash'],userColumn:'created_by'}) in the exporter that holds workspace_integration (:173); secrets never leave",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/core/src/lifecycle/deletion/erase.ts",
+   "change": "CI fix: add 'api_key' to PURGE_ORDER (purge-coverage test), next to workspace_integration",
+   "requirements": [
     "R4"
    ]
   }
@@ -195,69 +228,71 @@
  "preserve": [
   {
    "id": "P1",
-   "what": "createMatterAction behaviour and result shape (apps/web/app/(app)/w/[slug]/matters/actions.ts:50): the conflict check must never block or alter matter creation."
+   "what": "Cookie-session auth and `GET /v1/me` behaviour; Principal.apiKey is optional (apps/api/src/__tests__/auth.test.ts, authorize.test.ts)"
   },
   {
    "id": "P2",
-   "what": "Flag precedence and legal-ack rules (packages/flags/src/evaluate.ts:47-60); every flag default stays false."
+   "what": "Existing usage keys, meter idempotency and `increment` signature (packages/core/src/usage/meter.ts, usage tests)"
   },
   {
    "id": "P3",
-   "what": "Tenant isolation: no cross-workspace reads, no new SECURITY DEFINER function, no migration."
+   "what": "Default per-user/IP rate limit behaviour and headers (apps/api/src/__tests__/rate-limit.test.ts)"
   },
   {
    "id": "P4",
-   "what": "Existing audit action registry entries and AUDIT_ACTIONS shape (packages/core/src/audit/events.ts)."
+   "what": "requireWorkspace membership check semantics (apps/api/src/middleware/workspace.ts); cross-tenant route list in apps/api/src/__tests__/cross-tenant.test.ts"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/conflicts src/__tests__/cross-tenant/services.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "node /home/dev/.local/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/flags exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/api-keys src/usage src/domains.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/conflicts-action.test.ts __tests__/cross-tenant-actions.test.ts __tests__/matters-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/api-keys.test.ts src/__tests__/auth.test.ts src/__tests__/rate-limit.test.ts src/__tests__/authorize.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/export-coverage.test.ts src/lifecycle/__tests__/purge-coverage.test.ts src/api-keys --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/api-keys.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "No migration and no SECURITY DEFINER function: the check runs entirely inside the caller's withWorkspace transaction over tenant tables.",
-   "justification": "Tenant tables are FORCE RLS (packages/db/src/schema/people.ts:1-3), which satisfies 'no data leaves the chamber's workspace' by construction.",
-   "source": "doc"
+   "choice": "Principal for an API key carries `user` = the key's creator plus an optional `apiKey` field, so requireWorkspace and authorize keep working unchanged",
+   "justification": "apps/api/src/lib/openapi.ts:12-16 requires a SessionUser and middleware/workspace.ts:50 checks membership; a removed creator then invalidates the key",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Self-contained Tamil/Kannada phonetic normaliser in core instead of a new dependency.",
-   "justification": "No transliteration library exists in the repo (advocate-keys.ts:3-5 keeps names raw); avoids a new package dependency.",
+   "choice": "Key lookup by hash through an owner-defined SECURITY DEFINER function",
+   "justification": "api_key is tenant FORCE RLS and the workspace is unknown before authentication; same pattern as app_cause_list_watch_targets in migrations/0068_cause_list_watch.sql",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "`conflict.checked` is a security (fail-closed) audit action.",
-   "justification": "Issue requires every check logged; fail-closed (packages/core/src/audit/events.ts:1-5) guarantees a check cannot run unaudited.",
-   "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Flag gating follows requireFlag -> NOT_FOUND.",
-   "justification": "apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts:50-57.",
+   "choice": "sha256 + random secret, token shown once",
+   "justification": "packages/core/src/workspaces/invitations.ts:4,40-41 hashes high-entropy tokens this way; slow hashes are unnecessary for 256-bit secrets",
    "source": "precedent"
   },
   {
-   "id": "K5",
-   "choice": "Core conflicts depends only on audit; matter/person rows are read directly with the caller's tx.",
-   "justification": "CORE_DOMAIN_DEPENDENCIES rule (packages/config/eslint/core-domains.js) allows only registered imports via index.ts.",
-   "source": "lint"
+   "id": "K4",
+   "choice": "New core domain 'api-keys' depending on audit, usage, workspaces only",
+   "justification": "core-domains.js:55 map and docs/engineering/core-domains.md require declared domain deps through index.ts",
+   "source": "doc"
   }
  ]
 }

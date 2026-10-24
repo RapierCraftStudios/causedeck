@@ -1,40 +1,39 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: low (P3 greenfield, legal-gated; ships dark)
+**Severity**: medium (greenfield; part 1 of 4 of #487, blocks #625/#626; nothing is exposed publicly yet)
 **Task Type**: feature
 
 ### What Was Claimed
-Before taking a matter, a chamber must check whether it appears for the opposite party in any matter. Needs a `packages/core/src/conflicts/` name matcher (transliteration-aware for Tamil and Kannada, organisation aliases) over the chamber's own matters and parties (optionally cause-list history), a conflict check on new-matter intake in `apps/web` that never auto-blocks, an audit log of every check, no data leaving the workspace, and a flag that stays off until counsel signs off (#486).
+Part of #487: per-workspace API keys (hashed at rest, shown once), scopes, per-key quotas and rate limits, a usage key for billed calls through the #30 usage service, and a `BearerResolver` (`apps/api/src/middleware/auth.ts`) that resolves keys to a principal. Register in cross-tenant, core-domains and db test lists. Acceptance: keys, scopes and quotas enforced and usage billed per call [integration].
+Note: the "Investigation Report" comment already on #624 is for #586 (notices poll), not this issue; ignored.
 
 ### What We Found
-- Dependency #486 is merged on base (`7afc0e6d`), so the issue is not blocked.
-- No `packages/core/src/conflicts` exists; no conflict flag in `packages/flags/src/keys.ts:38-115` (registry ends at `workspace.export`, :110).
-- Party data: `person` (`name`, `aliases[]`, `kind` incl. `party`/`client`) and `organisation` (`name`, `aliases[]`) at `packages/db/src/schema/people.ts:34-90`; `role_edge` kinds `represents|appears_for|opposes` at `packages/db/src/schema/enums.ts:93-99`, targeting a matter at `people.ts:92-100`. All tenant tables under FORCE RLS, so a check inside `withWorkspace` cannot see another workspace.
-- Cause-list history in a workspace is `listing` (`packages/db/src/schema/docket.ts:50`); it holds no party names, so history matching can only go through proceedings/people. Treat as out of this change (issue says "optionally").
-- No transliteration utility exists. Adapters keep Karnataka names "never transliterated" (`packages/adapters/src/karnataka-hc/advocate-keys.ts:3-5`), `packages/intelligence/src/structure/match-matter.ts` ranks case numbers only.
-- Flag gating pattern: `requireFlag` -> `isEnabled(key, {workspaceId,userId})` -> `ActionError('NOT_FOUND')` (`apps/web/app/(app)/w/[slug]/settings/case-watch/actions.ts:50-57`). Legal-gated flags need `legal_ack_by` (`packages/flags/src/evaluate.ts:6-8,47-60`); `flag(key, desc, true, [owners])` at `keys.ts:28`; table mirrored in `docs/engineering/flags.md:25-26` (checked by `packages/flags/src/__tests__/docs.test.ts`).
-- Intake: `createMatterAction` / `searchMattersAction` at `apps/web/app/(app)/w/[slug]/matters/actions.ts:50,110`, dialog `apps/web/components/matters/new-matter-dialog.tsx:39-57`, messages in `packages/i18n/src/messages/{en,kn,ta}/matters.json` (generated copies under `src/generated`).
-- Audit: actions registered in `packages/core/src/audit/events.ts` (`AUDIT_ACTIONS`); writer `record` exported from `packages/core/src/audit/index.ts:65`.
-- Registries: `packages/config/eslint/core-domains.js:28-36` and `docs/engineering/core-domains.md:25-26,186-187`; cross-tenant `SERVICE_TESTS`/`NOT_A_SERVICE` in `packages/db/src/testing/cross-tenant-registry.ts` (~:181, :946); `apps/web/__tests__/cross-tenant-actions.test.ts:103-184` (`ACTIONS`); `packages/core/package.json:22` export map.
+- `apps/api/src/middleware/auth.ts:12-14` defines `BearerResolver` and `rejectAllBearerTokens`; `principalFrom` (:25-38) calls it and stamps `via:'bearer'`. `apps/api/src/app.ts:42,111` takes an optional `bearer` dep; nothing supplies one (the comment at auth.ts:3 says "API keys arrive later").
+- `Principal` (`apps/api/src/lib/openapi.ts:12-16`) is `{user, via}` only: no workspace, scopes or key id. `requireWorkspace` (`middleware/workspace.ts:34-68`) derives workspace from path/header and checks `memberRole`.
+- No API key table: `packages/db/src/schema/` has none (`auth.ts` has only user/session/org). Latest migration is `0079_source_data_class.sql`.
+- Usage: `packages/core/src/usage/keys.ts:4-12,16-24` lists `USAGE_KEYS` and counter/gauge kinds; `meter.ts` `increment(ctx,key,amount,{idempotencyKey})` is idempotent per workspace. Key pattern `^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*$` (`packages/db/src/schema/usage.ts:26`). `packages/core/src/runtime/index.ts:233` iterates `USAGE_KEYS` (new key shows up automatically); `fair-use.ts:20` and `billing/src/entitlements.ts` are plan caps, not needed for a billed-per-call key.
+- Rate limiting: `middleware/rate-limit.ts` is per user / IP with prefix groups (`RateLimitOptions.groups`, :48-55); in-memory store. No per-key limit.
+- Token hashing precedent: `packages/core/src/workspaces/invitations.ts:4,40-41` (`randomBytes` + sha256 hex).
+- Registries: `config/eslint/core-domains.js:55` (`usage: ['audit','billing']`), `packages/db/src/index.test.ts:69` and `__tests__/rls/sql.test.ts:41` (table lists, e.g. `budget_override`), `db/src/testing/cross-tenant-registry.ts:181` (`SERVICE_TESTS`) with `core/src/__tests__/cross-tenant/services.test.ts`; `apps/api/src/__tests__/cross-tenant.test.ts:89` lists /v1 routes.
 
 ### Root Cause
-Greenfield. No matcher, flag, action or UI exists.
+Greenfield: the bearer seam was left open (#14) and there is no key store, scope model, per-key limit or `api.*` usage key.
 
 ### Affected Files
-- new `packages/core/src/conflicts/{index,normalize,match,check}.ts` (+ tests); `packages/core/src/index.ts`, `packages/core/package.json` (`./conflicts` export)
-- `packages/flags/src/keys.ts`, `docs/engineering/flags.md`
-- `packages/core/src/audit/events.ts` (+ `docs/engineering/audit.md` if its table is test-checked)
-- `apps/web/app/(app)/w/[slug]/matters/actions.ts`, `apps/web/components/matters/new-matter-dialog.tsx` (+ story), `packages/i18n/src/messages/{en,kn,ta}/matters.json` and generated copies
-- `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`, `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`, `apps/web/__tests__/cross-tenant-actions.test.ts`
+- `packages/db/src/schema/api-keys.ts` (new), `schema/index.ts`, migration `0080_api_keys.sql` + `meta` snapshot/journal
+- `packages/core/src/api-keys/{index,keys,scopes,authenticate,quota}.ts` (new domain) + tests; `packages/core/package.json` `./api-keys` export (mirror `./usage`); `packages/core/src/index.ts`
+- `packages/core/src/usage/keys.ts` (`api.calls`)
+- `apps/api/src/middleware/auth.ts`, `lib/openapi.ts` (Principal), `middleware/api-key.ts` (new: scope check, per-key rate limit, quota + metering), `app.ts` wiring
+- Registries: `config/eslint/core-domains.js`, `docs/engineering/core-domains.md`, `db/src/testing/cross-tenant-registry.ts`, `core/src/__tests__/cross-tenant/services.test.ts`, `db/src/index.test.ts`, `db/src/__tests__/rls/sql.test.ts` (+ seeders if required)
 
 ### Sibling Sweep
-Other legal-gated features follow the same shape (`court.case-status` in case-watch actions, `invoices.enabled`, `limitation.enabled`): flag in registry + docs table, `requireFlag` in each action. Same registries apply as for `case-watch`/`notices` domains. No migration needed (reads existing tables).
+Other hashed one-time secrets: invitation tokens (`workspaces/invitations.ts`) and whatsapp tokens; reuse the sha256 + `timingSafeEqual` pattern. Bearer consumers: only `app.ts`. Existing cookie/session callers of `Principal` must keep working (new fields optional).
 
 ### History
-Related data layer: `person`/`role_edge` #348; DPDP posture #486 (merged, `docs/legal/court-data-posture.md`). The comment on the issue titled "Investigation Report" describes #586 (notices), not this issue; ignored. No prior attempt at #500.
+Seam introduced by #14 (`auth.ts` header comment). Usage service by #30. No prior API key attempt; #487 was closed not_planned and split into #624-#627.
 
 ### Recommendation
-Add `conflicts.check` legal-gated flag (owner [500, 486]). Core `checkConflicts(deps, actor, {parties:[{name, role: 'client'|'adverse', kind: 'person'|'organisation'}]})` runs in the caller's workspace transaction: loads `person`/`organisation` with names/aliases and their `role_edge` to matters (respecting matter restriction via existing matter-graph read helpers where available), normalises names (NFKC, case-fold, honorific and `M/S`, `Pvt Ltd`/`Limited` suffix stripping with organisation alias table, Tamil U+0B80-0BFF and Kannada U+0C80-0CFF to a Latin phonetic key, vowel-length/aspirate collapse, token-order independent) and scores matches. A hit is: new adverse party equals an existing matter's client (chamber represents them) or new client equals an existing adverse party. Return hits with matter id/title, matched name, role, and `source` (person/organisation/alias). Always write one audit event (ids and counts, no names). Web: `checkConflictsAction` (flag-gated, workspace-scoped, no external calls) invoked from the new-matter dialog; results shown with sources, never blocks submission. Cause-list history deferred.
+New workspace-scoped table `api_key` (id, workspace_id, created_by user id, name, prefix, token_hash unique, scopes text[], monthly_quota int null, rate_limit_per_minute int, expires_at, revoked_at, last_used_at; tenant RLS like other workspace tables). Token format `cdk_<prefix>_<secret>`; only sha256 stored; plaintext returned once by `createApiKey`. Core `api-keys` domain: create/list/revoke (owner/admin via workspaces `requireCan`-style check, audited through `audit`), `authenticateApiKey(db, token)` using an owner-defined SECURITY DEFINER lookup by hash (tenant table is FORCE RLS and workspace is unknown at that point), scope vocabulary (`cases:read`, `causelists:read`, `orders:read`, `notices:read`, `webhooks:write`), `consumeApiCall(ctx,key)` which checks the monthly quota against `getUsage` and bills via `increment('api.calls',1,{idempotencyKey:requestId})`. API: `bearer` resolver returns a Principal with `apiKey:{id,workspaceId,scopes,rateLimitPerMinute,quota}` and `user` = the key creator (so `requireWorkspace` membership still gates revoked/removed creators; header workspace must equal key workspace); new `requireScope(scope)` and a per-key rate-limit key (`key:<id>`) in `rate-limit.ts`; quota exhaustion -> 429 `QUOTA_EXCEEDED`; metering after successful auth. Register everything in the lists above.
 
 ### Related Issues
-#486 (merged dependency), #480, #348, #311.
+#487 (parent, closed not_planned), #625 (endpoints use `requireScope`), #626 (webhooks), #627 (docs), #30 (usage service), #14 (API), #486 (posture doc).

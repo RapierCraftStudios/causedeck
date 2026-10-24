@@ -304,6 +304,15 @@ function snapshotA() {
       })
       .from(schema.workspaceIntegration)
       .orderBy(schema.workspaceIntegration.kind),
+    // A's API keys (#624): no web action may issue, revoke or touch one.
+    apiKeys: await tx
+      .select({
+        id: schema.apiKey.id,
+        tokenHash: schema.apiKey.tokenHash,
+        revokedAt: schema.apiKey.revokedAt,
+      })
+      .from(schema.apiKey)
+      .orderBy(schema.apiKey.id),
     // A's intake addresses, allow-list and messages (#54).
     intakeAddresses: await tx.select().from(schema.intakeAddress).orderBy(schema.intakeAddress.id),
     intakeAllowlist: await tx

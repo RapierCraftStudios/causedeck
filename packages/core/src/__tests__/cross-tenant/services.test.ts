@@ -265,6 +265,16 @@ async function aWorkspace(f: Fixture) {
   return row;
 }
 
+/** A's API keys, with revocation state. */
+async function aApiKeys(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ id: schema.apiKey.id, revokedAt: schema.apiKey.revokedAt })
+      .from(schema.apiKey)
+      .orderBy(schema.apiKey.id),
+  );
+}
+
 /** A's usage counters and ledger. */
 async function aUsage(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, async (s) => ({
@@ -2556,6 +2566,75 @@ const CASES: Record<string, Case> = {
       idempotencyKey: 'xt-usage-key',
     });
     expect(asB).toEqual({ applied: true, value: 2 });
+    expect(await aUsage(f)).toEqual(before);
+  },
+  createApiKey: async (f) => {
+    const before = await aApiKeys(f);
+    const input = { workspaceId: f.a.id, name: 'xt', scopes: ['cases:read'] };
+    await expectDenied(core.createApiKey(f.tx, { ...input, actorUserId: f.ub }));
+    await expect(
+      f.asB((s) => core.createApiKey(s, { ...input, actorUserId: f.ub })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aApiKeys(f)).toEqual(before);
+  },
+  listApiKeys: async (f) => {
+    await expectDenied(core.listApiKeys(f.tx, f.a.id, f.ub));
+    await expect(f.asB((s) => core.listApiKeys(s, f.a.id, f.ub))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    expect(await f.asB((s) => core.listApiKeys(s, f.b.id, f.ub))).toHaveLength(1);
+  },
+  revokeApiKey: async (f) => {
+    const before = await aApiKeys(f);
+    const keyId = before[0]?.id ?? '';
+    await expectDenied(core.revokeApiKey(f.tx, f.a.id, f.ub, keyId));
+    await expect(f.asB((s) => core.revokeApiKey(s, f.a.id, f.ub, keyId))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    // B's own workspace with A's key id: not found, and A's key is untouched.
+    await expect(f.asB((s) => core.revokeApiKey(s, f.b.id, f.ub, keyId))).rejects.toMatchObject({
+      reason: 'NOT_FOUND',
+    });
+    expect(await aApiKeys(f)).toEqual(before);
+  },
+  authenticateApiKey: async (f) => {
+    // A token resolves only to the workspace that issued it; a B-scoped caller learns nothing else.
+    const { key, token } = await core.createApiKey(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      name: 'xt',
+      scopes: ['cases:read'],
+    });
+    const identity = await f.asB((s) => core.authenticateApiKey(s, token));
+    expect(identity).toMatchObject({ id: key.id, workspaceId: f.a.id });
+    expect(
+      await f.asB((s) => core.authenticateApiKey(s, core.generateApiKeyToken().token)),
+    ).toBeNull();
+  },
+  findApiKeyIssuer: async (f) => {
+    expect(await f.asB((s) => core.findApiKeyIssuer(s, f.ua))).toMatchObject({ id: f.ua });
+    expect(await f.asB((s) => core.findApiKeyIssuer(s, randomUUID()))).toBeNull();
+  },
+  apiKeyCallsThisPeriod: async (f) => {
+    await expect(
+      f.asB((s) =>
+        core.apiKeyCallsThisPeriod({ db: s, workspaceId: f.a.id }, randomUUID(), new Date()),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+  },
+  consumeApiCall: async (f) => {
+    const identity = {
+      id: randomUUID(),
+      workspaceId: f.a.id,
+      createdBy: f.ua,
+      scopes: ['cases:read'],
+      monthlyQuota: null,
+      rateLimitPerMinute: 60,
+    };
+    const before = await aUsage(f);
+    await expect(
+      f.asB((s) => core.consumeApiCall({ db: s, workspaceId: f.a.id }, identity, randomUUID())),
+    ).rejects.toBeInstanceOf(TenancyError);
     expect(await aUsage(f)).toEqual(before);
   },
   getUsage: async (f) => {

@@ -1,7 +1,7 @@
 // Seeding imported eCourts establishments (#635): at A0, idempotent on re-import (also across more
 // rows than one insert chunk), workspace forums untouched.
 import { Secret } from '@causedeck/config/env';
-import { and, inArray, isNotNull } from 'drizzle-orm';
+import { and, inArray, isNotNull, TransactionRollbackError } from 'drizzle-orm';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import type { Transaction } from '../../../client.ts';
@@ -36,7 +36,7 @@ async function rolledBack(fn: (tx: Transaction) => Promise<void>) {
       tx.rollback();
     });
   } catch (error) {
-    if (!(error instanceof Error) || error.name !== 'TransactionRollbackError') throw error;
+    if (!(error instanceof TransactionRollbackError)) throw error;
   }
 }
 

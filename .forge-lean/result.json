@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Deadlines engine, orders.poll and extraction hook delivered; V1-V3 pass",
+ "summary": "Deadlines engine, orders.poll and extraction hook delivered; V1-V3 pass; merged base, typecheck of affected packages passes",
  "requirements": [
   {
    "id": "R1",

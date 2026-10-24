@@ -30,3 +30,6 @@ The eight flagged symbols are not members of the named lists (partial mocks in c
 
 ### Merge typecheck failure
 `turbo run typecheck` exited 127 (`turbo: command not found`): an environment PATH issue, not a code or merge conflict. Ran `pnpm exec turbo run typecheck --filter=@causedeck/core --filter=@causedeck/worker` (core, worker and their dependencies, 17 tasks): all pass. No code changed.
+
+### Post-merge
+Merged origin/milestone/court-data-network (only .forge-lean files conflicted; kept this branch's). `turbo` is not on PATH here (exit 127 is environmental); `pnpm exec turbo run typecheck` over core, worker, api, db, flags and intelligence passes (18 tasks), and V1-V3 pass on the merged tree. No duplicate keys or symbol clashes found.

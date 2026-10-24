@@ -42,3 +42,5 @@ The `// authz: as startDryRunAction.` comments on startImportAction, resumeRunAc
 ## Post-merge check
 `turbo: command not found` (exit 127) was a PATH problem, not a code conflict. `pnpm exec turbo run typecheck --filter=@causedeck/core --filter=@causedeck/admin` passes (18 tasks), and V1-V3 pass on the merged tree. No source change needed.
 - After the second base merge `turbo run typecheck` again exited 127 (`turbo` is not on PATH): toolchain, not code. `tsc --noEmit` is clean for packages/core and apps/admin on the merged tree; no duplicate keys or same-named symbols found.
+
+- Post-merge re-check: `turbo: command not found` (exit 127) is an environment PATH issue, not a merge conflict. `tsc --noEmit` is clean in core and admin; V1-V3 pass. No code change.

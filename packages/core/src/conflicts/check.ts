@@ -114,7 +114,11 @@ export async function checkConflicts(
     const hits: ConflictHit[] = [];
     for (const row of rows) {
       const restricted = row.allowUserIds !== null;
-      if (restricted && row.ownerUserId !== actor.userId && !row.allowUserIds?.includes(actor.userId)) {
+      if (
+        restricted &&
+        row.ownerUserId !== actor.userId &&
+        !row.allowUserIds?.includes(actor.userId)
+      ) {
         continue;
       }
       const existingRole = ROLE_OF_EDGE[row.edgeKind as keyof typeof ROLE_OF_EDGE];

@@ -47,7 +47,12 @@ describe('checkConflicts', () => {
           .returning({ id: schema.matter.id });
         const [client] = await s
           .insert(schema.person)
-          .values({ workspaceId: a.id, name: 'Murugan Ilango', aliases: ['M. Ilango'], kind: 'client' })
+          .values({
+            workspaceId: a.id,
+            name: 'Murugan Ilango',
+            aliases: ['M. Ilango'],
+            kind: 'client',
+          })
           .returning({ id: schema.person.id });
         const [other] = await s
           .insert(schema.person)
@@ -58,9 +63,27 @@ describe('checkConflicts', () => {
           .values({ workspaceId: a.id, name: 'Secret Client', kind: 'client' })
           .returning({ id: schema.person.id });
         await s.insert(schema.roleEdge).values([
-          { workspaceId: a.id, kind: 'represents', fromPersonId: client?.id ?? '', matterId: m?.id ?? '', sourceType: 'manual' },
-          { workspaceId: a.id, kind: 'opposes', fromPersonId: other?.id ?? '', matterId: m?.id ?? '', sourceType: 'manual' },
-          { workspaceId: a.id, kind: 'represents', fromPersonId: secret?.id ?? '', matterId: hidden?.id ?? '', sourceType: 'manual' },
+          {
+            workspaceId: a.id,
+            kind: 'represents',
+            fromPersonId: client?.id ?? '',
+            matterId: m?.id ?? '',
+            sourceType: 'manual',
+          },
+          {
+            workspaceId: a.id,
+            kind: 'opposes',
+            fromPersonId: other?.id ?? '',
+            matterId: m?.id ?? '',
+            sourceType: 'manual',
+          },
+          {
+            workspaceId: a.id,
+            kind: 'represents',
+            fromPersonId: secret?.id ?? '',
+            matterId: hidden?.id ?? '',
+            sourceType: 'manual',
+          },
         ]);
         await s.insert(schema.matterRestriction).values({
           workspaceId: a.id,
@@ -86,7 +109,10 @@ describe('checkConflicts', () => {
 
       // An alias counts, and a new client who is adverse elsewhere is a conflict too.
       const alias = await checkConflicts({ db: tx }, actor, {
-        parties: [{ name: 'M Ilango', side: 'adverse' }, { name: 'Kumar Raja', side: 'client' }],
+        parties: [
+          { name: 'M Ilango', side: 'adverse' },
+          { name: 'Kumar Raja', side: 'client' },
+        ],
       });
       expect(alias.hits.map((h) => [h.checked, h.existingRole])).toEqual(
         expect.arrayContaining([
@@ -97,14 +123,21 @@ describe('checkConflicts', () => {
 
       // The same side is not a conflict; a restricted matter the actor cannot read is not shown.
       const same = await checkConflicts({ db: tx }, actor, {
-        parties: [{ name: 'Murugan Ilango', side: 'client' }, { name: 'Secret Client', side: 'adverse' }],
+        parties: [
+          { name: 'Murugan Ilango', side: 'client' },
+          { name: 'Secret Client', side: 'adverse' },
+        ],
       });
       expect(same.hits).toEqual([]);
 
       // Workspace B finds nothing of A's.
-      const asB = await checkConflicts({ db: tx }, { workspaceId: b.id, userId: seeded.ub }, {
-        parties: [{ name: 'Murugan Ilango', side: 'adverse' }],
-      });
+      const asB = await checkConflicts(
+        { db: tx },
+        { workspaceId: b.id, userId: seeded.ub },
+        {
+          parties: [{ name: 'Murugan Ilango', side: 'adverse' }],
+        },
+      );
       expect(asB.hits).toEqual([]);
 
       // Every check is audited, with counts and no names.
@@ -112,7 +145,12 @@ describe('checkConflicts', () => {
         s
           .select()
           .from(schema.auditEvent)
-          .where(and(eq(schema.auditEvent.workspaceId, a.id), eq(schema.auditEvent.action, 'conflict.checked'))),
+          .where(
+            and(
+              eq(schema.auditEvent.workspaceId, a.id),
+              eq(schema.auditEvent.action, 'conflict.checked'),
+            ),
+          ),
       );
       expect(events).toHaveLength(3);
       expect(JSON.stringify(events.map((e) => e.metadata))).not.toContain('Ilango');

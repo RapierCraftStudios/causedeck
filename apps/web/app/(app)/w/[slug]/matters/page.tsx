@@ -64,7 +64,9 @@ async function pageLocale() {
 }
 
 /** The legal-gated conflict check (#500): off unless counsel has signed off; a failed read is off. */
-async function conflictCheckEnabled(context: NonNullable<Awaited<ReturnType<typeof getWorkspaceContext>>>) {
+async function conflictCheckEnabled(
+  context: NonNullable<Awaited<ReturnType<typeof getWorkspaceContext>>>,
+) {
   try {
     const { isEnabled } = await import('@causedeck/flags/server');
     return await isEnabled('conflicts.check', {

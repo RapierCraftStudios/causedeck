@@ -7,34 +7,153 @@
 
 const CONSONANTS: Readonly<Record<string, string>> = {
   // Tamil
-  க: 'k', ங: 'ng', ச: 's', ஞ: 'ny', ட: 't', ண: 'n', த: 't', ந: 'n', ப: 'p', ம: 'm', ய: 'y',
-  ர: 'r', ல: 'l', வ: 'v', ழ: 'l', ள: 'l', ற: 'r', ன: 'n', ஜ: 'j', ஷ: 'sh', ஸ: 's', ஹ: 'h',
+  க: 'k',
+  ங: 'ng',
+  ச: 's',
+  ஞ: 'ny',
+  ட: 't',
+  ண: 'n',
+  த: 't',
+  ந: 'n',
+  ப: 'p',
+  ம: 'm',
+  ய: 'y',
+  ர: 'r',
+  ல: 'l',
+  வ: 'v',
+  ழ: 'l',
+  ள: 'l',
+  ற: 'r',
+  ன: 'n',
+  ஜ: 'j',
+  ஷ: 'sh',
+  ஸ: 's',
+  ஹ: 'h',
   // Kannada
-  ಕ: 'k', ಖ: 'kh', ಗ: 'g', ಘ: 'gh', ಙ: 'ng', ಚ: 'ch', ಛ: 'chh', ಜ: 'j', ಝ: 'jh', ಞ: 'ny',
-  ಟ: 't', ಠ: 'th', ಡ: 'd', ಢ: 'dh', ಣ: 'n', ತ: 't', ಥ: 'th', ದ: 'd', ಧ: 'dh', ನ: 'n',
-  ಪ: 'p', ಫ: 'ph', ಬ: 'b', ಭ: 'bh', ಮ: 'm', ಯ: 'y', ರ: 'r', ಱ: 'r', ಲ: 'l', ವ: 'v',
-  ಶ: 'sh', ಷ: 'sh', ಸ: 's', ಹ: 'h', ಳ: 'l',
+  ಕ: 'k',
+  ಖ: 'kh',
+  ಗ: 'g',
+  ಘ: 'gh',
+  ಙ: 'ng',
+  ಚ: 'ch',
+  ಛ: 'chh',
+  ಜ: 'j',
+  ಝ: 'jh',
+  ಞ: 'ny',
+  ಟ: 't',
+  ಠ: 'th',
+  ಡ: 'd',
+  ಢ: 'dh',
+  ಣ: 'n',
+  ತ: 't',
+  ಥ: 'th',
+  ದ: 'd',
+  ಧ: 'dh',
+  ನ: 'n',
+  ಪ: 'p',
+  ಫ: 'ph',
+  ಬ: 'b',
+  ಭ: 'bh',
+  ಮ: 'm',
+  ಯ: 'y',
+  ರ: 'r',
+  ಱ: 'r',
+  ಲ: 'l',
+  ವ: 'v',
+  ಶ: 'sh',
+  ಷ: 'sh',
+  ಸ: 's',
+  ಹ: 'h',
+  ಳ: 'l',
 };
 
 const VOWELS: Readonly<Record<string, string>> = {
-  அ: 'a', ஆ: 'aa', இ: 'i', ஈ: 'ii', உ: 'u', ஊ: 'uu', எ: 'e', ஏ: 'ee', ஐ: 'ai', ஒ: 'o', ஓ: 'oo', ஔ: 'au',
-  ಅ: 'a', ಆ: 'aa', ಇ: 'i', ಈ: 'ii', ಉ: 'u', ಊ: 'uu', ಋ: 'ru', ಎ: 'e', ಏ: 'ee', ಐ: 'ai', ಒ: 'o', ಓ: 'oo', ಔ: 'au',
+  அ: 'a',
+  ஆ: 'aa',
+  இ: 'i',
+  ஈ: 'ii',
+  உ: 'u',
+  ஊ: 'uu',
+  எ: 'e',
+  ஏ: 'ee',
+  ஐ: 'ai',
+  ஒ: 'o',
+  ஓ: 'oo',
+  ஔ: 'au',
+  ಅ: 'a',
+  ಆ: 'aa',
+  ಇ: 'i',
+  ಈ: 'ii',
+  ಉ: 'u',
+  ಊ: 'uu',
+  ಋ: 'ru',
+  ಎ: 'e',
+  ಏ: 'ee',
+  ಐ: 'ai',
+  ಒ: 'o',
+  ಓ: 'oo',
+  ಔ: 'au',
 };
 
 const VOWEL_SIGNS: Readonly<Record<string, string>> = {
-  ா: 'aa', ி: 'i', ீ: 'ii', ு: 'u', ூ: 'uu', ெ: 'e', ே: 'ee', ை: 'ai', ொ: 'o', ோ: 'oo', ௌ: 'au',
-  ಾ: 'aa', ಿ: 'i', ೀ: 'ii', ು: 'u', ೂ: 'uu', ೃ: 'ru', ೆ: 'e', ೇ: 'ee', ೈ: 'ai', ೊ: 'o', ೋ: 'oo', ೌ: 'au',
+  'ா': 'aa',
+  'ி': 'i',
+  'ீ': 'ii',
+  'ு': 'u',
+  'ூ': 'uu',
+  'ெ': 'e',
+  'ே': 'ee',
+  'ை': 'ai',
+  'ொ': 'o',
+  'ோ': 'oo',
+  'ௌ': 'au',
+  'ಾ': 'aa',
+  'ಿ': 'i',
+  'ೀ': 'ii',
+  'ು': 'u',
+  'ೂ': 'uu',
+  'ೃ': 'ru',
+  'ೆ': 'e',
+  'ೇ': 'ee',
+  'ೈ': 'ai',
+  'ೊ': 'o',
+  'ೋ': 'oo',
+  'ೌ': 'au',
 };
 
 const VIRAMAS = new Set(['்', '್']);
-const NASAL_SIGNS: Readonly<Record<string, string>> = { ஂ: 'm', ಂ: 'm', ஃ: 'h', ಃ: 'h' };
+const NASAL_SIGNS: Readonly<Record<string, string>> = { 'ஂ': 'm', 'ಂ': 'm', ஃ: 'h', 'ಃ': 'h' };
 
 const HONORIFICS = new Set([
-  'sri', 'shri', 'smt', 'kum', 'mr', 'mrs', 'ms', 'miss', 'dr', 'adv', 'advocate', 'thiru',
-  'tmt', 'selvi', 'late', 'the',
+  'sri',
+  'shri',
+  'smt',
+  'kum',
+  'mr',
+  'mrs',
+  'ms',
+  'miss',
+  'dr',
+  'adv',
+  'advocate',
+  'thiru',
+  'tmt',
+  'selvi',
+  'late',
+  'the',
 ]);
 const COMPANY_SUFFIXES = new Set([
-  'pvt', 'private', 'ltd', 'limited', 'llp', 'inc', 'co', 'company', 'corp', 'corporation', 'and',
+  'pvt',
+  'private',
+  'ltd',
+  'limited',
+  'llp',
+  'inc',
+  'co',
+  'company',
+  'corp',
+  'corporation',
+  'and',
 ]);
 /** Organisation abbreviations, expanded so `Govt` and `Government` agree. */
 const ORGANISATION_ALIASES: Readonly<Record<string, string>> = {
@@ -90,7 +209,9 @@ function fold(token: string): string {
     .replace(/zh/g, 'l')
     .replace(/x/g, 'ks')
     .replace(/(ch|sh|z|j)/g, 's')
-    .replace(/(aa|ii|ee|oo|uu)/g, (m) => (m === 'ee' ? 'i' : m === 'oo' || m === 'uu' ? 'u' : m[0]!))
+    .replace(/(aa|ii|ee|oo|uu)/g, (m) =>
+      m === 'ee' ? 'i' : m === 'oo' || m === 'uu' ? 'u' : m.charAt(0),
+    )
     .replace(/(kh|gh|g|q|c)/g, 'k')
     .replace(/(th|dh|d)/g, 't')
     .replace(/(ph|bh|b|f)/g, 'p')
@@ -111,7 +232,10 @@ export function nameTokens(name: string): string[] {
     .filter((w) => w !== '')
     .map((w) => ORGANISATION_ALIASES[w] ?? w)
     .filter((w) => !HONORIFICS.has(w) && !COMPANY_SUFFIXES.has(w));
-  return words.map(fold).filter((w) => w !== '').sort();
+  return words
+    .map(fold)
+    .filter((w) => w !== '')
+    .sort();
 }
 
 /** The matching key of a name: its phonetic tokens, sorted and joined. */

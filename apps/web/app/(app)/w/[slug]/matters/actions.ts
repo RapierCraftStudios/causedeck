@@ -151,7 +151,15 @@ const checkConflictsRun = workspaceAction(
       { workspaceId: ctx.workspaceId, userId: ctx.userId },
       { parties: input.parties },
     );
-    return result.hits.map(({ score: _score, ...hit }) => hit);
+    return result.hits.map((hit) => ({
+      checked: hit.checked,
+      side: hit.side,
+      matterId: hit.matterId,
+      matterTitle: hit.matterTitle,
+      matchedName: hit.matchedName,
+      source: hit.source,
+      existingRole: hit.existingRole,
+    }));
   },
   { action: 'matter.read' },
 );

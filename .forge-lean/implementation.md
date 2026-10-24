@@ -22,5 +22,6 @@ Reuse the existing `dedicated` plan kind (no migration) for an inactive `institu
 - New tests would fail without the fix (the functions and the plan row do not exist).
 
 ### Notes
-- D6/D7 (cross-tenant registry and services.test.ts) were not changed: `@causedeck/core/billing` is a subpath export, not exported from `packages/core/src/index.ts`, so the SERVICE_TESTS guard does not cover it, and a registry entry would reference a non-existent `core.*` export. Tenant isolation is covered by RLS on `portfolio_case` plus the explicit workspace filter.
+- D6 (SERVICE_TESTS registry entry) is not delivered: `@causedeck/core/billing` is a subpath export, not in `packages/core/src/index.ts`, so the guard does not cover it and an entry would reference a non-existent `core.*` export (recorded as an amendment).
+- D7 delivered as a standalone two-tenant case in `services.test.ts`: B's count/charge ignore A's portfolio_case rows (RLS), and A's count is unchanged.
 - `scripts/check-devdocs-freshness.sh` and `lane-check.sh` do not exist here.

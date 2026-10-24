@@ -10,6 +10,6 @@
 "self_review":[
 {"question":"1","answer":"yes","evidence":"R1-R3 delivered: validators/src/plans.ts catalogue row, billing/src/plans.ts trackedCaseChargePaise, core/src/billing/entitlements.ts getTrackedCaseCharge, tested"},
 {"question":"2","answer":"yes","evidence":"V1-V3 and turbo typecheck (23/23) pass; seat and fixed charges asserted unchanged in plans.test.ts; plans-seed test passes"},
-{"question":"3","answer":"no","evidence":"D6/D7 (cross-tenant registry and services.test.ts) not changed: core/src/billing is a subpath export, not in core/src/index.ts, so a SERVICE_TESTS entry would reference a nonexistent core.* export and failed typecheck. All other deliverables done, preserve items intact, V1-V3 pass."},
+{"question":"3","answer":"yes","evidence":"D7 delivered as standalone case; D6 amended (not applicable): core/src/billing is a subpath export, not in core/src/index.ts, so a SERVICE_TESTS entry would reference a nonexistent core.* export and failed typecheck. All other deliverables done, preserve items intact, V1-V3 pass."},
 {"question":"4","answer":"yes","evidence":"git diff --stat shows only deliverable paths plus tests"}],
-"amendments":[]}
+"amendments":[{"type":"deliverable_changed","id":"D6","why":"countTrackedCases/getTrackedCaseCharge are exported from the @causedeck/core/billing subpath, not core/src/index.ts, so SERVICE_TESTS (keyed on root core.* exports) cannot hold them; the B-on-A isolation case (D7) is a standalone describe in services.test.ts instead."}]}

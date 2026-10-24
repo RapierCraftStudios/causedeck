@@ -21,6 +21,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { z } from 'zod';
 
 import { captureConfigFromProcess } from '../../capture/index.ts';
+import { countTrackedCases, getTrackedCaseCharge } from '../../billing/index.ts';
 import * as core from '../../index.ts';
 
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
@@ -3388,6 +3389,38 @@ describe('cross-tenant core services: ub on workspace B against A', () => {
         aMember: { memberId: member.memberId, userId: member.userId },
         aInvitation: { invitationId: invitation.invitationId, token: invitation.token },
       });
+    });
+  });
+});
+
+// Tracked-case metering (#664) lives in the `@causedeck/core/billing` subpath, not the root index,
+// so it is not in SERVICE_TESTS; this case holds the same B-on-A contract.
+describe('cross-tenant tracked-case metering: ub on workspace B against A', () => {
+  it("ignores A's portfolio cases and leaves A unchanged", async () => {
+    await withTestDb(async (tx) => {
+      const seeded = await seedTwoTenants(tx);
+      const aId = seeded.a.id;
+      const bId = seeded.b.id;
+      const asB = <T>(fn: (s: Transaction) => Promise<T>) => inWorkspace(tx, bId, fn, seeded.ub);
+      const bBefore = await asB((s) => countTrackedCases(s, bId));
+      const aBefore = await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId));
+      await inWorkspace(tx, aId, async (s) => {
+        const [p] = await s
+          .insert(schema.portfolio)
+          .values({ workspaceId: aId, name: 'A book' })
+          .returning({ id: schema.portfolio.id });
+        await s.insert(schema.portfolioCase).values(
+          ['OA/1/2026', 'OA/2/2026'].map((caseNumber) => ({
+            workspaceId: aId,
+            portfolioId: p?.id ?? '',
+            caseNumber,
+          })),
+        );
+      });
+      expect(await asB((s) => countTrackedCases(s, bId))).toBe(bBefore);
+      expect(await asB((s) => countTrackedCases(s, aId))).toBe(0);
+      expect((await asB((s) => getTrackedCaseCharge(s, aId))).chargePaise).toBe(0);
+      expect(await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId))).toBe(aBefore + 2);
     });
   });
 });

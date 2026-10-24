@@ -113,8 +113,10 @@ describe('review queue', () => {
 
       await assignReviewItem(tx, staff, id, staff.userId);
       const result = await resolveReviewItem(tx, staff, id, { correctedValue: '2026-11-09' }, NOW);
-      // The two-tenant seed gives each workspace two watches on this record.
-      expect(result.propagated).toBe(4);
+      // The two-tenant seed gives each workspace two watches on this record. Propagation is global (every
+      // watcher of the CNR), and other test files can commit watches on the same seed CNR into the shared
+      // database, so assert at least ours; the loop below checks each of our watches got the fix.
+      expect(result.propagated).toBeGreaterThanOrEqual(4);
 
       for (const [ws, watch] of [
         [t.a, a],

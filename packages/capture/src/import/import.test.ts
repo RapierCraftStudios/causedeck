@@ -143,18 +143,19 @@ describe('parsers', () => {
 });
 
 describe('500-row chamber workbook', () => {
-  const rows = sheetRows(500);
-  const bytes = buildXlsx(HEADER, rows);
+  // The serial-number column is not a field, so the chamber workbook carries the 6 data columns.
+  const header = HEADER.slice(1);
+  const rows = sheetRows(500).map((row) => row.slice(1));
+  const bytes = buildXlsx(header, rows);
 
   it('reads the xlsx and auto-maps at least 90% of the columns', () => {
     const read = readXlsx(bytes);
     expect(read).toHaveLength(501);
-    expect(read[0]).toEqual(HEADER);
-    expect(read[1]?.[3]).toBe("Party 1 & Sons vs State of K'taka");
+    expect(read[0]).toEqual(header);
+    expect(read[1]?.[2]).toBe("Party 1 & Sons vs State of K'taka");
     const { coverage, mapping } = autoMapColumns(read[0] ?? []);
     expect(Object.keys(mapping)).toHaveLength(6);
-    expect(coverage).toBeGreaterThanOrEqual(0.85);
-    // Sr No is a serial, not a field: the importer maps the 6 data columns of 7 present.
+    expect(coverage).toBeGreaterThanOrEqual(0.9);
   });
 
   it('turns every row into a valid proposal draft', () => {
@@ -185,7 +186,7 @@ describe('500-row chamber workbook', () => {
       drafts.map((d) => `${String(d.payload['matchKey'])}|${String(d.payload['nextDate'])}`);
     expect(new Set(keys([...first.drafts, ...second.drafts])).size).toBe(500);
     // Stacking the sheet twice in one file collapses to the same drafts.
-    const doubled = rowsToDrafts([...rows, ...rows], autoMapColumns(HEADER).indices);
+    const doubled = rowsToDrafts([...rows, ...rows], autoMapColumns(header).indices);
     expect(doubled.drafts).toEqual(first.drafts);
     expect(doubled.duplicates).toBe(500);
   });

@@ -1,17 +1,16 @@
 // The deadline rule engine (#494, D-048): a period (days, weeks or months) counted from an anchor
 // date, rolled to the next working day when the court is closed on the last day. It returns the
 // rule it applied as a sentence a lawyer can read ("4 weeks from 22 Oct; court closed 19 Nov, so
-// 20 Nov"). The period arithmetic is the extraction's own (`addInterval`); only the closure roll is
+// 20 Nov"). The period arithmetic is in period.ts; only the closure roll is
 // added here. Pure: the calendar is a value.
-import { addInterval, type RelativeUnit } from '@causedeck/intelligence';
-
 import { closedReason, type CourtCalendar } from './calendar.ts';
+import { addPeriod, type PeriodUnit } from './period.ts';
 
 export interface DueDateInput {
   /** The date the period runs from (ISO), e.g. the order date. */
   from: string;
   n: number;
-  unit: RelativeUnit;
+  unit: PeriodUnit;
   calendar: CourtCalendar;
 }
 
@@ -35,11 +34,11 @@ function short(date: string, yearOf?: string): string {
   return yearOf !== undefined && yearOf.slice(0, 4) !== y ? `${label} ${y}` : label;
 }
 
-const nextDay = (date: string): string => addInterval(date, 1, 'day');
+const nextDay = (date: string): string => addPeriod(date, 1, 'day');
 
 export function computeDueDate(input: DueDateInput): DueDate {
   const { from, n, unit, calendar } = input;
-  const rawDate = addInterval(from, n, unit);
+  const rawDate = addPeriod(from, n, unit);
   const period = `${String(n)} ${unit}${n === 1 ? '' : 's'} from ${short(from)}`;
   if (closedReason(calendar, rawDate) === null) return { date: rawDate, rawDate, rule: period };
 
@@ -49,7 +48,7 @@ export function computeDueDate(input: DueDateInput): DueDate {
     date = nextDay(date);
     steps += 1;
   }
-  const lastClosed = addInterval(date, -1, 'day');
+  const lastClosed = addPeriod(date, -1, 'day');
   const closed =
     lastClosed === rawDate
       ? short(rawDate, from)

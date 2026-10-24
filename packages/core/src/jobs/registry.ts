@@ -28,6 +28,7 @@ import { captureRetention, systemCaptureRetention } from './definitions/capture-
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { portfolioAlertScan } from './definitions/portfolio-alert-scan.ts';
 import { ordersPoll } from './definitions/orders-poll.ts';
 import { statusPoll } from './definitions/status-poll.ts';
 import { webhookDeliver } from './definitions/webhook-deliver.ts';
@@ -206,6 +207,7 @@ export const registry = createRegistry([
   boardPoll,
   noticesPoll,
   judgmentAlertScan,
+  portfolioAlertScan,
   statusPoll,
   webhookDeliver,
   systemWebhookSweep,
@@ -264,6 +266,7 @@ export type JobMap = RegistryMap<
     typeof boardPoll,
     typeof noticesPoll,
     typeof judgmentAlertScan,
+    typeof portfolioAlertScan,
     typeof statusPoll,
     typeof webhookDeliver,
     typeof systemWebhookSweep,

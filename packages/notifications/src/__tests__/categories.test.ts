@@ -23,6 +23,8 @@ describe('category registry', () => {
         'judgment.alert',
         'member.joined',
         'notices',
+        'portfolio.adverse_order',
+        'portfolio.missed_date',
         'proposal.new',
         'reminder.hearing',
         'security.alert',

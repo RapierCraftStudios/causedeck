@@ -2,19 +2,19 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add a per-tracked-case plan kind to the plan catalogue",
+   "quote": "Add notification categories and a worker job/schedule that raises exception alerts for portfolio cases (new adverse order, missed date) to the institution's users",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "metering of tracked cases in packages/billing and core billing entitlements",
+   "quote": "update apps/worker registry.test.ts and schedules.test.ts and the notification category tests",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Acceptance: charge computed from tracked case count with tests.",
+   "quote": "Acceptance: alerts reach institution users (integration).",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -22,131 +22,175 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/plans.ts",
-   "change": "Add optional `perTrackedCase?: boolean` to Plan, export TRACKED_CASE_PRICE_PAISE (integer paise per case per month, ex-GST), and an `active:false` catalogue row id `institution-case-monthly`, kind 'dedicated', interval month, perSeat false, perTrackedCase true, limits PAID. No new PlanKind (no migration).",
+   "path": "packages/notifications/src/categories.ts",
+   "change": "add categories 'portfolio.adverse_order' and 'portfolio.missed_date' (defaultChannels in_app,email,push; not mandatory; comment citing #665)",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/billing/src/plans.ts",
-   "change": "Add pure `trackedCaseChargePaise(plan, trackedCases)`; extend mandateChargeNotice counts with optional `trackedCases` (charge = pricePaise*trackedCases when plan.perTrackedCase); checkPlanConfig: invalid if perSeat and perTrackedCase both set, minimum charge 0 for per-case plans; re-export TRACKED_CASE_PRICE_PAISE.",
+   "path": "packages/notifications/src/__tests__/categories.test.ts",
+   "change": "add the two keys to the exact-list expectation",
    "requirements": [
-    "R1",
-    "R2",
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/billing/src/service.ts",
-   "change": "Extend SeatCounts/cycleChargePaise (and quote counts) with optional trackedCases so per-case plans price from the count.",
+   "path": "packages/core/src/portfolio/alerts.ts",
+   "change": "new scanPortfolioAlerts({db,enqueueDelivery,now?}, workspaceId): inside withWorkspace find cases with lastAdverseOrderAt in last 7 days and cases with nextDate before today (IST); notify each active member via notify() with dedupe keys portfolio-adverse:\u003ccaseId>:\u003cref or epoch> and portfolio-missed:\u003ccaseId>:\u003cnextDate>; cap cases per run; return counts; idempotent",
    "requirements": [
+    "R1",
     "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/billing/src/invoice/on-payment.ts",
-   "change": "Invoice line quantity and description use tracked cases for perTrackedCase plans (input gains optional trackedCases).",
+   "path": "packages/core/src/portfolio/index.ts",
+   "change": "export scanPortfolioAlerts and its types",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/billing/entitlements.ts",
-   "change": "Add `countTrackedCases(db, workspaceId)` (count of portfolio_case rows via the caller's workspace-scoped queryable) and `getTrackedCaseCharge(db, workspaceId, now?)` returning {plan id, trackedCases, chargePaise} from the current subscription's plan (0 for non per-case plans).",
+   "path": "packages/core/src/jobs/definitions/portfolio-alert-scan.ts",
+   "change": "new job system.portfolio-alert.scan modelled on judgment-alert-scan.ts: daily cron 06:00 IST, targets via app_portfolio_alert_targets(), per-workspace try/catch, injectable deps",
    "requirements": [
-    "R2",
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register countTrackedCases and getTrackedCaseCharge in SERVICE_TESTS pointing at the services.test.ts case.",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "import and register portfolioAlertScan in definitions and the JobMap type tuple",
    "requirements": [
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real two-tenant case: B's count/charge ignore A's portfolio_case rows; A unchanged.",
+   "path": "packages/db/migrations/20261024120000_portfolio_alert_targets.sql",
+   "change": "CREATE FUNCTION app_portfolio_alert_targets() SECURITY DEFINER returning workspace ids of non-deleted institution organizations that have portfolio_case rows; REVOKE from PUBLIC, GRANT to causedeck_app (same shape as 0073). Use the next free timestamp if taken; update meta journal/snapshot as other migrations do",
    "requirements": [
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/billing/src/__tests__/plans.test.ts",
-   "change": "Tests: per-case charge from count (0, 1, 1000), config check, catalogue row inactive and frozen, not offered by active list. Also add cases to service.test.ts and on-payment.test.ts for D3/D4.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "register scanPortfolioAlerts in SERVICE_TESTS (self-scoped or denies) with a real case in the cross-tenant portfolio test",
    "requirements": [
-    "R1",
     "R3"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/billing/__tests__/entitlements.test.ts",
-   "change": "DB test: workspace on institution plan with N portfolio_case rows gets chargePaise = N*price; Junior gets 0.",
+   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
+   "change": "case: scanning workspace B notifies only B's members and leaves A unchanged",
    "requirements": [
-    "R2",
     "R3"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/core/src/portfolio/alerts.test.ts",
+   "change": "integration test: seeded institution with an adverse-order case and an overdue case alerts every active member once; second run adds nothing; non-institution/other-workspace users get nothing",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/core/src/jobs/definitions/portfolio-alert-scan.test.ts",
+   "change": "job test modelled on judgment-alert-scan.test.ts (targets listed, failure isolated)",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "add 'system.portfolio-alert.scan' at its registry position",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "add 'system.portfolio-alert.scan' to the expected scheduled names",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "add 'portfolio' to the jobs domain dependency list",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "docs/engineering/core-domains.md",
+   "change": "document scanPortfolioAlerts in the portfolio row and add portfolio to the jobs dependency row and graph",
+   "requirements": [
+    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing seat and fixed plan charges: mandateChargeNotice/cycleChargePaise outputs for junior, advocate, chamber unchanged (packages/billing/src/plans.ts, service.ts)"
+   "what": "Existing portfolio exports and behaviour (importPortfolioCases, listPortfolioCases, portfolioSummary, exportPortfolioCsv) in packages/core/src/portfolio/"
   },
   {
    "id": "P2",
-   "what": "PLAN_KINDS and the plan_kind_chk DB check unchanged; no migration (packages/db/src/schema/billing.ts:53)"
+   "what": "Existing notification categories and their defaults in packages/notifications/src/categories.ts; notify() semantics in packages/notifications/src/service.ts"
   },
   {
    "id": "P3",
-   "what": "GET /v1/billing/plans and the web plan picker list only active plans; the institution plan is not self-serve (apps/api/src/routes/v1/billing.ts:55, billing-view.ts:240)"
-  },
-  {
-   "id": "P4",
-   "what": "Plan seed maps catalogue rows to plan table columns only (packages/db/src/seed/plans.ts); perTrackedCase is not a DB column"
+   "what": "Other scheduled jobs and their cron in packages/core/src/jobs/registry.ts"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/billing exec vitest run src/__tests__/plans.test.ts src/__tests__/service.test.ts src/__tests__/on-payment.test.ts src/__tests__/entitlements.test.ts"
+   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__/categories.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/billing/__tests__/entitlements.test.ts src/__tests__/cross-tenant/services.test.ts src/usage/__tests__/fairness.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/jobs/definitions/portfolio-alert-scan.test.ts src/__tests__/cross-tenant/portfolio.test.ts src/domains.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/__tests__/plans-seed.test.ts"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/config exec vitest run test/eslint-boundaries.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Reuse existing PlanKind 'dedicated' for the per-case plan instead of adding 'institution'",
-   "justification": "A new kind needs a plan_kind_chk migration and snapshot (packages/db/src/schema/billing.ts:53), API enum (validators/src/api/billing.ts:9) and fairness map (core/src/usage/fairness.ts:12); 'dedicated' already exists everywhere and no row uses it",
+   "choice": "Use an owner-defined SECURITY DEFINER targets function plus per-workspace scan rather than reading portfolio_case directly in the job",
+   "justification": "The job has no workspace and tenant tables are FORCE RLS; same pattern as migrations/0073_judgment_alerts.sql and jobs/definitions/judgment-alert-scan.ts",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Plan row is active:false",
-   "justification": "Institutions are provisioned, not self-served; active plans feed the picker (billing-view.ts:240) and public API (api/routes/v1/billing.ts:55)",
+   "choice": "Dedupe via notify() dedupeKey instead of new state columns, so no schema change beyond the function",
+   "justification": "packages/notifications/src/service.ts:229-235 on-conflict-do-nothing per user and key",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "New core exports are registered in SERVICE_TESTS",
-   "justification": "CLAUDE.md registry table for runtime exports of @causedeck/core",
+   "choice": "Add portfolio to the jobs domain dependencies",
+   "justification": "jobs imports other domains only through index.ts; domains list in packages/config/eslint/core-domains.js and docs/engineering/core-domains.md (CLAUDE.md registries table)",
    "source": "doc"
   }
  ]

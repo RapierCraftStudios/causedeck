@@ -270,6 +270,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listPortfolioCases: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   portfolioSummary: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   exportPortfolioCsv: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  // Exception alerts (#665): the scan opens withWorkspace on the given workspace id only.
+  scanPortfolioAlerts: {
+    test: CORE_PORTFOLIO_TEST,
+    kind: 'self-scoped',
+    note: "opens withWorkspace on the given workspace id and notifies that workspace's members; RLS keeps every other workspace out",
+  },
   runBillingProcessEvent: {
     test: BILLING_PROCESS_EVENT_TEST,
     kind: 'self-scoped',
@@ -827,6 +833,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   parsePortfolioCsv: 'pure',
   MAX_PORTFOLIO_IMPORT_ROWS: 'constant',
   MAX_PORTFOLIO_WATCHES_PER_ADVOCATE: 'constant',
+  PORTFOLIO_ALERT_MAX_CASES: 'constant',
   PORTFOLIO_WATCH_CADENCE_MINUTES: 'constant',
   PORTFOLIO_EXPORT_HEADER: 'constant',
   // business dashboard (#519): pure maths and rendering over aggregates

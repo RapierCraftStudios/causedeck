@@ -42,6 +42,7 @@ describe('registerSchedules', () => {
       'system.board.poll',
       'system.notices.poll',
       'system.judgment-alert.scan',
+      'system.portfolio-alert.scan',
       'system.status.poll',
       'system.webhook.sweep',
       'system.orders.poll',

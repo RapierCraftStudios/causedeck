@@ -1,38 +1,40 @@
 **Verdict**: CONFIRMED
-**Confidence**: high
-**Severity**: medium (P2 greenfield; B2B institution billing, part 4 of #498)
+**Confidence**: medium
+**Severity**: medium (greenfield feature, part 5 of #498)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 4 of #498: "Add a per-tracked-case plan kind to the plan catalogue and metering of tracked cases in packages/billing and core billing entitlements. Acceptance: charge computed from tracked case count with tests." Depends on #661 (merged; `portfolio_case` exists).
+Add notification categories and a worker job/schedule that raises exception alerts for portfolio cases (new adverse order, missed date) to the institution's users; update worker `registry.test.ts`, `schedules.test.ts` and the notification category tests. Acceptance: alerts reach institution users (integration).
 
 ### What We Found
-- `PLAN_KINDS = ['junior','advocate','chamber','dedicated']` and the catalogue live in `packages/validators/src/plans.ts:12,92`; no plan is priced per tracked case. `kind 'dedicated'` is in the DB check (`packages/db/src/schema/billing.ts:53`, `migrations/0005_billing.sql:41`), the API enum (`packages/validators/src/api/billing.ts:9`) and `FAIRNESS_CONCURRENCY_BY_PLAN` (`packages/core/src/usage/fairness.ts:12-17`) but no catalogue row uses it.
-- Charge is computed by `mandateChargeNotice` (`packages/billing/src/plans.ts:60-69`) and `cycleChargePaise` (`packages/billing/src/service.ts:88-93`): only seats and clerk seats; `checkPlanConfig` (`plans.ts:88-133`) assumes per-seat or fixed.
-- Invoice line quantity is seats-only (`packages/billing/src/invoice/on-payment.ts:66-67`).
-- `portfolio_case` is a tenant table (`packages/db/src/schema/portfolio.ts:37`); there is no count of tracked cases anywhere in core billing (`packages/core/src/billing/entitlements.ts`, seat count via `countBillableSeats` only).
-- Web plan picker filters `p.active` (`apps/web/app/(app)/w/[slug]/billing/billing-view.ts:240-246`) and the API lists active plans only (`apps/api/src/routes/v1/billing.ts:55`), so an `active:false` institution plan is not self-serve (matches institutions being provisioned).
-- Plan `kind` is a DB check; reusing existing `'dedicated'` avoids a migration plus a 17k-line snapshot and the fairness/API enum churn.
+- No portfolio alert exists: `packages/core/src/portfolio/index.ts:1-27` exports import, dashboard, export and csv only. `dashboard.ts:2-3` says status fields are "written by the poll and the alerts of later parts".
+- Data to alert on is on `portfolio_case`: `nextDate`, `lastAdverseOrderAt`, `lastAdverseOrderRef` (`packages/db/src/schema/portfolio.ts:49-55`). Nothing writes `lastAdverseOrderAt` or `nextDate` yet (grep: only import/dashboard/export/tests touch `portfolioCase`), so the alert source reads these columns as they are.
+- Categories live in `packages/notifications/src/categories.ts:23-70`; the exact-list test is `packages/notifications/src/__tests__/categories.test.ts:13-33`. Precedent for similar categories: `status.order`/`status.next_date` (`categories.ts:48-50`).
+- Notifying: `notify()` with `dedupeKey` is idempotent per user (`packages/notifications/src/service.ts:212-252`). Precedent job: `judgment-alert-scan.ts` (no-workspace job lists targets via an owner-defined SECURITY DEFINER function `app_judgment_alert_targets`, `migrations/0073_judgment_alerts.sql`, then runs per-workspace, one failure does not stop the others) plus `research/alerts.ts` `scanJudgments`.
+- Job registry: `packages/core/src/jobs/registry.ts:30,208,266`; expected-name lists in `apps/worker/src/__tests__/registry.test.ts:118-172` and `schedules.test.ts:41-48`.
+- Organization kind `institution` exists (`migrations/20261024110000_portfolio.sql:60`); latest migration is `20261024110000_portfolio.sql`.
+- Cross-tenant guard: portfolio entries `packages/db/src/testing/cross-tenant-registry.ts:268-272, 826-829`.
 
 ### Root Cause
-Pricing model supports only flat and per-seat plans; no per-case price, no tracked-case count, no charge function.
+Feature not built: no alert category, no scan service, no job, no targets function for the portfolio.
 
 ### Affected Files
-- `packages/validators/src/plans.ts` (Plan flag, price constant, catalogue row)
-- `packages/billing/src/plans.ts`, `src/service.ts`, `src/invoice/on-payment.ts`, `src/entitlements.ts` (only if derive needs it)
-- `packages/core/src/billing/entitlements.ts` (count tracked cases, charge), `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`
-- tests: `packages/billing/src/__tests__/plans.test.ts`, `service.test.ts`, `on-payment.test.ts`; `packages/db/src/seed/__tests__/plans-seed.test.ts` (maps catalogue, should keep passing); `packages/core/src/billing/__tests__/entitlements.test.ts`
+- `packages/notifications/src/categories.ts` (+ `__tests__/categories.test.ts`)
+- `packages/core/src/portfolio/alerts.ts` (new), `portfolio/index.ts`, `portfolio/portfolio.test.ts` or a new `alerts.test.ts`
+- `packages/core/src/jobs/definitions/portfolio-alert-scan.ts` (new), `jobs/registry.ts`
+- `packages/db/migrations/<next>_portfolio_alert_targets.sql` (+ snapshot/journal as the repo requires)
+- `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/portfolio.test.ts`
+- `apps/worker/src/__tests__/registry.test.ts`, `schedules.test.ts`
+- `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md` (jobs -> portfolio dependency)
 
 ### Sibling Sweep
-- Catalogue consumers: `apps/api/src/routes/v1/billing.ts:55`, `billing-view.ts:240`, `db/src/seed/plans.ts:15`, `service.ts:198`, `entitlements.ts:118`: all tolerate a new optional-flag row; inactive row stays out of lists.
-- `kind` switch sites: `fairness.ts:12` (Record, already has `dedicated`), API enum `api/billing.ts:9` (has `dedicated`).
-- Other per-unit charge paths: `mandateChargeNotice`, `cycleChargePaise`, `quoteChange` counts (`service.ts:~130`) share `SeatCounts`; extend them together.
+Same pattern: `system.judgment-alert.scan`, `system.status.poll`, `system.notices.poll`. Follow `judgment-alert-scan` for the targets function and per-workspace error isolation. Gap to note: no code syncs watch snapshots into `portfolio_case.nextDate`/`lastAdverseOrderAt`; out of this issue's text, so the scan reads the columns and the integration test seeds them. Flag in the PR.
 
 ### History
-Catalogue from #28/#200; seat metering #203; `dedicated` kind reserved since 0005_billing. Portfolio tables landed in #661 (f4450766).
+Portfolio model #661, adapters #662, service #663 (merged 29504608). #664 billing went needs-human (unrelated). No prior alert work.
 
 ### Recommendation
-Reuse kind `dedicated` (no migration). Add `perTrackedCase?: boolean` to `Plan`, `TRACKED_CASE_PRICE_PAISE`, and an inactive monthly catalogue row `institution-case-monthly`. Pure `trackedCaseChargePaise(plan, n)`; extend `mandateChargeNotice`/`cycleChargePaise` counts with optional `trackedCases` so the charge = price × cases for such plans; `checkPlanConfig` rejects perSeat+perTrackedCase and does not flag the cap on a zero-case minimum. Core: `countTrackedCases(db, workspaceId)` (RLS-scoped count of `portfolio_case`) and `getTrackedCaseCharge` combining it with the subscription's plan; register in `SERVICE_TESTS` with a two-tenant case. Invoice line quantity uses tracked cases for such plans.
+Add categories `portfolio.adverse_order` and `portfolio.missed_date` (default in_app+email+push for institutions would be heavy; use in_app, email, push like `reminder.hearing`). Add `scanPortfolioAlerts(deps, workspaceId)` in core/portfolio: in `withWorkspace`, find cases with `lastAdverseOrderAt` within the lookback (7d) and cases with `nextDate` before today (IST) that are overdue; notify every active member of the workspace with dedupe keys `portfolio-adverse:<caseId>:<ref|epoch>` and `portfolio-missed:<caseId>:<nextDate>`. Add job `system.portfolio-alert.scan` (daily, e.g. 06:00 IST), targets via new `app_portfolio_alert_targets()` migration (institution orgs, not deleted, having cases). Cap cases per run for volume. Update registries, tests and docs listed above.
 
 ### Related Issues
-#498 (parent), #661 (dependency, merged), #662, #663, #665, #666.
+#498 (parent), #663 (dependency, merged), #661, #662, #666 (UI, open), #664.

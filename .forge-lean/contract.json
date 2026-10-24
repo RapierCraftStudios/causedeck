@@ -2,170 +2,199 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "A clerk can complete onboarding on mobile in Tamil or Kannada and the senior approves with one tap. [type:e2e]",
+   "quote": "Core migration domain on top of packages/core/src/import (upload portfolio file, column mapping, dry-run reporting mapping issues for 5,000 matters without writing, resumable chunked import with progress, rollback via undoImportBatch)",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "CI Playwright e2e job (ship PRs and nightly) runs e2e/tests/workspaces/clerk-onboarding.spec.ts; component and action tests run in lane"
+   "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Clerk permissions are unchanged (no strategy notes). [type:integration]",
+   "quote": "an apps/admin console section",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "The senior gets a one-tap approval of the clerk's setup.",
+   "quote": "Acceptance: dry-run of 5,000 matters writes nothing; real import resumable. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
-  },
-  {
-   "id": "R4",
-   "quote": "The UI is localised Tamil and Kannada first and mobile-first.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "the clerk can import, confirm listings and run the court-day view; strategy notes stay hidden (existing rule).",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "The clerk is invited by the senior, or the clerk starts and invites the senior to confirm.",
-   "disposition": "defer",
-   "why": "The senior-invites-clerk path is delivered. A clerk-started workspace would have no owner, and the clerk must not get owner, so this needs a product decision on ownerless or draft workspaces."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/auth.ts",
-   "change": "Add nullable member.clerk_setup_status ('pending'|'approved', check constraint) and clerk_setup_decided_at",
+   "path": "packages/core/src/migration/csv.ts",
+   "change": "New pure parseMigrationCsv(text, mapping): header-to-field mapping, max 5,000 rows, per-row issue codes (missing title, bad date, unknown forum, etc.), no row content in issues.",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/migrations/\u003cnext free timestamp>_clerk_setup.sql",
-   "change": "Migration adding the columns (locate the migrations dir next to 20261024182641_activation_event.sql, regenerate the snapshot) and update the db schema tests that list member columns",
+   "path": "packages/core/src/migration/run.ts",
+   "change": "startMigrationRun (dry_run writes only migration_run/migration_run_row and report; import mode stores pending rows), runMigrationChunk/resumeMigrationRun (250 rows per chunk from resume_from, each chunk an import batch via buildPlanFromDrafts + applyImportPlan, row states and counters advanced in the same transaction, idempotent on retry), getMigrationProgress, rollbackMigrationRun (undoImportBatch per chunk batch, rows to rolled_back, rolled_back_at set, refuse past the 7-day window).",
    "requirements": [
+    "R1",
     "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/workspaces/clerk-setup.ts",
-   "change": "requestClerkSetupApproval(clerk) sets pending; approveClerkSetup(actor needs workspace.manage) sets approved; getClerkSetup. Export from workspaces/index.ts; add to SERVICE_TESTS in packages/db/src/testing/cross-tenant-registry.ts with a real case in packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "path": "packages/core/src/migration/index.ts",
+   "change": "Domain public index exporting the above; not re-exported from the package root.",
    "requirements": [
-    "R3",
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/workspaces/index.ts",
-   "change": "Export clerk-setup",
+   "path": "packages/core/package.json",
+   "change": "Add the './migration' subpath export next to './import'.",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "apps/web/app/(app)/w/[slug]/welcome/page.tsx",
-   "change": "Mobile-first clerk welcome flow (language pick ta/kn/en via existing locale mechanism, links to import, listing confirmation, today) plus actions.ts with requestApproval and approve 'use server' actions (workspaceAction); register both in apps/web/__tests__/cross-tenant-actions.test.ts ACTIONS",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add migration to CORE_DOMAIN_DEPENDENCIES (import, matter-graph, and workspaces/audit only if used); keep the map acyclic.",
    "requirements": [
-    "R1",
-    "R4",
-    "R5",
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/app/(public)/invite/[token]/actions.ts",
-   "change": "After accepting a clerk invite, redirect to /w/\u003cslug>/welcome instead of /today",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Add the migration domain row.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/messages/en/workspace.json",
-   "change": "Add clerk welcome and approval strings in en, plus ta and kn files; update the catalog test only if a namespace is added (prefer extending workspace)",
+   "path": "packages/core/src/migration/__tests__/migration.test.ts",
+   "change": "Integration tests: 5,000-row dry-run leaves matter, proceeding and import_batch counts unchanged and reports mapping issues; import interrupted after N chunks and resumed ends with exactly the expected matters and no duplicates; rollback reverses; another workspace cannot read or run it.",
    "requirements": [
-    "R4"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D8",
-   "path": "e2e/tests/workspaces/clerk-onboarding.spec.ts",
-   "change": "Mobile viewport e2e: clerk accepts the invite, completes the Tamil flow, the senior approves with one tap",
+   "path": "apps/admin/lib/roles.ts",
+   "change": "Add a 'migrations' staff capability for the roles that run onboarding (ops/admin); update roles test expectations.",
    "requirements": [
-    "R1"
+    "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/__tests__/clerk-welcome.test.tsx",
-   "change": "Unit tests for the welcome page, approval action and a clerk-cannot-read-strategy assertion",
+   "path": "apps/admin/components/console-nav.tsx",
+   "change": "Add the Migrations nav entry and its href to the route union.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "apps/admin/lib/data/index.ts",
+   "change": "Audited staffCall/staffQuery reads: list runs for a workspace, run progress and report.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "apps/admin/app/(console)/migrations/page.tsx",
+   "change": "Server page: pick workspace, upload CSV, column mapping, list runs; counts and issue codes only, no matter content.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "apps/admin/app/(console)/migrations/[id]/page.tsx",
+   "change": "Run detail: dry-run report, progress, resume and rollback controls.",
    "requirements": [
     "R2",
-    "R3",
-    "R4"
+    "R3"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/admin/app/(console)/migrations/actions.ts",
+   "change": "'use server' actions: startDryRun, startImport, resumeRun, rollbackRun; requireStaff('migrations'), staff-audited, run as the workspace owner actor.",
+   "requirements": [
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "change": "Register the four new actions in ACTIONS with success-path invocations.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "apps/admin/__tests__/migrations-page.test.tsx",
+   "change": "Page render and gating test (role without capability is denied; no row content rendered).",
+   "requirements": [
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "packages/auth/src/policy/matrix.ts and roles.ts: no clerk permission changes (strategy.read and memory.* stay at junior)"
+   "what": "applyImportPlan, undoImportBatch, createImportBatch signatures and behaviour in packages/core/src/import (used by apps/web and jobs)."
   },
   {
    "id": "P2",
-   "what": "createWorkspaceFor and the existing /onboarding page behaviour (apps/web/app/(app)/onboarding)"
+   "what": "The enterprise schema and migrations from #682 (packages/db/src/schema/enterprise.ts): no table or column change; the registry/RLS tests stay green."
   },
   {
    "id": "P3",
-   "what": "inviteMember and acceptInvitation signatures and error reasons in packages/core/src/workspaces/invitations.ts; owner is still never invitable"
+   "what": "The admin guard tests (server-actions-audit, no-content-fields, server-component-imports, no-without-workspace-outside-data): admin never value-imports @causedeck/db outside lib/data."
+  },
+  {
+   "id": "P4",
+   "what": "packages/core/src/index.ts root exports: the migration domain is reached only as @causedeck/core/migration."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/clerk-welcome.test.tsx __tests__/invite.test.tsx __tests__/invite-actions.test.ts __tests__/onboarding.test.tsx __tests__/cross-tenant-actions.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/migration src/domains.test.ts src/import/__tests__/apply-import-plan.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/workspaces src/__tests__/cross-tenant/services.test.ts"
+   "command": "pnpm --filter @causedeck/config exec vitest run test/core-domain-boundaries.test.ts test/eslint-boundaries.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/auth-schema.test.ts"
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/migrations-page.test.tsx __tests__/server-actions-audit.test.ts __tests__/roles.test.ts __tests__/no-content-fields.test.ts __tests__/server-component-imports.test.ts __tests__/no-without-workspace-outside-data.test.ts __tests__/console-layout.test.tsx"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Store approval on member columns, not a new table",
-   "justification": "Avoids the new-table registries (RLS catalog, root table list) listed in CLAUDE.md; member is already tenant-scoped (packages/db/src/schema/auth.ts:223 region)",
+   "choice": "Run writes execute through core services as the workspace owner actor, with the staff id audited, because staff support sessions are view/usage only.",
+   "justification": "packages/core/src/support/sessions.ts:129-137 (no write scope); precedent for staff actions calling core services that audit with actor kind staff: apps/admin/app/(console)/workspaces/[id]/actions.ts",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Reuse role clerk and the invitation flow; no new role or matrix entry",
-   "justification": "Matrix is the single source of truth (packages/auth/src/policy/matrix.ts:1) and the issue requires unchanged clerk permissions",
+   "choice": "Each 250-row chunk is its own import batch applied with applyImportPlan, so rollback reuses undoImportBatch and resume is chunk-granular.",
+   "justification": "apply.ts:122 applies one whole batch in one transaction and is idempotent by plan hash; undo.ts:33 reverses one batch; the issue names undoImportBatch for rollback.",
    "source": "spec"
+  },
+  {
+   "id": "K3",
+   "choice": "New core domain 'migration' reached as a subpath, not a root export, so no cross-tenant SERVICE_TESTS registry entry is needed.",
+   "justification": "packages/core/package.json:19 pattern for import; packages/core/src/domains.test.ts root-index rule",
+   "source": "precedent"
   }
  ]
 }

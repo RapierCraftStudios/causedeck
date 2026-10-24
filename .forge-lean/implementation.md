@@ -37,3 +37,6 @@ Own-workspace aggregates: `getCourtInsights` reads proceedings, listings, hearin
 
 ## CI fix
 Added apps/web/components/courts/court-insights.stories.tsx (courts-stories guard requires a stories file per courts component).
+
+## Merge-check follow-up
+The reported failure (`turbo: command not found`, exit 127) was an environment PATH issue, not a code conflict. Re-ran via `pnpm turbo run typecheck --filter=...[base]`: 23/23 pass. V1-V3 pass. No source change needed.

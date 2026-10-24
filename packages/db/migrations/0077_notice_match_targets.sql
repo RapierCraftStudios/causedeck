@@ -1,4 +1,4 @@
--- Migration 0076_notice_match_targets: hand-written (one policy, one function), no table changes; reviewed before commit.
+-- Migration 0077_notice_match_targets: hand-written (one policy, one function), no table changes; reviewed before commit.
 -- Reviewed-by: Claude (agent, #586)
 -- Notice matching (#586, D-048). The notices poll has no workspace, so it finds the workspaces and
 -- matters that use a forum only through app_notice_match_targets (owner-defined; ids and the forum

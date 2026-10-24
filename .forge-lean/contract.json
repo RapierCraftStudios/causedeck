@@ -2,19 +2,37 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add notification categories and a worker job/schedule that raises exception alerts for portfolio cases (new adverse order, missed date) to the institution's users",
+   "quote": "`apps/web/app/(app)/w/[slug]/portfolio/`: CSV import",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "update apps/worker registry.test.ts and schedules.test.ts and the notification category tests",
+   "quote": "dashboard (next dates, stage, adverse orders)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Acceptance: alerts reach institution users (integration).",
+   "quote": "exception alert settings",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R4",
+   "quote": "exception alert settings, exports",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "i18n namespace and catalog test",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "cross-tenant-actions test entries for each 'use server' action.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -22,176 +40,186 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/notifications/src/categories.ts",
-   "change": "add categories 'portfolio.adverse_order' and 'portfolio.missed_date' (defaultChannels in_app,email,push; not mandatory; comment citing #665)",
+   "path": "packages/core/src/portfolio/portfolio.ts",
+   "change": "New core fns listPortfolios (any active member) and createPortfolio (owner-only, name 1-200, duplicate name -> conflict) using requirePortfolioAccess/withWorkspace from access.ts; needed because no code creates or lists portfolios and the UI needs a portfolioId.",
    "requirements": [
-    "R1"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/notifications/src/__tests__/categories.test.ts",
-   "change": "add the two keys to the exact-list expectation",
+   "path": "packages/core/src/portfolio/index.ts",
+   "change": "Export listPortfolios and createPortfolio.",
    "requirements": [
+    "R1",
     "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/portfolio/alerts.ts",
-   "change": "new scanPortfolioAlerts({db,enqueueDelivery,now?}, workspaceId): inside withWorkspace find cases with lastAdverseOrderAt in last 7 days and cases with nextDate before today (IST); notify each active member via notify() with dedupe keys portfolio-adverse:\u003ccaseId>:\u003cref or epoch> and portfolio-missed:\u003ccaseId>:\u003cnextDate>; cap cases per run; return counts; idempotent",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entries (kind 'denies') for listPortfolios and createPortfolio pointing at the portfolio cross-tenant test.",
    "requirements": [
-    "R1",
-    "R3"
+    "R6"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/portfolio/index.ts",
-   "change": "export scanPortfolioAlerts and its types",
+   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
+   "change": "Real cases: B calling listPortfolios/createPortfolio against A's workspace is denied or sees nothing; A's portfolios unchanged.",
    "requirements": [
-    "R1"
+    "R6"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/jobs/definitions/portfolio-alert-scan.ts",
-   "change": "new job system.portfolio-alert.scan modelled on judgment-alert-scan.ts: daily cron 06:00 IST, targets via app_portfolio_alert_targets(), per-workspace try/catch, injectable deps",
+   "path": "packages/core/src/portfolio/portfolio.test.ts",
+   "change": "Tests for listPortfolios/createPortfolio (owner-only create, member list, duplicate name conflict).",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "import and register portfolioAlertScan in definitions and the JobMap type tuple",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/actions.ts",
+   "change": "'use server' createPortfolioAction, importPortfolioAction (owner), exportPortfolioCsvAction (member) via workspaceAction, async-function wrappers, revalidatePath.",
    "requirements": [
-    "R1"
+    "R1",
+    "R4"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/db/migrations/20261024120000_portfolio_alert_targets.sql",
-   "change": "CREATE FUNCTION app_portfolio_alert_targets() SECURITY DEFINER returning workspace ids of non-deleted institution organizations that have portfolio_case rows; REVOKE from PUBLIC, GRANT to causedeck_app (same shape as 0073). Use the next free timestamp if taken; update meta journal/snapshot as other migrations do",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
+   "change": "Server page: summary, stage/next-date/adverse filters via search params, case table, import form (owners), export button, alert settings card (portfolio.adverse_order and portfolio.missed_date via the existing notification preference action), empty and read-only states; uses next-intl 'portfolio'.",
    "requirements": [
-    "R1"
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "register scanPortfolioAlerts in SERVICE_TESTS (self-scoped or denies) with a real case in the cross-tenant portfolio test",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/loading.tsx",
+   "change": "Skeleton loading state.",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/__tests__/cross-tenant/portfolio.test.ts",
-   "change": "case: scanning workspace B notifies only B's members and leaves A unchanged",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/error.tsx",
+   "change": "Error boundary with retry, mirroring courts/rosters/error.tsx.",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/portfolio/alerts.test.ts",
-   "change": "integration test: seeded institution with an adverse-order case and an overdue case alerts every active member once; second run adds nothing; non-institution/other-workspace users get nothing",
+   "path": "apps/web/components/portfolio/portfolio-view.tsx",
+   "change": "Client/presentational components (import form, case table, summary, alert toggles, export download) with a component test under apps/web/components/portfolio/__tests__/.",
    "requirements": [
-    "R3"
+    "R1",
+    "R2",
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/core/src/jobs/definitions/portfolio-alert-scan.test.ts",
-   "change": "job test modelled on judgment-alert-scan.test.ts (targets listed, failure isolated)",
+   "path": "apps/web/lib/nav.ts",
+   "change": "Add 'portfolio' to WORKSPACE_ROUTES and nav items (shown for institution workspaces); update apps/web/lib/__tests__/nav.test.ts expectations if it lists routes.",
    "requirements": [
-    "R1"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D12",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "add 'system.portfolio-alert.scan' at its registry position",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Add 'portfolio' to NAMESPACES.",
    "requirements": [
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "add 'system.portfolio-alert.scan' to the expected scheduled names",
+   "path": "packages/i18n/src/messages/en/portfolio.json",
+   "change": "English strings; add matching kn/portfolio.json and ta/portfolio.json (same keys) and nav.json key for the new route in all locales; regenerate packages/i18n/src/generated/messages.d.ts if committed.",
    "requirements": [
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add 'portfolio' to the jobs domain dependency list",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add 'portfolio' to the expected namespace list.",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D15",
-   "path": "docs/engineering/core-domains.md",
-   "change": "document scanPortfolioAlerts in the portfolio row and add portfolio to the jobs dependency row and graph",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Import the portfolio actions module, add createPortfolioAction, importPortfolioAction, exportPortfolioCsvAction to ACTIONS and probe inputs using B's workspace with A's portfolioId; assert FORBIDDEN/NOT_FOUND and A unchanged.",
    "requirements": [
-    "R1"
+    "R6"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing portfolio exports and behaviour (importPortfolioCases, listPortfolioCases, portfolioSummary, exportPortfolioCsv) in packages/core/src/portfolio/"
+   "what": "Core portfolio service signatures and owner-only import / member-read rules in packages/core/src/portfolio/{import,dashboard,export,access}.ts"
   },
   {
    "id": "P2",
-   "what": "Existing notification categories and their defaults in packages/notifications/src/categories.ts; notify() semantics in packages/notifications/src/service.ts"
+   "what": "Notification categories and preference action in packages/notifications/src/categories.ts and apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts"
   },
   {
    "id": "P3",
-   "what": "Other scheduled jobs and their cron in packages/core/src/jobs/registry.ts"
+   "what": "Existing cross-tenant registry entries and the ACTIONS exported==listed check in apps/web/__tests__/cross-tenant-actions.test.ts"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__/categories.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/domains.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/portfolio src/jobs/definitions/portfolio-alert-scan.test.ts src/__tests__/cross-tenant/portfolio.test.ts src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run lib/__tests__/nav.test.ts components/portfolio"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/config exec vitest run test/eslint-boundaries.test.ts"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Use an owner-defined SECURITY DEFINER targets function plus per-workspace scan rather than reading portfolio_case directly in the job",
-   "justification": "The job has no workspace and tenant tables are FORCE RLS; same pattern as migrations/0073_judgment_alerts.sql and jobs/definitions/judgment-alert-scan.ts",
+   "choice": "Add core listPortfolios/createPortfolio rather than querying schema.portfolio from apps/web",
+   "justification": "No portfolio create/list exists (only test seeders insert); web actions go through core services with registry coverage (rosters/actions.ts:1-12, CLAUDE.md registries table).",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Dedupe via notify() dedupeKey instead of new state columns, so no schema change beyond the function",
-   "justification": "packages/notifications/src/service.ts:229-235 on-conflict-do-nothing per user and key",
+   "choice": "Alert settings reuse setNotificationPreferenceAction for portfolio.adverse_order and portfolio.missed_date instead of a new action",
+   "justification": "categories already registered (packages/notifications/src/categories.ts:47-58) and mapped in preferences-form.tsx:89-90.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Add portfolio to the jobs domain dependencies",
-   "justification": "jobs imports other domains only through index.ts; domains list in packages/config/eslint/core-domains.js and docs/engineering/core-domains.md (CLAUDE.md registries table)",
-   "source": "doc"
+   "choice": "Page follows courts/rosters structure (page, loading, error, workspaceAction wrappers)",
+   "justification": "apps/web/app/(app)/w/[slug]/courts/rosters/actions.ts:120-135",
+   "source": "precedent"
   }
  ]
 }

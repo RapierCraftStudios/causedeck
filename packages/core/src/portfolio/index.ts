@@ -31,3 +31,4 @@ export {
   type PortfolioAlertDeps,
   type PortfolioAlertReport,
 } from './alerts.ts';
+export { createPortfolio, listPortfolios, type PortfolioSummaryRow } from './portfolio.ts';

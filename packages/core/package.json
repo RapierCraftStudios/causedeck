@@ -29,6 +29,7 @@
     "./matters": "./src/matters/index.ts",
     "./news": "./src/news/index.ts",
     "./network": "./src/network/index.ts",
+    "./portfolio": "./src/portfolio/index.ts",
     "./public-api": "./src/public-api/index.ts",
     "./research": "./src/research/index.ts",
     "./runtime": "./src/runtime/index.ts",

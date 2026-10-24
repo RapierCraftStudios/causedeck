@@ -30,3 +30,9 @@ e2e/tests/courts/courts.spec.ts:99 does not enumerate courts components; recorde
 
 ### Merge re-check
 The post-merge typecheck failure was `turbo: command not found` (PATH only, exit 127), not a code clash. `pnpm exec turbo run typecheck --filter='...[9820df68]'` passes (23/23 tasks). No source change was needed. Vitest suites need the Postgres testcontainer global setup, which is unavailable on this host; they run in CI.
+
+## Post-merge typecheck fix (#496)
+The reported failure was `turbo: command not found` (exit 127), a PATH problem, not a code conflict. Ran `pnpm exec turbo run typecheck --filter='...[9820df68]'`: 23/23 packages pass, so no rename was needed. Web tests (bench-notice-alerts, matter-workspace-page) pass 21/21. The core and notifications vitest runs could not start here: the Postgres testcontainer global setup exits ("Log stream ended ... Started"), a host issue that predates this change. They are left to CI.
+
+### Post-merge verification
+After merging the base, `pnpm exec turbo run typecheck --filter='...[<base>]'` passes (23 of 23 tasks). The earlier exit 127 was `turbo` missing from PATH, not a code fault, so no source change was needed. No duplicate keys or symbol collisions were found. V1 to V5 and `forgedock check` pass.

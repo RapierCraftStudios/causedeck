@@ -13,11 +13,18 @@ import { createLogger } from '@causedeck/observability';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { JobContext } from '../../jobs/context.ts';
-import { RetryableError } from '../../jobs/errors.ts';
-import { runWebhookDeliver, WEBHOOK_RETRY_LIMIT } from '../../jobs/definitions/webhook-deliver.ts';
-import { createWebhookEndpoint, emitWebhookEvent, verifyWebhookSignature } from '../index.ts';
-import { WEBHOOK_HEADERS } from '../sign.ts';
+import {
+  RetryableError,
+  runWebhookDeliver,
+  WEBHOOK_RETRY_LIMIT,
+  type JobContext,
+} from '../../jobs/index.ts';
+import {
+  createWebhookEndpoint,
+  emitWebhookEvent,
+  verifyWebhookSignature,
+  WEBHOOK_HEADERS,
+} from '../index.ts';
 
 const logger = createLogger({
   service: 'test',
@@ -29,8 +36,26 @@ const logger = createLogger({
   }),
 });
 
+/** The job runner hands a workspace job a `withWorkspace` transaction; do the same here. */
+function runScoped(
+  ctx: JobContext,
+  payload: Parameters<typeof runWebhookDeliver>[1],
+  deps?: Parameters<typeof runWebhookDeliver>[2],
+) {
+  return inWorkspace(ctx.db as Transaction, payload.workspaceId, (db) =>
+    runWebhookDeliver({ ...ctx, db }, payload, deps),
+  );
+}
+
 async function setup(tx: Transaction) {
   const { a, b, ua, ub } = await seedTwoTenants(tx);
+  // The two-tenant seeder gives each workspace its own endpoint and delivery; start from none.
+  for (const workspaceId of [a.id, b.id]) {
+    await inWorkspace(tx, workspaceId, async (s) => {
+      await s.delete(schema.webhookDelivery);
+      await s.delete(schema.webhookEndpoint);
+    });
+  }
   const ep = (workspaceId: string, actorUserId: string, events?: string[]) =>
     createWebhookEndpoint(tx, {
       workspaceId,
@@ -140,11 +165,7 @@ describe('webhook.deliver', () => {
       const { secret, id } = await pending(f);
       const deliver = vi.fn().mockResolvedValue({ status: 204 });
       expect(
-        await runWebhookDeliver(
-          f.ctx(f.a.id, id, 1),
-          { workspaceId: f.a.id, deliveryId: id },
-          { deliver },
-        ),
+        await runScoped(f.ctx(f.a.id, id, 1), { workspaceId: f.a.id, deliveryId: id }, { deliver }),
       ).toBe('delivered');
       const [url, request] = deliver.mock.calls[0] as [
         string,
@@ -173,11 +194,11 @@ describe('webhook.deliver', () => {
         .fn()
         .mockResolvedValueOnce({ status: 503 })
         .mockResolvedValueOnce({ status: 200 });
-      await expect(
-        runWebhookDeliver(f.ctx(f.a.id, id, 1), payload, { deliver }),
-      ).rejects.toBeInstanceOf(RetryableError);
+      await expect(runScoped(f.ctx(f.a.id, id, 1), payload, { deliver })).rejects.toBeInstanceOf(
+        RetryableError,
+      );
       expect((await state(f, id))?.status).toBe('pending');
-      expect(await runWebhookDeliver(f.ctx(f.a.id, id, 2), payload, { deliver })).toBe('delivered');
+      expect(await runScoped(f.ctx(f.a.id, id, 2), payload, { deliver })).toBe('delivered');
     });
   });
 
@@ -187,11 +208,7 @@ describe('webhook.deliver', () => {
       const { id } = await pending(f);
       const deliver = vi.fn().mockResolvedValue({ status: 400 });
       expect(
-        await runWebhookDeliver(
-          f.ctx(f.a.id, id, 1),
-          { workspaceId: f.a.id, deliveryId: id },
-          { deliver },
-        ),
+        await runScoped(f.ctx(f.a.id, id, 1), { workspaceId: f.a.id, deliveryId: id }, { deliver }),
       ).toBe('failed');
       const row = await state(f, id);
       expect(row).toMatchObject({ status: 'failed', lastStatus: 400 });
@@ -205,9 +222,7 @@ describe('webhook.deliver', () => {
       const { id } = await pending(f);
       const payload = { workspaceId: f.a.id, deliveryId: id };
       const blocked = vi.fn().mockRejectedValue(new WebhookDeliveryError('blocked_address'));
-      expect(await runWebhookDeliver(f.ctx(f.a.id, id, 1), payload, { deliver: blocked })).toBe(
-        'failed',
-      );
+      expect(await runScoped(f.ctx(f.a.id, id, 1), payload, { deliver: blocked })).toBe('failed');
     });
   });
 
@@ -218,7 +233,7 @@ describe('webhook.deliver', () => {
       const deliver = vi.fn().mockResolvedValue({ status: 503 });
       const last = WEBHOOK_RETRY_LIMIT + 1;
       expect(
-        await runWebhookDeliver(
+        await runScoped(
           f.ctx(f.a.id, id, last),
           { workspaceId: f.a.id, deliveryId: id },
           { deliver },

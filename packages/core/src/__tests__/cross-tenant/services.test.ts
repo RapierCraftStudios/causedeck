@@ -266,6 +266,16 @@ async function aWorkspace(f: Fixture) {
 }
 
 /** A's API keys, with revocation state. */
+/** The two-tenant seeder gives each workspace an endpoint and a delivery; start from none. */
+async function clearWebhooks(f: Fixture) {
+  for (const workspaceId of [f.a.id, f.b.id]) {
+    await inWorkspace(f.tx, workspaceId, async (s) => {
+      await s.delete(schema.webhookDelivery);
+      await s.delete(schema.webhookEndpoint);
+    });
+  }
+}
+
 async function aWebhookEndpoints(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s
@@ -2710,6 +2720,7 @@ const CASES: Record<string, Case> = {
     expect(await aWebhookEndpoints(f)).toEqual(before);
   },
   listWebhookEndpoints: async (f) => {
+    await clearWebhooks(f);
     await core.createWebhookEndpoint(f.tx, {
       workspaceId: f.a.id,
       actorUserId: f.ua,
@@ -2739,6 +2750,7 @@ const CASES: Record<string, Case> = {
     expect(await aWebhookEndpoints(f)).toEqual(before);
   },
   emitWebhookEvent: async (f) => {
+    await clearWebhooks(f);
     await core.createWebhookEndpoint(f.tx, {
       workspaceId: f.a.id,
       actorUserId: f.ua,

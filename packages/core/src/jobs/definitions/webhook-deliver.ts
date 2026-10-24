@@ -16,8 +16,11 @@ import { schema } from '@causedeck/db';
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { signWebhook, WEBHOOK_HEADERS } from '../../webhooks/sign.ts';
-import { WEBHOOK_DISABLE_AFTER_FAILURES } from '../../webhooks/endpoints.ts';
+import {
+  signWebhook,
+  WEBHOOK_DISABLE_AFTER_FAILURES,
+  WEBHOOK_HEADERS,
+} from '../../webhooks/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
@@ -162,7 +165,10 @@ export async function runWebhookDeliver(
       attempt = { status: null, error: error.reason, ok: false, retryable };
     }
     if (!attempt.ok && attempt.retryable && !lastAttempt) {
-      throw new RetryableError('WEBHOOK_DELIVERY_RETRY', `delivery failed (${attempt.error}); will retry`);
+      throw new RetryableError(
+        'WEBHOOK_DELIVERY_RETRY',
+        `delivery failed (${attempt.error ?? 'unknown'}); will retry`,
+      );
     }
     return attempt;
   });

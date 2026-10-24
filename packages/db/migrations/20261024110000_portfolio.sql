@@ -1,6 +1,7 @@
 -- Migration 20261024110000_portfolio: generated shape (tables, keys, indexes, kind check), RLS hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #661)
 -- Institution portfolios (#661, #498 part 1): portfolio, portfolio_case and portfolio_panel_advocate are tenant tables under FORCE RLS; organization.kind gains 'institution'. Expand only.
+-- portfolio_case_proceeding_fk is ON DELETE SET NULL ("proceeding_id"): a bare SET NULL on the composite key would also null the NOT NULL workspace_id (Postgres 15+ column list).
 CREATE TABLE "portfolio" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
@@ -49,7 +50,7 @@ ALTER TABLE "portfolio" ADD CONSTRAINT "portfolio_workspace_id_fk" FOREIGN KEY (
 ALTER TABLE "portfolio_case" ADD CONSTRAINT "portfolio_case_source_id_source_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."source"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "portfolio_case" ADD CONSTRAINT "portfolio_case_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "portfolio_case" ADD CONSTRAINT "portfolio_case_portfolio_fk" FOREIGN KEY ("workspace_id","portfolio_id") REFERENCES "public"."portfolio"("workspace_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "portfolio_case" ADD CONSTRAINT "portfolio_case_proceeding_fk" FOREIGN KEY ("workspace_id","proceeding_id") REFERENCES "public"."proceeding"("workspace_id","id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "portfolio_case" ADD CONSTRAINT "portfolio_case_proceeding_fk" FOREIGN KEY ("workspace_id","proceeding_id") REFERENCES "public"."proceeding"("workspace_id","id") ON DELETE SET NULL ("proceeding_id") ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "portfolio_panel_advocate" ADD CONSTRAINT "portfolio_panel_advocate_advocate_user_id_user_id_fk" FOREIGN KEY ("advocate_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "portfolio_panel_advocate" ADD CONSTRAINT "portfolio_panel_advocate_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "portfolio_panel_advocate" ADD CONSTRAINT "portfolio_panel_advocate_portfolio_fk" FOREIGN KEY ("workspace_id","portfolio_id") REFERENCES "public"."portfolio"("workspace_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

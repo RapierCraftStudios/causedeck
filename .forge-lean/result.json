@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Institution workspace kind plus portfolio, portfolio_case and portfolio_panel_advocate tenant tables with FORCE RLS, migration and registrations; V1-V3 pass; merge recheck: turbo exit 127 is only turbo missing from PATH; pnpm exec turbo typecheck 23/23 pass, V1-V3 pass, no code change",
+ "summary": "Institution workspace kind plus portfolio, portfolio_case and portfolio_panel_advocate tenant tables with FORCE RLS, migration and registrations; V1-V3 pass; merge recheck: turbo exit 127 is only turbo missing from PATH; pnpm exec turbo typecheck 23/23 pass, V1-V3 pass, no code change; CI tenancy fix: export-coverage guard needed exporter+erase registration for the 3 tables, and portfolio_case_proceeding_fk now SET NULL (proceeding_id)",
  "requirements": [
   {
    "id": "R1",

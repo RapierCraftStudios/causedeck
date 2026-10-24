@@ -304,6 +304,14 @@ export const webhooksExporter = tablesExporter('webhooks', [
   ws('webhook_delivery'),
 ]);
 
+// Institution portfolios (#661): the portfolios, their tracked cases (status, next date, last
+// adverse order) and the panel advocates delegated for them. Ids, short references and dates.
+const portfoliosExporter = tablesExporter('portfolios', [
+  ws('portfolio', { userColumn: 'created_by' }),
+  ws('portfolio_case'),
+  ws('portfolio_panel_advocate', { userColumn: 'advocate_user_id' }),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -318,6 +326,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   mattersExporter,
   automationExporter,
   webhooksExporter,
+  portfoliosExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

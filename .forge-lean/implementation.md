@@ -34,3 +34,8 @@ The merged-tree failure was `turbo: command not found` (bare `turbo` not on PATH
 
 ### Merge recheck
 Typecheck failure after the base merge was exit 127 `turbo: command not found` (turbo is not on PATH on this host; a toolchain problem, not a code defect). `pnpm exec turbo run typecheck --filter='...[41ce83bd]'` passes 23/23. No duplicate keys or symbols found; no code change. V1-V3 re-run and pass.
+
+## CI tenancy fix
+- `test:export-coverage` (part of the tenancy job) failed: portfolio, portfolio_case, portfolio_panel_advocate had no exporter. Added `portfoliosExporter` (not exported) in core lifecycle/export/exporters.ts and erase order entries in lifecycle/deletion/erase.ts.
+- Migration: `portfolio_case_proceeding_fk` is `ON DELETE SET NULL ("proceeding_id")` so a deleted proceeding does not null workspace_id (repo precedent: 0038).
+- Verified: export-coverage, purge/deletion/export/cross-tenant core tests, db rls + cross-tenant + lint-migrations, db:check, core tsc.

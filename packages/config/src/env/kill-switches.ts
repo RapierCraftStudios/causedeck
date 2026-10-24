@@ -22,6 +22,7 @@ export const FLAG_KILL_SWITCHES = [
   'KILL_BILLING_RAZORPAY',
   'KILL_INSIGHTS_ENABLED',
   'KILL_WORKSPACE_EXPORT',
+  'KILL_CONFLICTS_CHECK',
 ] as const;
 
 export type FlagKillSwitch = (typeof FLAG_KILL_SWITCHES)[number];

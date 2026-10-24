@@ -1,4 +1,4 @@
--- Migration 0082_bench_facts: generated shape (one table, one index, one FK, one check), grants, owner read policies and functions hand-written, reviewed before commit.
+-- Migration 20261024061133_bench_facts: generated shape (one table, one index, one FK, one check), grants, owner read policies and functions hand-written, reviewed before commit.
 -- Reviewed-by: Claude (agent, #521)
 -- Internal bench facts (#521, D-050). bench_sitting_fact is global and staff-only: neutral counts and
 -- pace per source, hall and sitting date, for data building and quality. There is no worker or

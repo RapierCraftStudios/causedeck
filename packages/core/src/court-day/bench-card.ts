@@ -53,7 +53,8 @@ export async function getBenchCard(
   actor: { workspaceId: string; userId: string },
   matterId: string,
 ): Promise<BenchCard | null> {
-  const flag = deps.flagEnabled ?? ((id) => isEnabled(BENCH_FACTS_FLAG, { workspaceId: id }));
+  const flag =
+    deps.flagEnabled ?? ((id) => isEnabled(BENCH_FACTS_FLAG, { workspaceId: id }, { db: deps.db }));
   if (!(await flag(actor.workspaceId))) return null;
 
   const [latest] = await withWorkspace(deps.db, actor, (tx) =>

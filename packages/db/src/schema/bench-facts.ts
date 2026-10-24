@@ -2,7 +2,7 @@
 // source, hall and sitting date with the neutral counts a display board and a roster support
 // (items listed, heard, disposed, minutes per item), tied to a bench when exactly one active
 // roster bench covers the hall. It is data for building and quality (call-time estimates, roster
-// reconciliation, coverage), never a user-facing table: migration 0082 revokes every grant from the
+// reconciliation, coverage), never a user-facing table: the bench_facts migration revokes every grant from the
 // app and clerk roles, and the only way in or out is the owner-defined `app_bench_*` functions. It
 // holds no judge, party, case or outcome column and no rate, ranking or score; the court-published
 // composition stays only in `bench.judges` (PX-9, ME-6; D-050 prohibits ratings, rankings,

@@ -2,61 +2,37 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`packages/db/src/schema/bench-facts.ts` and a migration: an internal, staff-only schema (bench, sitting date, hall, items listed, items heard, items disposed, minutes per item), global and not tenant data.",
+   "quote": "Two disagreeing sources produce one conflict card; agreeing sources raise confidence.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "The app role has no grants on it; only the worker and internal roles do.",
+   "quote": "Adapter health reports the conflict rate per source.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/intelligence/src/bench-facts/`: aggregation from rosters, display boards and status.",
+   "quote": "`packages/core/src/facts/agreement.ts`: for each fact, the set of sources, agreement status (agree, conflict, single source) and a confidence score.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Internal uses: call-time estimates (#493), roster reconciliation, coverage (#517) and the data ops console (#514).",
-   "disposition": "defer",
-   "why": "Call-time estimates are delivered here (R9, D10). Roster reconciliation, the coverage tracker (#517 is open and has no code) and the data ops console wiring have no consumer yet and belong to separate work."
+   "quote": "A conflict card generalised to every source pair; the lawyer resolves, and the resolution is kept.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "A user-facing `bench_facts` surface (a matter's bench card: who sat, dates, listing pace, counts) behind the feature flag `bench_facts`, **off** until counsel clears it; neutral wording only.",
+   "quote": "`apps/web`: a confidence chip on dates and stages, with the sources listed on hover.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Static guards: no field, query or UI string for ratings, rankings, comparisons between judges, outcome rates (grant, dismissal or bail percentages), predictions or sentiment.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "The app database role can't read the internal bench-facts tables (a grants test). [type:integration]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R8",
-   "quote": "With `bench_facts` off, no user-facing route or API returns judge-level data. [type:integration]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R8b",
-   "quote": "A static test fails on any outcome-rate, ranking, comparison or prediction field or string. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R9",
-   "quote": "Call-time estimates use the internal pace data. [type:integration]",
+   "quote": "Metrics: the conflict rate per source, which feeds adapter health.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -64,281 +40,178 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/bench-facts.ts",
-   "change": "New global table bench_sitting_fact (bench_id nullable FK to bench, source_id, hall_no, sitting_date, items_listed, items_heard, items_disposed, minutes_per_item numeric, computed_at; unique(source_id,hall_no,sitting_date)). No judge, rating, outcome or rate column.",
+   "path": "packages/core/src/facts/agreement.ts",
+   "change": "Pure assessAgreement(observations) -> {sources, status: agree|conflict|single, confidence}; plus getNextDateAgreement reader over a proceeding's listings (provenance sourceType/sourceRef/confidence)",
    "requirements": [
-    "R1"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/index.ts",
-   "change": "Export the bench-facts schema.",
+   "path": "packages/core/src/facts/index.ts",
+   "change": "Public barrel for the facts domain",
    "requirements": [
-    "R1"
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations/0082_bench_facts.sql",
-   "change": "CREATE TABLE; REVOKE ALL FROM PUBLIC, causedeck_app, causedeck_clerk; owner-defined SECURITY DEFINER functions app_bench_fact_record, app_bench_pace, a neutral bench-card read and an ids-only active-roster hall-to-bench lookup, each with REVOKE FROM PUBLIC and GRANT EXECUTE TO causedeck_app. Expand only. If 0082 is taken on the base, use the next free number and regenerate the snapshot.",
+   "path": "packages/core/package.json",
+   "change": "Add ./facts export",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/db/migrations/meta/_journal.json",
-   "change": "Add the 0082 entry (and meta/0082_snapshot.json, regenerated).",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add facts domain dependency edges (matter-graph if reader uses it)",
    "requirements": [
-    "R1"
+    "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/db/src/conventions.ts",
-   "change": "Add bench_sitting_fact to GLOBAL_TABLES with a doc line saying the app role has no table grants.",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document facts domain and edges",
    "requirements": [
-    "R1",
-    "R2"
+    "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add bench_sitting_fact to the root table list.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register facts exports in SERVICE_TESTS or NOT_A_SERVICE",
    "requirements": [
-    "R1"
+    "R3"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/db/src/__tests__/bench-facts-grants.test.ts",
-   "change": "Integration test: as the app role, SELECT/INSERT/UPDATE/DELETE on bench_sitting_fact fail with 42501; the definer functions work; no function returns a judge name.",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cross-tenant case for getNextDateAgreement",
    "requirements": [
-    "R2",
-    "R7"
+    "R3"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/intelligence/src/bench-facts/index.ts",
-   "change": "Pure aggregation (board observations, resolved roster bench, status facts) to per-bench-hall-day facts, plus persistence through the definer function; add bench-facts.test.ts beside it; export from packages/intelligence/src/index.ts.",
+   "path": "apps/web/components/matters/date-conflict-card.tsx",
+   "change": "Generalise card to N sources/every source pair, still never preselecting; resolution via existing chooseNextDateSource path",
    "requirements": [
-    "R3"
+    "R1",
+    "R4"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/intelligence/src/index.ts",
-   "change": "Export the bench-facts module.",
+   "path": "apps/web/lib/matters/workspace.ts",
+   "change": "Expose agreement (status, confidence, sources) on the overview view models",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/court-day/board.ts",
-   "change": "Prefer bench-facts pace (app_bench_pace) over raw per-hall observations when building the CallWindow samples, falling back to raw observations; test in court-day/board.test.ts.",
+   "path": "apps/web/components/matters/next-date-card.tsx",
+   "change": "Confidence chip on next date (and stage where shown) with sources on hover",
    "requirements": [
-    "R4",
-    "R9"
+    "R5"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/core/src/court-day/bench-card.ts",
-   "change": "New getBenchCard: checks flag bench_facts first and returns null when off; otherwise returns neutral counts and pace only. Export from court-day/index.ts; add bench-card.test.ts.",
+   "path": "packages/i18n/src/messages/en/matters.json",
+   "change": "New strings for chip/card (and kn/ta + generated copies per i18n catalog rules)",
    "requirements": [
-    "R5",
-    "R8"
+    "R5"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/core/src/court-day/index.ts",
-   "change": "Export bench-card.",
+   "path": "packages/db/migrations/0082_staff_conflict_rate.sql",
+   "change": "Security-definer app_staff_conflict_rate(since) mirroring 0072: per-source counts of listings/proposals vs corrected conflicts, staff only (renumbered to 0082 after base took 0080 and 0081; regenerate snapshot)",
    "requirements": [
-    "R5"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/api/src/routes/v1/bench-card.ts",
-   "change": "New GET /workspaces/{workspaceId}/matters/{matterId}/bench-card route (404 when the flag is off); mount it in routes/v1/index.ts and add it to apps/api/src/__tests__/cross-tenant.test.ts ROUTES; integration test that flag off returns no judge-level data.",
+   "path": "packages/core/src/sources/ops.ts",
+   "change": "staffConflictRate + conflictRate field on SourceOpsRow",
    "requirements": [
-    "R5",
-    "R8"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/api/src/routes/v1/index.ts",
-   "change": "Mount the bench-card router.",
+   "path": "apps/admin/app/(console)/data-ops/page.tsx",
+   "change": "Show conflict rate per source in adapter health",
    "requirements": [
-    "R5"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/api/src/__tests__/cross-tenant.test.ts",
-   "change": "Add the new route to ROUTES.",
+   "path": "packages/db/src/__tests__/staff-console-schema.test.ts",
+   "change": "Cover the new staff function (refuses non-staff, per-source counts only)",
    "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/flags/src/keys.ts",
-   "change": "Add legal-gated flag bench_facts, owner [521, 118]; update flags keys.test.ts (key and LEGAL lists), docs.test.ts regex to allow underscore, and docs/engineering/flags.md row.",
-   "requirements": [
-    "R5",
-    "R8"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/flags/src/__tests__/keys.test.ts",
-   "change": "Add bench_facts to LEGAL and the expected key list.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/flags/src/__tests__/docs.test.ts",
-   "change": "Allow underscore in the flag-key row regex.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "docs/engineering/flags.md",
-   "change": "Add the bench_facts row marked legal-gated.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "packages/config/src/env.ts",
-   "change": "Declare the KILL_BENCH_FACTS kill switch in FLAG_KILL_SWITCHES (locate the actual env module under packages/config/src/env* and the env doc if it lists switches).",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/intelligence/src/bench-facts/static-guard.test.ts",
-   "change": "Static test: no schema column, source identifier or string literal in the bench-facts schema, intelligence, core court-day bench-card, API route or flag text matches rating/ranking/rank/compare/outcome-rate/grant-rate/dismissal/bail percent/predict/sentiment; mutation case proves it fails on a planted offender.",
-   "requirements": [
-    "R6",
-    "R8b"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register new core runtime exports (getBenchCard, any new court-day exports) in SERVICE_TESTS with a real case in core/src/__tests__/cross-tenant/services.test.ts, or NOT_A_SERVICE with a reason.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Add the cross-tenant case for getBenchCard (B on A sees nothing; A unchanged).",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "docs/adr/0036-bench-facts.md",
-   "change": "ADR: internal bench facts, no worker or internal DB role so access is via definer functions, flag bench_facts, prohibited-content guard. Update docs/adr/README.md index if it lists ADRs.",
-   "requirements": [
-    "R2",
-    "R5",
-    "R6"
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "The no-judge-aggregation guard stays green: bench.judges is still the only judge column and no view is added (packages/db/src/__tests__/judge-aggregation-guard.test.ts)."
+   "what": "chooseNextDateSource semantics: a person chooses, loser stays as `corrected` history (packages/core/src/matter-graph/next-date.ts)"
   },
   {
    "id": "P2",
-   "what": "estimateCallWindow/paceSamples signatures and the CallWindow output shape (packages/core/src/court-day/eta.ts) and the existing pollBoards/getLiveHalls behaviour and tests (court-day/board.test.ts, eta.test.ts); bench pace is only an additional source, with the raw-observation fallback."
+   "what": "proposeNextDate/confirmNextDate remain the only writers of listing.list_date/canonical (no-direct-listing-update architecture test)"
   },
   {
    "id": "P3",
-   "what": "board_observation grants and the existing app_board_poll_targets function (migration 0076) are unchanged; earlier migrations are not edited."
+   "what": "getAdapterHealthSummary and sourceOpsOverview existing fields and callers (packages/core/src/court/adapter-health.ts, packages/core/src/sources/ops.ts, apps/admin data-ops page)"
   },
   {
    "id": "P4",
-   "what": "Existing /v1 routes and the Principal/cookie-session behaviour in apps/api; the Principal and app.ts bearer wiring from #624 are untouched."
-  },
-  {
-   "id": "P5",
-   "what": "With bench_facts off (the default, packages/flags default snapshot), no behaviour changes for any user."
+   "what": "Staff console aggregates stay content-free: no workspace, party or URL data leaves ops.ts"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/bench-facts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/facts src/matter-graph/__tests__/next-date.test.ts src/sources/__tests__/ops.test.ts src/__tests__/domains.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/bench-facts-grants.test.ts src/__tests__/judge-aggregation-guard.test.ts src/index.test.ts src/__tests__/lint-migrations.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/matter-workspace-components.test.tsx __tests__/matter-workspace-page.test.tsx __tests__/cross-tenant-actions.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/court-day src/__tests__/cross-tenant/services.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/staff-console-schema.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/flags exec vitest run"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/cross-tenant.test.ts src/routes"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Restrict the table with REVOKE plus SECURITY DEFINER functions instead of new worker/internal DB roles.",
-   "justification": "Only owner/app/clerk roles exist (packages/db/src/client.ts:10) and the worker and web both connect as the app role; a new role needs infra and credentials. Precedent: migrations/0072_staff_parse_yield.sql and 0033_staff_console_reads.sql:21.",
+   "choice": "Reuse listing provenance and the `corrected` state as the kept resolution instead of a new tenant table",
+   "justification": "Avoids RLS/seeder registry churn; next-date.ts:13-17 already keeps the losing proposal as corrected history",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Keep the flag key literally `bench_facts` and relax the docs test regex to allow underscore.",
-   "justification": "The issue names the flag `bench_facts`; the docs row regex at packages/flags/src/__tests__/docs.test.ts:16 only allows [a-z0-9.-].",
-   "source": "spec"
-  },
-  {
-   "id": "K3",
-   "choice": "Resolve hall to bench through an owner-defined, ids-only function over active rosters rather than reading tenant roster tables from the worker.",
-   "justification": "bench_roster_entry is FORCE-RLS tenant data (packages/db/src/schema/roster.ts:107); precedent app_board_poll_targets in 0076_display_board.sql:45-46.",
+   "choice": "Staff conflict-rate via a security-definer function like app_staff_parse_yield",
+   "justification": "packages/db/migrations/0072_staff_parse_yield.sql and packages/core/src/sources/ops.ts:118 give the cross-tenant, content-free pattern",
    "source": "precedent"
-  },
-  {
-   "id": "K4",
-   "choice": "bench_id is nullable and no judge identity is stored; facts are per bench and hall.",
-   "justification": "D-050 (DECISIONS.md:418-426) and the judge-aggregation guard (judge-aggregation-guard.test.ts:25-27).",
-   "source": "doc"
-  },
-  {
-   "id": "K5",
-   "choice": "The user-facing surface is delivered as the flagged core service plus API route; web card rendering is not built here.",
-   "justification": "Legal-gated (#118), ships dark; web UI would add an i18n namespace, stories and actions registry entries with no consumer while the flag is off. If the reviewer wants the card, add a web deliverable under R5.",
-   "source": "spec"
   }
  ]
 }

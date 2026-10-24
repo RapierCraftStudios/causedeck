@@ -1,0 +1,35 @@
+{
+  "template": "ecourts-district",
+  "status": "ok",
+  "cnr": "KABN010123452025",
+  "caseNumber": "OS/845/2025",
+  "nextHearingDate": "2026-11-14",
+  "lastHearingDate": "2025-03-21",
+  "stage": {
+    "raw": "Arguments",
+    "norm": "arguments"
+  },
+  "bench": "7-Senior Civil Judge (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2025-03-21",
+      "number": "1",
+      "summary": "Order issue summons",
+      "href": "/orders/ka-1.pdf"
+    },
+    {
+      "date": "2026-09-19",
+      "number": "2",
+      "summary": "Order posted for hearing",
+      "href": "/orders/ka-2.pdf"
+    }
+  ],
+  "quotes": {
+    "cnr": "KABN010123452025",
+    "caseNumber": "OS/845/2025",
+    "stage": "Arguments",
+    "bench": "7-Senior Civil Judge (FICTIONAL)",
+    "nextHearingDate": "14th November 2026",
+    "lastHearingDate": "21st March 2025"
+  }
+}

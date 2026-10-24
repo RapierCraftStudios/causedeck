@@ -52,6 +52,7 @@ const FUNCTIONS = [
   'app_staff_workspace_usage(uuid)',
   'app_staff_budget_overrides(uuid,integer)',
   'app_staff_parse_yield(timestamp with time zone)',
+  'app_staff_conflict_rate(timestamp with time zone)',
   'app_staff_business_snapshot(timestamp with time zone,timestamp with time zone)',
 ];
 const COUNTER_COLUMNS = ['key', 'period_start', 'value'];
@@ -133,6 +134,46 @@ describe('staff parse yield (0072)', () => {
   });
 });
 
+describe('staff conflict rate (0082)', () => {
+  it('counts per-source readings that disagree with the canonical date, and names no tenant', async () => {
+    await withTestDb(async (tx) => {
+      const t = await seedTwoTenants(tx);
+      const host = `conflict-${t.a.id.slice(0, 8)}.example`;
+      const proceedingId = t.a.rows.proceeding?.proceedingId ?? '';
+      const canonical = await inWorkspace(tx, t.a.id, (s) =>
+        s.execute<{ list_date: string }>(
+          sql`select list_date::text as list_date from listing where proceeding_id = ${proceedingId}::uuid and canonical`,
+        ),
+      );
+      await inWorkspace(tx, t.a.id, async (s) => {
+        if (canonical.length === 0) {
+          await s.execute(
+            sql`insert into listing (workspace_id, proceeding_id, list_date, list_type, stage_raw, canonical, source_type, confirmation_state)
+                values (${t.a.id}::uuid, ${proceedingId}::uuid, '2031-05-05', 'daily', 'x', true, 'manual', 'confirmed')`,
+          );
+        }
+        // A reading of another date from the host (a conflict) and one of the canonical date.
+        await s.execute(
+          sql`insert into listing (workspace_id, proceeding_id, list_date, list_type, stage_raw, source_type, source_ref, confirmation_state)
+              values (${t.a.id}::uuid, ${proceedingId}::uuid, '2031-06-06', 'daily', 'x', 'adapter', ${`https://${host}/status?cnr=1`}, 'proposed')`,
+        );
+      });
+      const rows = await as(tx, staffId, (s) =>
+        s.execute(
+          sql`select * from app_staff_conflict_rate(now() - interval '1 day') where source_key = ${host}`,
+        ),
+      );
+      expect(rows).toHaveLength(1);
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual([
+        'conflicts',
+        'observations',
+        'source_key',
+      ]);
+      expect(rows[0]).toMatchObject({ observations: '1', conflicts: '1' });
+    });
+  });
+});
+
 describe('staff console functions (0033)', () => {
   it('refuse anyone but an enabled staff member, and are not executable by PUBLIC', async () => {
     await withTestDb(async (tx) => {
@@ -144,6 +185,7 @@ describe('staff console functions (0033)', () => {
         sql`select * from app_staff_workspace_usage(${t.a.id}::uuid)`,
         sql`select * from app_staff_budget_overrides(${t.a.id}::uuid, 10)`,
         sql`select * from app_staff_parse_yield(now() - interval '7 days')`,
+        sql`select * from app_staff_conflict_rate(now() - interval '7 days')`,
         sql`select app_staff_business_snapshot(now(), now())`,
       ];
       for (const call of calls) {

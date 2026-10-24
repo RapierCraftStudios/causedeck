@@ -2605,6 +2605,14 @@ export type Messages = {
         announce: string;
         failed: string;
         stale: string;
+        chooseN: string;
+      };
+      confidence: {
+        chip: string;
+        agree: string;
+        conflict: string;
+        single: string;
+        sources: string;
       };
       proceedings: {
         title: string;

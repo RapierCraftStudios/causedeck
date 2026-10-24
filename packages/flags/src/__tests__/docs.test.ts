@@ -11,9 +11,12 @@ const DOC = readFileSync(
   'utf8',
 );
 
+/** The registry table is the part of the doc before `## Evaluation` (later tables list db tables, not flags). */
+const REGISTRY = DOC.split(/^## Evaluation$/m)[0] ?? DOC;
+
 /** The flag table rows: `| \`key\` | ... |`. */
 const rows = new Map(
-  [...DOC.matchAll(/^\| `([a-z0-9._-]+)` \|(.*)$/gm)].map((m) => [m[1] ?? '', m[2] ?? '']),
+  [...REGISTRY.matchAll(/^\| `([a-z0-9._-]+)` \|(.*)$/gm)].map((m) => [m[1] ?? '', m[2] ?? '']),
 );
 
 describe('docs/engineering/flags.md', () => {

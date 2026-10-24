@@ -178,7 +178,15 @@
         "dateRequired": "Enter a date from today onwards.",
         "announce": "Next date set to {date}.",
         "failed": "Couldn't save the date. Try again.",
-        "stale": "This conflict was already resolved. Showing the latest dates."
+        "stale": "This conflict was already resolved. Showing the latest dates.",
+        "chooseN": "Choose {letter}"
+      },
+      "confidence": {
+        "chip": "Confidence {percent}%",
+        "agree": "Sources agree",
+        "conflict": "Sources disagree",
+        "single": "One source",
+        "sources": "Sources: {list}"
       },
       "proceedings": {
         "title": "Proceedings",

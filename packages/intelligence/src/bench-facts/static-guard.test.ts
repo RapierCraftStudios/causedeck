@@ -15,7 +15,7 @@ const PROHIBITED =
 
 const FILES = [
   'packages/db/src/schema/bench-facts.ts',
-  'packages/db/migrations/0082_bench_facts.sql',
+  'packages/db/migrations/20261024061133_bench_facts.sql',
   'packages/intelligence/src/bench-facts/index.ts',
   'packages/core/src/court-day/bench-card.ts',
   'apps/api/src/routes/v1/bench-card.ts',

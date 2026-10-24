@@ -37,14 +37,18 @@ export function benchCardRoute(db: Database) {
     method: 'get',
     path: '/workspaces/{workspaceId}/matters/{matterId}/bench-card',
     operationId: 'getMatterBenchCard',
+    // Dark until counsel clears it (#118): kept out of the published spec so the feature leaves no hint.
+    hide: true,
     tags: ['Court day'],
     summary: 'The matter’s bench card: neutral sitting facts (flag-gated)',
     middleware: [
       requireWorkspace(db),
-      requireFlagMiddleware('bench_facts'),
+      // Reads the flag through the injected database, never a process-global client, so the
+      // flag-off path answers 404 wherever the API runs.
+      requireFlagMiddleware('bench_facts', { db }),
       authorize('matter.read'),
     ],
-    request: { params: z.object({ workspaceId: z.string().uuid(), matterId: z.string().uuid() }) },
+    request: { params: z.object({ workspaceId: z.uuid(), matterId: z.uuid() }) },
     responses: {
       200: {
         description: 'The bench card',

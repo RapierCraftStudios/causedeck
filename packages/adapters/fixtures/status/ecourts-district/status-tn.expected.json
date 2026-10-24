@@ -1,0 +1,35 @@
+{
+  "template": "ecourts-district",
+  "status": "ok",
+  "cnr": "TNCH010123452025",
+  "caseNumber": "OS/845/2025",
+  "nextHearingDate": "2026-11-14",
+  "lastHearingDate": "2025-03-21",
+  "stage": {
+    "raw": "Plaintiff Evidence",
+    "norm": "evidence"
+  },
+  "bench": "12-Principal Judge (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2025-03-21",
+      "number": "1",
+      "summary": "Order issue summons",
+      "href": "/orders/tn-1.pdf"
+    },
+    {
+      "date": "2026-09-19",
+      "number": "2",
+      "summary": "Order posted for hearing",
+      "href": "/orders/tn-2.pdf"
+    }
+  ],
+  "quotes": {
+    "cnr": "TNCH010123452025",
+    "caseNumber": "OS/845/2025",
+    "stage": "Plaintiff Evidence",
+    "bench": "12-Principal Judge (FICTIONAL)",
+    "nextHearingDate": "14th November 2026",
+    "lastHearingDate": "21st March 2025"
+  }
+}

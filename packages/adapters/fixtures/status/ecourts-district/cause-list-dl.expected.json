@@ -1,0 +1,133 @@
+{
+  "adapterId": "ecourts-district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.dl.district",
+  "listDate": "2026-10-24",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "CS/300/2026",
+        "rowIndex": 0
+      },
+      "confidence": 0.9,
+      "hallNo": "12",
+      "itemNo": "1",
+      "caseTypeRaw": "CS",
+      "caseType": "CS",
+      "caseNumber": "300",
+      "caseYear": 2026,
+      "matchKey": "CS/300/2026",
+      "parties": "I. Placeholder vs J. Faux",
+      "bench": "ADJ-05 (FICTIONAL)",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "CC/18/2025",
+        "rowIndex": 1
+      },
+      "confidence": 0.9,
+      "hallNo": "12",
+      "itemNo": "2",
+      "caseTypeRaw": "CC",
+      "caseType": "CC",
+      "caseNumber": "18",
+      "caseYear": 2025,
+      "matchKey": "CC/18/2025",
+      "parties": "K. Pseudo vs L. Sham",
+      "bench": "ADJ-05 (FICTIONAL)",
+      "stageRaw": null,
+      "stageNorm": null
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": [
+      "12",
+      "13"
+    ],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "12",
+      "bench": "ADJ-05 (FICTIONAL)",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "CS/300/2026",
+                "rowIndex": 0
+              },
+              "confidence": 0.9,
+              "hallNo": "12",
+              "itemNo": "1",
+              "caseTypeRaw": "CS",
+              "caseType": "CS",
+              "caseNumber": "300",
+              "caseYear": 2026,
+              "matchKey": "CS/300/2026",
+              "parties": "I. Placeholder vs J. Faux",
+              "bench": "ADJ-05 (FICTIONAL)",
+              "stageRaw": null,
+              "stageNorm": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "CC/18/2025",
+                "rowIndex": 1
+              },
+              "confidence": 0.9,
+              "hallNo": "12",
+              "itemNo": "2",
+              "caseTypeRaw": "CC",
+              "caseType": "CC",
+              "caseNumber": "18",
+              "caseYear": 2025,
+              "matchKey": "CC/18/2025",
+              "parties": "K. Pseudo vs L. Sham",
+              "bench": "ADJ-05 (FICTIONAL)",
+              "stageRaw": null,
+              "stageNorm": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "hallNo": "13",
+      "bench": "Additional Judge (FICTIONAL)",
+      "lists": [
+        {
+          "rows": []
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "not a number",
+        "rowIndex": 2
+      },
+      "text": "not a number",
+      "reason": "no case number"
+    }
+  ],
+  "status": "ok",
+  "source": "html",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "Cause List for 24-10-2026",
+    "rowIndex": 0
+  }
+}

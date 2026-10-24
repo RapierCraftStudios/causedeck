@@ -53,6 +53,12 @@ export const CATEGORIES = {
     mandatory: false,
     lockedChannels: [],
   },
+  // The legal news digest (#481): headlines and links to the original, at most one a day.
+  'digest.news': {
+    defaultChannels: ['in_app', 'email', 'push'],
+    mandatory: false,
+    lockedChannels: [],
+  },
   'system.notice': { defaultChannels: ['in_app'], mandatory: false, lockedChannels: [] },
 } as const satisfies Record<string, CategoryDefinition>;
 

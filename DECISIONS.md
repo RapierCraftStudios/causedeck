@@ -425,3 +425,11 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Why:** call-time estimates, roster accuracy and coverage need bench-level facts; factual bench information also helps advocates plan. Ratings, predictions and profiling carry contempt-of-court risk (scandalising the court), would damage the Registry relationships the data layer depends on (D-049 official rails), and many jurisdictions restrict them (France prohibited judge analytics in 2019).
 - **Amends:** D-027 (the judge-analytics prohibition narrowed to ratings, predictions and profiling), D-049 (guardrail wording), PRD ME-6 and PX-9, ADR 0017 (bench data use).
 - **Revisit if:** counsel advises against even factual bench facts (keep them internal only), or a court or Registry objects (switch off `bench_facts`).
+
+### D-051 — Timestamp-named migrations, and lane checks that run on any lane host
+- **Date:** 2026-10-24 · **Status:** Accepted (founder: "yes do 1 and 2")
+- **Decision:**
+  - New drizzle migrations are named by timestamp (`migrations.prefix: 'timestamp'` in `packages/db/drizzle.config.ts`), not by the next index. Migrations up to `0082` keep their names; the journal orders execution, and timestamp names sort after them.
+  - The lane-local checks live in the repo (`scripts/lane-check.sh`), so ForgeDock lanes on remote compute (computeshare, `legion`) run the same targeted format, lint, typecheck and test before they push. Lanes verify locally (`verify.mode: local`); CI remains the gate.
+- **Why:** on 2026-10-23/24 about 12 parallel lanes in Court Data Network kept taking the same next migration number (#52, #56, #484, #493, #497, #514, #519, #586, #499). Each collision parked a lane and needed a renumber and a re-review. Separately, lanes ran without dependencies and with CI-only verification, so they pushed code they had never compiled, and two CI fix rounds were not enough. Timestamps remove the collision class entirely; local verification on remote compute removes most of the CI fix rounds.
+- **Revisit if:** two lanes ever produce the same timestamp (switch to a unique suffix), or remote lanes can't install dependencies (fall back to `verify.mode: ci`).

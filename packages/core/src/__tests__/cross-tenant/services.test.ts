@@ -56,6 +56,22 @@ async function expectDenied(promise: Promise<unknown>): Promise<void> {
   expect(['NOT_FOUND', 'FORBIDDEN']).toContain((error as core.WorkspaceError).code);
 }
 
+/** News (#481): rejects with a NewsError FORBIDDEN (the caller is not a member of the workspace). */
+async function expectNewsDenied(promise: Promise<unknown>): Promise<void> {
+  const error: unknown = await promise.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error, 'expected a news FORBIDDEN').toBeInstanceOf(core.NewsError);
+  expect((error as core.NewsError).code).toBe('FORBIDDEN');
+}
+
+async function aNewsPref(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.newsPref).where(eq(schema.newsPref.workspaceId, f.a.id)),
+  );
+}
+
 async function aWorkspaceRow(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
@@ -249,6 +265,16 @@ async function aWorkspace(f: Fixture) {
     s.select().from(schema.organization).where(eq(schema.organization.id, f.a.id)),
   );
   return row;
+}
+
+/** A's API keys, with revocation state. */
+async function aApiKeys(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select({ id: schema.apiKey.id, revokedAt: schema.apiKey.revokedAt })
+      .from(schema.apiKey)
+      .orderBy(schema.apiKey.id),
+  );
 }
 
 /** A's usage counters and ledger. */
@@ -713,6 +739,60 @@ const CASES: Record<string, Case> = {
     expect(asA.hits.map((h) => h.matterId)).toEqual([matterId]);
     const aMatters = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.matter));
     expect(aMatters.filter((m) => m.id === matterId)).toHaveLength(1);
+  },
+  getStageAgreement: async (f) => {
+    // Covered with getNextDateAgreement below: one query, B sees none of A's readings.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    const asB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getStageAgreement(s, f.b.id, aProceeding),
+    );
+    expect(asB.sources).toEqual([]);
+  },
+  getNextDateAgreement: async (f) => {
+    // A's two disagreeing proposals are a conflict for A and invisible to B; A's rows are unchanged.
+    const aProceeding = f.a.rows.proceeding?.proceedingId ?? '';
+    await inWorkspace(f.tx, f.a.id, async (s) => {
+      await s.insert(schema.listing).values([
+        {
+          workspaceId: f.a.id,
+          proceedingId: aProceeding,
+          listDate: '2031-03-03',
+          listType: 'daily',
+          stageRaw: 'XT agreement',
+          sourceType: 'manual',
+          confirmationState: 'proposed',
+        },
+        {
+          workspaceId: f.a.id,
+          proceedingId: aProceeding,
+          listDate: '2031-03-04',
+          listType: 'daily',
+          stageRaw: 'XT agreement',
+          sourceType: 'document',
+          sourceRef: 'xt-agreement-doc',
+          confirmationState: 'proposed',
+        },
+      ]);
+    });
+    const asB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getNextDateAgreement(s, f.b.id, aProceeding),
+    );
+    expect(asB.sources).toEqual([]);
+    const asA = await inWorkspace(f.tx, f.a.id, (s) =>
+      core.getNextDateAgreement(s, f.a.id, aProceeding),
+    );
+    expect(asA.status).toBe('conflict');
+    expect(asA.groups.map((g) => g.value).sort()).toEqual(
+      expect.arrayContaining(['2031-03-03', '2031-03-04']),
+    );
+    const stageB = await inWorkspace(f.tx, f.b.id, (s) =>
+      core.getStageAgreement(s, f.b.id, aProceeding),
+    );
+    expect(stageB.sources).toEqual([]);
+    const stageA = await inWorkspace(f.tx, f.a.id, (s) =>
+      core.getStageAgreement(s, f.a.id, aProceeding),
+    );
+    expect(stageA.sources.length).toBeGreaterThan(0);
   },
   listCaseWatches: async (f) => {
     // ub lists nothing of A's: A's own watch is not in B's list.
@@ -1446,6 +1526,75 @@ const CASES: Record<string, Case> = {
     expect(outcome).toEqual({ status: 'completed' });
     expect(sent).toEqual([]);
   },
+  // News digest (#481): B's member never reads, writes or marks A's preferences or digest.
+  getNewsPref: async (f) => {
+    await expectNewsDenied(core.getNewsPref({ db: f.tx, workspaceId: f.a.id }, { userId: f.ub }));
+  },
+  setNewsPref: async (f) => {
+    const before = await aNewsPref(f);
+    await expectNewsDenied(
+      core.setNewsPref(
+        { db: f.tx, workspaceId: f.a.id },
+        { userId: f.ub, practiceAreas: ['tax'], forums: [], digestTime: '08:00' },
+      ),
+    );
+    expect(await aNewsPref(f)).toEqual(before);
+  },
+  markNewsDigestSent: async (f) => {
+    const before = await aNewsPref(f);
+    await expectNewsDenied(
+      core.markNewsDigestSent(
+        { db: f.tx, workspaceId: f.a.id },
+        { userId: f.ub, localDate: '2026-10-19' },
+      ),
+    );
+    expect(await aNewsPref(f)).toEqual(before);
+  },
+  listNewsForMember: async (f) => {
+    await expectNewsDenied(
+      core.listNewsForMember(
+        { db: f.tx, workspaceId: f.a.id },
+        { userId: f.ub, since: new Date('2026-10-01T00:00:00Z') },
+      ),
+    );
+  },
+  selectNewsDigestItems: async (f) => {
+    await expectNewsDenied(
+      core.selectNewsDigestItems(
+        { db: f.tx, workspaceId: f.a.id },
+        { userId: f.ub, since: new Date('2026-10-01T00:00:00Z') },
+      ),
+    );
+  },
+  listNewsDigestRecipients: async (f) => {
+    // B's recipients are B's members only: A's owner never appears.
+    const users = await core.listNewsDigestRecipients(
+      { db: f.tx, workspaceId: f.b.id },
+      { slot: '07:30', localDate: '2026-10-19' },
+    );
+    expect(users).not.toContain(f.ua);
+  },
+  runNewsDigestMember: async (f) => {
+    // ua is not a member of B: nothing is built, marked or sent.
+    const { sent, deps } = recordingDeps();
+    const outcome = await core.runNewsDigestMember(
+      { db: f.tx as unknown as Database, log: logger } as unknown as core.JobContext,
+      { workspaceId: f.b.id, userId: f.ua, localDate: '2026-10-19' },
+      deps,
+    );
+    expect(outcome).toBe('skippedNotMember');
+    expect(sent).toEqual([]);
+  },
+  runNewsDigest: async (f) => {
+    // B's fan-out lists B's members only; A's owner is never enqueued.
+    const enqueued: { userId: string }[] = [];
+    await core.runNewsDigest(
+      { db: f.tx as unknown as Database, log: logger } as unknown as core.JobContext,
+      { workspaceId: f.b.id, localDate: '2026-10-19', slot: '07:30' },
+      { enqueue: (p) => Promise.resolve(enqueued.push(p)) },
+    );
+    expect(enqueued.map((e) => e.userId)).not.toContain(f.ua);
+  },
   runActivityDigest: async (f) => {
     // B's fan-out lists B's members only; at a slot nobody chose it enqueues nothing.
     const outcome = await core.runJob(
@@ -1477,6 +1626,24 @@ const CASES: Record<string, Case> = {
     for (const t of mine)
       expect(Object.keys(t).sort()).toEqual(['localDate', 'slot', 'workspaceId']);
     expect(mine.every((t) => t.slot === '20:30')).toBe(true);
+  },
+  runNewsDigestSchedule: async (f) => {
+    // The scheduler lists every workspace, but hands on ids, the local date and the slot only.
+    const targets: core.NewsDigestTarget[] = [];
+    await core.runNewsDigestSchedule(
+      { db: f.tx, log: logger },
+      {
+        now: () => new Date('2026-10-19T15:00:00Z'),
+        enqueue: (t) => {
+          targets.push(t);
+          return Promise.resolve();
+        },
+      },
+    );
+    const mine = targets.filter((t) => t.workspaceId === f.a.id || t.workspaceId === f.b.id);
+    expect(mine).toHaveLength(2);
+    for (const t of mine)
+      expect(Object.keys(t).sort()).toEqual(['localDate', 'slot', 'workspaceId']);
   },
   restrictMatter: async (f) => {
     const aMatter = f.a.rows.matter_restriction?.matterId ?? '';
@@ -2516,6 +2683,75 @@ const CASES: Record<string, Case> = {
       idempotencyKey: 'xt-usage-key',
     });
     expect(asB).toEqual({ applied: true, value: 2 });
+    expect(await aUsage(f)).toEqual(before);
+  },
+  createApiKey: async (f) => {
+    const before = await aApiKeys(f);
+    const input = { workspaceId: f.a.id, name: 'xt', scopes: ['cases:read'] };
+    await expectDenied(core.createApiKey(f.tx, { ...input, actorUserId: f.ub }));
+    await expect(
+      f.asB((s) => core.createApiKey(s, { ...input, actorUserId: f.ub })),
+    ).rejects.toBeInstanceOf(TenancyError);
+    expect(await aApiKeys(f)).toEqual(before);
+  },
+  listApiKeys: async (f) => {
+    await expectDenied(core.listApiKeys(f.tx, f.a.id, f.ub));
+    await expect(f.asB((s) => core.listApiKeys(s, f.a.id, f.ub))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    expect(await f.asB((s) => core.listApiKeys(s, f.b.id, f.ub))).toHaveLength(1);
+  },
+  revokeApiKey: async (f) => {
+    const before = await aApiKeys(f);
+    const keyId = before[0]?.id ?? '';
+    await expectDenied(core.revokeApiKey(f.tx, f.a.id, f.ub, keyId));
+    await expect(f.asB((s) => core.revokeApiKey(s, f.a.id, f.ub, keyId))).rejects.toBeInstanceOf(
+      TenancyError,
+    );
+    // B's own workspace with A's key id: not found, and A's key is untouched.
+    await expect(f.asB((s) => core.revokeApiKey(s, f.b.id, f.ub, keyId))).rejects.toMatchObject({
+      reason: 'NOT_FOUND',
+    });
+    expect(await aApiKeys(f)).toEqual(before);
+  },
+  authenticateApiKey: async (f) => {
+    // A token resolves only to the workspace that issued it; a B-scoped caller learns nothing else.
+    const { key, token } = await core.createApiKey(f.tx, {
+      workspaceId: f.a.id,
+      actorUserId: f.ua,
+      name: 'xt',
+      scopes: ['cases:read'],
+    });
+    const identity = await f.asB((s) => core.authenticateApiKey(s, token));
+    expect(identity).toMatchObject({ id: key.id, workspaceId: f.a.id });
+    expect(
+      await f.asB((s) => core.authenticateApiKey(s, core.generateApiKeyToken().token)),
+    ).toBeNull();
+  },
+  findApiKeyIssuer: async (f) => {
+    expect(await f.asB((s) => core.findApiKeyIssuer(s, f.ua))).toMatchObject({ id: f.ua });
+    expect(await f.asB((s) => core.findApiKeyIssuer(s, randomUUID()))).toBeNull();
+  },
+  apiKeyCallsThisPeriod: async (f) => {
+    await expect(
+      f.asB((s) =>
+        core.apiKeyCallsThisPeriod({ db: s, workspaceId: f.a.id }, randomUUID(), new Date()),
+      ),
+    ).rejects.toBeInstanceOf(TenancyError);
+  },
+  consumeApiCall: async (f) => {
+    const identity = {
+      id: randomUUID(),
+      workspaceId: f.a.id,
+      createdBy: f.ua,
+      scopes: ['cases:read'],
+      monthlyQuota: null,
+      rateLimitPerMinute: 60,
+    };
+    const before = await aUsage(f);
+    await expect(
+      f.asB((s) => core.consumeApiCall({ db: s, workspaceId: f.a.id }, identity, randomUUID())),
+    ).rejects.toBeInstanceOf(TenancyError);
     expect(await aUsage(f)).toEqual(before);
   },
   getUsage: async (f) => {

@@ -171,6 +171,8 @@ export const settingsExporter = tablesExporter('settings', [
   ws('matter_restriction'),
   // Integration tokens (#287): the kind and dates only; the token hash is a secret.
   ws('workspace_integration', { exclude: ['token_hash'] }),
+  // API keys (#624): the name, prefix, scopes and limits; the token hash is a secret.
+  ws('api_key', { exclude: ['token_hash'], userColumn: 'created_by' }),
   // Email forward-in intake (#54): the member's address and sender allow-list; the message ledger
   // leaves out the raw MIME object's key, which is internal like `blob.key`.
   ws('intake_address', { userColumn: 'user_id' }),
@@ -194,6 +196,8 @@ export const notificationsExporter = tablesExporter('notifications', [
   }),
   ws('notification_setting', { keys: ['user_id'], userColumn: 'user_id' }),
   ws('notification', { userColumn: 'user_id' }),
+  // News digest (#481): the member's followed practice areas and forums and their digest time.
+  ws('news_pref', { keys: ['user_id'], userColumn: 'user_id' }),
 ]);
 
 export const billingExporter = tablesExporter('billing', [

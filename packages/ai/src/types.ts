@@ -14,6 +14,7 @@ export const TASK_IDS = [
   'parse_order_a0',
   'translate',
   'summarise',
+  'tag_news',
   'tag_notice',
   'extract_issue_tags',
 ] as const;

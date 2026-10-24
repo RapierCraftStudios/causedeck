@@ -25,6 +25,7 @@ import { anchor, document, documentPage } from '../schema/documents.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { extraction } from '../schema/extraction.ts';
 import { advocateProfile } from '../schema/advocate-profile.ts';
+import { apiKey } from '../schema/api-keys.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
@@ -40,6 +41,7 @@ import { proceeding, proceedingLink, proceedingStateChange } from '../schema/pro
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
 import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
+import { newsPref } from '../schema/news.ts';
 import { contributedDocument, contributionLedger } from '../schema/network.ts';
 import { source } from '../schema/source-registry.ts';
 import { notification, notificationPref, notificationSetting } from '../schema/notifications.ts';
@@ -440,6 +442,10 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       enabled: false,
     });
     return { userId: ownerId, category: 'system.notice', channel: 'email' };
+  },
+  news_pref: async (tx, { workspaceId, ownerId }) => {
+    await tx.insert(newsPref).values({ workspaceId, userId: ownerId, practiceAreas: ['tax'] });
+    return { userId: ownerId };
   },
   notification_setting: async (tx, { workspaceId, ownerId }) => {
     await tx
@@ -939,6 +945,20 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, noticeId, matterId, reason: 'matter_forum' })
       .returning({ id: noticeMatch.id });
     return { noticeId, matterId, id: first(rows, 'notice_match').id };
+  },
+  api_key: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(apiKey)
+      .values({
+        workspaceId,
+        name: 'seed key',
+        prefix: 'seed',
+        tokenHash: `seed-hash-${tag}`,
+        scopes: ['cases:read'],
+        createdBy: ownerId,
+      })
+      .returning({ id: apiKey.id });
+    return { id: first(rows, 'api_key').id };
   },
   cause_list_watch: async (tx, { workspaceId, ownerId }) => {
     const rows = await tx

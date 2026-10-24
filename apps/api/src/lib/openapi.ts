@@ -2,17 +2,20 @@
 // declares `security` (and gets `requireAuth`) or is explicitly `public: true` (webhooks, which
 // verify signatures instead). `assertRouteSecurity` is the guard the unit tests run.
 import type { Role, SessionUser } from '@causedeck/auth';
+import type { ApiKeyIdentity } from '@causedeck/core/api-keys';
 import type { Transaction } from '@causedeck/db';
 import { OpenAPIHono, type RouteConfig } from '@hono/zod-openapi';
 import { PROBLEM_CONTENT_TYPE, ProblemSchema } from '@causedeck/validators/api';
 import type { Context, MiddlewareHandler } from 'hono';
 
-import { fieldErrors, UnauthenticatedError, ValidationError } from '../errors.ts';
+import { fieldErrors, ForbiddenError, UnauthenticatedError, ValidationError } from '../errors.ts';
 
 export interface Principal {
   user: SessionUser;
   /** How the caller authenticated; CSRF checks apply to `cookie` only. */
   via: 'cookie' | 'bearer';
+  /** Set when the bearer token is a workspace API key (#624); `user` is then the key's issuer. */
+  apiKey?: ApiKeyIdentity;
 }
 
 export type WithWorkspace = <T>(fn: (tx: Transaction) => Promise<T>) => Promise<T>;
@@ -67,6 +70,20 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (c.get('principal') === null) throw new UnauthenticatedError();
   await next();
 };
+
+/**
+ * Route middleware: an API key needs `scope` (403 otherwise). Cookie and other bearer callers are
+ * unaffected: scopes limit keys only.
+ */
+export function requireScope(scope: string): MiddlewareHandler<AppEnv> {
+  return async (c, next) => {
+    const apiKey = c.get('principal')?.apiKey;
+    if (apiKey !== undefined && !apiKey.scopes.includes(scope)) {
+      throw new ForbiddenError(`This API key lacks the ${scope} scope.`);
+    }
+    await next();
+  };
+}
 
 type Middleware = MiddlewareHandler<AppEnv>;
 

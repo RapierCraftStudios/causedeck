@@ -66,6 +66,33 @@ export {
   type MemberDigestOutcome,
 } from './definitions/activity-digest.ts';
 export {
+  newsDigest,
+  newsDigestMember,
+  newsDigestMemberSchema,
+  newsDigestSchedule,
+  newsDigestSchema,
+  newsDigestSlot,
+  runNewsDigest,
+  runNewsDigestMember,
+  runNewsDigestSchedule,
+  type NewsDigestMemberPayload,
+  type NewsDigestOutcome,
+  type NewsDigestPayload,
+  type NewsDigestTarget,
+} from './definitions/news-digest.ts';
+export {
+  newsPoll,
+  newsPollSchema,
+  runNewsPoll,
+  runNewsPollSchedule,
+  setNewsFetcherFactory,
+  systemNewsPoll,
+  type NewsFetcher,
+  type NewsFetcherFactory,
+  type NewsPollOutcome,
+  type NewsPollPayload,
+} from './definitions/news-poll.ts';
+export {
   billingProcessEvent,
   billingProcessEventSchema,
   runBillingProcessEvent,

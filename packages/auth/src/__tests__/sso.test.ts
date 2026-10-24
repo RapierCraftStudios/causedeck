@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  isBlockedSsoPath,
-  isSsoPath,
-  parseSsoConfig,
-  SsoConfigError,
-  ssoDomainOf,
-} from '../sso';
+import { isBlockedSsoPath, isSsoPath, parseSsoConfig, SsoConfigError, ssoDomainOf } from '../sso';
 
 const context = {
   protocol: 'oidc',
@@ -22,7 +16,15 @@ describe('ssoDomainOf', () => {
   });
 
   it('rejects anything that is not a domain', () => {
-    for (const value of ['', 'a@', 'localhost', 'a@b', '-x.example.com', 'a b.example.com', 'a@x.c']) {
+    for (const value of [
+      '',
+      'a@',
+      'localhost',
+      'a@b',
+      '-x.example.com',
+      'a b.example.com',
+      'a@x.c',
+    ]) {
       expect(ssoDomainOf(value), value).toBeNull();
     }
   });

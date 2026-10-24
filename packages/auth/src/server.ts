@@ -46,7 +46,8 @@ type GoogleEnv =
 /** The env keys auth reads. Secrets arrive only as #4 `Secret` values. */
 export type AuthEnv = Pick<ServerEnv, 'NODE_ENV' | 'APP_URL' | 'BETTER_AUTH_SECRET'> & GoogleEnv;
 
-export type SignInMethod = 'magic_link' | 'passkey' | 'google' | 'sso' | 'two_factor' | 'dev' | 'unknown';
+export type SignInMethod =
+  'magic_link' | 'passkey' | 'google' | 'sso' | 'two_factor' | 'dev' | 'unknown';
 
 /** One auth security event as plain data; `@causedeck/core` turns it into an audit row (#228). */
 export interface SecurityEventInput {

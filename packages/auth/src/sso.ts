@@ -13,6 +13,7 @@ import { z } from 'zod';
  * only ever read; the owner-only core service writes `sso_provider`.
  */
 export const ssoProviderAuth = pgTable('sso_provider_auth', {
+  id: text('id').notNull(),
   providerId: text('provider_id').notNull(),
   issuer: text('issuer').notNull(),
   domain: text('domain').notNull(),
@@ -90,10 +91,7 @@ export class SsoConfigError extends Error {
  * Validate owner-supplied settings and expand them to the plugin's stored `oidcConfig` or
  * `samlConfig` shape (the `sso_provider.config` column). Throws `SsoConfigError`.
  */
-export function parseSsoConfig(
-  context: SsoConfigContext,
-  input: unknown,
-): Record<string, unknown> {
+export function parseSsoConfig(context: SsoConfigContext, input: unknown): Record<string, unknown> {
   const issuer = context.issuer.trim().replace(/\/+$/, '');
   if (context.protocol === 'oidc') {
     const parsed = OidcInput.safeParse(input);
@@ -103,7 +101,8 @@ export function parseSsoConfig(
       pkce: true,
       clientId: parsed.data.clientId,
       clientSecret: parsed.data.clientSecret,
-      discoveryEndpoint: parsed.data.discoveryEndpoint ?? `${issuer}/.well-known/openid-configuration`,
+      discoveryEndpoint:
+        parsed.data.discoveryEndpoint ?? `${issuer}/.well-known/openid-configuration`,
       scopes: parsed.data.scopes ?? ['openid', 'email', 'profile'],
     };
   }
@@ -119,7 +118,9 @@ export function parseSsoConfig(
     ...(audience === undefined ? {} : { audience }),
     wantAssertionsSigned: true,
     idpMetadata: { entityID: issuer, cert },
-    spMetadata: { entityID: `${base}/api/auth/sso/saml2/sp/metadata?providerId=${context.providerId}` },
+    spMetadata: {
+      entityID: `${base}/api/auth/sso/saml2/sp/metadata?providerId=${context.providerId}`,
+    },
   };
 }
 

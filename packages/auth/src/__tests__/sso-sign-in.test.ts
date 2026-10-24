@@ -11,7 +11,14 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { RATE_LIMIT_MESSAGE, SSO_DOMAIN_LIMIT } from '../rate-limit';
 import type { SecurityEventRecorder } from '../server';
-import { authRequest, makeAuth, sessionSetCookie, uniqueEmail, uniqueIp } from './helpers';
+import {
+  authRequest,
+  cookieHeader,
+  makeAuth,
+  sessionSetCookie,
+  uniqueEmail,
+  uniqueIp,
+} from './helpers';
 
 const IDP = 'https://idp.sso-test.example';
 const CLIENT_ID = 'causedeck-client';
@@ -33,7 +40,7 @@ function idToken(claims: Record<string, unknown>): string {
 /** The mocked IdP: `/token` returns an ID token for `profile`; `/jwks` its public key. */
 function stubIdp(profile: { sub: string; email: string }) {
   const realFetch = globalThis.fetch;
-  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+  vi.stubGlobal('fetch', async (input: Request | URL | string, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     if (url.origin !== IDP) return realFetch(input, init);
     if (url.pathname === '/jwks') return Response.json({ keys: [jwk] });
@@ -62,10 +69,15 @@ async function seedProvider(options: { enabled?: boolean } = {}) {
     emailVerified: true,
   });
   await withWorkspace(db, { workspaceId, userId: ownerId }, async (tx) => {
+    await tx.insert(schema.organization).values({
+      id: workspaceId,
+      name: 'SSO Chambers',
+      slug: `sso-${providerId}`,
+      createdBy: ownerId,
+    });
     await tx
-      .insert(schema.organization)
-      .values({ id: workspaceId, name: 'SSO Chambers', slug: `sso-${providerId}`, createdBy: ownerId });
-    await tx.insert(schema.member).values({ organizationId: workspaceId, userId: ownerId, role: 'owner' });
+      .insert(schema.member)
+      .values({ organizationId: workspaceId, userId: ownerId, role: 'owner' });
     await tx.insert(schema.ssoProvider).values({
       id: providerId,
       workspaceId,
@@ -102,8 +114,7 @@ function recorder() {
     },
   } as unknown as SecurityEventRecorder;
   const fallback = new Proxy(securityEvents, {
-    get: (target, key) =>
-      key in target ? (target as never)[key] : () => Promise.resolve(),
+    get: (target, key) => (key in target ? (target as never)[key] : () => Promise.resolve()),
   });
   return { events, securityEvents: fallback };
 }
@@ -113,7 +124,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function startSignIn(auth: ReturnType<typeof makeAuth>['auth'], email: string, ip = uniqueIp()) {
+async function startSignIn(
+  auth: ReturnType<typeof makeAuth>['auth'],
+  email: string,
+  ip = uniqueIp(),
+) {
   return authRequest(auth, '/sign-in/sso', { ip, body: { email, callbackURL: '/' } });
 }
 
@@ -135,7 +150,7 @@ describe('SSO sign-in', () => {
     const callback = await authRequest(
       auth,
       `/sso/callback/${seed.providerId}?code=abc&state=${state ?? ''}`,
-      { method: 'GET' },
+      { method: 'GET', cookie: cookieHeader(start) },
     );
     expect(callback.status).toBe(302);
     expect(callback.headers.get('location')).not.toContain('error');

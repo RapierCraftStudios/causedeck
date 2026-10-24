@@ -153,10 +153,29 @@ Rate limiting is always on, with storage `database` (the `rate_limit` table).
 |---|---|
 | Magic link: 20 requests per IP per hour | Better Auth `customRules['/sign-in/magic-link']` |
 | Magic link: 5 requests per email per 15 minutes | a `hooks.before` counter in `rate_limit` under `magic-link:email:<sha256(lowercased email)>` |
+| SSO sign-in: 20 starts per IP per hour | Better Auth `customRules['/sign-in/sso']` (also the SSO callback paths) |
+| SSO sign-in: 10 starts per email domain per 15 minutes | a `hooks.before` counter in `rate_limit` under `sso:domain:<sha256(lowercased domain)>` |
 | Everything else | Better Auth defaults (100 per 10 s; 3 per 10 s on other `/sign-in*` paths) |
 
 Both magic-link limits answer `429 { "message": "Too many requests. Please try again later." }`.
 The client IP comes from `x-forwarded-for`, which must be set by our own proxy.
+
+## Single sign-on (#683)
+
+Per-organisation SSO uses the Better Auth `@better-auth/sso` plugin (OIDC and SAML).
+
+- **Providers.** Rows of `sso_provider` (#682), edited only by workspace owners through the core
+  service `@causedeck/core/workspaces` (`saveSsoProvider`, `deleteSsoProvider`) and the page
+  `/w/<slug>/settings/sso`. The plugin's own registration, listing and delete endpoints answer 404.
+- **Domain lookup.** The plugin reads the `sso_provider_auth` view (migration `20261024210000`):
+  enabled providers only, exposing the id, issuer, domain and protocol config, resolved by the
+  email's domain. Unknown and disabled domains fail identically, so the form cannot enumerate
+  organisations; a provider or organisation id is refused as input.
+- **Provisioning.** A first SSO sign-in creates the user and makes them a `viewer` of the
+  organisation, never an owner; an owner raises the role afterwards.
+- **Audit.** Provider changes write `sso.provider_created`, `sso.provider_updated` and
+  `sso.provider_deleted` (fail-closed, metadata without settings). Sign-in success and failure go
+  through the `SecurityEventRecorder` with method `sso`.
 
 ## Threat notes
 

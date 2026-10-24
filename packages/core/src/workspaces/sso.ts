@@ -19,7 +19,7 @@ type Queryable = Database | Transaction;
 
 const { ssoProvider } = schema;
 
-export type SsoProtocol = schema.SsoProtocol;
+export type SsoProtocol = typeof ssoProvider.$inferSelect['protocol'];
 
 /** What the settings page may know about a provider: never `config`. */
 export interface SsoProviderSummary {
@@ -97,13 +97,14 @@ export async function saveSsoProvider(
       request.providerId === undefined
         ? []
         : await tx
-            .select({ id: ssoProvider.id, protocol: ssoProvider.protocol, issuer: ssoProvider.issuer })
+            .select({
+              id: ssoProvider.id,
+              protocol: ssoProvider.protocol,
+              issuer: ssoProvider.issuer,
+            })
             .from(ssoProvider)
             .where(
-              and(
-                eq(ssoProvider.id, request.providerId),
-                eq(ssoProvider.workspaceId, workspaceId),
-              ),
+              and(eq(ssoProvider.id, request.providerId), eq(ssoProvider.workspaceId, workspaceId)),
             )
             .for('update');
     if (request.providerId !== undefined && !existing) throw notFound();

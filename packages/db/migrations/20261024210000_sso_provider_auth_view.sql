@@ -12,6 +12,7 @@ CREATE POLICY "owner_definer_read" ON "sso_provider" AS PERMISSIVE FOR SELECT TO
   USING (true);--> statement-breakpoint
 CREATE VIEW "sso_provider_auth" AS
   SELECT
+    p.id::text AS id,
     p.id::text AS provider_id,
     p.issuer,
     p.domain,
@@ -21,5 +22,14 @@ CREATE VIEW "sso_provider_auth" AS
     p.created_by::text AS user_id
   FROM "sso_provider" p
   WHERE p.enabled;--> statement-breakpoint
+CREATE FUNCTION "sso_provider_auth_noop_update"() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  -- The plugin "locks" a provider with an update that changes nothing before linking an account;
+  -- the view stays read-only, so the update is accepted and discarded.
+  RETURN NEW;
+END;
+$$;--> statement-breakpoint
+CREATE TRIGGER "sso_provider_auth_noop_update" INSTEAD OF UPDATE ON "sso_provider_auth"
+  FOR EACH ROW EXECUTE FUNCTION "sso_provider_auth_noop_update"();--> statement-breakpoint
 REVOKE ALL ON "sso_provider_auth" FROM PUBLIC;--> statement-breakpoint
 GRANT SELECT ON "sso_provider_auth" TO causedeck_app;

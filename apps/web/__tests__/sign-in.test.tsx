@@ -22,7 +22,9 @@ const client = vi.hoisted(() => ({
 
 vi.mock('../lib/auth-client.ts', () => ({
   authClient: {
-    signIn: { magicLink: client.magicLink, social: client.social,
+    signIn: {
+      magicLink: client.magicLink,
+      social: client.social,
       passkey: client.passkey,
       sso: client.sso,
     },

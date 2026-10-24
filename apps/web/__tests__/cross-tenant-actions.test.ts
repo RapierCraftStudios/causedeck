@@ -988,7 +988,9 @@ describe('cross-tenant server actions', () => {
     expect(JSON.stringify(saved)).not.toContain('probe-secret');
     expect(await snapshotA()).toEqual(before);
     const { id } = (saved as { data: { id: string } }).data;
-    expect(await action('deleteSsoProviderAction')({ workspaceId: t.b.id, providerId: id })).toEqual({
+    expect(
+      await action('deleteSsoProviderAction')({ workspaceId: t.b.id, providerId: id }),
+    ).toEqual({
       ok: true,
       data: { id },
     });

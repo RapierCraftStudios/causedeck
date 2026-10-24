@@ -10,9 +10,10 @@ import { Writable } from 'node:stream';
 import type { Mailer } from '@causedeck/auth/mailer';
 import { Secret } from '@causedeck/config/env';
 import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
+import { seedPlans } from '@causedeck/db/seed/plans';
 import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
 import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
-import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
+import { BILLING_SERVICE_TESTS, SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
@@ -21,7 +22,13 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { z } from 'zod';
 
 import { captureConfigFromProcess } from '../../capture/index.ts';
-import { countTrackedCases, getTrackedCaseCharge } from '../../billing/index.ts';
+import { TRACKED_CASE_PRICE_PAISE } from '@causedeck/billing/plans';
+
+import {
+  countTrackedCases,
+  getTrackedCaseCharge,
+  invalidateEntitlements,
+} from '../../billing/index.ts';
 import * as core from '../../index.ts';
 
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
@@ -3393,34 +3400,67 @@ describe('cross-tenant core services: ub on workspace B against A', () => {
   });
 });
 
-// Tracked-case metering (#664) lives in the `@causedeck/core/billing` subpath, not the root index,
-// so it is not in SERVICE_TESTS; this case holds the same B-on-A contract.
+// Tracked-case metering (#664) lives in the `@causedeck/core/billing` subpath, not the root index;
+// it is registered in BILLING_SERVICE_TESTS and holds the same B-on-A contract.
 describe('cross-tenant tracked-case metering: ub on workspace B against A', () => {
-  it("ignores A's portfolio cases and leaves A unchanged", async () => {
+  it('has a registry entry for each service tested here', () => {
+    expect(Object.keys(BILLING_SERVICE_TESTS).sort()).toEqual([
+      'countTrackedCases',
+      'getTrackedCaseCharge',
+    ]);
+  });
+
+  it("counts and charges only B's cases; naming A from B reads nothing", async () => {
     await withTestDb(async (tx) => {
+      await seedPlans(tx);
       const seeded = await seedTwoTenants(tx);
       const aId = seeded.a.id;
       const bId = seeded.b.id;
       const asB = <T>(fn: (s: Transaction) => Promise<T>) => inWorkspace(tx, bId, fn, seeded.ub);
-      const bBefore = await asB((s) => countTrackedCases(s, bId));
-      const aBefore = await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId));
-      await inWorkspace(tx, aId, async (s) => {
-        const [p] = await s
-          .insert(schema.portfolio)
-          .values({ workspaceId: aId, name: 'A book' })
-          .returning({ id: schema.portfolio.id });
-        await s.insert(schema.portfolioCase).values(
-          ['OA/1/2026', 'OA/2/2026'].map((caseNumber) => ({
-            workspaceId: aId,
-            portfolioId: p?.id ?? '',
-            caseNumber,
-          })),
+      const track = (workspaceId: string, n: number) =>
+        inWorkspace(tx, workspaceId, async (s) => {
+          const [p] = await s
+            .insert(schema.portfolio)
+            .values({ workspaceId, name: `Book ${randomUUID().slice(0, 8)}` })
+            .returning({ id: schema.portfolio.id });
+          await s.insert(schema.portfolioCase).values(
+            Array.from({ length: n }, (_, i) => ({
+              workspaceId,
+              portfolioId: p?.id ?? '',
+              caseNumber: `OA/${String(i + 1)}/2026`,
+            })),
+          );
+        });
+      for (const workspaceId of [aId, bId]) {
+        await inWorkspace(tx, workspaceId, (s) =>
+          s
+            .update(schema.subscription)
+            .set({ planId: 'institution-case-monthly', status: 'active', seats: 1, clerkSeats: 0 })
+            .where(eq(schema.subscription.workspaceId, workspaceId)),
         );
+        invalidateEntitlements(workspaceId);
+      }
+      // The two-tenant seed already gives each workspace a portfolio case; count from there.
+      const bSeeded = await inWorkspace(tx, bId, (s) => countTrackedCases(s, bId));
+      const aSeeded = await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId));
+      await track(aId, 5);
+      await track(bId, 2);
+      const bOwn = bSeeded + 2;
+
+      // B sees only its own cases and is charged for exactly those.
+      expect(await asB((s) => countTrackedCases(s, bId))).toBe(bOwn);
+      expect(await asB((s) => getTrackedCaseCharge(s, bId))).toEqual({
+        planId: 'institution-case-monthly',
+        trackedCases: bOwn,
+        chargePaise: bOwn * TRACKED_CASE_PRICE_PAISE,
       });
-      expect(await asB((s) => countTrackedCases(s, bId))).toBe(bBefore);
+      // Naming A from B is empty: no count, and no charge computed from A's cases.
       expect(await asB((s) => countTrackedCases(s, aId))).toBe(0);
-      expect((await asB((s) => getTrackedCaseCharge(s, aId))).chargePaise).toBe(0);
-      expect(await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId))).toBe(aBefore + 2);
+      const naming = await asB((s) => getTrackedCaseCharge(s, aId));
+      expect(naming.trackedCases).toBe(0);
+      expect(naming.chargePaise).toBe(0);
+      // A is untouched and still counts its own.
+      expect(await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId))).toBe(aSeeded + 5);
     });
   });
 });

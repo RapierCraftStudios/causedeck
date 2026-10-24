@@ -1512,6 +1512,24 @@ export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'pure (binds the app db, env config and job producer into a CaptureCtx; capture routes check membership and authorize gates each capture call, covered by packages/core/src/capture/__tests__/cross-tenant.test.ts)',
 };
 
+/**
+ * Tracked-case metering (#664) lives in the `@causedeck/core/billing` subpath, which the root
+ * index does not re-export, so the root registry above never sees it. These entries are checked
+ * for staleness against that subpath's exports and for an existing test file.
+ */
+export const BILLING_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  countTrackedCases: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'counts portfolio_case rows for the given workspace id on the caller transaction; RLS hides other workspaces rows',
+  },
+  getTrackedCaseCharge: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'reads the entitlement row and portfolio_case count for the given workspace id on the caller transaction; naming another workspace reads nothing and charges 0',
+  },
+};
+
 /** The storage presign cross-tenant test (#21). */
 export const STORAGE_PRESIGN_TEST = 'packages/storage/src/__tests__/cross-tenant-presign.test.ts';
 
@@ -1556,6 +1574,7 @@ export function registeredTestFiles(): string[] {
       ...Object.values(SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(NOTIFICATION_SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(RUNTIME_SERVICE_TESTS).map((entry) => entry.test),
+      ...Object.values(BILLING_SERVICE_TESTS).map((entry) => entry.test),
       STORAGE_PRESIGN_TEST,
     ]),
   ].sort();

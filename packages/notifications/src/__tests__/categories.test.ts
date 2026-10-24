@@ -20,6 +20,7 @@ describe('category registry', () => {
         'digest.end_of_day',
         'judgment.alert',
         'member.joined',
+        'notices',
         'proposal.new',
         'reminder.hearing',
         'security.alert',

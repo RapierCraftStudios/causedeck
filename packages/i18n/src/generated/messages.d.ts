@@ -711,6 +711,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        notices: {
+          label: string;
+          description: string;
+        };
         digestDaily: {
           label: string;
           description: string;

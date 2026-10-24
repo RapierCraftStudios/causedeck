@@ -99,6 +99,7 @@ function defaults(): PreferenceView[] {
     'status.next_date': ['in_app', 'push'],
     'status.order': ['in_app', 'push'],
     'status.stage': ['in_app', 'push'],
+    notices: ['in_app', 'push'],
     'digest.daily': ['email'],
     'digest.end_of_day': ['in_app', 'email'],
     'system.notice': ['in_app'],

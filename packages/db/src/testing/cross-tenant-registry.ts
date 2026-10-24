@@ -236,6 +236,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // KHC cause-list watches (#482)
   addCauseListWatch: selfScoped,
   matchNotices: selfScoped,
+  notifyNoticeMatches: selfScoped,
+  listHolidayListings: selfScoped,
   listCauseListWatches: selfScoped,
   removeCauseListWatch: selfScoped,
   // Case-status watches (#591)

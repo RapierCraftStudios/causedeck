@@ -124,6 +124,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // stages list rows as proposals through automation; it reads captures and documents from the
   // tables and never imports capture or jobs (the job bodies in jobs wrap it).
   import: Object.freeze(['matter-graph', 'usage', 'automation']),
+  // Zero-entry onboarding (#501, D-048): discovery stages the advocate's matched listings as
+  // proposals on an import batch through the import and automation indexes, reads the fetch policy
+  // through sources, and types its actor through matter-graph. Nothing is applied here.
+  onboarding: Object.freeze(['import', 'automation', 'sources', 'matter-graph']),
   // The migration concierge (#685): runs matter imports through the import domain's apply and undo
   // (imports `index.ts` only) and checks the actor's role through workspaces.
   migration: Object.freeze(['import', 'workspaces']),

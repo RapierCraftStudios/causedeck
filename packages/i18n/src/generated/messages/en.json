@@ -3573,6 +3573,7 @@
         "email": "Email",
         "ics": "Calendar file",
         "whatsapp_export": "Chat export",
+        "whatsapp": "WhatsApp",
         "bulk_import": "Import",
         "manual": "Typed note"
       }

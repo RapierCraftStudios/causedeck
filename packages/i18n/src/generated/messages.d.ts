@@ -3574,6 +3574,7 @@ export type Messages = {
         email: string;
         ics: string;
         whatsapp_export: string;
+        whatsapp: string;
         bulk_import: string;
         manual: string;
       };

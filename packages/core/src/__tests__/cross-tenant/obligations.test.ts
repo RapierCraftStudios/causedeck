@@ -85,9 +85,7 @@ describe('cross-tenant: obligations (#67)', () => {
         expect((await listDefects(deps(tx), actor)).map((d) => d.id)).not.toContain(aDefect);
         expect((await listCertifiedCopies(deps(tx), actor)).map((c) => c.id)).not.toContain(aCopy);
         const options = await obligationOptions(deps(tx), actor);
-        expect(options.matters.map((m) => m.id)).not.toContain(
-          String(t.a.rows.matter?.matterId ?? 'none'),
-        );
+        expect(options.matters.map((m) => m.id)).not.toContain(t.a.rows.matter?.matterId ?? 'none');
 
         // Direct SQL from B's scope sees none of A's rows and changes none.
         const seen = await inWorkspace(tx, t.b.id, (s) =>

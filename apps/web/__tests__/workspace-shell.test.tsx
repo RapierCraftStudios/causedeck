@@ -171,6 +171,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'matters',
   // Its own page and shell test since #48 (components/inbox/__tests__/inbox-shell.test.tsx).
   'inbox',
+  // Its own page test since #68 (obligations-page.test.tsx).
+  'obligations',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
@@ -523,7 +525,6 @@ describe('placeholder pages', () => {
   it('uses the #11 design-spec empty copy verbatim', async () => {
     const spec: Partial<Record<PlaceholderId, string>> = {
       today: 'No hearings today. Forward a cause list to see your court day.',
-      obligations: 'No open obligations.',
     };
     for (const [route, copy] of Object.entries(spec)) {
       withIntl(await pageFor(route as PlaceholderId)(props('demo')));

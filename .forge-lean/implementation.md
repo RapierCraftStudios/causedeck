@@ -1,34 +1,43 @@
 ### Approach
-Settings card on the existing notifications page with one server action per operation, calling `@causedeck/core/whatsapp-link` on the workspace transaction for the signed-in member only. A wrong code is returned as a value so core's attempt count commits.
+Continued the checkpointed branch: the static Next.js site was largely in place. Finished the remaining contract deliverables (README, scaffold regression test, `@causedeck/config` in transpilePackages) and fixed lint errors.
 
 ### Changes
-- apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts: request/verify/setCategories/unlink/get actions (masked number only, domain errors mapped, RATE_LIMITED -> CONFLICT).
-- apps/web/components/notifications/whatsapp-link-card.tsx: client card (opt-in, code, categories from WHATSAPP_CATEGORIES, unlink).
-- .../settings/notifications/page.tsx: loads the link via inWorkspace + getWhatsAppLink, renders the card below the push card; a load error shows a message only.
-- packages/i18n: whatsapp-link namespace (en/ta/kn), catalog.ts, catalog test, regenerated generated files and translation-status.json.
-- Tests: whatsapp-link-actions, whatsapp-link-card, cross-tenant-actions entries.
+- apps/site/next.config.ts: transpilePackages now includes @causedeck/config (D4).
+- apps/site/README.md: commands, content, env, deploy (D36).
+- apps/site/src/site-scaffold.test.ts: regression tests for R1-R6, R12 (D37).
+- apps/site/lib/mdx.ts, scripts/rule36-lint.ts, scripts/write-headers.ts: lint fixes only.
+- Earlier session: all other deliverables (see git diff).
 
 ### Acceptance Criteria Status
-- R1 ✅ whatsapp-link-card.tsx, page.tsx (WhatsAppSection)
-- R2 ✅ whatsapp-actions.ts
-- R3 ✅ packages/i18n/src/messages/*/whatsapp-link.json, catalog.ts, catalog.test.ts
-- R4 ✅ cross-tenant-actions.test.ts (ACTIONS, inputs, snapshotA, B-workspace test)
-- R5 deferred (OTP template needs provider approval; amendment)
+- R1 ✅ next.config.ts:11, build output verified (V5)
+- R2 ✅ lib/frontmatter.ts, lib/mdx.ts
+- R3 ✅ lib/seo.ts, app/sitemap.ts, app/robots.ts
+- R4 ✅ lib/seo.ts, src/site-scaffold.test.ts (JSON-LD test)
+- R5 ✅ scripts/rule36-lint.ts
+- R6 ✅ lib/env.ts, app/layout.tsx
+- R7 ✅ app/fonts.ts
+- R8 ✅ app/layout.tsx, globals.css, theme-toggle.tsx
+- R9 ✅ (instrumented) lighthouserc.json, .github/workflows/site.yml
+- R10 ✅ (instrumented) e2e/site/smoke.spec.ts
+- R11 ✅ (instrumented) site.yml deploy job
+- R12 ✅ public/_headers, scripts/write-headers.ts
+- R13 ✅ (instrumented) e2e/site/chrome.visual.spec.ts
 
 ### Verification
-- V1 web vitest (4 files): pass, 42 tests. New tests fail without the fix (modules absent).
-- V2 i18n vitest: pass, 37 tests.
-- V3 cross-tenant-actions (tenancy config): pass, 26 tests.
-- V4 checks.mjs: ran; `tsc --noEmit` in apps/web clean, prettier and eslint (changed files) clean.
+V1 vitest: pass (28 tests). V2 tsc: pass. V3 rule36 lint: pass. V4 eslint: pass. V5 build + artifact checks: pass. `forgedock check` PASS. The scaffold test file did not exist before this change, so it cannot pass without the site code.
 
 ### Notes
-No env vars. The code is not delivered over WhatsApp yet (no sendOtp, R5 deferred).
+pnpm-lock.yaml growth (about 1000 lines) is generated dependency resolution for the new site deps (hotspot-exempt amendment). Duplicate `metadata`/`dynamic` export names are Next.js route-file conventions.
+Env vars: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_ANALYTICS_SRC (unset by default). No devdocs freshness script in repo.
 
-### Stale-list follow-up
-The 30 flagged sibling lists (nav, routes, shortcuts, API dirs, e2e) are not i18n namespace lists; recorded as not_members in result.json. No code change.
+### Duplicate export names (reviewed, intentionally kept)
+`metadata` (layout.tsx, page.tsx, not-found.tsx) and `dynamic` (opengraph-image.tsx, robots.ts, sitemap.ts) are Next.js App Router file-convention exports. Next reads them by exact name from each route file, so renaming one silently drops that page's metadata or its force-static setting (and `output: 'export'` needs the latter on robots, sitemap and the OG image). They are per-route file exports, not shared module APIs: nothing imports them, and no registry, map or test is keyed by them. No code change made.
 
-### Post-merge verification
-The merge failure (`turbo: command not found`, exit 127) was environmental: `turbo` was not on PATH. No code conflict. Reran via `pnpm exec turbo run typecheck --filter='...[722c3900]'` (23 tasks passed), plus V1 (42 tests) and V2 (37 tests): all pass. No source change.
+### CI lint fix
+CI lint log was unavailable; reproduced locally. `eslint .` in apps/site linted the gitignored `out/` static export (thousands of errors in minified chunks): added `out/**` to the ignores in apps/site/eslint.config.js. `e2e/site/smoke.spec.ts` had a `no-unnecessary-condition` error on `document.activeElement?.`: rewritten with an explicit `Element | null` check. Site and e2e eslint, prettier and e2e tsc pass.
 
-### Post-merge typecheck
-Bare `turbo` is not on PATH (exit 127, environment). `pnpm turbo run typecheck --filter=...[722c3900]` on the merged tree: 23/23 tasks successful, no code change needed.
+## CI lint fix
+The lint job runs Prettier on changed files; the committed apps/site/next-env.d.ts (generated by Next) failed `prettier --check`. Reformatted it with prettier. ESLint on apps/site and e2e passes locally.
+
+## CI test failure (not caused by this branch)
+`@causedeck/intelligence` pipeline.test.ts "processes 20 text pages..." failed at 20.26 s against a 20 s wall-clock budget on a loaded runner. The branch does not touch packages/intelligence (git diff against the base is empty there), so this is a timing flake. No code change; recorded as an amendment in result.json. Re-run the shard.

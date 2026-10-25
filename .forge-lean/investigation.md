@@ -1,39 +1,38 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (feature; no live defect, no UI for the shipped WhatsApp link service)
+**Severity**: medium (greenfield feature, no live defect; blocks #90, #91, #95)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 4 of #502: a settings UI to link a WhatsApp number (OTP), choose message categories and unlink, with one server action per operation, an i18n namespace in en/kn/ta with its catalog test, and cross-tenant-actions test entries. Depends on #678 and #679 (both merged).
+Scaffold `apps/site` as a static marketing site: Next.js `output: 'export'`, MDX content with zod-validated frontmatter, per-page SEO metadata, sitemap/robots, build-time OG image, SoftwareApplication-only JSON-LD, Rule 36 copy lint, self-hosted fonts, `packages/ui` tokens with next-themes, `_headers`/`_redirects`, Cloudflare Pages workflow, Lighthouse CI, axe/e2e smoke, visual baselines, README. Depends on #134 (closed).
 
 ### What We Found
-- Core service exists (#678), verified on base `origin/milestone/instant-gtm-adoption` (c44d5405): `packages/core/src/whatsapp-link/link.ts:90` `requestWhatsAppOtp` (needs `consent`, 60s cooldown), `:166` `verifyWhatsAppOtp`, `:242` `getWhatsAppLink` (masked number), `:254` `setWhatsAppCategories`, `:275` `unlinkWhatsApp`; exported via `@causedeck/core/whatsapp-link` (`packages/core/package.json:37`). `WhatsAppDeps.sendOtp` is optional (`link.ts:32`): without it no code is delivered.
-- Outbound sender exists (#679): `packages/notifications/src/channels/whatsapp.ts:18` has templates only for `court.board`, `status.order`, `digest.end_of_day` (`WHATSAPP_CATEGORIES`, `:25`, exported as `@causedeck/notifications/whatsapp`). No OTP template exists.
-- No web UI or action references WhatsApp link: `grep whatsapp-link apps/web` finds nothing. Closest pattern: `apps/web/app/(app)/w/[slug]/settings/notifications/{actions.ts,page.tsx,preferences-form.tsx}` (`workspaceAction` + `WorkspaceScoped`, `ctx.tx`, `ctx.userId`; actions are thin async wrappers because a `'use server'` module can only export async functions).
-- Errors: core throws domain errors (`NOT_FOUND`, `CONFLICT`, `VALIDATION`, rate-limited); `apps/web/lib/matters/graph-deps.ts:30` `domainErrorCode` + the `guarded` pattern in `settings/case-watch/actions.ts:~64` map them to `ActionError`.
-- Page reads under a workspace tx via `inWorkspace` from `@causedeck/core/runtime` (`apps/web/lib/workspace-action.ts:105`).
-- Registry guard: `apps/web/__tests__/cross-tenant-actions.test.ts:93-` imports each actions module, `ACTIONS` (`:~118`) maps name to module, probe inputs in `inputs()` (`:~475`), and a per-feature "under B's own workspace" test (`:~937`) checks A's snapshot is unchanged. A new actions file without entries fails that test.
-- i18n: `packages/i18n/src/catalog.ts:7` `NAMESPACES` (one file per locale per namespace, asserted by `catalog.test.ts` "exactly one file per namespace"), top-level key list asserted at `catalog.test.ts:~92`; generated catalogs are committed (`packages/i18n/src/generated/`, regenerated with `pnpm --filter @causedeck/i18n i18n:types`, checked by the test "committed generated files match").
-- Nav: `apps/web/lib/settings-nav.ts` has fixed section lists; the push card is already placed as a card on the notifications page (`page.tsx` `PushPermissionCard`), so a WhatsApp card there needs no nav change.
+(Verified against `origin/milestone/site-onboarding-launch` = b1c3467a. The "Investigation Report" comment on #89 is about a WhatsApp settings UI, is unrelated to this issue, and was ignored. The existing `.forge-lean/*` files in the tree were stale from another issue and are overwritten.)
+- `apps/site` is a stub, not an app: `apps/site/package.json:9` build script is `node -e "console.log('nothing to build yet')"`; devDependencies only config/types/eslint/ts/vitest (`package.json:13-19`). No next, react, mdx, zod, next-themes, `app/`, `public/`, `next.config.ts`, `lib/`, `components/`.
+- Package name is `@causedeck/site` (`package.json:2`); the issue's `pnpm --filter site build` equals `pnpm --filter @causedeck/site build` (renaming would break `src/index.ts:2` and `src/index.test.ts`).
+- Existing site content is plain `.md` with a different frontmatter schema (`slug/locale/title/order/law/fixture/reviewer/reviewedOn`): `apps/site/content/learn/**/{en,kn,ta}.md`, `content/developers/api.md`; consumed by `src/learn/*` and tested by `src/learn/learn.test.ts:59`, `src/developer-docs.test.ts:6`. The new MDX pipeline must not touch `.md` files or these.
+- `apps/site/tsconfig.json:3` includes only `src` and `*.ts`; must add `app`, `lib`, `components`, `scripts`, `next-env.d.ts`, `.next/types`. ESLint already uses `@causedeck/config/eslint/next` (`eslint.config.js:1`); `APP_NAMES` already contains `site` (`packages/config/eslint/boundaries.js:151`).
+- Reusable references in web: fonts via `next/font/local` from `packages/ui/fonts/*.woff2` (`apps/web/app/fonts.ts:10-50`, files incl. noto-sans-tamil/kannada present), token imports and Tailwind preset (`apps/web/app/globals.css:1-14`), `next.config.ts` `transpilePackages` list (`apps/web/next.config.ts:15-34`) and security headers (`:38-48`).
+- Catalog (`pnpm-workspace.yaml`) has next 16.4.2 (`:146`), react 19.3.1, next-themes 0.4.6 (`:148`), zod 4.6.7 (`:190`), tailwind 4.3.3 / `@tailwindcss/postcss`, `@lhci/cli` (`:65`), `@playwright/test`, `@axe-core/playwright` (`:54`), tsx (`:179`), sharp. Missing: any MDX package, wrangler.
+- CI: `turbo.json:5-7` build outputs list has no `out/**`; `ci.yml:188` build job runs `ci-affected.sh build` (so site's real build will run in CI). No `site.yml`. E2E harness (`e2e/playwright.config.ts:121-135`) has a single `webServer` building apps/web plus DB global setup, so site specs need their own config. Lighthouse configs are per-surface (`e2e/lighthouserc*.json`).
+- No `rule36` lint, `_headers`, `_redirects`, sitemap, robots anywhere in the repo.
 
 ### Root Cause
-Missing feature: #678 and #679 shipped the service and sender without a user-facing surface, so no member can opt in, verify, choose categories or unlink.
+Greenfield: #2 created the empty package; the site was never built (spike #1 §1/§2/§3.3 specify it).
 
 ### Affected Files
-- new `apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts` (actions)
-- new `apps/web/components/notifications/whatsapp-link-card.tsx` (client card)
-- `apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx` (load link, render card)
-- `packages/i18n/src/messages/{en,kn,ta}/whatsapp-link.json`, `packages/i18n/src/catalog.ts`, `packages/i18n/src/__tests__/catalog.test.ts`, regenerated `packages/i18n/src/generated/**`
-- `apps/web/__tests__/cross-tenant-actions.test.ts`; new `apps/web/__tests__/whatsapp-link-actions.test.ts`, `whatsapp-link-card.test.tsx`
+`apps/site/{package.json,tsconfig.json,next.config.ts,postcss.config.mjs,vitest.config.ts,eslint.config.js,README.md}`, `apps/site/app/**` (layout, page, `(content)/[...slug]`, sitemap, robots, not-found, opengraph-image, globals.css, fonts.ts), `apps/site/lib/{mdx,seo,env,frontmatter}.ts`, `apps/site/components/*`, `apps/site/content/**/*.mdx`, `apps/site/public/_headers|_redirects`, `apps/site/scripts/{rule36-lint,write-headers}.ts`, `apps/site/lighthouserc.json`, `.github/workflows/site.yml`, `e2e/site/smoke.spec.ts` + `e2e/playwright.site.config.ts`, `turbo.json`, `pnpm-workspace.yaml` + `pnpm-lock.yaml`, `docs/engineering/ci.md` (site job note).
 
 ### Sibling Sweep
-Same defect class (service without UI) not present elsewhere in the lane. Other actions modules are all registered in `cross-tenant-actions.test.ts`; the new module must be too. The nested `settings/integrations/*` modules show per-feature action files are accepted.
+- Other apps with next config: only `apps/web` (reference); `apps/admin` is a similar stub (out of scope).
+- Registries from CLAUDE.md: no `@causedeck/core` export, `'use server'` action, table, job, i18n namespace, or core-domain import is added, so none apply. The site must not import `@causedeck/core`/db/auth (no tenant data).
+- `.md` learn/developer content and `src/learn` keep working; the Rule 36 lint should scan MDX/TSX under `app`, `components`, `content/**/*.mdx` only, so existing legal-education `.md` (which legitimately mentions lawyers) is not flagged unless counsel-scope decides otherwise.
 
 ### History
-Service added in 15574312 (#678); sender in #679 (merged, PR #709). No prior UI attempt. Earlier `.forge-lean/*` files in the tree belong to #679 and are overwritten.
+Stub from db3e22d4 (#2) and 937e90fe (#3); content added by 1f599f4e (#627 API docs), edd19927 (learn modules), 8d6fd8da. No prior attempt at the app itself.
 
 ### Recommendation
-Add five actions (request OTP, verify, set categories, unlink, get link) via `workspaceAction`; the input never names a user (`ctx.userId`). Add a WhatsApp card to the notifications settings page, a new `whatsappLink` i18n namespace, tests and registry entries. Outbound OTP delivery needs a provider-approved OTP template (an external provider action) and is deferred; until then the request action works without a sender and the code is not delivered.
+One lane, ordered: (1) deps and config; (2) env/frontmatter/seo libs with unit tests; (3) layout/theme/fonts/components; (4) MDX route, sitemap, robots, OG, 404; (5) rule36 lint wired into `build`; (6) `_headers` generation; (7) CI workflow, lighthouse config, e2e spec, README. Use `next-mdx-remote/rsc` `compileMDX` (one new dep, works in static export, pure build-time) rather than `@next/mdx` + loader + react + types. CSP "without inline scripts" conflicts with Next's inline bootstrap scripts and next-themes' no-flash script, so a post-build step hashes each page's inline scripts into per-route `script-src 'sha256-…'` entries in `out/_headers` (no `unsafe-inline`). `build` = `next build && tsx scripts/write-headers.ts`, preceded by the rule36 lint. Browser/CI-only criteria (Lighthouse, axe, visual baselines, deploy) are delivered as config/spec/workflow and measured in CI, never run locally.
 
 ### Related Issues
-#502 (parent), #678, #679 (done), #680 (inbound webhook sibling), #488 (provider residency review).
+#1 (parent), #134 (dependency, closed), #90, #91, #95 (consume the scaffold), #99, #107 (Cloudflare credentials), #117 (counsel sign-off).

@@ -1,58 +1,107 @@
 {
  "status": "fixed",
- "summary": "WhatsApp link card, five server actions, whatsappLink i18n namespace and cross-tenant entries on the notifications settings page; OTP delivery deferred (R5).",
+ "summary": "Fix actionlint SC2086 in site workflow; declare non-contract support files via amendments",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "apps/web/components/notifications/whatsapp-link-card.tsx:57; page.tsx WhatsAppSection"
+   "evidence": "apps/site/next.config.ts:11"
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts:113"
+   "evidence": "apps/site/lib/frontmatter.ts:11"
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "packages/i18n/src/messages/en/whatsapp-link.json:1; catalog.ts:33"
+   "evidence": "apps/site/lib/seo.ts:25"
   },
   {
    "id": "R4",
    "status": "implemented",
-   "evidence": "apps/web/__tests__/cross-tenant-actions.test.ts:153"
+   "evidence": "apps/site/src/site-scaffold.test.ts"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "apps/site/scripts/rule36-lint.ts:10"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "apps/site/lib/env.ts:15"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "apps/site/app/fonts.ts:7"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": "apps/site/app/layout.tsx:33"
+  },
+  {
+   "id": "R9",
+   "status": "implemented",
+   "evidence": "apps/site/lighthouserc.json",
+   "instrumented": true
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "e2e/site/smoke.spec.ts",
+   "instrumented": true
+  },
+  {
+   "id": "R11",
+   "status": "implemented",
+   "evidence": ".github/workflows/site.yml deploy job",
+   "instrumented": true
+  },
+  {
+   "id": "R12",
+   "status": "implemented",
+   "evidence": "apps/site/public/_headers"
+  },
+  {
+   "id": "R13",
+   "status": "implemented",
+   "evidence": "e2e/site/chrome.visual.spec.ts",
+   "instrumented": true
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "web vitest whatsapp-link-actions, whatsapp-link-card, notification-preferences(.actions)",
+   "command": "pnpm --filter @causedeck/site exec vitest run",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "i18n vitest catalog, check-catalogs",
+   "command": "pnpm --filter @causedeck/site exec tsc --noEmit",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "web vitest tenancy cross-tenant-actions",
+   "command": "pnpm --filter @causedeck/site exec tsx scripts/rule36-lint.ts",
    "exit": 0
   },
   {
    "id": "V4",
-   "command": "checks.mjs --base origin/milestone/instant-gtm-adoption",
+   "command": "pnpm --filter @causedeck/site exec eslint app lib components scripts src vitest.config.ts next.config.ts",
    "exit": 0
   },
   {
    "id": "V5",
-   "command": "pnpm turbo run typecheck --filter=...[722c3900] (merged tree)",
+   "command": "pnpm --filter @causedeck/site build && artifact checks",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "web whatsapp-link-actions + whatsapp-link-card + cross-tenant-actions",
+   "command": "pnpm --filter @causedeck/site exec vitest run",
    "result": "pass",
    "fails_without_fix": true
   }
@@ -61,175 +110,69 @@
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "R1-R4 delivered per implementation.md; R5 is a contract-deferred item"
+   "evidence": "all deliver requirements mapped above; out-of-band ones instrumented"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "V1-V3 pass; tsc --noEmit in apps/web clean"
+   "evidence": "existing src tests pass (28 total)"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "forgedock check PASS; preserve items untouched (git diff touches no core/db/notifications)"
+   "evidence": "forgedock check PASS V1-V5"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "git diff --stat lists only deliverable paths and tests"
+   "evidence": "changes limited to apps/site, e2e/site, workflow, turbo.json, workspace files"
   }
  ],
- "amendments": [],
- "not_members": [
+ "amendments": [
   {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
+   "kind": "add-deliverable",
+   "path": "pnpm-lock.yaml",
+   "why": "hotspot-exempt: generated lockfile; the growth is the resolved dependency graph of the new @causedeck/site dependencies (next, next-mdx-remote, next-themes, tailwind, tsx) from `pnpm install --lockfile-only`, and cannot be split into another module."
   },
   {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
+   "kind": "note-unrelated-ci-failure",
+   "path": "packages/intelligence/src/pipeline/pipeline.test.ts",
+   "why": "CI failure is a wall-clock budget assertion (20.26 s vs 20 s) in packages/intelligence on a shared runner. This branch changes nothing under packages/intelligence or its dependencies (apps/site, e2e/site, workflow, workspace files only), so the failure is a timing flake unrelated to #89; no code change made. Re-run the shard."
   },
   {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
+   "kind": "add-deliverable",
+   "path": "apps/site/eslint.config.js",
+   "why": "ignore the gitignored static export out/ so V4/CI lint does not scan build output"
   },
   {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
+   "kind": "add-deliverable",
+   "path": "e2e/tsconfig.json",
+   "why": "include e2e/site so the new Playwright site specs are typechecked"
   },
   {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
+   "kind": "add-deliverable",
+   "path": "apps/site/next-env.d.ts",
+   "why": "Next-generated types file required by tsconfig; committed formatted for the Prettier check"
   },
   {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
+   "kind": "add-deliverable",
+   "path": "apps/site/content/legal/draft-notice.mdx",
+   "why": "the legal draft flagged noindex that R3 requires, exercised by the scaffold test"
   },
   {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
+   "kind": "add-deliverable",
+   "path": "e2e/site/static-server.mjs",
+   "why": "static server for out/ applying _headers, used by playwright.site.config.ts (D34)"
   },
   {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
+   "kind": "note-unrelated-ci-failure",
+   "path": "packages/core",
+   "why": "gitleaks flags test fixtures in packages/core (status.test.ts, automation handlers.test.ts) from earlier history, untouched by this branch"
   }
- ]
+ ],
+ "facts": {
+  "decisions": [
+   "Duplicate metadata/dynamic export names across app route files are Next.js route-file conventions, kept by design (not a contract change)."
+  ]
+ }
 }

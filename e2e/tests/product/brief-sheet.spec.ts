@@ -66,8 +66,13 @@ test.describe('brief sheet', () => {
     asUser,
   }) => {
     await openBrief(page, asUser);
-    await page.keyboard.press('?');
-    await expect(page.getByRole('dialog')).toBeVisible();
+    // The shortcuts dialog loads as a lazy chunk and owns the `?` hotkey, so a press that lands
+    // before the chunk is in is lost: press again until it opens.
+    const dialog = page.getByRole('dialog');
+    await expect(async () => {
+      if (!(await dialog.isVisible())) await page.keyboard.press('?');
+      await expect(dialog).toBeVisible({ timeout: 1_000 });
+    }).toPass();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await page.keyboard.press('1');
@@ -88,9 +93,15 @@ test.describe('brief sheet', () => {
     await expect(page.getByRole('navigation', { name: /jump|sections/i })).toBeVisible();
     for (const size of [SIZES.tablet, SIZES.desktop]) {
       await page.setViewportSize(size);
+      // From 768 px the workspace sidebar takes the left edge, so the sheet is centred in the page
+      // area (`main`), not in the viewport.
       const box = await page.locator('article').boundingBox();
+      const area = await page.locator('main').boundingBox();
       expect(box).not.toBeNull();
-      if (box) expect(Math.abs(box.x + box.width / 2 - size.width / 2)).toBeLessThan(40);
+      expect(area).not.toBeNull();
+      if (box && area) {
+        expect(Math.abs(box.x + box.width / 2 - (area.x + area.width / 2))).toBeLessThan(40);
+      }
     }
   });
 

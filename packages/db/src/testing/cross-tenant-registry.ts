@@ -125,6 +125,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   court_day_marker: DB_TABLES_TEST,
   list_snapshot: DB_TABLES_TEST,
 
+  // Brief state (#60).
+  brief_state: DB_TABLES_TEST,
+
   // Review and correction queue (#518).
   review_correction: DB_TABLES_TEST,
 
@@ -466,6 +469,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   snapshotList: denies,
   proposeCourtDayNextDate: denies,
   listConflictCards: denies,
+  // briefs (#60): B acting on A's listing is denied (NOT_FOUND), A's brief state is unchanged
+  assembleBrief: denies,
+  markPrepared: denies,
+  unmarkPrepared: denies,
+  setCarryItem: denies,
+  setBriefNote: denies,
+  refreshBrief: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -846,6 +856,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // briefs (#60): pure scoring, the empty memory port, and the system sweep
+  computeReadiness: 'pure',
+  emptyMemoryProvider: 'constant: the default memory port returns nothing',
+  onCourtDayListChanged:
+    "trigger consumer: lists the changed list's listings inside the event's own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts",
+  refreshBriefTargets:
+    'system job body: no workspace; lists targets only through the owner-defined app_brief_refresh_targets and refreshes each in its own workspace scope; covered by briefs/__tests__/state.test.ts',
   // portfolio (#663): pure CSV reader and constants
   parsePortfolioCsv: 'pure',
   MAX_PORTFOLIO_IMPORT_ROWS: 'constant',

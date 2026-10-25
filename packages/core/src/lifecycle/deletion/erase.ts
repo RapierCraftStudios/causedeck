@@ -91,6 +91,8 @@ export const PURGE_ORDER = [
   'task',
   'obligation',
   'order',
+  // Brief state (#60): cites a listing, so it goes first.
+  'brief_state',
   'listing',
   'bench_change_alert',
   'bench_roster_entry',

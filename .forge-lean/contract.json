@@ -2,102 +2,96 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`getCourtDay(ctx, {date, scope})` returns items grouped complex -> hall -> list type -> item number, each item carrying proceeding, matter, stage heading (raw and normalised), bench, appearance capacity, assignee, open-obligation count, carry-count and provenance (`source_type`, `anchor_id`, `confidence`, `confirmation_state`). [type:unit]",
+   "quote": "`assembleBrief(ctx, listingId)` returns all PRD PR-1 sections; each `BriefLine` carries `source_type`, `source_ref`, `anchor_id` (or `manual`), `confidence` and `confirmation_state`. A line with no provenance is not emitted. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Scope `mine` returns only items for the calling member's matters and appearances; scope `workspace` returns all items and is rejected for roles without `court_day:view_all` (owner, advocate per owner setting). [type:api]",
+   "quote": "Last order section shows 2-3 lines produced from the order's confirmed operative directions with a page-anchored link; if the extraction is unconfirmed the line is labelled 'Unconfirmed' and still anchored. No date appears that is absent from the anchored source text. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Items are ordered by item number within a hall list as numeric, not lexicographic (item 9 before item 10); supplementary lists sort after the daily list; ties are broken by serial. [type:unit]",
+   "quote": "Open obligations are listed with owner, due date, status and the phrase pattern 'counter not yet filed; due 20 Oct'; overdue items sort first; closed obligations are excluded but counted. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "`detectClashes` flags two or more listings on the same date for the same appearing member in different halls or different complexes, and returns both items, the member and the kind (`hall`, `complex`). Same-hall multi-item listings are never a clash. [type:unit]",
+   "quote": "Carry list is the union of (a) documents linked to open obligations, (b) the workspace's M2 'always carry' rules (when #74 wires memory; until then an empty provider), and (c) manual items; manual add, remove and tick persist in `brief_state` and survive re-assembly. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Clash detection never claims a predicted time overlap; output carries only the factual statement (same date, different hall) so the UI cannot imply a prediction. [type:unit]",
+   "quote": "Synopsis (M3), last-hearing summary and court notes (M4) are fetched through the memory scope check; a clerk's brief omits synopsis strategy fields and M4 notes entirely (server-side, not hidden in the UI). [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "`snapshotList` stores an immutable hash and row list of each list ingestion; `diffLists(prev, next)` returns `added`, `removed`, `moved` (hall or item changed) and `stage_changed` entries and is idempotent for identical input. [type:unit]",
+   "quote": "Document context returns at most 5 matter-scoped passages with page and quote anchors, retrieved by pgvector or full-text within the matter only; it never returns a passage from another matter or workspace. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "A diff between a daily list and its later supplementary list is labelled `supplementary` and sorts new rows first; the diff is computed only from lawyer-supplied or forwarded lists (no fetching). [type:unit]",
+   "quote": "`computeReadiness` returns a 0-100 score and per-segment booleans (stage known, last order present and confirmed, obligations reconciled, carry list reviewed) with human-readable reasons for each missing segment. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "`setCurrentItem` stores the lawyer's manual marker per hall and date with the setter and time; it is an internal note, writes an `audit_event`, and never changes any listing. [type:api]",
+   "quote": "`markPrepared` records who and when; any later material change (new order, changed stage, new obligation) clears the mark and emits `brief.stale` with the reason. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Exactly one canonical next date per proceeding is preserved: `proposeNextDate` creates a proposal (L2) and, when it disagrees with an existing confirmed date, a conflict card holding both sources; a confirmed date is never overwritten automatically. [type:unit]",
+   "quote": "Sensitive-matter flag (AI off): assembly skips AI compression and context retrieval from embeddings and still returns a deterministic brief. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "A partial unique index `listing(proceeding_id) where canonical` is asserted by a test that attempts two canonical rows and expects a constraint violation. [type:unit]",
+   "quote": "Assembly p95 \u003c 5 s per listing on the seeded dataset (target \u003c 1.5 s deterministic path), and `brief.refresh` is idempotent (running twice yields the same row and no duplicate events). [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Matters expected but not listed (a proceeding whose confirmed next date equals D but has no listing) are returned in `expectedNotListed`. [type:unit]",
+   "quote": "A job refreshes briefs for all listings on tomorrow's board and for matters likely to be reached (all matters with a confirmed next date within 7 days), because advance notice in Karnataka is about one day. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "Roles: clerk can read court-day items but strategy-bearing fields (court notes, matter memory snippets) are absent from the clerk payload (column-scoped view). [type:api]",
+   "quote": "All AI calls go through the gateway, are logged to `ai_call`, and run in India-only mode; the mock provider is used in CI. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "Performance: `getCourtDay` p95 \u003c 150 ms on the seeded chamber dataset (about 40 listings) and issues no more than 6 SQL statements (no N+1). [type:unit]",
+   "quote": "No outward action exists in this module: no send, export-to-third-party or filing function. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "Sensitive matters (AI-off flag) are still listed but expose no AI-derived fields. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R15",
    "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R16",
+   "id": "R15",
    "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R17",
+   "id": "R16",
    "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
@@ -106,350 +100,437 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/court-day.ts",
-   "change": "zod CourtDayQuery, CourtDayItem, CourtDay, Clash, ListDiff, CurrentItemMarker, SnapshotRow; no any",
+   "path": "packages/validators/src/brief.ts",
+   "change": "zod schemas and types: Brief, BriefSection, BriefLine (source_type, source_ref, anchor_id|manual, confidence, confirmation_state), ObligationLine, ContextPassage, Readiness, CarryItem, BriefState, input schemas for markPrepared/setCarryItem/setBriefNote. Export from packages/validators/src/index.ts with a colocated brief.test.ts.",
    "requirements": [
     "R1",
-    "R4",
-    "R6",
-    "R17"
+    "R7",
+    "R16"
    ]
   },
   {
    "id": "D2",
    "path": "packages/validators/src/index.ts",
-   "change": "export court-day schemas",
+   "change": "re-export brief.ts",
    "requirements": [
-    "R17"
+    "R16"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/src/schema/court-day.ts",
-   "change": "tenantTable court_day_marker (unique workspace,hall,list_date) and list_snapshot (content_hash, rows jsonb, forum_id, list_date, list_type, source_capture_id nullable, immutable)",
+   "path": "packages/db/src/schema/brief.ts",
+   "change": "tenantTable brief_state(id, workspace_id, listing_id, prepared_by, prepared_at, carry jsonb, note text, updated_at, updated_by), unique (workspace_id, listing_id), composite FK to listing, checks on carry jsonb array.",
    "requirements": [
-    "R6",
+    "R4",
     "R8",
-    "R16"
+    "R15"
    ]
   },
   {
    "id": "D4",
    "path": "packages/db/src/schema/index.ts",
-   "change": "export the new schema",
+   "change": "export brief schema",
    "requirements": [
-    "R16"
+    "R15"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/db/migrations/20261024170000_court_day.sql",
-   "change": "review-headed migration creating both tables with ENABLE+FORCE RLS ws_isolation on app.workspace_id, grants, snapshot immutability trigger; use the next free timestamp if taken",
+   "path": "packages/db/migrations/20261025000000_brief_state.sql",
+   "change": "create brief_state with FORCE RLS on app.workspace_id (match 20261024170000_court_day.sql), plus owner-defined app_brief_refresh_targets() returning (workspace_id, listing_id) for tomorrow's listings and matters with a confirmed next date within 7 days; add meta/20261025000000_snapshot.json and _journal.json entry (use the next free timestamp if taken).",
    "requirements": [
-    "R16"
+    "R11",
+    "R15"
    ]
   },
   {
    "id": "D6",
    "path": "packages/db/migrations/meta/_journal.json",
-   "change": "journal entry plus regenerated snapshot JSON file for D5 in packages/db/migrations/meta/",
+   "change": "journal entry for the brief_state migration (snapshot file generated alongside)",
    "requirements": [
-    "R16"
+    "R15"
    ]
   },
   {
    "id": "D7",
    "path": "packages/db/src/index.test.ts",
-   "change": "add both tables to the root table list",
+   "change": "add brief_state to the root table list",
    "requirements": [
-    "R16"
+    "R15"
    ]
   },
   {
    "id": "D8",
    "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "add both tables to the RLS catalog and TABLE_TESTS",
+   "change": "add brief_state to the RLS catalog",
    "requirements": [
-    "R15",
-    "R16"
+    "R14",
+    "R15"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/db/src/testing/two-tenants.ts",
-   "change": "seed marker and snapshot rows for both tenants",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "register brief_state table test; SERVICE_TESTS entries for every new runtime export of @causedeck/core briefs (assembleBrief, computeReadiness (NOT_A_SERVICE: pure), markPrepared, unmarkPrepared, setCarryItem, setBriefNote, refreshBrief/run job body) or NOT_A_SERVICE with reason.",
    "requirements": [
+    "R14",
     "R15"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "register new core exports: setCurrentItem, clearCurrentItem, getCourtDay, snapshotList, listConflictCards, proposeNextDate(court-day) in SERVICE_TESTS; pure detectClashes/diffLists in NOT_A_SERVICE with reason",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "two-tenant seeder for brief_state",
    "requirements": [
+    "R14",
     "R15"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "real B-on-A cases for each SERVICE_TESTS entry, including a user belonging to both workspaces",
+   "path": "packages/db/src/seed/brief-fixtures.ts",
+   "change": "seeded dataset for the brief tests and the p95 check (listings, anchored orders, obligations, document pages, a sensitive matter, a second matter and workspace); valid domain values only.",
    "requirements": [
-    "R15"
+    "R1",
+    "R6",
+    "R10"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/db/src/seed/court-day-fixtures.ts",
-   "change": "synthetic Madras HC and Karnataka HC chamber lists (~40 listings), fictional parties, valid domain values",
+   "path": "packages/core/src/briefs/assemble.ts",
+   "change": "assembleBrief(ctx, listingId, opts?): derived brief via scope helper (withWorkspace, role from membership, can()), drops any line without provenance, applies sensitive flag (no AI, no context retrieval), injected BriefDeps {memory, events, gateway, now}.",
    "requirements": [
+    "R1",
+    "R5",
+    "R9",
+    "R10",
+    "R12",
     "R13"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/src/court-day/query.ts",
-   "change": "getCourtDay: grouping, ordering, scopes, role-scoped payload, sensitive handling, expectedNotListed, freshness, \u003c=6 statements",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R11",
-    "R12",
-    "R13",
-    "R14"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/core/src/court-day/clashes.ts",
-   "change": "pure detectClashes returning factual same-date different-hall/complex clashes only",
-   "requirements": [
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/core/src/court-day/diff.ts",
-   "change": "snapshotList (hash, immutable rows) and diffLists incl. supplementary labelling, no fetching",
-   "requirements": [
-    "R6",
-    "R7"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/core/src/court-day/markers.ts",
-   "change": "setCurrentItem/clearCurrentItem with audit event, no listing writes",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/core/src/court-day/next-date.ts",
-   "change": "proposeNextDate and listConflictCards wrapping matter-graph proposeNextDate/conflict view via matter-graph index only",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/core/src/court-day/index.ts",
-   "change": "export new modules next to board/eta/bench-card (watch export name clashes)",
+   "path": "packages/core/src/briefs/sections/stage.ts",
+   "change": "stage line from listing stageRaw/stageNorm with listing provenance",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D19",
-   "path": "packages/core/src/court-day/query.test.ts",
-   "change": "tests for R1,R2,R3,R11,R12,R13,R14 (colocated, Testcontainers like board.test.ts)",
+   "id": "D14",
+   "path": "packages/core/src/briefs/sections/last-order.ts",
+   "change": "2-3 lines from the latest order's operative directions with anchor (page link); 'Unconfirmed' label; AI compression only from anchored extraction output through the gateway, with date-presence check against anchor quote text; deterministic fallback.",
    "requirements": [
-    "R1",
     "R2",
-    "R3",
-    "R11",
-    "R12",
-    "R13",
-    "R14"
+    "R9",
+    "R12"
    ]
   },
   {
-   "id": "D20",
-   "path": "packages/core/src/court-day/clashes.test.ts",
-   "change": "tests for R4,R5",
+   "id": "D15",
+   "path": "packages/core/src/briefs/sections/obligations.ts",
+   "change": "open obligations with owner, due, status and 'counter not yet filed; due 20 Oct' phrasing; overdue first; closed counted not listed",
    "requirements": [
-    "R4",
+    "R3"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/core/src/briefs/sections/carry.ts",
+   "change": "carry union: documents of open obligations + memory M2 always-carry provider + manual items from brief_state",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/core/src/briefs/sections/synopsis.ts",
+   "change": "M3 synopsis via MemoryProvider behind memory.read/strategy.read; strategy fields omitted for clerk",
+   "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D21",
-   "path": "packages/core/src/court-day/diff.test.ts",
-   "change": "tests for R6,R7",
+   "id": "D18",
+   "path": "packages/core/src/briefs/sections/last-hearing.ts",
+   "change": "last-hearing summary line from the latest hearing/memory with provenance",
+   "requirements": [
+    "R1",
+    "R5"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/core/src/briefs/sections/court-notes.ts",
+   "change": "M4 private court notes via MemoryProvider scope check (author-private unless chamber-shared); absent for clerk",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/core/src/briefs/sections/context.ts",
+   "change": "at most 5 matter-scoped passages from document_page full-text (search_tsv) joined on the matter's documents, with page and quote anchors; skipped for sensitive matters",
    "requirements": [
     "R6",
+    "R9"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/briefs/readiness.ts",
+   "change": "computeReadiness(brief): pure 0-100 score, four segment booleans, reasons",
+   "requirements": [
     "R7"
    ]
   },
   {
    "id": "D22",
-   "path": "packages/core/src/court-day/markers.test.ts",
-   "change": "tests for R8",
+   "path": "packages/core/src/briefs/state.ts",
+   "change": "markPrepared, unmarkPrepared, setCarryItem, setBriefNote persisting brief_state; material-change detection clears the mark and emits brief.stale {workspaceId, listingId, reason} through the injected events port",
    "requirements": [
-    "R8"
+    "R4",
+    "R8",
+    "R14"
    ]
   },
   {
    "id": "D23",
-   "path": "packages/core/src/court-day/next-date.test.ts",
-   "change": "tests for R9 and the two-canonical-rows constraint test for R10",
+   "path": "packages/core/src/briefs/refresh.ts",
+   "change": "refreshBrief and refreshTomorrow sweep (idempotent: same row, no duplicate events); consumes court_day.list_changed, extraction and obligation change triggers",
    "requirements": [
-    "R9",
-    "R10"
+    "R8",
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D24",
-   "path": "packages/auth/src/policy/actions.ts",
-   "change": "add court_day domain with court_day.view_all; update matrix.ts, can.ts (setting advocatesCanViewAllCourtDay default true, mirrors advocatesCanReadAudit), docs.ts and policy tests (files: packages/auth/src/policy/matrix.ts, can.ts, docs.ts, __tests__)",
+   "path": "packages/core/src/briefs/index.ts",
+   "change": "barrel; exports no send/export/file function",
    "requirements": [
-    "R2"
+    "R13"
    ]
   },
   {
    "id": "D25",
-   "path": "packages/auth/src/policy/matrix.ts",
-   "change": "map court_day.view_all to advocate (owner outranks)",
+   "path": "packages/core/src/jobs/definitions/brief-refresh.ts",
+   "change": "defineJob 'brief.refresh' ({workspaceId, listingId}, singleton per listing) and a scheduled sweep job using app_brief_refresh_targets() (pattern: portfolio-alert-scan.ts)",
    "requirements": [
-    "R2"
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D26",
-   "path": "packages/auth/src/policy/can.ts",
-   "change": "owner-setting gate for advocates",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "register the brief jobs (imports, list and type list)",
    "requirements": [
-    "R2"
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D27",
-   "path": "packages/auth/src/policy/docs.ts",
-   "change": "document the new action and setting",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "add the new job names",
    "requirements": [
-    "R2"
+    "R11"
    ]
   },
   {
    "id": "D28",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "court-day deps: add matter-graph, workspaces, audit, matters as needed",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "add the scheduled sweep job name",
    "requirements": [
-    "R9"
+    "R11"
    ]
   },
   {
    "id": "D29",
-   "path": "docs/engineering/core-domains.md",
-   "change": "mirror the dependency change",
+   "path": "packages/core/src/index.ts",
+   "change": "re-export briefs barrel (check name clashes with other domains)",
    "requirements": [
-    "R9"
+    "R1"
    ]
   },
   {
    "id": "D30",
-   "path": "docs/adr/0037-court-day-read-model.md",
-   "change": "ADR for the read model, markers, snapshots, no-prediction clash rule",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "add briefs domain deps: workspaces, audit, matter-graph, court-day, ai (index.ts imports only)",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D31",
+   "path": "docs/engineering/core-domains.md",
+   "change": "document the briefs domain and its allowed imports",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D32",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "real B-on-A cases for the briefs services",
+   "requirements": [
+    "R14"
+   ]
+  },
+  {
+   "id": "D33",
+   "path": "packages/core/src/briefs/__tests__/assemble.test.ts",
+   "change": "tests for R1,R2,R3,R4,R6,R9,R12,R13 (provenance drop, Unconfirmed label, date-in-source, obligation ordering/phrase, carry union, context limit, sensitive path, gateway/ai_call, barrel has no send/export/file)",
+   "requirements": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R6",
+    "R9",
+    "R12",
+    "R13"
+   ]
+  },
+  {
+   "id": "D34",
+   "path": "packages/core/src/briefs/__tests__/readiness.test.ts",
+   "change": "readiness score, segments, reasons",
+   "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D35",
+   "path": "packages/core/src/briefs/__tests__/state.test.ts",
+   "change": "markPrepared who/when, clear + brief.stale, carry add/remove/tick persistence across re-assembly, refresh idempotence and sweep selection, deterministic-path CPU-time budget",
+   "requirements": [
+    "R4",
+    "R8",
+    "R10",
+    "R11"
+   ]
+  },
+  {
+   "id": "D36",
+   "path": "packages/core/src/briefs/__tests__/permissions.test.ts",
+   "change": "clerk omits synopsis strategy and M4 notes; M4 private to author; second matter never leaks",
    "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D31",
-   "path": "docs/adr/README.md",
-   "change": "index entry for ADR 0037",
+   "id": "D37",
+   "path": "packages/core/src/briefs/__tests__/cross-tenant.test.ts",
+   "change": "workspace A vs B (and a user in both) via service and SQL",
    "requirements": [
-    "R5"
+    "R14",
+    "R15"
+   ]
+  },
+  {
+   "id": "D38",
+   "path": "docs/adr/0038-brief-as-derived-view.md",
+   "change": "ADR: brief is a derived view, anchor-or-drop, memory provider port, full-text context",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D39",
+   "path": "docs/adr/README.md",
+   "change": "index the new ADR (pnpm adr:lint)",
+   "requirements": [
+    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing live-board exports of packages/core/src/court-day (pollBoards, getLiveHalls, estimateCallWindow, backtestEta, getBenchCard) and board.test.ts/eta.test.ts/bench-card.test.ts behaviour"
+   "what": "court-day exports and behaviour, including CourtDayEvent court_day.list_changed (packages/core/src/court-day/*); no renamed or removed exports"
   },
   {
    "id": "P2",
-   "what": "matter-graph proposeNextDate/confirmNextDate/getCanonicalNextDate semantics and signatures (packages/core/src/matter-graph/next-date.ts); court-day wraps, never edits them"
+   "what": "runOrderExtraction and the extraction.extract-order job contract (packages/core/src/extraction/run.ts, jobs/definitions/extraction-extract-order.ts); briefs only read extraction/order output"
   },
   {
    "id": "P3",
-   "what": "Existing listing/hearing/appearance/obligation schema and the listing_one_canonical_uq index (packages/db/src/schema/docket.ts); no changes to those tables"
+   "what": "the policy matrix and closed action list (packages/auth/src/policy/matrix.ts, actions.ts): no new action; reuse listing.read, memory.read, strategy.read, matter.write"
   },
   {
    "id": "P4",
-   "what": "Existing policy matrix semantics for current actions (packages/auth/src/policy/matrix.ts, can.ts)"
+   "what": "existing migrations and their snapshots (packages/db/migrations/*): only append"
   },
   {
    "id": "P5",
-   "what": "Core never imports @causedeck/fetch or any HTTP client in the new court-day files (no fetching of lists)"
+   "what": "existing names exported from @causedeck/core root: new briefs exports must not collide (packages/core/src/index.ts)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/court-day src/domains.test.ts src/__tests__/cross-tenant/services.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/briefs src/jobs/registry.test.ts src/court-day src/extraction --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/brief.test.ts src/index.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/court-day.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V5",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+  },
+  {
+   "id": "V6",
    "command": "pnpm adr:lint"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Gate scope=workspace with a new policy action court_day.view_all rather than a role check in core",
-   "justification": "policy actions are the single authorisation surface (packages/auth/src/policy/actions.ts:8-15); owner-setting precedent advocatesCanReadAudit (can.ts:38,84-86)",
-   "source": "precedent"
+   "choice": "MemoryProvider port with an empty default instead of reading memory tables",
+   "justification": "#72 is open and no memory_item table exists (packages/core/src/lifecycle/deletion/memory.ts:23); the issue itself says 'until then an empty provider'. Role gating uses existing memory.read/strategy.read (packages/auth/src/policy/matrix.ts:22-24).",
+   "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "Reuse matter-graph proposeNextDate and conflict view instead of reimplementing; court-day imports matter-graph via its index.ts",
-   "justification": "matter-graph/next-date.ts:134 already implements proposal/conflict/never-overwrite; CLAUDE.md requires imports through index.ts and a CORE_DOMAIN_DEPENDENCIES update",
-   "source": "doc"
+   "choice": "Document context by full-text over document_page.search_tsv, not pgvector",
+   "justification": "No document embedding table exists; document_page has a GIN tsvector (packages/db/src/schema/documents.ts:158,166); the AC allows 'pgvector or full-text'.",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Migration goes in packages/db/migrations with a timestamp name, seeds in packages/db/src/seed, tests colocated, ignoring the issue's drizzle/, seeds/, __tests__ paths",
-   "justification": "actual repo layout (migrations/20261024160052_review_queue.sql, core/src/court-day/board.test.ts)",
+   "choice": "brief.refresh and the sweep live in packages/core/src/jobs/definitions/, not apps/worker/src/jobs/",
+   "justification": "apps/worker/src/jobs does not exist; every job is a defineJob in core and registered in jobs/registry.ts (extraction-extract-order.ts, portfolio-alert-scan.ts).",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "court_day.list_changed is emitted through an injected events port; no pg-boss job registered",
-   "justification": "matter-graph/context.ts emits via injected GraphEvents; a job would need registry.test.ts/schedules.test.ts and its consumers are #59/#64",
+   "choice": "Owner-defined SQL function app_brief_refresh_targets() for the cross-workspace sweep",
+   "justification": "Tenant tables are under FORCE RLS so a system job cannot list workspaces directly; same pattern as app_portfolio_alert_targets (packages/core/src/jobs/definitions/portfolio-alert-scan.ts:48-52).",
    "source": "precedent"
   },
   {
    "id": "K5",
-   "choice": "No new listing index or canonical index migration",
-   "justification": "docket.ts:73-77 already defines listing_one_canonical_uq and listing_workspace_date_hall_idx",
+   "choice": "Events (brief.stale) through an injected port, not a bus",
+   "justification": "court-day does the same and emits only after the scope resolves (packages/core/src/court-day/scope.ts:30-45).",
    "source": "precedent"
+  },
+  {
+   "id": "K6",
+   "choice": "Migration under packages/db/migrations with a timestamp name; seeds under packages/db/src/seed; ADR 0038",
+   "justification": "Repo layout differs from the issue's paths (latest migration 20261024170000_court_day.sql; docs/adr ends at 0037).",
+   "source": "doc"
   }
  ]
 }

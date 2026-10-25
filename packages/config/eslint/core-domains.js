@@ -41,6 +41,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Institution portfolios (#663, #498 part 3): the owner check through workspaces, watches through case-watch
   // (status sources) and the matter read probe through matter-graph; clearance through sources.
   portfolio: Object.freeze(['workspaces', 'matter-graph', 'case-watch', 'sources']),
+  // The derived listing brief (#60, ADR 0038): the scope and member role through workspaces, the
+  // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
+  // (imports `index.ts` only).
+  briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai']),
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
   // read as `listHolidayListings`) and the day arithmetic is the extraction's own, from intelligence.
   deadlines: Object.freeze([]),
@@ -144,6 +148,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'data-ops',
     'court',
     'court-day',
+    'briefs',
     'sources',
     'notices',
     'research',

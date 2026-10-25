@@ -45,6 +45,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0035](0035-data-ops-alerting.md) | Data operations alerting | Proposed | 2026-10-23 | — |
 | [0036](0036-bench-facts.md) | Internal bench facts and the flagged bench card | Proposed | 2026-10-24 | — |
 | [0037](0037-court-day-read-model.md) | The court day read model | Proposed | 2026-10-24 | — |
+| [0038](0038-brief-as-derived-view.md) | The brief is a derived view | Proposed | 2026-10-25 | — |
 
 ## Statuses
 

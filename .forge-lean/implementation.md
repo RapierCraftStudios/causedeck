@@ -28,3 +28,6 @@ Outward drafts UI (#736) on top of the merged #735 services. A new core read mod
 ### Notes
 - Pre-commit eslint hook ran out of heap on the shared host; commit used --no-verify after a manual eslint pass.
 - No behaviour change outside the drafts route and inbox ready list. No env vars.
+
+### Export-name collision fix
+- outward.stories.tsx exported Empty, Loading, ErrorState, Denied, which whatsapp-import.stories.tsx also exports; renamed to StatesEmpty, StatesLoading, StatesError, StatesDenied. No other references.

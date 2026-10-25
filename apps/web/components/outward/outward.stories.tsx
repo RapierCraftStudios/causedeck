@@ -109,8 +109,8 @@ export const Diff: Story = {
     />
   ),
 };
-export const Loading: Story = { render: () => <OutwardStates state="loading" /> };
-export const Empty: Story = { render: () => <OutwardStates state="empty" /> };
-export const ErrorState: Story = { render: () => <OutwardStates state="error" onRetry={fn()} /> };
+export const StatesLoading: Story = { render: () => <OutwardStates state="loading" /> };
+export const StatesEmpty: Story = { render: () => <OutwardStates state="empty" /> };
+export const StatesError: Story = { render: () => <OutwardStates state="error" onRetry={fn()} /> };
 export const OfflineState: Story = { render: () => <OutwardStates state="offline" /> };
-export const Denied: Story = { render: () => <OutwardStates state="denied" /> };
+export const StatesDenied: Story = { render: () => <OutwardStates state="denied" /> };

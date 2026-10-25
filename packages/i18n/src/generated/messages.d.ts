@@ -3591,6 +3591,98 @@ export type Messages = {
       };
     };
   };
+  calendarView: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    views: {
+      label: string;
+      week: string;
+      month: string;
+    };
+    scope: {
+      label: string;
+      mine: string;
+      workspace: string;
+    };
+    toolbar: {
+      label: string;
+      previous: string;
+      next: string;
+      today: string;
+      range: string;
+      shortcuts: string;
+    };
+    kind: {
+      listing: string;
+      next_date: string;
+      obligation_due: string;
+      holiday: string;
+      vacation: string;
+    };
+    legend: {
+      title: string;
+      proposed: string;
+      clash: string;
+    };
+    proposed: string;
+    restricted: string;
+    clash: string;
+    closed: string;
+    summary: string;
+    dayLabel: string;
+    grid: {
+      week: string;
+      month: string;
+      weekday: string;
+    };
+    week: {
+      noHall: string;
+      hall: string;
+      other: string;
+    };
+    day: {
+      openDay: string;
+      close: string;
+      listings: string;
+      deadlines: string;
+      nothing: string;
+      clash: string;
+      hall: string;
+      item: string;
+    };
+    empty: string;
+    offline: string;
+    denied: {
+      title: string;
+      description: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    loading: string;
+    subscribe: {
+      title: string;
+      explanation: string;
+      active: string;
+      inactive: string;
+      manage: string;
+      disclosure: string;
+      ack: string;
+      generate: string;
+      regenerate: string;
+      working: string;
+      urlLabel: string;
+      copy: string;
+      copied: string;
+      shownOnce: string;
+      revokesOld: string;
+      error: string;
+      forbidden: string;
+      copyFailed: string;
+    };
+  };
   inbox: {
     metaTitle: string;
     title: string;

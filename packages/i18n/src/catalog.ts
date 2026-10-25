@@ -28,6 +28,7 @@ export const NAMESPACES = [
   'matters',
   'matter-timeline',
   'calendar',
+  'calendarView',
   'inbox',
   'pwa',
   'whatsapp-import',

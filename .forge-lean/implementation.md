@@ -1,34 +1,21 @@
 ### Approach
-Settings card on the existing notifications page with one server action per operation, calling `@causedeck/core/whatsapp-link` on the workspace transaction for the signed-in member only. A wrong code is returned as a value so core's attempt count commits.
+Resumed from the checkpoint: the status domain, tables, job, storage seam, env and registries were in place. I added the missing core test suite and the i18n `status` namespace, and fixed an idempotence bug in `publishStatus`. The new snapshot was compared with its signature included, so every run counted as "changed".
 
 ### Changes
-- apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts: request/verify/setCategories/unlink/get actions (masked number only, domain errors mapped, RATE_LIMITED -> CONFLICT).
-- apps/web/components/notifications/whatsapp-link-card.tsx: client card (opt-in, code, categories from WHATSAPP_CATEGORIES, unlink).
-- .../settings/notifications/page.tsx: loads the link via inWorkspace + getWhatsAppLink, renders the card below the push card; a load error shows a message only.
-- packages/i18n: whatsapp-link namespace (en/ta/kn), catalog.ts, catalog test, regenerated generated files and translation-status.json.
-- Tests: whatsapp-link-actions, whatsapp-link-card, cross-tenant-actions entries.
+- packages/core/src/status/publish.ts: compare unsigned content on both sides (idempotent publish); lint fixes.
+- packages/core/src/status/status.test.ts: schema, thresholds, sanitiser, signature, idempotent publish, stale and court wording tests.
+- packages/i18n/src/catalog.ts, messages/{en,kn,ta}/status.json, generated/**, __tests__/catalog.test.ts: `status` namespace.
+- Earlier checkpoint: tables, migration, job, storage key seam, env, registries, docs (see git diff).
 
 ### Acceptance Criteria Status
-- R1 ✅ whatsapp-link-card.tsx, page.tsx (WhatsAppSection)
-- R2 ✅ whatsapp-actions.ts
-- R3 ✅ packages/i18n/src/messages/*/whatsapp-link.json, catalog.ts, catalog.test.ts
-- R4 ✅ cross-tenant-actions.test.ts (ACTIONS, inputs, snapshotA, B-workspace test)
-- R5 deferred (OTP template needs provider approval; amendment)
+- R1 ✅ packages/core/src/status/publish.ts:1
+- R2 ✅ packages/db/src/schema/status.ts, packages/db/src/__tests__/status-schema.test.ts
+- R3 ✅ packages/core/src/jobs/definitions/status-publish.ts, packages/config/src/env/schema.ts
+- R4 ✅ cross-tenant-registry.ts, core-domains.js/doc, worker tests, i18n catalog
+- R5 ✅ packages/core/src/status/status.test.ts
 
 ### Verification
-- V1 web vitest (4 files): pass, 42 tests. New tests fail without the fix (modules absent).
-- V2 i18n vitest: pass, 37 tests.
-- V3 cross-tenant-actions (tenancy config): pass, 26 tests.
-- V4 checks.mjs: ran; `tsc --noEmit` in apps/web clean, prettier and eslint (changed files) clean.
+V1 to V7 pass (forgedock checks ran them; V1 re-run for src/status after fixes: 10 passed). The idempotence test fails without the fix (second run reported 'changed'). Core, storage and db tsc are clean. Eslint is clean on the status files.
 
 ### Notes
-No env vars. The code is not delivered over WhatsApp yet (no sendOtp, R5 deferred).
-
-### Stale-list follow-up
-The 30 flagged sibling lists (nav, routes, shortcuts, API dirs, e2e) are not i18n namespace lists; recorded as not_members in result.json. No code change.
-
-### Post-merge verification
-The merge failure (`turbo: command not found`, exit 127) was environmental: `turbo` was not on PATH. No code conflict. Reran via `pnpm exec turbo run typecheck --filter='...[722c3900]'` (23 tasks passed), plus V1 (42 tests) and V2 (37 tests): all pass. No source change.
-
-### Post-merge typecheck
-Bare `turbo` is not on PATH (exit 127, environment). `pnpm turbo run typecheck --filter=...[722c3900]` on the merged tree: 23/23 tasks successful, no code change needed.
+New env STATUS_SIGNING_KEY (dev default). Job name is system.status.publish.

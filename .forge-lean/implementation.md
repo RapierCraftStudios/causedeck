@@ -1,33 +1,30 @@
 ### Approach
-Rerun recovery: CI test failure was the billing production env fixture missing the new required STATUS_SIGNING_KEY. Added it; reverted an out-of-scope .gitignore change. gitleaks failure is on old history commits (automation handlers.test.ts), unrelated.
+Followed the `sources` precedent: a core write service (staff check, rows and `incident.changed` audit in one `withUser` transaction), a `status` staff capability (ops, admin), a console page with server actions, and the guard registrations.
+
 ### Changes
-- packages/billing/src/__tests__/provider-select.test.ts: STATUS_SIGNING_KEY in production fixture
-- .gitignore: reverted to base
-- Remaining work from earlier runs (status domain, tables, job, env, registries) verified against contract.
+- packages/core/src/status/incidents.ts: new `INCIDENT_TEMPLATES`, `createIncident`, `addIncidentUpdate`, `listIncidents`, `IncidentAdminError`, `asIncidentStaff`.
+- packages/core/src/status/index.ts: exports them.
+- packages/core/src/status/incidents.test.ts: DB test (rows, audit, staff gate, resolved rejects updates, next snapshot build, empty title).
+- packages/core/src/audit/events.ts: `incident.changed` (security).
+- packages/db/src/testing/cross-tenant-registry.ts: NOT_A_SERVICE entries; cross-tenant-registry.test.ts (new) asserts them.
+- packages/config/eslint/core-domains.js, docs/engineering/core-domains.md: status depends on audit.
+- apps/admin/lib/roles.ts, components/console-nav.tsx, lib/data/index.ts: `status` capability, nav item, `incidentConsole` read.
+- apps/admin/app/(console)/status/{actions.ts,page.tsx,loading.tsx,error.tsx,offline-banner.tsx}: the console.
+- apps/admin tests: status-page (new), server-actions-audit, no-content-fields, roles, console-layout.
+- docs/engineering/admin-console.md: Status section.
+
 ### Acceptance Criteria Status
-- R1 ✅ packages/core/src/status/publish.ts
-- R2 ✅ packages/db/src/schema/status.ts, migrations/20261025050000_status_incident.sql
-- R3 ✅ packages/core/src/jobs/definitions/status-publish.ts, packages/config/src/env/schema.ts
-- R4 ✅ registries updated (cross-tenant-registry.ts, core-domains.js/md, worker tests, i18n catalog)
-- R5 ✅ packages/core/src/status/status.test.ts
+- R1 ✅ packages/core/src/status/incidents.ts, apps/admin/app/(console)/status/actions.ts, page.tsx
+- R2 ✅ packages/core/src/status/incidents.test.ts (buildSnapshot includes the new incident); page note that changes publish within a minute
+- R3 ✅ status/loading.tsx, error.tsx, offline-banner.tsx, page.tsx (empty state, requireStaff notFound)
+- R4 ✅ server-actions-audit.test.ts, no-content-fields.test.ts, console-nav.tsx
+- R5 ✅ uses #769 tables; core status service extended in incidents.ts
+
 ### Verification
-V1-V6 vitest commands: exit 0. V7 checks.mjs: PASS. billing provider-select test: 7 pass (fails without the fixture fix, as seen in CI). forgedock check: PASS.
+- V1 core vitest src/status + security-events: pass (36 tests); new test fails without the fix (module absent).
+- V2 admin vitest (5 files): pass (61 tests).
+- V3 db vitest src/testing: pass; the directory had no tests, so a small registry test was added.
+- V4 checks.mjs: pass. Scoped typecheck of admin, core and db: pass. ESLint on changed files: clean (needed NODE_OPTIONS=--max-old-space-size for the admin set).
+
 ### Notes
-STATUS_SIGNING_KEY required in production (>=32 chars); any production env fixture needs it.
-
-## Stale-list follow-up
-Checked the flagged tests: none enumerate job definitions or db schema exports, so every symbol is recorded under not_members in result.json. No code change needed.
-
-## Merge typecheck failure (turbo: command not found)
-Exit 127 was an environment problem, not a code conflict: `turbo` is in node_modules/.bin but was not on PATH. With PATH set, `turbo run typecheck` scoped to core, db, storage, config and i18n passes (16/16 tasks). No code change was needed.
-
-### Post-merge check
-Base merged (809117c8). `turbo run typecheck` exit 127 was a missing `turbo` binary on PATH (environment), not a code error; no sibling symbol/key collisions found. Ran `pnpm turbo run typecheck` filtered to core, storage, db, config, i18n, billing, worker (+dependents): 17/17 pass. Post-merge vitest: core status/domains and storage index/keys pass.
-
-Re-verified: with node_modules/.bin on PATH, scoped turbo typecheck (core, db, storage, config, i18n, worker) passes 17/17. lane-check.sh does not exist on this host. No code change.
-
-### Re-check (turbo exit 127)
-Again environmental: `turbo` lives in node_modules/.bin, not on PATH. With PATH set, scoped typecheck (core, db, storage, config, i18n, worker) passes 17/17. No code change.
-
-### Re-check 3 (turbo exit 127)
-Environmental again: turbo is only in node_modules/.bin. With PATH set, scoped typecheck (core, db, storage, config, i18n) passes 16/16. No code change.
+No migration, no env vars. The core staff gate is ops/admin; support is denied in core and by `requireStaff('status')`. `scripts/check-devdocs-freshness.sh` does not exist in this repo.

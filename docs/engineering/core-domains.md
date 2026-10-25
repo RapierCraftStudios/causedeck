@@ -154,6 +154,7 @@ graph LR
   jobs --> calendar
   jobs --> automation
   jobs --> whatsapp
+  jobs --> whatsapp-link
   jobs --> voice
   jobs --> email-intake
   jobs --> extraction
@@ -251,7 +252,7 @@ graph LR
 | `onboarding`   | `import`, `automation`, `sources`, `matter-graph` |
 | `import`       | `matter-graph`, `usage`, `automation`                                                                                                                                                                                                                                         |
 | `migration`    | `import`, `workspaces`                                                                                                                                                                                                                                                        |
-| `jobs`         | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `sources`, `research`, `portfolio`, `business`, `case-watch`, `webhooks`, `notices`, `data-ops`, `news` |
+| `jobs`         | `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `whatsapp-link`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `sources`, `research`, `portfolio`, `business`, `case-watch`, `webhooks`, `notices`, `data-ops`, `news` |
 | `runtime`      | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation`                                                                                                                                                   |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

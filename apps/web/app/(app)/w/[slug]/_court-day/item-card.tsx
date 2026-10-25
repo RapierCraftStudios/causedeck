@@ -1,8 +1,9 @@
 // One listed item (#59): numeral, matter, case number, stage badge and chips. The name read by a
 // screen reader follows "Item <n>, <case no.>, <stage>, brief <p> percent ready, <clash note>". No
 // element predicts when the item will be called and none shows bench or judge data.
-import { ItemNumeral, StageBadge, LISTING_STAGES, PROCEEDING_STAGES } from '@causedeck/ui/patterns';
-import type { Stage } from '@causedeck/ui/patterns';
+import { ItemNumeral } from '@causedeck/ui/patterns/court-day';
+import { StageBadge } from '@causedeck/ui/patterns/stage-badge';
+import { LISTING_STAGES, PROCEEDING_STAGES, type Stage } from '@causedeck/ui/patterns/types';
 import type { CourtDayItem, ListDiff } from '@causedeck/validators';
 import { ArrowRightLeft, Link2, Plus, Split, TriangleAlert, UserRound } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';

@@ -8,7 +8,7 @@ import {
   OutcomesStrip,
   type AssigneeOption,
   type AssignmentFlag,
-} from '@causedeck/ui/patterns';
+} from '@causedeck/ui/patterns/delegation';
 import {
   AlertDialog,
   AlertDialogAction,

@@ -1,6 +1,6 @@
 // One hall of the board (#59): sticky header with the court-is-at control, the clash card above the
 // first item, the items in numeric order with the marker rule, and the carry-over footer.
-import { HallHeader } from '@causedeck/ui/patterns';
+import { HallHeader } from '@causedeck/ui/patterns/court-day';
 import type { Clash, CourtDayHall, ListDiff } from '@causedeck/validators';
 import { getTranslations } from 'next-intl/server';
 

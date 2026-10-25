@@ -1,4 +1,4 @@
-import { ClashBracket } from '@causedeck/ui/patterns';
+import { ClashBracket } from '@causedeck/ui/patterns/court-day';
 import type { Clash } from '@causedeck/validators';
 import { getTranslations } from 'next-intl/server';
 

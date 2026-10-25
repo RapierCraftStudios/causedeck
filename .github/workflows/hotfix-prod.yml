@@ -1,0 +1,135 @@
+name: Hotfix production
+
+# Emergency override of the court-day freeze (#100), for P0 incidents only. Runs in the `hotfix`
+# environment (required reviewer) with a non-empty reason; every use writes an audit comment on the
+# incident issue and posts a Slack-compatible payload to the webhook secret SLACK_WEBHOOK_URL (hotfix
+# environment). The deploy itself then needs the `production` environment approval too, so a hotfix
+# has two reviewers. The sha must still be green on staging (check-promotion.sh).
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_sha:
+        description: 'Full 40-character commit sha to deploy'
+        required: true
+        type: string
+      reason:
+        description: 'Why this cannot wait for the next open window (P0 incident)'
+        required: true
+        type: string
+      incident_issue:
+        description: 'Incident issue number that receives the audit comment'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    name: Authorize and audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: hotfix
+    permissions:
+      contents: read
+      issues: write
+    env:
+      SHA: ${{ inputs.image_sha }}
+      REASON: ${{ inputs.reason }}
+      INCIDENT: ${{ inputs.incident_issue }}
+      GH_TOKEN: ${{ github.token }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::image_sha must be a full 40-character sha"; exit 1; }
+          [[ "$INCIDENT" =~ ^[0-9]+$ ]] || { echo "::error::incident_issue must be an issue number"; exit 1; }
+          [ -n "$(printf '%s' "$REASON" | tr -d '[:space:]')" ] || { echo "::error::a non-empty reason is required"; exit 1; }
+      - name: Freeze status (override allowed)
+        id: freeze
+        uses: ./.github/actions/freeze-guard
+        with:
+          allow_override: 'true'
+      - name: Same sha green on staging
+        run: bash infra/scripts/check-promotion.sh
+      - name: Audit comment on the incident issue
+        env:
+          FROZEN: ${{ steps.freeze.outputs.frozen }}
+          WINDOW: ${{ steps.freeze.outputs.window_name }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### Court-day freeze override"
+            echo "- Deployer: @$GITHUB_ACTOR"
+            echo "- Sha: \`$SHA\`"
+            echo "- Freeze at request time: $FROZEN ${WINDOW:+($WINDOW)}"
+            echo "- Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "- Reason:"
+            printf '%s\n' "$REASON" | sed 's/^/  > /'
+          } >"$RUNNER_TEMP/audit.md"
+          gh issue comment "$INCIDENT" --body-file "$RUNNER_TEMP/audit.md"
+      - name: Slack-compatible notification
+        run: |
+          set -euo pipefail
+          payload="$(jq -n --arg text ":rotating_light: Hotfix deploy during court-day freeze by $GITHUB_ACTOR: ${SHA:0:12} (incident #$INCIDENT). Reason: $REASON" '{text: $text}')"
+          printf '%s\n' "$payload" >>"$GITHUB_STEP_SUMMARY"
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -fsS --max-time 20 -X POST -H 'Content-Type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL" >/dev/null
+          else
+            echo "::warning::SLACK_WEBHOOK_URL is not configured in the hotfix environment; payload is in the step summary only"
+          fi
+
+  deploy:
+    name: Deploy hotfix to production
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
+    env:
+      SHA: ${{ inputs.image_sha }}
+      GH_TOKEN: ${{ github.token }}
+      DEPLOY_ENVIRONMENT: production
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      GHCR_USER: ${{ secrets.GHCR_USER }}
+      GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+      ACTOR: ${{ github.actor }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.image_sha }}
+          persist-credentials: false
+      - name: Create deployment record
+        run: |
+          set -euo pipefail
+          id="$(gh api "repos/$GITHUB_REPOSITORY/deployments" -X POST -f ref="$SHA" -f environment=production \
+            -F auto_merge=false -F 'required_contexts[]' -f description="hotfix deploy of $SHA" --jq .id)"
+          echo "DEPLOYMENT_ID=$id" >>"$GITHUB_ENV"
+          gh api "repos/$GITHUB_REPOSITORY/deployments/$id/statuses" -X POST -f state=in_progress >/dev/null
+      - name: Deploy
+        run: bash infra/scripts/remote-deploy.sh deploy
+      - name: Smoke
+        run: bash infra/scripts/remote-deploy.sh smoke
+      - name: Mark deployment successful
+        run: gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" -X POST -f state=success >/dev/null
+      - name: Failure summary
+        if: ${{ failure() }}
+        run: |
+          bash infra/scripts/remote-deploy.sh summary >>"$GITHUB_STEP_SUMMARY" || true
+          if [ -n "${DEPLOYMENT_ID:-}" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" -X POST -f state=failure >/dev/null || true
+          fi

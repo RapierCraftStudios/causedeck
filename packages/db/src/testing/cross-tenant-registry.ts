@@ -1451,6 +1451,9 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   // End-of-day digest preference (#49)
   getEndOfDayPreference: notificationDenies,
   setEndOfDayPreference: notificationDenies,
+  // Court-day reminder preferences (#64)
+  getReminderPreferences: notificationDenies,
+  setReminderPreferences: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */

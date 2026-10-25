@@ -43,3 +43,6 @@ The only failing test was `src/court/__tests__/rosters-perf.test.ts > are index-
 
 ### CI `test` failure (second report, no log available)
 The log was unreadable again. Re-ran core src/notices src/deadlines: 27 passed. No source change; the failing test is unconfirmed and is most likely the unrelated rosters-perf query-plan assertion recorded above (the core cross-tenant suite needs a database, so only CI runs it).
+
+## CI fix (db:check)
+After merging the base, the notice_holiday snapshot still pointed at snapshot c36110c7 as parent, colliding with 20261025192217. Re-parented it to 4cf89f39 and restored the appearance_appearing_for_person_fk entry. drizzle-kit check and V3 pass.

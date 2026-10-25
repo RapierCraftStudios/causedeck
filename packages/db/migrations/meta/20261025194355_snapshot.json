@@ -1,6 +1,6 @@
 {
   "id": "7ea9d444-f8bd-408e-8728-e6eca1827408",
-  "prevId": "c36110c7-f3c7-41cb-bf9d-b93b831ec9f3",
+  "prevId": "4cf89f39-fe78-4f6a-82f8-b2b9f30e2c9b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2094,6 +2094,21 @@
           "columnsFrom": [
             "workspace_id",
             "member_id"
+          ],
+          "columnsTo": [
+            "workspace_id",
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "appearance_appearing_for_person_fk": {
+          "name": "appearance_appearing_for_person_fk",
+          "tableFrom": "appearance",
+          "tableTo": "person",
+          "columnsFrom": [
+            "workspace_id",
+            "appearing_for_person_id"
           ],
           "columnsTo": [
             "workspace_id",

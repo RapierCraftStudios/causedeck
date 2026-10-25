@@ -76,3 +76,9 @@ Exit 127 is environmental: bare `turbo` is not on PATH. `pnpm exec turbo run typ
 
 ## Merged-tree typecheck re-check (#104)
 `turbo: command not found` (exit 127) was an environment PATH issue, not a code conflict. `pnpm exec turbo run typecheck` passes on the merged tree (24/24 tasks). No source changes needed.
+
+### Merge re-check (6)
+Exit 127 is environmental: bare `turbo` is not on PATH. `pnpm exec turbo run typecheck --concurrency=2` passes (24/24). No source change.
+
+### Merge re-check (6)
+Exit 127 again: bare `turbo` is not on PATH. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes (24/24). V1-V5 re-run on the merged tree: all pass (19, 80, 3, 1 tests; check:no-l5 clean). No source change.

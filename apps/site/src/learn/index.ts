@@ -8,7 +8,6 @@ import { LEARN_FIXTURES, type LearnFixtureId } from './fixtures';
 import { signupHref } from './signup-link';
 import { LEARN_LOCALES, LEARN_SLUGS, type LearnLocale, type LearnSlug } from './slugs';
 
-export { LEARN_LOCALES, LEARN_SLUGS, signupHref };
 export type { LearnLocale, LearnSlug };
 
 const CONTENT_DIR = path.resolve(import.meta.dirname, '..', '..', 'content', 'learn');

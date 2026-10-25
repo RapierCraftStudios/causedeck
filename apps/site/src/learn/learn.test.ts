@@ -4,17 +4,9 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { LEARN_FIXTURES } from './fixtures';
-import {
-  isLive,
-  liveModules,
-  loadModule,
-  loadModules,
-  parseModule,
-  reviewLabel,
-  LEARN_LOCALES,
-  LEARN_SLUGS,
-} from './index';
+import { isLive, liveModules, loadModule, loadModules, parseModule, reviewLabel } from './index';
 import { signupHref } from './signup-link';
+import { LEARN_LOCALES, LEARN_SLUGS } from './slugs';
 
 const DISCLAIMER_WORD: Record<string, string> = {
   en: 'not legal advice',

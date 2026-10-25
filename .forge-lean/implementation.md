@@ -37,3 +37,6 @@ Markdown lessons with a hand-parsed front-matter block (no new dependency; apps/
 
 ### Stale-list follow-up
 - The seven flagged tests matched `learn` only through the docs/engineering path. None lists docs files or site modules, and no i18n namespace or core export was added, so each is recorded in result.json `not_members`; no test lists changed.
+
+### Duplicate-export follow-up
+- `index.ts` no longer re-exports `LEARN_LOCALES`, `LEARN_SLUGS` or `signupHref`; they live only in `slugs.ts` and `signup-link.ts`. `learn.test.ts` imports them from there. V1 and V5 re-run and pass.

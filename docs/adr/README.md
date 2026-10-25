@@ -46,6 +46,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0036](0036-bench-facts.md) | Internal bench facts and the flagged bench card | Proposed | 2026-10-24 | — |
 | [0037](0037-obligation-model.md) | The obligation model: names, reschedule versus miss, no rule-derived dates | Proposed | 2026-10-25 | — |
 | [0038](0038-memory-scopes-and-confirmation.md) | Memory scopes, confirm-before-save, the clerk view and the no-judge rule | Proposed | 2026-10-25 | — |
+| [0039](0039-outward-drafts-no-send-path.md) | Outward update drafts: L4 only, no send path | Proposed | 2026-10-25 | — |
 
 ## Statuses
 

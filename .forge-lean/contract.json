@@ -2,228 +2,209 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "Add `packages/db/src/schema/drafting.ts` (tables `template` with nullable workspace_id for system templates and a SELECT-only policy for members, `draft`, `draft_version` immutable with content_sha256)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "the generated timestamped migration under `packages/db/migrations` with snapshot, schema barrel export",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "`packages/validators/src/drafting.ts` (`TemplateSchema`, `BlockSchema` with unknown block type / slot without resolver / narrative without length cap rejected with field-level errors, `DraftSchema`, `FormatPresetSchema`, `ExportRequestSchema`) and its barrel export.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "Register in `packages/db/src/index.test.ts`, the RLS catalog in `packages/db/src/__tests__/rls/sql.test.ts`, TABLE_TESTS/registry and two-tenant seeders.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
-   "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "quote": "Acceptance: tables exist with workspace_id not null (except system templates), RLS enabled and forced keyed on app.workspace_id; invalid trees rejected; typecheck strict.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "packages/db/src/schema/drafting.ts",
+   "change": "Define `template` via globalOrWorkspaceTable (id, code, name, kind, court preset key, blocks jsonb, locale, version int, enabled, timestamps; unique (workspace_id, code) nullsNotDistinct like forum_scope_code_uq), `draft` via tenantTable (id, template_id single-column FK restrict, optional matter_id composite FK (workspace_id, matter_id) to matter, title, status text + check, created_by user FK, timestamps; unique (workspace_id, id)), `draft_version` via tenantTable (id, draft_id composite FK (workspace_id, draft_id), version_no int unique per draft, content jsonb, content_sha256 text with check ^[0-9a-f]{64}$, created_by, created_at only).",
    "requirements": [
     "R1",
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export template, draft, draftVersion from ./drafting.ts",
    "requirements": [
-    "R1"
+    "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "packages/db/src/conventions.ts",
+   "change": "Add 'template' to GLOBAL_OR_WORKSPACE_TABLES",
    "requirements": [
-    "R1"
+    "R1",
+    "R5"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
+   "path": "packages/db/migrations/20261025050000_drafting.sql",
+   "change": "Generate with `pnpm --filter @causedeck/db db:generate`, rename to the next free timestamp after 20261025040000 if needed, then hand-add: tenantPolicy SQL (ENABLE+FORCE RLS, ws_isolation) for draft and draft_version; globalOrWorkspacePolicy SQL for template (ws_isolation, global_read, owner_catalogue); scopeGuardTrigger for draft.template_id -> template; BEFORE UPDATE OR DELETE immutability trigger on draft_version with REVOKE ALL ON FUNCTION FROM PUBLIC and GRANT to causedeck_app; table GRANTs to causedeck_app; header comments like 20261025030000_whatsapp_link.sql. Expand-only.",
    "requirements": [
-    "R3"
+    "R2",
+    "R5"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "Journal entry idx 99 for the new migration (generated)",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "packages/db/migrations/meta/20261025050000_snapshot.json",
+   "change": "Generated drizzle snapshot",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add 'template', 'draft', 'draft_version' to the root table list (alphabetical)",
    "requirements": [
     "R4"
    ]
   },
   {
+   "id": "D8",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add draft and draft_version to the tenant catalog list, template to the global-or-workspace list and to the ws_isolation/global_read/owner_catalogue policy test; add tests that a member of B can SELECT a system template but cannot INSERT/UPDATE/DELETE one, and that draft_version UPDATE/DELETE is rejected",
+   "requirements": [
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Add template, draft, draft_version: DB_TABLES_TEST to TABLE_TESTS",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "Two-tenant seeders for template (workspace-owned row), draft (with its template) and draft_version (with its draft, valid 64-hex content_sha256)",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/validators/src/drafting.ts",
+   "change": "zod: closed lists BLOCK_TYPES, SLOT_RESOLVERS, COURT_PRESETS, EXPORT_FORMATS (docx, pdf); recursive BlockSchema (z.lazy, discriminated by type; unknown type rejected; slot requires a resolver in SLOT_RESOLVERS; narrative requires integer maxChars 1..N; section/list carry children); TemplateSchema (blocks array, bounded depth/count), FormatPresetSchema (page size, margins, font, line spacing, numbering), DraftSchema, draft version content shape with sha256 hex, ExportRequestSchema (draftVersionId uuid, format). Issues carry field paths.",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/validators/src/drafting.test.ts",
+   "change": "Tests: valid tree passes; unknown block type, slot without/with unknown resolver, narrative without cap, nested bad block each rejected with the expected issue path",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/validators/src/index.ts",
+   "change": "export * from './drafting'",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
    "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "path": "packages/validators/package.json",
+   "change": "Add subpath export \"./drafting\": \"./src/drafting.ts\" (alphabetical, matching the existing subpath exports)",
    "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
-   "requirements": [
-    "R1"
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "Existing global-or-workspace tables forum/court_hall/bench and their policies (packages/db/src/schema/court.ts, packages/db/src/rls-policies.ts) are unchanged"
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "Existing migrations and snapshots are not edited; only a new migration is appended after 20261025040000_whatsapp_inbound"
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "Existing exports of @causedeck/validators (packages/validators/src/index.ts) and the @causedeck/db schema barrel stay unchanged; packages/db gains no dependency on @causedeck/validators"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/drafting.test.ts src/index.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-schema-conventions.ts && pnpm --filter @causedeck/db exec tsx scripts/lint-migrations.ts && pnpm --filter @causedeck/db exec drizzle-kit check"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-rls.ts"
+  },
+  {
+   "id": "V5",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
+   "choice": "template uses globalOrWorkspaceTable + globalOrWorkspacePolicy rather than a bespoke SELECT-only policy",
+   "justification": "Gives members SELECT on system rows (global_read) and owner-only writes; precedent forum at packages/db/src/schema/court.ts:26 and rls-policies.ts:91; the table must be listed at conventions.ts:102",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
+   "choice": "draft_version immutability via BEFORE UPDATE OR DELETE trigger copied from saas_invoice",
+   "justification": "packages/db/migrations/0017_saas_invoices.sql:77-111",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
+   "choice": "Closed block/resolver/preset lists live in packages/validators; db stores jsonb without importing validators",
+   "justification": "Avoids a new db->validators workspace dependency (P3); #767 and #768 import validators for parsing",
    "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
-   "source": "doc"
-  },
-  {
-   "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
-   "source": "precedent"
   }
  ]
 }

@@ -1,39 +1,35 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (feature; no live defect, no UI for the shipped WhatsApp link service)
+**Severity**: medium (feature; foundation for #767/#768, no live defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 4 of #502: a settings UI to link a WhatsApp number (OTP), choose message categories and unlink, with one server action per operation, an i18n namespace in en/kn/ta with its catalog test, and cross-tenant-actions test entries. Depends on #678 and #679 (both merged).
+Part 1 of #75: add the drafting data layer (`template`, `draft`, `draft_version` tables with forced RLS, migration + snapshot, schema barrel) and zod validators (`TemplateSchema`, `BlockSchema`, `DraftSchema`, `FormatPresetSchema`, `ExportRequestSchema`), registered in the db test lists, RLS catalog, TABLE_TESTS and two-tenant seeders.
 
 ### What We Found
-- Core service exists (#678), verified on base `origin/milestone/instant-gtm-adoption` (c44d5405): `packages/core/src/whatsapp-link/link.ts:90` `requestWhatsAppOtp` (needs `consent`, 60s cooldown), `:166` `verifyWhatsAppOtp`, `:242` `getWhatsAppLink` (masked number), `:254` `setWhatsAppCategories`, `:275` `unlinkWhatsApp`; exported via `@causedeck/core/whatsapp-link` (`packages/core/package.json:37`). `WhatsAppDeps.sendOtp` is optional (`link.ts:32`): without it no code is delivered.
-- Outbound sender exists (#679): `packages/notifications/src/channels/whatsapp.ts:18` has templates only for `court.board`, `status.order`, `digest.end_of_day` (`WHATSAPP_CATEGORIES`, `:25`, exported as `@causedeck/notifications/whatsapp`). No OTP template exists.
-- No web UI or action references WhatsApp link: `grep whatsapp-link apps/web` finds nothing. Closest pattern: `apps/web/app/(app)/w/[slug]/settings/notifications/{actions.ts,page.tsx,preferences-form.tsx}` (`workspaceAction` + `WorkspaceScoped`, `ctx.tx`, `ctx.userId`; actions are thin async wrappers because a `'use server'` module can only export async functions).
-- Errors: core throws domain errors (`NOT_FOUND`, `CONFLICT`, `VALIDATION`, rate-limited); `apps/web/lib/matters/graph-deps.ts:30` `domainErrorCode` + the `guarded` pattern in `settings/case-watch/actions.ts:~64` map them to `ActionError`.
-- Page reads under a workspace tx via `inWorkspace` from `@causedeck/core/runtime` (`apps/web/lib/workspace-action.ts:105`).
-- Registry guard: `apps/web/__tests__/cross-tenant-actions.test.ts:93-` imports each actions module, `ACTIONS` (`:~118`) maps name to module, probe inputs in `inputs()` (`:~475`), and a per-feature "under B's own workspace" test (`:~937`) checks A's snapshot is unchanged. A new actions file without entries fails that test.
-- i18n: `packages/i18n/src/catalog.ts:7` `NAMESPACES` (one file per locale per namespace, asserted by `catalog.test.ts` "exactly one file per namespace"), top-level key list asserted at `catalog.test.ts:~92`; generated catalogs are committed (`packages/i18n/src/generated/`, regenerated with `pnpm --filter @causedeck/i18n i18n:types`, checked by the test "committed generated files match").
-- Nav: `apps/web/lib/settings-nav.ts` has fixed section lists; the push card is already placed as a card on the notifications page (`page.tsx` `PushPermissionCard`), so a WhatsApp card there needs no nav change.
+- Base `origin/milestone/drafting-citations-research` has no drafting schema or validators: no `packages/db/src/schema/drafting.ts`, no `packages/validators/src/drafting.ts`, and no `drafting`/`draft_version` match in `packages/db/src` or `packages/validators/src`.
+- Last migration is `packages/db/migrations/20261025040000_whatsapp_inbound.sql` (journal idx 98, `meta/_journal.json` tail); next is idx 99.
+- Pattern for nullable-workspace tables: `forum` in `packages/db/src/schema/court.ts:26` uses `globalOrWorkspaceTable` and `unique('forum_scope_code_uq').on(workspaceId, code).nullsNotDistinct()` (`court.ts:~50`). Tables must be listed in `GLOBAL_OR_WORKSPACE_TABLES` (`packages/db/src/conventions.ts:102`, currently forum/court_hall/bench). Policy helpers are `globalOrWorkspacePolicy`/`scopeGuardTrigger` in `packages/db/src/rls-policies.ts:91,106`, and the RLS test requires them in the creating migration (`sql.test.ts:336`).
+- Immutability trigger precedent: `packages/db/migrations/0017_saas_invoices.sql:77-111` (function + trigger + REVOKE FROM PUBLIC + GRANT to `causedeck_app`).
+- `matter` has a `(workspace_id, id)` unique key (`matter-graph.ts:43`), so a composite FK from `draft` is possible.
+- Registries: table list `packages/db/src/index.test.ts:95,146`, RLS catalog `__tests__/rls/sql.test.ts:102-114`, `TABLE_TESTS` `testing/cross-tenant-registry.ts:63-76`, seeders `testing/two-tenants.ts:196,660`.
+- Validators: subpath exports in `packages/validators/package.json:8-17`; the barrel `src/index.ts` exports some modules (not all). No name collision with the new names.
+- Stale `.forge-lean/*` files in the tree belonged to a WhatsApp task and were removed.
 
 ### Root Cause
-Missing feature: #678 and #679 shipped the service and sender without a user-facing surface, so no member can opt in, verify, choose categories or unlink.
+Missing feature: the drafting engine (#767) and service (#768) need persistent tables and validated block trees that do not exist yet.
 
 ### Affected Files
-- new `apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts` (actions)
-- new `apps/web/components/notifications/whatsapp-link-card.tsx` (client card)
-- `apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx` (load link, render card)
-- `packages/i18n/src/messages/{en,kn,ta}/whatsapp-link.json`, `packages/i18n/src/catalog.ts`, `packages/i18n/src/__tests__/catalog.test.ts`, regenerated `packages/i18n/src/generated/**`
-- `apps/web/__tests__/cross-tenant-actions.test.ts`; new `apps/web/__tests__/whatsapp-link-actions.test.ts`, `whatsapp-link-card.test.tsx`
+`packages/db/src/schema/drafting.ts` (new), `schema/index.ts`, `conventions.ts`, new migration + `meta/_journal.json` + snapshot, `packages/db/src/index.test.ts`, `__tests__/rls/sql.test.ts`, `testing/cross-tenant-registry.ts`, `testing/two-tenants.ts`, `packages/validators/src/drafting.ts` (+ test), `src/index.ts`, `package.json`.
 
 ### Sibling Sweep
-Same defect class (service without UI) not present elsewhere in the lane. Other actions modules are all registered in `cross-tenant-actions.test.ts`; the new module must be too. The nested `settings/integrations/*` modules show per-feature action files are accepted.
+Same pattern (global-or-workspace + tenant tables) is already registered for forum/court_hall/bench and saas_invoice; follow those. No other missing registrations are known.
 
 ### History
-Service added in 15574312 (#678); sender in #679 (merged, PR #709). No prior UI attempt. Earlier `.forge-lean/*` files in the tree belong to #679 and are overwritten.
+No prior drafting work on the lane. Parent #75 was closed not_planned and split into #766-#768.
 
 ### Recommendation
-Add five actions (request OTP, verify, set categories, unlink, get link) via `workspaceAction`; the input never names a user (`ctx.userId`). Add a WhatsApp card to the notifications settings page, a new `whatsappLink` i18n namespace, tests and registry entries. Outbound OTP delivery needs a provider-approved OTP template (an external provider action) and is deferred; until then the request action works without a sender and the code is not delivered.
+Implement per `contract.json`. Keep the closed block, resolver and preset lists in validators only (db stores jsonb, no db->validators dependency). Generate the migration with `db:generate`, then hand-add the policies, scope guard and immutability trigger.
 
 ### Related Issues
-#502 (parent), #678, #679 (done), #680 (inbound webhook sibling), #488 (provider residency review).
+#75 (parent), #1, #767 (engine, consumes validators), #768 (service, consumes tables).

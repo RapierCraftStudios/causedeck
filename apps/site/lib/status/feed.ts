@@ -76,7 +76,7 @@ export function buildAtom(snapshot: StatusSnapshot | null, pageUrl: string): str
   );
 }
 
-/** Build-time read of status.json for the feed routes: the verified snapshot, else null. */
+/** Build-time read of status.json for the feed files: the verified snapshot, else null. */
 export async function loadVerifiedSnapshot(
   fetchFn: typeof fetch,
   url: string,

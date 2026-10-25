@@ -5,14 +5,7 @@
 // workspace in either table within 24 h, and never touches another workspace's rows.
 
 import { Secret } from '@causedeck/config/env';
-import {
-  createDb,
-  schema,
-  tenantPolicy,
-  withWorkspace,
-  type Database,
-  type Transaction,
-} from '@causedeck/db';
+import { createDb, schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { testDatabaseUrls } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { eq, sql, TransactionRollbackError } from 'drizzle-orm';
@@ -25,6 +18,8 @@ import {
   requestMemoryErasure,
   runMemoryErasure,
 } from '../index.ts';
+
+import { createMemoryFixtures } from '../testing/memory-fixtures.ts';
 
 import { captureLog } from './fixtures.ts';
 
@@ -56,25 +51,6 @@ async function codeOf(promise: Promise<unknown>): Promise<string | undefined> {
     return (error as { code?: string }).code;
   }
   return undefined;
-}
-
-// No FK to `organization`: `create table ... references organization` takes SHARE ROW EXCLUSIVE on
-// that shared table and so waits for (and blocks) every concurrent test transaction that wrote a
-// workspace, which stalled this file for the full test timeout under the parallel core suite.
-async function createMemoryFixtures(tx: Transaction): Promise<void> {
-  await tx.execute(sql`create table memory_item (
-    id uuid primary key default gen_random_uuid(),
-    workspace_id uuid not null,
-    content_ref text not null)`);
-  await tx.execute(sql`create table memory_embedding (
-    id uuid primary key default gen_random_uuid(),
-    workspace_id uuid not null,
-    item_id uuid references memory_item (id),
-    content_ref text not null)`);
-  for (const table of ['memory_item', 'memory_embedding']) {
-    await tx.execute(sql.raw(`create index ${table}_workspace_id_idx on ${table} (workspace_id)`));
-    for (const statement of tenantPolicy(table)) await tx.execute(sql.raw(statement));
-  }
 }
 
 /** `items` memory items for `workspaceId`, each with one embedding, plus `extra` loose embeddings. */

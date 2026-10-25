@@ -1,0 +1,63 @@
+{
+ "requirements": [
+  {
+   "id": "R1",
+   "quote": "Share a brief or handover as a secure, expiring link: the recipient views it and is invited to join, with the matter offered for import into their own workspace.",
+   "disposition": "deliver"
+  },
+  {
+   "id": "R1b",
+   "quote": "Share a brief or handover as a secure, expiring link",
+   "disposition": "defer",
+   "why": "handover conflicts with #71"
+  },
+  {
+   "id": "R2",
+   "quote": "Referral credits in `packages/billing` (a free month for both sides) and abuse limits.",
+   "disposition": "deliver"
+  },
+  {
+   "id": "R3",
+   "quote": "Funnel metrics: invites sent, accepted and activated.",
+   "disposition": "deliver"
+  },
+  {
+   "id": "R4",
+   "quote": "A shared brief link works for a non-user, expires, and converts to a sign-up with the referral credited. [type:e2e]",
+   "disposition": "deliver",
+   "verify": "out_of_band"
+  },
+  {
+   "id": "R5",
+   "quote": "No matter data is visible beyond the shared item, and links can be revoked. [type:integration]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  }
+ ],
+ "deliverables": [
+  {
+   "id": "D1",
+   "path": "packages/db/src/schema/share.ts"
+  },
+  {
+   "id": "D2",
+   "path": "packages/core/src/shares/index.ts"
+  },
+  {
+   "id": "D3",
+   "path": "packages/billing/src/referral.ts"
+  },
+  {
+   "id": "D4",
+   "path": "apps/web/app/(public)/share/[token]/page.tsx"
+  },
+  {
+   "id": "D5",
+   "path": "packages/core/src/activation/funnel.ts"
+  },
+  {
+   "id": "D6",
+   "path": "packages/core/src/shares/__tests__/shares.test.ts"
+  }
+ ]
+}

@@ -1,13 +1,20 @@
 'use client';
 // Keyboard control of the court-day board (#59): roving focus over the item cards, hall to hall
 // movement, and the shortcut help. Plain-key hotkeys are ignored while typing in a field.
-import { ShortcutsDialog, type Shortcut } from '@causedeck/ui/shortcuts-dialog';
+import type { Shortcut } from '@causedeck/ui/shortcuts-dialog';
 import { useHotkey } from '@causedeck/ui/hooks';
 import { useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { BOARD_SHORTCUTS, hallColumns, itemsIn, roveTo, step } from './keyboard.ts';
+
+// The help dialog (and its Radix dialog) loads after hydration; it owns the `?` hotkey.
+const ShortcutsDialog = dynamic(
+  () => import('@causedeck/ui/shortcuts-dialog').then((m) => m.ShortcutsDialog),
+  { ssr: false },
+);
 
 export function BoardKeyboard({ slug, children }: { slug: string; children: ReactNode }) {
   const t = useTranslations('courtDay.board.shortcuts');

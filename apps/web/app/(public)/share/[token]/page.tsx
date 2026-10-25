@@ -4,10 +4,9 @@ import Link from 'next/link';
 
 import { signInPathFor } from '../../../../lib/safe-next.ts';
 
-export const metadata: Metadata = {
-  title: 'Shared brief',
-  robots: { index: false, follow: false },
-};
+export function generateMetadata(): Metadata {
+  return { title: 'Shared brief', robots: { index: false, follow: false } };
+}
 
 interface SharePageProps {
   params: Promise<{ token: string }>;

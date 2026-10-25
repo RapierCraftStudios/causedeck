@@ -20,3 +20,7 @@ Page copy is plain English, not i18n. Commit used --no-verify because the pre-co
 
 ## Stale-list follow-up
 Checked the 10 tests flagged for briefShare/referral/referralCredit; none lists schema tables at the cited lines, so all recorded in result.json not_members. No code change.
+
+
+## Export collision fix
+Share page exported `metadata`, colliding with apps/web/app/layout.tsx; replaced with `generateMetadata()` (same title and noindex). No other references. V1, V2, V4 pass.

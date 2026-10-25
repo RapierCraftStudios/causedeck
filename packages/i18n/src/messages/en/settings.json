@@ -359,6 +359,7 @@
         "memory": "Matter memory",
         "document": "Documents",
         "task": "Tasks",
+        "obligation": "Obligations",
         "listing": "Cause list",
         "draft": "Drafts",
         "audit": "Audit log",
@@ -400,6 +401,11 @@
         "task": {
           "read": "See tasks",
           "write": "Create and update tasks"
+        },
+        "obligation": {
+          "read": "See obligations",
+          "write": "Manage all obligations",
+          "track": "Track tasks, defects and certified copies"
         },
         "listing": {
           "read": "See the cause list"

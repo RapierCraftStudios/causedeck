@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Brief share links, referral credit, funnel metrics (now on admin growth page) and share i18n delivered.",
+ "summary": "Brief share links, referral credit, funnel metrics (now on admin growth page) and share i18n delivered. CI fix: shares test no longer deep-imports briefs test helpers; lint cleaned.",
  "requirements": [
   {
    "id": "R1",

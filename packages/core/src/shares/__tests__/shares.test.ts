@@ -1,12 +1,12 @@
-import { schema, withWorkspace } from '@causedeck/db';
-import { withTestDb } from '@causedeck/db/testing';
+import { schema, withWorkspace, type Transaction } from '@causedeck/db';
+import { insertBriefFixture } from '@causedeck/db/seed/brief-fixtures';
+import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { referralFunnel } from '../../activation/index.ts';
 import { setBriefNote } from '../../briefs/index.ts';
-import { addMember, failure, newWorkspace } from '../../__tests__/fixtures.ts';
-import { seedBrief } from '../../briefs/__tests__/helpers.ts';
+import { failure, newWorkspace } from '../../__tests__/fixtures.ts';
 import {
   claimBriefShare,
   createBriefShare,
@@ -16,6 +16,16 @@ import {
 } from '../index.ts';
 
 const events = { emit: () => undefined };
+
+async function seedBrief(tx: Transaction) {
+  const { ownerId, workspaceId } = await newWorkspace(tx);
+  const fixture = await inWorkspace(tx, workspaceId, async (s) => {
+    const [m] = await s.select().from(schema.member).where(eq(schema.member.userId, ownerId));
+    if (m === undefined) throw new Error('owner member');
+    return insertBriefFixture(s, { workspaceId, ownerMemberId: m.id, date: '2026-10-26' });
+  });
+  return { ownerId, workspaceId, actor: { userId: ownerId, workspaceId }, fixture };
+}
 
 describe('brief sharing (#507)', () => {
   it('shows a non-user only the sanitised snapshot, until it expires', async () => {
@@ -88,7 +98,7 @@ describe('brief sharing (#507)', () => {
 
   it('does not refer the sharer to themselves, and a revoked link cannot be claimed or imported', async () => {
     await withTestDb(async (tx) => {
-      const { actor, fixture, workspaceId } = await seedBrief(tx);
+      const { actor, fixture } = await seedBrief(tx);
       const share = await createBriefShare({ db: tx }, actor, fixture.listingId);
       expect(await claimBriefShare(tx, { userId: actor.userId, token: share.token })).toEqual({
         referralId: null,
@@ -104,8 +114,6 @@ describe('brief sharing (#507)', () => {
           share.token,
         ),
       );
-      void addMember;
-      void workspaceId;
     });
   });
 });

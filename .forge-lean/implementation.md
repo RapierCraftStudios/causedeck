@@ -41,3 +41,6 @@ Flagged tests do not enumerate the new schema symbols or growthReferralFunnel; r
 
 ## Fix: R2 grantReferralCredit
 - billing `grantReferralCredit` (policy + extended subscription per side) and `addFreeMonths` added; core applies currentPeriodEnd +1 month per side in that side workspace scope (withWorkspace), marking referral_credit.applied_at. A side with no live subscription stays pending (applied_at null).
+
+## Fix: CI domains.test + lint
+- shares.test.ts deep-imported `briefs/__tests__/helpers.ts` (domain boundary violation); it now seeds the brief fixture locally. Also removed lint errors (useless `void` lines, unused bindings). domains.test, shares, activation, briefs: 40 pass; eslint clean on the file.

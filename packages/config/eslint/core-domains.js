@@ -146,6 +146,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'automation',
     'calendar',
     'whatsapp',
+    'whatsapp-link',
     'voice',
     'email-intake',
     'extraction',

@@ -21,7 +21,9 @@ import {
   endOfDaySlot,
   getEndOfDayPreference,
   getPreferences,
+  isQuietTime,
   localDayBounds,
+  localMinutes,
   notify,
 } from '@causedeck/notifications';
 import {
@@ -37,6 +39,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { countDigestActivities } from '../../automation/index.ts';
+import { getWhatsAppSendTarget } from '../../whatsapp-link/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
@@ -235,7 +238,7 @@ export async function runActivityDigestMember(
   const pref = await getEndOfDayPreference(notificationCtx, { userId });
   if (!pref.enabled) return 'skippedDisabled';
   const prefs = await getPreferences(notificationCtx, { userId });
-  const channelOn = (channel: 'in_app' | 'email') =>
+  const channelOn = (channel: 'in_app' | 'email' | 'whatsapp') =>
     prefs.some((p) => p.category === 'digest.end_of_day' && p.channel === channel && p.enabled);
 
   const counts = await countDigestActivities(
@@ -256,6 +259,43 @@ export async function runActivityDigestMember(
 
   const emailing = channelOn('email');
   if (emailing && (await isSuppressed(ctx.db, row.email))) return 'skippedSuppressed';
+
+  // The evening summary on WhatsApp (#679): only to the member's own verified number, only when
+  // they chose it for this digest, never inside court hours, counts and a link only. A failure is
+  // logged and never retried, and it runs after the email so a retried email never resends it.
+  const sendWhatsAppSummary = async (): Promise<void> => {
+    const whatsapp = deps.whatsapp;
+    if (whatsapp === undefined || !channelOn('whatsapp')) return;
+    try {
+      if (
+        isQuietTime(localMinutes(deps.now?.() ?? new Date(), timeZone), { courtHoursQuiet: true })
+      ) {
+        return;
+      }
+      const target = await getWhatsAppSendTarget(
+        { db: ctx.db },
+        { userId, workspaceId },
+        { category: 'digest.end_of_day' },
+      );
+      if (target === null) return;
+      await whatsapp.send(
+        {
+          category: 'digest.end_of_day',
+          params: [
+            String(digest.l3Count),
+            String(digest.pendingL2Count),
+            appLink(deps.appUrl, digest.links.activity),
+          ],
+        },
+        target,
+      );
+    } catch (error) {
+      ctx.log.warn(
+        { workspaceId, userId, code: emailErrorCode(error) },
+        'end-of-day digest whatsapp failed',
+      );
+    }
+  };
 
   const result = await once(ctx, memberKey({ workspaceId, userId, localDate }), async () => {
     const locale = toEmailLocale(row.locale);
@@ -283,13 +323,17 @@ export async function runActivityDigestMember(
         },
       );
     }
-    if (!emailing) return 'sent' as const;
+    if (!emailing) {
+      await sendWhatsAppSummary();
+      return 'sent' as const;
+    }
     try {
       await deps.email.send({
         to: row.email,
         ...email,
         tags: { template: 'end-of-day-digest' },
       });
+      await sendWhatsAppSummary();
       return 'sent' as const;
     } catch (error) {
       const code = emailErrorCode(error);
@@ -297,7 +341,10 @@ export async function runActivityDigestMember(
         { workspaceId, userId, code, permanent: isPermanentEmailError(error) },
         'end-of-day digest email failed',
       );
-      if (isPermanentEmailError(error)) return 'failed' as const;
+      if (isPermanentEmailError(error)) {
+        await sendWhatsAppSummary();
+        return 'failed' as const;
+      }
       throw new RetryableError(
         'ACTIVITY_DIGEST_RETRY',
         `digest email failed (${code}); will retry`,

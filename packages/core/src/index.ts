@@ -14,6 +14,7 @@ export * from './court/index.ts';
 export * from './court-day/index.ts';
 export * from './hearings/index.ts';
 export * from './briefs/index.ts';
+export * from './delegation/index.ts';
 export * from './deadlines/index.ts';
 export * from './jobs/index.ts';
 export * from './lifecycle/index.ts';

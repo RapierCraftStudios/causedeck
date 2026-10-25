@@ -52,6 +52,8 @@ export function renderPermissionsDoc(): string {
     '  (workspace_settings.advocates_can_read_audit).',
     '- `advocatesCanViewAllCourtDay` (default true): when false, advocates are denied',
     '  `court_day.view_all` and see only their own court-day items (`mine` scope).',
+    '- `advocatesCanAssign` (default true): when false, advocates are denied `appearance.assign`;',
+    '  owners always may.',
     '- Restricted matters: only users in `restricted.allowUserIds` may act on them, plus owners',
     '  while `ownersSeeRestrictedMatters` is true (the default;',
     '  workspace_settings.owners_see_restricted).',

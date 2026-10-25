@@ -129,3 +129,4 @@ export {
 } from './outcome/source-compare';
 export { SourceText, type SourceSpan, type SourceTextProps } from './outcome/source-text';
 export { ConfirmBar, type ConfirmBarProps } from './outcome/confirm-bar';
+export * from './delegation';

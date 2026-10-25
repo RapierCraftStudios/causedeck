@@ -37,3 +37,6 @@ The merged-tree failure was `turbo: command not found` (exit 127): `turbo` is no
 
 ### CI `test` failure (no log available)
 The job log could not be read. Re-ran locally: db (notices-schema, index, rls, cross-tenant, lint-migrations, migrate, conventions), core (notices, deadlines, jobs, domains), full intelligence, tsc for db/core/intelligence, prettier and ESLint on changed files: all pass. The core cross-tenant suite skips without its database, so it could only be checked by CI; it is the one suite not run here. Changed `listHolidayListings` case so the listing's date is named only by a `notice_holiday` row (contract D6), the multi-date path it had not exercised. No source change otherwise; the cause of the CI failure is unconfirmed.
+
+### CI `test` failure: rosters-perf (#387)
+The only failing test was `src/court/__tests__/rosters-perf.test.ts > are index-backed` (planner did not pick `bench_roster_entry_workspace_roster_idx` under `enable_seqscan = off`). It touches only the `bench_roster*` tables; this branch adds `notice_holiday` and changes nothing in `court` or those tables, and the other 185 core test files passed. It is a query-plan assertion on a CI database under load (shard took 554s), unrelated to #628, so no source change. Also untracked three accidentally committed `.eslintcache` files (gitignored).

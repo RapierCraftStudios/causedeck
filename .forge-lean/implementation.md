@@ -34,3 +34,6 @@ No code conflict: the failing check only ran `turbo` outside PATH (exit 127). Re
 
 ### Merge re-check
 The merged-tree failure was `turbo: command not found` (exit 127): `turbo` is not on PATH, not a code conflict. Run via `pnpm exec turbo`, typecheck passes for 22 of 23 packages; `@causedeck/web` hit a V8 heap OOM under the default heap and passes (rc 0, no TS errors) with `NODE_OPTIONS=--max-old-space-size=6144`. No source change was needed.
+
+### CI `test` failure (no log available)
+The job log could not be read. Re-ran locally: db (notices-schema, index, rls, cross-tenant, lint-migrations, migrate, conventions), core (notices, deadlines, jobs, domains), full intelligence, tsc for db/core/intelligence, prettier and ESLint on changed files: all pass. The core cross-tenant suite skips without its database, so it could only be checked by CI; it is the one suite not run here. Changed `listHolidayListings` case so the listing's date is named only by a `notice_holiday` row (contract D6), the multi-date path it had not exercised. No source change otherwise; the cause of the CI failure is unconfirmed.

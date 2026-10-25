@@ -232,7 +232,13 @@ async function legacyDatabase(name: string) {
   const app = createDb({ url: new Secret(db.app), role: 'app', max: 1 });
   cleanups.push(() => app.$client.end());
   const ids = await app.transaction(async (tx) => {
-    const userId = await newUser(tx);
+    // Raw insert: this database predates later `user` columns (e.g. phone_number, #503), which the
+    // schema-typed `newUser` would try to write.
+    const [created] = await tx.execute<{ id: string }>(
+      sql`insert into "user" (name, email) values ('Advocate', ${`${randomUUID()}@example.test`}) returning id`,
+    );
+    const userId = created?.id ?? '';
+    if (userId === '') throw new Error('user insert failed');
     const ws = await workspaceWith(tx, userId);
     await withWorkspace(tx, { workspaceId: ws }, async (s) => {
       await append(s, ws, null, 'test.ws.system');

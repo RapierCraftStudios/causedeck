@@ -19,8 +19,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
   // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
   court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
-  // Court-day display-board tracking (#493): the board source's clearance through sources.
-  'court-day': Object.freeze(['sources']),
+  // Court-day display-board tracking (#493): the board source's clearance through sources. The court
+  // day (#58) reads roles through workspaces, audits the hall marker through audit and wraps the
+  // canonical next-date proposal and conflict view of matter-graph (imports `index.ts` only).
+  'court-day': Object.freeze(['sources', 'matter-graph', 'workspaces', 'audit']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),
@@ -41,6 +43,12 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Institution portfolios (#663, #498 part 3): the owner check through workspaces, watches through case-watch
   // (status sources) and the matter read probe through matter-graph; clearance through sources.
   portfolio: Object.freeze(['workspaces', 'matter-graph', 'case-watch', 'sources']),
+  // The derived listing brief (#60, ADR 0038): the scope and member role through workspaces, the
+  // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
+  // (imports `index.ts` only).
+  briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai']),
+  // WhatsApp number link and OTP (#678, #502 part 1): the membership check through workspaces
+  'whatsapp-link': Object.freeze(['workspaces', 'audit', 'capture']),
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
   // read as `listHolidayListings`) and the day arithmetic is the extraction's own, from intelligence.
   deadlines: Object.freeze([]),
@@ -53,6 +61,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Change webhooks (#626, #487 part 3): managing endpoints checks the member's role through workspaces and is
   // audited; delivery goes through `@causedeck/fetch`, and events arrive as injected deps (no case-watch import).
   webhooks: Object.freeze(['audit', 'workspaces']),
+  // Bulk seat provisioning (#684, #508): CSV runs and SCIM Users are audited and add or remove members through workspaces.
+  provisioning: Object.freeze(['audit', 'workspaces']),
   // The public developer API reads (#625, D-048): every record is gated on source clearance and data class through sources.
   'public-api': Object.freeze(['sources']),
   // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
@@ -122,6 +132,13 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // stages list rows as proposals through automation; it reads captures and documents from the
   // tables and never imports capture or jobs (the job bodies in jobs wrap it).
   import: Object.freeze(['matter-graph', 'usage', 'automation']),
+  // Zero-entry onboarding (#501, D-048): discovery stages the advocate's matched listings as
+  // proposals on an import batch through the import and automation indexes, reads the fetch policy
+  // through sources, and types its actor through matter-graph. Nothing is applied here.
+  onboarding: Object.freeze(['import', 'automation', 'sources', 'matter-graph']),
+  // The migration concierge (#685): runs matter imports through the import domain's apply and undo
+  // (imports `index.ts` only) and checks the actor's role through workspaces.
+  migration: Object.freeze(['import', 'workspaces']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([
@@ -135,6 +152,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'automation',
     'calendar',
     'whatsapp',
+    'whatsapp-link',
     'voice',
     'email-intake',
     'extraction',
@@ -144,6 +162,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'data-ops',
     'court',
     'court-day',
+    'briefs',
     'sources',
     'notices',
     'research',

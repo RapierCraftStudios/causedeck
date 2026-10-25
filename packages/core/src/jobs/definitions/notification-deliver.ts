@@ -39,6 +39,13 @@ import {
   type RenderedEmail,
 } from '@causedeck/notifications/email';
 import { createPushSender, type PushSender } from '@causedeck/notifications/push';
+import {
+  createWhatsAppSender,
+  hasWhatsAppTemplate,
+  WhatsAppDeliveryError,
+  type WhatsAppMessage,
+  type WhatsAppSender,
+} from '@causedeck/notifications/whatsapp';
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -46,6 +53,7 @@ import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
 import { once } from '../idempotency.ts';
+import { getWhatsAppSendTarget } from '../../whatsapp-link/index.ts';
 
 const { notification, notificationSetting, user, workspaceSettings } = schema;
 
@@ -74,7 +82,7 @@ export async function workspaceTimezone(
   return validZone(row?.timezone ?? DEFAULT_WORKSPACE_TIMEZONE);
 }
 
-export const DELIVERY_CHANNELS = ['email', 'push'] as const;
+export const DELIVERY_CHANNELS = ['email', 'push', 'whatsapp'] as const;
 export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
 
 export const notificationDeliverSchema = z.object({
@@ -85,13 +93,15 @@ export const notificationDeliverSchema = z.object({
 
 export type NotificationDeliverPayload = z.output<typeof notificationDeliverSchema>;
 
-export type { PushSender };
+export type { PushSender, WhatsAppSender };
 
 /** Transports and links the notification jobs use; injectable for tests. */
 export interface NotificationJobDeps {
   email: EmailTransport;
   /** Absent: push is disabled and recorded as skipped. */
   push?: PushSender | undefined;
+  /** Absent: WhatsApp is disabled and recorded as skipped. */
+  whatsapp?: WhatsAppSender | undefined;
   appUrl: string;
   now?: () => Date;
 }
@@ -112,6 +122,7 @@ export function notificationJobDeps(log: JobContext['log']): NotificationJobDeps
     defaults = {
       email: createEmailTransport(env, log),
       push: createPushSender({ env, log }),
+      whatsapp: createWhatsAppSender({ env, log }),
       appUrl: env.APP_URL,
     };
   }
@@ -241,6 +252,40 @@ export async function runNotificationDeliver(
       await deps.email.send({ to: recipient.email, ...email, tags: { category: row.category } });
       return undefined;
     };
+  } else if (channel === 'whatsapp') {
+    const whatsapp = deps.whatsapp;
+    if (whatsapp === undefined) return skip('whatsapp_disabled');
+    if (!hasWhatsAppTemplate(row.category)) return skip('no_template');
+    // The only destination is the notification owner's verified, consented number for this
+    // category (D-029); it is never read from the notification or the payload.
+    const target = await getWhatsAppSendTarget(
+      { db: ctx.db },
+      { userId: row.userId, workspaceId },
+      { category: row.category },
+    );
+    if (target === null) return skip('not_linked');
+    const [setting] = await ctx.db
+      .select({ courtHoursQuiet: notificationSetting.courtHoursQuiet })
+      .from(notificationSetting)
+      .where(
+        and(
+          eq(notificationSetting.workspaceId, workspaceId),
+          eq(notificationSetting.userId, row.userId),
+        ),
+      );
+    if (setting?.courtHoursQuiet === true) {
+      const timeZone = await workspaceTimezone(ctx, workspaceId);
+      const now = deps.now?.() ?? new Date();
+      if (isQuietTime(localMinutes(now, timeZone), setting)) return skip('quiet_hours');
+    }
+    const message: WhatsAppMessage = {
+      category: row.category,
+      params: [appLink(deps.appUrl, row.href)],
+    };
+    send = async () => {
+      await whatsapp.send(message, target);
+      return undefined;
+    };
   } else {
     const push = deps.push;
     if (push === undefined) return skip('push_disabled');
@@ -285,6 +330,13 @@ export async function runNotificationDeliver(
       const code = emailErrorCode(error);
       if (channel === 'email' && isPermanentEmailError(error)) {
         return { status: 'failed', code, at: at() };
+      }
+      if (error instanceof WhatsAppDeliveryError && error.permanent) {
+        return {
+          status: 'failed',
+          code: `whatsapp_${String(error.status ?? 'rejected')}`,
+          at: at(),
+        };
       }
       throw new RetryableError(
         'NOTIFICATION_DELIVERY_RETRY',

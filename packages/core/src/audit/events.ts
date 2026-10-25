@@ -108,6 +108,28 @@ export const AUDIT_ACTIONS = {
   // Public API keys (#624): fail-closed. Metadata holds the key's scopes (created) or nothing.
   'api_key.created': { security: true, description: 'An owner or admin issued a public API key' },
   'api_key.revoked': { security: true, description: 'An owner or admin revoked a public API key' },
+  // Bulk provisioning (#684): fail-closed. A run's metadata holds its source, counts and a dry-run
+  // flag (never the addresses); a provisioned or deprovisioned member names the source and change.
+  'provisioning.run': {
+    security: true,
+    description: 'A bulk member provisioning run (CSV) finished',
+  },
+  'member.provisioned': {
+    security: true,
+    description: 'A member was added, reactivated or changed by SCIM provisioning',
+  },
+  'member.deprovisioned': {
+    security: true,
+    description: 'A member was suspended or removed by SCIM provisioning',
+  },
+  'scim_token.created': {
+    security: true,
+    description: 'An owner issued a SCIM provisioning token',
+  },
+  'scim_token.revoked': {
+    security: true,
+    description: 'An owner revoked a SCIM provisioning token',
+  },
   // Change webhooks (#626): fail-closed. Metadata holds the subscribed event types (created) or nothing.
   'webhook_endpoint.created': {
     security: true,
@@ -298,6 +320,15 @@ export const AUDIT_ACTIONS = {
   'automation.reassigned': {
     security: true,
     description: "A capture's results were moved to another matter",
+  },
+  // The lawyer's manual "court is at item N" hall marker (#58): an internal note, ids and numbers only.
+  'court_day.marker_set': {
+    security: false,
+    description: 'A manual court-is-at-item marker was set for a hall',
+  },
+  'court_day.marker_cleared': {
+    security: false,
+    description: 'A manual court-is-at-item marker was cleared',
   },
 } as const satisfies Record<string, AuditActionSpec>;
 

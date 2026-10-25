@@ -27,6 +27,21 @@ export {
   type WebhookEventType,
 } from './webhooks.ts';
 export { portfolio, portfolioCase, portfolioPanelAdvocate } from './portfolio.ts';
+export {
+  migrationRun,
+  migrationRunRow,
+  provisioningRun,
+  scimToken,
+  ssoProvider,
+} from './enterprise.ts';
+export {
+  WHATSAPP_E164_PATTERN,
+  WHATSAPP_OTP_MAX_ATTEMPTS,
+  WHATSAPP_INBOUND_STATUSES,
+  whatsappInboundMessage,
+  whatsappLink,
+  whatsappOtpChallenge,
+} from './whatsapp-link.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,
@@ -295,6 +310,7 @@ export {
   type IssueTagSource,
   type IssueTagStatus,
 } from './matter-issue.ts';
+export { courtDayMarker, listSnapshot, type ListSnapshotRow } from './court-day.ts';
 export {
   REVIEW_FIELDS,
   REVIEW_KINDS,
@@ -305,3 +321,4 @@ export {
   type ReviewKind,
   type ReviewStatus,
 } from './review.ts';
+export { briefState, type BriefCarryEntry } from './brief.ts';

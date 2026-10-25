@@ -84,6 +84,12 @@ the matrix, before the resource checks below.
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `audit.read` | ✓     | ✓        | —      | —     | —      |
 
+## court_day
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `court_day.view_all` | ✓     | ✓        | —      | —     | —      |
+
 ## export
 
 | Action | owner | advocate | junior | clerk | viewer |
@@ -110,6 +116,8 @@ the matrix, before the resource checks below.
   (workspace_settings.advocates_can_invite).
 - `advocatesCanReadAudit` (default true): when false, advocates are denied `audit.read`
   (workspace_settings.advocates_can_read_audit).
+- `advocatesCanViewAllCourtDay` (default true): when false, advocates are denied
+  `court_day.view_all` and see only their own court-day items (`mine` scope).
 - Restricted matters: only users in `restricted.allowUserIds` may act on them, plus owners
   while `ownersSeeRestrictedMatters` is true (the default;
   workspace_settings.owners_see_restricted).

@@ -71,9 +71,9 @@ ruleTester.run('causedeck/core-domain-boundaries', coreDomainBoundaries, {
     bad('billing/plans.ts', `import { x } from '../usage/index.ts';`, 'undeclaredDependency'),
     bad('shared/errors.ts', `import { x } from '../workspaces/index.ts';`, 'sharedImportsDomain'),
     bad('shared/errors.ts', `import { x } from '../audit/writer.ts';`, 'sharedImportsDomain'),
-    // `court` is a declared domain since #34, so the unknown-domain cases use an undeclared folder.
-    bad('briefs/graph.ts', `import { x } from '../audit/index.ts';`, 'unknownDomain'),
-    bad('audit/sink.ts', `import { x } from '../briefs/index.ts';`, 'unknownDomain'),
+    // `court` (#34) and `briefs` (#60) are declared domains, so the unknown-domain cases use an undeclared folder.
+    bad('undeclared/graph.ts', `import { x } from '../audit/index.ts';`, 'unknownDomain'),
+    bad('audit/sink.ts', `import { x } from '../undeclared/index.ts';`, 'unknownDomain'),
     bad('court/forums.ts', `import { x } from '../audit/index.ts';`, 'undeclaredDependency'),
   ],
 });

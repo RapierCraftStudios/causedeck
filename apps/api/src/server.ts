@@ -10,6 +10,7 @@ import { webhookSecretFor } from '@causedeck/billing/webhook';
 import { serverEnv } from '@causedeck/config/env';
 import { createSecurityEventRecorder } from '@causedeck/core/audit';
 import { inboundProviderFromProcess } from '@causedeck/core/email-intake';
+import { whatsappInboundProviderFromProcess } from '@causedeck/core/whatsapp-link';
 import { closeProducer } from '@causedeck/core/jobs';
 import { closeAppDb, db, startAppFlagListener } from '@causedeck/core/runtime';
 import {
@@ -135,6 +136,7 @@ async function main(): Promise<void> {
     readyChecks: readyChecksFromEnv(env),
     billing: { webhookSecret: webhookSecretFor(env) },
     inboundEmail: { provider: inboundProviderFromProcess() },
+    inboundWhatsapp: { provider: whatsappInboundProviderFromProcess() },
   });
   const { server, port } = await startServer({ app, port: env.API_PORT });
   // Staff flag changes drop this process's flag cache at once; the 15 s TTL covers a failure (#22).

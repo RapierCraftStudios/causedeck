@@ -6,3 +6,5 @@ export * from './capture';
 export * from './workspace';
 export * from './proposal-draft';
 export * from './digest-preferences';
+export * from './court-day';
+export * from './brief';

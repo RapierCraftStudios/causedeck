@@ -198,7 +198,7 @@ export interface NewsDigestMemberDeps extends NotificationJobDeps {
   enqueueDelivery?: (job: {
     workspaceId: string;
     notificationId: string;
-    channel: 'email' | 'push';
+    channel: 'email' | 'push' | 'whatsapp';
   }) => Promise<unknown>;
 }
 

@@ -255,6 +255,11 @@ export const courtExporter = tablesExporter('court', [
   ws('bench_roster'),
   ws('bench_roster_entry'),
   ws('bench_change_alert'),
+  // Court day (#58): the lawyer's own "court is at item N" notes and the stored list snapshots.
+  ws('court_day_marker', { userColumn: 'set_by' }),
+  ws('list_snapshot'),
+  // Brief state (#60): the lawyer's prepared mark, carry edits and note.
+  ws('brief_state', { userColumn: 'updated_by' }),
 ]);
 
 // Matters, their proceedings, links (#346) and state history (#363), their docket: listings, hearings, appearances,
@@ -314,6 +319,22 @@ const portfoliosExporter = tablesExporter('portfolios', [
   ws('portfolio_panel_advocate', { userColumn: 'advocate_user_id' }),
 ]);
 
+// WhatsApp number link (#678): the member's own linked number, opt-in time and chosen categories.
+// The pending challenge holds only a code hash and is never exported.
+const whatsappLinkExporter = tablesExporter('whatsapp-link', [
+  ws('whatsapp_link', { userColumn: 'user_id' }),
+]);
+
+// Enterprise onboarding (#682): SSO providers without their config (client secrets), SCIM tokens
+// without the hash, and the provisioning and migration runs with their per-row state.
+const enterpriseExporter = tablesExporter('enterprise', [
+  ws('sso_provider', { exclude: ['config'], userColumn: 'created_by' }),
+  ws('scim_token', { exclude: ['token_hash'], userColumn: 'created_by' }),
+  ws('provisioning_run', { userColumn: 'created_by' }),
+  ws('migration_run', { userColumn: 'created_by' }),
+  ws('migration_run_row'),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -329,6 +350,8 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   automationExporter,
   webhooksExporter,
   portfoliosExporter,
+  whatsappLinkExporter,
+  enterpriseExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

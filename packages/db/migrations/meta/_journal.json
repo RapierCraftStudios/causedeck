@@ -638,6 +638,76 @@
       "when": 1792866401767,
       "tag": "20261024182641_activation_event",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1792870066549,
+      "tag": "20261024192746_enterprise_onboarding",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1792870066550,
+      "tag": "20261024193000_user_phone_number",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1792876056927,
+      "tag": "20261024210736_clerk_setup",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1792886400000,
+      "tag": "20261025000000_scim_token_lookup",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1792890000000,
+      "tag": "20261025010000_advocate_search_sources",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1792893600000,
+      "tag": "20261025020000_education_channel",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1792897200000,
+      "tag": "20261025030000_whatsapp_link",
+      "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1792900800000,
+      "tag": "20261025040000_whatsapp_inbound",
+      "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1792909149619,
+      "tag": "20261025061909_court_day",
+      "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1792909164386,
+      "tag": "20261025061924_brief_state",
+      "breakpoints": true
     }
   ]
 }

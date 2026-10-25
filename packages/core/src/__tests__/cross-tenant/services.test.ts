@@ -1085,6 +1085,28 @@ const CASES: Record<string, Case> = {
       .where(eq(schema.session.id, sessionId));
     expect(still?.id).toBe(sessionId);
   },
+  addProvisionedMember: async (f) => {
+    const before = await aMembers(f);
+    await expect(
+      f.asB((s) =>
+        core.addProvisionedMember(s, {
+          workspaceId: f.a.id,
+          email: 'xt-provisioned@example.com',
+          role: 'viewer',
+        }),
+      ),
+    ).rejects.toBeDefined();
+    expect(await aMembers(f)).toEqual(before);
+  },
+  deactivateProvisionedMember: async (f) => {
+    const before = await aMembers(f);
+    await expect(
+      f.asB((s) =>
+        core.deactivateProvisionedMember(s, { workspaceId: f.a.id, userId: f.aMember.userId }),
+      ),
+    ).rejects.toBeDefined();
+    expect(await aMembers(f)).toEqual(before);
+  },
   prepareOwnershipTransfer: async (f) => {
     await expectDenied(
       f.asB((s) =>
@@ -1241,6 +1263,46 @@ const CASES: Record<string, Case> = {
       ),
     );
     expect(await core.getWorkspaceProfile(f.tx, f.a.id)).toEqual(before);
+  },
+  getClerkSetup: async (f) => {
+    const [clerkUser] = await f.tx
+      .insert(schema.user)
+      .values({ name: 'Clerk A', email: `clerk-a-${f.a.id}@example.test` })
+      .returning({ id: schema.user.id });
+    await inWorkspace(f.tx, f.a.id, (s) =>
+      s.insert(schema.member).values({
+        organizationId: f.a.id,
+        userId: clerkUser?.id ?? '',
+        role: 'clerk',
+        clerkSetupStatus: 'pending',
+      }),
+    );
+    // Under B's scope A's clerks are invisible; under A's they are listed.
+    expect(await f.asB((s) => core.getClerkSetup(s, f.a.id))).toEqual([]);
+    expect((await inWorkspace(f.tx, f.a.id, (s) => core.getClerkSetup(s, f.a.id)))[0]?.status).toBe(
+      'pending',
+    );
+  },
+  requestClerkSetupApproval: async (f) => {
+    // B's owner is not a clerk of A: denied, and A's clerks stay as they were.
+    const before = await core.getClerkSetup(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) => core.requestClerkSetupApproval(s, { workspaceId: f.a.id, actorUserId: f.ub })),
+    );
+    expect(await core.getClerkSetup(f.tx, f.a.id)).toEqual(before);
+  },
+  approveClerkSetup: async (f) => {
+    const before = await core.getClerkSetup(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.approveClerkSetup(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          memberId: before[0]?.memberId ?? f.a.id,
+        }),
+      ),
+    );
+    expect(await core.getClerkSetup(f.tx, f.a.id)).toEqual(before);
   },
   getRoleSettings: async (f) => {
     await f.tx
@@ -1867,6 +1929,145 @@ const CASES: Record<string, Case> = {
     expect(own.map((hall) => hall.hallNo)).not.toContain('xt-a-hall');
     expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
     expect(await aParseRuns(f)).toEqual(probe.before);
+  },
+  // Court day (#58): ub names A's workspace; every entry point is denied and A's rows stay as they were.
+  getCourtDay: async (f) => {
+    await expect(
+      core.getCourtDay(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02', scope: 'workspace' },
+      ),
+    ).rejects.toBeDefined();
+  },
+  setCurrentItem: async (f) => {
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.courtDayMarker));
+    const hallId = '00000000-0000-4000-8000-000000000001';
+    await expect(
+      core.setCurrentItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hallId, listDate: '2026-11-02', currentItem: 3 },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.courtDayMarker))).toEqual(
+      before,
+    );
+  },
+  clearCurrentItem: async (f) => {
+    const hallId = '00000000-0000-4000-8000-000000000001';
+    await expect(
+      core.clearCurrentItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hallId, listDate: '2026-11-02' },
+      ),
+    ).rejects.toBeDefined();
+  },
+  snapshotList: async (f) => {
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listSnapshot));
+    await expect(
+      core.snapshotList(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        {
+          forumId: '00000000-0000-4000-8000-000000000001',
+          listDate: '2026-11-02',
+          listType: 'daily',
+          rows: [],
+        },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listSnapshot))).toEqual(
+      before,
+    );
+  },
+  proposeCourtDayNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.proposeCourtDayNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId, date: '2027-01-04', provenance: PROBE_PROVENANCE },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  listConflictCards: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.listConflictCards(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        {
+          matterId: '00000000-0000-4000-8000-000000000001',
+        },
+      ),
+    );
+  },
+  // briefs (#60): B acting on A's listing is denied and A's brief state is unchanged.
+  assembleBrief: async (f) => {
+    const { listingId } = await aListing(f);
+    await expect(
+      core.assembleBrief({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, listingId),
+    ).rejects.toBeDefined();
+  },
+  markPrepared: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.markPrepared({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { listingId }),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  unmarkPrepared: async (f) => {
+    const { listingId } = await aListing(f);
+    await expect(
+      core.unmarkPrepared({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { listingId }),
+    ).rejects.toBeDefined();
+  },
+  setCarryItem: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.setCarryItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { listingId, action: 'add', label: 'Vakalatnama' },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  setBriefNote: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.setBriefNote(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { listingId, note: 'B was here' },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  refreshBrief: async (f) => {
+    // The system refresh runs in the workspace it names: A's listing id in B's scope is not found
+    // (or refreshes nothing), and A's brief state is unchanged.
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await core
+      .refreshBrief({ db: f.tx }, { workspaceId: f.b.id, listingId })
+      .catch(() => undefined);
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
   },
   getLiveHalls: async (f) => {
     // getLiveHalls is a per-member read model, not a write: a user with no seat in the workspace

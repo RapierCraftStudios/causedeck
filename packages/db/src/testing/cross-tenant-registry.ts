@@ -29,6 +29,7 @@ const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-pr
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
+const CORE_WHATSAPP_LINK_TEST = 'packages/core/src/__tests__/cross-tenant/whatsapp-link.test.ts';
 const CORE_PORTFOLIO_TEST = 'packages/core/src/__tests__/cross-tenant/portfolio.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
@@ -121,6 +122,13 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   case_watch: DB_TABLES_TEST,
   case_status_snapshot: DB_TABLES_TEST,
 
+  // Court-day marker and list snapshots (#58).
+  court_day_marker: DB_TABLES_TEST,
+  list_snapshot: DB_TABLES_TEST,
+
+  // Brief state (#60).
+  brief_state: DB_TABLES_TEST,
+
   // Review and correction queue (#518).
   review_correction: DB_TABLES_TEST,
 
@@ -145,6 +153,17 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   portfolio: DB_TABLES_TEST,
   portfolio_case: DB_TABLES_TEST,
   portfolio_panel_advocate: DB_TABLES_TEST,
+
+  // WhatsApp number link and OTP challenge (#678).
+  whatsapp_link: DB_TABLES_TEST,
+  whatsapp_otp_challenge: DB_TABLES_TEST,
+  whatsapp_inbound_message: DB_TABLES_TEST,
+  // Enterprise onboarding (#682).
+  sso_provider: DB_TABLES_TEST,
+  scim_token: DB_TABLES_TEST,
+  provisioning_run: DB_TABLES_TEST,
+  migration_run: DB_TABLES_TEST,
+  migration_run_row: DB_TABLES_TEST,
 
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
@@ -210,12 +229,26 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   countOpenWork: empty,
   offboardMember: denies,
   inviteMember: denies,
+  addProvisionedMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'trusts its caller (a SCIM token or a member holding member.invite); a B-scoped call for workspace A fails on RLS and adds no member',
+  },
+  deactivateProvisionedMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'trusts its caller (a SCIM token); a B-scoped call for workspace A finds no member row and changes nothing',
+  },
   reissueInvitation: denies,
   revokeInvitation: denies,
   listPendingInvitations: empty,
   // workspace profile (#284)
   getWorkspaceProfile: empty,
   updateWorkspaceProfile: denies,
+  // clerk setup approval (#505)
+  getClerkSetup: empty,
+  requestClerkSetupApproval: denies,
+  approveClerkSetup: denies,
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,
@@ -276,6 +309,16 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // Portfolio list and create (#666): B cannot list or create in A's workspace; B's list has no A row.
   listPortfolios: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   createPortfolio: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  // WhatsApp link (#678): B cannot request, verify, unlink or read A's link, challenge or target.
+  requestWhatsAppOtp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  verifyWhatsAppOtp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  unlinkWhatsApp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  setWhatsAppCategories: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  getWhatsAppLink: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  getWhatsAppSendTarget: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  // Inbound WhatsApp (#680): the workspace comes only from the sender's verified link.
+  receiveInboundWhatsApp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  runWhatsAppIntake: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
   // Exception alerts (#665): the scan opens withWorkspace on the given workspace id only.
   scanPortfolioAlerts: {
     test: CORE_PORTFOLIO_TEST,
@@ -455,6 +498,20 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getLiveHalls: denies,
   // bench card (#521): the flagged read model opens withWorkspace on the given actor
   getBenchCard: denies,
+  // court day (#58): B acting on A's workspace is denied, A's rows are unchanged
+  getCourtDay: denies,
+  setCurrentItem: denies,
+  clearCurrentItem: denies,
+  snapshotList: denies,
+  proposeCourtDayNextDate: denies,
+  listConflictCards: denies,
+  // briefs (#60): B acting on A's listing is denied (NOT_FOUND), A's brief state is unchanged
+  assembleBrief: denies,
+  markPrepared: denies,
+  unmarkPrepared: denies,
+  setCarryItem: denies,
+  setBriefNote: denies,
+  refreshBrief: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -835,6 +892,18 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // briefs (#60): pure scoring, the empty memory port, and the system sweep
+  computeReadiness: 'pure',
+  emptyMemoryProvider: 'constant: the default memory port returns nothing',
+  onCourtDayListChanged:
+    "trigger consumer: lists the changed list's listings inside the event's own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts",
+  refreshBriefTargets:
+    'system job body: no workspace; lists targets only through the owner-defined app_brief_refresh_targets and refreshes each in its own workspace scope; covered by briefs/__tests__/state.test.ts',
+  // whatsapp-link (#678): constants
+  WHATSAPP_OTP_TTL_MS: 'constant',
+  WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',
+  WHATSAPP_OTP_MAX_ATTEMPTS: 'constant',
+  whatsappInboundProviderFromProcess: 'env factory, no tenant data',
   // portfolio (#663): pure CSV reader and constants
   parsePortfolioCsv: 'pure',
   MAX_PORTFOLIO_IMPORT_ROWS: 'constant',
@@ -1091,6 +1160,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   planBoardAlert: 'pure (decides the one alert a listed item earns from a board row)',
   pollBoards:
     'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
+  detectClashes: 'pure (groups already-loaded items by date and member)',
+  diffLists: 'pure',
+  hashRows: 'pure',
   itemNumber: 'pure',
   paceSamples: 'pure',
   estimateCallWindow: 'pure',

@@ -87,10 +87,13 @@ vi.mock('next-intl/server', () => ({
 
 const members = await import('../app/(app)/w/[slug]/settings/members/actions.ts');
 const invite = await import('../app/(public)/invite/[token]/actions.ts');
+const welcome = await import('../app/(app)/w/[slug]/welcome/actions.ts');
 const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
+const whatsappLink =
+  await import('../app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts');
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
@@ -113,6 +116,7 @@ const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/act
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
+const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
@@ -123,6 +127,7 @@ const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 /** Every exported server action and the module it comes from. */
 const ACTIONS: Record<string, Record<string, unknown>> = {
   inviteMembersAction: members,
+  provisionMembersCsvAction: members,
   changeRoleAction: members,
   openWorkAction: members,
   removeMemberAction: members,
@@ -145,9 +150,16 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  requestWhatsAppOtpAction: whatsappLink,
+  verifyWhatsAppOtpAction: whatsappLink,
+  setWhatsAppCategoriesAction: whatsappLink,
+  unlinkWhatsAppAction: whatsappLink,
+  getWhatsAppLinkAction: whatsappLink,
   saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  requestClerkSetupApprovalAction: welcome,
+  approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
@@ -222,6 +234,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveImportPlanEditsAction: importer,
   applyImportPlanAction: importer,
   undoImportBatchAction: importer,
+  discoverAdvocateCasesAction: discovery,
+  discoveryProgressAction: discovery,
+  recordOnboardingStepAction: discovery,
   createCalendarFeedAction: calendar,
   rotateCalendarFeedAction: calendar,
   revokeCalendarFeedAction: calendar,
@@ -263,7 +278,12 @@ function signInAs(userId: string): void {
 function snapshotA() {
   return withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => ({
     members: await tx
-      .select({ id: schema.member.id, role: schema.member.role, status: schema.member.status })
+      .select({
+        id: schema.member.id,
+        role: schema.member.role,
+        status: schema.member.status,
+        clerkSetupStatus: schema.member.clerkSetupStatus,
+      })
       .from(schema.member)
       .orderBy(schema.member.id),
     invitations: await tx
@@ -295,6 +315,12 @@ function snapshotA() {
       .orderBy(schema.auditEvent.id),
     notificationPrefs: await tx.select().from(schema.notificationPref),
     notificationSettings: await tx.select().from(schema.notificationSetting),
+    // A's WhatsApp links and pending codes (#681): no web action of B may touch them.
+    whatsappLinks: await tx.select().from(schema.whatsappLink).orderBy(schema.whatsappLink.id),
+    whatsappChallenges: await tx
+      .select()
+      .from(schema.whatsappOtpChallenge)
+      .orderBy(schema.whatsappOtpChallenge.id),
     supportSessions: await tx
       .select()
       .from(schema.supportSession)
@@ -442,6 +468,11 @@ afterAll(closeTestDb);
 function inputs(workspaceId: string): Record<string, unknown> {
   return {
     inviteMembersAction: { workspaceId, emails: ['xt-probe@example.test'], role: 'junior' },
+    provisionMembersCsvAction: {
+      workspaceId,
+      csv: 'email,role\nxt-probe-csv@example.test,viewer\n',
+      dryRun: false,
+    },
     changeRoleAction: { workspaceId, memberId: aMember.memberId, role: 'owner' },
     openWorkAction: { workspaceId, memberId: aMember.memberId },
     removeMemberAction: { workspaceId, memberId: aMember.memberId },
@@ -466,6 +497,11 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    requestWhatsAppOtpAction: { workspaceId, e164: '+919812345678', consent: true },
+    verifyWhatsAppOtpAction: { workspaceId, code: '000000' },
+    setWhatsAppCategoriesAction: { workspaceId, categories: ['court.board'] },
+    unlinkWhatsAppAction: { workspaceId },
+    getWhatsAppLinkAction: { workspaceId },
     saveNewsPreferencesAction: {
       workspaceId,
       practiceAreas: ['tax'],
@@ -481,6 +517,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
       practiceCity: 'Probe City',
       slug: `xt-probe-${workspaceId.slice(0, 8)}`,
     },
+    requestClerkSetupApprovalAction: { workspaceId },
+    approveClerkSetupAction: { workspaceId, memberId: randomUUID() },
     updateRoleSettingsAction: {
       workspaceId,
       advocatesCanInvite: false,
@@ -609,6 +647,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       captureIds: [t.a.rows.capture?.id],
     },
     importProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    // Zero-entry onboarding (#501): ub may not search into A's workspace, read A's batch progress or record a step there.
+    discoverAdvocateCasesAction: {
+      workspaceId,
+      sourceIds: ['in.tn.madras-hc.chennai:advocate_search'],
+      enrolmentNumbers: ['KAR/1/2020'],
+      names: [],
+      batchId: t.a.rows.import_batch?.id,
+    },
+    discoveryProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    recordOnboardingStepAction: { workspaceId, step: 'confirm_grid_done' },
     getImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     saveImportPlanEditsAction: {
       workspaceId,
@@ -923,6 +971,34 @@ describe('cross-tenant server actions', () => {
       rows.filter((row) => row.userId === t.ub && row.workspaceId === t.b.id);
     expect(mine(inB.prefs).length).toBeGreaterThan(0);
     expect(mine(inB.settings)).toHaveLength(1);
+  });
+
+  it('WhatsApp link actions under B’s own workspace touch only ub’s rows in B (#681)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    // Unlink first: earlier probes may have left a pending code, and a new request waits a minute.
+    expect(await action('unlinkWhatsAppAction')(all.unlinkWhatsAppAction)).toMatchObject({
+      ok: true,
+    });
+    expect(await action('requestWhatsAppOtpAction')(all.requestWhatsAppOtpAction)).toMatchObject({
+      ok: true,
+    });
+    expect(await action('getWhatsAppLinkAction')(all.getWhatsAppLinkAction)).toMatchObject({
+      ok: true,
+      data: null,
+    });
+    // A wrong guess is refused, not linked.
+    expect(await action('verifyWhatsAppOtpAction')(all.verifyWhatsAppOtpAction)).toMatchObject({
+      ok: false,
+      error: { code: 'VALIDATION' },
+    });
+    expect(
+      await action('setWhatsAppCategoriesAction')(all.setWhatsAppCategoriesAction),
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'CONFLICT' },
+    });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('saveNewsPreferencesAction under B’s own workspace saves only ub’s row in B (#481)', async () => {

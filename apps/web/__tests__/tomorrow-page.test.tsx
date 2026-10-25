@@ -53,7 +53,8 @@ vi.mock('next/navigation', () => ({
   },
 }));
 vi.mock('next-intl/server', () => ({
-  getTranslations: (namespace?: string) => fakeGetTranslations(page.locale as TestLocale)(namespace),
+  getTranslations: (namespace?: string) =>
+    fakeGetTranslations(page.locale as TestLocale)(namespace),
 }));
 vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),

@@ -130,7 +130,14 @@
  ],
  "amendments": [
   {
-   "note": "Duplicate export names metadata/dynamic are Next.js route-file conventions; kept by design, documented in implementation.md"
+   "kind": "add-deliverable",
+   "path": "pnpm-lock.yaml",
+   "why": "hotspot-exempt: generated lockfile; the growth is the resolved dependency graph of the new @causedeck/site dependencies (next, next-mdx-remote, next-themes, tailwind, tsx) from `pnpm install --lockfile-only`, and cannot be split into another module."
   }
- ]
+ ],
+ "facts": {
+  "decisions": [
+   "Duplicate metadata/dynamic export names across app route files are Next.js route-file conventions, kept by design (not a contract change)."
+  ]
+ }
 }

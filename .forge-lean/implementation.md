@@ -27,6 +27,7 @@ Continued the checkpointed branch: the static Next.js site was largely in place.
 V1 vitest: pass (28 tests). V2 tsc: pass. V3 rule36 lint: pass. V4 eslint: pass. V5 build + artifact checks: pass. `forgedock check` PASS. The scaffold test file did not exist before this change, so it cannot pass without the site code.
 
 ### Notes
+pnpm-lock.yaml growth (about 1000 lines) is generated dependency resolution for the new site deps (hotspot-exempt amendment). Duplicate `metadata`/`dynamic` export names are Next.js route-file conventions.
 Env vars: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_ANALYTICS_SRC (unset by default). No devdocs freshness script in repo.
 
 ### Duplicate export names (reviewed, intentionally kept)

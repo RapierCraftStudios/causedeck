@@ -927,6 +927,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // WhatsApp OTP (#711): rate-limit constants and the env-selected sender factory (no workspace data).
+  WHATSAPP_OTP_NUMBER_LIMIT: 'constant',
+  WHATSAPP_OTP_MEMBER_LIMIT: 'constant',
+  whatsappOtpSendFromProcess:
+    'factory (reads process env, returns a sender; touches no tenant data)',
   packageName: 'constant',
   // whatsapp-link (#678): constants
   WHATSAPP_OTP_TTL_MS: 'constant',

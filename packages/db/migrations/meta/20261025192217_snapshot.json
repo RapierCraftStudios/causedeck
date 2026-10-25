@@ -1,5 +1,5 @@
 {
-  "id": "cb408bc2-8516-4400-b6e1-aeeb11c56ee9",
+  "id": "4cf89f39-fe78-4f6a-82f8-b2b9f30e2c9b",
   "prevId": "c36110c7-f3c7-41cb-bf9d-b93b831ec9f3",
   "version": "7",
   "dialect": "postgresql",
@@ -2094,6 +2094,21 @@
           "columnsFrom": [
             "workspace_id",
             "member_id"
+          ],
+          "columnsTo": [
+            "workspace_id",
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "appearance_appearing_for_person_fk": {
+          "name": "appearance_appearing_for_person_fk",
+          "tableFrom": "appearance",
+          "tableTo": "person",
+          "columnsFrom": [
+            "workspace_id",
+            "appearing_for_person_id"
           ],
           "columnsTo": [
             "workspace_id",
@@ -5339,167 +5354,6 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.correction": {
-      "name": "correction",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "document_id": {
-          "name": "document_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "forum_code": {
-          "name": "forum_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "row_key": {
-          "name": "row_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "column_name": {
-          "name": "column_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "before": {
-          "name": "before",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "after": {
-          "name": "after",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "page": {
-          "name": "page",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "quote": {
-          "name": "quote",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "eval_consent": {
-          "name": "eval_consent",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "correction_workspace_id_idx": {
-          "name": "correction_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "correction_workspace_id_fk": {
-          "name": "correction_workspace_id_fk",
-          "tableFrom": "correction",
-          "tableTo": "organization",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "correction_document_fk": {
-          "name": "correction_document_fk",
-          "tableFrom": "correction",
-          "tableTo": "document",
-          "columnsFrom": [
-            "workspace_id",
-            "document_id"
-          ],
-          "columnsTo": [
-            "workspace_id",
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "correction_workspace_id_id_uq": {
-          "name": "correction_workspace_id_id_uq",
-          "nullsNotDistinct": false,
-          "columns": [
-            "workspace_id",
-            "id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "correction_page_chk": {
-          "name": "correction_page_chk",
-          "value": "page >= 1"
-        },
-        "correction_after_chk": {
-          "name": "correction_after_chk",
-          "value": "btrim(after) <> ''"
-        },
-        "correction_column_chk": {
-          "name": "correction_column_chk",
-          "value": "column_name in ('caseNumber', 'parties', 'courtHall', 'stageText', 'date')"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.court_hall": {
@@ -21959,13 +21813,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": 30
-        },
-        "allow_eval_reuse": {
-          "name": "allow_eval_reuse",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "created_at": {
           "name": "created_at",

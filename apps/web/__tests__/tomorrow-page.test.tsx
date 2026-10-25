@@ -16,7 +16,7 @@ import { testWorkspaceContext } from './helpers/workspace.ts';
 const page = vi.hoisted(() => ({
   context: null as WorkspaceContext | null,
   dev: true,
-  locale: 'en',
+  locale: 'en' as TestLocale,
   items: [] as Record<string, unknown>[],
   suggestions: [] as Record<string, unknown>[],
   outcomes: null as Record<string, unknown> | null,

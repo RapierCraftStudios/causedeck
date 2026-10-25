@@ -5,7 +5,7 @@ import { seedTwoTenants } from '@causedeck/db/testing/two-tenants';
 import { schema, type Transaction } from '@causedeck/db';
 import { describe, expect, it } from 'vitest';
 
-import { WorkspaceError } from '../../shared/errors.ts';
+import type { WorkspaceError } from '../../shared/errors.ts';
 import {
   WHATSAPP_OTP_MAX_ATTEMPTS,
   WHATSAPP_OTP_RESEND_COOLDOWN_MS,

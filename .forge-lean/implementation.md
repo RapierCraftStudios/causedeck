@@ -41,3 +41,6 @@ Still `turbo: command not found` (exit 127): turbo lives in `node_modules/.bin`,
 
 ### Post-merge typecheck (third)
 Still a PATH problem: bare `turbo` is not installed on PATH (exit 127). `pnpm exec turbo run typecheck` for db, core, notifications, i18n and web exits 0 with the base merged. No code change needed.
+
+### Lint fix
+CI lint failed on `consistent-type-imports` in `packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts` (WorkspaceError used only as a type). Changed to `import type`. ESLint on all changed files in core, db, notifications, web and config is clean.

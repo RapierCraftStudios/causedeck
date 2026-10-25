@@ -4405,4 +4405,16 @@ export type Messages = {
     title: string;
     body: string;
   };
+  status: {
+    components: {
+      database: string;
+      storage: string;
+      court: string;
+    };
+    states: {
+      operational: string;
+      degraded: string;
+      down: string;
+    };
+  };
 };

@@ -2,481 +2,263 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`pnpm --filter site build` produces a fully static `out/` with no server runtime and no `middleware`",
+   "quote": "Add packages/core/src/status (model.ts StatusSnapshot/ComponentStatus/Incident zod; publish.ts building a sanitised, HMAC-signed snapshot from health checks and getAdapterHealthSummary with documented thresholds for operational/degraded/down).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "MDX pages are rendered from `content/` with a zod-validated frontmatter schema (title, description, date, noindex); invalid frontmatter fails the build",
+   "quote": "Add platform tables incident and incident_update (no workspace_id, justification comment, test they hold no tenant data) with migration.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Every page has a unique title, description, canonical URL, Open Graph and Twitter metadata; sitemap and robots are generated; `noindex` is applied to the legal drafts flagged as such",
+   "quote": "Add worker job status.publish (every minute, idempotent, overlap-safe, writes status/status.json to the public static path via the S3 abstraction) and STATUS_SIGNING_KEY env (dev default).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "JSON-LD uses `SoftwareApplication` only; there is no `LegalService`, `Attorney`, `Review` or `AggregateRating` schema anywhere (asserted by test)",
+   "quote": "Pre-stage every shared registry here: schema index, core index and cross-tenant registry (NOT_A_SERVICE or SERVICE_TESTS), core-domains doc, worker registry and schedules tests, i18n namespace and catalog test.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "The Rule 36 lint fails the build on denylisted terms (e.g. `best lawyer`, `top advocate`, `win rate`, `guaranteed outcome`, `find a lawyer`, `client reviews`, `testimonial`) and on any component named `Testimonial*` or `Directory*`",
+   "quote": "Acceptance: snapshot schema, sanitiser fixtures test, adapter threshold mapping tests, signature test, idempotent publish and stale detection (api test), court wording 'Parsing of documents you share'.",
    "disposition": "deliver",
    "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "The site ships no third-party scripts, no cookies and no tenant data; analytics, if enabled, is cookie-less and configured by env var `NEXT_PUBLIC_ANALYTICS_SRC` (unset by default)",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "Fonts (Geist or Inter, Newsreader or Source Serif 4, Noto Sans Tamil and Kannada subsets) are self-hosted with `font-display: swap` and preloaded for the critical weights",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R8",
-   "quote": "Site uses `packages/ui` tokens; light and dark themes work with `next-themes` and respect system preference without flash",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R9",
-   "quote": "Lighthouse CI on the home page is at least 95 for performance, accessibility, best practices and SEO, with budgets in `lighthouserc.json`",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Delivered as apps/site/lighthouserc.json and the lighthouse step of .github/workflows/site.yml; measured by the site workflow in CI (Lighthouse never runs locally)."
-  },
-  {
-   "id": "R10",
-   "quote": "axe reports zero serious violations on all routes in light and dark; skip link and focus order verified",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Delivered as e2e/site/smoke.spec.ts (axe fixture, skip-link and tab-order checks) run by .github/workflows/site.yml; Playwright is CI-only."
-  },
-  {
-   "id": "R11",
-   "quote": "Cloudflare Pages workflow deploys `main` to production and PRs to preview URLs, using secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` that may be absent in forks (job skips cleanly)",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Delivered as the deploy job in .github/workflows/site.yml (secret-presence guard, `main` = production, PR = preview); the actual deploy needs the real token (#107) and is only observable after merge."
-  },
-  {
-   "id": "R12",
-   "quote": "`_headers` and `_redirects` files set security headers (CSP without inline scripts, HSTS, Referrer-Policy, Permissions-Policy) and long cache for hashed assets",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R13",
-   "quote": "Visual baselines for header, footer and 404 in light and dark at 360, 768 and 1280",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Spec e2e/site/chrome.visual.spec.ts delivered in-lane; baselines are generated in the pinned Playwright image by the CI visual-update/e2e workflow (e2e.yml update_snapshots, visual-update.yml), never on dev machines."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/site/package.json",
-   "change": "Real scripts (dev: next dev, build: rule36 lint then next build then write-headers, typecheck, test, lint, lint:rule36); add deps next, react, react-dom, next-themes, zod, next-mdx-remote, @causedeck/ui (workspace: tokens, Button, Sheet, Badge, Separator, per issue Design spec); devDeps tailwindcss, @tailwindcss/postcss, postcss, @types/react, @types/react-dom, tsx, jsdom/@testing-library/react if component tests are needed. Package name stays @causedeck/site.",
+   "path": "packages/core/src/status/model.ts",
+   "change": "zod schemas + types StatusSnapshot, ComponentStatus (operational|degraded|down), Incident, IncidentUpdate; snapshot has version, generatedAt, components[], incidents[], signature field",
    "requirements": [
     "R1",
-    "R2",
-    "R8"
-   ]
-  },
-  {
-   "id": "D2",
-   "path": "pnpm-workspace.yaml",
-   "change": "Add catalog entry for next-mdx-remote (and any other missing dep) pinned to an exact version; pnpm-lock.yaml regenerated via pnpm install --lockfile-only.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "pnpm-lock.yaml",
-   "change": "Regenerated lockfile for the new site dependencies.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "apps/site/next.config.ts",
-   "change": "output 'export', images.unoptimized, trailingSlash, transpilePackages [@causedeck/ui,@causedeck/config], poweredByHeader false, reactStrictMode; no rewrites/redirects/headers() (unsupported in export), no middleware.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "apps/site/tsconfig.json",
-   "change": "Include app, lib, components, scripts, next-env.d.ts, .next/types and the Next plugin; keep src.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "apps/site/postcss.config.mjs",
-   "change": "Tailwind v4 postcss plugin, same as apps/web/postcss.config.mjs.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "apps/site/vitest.config.ts",
-   "change": "Vitest config covering src, lib, scripts and component tests (jsdom for tsx tests).",
-   "requirements": [
-    "R2",
-    "R4",
     "R5"
    ]
   },
   {
-   "id": "D8",
-   "path": "apps/site/lib/env.ts",
-   "change": "zod env schema: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL (default https://app.causedeck.example), NEXT_PUBLIC_ANALYTICS_SRC (optional, https only); invalid values fail the build.",
+   "id": "D2",
+   "path": "packages/core/src/status/publish.ts",
+   "change": "thresholds (documented constants: failed+degraded share of runs over a window mapped to operational/degraded/down; no runs = operational), sanitise() allowlist projection, canonical JSON + HMAC-SHA256 sign/verify with STATUS_SIGNING_KEY, buildSnapshot(deps) from health checks + getAdapterHealthSummary, publishStatus (skips write when unsigned-content hash unchanged), isStale(snapshot, now, maxAgeSec). Court component label 'Parsing of documents you share'.",
    "requirements": [
-    "R6"
+    "R1",
+    "R3",
+    "R5"
    ]
   },
   {
-   "id": "D9",
-   "path": "apps/site/lib/frontmatter.ts",
-   "change": "zod frontmatter schema (title, description, date, noindex default false; strict) and parse helper that throws with the file path.",
+   "id": "D3",
+   "path": "packages/core/src/status/index.ts",
+   "change": "barrel for the status domain; export from packages/core/src/index.ts and add './status' to packages/core/package.json exports",
    "requirements": [
-    "R2"
+    "R1",
+    "R4"
    ]
   },
   {
-   "id": "D10",
-   "path": "apps/site/lib/mdx.ts",
-   "change": "Read content/**/*.mdx only (not the existing .md learn/developers files), parse frontmatter via compileMDX, validate with D9, list slugs for generateStaticParams, fail the build on invalid frontmatter or duplicate titles/descriptions.",
+   "id": "D4",
+   "path": "packages/core/src/status/status.test.ts",
+   "change": "tests: snapshot schema, sanitiser fixtures (no hostnames/errors/workspace ids leak), threshold mapping per adapter, signature valid/tampered/wrong key, idempotent publish (second identical run does not put), stale detection, court wording",
    "requirements": [
-    "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/core/src/jobs/definitions/status-publish.ts",
+   "change": "defineJob name 'system.status.publish' (NOT status.poll, which is case-watch), schema { workspaceId: null optional }, concurrency 1, singleton key 'status-publish' policy 'stately', schedule cron '* * * * *'; handler calls publishStatus with createObjectStoreFromEnv",
+   "requirements": [
     "R3"
    ]
   },
   {
-   "id": "D11",
-   "path": "apps/site/lib/seo.ts",
-   "change": "Metadata helper (unique title, description, canonical, openGraph, twitter, robots noindex), SoftwareApplication JSON-LD builder, sitemap entry builder that omits noindex pages.",
+   "id": "D6",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "import and register statusPublish (list and tuple type); also export from packages/core/src/jobs/index.ts",
    "requirements": [
     "R3",
     "R4"
    ]
   },
   {
-   "id": "D12",
-   "path": "apps/site/app/layout.tsx",
-   "change": "Root layout: self-hosted fonts, next-themes ThemeProvider (attribute class, system default), skip link first in tab order, header, footer, main landmark, optional analytics script only when NEXT_PUBLIC_ANALYTICS_SRC is set.",
+   "id": "D7",
+   "path": "packages/db/src/schema/status.ts",
+   "change": "tables incident (id, title, severity, state, component, started_at, resolved_at, created_by staff ref optional, timestamps) and incident_update (id, incident_id fk, state, body, created_at); no workspace_id; justification comment that they hold only public platform status text; export from schema/index.ts",
    "requirements": [
-    "R6",
-    "R7",
-    "R8"
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/db/migrations/20261025050000_status_incident.sql",
+   "change": "CREATE TABLE incident, incident_update plus grants consistent with other global tables; regenerate meta/20261025050000_snapshot.json and _journal.json (renumber if the base took the number)",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/db/src/conventions.ts",
+   "change": "add 'incident' and 'incident_update' to GLOBAL_TABLES",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/db/src/index.test.ts",
+   "change": "add both tables to the root table list; add a test (or new packages/db/src/__tests__/status-schema.test.ts) asserting neither has a workspace_id column and neither column set can hold tenant data",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/storage/src/keys.ts",
+   "change": "add a narrow public-object key seam (e.g. publicObjectKey('status/status.json') allowlisted, branded as ObjectKey) so ObjectStore.put can write the public static path; verify s3-provider.ts and memory-provider.ts accept it and extend them if they re-parse keys; export from index.ts; add a test",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/config/src/env/schema.ts",
+   "change": "add STATUS_SIGNING_KEY (secret: true, devDefault placeholder constant like DEV_BETTER_AUTH_SECRET, min length enforced in production); update .env.example via the generator and the env tests",
+   "requirements": [
+    "R3"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/site/app/fonts.ts",
-   "change": "next/font/local from packages/ui/fonts (Geist, Newsreader roman preloaded; Noto Sans Tamil and Kannada subsets), display swap; mirror apps/web/app/fonts.ts.",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "add status domain to CORE_DOMAIN_DEPENDENCIES (court, storage-free imports only through index.ts); jobs gains status dependency; mirror in docs/engineering/core-domains.md (table row, mermaid, dependency table)",
    "requirements": [
-    "R7"
+    "R4"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/site/app/globals.css",
-   "change": "Tailwind v4 import plus the @causedeck/ui token CSS files without ui fonts.css (as apps/web/app/globals.css), @source for packages/ui, 150 ms hover/focus transitions disabled under reduced motion, focus ring 3:1.",
+   "path": "docs/engineering/core-domains.md",
+   "change": "document the status domain and its edges",
    "requirements": [
-    "R8"
+    "R4"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/site/app/page.tsx",
-   "change": "Placeholder hero with page metadata and the SoftwareApplication JSON-LD; replaced later by #90.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "register every new runtime export of @causedeck/core: NOT_A_SERVICE with reasons (pure/system job body/constant/job definition/no tenant data); getAdapterHealthSummary-style SERVICE_TESTS only if a function reads tenant tables (none expected)",
    "requirements": [
-    "R3",
     "R4"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/site/app/(content)/[...slug]/page.tsx",
-   "change": "Static MDX route: generateStaticParams from lib/mdx, generateMetadata from frontmatter, dynamicParams false, rendered in Prose.",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "add 'system.status.publish' to the expected job list",
    "requirements": [
-    "R2",
-    "R3"
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D17",
-   "path": "apps/site/content/about.mdx",
-   "change": "One seed MDX page with valid frontmatter and Rule-36-safe copy, plus one `noindex: true` draft page (content/legal/draft-notice.mdx) to prove the noindex path; no real legal text (#95).",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "add 'system.status.publish' to the scheduled list and the cron table ('* * * * *')",
    "requirements": [
-    "R2",
-    "R3"
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D18",
-   "path": "apps/site/app/sitemap.ts",
-   "change": "force-static sitemap from home + non-noindex MDX pages with absolute canonical URLs.",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "add 'status' to NAMESPACES; create messages/{en,kn,ta}/status.json (component names incl. 'Parsing of documents you share', state labels); update __tests__/catalog.test.ts top-level key list; regenerate generated/** with pnpm --filter @causedeck/i18n i18n:types",
    "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "apps/site/app/robots.ts",
-   "change": "force-static robots allowing all and pointing at the sitemap.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/site/app/not-found.tsx",
-   "change": "Calm, helpful 404 with links home and to the app.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "apps/site/app/opengraph-image.tsx",
-   "change": "force-static OG image via next/og ImageResponse using the self-hosted font files read from packages/ui/fonts.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "apps/site/components/site-header.tsx",
-   "change": "Header: logo, nav inline from 768, Sign in link to NEXT_PUBLIC_APP_URL, menu Sheet below 768; no directory links.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "apps/site/components/site-footer.tsx",
-   "change": "Footer: product, trust and legal links, India data note; no lawyer listing links.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "apps/site/components/theme-toggle.tsx",
-   "change": "Theme toggle client component (light/dark/system) with accessible label.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D25",
-   "path": "apps/site/components/prose.tsx",
-   "change": "Prose wrapper and MDX component map for rendered content.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D26",
-   "path": "apps/site/scripts/rule36-lint.ts",
-   "change": "Denylist/pattern lint over content/**/*.mdx, app/**/*.tsx, components/**/*.tsx copy and component/file names (Testimonial*, Directory*); exports a pure scan function plus a CLI exiting non-zero on findings; wired into the build script.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D27",
-   "path": "apps/site/scripts/write-headers.ts",
-   "change": "Post-build: scan out/**/*.html inline scripts, emit out/_headers (merging public/_headers) with per-route CSP script-src sha256 hashes and no unsafe-inline, HSTS, Referrer-Policy, Permissions-Policy, X-Content-Type-Options, immutable cache for /_next/static/*.",
-   "requirements": [
-    "R12",
-    "R1"
-   ]
-  },
-  {
-   "id": "D28",
-   "path": "apps/site/public/_redirects",
-   "change": "Redirect rules (e.g. /app to the app origin placeholder, none that need a server).",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D29",
-   "path": "apps/site/public/_headers",
-   "change": "Static base headers and cache rules copied into out/ (CSP script hashes appended by D27).",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D30",
-   "path": "apps/site/lighthouserc.json",
-   "change": "LHCI config: serve out/ statically, home page, min score 0.95 for performance, accessibility, best-practices, seo, plus resource budgets.",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D31",
-   "path": ".github/workflows/site.yml",
-   "change": "Jobs: build+lint+test (turbo, pinned actions as in ci.yml), Lighthouse CI, Playwright smoke/axe/visual in the pinned image, deploy to Cloudflare Pages (main = production, PR = preview) guarded by presence of CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID so forks skip cleanly; least-privilege permissions.",
-   "requirements": [
-    "R9",
-    "R10",
-    "R11",
-    "R13"
-   ]
-  },
-  {
-   "id": "D32",
-   "path": "e2e/site/smoke.spec.ts",
-   "change": "Playwright over every route of the exported site: status, unique title/description/canonical, no cookies and no third-party requests, theme no-flash, skip link first tab stop, axe zero serious violations in light and dark, robots/sitemap, headers file content.",
-   "requirements": [
-    "R3",
-    "R6",
-    "R8",
-    "R10"
-   ]
-  },
-  {
-   "id": "D33",
-   "path": "e2e/site/chrome.visual.spec.ts",
-   "change": "Visual spec for header, footer and 404 (light/dark at 360/768/1280); baselines generated in CI.",
-   "requirements": [
-    "R13"
-   ]
-  },
-  {
-   "id": "D34",
-   "path": "e2e/playwright.site.config.ts",
-   "change": "Separate Playwright config serving apps/site/out (no DB, no apps/web build), 360/768/1280 x light/dark projects, same screenshot options as playwright.config.ts.",
-   "requirements": [
-    "R10",
-    "R13"
-   ]
-  },
-  {
-   "id": "D35",
-   "path": "turbo.json",
-   "change": "Add `out/**` to build outputs.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D36",
-   "path": "apps/site/README.md",
-   "change": "Local dev, content authoring (frontmatter), Rule 36 lint, headers/CSP generation, env vars, deployment and secrets.",
-   "requirements": [
-    "R1",
-    "R2",
-    "R11"
-   ]
-  },
-  {
-   "id": "D37",
-   "path": "apps/site/src/site-scaffold.test.ts",
-   "change": "Unit tests: frontmatter schema accepts valid and rejects invalid (and invalid fails mdx load), seo helpers (unique canonical/OG/Twitter, noindex omitted from sitemap), JSON-LD only SoftwareApplication and a source scan asserting no LegalService/Attorney/Review/AggregateRating, rule36 scan fails on each denylisted term and Testimonial*/Directory* names, env schema, no middleware file and output export in next config, no third-party script URLs. May be split into lib/*.test.ts.",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3",
     "R4",
-    "R5",
-    "R6",
-    "R12"
+    "R5"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing plain-markdown content and its loaders/tests: apps/site/content/learn/**, apps/site/content/developers/api.md, apps/site/src/learn/*, apps/site/src/developer-docs.test.ts, apps/site/src/index.ts (appName '@causedeck/site') and src/index.test.ts keep passing unchanged."
+   "what": "system.status.poll (case-watch) job name, registration and tests: packages/core/src/jobs/definitions/status-poll.ts"
   },
   {
    "id": "P2",
-   "what": "Package name @causedeck/site and the root turbo task names (build, lint, typecheck, test); apps/web, apps/admin and e2e/playwright.config.ts (apps/web harness) are not modified."
+   "what": "getAdapterHealthSummary signature and row shape: packages/core/src/court/adapter-health.ts:20"
   },
   {
    "id": "P3",
-   "what": "No server runtime in the site: no middleware, no route handlers that are dynamic, no server actions, no imports of @causedeck/core, db, auth, adapters (tenant data); Node runtime rule in packages/config/eslint/next.js."
+   "what": "Workspace object keys ws/\u003cuuid>/\u003ckind>/\u003cyyyy>/\u003cuuid>: objectKey/parseObjectKey behaviour in packages/storage/src/keys.ts stays strict; the public seam must not accept arbitrary paths"
   },
   {
    "id": "P4",
-   "what": "Rule 36 positioning: no advocate names, rankings, testimonials, outcomes, directory or lead-capture copy anywhere in new public copy."
+   "what": "Existing migrations and journal ordering in packages/db/migrations; tenant RLS catalog in packages/db/src/__tests__/rls/sql.test.ts is unchanged (new tables are global)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/site exec vitest run"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/status src/jobs/definitions/status-poll.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/site exec tsc --noEmit"
+   "command": "pnpm --filter @causedeck/storage exec vitest run src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/site exec tsx scripts/rule36-lint.ts"
+   "command": "pnpm --filter @causedeck/config exec vitest run src/env --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/site exec eslint app lib components scripts src vitest.config.ts next.config.ts"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/site build && test -f apps/site/out/index.html && test -f apps/site/out/sitemap.xml && test -f apps/site/out/robots.txt && test -f apps/site/out/_headers && test ! -f apps/site/.next/server/middleware.js"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/status-schema.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V7",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/site-onboarding-launch"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Render MDX with next-mdx-remote/rsc compileMDX (new catalog dependency) instead of @next/mdx.",
-   "justification": "One dependency, build-time only in static export, and frontmatter is parsed by the same call so the zod schema can fail the build; @next/mdx would add @mdx-js/loader, @mdx-js/react, @types/mdx and a separate frontmatter parser. No MDX package exists in pnpm-workspace.yaml catalog.",
-   "source": "spec"
-  },
-  {
-   "id": "K2",
-   "choice": "Add @causedeck/ui as a workspace dependency of @causedeck/site (D1).",
-   "justification": "Issue Context requires 'Shared Button, Sheet, Badge, Separator from packages/ui' and tokens; mirrors apps/web (apps/web/package.json dependencies, globals.css:6-12). Spike §2 lists packages/ui as the shared design system for apps/web and apps/site.",
-   "source": "spec"
-  },
-  {
-   "id": "K3",
-   "choice": "Generate per-route CSP script-src hashes in a post-build step rather than relying on unsafe-inline.",
-   "justification": "Issue requires 'CSP without inline scripts'; Next static export and next-themes both emit inline scripts, and Cloudflare Pages _headers cannot carry per-request nonces. apps/web uses a nonce proxy (apps/web/next.config.ts:38 comment) which is unavailable in static export.",
-   "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Keep the package name @causedeck/site; the acceptance command is run as pnpm --filter @causedeck/site build.",
-   "justification": "apps/site/package.json:2, src/index.ts:2 and src/index.test.ts depend on it; all workspace packages use the @causedeck/ scope.",
+   "choice": "Job named system.status.publish, schema workspaceId null/optional, singleton stately",
+   "justification": "system jobs must start 'system.' (packages/core/src/jobs/define.ts:90); overlap-safety copies notices-poll.ts:79; system.status.poll is already taken by case-watch",
    "source": "precedent"
   },
   {
-   "id": "K5",
-   "choice": "Separate e2e/playwright.site.config.ts instead of adding projects to e2e/playwright.config.ts.",
-   "justification": "The main config's webServer builds apps/web and global setup needs the Postgres Compose stack (e2e/playwright.config.ts:121-135); the site needs neither.",
+   "id": "K2",
+   "choice": "Incident tables listed in GLOBAL_TABLES, no RLS catalog entry",
+   "justification": "notice is the precedent (packages/db/src/conventions.ts:80, index.test.ts:121); tables without workspace_id are exempt from the tenant convention",
+   "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "Public path written through a new narrow key seam in @causedeck/storage rather than a cast",
+   "justification": "ObjectKey is branded and parsed strictly to workspace paths (keys.ts:8,47,67); no new workspace dependency since core already depends on @causedeck/storage (packages/core/package.json:70)",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "STATUS_SIGNING_KEY with a dev default modelled on BETTER_AUTH_SECRET",
+   "justification": "packages/config/src/env/schema.ts:22,150-154",
    "source": "precedent"
   }
  ]

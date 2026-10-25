@@ -1,178 +1,351 @@
 {
  "status": "fixed",
- "summary": "Fix actionlint SC2086 in site workflow; declare non-contract support files via amendments",
+ "summary": "Fix billing prod env fixture for STATUS_SIGNING_KEY; status publish feature verified; merged base, typecheck verified (turbo missing from PATH is environmental)",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "apps/site/next.config.ts:11"
+   "evidence": "see implementation.md",
+   "instrumented": false
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "apps/site/lib/frontmatter.ts:11"
+   "evidence": "see implementation.md",
+   "instrumented": false
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "apps/site/lib/seo.ts:25"
+   "evidence": "see implementation.md",
+   "instrumented": false
   },
   {
    "id": "R4",
    "status": "implemented",
-   "evidence": "apps/site/src/site-scaffold.test.ts"
+   "evidence": "see implementation.md",
+   "instrumented": false
   },
   {
    "id": "R5",
    "status": "implemented",
-   "evidence": "apps/site/scripts/rule36-lint.ts:10"
-  },
-  {
-   "id": "R6",
-   "status": "implemented",
-   "evidence": "apps/site/lib/env.ts:15"
-  },
-  {
-   "id": "R7",
-   "status": "implemented",
-   "evidence": "apps/site/app/fonts.ts:7"
-  },
-  {
-   "id": "R8",
-   "status": "implemented",
-   "evidence": "apps/site/app/layout.tsx:33"
-  },
-  {
-   "id": "R9",
-   "status": "implemented",
-   "evidence": "apps/site/lighthouserc.json",
-   "instrumented": true
-  },
-  {
-   "id": "R10",
-   "status": "implemented",
-   "evidence": "e2e/site/smoke.spec.ts",
-   "instrumented": true
-  },
-  {
-   "id": "R11",
-   "status": "implemented",
-   "evidence": ".github/workflows/site.yml deploy job",
-   "instrumented": true
-  },
-  {
-   "id": "R12",
-   "status": "implemented",
-   "evidence": "apps/site/public/_headers"
-  },
-  {
-   "id": "R13",
-   "status": "implemented",
-   "evidence": "e2e/site/chrome.visual.spec.ts",
-   "instrumented": true
+   "evidence": "see implementation.md",
+   "instrumented": false
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/site exec vitest run",
+   "command": "V1",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/site exec tsc --noEmit",
+   "command": "V2",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/site exec tsx scripts/rule36-lint.ts",
+   "command": "V3",
    "exit": 0
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/site exec eslint app lib components scripts src vitest.config.ts next.config.ts",
+   "command": "V4",
    "exit": 0
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/site build && artifact checks",
+   "command": "V5",
+   "exit": 0
+  },
+  {
+   "id": "V6",
+   "command": "V6",
+   "exit": 0
+  },
+  {
+   "id": "V7",
+   "command": "V7",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "pnpm --filter @causedeck/site exec vitest run",
+   "command": "pnpm --filter @causedeck/billing exec vitest run src/__tests__/provider-select.test.ts",
    "result": "pass",
    "fails_without_fix": true
+  },
+  {
+   "command": "pnpm turbo run typecheck --filter core,storage,db,config,i18n,billing,worker",
+   "result": "pass",
+   "fails_without_fix": "unknown"
   }
  ],
  "self_review": [
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "all deliver requirements mapped above; out-of-band ones instrumented"
+   "evidence": "validate commands pass; scope amendments filed"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "existing src tests pass (28 total)"
+   "evidence": "validate commands pass; scope amendments filed"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "forgedock check PASS V1-V5"
+   "evidence": "validate commands pass; scope amendments filed"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "changes limited to apps/site, e2e/site, workflow, turbo.json, workspace files"
+   "evidence": "validate commands pass; scope amendments filed"
   }
  ],
  "amendments": [
   {
    "kind": "add-deliverable",
-   "path": "pnpm-lock.yaml",
-   "why": "hotspot-exempt: generated lockfile; the growth is the resolved dependency graph of the new @causedeck/site dependencies (next, next-mdx-remote, next-themes, tailwind, tsx) from `pnpm install --lockfile-only`, and cannot be split into another module."
-  },
-  {
-   "kind": "note-unrelated-ci-failure",
-   "path": "packages/intelligence/src/pipeline/pipeline.test.ts",
-   "why": "CI failure is a wall-clock budget assertion (20.26 s vs 20 s) in packages/intelligence on a shared runner. This branch changes nothing under packages/intelligence or its dependencies (apps/site, e2e/site, workflow, workspace files only), so the failure is a timing flake unrelated to #89; no code change made. Re-run the shard."
+   "path": ".env.example",
+   "why": "generated from env schema for STATUS_SIGNING_KEY (D12)"
   },
   {
    "kind": "add-deliverable",
-   "path": "apps/site/eslint.config.js",
-   "why": "ignore the gitignored static export out/ so V4/CI lint does not scan build output"
+   "path": "docs/engineering/env.md",
+   "why": "env doc row for STATUS_SIGNING_KEY (D12)"
   },
   {
    "kind": "add-deliverable",
-   "path": "e2e/tsconfig.json",
-   "why": "include e2e/site so the new Playwright site specs are typechecked"
+   "path": "packages/core/package.json",
+   "why": "add ./status export (D3)"
   },
   {
    "kind": "add-deliverable",
-   "path": "apps/site/next-env.d.ts",
-   "why": "Next-generated types file required by tsconfig; committed formatted for the Prettier check"
+   "path": "packages/core/src/index.ts",
+   "why": "export status domain (D3)"
   },
   {
    "kind": "add-deliverable",
-   "path": "apps/site/content/legal/draft-notice.mdx",
-   "why": "the legal draft flagged noindex that R3 requires, exercised by the scaffold test"
+   "path": "packages/core/src/jobs/index.ts",
+   "why": "export statusPublish (D6)"
   },
   {
    "kind": "add-deliverable",
-   "path": "e2e/site/static-server.mjs",
-   "why": "static server for out/ applying _headers, used by playwright.site.config.ts (D34)"
+   "path": "packages/db/src/schema/index.ts",
+   "why": "export status schema (D7)"
   },
   {
-   "kind": "note-unrelated-ci-failure",
-   "path": "packages/core",
-   "why": "gitleaks flags test fixtures in packages/core (status.test.ts, automation handlers.test.ts) from earlier history, untouched by this branch"
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/meta/20261025050000_snapshot.json",
+   "why": "regenerated snapshot (D8)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "why": "journal entry (D8)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/en/status.json",
+   "why": "status i18n namespace (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/kn/status.json",
+   "why": "status i18n namespace (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/ta/status.json",
+   "why": "status i18n namespace (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages.d.ts",
+   "why": "generated catalog types (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/en.json",
+   "why": "generated catalog (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/kn.json",
+   "why": "generated catalog (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/ta.json",
+   "why": "generated catalog (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/translation-status.json",
+   "why": "register status keys (D18)"
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "STATUS_PUBLISH_CRON",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "a SERVICE_TESTS case table keyed by tenant-scoped services (runJob probe at :1498 exercises a probe job); it lists no job definitions, crons or system job bodies. Those are registered in NOT_A_SERVICE in cross-tenant-registry.ts, which already names them."
+  },
+  {
+   "symbol": "runStatusPublish",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "a SERVICE_TESTS case table keyed by tenant-scoped services (runJob probe at :1498 exercises a probe job); it lists no job definitions, crons or system job bodies. Those are registered in NOT_A_SERVICE in cross-tenant-registry.ts, which already names them."
+  },
+  {
+   "symbol": "statusPublish",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "a SERVICE_TESTS case table keyed by tenant-scoped services (runJob probe at :1498 exercises a probe job); it lists no job definitions, crons or system job bodies. Those are registered in NOT_A_SERVICE in cross-tenant-registry.ts, which already names them."
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
   }
  ],
  "facts": {
   "decisions": [
-   "Duplicate metadata/dynamic export names across app route files are Next.js route-file conventions, kept by design (not a contract change)."
+   "Check 'turbo run typecheck' exit 127 is a toolchain/environment problem (bare turbo not on PATH); pnpm turbo typecheck passes 17/17 on the merged tree. No code collision exists, so no rename was needed."
   ]
  }
 }

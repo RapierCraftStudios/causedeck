@@ -20,6 +20,7 @@ export const OVERRIDE_ACK = 'I_UNDERSTAND';
 
 /** Dev-only placeholders; production rejects them even when supplied explicitly. */
 export const DEV_BETTER_AUTH_SECRET = 'dev-only-insecure-better-auth-secret-change-me';
+export const DEV_STATUS_SIGNING_KEY = 'dev-only-insecure-status-signing-key-change-me';
 export const DEV_KEK_BASE64 = Buffer.alloc(32).toString('base64');
 
 export const KILL_SWITCH_PATTERN = /^KILL_[A-Z0-9_]+$/;
@@ -155,6 +156,16 @@ export const serverKeys = {
     requiredWhen: 'NODE_ENV=production',
     ownerIssue: 12,
     credentialIssue: 116,
+    secret: true,
+  },
+  STATUS_SIGNING_KEY: {
+    domain: 'server',
+    type: 'secret (>= 32 chars)',
+    description:
+      'HMAC key that signs the public status snapshot (status/status.json), at least 32 characters.',
+    devDefault: DEV_STATUS_SIGNING_KEY,
+    requiredWhen: 'NODE_ENV=production',
+    ownerIssue: 769,
     secret: true,
   },
   KEK_BASE64: {
@@ -468,6 +479,9 @@ export const serverShape = {
   BETTER_AUTH_SECRET: secret(z.string().min(32, 'must be at least 32 characters')).describe(
     d(serverKeys.BETTER_AUTH_SECRET),
   ),
+  STATUS_SIGNING_KEY: secret(z.string().min(32, 'must be at least 32 characters')).describe(
+    d(serverKeys.STATUS_SIGNING_KEY),
+  ),
   KEK_BASE64: secret(
     z
       .base64()
@@ -674,6 +688,9 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
   }
   if (env.BETTER_AUTH_SECRET === DEV_BETTER_AUTH_SECRET) {
     add('BETTER_AUTH_SECRET', 'must not use the development placeholder in production');
+  }
+  if (env.STATUS_SIGNING_KEY === DEV_STATUS_SIGNING_KEY) {
+    add('STATUS_SIGNING_KEY', 'must not use the development placeholder in production');
   }
   if (env.KEK_BASE64 === DEV_KEK_BASE64) {
     add('KEK_BASE64', 'must not use the development placeholder in production');

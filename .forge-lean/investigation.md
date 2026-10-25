@@ -1,38 +1,47 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield feature, no live defect; blocks #90, #91, #95)
+**Severity**: medium (feature; no live defect, the status page in #96 has no data source yet)
 **Task Type**: feature
 
 ### What Was Claimed
-Scaffold `apps/site` as a static marketing site: Next.js `output: 'export'`, MDX content with zod-validated frontmatter, per-page SEO metadata, sitemap/robots, build-time OG image, SoftwareApplication-only JSON-LD, Rule 36 copy lint, self-hosted fonts, `packages/ui` tokens with next-themes, `_headers`/`_redirects`, Cloudflare Pages workflow, Lighthouse CI, axe/e2e smoke, visual baselines, README. Depends on #134 (closed).
+Part 1 of #96: a `packages/core/src/status` domain (zod model, sanitised HMAC-signed snapshot built from health checks and `getAdapterHealthSummary` with documented thresholds), platform tables `incident` and `incident_update` (no `workspace_id`) with a migration, a worker job `status.publish` (every minute, idempotent, overlap-safe, writes `status/status.json` through the S3 abstraction), a `STATUS_SIGNING_KEY` env var with a dev default, and every shared registry pre-staged. Siblings #770 (admin incident console), #771 (public page) and #772 (e2e) consume it.
+
+Note: the earlier "Investigation Report" comment on the issue (WhatsApp link UI) and the `.forge-lean/*` files found in the tree describe a different issue. They were ignored and overwritten.
 
 ### What We Found
-(Verified against `origin/milestone/site-onboarding-launch` = b1c3467a. The "Investigation Report" comment on #89 is about a WhatsApp settings UI, is unrelated to this issue, and was ignored. The existing `.forge-lean/*` files in the tree were stale from another issue and are overwritten.)
-- `apps/site` is a stub, not an app: `apps/site/package.json:9` build script is `node -e "console.log('nothing to build yet')"`; devDependencies only config/types/eslint/ts/vitest (`package.json:13-19`). No next, react, mdx, zod, next-themes, `app/`, `public/`, `next.config.ts`, `lib/`, `components/`.
-- Package name is `@causedeck/site` (`package.json:2`); the issue's `pnpm --filter site build` equals `pnpm --filter @causedeck/site build` (renaming would break `src/index.ts:2` and `src/index.test.ts`).
-- Existing site content is plain `.md` with a different frontmatter schema (`slug/locale/title/order/law/fixture/reviewer/reviewedOn`): `apps/site/content/learn/**/{en,kn,ta}.md`, `content/developers/api.md`; consumed by `src/learn/*` and tested by `src/learn/learn.test.ts:59`, `src/developer-docs.test.ts:6`. The new MDX pipeline must not touch `.md` files or these.
-- `apps/site/tsconfig.json:3` includes only `src` and `*.ts`; must add `app`, `lib`, `components`, `scripts`, `next-env.d.ts`, `.next/types`. ESLint already uses `@causedeck/config/eslint/next` (`eslint.config.js:1`); `APP_NAMES` already contains `site` (`packages/config/eslint/boundaries.js:151`).
-- Reusable references in web: fonts via `next/font/local` from `packages/ui/fonts/*.woff2` (`apps/web/app/fonts.ts:10-50`, files incl. noto-sans-tamil/kannada present), token imports and Tailwind preset (`apps/web/app/globals.css:1-14`), `next.config.ts` `transpilePackages` list (`apps/web/next.config.ts:15-34`) and security headers (`:38-48`).
-- Catalog (`pnpm-workspace.yaml`) has next 16.4.2 (`:146`), react 19.3.1, next-themes 0.4.6 (`:148`), zod 4.6.7 (`:190`), tailwind 4.3.3 / `@tailwindcss/postcss`, `@lhci/cli` (`:65`), `@playwright/test`, `@axe-core/playwright` (`:54`), tsx (`:179`), sharp. Missing: any MDX package, wrangler.
-- CI: `turbo.json:5-7` build outputs list has no `out/**`; `ci.yml:188` build job runs `ci-affected.sh build` (so site's real build will run in CI). No `site.yml`. E2E harness (`e2e/playwright.config.ts:121-135`) has a single `webServer` building apps/web plus DB global setup, so site specs need their own config. Lighthouse configs are per-surface (`e2e/lighthouserc*.json`).
-- No `rule36` lint, `_headers`, `_redirects`, sitemap, robots anywhere in the repo.
+(verified on `origin/milestone/site-onboarding-launch`, 8c2520a3)
+- Nothing exists yet: no `packages/core/src/status`, no `StatusSnapshot`, no `STATUS_SIGNING_KEY`, no `incident` table (git grep of the base).
+- Adapter data source: `packages/core/src/court/adapter-health.ts:20` `getAdapterHealthSummary(db)` returns per adapter and version `runs/okRuns/degradedRuns/failedRuns` (view `adapter_health_summary`, names no workspace). Thresholds must be derived from these counts.
+- Naming clash to avoid: `system.status.poll` already exists (case-watch, `packages/core/src/jobs/definitions/status-poll.ts`, registered in `apps/worker/src/__tests__/registry.test.ts:171`, `schedules.test.ts:46`). The new job must be `system.status.publish` (system jobs start `system.`, `packages/core/src/jobs/define.ts:90`, payload `workspaceId` null/optional).
+- Job precedent: `packages/core/src/jobs/definitions/notices-poll.ts:79` (`defineJob`, `concurrency: 1`, `singleton: { policy: 'stately' }`, `schedule: { cron, payload: {} }`); registered in `packages/core/src/jobs/registry.ts:47,210,270` and exported at `packages/core/src/jobs/index.ts:157`. Schedules run in Asia/Kolkata (`apps/worker/src/schedules.ts:5`), irrelevant for `* * * * *`.
+- Platform-table precedent: `notice` is in `GLOBAL_TABLES` (`packages/db/src/conventions.ts:46,80`), listed in the root table test (`packages/db/src/index.test.ts:121`), schema in `packages/db/src/schema/notices.ts`, exported from `packages/db/src/schema/index.ts:298`. Tables without `workspace_id` must be in `GLOBAL_TABLES`, with a justification comment. They need no RLS catalog entry (`packages/db/src/__tests__/rls/sql.test.ts` lists only tenant tables).
+- Latest migration is `20261025040000_whatsapp_inbound` (`packages/db/migrations/meta/_journal.json:695`); next free is `20261025050000`.
+- Storage: `ObjectStore` (`packages/storage/src/provider.ts:92`) accepts only branded `ObjectKey`, and the only builder `objectKey()` (`packages/storage/src/keys.ts:47`) produces `ws/<uuid>/<kind>/<yyyy>/<uuid>`; `parseObjectKey` (`keys.ts:67`) rejects anything else. `status/status.json` therefore cannot be written today: a small public-key seam is needed in `@causedeck/storage` (providers must be checked to accept it). `@causedeck/core` already depends on `@causedeck/storage` (`packages/core/package.json:70`), jobs use `createObjectStoreFromEnv` (`jobs/definitions/capture-retention.ts:10`), so no new workspace dependency.
+- Env: secrets with dev defaults follow `BETTER_AUTH_SECRET` (`packages/config/src/env/schema.ts:22,150-154`, `secret: true`, `devDefault`); `.env.example` is generated from the specs (`packages/config/src/env/example.ts`), and `packages/config/src/env/__tests__/*` assert it.
+- Registries to pre-stage (CLAUDE.md table): core domains `packages/config/eslint/core-domains.js:51` (`CORE_DOMAIN_DEPENDENCIES`) plus `docs/engineering/core-domains.md` (rows ~23-30, mermaid ~166, dependency table ~225); core barrel `packages/core/src/index.ts:9`; `packages/core/package.json:37` exports (add `./status`); cross-tenant `NOT_A_SERVICE`/`SERVICE_TESTS` in `packages/db/src/testing/cross-tenant-registry.ts:209,872` (`getAdapterHealthSummary` is tested at `services.test.ts:1863` as a model); worker `registry.test.ts:168`, `schedules.test.ts:43,115`; i18n `packages/i18n/src/catalog.ts:7` `NAMESPACES` and `catalog.test.ts:~113`.
+- Court wording: "Parsing of documents you share" appears nowhere on the base; it must be the display label for the court/adapter component.
 
 ### Root Cause
-Greenfield: #2 created the empty package; the site was never built (spike #1 §1/§2/§3.3 specify it).
+Missing feature: #96 was closed not_planned; the status page milestone work has no data layer. The signed snapshot, incident tables and publisher are the shared base for #770/#771/#772.
 
 ### Affected Files
-`apps/site/{package.json,tsconfig.json,next.config.ts,postcss.config.mjs,vitest.config.ts,eslint.config.js,README.md}`, `apps/site/app/**` (layout, page, `(content)/[...slug]`, sitemap, robots, not-found, opengraph-image, globals.css, fonts.ts), `apps/site/lib/{mdx,seo,env,frontmatter}.ts`, `apps/site/components/*`, `apps/site/content/**/*.mdx`, `apps/site/public/_headers|_redirects`, `apps/site/scripts/{rule36-lint,write-headers}.ts`, `apps/site/lighthouserc.json`, `.github/workflows/site.yml`, `e2e/site/smoke.spec.ts` + `e2e/playwright.site.config.ts`, `turbo.json`, `pnpm-workspace.yaml` + `pnpm-lock.yaml`, `docs/engineering/ci.md` (site job note).
+- new `packages/core/src/status/{index,model,publish,thresholds,sanitise}.ts` + tests
+- new `packages/core/src/jobs/definitions/status-publish.ts`; edit `jobs/registry.ts`, `jobs/index.ts`
+- `packages/core/src/index.ts`, `packages/core/package.json`
+- new `packages/db/src/schema/status.ts`; `schema/index.ts`; `conventions.ts`; `index.test.ts`; new migration `20261025050000_status_incident.sql` + meta snapshot/journal
+- `packages/storage/src/keys.ts` (+ providers if they validate keys), `packages/storage/src/index.ts`
+- `packages/config/src/env/schema.ts` (+ `.env.example`), `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`
+- `packages/db/src/testing/cross-tenant-registry.ts`; `apps/worker/src/__tests__/{registry,schedules}.test.ts`
+- `packages/i18n/src/catalog.ts`, `messages/{en,kn,ta}/status.json`, `__tests__/catalog.test.ts`, regenerated `generated/**`
 
 ### Sibling Sweep
-- Other apps with next config: only `apps/web` (reference); `apps/admin` is a similar stub (out of scope).
-- Registries from CLAUDE.md: no `@causedeck/core` export, `'use server'` action, table, job, i18n namespace, or core-domain import is added, so none apply. The site must not import `@causedeck/core`/db/auth (no tenant data).
-- `.md` learn/developer content and `src/learn` keep working; the Rule 36 lint should scan MDX/TSX under `app`, `components`, `content/**/*.mdx` only, so existing legal-education `.md` (which legitimately mentions lawyers) is not flagged unless counsel-scope decides otherwise.
+Other global (non-tenant) tables, `notice` (#584) and `adapter_health_summary`, follow the `GLOBAL_TABLES` route. The only same-name risk is `system.status.poll` and the case-watch `status` wording, so the new domain dir and job use `status`/`status.publish` but the registry text must be explicit. No other publisher writes to a public path.
 
 ### History
-Stub from db3e22d4 (#2) and 937e90fe (#3); content added by 1f599f4e (#627 API docs), edd19927 (learn modules), 8d6fd8da. No prior attempt at the app itself.
+No prior status-page implementation. `getAdapterHealthSummary` came with #372 (ADR 0015) and was explicitly meant for "the status page (#42)". #96 closed not_planned.
 
 ### Recommendation
-One lane, ordered: (1) deps and config; (2) env/frontmatter/seo libs with unit tests; (3) layout/theme/fonts/components; (4) MDX route, sitemap, robots, OG, 404; (5) rule36 lint wired into `build`; (6) `_headers` generation; (7) CI workflow, lighthouse config, e2e spec, README. Use `next-mdx-remote/rsc` `compileMDX` (one new dep, works in static export, pure build-time) rather than `@next/mdx` + loader + react + types. CSP "without inline scripts" conflicts with Next's inline bootstrap scripts and next-themes' no-flash script, so a post-build step hashes each page's inline scripts into per-route `script-src 'sha256-…'` entries in `out/_headers` (no `unsafe-inline`). `build` = `next build && tsx scripts/write-headers.ts`, preceded by the rule36 lint. Browser/CI-only criteria (Lighthouse, axe, visual baselines, deploy) are delivered as config/spec/workflow and measured in CI, never run locally.
+Implement as in `contract.json`: snapshot model and pure threshold mapping (documented constants), sanitiser as an allowlist projection (never copies free text from health errors), HMAC-SHA256 over canonical JSON with `STATUS_SIGNING_KEY`, `publishStatus` that skips the write when the content hash is unchanged (idempotent) and exposes staleness detection (`isStale(snapshot, now, maxAgeSec)`), job `system.status.publish` cron `* * * * *` singleton stately.
 
 ### Related Issues
-#1 (parent), #134 (dependency, closed), #90, #91, #95 (consume the scaffold), #99, #107 (Cloudflare credentials), #117 (counsel sign-off).
+#96 (parent), #770, #771, #772 (siblings, consumers), #372 (adapter health), #586 (notices precedent).

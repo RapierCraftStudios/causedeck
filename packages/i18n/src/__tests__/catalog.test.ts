@@ -121,6 +121,7 @@ describe('namespaced catalogs (#174)', () => {
         'settings',
         'shell',
         'shortcuts',
+        'status',
         'theme',
         'usage',
         'voice',

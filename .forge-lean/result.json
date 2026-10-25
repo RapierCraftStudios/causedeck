@@ -1,153 +1,249 @@
 {
-  "status": "fixed",
-  "summary": "Zero-entry advocate discovery in core plus onboarding UI, actions, migration (renumbered to 20261024221355) and i18n; the e2e budget spec is committed and V1-V4 pass. CI lint (no-confusing-void-expression) fixed with braced arrow bodies in onboarding actions and UI.",
-  "requirements": [
-    {
-      "id": "R1",
-      "status": "implemented",
-      "evidence": "packages/core/src/onboarding/discover.ts:393"
-    },
-    {
-      "id": "R2",
-      "status": "implemented",
-      "evidence": "apps/web/components/onboarding/discovery-onboarding.tsx:134"
-    },
-    {
-      "id": "R3",
-      "status": "implemented",
-      "evidence": "packages/core/src/onboarding/discover.ts"
-    },
-    {
-      "id": "R4",
-      "status": "implemented",
-      "evidence": "apps/web/app/(app)/w/[slug]/onboarding/actions.ts"
-    },
-    {
-      "id": "R5",
-      "status": "implemented",
-      "evidence": "e2e/tests/onboarding/zero-entry.spec.ts:1",
-      "instrumented": "true"
-    },
-    {
-      "id": "R6",
-      "status": "implemented",
-      "evidence": "packages/core/src/onboarding/discover.test.ts"
-    },
-    {
-      "id": "R7",
-      "status": "implemented",
-      "evidence": "packages/core/src/onboarding/discover.test.ts"
-    }
-  ],
-  "validation": [
-    {
-      "id": "V1",
-      "command": "pnpm --filter @causedeck/core exec vitest run src/onboarding/discover.test.ts src/import src/court/list-watch.test.ts src/activation",
-      "exit": 0
-    },
-    {
-      "id": "V2",
-      "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/domains.test.ts",
-      "exit": 0
-    },
-    {
-      "id": "V3",
-      "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts",
-      "exit": 0
-    },
-    {
-      "id": "V4",
-      "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts",
-      "exit": 0
-    }
-  ],
-  "tests": [
-    {
-      "command": "V1-V4",
-      "result": "pass",
-      "fails_without_fix": true
-    }
-  ],
-  "self_review": [
-    {
-      "question": "1",
-      "answer": "yes",
-      "evidence": "R1-R7 in implementation.md; R5 instrumented by e2e/tests/onboarding/zero-entry.spec.ts"
-    },
-    {
-      "question": "2",
-      "answer": "yes",
-      "evidence": "V1-V4 and forgedock check pass"
-    },
-    {
-      "question": "3",
-      "answer": "yes",
-      "evidence": "every deliverable changed; P1-P4 untouched"
-    },
-    {
-      "question": "4",
-      "answer": "yes",
-      "evidence": "deliverables and tests only"
-    }
-  ],
-  "amendments": [],
-  "not_members": [
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/nav.test.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/settings-shell.test.tsx",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/shortcuts.test.tsx",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/static-guards.test.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/workspace-shell.test.tsx",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "e2e/tests/courts/courts.spec.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "e2e/tests/settings/shell.spec.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    }
-  ],
-  "facts": {
-    "decisions": [
-      "R5 instrumented by a committed Playwright budget spec; it runs in CI only",
-      "post-merge typecheck failure was 'turbo: command not found' (PATH); no code change; typecheck via node_modules/.bin/turbo passes",
-      "typecheck exit 127 is turbo missing from PATH; ran via pnpm exec turbo, passes; migration renumbered to 20261025010000 after the base's scim_token_lookup"
-    ]
+ "status": "blocked",
+ "summary": "Implementation complete and V1-V5 pass directly, but forgedock check fails: frozen V2 (core vitest incl. src/audit) takes ~210s alone and exceeds the engine's 300s check timeout on this shared host (same as last run). V2 needs a narrower command.",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/auth/package.json",
+   "instrumented": false
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/auth/src/sso.ts:1",
+   "instrumented": false
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "apps/web/app/(public)/sign-in/sso-form.tsx:1",
+   "instrumented": false
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "apps/web/app/(app)/w/[slug]/settings/sso/page.tsx:1",
+   "instrumented": false
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "packages/auth/src/rate-limit.ts",
+   "instrumented": false
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/auth/src/__tests__/sso-sign-in.test.ts:1",
+   "instrumented": false
   }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/__tests__/sso.test.ts src/__tests__/sso-sign-in.test.ts src/__tests__/server.test.ts src/__tests__/security-events.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/audit src/workspaces/__tests__/sso.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/sign-in.test.tsx __tests__/cross-tenant-actions.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/enterprise-schema.test.ts src/index.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V6",
+   "command": "checks.mjs --base origin/milestone/instant-gtm-adoption (widened to full turbo; ran scoped tsc for auth, core, web: exit 0)",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/__tests__/sso.test.ts src/__tests__/sso-sign-in.test.ts src/__tests__/server.test.ts src/__tests__/security-events.test.ts",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  },
+  {
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/audit src/workspaces/__tests__/sso.test.ts",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  },
+  {
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/sign-in.test.tsx __tests__/cross-tenant-actions.test.ts",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  },
+  {
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/enterprise-schema.test.ts src/index.test.ts",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  },
+  {
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R6 implemented; sso-sign-in.test.ts passes"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "server.test.ts and security-events.test.ts pass unchanged (V1)"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V5 exit 0; extra files declared via add-deliverable"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "extra non-test files covered by amendments"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/settings/sso/actions.ts",
+   "why": "owner settings server actions for the SSO page (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/settings/sso/error.tsx",
+   "why": "error boundary for the new settings route (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/settings/sso/loading.tsx",
+   "why": "loading state for the new settings route (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/settings/sso/sso-form.tsx",
+   "why": "client form for provider config (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/settings/sso/view.ts",
+   "why": "view-model helpers for the settings page (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(public)/sign-in/sign-in-form.tsx",
+   "why": "mounts the SSO entry on the sign-in form (R3)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/lib/settings-nav.ts",
+   "why": "adds the owner Single sign-on settings nav entry (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/workspaces/index.ts",
+   "why": "exports the new sso service from the workspaces domain barrel (R2)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/20261025020000_sso_domain_verification.sql",
+   "why": "DNS domain verification columns for SSO (R2, takeover guard)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/20261025020100_sso_provider_lookup.sql",
+   "why": "RLS-safe lookup function resolving a provider by email domain pre-workspace (R6)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/meta/20261025020000_snapshot.json",
+   "why": "generated snapshot for migration"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/meta/20261025020100_snapshot.json",
+   "why": "generated snapshot for migration"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "why": "migration journal entries"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "why": "register new core runtime exports in SERVICE_TESTS per CLAUDE.md"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages.d.ts",
+   "why": "generated i18n types"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/en.json",
+   "why": "generated i18n bundle"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/kn.json",
+   "why": "generated i18n bundle"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/ta.json",
+   "why": "generated i18n bundle"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/en/settings.json",
+   "why": "SSO settings page copy (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/kn/auth.json",
+   "why": "kn SSO sign-in copy (R3)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/kn/settings.json",
+   "why": "kn SSO settings copy (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/ta/auth.json",
+   "why": "ta SSO sign-in copy (R3)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/ta/settings.json",
+   "why": "ta SSO settings copy (R4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/translation-status.json",
+   "why": "translation status tracking updated with new keys"
+  }
+ ],
+ "block": {
+  "kind": "human",
+  "why": "product-decision"
+ }
 }

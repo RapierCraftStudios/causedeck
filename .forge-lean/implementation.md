@@ -1,40 +1,43 @@
 ### Approach
-Harden the four app Dockerfiles, add a WAL-G/pgvector Postgres image, a prod compose stack, env examples, ops scripts, a CI images workflow and an in-readiness clock-drift check. Heavy checks (builds, size, smoke, Trivy, cosign) run only in CI.
+Greenfield Terraform under `infra/terraform` (five Cloudflare modules, two India-only VPS modules, prod and staging roots), a `terraform.yml` workflow, and a dependency-free node policy test that runs in the lane. A `terraform test` file repeats the residency rules in CI. Terraform and tflint are not installed on the host, so HCL was not validated locally.
 
 ### Changes
-- infra/docker/{web,api,worker,admin}.Dockerfile: ARG-pinned base, tini, numeric non-root, pruned deploy, UTC.
-- infra/docker/.dockerignore, base/README.md, README.md: context excludes, pinning docs, prod/staging and resource-limit docs.
-- infra/docker/postgres/{Dockerfile,postgresql.conf}: pgvector + checksum-verified WAL-G, archive_mode on.
-- infra/docker/compose.prod.yml, env/{prod,staging}.env.example: hardened stack with limits.
-- infra/scripts/{migrate,healthcheck,bootstrap-vps}.sh, infra/docker/test/compose-smoke.sh, infra/caddy/Caddyfile (placeholder, #98).
-- infra/scripts/compose-prod.test.mjs: static compose lint.
-- packages/observability/src/health.ts (+test), apps/{web,api,worker} health wiring: clock drift in /readyz only.
-- .github/workflows/images.yml: build, size gate, smoke, multi-arch publish, Trivy, SBOM, cosign.
+- infra/terraform/modules/cloudflare-zone: zone, DNSSEC, app/api/admin A/AAAA gated on `app_proxied` + `residency_decision_ref`, site CNAME, SES SPF/DKIM/DMARC/MX variables.
+- modules/cloudflare-pages: Pages project (static export of apps/site, production and preview) and custom domain.
+- modules/cloudflare-static-cdn: proxied static.<tld>, tiered cache, cache rule for hashed paths and a last-winning cookie/Authorization bypass.
+- modules/cloudflare-access, cloudflare-waf: count-gated, off by default; WAF needs the residency ref.
+- modules/vps-do-blr1, vps-lightsail-mumbai: region validation, firewall (80/443 tcp+udp world, 22 allowlist), data disk, snapshots, tags, cloud-init running bootstrap-vps.sh, identical outputs.
+- envs/prod, envs/staging: roots, variables, outputs, dummy `terraform.tfvars.example`.
+- infra/terraform/backend.tf.example, README.md, test/policy.test.mjs, test/residency.tftest.hcl.
+- .github/workflows/terraform.yml: static checks, PR plan comment, weekly drift, manual environment-gated apply.
+- package.json: `test:ci-scripts` also runs the terraform policy test. .gitignore: Terraform state, tfvars, generated backend.tf.
 
 ### Acceptance Criteria Status
-- R1 ✅ images.yml size/non-root steps; Dockerfiles
-- R2 ✅ compose.prod.yml, images.yml verify job
-- R3 ✅ compose-prod.test.mjs
-- R4 ✅ compose.prod.yml ports; compose-smoke.sh
-- R5 ✅ postgres/Dockerfile, postgresql.conf:24
-- R6 ✅ migrate.sh, compose.prod.yml migrate service
-- R7 ✅ compose-smoke.sh
-- R8 ✅ read_only in compose.prod.yml
-- R9 ✅ images.yml publish job
-- R10 ✅ compose.prod.yml limits, infra/docker/README.md
-- R11 ✅ bootstrap-vps.sh
-- R12 ✅ packages/observability/src/health.ts clockDriftCheckFromEnv
-- R13 ✅ env/staging.env.example
+- R1 ✅ (instrumented) .github/workflows/terraform.yml validate and plan jobs
+- R2 ✅ infra/terraform/modules/cloudflare-zone/main.tf:30-55, variables.tf (validation), test/policy.test.mjs, test/residency.tftest.hcl
+- R3 ✅ modules/cloudflare-static-cdn/main.tf
+- R4 ✅ modules/cloudflare-pages/main.tf
+- R5 ✅ modules/vps-*/variables.tf region validation, outputs.tf
+- R6 ✅ modules/vps-do-blr1/main.tf firewall, vps-lightsail-mumbai/main.tf public ports, policy test
+- R7 ✅ backup_policy / AutoSnapshot add-on, README "Disks and snapshots"
+- R8 ✅ backend.tf.example, sensitive variables, policy test
+- R9 ✅ modules/cloudflare-access, cloudflare-waf
+- R10 ✅ cloudflare-zone variables and records
+- R11 ✅ terraform.yml (plan comment, drift cron, apply environment)
+- R12 ✅ tags in modules and envs, README cost table
 
 ### Verification
-- V1 compose-prod/dev node tests: pass
-- V2 bash -n on four scripts: pass
-- V3 observability health.test.ts: 11 pass
-- V4 worker health + web health-routes: pass
-- Clock-drift tests in health.test.ts fail without the fix (function absent). Compose lint tests fail against the base compose (file absent).
+- V1 `node --test infra/terraform/test/policy.test.mjs`: 26 pass. It fails (2 failures) when `proxied = var.app_proxied` on the app hosts is replaced with `proxied = true`.
+- V2 compose-prod, compose-dev and policy tests: 54 pass.
+- V3 prettier --check on the changed files: pass. `forgedock check`: PASS.
+- checks.mjs widened to full turbo because a workflow changed; not run (no TS package touched, full lint is forbidden locally).
+- Not run locally: terraform fmt/validate/plan/test, tflint, checkov, actionlint (tools unavailable).
 
 ### Notes
-New env var CLOCK_DRIFT_REFERENCE_URL (optional; unset disables the check). Repo vars WALG_SHA256_AMD64/ARM64 are needed in CI. Docker-based checks were not run locally.
+- Each env creates its own zone, so staging needs its own domain.
+- `enable_access` requires the admin host proxied (Access only protects proxied hosts), hence the residency decision.
+- Credentials come from the environment (TF_VAR_cloudflare_api_token, DIGITALOCEAN_TOKEN, AWS_*). The drift and apply jobs need repo variables/secrets listed in the README (#116).
+- Provider schemas (Cloudflare v5, Lightsail add_on) were written from memory and are checked by CI only; expect possible fmt/validate fixes on first CI run.
 
-## Lint fix
-CI lint failed (no log). Prettier flagged infra/docker/compose.prod.yml; reformatted with prettier --write. Other changed files pass prettier; eslint on changed TS OOMed locally, left to CI.
+## Fix: terraform fmt alignment
+Aligned `=` in the locals block of envs/prod/main.tf and envs/staging/main.tf to the longest key (`lightsail_region`) so `terraform fmt -check` passes. V1 re-run: 26 pass.

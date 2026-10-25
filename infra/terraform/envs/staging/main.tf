@@ -3,9 +3,9 @@
 # the state bucket). Dummy values are enough for validate and plan.
 
 locals {
-  env             = "staging"
-  use_do          = var.vps_provider == "do_blr1"
-  use_lightsail   = var.vps_provider == "lightsail_mumbai"
+  env              = "staging"
+  use_do           = var.vps_provider == "do_blr1"
+  use_lightsail    = var.vps_provider == "lightsail_mumbai"
   lightsail_region = "ap-south-1"
 
   tags = {

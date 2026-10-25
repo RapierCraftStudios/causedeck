@@ -1,0 +1,19 @@
+{
+  "id": "en-26",
+  "language": "en",
+  "hearingDate": "2026-03-16",
+  "text": "In case 45818 of 2020 today. The matter was adjourned. Next hearing next sunday. The court directed the petitioner to file the rejoinder.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-03-22",
+      "phrase": "next sunday"
+    },
+    "directions": [
+      {
+        "text": "The court directed the petitioner to file the rejoinder.",
+        "dueDate": null
+      }
+    ],
+    "tasks": []
+  }
+}

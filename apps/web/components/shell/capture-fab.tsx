@@ -2,6 +2,7 @@
 
 import { ClipboardPaste, Mic, Paperclip, Plus, type LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   createContext,
   useContext,
@@ -65,12 +66,15 @@ const ACTIONS: readonly CaptureAction[] = [
 ];
 
 /**
- * The bottom nav's centre slot: a 52 px accent circle raised 8 px above the bar, labelled
- * `Capture`. It opens a bottom sheet with the three capture actions.
+ * The bottom nav's centre slot: a 52 px accent circle raised 16 px above the bar, labelled
+ * `Capture`. The circle ends at 36 px and the 12 px label sits at 42-54 px of the 56 px slot, so
+ * the two never overlap. It opens a bottom sheet with the three capture actions.
  */
 export function CaptureFab() {
   const t = useTranslations('shell');
   const overlays = useShellOverlays();
+  const router = useRouter();
+  const pathname = usePathname();
   const shared = useContext(CaptureContext);
   // Standalone (outside the provider) the button keeps its own state.
   const local = useCaptureState();
@@ -95,16 +99,18 @@ export function CaptureFab() {
               setOpen(true);
             }
       }
-      className="group/capture focus-visible:outline-ring relative flex h-14 min-h-11 w-full min-w-11 flex-col items-center justify-end pb-1 outline-none focus-visible:outline-2"
+      className="group/capture focus-visible:outline-ring relative flex h-14 min-h-11 w-full min-w-11 flex-col items-center justify-end pb-0.5 outline-none focus-visible:outline-2"
     >
       <span
         aria-hidden="true"
         data-capture-circle=""
-        className="bg-accent text-accent-ink shadow-3 group-active/capture:bg-accent/80 absolute -top-2 left-1/2 flex size-[52px] -translate-x-1/2 items-center justify-center rounded-full"
+        className="bg-accent text-accent-ink shadow-3 group-active/capture:bg-accent/80 absolute -top-4 left-1/2 flex size-[52px] -translate-x-1/2 items-center justify-center rounded-full"
       >
         <Plus className="size-6" strokeWidth={1.75} />
       </span>
-      <span className="text-ink text-[11px] leading-3 font-medium">{t('capture.label')}</span>
+      <span data-capture-label="" className="text-ink text-[11px] leading-3 font-medium">
+        {t('capture.label')}
+      </span>
     </button>
   );
 
@@ -121,11 +127,22 @@ export function CaptureFab() {
         <ul className="flex flex-col gap-1">
           {ACTIONS.map(({ id, icon: Icon }) => (
             <li key={id}>
-              {/* TODO(capture): voice, file and paste capture arrive with the Capture milestone. */}
+              {/* TODO(capture): file and paste capture arrive with the Capture milestone. */}
               <button
                 type="button"
-                disabled
+                disabled={id !== 'voice'}
                 data-capture-action={id}
+                onClick={
+                  id === 'voice'
+                    ? () => {
+                        setOpen(false);
+                        // Same address as voiceHref(); inlined so the shell does not pull the command registry in.
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('capture', 'voice');
+                        router.push(`${pathname}?${params.toString()}`);
+                      }
+                    : undefined
+                }
                 className="text-ink flex min-h-11 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium disabled:opacity-60"
               >
                 <Icon aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.5} />

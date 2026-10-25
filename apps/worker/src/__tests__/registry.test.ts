@@ -118,6 +118,60 @@ describe('enqueue', () => {
     expect(registry.definitions.map((d) => d.name)).toEqual([
       'system.ping',
       'system.retention.sweep',
+      'system.court-data.retention',
+      'system.billing.reconcile',
+      'system.billing.dunning-tick',
+      'billing.process-event',
+      'billing.invoice-render',
+      'billing.invoice-notice',
+      'notification.deliver',
+      'system.notification.digest',
+      'notification.digest',
+      'system.activity.digest',
+      'activity.digest',
+      'activity.digest.member',
+      'system.news.digest',
+      'news.digest',
+      'news.digest.member',
+      'system.news.poll',
+      'system.news.poll-source',
+      'system.usage.rollup',
+      'system.business.cost-alert',
+      'system.business.digest',
+      'system.coverage.weekly',
+      'system.audit.verify',
+      'audit.verify',
+      'system.audit.retention',
+      'export.build',
+      'system.export.expire',
+      'system.support.session-expire',
+      'system.deletion.tick',
+      'deletion.erase',
+      'account.delete',
+      'memory.erase',
+      'capture.scan',
+      'capture.process',
+      'system.capture.retention',
+      'capture.retention',
+      'whatsapp.import',
+      'voice.process',
+      'email.intake',
+      'whatsapp.intake',
+      'email.raw-expire',
+      'extraction.extract-order',
+      'import.batch',
+      'import.file',
+      'system.data-ops.evaluate',
+      'system.corpus.poll',
+      'system.causelist.poll',
+      'system.board.poll',
+      'system.notices.poll',
+      'system.judgment-alert.scan',
+      'system.portfolio-alert.scan',
+      'system.status.poll',
+      'webhook.deliver',
+      'system.webhook.sweep',
+      'system.orders.poll',
     ]);
   });
 });
@@ -169,15 +223,32 @@ describe('per-queue concurrency, singletonKey and fairness', () => {
     expect(state.max).toBe(1);
   });
 
-  it('caps concurrent jobs per fairnessKey (default the workspace)', async () => {
+  it('caps concurrent jobs per explicit fairnessKey at the definition cap', async () => {
     const { def, state, jobs } = trackingJob({ concurrency: 6, fairnessConcurrency: 3, ms: 500 });
     await startTestWorker([def]);
-    const workspaceId = randomUUID();
+    // An explicit fairnessKey group is not a workspace group, so the plan default (#221) does not
+    // apply and the definition's cap of 3 holds.
     for (let i = 0; i < 9; i += 1) {
-      await jobs.enqueue(producer, def.name, { workspaceId, key: String(i) });
+      await jobs.enqueue(producer, def.name, {
+        workspaceId: randomUUID(),
+        fairnessKey: 'shared-group',
+        key: String(i),
+      });
     }
 
     await waitFor(() => state.done === 9, { timeoutMs: 60_000 });
     expect(state.max).toBe(3);
+  });
+
+  it('caps a workspace group at its plan default (a workspace without a plan runs as Junior: 1)', async () => {
+    const { def, state, jobs } = trackingJob({ concurrency: 6, fairnessConcurrency: 3, ms: 300 });
+    await startTestWorker([def]);
+    const workspaceId = randomUUID();
+    for (let i = 0; i < 4; i += 1) {
+      await jobs.enqueue(producer, def.name, { workspaceId, key: String(i) });
+    }
+
+    await waitFor(() => state.done === 4, { timeoutMs: 60_000 });
+    expect(state.max).toBe(1);
   });
 });

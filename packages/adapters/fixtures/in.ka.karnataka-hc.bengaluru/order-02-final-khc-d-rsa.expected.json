@@ -1,0 +1,32 @@
+{
+  "header": {
+    "caseTypeRaw": "REGULAR SECOND APPEAL",
+    "caseType": "RSA",
+    "caseNumber": "100044",
+    "caseYear": 2024,
+    "orderDate": "2026-11-03",
+    "neutralCitation": "2026:KHC-D:567",
+    "anchor": {
+      "page": 1,
+      "quote": "REGULAR SECOND APPEAL NO. 100044 OF 2024",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "RSA",
+        "caseTypeRaw": "REGULAR SECOND APPEAL",
+        "number": "100044",
+        "year": 2024,
+        "matchKey": "RSA/100044/2024",
+        "benchNumbering": "100xxx"
+      }
+    ],
+    "bench": "THE HON'BLE MR JUSTICE C. KALPITA",
+    "judges": ["THE HON'BLE MR JUSTICE C. KALPITA"],
+    "neutralCitationRaw": "2026:KHC-D:567",
+    "orderType": "judgment",
+    "authenticityFlag": null
+  },
+  "cues": []
+}

@@ -1,15 +1,47 @@
 // Schema conventions from spike §4.2, checked over the Drizzle table objects (no database needed):
-//   1. `workspace_id` is NOT NULL and leads at least one index.
+//   1. `workspace_id` is NOT NULL (outside NULLABLE_WORKSPACE_TABLES) and leads at least one index.
 //   2. No cross-workspace foreign keys: a FK from a tenant table to another tenant table must be
 //      composite and pair `workspace_id` with `workspace_id`.
-// Tables in GLOBAL_TABLES (not workspace-scoped) are exempt.
+// Tables in GLOBAL_TABLES (not workspace-scoped) are exempt. Tables in GLOBAL_OR_WORKSPACE_TABLES
+// may have a null `workspace_id`, and a single-column FK into them is allowed (a scope-guard
+// trigger checks it; `db:check-rls` requires the trigger).
 import { getTableName, is, SQL } from 'drizzle-orm';
 import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /**
- * Tables that are not workspace-scoped: the baseline, Better Auth's identity tables and, later, the
- * court layer. `organization` (the workspace), `member` and `invitation` are tenant roots, not
- * global; RLS for them comes in #19.
+ * Tables that are not workspace-scoped: the baseline, Better Auth's identity tables, the billing
+ * plan catalogue and, later, the court layer. They carry no row-level security; everything else with
+ * a `workspace_id` column is a tenant table under FORCE RLS (`db:check-rls`,
+ * docs/engineering/tenancy.md). `organization` (the workspace) is the tenant root with its own
+ * policies; `member` and `invitation` are tenant tables. `api_idempotency_key` has a nullable
+ * `workspace_id` but is keyed by user, so it stays global. `push_subscription` (per user) and
+ * `email_suppression` (per address) have no workspace (#194). `feature_flag` (staff-managed global
+ * flag rows) and `access_mode_registry` (court-adapter access modes) are global by design (#22); the
+ * per-workspace overrides are the tenant table `workspace_feature_flag`. `invoice_counter` is the
+ * supplier-wide gapless SaaS invoice series (#252): no workspace, no RLS, allocated under a row lock
+ * by #253. `deletion_tombstone` (#301) records an erased workspace and must outlive the purge of
+ * every tenant row, so it has no RLS and no foreign key. `legal_hold_invoice` (#302) is the minimal
+ * statutory copy of an erased workspace's SaaS invoices; it outlives the purge the same way.
+ * `staff_user` is the platform staff registry (#308): written only by the operator CLI as the
+ * owner role (the app role may only read it). `audit_actor_salt` (#303) holds the per-user salt of
+ * `audit_event.actor_ref`; the app role has no privileges on it, only the audit functions do.
+ * `flag_change_request` (#311) holds staff requests for a legal-gated flag enable awaiting a second
+ * admin; its nullable `workspace_id` names the override it targets, but the table is staff-only and
+ * has no RLS. `catalogue_meta` (#34) records the version of each owner-seeded system catalogue (the
+ * forum catalogue); the app role may only read it. `adapter_version` (#372) holds the versioned
+ * court-adapter configs, one `active` row per adapter; staff manage it through the app role like
+ * `access_mode_registry`. `source` (#478, D-048) is the global source registry that generalises
+ * `access_mode_registry` to every external source; staff write it through the app role (no DELETE).
+ * `contributed_document` (#485, D-048) holds the public court documents workspaces opted in to share;
+ * it has no workspace column by design, the link to a contributor is the tenant table `contribution_ledger`.
+ * `fetch_log` (#479) is the global, content-free log of governed fetches: the app role may only SELECT and INSERT.
+ * `news_item` (#481) holds feed-provided news headlines, links and excerpts, never article bodies; staff-cleared sources only.
+ * `source_health`, `source_parse_run`, `data_ops_alert` and `data_ops_oncall` (#515) are the global, content-free
+ * data-operations tables: per-source health and backoff, parse yield, the alert ledger and the on-call rotation.
+ * `cause_list_publication` (#482) is the global, content-free cache of fetched list publications (no body).
+ * `board_observation` (#493) is the global, content-free hall display-board history (hall, item, state); the app role may SELECT and INSERT it.
+ * `bench_sitting_fact` (#521, D-050) is the global, staff-only bench-facts store (neutral counts and pace per hall and day); the app and clerk roles have no table grants and reach it only through the owner-defined `app_bench_*` functions.
+ * `notice` (#584, D-048) is the global official notices feed read from cleared sources; the app role may SELECT, INSERT and UPDATE it (no DELETE).
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -21,7 +53,53 @@ export const GLOBAL_TABLES: readonly string[] = [
   'two_factor',
   'rate_limit',
   'api_idempotency_key',
+  'plan',
+  'push_subscription',
+  'email_suppression',
+  'feature_flag',
+  'access_mode_registry',
+  'invoice_counter',
+  'deletion_tombstone',
+  'staff_user',
+  'legal_hold_invoice',
+  'audit_actor_salt',
+  'flag_change_request',
+  'catalogue_meta',
+  'adapter_version',
+  'source',
+  'contributed_document',
+  'fetch_log',
+  'news_item',
+  'source_health',
+  'source_parse_run',
+  'data_ops_alert',
+  'data_ops_oncall',
+  'judgment',
+  'cause_list_publication',
+  'board_observation',
+  'notice',
+  'review_item',
+  'bench_sitting_fact',
+  'activation_event',
 ];
+
+/**
+ * Tenant tables whose `workspace_id` may be null. `audit_event` holds account-level events (sign-in,
+ * passkey, 2FA) that belong to no workspace; they are written only through `app_audit_append()` and
+ * read through the `account_self` policy. The table is still under FORCE RLS with `ws_isolation`, and
+ * still needs an index led by `workspace_id`. `deletion_job` (#301) has no workspace only for
+ * account deletions (a check constraint enforces that). Adding a table here is a security decision.
+ */
+export const NULLABLE_WORKSPACE_TABLES: readonly string[] = ['audit_event', 'deletion_job'];
+
+/**
+ * Global-or-workspace reference tables (#344, ADR 0013): a null `workspace_id` is a system catalogue
+ * row, readable by every workspace and writable only by the owner (migration) role; a non-null one
+ * is a workspace's custom row, visible and writable only inside that workspace. Their policies come
+ * from `globalOrWorkspacePolicy()`. A foreign key into them is single-column (a composite FK cannot
+ * express "global or same workspace") and guarded by the `app_reference_scope_guard` trigger.
+ */
+export const GLOBAL_OR_WORKSPACE_TABLES: readonly string[] = ['forum', 'court_hall', 'bench'];
 
 export const WORKSPACE_COLUMN = 'workspace_id';
 
@@ -33,6 +111,8 @@ export interface ConventionViolation {
 
 export interface CheckOptions {
   globalTables?: readonly string[];
+  nullableWorkspaceTables?: readonly string[];
+  globalOrWorkspaceTables?: readonly string[];
 }
 
 function toSnakeCase(name: string): string {
@@ -58,9 +138,15 @@ export function tablesOf(exports: Record<string, unknown>): PgTable[] {
 
 export function checkSchemaConventions(
   tables: readonly PgTable[],
-  { globalTables = GLOBAL_TABLES }: CheckOptions = {},
+  {
+    globalTables = GLOBAL_TABLES,
+    nullableWorkspaceTables = NULLABLE_WORKSPACE_TABLES,
+    globalOrWorkspaceTables = GLOBAL_OR_WORKSPACE_TABLES,
+  }: CheckOptions = {},
 ): ConventionViolation[] {
   const globals = new Set(globalTables);
+  const references = new Set(globalOrWorkspaceTables);
+  const nullable = new Set([...nullableWorkspaceTables, ...globalOrWorkspaceTables]);
   const violations: ConventionViolation[] = [];
 
   for (const table of tables) {
@@ -69,7 +155,7 @@ export function checkSchemaConventions(
     if (!isTenant(table, globals)) continue;
 
     const workspace = config.columns.find((c) => columnName(c) === WORKSPACE_COLUMN);
-    if (workspace && !workspace.notNull) {
+    if (workspace && !workspace.notNull && !nullable.has(name)) {
       violations.push({
         table: name,
         rule: 'workspace-not-null',
@@ -100,6 +186,7 @@ export function checkSchemaConventions(
       const ref = fk.reference();
       if (!isTenant(ref.foreignTable, globals)) continue;
       const target = getTableName(ref.foreignTable);
+      if (references.has(target)) continue;
       const pairsWorkspace = ref.columns.some(
         (col, i) =>
           columnName(col) === WORKSPACE_COLUMN &&

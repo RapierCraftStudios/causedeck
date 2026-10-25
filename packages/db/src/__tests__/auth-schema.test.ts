@@ -4,7 +4,13 @@ import { describe, expect, it } from 'vitest';
 
 import { checkSchemaConventions, GLOBAL_TABLES, tablesOf } from '../conventions.ts';
 import { workspace } from '../index.ts';
-import { LOCALES, WORKSPACE_ROLES } from '../schema/auth.ts';
+import {
+  CLERK_SETUP_STATUSES,
+  LOCALES,
+  MEMBER_STATUSES,
+  WORKSPACE_KINDS,
+  WORKSPACE_ROLES,
+} from '../schema/auth.ts';
 import * as schema from '../schema/index.ts';
 
 const GLOBAL_AUTH_TABLES = [
@@ -81,5 +87,79 @@ describe('Better Auth schema (#151)', () => {
     expect(WORKSPACE_ROLES).toEqual(['owner', 'advocate', 'junior', 'clerk', 'viewer']);
     expect(LOCALES).toEqual(['en', 'ta', 'kn']);
     expect(schema.member.role.hasDefault).toBe(false);
+  });
+});
+
+const checksOf = (table: Parameters<typeof getTableConfig>[0]) =>
+  Object.fromEntries(getTableConfig(table).checks.map((c) => [c.name, c.value]));
+
+describe('workspace data model (#177)', () => {
+  it('extends organization in place with kind, plan, creator and soft delete', () => {
+    const { organization } = schema;
+    expect(WORKSPACE_KINDS).toEqual(['solo', 'chamber', 'institution']);
+    expect(organization.slug.getSQLType()).toBe('citext');
+    expect(organization.kind.notNull && organization.kind.default).toBe('solo');
+    expect(organization.planId.notNull).toBe(false);
+    expect(organization.createdBy.notNull).toBe(false);
+    expect(organization.deletedAt.notNull).toBe(false);
+    expect(Object.keys(checksOf(organization))).toEqual(['organization_kind_chk']);
+    const [creator] = getTableConfig(organization).foreignKeys;
+    expect(creator && getTableName(creator.reference().foreignTable)).toBe('user');
+    expect(creator?.onDelete).toBe('set null');
+  });
+
+  it('adds member status and joined_at, and invitation token hash and lifecycle stamps', () => {
+    const { member, invitation } = schema;
+    expect(MEMBER_STATUSES).toEqual(['active', 'suspended', 'removed']);
+    expect(member.status.default).toBe('active');
+    expect(member.joinedAt.notNull && member.joinedAt.hasDefault).toBe(true);
+    expect(Object.keys(checksOf(member))).toContain('member_status_chk');
+    for (const column of [invitation.tokenHash, invitation.acceptedAt, invitation.revokedAt]) {
+      expect(column.notNull, column.name).toBe(false);
+    }
+    expect(getTableConfig(invitation).indexes.map((i) => i.config.name)).toContain(
+      'invitation_token_hash_uq',
+    );
+  });
+
+  it('adds the nullable clerk setup columns with a closed status check (#505)', () => {
+    const { member } = schema;
+    expect(CLERK_SETUP_STATUSES).toEqual(['pending', 'approved']);
+    expect(member.clerkSetupStatus.notNull).toBe(false);
+    expect(member.clerkSetupDecidedAt.notNull).toBe(false);
+    expect(Object.keys(checksOf(member))).toContain('member_clerk_setup_status_chk');
+  });
+
+  it('keeps every added Better Auth column nullable or defaulted', () => {
+    const added = {
+      organization: ['kind', 'plan_id', 'created_by', 'deleted_at'],
+      member: ['status', 'joined_at', 'clerk_setup_status', 'clerk_setup_decided_at'],
+      invitation: ['token_hash', 'accepted_at', 'revoked_at'],
+    };
+    for (const table of [schema.organization, schema.member, schema.invitation]) {
+      const config = getTableConfig(table);
+      for (const column of config.columns.filter((c) =>
+        added[config.name as keyof typeof added].includes(c.name),
+      )) {
+        expect(!column.notNull || column.hasDefault, `${config.name}.${column.name}`).toBe(true);
+      }
+    }
+  });
+
+  it('adds workspace_settings and workspace_slug_history as convention-passing tenant tables', () => {
+    const { workspaceSettings, workspaceSlugHistory } = schema;
+    expect(getTableName(workspaceSettings)).toBe('workspace_settings');
+    expect(workspaceSettings.indiaOnlyAi.default).toBe(true);
+    expect(workspaceSettings.timezone.default).toBe('Asia/Kolkata');
+    expect(workspaceSettings.retention.getSQLType()).toBe('jsonb');
+    expect(getTableConfig(workspaceSettings).primaryKeys[0]?.columns.map((c) => c.name)).toEqual([
+      'workspace_id',
+    ]);
+    expect(workspaceSlugHistory.slug.getSQLType()).toBe('citext');
+    expect(workspaceSlugHistory.expiresAt.notNull).toBe(true);
+    for (const table of [workspaceSettings, workspaceSlugHistory]) {
+      expect(GLOBAL_TABLES).not.toContain(getTableName(table));
+      expect(checkSchemaConventions([table], { globalTables: [] })).toEqual([]);
+    }
   });
 });

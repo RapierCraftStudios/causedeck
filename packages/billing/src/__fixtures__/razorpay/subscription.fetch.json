@@ -1,0 +1,30 @@
+{
+  "id": "sub_FIXTURE0000001",
+  "entity": "subscription",
+  "plan_id": "plan_FIXTURE0000001",
+  "customer_id": "cust_FIXTURE0000001",
+  "status": "active",
+  "current_start": 1767225600,
+  "current_end": 1769904000,
+  "ended_at": null,
+  "quantity": 3,
+  "notes": {
+    "workspace_ref": "ws_FIXTURE0000001"
+  },
+  "charge_at": 1769904000,
+  "start_at": 1767225600,
+  "end_at": 1830297600,
+  "auth_attempts": 0,
+  "total_count": 24,
+  "paid_count": 1,
+  "customer_notify": true,
+  "created_at": 1767225000,
+  "expire_by": null,
+  "short_url": "https://rzp.io/i/FIXTURE01",
+  "has_scheduled_changes": false,
+  "change_scheduled_at": null,
+  "source": "api",
+  "payment_method": "upi",
+  "offer_id": null,
+  "remaining_count": 23
+}

@@ -1,0 +1,8 @@
+{
+  "job_id": "synthetic-ocr-1",
+  "pages": [
+    { "page_number": 1, "text": "IN THE HIGH COURT OF JUDICATURE AT MADRAS" },
+    { "page_number": 2, "text": "List the matter on 09.02.2026." }
+  ],
+  "confidence": 0.88
+}

@@ -24,6 +24,9 @@ export const ROLES = {
   app: { user: 'causedeck_app', password: 'causedeck_app' },
 } as const;
 
+/** The no-login role clerk members run as inside `withWorkspace({ dbRole: 'clerk' })` (#233). */
+export const CLERK_ROLE = 'causedeck_clerk';
+
 export const DATABASE_NAME = 'causedeck';
 /** Copy of `causedeck` taken after the init SQL and before migrations: the scratch-DB template. */
 export const PRISTINE_TEMPLATE = 'causedeck_pristine';
@@ -58,8 +61,20 @@ export async function applyInitSql(superuserUrl: string): Promise<void> {
   }
 }
 
+/**
+ * In a throwaway lane sandbox (computeshare sets IS_SANDBOX=1) Testcontainers' Ryuk reaper never
+ * reports "Started" on the sandbox's private dockerd, which fails every DB test setup. The sandbox and
+ * its dockerd are discarded after the lane, so the reaper has nothing to clean up. CI and dev keep Ryuk.
+ */
+function disableRyukInSandbox(): void {
+  // eslint-disable-next-line no-process-env -- a test-runner switch for Testcontainers, not app configuration.
+  const env = process.env;
+  if (env.IS_SANDBOX === '1') env.TESTCONTAINERS_RYUK_DISABLED ??= 'true';
+}
+
 /** Start Postgres 17 + pgvector, create the roles and apply every migration as the owner. */
 export async function startTestDatabase(): Promise<StartedTestDatabase> {
+  disableRyukInSandbox();
   const container = await new PostgreSqlContainer(POSTGRES_IMAGE)
     .withDatabase(DATABASE_NAME)
     .withUsername('causedeck')

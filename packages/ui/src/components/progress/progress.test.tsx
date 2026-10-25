@@ -32,4 +32,11 @@ describe('Progress', () => {
     const indicator = screen.getByRole('progressbar').firstElementChild;
     expect(indicator).toHaveClass('bg-danger', 'duration-(--dur-base)');
   });
+
+  it('supports a warning tone for a level nearing its limit', () => {
+    render(<Progress aria-label="AI processing" value={80} tone="warning" />);
+    const bar = screen.getByRole('progressbar');
+    expect(bar).toHaveAttribute('data-tone', 'warning');
+    expect(bar.firstElementChild).toHaveClass('bg-warning');
+  });
 });

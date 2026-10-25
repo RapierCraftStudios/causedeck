@@ -1,0 +1,31 @@
+{
+  "header": {
+    "caseTypeRaw": "REGULAR FIRST APPEAL",
+    "caseType": "RFA",
+    "caseNumber": "1201",
+    "caseYear": 2019,
+    "orderDate": "2026-10-28",
+    "neutralCitation": null,
+    "anchor": {
+      "page": 1,
+      "quote": "REGULAR FIRST APPEAL NO. 1201 OF 2019",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "RFA",
+        "caseTypeRaw": "REGULAR FIRST APPEAL",
+        "number": "1201",
+        "year": 2019,
+        "matchKey": "RFA/1201/2019"
+      }
+    ],
+    "bench": "THE HON'BLE MR JUSTICE C. KALPITA",
+    "judges": ["THE HON'BLE MR JUSTICE C. KALPITA"],
+    "neutralCitationRaw": null,
+    "orderType": "daily",
+    "authenticityFlag": null
+  },
+  "cues": []
+}

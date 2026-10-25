@@ -1,0 +1,269 @@
+{
+  "notifications": {
+    "email": {
+      "layout": {
+        "brand": "CauseDeck",
+        "footer": "You received this email because of your CauseDeck account.",
+        "preferences": "Manage notification preferences or unsubscribe",
+        "mandatory": "This is a required account email and cannot be turned off."
+      },
+      "magicLink": {
+        "subject": "Your CauseDeck sign-in link",
+        "preview": "Sign in to CauseDeck",
+        "heading": "Sign in to CauseDeck",
+        "body": "Use the button below to sign in. The link expires in {minutes} minutes and works once.",
+        "cta": "Sign in",
+        "fallback": "If the button does not work, open this link:",
+        "ignore": "If you did not ask to sign in, you can ignore this email."
+      },
+      "invitation": {
+        "subject": "You are invited to a CauseDeck workspace",
+        "preview": "Join a CauseDeck workspace",
+        "heading": "You are invited to a workspace",
+        "body": "A colleague invited you to join their CauseDeck workspace. The invitation expires in {days, plural, one {# day} other {# days}}.",
+        "cta": "Accept invitation",
+        "fallback": "If the button does not work, open this link:",
+        "ignore": "If you were not expecting this invitation, you can ignore this email."
+      },
+      "securityAlert": {
+        "subject": "Security alert: {title}",
+        "preview": "Security activity on your CauseDeck account",
+        "intro": "We noticed security activity on your CauseDeck account.",
+        "cta": "Review activity",
+        "help": "If this was not you, sign out of other sessions and contact your workspace owner."
+      },
+      "dailyDigest": {
+        "subject": "Your CauseDeck daily digest",
+        "preview": "Your updates from today",
+        "heading": "Today in your workspace",
+        "summary": "{count, plural, one {# update} other {# updates}} since your last digest.",
+        "empty": "Nothing new since your last digest.",
+        "cta": "Open CauseDeck"
+      },
+      "endOfDayDigest": {
+        "subject": "What CauseDeck did today",
+        "preview": "A count of what CauseDeck did and what waits for you",
+        "heading": "What CauseDeck did today",
+        "applied": "{count, plural, =0 {CauseDeck applied nothing on its own today.} one {CauseDeck applied # change on its own today. You can undo it for 7 days.} other {CauseDeck applied # changes on its own today. You can undo them for 7 days.}}",
+        "pending": "{count, plural, =0 {Nothing is waiting for your confirmation.} one {# proposal is waiting for your confirmation.} other {# proposals are waiting for your confirmation.}}",
+        "matters": "Matters touched today",
+        "activityCta": "Review today's activity",
+        "inboxCta": "Open your inbox",
+        "note": "This summary only opens the app. It never changes anything and it is not sent to anyone else."
+      },
+      "billingNotice": {
+        "subject": "Billing: {title}",
+        "preview": "A billing update for your workspace",
+        "cta": "View billing"
+      },
+      "notice": {
+        "subject": "{title}",
+        "preview": "An update from your CauseDeck workspace",
+        "cta": "Open in CauseDeck"
+      },
+      "newsDigest": {
+        "subject": "Legal news for you today",
+        "preview": "Headlines from the courts and tribunals you follow",
+        "heading": "Legal news for you today",
+        "source": "From {source}",
+        "cta": "Open the news page",
+        "note": "Headlines link to the original article. We show only what the publisher's feed provides."
+      }
+    },
+    "push": {
+      "card": {
+        "title": "Push notifications",
+        "body": "Get a nudge before your hearings. You can change this any time.",
+        "turnOn": "Turn on",
+        "notNow": "Not now",
+        "enabled": "Push notifications are on for this browser.",
+        "blocked": "Notifications are blocked for this site. Allow them in your browser settings to turn them on.",
+        "error": "Could not turn on push notifications. Try again."
+      }
+    },
+    "title": "Notifications",
+    "bell": {
+      "label": "Notifications",
+      "labelUnread": "Notifications, {count} unread"
+    },
+    "markAllRead": "Mark all read",
+    "groups": {
+      "today": "Today",
+      "earlier": "Earlier"
+    },
+    "empty": "You are all caught up.",
+    "error": "Could not load notifications.",
+    "retry": "Try again",
+    "offline": "Showing saved notifications",
+    "loading": "Loading notifications",
+    "unread": "Unread",
+    "unreadCount": "{count} unread",
+    "announce": "{count, plural, one {# new notification} other {# new notifications}}",
+    "close": "Close",
+    "shortcut": "Open notifications",
+    "preferences": {
+      "metaTitle": "Notification preferences",
+      "title": "Notification preferences",
+      "description": "Choose how CauseDeck tells you about activity in {workspace}.",
+      "link": "Notification preferences",
+      "linkHint": "Choose channels, the daily digest and quiet hours.",
+      "matrixCaption": "Channels for each kind of notification",
+      "categoryHeader": "Notification",
+      "channels": {
+        "inApp": "In-app",
+        "email": "Email",
+        "push": "Push"
+      },
+      "switchLabel": "{category}: {channel}",
+      "categories": {
+        "workspaceInvite": {
+          "label": "Workspace invitations",
+          "description": "When someone invites you to a workspace."
+        },
+        "memberJoined": {
+          "label": "New members",
+          "description": "When someone joins this workspace."
+        },
+        "securityAlert": {
+          "label": "Security alerts",
+          "description": "Sign-ins and changes to your account."
+        },
+        "billingNotice": {
+          "label": "Billing",
+          "description": "Payments, invoices and plan changes."
+        },
+        "reminderHearing": {
+          "label": "Hearing reminders",
+          "description": "Before your listed hearings."
+        },
+        "proposalNew": {
+          "label": "New proposals",
+          "description": "When CauseDeck prepares something for you to review."
+        },
+        "courtBoard": {
+          "label": "Court-day alerts",
+          "description": "When an item of yours is a few items away, now being heard, or the court rises or passes it over."
+        },
+        "judgmentAlert": {
+          "label": "Relevant judgments",
+          "description": "When a new judgment cites a statute section confirmed on one of your matters."
+        },
+        "statusNextDate": {
+          "label": "Next hearing date",
+          "description": "When a watched case shows a new next hearing date."
+        },
+        "statusOrder": {
+          "label": "New orders",
+          "description": "When a watched case lists a new order."
+        },
+        "statusStage": {
+          "label": "Stage changes",
+          "description": "When a watched case moves to a new stage."
+        },
+        "notices": {
+          "label": "Court notices",
+          "description": "When the court or Bar Council publishes a notice for a forum you use."
+        },
+        "benchChange": {
+          "label": "Bench changes",
+          "description": "When a court notice about a leave, special bench or roster change affects a matter you have listed."
+        },
+        "portfolioAdverseOrder": {
+          "label": "Portfolio adverse orders",
+          "description": "When a case in your institution's portfolio gets a new adverse order."
+        },
+        "portfolioMissedDate": {
+          "label": "Portfolio missed dates",
+          "description": "When the next date of a portfolio case has passed with no new date."
+        },
+        "digestDaily": {
+          "label": "Daily digest",
+          "description": "One email at 6:30 pm with the day's updates."
+        },
+        "digestEndOfDay": {
+          "label": "What CauseDeck did today",
+          "description": "One summary each evening: what CauseDeck applied and what waits for you."
+        },
+        "systemNotice": {
+          "label": "Service notices",
+          "description": "Updates about CauseDeck itself."
+        },
+        "digestNews": {
+          "label": "Legal news digest",
+          "description": "One daily digest of legal news, with the items for your practice areas and forums first."
+        }
+      },
+      "mandatory": "Security alerts are always sent in the app and by email so you never miss a sign-in or account change.",
+      "lockedLabel": "Always on",
+      "digest": {
+        "label": "Email digest",
+        "hint": "Instant sends each email as it happens. Daily gathers them into one email at 6:30 pm. Off sends only required emails.",
+        "instant": "Instant",
+        "daily": "Daily at 6:30 pm",
+        "off": "Off"
+      },
+      "courtHours": {
+        "label": "Do not push during court hours",
+        "hint": "No push notifications from 10:30 am to 5:00 pm in your workspace time zone."
+      },
+      "lockScreen": {
+        "label": "Show details on lock screen",
+        "hint": "When off, push notifications show only a general title, never matter or party names."
+      },
+      "saved": "Saved",
+      "error": "Could not save your change. Try again.",
+      "loadError": "Could not load notification preferences.",
+      "retry": "Try again",
+      "loading": "Loading notification preferences",
+      "empty": "No notification settings are available for this workspace yet."
+    },
+    "news": {
+      "metaTitle": "Legal news",
+      "title": "Legal news",
+      "description": "Headlines from cleared sources, with your practice areas and forums first.",
+      "empty": "No news yet. Items appear once staff clear a news source.",
+      "matched": "For you",
+      "source": "Source: {source}",
+      "readOriginal": "Read the original",
+      "prefs": {
+        "title": "Daily digest",
+        "description": "Choose what you follow and when the digest arrives.",
+        "areas": "Practice areas",
+        "forums": "Forums",
+        "time": "Digest time",
+        "save": "Save",
+        "saved": "Saved.",
+        "error": "Could not save. Try again."
+      },
+      "areas": {
+        "civil": "Civil",
+        "criminal": "Criminal",
+        "constitutional": "Constitutional",
+        "corporate": "Corporate",
+        "tax": "Tax",
+        "ibc": "Insolvency (IBC)",
+        "arbitration": "Arbitration",
+        "family": "Family",
+        "labour": "Labour",
+        "property": "Property",
+        "ip": "IP",
+        "consumer": "Consumer",
+        "environment": "Environment",
+        "banking": "Banking",
+        "service": "Service"
+      },
+      "forums": {
+        "supreme_court": "Supreme Court",
+        "high_court": "High Court",
+        "district_court": "District court",
+        "nclt": "NCLT",
+        "nclat": "NCLAT",
+        "itat": "ITAT",
+        "drt": "DRT",
+        "consumer_forum": "Consumer forum",
+        "tribunal": "Tribunal",
+        "regulator": "Regulator"
+      }
+    }
+  }
+}

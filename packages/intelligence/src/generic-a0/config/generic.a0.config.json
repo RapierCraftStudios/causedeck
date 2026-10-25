@@ -1,0 +1,106 @@
+{
+  "calendar": {
+    "dateOrder": "dmy",
+    "timeZone": "Asia/Kolkata"
+  },
+  "fixtures": {
+    "fictional": true,
+    "manifest": "fixtures/generic.a0/manifest.json"
+  },
+  "health": {
+    "maxUnmappedHeadings": 3,
+    "minAnchoredRatio": 0.9
+  },
+  "languageProfile": {
+    "languages": ["en"],
+    "scripts": ["Latn"]
+  },
+  "links": {},
+  "listing": {},
+  "nomenclature": {
+    "caseTypes": {
+      "CC": ["C.C.", "CC"],
+      "CCCA": ["CCCA"],
+      "COMAA": ["Com.A.A.", "Com. A.A."],
+      "COMAP": ["Com.A.P.", "Com. A.P."],
+      "COMEX": ["Com.Ex.", "Com. Ex."],
+      "COMFDP": ["Com.FDP", "Com. FDP"],
+      "COMMISC": ["Com.Misc.", "Com. Misc."],
+      "COMOS": ["Com.O.S.", "Com. O.S."],
+      "CRLA": ["Crl.A.", "Crl.A"],
+      "CRLMISC": ["Crl.Misc.", "Crl. Misc.", "Crl.M.P."],
+      "EXP": ["Ex.P.", "E.P.", "EP"],
+      "FDP": ["F.D.P.", "FDP"],
+      "MC": ["M.C.", "MC"],
+      "MVC": ["M.V.C.", "MVC"],
+      "OS": ["O.S.", "OS"],
+      "SC": ["S.C.", "SC"]
+    },
+    "seatSuffixes": []
+  },
+  "orderParser": {
+    "directionPhrases": []
+  },
+  "stageMap": [
+    {
+      "flags": "i",
+      "key": "appearance",
+      "pattern": "^(?:for\\s+)?(?:appearance|filing|steps)"
+    },
+    {
+      "flags": "i",
+      "key": "pleadings",
+      "pattern": "^(?:for\\s+)?(?:written\\s+statement|counter|reply)"
+    },
+    {
+      "flags": "i",
+      "key": "issues",
+      "pattern": "^(?:for\\s+)?(?:issues|framing\\s+of\\s+issues)"
+    },
+    {
+      "flags": "i",
+      "key": "evidence",
+      "pattern": "^(?:for\\s+)?evidence"
+    },
+    {
+      "flags": "i",
+      "key": "arguments",
+      "pattern": "^(?:for\\s+)?(?:arguments|final\\s+hearing)"
+    },
+    {
+      "flags": "i",
+      "key": "orders",
+      "pattern": "^(?:for\\s+)?(?:orders?|judg(?:e)?ment)"
+    },
+    {
+      "flags": "i",
+      "key": "hearing",
+      "pattern": "^(?:for\\s+)?(?:admission|hearing)"
+    },
+    {
+      "key": "orders",
+      "pattern": "^ஆணை"
+    },
+    {
+      "key": "evidence",
+      "pattern": "^சாட்சிய"
+    },
+    {
+      "key": "arguments",
+      "pattern": "^வாத"
+    },
+    {
+      "key": "orders",
+      "pattern": "^ಆದೇಶ"
+    },
+    {
+      "key": "evidence",
+      "pattern": "^ಸಾಕ್ಷ್ಯ"
+    },
+    {
+      "key": "arguments",
+      "pattern": "^ವಾದ"
+    }
+  ],
+  "twoDigitYearPivot": 50
+}

@@ -5,18 +5,39 @@
   "description": "Document intelligence pipelines.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./synthetic": "./src/synthetic/make-docs.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "vitest run src/extract/eval.test.ts"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
+    "@fontsource/noto-sans-kannada": "catalog:",
+    "@fontsource/noto-sans-tamil": "catalog:",
+    "@pdf-lib/fontkit": "catalog:",
     "@types/node": "catalog:",
+    "docx": "catalog:",
     "eslint": "catalog:",
+    "pdf-lib": "catalog:",
+    "regenerator-runtime": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@causedeck/adapters": "workspace:*",
+    "@causedeck/ai": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "@causedeck/storage": "workspace:*",
+    "@causedeck/validators": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "mammoth": "catalog:",
+    "mupdf": "catalog:",
+    "pdfjs-dist": "catalog:",
+    "sharp": "catalog:",
+    "zod": "catalog:"
   }
 }

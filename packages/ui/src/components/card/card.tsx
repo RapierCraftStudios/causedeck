@@ -3,13 +3,16 @@ import type { ComponentProps } from 'react';
 
 import { cn } from '../../lib/cn';
 
-/** Matte paper card: 1 px `--line` border, `--radius-lg`, no shadow (cards do not float). */
+/**
+ * Matte paper card: 1 px `--line` border, `--radius-lg`, no shadow (cards do not float). Compact
+ * 16 px padding and 12 px gaps keep record cards dense.
+ */
 export function Card({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       data-slot="card"
       className={cn(
-        'bg-surface-raised text-ink border-line flex flex-col gap-4 rounded-lg border py-5',
+        'bg-surface-raised text-ink border-line flex flex-col gap-3 rounded-lg border py-4',
         className,
       )}
       {...props}
@@ -22,7 +25,7 @@ export function CardHeader({ className, ...props }: ComponentProps<'div'>) {
     <div
       data-slot="card-header"
       className={cn(
-        'grid auto-rows-min items-start gap-1 px-5',
+        'grid auto-rows-min items-start gap-1 px-4',
         'has-data-[slot=card-action]:grid-cols-[1fr_auto]',
         className,
       )}
@@ -71,14 +74,14 @@ export function CardAction({ className, ...props }: ComponentProps<'div'>) {
 }
 
 export function CardContent({ className, ...props }: ComponentProps<'div'>) {
-  return <div data-slot="card-content" className={cn('px-5 text-base', className)} {...props} />;
+  return <div data-slot="card-content" className={cn('px-4 text-base', className)} {...props} />;
 }
 
 export function CardFooter({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-footer"
-      className={cn('flex flex-wrap items-center gap-2 px-5', className)}
+      className={cn('flex flex-wrap items-center gap-2 px-4', className)}
       {...props}
     />
   );

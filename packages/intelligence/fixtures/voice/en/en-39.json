@@ -1,0 +1,23 @@
+{
+  "id": "en-39",
+  "language": "en",
+  "hearingDate": "2025-08-13",
+  "text": "In case 51293 of 2019 today. The court heard both sides and the matter was adjourned again. Pleadings are incomplete. Next hearing next saturday. The court directed the respondent to file a counter affidavit. The court directed both sides to exchange written submissions by November 7th. Remind me to update the junior on the listing.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-08-16",
+      "phrase": "next saturday"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit.",
+        "dueDate": null
+      },
+      {
+        "text": "The court directed both sides to exchange written submissions by November 7th.",
+        "dueDate": "2025-11-07"
+      }
+    ],
+    "tasks": ["update the junior on the listing"]
+  }
+}

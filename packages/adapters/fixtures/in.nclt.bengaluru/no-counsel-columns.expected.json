@@ -1,0 +1,143 @@
+{
+  "adapterId": "in.nclt.bengaluru",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.nclt.bengaluru",
+  "listDate": "2026-10-21",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1 CP(IB) No. 724/BB/2019 Orders 66 Imaginary Finance Ltd. Vs. Imaginary",
+        "rowIndex": 0,
+        "bbox": { "x": 24, "y": 102, "width": 455.05, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "1",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "724",
+      "caseYear": 2019,
+      "matchKey": "CPIB(BB)/724/2019",
+      "parties": "Imaginary Finance Ltd. Vs. Imaginary Textiles Ltd.",
+      "stageRaw": "Orders",
+      "stageNorm": "orders",
+      "advocates": []
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2 CP(IB) No. 896/BB/2026 Admission 7 Imaginary Finance Ltd. Vs Made-up",
+        "rowIndex": 1,
+        "bbox": { "x": 24, "y": 125, "width": 450.32, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "2",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "896",
+      "caseYear": 2026,
+      "matchKey": "CPIB(BB)/896/2026",
+      "parties": "Imaginary Finance Ltd. Vs Made-up Foods Ltd.",
+      "stageRaw": "Admission",
+      "stageNorm": "admission",
+      "advocates": []
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3 CP(IB) No. 405/BB/2021 Orders 7 Pretend Steel Suppliers Vs. Made-up",
+        "rowIndex": 2,
+        "bbox": { "x": 24, "y": 148, "width": 454.29, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "3",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "405",
+      "caseYear": 2021,
+      "matchKey": "CPIB(BB)/405/2021",
+      "parties": "Pretend Steel Suppliers Vs. Made-up Foods Ltd.",
+      "stageRaw": "Orders",
+      "stageNorm": "orders",
+      "advocates": []
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4 CP(IB) No. 624/BB/2025 Orders 9 Fictional Bank Ltd. Vs Sample",
+        "rowIndex": 3,
+        "bbox": { "x": 24, "y": 171, "width": 432.6, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "4",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "624",
+      "caseYear": 2025,
+      "matchKey": "CPIB(BB)/624/2025",
+      "parties": "Fictional Bank Ltd. Vs Sample Logistics LLP",
+      "stageRaw": "Orders",
+      "stageNorm": "orders",
+      "advocates": []
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5 CP(IB) No. 31/BB/2024 Admission 9 Sample Credit Union V/s Fictional",
+        "rowIndex": 4,
+        "bbox": { "x": 24, "y": 194, "width": 444.29, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "5",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "31",
+      "caseYear": 2024,
+      "matchKey": "CPIB(BB)/31/2024",
+      "parties": "Sample Credit Union V/s Fictional Alloys Pvt. Ltd.",
+      "stageRaw": "Admission",
+      "stageNorm": "admission",
+      "advocates": []
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "6 CP(IB) No. 373/BB/2021 Hearing 66 Fictional Bank Ltd. V/s Made-up",
+        "rowIndex": 5,
+        "bbox": { "x": 24, "y": 217, "width": 438.44, "height": 16 }
+      },
+      "confidence": 1,
+      "hallNo": "1",
+      "itemNo": "6",
+      "caseTypeRaw": "CP(IB)",
+      "caseType": "CPIB",
+      "seatSuffix": "BB",
+      "caseNumber": "373",
+      "caseYear": 2021,
+      "matchKey": "CPIB(BB)/373/2021",
+      "parties": "Fictional Bank Ltd. V/s Made-up Foods Ltd.",
+      "stageRaw": "Hearing",
+      "stageNorm": "hearing",
+      "advocates": []
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["1"],
+    "hallsUnreadable": []
+  }
+}

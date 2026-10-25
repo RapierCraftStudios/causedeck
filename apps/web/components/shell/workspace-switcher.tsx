@@ -3,6 +3,7 @@
 import { initials } from '@causedeck/ui/avatar';
 import { Badge } from '@causedeck/ui/badge';
 import { Check, ChevronsUpDown, Plus, UserPlus } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useId, useState, type KeyboardEvent } from 'react';
@@ -201,6 +202,9 @@ export function WorkspaceSwitcher({ current, memberships, variant }: WorkspaceSw
       onKeyDown={onKeyDown}
       onHover={setActiveIndex}
       onSelect={select}
+      onCreate={() => {
+        setOpen(false);
+      }}
     />
   );
 
@@ -266,6 +270,8 @@ interface SwitcherPanelProps {
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   onHover: (index: number) => void;
   onSelect: (membership: Membership) => void;
+  /** Closes the panel as `Create workspace` navigates to `/onboarding`. */
+  onCreate: () => void;
 }
 
 /** Filter, membership listbox and footer: shared by the sidebar popover and the phone sheet. */
@@ -280,6 +286,7 @@ function SwitcherPanel({
   onKeyDown,
   onHover,
   onSelect,
+  onCreate,
 }: SwitcherPanelProps) {
   const t = useTranslations('shell');
   return (
@@ -339,15 +346,16 @@ function SwitcherPanel({
         </p>
       ) : null}
       <div className="border-line mt-1 flex flex-col border-t pt-1">
-        {/* TODO(#18): workspace creation and invites. */}
-        <button
-          type="button"
-          disabled
-          className="text-ink-muted flex h-9 items-center gap-2 rounded-md px-2 text-sm disabled:opacity-60"
+        <Link
+          href="/onboarding"
+          onClick={onCreate}
+          data-switcher-create=""
+          className="text-ink hover:bg-accent-soft/60 focus-visible:outline-ring flex h-9 items-center gap-2 rounded-md px-2 text-sm outline-none focus-visible:outline-2"
         >
           <Plus aria-hidden="true" className="size-4" />
           {t('switcher.create')}
-        </button>
+        </Link>
+        {/* TODO(#180): joining with an invite link. */}
         <button
           type="button"
           disabled

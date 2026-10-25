@@ -1,0 +1,11 @@
+{
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "truth": {
+    "kind": "order",
+    "cases": [{ "caseTypeRaw": "O.S.", "caseType": "OS", "caseNumber": "7657", "caseYear": 2025 }],
+    "orderDate": "2026-12-13",
+    "nextDate": "2026-09-18",
+    "dates": ["2026-12-13", "2026-09-18"],
+    "language": "en"
+  }
+}

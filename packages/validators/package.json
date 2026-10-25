@@ -6,7 +6,15 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./api": "./src/api/index.ts"
+    "./api": "./src/api/index.ts",
+    "./forum": "./src/forum.ts",
+    "./gstin": "./src/gstin.ts",
+    "./matter-graph": "./src/matter-graph.ts",
+    "./matter-graph-inputs": "./src/matter-graph-inputs.ts",
+    "./plans": "./src/plans.ts",
+    "./proposal-draft": "./src/proposal-draft.ts",
+    "./roster": "./src/roster.ts",
+    "./workspace": "./src/workspace.ts"
   },
   "scripts": {
     "lint": "eslint .",

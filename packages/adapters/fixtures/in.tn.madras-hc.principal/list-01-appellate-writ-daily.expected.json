@@ -1,0 +1,486 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "12",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. W.P.No.12345 of 2026 and W.M.P.Nos.13001 & 13002 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "1",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "12345",
+              "caseYear": 2026,
+              "matchKey": "WP/12345/2026",
+              "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                },
+                {
+                  "raw": "Mr. P. Pretend, Govt. Advocate",
+                  "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "WMP",
+                  "caseTypeRaw": "W.M.P.",
+                  "number": "13001",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "WMP/13001/2026",
+                  "parentProceedingKey": "WP/12345/2026"
+                },
+                {
+                  "caseTypeCode": "WMP",
+                  "caseTypeRaw": "W.M.P.",
+                  "number": "13002",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "WMP/13002/2026",
+                  "parentProceedingKey": "WP/12345/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. W.P.No.12346 of 2026",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "2",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "12346",
+              "caseYear": 2026,
+              "matchKey": "WP/12346/2026",
+              "parties": "K. Imaginary Selvam vs The District Collector, Example District",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                },
+                {
+                  "raw": "Mr. P. Pretend, Govt. Advocate",
+                  "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. W.P.No.12400 of 2026 and W.M.P.Nos.13100 to 13102 of 2026",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "3",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "12400",
+              "caseYear": 2026,
+              "matchKey": "WP/12400/2026",
+              "parties": "Pretend Weavers Co-operative Society vs The Registrar, Fictional University",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+                  "aliases": ["K KALPITHAM", "KALPITHAM K"],
+                  "enrolmentNo": "MS/4567/2004"
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "WMP",
+                  "caseTypeRaw": "W.M.P.",
+                  "number": "13100",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "WMP/13100/2026",
+                  "parentProceedingKey": "WP/12400/2026"
+                },
+                {
+                  "caseTypeCode": "WMP",
+                  "caseTypeRaw": "W.M.P.",
+                  "number": "13101",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "WMP/13101/2026",
+                  "parentProceedingKey": "WP/12400/2026"
+                },
+                {
+                  "caseTypeCode": "WMP",
+                  "caseTypeRaw": "W.M.P.",
+                  "number": "13102",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "WMP/13102/2026",
+                  "parentProceedingKey": "WP/12400/2026"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "4. W.P.No.9876 of 2025 and W.P.M.P.No.4 of 2025",
+                "rowIndex": 3
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "4",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "9876",
+              "caseYear": 2025,
+              "matchKey": "WP/9876/2025",
+              "parties": "M. Kalpitha Devi vs Pretend Municipal Corporation",
+              "stageRaw": "FOR ORDERS",
+              "stageNorm": "orders",
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                }
+              ],
+              "children": [
+                {
+                  "caseTypeCode": "WPMP",
+                  "caseTypeRaw": "W.P.M.P.",
+                  "number": "4",
+                  "year": 2025,
+                  "isMisc": true,
+                  "matchKey": "WPMP/4/2025",
+                  "parentProceedingKey": "WP/9876/2025"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "5. W.P.No.1111 of 2024",
+                "rowIndex": 4
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "5",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "1111",
+              "caseYear": 2024,
+              "matchKey": "WP/1111/2024",
+              "parties": "R. Karpanai Murugan vs The District Collector, Example District",
+              "stageRaw": "FOR FINAL HEARING",
+              "stageNorm": "hearing",
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                },
+                {
+                  "raw": "Mr. P. Pretend, Govt. Advocate",
+                  "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "12A. W.P.No.2222 of 2024",
+                "rowIndex": 5
+              },
+              "confidence": 1,
+              "hallNo": "12",
+              "itemNo": "12A",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "2222",
+              "caseYear": 2024,
+              "matchKey": "WP/2222/2024",
+              "parties": "S. Fictional Lakshmi vs The Secretary to Government (Fictional Department)",
+              "stageRaw": "FOR FINAL HEARING",
+              "stageNorm": "hearing",
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. W.P.No.12345 of 2026 and W.M.P.Nos.13001 & 13002 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "1",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "12345",
+      "caseYear": 2026,
+      "matchKey": "WP/12345/2026",
+      "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        },
+        {
+          "raw": "Mr. P. Pretend, Govt. Advocate",
+          "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "WMP",
+          "caseTypeRaw": "W.M.P.",
+          "number": "13001",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "WMP/13001/2026",
+          "parentProceedingKey": "WP/12345/2026"
+        },
+        {
+          "caseTypeCode": "WMP",
+          "caseTypeRaw": "W.M.P.",
+          "number": "13002",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "WMP/13002/2026",
+          "parentProceedingKey": "WP/12345/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. W.P.No.12346 of 2026",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "2",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "12346",
+      "caseYear": 2026,
+      "matchKey": "WP/12346/2026",
+      "parties": "K. Imaginary Selvam vs The District Collector, Example District",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        },
+        {
+          "raw": "Mr. P. Pretend, Govt. Advocate",
+          "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. W.P.No.12400 of 2026 and W.M.P.Nos.13100 to 13102 of 2026",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "3",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "12400",
+      "caseYear": 2026,
+      "matchKey": "WP/12400/2026",
+      "parties": "Pretend Weavers Co-operative Society vs The Registrar, Fictional University",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Mr. K. Kalpitham (MS/4567/2004)",
+          "aliases": ["K KALPITHAM", "KALPITHAM K"],
+          "enrolmentNo": "MS/4567/2004"
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "WMP",
+          "caseTypeRaw": "W.M.P.",
+          "number": "13100",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "WMP/13100/2026",
+          "parentProceedingKey": "WP/12400/2026"
+        },
+        {
+          "caseTypeCode": "WMP",
+          "caseTypeRaw": "W.M.P.",
+          "number": "13101",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "WMP/13101/2026",
+          "parentProceedingKey": "WP/12400/2026"
+        },
+        {
+          "caseTypeCode": "WMP",
+          "caseTypeRaw": "W.M.P.",
+          "number": "13102",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "WMP/13102/2026",
+          "parentProceedingKey": "WP/12400/2026"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. W.P.No.9876 of 2025 and W.P.M.P.No.4 of 2025",
+        "rowIndex": 3
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "4",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "9876",
+      "caseYear": 2025,
+      "matchKey": "WP/9876/2025",
+      "parties": "M. Kalpitha Devi vs Pretend Municipal Corporation",
+      "stageRaw": "FOR ORDERS",
+      "stageNorm": "orders",
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        }
+      ],
+      "children": [
+        {
+          "caseTypeCode": "WPMP",
+          "caseTypeRaw": "W.P.M.P.",
+          "number": "4",
+          "year": 2025,
+          "isMisc": true,
+          "matchKey": "WPMP/4/2025",
+          "parentProceedingKey": "WP/9876/2025"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. W.P.No.1111 of 2024",
+        "rowIndex": 4
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "5",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "1111",
+      "caseYear": 2024,
+      "matchKey": "WP/1111/2024",
+      "parties": "R. Karpanai Murugan vs The District Collector, Example District",
+      "stageRaw": "FOR FINAL HEARING",
+      "stageNorm": "hearing",
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        },
+        {
+          "raw": "Mr. P. Pretend, Govt. Advocate",
+          "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "12A. W.P.No.2222 of 2024",
+        "rowIndex": 5
+      },
+      "confidence": 1,
+      "hallNo": "12",
+      "itemNo": "12A",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "2222",
+      "caseYear": 2024,
+      "matchKey": "WP/2222/2024",
+      "parties": "S. Fictional Lakshmi vs The Secretary to Government (Fictional Department)",
+      "stageRaw": "FOR FINAL HEARING",
+      "stageNorm": "hearing",
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE A. FICTIONAL"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["12"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

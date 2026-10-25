@@ -52,6 +52,9 @@ describe('dev-only defaults', () => {
       'postgres://causedeck_owner:causedeck_owner@localhost:5432/causedeck',
     );
     expect(env.STORAGE_PROVIDER === 'minio' && env.S3_ENDPOINT).toBe('http://localhost:9000');
+    expect(env.S3_BUCKET).toBe('causedeck-dev');
+    expect(env.S3_ACCESS_KEY.reveal()).toBe('minioadmin');
+    expect(env.S3_SECRET_KEY.reveal()).toBe('minioadmin');
     expect(env.EMAIL_PROVIDER === 'smtp' && env.SMTP_URL.reveal()).toBe('smtp://localhost:1025');
     expect(env.APP_URL).toBe('http://localhost:3000');
   });
@@ -135,6 +138,12 @@ describe('production', () => {
 
     expect((error as EnvValidationError).keys).toEqual(['VAPID_PRIVATE_KEY']);
   });
+
+  it('requires the WhatsApp phone number id and access token together', () => {
+    const error = envError({ ...productionEnv, WHATSAPP_PHONE_NUMBER_ID: '123' });
+
+    expect((error as EnvValidationError).keys).toEqual(['WHATSAPP_ACCESS_TOKEN']);
+  });
 });
 
 describe('India-only AI guardrail', () => {
@@ -203,6 +212,20 @@ describe('data residency', () => {
       AWS_REGION_OVERRIDE_ACK: 'I_UNDERSTAND',
     });
     expect(env.AWS_REGION).toBe('us-east-1');
+  });
+
+  it('rejects a non-India S3_REGION unless overridden (#21)', () => {
+    const error = envError({ NODE_ENV: 'test', S3_REGION: 'us-east-1' });
+
+    expect((error as EnvValidationError).keys).toEqual(['S3_REGION']);
+    expect(error.message).toContain('AWS_REGION_OVERRIDE_ACK');
+    const env = createEnv({
+      NODE_ENV: 'test',
+      S3_REGION: 'eu-west-1',
+      AWS_REGION_OVERRIDE_ACK: 'I_UNDERSTAND',
+    });
+    expect(env.S3_REGION).toBe('eu-west-1');
+    expect(createEnv({ NODE_ENV: 'test', S3_REGION: 'ap-south-2' }).S3_REGION).toBe('ap-south-2');
   });
 });
 

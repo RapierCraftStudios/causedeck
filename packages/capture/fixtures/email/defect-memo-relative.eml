@@ -1,0 +1,11 @@
+From: Registry <registry@example.test>
+To: R. Fictional <r.fictional@example.test>
+Subject: Papers returned for rectification
+Date: Thu, 15 Oct 2026 10:00:00 +0530
+Message-ID: <memo-2@example.test>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Authentication-Results: mx.example.test; spf=pass; dkim=pass; dmarc=pass
+
+The defects are noted in the enclosed memo. Re-present the papers within two weeks.
+(FICTIONAL - SYNTHETIC FIXTURE)

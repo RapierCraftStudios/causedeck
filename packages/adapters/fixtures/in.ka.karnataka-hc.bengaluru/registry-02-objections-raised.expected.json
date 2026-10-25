@@ -1,0 +1,23 @@
+{
+  "events": [
+    {
+      "kind": "fr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "F.R. No. 4521 of 2026",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "frNo": "4521/2026"
+    },
+    {
+      "kind": "objection_raised",
+      "anchor": {
+        "page": 1,
+        "quote": "Office objections",
+        "rowIndex": 5
+      },
+      "confidence": 0.8
+    }
+  ]
+}

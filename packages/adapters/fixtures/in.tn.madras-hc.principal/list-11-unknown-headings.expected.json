@@ -1,0 +1,246 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.appellate",
+  "listDate": "2026-10-23",
+  "listType": "daily",
+  "source": "html",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "7",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1.\tW.P.No.700 of 2026\tMade-up Traders vs Pretend Municipal Corporation\tMs. A. Example / Mr. P. Pretend, Govt. Advocate",
+                "rowIndex": 0
+              },
+              "confidence": 0.9,
+              "hallNo": "7",
+              "itemNo": "1",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "700",
+              "caseYear": 2026,
+              "matchKey": "WP/700/2026",
+              "parties": "Made-up Traders vs Pretend Municipal Corporation",
+              "stageRaw": "TO BE SPOKEN TO",
+              "stageNorm": null,
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                },
+                {
+                  "raw": "Mr. P. Pretend, Govt. Advocate",
+                  "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2.\tW.P.No.701 of 2026\tK. Imaginary Selvam vs The District Collector, Example District\tMr. R. Fictional (MS/123/1990)",
+                "rowIndex": 1
+              },
+              "confidence": 0.9,
+              "hallNo": "7",
+              "itemNo": "2",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "701",
+              "caseYear": 2026,
+              "matchKey": "WP/701/2026",
+              "parties": "K. Imaginary Selvam vs The District Collector, Example District",
+              "stageRaw": "TO BE SPOKEN TO",
+              "stageNorm": null,
+              "advocates": [
+                {
+                  "raw": "Mr. R. Fictional (MS/123/1990)",
+                  "aliases": ["R FICTIONAL", "FICTIONAL R"],
+                  "enrolmentNo": "MS/123/1990"
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3.\tW.P.No.702 of 2026\tFictional Mills Ltd. vs The Secretary to Government (Fictional Department)\tTmt. S. Imaginary",
+                "rowIndex": 2
+              },
+              "confidence": 0.9,
+              "hallNo": "7",
+              "itemNo": "3",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "702",
+              "caseYear": 2026,
+              "matchKey": "WP/702/2026",
+              "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+              "stageRaw": "FOR DIRECTIONS REGARDING COMPLIANCE",
+              "stageNorm": null,
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "4.\tW.P.No.703 of 2026\tS. Fictional Lakshmi vs Pretend Municipal Corporation\tMs. A. Example",
+                "rowIndex": 3
+              },
+              "confidence": 1,
+              "hallNo": "7",
+              "itemNo": "4",
+              "caseTypeRaw": "W.P.",
+              "caseType": "WP",
+              "caseNumber": "703",
+              "caseYear": 2026,
+              "matchKey": "WP/703/2026",
+              "parties": "S. Fictional Lakshmi vs Pretend Municipal Corporation",
+              "stageRaw": "FOR ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Ms. A. Example",
+                  "aliases": ["A EXAMPLE", "EXAMPLE A"]
+                }
+              ],
+              "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1.\tW.P.No.700 of 2026\tMade-up Traders vs Pretend Municipal Corporation\tMs. A. Example / Mr. P. Pretend, Govt. Advocate",
+        "rowIndex": 0
+      },
+      "confidence": 0.9,
+      "hallNo": "7",
+      "itemNo": "1",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "700",
+      "caseYear": 2026,
+      "matchKey": "WP/700/2026",
+      "parties": "Made-up Traders vs Pretend Municipal Corporation",
+      "stageRaw": "TO BE SPOKEN TO",
+      "stageNorm": null,
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        },
+        {
+          "raw": "Mr. P. Pretend, Govt. Advocate",
+          "aliases": ["P PRETEND GOVT", "PRETEND GOVT P"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2.\tW.P.No.701 of 2026\tK. Imaginary Selvam vs The District Collector, Example District\tMr. R. Fictional (MS/123/1990)",
+        "rowIndex": 1
+      },
+      "confidence": 0.9,
+      "hallNo": "7",
+      "itemNo": "2",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "701",
+      "caseYear": 2026,
+      "matchKey": "WP/701/2026",
+      "parties": "K. Imaginary Selvam vs The District Collector, Example District",
+      "stageRaw": "TO BE SPOKEN TO",
+      "stageNorm": null,
+      "advocates": [
+        {
+          "raw": "Mr. R. Fictional (MS/123/1990)",
+          "aliases": ["R FICTIONAL", "FICTIONAL R"],
+          "enrolmentNo": "MS/123/1990"
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3.\tW.P.No.702 of 2026\tFictional Mills Ltd. vs The Secretary to Government (Fictional Department)\tTmt. S. Imaginary",
+        "rowIndex": 2
+      },
+      "confidence": 0.9,
+      "hallNo": "7",
+      "itemNo": "3",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "702",
+      "caseYear": 2026,
+      "matchKey": "WP/702/2026",
+      "parties": "Fictional Mills Ltd. vs The Secretary to Government (Fictional Department)",
+      "stageRaw": "FOR DIRECTIONS REGARDING COMPLIANCE",
+      "stageNorm": null,
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4.\tW.P.No.703 of 2026\tS. Fictional Lakshmi vs Pretend Municipal Corporation\tMs. A. Example",
+        "rowIndex": 3
+      },
+      "confidence": 1,
+      "hallNo": "7",
+      "itemNo": "4",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "703",
+      "caseYear": 2026,
+      "matchKey": "WP/703/2026",
+      "parties": "S. Fictional Lakshmi vs Pretend Municipal Corporation",
+      "stageRaw": "FOR ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Ms. A. Example",
+          "aliases": ["A EXAMPLE", "EXAMPLE A"]
+        }
+      ],
+      "bench": "THE HONOURABLE MR. JUSTICE C. IMAGINARY"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": ["TO BE SPOKEN TO", "FOR DIRECTIONS REGARDING COMPLIANCE"],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["7"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 23.10.2026",
+    "rowIndex": 0
+  }
+}

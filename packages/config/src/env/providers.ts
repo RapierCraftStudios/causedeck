@@ -54,6 +54,44 @@ export const providerKeys = {
     credentialIssue: 110,
     secret: true,
   },
+  SMS_PROVIDER: {
+    domain: 'sms',
+    type: 'enum(console|msg91)',
+    description:
+      'SMS transport for phone sign-in OTPs. `console` logs messages outside production; `msg91` sends through a DLT-registered template.',
+    default: 'console',
+    requiredWhen: 'never (defaults to console)',
+    ownerIssue: 503,
+  },
+  SMS_AUTH_KEY: {
+    domain: 'sms',
+    type: 'secret',
+    description: 'MSG91 auth key.',
+    requiredWhen: 'SMS_PROVIDER=msg91',
+    ownerIssue: 503,
+    secret: true,
+  },
+  SMS_SENDER_ID: {
+    domain: 'sms',
+    type: 'string',
+    description: 'DLT-registered six-character sender id (header).',
+    requiredWhen: 'SMS_PROVIDER=msg91',
+    ownerIssue: 503,
+  },
+  SMS_DLT_ENTITY_ID: {
+    domain: 'sms',
+    type: 'string',
+    description: 'DLT principal entity id registered with the operator.',
+    requiredWhen: 'SMS_PROVIDER=msg91',
+    ownerIssue: 503,
+  },
+  SMS_OTP_TEMPLATE_ID: {
+    domain: 'sms',
+    type: 'string',
+    description: 'MSG91 template id of the DLT-registered OTP template.',
+    requiredWhen: 'SMS_PROVIDER=msg91',
+    ownerIssue: 503,
+  },
   AI_PROVIDER: {
     domain: 'ai',
     type: 'enum(mock|bedrock|sarvam)',
@@ -96,6 +134,32 @@ export const providerKeys = {
     ownerIssue: 44,
     credentialIssue: 112,
   },
+  BEDROCK_DRAFTING_MODEL_ID: {
+    domain: 'ai',
+    type: 'string',
+    description:
+      'AWS Bedrock Sonnet-class model id for drafting tasks. Defaults to BEDROCK_MODEL_ID.',
+    requiredWhen: 'never (optional with AI_PROVIDER=bedrock)',
+    ownerIssue: 44,
+    credentialIssue: 112,
+  },
+  AI_MAX_CONCURRENCY_PER_WORKSPACE: {
+    domain: 'ai',
+    type: 'integer (1-32)',
+    description: 'Maximum concurrent AI gateway calls per workspace.',
+    default: '4',
+    requiredWhen: 'never (defaults to 4)',
+    ownerIssue: 44,
+  },
+  SARVAM_NO_TRAINING_CONFIRMED: {
+    domain: 'ai',
+    type: 'literal(true)',
+    description:
+      'Set to true once the Sarvam contract confirms no training on customer data. Production refuses to boot with a real Sarvam key without it.',
+    requiredWhen: 'NODE_ENV=production and AI_PROVIDER=sarvam',
+    ownerIssue: 44,
+    credentialIssue: 113,
+  },
   SARVAM_API_KEY: {
     domain: 'ai',
     type: 'secret',
@@ -121,28 +185,38 @@ export const providerKeys = {
     requiredWhen: 'STORAGE_PROVIDER=minio',
     ownerIssue: 21,
   },
+  S3_REGION: {
+    domain: 'storage',
+    type: 'string',
+    description:
+      'Storage region. Must be an India region (ap-south-1, ap-south-2) unless AWS_REGION_OVERRIDE_ACK is set.',
+    default: 'ap-south-1',
+    requiredWhen: 'never (defaults to ap-south-1)',
+    ownerIssue: 21,
+  },
   S3_BUCKET: {
     domain: 'storage',
     type: 'string',
     description: 'Bucket for tenant documents.',
-    devDefault: 'causedeck',
+    devDefault: 'causedeck-dev',
     requiredWhen: 'always (dev default outside production)',
     ownerIssue: 21,
   },
   S3_ACCESS_KEY: {
     domain: 'storage',
-    type: 'string',
+    type: 'secret',
     description: 'S3 access key.',
-    devDefault: 'causedeck',
+    devDefault: 'minioadmin',
     requiredWhen: 'always (dev default outside production)',
     ownerIssue: 21,
     credentialIssue: 116,
+    secret: true,
   },
   S3_SECRET_KEY: {
     domain: 'storage',
     type: 'secret',
     description: 'S3 secret key.',
-    devDefault: 'causedeck-dev-secret',
+    devDefault: 'minioadmin',
     requiredWhen: 'always (dev default outside production)',
     ownerIssue: 21,
     credentialIssue: 116,
@@ -243,24 +317,53 @@ export const emailProvider = z.discriminatedUnion('EMAIL_PROVIDER', [
   }),
 ]);
 
-export const aiProvider = z.discriminatedUnion('AI_PROVIDER', [
-  z.object({ AI_PROVIDER: z.literal('mock').describe(d('AI_PROVIDER')) }),
+export const smsProvider = z.discriminatedUnion('SMS_PROVIDER', [
+  z.object({ SMS_PROVIDER: z.literal('console').describe(d('SMS_PROVIDER')) }),
   z.object({
+    SMS_PROVIDER: z.literal('msg91'),
+    SMS_AUTH_KEY: secret(required).describe(d('SMS_AUTH_KEY')),
+    SMS_SENDER_ID: required.describe(d('SMS_SENDER_ID')),
+    SMS_DLT_ENTITY_ID: required.describe(d('SMS_DLT_ENTITY_ID')),
+    SMS_OTP_TEMPLATE_ID: required.describe(d('SMS_OTP_TEMPLATE_ID')),
+  }),
+]);
+
+const aiCommon = {
+  AI_MAX_CONCURRENCY_PER_WORKSPACE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(32)
+    .describe(d('AI_MAX_CONCURRENCY_PER_WORKSPACE')),
+};
+
+export const aiProvider = z.discriminatedUnion('AI_PROVIDER', [
+  z.object({ AI_PROVIDER: z.literal('mock').describe(d('AI_PROVIDER')), ...aiCommon }),
+  z.object({
+    ...aiCommon,
     AI_PROVIDER: z.literal('bedrock'),
     BEDROCK_REGION: required.describe(d('BEDROCK_REGION')),
     BEDROCK_ACCESS_KEY_ID: required.describe(d('BEDROCK_ACCESS_KEY_ID')),
     BEDROCK_SECRET_ACCESS_KEY: secret(required).describe(d('BEDROCK_SECRET_ACCESS_KEY')),
     BEDROCK_MODEL_ID: required.describe(d('BEDROCK_MODEL_ID')),
+    BEDROCK_DRAFTING_MODEL_ID: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(d('BEDROCK_DRAFTING_MODEL_ID')),
   }),
   z.object({
+    ...aiCommon,
     AI_PROVIDER: z.literal('sarvam'),
     SARVAM_API_KEY: secret(required).describe(d('SARVAM_API_KEY')),
+    SARVAM_NO_TRAINING_CONFIRMED: on.optional().describe(d('SARVAM_NO_TRAINING_CONFIRMED')),
   }),
 ]);
 
 const s3Credentials = {
+  S3_REGION: required.describe(d('S3_REGION')),
   S3_BUCKET: required.describe(d('S3_BUCKET')),
-  S3_ACCESS_KEY: required.describe(d('S3_ACCESS_KEY')),
+  S3_ACCESS_KEY: secret(required).describe(d('S3_ACCESS_KEY')),
   S3_SECRET_KEY: secret(required).describe(d('S3_SECRET_KEY')),
 };
 
@@ -303,6 +406,7 @@ export const sentry = z.discriminatedUnion('SENTRY_ENABLED', [
 
 export const providerSchemas = [
   emailProvider,
+  smsProvider,
   aiProvider,
   storageProvider,
   billingProvider,
@@ -321,6 +425,7 @@ export const MOCK_PROVIDERS = {
 } as const;
 
 export type ProviderEnv = z.output<typeof emailProvider> &
+  z.output<typeof smsProvider> &
   z.output<typeof aiProvider> &
   z.output<typeof storageProvider> &
   z.output<typeof billingProvider> &

@@ -2,12 +2,18 @@ import { createContext, useContext, type ComponentProps } from 'react';
 
 import { cn } from '../../lib/cn';
 
-/** Row density: comfortable rows are 44 px, compact rows 32 px. */
+/**
+ * Row density: comfortable rows are 40 px with a fine pointer (mouse, trackpad) and 44 px on touch,
+ * compact rows 32 px.
+ */
 export type TableDensity = 'comfortable' | 'compact';
 
-/** Row heights per density (the `--space-1` scale: 11 = 44 px, 8 = 32 px). */
+/** Matches devices whose primary pointer is fine: comfortable rows tighten to 40 px there. */
+export const TABLE_FINE_POINTER_QUERY = '(pointer: fine)';
+
+/** Row heights per density (the `--space-1` scale: 11 = 44 px, 10 = 40 px, 8 = 32 px). */
 export const TABLE_ROW_HEIGHT: Record<TableDensity, string> = {
-  comfortable: 'h-11',
+  comfortable: 'h-11 pointer-fine:h-10',
   compact: 'h-8',
 };
 
@@ -28,7 +34,7 @@ export interface TableProps extends ComponentProps<'table'> {
 
 /**
  * Semantic table in a scroll container. Numerals are tabular so columns of figures line up; the
- * density sets every row's height (44 px comfortable, 32 px compact).
+ * density sets every row's height (comfortable 40 px, or 44 px on touch; compact 32 px).
  */
 export function Table({
   density = 'comfortable',

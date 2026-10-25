@@ -1,36 +1,42 @@
 ### Approach
-Zero-entry discovery is built on injected DiscoverySource/fetcher ports. Matched listings are staged as proposals and flow into the existing import plan and confirm grid. Advocate-search sources are seeded uncleared.
+Markdown lessons with a hand-parsed front-matter block (no new dependency; apps/site has no MDX or Next stack yet). A lesson is live only when a reviewer and a review date are set; the committed drafts carry neither, so no reviewer is invented. Examples use fictional fixtures copied in shape from core's golden fixtures. Signup links carry the closed `education` channel, added to the activation channel list through a migration.
+
 ### Changes
-- packages/core/src/onboarding/{discover,index}.ts, discover.test.ts: `discoverAdvocateCases`, ambiguity prompts, provenance, progress counts.
-- packages/core/package.json: `./onboarding` subpath. packages/config/eslint/core-domains.js and docs/engineering/core-domains.md: onboarding domain.
-- packages/db/migrations/20261024221355_advocate_search_sources.sql plus snapshot and journal: uncleared sources, renumbered after the base's last migration.
-- apps/web onboarding actions, page, loading and error, plus components/onboarding/discovery-onboarding.tsx; cross-tenant-actions.test.ts entries.
-- packages/i18n: onboarding-discovery namespace (en/kn/ta), catalog, generated files.
-- e2e/tests/onboarding/zero-entry.spec.ts: the 10-minute budget spec.
+- apps/site/src/learn/{slugs,index,fixtures,signup-link}.ts: module registry, loader and parser, `isLive`, `reviewLabel` (⚖ for law modules), fictional fixtures, `signupHref`.
+- apps/site/content/learn/<slug>/{en,ta,kn}.md: 6 modules x 3 locales, each ending in the localized disclaimer.
+- apps/site/src/learn/learn.test.ts: regression tests (modules, review gate, fictional-only fixtures, signup links).
+- packages/db/src/schema/activation.ts: `education` added to `ACTIVATION_CHANNELS`.
+- packages/db/migrations/20261025020000_education_channel.sql plus meta snapshot and journal: recreates `activation_event_channel_chk`.
+- apps/admin/__tests__/growth-page.test.tsx, packages/core/src/activation/activation.test.ts: channel list mock and an `education` channel test.
+- docs/engineering/learn.md: review workflow.
+
 ### Acceptance Criteria Status
-- R1 ✅ packages/core/src/onboarding/discover.ts:393
-- R2 ✅ apps/web/components/onboarding/discovery-onboarding.tsx:134
-- R3 ✅ discover.ts (needsDisambiguation)
-- R4 ✅ apps/web/app/(app)/w/[slug]/onboarding/actions.ts (activation records and count logging)
-- R5 ✅ instrumented: e2e/tests/onboarding/zero-entry.spec.ts, runs in CI only
-- R6 ✅ discover.test.ts
-- R7 ✅ discover.test.ts
-- R8 deferred per contract
+- R1 ✅ apps/site/src/learn/index.ts:84; apps/site/content/learn/ (18 files)
+- R2 ✅ apps/site/src/learn/fixtures.ts:1
+- R3 ✅ apps/site/src/learn/signup-link.ts:8
+- R4 deferred (amendment)
+- R5 ✅ apps/site/src/learn/index.ts:37-48; docs/engineering/learn.md
+- R6 post-deploy (contract): reviews by a practising advocate are human; modules stay not-live until filled in
+- R7 ✅ apps/site/src/learn/learn.test.ts (fictional fixtures describe)
+- R8 ✅ apps/site/src/learn/signup-link.ts:8; packages/db/src/schema/activation.ts
+- R9 deferred (contract)
+- R10 ✅ disclaimer in every apps/site/content/learn/*/*.md; learn.test.ts
+
 ### Verification
-V1, V2, V3 and V4 all exit 0, and `forgedock check` passes. Typecheck of core, web, i18n and db passes. The new tests fail without the fix because discover.ts does not exist on the base.
+- V1 site vitest (learn, index, developer-docs): pass (9 tests). The new learn tests fail without the change (module absent).
+- V2 core activation test: pass (new education-channel test fails without the schema change: the CHECK rejects `education`).
+- V3 admin growth-page test: pass.
+- V4 db index test: pass.
+- V5 site tsc --noEmit: pass. `drizzle-kit check` and migration lint pass; eslint on changed files passes (pre-commit hook).
+- forgedock check: PASS.
+
 ### Notes
-- Environment: `turbo` is not on PATH, so run it as `pnpm exec turbo`. The base added `fflate`, so run `pnpm install --offline --frozen-lockfile` after merging.
-- The e2e spec cannot show a populated court-day view until the sources are cleared. They are seeded uncleared (D-048).
-- The 10 sibling-list tests flagged earlier are recorded in `not_members` in result.json.
+- Migration is timestamp-named and later than the base's latest (journal `when` is above the previous entry's, so already-migrated databases apply it).
+- Nothing is live yet: `liveModules()` is empty until advocates fill in `reviewer` and `reviewedOn`.
+- The channel is not recorded at signup for any source (packages/auth/src/server.ts:547-552); that is the deferred R9.
 
-## Post-merge typecheck fix
-The reported failure (`turbo: command not found`, exit 127) was environmental: turbo is not on PATH in the check shell. No code conflict exists in the merged tree. Verified with `./node_modules/.bin/turbo run typecheck` (core, web, i18n and dependents: 19/19 pass) and the validate commands V1-V4 (all pass).
+### Stale-list follow-up
+- The seven flagged tests matched `learn` only through the docs/engineering path. None lists docs files or site modules, and no i18n namespace or core export was added, so each is recorded in result.json `not_members`; no test lists changed.
 
-### Second merge
-The migration was renumbered to 20261025010000, after the base's 20261025000000_scim_token_lookup. Its journal entry was generated by `drizzle-kit generate --custom`, and I then moved the tag and timestamp past the base's entry because the wall clock was earlier. `turbo` is not on PATH (exit 127), so typecheck runs as `pnpm exec turbo`: core, web, i18n and db pass (19 of 19 tasks). V1–V4 pass.
-
-## Post-merge typecheck fix (re-check)
-The reported failure (`turbo: command not found`, exit 127) was a PATH problem, not a merge clash. `pnpm exec turbo run typecheck` for core, web and i18n passes (19/19 tasks). Validate V1–V4 all pass. No source change was needed.
-
-## Lint fix (CI)
-CI lint failed on `@typescript-eslint/no-confusing-void-expression`: the onboarding `log` callback in `actions.ts` and eight shorthand handlers in `discovery-onboarding.tsx` returned a void call. I gave each arrow function a block body. Both files now lint clean with `eslint` run on just those two files, and V3 still passes. Nothing else changed.
+### Duplicate-export follow-up
+- `index.ts` no longer re-exports `LEARN_LOCALES`, `LEARN_SLUGS` or `signupHref`; they live only in `slugs.ts` and `signup-link.ts`. `learn.test.ts` imports them from there. V1 and V5 re-run and pass.

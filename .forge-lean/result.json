@@ -1,153 +1,150 @@
 {
-  "status": "fixed",
-  "summary": "Zero-entry advocate discovery in core plus onboarding UI, actions, migration (renumbered to 20261024221355) and i18n; the e2e budget spec is committed and V1-V4 pass. CI lint (no-confusing-void-expression) fixed with braced arrow bodies in onboarding actions and UI.",
-  "requirements": [
-    {
-      "id": "R1",
-      "status": "implemented",
-      "evidence": "packages/core/src/onboarding/discover.ts:393"
-    },
-    {
-      "id": "R2",
-      "status": "implemented",
-      "evidence": "apps/web/components/onboarding/discovery-onboarding.tsx:134"
-    },
-    {
-      "id": "R3",
-      "status": "implemented",
-      "evidence": "packages/core/src/onboarding/discover.ts"
-    },
-    {
-      "id": "R4",
-      "status": "implemented",
-      "evidence": "apps/web/app/(app)/w/[slug]/onboarding/actions.ts"
-    },
-    {
-      "id": "R5",
-      "status": "implemented",
-      "evidence": "e2e/tests/onboarding/zero-entry.spec.ts:1",
-      "instrumented": "true"
-    },
-    {
-      "id": "R6",
-      "status": "implemented",
-      "evidence": "packages/core/src/onboarding/discover.test.ts"
-    },
-    {
-      "id": "R7",
-      "status": "implemented",
-      "evidence": "packages/core/src/onboarding/discover.test.ts"
-    }
-  ],
-  "validation": [
-    {
-      "id": "V1",
-      "command": "pnpm --filter @causedeck/core exec vitest run src/onboarding/discover.test.ts src/import src/court/list-watch.test.ts src/activation",
-      "exit": 0
-    },
-    {
-      "id": "V2",
-      "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/domains.test.ts",
-      "exit": 0
-    },
-    {
-      "id": "V3",
-      "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts",
-      "exit": 0
-    },
-    {
-      "id": "V4",
-      "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts",
-      "exit": 0
-    }
-  ],
-  "tests": [
-    {
-      "command": "V1-V4",
-      "result": "pass",
-      "fails_without_fix": true
-    }
-  ],
-  "self_review": [
-    {
-      "question": "1",
-      "answer": "yes",
-      "evidence": "R1-R7 in implementation.md; R5 instrumented by e2e/tests/onboarding/zero-entry.spec.ts"
-    },
-    {
-      "question": "2",
-      "answer": "yes",
-      "evidence": "V1-V4 and forgedock check pass"
-    },
-    {
-      "question": "3",
-      "answer": "yes",
-      "evidence": "every deliverable changed; P1-P4 untouched"
-    },
-    {
-      "question": "4",
-      "answer": "yes",
-      "evidence": "deliverables and tests only"
-    }
-  ],
-  "amendments": [],
-  "not_members": [
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/nav.test.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/settings-shell.test.tsx",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/shortcuts.test.tsx",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/static-guards.test.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/__tests__/workspace-shell.test.tsx",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "e2e/tests/courts/courts.spec.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    },
-    {
-      "symbol": "onboarding-discovery",
-      "test": "e2e/tests/settings/shell.spec.ts",
-      "why": "lists nav routes, API routes, chords or page DOM, not i18n namespaces"
-    }
-  ],
-  "facts": {
-    "decisions": [
-      "R5 instrumented by a committed Playwright budget spec; it runs in CI only",
-      "post-merge typecheck failure was 'turbo: command not found' (PATH); no code change; typecheck via node_modules/.bin/turbo passes",
-      "typecheck exit 127 is turbo missing from PATH; ran via pnpm exec turbo, passes; migration renumbered to 20261025010000 after the base's scim_token_lookup"
-    ]
+ "status": "fixed",
+ "summary": "Practice school: 6 modules x en/ta/kn with review gate, fictional fixtures, education signup links and channel (migration).",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "apps/site/src/learn/index.ts:84"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "apps/site/src/learn/fixtures.ts:1"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "apps/site/src/learn/signup-link.ts:8"
+  },
+  {
+   "id": "R4",
+   "status": "missing",
+   "evidence": "deferred: progress tracking needs auth and a per-user table"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "apps/site/src/learn/index.ts:37"
+  },
+  {
+   "id": "R6",
+   "status": "partial",
+   "evidence": "content authored in apps/site/content/learn; advocate review is post-deploy"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "apps/site/src/learn/learn.test.ts:78"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/activation.ts:47"
+  },
+  {
+   "id": "R9",
+   "status": "missing",
+   "evidence": "deferred: channel capture at signup, packages/auth/src/server.ts:547"
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "apps/site/content/learn/using-the-os/en.md:16"
   }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/site exec vitest run src/learn src/index.test.ts src/developer-docs.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/activation/activation.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/growth-page.test.tsx",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/site exec tsc --noEmit",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "V1-V5",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1,R2,R3,R5,R7,R8,R10 delivered (implementation.md); R4,R9 deferred and R6 post-deploy per contract"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V1-V5 and forgedock check pass; existing site tests untouched"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "D1-D10 changed; P1-P4 intact (site package.json and auth server untouched)"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "git diff origin/milestone/instant-gtm-adoption...HEAD touches only deliverable paths and tests"
+  }
+ ],
+ "amendments": [],
+ "not_members": [
+  {
+   "symbol": "learn",
+   "test": "apps/admin/__tests__/roles.test.ts",
+   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists staff role/nav matrix and dev staff email, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+  },
+  {
+   "symbol": "learn",
+   "test": "apps/api/src/__tests__/helpers.ts",
+   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists API test auth helper, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+  },
+  {
+   "symbol": "learn",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists settings shell mocks, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+  },
+  {
+   "symbol": "learn",
+   "test": "apps/web/src/workspace-imports.test.ts",
+   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists list of workspace packages imported by web, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+  },
+  {
+   "symbol": "learn",
+   "test": "packages/auth/src/__tests__/phone-otp.test.ts",
+   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists phone OTP sign-in tests, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+  },
+  {
+   "symbol": "learn",
+   "test": "packages/core/src/capture/__tests__/capture.test.ts",
+   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists capture inbox tests, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+  },
+  {
+   "symbol": "learn",
+   "test": "packages/i18n/src/__tests__/catalog.test.ts",
+   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists i18n top-level message namespaces, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+  }
+ ]
 }

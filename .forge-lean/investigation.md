@@ -1,46 +1,41 @@
 **Verdict**: CONFIRMED
 **Confidence**: medium
-**Severity**: medium (greenfield onboarding feature; GTM adoption milestone)
+**Severity**: medium (greenfield GTM feature; milestone Instant GTM & Adoption)
 **Task Type**: feature
 
-(Note: the pre-existing `.forge-lean/*` and the FORGE:INVESTIGATION comment on the issue described a different issue, the portfolio UI. They were stale and are replaced. This report was verified against `origin/milestone/instant-gtm-adoption` at ab7623e4.)
+(The `.forge-lean/*` files left in this worktree described #501 and were stale; they are replaced. Verified against HEAD 3f3d449c, which equals `origin/milestone/instant-gtm-adoption`.)
 
 ### What Was Claimed
-Zero-entry onboarding: from an advocate's name, enrolment number/BRN and courts, run delegated advocate searches (Madras HC, KHC list by name/BRN, eCourts advocate search) over the last 30-90 days plus upcoming lists, build proposed matters and proceedings, show live progress, go through the one confirm grid, then the court-day view. Name disambiguation, instrumentation, and three acceptance criteria (e2e under 10 min, nothing saved before confirm with provenance, ambiguous names prompt).
+A free practice school for juniors and law students, en/ta/kn, under `apps/site/src/learn/`: at least 6 reviewed and dated modules, interactive examples on fictional fixtures only, signup prompts into the free alerts tier (#506), progress tracking for signed-in users, a per-module advocate review workflow, a legal disclaimer, and module-page signups tracked in the activation funnel (#509).
 
 ### What We Found
-- `packages/core/src/onboarding/` does not exist; no `discover.ts` anywhere (`ls packages/core/src`).
-- The pieces it composes exist: governed fetcher `packages/fetch/src/fetcher.ts` (`delegatedFor` option, `types.ts:58-64`); KHC list watch `packages/core/src/court/list-watch.ts:68-259` (name/BRN watches, matched-only rule, proposals via `submitProposals`); delegated case-status lookups `packages/core/src/case-watch/lookup.ts:41-51` (`STATUS_SOURCES`; case-number lookup, not advocate search); identifiers `packages/core/src/import/identifiers.ts:39-62` (`getAdvocateIdentifiers`, `createAdvocateMatcher`: exact match only, never substring); profile `import/profile.ts:32-60`.
-- Plan/confirm pipeline already exists: `import/bootstrap.ts:164` (`buildPlanFromDrafts`, matched-only filter), `:317` (`buildImportPlan`), `import/apply.ts:122` (`applyImportPlan`, nothing written to the graph until apply), `import/plan-edit.ts` (merge/split edits). Web: `apps/web/app/(app)/w/[slug]/import/{page,actions}.ts*` (actions at actions.ts:260-288) and `apps/web/components/import/{identifiers-form,processing-view,confirm-grid}.tsx`.
-- No source registry rows for advocate search: the only seeded sources are `case_status`, `cause_list`, `display_board` ids (migrations `0067`, `0052`, db migrations dir; latest is `20261024182641_activation_event.sql`). `policyFor` fails closed on unknown sources, so advocate-search sources must be added (uncleared) before any fetch.
-- No adapter parses an advocate-search result page (`packages/adapters/src/madras-hc/advocates.ts` only normalises advocate names; `ecourts/cause-list.ts` parses cause lists with an Advocate column).
-- Instrumentation partly exists: `ACTIVATION_STEPS` already has `identifiers_entered`, `discovery_found`, `confirm_grid_done`, `first_court_day_view` (`packages/db/src/schema/activation.ts:25-36`), `recordActivation` (`core/src/activation/record.ts:24`), `timeToFirstCourtDay` (`activation/funnel.ts:87`). Only `workspace_created` is recorded today (`apps/web/app/(app)/onboarding/actions.ts:30-37`). Nothing records matters discovered vs confirmed.
-- `/onboarding` (`apps/web/app/(app)/onboarding/`) only creates a workspace.
-- Dependencies #479/#482 are closed and merged; #483/#495 closed not_planned but their code (case-watch, ecourts adapter) is present, so no block.
+- No education surface: `apps/site/src/` holds only `index.ts` (a stub constant) and tests; no `learn/` directory (`apps/site/src/index.ts:2`).
+- `apps/site` is not a Next app yet: `apps/site/package.json:7` build is a stub and there is no `next`, React or MDX dependency. Its precedent for content is plain markdown under `apps/site/content/developers/api.md`, guarded by `apps/site/src/developer-docs.test.ts:1-40` (reads the file with `node:fs`).
+- Locales are closed: `packages/i18n/src/locales.ts:4` (`en`, `ta`, `kn`); message catalogs live in `packages/i18n/src/messages/{en,ta,kn}`.
+- Fictional fixtures exist for reuse: `packages/core/src/import/fixtures/bundles.ts:1-3` (synthetic advocates, no real data) and `packages/intelligence/src/generic-a0/synthetic/generate.ts`. `apps/site` does not depend on those packages.
+- Funnel: `packages/db/src/schema/activation.ts:25-49` has a closed `ACTIVATION_STEPS` list and `ACTIVATION_CHANNELS` (`direct, invite, whatsapp, search, social, referral, other`; no education value), enforced by the CHECK `activation_event_channel_chk` (`:67-70`), created in `packages/db/migrations/20261024182641_activation_event.sql`.
+- Signup never records a channel: `packages/auth/src/server.ts:547-552` inserts `signed_up` with no channel, and `apps/web` has no code that sets one. The admin growth page filters by channel (`apps/admin/app/(console)/growth/page.tsx:33`).
+- #506 (free alerts tier) is still OPEN; #501 and #509 are closed and merged.
+- D-049 (`DECISIONS.md:394`) names "Education (Varsity)" as "The practice education program" and says it is a GTM lever. No decision text yet on disclaimers or review.
 
 ### Root Cause
-Greenfield. Data layers landed, but nothing orchestrates identifiers -> delegated searches -> proposals -> confirm grid, and advocate-search sources/parsers are absent.
+Greenfield: nothing exists. The site package is a placeholder with no rendering stack, so a design choice is needed (see Recommendation).
 
 ### Affected Files
-- New `packages/core/src/onboarding/{discover.ts,index.ts}`, `packages/core/package.json` subpath if domains need it, `packages/config/eslint/core-domains.js` + `docs/engineering/core-domains.md`, `packages/core/src/domains.test.ts` expectations.
-- New migration seeding uncleared advocate-search source rows (following the timestamp naming of the newest migration).
-- `packages/db/src/testing/cross-tenant-registry.ts` + `packages/core/src/__tests__/cross-tenant/services.test.ts` for new runtime exports.
-- `apps/web/app/(app)/w/[slug]/onboarding/*` (new route) with actions; `apps/web/__tests__/cross-tenant-actions.test.ts`; i18n namespace + `packages/i18n/src/__tests__/catalog.test.ts`.
-- Possibly a small adapters parser for advocate-search results.
+- New `apps/site/src/learn/` (module registry, loader/validator, fixtures, signup-link helper, tests) and `apps/site/content/learn/<slug>/{en,ta,kn}.md`.
+- `packages/db/src/schema/activation.ts` plus a new timestamp-named migration and regenerated snapshot/journal (add channel `education`).
+- `packages/core/src/activation/activation.test.ts`, `apps/admin/__tests__/growth-page.test.tsx:23` (hard-coded channel list mock).
+- `docs/engineering/` content-review doc (new, short).
 
 ### Sibling Sweep
-Every new core export and `'use server'` action needs registry entries (CLAUDE.md table). Matched-only/never-substring rule (`identifiers.ts:56`) must hold for discovery too, as in `list-watch.ts`. The `import` actions already enforce "nothing saved before apply"; reuse them rather than writing matters directly.
+- Other closed enums mirrored by hand: the admin growth test mock (`growth-page.test.tsx:23`) and any i18n label for channels in the admin page; check on implementation with `grep -rn "'referral'"`.
+- `apps/site/content/developers/api.md` is the one existing content pattern; the learn guard tests should follow `developer-docs.test.ts`.
 
 ### History
-Parent chain: #479 fetch layer, #482 KHC watch, #483 case-status watch, #495 eCourts adapter. Activation funnel steps added in the activation_event migration (#509). No earlier attempt at discovery.
+`apps/site` was created as a scaffold; `content/developers` was added with the public API docs. `activation_event` landed in #509 (migration `20261024182641`). No prior attempt at the learn surface; earlier #511 runs in the issue comments ended in engine errors (HTTP 502) with no code.
 
 ### Recommendation
-Keep one lane, build on injected ports so everything is testable offline with the mock fetch provider:
-1. `discoverAdvocateCases(deps, input)` in `core/onboarding/discover.ts`: takes identifiers + courts + window (30-90 days) + a `DiscoverySource` port per court (fetch through governed fetcher with `delegatedFor`, parse in memory), emits `ProposalDraft`s via automation/import (staged only; nothing in the matter graph), reports progress counts ("found N listings in M courts") and name-ambiguity candidates.
-2. Disambiguation: a name-only identifier returns `needsDisambiguation` with sample matters/distinct enrolment numbers; no proposals are staged until the caller confirms an enrolment/BRN or a sample selection.
-3. Seed uncleared advocate-search sources; skip fetching uncleared/killed sources (reported as skipped courts).
-4. Web onboarding steps: identifiers -> courts -> progress -> existing confirm grid (reuse import actions) -> court-day view; record the four activation steps and log discovered vs confirmed counts.
-5. Persistent discovered-vs-confirmed metric display on the admin growth page is a follow-up.
+Build it without new dependencies: markdown (front matter parsed by a small TS loader, validated by tests) rather than MDX; the loader returns typed modules so a later Next/MDX renderer can consume them. Six modules x three locales, each with front matter `slug, title, locale, order, law (bool), reviewer, reviewedOn, sources`. A module is "live" only when it has a reviewer and date; no reviewer name is invented, so every module ships unreviewed and the review step stays human. Examples use inline fictional fixtures with a unit test rejecting real-looking data (fixture marker, CNR/enrolment patterns not on an allowlist). Disclaimer is a required footer per locale. Signup CTA links to `/sign-in?channel=education&module=<slug>`. Add channel `education` via migration. Defer: signed-in progress tracking (needs auth and a table in a static site), capture of the channel at signup (no channel is captured for any source today), and the actual advocate reviews and Tamil/Kannada review (human).
 
 ### Related Issues
-#479, #482, #483, #495, #57 (bootstrap import), #509 (activation funnel).
+#501 (closed, dependency), #506 (open, free alerts tier; link target only, no code dependency), #509 (closed, funnel), D-049.

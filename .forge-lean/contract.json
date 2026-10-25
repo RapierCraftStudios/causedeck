@@ -2,226 +2,220 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "run delegated advocate searches (Madras HC advocate or enrolment search, KHC list by name or BRN, eCourts advocate search) for the last 30 to 90 days and upcoming lists, then build proposed matters and proceedings.",
+   "quote": "`apps/site/src/learn/`: modules (court-day practice, reading cause lists, listings and mentions, filing and defect cures, limitation basics, using the OS), MDX content with i18n (en, ta, kn).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`apps/web` onboarding: identifiers, then courts, then a live progress view (\"found 38 listings in 3 courts\"), then the one confirm grid (approve, merge, split; existing UJ-1 grid), then the court-day view.",
+   "quote": "Interactive examples built on fictional fixtures (cause lists, orders) from the existing golden fixtures; nothing from real matters.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Name disambiguation: common names are confirmed by enrolment number or BRN and by sample matters before anything is saved.",
+   "quote": "Free signup prompts into the free alerts tier (#506)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Instrumentation: time to first court-day view, and matters discovered against matters confirmed.",
-   "disposition": "deliver",
+   "quote": "progress tracking for signed-in users.",
+   "disposition": "defer",
+   "why": "apps/site is a static placeholder with no auth session or Next runtime, and progress needs a per-user table with RLS, a server action and registry entries; separate issue after the site gains a renderer.",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "An advocate with identifiers at both launch High Courts reaches a populated court-day view in under 10 minutes in staging fixtures. [type:e2e]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Playwright e2e runs in CI (ship PRs and nightly), never locally per CLAUDE.md; the in-lane fixture-driven integration test covers the flow offline."
-  },
-  {
-   "id": "R6",
-   "quote": "Nothing is saved before the confirm grid; discovered matters carry provenance. [type:integration]",
+   "quote": "A content review workflow: every module reviewed by a practising advocate (⚖ where it touches law), with the date and reviewer shown.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
+   "id": "R6",
+   "quote": "At least 6 modules are live in English with Tamil and Kannada translations, each reviewed and dated.",
+   "disposition": "post-deploy",
+   "why": "Authoring 6 modules x 3 locales is delivered here, but 'reviewed and dated' needs a practising advocate's sign-off, which agents cannot give or invent; modules stay not-live until reviewer and date are filled in front matter."
+  },
+  {
    "id": "R7",
-   "quote": "Ambiguous names prompt for disambiguation, never a silent merge. [type:unit]",
+   "quote": "Examples use only fictional fixtures.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "matters discovered against matters confirmed",
+   "quote": "Module pages convert to free signups",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "and are tracked in the activation funnel (#509).",
    "disposition": "defer",
-   "why": "This change records the activation steps and logs discovered/confirmed counts; a persisted metric and a Growth page panel is separate admin work.",
+   "why": "This change adds the closed 'education' channel and the tagged signup links, but recording the channel at signup (packages/auth/src/server.ts:547-552 records none for any source) is a cross-cutting auth change for all channels; separate issue.",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "it is not legal advice, so it carries a disclaimer.",
+   "disposition": "deliver",
    "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/onboarding/discover.ts",
-   "change": "New discoverAdvocateCases(deps,input): per-court DiscoverySource ports fetched via the governed fetcher with delegatedFor, parsed in memory, matched with createAdvocateMatcher (exact only), staged as proposals only (no matter-graph writes), returns progress counts, skipped uncleared courts, provenance on each draft, and needsDisambiguation for name-only/ambiguous identifiers (no staging until confirmed). Window 30-90 days back plus upcoming.",
+   "path": "apps/site/src/learn/index.ts",
+   "change": "Module registry (6 slugs: court-day-practice, reading-cause-lists, listings-and-mentions, filing-and-defect-cures, limitation-basics, using-the-os), loader that reads apps/site/content/learn/\u003cslug>/\u003clocale>.md, parses front matter (slug,title,locale,order,law,reviewer,reviewedOn) with no new dependency, exposes isLive(module) = reviewer and reviewedOn present, and review display data.",
    "requirements": [
     "R1",
-    "R3",
-    "R6",
-    "R7"
-   ]
-  },
-  {
-   "id": "D2",
-   "path": "packages/core/src/onboarding/index.ts",
-   "change": "Public index exporting the discovery API.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/core/src/onboarding/discover.test.ts",
-   "change": "Unit/integration tests with mock fetcher: advocate search per court, ambiguity prompts, nothing in matter graph before apply, provenance, uncleared source skipped, counts logged.",
-   "requirements": [
-    "R1",
-    "R3",
-    "R6",
-    "R7",
-    "R4"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Register the onboarding domain and its allowed imports (import, automation, sources, court via index only).",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Document the onboarding domain row.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/core/src/domains.test.ts",
-   "change": "Only if the guard test lists domains: add onboarding to the expected list.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register each new runtime export of @causedeck/core (SERVICE_TESTS with real case, or NOT_A_SERVICE with reason) .",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Cross-tenant cases for the registered discovery services (B on A denied/sees nothing; A unchanged).",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/db/migrations",
-   "change": "New migration (timestamp naming like 20261024182641_activation_event.sql, regenerated meta snapshot) seeding uncleared advocate-search source rows for Madras HC, KHC and eCourts, kind court, captcha only via delegated lookup; if the migration dir needs a root-table test update, update packages/db/src/index.test.ts.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/web/app/(app)/w/[slug]/onboarding/actions.ts",
-   "change": "workspaceAction server actions: start discovery, poll progress, confirm disambiguation, feeding the existing import plan actions; record identifiers_entered, discovery_found, confirm_grid_done, first_court_day_view via recordActivation (never failing the action) and log discovered vs confirmed counts.",
-   "requirements": [
-    "R2",
-    "R3",
-    "R4",
+    "R5",
     "R6"
    ]
   },
   {
-   "id": "D11",
-   "path": "apps/web/app/(app)/w/[slug]/onboarding/page.tsx",
-   "change": "Server page plus client steps (identifiers, courts, live progress, disambiguation, existing confirm-grid, redirect to court-day view); also loading.tsx and error.tsx beside it.",
+   "id": "D2",
+   "path": "apps/site/content/learn/",
+   "change": "18 markdown files (6 modules x en, ta, kn); each ends with the localized disclaimer; law-touching modules set law: true (⚖); reviewer and reviewedOn left empty (never invented); examples reference fixtures by id.",
+   "requirements": [
+    "R1",
+    "R5",
+    "R6",
+    "R10"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "apps/site/src/learn/fixtures.ts",
+   "change": "Fictional cause-list and order fixtures for the examples (fictional names, 'FICTIONAL' marker, reserved/obviously fake numbers), modelled on packages/core/src/import/fixtures/bundles.ts without importing it.",
    "requirements": [
     "R2",
-    "R3"
+    "R7"
    ]
   },
   {
-   "id": "D12",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Add ACTIONS entries and probe inputs for each new 'use server' action.",
+   "id": "D4",
+   "path": "apps/site/src/learn/signup-link.ts",
+   "change": "signupHref(slug, locale) returning /sign-in?channel=education&module=\u003cslug>; module is restricted to registry slugs, nothing else is carried.",
    "requirements": [
-    "R2"
+    "R3",
+    "R8"
    ]
   },
   {
-   "id": "D13",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add an onboarding-discovery namespace (en/kn/ta JSON under packages/i18n/src/messages/*/) and update packages/i18n/src/__tests__/catalog.test.ts (and generated types if checked in).",
+   "id": "D5",
+   "path": "apps/site/src/learn/learn.test.ts",
+   "change": "Tests: 6 modules x 3 locales exist and have required front matter and disclaimer; non-live without reviewer/date; fixtures only carry the FICTIONAL marker and no real-court data patterns; every module's CTA href is the education signup link; law modules carry the flag.",
    "requirements": [
-    "R2"
+    "R1",
+    "R2",
+    "R5",
+    "R7",
+    "R8",
+    "R10"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/db/src/schema/activation.ts",
+   "change": "Add 'education' to ACTIVATION_CHANNELS (CHECK activation_event_channel_chk follows the list).",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/db/migrations/",
+   "change": "New timestamp-named migration (pnpm --filter @causedeck/db exec drizzle-kit generate; next free timestamp after the latest in migrations/meta/_journal.json) that drops and recreates activation_event_channel_chk with the new list, plus the generated snapshot and journal entry.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "apps/admin/__tests__/growth-page.test.tsx",
+   "change": "Add 'education' to the hard-coded ACTIVATION_CHANNELS mock at line 23.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/core/src/activation/activation.test.ts",
+   "change": "Assert recordActivation accepts channel 'education'.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "docs/engineering/learn.md",
+   "change": "Short doc of the review workflow: front matter fields, live rule, who reviews (practising advocate, ⚖ modules), fictional-fixture rule, disclaimer, deferred items.",
+   "requirements": [
+    "R5",
+    "R10"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing import actions and plan semantics: apps/web/app/(app)/w/[slug]/import/actions.ts and packages/core/src/import/{bootstrap,apply,plan-edit}.ts; nothing reaches the matter graph before applyImportPlan."
+   "what": "apps/site/src/index.ts export appName and apps/site/src/index.test.ts"
   },
   {
    "id": "P2",
-   "what": "createWorkspaceAction behaviour and the /onboarding workspace creation page (apps/web/app/(app)/onboarding/*), including its workspace_created activation record."
+   "what": "apps/site/content/developers/api.md and apps/site/src/developer-docs.test.ts"
   },
   {
    "id": "P3",
-   "what": "Matched-only/exact-match rule in packages/core/src/import/identifiers.ts and court/list-watch.ts; fail-closed sourcing via policyFor in packages/core/src/sources; fetch layer contracts in packages/fetch/src/types.ts."
+   "what": "Existing activation steps and the signed_up insert in packages/auth/src/server.ts:547-552 (unchanged)"
   },
   {
    "id": "P4",
-   "what": "Activation steps list in packages/db/src/schema/activation.ts (no new step unless the check constraint migration is added)."
+   "what": "apps/site must not gain new dependencies (package.json unchanged) and must not import @causedeck/core or @causedeck/db"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/onboarding/discover.test.ts src/import src/court/list-watch.test.ts src/activation --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/site exec vitest run src/learn src/index.test.ts src/developer-docs.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/activation/activation.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/growth-page.test.tsx"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/site exec tsc --noEmit"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Discovery is built on injected DiscoverySource/fetcher ports rather than hard-wiring adapters.",
-   "justification": "Same structural-port pattern as court/list-watch.ts:181 (ListFetcher) and case-watch/lookup.ts:53 (StatusFetcher), which keeps domains acyclic and tests offline.",
+   "choice": "Markdown with a hand-parsed front matter instead of MDX",
+   "justification": "apps/site has no Next/React/MDX dependency (apps/site/package.json:7-19) and its content precedent is plain markdown read by node:fs (apps/site/src/developer-docs.test.ts:6-9); adding MDX would be a new dependency for no rendered surface yet.",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Stage discovered matters as proposals and reuse buildImportPlan/applyImportPlan and the existing confirm grid.",
-   "justification": "import/bootstrap.ts:317 and import/apply.ts:122 already guarantee nothing is written before apply; list-watch.ts stages through submitProposals.",
+   "choice": "Fixtures are copied in shape, not imported, from core",
+   "justification": "apps/site depends only on @causedeck/config (apps/site/package.json); a workspace dependency on core would need an architecture reason, and the site must not pull DB code.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Advocate-search sources are seeded uncleared.",
-   "justification": "policyFor fails closed and D-048 requires DPDP clearance before production fetches (issue #479 context).",
-   "source": "spec"
+   "choice": "New channel 'education' via migration rather than reusing 'other'",
+   "justification": "The channel list is a closed enum with a CHECK (packages/db/src/schema/activation.ts:40-48,67-70) so education signups are separable in the growth page; migrations are timestamp-named per D-051 (DECISIONS.md:429-433).",
+   "source": "doc"
   }
  ]
 }

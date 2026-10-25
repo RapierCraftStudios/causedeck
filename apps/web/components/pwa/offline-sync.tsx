@@ -2,16 +2,10 @@
 
 // Starts the 7-day prefetch for the workspace the member is in (#65 part 3): once after the shell
 // mounts while online, again when the connection returns and when the service worker's Background
-// Sync asks a page to (the worker has no session secret). Renders nothing.
+// Sync asks a page to (the worker has no session secret). Renders nothing. The store, crypto and
+// prefetch code load on demand so they stay out of the workspace shell's initial JS (bundle budget).
 import { useEffect } from 'react';
 
-import { pullCourtDaySnapshotAction } from '../../app/(app)/w/[slug]/_offline/actions.ts';
-import {
-  openScope,
-  prefetchWindow,
-  registerPrefetchSync,
-  rememberScope,
-} from '../../lib/offline/prefetch.ts';
 import { PREFETCH_MESSAGE } from '../../sw/court-day-cache.ts';
 
 export function OfflineSync({
@@ -30,6 +24,11 @@ export function OfflineSync({
       if (running || !navigator.onLine) return;
       running = true;
       try {
+        const [{ openScope, prefetchWindow, rememberScope }, { pullCourtDaySnapshotAction }] =
+          await Promise.all([
+            import('../../lib/offline/prefetch.ts'),
+            import('../../app/(app)/w/[slug]/_offline/actions.ts'),
+          ]);
         rememberScope(localStorage, slug, scope);
         const opened = await openScope(scope, sessionStorage);
         if (!opened) return;
@@ -62,7 +61,10 @@ export function OfflineSync({
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', onMessage);
       void navigator.serviceWorker.ready
-        .then((registration) => registerPrefetchSync(registration as never))
+        .then(async (registration) => {
+          const { registerPrefetchSync } = await import('../../lib/offline/prefetch.ts');
+          return registerPrefetchSync(registration);
+        })
         .catch(() => undefined);
     }
     return () => {

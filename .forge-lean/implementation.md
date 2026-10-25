@@ -54,3 +54,6 @@ The `tenancy` job's last step, `pnpm test:export-coverage`, failed: the five new
 
 ## Rerun verification
 V1 (17 files, 398 passed), V2, V3, V4 pass; V5 widened to full monorepo, so tsc --noEmit for validators, db, core, worker is clean. forgedock check passes.
+
+## Stale-list follow-up
+The 30 memory schema symbols flagged against three admin tests are not members of any list there (those tests mock modules, not schema exports); recorded in result.json not_members. No code change.

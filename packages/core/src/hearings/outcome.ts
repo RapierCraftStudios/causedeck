@@ -37,7 +37,8 @@ import {
 import { conflict, forbidden, invalid, notFound } from '../shared/errors.ts';
 import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
 
-const { anchor, appearance, document, hearing, listing, matter, matterRestriction, member } = schema;
+const { anchor, appearance, document, hearing, listing, matter, matterRestriction, member } =
+  schema;
 const { obligation, proceeding, proposal, task } = schema;
 
 /** Emitted once a confirmed outcome has committed; `notifyUserId` is the owner of a delegated appearance. */
@@ -200,7 +201,8 @@ async function load(
     ...(row.allowUserIds === null ? {} : { restricted: { allowUserIds: row.allowUserIds } }),
     ...(row.ownerUserId === null ? {} : { ownerUserId: row.ownerUserId }),
   };
-  if (!can(policyActor, 'matter.read', resource, settings).allow) throw notFound('Hearing not found');
+  if (!can(policyActor, 'matter.read', resource, settings).allow)
+    throw notFound('Hearing not found');
   if (action === 'matter.write' && !can(policyActor, action, resource, settings).allow) {
     throw forbidden('You cannot confirm this outcome');
   }
@@ -226,7 +228,12 @@ async function openProposals(scope: Scope, loaded: Loaded): Promise<ProposalRow[
         eq(proposal.workspaceId, actor.workspaceId),
         eq(proposal.proceedingId, loaded.proceedingId),
         eq(proposal.status, 'proposed'),
-        inArray(proposal.kind, ['hearing_outcome', 'next_date', 'obligation_from_direction', 'task']),
+        inArray(proposal.kind, [
+          'hearing_outcome',
+          'next_date',
+          'obligation_from_direction',
+          'task',
+        ]),
       ),
     )
     .orderBy(desc(proposal.createdAt));
@@ -304,7 +311,9 @@ export async function getOutcomeProposal(
       const [doc] = await tx
         .select({ language: document.language })
         .from(document)
-        .where(and(eq(document.workspaceId, who.workspaceId), eq(document.id, firstAnchor.documentId)))
+        .where(
+          and(eq(document.workspaceId, who.workspaceId), eq(document.id, firstAnchor.documentId)),
+        )
         .limit(1);
       const found = LANGUAGES.find((l) => l === doc?.language);
       if (found !== undefined) language = found;
@@ -474,7 +483,10 @@ export async function confirmOutcome(
         .set({ status, resolvedBy: userId, resolvedAt: now, resolutionReason: reason })
         .where(and(eq(proposal.workspaceId, workspaceId), eq(proposal.id, p.id)));
     };
-    const draftOf = (proposalId: string | null, kind: ProposalRow['kind']): ProposalRow | undefined => {
+    const draftOf = (
+      proposalId: string | null,
+      kind: ProposalRow['kind'],
+    ): ProposalRow | undefined => {
       if (proposalId === null) return undefined;
       const found = byId.get(proposalId);
       if (found === undefined || found.kind !== kind) {
@@ -503,7 +515,9 @@ export async function confirmOutcome(
           source: draft === undefined ? 'internal' : 'order_direction',
           description,
           dueDate:
-            decision.dueDate !== undefined ? decision.dueDate : text(draft?.payload ?? {}, 'dueDate'),
+            decision.dueDate !== undefined
+              ? decision.dueDate
+              : text(draft?.payload ?? {}, 'dueDate'),
           basis: text(draft?.payload ?? {}, 'basis'),
           ownerMemberId: decision.ownerMemberId ?? null,
           status: 'open',
@@ -551,7 +565,11 @@ export async function confirmOutcome(
     for (const p of proposals) {
       if (p.kind === 'hearing_outcome') await resolve(p, 'accepted', null);
       if (p.kind === 'next_date') {
-        await resolve(p, nextDate === proposedDate && proposedDate !== null ? 'accepted' : 'dismissed', null);
+        await resolve(
+          p,
+          nextDate === proposedDate && proposedDate !== null ? 'accepted' : 'dismissed',
+          null,
+        );
       }
     }
 

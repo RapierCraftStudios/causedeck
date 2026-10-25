@@ -122,11 +122,7 @@ export {
   type ResolutionFieldLabels,
   type ResolutionFieldProps,
 } from './outcome/resolution-field';
-export {
-  SourceCompare,
-  type CompareSide,
-  type SourceCompareProps,
-} from './outcome/source-compare';
+export { SourceCompare, type CompareSide, type SourceCompareProps } from './outcome/source-compare';
 export { SourceText, type SourceSpan, type SourceTextProps } from './outcome/source-text';
 export { ConfirmBar, type ConfirmBarProps } from './outcome/confirm-bar';
 export * from './delegation';

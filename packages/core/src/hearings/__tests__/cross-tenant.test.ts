@@ -15,12 +15,16 @@ describe('hearing outcome tenancy', () => {
       const b = await world(tx);
       const both = await addMember(tx, a.workspaceId, 'owner');
       await withWorkspace(tx, { workspaceId: b.workspaceId }, (s) =>
-        s.insert(schema.member).values({ organizationId: b.workspaceId, userId: both, role: 'owner' }),
+        s
+          .insert(schema.member)
+          .values({ organizationId: b.workspaceId, userId: both, role: 'owner' }),
       );
       const before = await inWorkspace(tx, a.workspaceId, (s) => s.select().from(schema.hearing));
       for (const userId of [b.ownerId, both]) {
         const actor = { userId, workspaceId: b.workspaceId };
-        await expect(getOutcomeProposal(a.deps, actor, { hearingId: a.hearingId })).rejects.toMatchObject({
+        await expect(
+          getOutcomeProposal(a.deps, actor, { hearingId: a.hearingId }),
+        ).rejects.toMatchObject({
           code: 'NOT_FOUND',
         });
         await expect(
@@ -31,7 +35,9 @@ describe('hearing outcome tenancy', () => {
           }),
         ).rejects.toMatchObject({ code: 'NOT_FOUND' });
       }
-      expect(await inWorkspace(tx, a.workspaceId, (s) => s.select().from(schema.hearing))).toEqual(before);
+      expect(await inWorkspace(tx, a.workspaceId, (s) => s.select().from(schema.hearing))).toEqual(
+        before,
+      );
     });
   });
 });

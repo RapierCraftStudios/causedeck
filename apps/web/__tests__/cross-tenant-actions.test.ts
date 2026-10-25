@@ -115,9 +115,8 @@ const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
-const hearingOutcome = await import(
-  '../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts'
-);
+const hearingOutcome =
+  await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');

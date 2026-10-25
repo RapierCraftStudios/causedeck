@@ -61,7 +61,9 @@ export const OutcomeProposal = z.strictObject({
   conflict: NextDateConflict.nullable().default(null),
   obligations: z.array(ObligationProposal).default([]),
   tasks: z.array(TaskProposal).default([]),
-  transcriptRef: z.strictObject({ documentId: uuid, language: z.enum(OUTCOME_LANGUAGES) }).nullable(),
+  transcriptRef: z
+    .strictObject({ documentId: uuid, language: z.enum(OUTCOME_LANGUAGES) })
+    .nullable(),
   language: z.enum(OUTCOME_LANGUAGES),
   /** Whether the hearing already has a confirmed outcome. */
   confirmed: z.boolean().default(false),
@@ -97,7 +99,11 @@ const ObligationDecision = z
   .superRefine((value, ctx) => {
     if (value.action === 'dismiss') {
       if (value.reason === undefined) {
-        ctx.addIssue({ code: 'custom', path: ['reason'], message: 'Give a reason, or mark it not applicable' });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['reason'],
+          message: 'Give a reason, or mark it not applicable',
+        });
       }
     } else if (value.proposalId === null && value.description === undefined) {
       ctx.addIssue({ code: 'custom', path: ['description'], message: 'Describe the obligation' });
@@ -114,7 +120,11 @@ const TaskDecision = z
   })
   .superRefine((value, ctx) => {
     if (value.action === 'dismiss' && value.reason === undefined) {
-      ctx.addIssue({ code: 'custom', path: ['reason'], message: 'Give a reason, or mark it not applicable' });
+      ctx.addIssue({
+        code: 'custom',
+        path: ['reason'],
+        message: 'Give a reason, or mark it not applicable',
+      });
     }
     if (value.action !== 'dismiss' && value.proposalId === null && value.title === undefined) {
       ctx.addIssue({ code: 'custom', path: ['title'], message: 'Name the task' });

@@ -2,245 +2,230 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add a `whatsapp_link` table (user, workspace, E.164 number, verified_at, consent_at, categories) and an OTP challenge table with expiry and attempt limits",
+   "quote": "Add packages/notifications/src/channels/whatsapp.ts (provider client, approved templates, send only to the verified linked number, per-user consent, quiet hours, court-hours rules)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "add `whatsapp` to the `notification_channel` enum (migration, next free number)",
+   "quote": "extend the `notification.deliver` job (DELIVERY_CHANNELS) and the evening court-day summary (digest.end_of_day), court.board and status.order alerts to use it",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Core service: request OTP, verify, unlink (unlink stops all messages), set categories.",
+   "quote": "Provider env config.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Messages may only ever target the verified number of the owning user (D-029).",
+   "quote": "Unit test: no message is ever sent to a number other than the verified user's.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Register tables (db index test, RLS catalog, seeders) and core exports (cross-tenant registry with real cases).",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "Add `'whatsapp'` to CHANNELS in packages/notifications/src/categories.ts.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "Acceptance: opt-in and verification required before any message; unlink stops messages; cross-tenant tests pass.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "Residency and processor review of the provider is a human action tracked with #488.",
+   "disposition": "defer",
+   "why": "Human action tracked by open issue #488; not code. The channel stays disabled until provider env is configured."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/whatsapp-link.ts",
-   "change": "New tenantTable whatsapp_link (workspace_id, user_id, e164 with CHECK, verified_at, consent_at, unlinked_at, categories text[], unique per workspace+user) and whatsapp_otp_challenge (code hash, expires_at, attempts with CHECK cap, consumed_at). Export from schema/index.ts.",
+   "path": "packages/notifications/src/channels/whatsapp.ts",
+   "change": "New createWhatsAppSender (Meta Cloud API via injectable fetch; absent env -> undefined), template registry keyed by category (court.board, status.order, digest.end_of_day), content-minimal params, send(message, target) where target is an explicit {e164} resolved by the caller; no function accepts a free number from notification data; permanent (4xx) vs retryable error classification; E.164 re-check before send. Plus channels/index.ts and a ./whatsapp export in packages/notifications/package.json.",
    "requirements": [
-    "R1"
+    "R1",
+    "R4"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/index.ts",
-   "change": "Export the new tables.",
+   "path": "packages/notifications/package.json",
+   "change": "Add the './whatsapp' subpath export to src/channels/index.ts (no new dependency).",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/src/schema/notifications.ts",
-   "change": "Add 'whatsapp' to NOTIFICATION_CHANNELS.",
+   "path": "packages/notifications/src/service.ts",
+   "change": "DeliveryJob.channel includes 'whatsapp'; notify() fan-out includes whatsapp when the resolved pref is enabled+instant (opt-in only: do not add whatsapp to any defaultChannels).",
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/db/migrations",
-   "change": "Next free migration (renumber if base took it) creating both tables with FORCE RLS ws_isolation and grants, plus ALTER TYPE notification_channel ADD VALUE IF NOT EXISTS 'whatsapp'; update meta/_journal.json and snapshot (drizzle-kit generate, then hand-add grants/RLS as in 20261024110000_portfolio.sql).",
+   "path": "packages/core/src/jobs/definitions/notification-deliver.ts",
+   "change": "DELIVERY_CHANNELS adds 'whatsapp'; deps gain optional whatsapp sender built from env; branch: channelEnabled, target via getWhatsAppSendTarget (from '@causedeck/core/whatsapp-link' index, null -> skip 'not_linked'), no sender -> skip 'whatsapp_disabled', courtHoursQuiet -> skip 'quiet_hours', send inside once(); only the resolved target is used; permanent provider error -> failed, other -> RetryableError. digest.end_of_day stays skipped here (own send).",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/core/src/jobs/definitions/activity-digest.ts",
+   "change": "After the digest is built, when the member's digest.end_of_day whatsapp pref is on and getWhatsAppSendTarget(category 'digest.end_of_day') returns a target and the local time is outside court hours, send the evening summary template (counts only, no matter names) inside the existing once().",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/core/src/jobs/index.ts",
+   "change": "Re-export any new public types if needed (DELIVERY_CHANNELS already exported).",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/config/src/env/schema.ts",
+   "change": "Add WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN (secret) to serverKeys and the zod schema, optional, each requiredWhen the other is set (mirror VAPID_*); optional WHATSAPP_API_VERSION.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": ".env.example",
+   "change": "Document the WHATSAPP_* keys (commented), as done for VAPID.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "docs/engineering/env.md",
+   "change": "Document the WHATSAPP_* keys (the env doc guard test may compare it with the schema).",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "docs/engineering/notifications.md",
+   "change": "Document the WhatsApp channel: templates, opt-in, target rule, quiet/court hours, skipped reasons.",
    "requirements": [
     "R1",
     "R2"
    ]
   },
   {
-   "id": "D5",
-   "path": "packages/notifications/src/categories.ts",
-   "change": "Add 'whatsapp' to CHANNELS; no category lists it as default.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/core/src/whatsapp-link/index.ts",
-   "change": "New domain (plus sibling files): requestWhatsAppOtp, verifyWhatsAppOtp, unlinkWhatsApp, setWhatsAppCategories, getWhatsAppSendTarget (only verified+consented+not-unlinked number of the owning user). OTP hashed, constant-time compare, expiry, attempt cap, resend cooldown; sender injected.",
-   "requirements": [
-    "R3",
-    "R4",
-    "R7"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/core/package.json",
-   "change": "Add ./whatsapp-link subpath export; also export from packages/core/src/index.ts.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/core/src/index.ts",
-   "change": "Re-export whatsapp-link.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "TABLE_TESTS for both tables; SERVICE_TESTS for each service export, NOT_A_SERVICE for pure ones.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cases: B on A's link/OTP is denied or sees nothing; A unchanged.",
-   "requirements": [
-    "R5",
-    "R7"
-   ]
-  },
-  {
    "id": "D11",
-   "path": "packages/db/src/testing/two-tenants.ts",
-   "change": "Seeders for whatsapp_link and whatsapp_otp_challenge.",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add 'whatsapp-link' to the jobs allow-list (index import only).",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add both tables to the RLS catalog.",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Add jobs --> whatsapp-link edge and mention in the jobs row.",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add both tables to the root table list.",
+   "path": "packages/notifications/src/channels/__tests__/whatsapp.test.ts",
+   "change": "Unit tests: sends only to the explicit target; refuses a non-E.164 target; absent env -> no sender; permanent vs retryable errors; template per category; a spy fetch never sees any number except the target.",
    "requirements": [
-    "R5"
+    "R1",
+    "R4"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/core/src/lifecycle/deletion/erase.ts",
-   "change": "Add both tables to PURGE_ORDER (challenge before link if cited).",
+   "path": "packages/core/src/jobs/definitions/notification-deliver.test.ts",
+   "change": "Tests: whatsapp sends only to the verified number of the notification's owner (two users, one linked: the other's notification sends nothing; another workspace's link ignored); unlinked, category not chosen, pref off, quiet hours, sender absent -> skipped; retry/permanent behaviour.",
    "requirements": [
-    "R5"
+    "R2",
+    "R4"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/core/src/lifecycle/export/exporters.ts",
-   "change": "Export whatsapp_link (number masked or included, categories, timestamps); exclude code hashes / challenge table.",
+   "path": "packages/core/src/jobs/definitions/activity-digest.test.ts",
+   "change": "Test the evening WhatsApp summary: sent to the verified number, not in court hours, not when unlinked or pref off.",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D16",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Document the whatsapp-link domain and its dependencies.",
+   "path": "packages/notifications/src/index.test.ts",
+   "change": "Update expectations for the whatsapp fan-out / DeliveryJob if they assert channels.",
    "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/core/src/domains.test.ts",
-   "change": "Add whatsapp-link to CORE_DOMAIN_DEPENDENCIES (audit only if audited).",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts",
-   "change": "Regression tests: no send target before verify/consent, OTP expiry, attempt cap, wrong code, unlink stops target, categories, number is E.164, target never another user's number.",
-   "requirements": [
-    "R3",
-    "R4",
-    "R7"
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "packages/notifications/src/service.ts fan-out stays email/push only (line ~239); whatsapp sends are #679, no message is sent by this change"
+   "what": "Email and push delivery behaviour and skip reasons in packages/core/src/jobs/definitions/notification-deliver.ts (existing tests stay green)."
   },
   {
    "id": "P2",
-   "what": "Existing notification preference behaviour: categories' defaultChannels unchanged, so whatsapp defaults off (service.ts resolve)"
+   "what": "getWhatsAppSendTarget in packages/core/src/whatsapp-link/link.ts stays the only source of a destination; do not change its signature."
   },
   {
    "id": "P3",
-   "what": "packages/core/src/whatsapp/ chat-import domain is untouched"
+   "what": "No whatsapp in any CATEGORIES defaultChannels (packages/notifications/src/categories.ts): opt-in only (D-029 consent)."
+  },
+  {
+   "id": "P4",
+   "what": "@causedeck/notifications must not import @causedeck/core (core depends on notifications); the target is passed in."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/whatsapp-link src/__tests__/cross-tenant/services.test.ts src/__tests__/cross-tenant/registry.test.ts src/domains.test.ts src/lifecycle --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/notifications exec vitest run src/channels src/index.test.ts src/push --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/notification-deliver.test.ts src/jobs/definitions/activity-digest.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__ --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/config exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V4",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "New core domain `whatsapp-link` rather than extending `whatsapp` (chat import)",
-   "justification": "Separate concern and dependency set; domains registered via CORE_DOMAIN_DEPENDENCIES and docs/engineering/core-domains.md:211-240",
+   "choice": "Channel takes an already-resolved target from the caller (the job) rather than looking it up",
+   "justification": "core depends on notifications, so notifications cannot import core/whatsapp-link (packages/config/eslint/core-domains.js); getWhatsAppSendTarget (link.ts:295) is the sole destination source per D-029",
    "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "Hand-add RLS/grants to the generated migration",
-   "justification": "Pattern in packages/db/migrations/20261024182641_activation_event.sql and 20261024110000_portfolio.sql",
+   "choice": "Mirror the push sender: env-built, absent config disables and records a skip",
+   "justification": "notification-deliver.ts:105-117 and push 'push_disabled' skip; keeps the channel inert until #488 residency review completes",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "OTP sender is injected; no provider dependency",
-   "justification": "Provider and residency review belong to #679/#502 item 4",
-   "source": "spec"
+   "choice": "Court-hours rule reuses notification_setting.courtHoursQuiet + isQuietTime for alerts, and the evening summary is never sent inside 10:30-17:00",
+   "justification": "notification-deliver.ts:221-229 and quiet-hours.ts:5",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "Add 'whatsapp-link' to the jobs domain allow-list",
+   "justification": "jobs must call getWhatsAppSendTarget; domain imports go through index.ts (CLAUDE.md registry table)",
+   "source": "doc"
   }
  ]
 }

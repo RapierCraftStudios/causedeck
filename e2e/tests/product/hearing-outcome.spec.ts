@@ -142,7 +142,7 @@ test.describe('hearing outcome', () => {
   });
 
   test('delegated appearance: a member can submit the outcome', async ({ page, asUser, db }) => {
-    const { hearingId } = await seedHearing(db.name, { proposals: false });
+    const { hearingId } = await seedHearing(db.name, { proposals: false, delegateTo: 'junior' });
     await openOutcome(page, asUser, hearingId, { role: 'junior' });
     await page.getByLabel('What happened').fill('Appeared for the lawyer; adjourned');
     await page.getByRole('button', { name: 'No next date / disposed' }).click();

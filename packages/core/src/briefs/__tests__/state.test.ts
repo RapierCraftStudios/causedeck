@@ -1,10 +1,10 @@
 import { schema } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { assembleBrief, type BriefEvent } from '../assemble.ts';
-import { refreshBrief } from '../refresh.ts';
+import { listRefreshTargets, refreshBrief, refreshBriefTargets } from '../refresh.ts';
 import { markPrepared, setBriefNote, setCarryItem, unmarkPrepared } from '../state.ts';
 
 import { seedBrief } from './helpers.ts';
@@ -59,7 +59,9 @@ describe('brief_state', () => {
           .from(schema.obligation)
           .where(eq(schema.obligation.id, fixture.openObligationId));
         if (o === undefined) throw new Error('obligation');
-        const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = o;
+        const rest = Object.fromEntries(
+          Object.entries(o).filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k)),
+        ) as Omit<typeof o, 'id' | 'createdAt' | 'updatedAt'>;
         await s
           .insert(schema.obligation)
           .values({ ...rest, description: 'new thing', createdAt: new Date(Date.now() + 5_000) });
@@ -90,6 +92,33 @@ describe('brief_state', () => {
       expect(events).toHaveLength(1);
       const rows = await inWorkspace(tx, workspaceId, (s) => s.select().from(schema.briefState));
       expect(rows).toHaveLength(1);
+    });
+  });
+
+  it('sweep selects tomorrow, skips far dates, and refreshes idempotently (R10, R11)', async () => {
+    await withTestDb(async (tx) => {
+      const [dayRow] = await tx.execute<{ day: string }>(
+        sql`select ((now() at time zone 'Asia/Kolkata')::date + 1)::text as day`,
+      );
+      const [farRow] = await tx.execute<{ far: string }>(
+        sql`select ((now() at time zone 'Asia/Kolkata')::date + 30)::text as far`,
+      );
+      const day = dayRow?.day ?? '';
+      const far = farRow?.far ?? '';
+      const near = await seedBrief(tx, day);
+      const distant = await seedBrief(tx, far);
+      const targets = await listRefreshTargets(tx);
+      const ids = targets.map((t) => t.listingId);
+      expect(ids).toContain(near.fixture.listingId);
+      expect(ids).not.toContain(distant.fixture.listingId);
+
+      const { events, port } = collector();
+      const report = await refreshBriefTargets({ db: tx, events: port });
+      expect(report.failed).toBe(0);
+      expect(report.refreshed).toBe(report.targets);
+      const again = await refreshBriefTargets({ db: tx, events: port });
+      expect(again.stale).toBe(0);
+      expect(events).toHaveLength(report.stale);
     });
   });
 

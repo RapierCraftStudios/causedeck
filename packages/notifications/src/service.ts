@@ -514,8 +514,9 @@ const DIGEST_CATEGORIES = CATEGORY_KEYS.filter(
     key !== 'digest.daily' &&
     key !== 'digest.end_of_day' &&
     key !== 'digest.news' &&
-    !key.startsWith('reminder.e') &&
-    !key.startsWith('reminder.m') &&
+    // Court-day reminders (#64) are time-bound: batching them into a digest would defeat them.
+    key !== 'reminder.evening' &&
+    key !== 'reminder.morning' &&
     key !== 'reminder.outcome_missing' &&
     !isLockedChannel(key, 'email'),
 );

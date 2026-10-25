@@ -44,3 +44,4 @@ Continued from the checkpoint (CSP route, Semgrep rules, audit gate, gitleaks co
 ## Merge re-check
 The `turbo: command not found` (exit 127) was an environment PATH issue, not a code conflict. `pnpm exec turbo run typecheck --filter=...[origin/milestone/production-infra-scale]` passes (24/24 tasks). No code change needed.
 - Post-merge: `turbo` was not on PATH (exit 127, environment); `pnpm exec turbo run typecheck` for api, web and config (with dependencies) passes on the merged tree. No code change needed.
+- Re-verified: `pnpm exec turbo run typecheck --concurrency=2` passes full (24/24). Failure was turbo missing from PATH; no code change.

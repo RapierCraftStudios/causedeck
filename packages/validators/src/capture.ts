@@ -14,6 +14,7 @@ export const CAPTURE_CHANNELS = [
   'email',
   'ics',
   'whatsapp_export',
+  'whatsapp',
   'bulk_import',
   'manual',
 ] as const;

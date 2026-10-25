@@ -168,9 +168,10 @@ describe('row-level security catalog', () => {
         'portfolio_case',
         'portfolio_panel_advocate',
 
-        // WhatsApp number link and OTP challenge (#678).
+        // WhatsApp number link and OTP challenge (#678); inbound dedupe ledger (#680).
         'whatsapp_link',
         'whatsapp_otp_challenge',
+        'whatsapp_inbound_message',
         // Enterprise onboarding (#682).
         'sso_provider',
         'scim_token',

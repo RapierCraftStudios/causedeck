@@ -8,3 +8,4 @@ export * from './proposal-draft';
 export * from './digest-preferences';
 export * from './court-day';
 export * from './brief';
+export * from './reminders';

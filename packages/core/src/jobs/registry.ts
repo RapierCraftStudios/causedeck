@@ -9,6 +9,12 @@ import {
   activityDigestMember,
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
+import {
+  reminderEvening,
+  reminderMorning,
+  reminderOutcomeMissing,
+  reminderSchedule,
+} from './definitions/reminders.ts';
 import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
@@ -217,6 +223,10 @@ export const registry = createRegistry([
   ordersPoll,
   briefRefresh,
   briefRefreshSweep,
+  reminderSchedule,
+  reminderEvening,
+  reminderMorning,
+  reminderOutcomeMissing,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -279,6 +289,10 @@ export type JobMap = RegistryMap<
     typeof ordersPoll,
     typeof briefRefresh,
     typeof briefRefreshSweep,
+    typeof reminderSchedule,
+    typeof reminderEvening,
+    typeof reminderMorning,
+    typeof reminderOutcomeMissing,
   ]
 >;
 export type JobName = keyof JobMap;

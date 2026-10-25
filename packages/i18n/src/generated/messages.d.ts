@@ -2781,6 +2781,68 @@ export type Messages = {
       offlineAt: string;
     };
   };
+  reminders: {
+    settings: {
+      title: string;
+      description: string;
+      evening: {
+        label: string;
+        hint: string;
+      };
+      morning: {
+        label: string;
+        hint: string;
+      };
+      outcomeMissing: {
+        label: string;
+        hint: string;
+      };
+      time: string;
+      delay: string;
+      minutes: string;
+      channels: {
+        in_app: string;
+        push: string;
+        email: string;
+      };
+      loading: string;
+      error: string;
+      retry: string;
+      saved: string;
+      denied: string;
+      saving: string;
+    };
+    email: {
+      evening: {
+        subject: string;
+        preview: string;
+        heading: string;
+        body: string;
+        cta: string;
+      };
+      morning: {
+        subject: string;
+        preview: string;
+        heading: string;
+        body: string;
+        cta: string;
+      };
+      outcomeMissing: {
+        subject: string;
+        preview: string;
+        heading: string;
+        body: string;
+        cta: string;
+      };
+      note: string;
+    };
+    inApp: {
+      eveningBody: string;
+      eveningNames: string;
+      morningBody: string;
+      outcomeBody: string;
+    };
+  };
   courtInsights: {
     metaTitle: string;
     title: string;

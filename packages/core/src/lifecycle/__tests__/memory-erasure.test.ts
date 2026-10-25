@@ -72,7 +72,7 @@ async function seedMemory(
     if (extra > 0) {
       await s.execute(sql`
         insert into memory_embedding (workspace_id, item_id, content_ref, embedding)
-        select ${workspaceId}::uuid, (select id from memory_item limit 1), 'extra-' || g, ${ZERO_VECTOR}
+        select ${workspaceId}::uuid, (select id from memory_item where workspace_id = ${workspaceId}::uuid limit 1), 'extra-' || g, ${ZERO_VECTOR}
         from generate_series(1, ${extra}) g`);
     }
   });

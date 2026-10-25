@@ -60,3 +60,6 @@ The 30 memory schema symbols flagged against three admin tests are not members o
 
 ## CI purge-coverage fix
 `purge-coverage.test.ts` failed: the five memory tables were in neither `PURGE_ORDER` nor `FINALIZE_TABLES`, so workspace erasure would have skipped them. Added `memory_usage`, `memory_embedding`, `memory_proposal`, `memory_item`, `memory_pause` to `PURGE_ORDER` (`packages/core/src/lifecycle/deletion/erase.ts`), embeddings before items (FK). `src/lifecycle` tests pass (15 files).
+
+## CI memory-erasure seed fix
+`memory-erasure.test.ts` seedMemory's "extra embeddings" insert picked `(select id from memory_item limit 1)` without a workspace filter, so it could take another workspace's item (FK violation on `memory_embedding_item_fk`). It now filters by `workspace_id`. Test-only change; the file passes (4 tests).

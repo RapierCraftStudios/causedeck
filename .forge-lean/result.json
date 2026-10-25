@@ -10,7 +10,7 @@
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "packages/billing/src/referral.ts"
+   "evidence": "packages/billing/src/referral.ts (grantReferralCredit, addFreeMonths); packages/core/src/shares/view.ts applies the month to each side's subscription period end"
   },
   {
    "id": "R3",

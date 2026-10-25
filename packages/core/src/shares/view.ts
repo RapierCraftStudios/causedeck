@@ -1,9 +1,16 @@
 // The recipient side of a brief share (#507): view by token (no account needed), claim after
 // sign-in (the referral), import the matter into the recipient's workspace (activation, which earns
 // the credit). The one cross-workspace read is `app_brief_share_view`, by token hash only.
-import { schema, type Queryable } from '@causedeck/db';
-import { decideReferralCredit, type ReferralDenial } from '@causedeck/billing/referral';
-import { and, count, eq, gt, isNull, sql } from 'drizzle-orm';
+import { schema, type Queryable, withWorkspace } from '@causedeck/db';
+import { TERMINAL_SUBSCRIPTION_STATUSES } from '@causedeck/validators/plans';
+import { fromSubscriptionRow } from '@causedeck/billing';
+import { SUBSCRIPTION_STATUSES, type SubscriptionStatus } from '@causedeck/billing/plans';
+import {
+  addFreeMonths,
+  grantReferralCredit,
+  type ReferralDenial,
+} from '@causedeck/billing/referral';
+import { and, count, eq, gt, isNull, notInArray, sql } from 'drizzle-orm';
 
 import { recordActivation } from '../activation/index.ts';
 import { createMatter, type GraphActor, type MatterGraphDeps } from '../matter-graph/index.ts';
@@ -101,17 +108,18 @@ export async function importSharedMatter(
     title: row.snapshot.matterTitle,
     synopsis: row.snapshot.synopsis,
   });
-  const credit = await activateReferral(deps.db, actor.userId, row, now);
+  const credit = await activateReferral(deps.db, actor.userId, actor.workspaceId, row, now);
   return { matterId: matter.id, credit };
 }
 
 async function activateReferral(
   db: Queryable,
   inviteeUserId: string,
+  inviteeWorkspaceId: string,
   share: ShareRow,
   now: Date,
 ): Promise<ImportedShare['credit']> {
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [ref] = await tx
       .update(schema.referral)
       .set({ activatedAt: now })
@@ -139,19 +147,66 @@ async function activateReferral(
           gt(schema.referralCredit.createdAt, yearAgo),
         ),
       );
-    const decision = decideReferralCredit({
-      referrerUserId: ref.referrerUserId,
-      inviteeUserId,
-      inviteeCreatedAt: invitee?.createdAt ?? new Date(0),
-      shareCreatedAt: new Date(share.created_at),
-      alreadyCredited: false,
-      referrerCreditedLastYear: credited?.n ?? 0,
-    });
-    if (!decision.grant) return { granted: false, reason: decision.reason } as const;
+    const grant = grantReferralCredit(
+      {
+        referrerUserId: ref.referrerUserId,
+        inviteeUserId,
+        inviteeCreatedAt: invitee?.createdAt ?? new Date(0),
+        shareCreatedAt: new Date(share.created_at),
+        alreadyCredited: false,
+        referrerCreditedLastYear: credited?.n ?? 0,
+      },
+      { referrer: null, invitee: null },
+    );
+    if (!grant.grant) return { granted: false, reason: grant.reason } as const;
     await tx
       .insert(schema.referralCredit)
-      .values(decision.credits.map((c) => ({ referralId: ref.id, ...c })))
+      .values(
+        grant.applications.map(({ side, userId, months }) => ({
+          referralId: ref.id,
+          side,
+          userId,
+          months,
+        })),
+      )
       .onConflictDoNothing();
-    return { granted: true, months: decision.credits[0].months } as const;
+    return { granted: true, months: grant.applications[0].months, referralId: ref.id } as const;
   });
+  if (result?.granted !== true) return result;
+  // Apply each side's free month in that side's own workspace scope (subscription is RLS-isolated).
+  // A side with no live subscription keeps its credit pending (`applied_at` null).
+  const sides = [
+    { side: 'referrer', workspaceId: share.workspace_id },
+    { side: 'invitee', workspaceId: inviteeWorkspaceId },
+  ] as const;
+  for (const target of sides) {
+    await withWorkspace(db, { workspaceId: target.workspaceId }, async (tx) => {
+      const [row] = await tx
+        .select()
+        .from(schema.subscription)
+        .where(notInArray(schema.subscription.status, [...TERMINAL_SUBSCRIPTION_STATUSES]));
+      if (row === undefined || !(SUBSCRIPTION_STATUSES as readonly string[]).includes(row.status)) {
+        return;
+      }
+      const next = addFreeMonths(
+        fromSubscriptionRow({ ...row, status: row.status as SubscriptionStatus }),
+        result.months,
+      );
+      if (next === null) return;
+      await tx
+        .update(schema.subscription)
+        .set({ currentPeriodEnd: next.currentPeriodEnd })
+        .where(eq(schema.subscription.id, row.id));
+      await tx
+        .update(schema.referralCredit)
+        .set({ appliedAt: now })
+        .where(
+          and(
+            eq(schema.referralCredit.referralId, result.referralId),
+            eq(schema.referralCredit.side, target.side),
+          ),
+        );
+    });
+  }
+  return { granted: true, months: result.months };
 }

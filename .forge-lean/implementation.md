@@ -38,3 +38,6 @@ Share page exported `metadata`, colliding with apps/web/app/layout.tsx; replaced
 
 ## Stale-list follow-up
 Flagged tests do not enumerate the new schema symbols or growthReferralFunnel; recorded as not_members in result.json (no test edits needed).
+
+## Fix: R2 grantReferralCredit
+- billing `grantReferralCredit` (policy + extended subscription per side) and `addFreeMonths` added; core applies currentPeriodEnd +1 month per side in that side workspace scope (withWorkspace), marking referral_credit.applied_at. A side with no live subscription stays pending (applied_at null).

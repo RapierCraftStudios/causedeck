@@ -9,7 +9,7 @@
    "id": "R1b",
    "quote": "Share a brief or handover as a secure, expiring link",
    "disposition": "defer",
-   "why": "handover conflicts with #71"
+   "why": "Conflicts with #71 internal-only acceptance criterion; needs product decision and the handover entity (#71 open)"
   },
   {
    "id": "R2",
@@ -25,7 +25,8 @@
    "id": "R4",
    "quote": "A shared brief link works for a non-user, expires, and converts to a sign-up with the referral credited. [type:e2e]",
    "disposition": "deliver",
-   "verify": "out_of_band"
+   "verify": "out_of_band",
+   "evidence": "Playwright e2e runs in CI (ship PRs and nightly); in lane covered by integration tests V1"
   },
   {
    "id": "R5",
@@ -37,27 +38,111 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/share.ts"
+   "path": "packages/db/src/schema/share.ts",
+   "change": "brief_share (workspace_id, token_hash, snapshot jsonb of the brief only, expires_at, revoked_at, created_by) and referral_credit tables; export from schema index; add migration SQL with RLS on workspace_id table, update db index/RLS tests and seeders",
+   "requirements": [
+    "R1",
+    "R2",
+    "R5"
+   ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/shares/index.ts"
+   "path": "packages/core/src/shares/index.ts",
+   "change": "createBriefShare (assembleBrief snapshot, hashed 32-byte token, TTL, rate limit), revokeBriefShare, viewBriefShare (public, token only, returns snapshot only), importSharedMatter, recordShareAccepted; cross-tenant registry entries and cases; CORE_DOMAIN_DEPENDENCIES + docs/engineering/core-domains.md",
+   "requirements": [
+    "R1",
+    "R3",
+    "R5"
+   ]
   },
   {
    "id": "D3",
-   "path": "packages/billing/src/referral.ts"
+   "path": "packages/billing/src/referral.ts",
+   "change": "grantReferralCredit (free month both sides, idempotent per invitee, per-referrer cap and self-referral denial) exported via index, with tests",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
   },
   {
    "id": "D4",
-   "path": "apps/web/app/(public)/share/[token]/page.tsx"
+   "path": "apps/web/app/(public)/share/[token]/page.tsx",
+   "change": "public read-only brief view, expired/revoked/invalid states, sign-up CTA carrying referral, import offer after sign-in; owner share/revoke 'use server' actions registered in apps/web/__tests__/cross-tenant-actions.test.ts; i18n namespace + catalog test",
+   "requirements": [
+    "R1",
+    "R4",
+    "R5"
+   ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/activation/funnel.ts"
+   "path": "packages/core/src/activation/funnel.ts",
+   "change": "funnel counts for invites sent, accepted, activated (channel referral); surface on apps/admin/app/(console)/growth/page.tsx",
+   "requirements": [
+    "R3"
+   ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/shares/__tests__/shares.test.ts"
+   "path": "packages/core/src/shares/__tests__/shares.test.ts",
+   "change": "integration tests: non-user view, expiry, revoke, no data beyond snapshot, rate limit, referral credited once",
+   "requirements": [
+    "R4",
+    "R5"
+   ]
+  }
+ ],
+ "preserve": [
+  {
+   "id": "P1",
+   "what": "Workspace invitations flow packages/core/src/workspaces/invitations.ts and apps/web/app/(public)/invite/[token]"
+  },
+  {
+   "id": "P2",
+   "what": "assembleBrief behaviour and its read-only barrel packages/core/src/briefs/index.ts (no export function added there)"
+  },
+  {
+   "id": "P3",
+   "what": "Existing activation_event steps/channels in packages/db/src/schema/activation.ts (additive only)"
+  }
+ ],
+ "validate": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/shares src/activation src/briefs --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/billing exec vitest run src/__tests__ --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "K1",
+   "choice": "Share only a snapshot of the assembled brief; the public page never queries matter tables",
+   "justification": "Satisfies 'no matter data beyond the shared item'; assembleBrief at packages/core/src/briefs/assemble.ts:39 is derived/read-only (ADR 0038)",
+   "source": "doc"
+  },
+  {
+   "id": "K2",
+   "choice": "Handover sharing deferred; brief only",
+   "justification": "#71 AC says handover is workspace-internal with no share link; needs product decision",
+   "source": "spec"
+  },
+  {
+   "id": "K3",
+   "choice": "Copy hashed-token/TTL/rate-limit pattern; no new workspace dependency (core already depends on billing)",
+   "justification": "packages/core/src/workspaces/invitations.ts:25-48; packages/core/package.json:61",
+   "source": "precedent"
   }
  ]
 }

@@ -2,6 +2,7 @@
 // activated, and the abuse limits that decide whether a referral earns anything. Pure policy: the
 // referral rows and the ledger live in `@causedeck/core/shares`, which asks this module.
 
+import { TERMINAL_STATES, type SubscriptionSnapshot } from './state-machine';
 /** The free months each side earns. */
 export const REFERRAL_CREDIT_MONTHS = 1;
 
@@ -55,4 +56,45 @@ export function decideReferralCredit(facts: ReferralFacts): ReferralDecision {
       { side: 'invitee', userId: facts.inviteeUserId, months: REFERRAL_CREDIT_MONTHS },
     ],
   };
+}
+
+/** A side's subscription before the credit, or null when that side has none yet (credit stays pending). */
+export type ReferralSideSubscription = SubscriptionSnapshot | null;
+
+export interface ReferralApplication extends ReferralCreditGrant {
+  /** The subscription with the free months added, or null when there is no live one to extend. */
+  next: SubscriptionSnapshot | null;
+}
+
+export type ReferralGrant =
+  | { grant: true; applications: [ReferralApplication, ReferralApplication] }
+  | { grant: false; reason: ReferralDenial };
+
+/** The snapshot with its billing period (and so its next charge) pushed out by whole months. */
+export function addFreeMonths(
+  snapshot: SubscriptionSnapshot,
+  months: number,
+): SubscriptionSnapshot | null {
+  if (TERMINAL_STATES.includes(snapshot.state) || snapshot.currentPeriodEnd === null) return null;
+  const end = new Date(snapshot.currentPeriodEnd.getTime());
+  end.setUTCMonth(end.getUTCMonth() + months);
+  return { ...snapshot, currentPeriodEnd: end };
+}
+
+/**
+ * Grant a free month to both sides: the policy (`decideReferralCredit`: idempotent per invitee,
+ * per-referrer cap, self-referral denial) and the subscription each side ends up with. The caller
+ * persists `next` and marks the credit applied; a side with no live subscription stays pending.
+ */
+export function grantReferralCredit(
+  facts: ReferralFacts,
+  subscriptions: { referrer: ReferralSideSubscription; invitee: ReferralSideSubscription },
+): ReferralGrant {
+  const decision = decideReferralCredit(facts);
+  if (!decision.grant) return decision;
+  const apply = (c: ReferralCreditGrant): ReferralApplication => {
+    const current = subscriptions[c.side];
+    return { ...c, next: current === null ? null : addFreeMonths(current, c.months) };
+  };
+  return { grant: true, applications: [apply(decision.credits[0]), apply(decision.credits[1])] };
 }

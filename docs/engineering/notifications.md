@@ -197,3 +197,9 @@ link, or counts and a link, never a title, body or party name.
   retried, so it cannot repeat the email.
 - Env: `WHATSAPP_PHONE_NUMBER_ID` and `WHATSAPP_ACCESS_TOKEN` together (absent: disabled),
   optional `WHATSAPP_API_VERSION`. The provider's residency and processor review is #488.
+- Link code (#711): the code that links a member's number goes out as the provider's authentication
+  template (`WHATSAPP_OTP_TEMPLATE`, `channels/otp.ts`, `createWhatsAppOtpSender`). The real send
+  needs the provider env above plus `WHATSAPP_OTP_TEMPLATE_NAME`, set only once the provider approved
+  the template (a human step, #708, #488). Without it: the console sender outside production (logs
+  the masked number, never the code) and a refusal in production, so the member sees an error.
+  Sends are limited per number (5/hour) and per member (10/hour) plus a 60 second resend cooldown.

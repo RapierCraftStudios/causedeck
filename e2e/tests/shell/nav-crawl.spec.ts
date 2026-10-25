@@ -107,12 +107,13 @@ test.describe('shell nav crawl', () => {
   });
 
   test('empty-state actions lead to real pages', async ({ page, asUser }) => {
-    // `today` is still a placeholder page (matters became a real page in #388); its action is Courts.
-    await openShell(page, asUser, { path: 'today' });
-    const action = page.locator('[data-route="today"] [data-empty-action]');
+    // `today` is the Court-Day Board (#59) and `matters` a real page (#388); `obligations` is still
+    // a placeholder, and its action is Matters.
+    await openShell(page, asUser, { path: 'obligations' });
+    const action = page.locator('[data-route="obligations"] [data-empty-action]');
     await expect(action).toBeVisible();
     await action.click();
-    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/courts$`));
-    await expectRealPage(page, `/w/${SHELL_WORKSPACE}/courts`);
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/matters$`));
+    await expectRealPage(page, `/w/${SHELL_WORKSPACE}/matters`);
   });
 });

@@ -2,7 +2,11 @@ import { Button } from '@causedeck/ui/button';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { getSession } from '../../../../lib/auth.ts';
 import { signInPathFor } from '../../../../lib/safe-next.ts';
+
+import { importSharedBriefAction } from './actions.ts';
+import { ImportForm } from './import-form.tsx';
 
 export function generateMetadata(): Metadata {
   return { title: 'Shared brief', robots: { index: false, follow: false } };
@@ -38,6 +42,7 @@ export default async function SharePage({ params }: SharePageProps) {
   }
 
   const { snapshot } = view;
+  const session = await getSession();
   const path = `/share/${encodeURIComponent(token)}`;
   return (
     <main className="mx-auto max-w-xl space-y-4 p-6">
@@ -71,9 +76,13 @@ export default async function SharePage({ params }: SharePageProps) {
       <p className="text-muted-foreground text-sm">
         Shared as of {snapshot.assembledAt}. Link expires {view.expiresAt.toDateString()}.
       </p>
-      <Button asChild size="lg">
-        <Link href={signInPathFor(path)}>Join CauseDeck and import this matter</Link>
-      </Button>
+      {session ? (
+        <ImportForm token={token} action={importSharedBriefAction} />
+      ) : (
+        <Button asChild size="lg">
+          <Link href={signInPathFor(path)}>Join CauseDeck and import this matter</Link>
+        </Button>
+      )}
     </main>
   );
 }

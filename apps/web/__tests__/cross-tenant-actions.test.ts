@@ -118,6 +118,7 @@ const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
+const shareActions = await import('../app/(public)/share/[token]/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -136,6 +137,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   prepareTransferAction: members,
   confirmTransferAction: members,
   acceptInvitationAction: invite,
+  importSharedBriefAction: shareActions,
   createWorkspaceAction: onboarding,
   setLocaleAction: account,
   updateAccountProfileAction: account,
@@ -1371,6 +1373,13 @@ describe('cross-tenant server actions', () => {
     const before = await snapshotA();
     const result = await action('acceptInvitationAction')({ token: aInvitation.token });
     expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'EMAIL_MISMATCH' } });
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('importSharedBriefAction with a token that names no share imports nothing and leaves A alone', async () => {
+    const before = await snapshotA();
+    const result = await action('importSharedBriefAction')({ token: 'not-a-real-token-at-all' });
+    expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'INVALID' } });
     expect(await snapshotA()).toEqual(before);
   });
 

@@ -1,8 +1,25 @@
-# Court-day freeze and deploys
+# Runbook: court-day freeze and deploys
+
+Owner: Engineering lead
+Last drilled: not yet drilled
+
+## Purpose
+
+Avoid deploys and risky maintenance while advocates rely on CauseDeck. Production deploys stop during court hours so a release never lands while users are in a hearing.
+
+## Triggers
+
+A deploy, migration, key rotation or restore drill is planned inside a court-day window, or an incident happens inside one (every `window=court-day` alert is handled as P0, see [on-call](on-call.md)). Scheduled key rotations ([key-rotation](key-rotation.md)) and drills run between 10:30 and 18:00 IST.
+
+## Roles
+
+Engineering lead decides exceptions; the on-call primary executes.
 
 Production deploys stop during court hours so a release never lands while users are in a hearing.
 
-## Windows (Asia/Kolkata, start inclusive, end exclusive)
+## Steps
+
+### Windows (Asia/Kolkata, start inclusive, end exclusive)
 
 | Window          | Frozen            |
 | --------------- | ----------------- |
@@ -12,7 +29,7 @@ Production deploys stop during court hours so a release never lands while users 
 Every other time is open, every day of the week. The clock is the runner's, never an input
 (`.github/actions/freeze-guard/freeze.ts`). Staging is not frozen; it records the same check.
 
-## Normal path
+### Normal path
 
 1. Merge to `staging`: `deploy-staging.yml` builds, signs, deploys and smokes it.
 2. Within 24 h, run `deploy-prod.yml` (or push a `v*` tag) with the same full sha.
@@ -33,12 +50,12 @@ Migrations in a deploy must be expand-only. `DROP COLUMN`, `DROP TABLE` and `SET
 rejected unless the file carries a `-- contract` tag, which belongs in the release after the expand
 release has been live.
 
-## Planning
+### Planning
 
 PRs labelled `deploy:prod` get a warning comment from `freeze-warning.yml` when a freeze is active or
 starts within two hours. Plan merges for open windows.
 
-## Override etiquette (P0 only)
+### Override etiquette (P0 only)
 
 Use `hotfix-prod.yml` only for an active P0 that cannot wait for the next open window.
 
@@ -52,6 +69,8 @@ Use `hotfix-prod.yml` only for an active P0 that cannot wait for the next open w
 
 ## Communications
 
+No automated outbound messages go to third parties; notices are sent by a human after approval.
+
 - Planned deploy blocked by the freeze: say nothing to users; post the next open window in the
   release thread.
 - Hotfix during court hours: post in the status channel before the deploy ("fixing X, deploying at
@@ -60,9 +79,21 @@ Use `hotfix-prod.yml` only for an active P0 that cannot wait for the next open w
 - Failed deploy with rollback: post that the release was rolled back and which sha is live.
 - Rollback failed: declare an incident and notify users through the status page.
 
-## Hot-deployable changes during freeze
+### Hot-deployable changes during freeze
 
 Only changes designed to be hot-deployable go out during a freeze, and they do not use this
 pipeline: adapters and feature flags change through their own safe paths (flag toggles in the admin
 console, adapter configuration through its audited settings). Anything that needs a new image is a
 deploy and is frozen like any other.
+
+## Evidence
+
+The freeze-guard job output, the `release.json` record and, for any in-window change, the approval in the incident ticket.
+
+## Verification
+
+The deploy pipeline refuses a deploy inside a window without the hotfix override (`freeze-guard`; `.github/actions/freeze-guard/test/freeze.test.ts`).
+
+## After action
+
+Review every in-window change and every hotfix override in the weekly review.

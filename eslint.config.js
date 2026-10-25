@@ -16,6 +16,8 @@ export default [
       'infra/monitoring/test/**',
       // Semgrep rule fixtures are deliberately unsafe snippets outside every tsconfig (#104).
       'infra/security/semgrep/fixtures/**',
+      'infra/runbooks/test/**',
+      'infra/scripts/runbooks/**',
     ],
   },
   {

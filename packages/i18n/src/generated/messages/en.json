@@ -1315,7 +1315,8 @@
         "court_day": "Court day",
         "export": "Export",
         "support": "Support",
-        "shell": "Workspace areas"
+        "shell": "Workspace areas",
+        "appearance": "Appearances"
       },
       "actions": {
         "workspace": {
@@ -1381,6 +1382,9 @@
         },
         "invoices": {
           "read": "Download invoices"
+        },
+        "appearance": {
+          "assign": "Assign appearances to members"
         }
       },
       "settings": {
@@ -2650,6 +2654,38 @@
         "high": "High confidence"
       },
       "updated": "Board read at {time}"
+    }
+  },
+  "delegation": {
+    "title": "Tomorrow's plan",
+    "metaTitle": "Tomorrow's plan",
+    "description": "Assign tomorrow's appearances. Suggestions are proposals; nothing changes until you accept.",
+    "empty": "No appearances to assign for tomorrow",
+    "loading": "Loading the plan",
+    "error": "Could not load the plan.",
+    "retry": "Try again",
+    "denied": "You do not have access to the tomorrow plan. Ask the workspace owner.",
+    "offline": "You are offline. Assignments are saved and will sync.",
+    "willSync": "Will sync",
+    "conflictNotice": "{name} changed this assignment first. Showing their change.",
+    "assignee": "Assignee",
+    "assign": "Assign",
+    "choose": "Choose a member",
+    "unassigned": "Unassigned",
+    "clash": "Clash",
+    "suggested": "Suggested: {name}",
+    "acceptAll": "Accept all suggestions",
+    "acceptAllTitle": "Accept all suggestions?",
+    "acceptAllBody": "{count, plural, one {# assignment} other {# assignments}} will be made and the members notified in the app.",
+    "confirm": "Accept",
+    "cancel": "Cancel",
+    "assigned": "Assigned to {name}",
+    "restricted": "{name} cannot see this restricted matter.",
+    "grantAccess": "Grant access and assign",
+    "outcomes": {
+      "label": "Outcomes",
+      "member": "{name}: {done} of {total} outcomes in",
+      "toast": "{name} confirmed an outcome"
     }
   },
   "courtInsights": {

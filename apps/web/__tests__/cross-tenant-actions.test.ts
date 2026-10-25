@@ -254,6 +254,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   assignAppearanceAction: planActions,
   acceptSuggestionAction: planActions,
   acceptAllSuggestionsAction: planActions,
+  outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
 };
@@ -736,6 +737,7 @@ function inputs(workspaceId: string): Record<string, unknown> {
         },
       ],
     },
+    outcomesLiveAction: { workspaceId, date: '2026-10-26' },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },

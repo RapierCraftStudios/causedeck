@@ -1317,6 +1317,7 @@ export type Messages = {
         export: string;
         support: string;
         shell: string;
+        appearance: string;
       };
       actions: {
         workspace: {
@@ -1382,6 +1383,9 @@ export type Messages = {
         };
         invoices: {
           read: string;
+        };
+        appearance: {
+          assign: string;
         };
       };
       settings: {
@@ -2651,6 +2655,38 @@ export type Messages = {
         high: string;
       };
       updated: string;
+    };
+  };
+  delegation: {
+    title: string;
+    metaTitle: string;
+    description: string;
+    empty: string;
+    loading: string;
+    error: string;
+    retry: string;
+    denied: string;
+    offline: string;
+    willSync: string;
+    conflictNotice: string;
+    assignee: string;
+    assign: string;
+    choose: string;
+    unassigned: string;
+    clash: string;
+    suggested: string;
+    acceptAll: string;
+    acceptAllTitle: string;
+    acceptAllBody: string;
+    confirm: string;
+    cancel: string;
+    assigned: string;
+    restricted: string;
+    grantAccess: string;
+    outcomes: {
+      label: string;
+      member: string;
+      toast: string;
     };
   };
   courtInsights: {

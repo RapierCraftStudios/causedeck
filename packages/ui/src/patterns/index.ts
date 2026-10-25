@@ -115,3 +115,4 @@ export {
   type MemoryScopeMeta,
 } from './memory-card/memory-card';
 export * from './states';
+export * from './delegation';

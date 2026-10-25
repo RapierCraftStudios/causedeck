@@ -49,3 +49,6 @@ Pure IST freeze logic (`freeze.ts`) shared by the composite action and the warni
 `turbo: command not found` (exit 127) was a PATH problem on the check host, not a merge conflict. No code change. Verified with tsc on .github/actions/freeze-guard and node:test for freeze, check-migrations and deploy-workflows (46 pass, 0 fail).
 
 Re-checked after the second merge of the base (restore-drill, worker registry tests): `pnpm exec turbo run typecheck --concurrency=2` passes 24/24; exit 127 was `turbo` missing from the check shell's PATH, not a code conflict, so nothing was renamed.
+
+## Merge-fix note
+The reported `turbo: command not found` (exit 127) was an environment/PATH failure, not a merge conflict: no duplicate keys or symbols. `pnpm exec turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes (no workspace package changed), freeze-guard tests pass and its tsconfig typechecks. No code changes needed.

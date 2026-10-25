@@ -52,7 +52,11 @@ vi.mock('../lib/auth.ts', () => ({
 }));
 vi.mock('../lib/env.ts', () => ({
   isProd: () => false,
-  serverEnv: () => ({ APP_URL: 'http://localhost:3000', EMAIL_PROVIDER: 'console' }),
+  serverEnv: () => ({
+    APP_URL: 'http://localhost:3000',
+    EMAIL_PROVIDER: 'console',
+    BETTER_AUTH_SECRET: { reveal: () => 'cross-tenant-test-secret-0123456789' },
+  }),
 }));
 vi.mock('../src/health.ts', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -98,6 +102,7 @@ const reminders = await import('../app/(app)/w/[slug]/settings/notifications/rem
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
+const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
@@ -122,6 +127,8 @@ const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
+const shareActions = await import('../app/(public)/share/[token]/actions.ts');
+const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -140,6 +147,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   prepareTransferAction: members,
   confirmTransferAction: members,
   acceptInvitationAction: invite,
+  importSharedBriefAction: shareActions,
+  createBriefShareAction: briefShareActions,
+  revokeBriefShareAction: briefShareActions,
   createWorkspaceAction: onboarding,
   setLocaleAction: account,
   updateAccountProfileAction: account,
@@ -164,6 +174,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  saveSsoProviderAction: sso,
+  deleteSsoProviderAction: sso,
+  verifySsoDomainAction: sso,
   requestClerkSetupApprovalAction: welcome,
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
@@ -543,6 +556,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       advocatesCanInvite: false,
       ownersSeeRestrictedMatters: false,
     },
+    saveSsoProviderAction: {
+      workspaceId,
+      protocol: 'oidc',
+      issuer: 'https://idp.example.com',
+      domain: `xt-${workspaceId.slice(0, 8)}.example.com`,
+      enabled: false,
+      settings: { clientId: 'probe', clientSecret: 'probe-secret' },
+    },
+    deleteSsoProviderAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
+    verifySsoDomainAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
     updateWorkspacePrivacyAction: {
       workspaceId,
       sensitiveDefaultRestricted: false,
@@ -752,6 +775,13 @@ function inputs(workspaceId: string): Record<string, unknown> {
       ],
     },
     outcomesLiveAction: { workspaceId, date: '2026-10-26' },
+    // Brief sharing (#507): ub, owner of B, may not share A's brief or revoke A's link.
+    createBriefShareAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      expiresInDays: 7,
+    },
+    revokeBriefShareAction: { workspaceId, shareId: crypto.randomUUID() },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
@@ -1114,6 +1144,26 @@ describe('cross-tenant server actions', () => {
     });
   });
 
+  it('saveSsoProviderAction and deleteSsoProviderAction under B’s own workspace change only B', async () => {
+    const before = await snapshotA();
+    const saved = await action('saveSsoProviderAction')(inputs(t.b.id).saveSsoProviderAction);
+    expect(saved).toMatchObject({
+      ok: true,
+      data: { protocol: 'oidc', enabled: false, domainVerified: false },
+    });
+    // The result never carries the provider's settings.
+    expect(JSON.stringify(saved)).not.toContain('probe-secret');
+    expect(await snapshotA()).toEqual(before);
+    const { id } = (saved as { data: { id: string } }).data;
+    expect(
+      await action('deleteSsoProviderAction')({ workspaceId: t.b.id, providerId: id }),
+    ).toEqual({
+      ok: true,
+      data: { id },
+    });
+    expect(await snapshotA()).toEqual(before);
+  });
+
   it('updateWorkspacePrivacyAction under B’s own workspace changes only B', async () => {
     const before = await snapshotA();
     const privacyOfA = () =>
@@ -1453,6 +1503,57 @@ describe('cross-tenant server actions', () => {
     const result = await action('acceptInvitationAction')({ token: aInvitation.token });
     expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'EMAIL_MISMATCH' } });
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('importSharedBriefAction with a token that names no share imports nothing and leaves A alone', async () => {
+    const before = await snapshotA();
+    const result = await action('importSharedBriefAction')({ token: 'not-a-real-token-at-all' });
+    expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'INVALID' } });
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('brief share actions under B’s workspace cannot share A’s listing or revoke A’s link (#507)', async () => {
+    const aShare = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => {
+      const [row] = await tx
+        .insert(schema.briefShare)
+        .values({
+          workspaceId: t.a.id,
+          tokenHash: `xt-${crypto.randomUUID()}`,
+          snapshot: {
+            matterTitle: 'XT',
+            synopsis: null,
+            stage: null,
+            lastOrder: [],
+            lastHearing: null,
+            openObligations: [],
+            assembledAt: new Date().toISOString(),
+          },
+          createdBy: t.ua,
+          expiresAt: new Date(Date.now() + 86_400_000),
+        })
+        .returning({ id: schema.briefShare.id });
+      if (row === undefined) throw new Error('seed share');
+      return row.id;
+    });
+    const sharesOfA = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.briefShare),
+      );
+    const before = await sharesOfA();
+    const created = await action('createBriefShareAction')({
+      workspaceId: t.b.id,
+      listingId: t.a.rows.listing?.listingId,
+      expiresInDays: 7,
+    });
+    expect(code(created)).toBe('NOT_FOUND');
+    const revoked = await action('revokeBriefShareAction')({
+      workspaceId: t.b.id,
+      shareId: aShare,
+    });
+    expect(code(revoked)).toBe('NOT_FOUND');
+    const after = await sharesOfA();
+    expect(after).toEqual(before);
+    expect(after.find((row) => row.id === aShare)?.revokedAt).toBeNull();
   });
 
   it('createWorkspaceAction and setLocaleAction touch only the caller’s own data', async () => {

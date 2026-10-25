@@ -129,6 +129,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Brief state (#60).
   brief_state: DB_TABLES_TEST,
 
+  // Brief sharing (#507).
+  brief_share: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 
@@ -255,6 +257,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,
+  // SSO providers (#683)
+  listSsoProviders: empty,
+  saveSsoProvider: denies,
+  deleteSsoProvider: denies,
+  verifySsoDomain: denies,
   // privacy settings (#286)
   getPrivacySettings: empty,
   updateWorkspacePrivacy: denies,

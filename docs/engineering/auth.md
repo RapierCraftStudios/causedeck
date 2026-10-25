@@ -179,10 +179,47 @@ Rate limiting is always on, with storage `database` (the `rate_limit` table).
 |---|---|
 | Magic link: 20 requests per IP per hour | Better Auth `customRules['/sign-in/magic-link']` |
 | Magic link: 5 requests per email per 15 minutes | a `hooks.before` counter in `rate_limit` under `magic-link:email:<sha256(lowercased email)>` |
+| SSO sign-in: 20 starts per IP per hour | Better Auth `customRules['/sign-in/sso']` (also the SSO callback paths) |
+| SSO sign-in: 10 starts per email domain per 15 minutes | a `hooks.before` counter in `rate_limit` under `sso:domain:<sha256(lowercased domain)>` |
 | Everything else | Better Auth defaults (100 per 10 s; 3 per 10 s on other `/sign-in*` paths) |
 
 Both magic-link limits answer `429 { "message": "Too many requests. Please try again later." }`.
 The client IP comes from `x-forwarded-for`, which must be set by our own proxy.
+
+## Single sign-on (#683)
+
+Per-organisation SSO uses the Better Auth `@better-auth/sso` plugin (OIDC and SAML).
+
+- **Providers.** Rows of `sso_provider` (#682), edited only by workspace owners through the core
+  service `@causedeck/core/workspaces` (`saveSsoProvider`, `deleteSsoProvider`) and the page
+  `/w/<slug>/settings/sso`. The plugin's own registration, listing and delete endpoints answer 404.
+- **Domain lookup.** The plugin's `ssoProvider` model is answered by the keyed SECURITY DEFINER
+  function `app_sso_provider_lookup` (migration `20261025115033`, the `app_slug_taken` pattern):
+  one enabled provider with a verified domain for an exact provider id or domain, never a list. The app role has no
+  SELECT on `sso_provider` and no view over it, so RLS and the "config is never exported" rule hold;
+  the settings are read only to finish a sign-in for a provider named by its id or the typed
+  domain. Unknown and disabled domains fail identically, so the form cannot enumerate
+  organisations.
+- **Secrets.** The OIDC client secret is sealed (AES-256-GCM, key derived from `BETTER_AUTH_SECRET`,
+  bound to the workspace and provider id) before it is stored in `sso_provider.config`, and opened
+  only inside the sign-in lookup. No API returns `config`, and the export excludes it. SAML keeps
+  only the IdP's public certificate. For SAML the plugin verifies the assertion signature
+  (`wantAssertionsSigned`) and the audience (this SP's entity id); we do not relax either.
+- **Domain binding and takeover guard.** A provider signs nobody in until its domain is verified:
+  the owner publishes the DNS TXT record `_better-auth-token-<providerId>.<domain>` (the plugin's
+  convention) and `verifySsoDomain` checks it (owner-only, audited as `sso.domain_verified`). Only
+  one organisation can hold a verified domain (partial unique index), changing the domain drops the
+  proof, and a provider cannot be enabled before it. The plugin runs with
+  `domainVerification.enabled`, so it links an existing account by email only when the IdP-asserted
+  email is at the provider's verified domain. On top, `databaseHooks` on `user.create` and
+  `account.create` refuse any user or account created or linked on an SSO return whose email is
+  outside that domain, so no provider can mint or capture an account at another organisation's or a
+  personal address.
+- **Provisioning.** A first SSO sign-in creates the user and makes them a `viewer` of the
+  organisation, never an owner; an owner raises the role afterwards.
+- **Audit.** Provider changes write `sso.provider_created`, `sso.provider_updated` and
+  `sso.provider_deleted` and `sso.domain_verified` (fail-closed, metadata without settings). Sign-in success and failure go
+  through the `SecurityEventRecorder` with method `sso`.
 
 ## Threat notes
 

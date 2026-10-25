@@ -53,3 +53,6 @@ CI lint failed on Prettier for migrations/meta/_journal.json (missing trailing n
 
 ### Stale-list pass
 Checked the 10 listed web/admin tests: none enumerates db schema exports or core domains (they are UI/nav/action fixtures), so all 18 symbols are recorded as not_members in result.json. No code change.
+
+### Lint fix (third)
+CI log unavailable (url only). Re-ran ESLint (type-aware, 6 GB heap) on all changed files in core, db, notifications, web, config, plus `packages/config` and core whatsapp-link/cross-tenant/lifecycle dirs, and Prettier on changed files: all clean. No code change; removed stray untracked `.eslintcache` files. lane-check.sh does not exist on this host. A full-monorepo `eslint .` was not run (host rule).

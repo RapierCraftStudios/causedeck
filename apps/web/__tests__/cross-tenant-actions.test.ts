@@ -129,6 +129,7 @@ const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
 const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
+const offlineActions = await import('../app/(app)/w/[slug]/_offline/actions.ts');
 const shareActions = await import('../app/(public)/share/[token]/actions.ts');
 const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
@@ -152,6 +153,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   confirmTransferAction: members,
   acceptInvitationAction: invite,
   importSharedBriefAction: shareActions,
+  pullCourtDaySnapshotAction: offlineActions,
+  pushOutboxAction: offlineActions,
   createBriefShareAction: briefShareActions,
   revokeBriefShareAction: briefShareActions,
   createWorkspaceAction: onboarding,
@@ -549,6 +552,26 @@ function inputs(workspaceId: string): Record<string, unknown> {
       currentItem: 3,
     },
     clearCurrentItemAction: { workspaceId, hallId: PROBE_HALL_ID, listDate: '2030-01-02' },
+    // Offline pull and push (#743): ub may not pull A's days nor push edits to A's matters.
+    pullCourtDaySnapshotAction: { workspaceId, from: '2030-01-01', to: '2030-01-07' },
+    pushOutboxAction: {
+      workspaceId,
+      items: [
+        {
+          key: 'xt-probe-date',
+          kind: 'next_date',
+          proceedingId: t.a.rows.proceeding?.proceedingId,
+          date: '2031-05-05',
+          expectedCanonicalDate: null,
+        },
+        {
+          key: 'xt-probe-note',
+          kind: 'brief_note',
+          listingId: t.a.rows.listing?.listingId,
+          note: 'Cross-tenant probe note',
+        },
+      ],
+    },
     unlinkWhatsAppAction: { workspaceId },
     getWhatsAppLinkAction: { workspaceId },
     saveNewsPreferencesAction: {
@@ -1047,6 +1070,61 @@ describe('cross-tenant server actions', () => {
     expect(before.supportSessions.find((row) => row.id === aSupportSessionId)?.status).toBe(
       'requested',
     );
+  });
+
+  it('offline push under B’s own workspace refuses A’s ids per item and writes nothing (#743)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    const pushed = (await action('pushOutboxAction')(all.pushOutboxAction)) as {
+      ok: boolean;
+      data?: { status: string }[];
+    };
+    expect(pushed.ok).toBe(true);
+    expect(pushed.data?.map((r) => r.status)).toEqual(['rejected', 'rejected']);
+    const pulled = (await action('pullCourtDaySnapshotAction')(all.pullCourtDaySnapshotAction)) as {
+      ok: boolean;
+      data?: { briefs: unknown[] };
+    };
+    expect(pulled.ok).toBe(true);
+    expect(pulled.data?.briefs).toEqual([]);
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('offline push replayed adds one proposal and the same keys answer duplicate (#743)', async () => {
+    signInAs(t.ua);
+    const proceedingId = t.a.rows.proceeding?.proceedingId;
+    const current = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+      tx
+        .select({
+          listDate: schema.listing.listDate,
+          proceedingId: schema.listing.proceedingId,
+          canonical: schema.listing.canonical,
+        })
+        .from(schema.listing),
+    );
+    const canonical = current.find((r) => r.proceedingId === proceedingId && r.canonical);
+    const item = {
+      key: 'xt-replay',
+      kind: 'next_date',
+      proceedingId,
+      date: '2031-06-06',
+      expectedCanonicalDate: canonical?.listDate ?? null,
+    };
+    const count = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => {
+        const rows = await tx.select({ date: schema.listing.listDate }).from(schema.listing);
+        return rows.filter((r) => r.date === '2031-06-06').length;
+      });
+    const push = async (items: unknown[]) =>
+      (await action('pushOutboxAction')({ workspaceId: t.a.id, items })) as {
+        ok: boolean;
+        data?: { status: string }[];
+      };
+    expect((await push([item, item])).data?.map((r) => r.status)).toEqual(['applied', 'duplicate']);
+    expect(await count()).toBe(1);
+    // A later batch with the same key finds the earlier proposal: no second row.
+    expect((await push([item])).data?.[0]?.status).toBe('applied');
+    expect(await count()).toBe(1);
   });
 
   it('court-day marker actions refuse a hall outside the workspace and write nothing', async () => {

@@ -1201,6 +1201,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
+      '@causedeck/drafting':
+        specifier: workspace:*
+        version: link:../drafting
       '@causedeck/fetch':
         specifier: workspace:*
         version: link:../fetch

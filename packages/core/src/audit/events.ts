@@ -162,8 +162,8 @@ export const AUDIT_ACTIONS = {
     description: 'A download link for a workspace data export was issued to its requester',
   },
   'export.downloaded': { security: true, description: 'A workspace data export was downloaded' },
-  // Drafting export (#768): fail-closed. Metadata holds the format and the version content hash only.
-  'draft.exported': { security: true, description: 'A draft version was exported to DOCX or PDF' },
+  // Drafting export (#768): informational. Metadata holds the format and the version content hash only.
+  'draft.exported': { security: false, description: 'A draft version was exported to DOCX or PDF' },
   // Workspace deletion (#302): fail-closed. Metadata holds the deletion job id and dates only. These
   // events are purged with the workspace in the final erase step; the receipt keeps the chain head.
   'workspace.deletion_requested': {

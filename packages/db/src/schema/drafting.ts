@@ -136,7 +136,7 @@ export const draftExport = tenantTable(
     /** sha256 hex of the version content this file was rendered from (also in the audit event). */
     contentSha256: text('content_sha256').notNull(),
     exportedAt: timestamp('exported_at', { withTimezone: true }).notNull().defaultNow(),
-    exportedBy: uuid('exported_by').references(() => user.id, { onDelete: 'set null' }),
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
   },
   (t) => [
     foreignKey({

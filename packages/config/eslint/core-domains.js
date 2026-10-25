@@ -85,6 +85,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Judgment alerts (#497, D-048): member roles and role settings through workspaces; an alert is
   // shown only if `verifyCitation` resolves its judgment (D-004), through citations.
   research: Object.freeze(['workspaces', 'citations']),
+  // Drafting (#768): roles through workspaces, facts through the matter-graph index, `draft.exported`
+  // through audit and the narrative gateway through ai's index.
+  drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // The business dashboard (#519): the IST month through usage's `periodStart`, FORBIDDEN through workspaces.
@@ -159,6 +162,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'sources',
     'notices',
     'research',
+    'drafting',
     'portfolio',
     'business',
     'case-watch',

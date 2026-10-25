@@ -6309,8 +6309,8 @@
           "notNull": true,
           "default": "now()"
         },
-        "exported_by": {
-          "name": "exported_by",
+        "created_by": {
+          "name": "created_by",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -6340,12 +6340,12 @@
         }
       },
       "foreignKeys": {
-        "draft_export_exported_by_user_id_fk": {
-          "name": "draft_export_exported_by_user_id_fk",
+        "draft_export_created_by_user_id_fk": {
+          "name": "draft_export_created_by_user_id_fk",
           "tableFrom": "draft_export",
           "tableTo": "user",
           "columnsFrom": [
-            "exported_by"
+            "created_by"
           ],
           "columnsTo": [
             "id"

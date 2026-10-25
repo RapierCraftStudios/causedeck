@@ -10,14 +10,14 @@ CREATE TABLE "draft_export" (
 	"size_bytes" integer NOT NULL,
 	"content_sha256" text NOT NULL,
 	"exported_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"exported_by" uuid,
+	"created_by" uuid,
 	"workspace_id" uuid NOT NULL,
 	CONSTRAINT "draft_export_version_format_uq" UNIQUE("draft_version_id","format"),
 	CONSTRAINT "draft_export_format_chk" CHECK (format in ('docx', 'pdf')),
 	CONSTRAINT "draft_export_size_chk" CHECK (size_bytes >= 0)
 );
 --> statement-breakpoint
-ALTER TABLE "draft_export" ADD CONSTRAINT "draft_export_exported_by_user_id_fk" FOREIGN KEY ("exported_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "draft_export" ADD CONSTRAINT "draft_export_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "draft_export" ADD CONSTRAINT "draft_export_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "draft_export" ADD CONSTRAINT "draft_export_version_fk" FOREIGN KEY ("workspace_id","draft_version_id") REFERENCES "public"."draft_version"("workspace_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "draft_export_workspace_id_idx" ON "draft_export" USING btree ("workspace_id");--> statement-breakpoint

@@ -1,0 +1,10 @@
+# Admin host gate (#98): only addresses in ADMIN_ALLOWLIST (space-separated IPs or CIDRs) get
+# through; everything else is answered 403 and appears in the access log. The default allows
+# loopback only, i.e. nobody from outside. Cloudflare Access is an alternative gate (README) and
+# needs the admin hostname proxied, so it is off by default.
+(admin_gate) {
+	@denied not client_ip {$ADMIN_ALLOWLIST:127.0.0.1/32}
+	handle @denied {
+		respond "Forbidden" 403
+	}
+}

@@ -29,6 +29,8 @@ OWNER_PW="$(rand)"; APP_PW="$(rand)"; PG_PW="$(rand)"; S3_KEY="smoke$(rand)"; S3
 cp "$ROOT/infra/docker/env/prod.env.example" "$ENV_FILE"
 {
   echo "COMPOSE_ENV_NAME=smoke"
+  echo "DOMAIN=localhost"
+  echo "ADMIN_ALLOWLIST="
   echo "IMAGE_ORG=$IMAGE_ORG"
   echo "GIT_SHA=$GIT_SHA"
   echo "NODE_ENV=production"
@@ -123,5 +125,8 @@ for service in web api worker admin; do
   ro="$(compose exec -T "$service" sh -c 'touch /smoke-write 2>&1 || echo READONLY' | tail -n 1)"
   [ "$ro" = "READONLY" ] || fail "$service root filesystem is writable"
 done
+
+echo "smoke: edge (redirects, h3, headers, admin gate, rate limits)"
+CADDY_SMOKE_DOMAIN=localhost bash "$ROOT/infra/caddy/test/smoke.sh" || fail "caddy edge checks failed"
 
 echo "smoke: ok"

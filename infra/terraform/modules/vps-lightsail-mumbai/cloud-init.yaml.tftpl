@@ -1,0 +1,20 @@
+#cloud-config
+# Runs infra/scripts/bootstrap-vps.sh (idempotent) on first boot; the compose stack is deployed by
+# the pipeline from #100 afterwards.
+write_files:
+  - path: /root/bootstrap-vps.env
+    permissions: '0600'
+    content: |
+      SSH_ALLOWLIST='${ssh_allowlist}'
+      DEPLOY_PUBKEY='${deploy_pubkey}'
+runcmd:
+  - |
+    set -euo pipefail
+    curl -fsSL '${bootstrap_url}' -o /root/bootstrap-vps.sh
+%{ if bootstrap_sha256 != "" ~}
+    echo '${bootstrap_sha256}  /root/bootstrap-vps.sh' | sha256sum -c -
+%{ endif ~}
+    set -a
+    . /root/bootstrap-vps.env
+    set +a
+    bash /root/bootstrap-vps.sh

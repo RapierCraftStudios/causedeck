@@ -44,11 +44,13 @@ export interface BriefSharePanelProps {
 
 export const EXPIRY_CHOICES = [1, 7, 14, 30] as const;
 
-function errorKey(error: { code: string; message: string }): string {
-  if (error.code === 'CONFLICT' && error.message === 'RATE_LIMITED') return 'rateLimited';
-  if (error.code === 'FORBIDDEN') return 'forbidden';
-  if (error.code === 'NOT_FOUND') return 'notFound';
-  return 'generic';
+type ErrorKey = 'errors.rateLimited' | 'errors.forbidden' | 'errors.notFound' | 'errors.generic';
+
+function errorKey(error: { code: string; message: string }): ErrorKey {
+  if (error.code === 'CONFLICT' && error.message === 'RATE_LIMITED') return 'errors.rateLimited';
+  if (error.code === 'FORBIDDEN') return 'errors.forbidden';
+  if (error.code === 'NOT_FOUND') return 'errors.notFound';
+  return 'errors.generic';
 }
 
 export function BriefSharePanel({
@@ -78,7 +80,7 @@ export function BriefSharePanel({
       const result = await actions.create({ workspaceId, listingId, expiresInDays: days });
       if (!result.ok) {
         setCreated(null);
-        setError(t(`errors.${errorKey(result.error)}`));
+        setError(t(errorKey(result.error)));
         return;
       }
       setCreated({
@@ -104,7 +106,7 @@ export function BriefSharePanel({
     startTransition(async () => {
       const result = await actions.revoke({ workspaceId, shareId });
       if (!result.ok) {
-        setError(t(`errors.${errorKey(result.error)}`));
+        setError(t(errorKey(result.error)));
         return;
       }
       toast.success(t('revoked'));
@@ -142,7 +144,9 @@ export function BriefSharePanel({
                 id={expiryId}
                 value={days}
                 disabled={disabled}
-                onChange={(event) => setDays(Number(event.target.value))}
+                onChange={(event) => {
+                  setDays(Number(event.target.value));
+                }}
                 className="border-line bg-surface h-9 rounded-md border px-2 text-sm"
               >
                 {EXPIRY_CHOICES.map((choice) => (
@@ -173,10 +177,19 @@ export function BriefSharePanel({
               readOnly
               aria-label={t('linkLabel')}
               value={created.url}
-              onFocus={(event) => event.currentTarget.select()}
+              onFocus={(event) => {
+                event.currentTarget.select();
+              }}
               className="border-line bg-surface h-9 min-w-0 flex-1 rounded-md border px-2 font-mono text-xs"
             />
-            <Button type="button" variant="outline" data-share-copy="" onClick={copy}>
+            <Button
+              type="button"
+              variant="outline"
+              data-share-copy=""
+              onClick={() => {
+                void copy();
+              }}
+            >
               {t('copy')}
             </Button>
           </div>
@@ -213,7 +226,9 @@ export function BriefSharePanel({
                     data-share-revoke={share.id}
                     disabled={disabled}
                     aria-label={t('revokeLabel', { title: share.matterTitle })}
-                    onClick={() => revoke(share.id)}
+                    onClick={() => {
+                      revoke(share.id);
+                    }}
                   >
                     {t('revoke')}
                   </Button>

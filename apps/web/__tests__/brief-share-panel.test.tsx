@@ -56,11 +56,10 @@ function setup(overrides: Partial<BriefSharePanelProps> = {}) {
   return actions;
 }
 
+const writeText = vi.fn(() => Promise.resolve());
+
 beforeEach(() => {
-  Object.defineProperty(navigator, 'clipboard', {
-    configurable: true,
-    value: { writeText: vi.fn(() => Promise.resolve()) },
-  });
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
 });
 afterEach(() => {
   cleanup();
@@ -72,18 +71,20 @@ describe('BriefSharePanel', () => {
     const actions = setup();
     fireEvent.change(screen.getByLabelText(t.expiry), { target: { value: '14' } });
     fireEvent.click(screen.getByRole('button', { name: t.create }));
-    await waitFor(() =>
+    await waitFor(() => {
       expect(actions.create).toHaveBeenCalledWith({
         workspaceId: WS,
         listingId: LISTING,
         expiresInDays: 14,
-      }),
-    );
-    const input = (await screen.findByLabelText(t.linkLabel)) as HTMLInputElement;
+      });
+    });
+    const input = await screen.findByLabelText<HTMLInputElement>(t.linkLabel);
     expect(input.value).toBe(`${window.location.origin}/share/tok_secret`);
     expect(router.refresh).toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: t.copy }));
-    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith(input.value));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(input.value);
+    });
     expect(toast.success).toHaveBeenCalledWith(t.copied);
   });
 
@@ -92,9 +93,9 @@ describe('BriefSharePanel', () => {
     const row = document.querySelector('[data-share="share-1"]') as HTMLElement;
     expect(within(row).getByText('Ravi v State')).toBeTruthy();
     fireEvent.click(within(row).getByRole('button', { name: /Revoke the link for Ravi v State/ }));
-    await waitFor(() =>
-      expect(actions.revoke).toHaveBeenCalledWith({ workspaceId: WS, shareId: 'share-1' }),
-    );
+    await waitFor(() => {
+      expect(actions.revoke).toHaveBeenCalledWith({ workspaceId: WS, shareId: 'share-1' });
+    });
     expect(toast.success).toHaveBeenCalledWith(t.revoked);
     expect(router.refresh).toHaveBeenCalled();
   });

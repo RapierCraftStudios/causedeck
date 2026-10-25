@@ -40,3 +40,6 @@ After merging the base, `turbo run typecheck '--filter=...[f840ec10]'` exited 12
 
 ## CI fix
 CI log unavailable. Re-ran admin (all), config boundaries, core status/audit/domains, db testing locally: all pass. Removed four stray tracked .eslintcache files (machine-absolute paths, not ignored).
+
+## CI fix round
+@causedeck/intelligence#test failed in CI with no failing assertion in the log. The package is untouched by this branch and passes locally (39 files, 318 tests). Recorded as an amendment; no code change.

@@ -4005,6 +4005,46 @@ export type Messages = {
       action: string;
     };
   };
+  onboardingDiscovery: {
+    metaTitle: string;
+    title: string;
+    denied: string;
+    loading: string;
+    error: {
+      action: string;
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    nothingFound: string;
+    identifiers: {
+      title: string;
+      body: string;
+      enrolment: string;
+      names: string;
+      next: string;
+    };
+    courts: {
+      title: string;
+      body: string;
+      madrasHc: string;
+      karnatakaHc: string;
+      tnDistrict: string;
+      back: string;
+      search: string;
+    };
+    progress: {
+      searching: string;
+      found: string;
+    };
+    disambiguate: {
+      title: string;
+      body: string;
+      enrolments: string;
+      addEnrolment: string;
+      confirm: string;
+    };
+  };
   emailIntake: {
     metaTitle: string;
     title: string;

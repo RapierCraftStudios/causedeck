@@ -10,7 +10,7 @@
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "packages/db/migrations/20261025000503_whatsapp_link.sql"
+   "evidence": "packages/db/migrations/20261025020000_whatsapp_link.sql"
   },
   {
    "id": "R3",

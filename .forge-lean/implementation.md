@@ -40,3 +40,6 @@ The reported `turbo: command not found` (exit 127) was an environment failure, n
 
 ### Merge follow-up
 Base took migration number 20261025050000 (research_notes), so the drafting migration is 20261025060000 (SQL unchanged, snapshot and journal regenerated). The reported `turbo: command not found` (exit 127) was the PATH, not the code: `pnpm exec turbo run typecheck` over validators, db, core, i18n, web and worker passes (20 tasks). V1-V5 pass (V4 with a migrated DB URL).
+
+## Merge follow-up 2
+turbo was not on PATH (exit 127); no source conflict. Verified with scoped tsc and the validate commands.

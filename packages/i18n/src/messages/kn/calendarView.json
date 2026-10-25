@@ -1,81 +1,81 @@
 {
   "calendarView": {
-    "metaTitle": "Calendar",
-    "title": "Calendar",
-    "description": "Listings and deadlines beyond today and tomorrow.",
+    "metaTitle": "ಕ್ಯಾಲೆಂಡರ್",
+    "title": "ಕ್ಯಾಲೆಂಡರ್",
+    "description": "ಇಂದು ಮತ್ತು ನಾಳೆಯನ್ನು ಮೀರಿದ ಪಟ್ಟಿಮಾಡಿದ ಪ್ರಕರಣಗಳು ಮತ್ತು ಗಡುವುಗಳು.",
     "views": {
-      "label": "View",
-      "week": "Week",
-      "month": "Month"
+      "label": "ನೋಟ",
+      "week": "ವಾರ",
+      "month": "ತಿಂಗಳು"
     },
     "scope": {
-      "label": "Show",
-      "mine": "Mine",
-      "workspace": "Whole chamber"
+      "label": "ತೋರಿಸು",
+      "mine": "ನನ್ನವು",
+      "workspace": "ಇಡೀ ಕಚೇರಿ"
     },
     "toolbar": {
-      "label": "Calendar controls",
-      "previous": "Previous",
-      "next": "Next",
-      "today": "Today",
-      "range": "{from} to {to}",
-      "shortcuts": "Keys: arrows move across days, Enter opens a day, t today, w week, m month, [ and ] previous and next."
+      "label": "ಕ್ಯಾಲೆಂಡರ್ ನಿಯಂತ್ರಣಗಳು",
+      "previous": "ಹಿಂದಿನದು",
+      "next": "ಮುಂದಿನದು",
+      "today": "ಇಂದು",
+      "range": "{from} ರಿಂದ {to} ವರೆಗೆ",
+      "shortcuts": "ಕೀಗಳು: ಬಾಣದ ಕೀಗಳು ದಿನಗಳ ನಡುವೆ ಸರಿಸುತ್ತವೆ, Enter ಒಂದು ದಿನವನ್ನು ತೆರೆಯುತ್ತದೆ, t ಇಂದು, w ವಾರ, m ತಿಂಗಳು, [ ಮತ್ತು ] ಹಿಂದಿನದು ಮತ್ತು ಮುಂದಿನದು."
     },
     "kind": {
-      "listing": "Listing",
-      "next_date": "Next date",
-      "obligation_due": "Due",
-      "holiday": "Holiday",
-      "vacation": "Vacation"
+      "listing": "ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ",
+      "next_date": "ಮುಂದಿನ ದಿನಾಂಕ",
+      "obligation_due": "ಬಾಕಿ",
+      "holiday": "ರಜೆ",
+      "vacation": "ನ್ಯಾಯಾಲಯದ ರಜೆ"
     },
     "legend": {
-      "title": "Legend",
-      "proposed": "Proposed (dashed, not counted)",
-      "clash": "Clash: same member in different halls"
+      "title": "ಸೂಚಿ",
+      "proposed": "ಪ್ರಸ್ತಾವಿತ (ಚುಕ್ಕಿ ಗೆರೆ, ಲೆಕ್ಕಕ್ಕೆ ಸೇರುವುದಿಲ್ಲ)",
+      "clash": "ಸಂಘರ್ಷ: ಒಬ್ಬರೇ ಸದಸ್ಯರು ಬೇರೆ ಬೇರೆ ಸಭಾಂಗಣಗಳಲ್ಲಿ"
     },
-    "proposed": "Proposed",
-    "restricted": "Restricted matter",
-    "clash": "Clash",
-    "closed": "Court closed: {reason}",
-    "summary": "{listings, plural, =0 {No listings} one {# listing} other {# listings}}, {deadlines, plural, =0 {no deadlines} one {# deadline} other {# deadlines}}",
+    "proposed": "ಪ್ರಸ್ತಾವಿತ",
+    "restricted": "ನಿರ್ಬಂಧಿತ ಪ್ರಕರಣ",
+    "clash": "ಸಂಘರ್ಷ",
+    "closed": "ನ್ಯಾಯಾಲಯ ಮುಚ್ಚಿದೆ: {reason}",
+    "summary": "{listings, plural, =0 {ಪಟ್ಟಿಮಾಡಿದ ಪ್ರಕರಣಗಳಿಲ್ಲ} one {# ಪ್ರಕರಣ ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ} other {# ಪ್ರಕರಣಗಳನ್ನು ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ}}, {deadlines, plural, =0 {ಗಡುವುಗಳಿಲ್ಲ} one {# ಗಡುವು} other {# ಗಡುವುಗಳು}}",
     "dayLabel": "{date}, {summary}",
     "grid": {
-      "week": "Week of {date}",
-      "month": "Month of {date}",
+      "week": "{date} ವಾರ",
+      "month": "{date} ತಿಂಗಳು",
       "weekday": "{day}"
     },
     "week": {
-      "noHall": "Not placed in a hall",
-      "hall": "Hall {hall}",
-      "other": "Dates and deadlines"
+      "noHall": "ಸಭಾಂಗಣಕ್ಕೆ ಹಂಚಿಕೆಯಾಗಿಲ್ಲ",
+      "hall": "ಸಭಾಂಗಣ {hall}",
+      "other": "ದಿನಾಂಕಗಳು ಮತ್ತು ಗಡುವುಗಳು"
     },
     "day": {
-      "openDay": "Open day",
-      "close": "Close",
-      "listings": "Listings",
-      "deadlines": "Deadlines",
-      "nothing": "Nothing listed.",
-      "clash": "This day has a clash: the same member is listed in different halls.",
-      "hall": "Hall {hall}",
-      "item": "Item {item}"
+      "openDay": "ದಿನವನ್ನು ತೆರೆಯಿರಿ",
+      "close": "ಮುಚ್ಚಿ",
+      "listings": "ಪಟ್ಟಿಮಾಡಿದ ಪ್ರಕರಣಗಳು",
+      "deadlines": "ಗಡುವುಗಳು",
+      "nothing": "ಏನೂ ಪಟ್ಟಿಮಾಡಲಾಗಿಲ್ಲ.",
+      "clash": "ಈ ದಿನ ಸಂಘರ್ಷವಿದೆ: ಒಬ್ಬರೇ ಸದಸ್ಯರನ್ನು ಬೇರೆ ಬೇರೆ ಸಭಾಂಗಣಗಳಲ್ಲಿ ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ.",
+      "hall": "ಸಭಾಂಗಣ {hall}",
+      "item": "ಕ್ರಮ ಸಂಖ್ಯೆ {item}"
     },
-    "empty": "Nothing listed this range.",
-    "offline": "You are offline. This range is shown as last loaded; it refreshes when you are back online.",
+    "empty": "ಈ ಅವಧಿಯಲ್ಲಿ ಏನೂ ಪಟ್ಟಿಮಾಡಲಾಗಿಲ್ಲ.",
+    "offline": "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಈ ಅವಧಿಯನ್ನು ಕೊನೆಯ ಬಾರಿ ಲೋಡ್ ಆದಂತೆ ತೋರಿಸಲಾಗಿದೆ; ಮತ್ತೆ ಆನ್‌ಲೈನ್ ಬಂದಾಗ ನವೀಕರಿಸಲಾಗುತ್ತದೆ.",
     "denied": {
-      "title": "You do not have access to the calendar.",
-      "description": "Ask a workspace owner for access."
+      "title": "ಕ್ಯಾಲೆಂಡರ್ ಬಳಸಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ.",
+      "description": "ಪ್ರವೇಶಕ್ಕಾಗಿ ವರ್ಕ್‌ಸ್ಪೇಸ್ ಮಾಲೀಕರನ್ನು ಕೇಳಿ."
     },
     "error": {
-      "title": "Could not load the calendar.",
-      "retry": "Try again"
+      "title": "ಕ್ಯಾಲೆಂಡರ್ ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ.",
+      "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
     },
-    "loading": "Loading the calendar",
+    "loading": "ಕ್ಯಾಲೆಂಡರ್ ಲೋಡ್ ಆಗುತ್ತಿದೆ",
     "subscribe": {
-      "title": "Subscribe in your calendar",
-      "explanation": "Your calendar feed is private to you. Anyone with its link can read your confirmed hearings and deadlines, so do not share it.",
-      "active": "Your private feed is active. Its link is shown only when you create or regenerate it.",
-      "inactive": "You have no feed yet. Create one to see hearings in your phone calendar.",
-      "manage": "Manage or regenerate the feed",
+      "title": "ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿ ಚಂದಾದಾರರಾಗಿ",
+      "explanation": "ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್ ಫೀಡ್ ನಿಮಗೆ ಮಾತ್ರ ಖಾಸಗಿ. ಅದರ ಲಿಂಕ್ ಇರುವ ಯಾರಾದರೂ ನಿಮ್ಮ ದೃಢೀಕೃತ ವಿಚಾರಣೆಗಳು ಮತ್ತು ಗಡುವುಗಳನ್ನು ಓದಬಹುದು; ಆದ್ದರಿಂದ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.",
+      "active": "ನಿಮ್ಮ ಖಾಸಗಿ ಫೀಡ್ ಸಕ್ರಿಯವಾಗಿದೆ. ಅದರ ಲಿಂಕ್ ಅನ್ನು ನೀವು ರಚಿಸಿದಾಗ ಅಥವಾ ಮರುರಚಿಸಿದಾಗ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ.",
+      "inactive": "ನಿಮಗೆ ಇನ್ನೂ ಫೀಡ್ ಇಲ್ಲ. ನಿಮ್ಮ ಫೋನ್ ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿ ವಿಚಾರಣೆಗಳನ್ನು ನೋಡಲು ಒಂದನ್ನು ರಚಿಸಿ.",
+      "manage": "ಫೀಡ್ ನಿರ್ವಹಿಸಿ ಅಥವಾ ಮರುರಚಿಸಿ",
       "disclosure": "ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್ ಆ್ಯಪ್ ಈ ಫೀಡ್ ಅನ್ನು ಭಾರತದ ಹೊರಗಿನ ಸರ್ವರ್‌ಗಳಿಂದ ಪಡೆಯಬಹುದು. ನಾವು ವಿಷಯವನ್ನು ಕನಿಷ್ಠವಾಗಿಡುತ್ತೇವೆ.",
       "ack": "ನನಗೆ ಅರ್ಥವಾಗಿದೆ",
       "generate": "ಹೊಸ ಲಿಂಕ್ ರಚಿಸಿ",

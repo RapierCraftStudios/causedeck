@@ -212,13 +212,15 @@ describe('SubscribePanel (#66 R7)', () => {
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     const { rotate, create } = panel(true);
     fireEvent.click(screen.getByRole('button', { name: 'Regenerate link' }));
-    const field = (await screen.findByRole('textbox')) as HTMLInputElement;
+    const field = await screen.findByRole<HTMLInputElement>('textbox');
     expect(rotate).toHaveBeenCalledWith({ workspaceId: WS });
     expect(create).not.toHaveBeenCalled();
     expect(field.value).toBe(URL_ONCE);
     expect(screen.getByText(/will not be shown again/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(URL_ONCE));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(URL_ONCE);
+    });
   });
 
   it('creates the first link only after the disclosure is acknowledged', async () => {
@@ -227,7 +229,7 @@ describe('SubscribePanel (#66 R7)', () => {
     expect((generate as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(generate);
-    expect(((await screen.findByRole('textbox')) as HTMLInputElement).value).toBe(URL_ONCE);
+    expect((await screen.findByRole<HTMLInputElement>('textbox')).value).toBe(URL_ONCE);
     expect(create).toHaveBeenCalledWith({
       workspaceId: WS,
       scope: 'mine',

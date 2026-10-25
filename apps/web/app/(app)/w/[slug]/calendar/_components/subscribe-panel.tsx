@@ -84,7 +84,12 @@ export function SubscribePanel({
         <>
           <Alert tone="warning">{t('disclosure')}</Alert>
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={ack} onCheckedChange={(v) => setAck(v === true)} />
+            <Checkbox
+              checked={ack}
+              onCheckedChange={(v) => {
+                setAck(v === true);
+              }}
+            />
             {t('ack')}
           </label>
         </>
@@ -100,7 +105,9 @@ export function SubscribePanel({
               readOnly
               value={url}
               className="font-mono"
-              onFocus={(event) => event.currentTarget.select()}
+              onFocus={(event) => {
+                event.currentTarget.select();
+              }}
             />
             <Button type="button" onClick={() => void copy(url)}>
               {copied ? t('copied') : t('copy')}

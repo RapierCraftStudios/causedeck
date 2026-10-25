@@ -129,163 +129,93 @@
  "not_members": [
   {
    "symbol": "WHATSAPP_E164_PATTERN",
-   "test": "apps/admin/__tests__/headers.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
    "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
-   "test": "apps/admin/__tests__/headers.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
    "symbol": "whatsappLink",
-   "test": "apps/admin/__tests__/headers.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
    "symbol": "whatsappOtpChallenge",
-   "test": "apps/admin/__tests__/headers.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
    "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
+   "test": "apps/admin/__tests__/data-layer.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
+   "test": "apps/admin/__tests__/roles.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
    "test": "apps/admin/__tests__/server-actions-audit.test.ts",
-   "why": "its @causedeck/db mock is a stub for the audit path, not a list of schema exports"
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
-   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
-   "why": "its @causedeck/db mock is a stub for the audit path, not a list of schema exports"
-  },
-  {
-   "symbol": "whatsappLink",
-   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
-   "why": "its @causedeck/db mock is a stub for the audit path, not a list of schema exports"
-  },
-  {
-   "symbol": "whatsappOtpChallenge",
-   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
-   "why": "its @causedeck/db mock is a stub for the audit path, not a list of schema exports"
-  },
-  {
-   "symbol": "WHATSAPP_E164_PATTERN",
+   "symbol": "whatsapp-link",
    "test": "apps/admin/__tests__/sources-actions.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
-   "test": "apps/admin/__tests__/sources-actions.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "whatsappLink",
-   "test": "apps/admin/__tests__/sources-actions.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "whatsappOtpChallenge",
-   "test": "apps/admin/__tests__/sources-actions.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "WHATSAPP_E164_PATTERN",
-   "test": "apps/web/__tests__/activity-export-route.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
-   "test": "apps/web/__tests__/activity-export-route.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "whatsappLink",
-   "test": "apps/web/__tests__/activity-export-route.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "whatsappOtpChallenge",
-   "test": "apps/web/__tests__/activity-export-route.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "WHATSAPP_E164_PATTERN",
-   "test": "apps/web/__tests__/billing-actions.test.ts",
-   "why": "its @causedeck/db mock provides only db and withWorkspace, not schema exports"
-  },
-  {
-   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
-   "test": "apps/web/__tests__/billing-actions.test.ts",
-   "why": "its @causedeck/db mock provides only db and withWorkspace, not schema exports"
-  },
-  {
-   "symbol": "whatsappLink",
-   "test": "apps/web/__tests__/billing-actions.test.ts",
-   "why": "its @causedeck/db mock provides only db and withWorkspace, not schema exports"
-  },
-  {
-   "symbol": "whatsappOtpChallenge",
-   "test": "apps/web/__tests__/billing-actions.test.ts",
-   "why": "its @causedeck/db mock provides only db and withWorkspace, not schema exports"
-  },
-  {
-   "symbol": "WHATSAPP_E164_PATTERN",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "whatsappLink",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "whatsappOtpChallenge",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "WHATSAPP_E164_PATTERN",
-   "test": "apps/web/__tests__/conflicts-action.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
-   "test": "apps/web/__tests__/conflicts-action.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "whatsappLink",
-   "test": "apps/web/__tests__/conflicts-action.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "whatsappOtpChallenge",
-   "test": "apps/web/__tests__/conflicts-action.test.ts",
-   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
-  },
-  {
-   "symbol": "WHATSAPP_E164_PATTERN",
+   "symbol": "whatsapp-link",
    "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "it spreads the real @causedeck/db module; its lists enumerate server actions, not schema exports"
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "it spreads the real @causedeck/db module; its lists enumerate server actions, not schema exports"
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/matter-tab-registry.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "whatsappLink",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "it spreads the real @causedeck/db module; its lists enumerate server actions, not schema exports"
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/matter-workspace-page.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "whatsappOtpChallenge",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "it spreads the real @causedeck/db module; its lists enumerate server actions, not schema exports"
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/nav.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/proceedings-page.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   }
  ]
 }

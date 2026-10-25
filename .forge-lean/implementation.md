@@ -50,3 +50,6 @@ No CI log was available. ESLint on every changed source file in core, db, notifi
 
 ### Recovery pass (ci.red)
 CI lint failed on Prettier for migrations/meta/_journal.json (missing trailing newline); reformatted. Reverted the out-of-scope .gitignore edit. Non-listed files needed for typecheck/lint are declared as add-deliverable amendments. Targeted core (22) and db (18) tests pass; forgedock check runs timed out at 300s on host load with no failing tests.
+
+### Stale-list pass
+Checked the 10 listed web/admin tests: none enumerates db schema exports or core domains (they are UI/nav/action fixtures), so all 18 symbols are recorded as not_members in result.json. No code change.

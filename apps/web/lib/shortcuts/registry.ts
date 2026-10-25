@@ -18,8 +18,13 @@ export type ShortcutGroupId = (typeof SHORTCUT_GROUPS)[number];
 export type ShortcutAction =
   'capture' | 'palette' | 'sidebar' | 'search' | 'notifications' | 'help';
 
+/** Where a shortcut applies: the whole shell, or one surface (a page registering its own keys). */
+export type ShortcutScope = 'global' | (string & {});
+
 export interface ShortcutDefinition {
   id: string;
+  /** The surface the keys belong to; two shortcuts may share keys only in different scopes. Default `global`. */
+  scope?: ShortcutScope;
   /** `useHotkey` syntax: `c`, `mod+k`, `g then t`. */
   keys: string;
   group: ShortcutGroupId;
@@ -77,6 +82,25 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
   action('notifications', 'shift+n', 'actions', 'notifications.shortcut'),
   action('help', '?', 'help'),
 ];
+
+/** Shortcuts that bind the same keys in the same scope (case-insensitive); empty when there is no conflict. */
+export function findDuplicateShortcuts(
+  shortcuts: readonly ShortcutDefinition[],
+): { scope: string; keys: string; ids: string[] }[] {
+  const seen = new Map<string, ShortcutDefinition[]>();
+  for (const shortcut of shortcuts) {
+    const scope = shortcut.scope ?? 'global';
+    const bound = `${scope}\u0000${shortcut.keys.toLowerCase().replace(/\s+/g, ' ').trim()}`;
+    seen.set(bound, [...(seen.get(bound) ?? []), shortcut]);
+  }
+  return [...seen.values()]
+    .filter((group) => group.length > 1)
+    .map((group) => ({
+      scope: group[0]?.scope ?? 'global',
+      keys: group[0]?.keys ?? '',
+      ids: group.map((shortcut) => shortcut.id),
+    }));
+}
 
 /** The keys of an action shortcut, e.g. `c` for capture. */
 export function actionKeys(id: ShortcutAction): string {

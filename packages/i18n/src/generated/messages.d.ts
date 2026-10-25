@@ -3952,6 +3952,110 @@ export type Messages = {
       generic: string;
     };
   };
+  help: {
+    title: string;
+    menu: string;
+    open: string;
+    close: string;
+    description: string;
+    tabs: {
+      label: string;
+      articles: string;
+      shortcuts: string;
+      contact: string;
+    };
+    search: {
+      label: string;
+      placeholder: string;
+      tags: string;
+      allTags: string;
+      empty: string;
+      loading: string;
+      error: string;
+      retry: string;
+      results: string;
+    };
+    offline: string;
+    article: {
+      back: string;
+      updated: string;
+      notFound: string;
+    };
+    tip: {
+      label: string;
+      opened: string;
+    };
+    surfaces: {
+      today: string;
+      inbox: string;
+      obligations: string;
+      briefs: string;
+      memory: string;
+      general: string;
+    };
+    coachmark: {
+      dismiss: string;
+      hint: string;
+      today: {
+        title: string;
+        body: string;
+      };
+      inbox: {
+        title: string;
+        body: string;
+      };
+      obligations: {
+        title: string;
+        body: string;
+      };
+      briefs: {
+        title: string;
+        body: string;
+      };
+      memory: {
+        title: string;
+        body: string;
+      };
+    };
+    shortcuts: {
+      title: string;
+      table: string;
+      keys: string;
+      action: string;
+      area: string;
+      gestures: {
+        title: string;
+        description: string;
+        tap: string;
+        swipe: string;
+        hold: string;
+        pull: string;
+      };
+      open: string;
+    };
+    contact: {
+      title: string;
+      whatsapp: string;
+      email: string;
+      hours: string;
+      emailOnly: string;
+      request: {
+        title: string;
+        description: string;
+        reason: string;
+        minutes: string;
+        minutes60: string;
+        minutes120: string;
+        minutes240: string;
+        submit: string;
+        sending: string;
+        sent: string;
+        error: string;
+        ownerOnly: string;
+      };
+    };
+    footer: string;
+  };
   bootstrapImport: {
     metaTitle: string;
     title: string;

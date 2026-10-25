@@ -15,6 +15,7 @@ import {
   NAV_CHORDS,
   SHORTCUTS,
   createShortcutDispatcher,
+  findDuplicateShortcuts,
   visibleShortcuts,
   type ShortcutDefinition,
 } from '../lib/shortcuts/registry.ts';
@@ -335,5 +336,31 @@ describe('shortcuts in the app shell', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeTruthy();
     });
+  });
+});
+
+describe('shortcut conflicts (#94)', () => {
+  const sample = (id: string, keys: string, scope?: string): ShortcutDefinition => ({
+    id,
+    keys,
+    group: 'actions',
+    labelKey: 'x',
+    ...(scope === undefined ? {} : { scope }),
+  });
+
+  it('the registry has no duplicate key in the same scope', () => {
+    expect(findDuplicateShortcuts(SHORTCUTS)).toEqual([]);
+  });
+
+  it('reports a duplicate key in one scope and allows it across scopes', () => {
+    expect(findDuplicateShortcuts([sample('a', 'x'), sample('b', 'X')])).toEqual([
+      { scope: 'global', keys: 'x', ids: ['a', 'b'] },
+    ]);
+    expect(findDuplicateShortcuts([sample('a', 'x', 'inbox'), sample('b', 'x', 'matters')])).toEqual(
+      [],
+    );
+    expect(findDuplicateShortcuts([sample('a', 'g then t'), sample('b', 'g  then t')])).toHaveLength(
+      1,
+    );
   });
 });

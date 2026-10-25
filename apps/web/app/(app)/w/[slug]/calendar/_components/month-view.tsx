@@ -79,7 +79,7 @@ export function MonthView({
                 data-date={d.date}
                 data-clash={d.clash ? 'true' : undefined}
                 className={`border-line min-h-16 rounded-md border p-1 text-xs ${
-                  d.date.startsWith(month) ? '' : 'text-ink-muted opacity-70'
+                  d.date.startsWith(month) ? '' : 'text-ink-muted'
                 } ${d.closedReason === null ? '' : 'bg-surface-sunken'}`}
               >
                 <a

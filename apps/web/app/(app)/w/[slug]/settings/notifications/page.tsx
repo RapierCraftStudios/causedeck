@@ -33,6 +33,8 @@ import {
   type SettingsView,
 } from './actions.ts';
 import { PreferencesError, PreferencesForm, PreferencesSkeleton } from './preferences-form.tsx';
+import { RemindersCard, RemindersError, RemindersSkeleton } from './_reminders-card.tsx';
+import { setReminderPreferencesAction, type ReminderPrefsView } from './reminders-actions.ts';
 import {
   requestWhatsAppOtpAction,
   setWhatsAppCategoriesAction,
@@ -111,6 +113,33 @@ async function WhatsAppSection({ context }: { context: WorkspaceContext }) {
   );
 }
 
+/** The caller's own court-day reminder preferences (#64), read on the workspace-scoped transaction. */
+async function loadReminders(context: WorkspaceContext): Promise<ReminderPrefsView> {
+  const { inWorkspace } = await import('@causedeck/core/runtime');
+  const { getReminderPreferences } = await import('@causedeck/notifications');
+  const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+  return inWorkspace(actor, (tx) =>
+    getReminderPreferences({ db: tx, workspaceId: actor.workspaceId }, { userId: actor.userId }),
+  );
+}
+
+async function RemindersSection({ context }: { context: WorkspaceContext }) {
+  let prefs: ReminderPrefsView;
+  try {
+    prefs = await loadReminders(context);
+  } catch (error) {
+    logger.error({ err: error }, 'notification preferences: could not load reminders');
+    return <RemindersError />;
+  }
+  return (
+    <RemindersCard
+      workspaceId={context.workspace.id}
+      prefs={prefs}
+      actions={{ set: setReminderPreferencesAction }}
+    />
+  );
+}
+
 async function PreferencesSection({
   context,
   failOnPurpose,
@@ -170,6 +199,13 @@ export default async function NotificationPreferencesPage({
       ) : (
         <Suspense fallback={<PreferencesSkeleton />}>
           <PreferencesSection context={context} failOnPurpose={state === 'error'} />
+        </Suspense>
+      )}
+      {state === 'loading' ? (
+        <RemindersSkeleton />
+      ) : (
+        <Suspense fallback={<RemindersSkeleton />}>
+          <RemindersSection context={context} />
         </Suspense>
       )}
       <PushPermissionCard vapidPublicKey={vapidPublicKey} />

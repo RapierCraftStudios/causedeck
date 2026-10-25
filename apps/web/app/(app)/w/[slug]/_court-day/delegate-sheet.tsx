@@ -1,7 +1,7 @@
 'use client';
 // Delegation client pieces (#63): the tomorrow plan's rows with an assignee picker, bulk "Accept all
 // suggestions" behind a confirm dialog, offline queueing ("Will sync"), and the owner's live outcome
-// strip (30 s poll while the tab is visible, plus a toast per new confirmation).
+// strip (4 s poll while the tab is visible, plus a toast per new confirmation).
 import {
   AssigneeChip,
   AssignmentRow,
@@ -29,7 +29,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Result } from '../../../../../lib/safe-action.ts';
 import type { AssignedView, OutcomesLiveView } from '../tomorrow/plan/actions.ts';
 
-export const OUTCOMES_POLL_MS = 30_000;
+/** Under the 5 s budget (R5): a confirmed outcome shows on the owner's board within one tick. */
+export const OUTCOMES_POLL_MS = 4_000;
 
 export interface PlanRow {
   listingId: string;

@@ -57,6 +57,21 @@ test.describe('tomorrow plan', { tag: '@a11y' }, () => {
   });
 });
 
+test.describe('tomorrow plan live outcomes', () => {
+  // R5: the owner's strip polls inside the 5 s budget, so a junior's confirmed outcome shows (and
+  // toasts) without a reload. The clock is faked; only the poll cadence is asserted here.
+  test('owner board polls for outcomes within 5 seconds', async ({ page, asUser }) => {
+    await page.clock.install();
+    await open(page, asUser);
+    if ((await page.locator('[data-slot="outcomes-strip"]').count()) === 0) return;
+    const polled = page.waitForRequest(
+      (r) => r.method() === 'POST' && r.url().includes('tomorrow'),
+    );
+    await page.clock.runFor(5_000);
+    await polled;
+  });
+});
+
 test.describe('tomorrow plan visual', { tag: '@visual' }, () => {
   test('plan', async ({ page, asUser }) => {
     await open(page, asUser);

@@ -40,3 +40,6 @@ The 10 flagged tests do not enumerate i18n namespaces (nav routes, settings sect
 
 ## Duplicate-export follow-up
 Renamed delegation's internal `istDay` -> `delegationDay` and `requireAction` -> `requireDelegationAction` (scope.ts, assign.ts, suggest.ts) so they no longer collide with import/bootstrap.ts and court-day/scope.ts. No registry keyed by those names. Also fixed two lint errors (type import in scope.ts, typed Map in suggest.ts). core tsc clean, delegation vitest 13/13, eslint clean on changed files.
+
+## R5 follow-up
+Owner outcome strip now polls every 4 s (`OUTCOMES_POLL_MS`, was 30 s) to meet the 5 s criterion; e2e spec gained `tomorrow plan live outcomes` asserting a poll request within 5 s on a faked clock.

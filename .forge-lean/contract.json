@@ -2,228 +2,350 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "An obligation requires `source_type`, `source_ref` and an anchor (or `manual`), description, owner, due date (nullable only for undated tasks) and status; creation without provenance is rejected.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "A DB check plus service guard enforce that status `closed` requires a `closed_reason` in (`completed_task`, `lawyer_action`, `not_applicable`) and, for `not_applicable`, non-empty reason text; a direct SQL update violating this fails.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "`reconcileOrder(orderId)` returns the order's directions each marked `obligation`, `not_applicable` (with reason) or `unresolved`; an order is `reconciled` only when no direction is unresolved, and the unresolved count feeds brief readiness (#60).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "Proposed obligations from extraction (#46) arrive as L2 proposals; confirming creates the obligation with the original anchor and records the confirmer.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
+   "quote": "Defects: `raiseDefect` creates a defect obligation with a cure deadline and moves the proceeding to `defects`; `representFiling` moves to `re_presented`; allocation of SR (Madras) or FR (Karnataka) numbers is stored on the proceeding without implying court status.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "Certified copies move through applied -> ready -> collected, each transition dated and sourced, and surface in the queue as obligations with a follow-up reminder.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "`queryQueue` groups obligations as `overdue`, `today`, `this_week`, `later`, `undated`, filterable by matter, owner, kind and source; overdue sort first by age; p95 \u003c 150 ms on the seeded dataset and one query per group.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "Rescheduling an obligation requires a reason, preserves history in `obligation_event`, and is distinguished from a miss in the missed-obligation metric (deliberate reschedule is not a miss).",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "Reminders: a job emits in-app reminders for obligations due within the member's lead time and overdue obligations once per day; idempotent; delivery via #23.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "Roles: owner and advocate manage all; junior manages assigned matters; clerk can manage tasks, defects and copies but not strategy notes; viewer read-only. All checked by `can()` and covered by tests.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "Every mutation writes an `audit_event`; undo of an L3 task creation cascades correctly (#47 contract).",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "Obligation due dates are never computed from a generated legal rule; rule-driven limitation dates live in #84 behind a flag.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "Strategy-bearing descriptions are hidden from clerks via column-scoped views.",
    "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "why": "The obligation table has no strategy-note column or flag to scope on; defining one (and the clerk view) is a product/schema decision separate from the service. Clerk role rules in R10 are still delivered.",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R17",
+   "quote": "Jobs: `obligation.reminders` (daily 07:00 IST per workspace).",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "packages/validators/src/obligation.ts",
+   "change": "zod ObligationInput, ObligationPatch, CloseInput, DefectInput, CertifiedCopyInput, QueueQuery, ReconcileInput; provenance required; reschedule needs reason; add package export and index test entry if the package lists subpaths",
    "requirements": [
     "R1",
-    "R2"
+    "R2",
+    "R8",
+    "R15"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "packages/db/src/schema/obligation-tracking.ts",
+   "change": "new tenant tables obligation_event, defect, certified_copy (workspace_id, composite FKs, RLS via tenantTable), export from schema/index.ts; extend obligation only with columns truly missing (keep existing enum names)",
    "requirements": [
-    "R1"
+    "R5",
+    "R6",
+    "R8",
+    "R14"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "packages/db/migrations",
+   "change": "one new timestamp-named migration + regenerated snapshot/journal for the three tables with RLS; closure check already exists (docket.ts obligation_closure_chk)",
    "requirements": [
-    "R1"
+    "R2",
+    "R14"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
+   "path": "packages/auth/src/policy/actions.ts",
+   "change": "add obligation.read/write (and matrix.ts entries, can() snapshot) with owner/advocate all, junior assigned matters, clerk tasks/defects/copies, viewer read",
    "requirements": [
-    "R3"
+    "R10"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
+   "path": "packages/core/src/obligations/index.ts",
+   "change": "domain barrel plus create.ts, update.ts, close.ts, reopen.ts, due.ts (IST arithmetic, working-day hook, no rule-derived dates), audit_event on every mutation; export from core package.json",
    "requirements": [
-    "R3"
+    "R1",
+    "R2",
+    "R8",
+    "R11",
+    "R12"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "packages/core/src/obligations/reconcile.ts",
+   "change": "reconcileOrder over order.operativeDirections linked by source_order_id + anchor_id; unresolved count exposed for #60",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
+   "path": "packages/core/src/obligations/defects.ts",
+   "change": "raiseDefect, cureDefect, representFiling via transitionProceeding (never write proceeding.state directly); SR/FR stored on proceeding",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "path": "packages/core/src/obligations/certified-copies.ts",
+   "change": "applied->ready->collected transitions, dated and sourced, backed by an obligation with follow-up",
    "requirements": [
-    "R3"
+    "R6"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
+   "path": "packages/core/src/obligations/queue.ts",
+   "change": "queryQueue: one query per group, filters, overdue by age",
    "requirements": [
-    "R3"
+    "R7"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
+   "path": "packages/core/src/obligations/reminders.ts",
+   "change": "reminder selection + notify via @causedeck/notifications, once per day per member",
    "requirements": [
-    "R3"
+    "R9"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
+   "path": "packages/core/src/jobs/definitions/obligation-reminders.ts",
+   "change": "defineJob obligation.reminders (+ per-workspace fan-out), register in jobs/registry.ts; schedule 07:00 Asia/Kolkata in apps/worker/src/schedules.ts",
    "requirements": [
-    "R3"
+    "R9",
+    "R17"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
+   "path": "packages/core/src/automation/handlers/obligation-from-direction.ts",
+   "change": "route confirm through createObligation guards (original anchor, confirmer recorded) keeping undo payload shape",
    "requirements": [
-    "R3"
+    "R4",
+    "R11"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
+   "path": "packages/core/src/obligations/__tests__/obligations.test.ts",
+   "change": "lifecycle, reconcile, defects, copies, queue (+perf), permissions, direct-SQL closure violation, audit, undo cascade; sibling test files per area allowed",
    "requirements": [
-    "R4"
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R10",
+    "R11",
+    "R12"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "path": "packages/core/src/__tests__/cross-tenant/obligations.test.ts",
+   "change": "B on A denied or sees nothing, A unchanged, incl. two-workspace user; register in packages/db/src/testing/cross-tenant-registry.ts (SERVICE_TESTS / NOT_A_SERVICE)",
    "requirements": [
-    "R2"
+    "R13",
+    "R14"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "path": "packages/db/src/seed/obligation-fixtures.ts",
+   "change": "seeded dataset used by the queue p95 test",
    "requirements": [
-    "R1"
+    "R7"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "add obligations domain edges (workspaces, audit, matter-graph, automation as needed) and document in docs/engineering/core-domains.md",
    "requirements": [
-    "R1"
+    "R5"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "docs/adr/0037-obligation-model.md",
+   "change": "ADR (next free number): model, enum-name mapping to the issue's terms, reschedule vs miss, no rule-derived dates",
+   "requirements": [
+    "R8",
+    "R12"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/src/index.test.ts",
+   "change": "root table list + RLS catalog (packages/db/src/__tests__/rls/sql.test.ts) and two-tenant seeders for the new tables; apps/worker registry.test.ts and schedules.test.ts entries",
+   "requirements": [
+    "R14",
+    "R17"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "Existing obligation enum values and column names (docket.ts, enums.ts): timeline.ts, merge-split.ts and their tests read them"
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "transitionProceeding in packages/core/src/matter-graph/state-machine.ts stays the only writer of proceeding.state; import matter-graph only via its index.ts"
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "automation obligation_from_direction undo payload shape (obligationId) and undo cascade in packages/core/src/automation/undo.ts"
+  },
+  {
+   "id": "P4",
+   "what": "No auto-closure, no auto-filing, no court fetching; deadlines are never derived from generated legal rules"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/obligations src/__tests__/cross-tenant/obligations.test.ts src/matter-graph/__tests__/merge-split.test.ts src/matter-graph/__tests__/timeline.test.ts src/automation/__tests__/handlers.test.ts src/jobs/registry.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/index.test.ts && pnpm --filter @causedeck/auth exec vitest run src/policy"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/follow-up-continuity-memory"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
+   "choice": "Keep existing obligation names (status done, closedReasonType task_completed, column source) and map the issue's closed/completed_task/kind terms in the ADR",
+   "justification": "packages/db/src/schema/docket.ts:227-297 already has the closure check, and timeline/merge-split depend on these names",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
-   "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
+   "choice": "Defect cure and re-presentation go through transitionProceeding",
+   "justification": "matter-graph/state-machine.ts:1-10 states it is the only writer of proceeding.state; events.ts:112-125 passes cureDeadline for #67",
    "source": "doc"
   },
   {
-   "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
+   "id": "K3",
+   "choice": "Reminders job modelled on activity-digest (per-workspace, Asia/Kolkata, once())",
+   "justification": "core/jobs/definitions/activity-digest.ts header; the issue's apps/worker/src/jobs path does not exist, jobs live in core/jobs/definitions",
    "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "Order directions are reconciled by source_order_id + anchor_id",
+   "justification": "order.operativeDirections is jsonb {text, anchorId} with no id (docket.ts:175-191)",
+   "source": "spec"
+  },
+  {
+   "id": "K5",
+   "choice": "New workspace dependency edges are limited to core-domains.js obligations entry; no package.json dependency between workspace packages is added",
+   "justification": "packages/config/eslint/core-domains.js:26-29 pattern; core already depends on validators, auth, db, notifications",
+   "source": "lint"
   }
  ]
 }

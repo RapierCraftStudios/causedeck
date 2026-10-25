@@ -26,7 +26,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   'matter-graph': Object.freeze(['workspaces', 'matters']),
   // The automation engine (#47): membership roles through workspaces, its audit events through
   // audit, and every graph write through the matter-graph services (imports `index.ts` only).
-  automation: Object.freeze(['workspaces', 'audit', 'matter-graph']),
+  // Confirming an `obligation_from_direction` proposal creates it through obligations (#67).
+  automation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'obligations']),
   // Case-status watches (#591, D-048): a lookup needs a cleared source through sources, the next-date
   // proposal goes through automation and every proceeding read through matter-graph.
   // The orders poll (#494) stores a fetched order as a capture (the `CaptureJobs` port) and audits it.
@@ -133,9 +134,13 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The migration concierge (#685): runs matter imports through the import domain's apply and undo
   // (imports `index.ts` only) and checks the actor's role through workspaces.
   migration: Object.freeze(['import', 'workspaces']),
+  // The obligation service (#67): roles through workspaces, audit events through audit, defect
+  // transitions through the matter-graph state machine (imports `index.ts` only).
+  obligations: Object.freeze(['workspaces', 'audit', 'matter-graph']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([
+    'obligations',
     'ai',
     'audit',
     'billing',

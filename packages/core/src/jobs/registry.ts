@@ -9,6 +9,10 @@ import {
   activityDigestMember,
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
+import {
+  obligationReminders,
+  obligationRemindersSchedule,
+} from './definitions/obligation-reminders.ts';
 import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
@@ -214,6 +218,8 @@ export const registry = createRegistry([
   webhookDeliver,
   systemWebhookSweep,
   ordersPoll,
+  obligationRemindersSchedule,
+  obligationReminders,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -274,6 +280,8 @@ export type JobMap = RegistryMap<
     typeof webhookDeliver,
     typeof systemWebhookSweep,
     typeof ordersPoll,
+    typeof obligationRemindersSchedule,
+    typeof obligationReminders,
   ]
 >;
 export type JobName = keyof JobMap;

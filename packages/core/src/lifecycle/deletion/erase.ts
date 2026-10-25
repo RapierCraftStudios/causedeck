@@ -101,6 +101,10 @@ export const PURGE_ORDER = [
   'appearance',
   'hearing',
   'task',
+  // Obligation service (#67): children before the obligation they hang off.
+  'obligation_event',
+  'defect',
+  'certified_copy',
   'obligation',
   'order',
   'listing',

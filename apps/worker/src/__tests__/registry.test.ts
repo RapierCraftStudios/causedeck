@@ -172,6 +172,8 @@ describe('enqueue', () => {
       'webhook.deliver',
       'system.webhook.sweep',
       'system.orders.poll',
+      'system.obligation.reminders',
+      'obligation.reminders',
     ]);
   });
 });

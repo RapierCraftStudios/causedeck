@@ -166,6 +166,11 @@ describe('@causedeck/ui', () => {
       'MemoryCard',
       'MEMORY_SCOPES',
       'MEMORY_SCOPE_META',
+      'DEFAULT_RESOLUTION_FIELD_LABELS',
+      'ResolutionField',
+      'SourceCompare',
+      'SourceText',
+      'ConfirmBar',
     ]) {
       expect(ui, name).toHaveProperty(name);
       expect(patterns[name]).toBe((ui as Record<string, unknown>)[name]);

@@ -1,3 +1,4 @@
+// check-stories: n/a Hover, FocusVisible, Active, Disabled, Invalid, WithIcon, LongText, RtlNeutral, Tamil, Kannada (state coverage is the Empty, Loading, ErrorState, Offline and Denied stories; no icon, RTL or per-script variants)
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, within } from 'storybook/test';
 

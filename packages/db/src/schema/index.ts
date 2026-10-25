@@ -297,6 +297,14 @@ export {
   type NoticeMatchReason,
 } from './notices.ts';
 export {
+  INCIDENT_SEVERITIES,
+  INCIDENT_STATES,
+  incident,
+  incidentUpdate,
+  type IncidentSeverity,
+  type IncidentState,
+} from './status.ts';
+export {
   CASE_STATUS_VIA,
   caseStatusSnapshot,
   caseWatch,

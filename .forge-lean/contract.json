@@ -2,227 +2,263 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "Add packages/core/src/status (model.ts StatusSnapshot/ComponentStatus/Incident zod; publish.ts building a sanitised, HMAC-signed snapshot from health checks and getAdapterHealthSummary with documented thresholds for operational/degraded/down).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "Add platform tables incident and incident_update (no workspace_id, justification comment, test they hold no tenant data) with migration.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "Add worker job status.publish (every minute, idempotent, overlap-safe, writes status/status.json to the public static path via the S3 abstraction) and STATUS_SIGNING_KEY env (dev default).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "Pre-stage every shared registry here: schema index, core index and cross-tenant registry (NOT_A_SERVICE or SERVICE_TESTS), core-domains doc, worker registry and schedules tests, i18n namespace and catalog test.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
-   "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "quote": "Acceptance: snapshot schema, sanitiser fixtures test, adapter threshold mapping tests, signature test, idempotent publish and stale detection (api test), court wording 'Parsing of documents you share'.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "packages/core/src/status/model.ts",
+   "change": "zod schemas + types StatusSnapshot, ComponentStatus (operational|degraded|down), Incident, IncidentUpdate; snapshot has version, generatedAt, components[], incidents[], signature field",
    "requirements": [
     "R1",
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "packages/core/src/status/publish.ts",
+   "change": "thresholds (documented constants: failed+degraded share of runs over a window mapped to operational/degraded/down; no runs = operational), sanitise() allowlist projection, canonical JSON + HMAC-SHA256 sign/verify with STATUS_SIGNING_KEY, buildSnapshot(deps) from health checks + getAdapterHealthSummary, publishStatus (skips write when unsigned-content hash unchanged), isStale(snapshot, now, maxAgeSec). Court component label 'Parsing of documents you share'.",
    "requirements": [
-    "R1"
+    "R1",
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "packages/core/src/status/index.ts",
+   "change": "barrel for the status domain; export from packages/core/src/index.ts and add './status' to packages/core/package.json exports",
    "requirements": [
-    "R1"
+    "R1",
+    "R4"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
+   "path": "packages/core/src/status/status.test.ts",
+   "change": "tests: snapshot schema, sanitiser fixtures (no hostnames/errors/workspace ids leak), threshold mapping per adapter, signature valid/tampered/wrong key, idempotent publish (second identical run does not put), stale detection, court wording",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
+   "path": "packages/core/src/jobs/definitions/status-publish.ts",
+   "change": "defineJob name 'system.status.publish' (NOT status.poll, which is case-watch), schema { workspaceId: null optional }, concurrency 1, singleton key 'status-publish' policy 'stately', schedule cron '* * * * *'; handler calls publishStatus with createObjectStoreFromEnv",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "import and register statusPublish (list and tuple type); also export from packages/core/src/jobs/index.ts",
    "requirements": [
-    "R3"
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
+   "path": "packages/db/src/schema/status.ts",
+   "change": "tables incident (id, title, severity, state, component, started_at, resolved_at, created_by staff ref optional, timestamps) and incident_update (id, incident_id fk, state, body, created_at); no workspace_id; justification comment that they hold only public platform status text; export from schema/index.ts",
    "requirements": [
-    "R3"
+    "R2",
+    "R4"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "path": "packages/db/migrations/20261025050000_status_incident.sql",
+   "change": "CREATE TABLE incident, incident_update plus grants consistent with other global tables; regenerate meta/20261025050000_snapshot.json and _journal.json (renumber if the base took the number)",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
+   "path": "packages/db/src/conventions.ts",
+   "change": "add 'incident' and 'incident_update' to GLOBAL_TABLES",
    "requirements": [
-    "R3"
+    "R2",
+    "R4"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
+   "path": "packages/db/src/index.test.ts",
+   "change": "add both tables to the root table list; add a test (or new packages/db/src/__tests__/status-schema.test.ts) asserting neither has a workspace_id column and neither column set can hold tenant data",
    "requirements": [
-    "R3"
+    "R2",
+    "R4"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
+   "path": "packages/storage/src/keys.ts",
+   "change": "add a narrow public-object key seam (e.g. publicObjectKey('status/status.json') allowlisted, branded as ObjectKey) so ObjectStore.put can write the public static path; verify s3-provider.ts and memory-provider.ts accept it and extend them if they re-parse keys; export from index.ts; add a test",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
+   "path": "packages/config/src/env/schema.ts",
+   "change": "add STATUS_SIGNING_KEY (secret: true, devDefault placeholder constant like DEV_BETTER_AUTH_SECRET, min length enforced in production); update .env.example via the generator and the env tests",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "add status domain to CORE_DOMAIN_DEPENDENCIES (court, storage-free imports only through index.ts); jobs gains status dependency; mirror in docs/engineering/core-domains.md (table row, mermaid, dependency table)",
    "requirements": [
     "R4"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "path": "docs/engineering/core-domains.md",
+   "change": "document the status domain and its edges",
    "requirements": [
-    "R2"
+    "R4"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "register every new runtime export of @causedeck/core: NOT_A_SERVICE with reasons (pure/system job body/constant/job definition/no tenant data); getAdapterHealthSummary-style SERVICE_TESTS only if a function reads tenant tables (none expected)",
    "requirements": [
-    "R1"
+    "R4"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "add 'system.status.publish' to the expected job list",
    "requirements": [
-    "R1"
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "add 'system.status.publish' to the scheduled list and the cron table ('* * * * *')",
+   "requirements": [
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "add 'status' to NAMESPACES; create messages/{en,kn,ta}/status.json (component names incl. 'Parsing of documents you share', state labels); update __tests__/catalog.test.ts top-level key list; regenerate generated/** with pnpm --filter @causedeck/i18n i18n:types",
+   "requirements": [
+    "R4",
+    "R5"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "system.status.poll (case-watch) job name, registration and tests: packages/core/src/jobs/definitions/status-poll.ts"
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "getAdapterHealthSummary signature and row shape: packages/core/src/court/adapter-health.ts:20"
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "Workspace object keys ws/\u003cuuid>/\u003ckind>/\u003cyyyy>/\u003cuuid>: objectKey/parseObjectKey behaviour in packages/storage/src/keys.ts stays strict; the public seam must not accept arbitrary paths"
+  },
+  {
+   "id": "P4",
+   "what": "Existing migrations and journal ordering in packages/db/migrations; tenant RLS catalog in packages/db/src/__tests__/rls/sql.test.ts is unchanged (new tables are global)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/status src/jobs/definitions/status-poll.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/storage exec vitest run src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/config exec vitest run src/env --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/status-schema.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V7",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/site-onboarding-launch"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
+   "choice": "Job named system.status.publish, schema workspaceId null/optional, singleton stately",
+   "justification": "system jobs must start 'system.' (packages/core/src/jobs/define.ts:90); overlap-safety copies notices-poll.ts:79; system.status.poll is already taken by case-watch",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
+   "choice": "Incident tables listed in GLOBAL_TABLES, no RLS catalog entry",
+   "justification": "notice is the precedent (packages/db/src/conventions.ts:80, index.test.ts:121); tables without workspace_id are exempt from the tenant convention",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
-   "source": "spec"
+   "choice": "Public path written through a new narrow key seam in @causedeck/storage rather than a cast",
+   "justification": "ObjectKey is branded and parsed strictly to workspace paths (keys.ts:8,47,67); no new workspace dependency since core already depends on @causedeck/storage (packages/core/package.json:70)",
+   "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
-   "source": "doc"
-  },
-  {
-   "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
+   "choice": "STATUS_SIGNING_KEY with a dev default modelled on BETTER_AUTH_SECRET",
+   "justification": "packages/config/src/env/schema.ts:22,150-154",
    "source": "precedent"
   }
  ]

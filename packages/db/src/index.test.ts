@@ -100,6 +100,8 @@ describe('@causedeck/db root entry point', () => {
       'import_batch',
       'import_batch_file',
       'import_plan',
+      'incident',
+      'incident_update',
       'intake_address',
       'intake_allowlist',
       'intake_message',

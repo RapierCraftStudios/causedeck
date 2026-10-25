@@ -35,6 +35,7 @@
     "./network": "./src/network/index.ts",
     "./portfolio": "./src/portfolio/index.ts",
     "./whatsapp-link": "./src/whatsapp-link/index.ts",
+    "./status": "./src/status/index.ts",
     "./public-api": "./src/public-api/index.ts",
     "./research": "./src/research/index.ts",
     "./review": "./src/review/index.ts",

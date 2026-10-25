@@ -100,3 +100,9 @@ Exit 127 again: bare `turbo` is not on PATH (environment). With `node_modules/.b
 
 ### Merge re-check (10)
 Exit 127: bare `turbo` is not on PATH (environment). With `node_modules/.bin` on PATH, `turbo run typecheck` passes 24/24 on the merged tree. No source change.
+
+### Merge re-check (11)
+Exit 127: bare `turbo` is not on PATH (environment). With `node_modules/.bin` on PATH, `turbo run typecheck` passes 24/24. No source change.
+
+### Merge re-check (8)
+Exit 127 again: bare `turbo` is not on PATH (environment). With `node_modules/.bin` on PATH, typecheck passes 24/24; V1-V5 re-run and pass. No source change.

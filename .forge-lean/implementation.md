@@ -34,3 +34,6 @@ Could not reproduce. Run locally with one worker and no file parallelism: packag
 
 ### CI follow-up
 The CI `test` job log was not available. I could not reproduce a failure locally. These pass on the branch: core `src/lifecycle` (15 files) and `src/__tests__` (13 files), db drafting-schema, conventions, migrate, lint-migrations, cross-tenant and rls (15 files), `tsc --noEmit` for validators, db, core, web and worker, and `drizzle-kit generate` (no schema changes). No code change was made. If the failure is outside these, the CI log is needed.
+
+## Merge follow-up
+The reported `turbo: command not found` (exit 127) was an environment failure, not a code conflict. Ran scoped `tsc --noEmit` for db, validators and core (clean) plus the V1-V3 validate commands (pass). Fixed the migration header comment to name 20261025060000_drafting.

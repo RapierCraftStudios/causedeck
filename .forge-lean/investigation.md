@@ -1,36 +1,34 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield Stage A monitoring; CERT-In 180-day log retention is a compliance obligation)
+**Severity**: high (no backups or DR exist for client data; PRD §8 RPO/RTO unmet)
 **Task Type**: feature
 
 ### What Was Claimed
-Add an India-resident monitoring stack (Prometheus, Grafana, Loki, Alertmanager, OTel Collector, cAdvisor, node_exporter, blackbox) with promtool-tested alerts, 180-day tamper-resistant log retention, content redaction, court-day dashboards/thresholds, on-call routing, optional Sentry, adapter-health metrics and capacity docs (13 acceptance criteria).
+Issue #101 asks for Stage A backup and DR: continuous WAL archiving and nightly base backups with WAL-G to India object storage (14 daily + 8 weekly, 14 days PITR), client-side encryption with off-host key custody, nightly MinIO replication to a second India location (versioning, delete protection), an automated restore drill (isolated container, amcheck, row-count manifest, RLS and cross-tenant checks, JSON report with RPO/RTO), a guarded PITR restore script, a `ops.backup.health` job with four metrics, a weekly drill workflow, runbooks, crypto-erase documentation and tests. 12 acceptance criteria.
 
 ### What We Found
-- `infra/monitoring/` does not exist on base; `infra/runbooks/` holds only `data-ops/` and `workspace-deletion.md` (no `on-call.md`).
-- `infra/docker/compose.prod.yml:16-21` defines networks `edge` and `data` (internal); no monitoring services, no log driver config. Caddy is a placeholder owned by #98 (`infra/caddy/Caddyfile:1-3`, no log directive).
-- `packages/observability/src/redact.ts:12-19` `CONTENT_KEYS` = content,text,body,quote,prompt,memoryValue: missing `title`, `filename`, `email`; secret pattern `:9` already covers token/authorization.
-- `packages/observability/src/logger.ts:96-123`: base fields `service`, `env`; mixin emits camelCase `requestId`, `workspaceId` (no `request_id`/`workspace_id`, no trace/span ids).
-- `packages/observability/src/otel.ts` exports OTLP over HTTP (`exporter-*-otlp-http`); no adapter metrics exist anywhere (`adapter_parse_success_ratio` / `adapter_last_success_timestamp` grep: none).
-- `packages/observability/src/sentry.ts:29-41` `beforeSend` already scrubs request data/user email; Sentry inert without DSN (`:20-24`).
-- `packages/observability/src/health.ts:106-152` already has a clock-drift readiness check (`createClockDriftCheck`, 1 s), so only the host-level alert (node_exporter `node_timex_offset_seconds`) and chrony/NTP guarantee are missing.
-- Test precedent: node tests over compose text `infra/scripts/compose-dev.test.mjs`, `compose-prod.test.mjs`, run by `package.json:31` `test:ci-scripts`. `promtool` is not installed locally.
-- Stale `.forge-lean/*` files from other issues were replaced.
+- #97 is merged on the base: the Postgres image already bundles WAL-G (`infra/docker/postgres/Dockerfile:7-28`) and `postgresql.conf:19-25` already sets `archive_mode = on`, `archive_timeout = 60`, `archive_command = 'wal-g wal-push %p'`. Missing: encryption env, base backup, retention, restore, replication, metrics.
+- `infra/docker/compose.prod.yml:244-247` passes only `WALG_S3_PREFIX` and `AWS_ENDPOINT` to postgres; `minio-init` (`:305-323`) creates only `causedeck-wal`; no versioning, no replication, no backup runner. `env/prod.env.example:36-38` has the WAL-G target only; no `infra/docker/postgres/wal-g.env.example`.
+- No `infra/scripts/backup/`, `infra/scripts/restore/`, `infra/runbooks/restore.md`, `dr-hyderabad.md`, `drills/` or `.github/workflows/restore-drill.yml` exist (`git ls-tree HEAD`). Runbooks present: `infra/runbooks/workspace-deletion.md:65-69` (already promises backups hold no recoverable DEK of a deleted workspace; nothing implements or tests it), `infra/runbooks/data-ops/`.
+- Job convention: definitions live in `packages/core/src/jobs/definitions/*.ts`, registered in `packages/core/src/jobs/registry.ts`, run by the worker (no `apps/worker/src/jobs/` dir). A non-`system.` job must require `workspaceId` (`packages/core/src/jobs/define.ts:104-106`), so the issue's `ops.backup.health` must be `system.backup.health` (precedent `system.audit.retention`, `audit-retention.ts:78`). Registry lists to update: `apps/worker/src/__tests__/registry.test.ts:144-165`, `schedules.test.ts:19-40`, `docs/engineering/jobs.md:124`.
+- Metrics API: `meter()` in `packages/observability/src/otel.ts:162`. Core already depends on `@causedeck/observability` and `@causedeck/storage` (`packages/core/package.json:69-70`), so no new workspace dependency.
+- Cross-tenant guard: new core runtime exports need `SERVICE_TESTS` or `NOT_A_SERVICE` in `packages/db/src/testing/cross-tenant-registry.ts` (jobs section ~`:1189-1236`).
+- Static-lint precedent for infra: `infra/scripts/compose-prod.test.mjs`, `compose-dev.test.mjs`; CI-only runtime precedent: `infra/docker/test/compose-smoke.sh`, `.github/workflows/images.yml` (actions pinned by SHA).
 
 ### Root Cause
-Greenfield: Stage A observability collection/alerting/retention was specified (spike §1, §6) but never built; instrumentation (#13) and prod compose (#97) exist but nothing collects them.
+Greenfield. #97 shipped the archiving hook only; nothing takes base backups, enforces retention or encryption, replicates MinIO, restores, or reports freshness.
 
 ### Affected Files
-New: `infra/monitoring/**` (compose, prometheus + rules + promtool tests, alertmanager, loki, otel-collector, blackbox, grafana provisioning/dashboards, log-retention, tests, README with limits and growth model), `infra/runbooks/on-call.md`. Changed: `packages/observability/src/redact.ts` (+test), `logger.ts` (snake_case + trace ids), new `adapter-metrics.ts`, `package.json` (`test:ci-scripts` already globs `infra/scripts` only; add monitoring test script).
+`infra/docker/{compose.prod.yml,postgres/postgresql.conf,postgres/wal-g.env.example,minio/replication.json,env/*.env.example}`, new `infra/scripts/backup/*`, `infra/scripts/restore/*`, `packages/core/src/jobs/definitions/backup-health.ts` (+registry), `.github/workflows/restore-drill.yml`, `infra/runbooks/{restore,dr-hyderabad}.md`, `infra/runbooks/drills/`, docs and registry tests (see contract.json).
 
 ### Sibling Sweep
-Same content-leak class: `sentry.ts` and `otel.ts` share `redact.ts`, so new content keys cover all three. OTel Collector redaction processor must mirror `CONTENT_KEYS`; a test should assert the lists match. Caddy JSON access logs must drop `Authorization`/`Cookie` headers and URL query.
+Other places that must stay consistent: `workspace-deletion.md` Backups section (crypto-erase claim), `infra/docker/README.md` production section, `docs/engineering/jobs.md` schedule list, worker registry/schedules tests, cross-tenant registry. Caddy/monitoring alert routing belong to #98/#102 (open), incident runbooks to #103.
 
 ### History
-`redact.ts` from the observability foundation (#13); prod compose from #97 (b210fd3a). No prior monitoring attempt.
+WAL archiving hook and WAL-G binary landed in #97 (PR #784, "Restore drills and retention are #101" in `postgresql.conf:22`). No prior backup attempt.
 
 ### Recommendation
-Single lane (~35 mostly independent config files, under split threshold). In-lane checks: node tests that parse configs (retention >= 4320h, India endpoint, rule coverage, route wiring), vitest for redaction/logger/adapter metrics, `verify-retention.sh` against a fixture/mock mode. promtool, e2e leak run, Grafana-behind-admin and live delivery are CI/out-of-band (promtool via pinned prom image in CI).
+One lane. Ship scripts with shell-level unit tests (guards, India endpoint validation, retention arithmetic, report schema) and a job with vitest unit tests; the full backup-PITR-restore integration test and the weekly drill run in CI against local MinIO only (never locally on this host). Alert routing is #102: deliver the metrics, thresholds and failing job/log signal, defer wiring.
 
 ### Related Issues
-#1 (parent), #13 and #97 (deps, done), #96 (status page, closed not_planned), #98 Caddy, #101 backups (metrics source), #103 runbooks, #115 Sentry DSN (human).
+#97 (done, dependency), #1 parent, #102 monitoring/alerts, #103 incident runbooks, #106 Stage B/C, #108 VPS, #116 secrets.

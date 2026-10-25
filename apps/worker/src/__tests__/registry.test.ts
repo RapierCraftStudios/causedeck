@@ -142,6 +142,7 @@ describe('enqueue', () => {
       'system.audit.verify',
       'audit.verify',
       'system.audit.retention',
+      'system.backup.health',
       'export.build',
       'system.export.expire',
       'system.support.session-expire',

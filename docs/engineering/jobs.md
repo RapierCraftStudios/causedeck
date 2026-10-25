@@ -123,7 +123,11 @@ A definition may declare `schedule: { cron, payload }`. `registerSchedules` regi
 each occurrence once, so every replica registers on boot without double-sending. Current
 schedules: `system.audit.verify` daily at 02:00 IST, `system.audit.retention` daily at 03:00 IST,
 `system.retention.sweep` daily at 03:30 IST, `system.billing.reconcile` daily at 04:00 IST,
-`system.billing.dunning-tick` daily at 04:30 IST and `system.notification.digest` every half hour.
+`system.billing.dunning-tick` daily at 04:30 IST, `system.notification.digest` every half hour and
+`system.backup.health` every minute (#101: reads the backup status reports from the ops bucket,
+exposes `walg_last_archive_age_seconds`, `walg_last_backup_age_seconds`,
+`restore_drill_last_success_timestamp` and `restore_drill_rto_seconds`, and logs `backup_alert`
+errors for stale WAL, failed backups, failed drills and RPO/RTO breaches; needs `BACKUP_OPS_*`).
 
 ## Notification jobs
 

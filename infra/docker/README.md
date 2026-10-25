@@ -135,3 +135,7 @@ Limits are per container; override with the `*_MEM` / `*_CPUS` variables. Memory
 | `admin` | 1 | 384m | 0.5 | 256m / 0.25 |
 | `postgres` | 1 | 2g | 2.0 | 1g / 1.0 |
 | `minio` | 1 | 512m | 0.5 | 256m / 0.25 |
+
+### Backups and restore (#101)
+
+WAL-G archives WAL continuously (`archive_timeout = 60`, encrypted with a libsodium key file) and the `backup` profile runs the nightly base backup (14 daily + 8 weekly, `BACKUP_RETAIN_*`), the one-minute WAL freshness check and the nightly MinIO replication to a second India location (`minio-replicate`, versioned, deletes never propagated). All storage targets pass `infra/scripts/backup/lib/india-guard.sh`. Variables: `postgres/wal-g.env.example`, `env/prod.env.example`. Restore, drills, key custody and alert thresholds: `infra/runbooks/restore.md`; losing the VPS: `infra/runbooks/dr-hyderabad.md`.

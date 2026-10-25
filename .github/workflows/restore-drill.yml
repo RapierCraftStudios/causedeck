@@ -1,0 +1,78 @@
+name: Restore drill
+
+# Weekly restore drill against staging backups (#101, R8/R13). The monthly drill is run by a human
+# and signed off in infra/runbooks/drills/. A failed or RPO/RTO-breaching drill fails this job and
+# publishes drills/latest.json, which system.backup.health turns into the alert signal.
+on:
+  schedule:
+    - cron: '30 21 * * 0' # Monday 03:00 IST
+  workflow_dispatch:
+    inputs:
+      target_time:
+        description: 'Recovery target (UTC ISO 8601) or "latest"'
+        default: latest
+
+permissions:
+  contents: read
+
+concurrency:
+  group: restore-drill
+  cancel-in-progress: false
+
+jobs:
+  drill:
+    name: restore drill (staging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    environment: staging
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Write the encryption key to tmpfs
+        env:
+          WALG_KEY: ${{ secrets.STAGING_WALG_KEY }}
+        run: |
+          install -m 0400 /dev/null "$RUNNER_TEMP/walg.key"
+          printf %s "$WALG_KEY" >"$RUNNER_TEMP/walg.key"
+      - name: Drill
+        env:
+          DRILL_IMAGE: ${{ vars.STAGING_POSTGRES_IMAGE }}
+          WALG_S3_PREFIX: ${{ vars.STAGING_WALG_S3_PREFIX }}
+          AWS_ENDPOINT: ${{ vars.STAGING_WALG_AWS_ENDPOINT }}
+          AWS_REGION: ${{ vars.STAGING_S3_REGION }}
+          # Read-only restore credentials; never the archiver or admin keys.
+          AWS_ACCESS_KEY_ID: ${{ secrets.STAGING_WALG_RESTORE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.STAGING_WALG_RESTORE_SECRET_KEY }}
+          OPS_ENDPOINT: ${{ vars.STAGING_WALG_AWS_ENDPOINT }}
+          OPS_BUCKET: causedeck-ops
+          OPS_REGION: ${{ vars.STAGING_S3_REGION }}
+          OPS_ACCESS_KEY: ${{ secrets.STAGING_OPS_ACCESS_KEY }}
+          OPS_SECRET_KEY: ${{ secrets.STAGING_OPS_SECRET_KEY }}
+          TARGET_TIME: ${{ inputs.target_time || 'latest' }}
+        run: |
+          set -euo pipefail
+          export WALG_LIBSODIUM_KEY_PATH="$RUNNER_TEMP/walg.key"
+          bash infra/scripts/restore/restore-drill.sh --target-time "$TARGET_TIME" \
+            --report "$RUNNER_TEMP/drill-report.json"
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: restore-drill-report
+          path: ${{ runner.temp }}/drill-report.json
+          if-no-files-found: ignore
+          retention-days: 90
+
+  integration:
+    name: backup -> PITR -> restore (local MinIO)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the postgres image
+        run: docker build -f infra/docker/postgres/Dockerfile -t "ghcr.io/ci/causedeck-postgres:sha-${GITHUB_SHA}" .
+      - name: PITR integration
+        run: IMAGE_ORG=ci GIT_SHA="$GITHUB_SHA" bash infra/scripts/backup/test/pitr-integration.sh

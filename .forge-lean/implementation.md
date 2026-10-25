@@ -40,3 +40,6 @@ The job log could not be read. Re-ran locally: db (notices-schema, index, rls, c
 
 ### CI `test` failure: rosters-perf (#387)
 The only failing test was `src/court/__tests__/rosters-perf.test.ts > are index-backed` (planner did not pick `bench_roster_entry_workspace_roster_idx` under `enable_seqscan = off`). It touches only the `bench_roster*` tables; this branch adds `notice_holiday` and changes nothing in `court` or those tables, and the other 185 core test files passed. It is a query-plan assertion on a CI database under load (shard took 554s), unrelated to #628, so no source change. Also untracked three accidentally committed `.eslintcache` files (gitignored).
+
+### CI `test` failure (second report, no log available)
+The log was unreadable again. Re-ran core src/notices src/deadlines: 27 passed. No source change; the failing test is unconfirmed and is most likely the unrelated rosters-perf query-plan assertion recorded above (the core cross-tenant suite needs a database, so only CI runs it).

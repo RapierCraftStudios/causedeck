@@ -33,3 +33,6 @@ Drafting domain in `@causedeck/core` over the pure `@causedeck/drafting` engine:
 
 ### Notes
 - Job payload also carries `userId` (audit actor and facts reader).
+
+## Sibling-list follow-up
+The 20 flagged (symbol, test) pairs for DRAFT_EXPORT_FORMATS and draftExport are unrelated mocks or fixtures at the cited lines, not lists of db schema exports. They are recorded in result.json not_members; no test edits.

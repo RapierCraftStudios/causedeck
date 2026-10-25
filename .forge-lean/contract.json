@@ -2,471 +2,317 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "The queue groups obligations as Overdue, Today, This week, Later, Undated, each group collapsible with a count, overdue first and sorted by age; group state persists per member.",
+   "quote": "Server actions (apps/web outward actions with cross-tenant ACTIONS registration)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Each row shows description, matter and case number, owner avatar, due label with relative text ('due Fri 23 Oct, 3 days'), kind icon, status and a Provenance Chip to the source line; overdue uses an icon plus text, not colour alone.",
+   "quote": "draft-editor, ready-to-send-list integration via registerReadyProvider",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Closing an obligation always opens the close dialog requiring a reason (completed task, lawyer action, not applicable plus text); there is no one-tap silent close, including via swipe or keyboard.",
+   "quote": "share-menu (copy, wa.me and mailto links opened by the user in a new window, download)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "On touch devices, swipe right opens 'Done' (which opens the close dialog) and swipe left opens 'Reschedule' (date picker plus mandatory reason); a visible button and keyboard shortcut provide the same actions.",
+   "quote": "language-switcher, diff-view, keyboard shortcuts, banner",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Each item shows one drafted next step (task, reminder to the clerk, or letter to the client) as a collapsed card; 'Use' creates a task or an internal reminder immediately and a client letter as a draft that is never sent.",
+   "quote": "all states (skeleton, empty, error, offline, denied)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Filters (matter, owner, kind, source, group) and a text search narrow the queue within 100 ms client-side and are reflected in the URL.",
+   "quote": "`outward` i18n namespace en/ta/kn plus catalog test",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "Defects tab lists registry defects with cure-by dates and proceeding state; Certified copies tab shows applied, ready and collected with next action.",
+   "quote": "Storybook stories with interaction tests, a11y.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Reorder and group changes animate with layout animation (220 ms) and reduced motion disables them.",
+   "quote": "Depends on part 1 services.",
    "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R9",
-   "quote": "States: empty ('Nothing outstanding. Orders you confirm will add obligations here'), skeleton, error with retry, offline (read from cache; mutations queue and show 'Will sync'), permission-denied (viewer read-only, clerk without strategy text).",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R10",
-   "quote": "Keyboard: `j`/`k` move, `x` select, `d` done (dialog), `r` reschedule, `a` add, `o` open detail, `/` search, `g o` go to queue, `?` help; all are listed in the shortcut sheet.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R11",
-   "quote": "Light and dark themes meet AA; visual baselines at 360, 768, 1280 px.",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "e2e workflow update_snapshots and visual job generate and compare baselines in CI"
-  },
-  {
-   "id": "R12",
-   "quote": "Initial JS \u003c= 180 KB gzip, Lighthouse performance and accessibility >= 95, p95 server action \u003c 300 ms.",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Lighthouse CI (e2e/lighthouserc.json, add an obligations config) and next build bundle check run only in CI"
-  },
-  {
-   "id": "R13",
-   "quote": "The surface never auto-sends anything; letter and reminder next steps only create drafts or internal tasks.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R14",
-   "quote": "Storybook stories exist for every new component with all states (default, empty, loading, error, offline, denied) and interaction tests.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R15",
-   "quote": "Playwright visual baselines exist for light and dark themes at 360, 768 and 1280 px.",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Baselines are generated only by the e2e workflow update_snapshots (CLAUDE.md: no Playwright locally); the visual spec is delivered here"
-  },
-  {
-   "id": "R16",
-   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "e2e a11y job (e2e/tests/a11y) runs axe in CI; the spec is delivered here"
-  },
-  {
-   "id": "R17",
-   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "in_lane",
+   "why": "Part 1 (#735) is merged; the missing read model is added in D1 so the UI can consume it."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/obligations/views.ts",
-   "change": "New read models: listDefects, listCertifiedCopies and a queue hydration (matter title and case number, owner name, source quote anchor) scoped by inObligationScope and visibleMatters; export from index.ts",
+   "path": "packages/core/src/outward/views.ts",
+   "change": "New read model: listDrafts(deps, actor, filter?) returning ready drafts (id, matterId, matter title, audience, language, tone, status, createdAt, latest body preview) and getDraft(deps, actor, draftId) returning latest version body, system (first) version body, facts with provenance, versions list. Same scope, draft.write and matter-visibility rules as saveEdit (diff.ts:99-122); not-found for another workspace's id. Exclude fully shared drafts from the ready list.",
    "requirements": [
     "R2",
-    "R7"
+    "R8"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/obligations/index.ts",
-   "change": "Export the views",
+   "path": "packages/core/src/outward/index.ts",
+   "change": "Export listDrafts, getDraft and their view types.",
    "requirements": [
-    "R7"
+    "R8"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register new core runtime exports under SERVICE_TESTS (cases in packages/core/src/__tests__/cross-tenant/services.test.ts)",
+   "path": "packages/core/src/outward/__tests__/views.test.ts",
+   "change": "Tests for listDrafts/getDraft: lists, ordering, latest vs system version, clerk denied, restricted matter hidden.",
    "requirements": [
-    "R7"
+    "R8"
    ]
   },
   {
    "id": "D4",
    "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Cases: tenant B listing defects/copies/hydrated queue sees nothing of A; A unchanged",
+   "change": "Extend the outward cross-tenant describe (line ~3533): B on A's listDrafts sees nothing and getDraft is NOT_FOUND; A is unchanged.",
    "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/ui/src/patterns/obligation-row/obligation-row.tsx",
-   "change": "Swipe right=Done (opens dialog), left=Reschedule, threshold 72 px; labels reschedule not snooze; kind icon, status; 220 ms layout animation with reduced-motion fade; keep existing props working",
-   "requirements": [
-    "R2",
-    "R4",
+    "R1",
     "R8"
    ]
   },
   {
-   "id": "D6",
-   "path": "packages/ui/src/patterns/obligation-row/obligation-row.stories.tsx",
-   "change": "Stories for default, empty, loading, error, offline, denied with play tests",
+   "id": "D5",
+   "path": "apps/web/app/(app)/w/[slug]/_outward/actions.ts",
+   "change": "'use server' actions via workspaceAction: composeDraftAction (draft.write; generation), saveDraftEditAction, markDraftSharedAction (channel enum, records via recordShared/recordCopied only; no transport), each strict zod from @causedeck/validators/outward-draft, assertCan draft.write, lazy core imports, revalidatePath of drafts and inbox. Read helpers for the page stay in lib, not 'use server'.",
    "requirements": [
-    "R14"
+    "R1"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Import _outward/actions.ts, add every exported action to ACTIONS with probe inputs (uuid of another workspace's draft/matter).",
+   "requirements": [
+    "R1"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/ui/src/patterns/obligation-row/obligation-row.test.tsx",
-   "change": "Update tests for swipe directions and labels",
+   "path": "apps/web/lib/outward/share-links.ts",
+   "change": "Pure builders: whatsappHref(text), mailtoHref(subject, body), downloadBlob(text, filename); encode text; hrefs are wa.me / mailto: only; plus unit test apps/web/lib/outward/share-links.test.ts.",
    "requirements": [
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/ui/src/patterns/index.ts",
-   "change": "Export any new pattern parts (DueLabel, GroupHeader)",
+   "path": "apps/web/lib/outward/ready-provider.ts",
+   "change": "ReadyItemProvider id 'outward' registered with registerReadyProvider: list maps listDrafts to ReadyItem (title, summary with audience/language/matter, copy and wa.me/mailto open actions); markSent calls recordShared. Plus test apps/web/lib/outward/ready-provider.test.ts. Registration is imported for side effect from the inbox page (D9).",
    "requirements": [
-    "R1",
     "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/messages/en/obligations.json",
-   "change": "Complete en catalog for the surface",
+   "path": "apps/web/app/(app)/w/[slug]/inbox/page.tsx",
+   "change": "Import the outward ready provider module so it is registered before listReadyItems runs; no other behaviour change.",
    "requirements": [
-    "R17",
-    "R9",
-    "R10"
+    "R2"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/messages/ta/obligations.json",
-   "change": "Stub keys",
+   "path": "apps/web/components/outward/draft-editor.tsx",
+   "change": "Client editor: labelled textarea (serif, 1.7 line height, lang attribute per draft, Indic fallback), banner, fact chips/right rail with provenance and 'to be confirmed' flags, guard warnings as amber text notes, save edit, Cmd/Ctrl+Enter copy, l cycles language, d toggles diff, Esc closes, aria-live announcements on copy and language change, 180 ms fade with reduced-motion fallback.",
    "requirements": [
-    "R17"
+    "R2",
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/messages/kn/obligations.json",
-   "change": "Stub keys",
+   "path": "apps/web/components/outward/share-menu.tsx",
+   "change": "Copy (clipboard), Open in WhatsApp and Open in email (window.open(href,'_blank','noopener,noreferrer') on user click, then markShared action), Download; sticky bottom bar at 360 px; Mark shared; disabled with explanation offline/denied.",
    "requirements": [
-    "R17"
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'obligations' to NAMESPACES",
-   "requirements": [
-    "R17"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add obligations to the expected namespace list",
-   "requirements": [
-    "R17"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/web/lib/obligations/queue-state.ts",
-   "change": "URL param parse/serialise for filters, search, tab; client-side filter and next-step suggestion (deterministic, no send)",
-   "requirements": [
-    "R5",
-    "R6"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/page.tsx",
-   "change": "Server page: load queue/defects/copies via core, permission-denied and dev __state previews",
-   "requirements": [
-    "R1",
-    "R9"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/loading.tsx",
-   "change": "Skeleton",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/error.tsx",
-   "change": "Error with Retry",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/actions.ts",
-   "change": "closeObligationAction, rescheduleAction, reassignAction, addObligationAction (+ use-next-step) via workspaceAction, strict zod, can() checked, revalidatePath; no send path",
-   "requirements": [
-    "R3",
-    "R4",
-    "R5",
-    "R13"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Add the new actions to ACTIONS with probe inputs",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-view.tsx",
-   "change": "Client queue: groups, selection, shortcuts (j k x d r a o / g o ?), shortcut sheet, offline queue 'Will sync', group collapse persisted per member",
-   "requirements": [
-    "R1",
-    "R6",
-    "R9",
-    "R10"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-group.tsx",
-   "change": "Collapsible group with count and sticky header",
-   "requirements": [
-    "R1",
-    "R8"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/close-dialog.tsx",
-   "change": "Reason-required close dialog",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/reschedule-popover.tsx",
-   "change": "Date picker plus mandatory reason",
+   "path": "apps/web/components/outward/language-switcher.tsx",
+   "change": "Segmented control EN / தமிழ் / ಕನ್ನಡ (toggle-group) with accessible names.",
    "requirements": [
     "R4"
    ]
   },
   {
-   "id": "D24",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/next-step-card.tsx",
-   "change": "Collapsed drafted next step with Use",
+   "id": "D13",
+   "path": "apps/web/components/outward/diff-view.tsx",
+   "change": "Renders DiffPart[] with +/- text markers as well as colour, sr-only labels.",
    "requirements": [
-    "R5",
-    "R13"
+    "R4"
    ]
   },
   {
-   "id": "D25",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-filters.tsx",
-   "change": "Matter, owner, kind, source, group filters and search",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D26",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/defects-tab.tsx",
-   "change": "Defects list",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D27",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/copies-tab.tsx",
-   "change": "Certified copies list",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D28",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/detail-sheet.tsx",
-   "change": "Detail with source quote, history, next step",
+   "id": "D14",
+   "path": "apps/web/components/outward/draft-list.tsx",
+   "change": "Ready-to-send draft cards (audience chip, language chip, matter, 3-line preview, age) plus states component: skeleton, empty ('No updates waiting'), error with retry, offline (editing allowed, generation disabled), denied; split view at 768 px+.",
    "requirements": [
     "R2",
     "R5"
    ]
   },
   {
-   "id": "D29",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/use-swipe.ts",
-   "change": "Pointer swipe hook with keyboard parity",
+   "id": "D15",
+   "path": "apps/web/components/outward/outward.stories.tsx",
+   "change": "Storybook stories for every component with default, empty, loading, error, offline, denied states and play-function interaction tests; a11y addon clean.",
    "requirements": [
-    "R4"
+    "R7"
    ]
   },
   {
-   "id": "D30",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/swipe-row.tsx",
-   "change": "Swipe wrapper using use-swipe",
+   "id": "D16",
+   "path": "apps/web/components/outward/__tests__/outward.test.tsx",
+   "change": "Component tests: banner text, keyboard shortcuts, share hrefs opened with noopener and no server transport, denied/offline states.",
    "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D31",
-   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/obligation-row.tsx",
-   "change": "Row adapter over the ui pattern",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D32",
-   "path": "e2e/tests/obligations/obligation-queue.spec.ts",
-   "change": "Product e2e journeys (CI only)",
-   "requirements": [
-    "R1",
     "R3",
     "R4",
-    "R6",
-    "R9",
-    "R10"
+    "R5"
    ]
   },
   {
-   "id": "D33",
-   "path": "e2e/tests/obligations/obligation-queue.visual.spec.ts",
-   "change": "Visual and axe spec for light/dark at 360, 768, 1280",
+   "id": "D17",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/page.tsx",
+   "change": "Replace placeholderPage with the server page: membership check, draft.write gate (PermissionDenied for clerk), listDrafts/getDraft via runtime.inWorkspace, render list and editor.",
    "requirements": [
-    "R11",
-    "R15",
-    "R16"
+    "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/loading.tsx",
+   "change": "Skeleton state.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/error.tsx",
+   "change": "Error boundary with retry (copy the memory/error.tsx pattern).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/i18n/src/messages/en/outward.json",
+   "change": "Complete English strings incl. the banner 'Draft for you to review and send yourself. CauseDeck does not send messages.', states, shortcuts, share, language names, a11y announcements.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/i18n/src/messages/ta/outward.json",
+   "change": "Same keys stubbed for Tamil, copying the stub convention of the other ta files.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/i18n/src/messages/kn/outward.json",
+   "change": "Same keys stubbed for Kannada.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Register the 'outward' namespace.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add 'outward' to the expected namespace list.",
+   "requirements": [
+    "R6"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "@causedeck/core/obligations service behaviour and signatures (queryQueue, closeObligation, updateObligation, createObligation) in packages/core/src/obligations/*; the UI only calls them"
+   "what": "Outward core service signatures and behaviour (composeUpdate, saveEdit, recordShared, recordCopied, guardOutward) in packages/core/src/outward/*.ts, including the static no-send test packages/core/src/outward/__tests__/no-send.test.ts: no transport import, server never transmits draft text."
   },
   {
    "id": "P2",
-   "what": "The DB closure check obligation_closure_chk and enum names (done, task_completed, source) in packages/db/src/schema/docket.ts; no schema or migration change"
+   "what": "ReadyItemProvider/ReadyItem types and existing inbox behaviour in apps/web/lib/inbox/ready-providers.ts and apps/web/components/inbox/ready-to-send-list.tsx (providers that fail contribute nothing; empty when none)."
   },
   {
    "id": "P3",
-   "what": "Other consumers of the ui patterns index (packages/ui/src/patterns/index.ts) and the ObligationRow public props"
-  },
-  {
-   "id": "P4",
-   "what": "No outward send path: nothing on the page may call a mail, WhatsApp or filing provider"
+   "what": "Existing cross-tenant action probes and other i18n namespaces (apps/web/__tests__/cross-tenant-actions.test.ts, packages/i18n/src/messages/*)."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/outward/__tests__/views.test.ts src/outward/__tests__/no-send.test.ts src/outward/__tests__/outward.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/obligations"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts -t 'outward' --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts lib/outward components/outward components/inbox --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/ui exec vitest run src/patterns/obligation-row src/patterns/boundaries.test.ts src/patterns/motion.test.ts"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/web exec vitest run lib/obligations"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/follow-up-continuity-memory"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Keep existing enum and column names (source as kind, done as closed) in the UI and map to issue wording in i18n",
-   "justification": "packages/db/src/schema/enums.ts:66-77 and docket.ts:227; ADR docs/adr/0037-obligation-model.md",
-   "source": "doc"
+   "choice": "Components and stories live in apps/web/components/outward/, actions in app/(app)/w/[slug]/_outward/actions.ts, not packages/ui/src/patterns/outward as the parent #69 suggests.",
+   "justification": "apps/web/.storybook/main.ts:14 only globs ../components/**/*.stories; packages/ui/src/patterns/outward does not exist; web owns the next-intl strings and server actions; memory/inbox are precedents (apps/web/components/inbox/*).",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Client letter next step creates an internal task via createObligation(source 'internal') until #69 lands",
-   "justification": "Issue 'Data and API contracts' says so; #69 is open; core/obligations/create.ts:95",
-   "source": "spec"
+   "choice": "Add a core read model (listDrafts/getDraft) instead of querying tables from apps/web.",
+   "justification": "Core has no draft reader (packages/core/src/outward/index.ts:3-15); core-domains rules keep table access in core and RLS-scoped via inOutwardScope (context.ts), so web must go through a core export.",
+   "source": "doc"
   },
   {
    "id": "K3",
-   "choice": "New core read models for defects and copies instead of querying the db from apps/web",
-   "justification": "core/obligations has only writers (defects.ts:52, certified-copies.ts:33); apps/web reaches data through core services (inbox/actions.ts pattern); new core exports need cross-tenant registry entries (CLAUDE.md)",
+   "choice": "The drafts route at /w/[slug]/drafts hosts the split-view editor; the inbox Ready-to-send items link to it and offer copy/open hand-offs through the registered provider.",
+   "justification": "drafts/page.tsx:1-3 is a placeholder already in shell nav; inbox ReadyAction supports only copy/open (ready-providers.ts:13-15).",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Reuse and adapt packages/ui/src/patterns/obligation-row rather than create patterns/obligation/",
-   "justification": "obligation-row.tsx already has swipe, due state, ProvenanceChip; the issue path is outdated",
-   "source": "precedent"
-  },
-  {
-   "id": "K5",
-   "choice": "Group-collapse persistence per member via client storage keyed by member id, no new table",
-   "justification": "No member-preferences store found; a table would need RLS catalog and migration registries",
-   "source": "precedent"
+   "choice": "The only transport is a user-clicked wa.me/mailto: href opened with noopener in a new window; the server action only records the share.",
+   "justification": "ADR docs/adr/0039-outward-drafts-no-send-path.md and #69 acceptance criteria.",
+   "source": "doc"
   }
  ]
 }

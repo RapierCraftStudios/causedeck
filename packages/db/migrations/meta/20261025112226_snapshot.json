@@ -1,6 +1,6 @@
 {
-  "id": "ae0cb825-c7b4-4c2c-8b8d-ab00de2c45cb",
-  "prevId": "c0443261-9a90-4075-998b-d6711524a0bb",
+  "id": "3d9cd152-a5fe-40db-84bd-80e1f546fb89",
+  "prevId": "24675310-7b73-4424-a516-9bc25b96f4a3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -12401,6 +12401,20 @@
           "notNull": true,
           "default": false
         },
+        "reminder_evening_time": {
+          "name": "reminder_evening_time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'20:00'"
+        },
+        "reminder_outcome_delay_min": {
+          "name": "reminder_outcome_delay_min",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 90
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -15645,6 +15659,128 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reminder_dispatch": {
+      "name": "reminder_dispatch",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "for_date": {
+          "name": "for_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "reminder_dispatch_workspace_id_idx": {
+          "name": "reminder_dispatch_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "reminder_dispatch_workspace_id_fk": {
+          "name": "reminder_dispatch_workspace_id_fk",
+          "tableFrom": "reminder_dispatch",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reminder_dispatch_member_fk": {
+          "name": "reminder_dispatch_member_fk",
+          "tableFrom": "reminder_dispatch",
+          "tableTo": "member",
+          "columnsFrom": [
+            "workspace_id",
+            "member_id"
+          ],
+          "columnsTo": [
+            "workspace_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "reminder_dispatch_member_kind_date_channel_uq": {
+          "name": "reminder_dispatch_member_kind_date_channel_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "member_id",
+            "kind",
+            "for_date",
+            "channel"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "reminder_dispatch_kind_chk": {
+          "name": "reminder_dispatch_kind_chk",
+          "value": "\"reminder_dispatch\".\"kind\" in ('evening', 'morning', 'outcome_missing')"
+        },
+        "reminder_dispatch_channel_chk": {
+          "name": "reminder_dispatch_channel_chk",
+          "value": "\"reminder_dispatch\".\"channel\" in ('in_app', 'push', 'email')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.review_correction": {

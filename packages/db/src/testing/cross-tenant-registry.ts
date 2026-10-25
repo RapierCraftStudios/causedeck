@@ -129,6 +129,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Brief state (#60).
   brief_state: DB_TABLES_TEST,
 
+  // Court-day reminders (#64).
+  reminder_dispatch: DB_TABLES_TEST,
+
   // Review and correction queue (#518).
   review_correction: DB_TABLES_TEST,
 
@@ -1174,6 +1177,13 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
   detectClashes: 'pure (groups already-loaded items by date and member)',
   diffLists: 'pure',
+  addDays: 'pure (calendar date arithmetic)',
+  buildEveningBrief: 'pure (counts over an already-loaded court day, which getCourtDay scopes)',
+  buildMorningDiff: 'pure (sums already-computed list diffs)',
+  eveningPushPayload: 'pure (drops the matter names from an evening brief)',
+  findMissingOutcomes: 'pure (filters hearings already read under the workspace scope)',
+  LOW_READINESS_BELOW: 'constant',
+  OUTCOME_FALLBACK_TIME: 'constant',
   hashRows: 'pure',
   itemNumber: 'pure',
   paceSamples: 'pure',
@@ -1460,6 +1470,9 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   // End-of-day digest preference (#49)
   getEndOfDayPreference: notificationDenies,
   setEndOfDayPreference: notificationDenies,
+  // Court-day reminder preferences (#64)
+  getReminderPreferences: notificationDenies,
+  setReminderPreferences: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */

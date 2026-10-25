@@ -119,6 +119,7 @@ describe('namespaced catalogs (#174)', () => {
         'portfolio',
         'provisioning',
         'pwa',
+        'reminders',
         'settings',
         'shell',
         'shortcuts',

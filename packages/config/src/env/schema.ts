@@ -192,6 +192,31 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 197,
   },
+  WHATSAPP_PHONE_NUMBER_ID: {
+    domain: 'server',
+    type: 'string',
+    description: 'WhatsApp Business Platform phone number id that outbound messages are sent from.',
+    requiredWhen: 'WHATSAPP_ACCESS_TOKEN is set',
+    ownerIssue: 679,
+    credentialIssue: 488,
+  },
+  WHATSAPP_ACCESS_TOKEN: {
+    domain: 'server',
+    type: 'secret',
+    description:
+      'WhatsApp Business Platform access token. Without it WhatsApp delivery is disabled.',
+    requiredWhen: 'WHATSAPP_PHONE_NUMBER_ID is set',
+    ownerIssue: 679,
+    credentialIssue: 488,
+    secret: true,
+  },
+  WHATSAPP_API_VERSION: {
+    domain: 'server',
+    type: 'string (vNN.N)',
+    description: 'WhatsApp Business Platform Graph API version. Defaults to v21.0.',
+    requiredWhen: 'never',
+    ownerIssue: 679,
+  },
   OTEL_EXPORTER_OTLP_ENDPOINT: {
     domain: 'server',
     type: 'url',
@@ -455,6 +480,19 @@ export const serverShape = {
     .regex(/^(mailto:\S+@\S+|https:\/\/\S+)$/, 'must be a mailto: address or an https URL')
     .optional()
     .describe(d(serverKeys.VAPID_SUBJECT)),
+  WHATSAPP_PHONE_NUMBER_ID: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(d(serverKeys.WHATSAPP_PHONE_NUMBER_ID)),
+  WHATSAPP_ACCESS_TOKEN: secret(z.string().min(1))
+    .optional()
+    .describe(d(serverKeys.WHATSAPP_ACCESS_TOKEN)),
+  WHATSAPP_API_VERSION: z
+    .string()
+    .regex(/^v\d+\.\d+$/, 'must look like v21.0')
+    .optional()
+    .describe(d(serverKeys.WHATSAPP_API_VERSION)),
   OTEL_EXPORTER_OTLP_ENDPOINT: z
     .url()
     .optional()
@@ -644,6 +682,14 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
     add(
       env.VAPID_PUBLIC_KEY === undefined ? 'VAPID_PUBLIC_KEY' : 'VAPID_PRIVATE_KEY',
       'VAPID keys must be set together',
+    );
+  }
+  if ((env.WHATSAPP_PHONE_NUMBER_ID === undefined) !== (env.WHATSAPP_ACCESS_TOKEN === undefined)) {
+    add(
+      env.WHATSAPP_PHONE_NUMBER_ID === undefined
+        ? 'WHATSAPP_PHONE_NUMBER_ID'
+        : 'WHATSAPP_ACCESS_TOKEN',
+      'WhatsApp phone number id and access token must be set together',
     );
   }
   return issues;

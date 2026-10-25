@@ -156,6 +156,7 @@ describe('enqueue', () => {
       'whatsapp.import',
       'voice.process',
       'email.intake',
+      'whatsapp.intake',
       'email.raw-expire',
       'extraction.extract-order',
       'import.batch',

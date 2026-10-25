@@ -46,7 +46,7 @@ vi.mock('@causedeck/core/runtime', () => ({
 }));
 vi.mock('../lib/staff.ts', () => ({ requireStaff: () => Promise.resolve(state.staff) }));
 
-const { searchWorkspaces, staffAuditLog, workspaceMetadata, workspaceUsage } =
+const { growthFunnel, searchWorkspaces, staffAuditLog, workspaceMetadata, workspaceUsage } =
   await import('../lib/data/index.ts');
 const { default: WorkspacesPage } = await import('../app/(console)/workspaces/page.tsx');
 const { default: WorkspacePage } = await import('../app/(console)/workspaces/[id]/page.tsx');
@@ -170,6 +170,26 @@ describe('staff console responses carry metadata only', () => {
         expect(text).not.toMatch(CONTENT);
         expect(text).not.toContain(otherEmail);
       }
+    });
+  });
+});
+
+describe('the growth funnel carries counts only (#509)', () => {
+  it('returns no user id, email or content word', async () => {
+    await withTestDb(async (tx) => {
+      state.tx = tx;
+      const t = await seed(tx);
+      await tx.insert(schema.activationEvent).values([
+        { userId: t.ua, step: 'signed_up', channel: 'direct', occurredAt: new Date('2031-03-03') },
+        { userId: t.ua, step: 'first_court_day_view', occurredAt: new Date('2031-03-04') },
+      ]);
+      const funnel = await growthFunnel(state.staff as never, { since: new Date('2031-01-01') });
+      expect(funnel.cohorts.length).toBeGreaterThan(0);
+      const json = JSON.stringify(funnel);
+      expect(json).not.toContain(t.ua);
+      for (const email of await emails(tx, [t.ua])) expect(json).not.toContain(email);
+      expect(json).not.toMatch(CONTENT);
+      expect(keysDeep(funnel).filter((k) => /id$|email|name/i.test(k))).toEqual([]);
     });
   });
 });

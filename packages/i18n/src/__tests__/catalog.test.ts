@@ -113,8 +113,10 @@ describe('namespaced catalogs (#174)', () => {
         'notices',
         'notifications',
         'offline',
+        'onboardingDiscovery',
         'palette',
         'portfolio',
+        'provisioning',
         'pwa',
         'settings',
         'shell',
@@ -123,6 +125,7 @@ describe('namespaced catalogs (#174)', () => {
         'usage',
         'voice',
         'whatsappImport',
+        'whatsappLink',
         'workspace',
       ].sort(),
     );
@@ -175,5 +178,15 @@ describe('import review recovery copy (#551)', () => {
     ['kn', kn],
   ] as const)('%s reuses the standard unreadable-file sentence', (_locale, messages) => {
     expect(messages.importReview.issues.unreadableCopy).toBe(messages.inbox.unreadable.copy);
+  });
+});
+
+describe('whatsapp link copy (#681)', () => {
+  it('has the whatsappLink namespace in every locale with the opt-in and unlink strings', () => {
+    for (const catalog of [en, ta, kn]) {
+      expect(catalog.whatsappLink.consent).not.toBe('');
+      expect(catalog.whatsappLink.unlink).not.toBe('');
+      expect(catalog.whatsappLink.linked).toContain('{number}');
+    }
   });
 });

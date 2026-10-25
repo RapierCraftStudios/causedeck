@@ -7,7 +7,7 @@ import { expect, fn, screen, waitFor } from 'storybook/test';
 import en from '@causedeck/i18n/messages/en.json';
 
 import type { Result } from '../../lib/safe-action.ts';
-import { AddForum } from './add-forum.tsx';
+import { AddForum, loadAddForumDialog } from './add-forum.tsx';
 import type { AddForumInput } from './add-forum-dialog.tsx';
 
 type ActionResult = Result<{ code: string; court: string }>;
@@ -36,11 +36,19 @@ export const Default: Story = {
   },
 };
 
-/** A click opens the dialog once its chunk has loaded. */
+/**
+ * A click opens the dialog once its chunk has loaded. The loader loads the chunk before render: when
+ * it lands mid-click (the hover prefetch), the static button is swapped out under `userEvent.click`
+ * and the click is lost. The click-before-load path is covered in `__tests__/add-forum.test.tsx`.
+ */
 export const Opens: Story = {
+  loaders: [
+    async () => {
+      await loadAddForumDialog();
+    },
+  ],
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(canvas.getByRole('button', { name: t.trigger }));
-    // The dialog chunk loads lazily; a cold dark-theme run can exceed waitFor's 1 s default.
     await waitFor(() => expect(screen.getByRole('dialog')).toBeVisible(), { timeout: 5000 });
   },
 };

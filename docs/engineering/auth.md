@@ -145,6 +145,32 @@ RP ID.
 Auth emails carry i18n keys (`auth.email.magicLink.subject`, `auth.email.magicLink.body`) and the
 recipient's locale, never English prose. The templated transport in #23 resolves the keys.
 
+## Phone OTP (#503)
+
+Phone-first sign-in: a +91 mobile number and a six-digit code by SMS (Better Auth `phoneNumber`
+plugin, mounted only when `createAuth` gets an `sms` sender). Codes expire after 5 minutes and allow
+3 wrong attempts. The first verification creates the account (never when `disableSignUp`, as in the
+admin console) with the placeholder email `<digits>@phone.causedeck.invalid`; `user.email` stays
+required and unique.
+
+`createSmsSender(env)` (`@causedeck/auth/sms`) picks the transport from `SMS_PROVIDER`:
+
+- `console` (default): logs the message; the code is logged only outside production, and the number
+  is masked to its last four digits in production.
+- `msg91`: MSG91 Flow API with the DLT-registered OTP template. Needs `SMS_AUTH_KEY`,
+  `SMS_SENDER_ID`, `SMS_DLT_ENTITY_ID` and `SMS_OTP_TEMPLATE_ID` (DLT template registration is a
+  human step with the operator).
+
+| Limit | Where |
+|---|---|
+| OTP send: 5 per phone number per 15 minutes | `hooks.before` counter under `phone-otp:phone:<sha256(number)>` |
+| OTP send: 20 per IP per hour; verify: 30 per IP per hour | Better Auth `customRules` |
+| Wrong codes: 3 per code | plugin `allowedAttempts` |
+
+Linking: a phone-only account can add an email on `/account` (`/change-email`: the address changes only after the emailed link is opened; refused for accounts
+that already have a real email) and link Google (`account.accountLinking`, Google trusted). Security
+events record the method `phone_otp`.
+
 ## Rate limits
 
 Rate limiting is always on, with storage `database` (the `rate_limit` table).

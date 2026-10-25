@@ -301,6 +301,24 @@
         "expired": "This link has expired. Request a new one.",
         "offline": "You are offline. Connect to sign in.",
         "accessDenied": "Access was not granted."
+      },
+      "phone": {
+        "label": "Mobile number",
+        "placeholder": "98765 43210",
+        "submit": "Send code",
+        "codeSent": "We texted a 6-digit code to {phone}. It expires in {minutes} minutes.",
+        "codeLabel": "Code",
+        "verify": "Verify and sign in",
+        "differentNumber": "Use a different number",
+        "resend": "Resend code",
+        "resendIn": "Resend in {seconds}s",
+        "errors": {
+          "invalidNumber": "Enter a 10-digit Indian mobile number.",
+          "sendFailed": "We could not send the code. Try again in a moment.",
+          "invalidCode": "That code is not right. Check it and try again.",
+          "expiredCode": "This code has expired. Request a new one.",
+          "tooManyAttempts": "Too many wrong attempts. Request a new code."
+        }
       }
     },
     "checkEmail": {
@@ -319,6 +337,18 @@
         "subject": "You are invited to a CauseDeck workspace",
         "body": "Use this link to join the workspace. It expires in {minutes} minutes: {url}"
       }
+    },
+    "link": {
+      "title": "Add an email",
+      "description": "Add an email so you can also sign in with a link, and receive notices.",
+      "emailLabel": "Email",
+      "submit": "Add email",
+      "added": "Check your inbox and open the link to confirm this email.",
+      "error": "We could not add that email. Try again.",
+      "googleTitle": "Link Google",
+      "googleDescription": "Link your Google account to sign in with it.",
+      "googleButton": "Link Google",
+      "googleError": "We could not start Google linking."
     }
   },
   "workspace": {
@@ -349,6 +379,48 @@
         "offline": "You are offline. Connect to create a workspace.",
         "signedOut": "Your session ended. Sign in again to continue.",
         "generic": "Could not create the workspace. Please try again."
+      }
+    },
+    "welcome": {
+      "metaTitle": "Set up the practice",
+      "title": "Set up {workspace}",
+      "clerkIntro": "You are setting this practice up for your senior. Do the three steps, then ask for their approval.",
+      "steps": {
+        "language": {
+          "title": "Choose your language",
+          "body": "The whole app switches to the language you pick."
+        },
+        "import": {
+          "title": "Bring in the cases",
+          "body": "Import the diary from a photo, a file or WhatsApp, then confirm the listings it finds.",
+          "action": "Open import"
+        },
+        "today": {
+          "title": "See the court day",
+          "body": "Check today’s listings and where each item stands.",
+          "action": "Open court day"
+        }
+      },
+      "approval": {
+        "title": "Your senior’s approval",
+        "body": "When the setup looks right, ask your senior to approve it. They need one tap.",
+        "request": "Ask for approval",
+        "requesting": "Asking",
+        "pending": "Waiting for your senior. Ask them to open {path} and tap Approve.",
+        "approved": "Your senior approved this setup."
+      },
+      "senior": {
+        "title": "Clerk setups waiting for you",
+        "empty": "No clerk setup is waiting for approval.",
+        "item": "{name} has finished setting up the practice.",
+        "approve": "Approve",
+        "approving": "Approving",
+        "approved": "Approved"
+      },
+      "notForRole": "This page is for clerks, and for the people who run the practice.",
+      "errors": {
+        "offline": "You are offline. Connect and try again.",
+        "generic": "That did not work. Try again."
       }
     }
   },
@@ -567,6 +639,47 @@
       "continue": "Continue",
       "cancel": "Cancel",
       "none": "Invite another member before you transfer ownership."
+    }
+  },
+  "provisioning": {
+    "trigger": "Import CSV",
+    "title": "Import members from CSV",
+    "description": "Paste or upload a CSV with the columns email, name (optional) and role (optional, default viewer). Check it with a dry run first; new addresses get an invitation email.",
+    "fileLabel": "CSV file",
+    "csvLabel": "CSV contents",
+    "csvPlaceholder": "email,name,role\nasha@example.com,Asha Rao,junior",
+    "dryRun": "Check (dry run)",
+    "confirm": "Provision members",
+    "close": "Close",
+    "working": "Working…",
+    "offline": "You are offline. Reconnect to continue.",
+    "tooLarge": "The file is too large. Split it into smaller files.",
+    "empty": "Add a CSV first.",
+    "failed": "Could not process the CSV. Try again.",
+    "forbidden": "You do not have permission to invite members.",
+    "report": {
+      "dryRunTitle": "Dry run: nothing was changed",
+      "doneTitle": "Provisioning finished",
+      "summary": "{created} to invite, {skipped} skipped, {errors} with errors (of {total} rows).",
+      "summaryDone": "{created} invited, {skipped} skipped, {errors} with errors (of {total} rows).",
+      "line": "Line {line}",
+      "noEmail": "(no address)",
+      "outcome": {
+        "invited": "Invited",
+        "skipped": "Skipped",
+        "error": "Error"
+      },
+      "reason": {
+        "alreadyMember": "Already an active member",
+        "forbidden": "You cannot grant this role",
+        "conflict": "Already invited or conflicting",
+        "invalid": "Not valid",
+        "seatLimit": "No seat left on the plan for this role",
+        "failed": "Something went wrong"
+      }
+    },
+    "toast": {
+      "done": "Provisioned {created} members"
     }
   },
   "notifications": {
@@ -3464,6 +3577,7 @@
         "email": "Email",
         "ics": "Calendar file",
         "whatsapp_export": "Chat export",
+        "whatsapp": "WhatsApp",
         "bulk_import": "Import",
         "manual": "Typed note"
       }
@@ -3813,6 +3927,34 @@
       }
     }
   },
+  "whatsappLink": {
+    "title": "WhatsApp",
+    "description": "Get court-day alerts and your evening summary on your own WhatsApp. Messages go only to the number you verify here, never to clients.",
+    "consent": "I agree to receive CauseDeck messages on this WhatsApp number.",
+    "numberLabel": "WhatsApp number",
+    "numberHint": "International format, for example +919812345678.",
+    "sendCode": "Send code",
+    "codeLabel": "6-digit code",
+    "codeSent": "We sent a code to your number. It expires in 10 minutes.",
+    "verify": "Verify and link",
+    "linked": "Linked number: {number}",
+    "categoriesTitle": "Send these to WhatsApp",
+    "categories": {
+      "courtBoard": "Court board alerts",
+      "statusOrder": "New order alerts",
+      "digestEndOfDay": "Evening court-day summary"
+    },
+    "unlink": "Unlink WhatsApp",
+    "unlinked": "WhatsApp unlinked. No more messages will be sent.",
+    "saved": "Saved.",
+    "loadError": "Could not load the WhatsApp link.",
+    "error": {
+      "consent": "Please agree to receive messages first.",
+      "invalid": "Check the number or code and try again.",
+      "conflict": "Please wait a minute before asking for another code.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
   "bootstrapImport": {
     "metaTitle": "Import your cases",
     "title": "Import your cases",
@@ -3893,6 +4035,46 @@
       "reference": "Reference {digest}",
       "retry": "Retry",
       "action": "Something went wrong. Try again."
+    }
+  },
+  "onboardingDiscovery": {
+    "metaTitle": "Find your cases",
+    "title": "Find your cases",
+    "denied": "You do not have access to onboarding.",
+    "loading": "Loading",
+    "error": {
+      "action": "We could not search the courts. Nothing was saved. Try again.",
+      "title": "Something went wrong",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "nothingFound": "No listings carrying you were found in these courts. Check the spelling or add an enrolment number.",
+    "identifiers": {
+      "title": "Who should we look for?",
+      "body": "Enter your enrolment number or the spellings of your name. We only keep listings that carry you.",
+      "enrolment": "Enrolment numbers or BRN, one per line",
+      "names": "Name spellings, one per line",
+      "next": "Choose courts"
+    },
+    "courts": {
+      "title": "Which courts?",
+      "body": "We search the last 90 days and the upcoming lists. Nothing is saved until you confirm.",
+      "madrasHc": "Madras High Court",
+      "karnatakaHc": "Karnataka High Court",
+      "tnDistrict": "Tamil Nadu district courts",
+      "back": "Back",
+      "search": "Search these courts"
+    },
+    "progress": {
+      "searching": "Searching {courts, plural, one {# court} other {# courts}}...",
+      "found": "Found {listings, plural, one {# listing} other {# listings}} in {courts, plural, one {# court} other {# courts}}"
+    },
+    "disambiguate": {
+      "title": "Is this you?",
+      "body": "A name alone is not enough. Pick the matters that are yours, or add your enrolment number.",
+      "enrolments": "Enrolment numbers printed beside this name: {list}",
+      "addEnrolment": "Add an enrolment number",
+      "confirm": "These {count, plural, one {# matter is} other {# matters are}} mine"
     }
   },
   "emailIntake": {

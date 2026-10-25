@@ -1,4 +1,4 @@
-// Console navigation (#309): Overview, Adapters, Sources, Data Ops, Coverage, Flags, Workspaces, Support sessions, Audit, Business (admin only),
+// Console navigation (#309): Overview, Adapters, Sources, Data Ops, Coverage, Flags, Workspaces, Support sessions, Audit, Business (admin only), Growth, Migrations,
 // filtered by the staff role matrix. 240 px left nav at desktop widths, an icon rail at 768, a
 // wrapping row on phones (360).
 import {
@@ -13,6 +13,8 @@ import {
   LifeBuoy,
   ScrollText,
   ToggleLeft,
+  UploadCloud,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -32,7 +34,9 @@ export interface ConsoleNavItem {
     | '/workspaces'
     | '/support'
     | '/audit'
-    | '/business';
+    | '/business'
+    | '/growth'
+    | '/migrations';
   label: string;
   icon: LucideIcon;
 }
@@ -49,6 +53,8 @@ export const CONSOLE_NAV: readonly ConsoleNavItem[] = [
   { capability: 'support', href: '/support', label: 'Support sessions', icon: LifeBuoy },
   { capability: 'audit', href: '/audit', label: 'Audit', icon: ScrollText },
   { capability: 'business', href: '/business', label: 'Business', icon: CircleDollarSign },
+  { capability: 'growth', href: '/growth', label: 'Growth', icon: TrendingUp },
+  { capability: 'migrations', href: '/migrations', label: 'Migrations', icon: UploadCloud },
 ];
 
 export function navItemsFor(role: StaffRole): readonly ConsoleNavItem[] {

@@ -23,6 +23,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | Switch | Default | Real providers |
 |---|---|---|
 | `EMAIL_PROVIDER` | `console` | `ses`, `smtp` |
+| `SMS_PROVIDER` | `console` | `msg91` |
 | `AI_PROVIDER` | `mock` | `bedrock`, `sarvam` |
 | `STORAGE_PROVIDER` | `minio` | `minio`, `s3` |
 | `BILLING_PROVIDER` | `mock` | `razorpay` |
@@ -85,6 +86,9 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `VAPID_PUBLIC_KEY` | string | — | VAPID_PRIVATE_KEY is set | #23 | #116 |
 | `VAPID_PRIVATE_KEY` | secret | — | VAPID_PUBLIC_KEY is set | #23 | #116 |
 | `VAPID_SUBJECT` | mailto: or https url | — | never | #197 | — |
+| `WHATSAPP_PHONE_NUMBER_ID` | string | — | WHATSAPP_ACCESS_TOKEN is set | #679 | #488 |
+| `WHATSAPP_ACCESS_TOKEN` | secret | — | WHATSAPP_PHONE_NUMBER_ID is set | #679 | #488 |
+| `WHATSAPP_API_VERSION` | string (vNN.N) | — | never | #679 | — |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | url | — | never | #13 | — |
 | `API_PORT` | port | `3001` | never (defaults to 3001) | #14 | — |
 | `WORKER_PORT` | port | `3003` | never (defaults to 3003) | #15 | — |
@@ -113,6 +117,11 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `SES_ACCESS_KEY_ID` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SES_SECRET_ACCESS_KEY` | secret | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SMTP_URL` | secret url | dev placeholder (non-prod only) | EMAIL_PROVIDER=smtp | #23 | #110 |
+| `SMS_PROVIDER` | enum(console\|msg91) | `console` | never (defaults to console) | #503 | — |
+| `SMS_AUTH_KEY` | secret | — | SMS_PROVIDER=msg91 | #503 | — |
+| `SMS_SENDER_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
+| `SMS_DLT_ENTITY_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
+| `SMS_OTP_TEMPLATE_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
 | `AI_PROVIDER` | enum(mock\|bedrock\|sarvam) | `mock` | never (defaults to mock) | #44 | — |
 | `BEDROCK_REGION` | string | `ap-south-1` | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_ACCESS_KEY_ID` | string | — | AI_PROVIDER=bedrock | #44 | #112 |

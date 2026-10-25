@@ -154,6 +154,7 @@ graph LR
   jobs --> calendar
   jobs --> automation
   jobs --> whatsapp
+  jobs --> whatsapp-link
   jobs --> voice
   jobs --> email-intake
   jobs --> extraction

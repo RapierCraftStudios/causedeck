@@ -6,7 +6,7 @@
 //
 // `notify` writes the in-app row, resolves the member's preferences against the category defaults
 // and, after the transaction commits, asks `enqueueDelivery` for one `notification.deliver` job per
-// enabled instant email/push channel. The job itself is defined by `@causedeck/core` (#196), which
+// enabled instant email/push/whatsapp channel. The job itself is defined by `@causedeck/core` (#196), which
 // depends on this package, so the producer is injected rather than imported.
 //
 // The digest is stored per category and channel; the preferences page's single selector
@@ -45,8 +45,7 @@ export interface NotificationContext {
 export interface DeliveryJob {
   workspaceId: string;
   notificationId: string;
-  /** WhatsApp is not delivered through this job; its sender arrives with #679. */
-  channel: Exclude<Channel, 'in_app' | 'whatsapp'>;
+  channel: Exclude<Channel, 'in_app'>;
 }
 
 export interface NotifyContext extends NotificationContext {
@@ -237,7 +236,7 @@ export async function notify(ctx: NotifyContext, input: NotifyInput): Promise<vo
     const row = rows[0];
     if (row === undefined) return undefined;
     const prefs = await prefRows(tx, ctx.workspaceId, n.userId);
-    const channels = (['email', 'push'] as const).filter((channel) => {
+    const channels = (['email', 'push', 'whatsapp'] as const).filter((channel) => {
       const p = resolve(key, channel, prefs);
       return p.enabled && p.digest === 'instant';
     });

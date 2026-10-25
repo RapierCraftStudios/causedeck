@@ -1,4 +1,4 @@
-// Who may read which memory (#72, ADR 0037), shared by every memory service. Scope is enforced in
+// Who may read which memory (#72, ADR 0038), shared by every memory service. Scope is enforced in
 // SQL first: FORCE RLS (`ws_isolation`), the owner and matter scope policies of the migration, and
 // the clerk view. The predicates here repeat those rules in the query so a read never depends on
 // the policy alone, and `canReadMemory` is the same rule for a row already in hand.

@@ -54,6 +54,7 @@ import { judgmentAlert, matterIssueTag } from '../schema/matter-issue.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
+import { certifiedCopy, defect, obligationEvent } from '../schema/obligation-tracking.ts';
 import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { newsPref } from '../schema/news.ts';
@@ -1345,6 +1346,46 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
   obligation: async (tx, { workspaceId, tag }) => ({
     obligationId: await seedObligation(tx, workspaceId, tag),
   }),
+  obligation_event: async (tx, { workspaceId, tag }) => {
+    const obligationId = await seedObligation(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(obligationEvent)
+      .values({ workspaceId, obligationId, kind: 'created' })
+      .returning({ id: obligationEvent.id });
+    return { obligationId, eventId: first(rows, 'obligation_event').id };
+  },
+  defect: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const obligationId = await seedObligation(tx, workspaceId, `${tag}d`);
+    const rows = await tx
+      .insert(defect)
+      .values({
+        workspaceId,
+        obligationId,
+        proceedingId,
+        raisedOn: '2026-11-02',
+        cureBy: '2026-11-09',
+        description: 'Court fee short',
+        sourceType: 'manual',
+      })
+      .returning({ id: defect.id });
+    return { obligationId, defectId: first(rows, 'defect').id };
+  },
+  certified_copy: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const obligationId = await seedObligation(tx, workspaceId, `${tag}c`);
+    const rows = await tx
+      .insert(certifiedCopy)
+      .values({
+        workspaceId,
+        obligationId,
+        proceedingId,
+        appliedOn: '2026-11-02',
+        sourceType: 'manual',
+      })
+      .returning({ id: certifiedCopy.id });
+    return { obligationId, certifiedCopyId: first(rows, 'certified_copy').id };
+  },
   task: async (tx, { workspaceId, tag }) => {
     const obligationId = await seedObligation(tx, workspaceId, tag);
     const rows = await tx

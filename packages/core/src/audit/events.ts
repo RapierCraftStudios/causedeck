@@ -327,6 +327,34 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "A capture's results were moved to another matter",
   },
+  // Obligation service (#67). Ids and flags only, never the description.
+  'obligation.created': { security: false, description: 'An obligation was created' },
+  'obligation.updated': { security: false, description: 'An obligation was edited' },
+  'obligation.rescheduled': {
+    security: false,
+    description: 'An obligation was rescheduled, with a reason',
+  },
+  'obligation.closed': {
+    security: false,
+    description: 'An obligation was closed by a person, with a reason',
+  },
+  'obligation.reopened': { security: false, description: 'A closed obligation was reopened' },
+  'obligation.direction_not_applicable': {
+    security: false,
+    description: 'An order direction was marked not applicable, in words',
+  },
+  'obligation.defect_raised': { security: false, description: 'A registry defect was raised' },
+  'obligation.defect_cured': { security: false, description: 'A registry defect was cured' },
+  'obligation.represented': { security: false, description: 'A filing was re-presented' },
+  'obligation.registry_number': {
+    security: false,
+    description: 'A registry SR or FR number was stored',
+  },
+  'obligation.copy_applied': { security: false, description: 'A certified copy was applied for' },
+  'obligation.copy_transitioned': {
+    security: false,
+    description: 'A certified copy moved to its next step',
+  },
 } as const satisfies Record<string, AuditActionSpec>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

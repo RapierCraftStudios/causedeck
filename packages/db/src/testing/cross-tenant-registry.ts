@@ -93,6 +93,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   appearance: DB_TABLES_TEST,
   order: DB_TABLES_TEST,
   obligation: DB_TABLES_TEST,
+  // Obligation service tables (#67).
+  obligation_event: DB_TABLES_TEST,
+  defect: DB_TABLES_TEST,
+  certified_copy: DB_TABLES_TEST,
   task: DB_TABLES_TEST,
   // People (#348).
   person: DB_TABLES_TEST,

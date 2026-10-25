@@ -1,4 +1,4 @@
-// Memory proposals (#72, ADR 0037). Nothing here writes `memory_item`: every service files a
+// Memory proposals (#72, ADR 0038). Nothing here writes `memory_item`: every service files a
 // `memory_proposal` (status `proposed`) that a person confirms in `confirm.ts`. A member who paused
 // all memory gets no proposal at all, and a key or value that describes a judge or a bench is
 // rejected (R13). A repeated-edit pattern is counted in an `observing` proposal row, which turns

@@ -130,6 +130,9 @@ describe('row-level security catalog', () => {
         'appearance',
         'order',
         'obligation',
+        'obligation_event',
+        'defect',
+        'certified_copy',
         'task',
         // People (#348).
         'person',

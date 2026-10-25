@@ -1,4 +1,4 @@
-// Matter-scoped memory embeddings (#72, ADR 0037). Only M3 (matter memory) is embedded, so a
+// Matter-scoped memory embeddings (#72, ADR 0038). Only M3 (matter memory) is embedded, so a
 // similarity search can be pinned to one matter. What is stored is the vector and a content
 // reference (item id and update time), never the text. The AI gateway has no embedding task yet, so
 // the vector comes from an injected `MemoryEmbedder`: the default is the in-process hashing embedder

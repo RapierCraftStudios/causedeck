@@ -1,4 +1,4 @@
-// Reading memory (#72, ADR 0037). Every read goes through the scope rules of `scope.ts`: SQL
+// Reading memory (#72, ADR 0038). Every read goes through the scope rules of `scope.ts`: SQL
 // predicate plus RLS for members, the column-scoped view `memory_item_clerk_v` for clerks (who never
 // see M3, M4 or strategy-typed values), nothing for viewers. A member who paused all memory gets
 // nothing back for use in an output, and `recordUsage` logs only real use.

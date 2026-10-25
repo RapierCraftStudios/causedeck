@@ -1310,6 +1310,7 @@ export type Messages = {
         memory: string;
         document: string;
         task: string;
+        obligation: string;
         listing: string;
         draft: string;
         audit: string;
@@ -1351,6 +1352,11 @@ export type Messages = {
         task: {
           read: string;
           write: string;
+        };
+        obligation: {
+          read: string;
+          write: string;
+          track: string;
         };
         listing: {
           read: string;

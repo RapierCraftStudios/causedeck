@@ -1,35 +1,39 @@
 **Verdict**: CONFIRMED
-**Confidence**: medium
-**Severity**: medium (a listing or deadline on a holiday named only inside a holiday-list document is not flagged; the date rolls onto a closed day)
+**Confidence**: high
+**Severity**: medium (greenfield UI; the merged outward backend has no screen, and the inbox "Ready to send" list is permanently empty)
 **Task Type**: feature
 
 ### What Was Claimed
-#628 (deferred from #587): holiday-list notices must feed the court calendar so listings on a holiday are flagged. #587 only flags a holiday notice with a single machine-readable `effective_on`; "reading every date out of a holiday-list PDF needs document parsing that no parser does yet".
-(The earlier investigation comment on the issue and the old `.forge-lean/investigation.md` describe #68, the obligation queue UI. They are misattributed and ignored.)
+Part 2 of #69: build the web side of outward update drafts. This covers server actions with cross-tenant registration, draft editor, Ready-to-send integration via `registerReadyProvider`, share menu (copy, `wa.me`, `mailto`, download), language switcher, diff view, keyboard shortcuts, banner, all states, an `outward` i18n namespace (en/ta/kn) with the catalog test, and Storybook stories with interaction tests and a11y. Depends on #735.
 
 ### What We Found
-Verified on the base (`milestone/follow-up-continuity-memory`, HEAD cc377aae).
-- `packages/core/src/notices/holidays.ts:42-52` joins `notice.effectiveOn = listing.listDate` and `forum.code = any(notice.forumCodes)`: one date per notice. Header comment `holidays.ts:3-5` says the dates inside a holiday-list document are not parsed.
-- `packages/core/src/deadlines/calendar.ts:70-81` (`loadCourtCalendar`) reads the same single `notice.effectiveOn`; `docs/engineering/core-domains.md:28` documents the single-date limit and the static `FORUM_VACATIONS`.
-- `packages/db/src/schema/notices.ts:46-81`: `notice` (global, no workspace_id) has one `effective_on`, plus `document_key/sha256/mime` that nothing sets (`packages/core/src/notices/notices.test.ts:132` asserts null).
-- `packages/core/src/notices/poll.ts:1-8,124,140-150`: the poll fetches only the listing page and stores metadata, never the notice document. `NoticeFetcher` returns `body: string` (`poll.ts:26-31`) and `packages/fetch/src/types.ts:43,79` has string bodies only, so a PDF cannot be fetched as bytes through the governed fetcher today.
-- Parsing pieces now exist: `layoutFromPdf`, `layoutFromHtml`, `normaliseDate` in `@causedeck/adapters` (used by `packages/intelligence/src/notices/parse-pdf-list.ts:4`, `packages/core/src/court/roster-import.ts:8`); `kindFromTitle`/`effectiveOnFromTitle` in `packages/intelligence/src/notices/types.ts:47-55`. No holiday-list date extractor exists (`git grep -i holiday` in adapters/intelligence: none).
-- Cross-tenant registry already lists `listHolidayListings` and `loadCourtCalendar` as `selfScoped` (`packages/db/src/testing/cross-tenant-registry.ts:298-300`); real cases in `packages/core/src/__tests__/cross-tenant/services.test.ts:570-662`.
+Verified on the current base (HEAD cc377aae, which contains #735 via PR #739).
+- Dependency #735 is met: `packages/core/src/outward/index.ts:3-15` exports `composeUpdate`, `saveEdit`, `diffDraft`, `guardOutward`, `recordShared`, `recordCopied`; subpath `./outward` at `packages/core/package.json:37`; validators subpath at `packages/validators/package.json:15` (`DraftRequest`, `DraftEdit`, `ShareRecord`, `Audience`, `Language`, `Tone`, `ShareChannel`, `MAX_DRAFT_BODY` in `outward-draft.ts:9-69`). ADR `docs/adr/0039-outward-drafts-no-send-path.md`; core-domains entry exists (`docs/engineering/core-domains.md:42`).
+- Services take `(deps: OutwardDeps, actor: {workspaceId,userId}, input)` and open their own workspace scope (`packages/core/src/outward/context.ts:42-50`, `compose.ts:244`, `diff.ts:99`, `share.ts:27`). Authorization is `draft.write` (`packages/auth/src/policy/actions.ts:16`, min role junior at `matrix.ts:33`), so a clerk is denied.
+- **Gap: core has no read model for drafts.** No `listDrafts` or `getDraft` exists (index lists only writers). The "ready to send" list and the editor need drafts with matter, audience, language, tone, status, age, the latest version body, the system version body (for the diff) and facts (jsonb, provenance). Needs a new `packages/core/src/outward/views.ts` exported from `index.ts` (same scope and `draft.write`/matter-visibility rules as `saveEdit`, `diff.ts:105-122`).
+- `registerReadyProvider` exists (`apps/web/lib/inbox/ready-providers.ts:38`) with `ReadyItemProvider{id,list,markSent}` and `ReadyAction` of kind `copy` or `open{app,href}`; NO provider is registered anywhere (grep: only the registry, inbox page `inbox/page.tsx:12` and `inbox/actions.ts:16` use it). `markSent` must map to `recordShared`. The inbox list component is `apps/web/components/inbox/ready-to-send-list.tsx`.
+- The `/w/[slug]/drafts` route is a placeholder: `apps/web/app/(app)/w/[slug]/drafts/page.tsx:1-3`; it is already in the shell nav, so it is the natural home of the split-view editor.
+- Action convention: `workspaceAction(schema, handler, {action})` in `apps/web/lib/workspace-action.ts`, strict zod, `assertCan`, lazy core imports, `revalidatePath` (model `inbox/actions.ts`, `memory/actions.ts`). New `'use server'` actions must be added to `ACTIONS` plus probe inputs in `apps/web/__tests__/cross-tenant-actions.test.ts:131` (memory actions imported at line 119 as the pattern).
+- i18n: namespace list in `packages/i18n/src/catalog.ts` (`obligations`, `memory` near lines 40-41); files at `packages/i18n/src/messages/{en,ta,kn}/*.json`; there is no `outward` namespace. Catalog guard: `packages/i18n/src/__tests__/catalog.test.ts`. The issue/parent paths `packages/i18n/messages/...` are outdated.
+- Storybook for web picks up `apps/web/components/**/*.stories.@(ts|tsx)` only (`apps/web/.storybook/main.ts:14`), so stories must live under `apps/web/components/`, not under `app/.../_outward` and not `packages/ui/src/patterns/outward` (that dir does not exist). `packages/ui` has textarea, toggle-group (segmented), badge, sheet, sonner, shortcuts-dialog; there is no diff-view primitive, so the diff view is a web component rendering `DiffPart[]` (`diff.ts:21`) with text markers (+/-) as well as colour.
+- Shortcuts registry: `apps/web/lib/shortcuts/registry.ts` (Cmd/Ctrl+Enter copy, `l` language, `d` diff, Esc close per #69 design).
+- No-send static test (`packages/core/src/outward/__tests__/no-send.test.ts`) covers core only; web must open `wa.me`/`mailto:` hrefs client-side with `window.open(..., 'noopener')`, and the server action only records the share.
+- E2E/visual (`e2e/product|visual`) belong to sibling #737 (open), not this issue.
 
 ### Root Cause
-The model stores one date per notice and nothing reads the holiday-list document, so only notices with a title-derived single date reach the calendar.
+Greenfield: the backend (#735) is merged but no read model, actions, provider, components or catalog consume it.
 
 ### Affected Files
-`packages/db/src/schema/notices.ts` (+ new migration, snapshot, `packages/db/src/index.test.ts` table list, `notices-schema.test.ts`); `packages/intelligence/src/notices/parse-holiday-list.ts` (+index export, test); `packages/core/src/notices/{holiday-dates.ts,poll.ts,holidays.ts,index.ts,notices.test.ts}`; `packages/core/src/deadlines/calendar.ts`; `packages/core/src/__tests__/cross-tenant/services.test.ts`; `docs/engineering/core-domains.md`; `apps/worker` notices poll wiring only if the document fetcher seam is wired there.
+`packages/core/src/outward/{views.ts,index.ts}` (+ test in `__tests__/`), `packages/core/src/__tests__/cross-tenant/services.test.ts` (read cases); `apps/web/app/(app)/w/[slug]/_outward/actions.ts`; `apps/web/app/(app)/w/[slug]/drafts/{page,loading,error}.tsx`; `apps/web/components/outward/*` (draft-editor, draft-list, share-menu, language-switcher, diff-view, banner, states, stories, tests); `apps/web/lib/outward/{ready-provider.ts,share-links.ts}`; `apps/web/app/(app)/w/[slug]/inbox/page.tsx` (import to register the provider); `apps/web/__tests__/cross-tenant-actions.test.ts`; `packages/i18n/src/{catalog.ts,messages/{en,ta,kn}/outward.json}`, `__tests__/catalog.test.ts`.
 
 ### Sibling Sweep
-Both readers of notice dates (`holidays.ts`, `calendar.ts`) must change together; `packages/core/src/court/bench-alerts.ts:261` excludes holiday notices from bench alerts, unaffected. No other `effectiveOn` date consumer treats holidays (`apps/api/src/public/v1/notices.ts`, `list.ts` expose the field only).
+Other placeholder routes backed by merged services (`calendar`, `briefs`, `news`) belong to their own issues. The "Ready to send" registry is empty for every provider; only outward drafts (this issue) are in scope. `apps/web` has no other caller of `@causedeck/core/outward`.
 
 ### History
-`1f4cd406` (#587) added `listHolidayListings` and declared the multi-date case out of scope; `loadCourtCalendar` came with #494. No prior attempt at this item.
+Backend: #735 / PR #739 (merged, `feat/issue-735-lean`). Registry and inbox list: #48. No earlier UI attempt for #736 (the `.forge-lean` files inherited from the base belong to #73).
 
 ### Recommendation
-One lane. (1) Pure `parseHolidayList(layout lines) -> {date,name}[]` over text lines (dd/mm/yyyy, dd-Mon-yyyy via `normaliseDate`), tolerant, never throws. (2) New global table `notice_holiday` (notice_id FK cascade, holiday_on date, name; unique notice_id+holiday_on), migration with next free number. (3) Poll: for newly inserted `holiday` notices, fetch the document through an optional injected `NoticeDocumentFetcher` (bytes or text), parse, insert dates; failure is logged and skipped, never fails the poll. (4) `listHolidayListings` and `loadCourtCalendar` read `notice_holiday` union the legacy `effective_on`. Binary PDF fetch through `@causedeck/fetch` (string-only bodies) is a separate change; this lane accepts bytes via the seam and covers HTML/text bodies and PDF bytes in tests with synthetic fixtures.
+One lane, ordered: (1) core read model `listDrafts`/`getDraft` + tests; (2) i18n `outward` namespace + catalog registration; (3) `lib/outward` share-link builders and ready provider, registered from the inbox page; (4) `_outward/actions.ts` (compose, saveEdit, markShared per channel) + cross-tenant ACTIONS entries; (5) components with all states (skeleton, empty, error with retry, offline, denied), banner, shortcuts, `lang` per draft, aria-live announcements; (6) `drafts` page, loading, error; (7) stories with play tests and a11y. Visual baselines and Playwright e2e belong to #737 and CI.
 
 ### Related Issues
-#587 (origin), #586, #585, #494, #480 (parent).
+#69 (parent), #735 (dependency, merged), #737 (sibling: e2e and visual baselines, open), #48 (Ready to send registry).

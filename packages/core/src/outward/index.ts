@@ -12,3 +12,4 @@ export {
 } from './guard.ts';
 export type { OutwardActor, OutwardDeps } from './context.ts';
 export { recordCopied, recordShared, type SharedRecord } from './share.ts';
+export { getDraft, listDrafts, type DraftDetail, type DraftSummary } from './views.ts';

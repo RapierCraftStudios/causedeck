@@ -1,9 +1,5 @@
 
- RUN  v3.2.7 /work/repo/.claude/worktrees/lean-678/packages/notifications
+ RUN  v3.2.7 /work/repo/.claude/worktrees/lean-736/apps/web
 
- ✓ |@causedeck/notifications| src/__tests__/categories.test.ts (6 tests) 33ms
- ✓ |@causedeck/notifications| src/__tests__/cross-tenant/registry.test.ts (3 tests) 4487ms
-   ✓ cross-tenant registry: notifications services > registers every runtime export of @causedeck/notifications  4480ms
- ✓ |@causedeck/notifications| src/__tests__/quiet-hours.test.ts (3 tests) 108ms
 
 (timed out after 300s)

@@ -30,7 +30,14 @@ import {
   invalidateEntitlements,
 } from '../../billing/index.ts';
 import * as core from '../../index.ts';
-import { composeUpdate, recordCopied, recordShared, saveEdit } from '../../outward/index.ts';
+import {
+  composeUpdate,
+  getDraft,
+  listDrafts,
+  recordCopied,
+  recordShared,
+  saveEdit,
+} from '../../outward/index.ts';
 
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const mailer: Mailer = { send: () => Promise.resolve() };
@@ -3589,6 +3596,9 @@ describe('cross-tenant outward drafts: ub on workspace B against A', () => {
         recordShared(deps, asBActor, { draftId, channel: 'download' }),
       ).rejects.toBeDefined();
       await expect(recordCopied(deps, asBActor, { draftId })).rejects.toBeDefined();
+      // The read model (#736): B's list holds nothing of A's and cannot open A's draft.
+      expect((await listDrafts(deps, asBActor)).map((d) => d.id)).not.toContain(draftId);
+      await expect(getDraft(deps, asBActor, draftId)).rejects.toBeDefined();
       expect(await read()).toEqual(before);
       const seenByB = await inWorkspace(
         tx,

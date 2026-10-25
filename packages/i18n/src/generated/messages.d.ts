@@ -4745,6 +4745,88 @@ export type Messages = {
       forbidden: string;
     };
   };
+  outward: {
+    metaTitle: string;
+    title: string;
+    banner: string;
+    denied: string;
+    loading: string;
+    generating: string;
+    readOnly: string;
+    offline: string;
+    empty: {
+      title: string;
+      description: string;
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    list: {
+      label: string;
+      open: string;
+      age: string;
+      templateOnly: string;
+    };
+    audience: {
+      client: string;
+      senior_counsel: string;
+      briefing_counsel: string;
+    };
+    status: {
+      drafted: string;
+      edited: string;
+      shared: string;
+    };
+    language: {
+      label: string;
+      enName: string;
+      taName: string;
+      knName: string;
+      changed: string;
+    };
+    editor: {
+      label: string;
+      save: string;
+      saved: string;
+      saveFailed: string;
+      close: string;
+      back: string;
+      warnings: string;
+      facts: string;
+      factToConfirm: string;
+      factConfirmed: string;
+      noFacts: string;
+    };
+    diff: {
+      toggle: string;
+      label: string;
+      added: string;
+      removed: string;
+      unchanged: string;
+    };
+    share: {
+      label: string;
+      copy: string;
+      copied: string;
+      copyFailed: string;
+      whatsapp: string;
+      email: string;
+      download: string;
+      markShared: string;
+      shared: string;
+      failed: string;
+      emailSubject: string;
+      note: string;
+    };
+    shortcuts: {
+      copy: string;
+      language: string;
+      diff: string;
+      close: string;
+    };
+  };
   error: {
     title: string;
     description: string;

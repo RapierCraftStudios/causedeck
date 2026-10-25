@@ -1,12 +1,15 @@
 // Calendar journeys (#66): week and month views, the day popover and its Open day hand-off, the
 // Mine / Whole chamber scope, the keyboard model and the states. Runs in CI only.
+import type { Page } from '@playwright/test';
+
+import type { AsUser } from '../../fixtures/auth.ts';
 import { COURTS_WORKSPACE } from '../../fixtures/courts-data.ts';
 import { expect, test } from '../../fixtures/index.ts';
 import { shellReady } from '../shell/helpers.ts';
 
 async function openCalendar(
-  page: import('@playwright/test').Page,
-  asUser: import('../../fixtures/auth.ts').AsUser,
+  page: Page,
+  asUser: AsUser,
   query = '',
   role: 'owner' | 'clerk' = 'owner',
 ) {
@@ -54,9 +57,17 @@ test.describe('calendar', () => {
     await expect(page.locator('[data-section="subscribe"]')).toBeVisible();
   });
 
-  test('a month range answers within the p95 budget', async ({ page, asUser }) => {
-    const started = Date.now();
+  test('a month range answers within the p95 budget (300 ms)', async ({ page, asUser }) => {
     await openCalendar(page, asUser, '?view=month');
-    expect(Date.now() - started).toBeLessThan(3000);
+    const url = page.url();
+    const samples: number[] = [];
+    for (let i = 0; i < 20; i += 1) {
+      const started = performance.now();
+      const response = await page.request.get(url);
+      expect(response.ok()).toBe(true);
+      samples.push(performance.now() - started);
+    }
+    samples.sort((a, b) => a - b);
+    expect(samples[Math.ceil(samples.length * 0.95) - 1]).toBeLessThan(300);
   });
 });

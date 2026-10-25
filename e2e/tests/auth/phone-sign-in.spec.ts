@@ -39,7 +39,10 @@ test.describe('phone sign-in', () => {
     const firstCode = await readPhoneOtp(e164);
     await page.getByLabel('Code').fill(firstCode);
     await page.getByRole('button', { name: 'Verify and sign in' }).click();
-    await page.waitForURL((url) => !url.pathname.startsWith('/sign-in'));
+    // A new account has no workspace, so it lands on `/onboarding`. The root `loading.tsx` streams
+    // `/`, which makes its redirect a client-side one: wait for the final page, or the next `goto`
+    // races that redirect and aborts.
+    await page.waitForURL('**/onboarding');
 
     const session = async () =>
       (await (await page.request.get('/api/auth/get-session')).json()) as {
@@ -50,9 +53,8 @@ test.describe('phone sign-in', () => {
       phoneNumberVerified: true,
     });
     // A signed-in visitor is bounced off the sign-in page.
-    await page.goto('/sign-in');
-    await expect(page).not.toHaveURL(/\/sign-in/);
-    await page.waitForLoadState('load');
+    await page.goto('/sign-in', { waitUntil: 'commit' });
+    await page.waitForURL('**/onboarding');
 
     // Sign out (the user menu has no sign-out action yet, so use the auth endpoint).
     const signOut = await page.request.post('/api/auth/sign-out', {

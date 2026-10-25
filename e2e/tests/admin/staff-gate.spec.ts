@@ -105,6 +105,7 @@ test.describe('admin staff gate', () => {
       'Audit',
       'Business',
       'Growth',
+      'Migrations',
     ]);
     const headers = (await page.request.get('/flags')).headers();
     expect(headers['x-robots-tag']).toBe('noindex, nofollow');

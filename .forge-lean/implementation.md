@@ -52,3 +52,13 @@ Re-checked after the second merge of the base (restore-drill, worker registry te
 
 ## Merge-fix note
 The reported `turbo: command not found` (exit 127) was an environment/PATH failure, not a merge conflict: no duplicate keys or symbols. `pnpm exec turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes (no workspace package changed), freeze-guard tests pass and its tsconfig typechecks. No code changes needed.
+
+## Merge verification note
+
+The post-merge typecheck failure was `turbo: command not found` (exit 127): `turbo` is not on PATH in the check shell, not a code or merge conflict. Via `pnpm exec turbo run typecheck --filter=@causedeck/storage` (the only TS package this change touches) typecheck passes, and `rotate-kek-script.test.ts` passes. No source change needed.
+
+### Merge follow-up
+Merged origin/milestone/production-infra-scale (c8c7b0aa); court-day-freeze.md now carries the base's #100 content under the required headings. The reported `turbo: command not found` was an environment problem (turbo is not on PATH; `pnpm exec turbo` works), not a code defect. `pnpm exec turbo run typecheck --concurrency=1` on the merged tree passes (24/24 tasks). V1-V4 and `forgedock check` pass. No code change was needed.
+
+### Lint fix
+CI `lint` also runs `pnpm adr:lint`; ADR 0037 lacked the required `## Considered options` and `## Revisit when` sections. Added both (alternatives folded into the options table). `adr:lint`, `adr:test`, `docs:links`, `check:no-l5`, prettier and ESLint on changed TS files pass. No amendment needed.

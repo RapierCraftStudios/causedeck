@@ -2,100 +2,79 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "freeze-guard returns frozen for 18:00:00 to 22:59:59 and 07:00:00 to 10:29:59 IST inclusive of the start and exclusive of the end, and unfrozen otherwise, verified by boundary unit tests [type:unit]",
+   "quote": "Each runbook has the required headings (Purpose, Triggers, Roles, Steps, Communications, Evidence, Verification, After action), an owner and a `Last drilled` date; a CI check fails otherwise [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Production deploy workflow fails at its first job with a message naming the next open window when run inside a freeze, and does not reach the SSH step [type:e2e]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "deploy-prod.yml first job (freeze-guard) in GitHub Actions; in lane covered by static workflow test and freeze unit tests"
-  },
-  {
-   "id": "R3",
-   "quote": "The staging deploy is not subject to the freeze but records the same checks and runs automatically on merge to the staging branch [type:e2e]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "deploy-staging.yml run on push to staging"
-  },
-  {
-   "id": "R4",
-   "quote": "Production promotion requires: the same image SHA deployed to staging, staging smoke green within the last 24 hours, and required reviewers on the `production` environment [type:manual]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "deploy-prod.yml promotion job and the GitHub `production` environment (#116)"
-  },
-  {
-   "id": "R5",
-   "quote": "Deploy order is: pull images, run expand-only migrations as the owner role, roll `api` and `worker`, then `web` containers one at a time, each gated by `/readyz` for 60 s before moving on [type:api]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
-  },
-  {
-   "id": "R6",
-   "quote": "A failed readiness gate triggers automatic rollback to the previously recorded image tags and posts a failure summary; the rollback path is tested in CI by deploying a deliberately unhealthy image [type:api]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
-  },
-  {
-   "id": "R7",
-   "quote": "The deploy never drops traffic: with two web containers, at least one is always ready (verified by a continuous probe during the deploy test) [type:api]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
-  },
-  {
-   "id": "R8",
-   "quote": "The hotfix workflow bypasses the freeze only when run in the `hotfix` environment with a non-empty reason; each use writes an audit comment and a Slack-compatible notification payload to a configured webhook [type:manual]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "hotfix-prod.yml run in the `hotfix` environment"
-  },
-  {
-   "id": "R9",
-   "quote": "Migrations are restricted to expand-compatible operations in deploy (a static check rejects `DROP COLUMN` or `ALTER ... NOT NULL` without a prior expand release unless tagged `contract`) [type:unit]",
+   "quote": "The CERT-In runbook defines the 6-hour clock from detection, lists incident categories in the directions, and includes a ready report template and an evidence checklist referencing the 180-day India log store [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R10",
-   "quote": "Deploy records `release.json` (sha, time IST, deployer, migration list) on the VPS and in a GitHub deployment record; `/readyz` exposes the running sha [type:api]",
+   "id": "R3",
+   "quote": "`evidence-export.sh` exports logs for a time range from Loki into an encrypted archive within India, with a manifest and hash, and is tested against seeded logs [type:api]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "deploy-test.yml asserts release.json and /readyz version; GitHub deployment record is written by deploy-*.yml"
+   "verify": "in_lane"
+  },
+  {
+   "id": "R4",
+   "quote": "The DPDP runbook covers assessment, containment, Board and principal notification as applicable, customer (Data Fiduciary) notification templates, and record keeping; counsel-owned sections are marked `Counsel to confirm` until the human issue is complete [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "The key rotation runbook covers KEK rotation with DEK re-wrap without downtime, session secret and API secret rotation, SSH and deploy key rotation, backup encryption key rotation and an emergency compromise path; each step has a verification command [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "`rotate-kek.sh` is exercised in CI against staging-like data: after rotation all documents still decrypt and the old KEK is rejected [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "The restore and DR runbooks match the measured RPO and RTO from #101 drills and link to the latest drill report [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "The on-call runbook defines severities P0 to P3, response targets, escalation ladder, handoff and a communication plan including the public status page and WhatsApp support line during court-day hours [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "A tabletop drill is held for CERT-In and DPDP scenarios, and a technical drill for restore and key rotation, with records saved under `drills/` before launch [type:manual]",
+   "disposition": "defer",
+   "why": "Drills need humans (participants, a live staging restore and key rotation) and are due before launch, not at merge. This change ships drills/TEMPLATE.md, one pending record per runbook and a README launch checklist; the engine files the follow-up to hold the drills and fill the records."
+  },
+  {
+   "id": "R10",
+   "quote": "Runbooks contain no secrets or real personal data; a secret scanner runs on `infra/runbooks/` in CI [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Secrets used by workflows (SSH key, GHCR token, host fingerprints) come from GitHub environments; host key is pinned and verified (no `StrictHostKeyChecking=no`) [type:manual]",
+   "quote": "Runbooks state that no automated outbound messages go to courts or third parties and that customer notices are sent by a human after approval, consistent with the no auto-send guardrail [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "Deploy and freeze behaviour is documented in the court-day freeze runbook including override etiquette and the expected communications to users [type:manual]",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "These are documents with drills, not decoration: each runbook is exercised in a tabletop or technical drill before launch and the evidence is stored.",
+   "disposition": "defer",
+   "why": "Same as R9: executing the drills is a pre-launch human activity; the template and pending records are delivered here."
   },
   {
    "id": "R13",
-   "quote": "A scheduled workflow comments a warning on any PR labelled `deploy:prod` if its merge would land inside the freeze, so planning is visible [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R14",
-   "quote": "Production deploys are promoted from a green staging deploy of the same image SHA.",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "deploy-prod.yml promotion check"
-  },
-  {
-   "id": "R15",
-   "quote": "Adapters and flags may be changed through their own safe paths during freeze only where designed to be hot-deployable.",
+   "quote": "Each runbook has an owner, a last-drilled date, decision trees, copy-paste commands and communication templates.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -103,247 +82,303 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": ".github/actions/freeze-guard/freeze.ts",
-   "change": "Pure function evaluating the IST freeze windows (07:00-10:30, 18:00-23:00, start inclusive, end exclusive) from an injected Date using Intl Asia/Kolkata; returns frozen, window_name, next_open_at_ist",
+   "path": "infra/runbooks/README.md",
+   "change": "Index, owners, drill calendar, severity matrix, pre-launch drill checklist, link to every runbook and template",
    "requirements": [
     "R1",
-    "R2"
+    "R9",
+    "R13"
    ]
   },
   {
    "id": "D2",
-   "path": ".github/actions/freeze-guard/index.ts",
-   "change": "Thin entrypoint: reads server clock (optional test override only via env FREEZE_NOW in tests), writes frozen/window_name/next_open_at_ist outputs, fails with message naming the next open window",
+   "path": "infra/runbooks/cert-in-6h.md",
+   "change": "New runbook with the required headings, owner, Last drilled, 6h clock from detection, incident categories, decision tree, evidence checklist referencing the 180-day Loki store and evidence-export.sh, report template link, Counsel to confirm for contacts/wording, no-auto-send statement",
    "requirements": [
     "R1",
-    "R2"
+    "R2",
+    "R11",
+    "R13"
    ]
   },
   {
    "id": "D3",
-   "path": ".github/actions/freeze-guard/action.yml",
-   "change": "Composite action running index.ts with node --experimental-strip-types; inputs allow_override for the hotfix path",
+   "path": "infra/runbooks/dpdp-breach.md",
+   "change": "New runbook: assessment, containment, Processor-first customer notification, Board/principal notification marked Counsel to confirm, record keeping, human-approved notices only",
    "requirements": [
     "R1",
-    "R2",
-    "R8"
+    "R4",
+    "R11",
+    "R13"
    ]
   },
   {
    "id": "D4",
-   "path": ".github/actions/freeze-guard/test/freeze.test.ts",
-   "change": "node:test boundary tests at 07:00, 10:30, 18:00, 23:00, 22:59:59, 10:29:59, week boundaries, UTC-to-IST conversion",
+   "path": "infra/runbooks/key-rotation.md",
+   "change": "New runbook: KEK rotation via rotate-kek.sh and rewrapAll, per-workspace DEK, secrets inventory, session/API secrets, SSH/deploy keys, backup encryption key, scheduled vs emergency path, verification command per step",
    "requirements": [
-    "R1"
+    "R1",
+    "R5",
+    "R13"
    ]
   },
   {
    "id": "D5",
-   "path": "package.json",
-   "change": "Extend test:ci-scripts globs with .github/actions/*/test/*.test.ts (and any new infra/scripts tests already covered)",
+   "path": "infra/runbooks/restore.md",
+   "change": "Add required headings, owner, Last drilled; align RPO/RTO (15 min / 4 h) and link the drill records and the restore-drill workflow artifact; keep existing content",
+   "requirements": [
+    "R1",
+    "R7"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "infra/runbooks/dr-hyderabad.md",
+   "change": "Add required headings, owner, Last drilled; RPO/RTO and drill-report link",
+   "requirements": [
+    "R1",
+    "R7"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "infra/runbooks/on-call.md",
+   "change": "Add required headings, owner, Last drilled; add P3, handoff, escalation ladder, communication plan (public status page, WhatsApp support line in court-day windows 07:00-10:30 and 18:00-23:00 IST); link the new runbooks instead of the #103 placeholders",
+   "requirements": [
+    "R1",
+    "R8",
+    "R11",
+    "R13"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "infra/runbooks/court-day-freeze.md",
+   "change": "Cross-link stub with the required headings and owner, stating that #100 owns the procedure and content",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D6",
-   "path": ".github/workflows/images.yml",
-   "change": "Add workflow_call (inputs: publish) so deploy-staging reuses the build, scan, SBOM and cosign path for the staging SHA; main behaviour unchanged",
-   "requirements": [
-    "R3",
-    "R4"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": ".github/workflows/deploy-staging.yml",
-   "change": "On push to staging: build/push via images.yml, deploy over pinned-host-key SSH using the staging environment, run smoke.sh, create GitHub deployment record, record freeze-guard output as informational (not blocking)",
-   "requirements": [
-    "R3",
-    "R10",
-    "R11"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": ".github/workflows/deploy-prod.yml",
-   "change": "workflow_dispatch (image_sha) and release tag; first job is freeze-guard; then verify staging deployment of same SHA with successful smoke within 24 h via deployments API; then production environment deploy via SSH; deployment record",
+   "id": "D9",
+   "path": "infra/runbooks/templates/incident-report.md",
+   "change": "CERT-In incident report template (placeholders only)",
    "requirements": [
     "R2",
-    "R4",
-    "R10",
-    "R11",
-    "R14"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": ".github/workflows/hotfix-prod.yml",
-   "change": "Runs in the `hotfix` environment, requires non-empty reason input, skips freeze, audit comment on incident issue and Slack-compatible payload POST to webhook secret; secrets never echoed",
-   "requirements": [
-    "R8",
-    "R11"
+    "R13"
    ]
   },
   {
    "id": "D10",
-   "path": ".github/workflows/freeze-warning.yml",
-   "change": "Scheduled workflow commenting a warning (idempotent marker) on open PRs labelled deploy:prod if now or the next scheduled merge window falls in the freeze, using freeze.ts",
+   "path": "infra/runbooks/templates/customer-notice.md",
+   "change": "Customer (Data Fiduciary) breach notice template, Counsel to confirm wording, human approval line",
    "requirements": [
+    "R4",
+    "R11",
     "R13"
    ]
   },
   {
    "id": "D11",
-   "path": ".github/workflows/deploy-test.yml",
-   "change": "CI job running infra/scripts/deploy.test.sh against docker compose (docker-in-docker); also runs check-migrations and bash -n/shellcheck on scripts",
+   "path": "infra/runbooks/templates/post-incident-review.md",
+   "change": "Post-incident review template",
    "requirements": [
-    "R5",
-    "R6",
-    "R7",
-    "R10"
+    "R8",
+    "R13"
    ]
   },
   {
    "id": "D12",
-   "path": "infra/scripts/deploy.sh",
-   "change": "On VPS: record previous tags, pull, migrate.sh (expand-only check first), roll api+worker then web replicas one at a time with 60 s /readyz gate, write /opt/causedeck/releases/\u003csha>/release.json (sha, IST time, deployer, migrations), call rollback.sh on failure and print failure summary",
+   "path": "infra/runbooks/templates/evidence-checklist.md",
+   "change": "Evidence checklist referencing the 180-day India Loki store and evidence-export.sh",
    "requirements": [
-    "R5",
-    "R6",
-    "R7",
-    "R10"
+    "R2"
    ]
   },
   {
    "id": "D13",
-   "path": "infra/scripts/rollback.sh",
-   "change": "Restore previous image tags from /opt/causedeck/releases and re-up services with the same one-at-a-time gate",
+   "path": "infra/runbooks/drills/TEMPLATE.md",
+   "change": "Drill record schema (date, type, runbook, participants, scenario, findings, sign-off)",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "infra/runbooks/drills/README.md",
+   "change": "Generalise to all runbooks, point to TEMPLATE.md, keep the restore rules and pre-launch requirement",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "infra/runbooks/drills/pending-launch-drills.md",
+   "change": "One pending record per runbook (cert-in, dpdp, restore, key-rotation) marked not yet drilled, owner and target date",
+   "requirements": [
+    "R9",
+    "R12"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "infra/scripts/runbooks/evidence-export.sh",
+   "change": "Export a Loki time range (query_range via LOKI_URL, paginated) to a tar, encrypt it (age or openssl with a key reference from env, never inline), write manifest.json with sha256 per file and archive hash, refuse non-India destination via infra/scripts/backup/lib/india-guard.sh",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "infra/runbooks/test/evidence-export.test.ts",
+   "change": "node:test: seeded fake Loki HTTP server, run the script, assert archive is encrypted (plaintext absent), manifest and hash verify, decrypts to the seeded lines, non-India destination rejected",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "infra/scripts/runbooks/rotate-kek.sh",
+   "change": "Operator wrapper: validates env (KEK_BASE64 new, KEK_PREVIOUS_BASE64 old), runs a tsx entry that calls pendingRewrap and rewrapAll, prints rewrapped/remaining, refuses to finish unless remaining is 0 (--dry-run supported)",
+   "requirements": [
+    "R5",
+    "R6"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "infra/scripts/runbooks/rotate-kek.ts",
+   "change": "TS entry used by rotate-kek.sh: builds EnvKeyProvider.fromEnv(new, [old]) and calls rewrapAll against DATABASE_URL",
    "requirements": [
     "R6"
    ]
   },
   {
-   "id": "D14",
-   "path": "infra/scripts/smoke.sh",
-   "change": "Health (/readyz sha equals expected), sign-in page, API /v1/health, Caddy security headers, synthetic RLS check",
+   "id": "D20",
+   "path": "packages/storage/src/__tests__/rotate-kek-script.test.ts",
+   "change": "vitest with Testcontainers: seed two workspaces with encrypted documents, run the rotation through the rotate-kek entry, assert all decrypt under the new KEK and that a provider holding only the old KEK is rejected (UNKNOWN_KEK/AUTH_FAILED)",
    "requirements": [
-    "R3",
-    "R10"
+    "R6"
    ]
   },
   {
-   "id": "D15",
-   "path": "infra/scripts/deploy.test.sh",
-   "change": "Deploy happy path, deliberately unhealthy image triggers rollback, continuous probe proves at least one web replica always ready, release.json and /readyz sha asserted",
+   "id": "D21",
+   "path": "infra/runbooks/test/links.test.ts",
+   "change": "node:test over the named runbooks: required headings, Owner and Last drilled (a date or 'not yet drilled'), internal relative links resolve, templates exist, secret/PII patterns absent, no-auto-send and human-approval statements present, Counsel to confirm present in dpdp and cert-in",
    "requirements": [
-    "R5",
-    "R6",
-    "R7",
-    "R10"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "infra/scripts/check-migrations.mjs",
-   "change": "Static check over packages/db/migrations rejecting DROP COLUMN and ALTER ... SET NOT NULL unless the file carries a `-- contract` tag; called by deploy.sh and CI",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "infra/scripts/check-migrations.test.mjs",
-   "change": "node:test cases for accepted and rejected statements plus the contract tag; run on the real migrations dir",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "infra/scripts/deploy-workflows.test.mjs",
-   "change": "Static node:test lint of the workflows and scripts: no StrictHostKeyChecking=no, host key pinned (known_hosts), freeze-guard is the first job of deploy-prod and precedes any ssh step, hotfix requires environment hotfix and reason, secrets come from environments",
-   "requirements": [
-    "R2",
-    "R3",
-    "R8",
+    "R1",
+    "R4",
+    "R10",
     "R11"
    ]
   },
   {
-   "id": "D19",
-   "path": "infra/runbooks/court-day-freeze.md",
-   "change": "Windows, override procedure and etiquette, what may still ship (flags, hot-deployable adapters with approval), user communications template, deploy and rollback steps",
+   "id": "D22",
+   "path": "infra/runbooks/test/index.js",
+   "change": "Aggregator importing the suites, as infra/monitoring/test/index.js",
    "requirements": [
-    "R12",
-    "R15"
+    "R1"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": ".github/workflows/runbooks.yml",
+   "change": "Path-filtered workflow (infra/runbooks/**, infra/scripts/runbooks/**): node --test for infra/runbooks/test, plus a gitleaks run on infra/runbooks using the same digest-pinned image as security.yml; SHA-pinned actions; and the rotate-kek vitest",
+   "requirements": [
+    "R1",
+    "R6",
+    "R10"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "docs/adr/0037-incident-and-key-rotation-policy.md",
+   "change": "ADR in the 0035 format: incident, reporting and key rotation policy, clocks, roles, rotation cadence, human-approval rule",
+   "requirements": [
+    "R13"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "docs/adr/README.md",
+   "change": "Add the 0037 index entry if the README lists ADRs",
+   "requirements": [
+    "R13"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "infra/scripts/healthcheck.sh and infra/scripts/migrate.sh behaviour and CLI (used by infra/docker/test/compose-smoke.sh)"
+   "what": "Existing restore/DR/crypto-erase content and commands in infra/runbooks/restore.md, dr-hyderabad.md and the Backups section of infra/runbooks/workspace-deletion.md:65-69, and the scripts in infra/scripts/backup and infra/scripts/restore"
   },
   {
    "id": "P2",
-   "what": "infra/docker/compose.prod.yml service names, image tag format ghcr.io/${IMAGE_ORG}/causedeck-\u003csvc>:sha-${GIT_SHA} and replicas; infra/scripts/compose-prod.test.mjs must still pass"
+   "what": "Public API of @causedeck/storage (rewrapAll, pendingRewrap, EnvKeyProvider in packages/storage/src/workspace-crypto.ts and crypto/kek.ts): no source change, only a new test"
   },
   {
    "id": "P3",
-   "what": ".github/workflows/images.yml existing pull_request and push-to-main behaviour (verify, publish, cosign, Trivy)"
+   "what": "infra/monitoring stack, its retention proof (infra/monitoring/log-retention/verify-retention.sh) and Alertmanager routing and severity semantics in infra/runbooks/on-call.md (P0/P1 ack targets 15/30 min, court-day windows)"
   },
   {
    "id": "P4",
-   "what": "infra/caddy/** and infra/terraform/** unchanged"
-  },
-  {
-   "id": "P5",
-   "what": "Workflows pin actions by commit SHA with persist-credentials: false and minimal permissions, matching ci.yml and images.yml; actionlint (lint-workflows.yml) must pass"
+   "what": "The restore-drill workflow and infra/runbooks/drills/ file naming rule (a drill without a sign-off does not count)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node --experimental-strip-types --no-warnings --test .github/actions/freeze-guard/test/freeze.test.ts"
+   "command": "node --experimental-strip-types --no-warnings --test infra/runbooks/test/"
   },
   {
    "id": "V2",
-   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/check-migrations.test.mjs infra/scripts/deploy-workflows.test.mjs infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
+   "command": "bash -n infra/scripts/runbooks/rotate-kek.sh && bash -n infra/scripts/runbooks/evidence-export.sh"
   },
   {
    "id": "V3",
-   "command": "bash -n infra/scripts/deploy.sh && bash -n infra/scripts/rollback.sh && bash -n infra/scripts/smoke.sh && bash -n infra/scripts/deploy.test.sh"
+   "command": "pnpm --filter @causedeck/storage exec vitest run src/__tests__/rotate-kek-script.test.ts src/__tests__/rotation.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/production-infra-scale"
+   "command": "node --experimental-strip-types --no-warnings --test infra/monitoring/test/verify-retention.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Freeze logic lives in a pure freeze.ts imported by index.ts and freeze-warning.yml; tests are node:test run through the existing test:ci-scripts runner, not a new vitest package",
-   "justification": "package.json:31 already runs node --experimental-strip-types --test for CI scripts; no vitest config exists under .github",
+   "choice": "No new workspace dependency; rotate-kek.ts imports @causedeck/storage and @causedeck/config via the existing workspace resolution (script run with pnpm --filter \u003cpkg> exec tsx); the CI proof is a vitest inside packages/storage",
+   "justification": "rewrapAll already exists (packages/storage/src/workspace-crypto.ts:158); rotation.test.ts:1-30 is the DB-backed precedent; tsx is only in db/auth/ui (db/package.json:52), so the wrapper runs through the db package, which storage already depends on",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Reuse images.yml through workflow_call for the staging build rather than duplicating the multi-arch/Trivy/cosign steps",
-   "justification": "images.yml header documents the pinned-tool publish path; staging and prod must deploy the identical signed sha tag",
+   "choice": "Tests are node:test with --experimental-strip-types under infra/runbooks/test plus an index.js aggregator and a path-filtered workflow",
+   "justification": "Copies infra/monitoring/test/index.js:1-5 and .github/workflows/monitoring.yml:59",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Add deploy-test.yml (not in the issue file list) to run deploy.test.sh and docker-dependent checks in CI, since docker is never run locally",
-   "justification": "CLAUDE.md: Playwright/docker-heavy checks run in CI only; acceptance criteria R5-R7 require a CI-run deploy test",
-   "source": "doc"
+   "choice": "Evidence archive destination is checked with infra/scripts/backup/lib/india-guard.sh",
+   "justification": "Backup storage and replicas stay in India (india-guard.sh:6); the same rule applies to evidence archives (PRD §8)",
+   "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Host key verification uses a pinned known_hosts value from the GitHub environment secret and ssh -o StrictHostKeyChecking=yes",
-   "justification": "Issue acceptance criterion on pinned host key; credentials come from #116/#108",
+   "choice": "Secret scan in CI reuses the digest-pinned gitleaks image from security.yml:47, scoped to infra/runbooks, plus a regex check in links.test.ts; no new tool",
+   "justification": ".github/workflows/security.yml:33-48",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "Last drilled accepts a date or 'not yet drilled' before launch; the README carries the pre-launch checklist and the drills are deferred (R9)",
+   "justification": "Agents cannot hold tabletop drills; the issue requires the field to exist, which the check enforces",
    "source": "spec"
+  },
+  {
+   "id": "K6",
+   "choice": "ADR number 0037 (last on base is 0036-bench-facts.md); renumber if the base takes it",
+   "justification": "docs/adr listing at HEAD",
+   "source": "doc"
   }
  ]
 }

@@ -228,6 +228,7 @@ describe('backup services (#101)', () => {
     for (const name of ['postgres', 'backup']) {
       assert.match(services[name], /secrets: \[walg_key\]/);
       assert.match(services[name], /WALG_LIBSODIUM_KEY_PATH: \/run\/secrets\/walg_key/);
+      assert.match(services[name], /WALG_LIBSODIUM_KEY_TRANSFORM: hex/);
     }
     assert.doesNotMatch(compose, /WALG_LIBSODIUM_KEY:/);
   });

@@ -57,7 +57,7 @@ read -r -p "Type the target volume name to continue: " typed
 docker volume create "$TARGET_VOLUME" >/dev/null
 docker run --rm --user postgres \
   -e WALG_S3_PREFIX -e AWS_ENDPOINT -e AWS_REGION -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
-  -e AWS_S3_FORCE_PATH_STYLE=true -e WALG_LIBSODIUM_KEY_PATH=/run/walg.key \
+  -e AWS_S3_FORCE_PATH_STYLE=true -e WALG_LIBSODIUM_KEY_PATH=/run/walg.key -e WALG_LIBSODIUM_KEY_TRANSFORM=hex \
   -v "$WALG_LIBSODIUM_KEY_PATH:/run/walg.key:ro" -v "$TARGET_VOLUME:/var/lib/postgresql/data" \
   "$IMAGE" bash -euc '
     cd /var/lib/postgresql/data

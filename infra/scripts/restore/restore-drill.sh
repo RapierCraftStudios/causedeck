@@ -93,7 +93,7 @@ fi
 docker volume create "${LABELS[@]}" "$ID" >/dev/null
 
 WALG_ENV=(-e WALG_S3_PREFIX -e AWS_ENDPOINT -e AWS_REGION -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY
-  -e AWS_S3_FORCE_PATH_STYLE=true -e WALG_LIBSODIUM_KEY_PATH=/run/walg.key)
+  -e AWS_S3_FORCE_PATH_STYLE=true -e WALG_LIBSODIUM_KEY_PATH=/run/walg.key -e WALG_LIBSODIUM_KEY_TRANSFORM=hex)
 KEY_MOUNT=(-v "$WALG_LIBSODIUM_KEY_PATH:/run/walg.key:ro")
 
 # 1. Base backup + recovery settings. The drill instance never archives.

@@ -261,6 +261,7 @@ services:
       AWS_S3_FORCE_PATH_STYLE: 'true'
       AWS_REGION: ${S3_REGION:-ap-south-1}
       WALG_LIBSODIUM_KEY_PATH: /run/secrets/walg_key
+      WALG_LIBSODIUM_KEY_TRANSFORM: hex
     secrets: [walg_key]
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -382,6 +383,7 @@ services:
       AWS_S3_FORCE_PATH_STYLE: 'true'
       AWS_REGION: ${S3_REGION:-ap-south-1}
       WALG_LIBSODIUM_KEY_PATH: /run/secrets/walg_key
+      WALG_LIBSODIUM_KEY_TRANSFORM: hex
       ALLOW_LOCAL_ENDPOINTS: ${ALLOW_LOCAL_ENDPOINTS:-1}
       BACKUP_RETAIN_DAILY: ${BACKUP_RETAIN_DAILY:-14}
       BACKUP_RETAIN_WEEKLY: ${BACKUP_RETAIN_WEEKLY:-8}

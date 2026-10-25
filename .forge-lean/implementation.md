@@ -31,3 +31,9 @@ No migration, no env vars. The core staff gate is ops/admin; support is denied i
 
 ### Stale-list follow-up
 Guard flagged incidentConsole (growth-page, migrations-page tests) and the incident exports (status.test.ts). None is a member: those tests mock/import only what their own page or publish.ts uses. Recorded in result.json `not_members`; no test edits needed.
+
+### Merge-check follow-up
+The merged-tree failure was `turbo: command not found` (exit 127), an environment PATH problem, not a code or symbol clash. With `node_modules/.bin` on PATH, `pnpm turbo run typecheck --filter='...[f840ec10]'` passes on the merged tree (24/24 tasks). No source change needed.
+
+### Post-merge check
+After merging the base, `turbo run typecheck '--filter=...[f840ec10]'` exited 127 because `turbo` is not on PATH in this shell. This is an environment problem, not a code defect: `pnpm turbo run typecheck '--filter=...[f840ec10]'` passes (24 of 24 tasks), and V1 to V4 pass on the merged tree. No source change was needed.

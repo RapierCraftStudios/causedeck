@@ -67,3 +67,9 @@ Same exit 127: `turbo` is not on PATH in the check shell; no code conflict. With
 
 ### Merge re-check (3)
 Exit 127 again is environmental (`turbo` not on PATH). With `PATH=$PWD/node_modules/.bin:$PATH`, full `turbo run typecheck` passes (24/24). No source change; run turbo via node_modules/.bin or `pnpm exec`.
+
+### Merge re-check (4)
+Exit 127 is environmental: bare `turbo` is not on PATH. With `PATH=$PWD/node_modules/.bin:$PATH`, full `turbo run typecheck` passes (24/24). No source change.
+
+### Merge re-check (5)
+Exit 127 is environmental: bare `turbo` is not on PATH. `pnpm exec turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes on the merged tree (24/24, exit 0). No duplicate keys or symbol clashes; no source change.

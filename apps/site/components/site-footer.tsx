@@ -1,6 +1,8 @@
 import { Separator } from '@causedeck/ui/separator';
 import Link from 'next/link';
 
+import { POSITIONING_LINE } from '../content/landing.ts';
+
 const COLUMNS = [
   { heading: 'Product', links: [{ href: '/', label: 'Overview' }] },
   { heading: 'Trust', links: [{ href: '/about/', label: 'About' }] },
@@ -31,8 +33,8 @@ export function SiteFooter() {
           ))}
         </div>
         <Separator className="my-8" />
-        <p className="text-ink-muted text-sm">
-          CauseDeck is software for advocates. Customer data is stored in India.
+        <p className="text-ink-muted text-sm" data-testid="positioning-line">
+          {POSITIONING_LINE}
         </p>
       </div>
     </footer>

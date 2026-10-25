@@ -736,6 +736,13 @@
       "when": 1792929033567,
       "tag": "20261025115033_sso_provider_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1792930387697,
+      "tag": "20261025121307_brief_share",
+      "breakpoints": true
     }
   ]
 }

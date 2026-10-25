@@ -4765,6 +4765,55 @@ export type Messages = {
       full: string;
     };
   };
+  share: {
+    metaTitle: string;
+    unavailable: string;
+    states: {
+      invalid: string;
+      expired: string;
+      revoked: string;
+    };
+    stage: string;
+    lastOrder: string;
+    lastHearing: string;
+    obligations: string;
+    due: string;
+    footer: string;
+    join: string;
+    import: string;
+    errors: {
+      noWorkspace: string;
+      gone: string;
+      failed: string;
+    };
+    manage: {
+      title: string;
+      description: string;
+      expiry: string;
+      days: string;
+      create: string;
+      creating: string;
+      createdOnce: string;
+      linkLabel: string;
+      copy: string;
+      copied: string;
+      copyFailed: string;
+      activeTitle: string;
+      empty: string;
+      createdOn: string;
+      expiresOn: string;
+      revoke: string;
+      revokeLabel: string;
+      revoked: string;
+      noListing: string;
+      errors: {
+        rateLimited: string;
+        forbidden: string;
+        notFound: string;
+        generic: string;
+      };
+    };
+  };
   error: {
     title: string;
     description: string;

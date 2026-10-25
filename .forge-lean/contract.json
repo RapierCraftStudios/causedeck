@@ -2,79 +2,97 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Each runbook has the required headings (Purpose, Triggers, Roles, Steps, Communications, Evidence, Verification, After action), an owner and a `Last drilled` date; a CI check fails otherwise [type:unit]",
+   "quote": "The Stage B runbook lists the triggers (p95 above 400 ms, DB CPU above 60%, more than 1,000 seats), pre-checks, a cutover timeline that avoids the 18:00 to 23:00 and 07:00 to 10:30 IST freeze windows, rollback at every step, and communication templates [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "The CERT-In runbook defines the 6-hour clock from detection, lists incident categories in the directions, and includes a ready report template and an evidence checklist referencing the 180-day India log store [type:manual]",
+   "quote": "Terraform modules for RDS, S3, ALB, and optional Cloudflare LB validate and plan in CI with dummy credentials; region variables are validated to India regions only (`ap-south-1`, `ap-south-2`) [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`evidence-export.sh` exports logs for a time range from Loki into an encrypted archive within India, with a manifest and hash, and is tested against seeded logs [type:api]",
+   "quote": "The RDS module enables encryption with a customer-managed KMS key, automated backups with PITR, a read replica in Hyderabad (`ap-south-2`), pgvector parameter group and private networking only (no public endpoint, policy test) [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "The DPDP runbook covers assessment, containment, Board and principal notification as applicable, customer (Data Fiduciary) notification templates, and record keeping; counsel-owned sections are marked `Counsel to confirm` until the human issue is complete [type:manual]",
+   "quote": "The S3 module blocks public access, enables versioning and SSE-KMS, applies per-workspace prefix IAM conditions, and replicates to a second India region; a policy test asserts all four [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "The key rotation runbook covers KEK rotation with DEK re-wrap without downtime, session secret and API secret rotation, SSH and deploy key rotation, backup encryption key rotation and an emergency compromise path; each step has a verification command [type:manual]",
+   "quote": "The ALB is the default multi-node entry; the Cloudflare LB module cannot be enabled without `residency_decision_ref` and a documented approval, matching the DNS-only app rule [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "`rotate-kek.sh` is exercised in CI against staging-like data: after rotation all documents still decrypt and the old KEK is rejected [type:api]",
+   "quote": "`scale-readiness-check.ts` verifies the day-one rules (stateless containers, state only in Postgres and S3, env-only config, health and readiness endpoints, idempotent jobs, backward-compatible migrations) and fails CI if a rule regresses [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "The restore and DR runbooks match the measured RPO and RTO from #101 drills and link to the latest drill report [type:manual]",
+   "quote": "`packages/storage` passes the same conformance suite against MinIO and an S3-compatible target, proving the provider swap needs only env changes [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "The on-call runbook defines severities P0 to P3, response targets, escalation ladder, handoff and a communication plan including the public status page and WhatsApp support line during court-day hours [type:manual]",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "A Postgres migration rehearsal on staging data (logical replication from the compose Postgres to a scratch Postgres) completes with row-count and RLS verification and measures cutover downtime, recorded in the runbook [type:manual]",
+   "disposition": "post-deploy",
+   "why": "Needs staging data and a scratch Postgres; cannot run on the shared host or in the lane. The lane delivers migrate-postgres-to-rds.sh (with row-count and RLS verification) and a rehearsal-results section in the runbook; the run is recorded after deploy."
   },
   {
    "id": "R9",
-   "quote": "A tabletop drill is held for CERT-In and DPDP scenarios, and a technical drill for restore and key rotation, with records saved under `drills/` before launch [type:manual]",
-   "disposition": "defer",
-   "why": "Drills need humans (participants, a live staging restore and key rotation) and are due before launch, not at merge. This change ships drills/TEMPLATE.md, one pending record per runbook and a README launch checklist; the engine files the follow-up to hold the drills and fill the records."
+   "quote": "A MinIO to S3 sync rehearsal with checksum verification passes on seeded documents [type:manual]",
+   "disposition": "post-deploy",
+   "why": "Needs seeded documents on staging MinIO and a scratch S3 target; the lane delivers migrate-minio-to-s3.sh with a checksum-verify mode and a guarded shell test using stubs, the real rehearsal is recorded after deploy."
   },
   {
    "id": "R10",
-   "quote": "Runbooks contain no secrets or real personal data; a secret scanner runs on `infra/runbooks/` in CI [type:unit]",
+   "quote": "Envelope encryption path is documented for the KMS move: KEK moves from env and secret manager to KMS with DEK re-wrap, referencing the key rotation runbook [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Runbooks state that no automated outbound messages go to courts or third parties and that customer notices are sent by a human after approval, consistent with the no auto-send guardrail [type:manual]",
+   "quote": "Stage C document states the decision criteria for ECS Fargate vs k3s, Redis, OpenSearch and PowerSync, each with measurable triggers, and is reviewed in an ADR [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "These are documents with drills, not decoration: each runbook is exercised in a tabletop or technical drill before launch and the evidence is stored.",
-   "disposition": "defer",
-   "why": "Same as R9: executing the drills is a pre-launch human activity; the template and pending records are delivered here."
+   "quote": "A cost model compares Stage A, B and C per 1,000 seats in INR and checks the variable cost target per seat (PRD §8) [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "Each runbook has an owner, a last-drilled date, decision trees, copy-paste commands and communication templates.",
+   "quote": "Nothing in this issue is applied automatically: apply requires the manual gated workflow from #99 [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "`.github/workflows/terraform.yml` (extend to plan Stage B modules with dummy vars)",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "This issue produces the runbook, Terraform modules (plan-able, not applied), and a migration rehearsal checklist. It does not perform the migration.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "`infra/terraform/modules/aws-ecs-fargate/` and `aws-elasticache/` (Stage C skeletons, `enabled=false` default)",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -82,302 +100,238 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "infra/runbooks/README.md",
-   "change": "Index, owners, drill calendar, severity matrix, pre-launch drill checklist, link to every runbook and template",
+   "path": "infra/runbooks/stage-b-scale-out.md",
+   "change": "Triggers, pre-checks, step-by-step cutover timeline outside IST freeze windows 18:00-23:00 and 07:00-10:30, rollback per step, communication templates, migration rehearsal checklist and rehearsal-results section (to be filled post-deploy), KMS move with KEK->KMS DEK re-wrap referencing storage.md rotation and restore.md, statement that apply only via the gated terraform.yml workflow.",
    "requirements": [
     "R1",
+    "R8",
     "R9",
-    "R13"
+    "R10",
+    "R13",
+    "R15"
    ]
   },
   {
    "id": "D2",
-   "path": "infra/runbooks/cert-in-6h.md",
-   "change": "New runbook with the required headings, owner, Last drilled, 6h clock from detection, incident categories, decision tree, evidence checklist referencing the 180-day Loki store and evidence-export.sh, report template link, Counsel to confirm for contacts/wording, no-auto-send statement",
+   "path": "infra/runbooks/stage-c-orchestration.md",
+   "change": "ECS Fargate vs k3s decision record, per-queue worker autoscaling, Redis, OpenSearch and PowerSync criteria each with measurable triggers; cost model Stage A/B/C per 1,000 seats in INR checked against the PRD §8 variable-cost target (docs/product/03-prd.md:335).",
    "requirements": [
-    "R1",
-    "R2",
     "R11",
-    "R13"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "infra/runbooks/dpdp-breach.md",
-   "change": "New runbook: assessment, containment, Processor-first customer notification, Board/principal notification marked Counsel to confirm, record keeping, human-approved notices only",
-   "requirements": [
-    "R1",
-    "R4",
-    "R11",
-    "R13"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "infra/runbooks/key-rotation.md",
-   "change": "New runbook: KEK rotation via rotate-kek.sh and rewrapAll, per-workspace DEK, secrets inventory, session/API secrets, SSH/deploy keys, backup encryption key, scheduled vs emergency path, verification command per step",
-   "requirements": [
-    "R1",
-    "R5",
-    "R13"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "infra/runbooks/restore.md",
-   "change": "Add required headings, owner, Last drilled; align RPO/RTO (15 min / 4 h) and link the drill records and the restore-drill workflow artifact; keep existing content",
-   "requirements": [
-    "R1",
-    "R7"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "infra/runbooks/dr-hyderabad.md",
-   "change": "Add required headings, owner, Last drilled; RPO/RTO and drill-report link",
-   "requirements": [
-    "R1",
-    "R7"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "infra/runbooks/on-call.md",
-   "change": "Add required headings, owner, Last drilled; add P3, handoff, escalation ladder, communication plan (public status page, WhatsApp support line in court-day windows 07:00-10:30 and 18:00-23:00 IST); link the new runbooks instead of the #103 placeholders",
-   "requirements": [
-    "R1",
-    "R8",
-    "R11",
-    "R13"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "infra/runbooks/court-day-freeze.md",
-   "change": "Cross-link stub with the required headings and owner, stating that #100 owns the procedure and content",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "infra/runbooks/templates/incident-report.md",
-   "change": "CERT-In incident report template (placeholders only)",
-   "requirements": [
-    "R2",
-    "R13"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "infra/runbooks/templates/customer-notice.md",
-   "change": "Customer (Data Fiduciary) breach notice template, Counsel to confirm wording, human approval line",
-   "requirements": [
-    "R4",
-    "R11",
-    "R13"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "infra/runbooks/templates/post-incident-review.md",
-   "change": "Post-incident review template",
-   "requirements": [
-    "R8",
-    "R13"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "infra/runbooks/templates/evidence-checklist.md",
-   "change": "Evidence checklist referencing the 180-day India Loki store and evidence-export.sh",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "infra/runbooks/drills/TEMPLATE.md",
-   "change": "Drill record schema (date, type, runbook, participants, scenario, findings, sign-off)",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "infra/runbooks/drills/README.md",
-   "change": "Generalise to all runbooks, point to TEMPLATE.md, keep the restore rules and pre-launch requirement",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "infra/runbooks/drills/pending-launch-drills.md",
-   "change": "One pending record per runbook (cert-in, dpdp, restore, key-rotation) marked not yet drilled, owner and target date",
-   "requirements": [
-    "R9",
     "R12"
    ]
   },
   {
-   "id": "D16",
-   "path": "infra/scripts/runbooks/evidence-export.sh",
-   "change": "Export a Loki time range (query_range via LOKI_URL, paginated) to a tar, encrypt it (age or openssl with a key reference from env, never inline), write manifest.json with sha256 per file and archive hash, refuse non-India destination via infra/scripts/backup/lib/india-guard.sh",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "infra/runbooks/test/evidence-export.test.ts",
-   "change": "node:test: seeded fake Loki HTTP server, run the script, assert archive is encrypted (plaintext absent), manifest and hash verify, decrypts to the seeded lines, non-India destination rejected",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "infra/scripts/runbooks/rotate-kek.sh",
-   "change": "Operator wrapper: validates env (KEK_BASE64 new, KEK_PREVIOUS_BASE64 old), runs a tsx entry that calls pendingRewrap and rewrapAll, prints rewrapped/remaining, refuses to finish unless remaining is 0 (--dry-run supported)",
+   "id": "D3",
+   "path": "docs/adr/0037-stage-b-c-scale-path.md",
+   "change": "ADR: scale path, ALB-default vs Cloudflare LB residency trade-off (D-037), ECS vs k3s, review of Stage C criteria.",
    "requirements": [
     "R5",
-    "R6"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "infra/scripts/runbooks/rotate-kek.ts",
-   "change": "TS entry used by rotate-kek.sh: builds EnvKeyProvider.fromEnv(new, [old]) and calls rewrapAll against DATABASE_URL",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "packages/storage/src/__tests__/rotate-kek-script.test.ts",
-   "change": "vitest with Testcontainers: seed two workspaces with encrypted documents, run the rotation through the rotate-kek entry, assert all decrypt under the new KEK and that a provider holding only the old KEK is rejected (UNKNOWN_KEK/AUTH_FAILED)",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "infra/runbooks/test/links.test.ts",
-   "change": "node:test over the named runbooks: required headings, Owner and Last drilled (a date or 'not yet drilled'), internal relative links resolve, templates exist, secret/PII patterns absent, no-auto-send and human-approval statements present, Counsel to confirm present in dpdp and cert-in",
-   "requirements": [
-    "R1",
-    "R4",
-    "R10",
     "R11"
    ]
   },
   {
-   "id": "D22",
-   "path": "infra/runbooks/test/index.js",
-   "change": "Aggregator importing the suites, as infra/monitoring/test/index.js",
+   "id": "D4",
+   "path": "infra/terraform/modules/aws-rds-postgres/",
+   "change": "main/variables/outputs/versions/README: RDS Postgres in ap-south-1 with CMK KMS key, backup_retention_period>0 (PITR), Multi-AZ option, parameter group (pgvector via shared_preload/extension notes), private subnets, publicly_accessible=false, force TLS, read replica in ap-south-2 (provider alias); region variables validated to ap-south-1/ap-south-2; outputs private endpoint and replica endpoint.",
    "requirements": [
-    "R1"
+    "R2",
+    "R3"
    ]
   },
   {
-   "id": "D23",
-   "path": ".github/workflows/runbooks.yml",
-   "change": "Path-filtered workflow (infra/runbooks/**, infra/scripts/runbooks/**): node --test for infra/runbooks/test, plus a gitleaks run on infra/runbooks using the same digest-pinned image as security.yml; SHA-pinned actions; and the rotate-kek vitest",
+   "id": "D5",
+   "path": "infra/terraform/modules/aws-s3-documents/",
+   "change": "Bucket in ap-south-1 with public access block, versioning, SSE-KMS, per-workspace prefix IAM policy conditions, lifecycle, cross-region replication to ap-south-2; India-only region validation; README, outputs bucket names.",
    "requirements": [
-    "R1",
-    "R6",
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "infra/terraform/modules/aws-alb-multinode/",
+   "change": "ALB, target groups with health check on /readyz, TLS listener, WAF off by default; India region validation; outputs ALB DNS name.",
+   "requirements": [
+    "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "infra/terraform/modules/cloudflare-lb/",
+   "change": "Optional LB gated by enable_cloudflare_lb (default false) and non-empty residency_decision_ref via variable validation/precondition, mirroring #99 app_proxied rule.",
+   "requirements": [
+    "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "infra/terraform/modules/aws-ecs-fargate/",
+   "change": "Stage C skeleton with enabled=false default (count gated), region validation, README. Also create sibling infra/terraform/modules/aws-elasticache/ with the same shape.",
+   "requirements": [
+    "R16",
+    "R2"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "infra/terraform/envs/stage-b/",
+   "change": "versions/variables/main/outputs and terraform.tfvars.example (dummy values) composing the Stage B modules; no backend committed; ALB default, cloudflare-lb off.",
+   "requirements": [
+    "R2",
+    "R5",
+    "R13",
+    "R15"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": ".github/workflows/terraform.yml",
+   "change": "Add stage-b to static validate loop and to the plan matrix with dummy AWS credentials; keep apply/drift jobs unchanged (no automatic apply; stage-b not an apply option unless it stays behind the same gated environment).",
+   "requirements": [
+    "R13",
+    "R14",
+    "R2"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "infra/terraform/test/stage-b-policy.test.mjs",
+   "change": "Node policy tests (reuse the text block-parser pattern of policy.test.mjs): India-only region validations in all new modules, RDS encryption/KMS/PITR/replica ap-south-2/pgvector/no public endpoint, S3 four properties, ALB default and /readyz check, cloudflare-lb residency gate, ecs/elasticache enabled=false, stage-b env does not enable cloudflare-lb.",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R16"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "infra/terraform/README.md",
+   "change": "Document new modules, stage-b env, variables and the not-applied-automatically rule.",
+   "requirements": [
+    "R13",
+    "R15"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "infra/scripts/stage-b/migrate-postgres-to-rds.sh",
+   "change": "Logical-replication plan script: dry-run default, explicit --execute guard, India endpoint guard, row-count and RLS verification (reuse infra/scripts/restore/verify.sql ideas), read-only window and downtime measurement, rollback hints.",
+   "requirements": [
+    "R8",
+    "R15"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "infra/scripts/stage-b/migrate-minio-to-s3.sh",
+   "change": "rclone sync with --checksum and a verify step (rclone check), dry-run default, India region guard; also add infra/scripts/stage-b/test/stage-b-scripts.test.mjs with stubbed binaries asserting guards and dry-run behaviour.",
+   "requirements": [
+    "R9",
+    "R15"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "infra/scripts/scale-readiness-check.ts",
+   "change": "Erasable-TS script (run via node --experimental-strip-types) exporting pure rule checkers: no local-disk writes outside volumes in compose, /healthz and /readyz routes present, env-only config (no hardcoded endpoints), job idempotency tests present, expand/migrate/contract migration check (no destructive DROP/rename in a single migration without marker); CLI exits non-zero on any failure. Add infra/scripts/scale-readiness-check.test.ts (picked up by test:ci-scripts) with passing and regressing fixtures, and a root package.json script entry `scale-readiness`.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "package.json",
+   "change": "Add script `scale-readiness` running infra/scripts/scale-readiness-check.ts with node --experimental-strip-types --no-warnings (mirrors the doctor entry at package.json:14).",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/storage/src/__tests__/s3-compatible.test.ts",
+   "change": "Run objectStoreContract against a second S3-compatible target (in-process mock server, no containers) constructed only via createObjectStoreFromEnv with different env values, next to the MinIO run in minio.test.ts; assert no code path differs beyond env. Export or add the minimal mock helper under __tests__.",
+   "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "docs/engineering/storage.md",
+   "change": "Add Stage B KMS move section linking to stage-b-scale-out.md (KeyProvider KMS implementation, DEK re-wrap, rotation list).",
+   "requirements": [
     "R10"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "docs/adr/0037-incident-and-key-rotation-policy.md",
-   "change": "ADR in the 0035 format: incident, reporting and key rotation policy, clocks, roles, rotation cadence, human-approval rule",
-   "requirements": [
-    "R13"
-   ]
-  },
-  {
-   "id": "D25",
-   "path": "docs/adr/README.md",
-   "change": "Add the 0037 index entry if the README lists ADRs",
-   "requirements": [
-    "R13"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing restore/DR/crypto-erase content and commands in infra/runbooks/restore.md, dr-hyderabad.md and the Backups section of infra/runbooks/workspace-deletion.md:65-69, and the scripts in infra/scripts/backup and infra/scripts/restore"
+   "what": "Existing #99 modules and envs/{prod,staging} behaviour, including app_proxied/residency_decision_ref gating (infra/terraform/envs/*, test/policy.test.mjs, residency.tftest.hcl)."
   },
   {
    "id": "P2",
-   "what": "Public API of @causedeck/storage (rewrapAll, pendingRewrap, EnvKeyProvider in packages/storage/src/workspace-crypto.ts and crypto/kek.ts): no source change, only a new test"
+   "what": "terraform.yml apply and drift jobs stay manual/gated and limited to staging and prod (.github/workflows/terraform.yml:155-190)."
   },
   {
    "id": "P3",
-   "what": "infra/monitoring stack, its retention proof (infra/monitoring/log-retention/verify-retention.sh) and Alertmanager routing and severity semantics in infra/runbooks/on-call.md (P0/P1 ack targets 15/30 min, court-day windows)"
+   "what": "Public API of @causedeck/storage (createS3ObjectStore, createObjectStoreFromEnv, ObjectStore contract) in packages/storage/src/s3-provider.ts and index.ts; no new @causedeck/core runtime exports (cross-tenant registry untouched)."
   },
   {
    "id": "P4",
-   "what": "The restore-drill workflow and infra/runbooks/drills/ file naming rule (a drill without a sign-off does not count)"
+   "what": "Stage A backup/restore scripts and runbooks from #101 (infra/scripts/backup, infra/scripts/restore, infra/runbooks/restore.md) are only referenced, not modified."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node --experimental-strip-types --no-warnings --test infra/runbooks/test/"
+   "command": "node --experimental-strip-types --no-warnings --test infra/terraform/test/policy.test.mjs infra/terraform/test/stage-b-policy.test.mjs"
   },
   {
    "id": "V2",
-   "command": "bash -n infra/scripts/runbooks/rotate-kek.sh && bash -n infra/scripts/runbooks/evidence-export.sh"
+   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/scale-readiness-check.test.ts infra/scripts/stage-b/test/stage-b-scripts.test.mjs"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/storage exec vitest run src/__tests__/rotate-kek-script.test.ts src/__tests__/rotation.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "node --experimental-strip-types --no-warnings infra/scripts/scale-readiness-check.ts"
   },
   {
    "id": "V4",
-   "command": "node --experimental-strip-types --no-warnings --test infra/monitoring/test/verify-retention.test.ts"
+   "command": "pnpm --filter @causedeck/storage exec vitest run src/__tests__/s3-compatible.test.ts src/__tests__/s3-provider.test.ts --maxWorkers=1"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "No new workspace dependency; rotate-kek.ts imports @causedeck/storage and @causedeck/config via the existing workspace resolution (script run with pnpm --filter \u003cpkg> exec tsx); the CI proof is a vitest inside packages/storage",
-   "justification": "rewrapAll already exists (packages/storage/src/workspace-crypto.ts:158); rotation.test.ts:1-30 is the DB-backed precedent; tsx is only in db/auth/ui (db/package.json:52), so the wrapper runs through the db package, which storage already depends on",
-   "source": "precedent"
+   "choice": "ALB (aws-alb-multinode) is the default multi-node entry; cloudflare-lb is off unless enable_cloudflare_lb and residency_decision_ref are set",
+   "justification": "Issue Root Cause and D-037 residency rule; same gating pattern as app_proxied in #99 (infra/terraform/README.md variables table).",
+   "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "Tests are node:test with --experimental-strip-types under infra/runbooks/test plus an index.js aggregator and a path-filtered workflow",
-   "justification": "Copies infra/monitoring/test/index.js:1-5 and .github/workflows/monitoring.yml:59",
+   "choice": "Policy tests are node text-lint tests rather than conftest/checkov custom policies",
+   "justification": "Tools not installable on the shared host (#99 PR #790 fact); precedent infra/terraform/test/policy.test.mjs run by pnpm test:ci-scripts (package.json:31).",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Evidence archive destination is checked with infra/scripts/backup/lib/india-guard.sh",
-   "justification": "Backup storage and replicas stay in India (india-guard.sh:6); the same rule applies to evidence archives (PRD §8)",
+   "choice": "Storage provider path is packages/storage/src/s3-provider.ts and tests under src/__tests__, not providers/s3.ts",
+   "justification": "The issue's path does not exist; repo layout shows s3-provider.ts and object-store.contract.ts:23.",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Secret scan in CI reuses the digest-pinned gitleaks image from security.yml:47, scoped to infra/runbooks, plus a regex check in links.test.ts; no new tool",
-   "justification": ".github/workflows/security.yml:33-48",
+   "choice": "ADR number 0037",
+   "justification": "Last ADR on base is docs/adr/0036-bench-facts.md.",
    "source": "precedent"
   },
   {
    "id": "K5",
-   "choice": "Last drilled accepts a date or 'not yet drilled' before launch; the README carries the pre-launch checklist and the drills are deferred (R9)",
-   "justification": "Agents cannot hold tabletop drills; the issue requires the field to exist, which the check enforces",
-   "source": "spec"
-  },
-  {
-   "id": "K6",
-   "choice": "ADR number 0037 (last on base is 0036-bench-facts.md); renumber if the base takes it",
-   "justification": "docs/adr listing at HEAD",
+   "choice": "Rehearsals R8 and R9 are post-deploy, with scripts and runbook template delivered in lane",
+   "justification": "Require staging data and a scratch target; the host forbids Docker-heavy runs (CLAUDE.md local verification).",
    "source": "doc"
   }
  ]

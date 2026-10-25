@@ -14,7 +14,14 @@ infra/terraform/
   modules/cloudflare-waf         managed rules + rate limit (enable_app_waf, off)
   modules/vps-do-blr1            DigitalOcean droplet, firewall, volume, backups
   modules/vps-lightsail-mumbai   Lightsail instance, public ports, disk, snapshots
+  modules/aws-rds-postgres       Stage B RDS Postgres 17, CMK KMS, PITR, Hyderabad replica (#106)
+  modules/aws-s3-documents       Stage B documents bucket: public block, versioning, SSE-KMS, replication
+  modules/aws-alb-multinode      Stage B ALB (default multi-node entry), /readyz health check
+  modules/cloudflare-lb          optional Cloudflare LB (enable_cloudflare_lb, off)
+  modules/aws-ecs-fargate        Stage C skeleton (enabled = false)
+  modules/aws-elasticache        Stage C skeleton (enabled = false)
   envs/{prod,staging}            roots; terraform.tfvars.example holds dummy values
+  envs/stage-b                   Stage B root composing the #106 modules (plan only in CI)
   backend.tf.example             remote state (S3 ap-south-1, locking)
   test/                          policy.test.mjs (node) and residency.tftest.hcl (terraform test)
 ```
@@ -51,6 +58,19 @@ state bucket). Real values come from #107 (domain and Cloudflare token), #108 (V
 - VPS modules reject any region except `blr1` / `ap-south-1`. The firewall opens only 80 and 443
   (tcp and udp) to the world and 22 to `ssh_allowlist`; Postgres, MinIO and admin ports are never public.
 - Every VPS resource is tagged `project`, `env`, `owner`, `data_residency=in`.
+
+## Stage B (#106)
+
+`envs/stage-b` composes the RDS, S3, ALB and optional Cloudflare LB modules and the disabled Stage C
+skeletons. Region variables (`aws_region`, `replica_region`, each module's `region`) accept only
+`ap-south-1` and `ap-south-2`. `enable_cloudflare_lb` (default `false`) needs `residency_decision_ref`
+and `approval_doc`, like `app_proxied`; the ALB is the default entry. `enable_stage_c` (default
+`false`) gates ECS Fargate and ElastiCache. `plan_with_dummy_credentials = true` lets CI plan without
+AWS credentials; it is never set for a real apply.
+
+**Nothing in Stage B is applied automatically.** CI validates and plans it with
+`terraform.tfvars.example`; the workflow has no apply or drift path for it. Apply is manual and gated
+(see `infra/runbooks/stage-b-scale-out.md`). Policy tests: `node --test infra/terraform/test/stage-b-policy.test.mjs`.
 
 ## Apply order
 

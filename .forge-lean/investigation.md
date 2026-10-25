@@ -1,38 +1,43 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (launch-blocking compliance documents; no runtime defect)
-**Task Type**: docs
+**Severity**: medium (no outage today; the scale path is undocumented and uncodified, so a trigger firing would force an unplanned migration)
+**Task Type**: feature
 
 ### What Was Claimed
-Issue #103 asks for the incident and key-rotation runbooks (CERT-In 6h, DPDP breach, key rotation, restore/DR, on-call, court-day-freeze link), templates, drill records, `rotate-kek.sh`, `evidence-export.sh`, an ADR and a CI check (`links.test.ts`) for headings, owner, `Last drilled`, internal links and secrets. 11 acceptance criteria.
+Issue #106 asks for the Stage B/C scale-out runbooks, plan-able (never applied) Terraform modules (RDS, S3, ALB, optional Cloudflare LB, ECS/ElastiCache skeletons, `envs/stage-b`), migration scripts (Postgres to RDS, MinIO to S3), S3 provider conformance tests proving env-only provider swap, `scale-readiness-check.ts`, an ADR, and a CI extension of `terraform.yml`. 13 acceptance criteria. The migration itself, Stage A backups (#101), base Terraform (#99) and load tests (#105) are out of scope.
 
 ### What We Found
-- Base `origin/milestone/production-infra-scale` = HEAD (15297f35). #101 and #102 are merged, so both dependencies are met.
-- Already present (from #101/#102): `infra/runbooks/restore.md`, `dr-hyderabad.md`, `on-call.md`, `drills/README.md`, `workspace-deletion.md`, `data-ops/runbook.md`. None has the required headings (Purpose, Triggers, Roles, Steps, Communications, Evidence, Verification, After action), an owner or `Last drilled` (`restore.md:1-69` headings are ad hoc; `on-call.md:1-38`). `on-call.md:3-4` and `:24-26` defer to "the #103 runbook". `drills/README.md:5-17` defines a restore-only drill format, with no `TEMPLATE.md`.
-- Missing: `infra/runbooks/{README,cert-in-6h,dpdp-breach,key-rotation,court-day-freeze}.md`, `templates/`, `test/`, `infra/scripts/runbooks/`, and the ADR. Last ADR is `docs/adr/0036-bench-facts.md`, so the next is 0037.
-- Evidence source: Loki, 180-day retention (`infra/monitoring/loki/loki-config.yml:1`, `infra/monitoring/log-retention/verify-retention.sh:9-12`), object store bucket `causedeck-logs` (`infra/monitoring/compose.monitoring.yml:121`).
-- KEK rotation is already implemented in code: `rewrapAll` and `pendingRewrap` (`packages/storage/src/workspace-crypto.ts:138-180`), `EnvKeyProvider.fromEnv(env, previous)` (`packages/storage/src/crypto/kek.ts:64-66`) and the `KEK_BASE64` env (`packages/config/src/env/schema.ts:160,471`). The tests are in `packages/storage/src/__tests__/rotation.test.ts` (DB-backed, Testcontainers). It has no test that the old KEK is rejected once dropped from the provider.
-- Test precedent for infra: node:test with `--experimental-strip-types`, an `index.js` aggregator and a path-filtered workflow (`infra/monitoring/test/index.js`, `.github/workflows/monitoring.yml:1-30,59`). Shell scripts are tested via spawnSync (`infra/monitoring/test/verify-retention.test.ts`). Backup scripts use `infra/scripts/backup/lib/india-guard.sh`, which can be reused for the evidence archive endpoint.
-- Secret scanning: gitleaks already scans the whole repo history in `.github/workflows/security.yml:33-48` (config `.gitleaks.toml`), which covers `infra/runbooks/`. No runbook-scoped check exists.
-- `tsx` is only a dependency of db, auth and ui (`packages/*/package.json`), not storage.
+- #99 and #101 are merged on the base (`origin/milestone/production-infra-scale` = `15297f35`, same as HEAD). Terraform layout exists: `infra/terraform/modules/{cloudflare-access,cloudflare-pages,cloudflare-static-cdn,cloudflare-waf,cloudflare-zone,vps-do-blr1,vps-lightsail-mumbai}`, `envs/{prod,staging}`, `backend.tf.example`, `infra/terraform/README.md:1-30`.
+- None of the issue's deliverables exist: no `aws-*`, `cloudflare-lb`, `envs/stage-b`, `infra/scripts/stage-b/`, `scale-readiness-check.ts`, `stage-b-scale-out.md`, `stage-c-orchestration.md`. Last ADR is `docs/adr/0036-bench-facts.md`; next free number 0037.
+- `.github/workflows/terraform.yml:41-67` (static job: policy node test, fmt, validate and `terraform test` for staging/prod only, tflint, checkov) and `:69-117` (plan matrix `[staging, prod]`, dummy AWS creds) must be extended with `stage-b`. Apply is `workflow_dispatch` gated by `environment: terraform-<env>` (`:155-190`); Stage B must reuse that gate (apply inputs `options: [staging, prod]` at `:15-20`).
+- Policy lint precedent: `infra/terraform/test/policy.test.mjs` (text-based HCL block parser, `blocks()` at `:21-39`, ENVS list `:15`) plus `residency.tftest.hcl`; run in CI and by `pnpm test:ci-scripts` (`package.json:31` globs `infra/terraform/test/*.test.mjs`). New module policy tests fit here (or a sibling file in that dir).
+- Residency precedent to mirror for the Cloudflare LB: #99 K3, `app_proxied` false unless `residency_decision_ref` non-empty (`infra/terraform/README.md` variables table, `envs/prod/variables.tf`).
+- Storage: the provider is `packages/storage/src/s3-provider.ts` (not `providers/s3.ts` as the issue says). `createObjectStoreFromEnv` and `StorageEnv` exist (`__tests__/s3-provider.test.ts:11-20`). The shared contract `objectStoreContract(name, harness)` is in `__tests__/object-store.contract.ts:23`, already run against MinIO via Testcontainers (`__tests__/minio.test.ts:24-40`) and the memory provider. No S3-compatible mock target runs the same suite, and no test proves the swap needs only env changes.
+- Envelope encryption: `packages/storage/src/crypto/kek.ts` has the `KeyProvider` seam (KEK from `KEK_BASE64`, rotation list), `docs/engineering/storage.md:14-50` states "Stage B: AWS KMS". No dedicated key-rotation runbook file exists; rotation text is in `storage.md` and `infra/runbooks/restore.md:34`.
+- Health endpoints exist: web `apps/web/app/readyz/route.ts:9`, API `apps/api/src/app.ts:92-98` (health handlers). Needed for ALB health checks and the readiness check.
+- Script tooling precedent: TS scripts run via Node type stripping (`package.json:14`, `infra/scripts/doctor.ts:1-2`, `infra/scripts/tsconfig.json`), tests in `infra/scripts/*.test.ts` (picked up by `test:ci-scripts`). Shell precedent: `infra/scripts/backup/*.sh`, `infra/scripts/restore/*.sh`, `infra/scripts/backup/lib/india-guard.sh`, tests `infra/scripts/backup/test/backup.test.mjs`.
+- Existing runbooks to cross-link: `infra/runbooks/{restore.md,dr-hyderabad.md,on-call.md,workspace-deletion.md}`; verification SQL reusable from `infra/scripts/restore/verify.sql`.
+- PRD cost target: `docs/product/03-prd.md:335` (≤ ₹175 variable cost per active seat per month at launch, ≤ ₹110 by month 6).
+- Day-one rules source: `docs/engineering/13-technical-architecture-spike.md:125`.
 
 ### Root Cause
-Greenfield. #97, #101 and #102 shipped the tooling; the operational procedures, templates, drills and rotation/evidence scripts were deferred to #103.
+Greenfield. The spike (#1 §3.2, §3.3, §6, §11) specified Stage B/C but only Stage A infra (#97, #99, #101) was built; there is no runbook, IaC, migration tooling or automated guard that the day-one rules still hold.
 
 ### Affected Files
-New under `infra/runbooks/`: README, cert-in-6h, dpdp-breach, key-rotation, court-day-freeze, templates/*, drills/TEMPLATE.md plus drill records, test/. Edited: restore.md, dr-hyderabad.md, on-call.md (and, if checked, workspace-deletion.md and data-ops/runbook.md). New: `infra/scripts/runbooks/{rotate-kek.sh,evidence-export.sh}` with tests, `docs/adr/0037-incident-and-key-rotation-policy.md`, `.github/workflows/runbooks.yml`, a storage rotation test. Details are in contract.json.
+New: `infra/runbooks/stage-b-scale-out.md`, `infra/runbooks/stage-c-orchestration.md`, `infra/terraform/modules/{aws-rds-postgres,aws-s3-documents,aws-alb-multinode,cloudflare-lb,aws-ecs-fargate,aws-elasticache}/`, `infra/terraform/envs/stage-b/`, `infra/scripts/stage-b/{migrate-postgres-to-rds.sh,migrate-minio-to-s3.sh}`, `infra/scripts/scale-readiness-check.ts` (+test), `docs/adr/0037-stage-b-c-scale-path.md`, storage conformance test(s). Changed: `.github/workflows/terraform.yml`, `infra/terraform/README.md`, `infra/terraform/test/policy.test.mjs` (or new sibling test), `packages/storage/src/__tests__/*`, `docs/engineering/storage.md` (KMS note), `package.json` (script entry).
 
 ### Sibling Sweep
-- `workspace-deletion.md:65-69` and `restore.md:69` (crypto-erase and backups) must stay consistent with key-rotation.md.
-- `docs/adr/README.md` index, `infra/monitoring/README.md` and `infra/docker/README.md` link to runbooks.
-- The restore and DR runbooks must cite RPO ≤ 15 min and RTO ≤ 4 h (`restore.md:3-4`) and the drill reports in `drills/`. No measured drill report exists yet (#101 reports are produced by CI). Link the workflow artifact and the `drills/` dir; do not invent measurements.
-- The guard list in `CLAUDE.md` does not apply: there are no core exports, actions, tables or jobs.
+- Every Terraform region variable must validate to `ap-south-1`/`ap-south-2` (policy test covering all new modules, as `policy.test.ts` does for #99 modules).
+- `workspace-deletion.md` and `restore.md` crypto-erase and key claims must stay consistent with the KMS DEK re-wrap description.
+- `infra/docker/README.md` and `docs/engineering/13-technical-architecture-spike.md` link the scale path: add backlinks only if trivial.
+- `terraform.yml` drift and apply jobs enumerate `[staging, prod]`; do not add `stage-b` to apply or drift (nothing applied automatically).
+- Core exports: no new `@causedeck/core` runtime exports are planned, so the cross-tenant registry is untouched.
 
 ### History
-`restore.md`, `dr-hyderabad.md`, `on-call.md` and `drills/README.md` came from #101 and #102 (PRs #793, #791) and explicitly point at #103. No prior attempt at #103.
+`terraform.yml` and base modules from #99 (PR #790); backups and drill tooling from #101 (PR #793); storage provider and envelope crypto from earlier storage issues. No prior attempt at Stage B/C. Linked context shows #99/#101 lanes had conformance regressions on scope creep and omission, so every acceptance item must be mapped explicitly.
 
 ### Recommendation
-One lane, documentation-heavy. Order: ADR; templates and drills/TEMPLATE; the runbooks, all with the required heading set; `links.test.ts` (headings, owner, Last drilled, links, secret patterns, no-auto-send statement, `Counsel to confirm` markers); evidence-export.sh with a node test over seeded fixtures. The test starts a local fake Loki HTTP server and writes to a local directory/MinIO-stub, with the India guard applied to the real endpoint. rotate-kek.sh invokes a TS entry through `pnpm --filter @causedeck/db exec tsx` (or similar) that calls `rewrapAll`. CI coverage for "all documents decrypt and the old KEK is rejected" goes in a new vitest in `packages/storage` (runs in CI with Testcontainers; not locally on this host, or only that one file). Real tabletop and technical drills cannot be run by an agent: ship drill records marked as scheduled (`Last drilled: not yet drilled`, status pending) and defer the actual drills as a tracked follow-up. Counsel wording stays `Counsel to confirm` (#117). A runbook `Last drilled` field must be accepted as a date or the literal `not yet drilled` pre-launch, with the launch check noted in the README.
+One lane, ordered: (1) ADR + runbooks; (2) modules with variable validation and policy tests; (3) `envs/stage-b` + example tfvars + workflow plan job; (4) scale-readiness script with tests; (5) storage conformance against an S3-compatible in-process mock; (6) migration scripts with dry-run/guard shell tests. Terraform cannot run locally (docker/tools unavailable on host): verify with node policy tests only; CI runs fmt/validate/plan. The two rehearsals need real staging data and are post-deploy; ship scripts plus a rehearsal results section in the runbook that is filled after the run.
 
 ### Related Issues
-#101, #102 (dependencies, done), #117 (counsel wording), #100 (court-day-freeze owner), #104 (scanning), #1 (parent).
+#1 parent, #99 and #101 (dependencies, done), #105 (load tests/triggers), #108 (VPS), #112 (AWS access), #116 (gated apply environments), #102/#103 (alerts, incident runbooks).

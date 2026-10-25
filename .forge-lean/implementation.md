@@ -53,12 +53,35 @@ Re-checked after the second merge of the base (restore-drill, worker registry te
 ## Merge-fix note
 The reported `turbo: command not found` (exit 127) was an environment/PATH failure, not a merge conflict: no duplicate keys or symbols. `pnpm exec turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes (no workspace package changed), freeze-guard tests pass and its tsconfig typechecks. No code changes needed.
 
-## Merge verification note
+## Merge-fix note (#106, third merge)
+`turbo: command not found` (exit 127) was `turbo` missing from the check shell's PATH, not a code conflict. `pnpm exec turbo run typecheck --concurrency=2` passes 24/24 on the merged tree. No source changes.
 
-The post-merge typecheck failure was `turbo: command not found` (exit 127): `turbo` is not on PATH in the check shell, not a code or merge conflict. Via `pnpm exec turbo run typecheck --filter=@causedeck/storage` (the only TS package this change touches) typecheck passes, and `rotate-kek-script.test.ts` passes. No source change needed.
+## Merge-fix note (#106, fourth)
+`turbo: command not found` (exit 127) is a PATH problem in the check shell, not a code conflict. `pnpm exec turbo run typecheck` passes 24/24. No source changes.
 
-### Merge follow-up
-Merged origin/milestone/production-infra-scale (c8c7b0aa); court-day-freeze.md now carries the base's #100 content under the required headings. The reported `turbo: command not found` was an environment problem (turbo is not on PATH; `pnpm exec turbo` works), not a code defect. `pnpm exec turbo run typecheck --concurrency=1` on the merged tree passes (24/24 tasks). V1-V4 and `forgedock check` pass. No code change was needed.
+### Post-merge check
+After merging the base, `turbo` was not on PATH (exit 127), which is an environment problem rather than a code conflict. `pnpm exec turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0 (22/22 tasks). V1-V3 re-ran green on the merged tree. The `runChecks` rename in 063c99c3 already removed the same-name collision with doctor.ts. No code change was needed.
 
-### Lint fix
-CI `lint` also runs `pnpm adr:lint`; ADR 0037 lacked the required `## Considered options` and `## Revisit when` sections. Added both (alternatives folded into the options table). `adr:lint`, `adr:test`, `docs:links`, `check:no-l5`, prettier and ESLint on changed TS files pass. No amendment needed.
+## Merge-fix: turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a code conflict. With node_modules/.bin on PATH, `turbo run typecheck` passes (24/24). No source change.
+
+## Merge-fix (fifth): turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a symbol or key collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes (22/22). No source change.
+
+## Conformance fix
+R16 was missing from result.json (dropped in an earlier rewrite). Re-added as implemented: `enabled` defaults to false in both Stage C modules (aws-ecs-fargate/variables.tf:1, aws-elasticache/variables.tf:1), and every resource is gated by `count = var.enabled ? 1 : 0`. The 'Stage C skeletons are disabled by default' test in stage-b-policy.test.mjs (line 286) covers this. V1-V4 re-run green.
+
+## Merge note
+Base took ADR 0037, so the scale-path ADR is now docs/adr/0038-stage-b-c-scale-path.md (amendment recorded). adr lint, link check, V1-V3 pass on the merged tree.
+
+## Merge-fix (sixth): turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a symbol or key collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0. No source change.
+
+## Merge-fix (seventh): turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a code collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0 (22/22). No source change.
+
+## Merge-fix (eighth): turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a code collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0 (22/22). No source change.
+
+## Merge-fix (ninth): turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a code collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0 (22/22). No source change.

@@ -4,7 +4,9 @@ name: Terraform
 # validate, tflint, checkov and `terraform test`, then plan staging and prod with the example tfvars
 # (dummy credentials, -backend=false) and post the plan on the PR. Apply is manual
 # (workflow_dispatch) and gated by the GitHub environment terraform-<env> (required reviewers are
-# configured in #116). A weekly run plans against the real state with -detailed-exitcode: exit 2
+# configured in #116). The Stage B modules (#106) are only validated and planned here (stage-b
+# is not an apply or drift target). A weekly run plans against the real state with
+# -detailed-exitcode: exit 2
 # (drift) fails the job. Tools run as pinned container images, like lint-workflows.yml.
 
 on:
@@ -45,14 +47,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Policy tests (node)
-        run: node --test infra/terraform/test/policy.test.mjs
+        run: node --test infra/terraform/test/policy.test.mjs infra/terraform/test/stage-b-policy.test.mjs
       - name: terraform fmt
         run: >-
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform
           "$TF_IMAGE" fmt -check -recursive -diff
-      - name: terraform validate (staging, prod)
+      - name: terraform validate (staging, prod, stage-b)
         run: |
-          for env in staging prod; do
+          for env in staging prod stage-b; do
             docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/$env" \
               "$TF_IMAGE" init -backend=false -input=false
             docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/$env" \
@@ -83,7 +85,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [staging, prod]
+        env: [staging, prod, stage-b]
     env:
       DIGITALOCEAN_TOKEN: dummy-token-for-ci-plan-only
       AWS_ACCESS_KEY_ID: dummy

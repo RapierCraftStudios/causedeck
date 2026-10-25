@@ -7,3 +7,4 @@ export * from './workspace';
 export * from './proposal-draft';
 export * from './digest-preferences';
 export * from './drafting';
+export * from './research';

@@ -1180,6 +1180,7 @@ export type Messages = {
       support: string;
       more: string;
       'court-watch': string;
+      research: string;
     };
     placeholder: {
       export: string;
@@ -3951,6 +3952,58 @@ export type Messages = {
       conflict: string;
       generic: string;
     };
+  };
+  research: {
+    linkOut: {
+      button: string;
+      menuLabel: string;
+      hint: string;
+      preview: string;
+      empty: string;
+      noQuery: string;
+    };
+    notes: {
+      heading: string;
+      loading: string;
+      empty: string;
+      error: string;
+      offline: string;
+      denied: string;
+      add: string;
+      titleLabel: string;
+      bodyLabel: string;
+      save: string;
+      saving: string;
+      delete: string;
+      edit: string;
+      saveError: string;
+      authoritiesHeading: string;
+      authoritiesEmpty: string;
+      authorityLabel: string;
+      authorityCitation: string;
+      authorityUrl: string;
+      addAuthority: string;
+      removeAuthority: string;
+      pin: string;
+      unpin: string;
+      pinned: string;
+      pinHint: string;
+    };
+  };
+  settingsResearch: {
+    title: string;
+    description: string;
+    builtInHeading: string;
+    ownHeading: string;
+    ownEmpty: string;
+    keyLabel: string;
+    labelLabel: string;
+    templateLabel: string;
+    templateHint: string;
+    enabledLabel: string;
+    save: string;
+    remove: string;
+    saveError: string;
   };
   bootstrapImport: {
     metaTitle: string;

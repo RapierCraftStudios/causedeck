@@ -167,6 +167,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Judgment alerts (#497).
   matter_issue_tag: DB_TABLES_TEST,
   judgment_alert: DB_TABLES_TEST,
+  // Research notes and providers (#80).
+  research_note: DB_TABLES_TEST,
+  research_provider: DB_TABLES_TEST,
   // Official notices feed (#584).
   notice_match: DB_TABLES_TEST,
 };
@@ -849,6 +852,19 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // research notes, facts and provider templates (#80)
+  listNotes: denies,
+  createNote: denies,
+  updateNote: denies,
+  deleteNote: denies,
+  addAuthority: denies,
+  removeAuthority: denies,
+  setAuthorityPinned: denies,
+  getResearchFacts: denies,
+  listProviderTemplates: denies,
+  saveProviderTemplate: denies,
+  removeProviderTemplate: denies,
+  listLinkProviders: denies,
   // notices page and matter card (#588)
   listWorkspaceNotices: empty,
   getPublicCase: empty,
@@ -875,6 +891,14 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // research link-outs (#80): pure link building and provider templates, no database access
+  buildResearchLinks: 'pure function: builds URLs from the facts it is given, reads nothing',
+  researchQueryParts: 'pure function over the given facts',
+  researchFactsFromTags: 'pure function over the tags it is given',
+  validateProviderTemplate: 'pure function over a template string',
+  providerFromTemplate: 'pure function over a template row',
+  BUILT_IN_PROVIDERS: 'constant',
+  QUERY_PLACEHOLDER: 'constant',
   // whatsapp-link (#678): constants
   WHATSAPP_OTP_TTL_MS: 'constant',
   WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',

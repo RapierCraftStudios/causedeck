@@ -206,6 +206,9 @@ describe('row-level security catalog', () => {
         // Judgment alerts (#497).
         'matter_issue_tag',
         'judgment_alert',
+        // Research notes and providers (#80).
+        'research_note',
+        'research_provider',
         // Court document network (#485).
         'contribution_ledger',
 

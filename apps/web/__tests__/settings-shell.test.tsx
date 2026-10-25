@@ -175,6 +175,7 @@ describe('settings nav manifest', () => {
       'audit',
       'support',
       'court-watch',
+      'research',
     ]);
   });
 
@@ -188,6 +189,7 @@ describe('settings nav manifest', () => {
       'privacy',
       'audit',
       'court-watch',
+      'research',
     ]);
     // Court watch (#482) needs matter.write: juniors have it, clerks and viewers do not.
     expect(ids('junior')).toEqual(['profile', 'members', 'roles', 'notifications', 'court-watch']);
@@ -241,6 +243,7 @@ describe('settings shell', () => {
       en.nav.audit,
       en.nav.support,
       en.nav['court-watch'],
+      en.nav.research,
     ]);
     expect(links[0]?.getAttribute('href')).toBe('/w/demo/settings/profile');
     expect(links[0]?.getAttribute('aria-current')).toBe('page');

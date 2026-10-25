@@ -114,6 +114,7 @@ const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
+const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
@@ -207,6 +208,14 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   addTagAction: research,
   confirmTagAction: research,
   dismissTagAction: research,
+  createNoteAction: research,
+  updateNoteAction: research,
+  deleteNoteAction: research,
+  addAuthorityAction: research,
+  removeAuthorityAction: research,
+  setAuthorityPinnedAction: research,
+  saveProviderTemplateAction: researchSettings,
+  removeProviderTemplateAction: researchSettings,
   chooseNextDateSourceAction: matterWorkspace,
   reportRecordErrorAction: matterWorkspace,
   createProceedingAction: proceedingsTab,
@@ -734,6 +743,46 @@ function inputs(workspaceId: string): Record<string, unknown> {
       matterId: t.a.rows.matter_issue_tag?.matterId,
       tagId: t.a.rows.matter_issue_tag?.id,
     },
+    // Research notes and provider templates (#80): ub may not write A's notes or A's templates.
+    createNoteAction: { workspaceId, matterId: t.a.rows.research_note?.matterId, title: 'x' },
+    updateNoteAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      title: 'x',
+      body: 'x',
+    },
+    deleteNoteAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+    },
+    addAuthorityAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      label: 'x',
+    },
+    removeAuthorityAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      index: 0,
+    },
+    setAuthorityPinnedAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      index: 0,
+      pinned: true,
+    },
+    saveProviderTemplateAction: {
+      workspaceId,
+      key: 'xt-provider',
+      label: 'B',
+      urlTemplate: 'https://b.example.test/?q={q}',
+    },
+    removeProviderTemplateAction: { workspaceId, key: 'xt-provider' },
     chooseNextDateSourceAction: {
       workspaceId,
       currentListingId: t.a.rows.listing?.listingId,
@@ -1200,6 +1249,12 @@ describe('cross-tenant server actions', () => {
       'addTagAction',
       'confirmTagAction',
       'dismissTagAction',
+      'createNoteAction',
+      'updateNoteAction',
+      'deleteNoteAction',
+      'addAuthorityAction',
+      'removeAuthorityAction',
+      'setAuthorityPinnedAction',
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',

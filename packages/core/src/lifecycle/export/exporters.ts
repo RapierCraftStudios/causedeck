@@ -285,6 +285,10 @@ export const mattersExporter = tablesExporter('matters', [
   // judgment itself is global corpus data, not the workspace's.
   ws('matter_issue_tag'),
   ws('judgment_alert'),
+  // Research notes (#80): the lawyer's own notes and chosen authorities, and the workspace's own
+  // https provider templates.
+  ws('research_note'),
+  ws('research_provider'),
 ]);
 
 // What the automation engine did and proposed (#47): proposals, the activity feed with its undo

@@ -1178,7 +1178,8 @@
       "audit": "Audit log",
       "support": "Support access",
       "more": "More",
-      "court-watch": "Court watch"
+      "court-watch": "Court watch",
+      "research": "Research"
     },
     "placeholder": {
       "export": "Download a copy of everything in this workspace.",
@@ -3950,6 +3951,58 @@
       "conflict": "Please wait a minute before asking for another code.",
       "generic": "Something went wrong. Try again."
     }
+  },
+  "research": {
+    "linkOut": {
+      "button": "Research on…",
+      "menuLabel": "Research providers",
+      "hint": "Opens in a new window on a site we do not control.",
+      "preview": "Link: {url}",
+      "empty": "Add a confirmed issue tag or a forum to build research links.",
+      "noQuery": "No research links yet"
+    },
+    "notes": {
+      "heading": "Research notes",
+      "loading": "Loading notes",
+      "empty": "No notes yet. Write down what you found and the authorities you chose.",
+      "error": "Notes could not be loaded. Try again.",
+      "offline": "You are offline. Notes are shown read-only.",
+      "denied": "You do not have access to research notes.",
+      "add": "New note",
+      "titleLabel": "Title",
+      "bodyLabel": "Note",
+      "save": "Save note",
+      "saving": "Saving…",
+      "delete": "Delete note",
+      "edit": "Edit",
+      "saveError": "The note was not saved. Try again.",
+      "authoritiesHeading": "Authorities",
+      "authoritiesEmpty": "No authorities chosen.",
+      "authorityLabel": "Authority",
+      "authorityCitation": "Citation (optional)",
+      "authorityUrl": "Link (https, optional)",
+      "addAuthority": "Add authority",
+      "removeAuthority": "Remove",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinned": "Pinned",
+      "pinHint": "Pinning keeps an authority at the top of this note. It does not add a citation to any draft."
+    }
+  },
+  "settingsResearch": {
+    "title": "Research providers",
+    "description": "Where research links on a matter may point. Links open in a new window; CauseDeck never fetches these sites.",
+    "builtInHeading": "Built-in providers",
+    "ownHeading": "Your providers",
+    "ownEmpty": "No providers of your own yet. Add the link of a subscription you hold, such as SCC Online or Manupatra.",
+    "keyLabel": "Key",
+    "labelLabel": "Name",
+    "templateLabel": "Link template",
+    "templateHint": "An https link with {q} where the query goes, for example https://www.scconline.com/search?q={q}.",
+    "enabledLabel": "Enabled",
+    "save": "Save provider",
+    "remove": "Remove",
+    "saveError": "The provider was not saved. Check the link."
   },
   "bootstrapImport": {
     "metaTitle": "Import your cases",

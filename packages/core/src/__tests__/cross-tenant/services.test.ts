@@ -253,6 +253,20 @@ async function expectGraphDenied(
   expect(await aGraph(f)).toEqual(before);
 }
 
+/** Workspace B's user claiming workspace A (research, #80). */
+const bActsOnA = (f: Fixture) => ({ workspaceId: f.a.id, userId: f.ub });
+const aNote = (f: Fixture) => ({
+  matterId: f.a.rows.research_note?.matterId ?? '',
+  id: f.a.rows.research_note?.id ?? '',
+});
+const aNotes = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select()
+      .from(schema.researchNote)
+      .where(eq(schema.researchNote.id, aNote(f).id)),
+  );
+
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
 
 /** A's seeded listing (canonical) and its proceeding. */
@@ -3256,6 +3270,83 @@ const CASES: Record<string, Case> = {
     await expectDenied(
       f.asB((s) => core.listRelevantJudgments(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
     );
+  },
+  // research notes and provider templates (#80): B on A's matter or workspace is denied; A's rows are unchanged.
+  listNotes: async (f) => {
+    await expectDenied(f.asB((s) => core.listNotes(s, bActsOnA(f), aNote(f).matterId)));
+    await expectDenied(
+      f.asB((s) => core.listNotes(s, { workspaceId: f.b.id, userId: f.ub }, aNote(f).matterId)),
+    );
+  },
+  createNote: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.createNote(s, bActsOnA(f), { matterId: aNote(f).matterId, title: 'B was here' }),
+      ),
+    );
+    expect(await aNotes(f)).toHaveLength(1);
+  },
+  updateNote: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(
+      f.asB((s) => core.updateNote(s, bActsOnA(f), { matterId, noteId, title: 'x', body: 'x' })),
+    );
+    expect((await aNotes(f))[0]?.title).toBe('xt note');
+  },
+  deleteNote: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(f.asB((s) => core.deleteNote(s, bActsOnA(f), { matterId, noteId })));
+    expect(await aNotes(f)).toHaveLength(1);
+  },
+  addAuthority: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(
+      f.asB((s) =>
+        core.addAuthority(s, bActsOnA(f), { matterId, noteId, authority: { label: 'x' } }),
+      ),
+    );
+    expect((await aNotes(f))[0]?.authorities).toEqual([]);
+  },
+  removeAuthority: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(
+      f.asB((s) => core.removeAuthority(s, bActsOnA(f), { matterId, noteId, index: 0 })),
+    );
+  },
+  setAuthorityPinned: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(
+      f.asB((s) =>
+        core.setAuthorityPinned(s, bActsOnA(f), { matterId, noteId, index: 0, pinned: true }),
+      ),
+    );
+  },
+  getResearchFacts: async (f) => {
+    await expectDenied(f.asB((s) => core.getResearchFacts(s, bActsOnA(f), aNote(f).matterId)));
+  },
+  listProviderTemplates: async (f) => {
+    await expectDenied(f.asB((s) => core.listProviderTemplates(s, bActsOnA(f))));
+  },
+  saveProviderTemplate: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.saveProviderTemplate(s, bActsOnA(f), {
+          key: 'xt-provider',
+          label: 'B',
+          urlTemplate: 'https://b.example.test/?q={q}',
+        }),
+      ),
+    );
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.researchProvider));
+    expect(row?.label).toBe('XT provider');
+  },
+  removeProviderTemplate: async (f) => {
+    await expectDenied(f.asB((s) => core.removeProviderTemplate(s, bActsOnA(f), 'xt-provider')));
+    const rows = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.researchProvider));
+    expect(rows).toHaveLength(1);
+  },
+  listLinkProviders: async (f) => {
+    await expectDenied(f.asB((s) => core.listLinkProviders(s, bActsOnA(f))));
   },
   listWorkspaceNotices: async (f) => {
     const noticeId = f.a.rows.notice_match?.noticeId ?? '';

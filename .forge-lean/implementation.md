@@ -26,3 +26,6 @@ The reported `turbo run typecheck` failure (exit 127, `turbo: command not found`
 
 ### Post-merge typecheck
 The merged tree typechecks. The reported `turbo: command not found` (exit 127) came from `turbo` not being on PATH, not from a code conflict. `pnpm exec turbo run typecheck` for db, core, notifications, i18n and web exits 0, and `tsc --noEmit` is clean in each of those packages. No code change was needed.
+
+### Re-check
+Same failure reported again (`turbo: command not found`, exit 127): environment PATH only. `pnpm exec turbo run typecheck --filter='...[origin/milestone/instant-gtm-adoption]'` passes (24/24 tasks). No code change.

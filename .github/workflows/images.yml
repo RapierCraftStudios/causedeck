@@ -18,6 +18,13 @@ on:
       - '.github/workflows/images.yml'
   push:
     branches: [main]
+  # deploy-staging.yml (#100) builds, scans and signs the staging sha through this workflow.
+  workflow_call:
+    inputs:
+      publish:
+        description: 'Publish the images to GHCR (sha tag and the branch-name tag)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -112,7 +119,7 @@ jobs:
   publish:
     name: Publish ${{ matrix.svc }}
     needs: verify
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.publish == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -185,5 +192,7 @@ jobs:
           }
           cosign sign --yes "$REF@$DIGEST"
           cosign attest --yes --type cyclonedx --predicate /out/sbom.cdx.json "$REF@$DIGEST"
-      - name: Tag main
-        run: docker buildx imagetools create -t "$REF:main" "$REF@$DIGEST"
+      - name: Tag branch
+        env:
+          BRANCH_TAG: ${{ github.ref_name }}
+        run: docker buildx imagetools create -t "$REF:$BRANCH_TAG" "$REF@$DIGEST"

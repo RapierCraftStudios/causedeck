@@ -1,7 +1,7 @@
 // The recipient side of a brief share (#507): view by token (no account needed), claim after
 // sign-in (the referral), import the matter into the recipient's workspace (activation, which earns
 // the credit). The one cross-workspace read is `app_brief_share_view`, by token hash only.
-import { schema, type Database, type Queryable } from '@causedeck/db';
+import { schema, type Queryable } from '@causedeck/db';
 import { decideReferralCredit, type ReferralDenial } from '@causedeck/billing/referral';
 import { and, count, eq, gt, isNull, sql } from 'drizzle-orm';
 
@@ -15,7 +15,7 @@ export type ShareView =
   | { state: 'INVALID' | 'EXPIRED' | 'REVOKED' }
   | { state: 'VALID'; snapshot: SharedBriefSnapshot; expiresAt: Date };
 
-interface ShareRow {
+type ShareRow = {
   id: string;
   workspace_id: string;
   created_by: string | null;
@@ -23,7 +23,7 @@ interface ShareRow {
   created_at: Date | string;
   expires_at: Date | string;
   revoked_at: Date | string | null;
-}
+};
 
 async function lookup(db: Queryable, token: string): Promise<ShareRow | null> {
   if (token.length < 16 || token.length > 128) return null;
@@ -62,7 +62,7 @@ export interface ClaimedShare {
  * sharer) and the invitee's `referral` channel. A dead link is `notFound`.
  */
 export async function claimBriefShare(
-  db: Database,
+  db: Queryable,
   input: { userId: string; token: string; now?: Date },
 ): Promise<ClaimedShare> {
   const now = input.now ?? new Date();
@@ -90,7 +90,7 @@ export interface ImportedShare {
 
 /** Offer-and-import: the shared matter becomes a matter of the recipient's own workspace. */
 export async function importSharedMatter(
-  deps: MatterGraphDeps & { db: Database },
+  deps: MatterGraphDeps,
   actor: GraphActor,
   token: string,
 ): Promise<ImportedShare> {
@@ -106,7 +106,7 @@ export async function importSharedMatter(
 }
 
 async function activateReferral(
-  db: Database,
+  db: Queryable,
   inviteeUserId: string,
   share: ShareRow,
   now: Date,

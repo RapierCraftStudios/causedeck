@@ -51,6 +51,8 @@ CREATE INDEX "referral_credit_user_idx" ON "referral_credit" USING btree ("user_
 ALTER TABLE "brief_share" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "brief_share" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
 CREATE POLICY "ws_isolation" ON "brief_share" AS PERMISSIVE FOR ALL TO PUBLIC USING (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid) WITH CHECK (workspace_id = nullif(current_setting('app.workspace_id', true), '')::uuid);--> statement-breakpoint
+CREATE POLICY "owner_definer_read" ON "brief_share" AS PERMISSIVE FOR SELECT TO causedeck_owner
+  USING (true);--> statement-breakpoint
 CREATE FUNCTION app_brief_share_view(hash text)
   RETURNS TABLE (id uuid, workspace_id uuid, created_by uuid, snapshot jsonb, created_at timestamptz, expires_at timestamptz, revoked_at timestamptz)
   LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp

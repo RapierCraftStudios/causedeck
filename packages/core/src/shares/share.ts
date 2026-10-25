@@ -5,7 +5,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 
 import { consumeRateLimit } from '@causedeck/auth/rate-limit';
-import { isUuid, schema, withWorkspace, type Database } from '@causedeck/db';
+import { isUuid, schema, withWorkspace, type Database, type Queryable } from '@causedeck/db';
 import type { Brief } from '@causedeck/validators';
 import { and, eq, isNull } from 'drizzle-orm';
 
@@ -59,7 +59,14 @@ export async function createBriefShare(
 ): Promise<CreatedShare> {
   const now = (deps.now ?? (() => new Date()))();
   if (!isUuid(actor.userId)) throw notFound('Listing not found');
-  if (!(await consumeRateLimit(deps.db as Database, `brief-share:${actor.userId}`, SHARE_RATE_LIMIT, now.getTime()))) {
+  if (
+    !(await consumeRateLimit(
+      deps.db as Database,
+      `brief-share:${actor.userId}`,
+      SHARE_RATE_LIMIT,
+      now.getTime(),
+    ))
+  ) {
     throw rateLimited();
   }
   const brief = await assembleBrief(deps, actor, listingId, { compress: false });
@@ -97,7 +104,7 @@ export async function createBriefShare(
 
 /** Revoke a share of the actor's workspace (its creator or an owner); the link stops working at once. */
 export async function revokeBriefShare(
-  deps: { db: Database; now?: () => Date },
+  deps: { db: Queryable; now?: () => Date },
   actor: BriefActor,
   shareId: string,
 ): Promise<void> {

@@ -1,4 +1,4 @@
-import { schema } from '@causedeck/db';
+import { schema, withWorkspace } from '@causedeck/db';
 import { withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -50,9 +50,7 @@ describe('brief sharing (#507)', () => {
       const { actor, fixture, workspaceId } = await seedBrief(tx);
       const share = await createBriefShare({ db: tx }, actor, fixture.listingId);
       const other = await newWorkspace(tx);
-      await failure(
-        revokeBriefShare({ db: tx }, { userId: other.ownerId, workspaceId }, share.id),
-      );
+      await failure(revokeBriefShare({ db: tx }, { userId: other.ownerId, workspaceId }, share.id));
       expect((await viewBriefShare(tx, share.token)).state).toBe('VALID');
       await revokeBriefShare({ db: tx }, actor, share.id);
       expect((await viewBriefShare(tx, share.token)).state).toBe('REVOKED');
@@ -76,10 +74,9 @@ describe('brief sharing (#507)', () => {
       const again = await importSharedMatter({ db: tx, events }, invitee2, share.token);
       expect(again.credit).toBeNull();
       expect(await tx.select().from(schema.referralCredit)).toHaveLength(2);
-      const matter = await tx
-        .select()
-        .from(schema.matter)
-        .where(eq(schema.matter.id, imported.matterId));
+      const matter = await withWorkspace(tx, invitee2, (w) =>
+        w.select().from(schema.matter).where(eq(schema.matter.id, imported.matterId)),
+      );
       expect(matter[0]?.workspaceId).toBe(invitee.workspaceId);
       const funnel = await referralFunnel(tx);
       expect(funnel.accepted).toBeGreaterThanOrEqual(1);
@@ -101,7 +98,11 @@ describe('brief sharing (#507)', () => {
       const invitee = await newWorkspace(tx);
       await failure(claimBriefShare(tx, { userId: invitee.ownerId, token: share.token }));
       await failure(
-        importSharedMatter({ db: tx, events }, { userId: invitee.ownerId, workspaceId: invitee.workspaceId }, share.token),
+        importSharedMatter(
+          { db: tx, events },
+          { userId: invitee.ownerId, workspaceId: invitee.workspaceId },
+          share.token,
+        ),
       );
       void addMember;
       void workspaceId;

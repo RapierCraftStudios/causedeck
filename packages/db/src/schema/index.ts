@@ -322,9 +322,4 @@ export {
   type ReviewStatus,
 } from './review.ts';
 export { briefState, type BriefCarryEntry } from './brief.ts';
-export {
-  briefShare,
-  referral,
-  referralCredit,
-  type SharedBriefSnapshot,
-} from './share.ts';
+export { briefShare, referral, referralCredit, type SharedBriefSnapshot } from './share.ts';

@@ -12,10 +12,7 @@ export const MAX_CREDITED_REFERRALS_PER_YEAR = 12;
 export const REFERRAL_WINDOW_DAYS = 30;
 
 export type ReferralDenial =
-  | 'SELF_REFERRAL'
-  | 'NOT_NEW_USER'
-  | 'ALREADY_CREDITED'
-  | 'REFERRER_CAP_REACHED';
+  'SELF_REFERRAL' | 'NOT_NEW_USER' | 'ALREADY_CREDITED' | 'REFERRER_CAP_REACHED';
 
 export interface ReferralFacts {
   referrerUserId: string;
@@ -42,7 +39,8 @@ export type ReferralDecision =
 
 /** Whether an activated referral earns the free month on both sides, and who gets it. */
 export function decideReferralCredit(facts: ReferralFacts): ReferralDecision {
-  if (facts.referrerUserId === facts.inviteeUserId) return { grant: false, reason: 'SELF_REFERRAL' };
+  if (facts.referrerUserId === facts.inviteeUserId)
+    return { grant: false, reason: 'SELF_REFERRAL' };
   if (facts.alreadyCredited) return { grant: false, reason: 'ALREADY_CREDITED' };
   const windowMs = REFERRAL_WINDOW_DAYS * 24 * 60 * 60 * 1000;
   const age = facts.inviteeCreatedAt.getTime() - facts.shareCreatedAt.getTime();

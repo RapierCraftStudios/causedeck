@@ -10,6 +10,7 @@ export interface LegalChrome {
   effectiveDatePending: string;
   lastUpdated: string;
   contents: string;
+  close: string;
   versionHistory: string;
   languageNote: string;
   print: string;
@@ -32,6 +33,7 @@ const en: LegalChrome = {
   effectiveDatePending: 'Set when counsel approves',
   lastUpdated: 'Last updated',
   contents: 'On this page',
+  close: 'Close',
   versionHistory: 'Version history',
   languageNote: 'This document is available in English only.',
   print: 'Print this page',

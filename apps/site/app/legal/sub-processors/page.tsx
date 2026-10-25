@@ -12,10 +12,7 @@ export default async function SubProcessorsPage() {
     <LegalLayout
       page={page}
       afterBody={
-        <section aria-labelledby="sub-processor-list" className="mt-10 font-sans">
-          <h2 id="sub-processor-list" className="font-serif text-2xl">
-            {legalChrome().subprocessorColumns.name}
-          </h2>
+        <section aria-labelledby="current-sub-processors" className="font-sans">
           <div className="mt-4">
             <SubprocessorTable rows={SUBPROCESSORS} />
           </div>

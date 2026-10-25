@@ -5,6 +5,7 @@ import { legalChrome } from '../../lib/legal-chrome.ts';
 import { mdxComponents } from '../prose.tsx';
 
 import { DraftBanner } from './draft-banner.tsx';
+import { TocSheet } from './toc-sheet.tsx';
 import { VersionHistory } from './version-history.tsx';
 
 function text(children: ReactNode): string {
@@ -71,10 +72,15 @@ export function LegalLayout({
       <aside className="mb-8 xl:mb-0 print:hidden">
         {toc === false ? null : (
           <>
-            <details className="border-line rounded-md border p-3 xl:hidden">
+            <details className="border-line rounded-md border p-3 md:hidden">
               <summary className="cursor-pointer font-medium">{chrome.contents}</summary>
               <div className="mt-3">{toc}</div>
             </details>
+            <div className="hidden md:block xl:hidden">
+              <TocSheet label={chrome.contents} closeLabel={chrome.close}>
+                {toc}
+              </TocSheet>
+            </div>
             <div className="sticky top-20 hidden xl:block">
               <p className="mb-3 text-sm font-semibold">{chrome.contents}</p>
               {toc}

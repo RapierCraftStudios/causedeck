@@ -1,5 +1,5 @@
 {
-  "id": "5db8ac83-61cc-4a43-9c56-f4bbebff0a17",
+  "id": "3d9cd152-a5fe-40db-84bd-80e1f546fb89",
   "prevId": "24675310-7b73-4424-a516-9bc25b96f4a3",
   "version": "7",
   "dialect": "postgresql",
@@ -1999,6 +1999,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "assigned_by_member_id": {
+          "name": "assigned_by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2094,6 +2106,21 @@
           "columnsFrom": [
             "workspace_id",
             "member_id"
+          ],
+          "columnsTo": [
+            "workspace_id",
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "appearance_assigned_by_fk": {
+          "name": "appearance_assigned_by_fk",
+          "tableFrom": "appearance",
+          "tableTo": "member",
+          "columnsFrom": [
+            "workspace_id",
+            "assigned_by_member_id"
           ],
           "columnsTo": [
             "workspace_id",
@@ -17610,18 +17637,6 @@
           "notNull": true,
           "default": false
         },
-        "domain_verification_token": {
-          "name": "domain_verification_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "domain_verified_at": {
-          "name": "domain_verified_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_by": {
           "name": "created_by",
           "type": "uuid",
@@ -17676,7 +17691,6 @@
             }
           ],
           "isUnique": true,
-          "where": "\"sso_provider\".\"domain_verified_at\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}

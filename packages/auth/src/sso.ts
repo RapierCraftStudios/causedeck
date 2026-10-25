@@ -1,6 +1,6 @@
 // Per-organisation SSO (#683, part 2 of #508): the pieces around the Better Auth SSO plugin that
 // are ours. The plugin reads providers through `app_sso_provider_lookup` (one enabled provider per exact id or
-// domain, see migration 20261025112612), never writes them: providers are edited through the owner-only
+// domain, see migration 20261025115033), never writes them: providers are edited through the owner-only
 // core service, which validates settings with `parseSsoConfig`. A first SSO sign-in makes the user
 // a `viewer` of the organisation; an owner raises the role afterwards. Server-only.
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto';
@@ -23,7 +23,7 @@ type LookupRow = {
 
 /**
  * Wrap the Better Auth database adapter so the SSO plugin's `ssoProvider` model is answered by the
- * keyed definer function `app_sso_provider_lookup` (migration 20261025112612) instead of a table
+ * keyed definer function `app_sso_provider_lookup` (migration 20261025115033) instead of a table
  * read: one enabled provider for an exact provider id or domain, nothing else. Listing,
  * enumeration by organisation and every write are refused (empty or no-op), so the app role can
  * never read another tenant's providers or settings in bulk.

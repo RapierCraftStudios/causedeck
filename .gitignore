@@ -36,3 +36,6 @@ packages/adapters/fixtures/generated/
 # OS and editor noise
 .DS_Store
 *.log
+
+# ESLint cache: local tool state, never committed (lanes kept committing it and it conflicted in merges).
+.eslintcache

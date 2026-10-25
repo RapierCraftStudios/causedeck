@@ -1323,7 +1323,8 @@
         "court_day": "Court day",
         "export": "Export",
         "support": "Support",
-        "shell": "Workspace areas"
+        "shell": "Workspace areas",
+        "appearance": "Appearances"
       },
       "actions": {
         "workspace": {
@@ -1389,6 +1390,9 @@
         },
         "invoices": {
           "read": "Download invoices"
+        },
+        "appearance": {
+          "assign": "Assign appearances to members"
         }
       },
       "settings": {
@@ -2702,6 +2706,38 @@
       "updated": "Board read at {time}"
     }
   },
+  "delegation": {
+    "title": "Tomorrow's plan",
+    "metaTitle": "Tomorrow's plan",
+    "description": "Assign tomorrow's appearances. Suggestions are proposals; nothing changes until you accept.",
+    "empty": "No appearances to assign for tomorrow",
+    "loading": "Loading the plan",
+    "error": "Could not load the plan.",
+    "retry": "Try again",
+    "denied": "You do not have access to the tomorrow plan. Ask the workspace owner.",
+    "offline": "You are offline. Assignments are saved and will sync.",
+    "willSync": "Will sync",
+    "conflictNotice": "{name} changed this assignment first. Showing their change.",
+    "assignee": "Assignee",
+    "assign": "Assign",
+    "choose": "Choose a member",
+    "unassigned": "Unassigned",
+    "clash": "Clash",
+    "suggested": "Suggested: {name}",
+    "acceptAll": "Accept all suggestions",
+    "acceptAllTitle": "Accept all suggestions?",
+    "acceptAllBody": "{count, plural, one {# assignment} other {# assignments}} will be made and the members notified in the app.",
+    "confirm": "Accept",
+    "cancel": "Cancel",
+    "assigned": "Assigned to {name}",
+    "restricted": "{name} cannot see this restricted matter.",
+    "grantAccess": "Grant access and assign",
+    "outcomes": {
+      "label": "Outcomes",
+      "member": "{name}: {done} of {total} outcomes in",
+      "toast": "{name} confirmed an outcome"
+    }
+  },
   "reminders": {
     "settings": {
       "title": "Court-day reminders",
@@ -3638,6 +3674,98 @@
         "error": "Something went wrong. Nothing changed.",
         "forbidden": "You cannot do that."
       }
+    }
+  },
+  "calendarView": {
+    "metaTitle": "Calendar",
+    "title": "Calendar",
+    "description": "Listings and deadlines beyond today and tomorrow.",
+    "views": {
+      "label": "View",
+      "week": "Week",
+      "month": "Month"
+    },
+    "scope": {
+      "label": "Show",
+      "mine": "Mine",
+      "workspace": "Whole chamber"
+    },
+    "toolbar": {
+      "label": "Calendar controls",
+      "previous": "Previous",
+      "next": "Next",
+      "today": "Today",
+      "range": "{from} to {to}",
+      "shortcuts": "Keys: arrows move across days, Enter opens a day, t today, w week, m month, [ and ] previous and next."
+    },
+    "kind": {
+      "listing": "Listing",
+      "next_date": "Next date",
+      "obligation_due": "Due",
+      "holiday": "Holiday",
+      "vacation": "Vacation"
+    },
+    "legend": {
+      "title": "Legend",
+      "proposed": "Proposed (dashed, not counted)",
+      "clash": "Clash: same member in different halls"
+    },
+    "proposed": "Proposed",
+    "restricted": "Restricted matter",
+    "clash": "Clash",
+    "closed": "Court closed: {reason}",
+    "summary": "{listings, plural, =0 {No listings} one {# listing} other {# listings}}, {deadlines, plural, =0 {no deadlines} one {# deadline} other {# deadlines}}",
+    "dayLabel": "{date}, {summary}",
+    "grid": {
+      "week": "Week of {date}",
+      "month": "Month of {date}",
+      "weekday": "{day}"
+    },
+    "week": {
+      "noHall": "Not placed in a hall",
+      "hall": "Hall {hall}",
+      "other": "Dates and deadlines"
+    },
+    "day": {
+      "openDay": "Open day",
+      "close": "Close",
+      "listings": "Listings",
+      "deadlines": "Deadlines",
+      "nothing": "Nothing listed.",
+      "clash": "This day has a clash: the same member is listed in different halls.",
+      "hall": "Hall {hall}",
+      "item": "Item {item}"
+    },
+    "empty": "Nothing listed this range.",
+    "offline": "You are offline. This range is shown as last loaded; it refreshes when you are back online.",
+    "denied": {
+      "title": "You do not have access to the calendar.",
+      "description": "Ask a workspace owner for access."
+    },
+    "error": {
+      "title": "Could not load the calendar.",
+      "retry": "Try again"
+    },
+    "loading": "Loading the calendar",
+    "subscribe": {
+      "title": "Subscribe in your calendar",
+      "explanation": "Your calendar feed is private to you. Anyone with its link can read your confirmed hearings and deadlines, so do not share it.",
+      "active": "Your private feed is active. Its link is shown only when you create or regenerate it.",
+      "inactive": "You have no feed yet. Create one to see hearings in your phone calendar.",
+      "manage": "Manage or regenerate the feed",
+      "disclosure": "Your calendar app may fetch this feed from servers outside India. We keep the content minimal.",
+      "ack": "I understand",
+      "generate": "Generate new link",
+      "regenerate": "Regenerate link",
+      "working": "Working",
+      "urlLabel": "Feed link",
+      "copy": "Copy link",
+      "copied": "Copied",
+      "shownOnce": "Copy this link now. It is private to you and will not be shown again.",
+      "revokesOld": "Regenerating creates a new link and revokes the old one at once. Update the subscription in your calendar app.",
+      "error": "Something went wrong. Nothing changed.",
+      "forbidden": "You cannot do that.",
+      "copyFailed": "Could not copy. Select the link and copy it."
     }
   },
   "inbox": {

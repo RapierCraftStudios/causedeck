@@ -1,4 +1,4 @@
--- Migration 20261025112612_sso_provider_lookup: hand-written (one policy, one function, one grant), no table changes; reviewed before commit.
+-- Migration 20261025115033_sso_provider_lookup: hand-written (one policy, one function, one grant), no table changes; reviewed before commit.
 -- Reviewed-by: Claude (agent, #683)
 -- SSO sign-in (#683, #508 part 2). The Better Auth SSO plugin resolves a provider by email domain
 -- or provider id before any workspace is known, so the app role cannot read the FORCE RLS table

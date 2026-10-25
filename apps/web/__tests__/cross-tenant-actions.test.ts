@@ -121,6 +121,7 @@ const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedi
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
@@ -261,6 +262,10 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoActivityAction: inbox,
   reassignCaptureAction: inbox,
   keepAsAttachmentAction: inbox,
+  assignAppearanceAction: planActions,
+  acceptSuggestionAction: planActions,
+  acceptAllSuggestionsAction: planActions,
+  outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
 };
@@ -735,6 +740,32 @@ function inputs(workspaceId: string): Record<string, unknown> {
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
+    // Delegation (#63): ub, owner of B, may not assign appearances in A.
+    assignAppearanceAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      memberId: t.a.rows.listing?.listingId,
+      capacity: 'arguing',
+    },
+    acceptSuggestionAction: {
+      workspaceId,
+      suggestion: {
+        listingId: t.a.rows.listing?.listingId,
+        memberId: t.a.rows.listing?.listingId,
+        capacity: 'arguing',
+      },
+    },
+    acceptAllSuggestionsAction: {
+      workspaceId,
+      suggestions: [
+        {
+          listingId: t.a.rows.listing?.listingId,
+          memberId: t.a.rows.listing?.listingId,
+          capacity: 'arguing',
+        },
+      ],
+    },
+    outcomesLiveAction: { workspaceId, date: '2026-10-26' },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },

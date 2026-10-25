@@ -13,6 +13,7 @@
     "test:update-snapshots": "node support/playwright.mjs --grep @visual --update-snapshots",
     "lhci": "lhci autorun --config=lighthouserc.json",
     "lhci:courts": "node support/lighthouse-courts.mjs",
+    "lhci:calendar": "node support/lighthouse-courts.mjs lighthouserc.calendar.json",
     "lhci:matters": "node --experimental-strip-types --no-warnings support/lighthouse-matters.mjs"
   },
   "devDependencies": {

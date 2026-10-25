@@ -194,7 +194,7 @@ Per-organisation SSO uses the Better Auth `@better-auth/sso` plugin (OIDC and SA
   service `@causedeck/core/workspaces` (`saveSsoProvider`, `deleteSsoProvider`) and the page
   `/w/<slug>/settings/sso`. The plugin's own registration, listing and delete endpoints answer 404.
 - **Domain lookup.** The plugin's `ssoProvider` model is answered by the keyed SECURITY DEFINER
-  function `app_sso_provider_lookup` (migration `20261025112612`, the `app_slug_taken` pattern):
+  function `app_sso_provider_lookup` (migration `20261025115033`, the `app_slug_taken` pattern):
   one enabled provider with a verified domain for an exact provider id or domain, never a list. The app role has no
   SELECT on `sso_provider` and no view over it, so RLS and the "config is never exported" rule hold;
   the settings are read only to finish a sign-in for a provider named by its id or the typed

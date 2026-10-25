@@ -339,6 +339,24 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A manual court-is-at-item marker was cleared',
   },
+  // Chamber delegation of appearances (#63): ids only, never the delegator's note.
+  'appearance.assigned': {
+    security: false,
+    description: 'An appearance was assigned to a member',
+  },
+  'appearance.reassigned': {
+    security: false,
+    description: 'An appearance moved to another member; the previous assignee is recorded',
+  },
+  'appearance.unassigned': {
+    security: false,
+    description: 'A member was removed from an appearance',
+  },
+  'matter.access_granted': {
+    security: true,
+    description:
+      'An owner granted a member access to a restricted matter to delegate an appearance',
+  },
 } as const satisfies Record<string, AuditActionSpec>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

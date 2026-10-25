@@ -38,6 +38,11 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Staff created or changed an external data source or flipped its kill switch',
   },
+  // The public status page's incident log (#770). Metadata holds the change and the old and new state.
+  'incident.changed': {
+    security: true,
+    description: 'Staff opened, updated or resolved a public status incident',
+  },
   // The court document network (#485, D-048). Metadata holds ids and counts only, never content.
   'network.contributed': {
     security: false,

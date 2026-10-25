@@ -42,3 +42,19 @@ export {
   type PublishStatusResult,
   type StatusCheck,
 } from './publish.ts';
+export {
+  INCIDENT_SEVERITIES,
+  INCIDENT_TEMPLATES,
+  IncidentAdminError,
+  addIncidentUpdate,
+  asIncidentStaff,
+  createIncident,
+  listIncidents,
+  type IncidentActor,
+  type IncidentAdminErrorCode,
+  type IncidentInput,
+  type IncidentRecord,
+  type IncidentSeverity,
+  type IncidentTemplateId,
+  type IncidentUpdateInput,
+} from './incidents.ts';

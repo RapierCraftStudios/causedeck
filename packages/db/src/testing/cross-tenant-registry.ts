@@ -1178,6 +1178,16 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   publishStatus: 'system job body: see buildSnapshot; writes only the public status object',
   runStatusPublish: 'system job body: see publishStatus',
   statusPublish: 'job definition (handler is runStatusPublish)',
+  // status incidents (#770): staff-only writes to the platform incident tables (GLOBAL_TABLES), public text only
+  INCIDENT_SEVERITIES: 'constant',
+  INCIDENT_TEMPLATES: 'constant',
+  IncidentAdminError: 'error class',
+  asIncidentStaff: 'pure (builds the actor; createIncident checks staff_user in the transaction)',
+  createIncident:
+    'staff-only write to the platform incident tables (GLOBAL_TABLES, no tenant data); covered by status/incidents.test.ts',
+  addIncidentUpdate:
+    'staff-only write to the platform incident tables (GLOBAL_TABLES, no tenant data); covered by status/incidents.test.ts',
+  listIncidents: 'reads only the platform incident tables (GLOBAL_TABLES, no tenant data)',
   noticesPoll: 'job definition (handler is runNoticesPoll)',
   runNoticesPoll: 'system job body: see pollNotices',
   setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',

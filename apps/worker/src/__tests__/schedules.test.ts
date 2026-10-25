@@ -46,6 +46,7 @@ describe('registerSchedules', () => {
       'system.status.poll',
       'system.webhook.sweep',
       'system.orders.poll',
+      'system.obligation.reminders',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -113,6 +114,8 @@ describe('registerSchedules', () => {
       ['system.board.poll', '*/5 10-16 * * 1-5', '2026-10-19T04:30:00.000Z'],
       // Notices poll (#586): hourly on the hour IST; 06:00 IST is 00:30 UTC.
       ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
+      // Obligation reminders (#67): daily 07:00 IST; 07:00 IST is 01:30 UTC.
+      ['system.obligation.reminders', '0 7 * * *', '2026-10-18T01:30:00.000Z'],
     ] as const;
     for (const [name, cron, firstRun] of others) {
       const row = await worker.boss.getSchedule(name);

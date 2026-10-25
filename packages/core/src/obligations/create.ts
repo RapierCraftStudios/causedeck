@@ -106,10 +106,9 @@ export async function createObligation(
 export async function createObligationFromProposal(
   tx: Transaction,
   actor: ObligationActor,
-  input: ObligationInput,
+  input: Omit<ObligationInput, 'ownerMemberId'> & { ownerMemberId?: string | null },
   now: Date = new Date(),
 ): Promise<ObligationRow> {
-  const data = parseInput(ObligationInput, input);
   const { member } = schema;
   const [self] = await tx
     .select({ id: member.id })
@@ -117,6 +116,7 @@ export async function createObligationFromProposal(
     .where(and(eq(member.organizationId, actor.workspaceId), eq(member.userId, actor.userId)))
     .limit(1);
   if (self === undefined) throw invalid('confirmer is not a member of this workspace');
+  const data = parseInput(ObligationInput, { ...input, ownerMemberId: input.ownerMemberId ?? self.id });
   const scope: ObligationScope = {
     tx,
     actor: { ...actor, role: 'owner' },

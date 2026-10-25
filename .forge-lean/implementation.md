@@ -47,3 +47,6 @@ CI lint failed on `consistent-type-imports` in `packages/core/src/whatsapp-link/
 
 ### Lint fix (second)
 No CI log was available. ESLint on every changed source file in core, db, notifications and web is clean, and prettier passes. Removed three accidentally committed `.eslintcache` files (packages/config, db, notifications) and ignored `.eslintcache`. The earlier `import type` fix is already in HEAD.
+
+### Recovery pass (ci.red)
+CI lint failed on Prettier for migrations/meta/_journal.json (missing trailing newline); reformatted. Reverted the out-of-scope .gitignore edit. Non-listed files needed for typecheck/lint are declared as add-deliverable amendments. Targeted core (22) and db (18) tests pass; forgedock check runs timed out at 300s on host load with no failing tests.

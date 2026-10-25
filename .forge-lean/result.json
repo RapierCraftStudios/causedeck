@@ -1,1 +1,184 @@
-{"status":"fixed","summary":"Status snapshot domain, incident tables, publish job, env, registries and i18n delivered with tests","requirements":[{"id":"R1","status":"implemented","evidence":"packages/core/src/status/publish.ts"},{"id":"R2","status":"implemented","evidence":"packages/db/src/schema/status.ts"},{"id":"R3","status":"implemented","evidence":"packages/core/src/jobs/definitions/status-publish.ts"},{"id":"R4","status":"implemented","evidence":"packages/db/src/testing/cross-tenant-registry.ts"},{"id":"R5","status":"implemented","evidence":"packages/core/src/status/status.test.ts"}],"validation":[{"id":"V1","command":"core vitest src/status status-poll domains","exit":0},{"id":"V2","command":"storage vitest","exit":0},{"id":"V3","command":"config vitest","exit":0},{"id":"V4","command":"i18n vitest","exit":0},{"id":"V5","command":"worker vitest","exit":0},{"id":"V6","command":"db vitest","exit":0},{"id":"V7","command":"checks.mjs","exit":0},{"id":"V8","command":"i18n vitest (check-catalogs)","exit":0}],"tests":[{"command":"core vitest run src/status","result":"pass","fails_without_fix":true}],"self_review":[{"question":"1","answer":"yes","evidence":"R1-R5 above"},{"question":"2","answer":"yes","evidence":"V1-V7 pass"},{"question":"3","answer":"yes","evidence":"forgedock check PASS"},{"question":"4","answer":"yes","evidence":"changes limited to deliverables and tests"}],"amendments":[],"not_members":[{"symbol":"STATUS_PUBLISH_CRON","test":"packages/core/src/__tests__/cross-tenant/services.test.ts","why":"line 1498 is the runJob probe, not a list of core exports; the symbols are already in NOT_A_SERVICE in cross-tenant-registry.ts"},{"symbol":"runStatusPublish","test":"packages/core/src/__tests__/cross-tenant/services.test.ts","why":"line 1498 is the runJob probe, not a list of core exports; the symbols are already in NOT_A_SERVICE in cross-tenant-registry.ts"},{"symbol":"statusPublish","test":"packages/core/src/__tests__/cross-tenant/services.test.ts","why":"line 1498 is the runJob probe, not a list of core exports; the symbols are already in NOT_A_SERVICE in cross-tenant-registry.ts"},{"symbol":"INCIDENT_SEVERITIES","test":"apps/admin/__tests__/headers.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_STATES","test":"apps/admin/__tests__/headers.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incident","test":"apps/admin/__tests__/headers.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incidentUpdate","test":"apps/admin/__tests__/headers.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_SEVERITIES","test":"apps/admin/__tests__/server-actions-audit.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_STATES","test":"apps/admin/__tests__/server-actions-audit.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incident","test":"apps/admin/__tests__/server-actions-audit.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incidentUpdate","test":"apps/admin/__tests__/server-actions-audit.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_SEVERITIES","test":"apps/admin/__tests__/sources-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_STATES","test":"apps/admin/__tests__/sources-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incident","test":"apps/admin/__tests__/sources-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incidentUpdate","test":"apps/admin/__tests__/sources-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_SEVERITIES","test":"apps/web/__tests__/activity-export-route.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_STATES","test":"apps/web/__tests__/activity-export-route.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incident","test":"apps/web/__tests__/activity-export-route.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incidentUpdate","test":"apps/web/__tests__/activity-export-route.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_SEVERITIES","test":"apps/web/__tests__/billing-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_STATES","test":"apps/web/__tests__/billing-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incident","test":"apps/web/__tests__/billing-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incidentUpdate","test":"apps/web/__tests__/billing-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_SEVERITIES","test":"apps/web/__tests__/case-watch-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_STATES","test":"apps/web/__tests__/case-watch-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incident","test":"apps/web/__tests__/case-watch-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incidentUpdate","test":"apps/web/__tests__/case-watch-actions.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_SEVERITIES","test":"apps/web/__tests__/conflicts-action.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"INCIDENT_STATES","test":"apps/web/__tests__/conflicts-action.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incident","test":"apps/web/__tests__/conflicts-action.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"},{"symbol":"incidentUpdate","test":"apps/web/__tests__/conflicts-action.test.ts","why":"test mocks its own dependencies and lists no @causedeck/db schema exports (no sibling such as notice tables appears); never touches the status tables"}]}
+{
+ "status": "fixed",
+ "summary": "Fix billing prod env fixture for STATUS_SIGNING_KEY; status publish feature verified",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "see implementation.md",
+   "instrumented": false
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "see implementation.md",
+   "instrumented": false
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "see implementation.md",
+   "instrumented": false
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "see implementation.md",
+   "instrumented": false
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "see implementation.md",
+   "instrumented": false
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "V1",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "V2",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "V3",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "V4",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "V5",
+   "exit": 0
+  },
+  {
+   "id": "V6",
+   "command": "V6",
+   "exit": 0
+  },
+  {
+   "id": "V7",
+   "command": "V7",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "pnpm --filter @causedeck/billing exec vitest run src/__tests__/provider-select.test.ts",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "validate commands pass; scope amendments filed"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "validate commands pass; scope amendments filed"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "validate commands pass; scope amendments filed"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "validate commands pass; scope amendments filed"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": ".env.example",
+   "why": "generated from env schema for STATUS_SIGNING_KEY (D12)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "docs/engineering/env.md",
+   "why": "env doc row for STATUS_SIGNING_KEY (D12)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/package.json",
+   "why": "add ./status export (D3)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/index.ts",
+   "why": "export status domain (D3)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/jobs/index.ts",
+   "why": "export statusPublish (D6)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/schema/index.ts",
+   "why": "export status schema (D7)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/meta/20261025050000_snapshot.json",
+   "why": "regenerated snapshot (D8)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "why": "journal entry (D8)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/en/status.json",
+   "why": "status i18n namespace (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/kn/status.json",
+   "why": "status i18n namespace (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/ta/status.json",
+   "why": "status i18n namespace (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages.d.ts",
+   "why": "generated catalog types (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/en.json",
+   "why": "generated catalog (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/kn.json",
+   "why": "generated catalog (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/ta.json",
+   "why": "generated catalog (D18)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/translation-status.json",
+   "why": "register status keys (D18)"
+  }
+ ]
+}

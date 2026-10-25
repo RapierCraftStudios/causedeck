@@ -194,7 +194,7 @@ describe('whatsapp link (#678)', () => {
       const failing = { ...deps, sendOtp: () => Promise.reject(new Error('provider down')) };
       await expect(
         requestWhatsAppOtp(failing, actor, { e164: NUMBER, consent: true }),
-      ).rejects.toThrow('provider down');
+      ).rejects.toThrow('We could not send the code');
       const rows = await inWorkspace(tx, actor.workspaceId, (s) =>
         s.select().from(schema.whatsappOtpChallenge),
       );

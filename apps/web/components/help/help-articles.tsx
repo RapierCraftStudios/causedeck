@@ -8,7 +8,7 @@ import { Input } from '@causedeck/ui/input';
 import { Button } from '@causedeck/ui/button';
 import { Skeleton, SkeletonGroup } from '@causedeck/ui/skeleton';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 
 import {
   getArticle,
@@ -54,18 +54,24 @@ export function HelpArticles({ selected, onSelect, columns = false }: HelpArticl
   const t = useTranslations('help');
   const format = useFormatter();
   const offline = useOffline();
-  const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [query, setQuery] = useState('');
   const [tag, setTag] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
+  // The bundled index loads after hydration so the first paint is the skeleton; `attempt` re-runs it.
+  const hydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
+  const load = useMemo<Load>(() => {
+    if (!hydrated) return { status: 'loading' };
     try {
-      setLoad({ status: 'ready', index: helpIndex() });
+      return { status: 'ready', index: helpIndex() };
     } catch {
-      setLoad({ status: 'error' });
+      return { status: 'error' };
     }
-  }, [attempt]);
+  }, [hydrated, attempt]);
 
   const results = useMemo(
     () => (load.status === 'ready' ? searchHelp(load.index, query, { tag }) : []),
@@ -87,7 +93,6 @@ export function HelpArticles({ selected, onSelect, columns = false }: HelpArticl
         <p>{t('search.error')}</p>
         <Button
           onClick={() => {
-            setLoad({ status: 'loading' });
             setAttempt((n) => n + 1);
           }}
         >

@@ -39,6 +39,7 @@ export interface SupportContactProps {
 export function SupportContact({
   workspaceId,
   isOwner,
+  // eslint-disable-next-line no-process-env -- NEXT_PUBLIC_ values are inlined at build time; this is the documented support line.
   whatsapp = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP,
 }: SupportContactProps) {
   const t = useTranslations('help.contact');

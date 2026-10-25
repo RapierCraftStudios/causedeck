@@ -2,227 +2,481 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "`pnpm --filter site build` produces a fully static `out/` with no server runtime and no `middleware`",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "MDX pages are rendered from `content/` with a zod-validated frontmatter schema (title, description, date, noindex); invalid frontmatter fails the build",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "Every page has a unique title, description, canonical URL, Open Graph and Twitter metadata; sitemap and robots are generated; `noindex` is applied to the legal drafts flagged as such",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "JSON-LD uses `SoftwareApplication` only; there is no `LegalService`, `Attorney`, `Review` or `AggregateRating` schema anywhere (asserted by test)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
-   "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "quote": "The Rule 36 lint fails the build on denylisted terms (e.g. `best lawyer`, `top advocate`, `win rate`, `guaranteed outcome`, `find a lawyer`, `client reviews`, `testimonial`) and on any component named `Testimonial*` or `Directory*`",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "The site ships no third-party scripts, no cookies and no tenant data; analytics, if enabled, is cookie-less and configured by env var `NEXT_PUBLIC_ANALYTICS_SRC` (unset by default)",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "Fonts (Geist or Inter, Newsreader or Source Serif 4, Noto Sans Tamil and Kannada subsets) are self-hosted with `font-display: swap` and preloaded for the critical weights",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "Site uses `packages/ui` tokens; light and dark themes work with `next-themes` and respect system preference without flash",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "Lighthouse CI on the home page is at least 95 for performance, accessibility, best practices and SEO, with budgets in `lighthouserc.json`",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Delivered as apps/site/lighthouserc.json and the lighthouse step of .github/workflows/site.yml; measured by the site workflow in CI (Lighthouse never runs locally)."
+  },
+  {
+   "id": "R10",
+   "quote": "axe reports zero serious violations on all routes in light and dark; skip link and focus order verified",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Delivered as e2e/site/smoke.spec.ts (axe fixture, skip-link and tab-order checks) run by .github/workflows/site.yml; Playwright is CI-only."
+  },
+  {
+   "id": "R11",
+   "quote": "Cloudflare Pages workflow deploys `main` to production and PRs to preview URLs, using secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` that may be absent in forks (job skips cleanly)",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Delivered as the deploy job in .github/workflows/site.yml (secret-presence guard, `main` = production, PR = preview); the actual deploy needs the real token (#107) and is only observable after merge."
+  },
+  {
+   "id": "R12",
+   "quote": "`_headers` and `_redirects` files set security headers (CSP without inline scripts, HSTS, Referrer-Policy, Permissions-Policy) and long cache for hashed assets",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "Visual baselines for header, footer and 404 in light and dark at 360, 768 and 1280",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Spec e2e/site/chrome.visual.spec.ts delivered in-lane; baselines are generated in the pinned Playwright image by the CI visual-update/e2e workflow (e2e.yml update_snapshots, visual-update.yml), never on dev machines."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "apps/site/package.json",
+   "change": "Real scripts (dev: next dev, build: rule36 lint then next build then write-headers, typecheck, test, lint, lint:rule36); add deps next, react, react-dom, next-themes, zod, next-mdx-remote, @causedeck/ui (workspace: tokens, Button, Sheet, Badge, Separator, per issue Design spec); devDeps tailwindcss, @tailwindcss/postcss, postcss, @types/react, @types/react-dom, tsx, jsdom/@testing-library/react if component tests are needed. Package name stays @causedeck/site.",
    "requirements": [
     "R1",
-    "R2"
+    "R2",
+    "R8"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "pnpm-workspace.yaml",
+   "change": "Add catalog entry for next-mdx-remote (and any other missing dep) pinned to an exact version; pnpm-lock.yaml regenerated via pnpm install --lockfile-only.",
    "requirements": [
-    "R1"
+    "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "pnpm-lock.yaml",
+   "change": "Regenerated lockfile for the new site dependencies.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
+   "path": "apps/site/next.config.ts",
+   "change": "output 'export', images.unoptimized, trailingSlash, transpilePackages [@causedeck/ui,@causedeck/config], poweredByHeader false, reactStrictMode; no rewrites/redirects/headers() (unsupported in export), no middleware.",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
+   "path": "apps/site/tsconfig.json",
+   "change": "Include app, lib, components, scripts, next-env.d.ts, .next/types and the Next plugin; keep src.",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "apps/site/postcss.config.mjs",
+   "change": "Tailwind v4 postcss plugin, same as apps/web/postcss.config.mjs.",
    "requirements": [
-    "R3"
+    "R8"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
+   "path": "apps/site/vitest.config.ts",
+   "change": "Vitest config covering src, lib, scripts and component tests (jsdom for tsx tests).",
    "requirements": [
-    "R3"
+    "R2",
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "path": "apps/site/lib/env.ts",
+   "change": "zod env schema: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL (default https://app.causedeck.example), NEXT_PUBLIC_ANALYTICS_SRC (optional, https only); invalid values fail the build.",
    "requirements": [
-    "R3"
+    "R6"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "path": "apps/site/lib/frontmatter.ts",
+   "change": "zod frontmatter schema (title, description, date, noindex default false; strict) and parse helper that throws with the file path.",
    "requirements": [
     "R2"
    ]
   },
   {
+   "id": "D10",
+   "path": "apps/site/lib/mdx.ts",
+   "change": "Read content/**/*.mdx only (not the existing .md learn/developers files), parse frontmatter via compileMDX, validate with D9, list slugs for generateStaticParams, fail the build on invalid frontmatter or duplicate titles/descriptions.",
+   "requirements": [
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "apps/site/lib/seo.ts",
+   "change": "Metadata helper (unique title, description, canonical, openGraph, twitter, robots noindex), SoftwareApplication JSON-LD builder, sitemap entry builder that omits noindex pages.",
+   "requirements": [
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "apps/site/app/layout.tsx",
+   "change": "Root layout: self-hosted fonts, next-themes ThemeProvider (attribute class, system default), skip link first in tab order, header, footer, main landmark, optional analytics script only when NEXT_PUBLIC_ANALYTICS_SRC is set.",
+   "requirements": [
+    "R6",
+    "R7",
+    "R8"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/site/app/fonts.ts",
+   "change": "next/font/local from packages/ui/fonts (Geist, Newsreader roman preloaded; Noto Sans Tamil and Kannada subsets), display swap; mirror apps/web/app/fonts.ts.",
+   "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/site/app/globals.css",
+   "change": "Tailwind v4 import plus the @causedeck/ui token CSS files without ui fonts.css (as apps/web/app/globals.css), @source for packages/ui, 150 ms hover/focus transitions disabled under reduced motion, focus ring 3:1.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
    "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "path": "apps/site/app/page.tsx",
+   "change": "Placeholder hero with page metadata and the SoftwareApplication JSON-LD; replaced later by #90.",
+   "requirements": [
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "apps/site/app/(content)/[...slug]/page.tsx",
+   "change": "Static MDX route: generateStaticParams from lib/mdx, generateMetadata from frontmatter, dynamicParams false, rendered in Prose.",
+   "requirements": [
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/site/content/about.mdx",
+   "change": "One seed MDX page with valid frontmatter and Rule-36-safe copy, plus one `noindex: true` draft page (content/legal/draft-notice.mdx) to prove the noindex path; no real legal text (#95).",
+   "requirements": [
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/site/app/sitemap.ts",
+   "change": "force-static sitemap from home + non-noindex MDX pages with absolute canonical URLs.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/site/app/robots.ts",
+   "change": "force-static robots allowing all and pointing at the sitemap.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/site/app/not-found.tsx",
+   "change": "Calm, helpful 404 with links home and to the app.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "apps/site/app/opengraph-image.tsx",
+   "change": "force-static OG image via next/og ImageResponse using the self-hosted font files read from packages/ui/fonts.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "apps/site/components/site-header.tsx",
+   "change": "Header: logo, nav inline from 768, Sign in link to NEXT_PUBLIC_APP_URL, menu Sheet below 768; no directory links.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "apps/site/components/site-footer.tsx",
+   "change": "Footer: product, trust and legal links, India data note; no lawyer listing links.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "apps/site/components/theme-toggle.tsx",
+   "change": "Theme toggle client component (light/dark/system) with accessible label.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "apps/site/components/prose.tsx",
+   "change": "Prose wrapper and MDX component map for rendered content.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "apps/site/scripts/rule36-lint.ts",
+   "change": "Denylist/pattern lint over content/**/*.mdx, app/**/*.tsx, components/**/*.tsx copy and component/file names (Testimonial*, Directory*); exports a pure scan function plus a CLI exiting non-zero on findings; wired into the build script.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "apps/site/scripts/write-headers.ts",
+   "change": "Post-build: scan out/**/*.html inline scripts, emit out/_headers (merging public/_headers) with per-route CSP script-src sha256 hashes and no unsafe-inline, HSTS, Referrer-Policy, Permissions-Policy, X-Content-Type-Options, immutable cache for /_next/static/*.",
+   "requirements": [
+    "R12",
+    "R1"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "apps/site/public/_redirects",
+   "change": "Redirect rules (e.g. /app to the app origin placeholder, none that need a server).",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "apps/site/public/_headers",
+   "change": "Static base headers and cache rules copied into out/ (CSP script hashes appended by D27).",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "apps/site/lighthouserc.json",
+   "change": "LHCI config: serve out/ statically, home page, min score 0.95 for performance, accessibility, best-practices, seo, plus resource budgets.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D31",
+   "path": ".github/workflows/site.yml",
+   "change": "Jobs: build+lint+test (turbo, pinned actions as in ci.yml), Lighthouse CI, Playwright smoke/axe/visual in the pinned image, deploy to Cloudflare Pages (main = production, PR = preview) guarded by presence of CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID so forks skip cleanly; least-privilege permissions.",
+   "requirements": [
+    "R9",
+    "R10",
+    "R11",
+    "R13"
+   ]
+  },
+  {
+   "id": "D32",
+   "path": "e2e/site/smoke.spec.ts",
+   "change": "Playwright over every route of the exported site: status, unique title/description/canonical, no cookies and no third-party requests, theme no-flash, skip link first tab stop, axe zero serious violations in light and dark, robots/sitemap, headers file content.",
+   "requirements": [
+    "R3",
+    "R6",
+    "R8",
+    "R10"
+   ]
+  },
+  {
+   "id": "D33",
+   "path": "e2e/site/chrome.visual.spec.ts",
+   "change": "Visual spec for header, footer and 404 (light/dark at 360/768/1280); baselines generated in CI.",
+   "requirements": [
+    "R13"
+   ]
+  },
+  {
+   "id": "D34",
+   "path": "e2e/playwright.site.config.ts",
+   "change": "Separate Playwright config serving apps/site/out (no DB, no apps/web build), 360/768/1280 x light/dark projects, same screenshot options as playwright.config.ts.",
+   "requirements": [
+    "R10",
+    "R13"
+   ]
+  },
+  {
+   "id": "D35",
+   "path": "turbo.json",
+   "change": "Add `out/**` to build outputs.",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
+   "id": "D36",
+   "path": "apps/site/README.md",
+   "change": "Local dev, content authoring (frontmatter), Rule 36 lint, headers/CSP generation, env vars, deployment and secrets.",
    "requirements": [
-    "R1"
+    "R1",
+    "R2",
+    "R11"
+   ]
+  },
+  {
+   "id": "D37",
+   "path": "apps/site/src/site-scaffold.test.ts",
+   "change": "Unit tests: frontmatter schema accepts valid and rejects invalid (and invalid fails mdx load), seo helpers (unique canonical/OG/Twitter, noindex omitted from sitemap), JSON-LD only SoftwareApplication and a source scan asserting no LegalService/Attorney/Review/AggregateRating, rule36 scan fails on each denylisted term and Testimonial*/Directory* names, env schema, no middleware file and output export in next config, no third-party script URLs. May be split into lib/*.test.ts.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R12"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "Existing plain-markdown content and its loaders/tests: apps/site/content/learn/**, apps/site/content/developers/api.md, apps/site/src/learn/*, apps/site/src/developer-docs.test.ts, apps/site/src/index.ts (appName '@causedeck/site') and src/index.test.ts keep passing unchanged."
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "Package name @causedeck/site and the root turbo task names (build, lint, typecheck, test); apps/web, apps/admin and e2e/playwright.config.ts (apps/web harness) are not modified."
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "No server runtime in the site: no middleware, no route handlers that are dynamic, no server actions, no imports of @causedeck/core, db, auth, adapters (tenant data); Node runtime rule in packages/config/eslint/next.js."
+  },
+  {
+   "id": "P4",
+   "what": "Rule 36 positioning: no advocate names, rankings, testimonials, outcomes, directory or lead-capture copy anywhere in new public copy."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/site exec vitest run"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/site exec tsc --noEmit"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/site exec tsx scripts/rule36-lint.ts"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/site exec eslint app lib components scripts src vitest.config.ts next.config.ts"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/site build && test -f apps/site/out/index.html && test -f apps/site/out/sitemap.xml && test -f apps/site/out/robots.txt && test -f apps/site/out/_headers && test ! -f apps/site/.next/server/middleware.js"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
-   "source": "precedent"
+   "choice": "Render MDX with next-mdx-remote/rsc compileMDX (new catalog dependency) instead of @next/mdx.",
+   "justification": "One dependency, build-time only in static export, and frontmatter is parsed by the same call so the zod schema can fail the build; @next/mdx would add @mdx-js/loader, @mdx-js/react, @types/mdx and a separate frontmatter parser. No MDX package exists in pnpm-workspace.yaml catalog.",
+   "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
-   "source": "precedent"
+   "choice": "Add @causedeck/ui as a workspace dependency of @causedeck/site (D1).",
+   "justification": "Issue Context requires 'Shared Button, Sheet, Badge, Separator from packages/ui' and tokens; mirrors apps/web (apps/web/package.json dependencies, globals.css:6-12). Spike §2 lists packages/ui as the shared design system for apps/web and apps/site.",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
+   "choice": "Generate per-route CSP script-src hashes in a post-build step rather than relying on unsafe-inline.",
+   "justification": "Issue requires 'CSP without inline scripts'; Next static export and next-themes both emit inline scripts, and Cloudflare Pages _headers cannot carry per-request nonces. apps/web uses a nonce proxy (apps/web/next.config.ts:38 comment) which is unavailable in static export.",
    "source": "spec"
   },
   {
    "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
-   "source": "doc"
+   "choice": "Keep the package name @causedeck/site; the acceptance command is run as pnpm --filter @causedeck/site build.",
+   "justification": "apps/site/package.json:2, src/index.ts:2 and src/index.test.ts depend on it; all workspace packages use the @causedeck/ scope.",
+   "source": "precedent"
   },
   {
    "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
+   "choice": "Separate e2e/playwright.site.config.ts instead of adding projects to e2e/playwright.config.ts.",
+   "justification": "The main config's webServer builds apps/web and global setup needs the Postgres Compose stack (e2e/playwright.config.ts:121-135); the site needs neither.",
    "source": "precedent"
   }
  ]

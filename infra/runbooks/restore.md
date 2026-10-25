@@ -1,8 +1,29 @@
 # Backup and restore runbook (#101)
 
+Owner: Engineering lead
+Last drilled: not yet drilled (record: [drills](drills/README.md))
+
+## Purpose
+
 Stage A: WAL-G on the single India VPS archives to the stack's MinIO bucket `causedeck-wal`;
 `minio-replicate` copies it nightly to a second India location. Targets (PRD §8): RPO ≤ 15 min,
 RTO ≤ 4 h. Scripts: `infra/scripts/backup/`, `infra/scripts/restore/`.
+
+Measured values: the weekly drill report (`.github/workflows/restore-drill.yml` artifact) and the signed records in
+[drills](drills/README.md) carry the measured RPO and RTO. No signed drill exists yet, so the targets above are
+the commitment; update this page from the first signed record. Loss, damage or suspected tampering of data opens
+[cert-in-6h](cert-in-6h.md) and, for personal data, [dpdp-breach](dpdp-breach.md). Key handling is in
+[key-rotation](key-rotation.md).
+
+## Triggers
+
+Data loss or corruption, a failed restore drill or backup alert (P0/P1, [on-call](on-call.md)), the monthly drill,
+or a DR event ([dr-hyderabad](dr-hyderabad.md)).
+
+## Roles
+
+Incident commander (on-call primary) runs the restore; the engineering lead approves switching production to the
+restored volume; a second custodian provides the backup key when needed.
 
 ## What runs
 
@@ -45,7 +66,9 @@ Backups are encrypted client-side with WAL-G libsodium. Without the key, `wal-pu
 than 26 h or failed, replication failed, last drill failed, RPO > 900 s, RTO > 14 400 s, no
 successful drill in 8 days.
 
-## Restore (point in time)
+## Steps
+
+Point-in-time restore:
 
 1. Declare an incident; stop writes (`docker compose stop web api worker admin`).
 2. Provide `WALG_LIBSODIUM_KEY_PATH` (key from custody), `WALG_S3_PREFIX`, `AWS_ENDPOINT` and the
@@ -58,6 +81,21 @@ successful drill in 8 days.
 6. Verify: run `infra/scripts/restore/verify.sql` (amcheck, row counts, RLS, cross-tenant,
    crypto-erase), then switch the stack's `pgdata` to the new volume and start the apps. Keep the
    old volume until the incident closes.
+
+## Communications
+
+Post a status page notice when writes stop and when service resumes. No automated outbound messages go to courts or
+third parties; notices are approved by a human and sent by a human after approval.
+
+## Evidence
+
+Keep the drill JSON report (`rtoSeconds`, `rpoSeconds`, `checks`, `ok`), the `verify.sql` output and the incident
+ticket with times.
+
+## Verification
+
+`verify.sql` passes (amcheck, row counts, RLS, cross-tenant, crypto-erase); the app health check is green on the
+restored volume; measured RPO ≤ 900 s and RTO ≤ 14 400 s.
 
 ## Drills
 
@@ -76,3 +114,8 @@ that holds the wrapped DEK until it ages out (at most 14 days daily, 8 weeks wee
 - The `crypto_erase` check in `verify.sql` fails the drill if a destroyed workspace key in the
   restored database still holds key material.
 - Once the key-backup retention window (8 weeks) has passed, no backup holds the DEK.
+
+## After action
+
+Post-incident review ([template](templates/post-incident-review.md)); record the measured RPO and RTO in
+[drills](drills/README.md) and update this runbook and `Last drilled`.

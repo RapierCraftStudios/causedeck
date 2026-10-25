@@ -48,6 +48,15 @@ describe('recordActivation', () => {
     });
   });
 
+  it('accepts the education channel for learn-module signups (#511)', async () => {
+    expect(ACTIVATION_CHANNELS).toContain('education');
+    await withTestDb(async (tx) => {
+      const [u] = await users(tx);
+      const ok = await recordActivation(tx, { userId: u, step: 'signed_up', channel: 'education' });
+      expect(ok).toBe(true);
+    });
+  });
+
   it('rejects a step or channel outside the catalogue at the database', async () => {
     await withTestDb(async (tx) => {
       const [u] = await users(tx);

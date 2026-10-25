@@ -35,7 +35,10 @@ export function ProviderForm({ workspaceId, providers, save, remove }: ProviderF
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const field = (name: string) => String(data.get(name) ?? '').trim();
+    const field = (name: string) => {
+      const value = data.get(name);
+      return typeof value === 'string' ? value.trim() : '';
+    };
     start(async () => {
       const result = await save({
         workspaceId,

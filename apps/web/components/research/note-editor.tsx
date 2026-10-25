@@ -61,11 +61,16 @@ export function NoteEditor({ workspaceId, matterId, note, readOnly, actions }: N
     });
   }
 
+  function rawBody(form: FormData): string {
+    const value = form.get('body');
+    return typeof value === 'string' ? value : '';
+  }
+
   function onSave(event: SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const fields = { title: text(data, 'title'), body: String(data.get('body') ?? '') };
+    const fields = { title: text(data, 'title'), body: rawBody(data) };
     run(
       () =>
         note === undefined

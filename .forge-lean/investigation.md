@@ -1,38 +1,52 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield feature, no live defect; blocks #90, #91, #95)
+**Severity**: medium (greenfield feature; no live defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Scaffold `apps/site` as a static marketing site: Next.js `output: 'export'`, MDX content with zod-validated frontmatter, per-page SEO metadata, sitemap/robots, build-time OG image, SoftwareApplication-only JSON-LD, Rule 36 copy lint, self-hosted fonts, `packages/ui` tokens with next-themes, `_headers`/`_redirects`, Cloudflare Pages workflow, Lighthouse CI, axe/e2e smoke, visual baselines, README. Depends on #134 (closed).
+Replace the placeholder home page of the static marketing site with the CauseDeck landing page: hero with the Court-Day Board preview, problem strip, four-beat loop, provenance, trust, courts, FAQ, CTA band and a positioning line near the footer. It must be Rule 36 safe and use only fictional sample data. Copy goes through an i18n-ready layer (en complete, ta/kn stubbed). It needs visual baselines, axe, a Lighthouse score of at least 95 and a `/design` pipeline trail.
 
 ### What We Found
-(Verified against `origin/milestone/site-onboarding-launch` = b1c3467a. The "Investigation Report" comment on #89 is about a WhatsApp settings UI, is unrelated to this issue, and was ignored. The existing `.forge-lean/*` files in the tree were stale from another issue and are overwritten.)
-- `apps/site` is a stub, not an app: `apps/site/package.json:9` build script is `node -e "console.log('nothing to build yet')"`; devDependencies only config/types/eslint/ts/vitest (`package.json:13-19`). No next, react, mdx, zod, next-themes, `app/`, `public/`, `next.config.ts`, `lib/`, `components/`.
-- Package name is `@causedeck/site` (`package.json:2`); the issue's `pnpm --filter site build` equals `pnpm --filter @causedeck/site build` (renaming would break `src/index.ts:2` and `src/index.test.ts`).
-- Existing site content is plain `.md` with a different frontmatter schema (`slug/locale/title/order/law/fixture/reviewer/reviewedOn`): `apps/site/content/learn/**/{en,kn,ta}.md`, `content/developers/api.md`; consumed by `src/learn/*` and tested by `src/learn/learn.test.ts:59`, `src/developer-docs.test.ts:6`. The new MDX pipeline must not touch `.md` files or these.
-- `apps/site/tsconfig.json:3` includes only `src` and `*.ts`; must add `app`, `lib`, `components`, `scripts`, `next-env.d.ts`, `.next/types`. ESLint already uses `@causedeck/config/eslint/next` (`eslint.config.js:1`); `APP_NAMES` already contains `site` (`packages/config/eslint/boundaries.js:151`).
-- Reusable references in web: fonts via `next/font/local` from `packages/ui/fonts/*.woff2` (`apps/web/app/fonts.ts:10-50`, files incl. noto-sans-tamil/kannada present), token imports and Tailwind preset (`apps/web/app/globals.css:1-14`), `next.config.ts` `transpilePackages` list (`apps/web/next.config.ts:15-34`) and security headers (`:38-48`).
-- Catalog (`pnpm-workspace.yaml`) has next 16.4.2 (`:146`), react 19.3.1, next-themes 0.4.6 (`:148`), zod 4.6.7 (`:190`), tailwind 4.3.3 / `@tailwindcss/postcss`, `@lhci/cli` (`:65`), `@playwright/test`, `@axe-core/playwright` (`:54`), tsx (`:179`), sharp. Missing: any MDX package, wrangler.
-- CI: `turbo.json:5-7` build outputs list has no `out/**`; `ci.yml:188` build job runs `ci-affected.sh build` (so site's real build will run in CI). No `site.yml`. E2E harness (`e2e/playwright.config.ts:121-135`) has a single `webServer` building apps/web plus DB global setup, so site specs need their own config. Lighthouse configs are per-surface (`e2e/lighthouserc*.json`).
-- No `rule36` lint, `_headers`, `_redirects`, sitemap, robots anywhere in the repo.
+- The #89 scaffold is merged and in this tree (HEAD a99c9235). `apps/site/app/page.tsx:11-35` is an explicit placeholder ("the landing page (#90) replaces it"). It already exports `pageMetadata` and the `SoftwareApplication` JSON-LD (`lib/seo.ts:5-60`) and renders a "Sign in" button to `${siteEnv.appUrl}/sign-in`.
+- `apps/site/lib/env.ts:12-18` gives `NEXT_PUBLIC_APP_URL` a default, so "app URL env var missing, so CTA falls back to /contact" cannot be detected today. `/contact` does not exist (no page under `apps/site/app` or `content`).
+- `apps/site/app/layout.tsx:29-31` wraps every page in `<main class="max-w-[1200px] px-4 py-10">`. A full-bleed hero or band needs to work inside, or around, that container.
+- `apps/site/components/site-footer.tsx:34-36` has a weaker line ("CauseDeck is software for advocates. Customer data is stored in India."). The required verbatim positioning line is not there. The footer is shared by every page, so the exact line can go in the footer, or in a landing section that sits directly above it.
+- Rule 36 lint, `apps/site/scripts/rule36-lint.ts:9-20,64`, scans `content`, `app` and `components` for `.mdx` and `.tsx?` (so `content/landing.ts` and `components/landing/*` are covered). It has no check for verbs beyond L4 (`files`, `sends`, `handles for you`). `scanText` and `DENYLIST` are exported, so a unit test can reuse them.
+- Fonts are in place: Geist, Newsreader and the Noto Tamil and Kannada faces, via `app/fonts.ts:9-50`. `globals.css` wires them into `--font-sans` and `--font-serif`.
+- `@causedeck/ui` exports `./patterns` (`packages/ui/package.json:64`): `ProvenanceChip`, `StageBadge`, `STAGE_MAP`, the court item chip, `LevelBadge`/`LevelLegend` (`packages/ui/src/patterns/index.ts`). `./accordion`, `./badge`, `./button`, `./card` and `./separator` are exported as well. `@causedeck/ui` is already a dependency of the site. The pattern components may use client features (popover/hover). That affects the JS budget, so check it.
+- The test harness exists: `e2e/playwright.site.config.ts` has 360/768/1280 x light/dark projects, reduced motion on, and the specs serve `apps/site/out`. `e2e/site/chrome.visual.spec.ts:19-27` skips when a baseline is missing, and baselines are generated only in the pinned image through the `update_snapshots` workflow dispatch (`.github/workflows/site.yml:12-17,130-160`). Lighthouse is `apps/site/lighthouserc.json`: category floors 0.95 and a script budget of 184320 B, but only the `/index.html` URL.
+- `apps/site/lighthouserc.json` has no LCP assertion, and its script budget is 180 KB, not the 120 KB gzip the issue asks for.
+- `apps/site/vitest.config.ts:7` only includes `src/**`, `lib/**` and `scripts/**` tests. Unit tests for `content/` therefore go under `src/`.
+- The security page (#91) is open and does not exist yet, so "each claim links to the relevant section of the security page" can only target planned anchors (`/security/#...`).
+- `.forge/design/` is gitignored (`git check-ignore`), so design artefacts need `git add -f`.
+- There is no site i18n layer. `packages/i18n` is app-oriented (next-intl catalog, `catalog.test.ts`) and the site does not depend on it.
 
 ### Root Cause
-Greenfield: #2 created the empty package; the site was never built (spike #1 §1/§2/§3.3 specify it).
+Greenfield. #89 deliberately shipped a placeholder home page, and the landing page is this issue's work.
 
 ### Affected Files
-`apps/site/{package.json,tsconfig.json,next.config.ts,postcss.config.mjs,vitest.config.ts,eslint.config.js,README.md}`, `apps/site/app/**` (layout, page, `(content)/[...slug]`, sitemap, robots, not-found, opengraph-image, globals.css, fonts.ts), `apps/site/lib/{mdx,seo,env,frontmatter}.ts`, `apps/site/components/*`, `apps/site/content/**/*.mdx`, `apps/site/public/_headers|_redirects`, `apps/site/scripts/{rule36-lint,write-headers}.ts`, `apps/site/lighthouserc.json`, `.github/workflows/site.yml`, `e2e/site/smoke.spec.ts` + `e2e/playwright.site.config.ts`, `turbo.json`, `pnpm-workspace.yaml` + `pnpm-lock.yaml`, `docs/engineering/ci.md` (site job note).
+`apps/site/app/page.tsx`, `apps/site/app/globals.css` (landing tokens, reveal/parallax motion with reduced-motion guard), `apps/site/components/landing/*` (new), `apps/site/content/landing.ts` (new), `apps/site/lib/env.ts` and a new `lib/landing.ts` (CTA fallback), `apps/site/app/contact/page.tsx` (new mailto page), `apps/site/components/site-footer.tsx`, `apps/site/lighthouserc.json`, `apps/site/src/landing.test.ts` (new), `e2e/site/landing.spec.ts` (new), `e2e/site/smoke.spec.ts` (ROUTES), `.forge/design/landing/*`.
 
 ### Sibling Sweep
-- Other apps with next config: only `apps/web` (reference); `apps/admin` is a similar stub (out of scope).
-- Registries from CLAUDE.md: no `@causedeck/core` export, `'use server'` action, table, job, i18n namespace, or core-domain import is added, so none apply. The site must not import `@causedeck/core`/db/auth (no tenant data).
-- `.md` learn/developer content and `src/learn` keep working; the Rule 36 lint should scan MDX/TSX under `app`, `components`, `content/**/*.mdx` only, so existing legal-education `.md` (which legitimately mentions lawyers) is not flagged unless counsel-scope decides otherwise.
+- The same placeholder/fallback pattern does not exist elsewhere. `apps/admin` is a stub and out of scope.
+- The footer text is shared by `/about`, `/legal/*` and `/contact`. Changing it affects the existing chrome visual baselines, which have to be regenerated in CI.
+- No `@causedeck/core` export, `'use server'` action, table, job, i18n namespace or core-domain import is added, so none of the CLAUDE.md registries apply. The site must not import core, db or auth.
+- The Rule 36 lint's other scanned dirs (`app`, `components`) are all covered by the new landing files, so no lint-scope change is needed.
 
 ### History
-Stub from db3e22d4 (#2) and 937e90fe (#3); content added by 1f599f4e (#627 API docs), edd19927 (learn modules), 8d6fd8da. No prior attempt at the app itself.
+Placeholder from the #89 scaffold (merge a99c9235, PR #786). Spec: spike #1 §1/§7/§11. No earlier landing-page attempt.
 
 ### Recommendation
-One lane, ordered: (1) deps and config; (2) env/frontmatter/seo libs with unit tests; (3) layout/theme/fonts/components; (4) MDX route, sitemap, robots, OG, 404; (5) rule36 lint wired into `build`; (6) `_headers` generation; (7) CI workflow, lighthouse config, e2e spec, README. Use `next-mdx-remote/rsc` `compileMDX` (one new dep, works in static export, pure build-time) rather than `@next/mdx` + loader + react + types. CSP "without inline scripts" conflicts with Next's inline bootstrap scripts and next-themes' no-flash script, so a post-build step hashes each page's inline scripts into per-route `script-src 'sha256-…'` entries in `out/_headers` (no `unsafe-inline`). `build` = `next build && tsx scripts/write-headers.ts`, preceded by the rule36 lint. Browser/CI-only criteria (Lighthouse, axe, visual baselines, deploy) are delivered as config/spec/workflow and measured in CI, never run locally.
+One lane, ordered checklist:
+1. `content/landing.ts`: typed copy, `en` complete and `ta`/`kn` as `Partial` stubs that fall back to `en`.
+2. Components under `components/landing/`: non-interactive `court-day-preview` built from `@causedeck/ui/patterns` with fictional Madras HC and Karnataka HC data. It is `aria-hidden`, with an adjacent text description and an "Illustrative, sample data" label.
+3. Compose `app/page.tsx` with JSON-LD kept. Add the `/contact` mailto page and the CTA fallback via an `appUrlConfigured` flag in `lib/env.ts`.
+4. Put the exact positioning line in the footer.
+5. Add the unit tests: copy invariants, L4 verbs, no `LegalService`, Rule 36 scan.
+6. Add the e2e spec and tighten Lighthouse. Visual baselines are generated by CI, never locally.
+7. Write the design-spec artefacts, with a render-critique record produced from a local build.
+
+Keep JS small: server components by default, CSS-only reveals and parallax (no animation library), and a client component only where the ui pattern requires it. The `/design` render loop, Lighthouse, the visual baselines and the Playwright run are out of lane and measured in CI (`site.yml`).
 
 ### Related Issues
-#1 (parent), #134 (dependency, closed), #90, #91, #95 (consume the scaffold), #99, #107 (Cloudflare credentials), #117 (counsel sign-off).
+#1 (parent), #89 (done, dependency), #91 (security page that the trust links target), #95, #117 (counsel sign-off on wording), #99, #107.

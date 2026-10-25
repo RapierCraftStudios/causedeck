@@ -2,481 +2,299 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`pnpm --filter site build` produces a fully static `out/` with no server runtime and no `middleware`",
+   "quote": "The issue is executed via `/design`: a FORGE:DESIGN_SPEC annotation exists, at least one render-critique iteration is recorded, and the final render passes the perceptual negatives before merge [type:manual]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "why": "",
+   "verify": "out_of_band",
+   "evidence": "Design spec and critique record written under .forge/design/landing/ (force-add, the dir is gitignored); the final-render judgement is manual, at review"
   },
   {
    "id": "R2",
-   "quote": "MDX pages are rendered from `content/` with a zod-validated frontmatter schema (title, description, date, noindex); invalid frontmatter fails the build",
+   "quote": "Above the fold at 360, 768 and 1280 shows: headline, one-sentence subhead, primary CTA (`Start free` to the app sign-in) and secondary CTA (`See how a court day runs`), and a crisp product visual [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Every page has a unique title, description, canonical URL, Open Graph and Twitter metadata; sitemap and robots are generated; `noindex` is applied to the legal drafts flagged as such",
+   "quote": "Hero copy states the positioning plainly, e.g. headline `Walk into court prepared.` with subhead `CauseDeck is software for advocates: it reads your cause lists and orders, builds tomorrow's briefs, and tracks every direction you owe.` Final wording may be refined in the design loop but must keep `software for advocates` and must not use `legal services` as a self-description [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "JSON-LD uses `SoftwareApplication` only; there is no `LegalService`, `Attorney`, `Review` or `AggregateRating` schema anywhere (asserted by test)",
+   "quote": "Rule 36 content test passes: no testimonials, reviews, ratings, case outcomes, client names, win or success claims, `find a lawyer`, lawyer listings, or language addressed to litigants; the L01 lint passes [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "The Rule 36 lint fails the build on denylisted terms (e.g. `best lawyer`, `top advocate`, `win rate`, `guaranteed outcome`, `find a lawyer`, `client reviews`, `testimonial`) and on any component named `Testimonial*` or `Directory*`",
+   "quote": "The page includes an explicit, visible line near the footer: `CauseDeck is software for advocates. It does not provide legal services or legal advice, and it does not advertise or recommend any lawyer.` [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "The site ships no third-party scripts, no cookies and no tenant data; analytics, if enabled, is cookie-less and configured by env var `NEXT_PUBLIC_ANALYTICS_SRC` (unset by default)",
+   "quote": "Product visuals use only fictional, court-faithful sample data (fictional parties, realistic Madras HC and Karnataka HC nomenclature) and are labelled `Illustrative, sample data` [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "Fonts (Geist or Inter, Newsreader or Source Serif 4, Noto Sans Tamil and Kannada subsets) are self-hosted with `font-display: swap` and preloaded for the critical weights",
+   "quote": "Trust section lists true product facts only: data stored in India, India-only AI by default, nothing is sent or filed without you, no training on your data, every fact shows its source; each claim links to the relevant section of the security page [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Site uses `packages/ui` tokens; light and dark themes work with `next-themes` and respect system preference without flash",
+   "quote": "No claim of automation beyond L4: copy says `prepares` and `proposes`, never `files`, `sends` or `handles for you` [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Lighthouse CI on the home page is at least 95 for performance, accessibility, best practices and SEO, with budgets in `lighthouserc.json`",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Delivered as apps/site/lighthouserc.json and the lighthouse step of .github/workflows/site.yml; measured by the site workflow in CI (Lighthouse never runs locally)."
-  },
-  {
-   "id": "R10",
-   "quote": "axe reports zero serious violations on all routes in light and dark; skip link and focus order verified",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Delivered as e2e/site/smoke.spec.ts (axe fixture, skip-link and tab-order checks) run by .github/workflows/site.yml; Playwright is CI-only."
-  },
-  {
-   "id": "R11",
-   "quote": "Cloudflare Pages workflow deploys `main` to production and PRs to preview URLs, using secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` that may be absent in forks (job skips cleanly)",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Delivered as the deploy job in .github/workflows/site.yml (secret-presence guard, `main` = production, PR = preview); the actual deploy needs the real token (#107) and is only observable after merge."
-  },
-  {
-   "id": "R12",
-   "quote": "`_headers` and `_redirects` files set security headers (CSP without inline scripts, HSTS, Referrer-Policy, Permissions-Policy) and long cache for hashed assets",
+   "quote": "Primary CTA goes to `https://app.\u003ctld>/sign-in` (env-driven); no form collects lawyers' practice details or phone numbers; no newsletter popup [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R13",
-   "quote": "Visual baselines for header, footer and 404 in light and dark at 360, 768 and 1280",
+   "id": "R10",
+   "quote": "Lighthouse is at least 95 for performance, accessibility, best practices and SEO on mobile; LCP under 2.0 s on the CI profile; total JS under 120 KB gzip [type:e2e]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "Spec e2e/site/chrome.visual.spec.ts delivered in-lane; baselines are generated in the pinned Playwright image by the CI visual-update/e2e workflow (e2e.yml update_snapshots, visual-update.yml), never on dev machines."
+   "evidence": "site lighthouse job in .github/workflows/site.yml running apps/site/lighthouserc.json (assertions tightened in this change)"
+  },
+  {
+   "id": "R11",
+   "quote": "axe zero serious violations in light and dark; reduced-motion respected; all imagery has meaningful alt text or is decorative [type:e2e]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "site e2e job in .github/workflows/site.yml (e2e/site/landing.spec.ts, axe in light and dark projects)"
+  },
+  {
+   "id": "R12",
+   "quote": "Visual regression baselines exist for light and dark at 360, 768 and 1280 [type:e2e]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Spec e2e/site/landing.spec.ts is added; the PNG baselines can only be generated in the pinned Playwright image via the site.yml update_snapshots dispatch, so they are committed from that artifact"
+  },
+  {
+   "id": "R13",
+   "quote": "Copy is available through the i18n layer with `en` complete and `ta`/`kn` stubbed; Tamil and Kannada glyphs render with Noto Sans if a locale preview is toggled [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Page metadata, Open Graph image and `SoftwareApplication` JSON-LD are present; no `LegalService` schema [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/site/package.json",
-   "change": "Real scripts (dev: next dev, build: rule36 lint then next build then write-headers, typecheck, test, lint, lint:rule36); add deps next, react, react-dom, next-themes, zod, next-mdx-remote, @causedeck/ui (workspace: tokens, Button, Sheet, Badge, Separator, per issue Design spec); devDeps tailwindcss, @tailwindcss/postcss, postcss, @types/react, @types/react-dom, tsx, jsdom/@testing-library/react if component tests are needed. Package name stays @causedeck/site.",
+   "path": "apps/site/content/landing.ts",
+   "change": "Typed copy constants keyed by locale: en complete, ta and kn partial stubs falling back to en; includes the hero, problem strip, loop beats, provenance, trust claims with security-page anchors, courts, FAQ, CTA band and the exact positioning line. Fictional Madras HC and Karnataka HC sample data lives here too, with the label 'Illustrative, sample data'.",
    "requirements": [
-    "R1",
     "R2",
-    "R8"
+    "R3",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R13"
    ]
   },
   {
    "id": "D2",
-   "path": "pnpm-workspace.yaml",
-   "change": "Add catalog entry for next-mdx-remote (and any other missing dep) pinned to an exact version; pnpm-lock.yaml regenerated via pnpm install --lockfile-only.",
+   "path": "apps/site/components/landing/hero.tsx",
+   "change": "Hero section: headline, subhead, primary CTA 'Start free', secondary CTA 'See how a court day runs' (anchors to the loop section), board preview on the right at about 60% width on desktop and a snap-scrolling strip at 360 px.",
    "requirements": [
-    "R2"
+    "R2",
+    "R3",
+    "R9"
    ]
   },
   {
    "id": "D3",
-   "path": "pnpm-lock.yaml",
-   "change": "Regenerated lockfile for the new site dependencies.",
+   "path": "apps/site/components/landing/court-day-preview.tsx",
+   "change": "Non-interactive Court-Day Board built from @causedeck/ui/patterns (court item chip, StageBadge, ProvenanceChip) with fictional data; aria-hidden with an adjacent visible text description; the 'Illustrative, sample data' label; CSS-only slow parallax and one overnight-change cycle, both off under prefers-reduced-motion.",
    "requirements": [
-    "R1"
+    "R2",
+    "R6",
+    "R11"
    ]
   },
   {
    "id": "D4",
-   "path": "apps/site/next.config.ts",
-   "change": "output 'export', images.unoptimized, trailingSlash, transpilePackages [@causedeck/ui,@causedeck/config], poweredByHeader false, reactStrictMode; no rewrites/redirects/headers() (unsupported in export), no middleware.",
+   "path": "apps/site/components/landing/sections.tsx",
+   "change": "Problem strip, loop (Capture, Prepare, Execute, Follow up), provenance, trust (levels of automation in plain words, 7-day undo, claims link to /security/ anchors), courts, FAQ (includes 'Is this legal advice? No.') and CTA band. Server components; the FAQ uses native details/summary or the ui accordion only if it adds no meaningful JS.",
    "requirements": [
-    "R1"
+    "R4",
+    "R7",
+    "R8",
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D5",
-   "path": "apps/site/tsconfig.json",
-   "change": "Include app, lib, components, scripts, next-env.d.ts, .next/types and the Next plugin; keep src.",
+   "path": "apps/site/app/page.tsx",
+   "change": "Compose the landing sections; keep pageMetadata and the SoftwareApplication JSON-LD (no LegalService); remove the placeholder.",
    "requirements": [
-    "R1"
+    "R2",
+    "R14"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/site/postcss.config.mjs",
-   "change": "Tailwind v4 postcss plugin, same as apps/web/postcss.config.mjs.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "apps/site/vitest.config.ts",
-   "change": "Vitest config covering src, lib, scripts and component tests (jsdom for tsx tests).",
-   "requirements": [
-    "R2",
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D8",
    "path": "apps/site/lib/env.ts",
-   "change": "zod env schema: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL (default https://app.causedeck.example), NEXT_PUBLIC_ANALYTICS_SRC (optional, https only); invalid values fail the build.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "apps/site/lib/frontmatter.ts",
-   "change": "zod frontmatter schema (title, description, date, noindex default false; strict) and parse helper that throws with the file path.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/site/lib/mdx.ts",
-   "change": "Read content/**/*.mdx only (not the existing .md learn/developers files), parse frontmatter via compileMDX, validate with D9, list slugs for generateStaticParams, fail the build on invalid frontmatter or duplicate titles/descriptions.",
-   "requirements": [
-    "R2",
-    "R3"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "apps/site/lib/seo.ts",
-   "change": "Metadata helper (unique title, description, canonical, openGraph, twitter, robots noindex), SoftwareApplication JSON-LD builder, sitemap entry builder that omits noindex pages.",
-   "requirements": [
-    "R3",
-    "R4"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "apps/site/app/layout.tsx",
-   "change": "Root layout: self-hosted fonts, next-themes ThemeProvider (attribute class, system default), skip link first in tab order, header, footer, main landmark, optional analytics script only when NEXT_PUBLIC_ANALYTICS_SRC is set.",
-   "requirements": [
-    "R6",
-    "R7",
-    "R8"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "apps/site/app/fonts.ts",
-   "change": "next/font/local from packages/ui/fonts (Geist, Newsreader roman preloaded; Noto Sans Tamil and Kannada subsets), display swap; mirror apps/web/app/fonts.ts.",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/site/app/globals.css",
-   "change": "Tailwind v4 import plus the @causedeck/ui token CSS files without ui fonts.css (as apps/web/app/globals.css), @source for packages/ui, 150 ms hover/focus transitions disabled under reduced motion, focus ring 3:1.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/site/app/page.tsx",
-   "change": "Placeholder hero with page metadata and the SoftwareApplication JSON-LD; replaced later by #90.",
-   "requirements": [
-    "R3",
-    "R4"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/site/app/(content)/[...slug]/page.tsx",
-   "change": "Static MDX route: generateStaticParams from lib/mdx, generateMetadata from frontmatter, dynamicParams false, rendered in Prose.",
-   "requirements": [
-    "R2",
-    "R3"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "apps/site/content/about.mdx",
-   "change": "One seed MDX page with valid frontmatter and Rule-36-safe copy, plus one `noindex: true` draft page (content/legal/draft-notice.mdx) to prove the noindex path; no real legal text (#95).",
-   "requirements": [
-    "R2",
-    "R3"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "apps/site/app/sitemap.ts",
-   "change": "force-static sitemap from home + non-noindex MDX pages with absolute canonical URLs.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "apps/site/app/robots.ts",
-   "change": "force-static robots allowing all and pointing at the sitemap.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/site/app/not-found.tsx",
-   "change": "Calm, helpful 404 with links home and to the app.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "apps/site/app/opengraph-image.tsx",
-   "change": "force-static OG image via next/og ImageResponse using the self-hosted font files read from packages/ui/fonts.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "apps/site/components/site-header.tsx",
-   "change": "Header: logo, nav inline from 768, Sign in link to NEXT_PUBLIC_APP_URL, menu Sheet below 768; no directory links.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "apps/site/components/site-footer.tsx",
-   "change": "Footer: product, trust and legal links, India data note; no lawyer listing links.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "apps/site/components/theme-toggle.tsx",
-   "change": "Theme toggle client component (light/dark/system) with accessible label.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D25",
-   "path": "apps/site/components/prose.tsx",
-   "change": "Prose wrapper and MDX component map for rendered content.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D26",
-   "path": "apps/site/scripts/rule36-lint.ts",
-   "change": "Denylist/pattern lint over content/**/*.mdx, app/**/*.tsx, components/**/*.tsx copy and component/file names (Testimonial*, Directory*); exports a pure scan function plus a CLI exiting non-zero on findings; wired into the build script.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D27",
-   "path": "apps/site/scripts/write-headers.ts",
-   "change": "Post-build: scan out/**/*.html inline scripts, emit out/_headers (merging public/_headers) with per-route CSP script-src sha256 hashes and no unsafe-inline, HSTS, Referrer-Policy, Permissions-Policy, X-Content-Type-Options, immutable cache for /_next/static/*.",
-   "requirements": [
-    "R12",
-    "R1"
-   ]
-  },
-  {
-   "id": "D28",
-   "path": "apps/site/public/_redirects",
-   "change": "Redirect rules (e.g. /app to the app origin placeholder, none that need a server).",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D29",
-   "path": "apps/site/public/_headers",
-   "change": "Static base headers and cache rules copied into out/ (CSP script hashes appended by D27).",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D30",
-   "path": "apps/site/lighthouserc.json",
-   "change": "LHCI config: serve out/ statically, home page, min score 0.95 for performance, accessibility, best-practices, seo, plus resource budgets.",
+   "change": "Expose appUrlConfigured (true when NEXT_PUBLIC_APP_URL was provided and non-empty) without changing the existing defaults or the siteEnv shape's current fields. Add a helper (e.g. apps/site/lib/landing.ts) that returns `${appUrl}/sign-in` or '/contact/' when unset.",
    "requirements": [
     "R9"
    ]
   },
   {
-   "id": "D31",
-   "path": ".github/workflows/site.yml",
-   "change": "Jobs: build+lint+test (turbo, pinned actions as in ci.yml), Lighthouse CI, Playwright smoke/axe/visual in the pinned image, deploy to Cloudflare Pages (main = production, PR = preview) guarded by presence of CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID so forks skip cleanly; least-privilege permissions.",
+   "id": "D7",
+   "path": "apps/site/app/contact/page.tsx",
+   "change": "Static /contact page with a single mailto link and no form; noindex not required. The address is derived from the site host. Add it to the sitemap list used by app/sitemap.ts if that list is explicit.",
    "requirements": [
-    "R9",
-    "R10",
-    "R11",
-    "R13"
+    "R9"
    ]
   },
   {
-   "id": "D32",
-   "path": "e2e/site/smoke.spec.ts",
-   "change": "Playwright over every route of the exported site: status, unique title/description/canonical, no cookies and no third-party requests, theme no-flash, skip link first tab stop, axe zero serious violations in light and dark, robots/sitemap, headers file content.",
+   "id": "D8",
+   "path": "apps/site/components/site-footer.tsx",
+   "change": "Replace the bottom line with the exact positioning sentence required by the issue (keep 'Customer data is stored in India.' as a separate sentence only if it is a true, sourced fact).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "apps/site/app/globals.css",
+   "change": "Landing-only styles: scroll-snap strip, reveal and parallax keyframes (150-250 ms transitions), wrapped so prefers-reduced-motion removes them; content must never be hidden when JS or motion is off.",
    "requirements": [
     "R3",
-    "R6",
-    "R8",
-    "R10"
-   ]
-  },
-  {
-   "id": "D33",
-   "path": "e2e/site/chrome.visual.spec.ts",
-   "change": "Visual spec for header, footer and 404 (light/dark at 360/768/1280); baselines generated in CI.",
-   "requirements": [
-    "R13"
-   ]
-  },
-  {
-   "id": "D34",
-   "path": "e2e/playwright.site.config.ts",
-   "change": "Separate Playwright config serving apps/site/out (no DB, no apps/web build), 360/768/1280 x light/dark projects, same screenshot options as playwright.config.ts.",
-   "requirements": [
-    "R10",
-    "R13"
-   ]
-  },
-  {
-   "id": "D35",
-   "path": "turbo.json",
-   "change": "Add `out/**` to build outputs.",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D36",
-   "path": "apps/site/README.md",
-   "change": "Local dev, content authoring (frontmatter), Rule 36 lint, headers/CSP generation, env vars, deployment and secrets.",
-   "requirements": [
-    "R1",
-    "R2",
     "R11"
    ]
   },
   {
-   "id": "D37",
-   "path": "apps/site/src/site-scaffold.test.ts",
-   "change": "Unit tests: frontmatter schema accepts valid and rejects invalid (and invalid fails mdx load), seo helpers (unique canonical/OG/Twitter, noindex omitted from sitemap), JSON-LD only SoftwareApplication and a source scan asserting no LegalService/Attorney/Review/AggregateRating, rule36 scan fails on each denylisted term and Testimonial*/Directory* names, env schema, no middleware file and output export in next config, no third-party script URLs. May be split into lib/*.test.ts.",
+   "id": "D10",
+   "path": "apps/site/src/landing.test.ts",
+   "change": "Unit tests (vitest, node): hero keeps 'software for advocates' and never self-describes as 'legal services'; scanText from scripts/rule36-lint.ts reports nothing on content/landing.ts and components/landing; no 'files', 'sends' or 'handles for you' as claims (allow the negated footer line); en complete and ta/kn stubs fall back to en; no LegalService in JSON-LD and the type is SoftwareApplication; the CTA helper returns the sign-in URL or /contact/; the required footer sentence is verbatim.",
    "requirements": [
-    "R1",
+    "R4",
+    "R8",
+    "R13",
+    "R14",
+    "R9",
+    "R5"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "e2e/site/landing.spec.ts",
+   "change": "Playwright (site config): above-the-fold elements in view per project; both CTAs; footer positioning line; 'Illustrative, sample data' label; trust links point at /security/ anchors; no form, no input and no cookies; axe in light and dark; an @visual full-page screenshot per project, skipped when no baseline exists, as in chrome.visual.spec.ts; Rule 36 phrases absent from page text.",
+   "requirements": [
     "R2",
     "R3",
-    "R4",
     "R5",
     "R6",
+    "R7",
+    "R9",
+    "R11",
     "R12"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "e2e/site/smoke.spec.ts",
+   "change": "Add /contact/ to ROUTES and keep titles and descriptions unique.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/site/lighthouserc.json",
+   "change": "Tighten the script budget to 122880 B (120 KB) and add an LCP assertion under 2000 ms. Keep the 0.95 category floors.",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": ".forge/design/landing/DESIGN_SPEC.md",
+   "change": "FORGE:DESIGN_SPEC for the landing page plus a critique log with at least one render-critique iteration and the perceptual-negatives check. Add with git add -f (the dir is gitignored). Screenshots are taken from a local static serve of the export; no browsers are installed, so use the browser already available or record that the render was produced by CI artifacts.",
+   "requirements": [
+    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing plain-markdown content and its loaders/tests: apps/site/content/learn/**, apps/site/content/developers/api.md, apps/site/src/learn/*, apps/site/src/developer-docs.test.ts, apps/site/src/index.ts (appName '@causedeck/site') and src/index.test.ts keep passing unchanged."
+   "what": "The existing pageMetadata and softwareApplicationJsonLd contracts in apps/site/lib/seo.ts, and unique title and description per route (e2e/site/smoke.spec.ts)."
   },
   {
    "id": "P2",
-   "what": "Package name @causedeck/site and the root turbo task names (build, lint, typecheck, test); apps/web, apps/admin and e2e/playwright.config.ts (apps/web harness) are not modified."
+   "what": "apps/site/src/index.ts, src/learn/* and the .md content under apps/site/content/learn and content/developers (tests: src/learn/learn.test.ts, src/developer-docs.test.ts, src/site-scaffold.test.ts)."
   },
   {
    "id": "P3",
-   "what": "No server runtime in the site: no middleware, no route handlers that are dynamic, no server actions, no imports of @causedeck/core, db, auth, adapters (tenant data); Node runtime rule in packages/config/eslint/next.js."
+   "what": "Static export with no server runtime, the CSP generation in apps/site/scripts/write-headers.ts (no unsafe-inline scripts: do not add inline scripts beyond JSON-LD and what Next emits) and zero third-party requests and no cookies."
   },
   {
    "id": "P4",
-   "what": "Rule 36 positioning: no advocate names, rankings, testimonials, outcomes, directory or lead-capture copy anywhere in new public copy."
+   "what": "The shared header and footer link structure used by the chrome visual baselines (e2e/site/chrome.visual.spec.ts); the footer change in D8 intentionally changes only the bottom line."
+  },
+  {
+   "id": "P5",
+   "what": "apps/site must not import @causedeck/core, db or auth (the site holds no tenant data)."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/site exec vitest run"
+   "command": "pnpm --filter @causedeck/site exec vitest run src/landing.test.ts src/site-scaffold.test.ts src/learn src/developer-docs.test.ts lib scripts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/site exec tsc --noEmit"
-  },
-  {
-   "id": "V3",
    "command": "pnpm --filter @causedeck/site exec tsx scripts/rule36-lint.ts"
   },
   {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/site exec eslint app lib components scripts src vitest.config.ts next.config.ts"
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/site exec tsc --noEmit"
   },
   {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/site build && test -f apps/site/out/index.html && test -f apps/site/out/sitemap.xml && test -f apps/site/out/robots.txt && test -f apps/site/out/_headers && test ! -f apps/site/.next/server/middleware.js"
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/site exec eslint app components content lib scripts src"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Render MDX with next-mdx-remote/rsc compileMDX (new catalog dependency) instead of @next/mdx.",
-   "justification": "One dependency, build-time only in static export, and frontmatter is parsed by the same call so the zod schema can fail the build; @next/mdx would add @mdx-js/loader, @mdx-js/react, @types/mdx and a separate frontmatter parser. No MDX package exists in pnpm-workspace.yaml catalog.",
+   "choice": "Copy lives in a plain typed content/landing.ts keyed by locale (en complete, ta/kn partial with fallback) and does not add @causedeck/i18n as a dependency of the site.",
+   "justification": "The issue names apps/site/content/landing.ts as the i18n-ready copy constant. The site has no next-intl setup and packages/i18n is the app catalog (packages/i18n/src/__tests__/catalog.test.ts). Adding a workspace dependency would need its own architecture justification.",
    "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "Add @causedeck/ui as a workspace dependency of @causedeck/site (D1).",
-   "justification": "Issue Context requires 'Shared Button, Sheet, Badge, Separator from packages/ui' and tokens; mirrors apps/web (apps/web/package.json dependencies, globals.css:6-12). Spike §2 lists packages/ui as the shared design system for apps/web and apps/site.",
+   "choice": "Trust claims link to planned /security/#anchor targets even though the security page (#91) is not merged yet; the e2e spec asserts the href shape and does not follow them.",
+   "justification": "The issue requires the links, and #91 is open and out of scope here. Following the links would 404 until #91 lands; the anchors must be reconciled when #91 merges.",
    "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Generate per-route CSP script-src hashes in a post-build step rather than relying on unsafe-inline.",
-   "justification": "Issue requires 'CSP without inline scripts'; Next static export and next-themes both emit inline scripts, and Cloudflare Pages _headers cannot carry per-request nonces. apps/web uses a nonce proxy (apps/web/next.config.ts:38 comment) which is unavailable in static export.",
-   "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Keep the package name @causedeck/site; the acceptance command is run as pnpm --filter @causedeck/site build.",
-   "justification": "apps/site/package.json:2, src/index.ts:2 and src/index.test.ts depend on it; all workspace packages use the @causedeck/ scope.",
+   "choice": "Reveal and parallax motion is CSS-only (scroll-driven or intersection-free) and guarded by prefers-reduced-motion; no animation library is added.",
+   "justification": "The 120 KB gzip JS budget (R10) and the static CSP in apps/site/scripts/write-headers.ts:32-66 argue against extra client JS; e2e/playwright.site.config.ts:22 already runs with reduced motion.",
    "source": "precedent"
   },
   {
-   "id": "K5",
-   "choice": "Separate e2e/playwright.site.config.ts instead of adding projects to e2e/playwright.config.ts.",
-   "justification": "The main config's webServer builds apps/web and global setup needs the Postgres Compose stack (e2e/playwright.config.ts:121-135); the site needs neither.",
+   "id": "K4",
+   "choice": "Reuse app/opengraph-image.tsx (build-time OG for the root route) for the landing OG image instead of committing public/og/landing.png.",
+   "justification": "apps/site/app/opengraph-image.tsx already generates the OG image at build for '/'. A committed binary would drift from the page; the issue's own wording is 'generated from the page at build'.",
    "source": "precedent"
   }
  ]

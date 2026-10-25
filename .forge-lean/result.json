@@ -1,107 +1,106 @@
 {
  "status": "fixed",
- "summary": "Fix actionlint SC2086 in site workflow; declare non-contract support files via amendments",
+ "summary": "Landing page replaces the #89 placeholder: hero with Court-Day Board preview, loop, provenance, trust, courts, FAQ, CTA band, contact fallback, tests and e2e/Lighthouse instrumentation",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "apps/site/next.config.ts:11"
+   "evidence": ".forge/design/landing/DESIGN_SPEC.md:1"
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "apps/site/lib/frontmatter.ts:11"
+   "evidence": "apps/site/components/landing/hero.tsx:12"
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "apps/site/lib/seo.ts:25"
+   "evidence": "apps/site/content/landing.ts:51"
   },
   {
    "id": "R4",
    "status": "implemented",
-   "evidence": "apps/site/src/site-scaffold.test.ts"
+   "evidence": "apps/site/src/landing.test.ts:46"
   },
   {
    "id": "R5",
    "status": "implemented",
-   "evidence": "apps/site/scripts/rule36-lint.ts:10"
+   "evidence": "apps/site/content/landing.ts:9"
   },
   {
    "id": "R6",
    "status": "implemented",
-   "evidence": "apps/site/lib/env.ts:15"
+   "evidence": "apps/site/components/landing/court-day-preview.tsx:1"
   },
   {
    "id": "R7",
    "status": "implemented",
-   "evidence": "apps/site/app/fonts.ts:7"
+   "evidence": "apps/site/components/landing/sections.tsx:107"
   },
   {
    "id": "R8",
    "status": "implemented",
-   "evidence": "apps/site/app/layout.tsx:33"
+   "evidence": "apps/site/src/landing.test.ts:70"
   },
   {
    "id": "R9",
    "status": "implemented",
-   "evidence": "apps/site/lighthouserc.json",
-   "instrumented": true
+   "evidence": "apps/site/lib/landing.ts:6"
   },
   {
    "id": "R10",
    "status": "implemented",
-   "evidence": "e2e/site/smoke.spec.ts",
+   "evidence": "apps/site/lighthouserc.json:23",
    "instrumented": true
   },
   {
    "id": "R11",
    "status": "implemented",
-   "evidence": ".github/workflows/site.yml deploy job",
+   "evidence": "e2e/site/landing.spec.ts:100",
    "instrumented": true
   },
   {
    "id": "R12",
    "status": "implemented",
-   "evidence": "apps/site/public/_headers"
+   "evidence": "e2e/site/landing.spec.ts:118",
+   "instrumented": true
   },
   {
    "id": "R13",
    "status": "implemented",
-   "evidence": "e2e/site/chrome.visual.spec.ts",
-   "instrumented": true
+   "evidence": "apps/site/content/landing.ts:218"
+  },
+  {
+   "id": "R14",
+   "status": "implemented",
+   "evidence": "apps/site/app/page.tsx:12"
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/site exec vitest run",
+   "command": "pnpm --filter @causedeck/site exec vitest run src/landing.test.ts src/site-scaffold.test.ts src/learn src/developer-docs.test.ts lib scripts",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/site exec tsc --noEmit",
-   "exit": 0
-  },
-  {
-   "id": "V3",
    "command": "pnpm --filter @causedeck/site exec tsx scripts/rule36-lint.ts",
    "exit": 0
   },
   {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/site exec eslint app lib components scripts src vitest.config.ts next.config.ts",
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/site exec tsc --noEmit",
    "exit": 0
   },
   {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/site build && artifact checks",
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/site exec eslint app components content lib scripts src",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "pnpm --filter @causedeck/site exec vitest run",
+   "command": "pnpm --filter @causedeck/site exec vitest run src/landing.test.ts",
    "result": "pass",
    "fails_without_fix": true
   }
@@ -110,69 +109,41 @@
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "all deliver requirements mapped above; out-of-band ones instrumented"
+   "evidence": "R1-R14 mapped in implementation.md; out-of-band R10-R12 delivered by lighthouserc.json and e2e/site/landing.spec.ts"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "existing src tests pass (28 total)"
+   "evidence": "site-scaffold, learn and developer-docs tests pass (V1); header/footer links unchanged"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "forgedock check PASS V1-V5"
+   "evidence": "D1-D14 changed as described; P1-P5 intact; V1-V4 and forgedock check pass"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "changes limited to apps/site, e2e/site, workflow, turbo.json, workspace files"
+   "evidence": "git show --stat HEAD lists only deliverable paths plus apps/site/src/landing.test.ts"
   }
  ],
- "amendments": [
-  {
-   "kind": "add-deliverable",
-   "path": "pnpm-lock.yaml",
-   "why": "hotspot-exempt: generated lockfile; the growth is the resolved dependency graph of the new @causedeck/site dependencies (next, next-mdx-remote, next-themes, tailwind, tsx) from `pnpm install --lockfile-only`, and cannot be split into another module."
-  },
-  {
-   "kind": "note-unrelated-ci-failure",
-   "path": "packages/intelligence/src/pipeline/pipeline.test.ts",
-   "why": "CI failure is a wall-clock budget assertion (20.26 s vs 20 s) in packages/intelligence on a shared runner. This branch changes nothing under packages/intelligence or its dependencies (apps/site, e2e/site, workflow, workspace files only), so the failure is a timing flake unrelated to #89; no code change made. Re-run the shard."
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "apps/site/eslint.config.js",
-   "why": "ignore the gitignored static export out/ so V4/CI lint does not scan build output"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "e2e/tsconfig.json",
-   "why": "include e2e/site so the new Playwright site specs are typechecked"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "apps/site/next-env.d.ts",
-   "why": "Next-generated types file required by tsconfig; committed formatted for the Prettier check"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "apps/site/content/legal/draft-notice.mdx",
-   "why": "the legal draft flagged noindex that R3 requires, exercised by the scaffold test"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "e2e/site/static-server.mjs",
-   "why": "static server for out/ applying _headers, used by playwright.site.config.ts (D34)"
-  },
-  {
-   "kind": "note-unrelated-ci-failure",
-   "path": "packages/core",
-   "why": "gitleaks flags test fixtures in packages/core (status.test.ts, automation handlers.test.ts) from earlier history, untouched by this branch"
-  }
- ],
+ "amendments": [],
  "facts": {
   "decisions": [
-   "Duplicate metadata/dynamic export names across app route files are Next.js route-file conventions, kept by design (not a contract change)."
-  ]
+   "CTA falls back to /contact/ via appUrlConfigured when NEXT_PUBLIC_APP_URL is unset"
+  ],
+  "rejected": [
+   {
+    "approach": "Commit public/og/landing.png",
+    "why": "app/opengraph-image.tsx already generates the OG image at build"
+   }
+  ],
+  "hotspots": [
+   {
+    "at": "apps/site/components/landing/court-day-preview.tsx:1",
+    "why": "client component pulling ui patterns; its JS size is only measured by CI Lighthouse"
+   }
+  ],
+  "conventions": []
  }
 }

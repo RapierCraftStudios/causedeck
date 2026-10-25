@@ -23,9 +23,9 @@ export function CourtDayPreview({ locale = 'en' }: { locale?: LandingLocale }) {
           <div className="cd-snap-strip flex gap-4 md:grid md:grid-cols-2">
             {SAMPLE_BOARD.map((column) => (
               <section key={column.court} className="cd-snap-item min-w-[17rem] flex-1 space-y-3">
-                <h3 className="text-ink-muted text-xs font-medium tracking-wide uppercase">
+                <p className="text-ink-muted text-xs font-medium tracking-wide uppercase">
                   {column.court}
-                </h3>
+                </p>
                 {column.items.map((item) => (
                   <div
                     key={item.itemNo}

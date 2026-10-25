@@ -1,43 +1,46 @@
 ### Approach
-Continued the checkpointed branch: the static Next.js site was largely in place. Finished the remaining contract deliverables (README, scaffold regression test, `@causedeck/config` in transpilePackages) and fixed lint errors.
+Replace the #89 placeholder home page with the landing page: copy in a typed, locale-keyed `content/landing.ts`, server-component sections, and one client component (the illustrative Court-Day Board built from `@causedeck/ui/patterns`). Motion is CSS-only and removed under reduced motion. The CTA helper falls back to `/contact/` (a mailto page) when `NEXT_PUBLIC_APP_URL` is not set.
 
 ### Changes
-- apps/site/next.config.ts: transpilePackages now includes @causedeck/config (D4).
-- apps/site/README.md: commands, content, env, deploy (D36).
-- apps/site/src/site-scaffold.test.ts: regression tests for R1-R6, R12 (D37).
-- apps/site/lib/mdx.ts, scripts/rule36-lint.ts, scripts/write-headers.ts: lint fixes only.
-- Earlier session: all other deliverables (see git diff).
+- `apps/site/content/landing.ts`: copy (en complete, ta/kn stubs falling back), the positioning line, the sample label, fictional Madras HC and Karnataka HC sample board.
+- `apps/site/components/landing/{hero,court-day-preview,sections}.tsx`: hero, aria-hidden and inert board preview, problem strip, loop, provenance, trust, courts, FAQ, CTA band.
+- `apps/site/app/page.tsx`: composes the sections, keeps metadata and SoftwareApplication JSON-LD.
+- `apps/site/lib/env.ts`, `lib/landing.ts`: `appUrlConfigured`, sign-in CTA href and contact address.
+- `apps/site/app/contact/page.tsx`: mailto-only contact page.
+- `apps/site/components/site-footer.tsx`: exact positioning sentence.
+- `apps/site/app/globals.css`: snap strip, one-cycle change animation, scroll-driven parallax and reveal, all under `prefers-reduced-motion: no-preference`.
+- `apps/site/lighthouserc.json`: script budget 120 KB, LCP under 2000 ms.
+- `apps/site/src/landing.test.ts`: unit tests. `e2e/site/landing.spec.ts`, `e2e/site/smoke.spec.ts`: e2e spec and the /contact/ route.
+- `.forge/design/landing/{DESIGN_SPEC,CRITIQUE}.md`: design spec and critique log (force-added, the dir is gitignored).
 
 ### Acceptance Criteria Status
-- R1 ✅ next.config.ts:11, build output verified (V5)
-- R2 ✅ lib/frontmatter.ts, lib/mdx.ts
-- R3 ✅ lib/seo.ts, app/sitemap.ts, app/robots.ts
-- R4 ✅ lib/seo.ts, src/site-scaffold.test.ts (JSON-LD test)
-- R5 ✅ scripts/rule36-lint.ts
-- R6 ✅ lib/env.ts, app/layout.tsx
-- R7 ✅ app/fonts.ts
-- R8 ✅ app/layout.tsx, globals.css, theme-toggle.tsx
-- R9 ✅ (instrumented) lighthouserc.json, .github/workflows/site.yml
-- R10 ✅ (instrumented) e2e/site/smoke.spec.ts
-- R11 ✅ (instrumented) site.yml deploy job
-- R12 ✅ public/_headers, scripts/write-headers.ts
-- R13 ✅ (instrumented) e2e/site/chrome.visual.spec.ts
+- R1 ✅ (manual) `.forge/design/landing/DESIGN_SPEC.md:1`, `CRITIQUE.md:3`; a render critique on real pixels is not possible on this host, so the follow-ups are recorded for the CI render.
+- R2 ✅ `components/landing/hero.tsx:12-35`, `e2e/site/landing.spec.ts:19`
+- R3 ✅ `content/landing.ts:51-55`, `src/landing.test.ts:33`
+- R4 ✅ `src/landing.test.ts:46-56`
+- R5 ✅ `content/landing.ts:9`, `components/site-footer.tsx`, `e2e/site/landing.spec.ts:47`
+- R6 ✅ `content/landing.ts` (SAMPLE_BOARD, SAMPLE_LABEL), `components/landing/court-day-preview.tsx`
+- R7 ✅ `content/landing.ts` trust claims, `components/landing/sections.tsx` TrustSection
+- R8 ✅ `src/landing.test.ts` automation test
+- R9 ✅ `lib/landing.ts:6`, `src/landing.test.ts` CTA tests
+- R10 ✅ instrumented: `apps/site/lighthouserc.json` (not measured here)
+- R11 ✅ instrumented: `e2e/site/landing.spec.ts` axe test; CSS reduced-motion guards in `globals.css`
+- R12 ✅ instrumented: `e2e/site/landing.spec.ts` @visual test; PNG baselines come from the CI update_snapshots dispatch
+- R13 ✅ `content/landing.ts` `landingCopy`, `src/landing.test.ts` locales tests
+- R14 ✅ `app/page.tsx`, `src/landing.test.ts` metadata test
 
 ### Verification
-V1 vitest: pass (28 tests). V2 tsc: pass. V3 rule36 lint: pass. V4 eslint: pass. V5 build + artifact checks: pass. `forgedock check` PASS. The scaffold test file did not exist before this change, so it cannot pass without the site code.
+- V1 `vitest run src/landing.test.ts src/site-scaffold.test.ts src/learn src/developer-docs.test.ts lib scripts`: 44 passed. The new test file fails without the change (its imports do not exist before it).
+- V2 `tsx scripts/rule36-lint.ts`: passed.
+- V3 `tsc --noEmit` in `@causedeck/site`: clean.
+- V4 `eslint app components content lib scripts src`: clean. `e2e` spec files also lint clean. Prettier applied to changed files.
+- Not run locally by rule: `next build`, Playwright, Lighthouse.
 
 ### Notes
-pnpm-lock.yaml growth (about 1000 lines) is generated dependency resolution for the new site deps (hotspot-exempt amendment). Duplicate `metadata`/`dynamic` export names are Next.js route-file conventions.
-Env vars: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_ANALYTICS_SRC (unset by default). No devdocs freshness script in repo.
+- The CTA falls back to `/contact/` when `NEXT_PUBLIC_APP_URL` is unset, so CI builds without that variable link to the contact page; the e2e accepts either target.
+- `/contact/` is not in the sitemap (`app/sitemap.ts` is not a deliverable).
+- Trust links point at `/security/#...` anchors that #91 must provide.
+- The JS size of the Provenance Chip (client) is unmeasured until CI runs Lighthouse.
+- The footer line changed, so the existing footer visual baselines need regenerating in CI.
 
-### Duplicate export names (reviewed, intentionally kept)
-`metadata` (layout.tsx, page.tsx, not-found.tsx) and `dynamic` (opengraph-image.tsx, robots.ts, sitemap.ts) are Next.js App Router file-convention exports. Next reads them by exact name from each route file, so renaming one silently drops that page's metadata or its force-static setting (and `output: 'export'` needs the latter on robots, sitemap and the OG image). They are per-route file exports, not shared module APIs: nothing imports them, and no registry, map or test is keyed by them. No code change made.
-
-### CI lint fix
-CI lint log was unavailable; reproduced locally. `eslint .` in apps/site linted the gitignored `out/` static export (thousands of errors in minified chunks): added `out/**` to the ignores in apps/site/eslint.config.js. `e2e/site/smoke.spec.ts` had a `no-unnecessary-condition` error on `document.activeElement?.`: rewritten with an explicit `Element | null` check. Site and e2e eslint, prettier and e2e tsc pass.
-
-## CI lint fix
-The lint job runs Prettier on changed files; the committed apps/site/next-env.d.ts (generated by Next) failed `prettier --check`. Reformatted it with prettier. ESLint on apps/site and e2e passes locally.
-
-## CI test failure (not caused by this branch)
-`@causedeck/intelligence` pipeline.test.ts "processes 20 text pages..." failed at 20.26 s against a 20 s wall-clock budget on a loaded runner. The branch does not touch packages/intelligence (git diff against the base is empty there), so this is a timing flake. No code change; recorded as an amendment in result.json. Re-run the shard.
+- Fix: board preview column labels are now <p>, not <h3>, so the heading order is h1 → h2 (court-day-preview.tsx).

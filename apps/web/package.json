@@ -34,6 +34,7 @@
     "@types/react-dom": "catalog:",
     "@vitest/browser": "catalog:",
     "esbuild": "catalog:",
+    "fake-indexeddb": "catalog:",
     "eslint": "catalog:",
     "jsdom": "catalog:",
     "playwright": "catalog:",

@@ -5043,6 +5043,61 @@ export type Messages = {
       };
     };
   };
+  offline: {
+    title: string;
+    body: string;
+    banner: {
+      offline: string;
+      savedAt: string;
+      stale: string;
+      backOnline: string;
+    };
+    sync: {
+      label: string;
+      idle: string;
+      syncing: string;
+      pending: string;
+      failed: string;
+      retry: string;
+      lastSynced: string;
+    };
+    courtDay: {
+      savedFor: string;
+      notSaved: string;
+      unavailable: string;
+    };
+    brief: {
+      savedFor: string;
+      notSaved: string;
+      unavailable: string;
+    };
+    outbox: {
+      queued: string;
+      uploading: string;
+      failed: string;
+      sent: string;
+      conflict: string;
+    };
+    storage: {
+      title: string;
+      used: string;
+      days: string;
+      clear: string;
+      cleared: string;
+      unsupported: string;
+    };
+    privacy: {
+      title: string;
+      body: string;
+      lostPhone: string;
+      clearConfirm: string;
+    };
+    errors: {
+      decrypt: string;
+      quota: string;
+      unknown: string;
+    };
+  };
   error: {
     title: string;
     description: string;
@@ -5050,9 +5105,5 @@ export type Messages = {
   };
   notFound: {
     title: string;
-  };
-  offline: {
-    title: string;
-    body: string;
   };
 };

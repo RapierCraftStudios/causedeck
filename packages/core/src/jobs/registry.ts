@@ -45,6 +45,7 @@ import { deletionTick } from './definitions/deletion-tick.ts';
 import { boardPoll } from './definitions/board-poll.ts';
 import { causelistPoll } from './definitions/causelist-poll.ts';
 import { noticesPoll } from './definitions/notices-poll.ts';
+import { statusPublish } from './definitions/status-publish.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { memoryErase } from './definitions/memory-erase.ts';
@@ -208,6 +209,7 @@ export const registry = createRegistry([
   causelistPoll,
   boardPoll,
   noticesPoll,
+  statusPublish,
   judgmentAlertScan,
   portfolioAlertScan,
   statusPoll,
@@ -268,6 +270,7 @@ export type JobMap = RegistryMap<
     typeof causelistPoll,
     typeof boardPoll,
     typeof noticesPoll,
+    typeof statusPublish,
     typeof judgmentAlertScan,
     typeof portfolioAlertScan,
     typeof statusPoll,

@@ -153,6 +153,11 @@ export {
   type CauseListFetcherFactory,
 } from './definitions/causelist-poll.ts';
 export {
+  STATUS_PUBLISH_CRON,
+  runStatusPublish,
+  statusPublish,
+} from './definitions/status-publish.ts';
+export {
   NOTICES_POLL_CRON,
   noticesPoll,
   runNoticesPoll,

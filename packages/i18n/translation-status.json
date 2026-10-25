@@ -3232,7 +3232,13 @@
     "whatsappLink.error.consent": "draft",
     "whatsappLink.error.invalid": "draft",
     "whatsappLink.error.conflict": "draft",
-    "whatsappLink.error.generic": "draft"
+    "whatsappLink.error.generic": "draft",
+    "status.components.database": "draft",
+    "status.components.storage": "draft",
+    "status.components.court": "draft",
+    "status.states.operational": "draft",
+    "status.states.degraded": "draft",
+    "status.states.down": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -6457,6 +6463,12 @@
     "whatsappLink.error.consent": "draft",
     "whatsappLink.error.invalid": "draft",
     "whatsappLink.error.conflict": "draft",
-    "whatsappLink.error.generic": "draft"
+    "whatsappLink.error.generic": "draft",
+    "status.components.database": "draft",
+    "status.components.storage": "draft",
+    "status.components.court": "draft",
+    "status.states.operational": "draft",
+    "status.states.degraded": "draft",
+    "status.states.down": "draft"
   }
 }

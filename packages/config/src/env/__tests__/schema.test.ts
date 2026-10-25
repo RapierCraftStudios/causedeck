@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createEnv, EnvValidationError, resetEnvCache, serverEnv } from '../index.ts';
-import { DEV_BETTER_AUTH_SECRET, DEV_KEK_BASE64 } from '../schema.ts';
+import { DEV_BETTER_AUTH_SECRET, DEV_KEK_BASE64, DEV_STATUS_SIGNING_KEY } from '../schema.ts';
 import { envError, productionEnv } from './helpers.ts';
 
 afterEach(() => {
@@ -90,6 +90,18 @@ describe('production', () => {
       'BETTER_AUTH_SECRET',
       'KEK_BASE64',
     ]);
+  });
+
+  it('defaults STATUS_SIGNING_KEY in development and rejects the placeholder in production (#769)', () => {
+    expect(createEnv({ NODE_ENV: 'development' }).STATUS_SIGNING_KEY.reveal()).toBe(
+      DEV_STATUS_SIGNING_KEY,
+    );
+    expect(
+      envError({ ...productionEnv, STATUS_SIGNING_KEY: DEV_STATUS_SIGNING_KEY }).message,
+    ).toContain('STATUS_SIGNING_KEY: must not use the development placeholder');
+    expect(envError({ ...productionEnv, STATUS_SIGNING_KEY: 'short' }).message).toContain(
+      'STATUS_SIGNING_KEY: must be at least 32 characters',
+    );
   });
 
   it('rejects a BETTER_AUTH_SECRET shorter than 32 characters', () => {

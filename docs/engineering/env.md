@@ -82,6 +82,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `APP_URL` | url | `http://localhost:3000` (non-prod only) | NODE_ENV=production | #10 | — |
 | `API_URL` | url | `http://localhost:3001` (non-prod only) | NODE_ENV=production | #14 | — |
 | `BETTER_AUTH_SECRET` | secret (>= 32 chars) | dev placeholder (non-prod only) | NODE_ENV=production | #12 | #116 |
+| `STATUS_SIGNING_KEY` | secret (>= 32 chars) | dev placeholder (non-prod only) | NODE_ENV=production | #769 | — |
 | `KEK_BASE64` | secret base64 (32 bytes) | dev placeholder (non-prod only) | NODE_ENV=production | #21 | #116 |
 | `VAPID_PUBLIC_KEY` | string | — | VAPID_PRIVATE_KEY is set | #23 | #116 |
 | `VAPID_PRIVATE_KEY` | secret | — | VAPID_PUBLIC_KEY is set | #23 | #116 |

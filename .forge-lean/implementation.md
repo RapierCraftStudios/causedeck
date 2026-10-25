@@ -43,3 +43,6 @@ Base took migration number 20261025050000 (research_notes), so the drafting migr
 
 ## Merge follow-up 2
 turbo was not on PATH (exit 127); no source conflict. Verified with scoped tsc and the validate commands.
+
+## Follow-up: turbo-not-found (re-verified)
+`turbo: command not found` is a host PATH issue, not a merge conflict. No code change. Scoped tsc (db, validators), validators vitest, schema-conventions, lint-migrations, drizzle-kit check all pass.

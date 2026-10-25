@@ -10,7 +10,11 @@ export function createNonce(): string {
 /** Strict nonce-based CSP. Styles stay `'unsafe-inline'` because Sonner and next-themes inject them. */
 export function buildCsp(
   nonce: string,
-  { dev = false, uploadOrigin }: { dev?: boolean; uploadOrigin?: string | undefined } = {},
+  {
+    dev = false,
+    uploadOrigin,
+    reportUrl,
+  }: { dev?: boolean; uploadOrigin?: string | undefined; reportUrl?: string | undefined } = {},
 ): string {
   const directives = [
     "default-src 'self'",
@@ -26,6 +30,8 @@ export function buildCsp(
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    // Violations go to the API's report route (#104); Caddy's `Reporting-Endpoints` names `csp-endpoint`.
+    ...(reportUrl === undefined ? [] : [`report-uri ${reportUrl}`, 'report-to csp-endpoint']),
   ];
   return directives.join('; ');
 }
@@ -35,6 +41,16 @@ export function buildCsp(
  * `S3_ENDPOINT` is set, else the bucket's AWS virtual-hosted host. `undefined` when the storage env
  * is absent or malformed, so the page falls back to `'self'` only.
  */
+export function cspReportUrlOf(env: { API_URL?: string | undefined }): string | undefined {
+  try {
+    return env.API_URL === undefined || env.API_URL === ''
+      ? undefined
+      : new URL('/v1/csp-report', env.API_URL).href;
+  } catch {
+    return undefined;
+  }
+}
+
 export function uploadOriginOf(env: {
   S3_ENDPOINT?: string | undefined;
   S3_BUCKET?: string | undefined;

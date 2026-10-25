@@ -7,6 +7,8 @@
 		Cross-Origin-Opener-Policy same-origin
 		Cross-Origin-Resource-Policy {args[1]}
 		X-Content-Type-Options nosniff
+		# Names the `csp-endpoint` group that `report-to` in every CSP refers to (#104).
+		Reporting-Endpoints `csp-endpoint="https://api.{$DOMAIN}/v1/csp-report"`
 		-Server
 		defer
 	}
@@ -15,5 +17,5 @@
 # For hosts that serve no HTML (API, static): nothing may load or frame. The app and admin hosts
 # do not use this: their nonce CSP comes from Next.js.
 (strict_csp) {
-	header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+	header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; report-uri https://api.{$DOMAIN}/v1/csp-report; report-to csp-endpoint"
 }

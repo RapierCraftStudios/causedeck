@@ -1884,6 +1884,50 @@
           }
         }
       }
+    },
+    "/v1/csp-report": {
+      "post": {
+        "operationId": "receiveCspReport",
+        "tags": ["Security"],
+        "summary": "CSP violation report (`application/csp-report` or `application/reports+json`, 8 KB maximum)",
+        "security": [],
+        "x-public": true,
+        "responses": {
+          "204": {
+            "description": "Accepted: logged and counted, nothing stored"
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "webhooks": {}

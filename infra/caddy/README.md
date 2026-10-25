@@ -32,7 +32,10 @@ HSTS (one year, includeSubDomains), Referrer-Policy, Permissions-Policy (camera 
 `self` on the app host only), COOP, CORP and `nosniff` are set on every response. Caddy never sets a
 CSP on the app and admin hosts: Next.js mints a nonce per request and Caddy cannot. App, API and
 admin default to `Cache-Control: private, no-store`; static serves `public, max-age=31536000,
-immutable`. CSP report collection is #104.
+immutable`. CSP violations are reported to `https://api.<tld>/v1/csp-report`: every response carries
+`Reporting-Endpoints: csp-endpoint=...`, the strict CSP on API and static names it with `report-uri` and
+`report-to`, and the web app's nonce CSP does the same (`apps/web/lib/csp.ts`). The API logs a
+sanitised line and counts `csp_violations_total{directive}`.
 
 ## Limits
 

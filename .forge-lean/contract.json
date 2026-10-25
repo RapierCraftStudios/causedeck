@@ -2,88 +2,82 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Each Dockerfile builds with BuildKit, runs as a non-root UID, has no package manager caches in the final layer, and the final image size is under budget (web under 350 MB, api and worker under 250 MB) [type:unit]",
+   "quote": "Dependabot or Renovate opens grouped update PRs weekly and security updates immediately; policy documented [type:manual]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml size-gate step measures size; non-root and cache rules statically asserted in compose-prod.test.mjs"
+   "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`compose.prod.yml` starts caddy, web x2, api, worker x2, admin, postgres and minio with healthchecks; `docker compose up -d` reaches healthy for all services within 120 s in CI [type:api]",
+   "quote": "CI fails a PR that introduces a dependency with a known critical or high vulnerability with a fix available, unless an unexpired exception exists in `infra/security/exceptions.yml` [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "No container runs privileged; `cap_drop: [ALL]`, `no-new-privileges`, read-only root filesystem with tmpfs where needed, asserted by a compose lint script [type:unit]",
+   "quote": "Gitleaks runs in CI and as a pre-commit hook and fails on a seeded fake secret in a test branch; example env files are allow-listed explicitly [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Only Caddy publishes ports 80 and 443 (and 443/udp for HTTP/3); Postgres, MinIO, admin and internal services are on a private network and unreachable from outside, verified by a port scan in the smoke test [type:api]",
+   "quote": "CodeQL and Semgrep run on PRs and weekly; custom Semgrep rules flag queries bypassing `withWorkspace`, unsafe HTML injection, outbound fetches to non-allow-listed hosts and any L5 action; each rule has a passing and a failing fixture [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job port scan; static port check in compose-prod.test.mjs is in-lane"
+   "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Postgres image bundles pgvector and the WAL-G binary; `archive_mode=on` and `archive_command` point at WAL-G with env-provided storage, defaulting to a local MinIO bucket in CI [type:api]",
+   "quote": "Trivy scans built images in the images workflow and fails on critical vulnerabilities with fixes; ignore entries require an expiry date [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "The app database role is not the owner so RLS is enforced; migrations run through the owner role in a one-off container; the smoke test asserts RLS-forced tables reject cross-workspace reads [type:api]",
+   "quote": "ZAP baseline runs against the staging-like compose stack with an authenticated test user and fails on new medium or higher alerts not listed in a reviewed suppression file [type:e2e]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "evidence": ".github/workflows/zap-baseline.yml (new)"
   },
   {
    "id": "R7",
-   "quote": "All services read configuration only from env validated by the shared env schema; booting with a missing required variable fails fast with a clear message [type:unit]",
+   "quote": "ZAP is configured to target only the allow-listed staging base URL; the workflow refuses other hosts [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "compose-smoke.sh boots a service with a missing variable and asserts non-zero exit; packages/config already validates"
+   "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "No service writes outside declared volumes or tmpfs; verified with a read-only filesystem run of the smoke test [type:api]",
+   "quote": "`POST /v1/csp-report` accepts `application/csp-report` and `application/reports+json`, caps body at 8 KB, rate-limits per IP, strips query strings and fragments from URLs, and writes a structured log line; it never persists user content [type:api]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job runs with read_only: true"
+   "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Images are multi-arch, tagged `sha-\u003cgitsha>` and `main`, pushed to GHCR, scanned by Trivy (fail on critical with fix available), and signed with cosign; SBOM attached [type:manual]",
+   "quote": "A deliberate CSP violation in an e2e test produces a sanitised log entry and increments a metric `csp_violations_total` visible in monitoring [type:e2e]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "images.yml on push to main"
+   "evidence": ".github/workflows/e2e.yml"
   },
   {
    "id": "R10",
-   "quote": "Resource limits (memory and CPU) are set for every service and documented, sized for a 4 vCPU and 8 GB VPS within the cost target of about ₹6 to 12k per month for staging and prod combined [type:manual]",
+   "quote": "A weekly report workflow posts a summary of open vulnerabilities and exceptions, and expired exceptions fail the build [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "`bootstrap-vps.sh` is idempotent: running twice makes no changes the second time; it configures firewall (only 22 limited by allowlist, 80, 443), fail2ban, unattended security upgrades and time sync (chrony) [type:manual]",
+   "quote": "SBOMs (CycloneDX) are generated for each image and attached to the release; supply-chain signing is verified in deploy (cosign) [type:manual]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "needs a real VPS (#108); in-lane is bash -n and guard-pattern review"
+   "evidence": ".github/workflows/images.yml (SBOM + cosign attest); deploy verification belongs to #100's deploy workflow"
   },
   {
    "id": "R12",
-   "quote": "Timezone and clocks: containers log in UTC, host NTP is verified by a startup check that fails readiness if drift exceeds 1 s [type:api]",
+   "quote": "A static check proves no L5 action type exists and no code path auto-sends, files or pays; it runs in the security workflow [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "Staging runs the same compose with `staging.env.example` overrides and smaller limits, using preview data only [type:manual]",
+   "quote": "Findings policy documented in `vuln-triage.md`: critical within 48 hours, high within 7 days, medium within 30 days; the cross-tenant suite must stay green on every PR [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -91,278 +85,407 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "infra/docker/web.Dockerfile",
-   "change": "Harden: digest-pinned base via ARG, tini, no apt/pnpm caches in final layer, numeric non-root USER, writes only to /tmp and .next/cache (tmpfs), TZ=UTC, healthcheck /healthz, exec-form CMD",
+   "path": ".github/dependabot.yml",
+   "change": "Add a security-updates group (`applies-to: security-updates`) and keep the weekly grouped npm and github-actions updates; note the policy in docs.",
    "requirements": [
-    "R1",
-    "R8",
-    "R12"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "infra/docker/api.Dockerfile",
-   "change": "Same hardening; pnpm deploy --prod to prune; tini; numeric UID; exec-form CMD so 10s SIGTERM drain works",
+   "path": "docs/engineering/ci.md",
+   "change": "Document dependency-update policy, audit gate and exceptions, semgrep/zap/trivy/gitleaks jobs, weekly report.",
    "requirements": [
     "R1",
-    "R8",
-    "R12"
+    "R2",
+    "R10"
    ]
   },
   {
    "id": "D3",
-   "path": "infra/docker/worker.Dockerfile",
-   "change": "Same as api; include owner-role migrate entry (packages/db/scripts/migrate.ts via tsx) usable by migrate.sh; exec-form CMD keeps 30s drain",
+   "path": "scripts/audit-gate.mjs",
+   "change": "New: run `pnpm audit --prod --json`, fail on high/critical advisories that have a patched version unless an unexpired entry in infra/security/exceptions.yml matches (id, package, reason, owner, expires); fail on any expired exception. Export pure functions for tests.",
    "requirements": [
-    "R1",
-    "R6",
-    "R8"
+    "R2",
+    "R10"
    ]
   },
   {
    "id": "D4",
-   "path": "infra/docker/admin.Dockerfile",
-   "change": "Same hardening as web; healthcheck /healthz (admin has no /readyz)",
+   "path": "scripts/audit-gate.test.mjs",
+   "change": "Node tests for audit-gate: fix available vs not, unexpired exception passes, expired fails, malformed entry fails.",
    "requirements": [
-    "R1",
-    "R8",
-    "R12"
+    "R2",
+    "R10"
    ]
   },
   {
    "id": "D5",
-   "path": "infra/docker/.dockerignore",
-   "change": "Exclude node_modules, .next, .git, .forge-lean, tests, docs from build context",
+   "path": "infra/security/exceptions.yml",
+   "change": "New, empty `exceptions: []` with schema comment (id, package, severity, reason, owner, expires).",
    "requirements": [
-    "R1"
+    "R2",
+    "R10"
    ]
   },
   {
    "id": "D6",
-   "path": "infra/docker/base/README.md",
-   "change": "Document pinned base image digests and how to refresh them",
+   "path": "package.json",
+   "change": "Point `audit:prod` at the gate script (keep a raw `audit:prod:raw`), add scripts for semgrep fixture test if needed.",
    "requirements": [
-    "R1"
+    "R2"
    ]
   },
   {
    "id": "D7",
-   "path": "infra/docker/postgres/Dockerfile",
-   "change": "pgvector pg17 pinned by digest + checksum-verified per-arch WAL-G binary + init scripts + postgresql.conf",
+   "path": ".gitleaks.toml",
+   "change": "Add explicit path allowlist for `.env.example`, `.env.ci`, `infra/docker/env/*.env.example` and a fixture dir.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "lefthook.yml",
+   "change": "Add a gitleaks pre-commit command on staged files (use the gitleaks binary if installed, else the digest-pinned docker image; skip with a notice when neither exists).",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "infra/security/gitleaks/fixtures/seeded-secret.txt",
+   "change": "Non-scanned-by-default fake secret fixture used by CI to prove the scanner fails; excluded from the main scan by explicit path allowlist only for the main scan.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "infra/security/gitleaks.test.mjs",
+   "change": "Node test: allowlist covers each example env file, does not cover other paths, lefthook has gitleaks command, security.yml has seeded-secret step.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": ".github/workflows/security.yml",
+   "change": "Switch audit job to the gate script; add seeded-secret gitleaks step, trivy fs scan job (config from infra/security/trivy), `pnpm check:no-l5` step, weekly report job (step summary + issue update, issues: write only on that job), keep codeql/dependency-review opt-in; run on lockfile changes and weekly.",
+   "requirements": [
+    "R2",
+    "R3",
+    "R5",
+    "R10",
+    "R12"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": ".github/workflows/semgrep.yml",
+   "change": "New: Semgrep on PRs and weekly via digest-pinned docker image, rules from infra/security/semgrep, plus `semgrep --test` for fixtures. No secrets.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "infra/security/semgrep/rules.yml",
+   "change": "Custom rules: db query/raw SQL outside withWorkspace, dangerouslySetInnerHTML, fetch to non-allow-listed hosts, L5 action type.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "infra/security/semgrep/fixtures/",
+   "change": "One `*.ts`/`*.tsx` fixture per rule with `ruleid:`/`ok:` annotations (passing and failing).",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "infra/security/semgrep/rules.test.mjs",
+   "change": "Node test: every rule id has a fixture containing both `ruleid: \u003cid>` and `ok: \u003cid>` annotations; workflow is pinned.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "infra/security/trivy/trivy.yaml",
+   "change": "Trivy config (severity CRITICAL, ignore-unfixed, ignorefile).",
    "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D8",
-   "path": "infra/docker/postgres/postgresql.conf",
-   "change": "archive_mode=on, archive_command wal-g wal-push with env storage, ssl, log_statement policy, timezone UTC",
+   "id": "D17",
+   "path": "infra/security/trivy/.trivyignore.yaml",
+   "change": "Ignore file (empty list) with expiry format documented.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "infra/security/trivy/trivy.test.mjs",
+   "change": "Node test: every ignore entry has `expired_at`/expiry in future; images.yml uses config, severity CRITICAL, exit-code 1.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": ".github/workflows/images.yml",
+   "change": "Use infra/security/trivy config and ignore file in the Trivy step; attach SBOM files to the GitHub release when a release/tag build, keep cosign attest.",
    "requirements": [
     "R5",
-    "R12"
+    "R11"
    ]
   },
   {
-   "id": "D9",
-   "path": "infra/docker/compose.prod.yml",
-   "change": "Services caddy, web x2, api, worker x2, admin, postgres, minio; private network, only caddy publishes 80/443/443udp; cap_drop ALL, no-new-privileges, read_only+tmpfs, mem/cpu limits (documented for 4 vCPU/8 GB, overridable via env for staging), restart policy, named volumes, healthchecks, depends_on service_healthy; images ghcr.io/\u003corg>/causedeck-\u003csvc>:sha-\u003cgitsha>; mount infra/caddy/Caddyfile",
-   "requirements": [
-    "R2",
-    "R3",
-    "R4",
-    "R5",
-    "R6",
-    "R8",
-    "R10",
-    "R13"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "infra/docker/env/prod.env.example",
-   "change": "Variables only, no secrets, matching packages/config env schema",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "infra/docker/env/staging.env.example",
-   "change": "Staging overrides: smaller limit variables, preview data only",
-   "requirements": [
-    "R13"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "infra/scripts/migrate.sh",
-   "change": "Run owner-role migration in a one-off container before up -d; fail on error",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "infra/scripts/healthcheck.sh",
-   "change": "Aggregate /readyz of web, api, worker plus admin /healthz for deploys",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "infra/scripts/bootstrap-vps.sh",
-   "change": "Idempotent ufw (22 limited + allowlist, 80, 443), fail2ban, unattended-upgrades, chrony, Docker, deploy user, dirs; set -euo pipefail, guard before each change",
+   "id": "D20",
+   "path": "infra/security/sbom/generate.sh",
+   "change": "Generate CycloneDX per image via digest-pinned Trivy; and `verify-cosign.sh` that deploy workflows call (cosign verify + verify-attestation with the repo identity).",
    "requirements": [
     "R11"
    ]
   },
   {
-   "id": "D15",
-   "path": "infra/docker/test/compose-smoke.sh",
-   "change": "Boot stack with mock providers, wait healthy \u003c=120s, port scan, RLS cross-workspace read assertion, missing-env fail-fast, read-only run",
-   "requirements": [
-    "R2",
-    "R4",
-    "R6",
-    "R7",
-    "R8"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "infra/scripts/compose-prod.test.mjs",
-   "change": "Node test modelled on compose-dev.test.mjs: no privileged, cap_drop ALL, no-new-privileges, read_only, mem/cpu limits on every service, only caddy publishes 80/443/443udp, replica counts, pinned images, Dockerfiles non-root numeric USER",
-   "requirements": [
-    "R1",
-    "R3",
-    "R4",
-    "R10"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/observability/src/health.ts",
-   "change": "Add exported clock-drift HealthCheck factory (reference time source injectable, 1 s threshold)",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/observability/src/__tests__/health.test.ts",
-   "change": "Unit tests for clock-drift check (ok under 1 s, fails over 1 s, source error)",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "apps/web/src/health.ts",
-   "change": "Register clock-drift readiness check",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/api/src/app.ts",
-   "change": "Register clock-drift readiness check alongside db check",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
    "id": "D21",
-   "path": "apps/worker/src/health.ts",
-   "change": "Register clock-drift readiness check",
+   "path": "infra/security/zap/baseline.yaml",
+   "change": "ZAP automation plan: authenticated test user (CI-only credentials generated in the job), context limited to the allow-listed base URL, fail on medium+ not in suppression file.",
    "requirements": [
-    "R12"
+    "R6",
+    "R7"
    ]
   },
   {
    "id": "D22",
-   "path": ".github/workflows/images.yml",
-   "change": "buildx multi-arch, tags sha-\u003cgitsha> and main, GHCR push on main, Trivy (fail critical with fix), SBOM, cosign keyless, size gate, compose-smoke job; actions pinned by SHA; passes lint-workflows",
+   "path": "infra/security/zap/suppressions.tsv",
+   "change": "Reviewed suppression file (empty with header).",
    "requirements": [
-    "R1",
-    "R2",
-    "R9"
+    "R6"
    ]
   },
   {
    "id": "D23",
-   "path": "infra/docker/README.md",
-   "change": "Document prod stack, bootstrap, resource limit table and cost sizing, staging override usage",
+   "path": "infra/security/zap/check-target.mjs",
+   "change": "Pure `assertAllowedTarget(url, allowlist)` that refuses anything but the allow-listed staging/CI-compose base URL (never production, never third-party); CLI used by the workflow.",
    "requirements": [
-    "R10",
-    "R11",
-    "R13"
+    "R7"
    ]
   },
   {
    "id": "D24",
-   "path": "infra/caddy/Caddyfile",
-   "change": "Minimal placeholder only if absent; real config owned by #98",
+   "path": "infra/security/zap/check-target.test.mjs",
+   "change": "Node tests: allowed URL passes; production host, other hosts, userinfo/port tricks, non-http all refused.",
    "requirements": [
-    "R2"
+    "R7"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": ".github/workflows/zap-baseline.yml",
+   "change": "New: weekly + workflow_dispatch; launches the compose stack (compose.prod.yml style as in infra/docker/test/compose-smoke.sh), seeds a test user, runs check-target first, then ZAP baseline; fails on new medium+.",
+   "requirements": [
+    "R6",
+    "R7"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "apps/api/src/routes/csp-report.ts",
+   "change": "New `cspReportRouter({ logger })`: POST /csp-report (mounted under /v1) accepts application/csp-report (object) and application/reports+json (array of csp-violation reports), reads text, rejects >8 KB, strips query/fragment from document/blocked/source URLs, logs one structured line with only whitelisted fields, increments `csp_violations_total{directive}` via meter(), returns 204; invalid type/shape 415/400 problem; stores nothing.",
+   "requirements": [
+    "R8",
+    "R9"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "apps/api/src/routes/v1/index.ts",
+   "change": "Mount the CSP report router.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "apps/api/src/app.ts",
+   "change": "Add `/v1/csp-report` to rate-limit groups (per IP, e.g. 60/min) and a body-limit group of 8 KB.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "apps/api/src/__tests__/csp-report.test.ts",
+   "change": "Tests: both content types, 8 KB cap (413), per-IP rate limit (429), sanitised log, metric incremented (test metric reader), no persistence, bad shape.",
+   "requirements": [
+    "R8",
+    "R9"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "apps/api/openapi.json",
+   "change": "Regenerate with `pnpm --filter @causedeck/api openapi:export` if the route is documented (path to be confirmed by openapi-file.test.ts).",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D31",
+   "path": "apps/web/lib/csp.ts",
+   "change": "Add `report-uri` and `report-to csp-endpoint` directives when an API report URL is configured (env-derived option); keep all existing directives.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D32",
+   "path": "apps/web/lib/csp.test.ts",
+   "change": "Assert report directives present when configured and absent otherwise.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D33",
+   "path": "infra/caddy/snippets/security-headers.caddy",
+   "change": "Add `Reporting-Endpoints \"csp-endpoint=\\\"https://api.\u003cdomain>/v1/csp-report\\\"\"` to security_headers and `report-uri`/`report-to` to strict_csp; do not add a CSP to app/admin hosts.",
+   "requirements": [
+    "R8",
+    "R9"
+   ]
+  },
+  {
+   "id": "D34",
+   "path": "infra/caddy/test/caddyfile.test.mjs",
+   "change": "Assert Reporting-Endpoints present and strict_csp has report-to; existing assertions unchanged.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D35",
+   "path": "e2e/tests/security/csp.spec.ts",
+   "change": "Playwright spec: deliberate CSP violation produces a report that reaches the report route sanitised (query/fragment stripped) and the metric/log is observed.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D36",
+   "path": "infra/runbooks/vuln-triage.md",
+   "change": "SLA critical 48h / high 7d / medium 30d, exceptions process (exceptions.yml fields, expiry max, review), cross-tenant suite must stay green on every PR, weekly report, CSP report triage.",
+   "requirements": [
+    "R13",
+    "R10"
+   ]
+  },
+  {
+   "id": "D37",
+   "path": "packages/config/test/no-l5.test.ts",
+   "change": "Vitest: run scripts/check-no-l5.ts against the repo and assert pass; reference from semgrep L5 rule docs.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D38",
+   "path": "infra/caddy/README.md",
+   "change": "Replace 'CSP report collection is #104' with the real description.",
+   "requirements": [
+    "R8"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Build context stays the repo root and CMDs stay exec-form so SIGTERM drains (api 10s, worker 30s): infra/docker/{api,worker}.Dockerfile"
+   "what": "infra/caddy/test/caddyfile.test.mjs:77-81: app and admin hosts carry no Caddy CSP (nonce CSP from apps/web/proxy.ts passes through); api and static keep strict_csp."
   },
   {
    "id": "P2",
-   "what": "infra/docker/compose.dev.yml, infra/scripts/compose-dev.test.mjs, dev-up/down scripts unchanged"
+   "what": "GHAS-gated jobs `codeql` and `dependency-review` in .github/workflows/security.yml stay opt-in via vars.ENABLE_GHAS (D-043); scanners need no repository secrets."
   },
   {
    "id": "P3",
-   "what": "/healthz stays dependency-free liveness; /readyz contracts in apps/web/app, apps/api/src/app.ts, apps/worker/src/health.ts; drift check only added to readiness"
+   "what": "Existing Trivy critical+ignore-unfixed fail, SBOM and cosign sign/attest in .github/workflows/images.yml keep working."
   },
   {
    "id": "P4",
-   "what": "Role split in infra/docker/postgres/init/02-roles.sql (app role non-owner, NOBYPASSRLS) unchanged"
+   "what": "All new workflow actions pinned by SHA and docker images by digest; actionlint passes (.github/workflows/lint-workflows.yml)."
+  },
+  {
+   "id": "P5",
+   "what": "scripts/check-no-l5.ts behaviour and packages/core/src/automation/no-l5.test.ts unchanged."
+  },
+  {
+   "id": "P6",
+   "what": "Public API contract of existing /v1 routes, rate-limit defaults (apps/api/src/middleware/rate-limit.ts) and the `openapi:check` file test (apps/api/src/__tests__/openapi-file.test.ts)."
+  },
+  {
+   "id": "P7",
+   "what": "ZAP must never target production or third-party hosts; no court scraping."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/csp-report.test.ts src/__tests__/openapi-file.test.ts src/__tests__/rate-limit.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "bash -n infra/scripts/migrate.sh && bash -n infra/scripts/healthcheck.sh && bash -n infra/scripts/bootstrap-vps.sh && bash -n infra/docker/test/compose-smoke.sh"
+   "command": "node --test scripts/audit-gate.test.mjs infra/security/zap/check-target.test.mjs infra/security/trivy/trivy.test.mjs infra/security/semgrep/rules.test.mjs infra/security/gitleaks.test.mjs infra/caddy/test/caddyfile.test.mjs infra/scripts/compose-prod.test.mjs --test-concurrency=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/observability exec vitest run src/__tests__/health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/web exec vitest run lib/csp.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1} && pnpm --filter @causedeck/web exec vitest run app/__tests__/health-routes.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/config exec vitest run test/no-l5.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm check:no-l5"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Docker builds, size budgets, multi-arch, Trivy/cosign and compose smoke run only in CI (images.yml)",
-   "justification": "CLAUDE.md forbids heavy local runs (Playwright, builds); in-lane coverage is static compose lint mirroring infra/scripts/compose-dev.test.mjs",
-   "source": "doc"
+   "choice": "Place the CSP e2e spec at e2e/tests/security/csp.spec.ts, not e2e/security/csp.spec.ts as the issue lists.",
+   "justification": "e2e/playwright.config.ts:91 sets testDir './tests'; a spec outside it never runs.",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Clock-drift check lives in packages/observability, no new workspace dependency",
-   "justification": "apps/worker/src/health.ts:5 and apps/api/src/app.ts:13 already import from @causedeck/observability",
+   "choice": "Run Semgrep and gitleaks through digest-pinned docker images instead of marketplace actions.",
+   "justification": ".github/workflows/security.yml:34-37 documents that gitleaks-action needs a license secret; scanners must run secret-free.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Caddyfile content belongs to #98; only a placeholder is shipped if absent",
-   "justification": "#98 is the open Caddy config issue; infra/caddy does not exist on base",
-   "source": "spec"
+   "choice": "Keep CodeQL in security.yml opt-in via ENABLE_GHAS and add no separate codeql.yml; Semgrep (free on private repos) is the always-on SAST.",
+   "justification": "docs/engineering/ci.md:104 and D-043 gate code scanning on GHAS for private repos; security.yml:60-80 already has the job.",
+   "source": "doc"
+  },
+  {
+   "id": "K4",
+   "choice": "Use no new npm dependency for the gate scripts; parse exceptions.yml with a minimal parser or a YAML library already resolvable from the workspace (check `pnpm why yaml`); do not add one to the root without a catalog entry.",
+   "justification": "infra/scripts/compose-dev.test.mjs:1-6 shows infra tests use only node built-ins.",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "CSP report route is mounted inside v1Router so it inherits the request logger, per-IP rate limit and body-limit groups; anonymous principals bypass csrf.",
+   "justification": "apps/api/src/middleware/cors.ts:43-53 csrf only applies to cookie principals; apps/api/src/app.ts:126-133 group maps are the extension point.",
+   "source": "precedent"
   }
  ]
 }

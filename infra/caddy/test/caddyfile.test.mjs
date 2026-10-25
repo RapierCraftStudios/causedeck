@@ -83,6 +83,19 @@ describe('security headers', () => {
   });
 });
 
+describe('CSP reporting (#104)', () => {
+  it('names the csp-endpoint group on every host and points the strict CSP at it', () => {
+    assert.match(
+      headers,
+      /Reporting-Endpoints `csp-endpoint="https:\/\/api\.\{\$DOMAIN\}\/v1\/csp-report"`/,
+    );
+    assert.match(
+      headers,
+      /report-uri https:\/\/api\.\{\$DOMAIN\}\/v1\/csp-report; report-to csp-endpoint/,
+    );
+  });
+});
+
 describe('caching', () => {
   it('never sets CDN-cacheable headers on app, api and admin', () => {
     for (const name of ['app', 'api', 'admin']) {

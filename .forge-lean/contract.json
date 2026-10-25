@@ -2,31 +2,31 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add packages/core/src/status (model.ts StatusSnapshot/ComponentStatus/Incident zod; publish.ts building a sanitised, HMAC-signed snapshot from health checks and getAdapterHealthSummary with documented thresholds for operational/degraded/down).",
+   "quote": "apps/admin/app/(console)/status/page.tsx plus actions: staff create, update and resolve incidents from a message template, writing incident rows and an audit_event per change",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Add platform tables incident and incident_update (no workspace_id, justification comment, test they hold no tenant data) with migration.",
+   "quote": "incidents appear in the next status.publish cycle",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Add worker job status.publish (every minute, idempotent, overlap-safe, writes status/status.json to the public static path via the S3 abstraction) and STATUS_SIGNING_KEY env (dev default).",
+   "quote": "States: loading skeleton, empty, error, offline; permission-denied for non-staff.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Pre-stage every shared registry here: schema index, core index and cross-tenant registry (NOT_A_SERVICE or SERVICE_TESTS), core-domains doc, worker registry and schedules tests, i18n namespace and catalog test.",
+   "quote": "Register in admin tests (server-actions-audit, no-content-fields) and console nav.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Acceptance: snapshot schema, sanitiser fixtures test, adapter threshold mapping tests, signature test, idempotent publish and stale detection (api test), court wording 'Parsing of documents you share'.",
+   "quote": "Depends on sub-issue 1 for the incident tables and core status service.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -34,231 +34,241 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/status/model.ts",
-   "change": "zod schemas + types StatusSnapshot, ComponentStatus (operational|degraded|down), Incident, IncidentUpdate; snapshot has version, generatedAt, components[], incidents[], signature field",
+   "path": "packages/core/src/status/incidents.ts",
+   "change": "New. INCIDENT_TEMPLATES (pure, fixed public wording per state, optional note), createIncident(db, actor, input), addIncidentUpdate(db, actor, incidentId, {state, body}) (state 'resolved' sets resolved_at; reject updates on a resolved incident; body from template id plus optional note), listIncidents(db). Each write: withUser tx, assert enabled ops/admin staff via staffUser (copy sources/registry.ts:268), write incident/incident_update, record() action 'incident.changed' with actor kind staff, workspaceId null, in the same tx. Typed IncidentAdminError.",
    "requirements": [
     "R1",
+    "R2",
     "R5"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/status/publish.ts",
-   "change": "thresholds (documented constants: failed+degraded share of runs over a window mapped to operational/degraded/down; no runs = operational), sanitise() allowlist projection, canonical JSON + HMAC-SHA256 sign/verify with STATUS_SIGNING_KEY, buildSnapshot(deps) from health checks + getAdapterHealthSummary, publishStatus (skips write when unsigned-content hash unchanged), isStale(snapshot, now, maxAgeSec). Court component label 'Parsing of documents you share'.",
+   "path": "packages/core/src/status/index.ts",
+   "change": "Export the new incident service, templates and error.",
    "requirements": [
     "R1",
-    "R3",
     "R5"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/status/index.ts",
-   "change": "barrel for the status domain; export from packages/core/src/index.ts and add './status' to packages/core/package.json exports",
+   "path": "packages/core/src/status/incidents.test.ts",
+   "change": "New DB test: create/update/resolve write rows and an incident.changed audit event with actor kind staff; non-staff and support role rejected; resolved incident rejects updates; buildSnapshot (publish.ts:202) includes the new incident in the next build (R2); empty title rejected.",
    "requirements": [
     "R1",
-    "R4"
+    "R2"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/status/status.test.ts",
-   "change": "tests: snapshot schema, sanitiser fixtures (no hostnames/errors/workspace ids leak), threshold mapping per adapter, signature valid/tampered/wrong key, idempotent publish (second identical run does not put), stale detection, court wording",
+   "path": "packages/core/src/audit/events.ts",
+   "change": "Register 'incident.changed' (security: true) in AUDIT_ACTIONS.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Add NOT_A_SERVICE entries (reason: platform tables incident/incident_update, GLOBAL_TABLES, no tenant data) for createIncident, addIncidentUpdate, listIncidents, INCIDENT_TEMPLATES, IncidentAdminError; check whether the guard needs runtime-export names only.",
    "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D5",
-   "path": "packages/core/src/jobs/definitions/status-publish.ts",
-   "change": "defineJob name 'system.status.publish' (NOT status.poll, which is case-watch), schema { workspaceId: null optional }, concurrency 1, singleton key 'status-publish' policy 'stately', schedule cron '* * * * *'; handler calls publishStatus with createObjectStoreFromEnv",
+   "id": "D6",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "status: ['court','audit'] with updated comment (incident writes record audit events).",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
-   "id": "D6",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "import and register statusPublish (list and tuple type); also export from packages/core/src/jobs/index.ts",
+   "id": "D7",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Update the status row, mermaid edge status --> audit and dependency table row.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "apps/admin/lib/roles.ts",
+   "change": "Add capability 'status' to STAFF_CAPABILITIES and to the ops list (admin gets all; support none).",
    "requirements": [
     "R3",
     "R4"
    ]
   },
   {
-   "id": "D7",
-   "path": "packages/db/src/schema/status.ts",
-   "change": "tables incident (id, title, severity, state, component, started_at, resolved_at, created_by staff ref optional, timestamps) and incident_update (id, incident_id fk, state, body, created_at); no workspace_id; justification comment that they hold only public platform status text; export from schema/index.ts",
-   "requirements": [
-    "R2",
-    "R4"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/db/migrations/20261025050000_status_incident.sql",
-   "change": "CREATE TABLE incident, incident_update plus grants consistent with other global tables; regenerate meta/20261025050000_snapshot.json and _journal.json (renumber if the base took the number)",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
    "id": "D9",
-   "path": "packages/db/src/conventions.ts",
-   "change": "add 'incident' and 'incident_update' to GLOBAL_TABLES",
+   "path": "apps/admin/components/console-nav.tsx",
+   "change": "Add '/status' href and nav item { capability:'status', label:'Status', icon (lucide, e.g. RadioTower) } after Flags.",
    "requirements": [
-    "R2",
     "R4"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/db/src/index.test.ts",
-   "change": "add both tables to the root table list; add a test (or new packages/db/src/__tests__/status-schema.test.ts) asserting neither has a workspace_id column and neither column set can hold tenant data",
+   "path": "apps/admin/lib/data/index.ts",
+   "change": "Add incidentConsole(staff, db?) read via staffQuery (purpose 'status.incidents', capability 'status', tables ['incident','incident_update']) calling listIncidents.",
    "requirements": [
-    "R2",
-    "R4"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/storage/src/keys.ts",
-   "change": "add a narrow public-object key seam (e.g. publicObjectKey('status/status.json') allowlisted, branded as ObjectKey) so ObjectStore.put can write the public static path; verify s3-provider.ts and memory-provider.ts accept it and extend them if they re-parse keys; export from index.ts; add a test",
-   "requirements": [
+    "R1",
     "R3"
    ]
   },
   {
-   "id": "D12",
-   "path": "packages/config/src/env/schema.ts",
-   "change": "add STATUS_SIGNING_KEY (secret: true, devDefault placeholder constant like DEV_BETTER_AUTH_SECRET, min length enforced in production); update .env.example via the generator and the env tests",
+   "id": "D11",
+   "path": "apps/admin/app/(console)/status/actions.ts",
+   "change": "New 'use server' module: createIncidentAction, updateIncidentAction (resolve is an update with state resolved). requireStaff('status'), zod (title/severity/component from COMPONENT_IDS/template id/note), call core with asStaff actor, redirect ?done=/?error= like sources/actions.ts, include the '// authz:' comment.",
    "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "apps/admin/app/(console)/status/page.tsx",
+   "change": "New server page: requireStaff('status') (notFound for non-staff = permission-denied), reads incidentConsole, lists open and resolved incidents, create form and update/resolve forms with template select, empty state, ?error= banner, note that changes publish within a minute.",
+   "requirements": [
+    "R1",
+    "R2",
     "R3"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add status domain to CORE_DOMAIN_DEPENDENCIES (court, storage-free imports only through index.ts); jobs gains status dependency; mirror in docs/engineering/core-domains.md (table row, mermaid, dependency table)",
+   "path": "apps/admin/app/(console)/status/loading.tsx",
+   "change": "New loading skeleton (aria-busy).",
    "requirements": [
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D14",
-   "path": "docs/engineering/core-domains.md",
-   "change": "document the status domain and its edges",
+   "path": "apps/admin/app/(console)/status/error.tsx",
+   "change": "New client error boundary with retry (message plus request id digest), scoped to the status route.",
    "requirements": [
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "register every new runtime export of @causedeck/core: NOT_A_SERVICE with reasons (pure/system job body/constant/job definition/no tenant data); getAdapterHealthSummary-style SERVICE_TESTS only if a function reads tenant tables (none expected)",
+   "path": "apps/admin/app/(console)/status/offline-banner.tsx",
+   "change": "New client component showing an offline notice and disabling nothing server-side, driven by navigator.onLine and online/offline events; rendered by the page.",
    "requirements": [
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "add 'system.status.publish' to the expected job list",
+   "path": "apps/admin/__tests__/status-page.test.tsx",
+   "change": "New jsdom test: empty state, list rendering, offline banner toggles on the offline event, loading skeleton renders, non-staff gets notFound (mock requireStaff).",
    "requirements": [
-    "R3",
-    "R4"
+    "R3"
    ]
   },
   {
    "id": "D17",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "add 'system.status.publish' to the scheduled list and the cron table ('* * * * *')",
+   "path": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "change": "Mock @causedeck/core/status incident functions as audited (staff actor) and add ACTIONS entries for createIncidentAction and updateIncidentAction.",
    "requirements": [
-    "R3",
     "R4"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'status' to NAMESPACES; create messages/{en,kn,ta}/status.json (component names incl. 'Parsing of documents you share', state labels); update __tests__/catalog.test.ts top-level key list; regenerate generated/** with pnpm --filter @causedeck/i18n i18n:types",
+   "path": "apps/admin/__tests__/no-content-fields.test.ts",
+   "change": "Render the status page and data read against the two seeded tenants and assert no tenant ids, emails or content words appear.",
    "requirements": [
-    "R4",
-    "R5"
+    "R4"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/admin/__tests__/roles.test.ts",
+   "change": "Update matrix expectation and add canStaff status assertions (ops yes, support no, admin yes).",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/admin/__tests__/console-layout.test.tsx",
+   "change": "Add 'Status' to the admin and ops nav expectations, '/status' to ops hrefs.",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "docs/engineering/admin-console.md",
+   "change": "Document the Status console, capability, templates and incident.changed audit action.",
+   "requirements": [
+    "R1"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "system.status.poll (case-watch) job name, registration and tests: packages/core/src/jobs/definitions/status-poll.ts"
+   "what": "The published snapshot shape and sanitiser in packages/core/src/status/model.ts and publish.ts (sanitiseIncident, buildSnapshot, signature) stay unchanged; incident writes only use existing columns."
   },
   {
    "id": "P2",
-   "what": "getAdapterHealthSummary signature and row shape: packages/core/src/court/adapter-health.ts:20"
+   "what": "The incident table checks and grants (packages/db/migrations/20261025050000_status_incident.sql): no new migration, no DELETE; resolved_at is set exactly when state is resolved."
   },
   {
    "id": "P3",
-   "what": "Workspace object keys ws/\u003cuuid>/\u003ckind>/\u003cyyyy>/\u003cuuid>: objectKey/parseObjectKey behaviour in packages/storage/src/keys.ts stays strict; the public seam must not accept arbitrary paths"
+   "what": "Existing console pages, requireStaff behaviour (apps/admin/lib/staff.ts) and the sources/flags actions and their audit tests; support role capabilities unchanged."
   },
   {
    "id": "P4",
-   "what": "Existing migrations and journal ordering in packages/db/migrations; tenant RLS catalog in packages/db/src/__tests__/rls/sql.test.ts is unchanged (new tables are global)"
+   "what": "system.status.poll (case-watch) and system.status.publish job definitions and registry tests are untouched."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/status src/jobs/definitions/status-poll.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/status src/audit/__tests__/security-events.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/storage exec vitest run src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/status-page.test.tsx __tests__/server-actions-audit.test.ts __tests__/no-content-fields.test.ts __tests__/roles.test.ts __tests__/console-layout.test.tsx"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/config exec vitest run src/env --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/testing"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V6",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/status-schema.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V7",
    "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/site-onboarding-launch"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Job named system.status.publish, schema workspaceId null/optional, singleton stately",
-   "justification": "system jobs must start 'system.' (packages/core/src/jobs/define.ts:90); overlap-safety copies notices-poll.ts:79; system.status.poll is already taken by case-watch",
+   "choice": "One audit action 'incident.changed' (security, fail-closed) with metadata {incident_id, change: created|updated|resolved, old/new state} instead of three actions.",
+   "justification": "Mirrors source.changed (packages/core/src/audit/events.ts:37, sources/registry.ts:325-331).",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Incident tables listed in GLOBAL_TABLES, no RLS catalog entry",
-   "justification": "notice is the precedent (packages/db/src/conventions.ts:80, index.test.ts:121); tables without workspace_id are exempt from the tenant convention",
+   "choice": "New capability 'status' for ops and admin rather than reusing 'flags' or 'adapters'; support denied via requireStaff notFound.",
+   "justification": "Capabilities are one per nav item (apps/admin/lib/roles.ts:14-27); incident publishing is an ops duty like sources/flags.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Public path written through a new narrow key seam in @causedeck/storage rather than a cast",
-   "justification": "ObjectKey is branded and parsed strictly to workspace paths (keys.ts:8,47,67); no new workspace dependency since core already depends on @causedeck/storage (packages/core/package.json:70)",
-   "source": "precedent"
+   "choice": "core status gains a dependency on audit (CORE_DOMAIN_DEPENDENCIES) and writes only through audit's index.",
+   "justification": "Sources does the same (core-domains.js:78); cross-domain imports go through index.ts per CLAUDE.md.",
+   "source": "doc"
   },
   {
    "id": "K4",
-   "choice": "STATUS_SIGNING_KEY with a dev default modelled on BETTER_AUTH_SECRET",
-   "justification": "packages/config/src/env/schema.ts:22,150-154",
+   "choice": "Staff authorisation checked inside core against staff_user (ops/admin, not disabled), copied from assertSourceStaff.",
+   "justification": "packages/core/src/sources/registry.ts:268.",
    "source": "precedent"
   }
  ]

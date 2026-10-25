@@ -1,47 +1,43 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (feature; no live defect, the status page in #96 has no data source yet)
+**Severity**: medium (feature; no live defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 1 of #96: a `packages/core/src/status` domain (zod model, sanitised HMAC-signed snapshot built from health checks and `getAdapterHealthSummary` with documented thresholds), platform tables `incident` and `incident_update` (no `workspace_id`) with a migration, a worker job `status.publish` (every minute, idempotent, overlap-safe, writes `status/status.json` through the S3 abstraction), a `STATUS_SIGNING_KEY` env var with a dev default, and every shared registry pre-staged. Siblings #770 (admin incident console), #771 (public page) and #772 (e2e) consume it.
-
-Note: the earlier "Investigation Report" comment on the issue (WhatsApp link UI) and the `.forge-lean/*` files found in the tree describe a different issue. They were ignored and overwritten.
+Part 2 of #96: a staff incident console at `apps/admin/app/(console)/status/page.tsx` with actions to create, update and resolve incidents from a message template, writing incident rows and an `audit_event` per change. Incidents appear in the next `status.publish` cycle. States: loading skeleton, empty, error, offline, and permission-denied for non-staff. Register in the admin tests (server-actions-audit, no-content-fields) and the console nav. Depends on #769.
 
 ### What We Found
-(verified on `origin/milestone/site-onboarding-launch`, 8c2520a3)
-- Nothing exists yet: no `packages/core/src/status`, no `StatusSnapshot`, no `STATUS_SIGNING_KEY`, no `incident` table (git grep of the base).
-- Adapter data source: `packages/core/src/court/adapter-health.ts:20` `getAdapterHealthSummary(db)` returns per adapter and version `runs/okRuns/degradedRuns/failedRuns` (view `adapter_health_summary`, names no workspace). Thresholds must be derived from these counts.
-- Naming clash to avoid: `system.status.poll` already exists (case-watch, `packages/core/src/jobs/definitions/status-poll.ts`, registered in `apps/worker/src/__tests__/registry.test.ts:171`, `schedules.test.ts:46`). The new job must be `system.status.publish` (system jobs start `system.`, `packages/core/src/jobs/define.ts:90`, payload `workspaceId` null/optional).
-- Job precedent: `packages/core/src/jobs/definitions/notices-poll.ts:79` (`defineJob`, `concurrency: 1`, `singleton: { policy: 'stately' }`, `schedule: { cron, payload: {} }`); registered in `packages/core/src/jobs/registry.ts:47,210,270` and exported at `packages/core/src/jobs/index.ts:157`. Schedules run in Asia/Kolkata (`apps/worker/src/schedules.ts:5`), irrelevant for `* * * * *`.
-- Platform-table precedent: `notice` is in `GLOBAL_TABLES` (`packages/db/src/conventions.ts:46,80`), listed in the root table test (`packages/db/src/index.test.ts:121`), schema in `packages/db/src/schema/notices.ts`, exported from `packages/db/src/schema/index.ts:298`. Tables without `workspace_id` must be in `GLOBAL_TABLES`, with a justification comment. They need no RLS catalog entry (`packages/db/src/__tests__/rls/sql.test.ts` lists only tenant tables).
-- Latest migration is `20261025040000_whatsapp_inbound` (`packages/db/migrations/meta/_journal.json:695`); next free is `20261025050000`.
-- Storage: `ObjectStore` (`packages/storage/src/provider.ts:92`) accepts only branded `ObjectKey`, and the only builder `objectKey()` (`packages/storage/src/keys.ts:47`) produces `ws/<uuid>/<kind>/<yyyy>/<uuid>`; `parseObjectKey` (`keys.ts:67`) rejects anything else. `status/status.json` therefore cannot be written today: a small public-key seam is needed in `@causedeck/storage` (providers must be checked to accept it). `@causedeck/core` already depends on `@causedeck/storage` (`packages/core/package.json:70`), jobs use `createObjectStoreFromEnv` (`jobs/definitions/capture-retention.ts:10`), so no new workspace dependency.
-- Env: secrets with dev defaults follow `BETTER_AUTH_SECRET` (`packages/config/src/env/schema.ts:22,150-154`, `secret: true`, `devDefault`); `.env.example` is generated from the specs (`packages/config/src/env/example.ts`), and `packages/config/src/env/__tests__/*` assert it.
-- Registries to pre-stage (CLAUDE.md table): core domains `packages/config/eslint/core-domains.js:51` (`CORE_DOMAIN_DEPENDENCIES`) plus `docs/engineering/core-domains.md` (rows ~23-30, mermaid ~166, dependency table ~225); core barrel `packages/core/src/index.ts:9`; `packages/core/package.json:37` exports (add `./status`); cross-tenant `NOT_A_SERVICE`/`SERVICE_TESTS` in `packages/db/src/testing/cross-tenant-registry.ts:209,872` (`getAdapterHealthSummary` is tested at `services.test.ts:1863` as a model); worker `registry.test.ts:168`, `schedules.test.ts:43,115`; i18n `packages/i18n/src/catalog.ts:7` `NAMESPACES` and `catalog.test.ts:~113`.
-- Court wording: "Parsing of documents you share" appears nowhere on the base; it must be the display label for the court/adapter component.
+(verified on HEAD d03a2bc4, which already contains the merged #769)
+- No status page, actions or `status` capability exist: `apps/admin/app/(console)/` has no `status/`; `apps/admin/lib/roles.ts:14-27` has no `status` capability; `apps/admin/components/console-nav.tsx:29-56` has no `/status` entry.
+- Tables exist: `packages/db/src/schema/status.ts:18` (`incident`) and `:46` (`incidentUpdate`), checks make `state='resolved'` iff `resolved_at` is set (`:42`). The app role has SELECT/INSERT/UPDATE (`packages/db/migrations/20261025050000_status_incident.sql:36-37`). The schema header (`status.ts:6`) says #770 writes them.
+- `packages/core/src/status/` has only the read/publish side (`index.ts`, `model.ts`, `publish.ts`: `sanitiseIncident` at `publish.ts:104`, `buildSnapshot` at `:202`). There is NO incident write service, so "the core status service" the issue relies on must gain one. The job `system.status.publish` is in `packages/core/src/jobs/definitions/status-publish.ts`; incidents reach the page on its next run.
+- Write-service precedent: `packages/core/src/sources/registry.ts:268` (`assertSourceStaff` against `staffUser`), `:341` (`createSource`: `withUser` transaction, staff check, write, `record()` with actor kind `staff` and `workspaceId: null` in the same tx, `:325-331`). Console action precedent: `apps/admin/app/(console)/sources/actions.ts` (`'use server'`, `requireStaff('sources')`, zod, `redirect('?done=/?error=')`, the `// authz:` comment).
+- Audit actions must be registered in `packages/core/src/audit/events.ts` (`AUDIT_ACTIONS`; `source.changed` at `:37`); `security-events.test.ts:87,362` assert registry properties.
+- Reads: `apps/admin/lib/data/index.ts:217` (`sourceRegistry` via `staffQuery`, which records `staff.read` and runs in `withoutWorkspace` with a table allowlist, `lib/data/scope.ts:70`).
+- Page states: only `apps/admin/app/error.tsx` and `not-found.tsx` exist; no `loading.tsx` anywhere. `requireStaff(cap)` calls `notFound()` for a non-staff or a role lacking the capability (`apps/admin/lib/staff.ts:36-40`), which is the permission-denied behaviour.
+- Tests to extend: `apps/admin/__tests__/server-actions-audit.test.ts` (ACTIONS map `:300-385`, enumerates every `'use server'` export `:398+`, mocks `@causedeck/core/sources` at `:89`), `roles.test.ts:23-54` (matrix), `console-layout.test.tsx:60-100` (nav labels per role), `no-content-fields.test.ts:116+` (renders pages against seeded tenants).
+- Registries from CLAUDE.md: new runtime exports of `@causedeck/core` need `NOT_A_SERVICE`/`SERVICE_TESTS` in `packages/db/src/testing/cross-tenant-registry.ts` (status block `:1149-1178`, `createSource` precedent `:918`). `status` currently depends only on `court` (`packages/config/eslint/core-domains.js:50`); importing `audit` needs a `CORE_DOMAIN_DEPENDENCIES` edit and `docs/engineering/core-domains.md` (row `:31`, mermaid, dependency table).
 
 ### Root Cause
-Missing feature: #96 was closed not_planned; the status page milestone work has no data layer. The signed snapshot, incident tables and publisher are the shared base for #770/#771/#772.
+Missing feature: #769 delivered the incident tables and publisher but no staff write path or console UI, so incidents cannot be created.
 
 ### Affected Files
-- new `packages/core/src/status/{index,model,publish,thresholds,sanitise}.ts` + tests
-- new `packages/core/src/jobs/definitions/status-publish.ts`; edit `jobs/registry.ts`, `jobs/index.ts`
-- `packages/core/src/index.ts`, `packages/core/package.json`
-- new `packages/db/src/schema/status.ts`; `schema/index.ts`; `conventions.ts`; `index.test.ts`; new migration `20261025050000_status_incident.sql` + meta snapshot/journal
-- `packages/storage/src/keys.ts` (+ providers if they validate keys), `packages/storage/src/index.ts`
-- `packages/config/src/env/schema.ts` (+ `.env.example`), `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`
-- `packages/db/src/testing/cross-tenant-registry.ts`; `apps/worker/src/__tests__/{registry,schedules}.test.ts`
-- `packages/i18n/src/catalog.ts`, `messages/{en,kn,ta}/status.json`, `__tests__/catalog.test.ts`, regenerated `generated/**`
+- `packages/core/src/status/incidents.ts` (new) + `index.ts` export + test
+- `packages/core/src/audit/events.ts`
+- `packages/core/package.json` only if exports need no change (`./status` already exported by #769; no edit expected)
+- `packages/db/src/testing/cross-tenant-registry.ts`, `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`, `docs/engineering/admin-console.md`
+- `apps/admin/lib/roles.ts`, `components/console-nav.tsx`, `lib/data/index.ts`
+- `apps/admin/app/(console)/status/{page.tsx,actions.ts,loading.tsx,error.tsx,incident-forms.tsx,offline-banner.tsx}` (new)
+- admin tests: `roles.test.ts`, `console-layout.test.tsx`, `server-actions-audit.test.ts`, `no-content-fields.test.ts`, new `status-page.test.tsx`
 
 ### Sibling Sweep
-Other global (non-tenant) tables, `notice` (#584) and `adapter_health_summary`, follow the `GLOBAL_TABLES` route. The only same-name risk is `system.status.poll` and the case-watch `status` wording, so the new domain dir and job use `status`/`status.publish` but the registry text must be explicit. No other publisher writes to a public path.
+Same pattern (audited staff write to a global table) is `sources` (`#478`) and flags; follow `sources/actions.ts`. The `no-content-fields` and `server-actions-audit` guards are the registries any new admin page/action must join. #771 (public page) reads only the published snapshot, so it is unaffected. Do not confuse with `system.status.poll` (case-watch).
 
 ### History
-No prior status-page implementation. `getAdapterHealthSummary` came with #372 (ADR 0015) and was explicitly meant for "the status page (#42)". #96 closed not_planned.
+Tables and publisher: #769 (merged, PR #787). No prior console. `source.changed` (#478) is the template for the audit shape.
 
 ### Recommendation
-Implement as in `contract.json`: snapshot model and pure threshold mapping (documented constants), sanitiser as an allowlist projection (never copies free text from health errors), HMAC-SHA256 over canonical JSON with `STATUS_SIGNING_KEY`, `publishStatus` that skips the write when the content hash is unchanged (idempotent) and exposes staleness detection (`isStale(snapshot, now, maxAgeSec)`), job `system.status.publish` cron `* * * * *` singleton stately.
+Add `createIncident`, `addIncidentUpdate` (state change or resolve) and `listIncidents` plus the pure `INCIDENT_TEMPLATES` to core `status`, audited in-tx as `incident.changed`; a new `status` capability for ops and admin; the page with `loading.tsx`, `error.tsx`, empty state, an offline banner (client, `navigator.onLine`) and notFound for others; register everything in the guards listed above.
 
 ### Related Issues
-#96 (parent), #770, #771, #772 (siblings, consumers), #372 (adapter health), #586 (notices precedent).
+#96 (parent), #769 (dependency, merged), #771, #772 (siblings).

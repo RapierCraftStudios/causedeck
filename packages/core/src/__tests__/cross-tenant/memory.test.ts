@@ -84,6 +84,12 @@ const CASES: Record<string, Case> = {
   recordUsage: (f) =>
     denied(f, () => core.recordUsage(f.deps, asBInA(f), { itemId: f.itemA, usedIn: 'brief' })),
   tenureMetrics: (f) => denied(f, () => core.tenureMetrics(f.deps, asBInA(f))),
+  listMemoryProposals: (f) => denied(f, () => core.listMemoryProposals(f.deps, asBInA(f))),
+  listMemoryUsage: (f) => denied(f, () => core.listMemoryUsage(f.deps, asBInA(f), f.itemA)),
+  listMemoryWithUsage: (f) => denied(f, () => core.listMemoryWithUsage(f.deps, asBInA(f))),
+  listReviewCandidates: (f) => denied(f, () => core.listReviewCandidates(f.deps, asBInA(f))),
+  getLastMemoryReview: (f) => denied(f, () => core.getLastMemoryReview(f.deps, asBInA(f))),
+  completeMemoryReview: (f) => denied(f, () => core.completeMemoryReview(f.deps, asBInA(f))),
   monthlyReview: async (f) => {
     // A system body that takes a workspace id: B's review counts B's memory and nothing of A's.
     const review = await core.monthlyReview({ db: f.tx }, f.b.id);

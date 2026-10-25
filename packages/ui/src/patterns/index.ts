@@ -119,4 +119,18 @@ export {
   type MemoryLabels,
   type MemoryScopeMeta,
 } from './memory-card/memory-card';
+export {
+  DEFAULT_SCOPE_CHIP_LABELS,
+  ScopeChip,
+  type MemoryVisibility,
+  type ScopeChipLabels,
+  type ScopeChipProps,
+} from './scope-chip/scope-chip';
+export {
+  DEFAULT_PROPOSAL_TRAY_LABELS,
+  ProposalTray,
+  type ProposalTrayLabels,
+  type ProposalTrayProps,
+  type TrayProposal,
+} from './proposal-tray/proposal-tray';
 export * from './states';

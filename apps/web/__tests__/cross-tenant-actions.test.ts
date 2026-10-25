@@ -164,6 +164,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   requestClerkSetupApprovalAction: welcome,
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
+  setAllowEvalReuseAction: privacy,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
   rotateIntakeAddressAction: emailIntake,
@@ -546,6 +547,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
       sensitiveDefaultRestricted: false,
       retentionAudioDays: 7,
     },
+    // Eval reuse consent (#558): ub, owner of B, may not opt A in.
+    setAllowEvalReuseAction: { workspaceId, allowEvalReuse: true },
     rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
     // Email intake (#54): ub, owner of B, may not create, rotate or revoke an address, edit the
     // allow-list or enable the email channel on A.

@@ -196,8 +196,7 @@ describe('eval reuse consent', () => {
   it('exports only when the workspace opt-in and the item consent both hold', async () => {
     await withTestDb(async (tx) => {
       const { a, docA } = await world(tx);
-      const run = <T>(fn: (s: Transaction) => Promise<T>) =>
-        inWorkspace(tx, a.workspaceId, fn);
+      const run = <T>(fn: (s: Transaction) => Promise<T>) => inWorkspace(tx, a.workspaceId, fn);
       await run((s) =>
         createCorrectionStore({ db: s, workspaceId: a.workspaceId, actorUserId: a.ownerId }).save([
           sample(docA.id),

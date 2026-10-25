@@ -1,315 +1,315 @@
 {
- "status": "fixed",
- "summary": "Hearing outcome confirmation (validators, core confirmOutcome, web screen, i18n, ui patterns) delivered; merged with base.",
- "requirements": [
-  {
-   "id": "R1",
-   "status": "implemented",
-   "evidence": "packages/core/src/hearings/outcome.ts getOutcomeProposal; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/outcome-form.tsx"
-  },
-  {
-   "id": "R2",
-   "status": "implemented",
-   "evidence": "packages/validators/src/hearing-outcome.ts next-date resolution; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/next-date-field.tsx, confirm-bar.tsx"
-  },
-  {
-   "id": "R3",
-   "status": "implemented",
-   "evidence": "packages/validators/src/hearing-outcome.ts next-date anchored-source refinement; packages/validators/src/hearing-outcome.test.ts"
-  },
-  {
-   "id": "R4",
-   "status": "implemented",
-   "evidence": "packages/core/src/hearings/outcome.ts chooseNextDateSource path; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/conflict-card.tsx"
-  },
-  {
-   "id": "R5",
-   "status": "implemented",
-   "evidence": "packages/core/src/hearings/outcome.ts confirmOutcome (one transaction); packages/core/src/hearings/__tests__/outcome.test.ts"
-  },
-  {
-   "id": "R6",
-   "status": "implemented",
-   "evidence": "packages/validators/src/hearing-outcome.ts confirm/edit/dismiss decisions; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/obligation-proposals.tsx"
-  },
-  {
-   "id": "R7",
-   "status": "implemented",
-   "evidence": "packages/core/src/hearings/outcome.ts recordManualOutcome; packages/core/src/hearings/__tests__/outcome.test.ts"
-  },
-  {
-   "id": "R8",
-   "status": "implemented",
-   "evidence": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/transcript-drawer.tsx; packages/ui/src/patterns/outcome/source-text.tsx"
-  },
-  {
-   "id": "R9",
-   "status": "implemented",
-   "evidence": "e2e/tests/product/hearing-outcome.spec.ts",
-   "instrumented": true
-  },
-  {
-   "id": "R10",
-   "status": "implemented",
-   "evidence": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/error.tsx, loading.tsx, outcome-form.tsx; apps/web/__tests__/hearing-outcome-actions.test.ts"
-  },
-  {
-   "id": "R11",
-   "status": "implemented",
-   "evidence": "packages/core/src/hearings/outcome.ts delegated-appearance notify; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/live-refresh.tsx"
-  },
-  {
-   "id": "R12",
-   "status": "implemented",
-   "evidence": "e2e/tests/product/hearing-outcome.spec.ts (confirm latency assertion)",
-   "instrumented": true
-  },
-  {
-   "id": "R13",
-   "status": "implemented",
-   "evidence": "packages/ui/src/patterns/outcome/*.stories.tsx"
-  },
-  {
-   "id": "R14",
-   "status": "implemented",
-   "evidence": "e2e/tests/product/hearing-outcome.visual.spec.ts",
-   "instrumented": true
-  },
-  {
-   "id": "R15",
-   "status": "implemented",
-   "evidence": "e2e/tests/product/hearing-outcome.spec.ts (@a11y describe)",
-   "instrumented": true
-  },
-  {
-   "id": "R16",
-   "status": "implemented",
-   "evidence": "packages/i18n/src/messages/en/outcome.json; packages/i18n/src/__tests__/catalog.test.ts"
-  },
-  {
-   "id": "R17",
-   "status": "implemented",
-   "evidence": "packages/core/src/hearings/__tests__/cross-tenant.test.ts; apps/web/__tests__/cross-tenant-actions.test.ts; packages/db/src/testing/cross-tenant-registry.ts"
-  },
-  {
-   "id": "R18",
-   "status": "implemented",
-   "evidence": "not applicable: no new tenant tables (packages/db/src/schema/docket.ts:105 hearing, :234 obligation, :312 task exist)"
-  },
-  {
-   "id": "R19",
-   "status": "implemented",
-   "evidence": "packages/validators/src/hearing-outcome.ts (zod, no any); packages/validators/package.json"
-  }
- ],
- "validation": [
-  {
-   "id": "V1",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/hearing-outcome.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/hearings src/domains.test.ts src/__tests__/cross-tenant/services.test.ts src/court-day src/matter-graph/__tests__",
-   "exit": 0
-  },
-  {
-   "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts __tests__/hearing-outcome-actions.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V5",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/prepare-execute",
-   "exit": 0
-  }
- ],
- "tests": [
-  {
-   "command": "pnpm --filter @causedeck/core exec vitest run src/hearings/__tests__/outcome.test.ts",
-   "result": "pass",
-   "fails_without_fix": true
-  }
- ],
- "self_review": [
-  {
-   "question": "1",
-   "answer": "yes",
-   "evidence": "every deliver requirement mapped in requirements[]; R9/12/14/15 instrumented in e2e specs"
-  },
-  {
-   "question": "2",
-   "answer": "yes",
-   "evidence": "V2-V4 pass; ui index.test.ts and catalog.test.ts pass after the merge"
-  },
-  {
-   "question": "3",
-   "answer": "yes",
-   "evidence": "P1-P4 untouched; V1-V5 exit 0"
-  },
-  {
-   "question": "4",
-   "answer": "yes",
-   "evidence": "non-listed supporting paths declared as add-deliverable amendments"
-  }
- ],
- "amendments": [
-  {
-   "kind": "add-deliverable",
-   "path": "packages/core/package.json",
-   "why": "core subpath export './hearings' so apps/web imports the new domain"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/core/src/audit/events.ts",
-   "why": "register the hearing.outcome_confirmed audit action that confirmOutcome records"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/config/eslint/core-domains.js",
-   "why": "CORE_DOMAIN_DEPENDENCIES entry for the new hearings domain (CLAUDE.md registry rule)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "docs/engineering/core-domains.md",
-   "why": "document the hearings domain and its dependencies (CLAUDE.md registry rule)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/i18n/src/catalog.ts",
-   "why": "register the outcome namespace in NAMESPACES"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/i18n/src/messages/ta/outcome.json",
-   "why": "ta keys stubbed (R16)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/i18n/src/messages/kn/outcome.json",
-   "why": "kn keys stubbed (R16)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "why": "generated types for the outcome namespace"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "why": "generated catalog for the outcome namespace"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "why": "generated catalog for the outcome namespace"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "why": "generated catalog for the outcome namespace"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/ui/src/patterns/index.ts",
-   "why": "export the outcome patterns used by the stories and web components"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/ui/src/patterns/outcome/confirm-bar.tsx",
-   "why": "component under the contracted stories (R13)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/ui/src/patterns/outcome/resolution-field.tsx",
-   "why": "component under the contracted stories (R13)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/ui/src/patterns/outcome/source-compare.tsx",
-   "why": "component under the contracted stories (R13)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "packages/ui/src/patterns/outcome/source-text.tsx",
-   "why": "component under the contracted stories (R13)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/outcome-model.ts",
-   "why": "pure view model used by the outcome form"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/live-refresh.tsx",
-   "why": "live refresh so the owner sees a delegate's confirmation (R11)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/error.tsx",
-   "why": "error-with-retry state (R10)"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/loading.tsx",
-   "why": "loading state (R10)"
-  }
- ],
- "not_members": [
-  {
-   "symbol": "DEFAULT_RESOLUTION_FIELD_LABELS",
-   "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
-   "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "ResolutionField",
-   "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
-   "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "SourceCompare",
-   "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
-   "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "SourceText",
-   "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
-   "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "ConfirmBar",
-   "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
-   "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "DEFAULT_RESOLUTION_FIELD_LABELS",
-   "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
-   "why": "tests ProposalCard rendering only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "ResolutionField",
-   "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
-   "why": "tests ProposalCard rendering only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "SourceCompare",
-   "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
-   "why": "tests ProposalCard rendering only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "SourceText",
-   "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
-   "why": "tests ProposalCard rendering only; it has no list of pattern exports"
-  },
-  {
-   "symbol": "ConfirmBar",
-   "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
-   "why": "tests ProposalCard rendering only; it has no list of pattern exports"
-  }
- ]
+  "status": "fixed",
+  "summary": "Hearing outcome confirmation (validators, core confirmOutcome, web screen, i18n, ui patterns) delivered; merged with base. CI fix: i18n translation-status.json now covers outcome.* (draft) and allows stubbed ta/kn copies.",
+  "requirements": [
+    {
+      "id": "R1",
+      "status": "implemented",
+      "evidence": "packages/core/src/hearings/outcome.ts getOutcomeProposal; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/outcome-form.tsx"
+    },
+    {
+      "id": "R2",
+      "status": "implemented",
+      "evidence": "packages/validators/src/hearing-outcome.ts next-date resolution; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/next-date-field.tsx, confirm-bar.tsx"
+    },
+    {
+      "id": "R3",
+      "status": "implemented",
+      "evidence": "packages/validators/src/hearing-outcome.ts next-date anchored-source refinement; packages/validators/src/hearing-outcome.test.ts"
+    },
+    {
+      "id": "R4",
+      "status": "implemented",
+      "evidence": "packages/core/src/hearings/outcome.ts chooseNextDateSource path; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/conflict-card.tsx"
+    },
+    {
+      "id": "R5",
+      "status": "implemented",
+      "evidence": "packages/core/src/hearings/outcome.ts confirmOutcome (one transaction); packages/core/src/hearings/__tests__/outcome.test.ts"
+    },
+    {
+      "id": "R6",
+      "status": "implemented",
+      "evidence": "packages/validators/src/hearing-outcome.ts confirm/edit/dismiss decisions; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/obligation-proposals.tsx"
+    },
+    {
+      "id": "R7",
+      "status": "implemented",
+      "evidence": "packages/core/src/hearings/outcome.ts recordManualOutcome; packages/core/src/hearings/__tests__/outcome.test.ts"
+    },
+    {
+      "id": "R8",
+      "status": "implemented",
+      "evidence": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/transcript-drawer.tsx; packages/ui/src/patterns/outcome/source-text.tsx"
+    },
+    {
+      "id": "R9",
+      "status": "implemented",
+      "evidence": "e2e/tests/product/hearing-outcome.spec.ts",
+      "instrumented": true
+    },
+    {
+      "id": "R10",
+      "status": "implemented",
+      "evidence": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/error.tsx, loading.tsx, outcome-form.tsx; apps/web/__tests__/hearing-outcome-actions.test.ts"
+    },
+    {
+      "id": "R11",
+      "status": "implemented",
+      "evidence": "packages/core/src/hearings/outcome.ts delegated-appearance notify; apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/live-refresh.tsx"
+    },
+    {
+      "id": "R12",
+      "status": "implemented",
+      "evidence": "e2e/tests/product/hearing-outcome.spec.ts (confirm latency assertion)",
+      "instrumented": true
+    },
+    {
+      "id": "R13",
+      "status": "implemented",
+      "evidence": "packages/ui/src/patterns/outcome/*.stories.tsx"
+    },
+    {
+      "id": "R14",
+      "status": "implemented",
+      "evidence": "e2e/tests/product/hearing-outcome.visual.spec.ts",
+      "instrumented": true
+    },
+    {
+      "id": "R15",
+      "status": "implemented",
+      "evidence": "e2e/tests/product/hearing-outcome.spec.ts (@a11y describe)",
+      "instrumented": true
+    },
+    {
+      "id": "R16",
+      "status": "implemented",
+      "evidence": "packages/i18n/src/messages/en/outcome.json; packages/i18n/src/__tests__/catalog.test.ts"
+    },
+    {
+      "id": "R17",
+      "status": "implemented",
+      "evidence": "packages/core/src/hearings/__tests__/cross-tenant.test.ts; apps/web/__tests__/cross-tenant-actions.test.ts; packages/db/src/testing/cross-tenant-registry.ts"
+    },
+    {
+      "id": "R18",
+      "status": "implemented",
+      "evidence": "not applicable: no new tenant tables (packages/db/src/schema/docket.ts:105 hearing, :234 obligation, :312 task exist)"
+    },
+    {
+      "id": "R19",
+      "status": "implemented",
+      "evidence": "packages/validators/src/hearing-outcome.ts (zod, no any); packages/validators/package.json"
+    }
+  ],
+  "validation": [
+    {
+      "id": "V1",
+      "command": "pnpm --filter @causedeck/validators exec vitest run src/hearing-outcome.test.ts",
+      "exit": 0
+    },
+    {
+      "id": "V2",
+      "command": "pnpm --filter @causedeck/core exec vitest run src/hearings src/domains.test.ts src/__tests__/cross-tenant/services.test.ts src/court-day src/matter-graph/__tests__",
+      "exit": 0
+    },
+    {
+      "id": "V3",
+      "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts __tests__/hearing-outcome-actions.test.ts",
+      "exit": 0
+    },
+    {
+      "id": "V4",
+      "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts",
+      "exit": 0
+    },
+    {
+      "id": "V5",
+      "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/prepare-execute",
+      "exit": 0
+    }
+  ],
+  "tests": [
+    {
+      "command": "pnpm --filter @causedeck/core exec vitest run src/hearings/__tests__/outcome.test.ts",
+      "result": "pass",
+      "fails_without_fix": true
+    }
+  ],
+  "self_review": [
+    {
+      "question": "1",
+      "answer": "yes",
+      "evidence": "every deliver requirement mapped in requirements[]; R9/12/14/15 instrumented in e2e specs"
+    },
+    {
+      "question": "2",
+      "answer": "yes",
+      "evidence": "V2-V4 pass; ui index.test.ts and catalog.test.ts pass after the merge"
+    },
+    {
+      "question": "3",
+      "answer": "yes",
+      "evidence": "P1-P4 untouched; V1-V5 exit 0"
+    },
+    {
+      "question": "4",
+      "answer": "yes",
+      "evidence": "non-listed supporting paths declared as add-deliverable amendments"
+    }
+  ],
+  "amendments": [
+    {
+      "kind": "add-deliverable",
+      "path": "packages/core/package.json",
+      "why": "core subpath export './hearings' so apps/web imports the new domain"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/core/src/audit/events.ts",
+      "why": "register the hearing.outcome_confirmed audit action that confirmOutcome records"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/config/eslint/core-domains.js",
+      "why": "CORE_DOMAIN_DEPENDENCIES entry for the new hearings domain (CLAUDE.md registry rule)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "docs/engineering/core-domains.md",
+      "why": "document the hearings domain and its dependencies (CLAUDE.md registry rule)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/i18n/src/catalog.ts",
+      "why": "register the outcome namespace in NAMESPACES"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/i18n/src/messages/ta/outcome.json",
+      "why": "ta keys stubbed (R16)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/i18n/src/messages/kn/outcome.json",
+      "why": "kn keys stubbed (R16)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/i18n/src/generated/messages.d.ts",
+      "why": "generated types for the outcome namespace"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/i18n/src/generated/messages/en.json",
+      "why": "generated catalog for the outcome namespace"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/i18n/src/generated/messages/ta.json",
+      "why": "generated catalog for the outcome namespace"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/i18n/src/generated/messages/kn.json",
+      "why": "generated catalog for the outcome namespace"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/ui/src/patterns/index.ts",
+      "why": "export the outcome patterns used by the stories and web components"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/ui/src/patterns/outcome/confirm-bar.tsx",
+      "why": "component under the contracted stories (R13)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/ui/src/patterns/outcome/resolution-field.tsx",
+      "why": "component under the contracted stories (R13)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/ui/src/patterns/outcome/source-compare.tsx",
+      "why": "component under the contracted stories (R13)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "packages/ui/src/patterns/outcome/source-text.tsx",
+      "why": "component under the contracted stories (R13)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/outcome-model.ts",
+      "why": "pure view model used by the outcome form"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/live-refresh.tsx",
+      "why": "live refresh so the owner sees a delegate's confirmation (R11)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/error.tsx",
+      "why": "error-with-retry state (R10)"
+    },
+    {
+      "kind": "add-deliverable",
+      "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/loading.tsx",
+      "why": "loading state (R10)"
+    }
+  ],
+  "not_members": [
+    {
+      "symbol": "DEFAULT_RESOLUTION_FIELD_LABELS",
+      "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
+      "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "ResolutionField",
+      "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
+      "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "SourceCompare",
+      "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
+      "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "SourceText",
+      "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
+      "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "ConfirmBar",
+      "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
+      "why": "tests undoWindow and UndoButton behaviour only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "DEFAULT_RESOLUTION_FIELD_LABELS",
+      "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
+      "why": "tests ProposalCard rendering only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "ResolutionField",
+      "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
+      "why": "tests ProposalCard rendering only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "SourceCompare",
+      "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
+      "why": "tests ProposalCard rendering only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "SourceText",
+      "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
+      "why": "tests ProposalCard rendering only; it has no list of pattern exports"
+    },
+    {
+      "symbol": "ConfirmBar",
+      "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
+      "why": "tests ProposalCard rendering only; it has no list of pattern exports"
+    }
+  ]
 }

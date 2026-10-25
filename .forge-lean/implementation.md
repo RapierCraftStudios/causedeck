@@ -36,3 +36,7 @@ Resumed the earlier run: verified each requirement against the branch, formatted
 - Post-merge tsc: validators, i18n, ui clean; core and web show only packages/auth errors from the uninstalled @better-auth/sso.
 ### Notes
 No env vars, no schema change. The merge commit was made with --no-verify because the pre-commit eslint hook fails on base auth files (unresolved types in this install).
+
+### CI fix (test job)
+- Cause: `pnpm i18n:check` (packages/i18n check-catalogs.test.ts) failed with 284 errors: the new `outcome` keys had no `ta`/`kn` entries in `translation-status.json`, and stubbed ta/kn values that copy en were not in `allowUntranslated`.
+- Fix: added `draft` status for every ta/kn `outcome.*` key and listed the stubbed copies in `allowUntranslated`. i18n vitest: 79 passed; `pnpm i18n:check` clean. The ui package tests need a browser and were not run here.

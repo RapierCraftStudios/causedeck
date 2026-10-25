@@ -40,7 +40,7 @@ export function ListDiffSheet({ diffs }: { diffs: readonly ListDiff[] }) {
                   diff[kind].map((entry, i) => {
                     const Icon = KIND_ICON[kind];
                     return (
-                      <li key={`${kind}-${i}`} className="flex items-center gap-2">
+                      <li key={`${kind}-${String(i)}`} className="flex items-center gap-2">
                         <Icon aria-hidden="true" className="size-4 shrink-0" />
                         <span>
                           {t(`kind.${kind}`, {

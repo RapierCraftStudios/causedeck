@@ -54,7 +54,7 @@ export const ErrorStory: Story = {
   name: 'Error',
   render: () => (
     <div className="p-4">
-      <ErrorState />
+      <ErrorState title="The court day could not load." onRetry={() => undefined} />
     </div>
   ),
 };
@@ -62,7 +62,7 @@ export const ErrorStory: Story = {
 export const Offline: Story = {
   render: () => (
     <div className="p-4">
-      <OfflineBanner />
+      <OfflineBanner savedAt={new Date('2030-01-02T04:30:00Z')} />
     </div>
   ),
 };

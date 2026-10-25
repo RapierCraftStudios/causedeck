@@ -69,7 +69,8 @@ export async function ItemCard(props: ItemCardProps) {
     brief,
     ...(clash ? [t('item.clashNote')] : []),
   ].join(', ');
-  const ChangeIcon = change?.kind === 'added' ? Plus : change?.kind === 'moved' ? ArrowRightLeft : Split;
+  const ChangeIcon =
+    change?.kind === 'added' ? Plus : change?.kind === 'moved' ? ArrowRightLeft : Split;
 
   return (
     <QuickActionsSheet

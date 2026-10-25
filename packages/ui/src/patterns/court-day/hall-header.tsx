@@ -27,7 +27,7 @@ export function HallHeader({
       data-slot="hall-header"
       className={cn(
         'bg-surface border-border flex items-start justify-between gap-3 border-b px-3 py-2',
-        sticky && 'sticky top-0 z-10',
+        sticky && 'z-sticky sticky top-0',
         className,
       )}
       {...props}

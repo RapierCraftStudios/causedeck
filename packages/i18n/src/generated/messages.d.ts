@@ -2652,6 +2652,130 @@ export type Messages = {
       };
       updated: string;
     };
+    board: {
+      header: {
+        today: string;
+        tomorrow: string;
+        days: string;
+        summary: string;
+        read: string;
+      };
+      failure: {
+        message: string;
+        today: string;
+        tomorrow: string;
+        openOfficial: string;
+        shareAgain: string;
+        lastKnown: string;
+      };
+      diff: {
+        banner: string;
+        open: string;
+        title: string;
+        description: string;
+        label: {
+          changed: string;
+          supplementary: string;
+        };
+        kind: {
+          added: string;
+          removed: string;
+          moved: string;
+        };
+      };
+      shortcuts: {
+        nextItem: string;
+        previousItem: string;
+        nextHall: string;
+        previousHall: string;
+        open: string;
+        carry: string;
+        marker: string;
+        actions: string;
+        diff: string;
+        rail: string;
+        today: string;
+        matters: string;
+        help: string;
+      };
+      clash: {
+        title: string;
+        hall: string;
+        complex: string;
+      };
+      hall: {
+        unassigned: string;
+        name: string;
+        count: string;
+        courtIsAt: string;
+      };
+      item: {
+        name: string;
+        unnumbered: string;
+        brief: string;
+        briefUnknown: string;
+        clashNote: string;
+        restricted: string;
+        clash: string;
+        carried: string;
+        delegated: string;
+      };
+      stage: {
+        filed: string;
+        sr_fr: string;
+        defects: string;
+        re_presented: string;
+        numbered: string;
+        disposed: string;
+        listed: string;
+        reserved: string;
+        'part-heard': string;
+      };
+      change: {
+        added: string;
+        moved: string;
+        removed: string;
+      };
+      marker: {
+        label: string;
+        set: string;
+        clear: string;
+        invalid: string;
+        failed: string;
+      };
+      rail: {
+        carry: string;
+        carryEmpty: string;
+        needsYou: string;
+        needsEmpty: string;
+        carriedTimes: string;
+        toConfirm: string;
+        summary: string;
+      };
+      actions: {
+        open: string;
+        title: string;
+        openMatter: string;
+        courtIsHere: string;
+      };
+      hallRail: {
+        label: string;
+      };
+      empty: {
+        title: string;
+        description: string;
+      };
+      offline: string;
+      denied: {
+        title: string;
+        description: string;
+      };
+      loading: string;
+      error: {
+        title: string;
+        retry: string;
+      };
+    };
   };
   courtInsights: {
     metaTitle: string;

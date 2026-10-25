@@ -27,9 +27,12 @@ export async function HallColumn(props: HallColumnProps) {
   const t = await getTranslations('courtDay.board');
   const items = hall.lists.flatMap((list) => list.items);
   const clashIds = new Set(clashes.flatMap((c) => c.items.map((i) => i.listingId)));
-  const own = clashes.filter((c) => c.items.some((i) => items.some((x) => x.listingId === i.listingId)));
+  const own = clashes.filter((c) =>
+    c.items.some((i) => items.some((x) => x.listingId === i.listingId)),
+  );
   const marker = hall.marker?.currentItem ?? null;
-  const title = hall.hallNo === null ? t('hall.unassigned') : t('hall.name', { hallNo: hall.hallNo });
+  const title =
+    hall.hallNo === null ? t('hall.unassigned') : t('hall.name', { hallNo: hall.hallNo });
   const firstAtMarker =
     marker === null
       ? -1

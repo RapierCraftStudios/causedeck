@@ -83,7 +83,7 @@ export function QuickActionsSheet({
       <Button
         type="button"
         variant="ghost"
-        size="icon"
+        size="md"
         className="size-11 shrink-0"
         aria-label={t('open')}
         data-quick-actions

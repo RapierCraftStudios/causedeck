@@ -11,7 +11,7 @@ export async function DayRibbon({ slug, which }: { slug: string; which: 'today' 
           key={day}
           href={`/w/${slug}/${day}`}
           aria-current={day === which ? 'page' : undefined}
-          className="border-border inline-flex min-h-11 min-w-11 items-center rounded-full border px-4 text-sm aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
+          className="border-border aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground inline-flex min-h-11 min-w-11 items-center rounded-full border px-4 text-sm"
         >
           {t(day)}
         </Link>

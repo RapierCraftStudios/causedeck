@@ -21,6 +21,130 @@
         "high": "ಹೆಚ್ಚಿನ ವಿಶ್ವಾಸ"
       },
       "updated": "ಫಲಕ ಓದಿದ ಸಮಯ {time}"
+    },
+    "board": {
+      "header": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "days": "Court day",
+        "summary": "{items, plural, one {# item} other {# items}} in {halls, plural, one {# hall} other {# halls}}",
+        "read": "lists read {time}"
+      },
+      "failure": {
+        "message": "Couldn't read {day}'s {forum} list for Hall {hall}.",
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "openOfficial": "Open the official list",
+        "shareAgain": "or share it again.",
+        "lastKnown": "Last known data, read {time}"
+      },
+      "diff": {
+        "banner": "{count, plural, one {# change} other {# changes}} since the last list",
+        "open": "{count, plural, one {See # change} other {See # changes}}",
+        "title": "List changes",
+        "description": "What was added, moved or removed since the previous list.",
+        "label": {
+          "changed": "Changed list",
+          "supplementary": "Supplementary list"
+        },
+        "kind": {
+          "added": "New: item {item}, {case}",
+          "removed": "Removed: item {item}, {case}",
+          "moved": "Moved from Hall {hall}: item {item}, {case}"
+        }
+      },
+      "shortcuts": {
+        "nextItem": "Next item",
+        "previousItem": "Previous item",
+        "nextHall": "Next hall",
+        "previousHall": "Previous hall",
+        "open": "Open the matter",
+        "carry": "Go to the carry list",
+        "marker": "Set court is at item",
+        "actions": "Quick actions for the item",
+        "diff": "Open list changes",
+        "rail": "Go to the hall rail",
+        "today": "Go to Today",
+        "matters": "Go to Matters",
+        "help": "Show shortcuts"
+      },
+      "clash": {
+        "title": "Clash",
+        "hall": "You are listed in two halls on this date.",
+        "complex": "You are listed in two court complexes on this date."
+      },
+      "hall": {
+        "unassigned": "Hall not yet assigned",
+        "name": "Hall {hallNo}",
+        "count": "{count, plural, one {# item} other {# items}}",
+        "courtIsAt": "Court is at item {item}"
+      },
+      "item": {
+        "name": "Item {n}",
+        "unnumbered": "No item number",
+        "brief": "brief {percent} percent ready",
+        "briefUnknown": "brief readiness not known",
+        "clashNote": "clash with another hall",
+        "restricted": "Restricted matter",
+        "clash": "Clash",
+        "carried": "{count, plural, one {Listed before} other {Listed # times before}}",
+        "delegated": "Delegated"
+      },
+      "stage": {
+        "filed": "Filed",
+        "sr_fr": "SR/FR",
+        "defects": "Defects",
+        "re_presented": "Re-presented",
+        "numbered": "Numbered",
+        "disposed": "Disposed",
+        "listed": "Listed",
+        "reserved": "Reserved",
+        "part-heard": "Part-heard"
+      },
+      "change": {
+        "added": "New",
+        "moved": "Moved from Hall {hall}",
+        "removed": "Removed"
+      },
+      "marker": {
+        "label": "Court is at item",
+        "set": "Set",
+        "clear": "Clear",
+        "invalid": "Enter an item number.",
+        "failed": "Could not save. Try again."
+      },
+      "rail": {
+        "carry": "Carry list",
+        "carryEmpty": "Nothing listed before.",
+        "needsYou": "Needs you",
+        "needsEmpty": "Nothing to confirm.",
+        "carriedTimes": "{count, plural, one {listed once before} other {listed # times before}}",
+        "toConfirm": "to confirm",
+        "summary": "Carry {carry}, needs you {needs}"
+      },
+      "actions": {
+        "open": "Quick actions",
+        "title": "Quick actions",
+        "openMatter": "Open the matter",
+        "courtIsHere": "Court is at item {item}"
+      },
+      "hallRail": {
+        "label": "Halls"
+      },
+      "empty": {
+        "title": "Nothing listed",
+        "description": "None of your matters are on a cause list for this day."
+      },
+      "offline": "You are offline. Showing the last known data.",
+      "denied": {
+        "title": "You cannot view this day",
+        "description": "Your role does not include the court day."
+      },
+      "loading": "Loading the court day",
+      "error": {
+        "title": "The court day could not load",
+        "retry": "Try again"
+      }
     }
   }
 }

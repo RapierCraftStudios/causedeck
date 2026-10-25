@@ -9,13 +9,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { BOARD_SHORTCUTS, hallColumns, itemsIn, roveTo, step } from './keyboard.ts';
 
-export function BoardKeyboard({
-  slug,
-  children,
-}: {
-  slug: string;
-  children: ReactNode;
-}) {
+export function BoardKeyboard({ slug, children }: { slug: string; children: ReactNode }) {
   const t = useTranslations('courtDay.board.shortcuts');
   const router = useRouter();
   const root = useRef<HTMLDivElement>(null);
@@ -83,7 +77,10 @@ export function BoardKeyboard({
   });
   useHotkey('o', () => {
     const active = document.activeElement as HTMLElement | null;
-    active?.closest('[data-court-item]')?.querySelector<HTMLElement>('[data-quick-actions]')?.click();
+    active
+      ?.closest('[data-court-item]')
+      ?.querySelector<HTMLElement>('[data-quick-actions]')
+      ?.click();
   });
   useHotkey('d', () => {
     (root.current ?? document).querySelector<HTMLElement>('[data-diff-trigger]')?.click();

@@ -32,7 +32,7 @@ export async function DayHeader({
           minute: '2-digit',
         }).format(freshness);
   return (
-    <header className="bg-canvas sticky top-0 z-30 flex flex-col gap-1 py-2">
+    <header className="bg-canvas z-sticky sticky top-0 flex flex-col gap-1 py-2">
       <h1 className="font-serif text-2xl font-medium">{t(which)}</h1>
       <p className="text-ink-muted text-sm">
         <time dateTime={date}>{formatted}</time>

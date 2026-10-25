@@ -73,3 +73,6 @@ R16 was missing from result.json (dropped in an earlier rewrite). Re-added as im
 
 ## Merge note
 Base took ADR 0037, so the scale-path ADR is now docs/adr/0038-stage-b-c-scale-path.md (amendment recorded). adr lint, link check, V1-V3 pass on the merged tree.
+
+## Merge-fix (sixth): turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a symbol or key collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0. No source change.

@@ -8,7 +8,7 @@ import { Input } from '@causedeck/ui/input';
 import { Button } from '@causedeck/ui/button';
 import { Skeleton, SkeletonGroup } from '@causedeck/ui/skeleton';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useReducer, useState, useSyncExternalStore } from 'react';
 
 import {
   getArticle,
@@ -50,28 +50,31 @@ export interface HelpArticlesProps {
 
 type Load = { status: 'loading' } | { status: 'error' } | { status: 'ready'; index: HelpIndex };
 
+/** `helpIndex` is built once and cached, so reading it on each render is cheap; a failure retries. */
+function readLoad(hydrated: boolean): Load {
+  if (!hydrated) return { status: 'loading' };
+  try {
+    return { status: 'ready', index: helpIndex() };
+  } catch {
+    return { status: 'error' };
+  }
+}
+
 export function HelpArticles({ selected, onSelect, columns = false }: HelpArticlesProps) {
   const t = useTranslations('help');
   const format = useFormatter();
   const offline = useOffline();
-  const [attempt, setAttempt] = useState(0);
+  const [, retry] = useReducer((n: number) => n + 1, 0);
   const [query, setQuery] = useState('');
   const [tag, setTag] = useState<string | undefined>(undefined);
 
-  // The bundled index loads after hydration so the first paint is the skeleton; `attempt` re-runs it.
+  // The bundled index loads after hydration so the first paint is the skeleton.
   const hydrated = useSyncExternalStore(
     () => () => undefined,
     () => true,
     () => false,
   );
-  const load = useMemo<Load>(() => {
-    if (!hydrated) return { status: 'loading' };
-    try {
-      return { status: 'ready', index: helpIndex() };
-    } catch {
-      return { status: 'error' };
-    }
-  }, [hydrated, attempt]);
+  const load = readLoad(hydrated);
 
   const results = useMemo(
     () => (load.status === 'ready' ? searchHelp(load.index, query, { tag }) : []),
@@ -93,7 +96,7 @@ export function HelpArticles({ selected, onSelect, columns = false }: HelpArticl
         <p>{t('search.error')}</p>
         <Button
           onClick={() => {
-            setAttempt((n) => n + 1);
+            retry();
           }}
         >
           {t('search.retry')}

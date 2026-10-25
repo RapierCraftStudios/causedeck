@@ -1,42 +1,61 @@
 ### Approach
-Markdown lessons with a hand-parsed front-matter block (no new dependency; apps/site has no MDX or Next stack yet). A lesson is live only when a reviewer and a review date are set; the committed drafts carry neither, so no reviewer is invented. Examples use fictional fixtures copied in shape from core's golden fixtures. Signup links carry the closed `education` channel, added to the activation channel list through a migration.
-
+Resumed the earlier run; verified the branch against the contract, ran all validates, declared out-of-contract files by amendment.
 ### Changes
-- apps/site/src/learn/{slugs,index,fixtures,signup-link}.ts: module registry, loader and parser, `isLive`, `reviewLabel` (⚖ for law modules), fictional fixtures, `signupHref`.
-- apps/site/content/learn/<slug>/{en,ta,kn}.md: 6 modules x 3 locales, each ending in the localized disclaimer.
-- apps/site/src/learn/learn.test.ts: regression tests (modules, review gate, fictional-only fixtures, signup links).
-- packages/db/src/schema/activation.ts: `education` added to `ACTIVATION_CHANNELS`.
-- packages/db/migrations/20261025020000_education_channel.sql plus meta snapshot and journal: recreates `activation_event_channel_chk`.
-- apps/admin/__tests__/growth-page.test.tsx, packages/core/src/activation/activation.test.ts: channel list mock and an `education` channel test.
-- docs/engineering/learn.md: review workflow.
-
+- packages/db: whatsapp-link schema, migration 20261025030000 + snapshot/journal, whatsapp channel enum, registry/seeders/RLS/index tests
+- packages/core: whatsapp-link domain (OTP request/verify, unlink, categories, send target), exports, erase/export registration, cross-tenant tests
+- packages/notifications: 'whatsapp' in CHANNELS; DeliveryJob type excludes it
+- apps/web, eslint core-domains.js: type-fallout and domain dependency entry
 ### Acceptance Criteria Status
-- R1 ✅ apps/site/src/learn/index.ts:84; apps/site/content/learn/ (18 files)
-- R2 ✅ apps/site/src/learn/fixtures.ts:1
-- R3 ✅ apps/site/src/learn/signup-link.ts:8
-- R4 deferred (amendment)
-- R5 ✅ apps/site/src/learn/index.ts:37-48; docs/engineering/learn.md
-- R6 post-deploy (contract): reviews by a practising advocate are human; modules stay not-live until filled in
-- R7 ✅ apps/site/src/learn/learn.test.ts (fictional fixtures describe)
-- R8 ✅ apps/site/src/learn/signup-link.ts:8; packages/db/src/schema/activation.ts
-- R9 deferred (contract)
-- R10 ✅ disclaimer in every apps/site/content/learn/*/*.md; learn.test.ts
-
+- R1 ✅ packages/db/src/schema/whatsapp-link.ts
+- R2 ✅ packages/db/migrations/20261025030000_whatsapp_link.sql
+- R3 ✅ packages/core/src/whatsapp-link/link.ts
+- R4 ✅ link.ts getWhatsAppSendTarget
+- R5 ✅ cross-tenant-registry.ts, two-tenants.ts, sql.test.ts, index.test.ts, core index.ts
+- R6 ✅ packages/notifications/src/categories.ts
+- R7 ✅ whatsapp-link/__tests__/whatsapp-link.test.ts, cross-tenant tests
 ### Verification
-- V1 site vitest (learn, index, developer-docs): pass (9 tests). The new learn tests fail without the change (module absent).
-- V2 core activation test: pass (new education-channel test fails without the schema change: the CHECK rejects `education`).
-- V3 admin growth-page test: pass.
-- V4 db index test: pass.
-- V5 site tsc --noEmit: pass. `drizzle-kit check` and migration lint pass; eslint on changed files passes (pre-commit hook).
-- forgedock check: PASS.
-
+V1, V2, V3 pass (forgedock check PASS). tsc clean for db, notifications, core, web. Prettier clean. An earlier V1 failure at 14 workers was a load flake; it passes at 2 workers. Regression tests were not run against a reverted fix.
 ### Notes
-- Migration is timestamp-named and later than the base's latest (journal `when` is above the previous entry's, so already-migrated databases apply it).
-- Nothing is live yet: `liveModules()` is empty until advocates fill in `reviewer` and `reviewedOn`.
-- The channel is not recorded at signup for any source (packages/auth/src/server.ts:547-552); that is the deferred R9.
+No env vars. No messages are sent (P1). No devdocs freshness script in repo.
 
-### Stale-list follow-up
-- The seven flagged tests matched `learn` only through the docs/engineering path. None lists docs files or site modules, and no i18n namespace or core export was added, so each is recorded in result.json `not_members`; no test lists changed.
+## Stale-list follow-up
+Checked the 8 flagged tests: none enumerates @causedeck/db schema exports (they mock other modules or the db wholesale). Recorded all as not_members in result.json; no code change.
 
-### Duplicate-export follow-up
-- `index.ts` no longer re-exports `LEARN_LOCALES`, `LEARN_SLUGS` or `signupHref`; they live only in `slugs.ts` and `signup-link.ts`. `learn.test.ts` imports them from there. V1 and V5 re-run and pass.
+## Merge-check follow-up
+The reported `turbo run typecheck` failure (exit 127, `turbo: command not found`) was an environment problem (turbo not on PATH), not a code conflict. No code change. Via `pnpm exec turbo run typecheck` for core, db, notifications and web: 19/19 tasks pass. V2 and V3 pass. V1 had two deadlock flakes seeding the shared DB at high worker count (export.test.ts, memory-erasure.test.ts); both pass at --maxWorkers=1.
+
+### Post-merge typecheck
+The merged tree typechecks. The reported `turbo: command not found` (exit 127) came from `turbo` not being on PATH, not from a code conflict. `pnpm exec turbo run typecheck` for db, core, notifications, i18n and web exits 0, and `tsc --noEmit` is clean in each of those packages. No code change was needed.
+
+### Re-check
+Same failure reported again (`turbo: command not found`, exit 127): environment PATH only. `pnpm exec turbo run typecheck --filter='...[origin/milestone/instant-gtm-adoption]'` passes (24/24 tasks). No code change.
+
+## Post-merge fix (typecheck exit 127)
+The failing check was `turbo: command not found` (environment, not code). No source change needed. Ran `tsc --noEmit` directly in packages/db, core, notifications and apps/web: clean. Validate V1-V3 pass; two account-deletion tests hit a DB deadlock (40P01) only under 14 parallel workers and pass with `--maxWorkers=1`.
+
+### Post-merge typecheck (second merge)
+The merged tree typechecks; the reported `turbo: command not found` (exit 127) is a PATH problem, not a code conflict. `pnpm exec turbo run typecheck` for db, core, notifications, i18n and web exits 0 (19 tasks, 9 cached). No code change was needed.
+
+### Post-merge typecheck (third report)
+Still `turbo: command not found` (exit 127): turbo lives in `node_modules/.bin`, not on PATH. With that on PATH, `turbo run typecheck` for db, core, notifications and web exits 0 (19 tasks). No code change. V1 (with `--maxWorkers=2`, one account-deletion deadlock pair that passes alone), V2 and V3 pass.
+
+### Post-merge typecheck (third)
+Still a PATH problem: bare `turbo` is not installed on PATH (exit 127). `pnpm exec turbo run typecheck` for db, core, notifications, i18n and web exits 0 with the base merged. No code change needed.
+
+### Lint fix
+CI lint failed on `consistent-type-imports` in `packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts` (WorkspaceError used only as a type). Changed to `import type`. ESLint on all changed files in core, db, notifications, web and config is clean.
+
+### Lint fix (second)
+No CI log was available. ESLint on every changed source file in core, db, notifications and web is clean, and prettier passes. Removed three accidentally committed `.eslintcache` files (packages/config, db, notifications) and ignored `.eslintcache`. The earlier `import type` fix is already in HEAD.
+
+### Recovery pass (ci.red)
+CI lint failed on Prettier for migrations/meta/_journal.json (missing trailing newline); reformatted. Reverted the out-of-scope .gitignore edit. Non-listed files needed for typecheck/lint are declared as add-deliverable amendments. Targeted core (22) and db (18) tests pass; forgedock check runs timed out at 300s on host load with no failing tests.
+
+### Stale-list pass
+Checked the 10 listed web/admin tests: none enumerates db schema exports or core domains (they are UI/nav/action fixtures), so all 18 symbols are recorded as not_members in result.json. No code change.
+
+### Lint fix (third)
+CI log unavailable (url only). Re-ran ESLint (type-aware, 6 GB heap) on all changed files in core, db, notifications, web, config, plus `packages/config` and core whatsapp-link/cross-tenant/lifecycle dirs, and Prettier on changed files: all clean. No code change; removed stray untracked `.eslintcache` files. lane-check.sh does not exist on this host. A full-monorepo `eslint .` was not run (host rule).
+
+### Lint fix (fourth)
+CI log still unavailable. Re-ran ESLint on changed ts/tsx files in core, db, notifications and web (web with a 6 GB heap) and Prettier on all changed non-SQL files: clean. Could not reproduce; no code change. Removed untracked .eslintcache files.

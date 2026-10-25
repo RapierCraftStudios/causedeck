@@ -225,6 +225,8 @@ export default async function PortfolioPage({ params, searchParams }: PortfolioP
 
 function alertCells(preferences: readonly PreferenceView[]): PortfolioAlertCell[] {
   return preferences.flatMap((pref) =>
+    // WhatsApp (#678) is linked in its own settings, not toggled per cell here.
+    pref.channel !== 'whatsapp' &&
     (PORTFOLIO_ALERT_CATEGORIES as readonly string[]).includes(pref.category)
       ? [
           {

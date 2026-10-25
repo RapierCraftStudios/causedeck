@@ -314,6 +314,12 @@ const portfoliosExporter = tablesExporter('portfolios', [
   ws('portfolio_panel_advocate', { userColumn: 'advocate_user_id' }),
 ]);
 
+// WhatsApp number link (#678): the member's own linked number, opt-in time and chosen categories.
+// The pending challenge holds only a code hash and is never exported.
+const whatsappLinkExporter = tablesExporter('whatsapp-link', [
+  ws('whatsapp_link', { userColumn: 'user_id' }),
+]);
+
 // Enterprise onboarding (#682): SSO providers without their config (client secrets), SCIM tokens
 // without the hash, and the provisioning and migration runs with their per-row state.
 const enterpriseExporter = tablesExporter('enterprise', [
@@ -339,6 +345,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   automationExporter,
   webhooksExporter,
   portfoliosExporter,
+  whatsappLinkExporter,
   enterpriseExporter,
 ];
 

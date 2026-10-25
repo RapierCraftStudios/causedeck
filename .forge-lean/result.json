@@ -1,150 +1,221 @@
 {
  "status": "fixed",
- "summary": "Practice school: 6 modules x en/ta/kn with review gate, fictional fixtures, education signup links and channel (migration).",
+ "summary": "WhatsApp link + OTP tables, core service, enum/channel delivered; prettier fix on migration journal, out-of-scope .gitignore reverted",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "apps/site/src/learn/index.ts:84"
+   "evidence": "packages/db/src/schema/whatsapp-link.ts"
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "apps/site/src/learn/fixtures.ts:1"
+   "evidence": "packages/db/migrations/20261025030000_whatsapp_link.sql"
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "apps/site/src/learn/signup-link.ts:8"
+   "evidence": "packages/core/src/whatsapp-link/link.ts"
   },
   {
    "id": "R4",
-   "status": "missing",
-   "evidence": "deferred: progress tracking needs auth and a per-user table"
+   "status": "implemented",
+   "evidence": "packages/core/src/whatsapp-link/link.ts getWhatsAppSendTarget"
   },
   {
    "id": "R5",
    "status": "implemented",
-   "evidence": "apps/site/src/learn/index.ts:37"
+   "evidence": "packages/db/src/testing/cross-tenant-registry.ts"
   },
   {
    "id": "R6",
-   "status": "partial",
-   "evidence": "content authored in apps/site/content/learn; advocate review is post-deploy"
+   "status": "implemented",
+   "evidence": "packages/notifications/src/categories.ts"
   },
   {
    "id": "R7",
    "status": "implemented",
-   "evidence": "apps/site/src/learn/learn.test.ts:78"
-  },
-  {
-   "id": "R8",
-   "status": "implemented",
-   "evidence": "packages/db/src/schema/activation.ts:47"
-  },
-  {
-   "id": "R9",
-   "status": "missing",
-   "evidence": "deferred: channel capture at signup, packages/auth/src/server.ts:547"
-  },
-  {
-   "id": "R10",
-   "status": "implemented",
-   "evidence": "apps/site/content/learn/using-the-os/en.md:16"
+   "evidence": "packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts"
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/site exec vitest run src/learn src/index.test.ts src/developer-docs.test.ts",
+   "command": "core vitest",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/activation/activation.test.ts",
+   "command": "db vitest",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/growth-page.test.tsx",
+   "command": "notifications vitest",
    "exit": 0
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts",
-   "exit": 0
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/site exec tsc --noEmit",
+   "command": "pnpm exec turbo run typecheck (db, core, notifications, i18n, web)",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "V1-V5",
+   "command": "core whatsapp-link tests",
    "result": "pass",
-   "fails_without_fix": true
+   "fails_without_fix": "unknown"
   }
  ],
  "self_review": [
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "R1,R2,R3,R5,R7,R8,R10 delivered (implementation.md); R4,R9 deferred and R6 post-deploy per contract"
+   "evidence": "R1-R7 mapped above"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "V1-V5 and forgedock check pass; existing site tests untouched"
+   "evidence": "tsc clean, V1-V3 pass"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "D1-D10 changed; P1-P4 intact (site package.json and auth server untouched)"
+   "evidence": "forgedock check PASS"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "git diff origin/milestone/instant-gtm-adoption...HEAD touches only deliverable paths and tests"
+   "evidence": "extra paths declared via amendments"
   }
  ],
- "amendments": [],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/whatsapp-link/link.ts",
+   "why": "service implementation behind the contracted index.ts"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/__tests__/cross-tenant/whatsapp-link.test.ts",
+   "why": "cross-tenant real cases (test file)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/notifications/src/service.ts",
+   "why": "DeliveryJob channel type must exclude whatsapp (no sender until #679) for typecheck"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/notifications/src/__tests__/service.test.ts",
+   "why": "preference list now includes the whatsapp row (test)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/config/eslint/core-domains.js",
+   "why": "CORE_DOMAIN_DEPENDENCIES entry for whatsapp-link"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
+   "why": "skip whatsapp channel in portfolio alert cells (typecheck)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/preferences-form.tsx",
+   "why": "whatsapp is not a matrix channel; exclude it so Record types still typecheck"
+  }
+ ],
  "not_members": [
   {
-   "symbol": "learn",
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
+   "test": "apps/admin/__tests__/data-layer.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
    "test": "apps/admin/__tests__/roles.test.ts",
-   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists staff role/nav matrix and dev staff email, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "learn",
-   "test": "apps/api/src/__tests__/helpers.ts",
-   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists API test auth helper, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+   "symbol": "whatsapp-link",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "learn",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists settings shell mocks, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+   "symbol": "whatsapp-link",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "learn",
-   "test": "apps/web/src/workspace-imports.test.ts",
-   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists list of workspace packages imported by web, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "learn",
-   "test": "packages/auth/src/__tests__/phone-otp.test.ts",
-   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists phone OTP sign-in tests, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/matter-tab-registry.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "learn",
-   "test": "packages/core/src/capture/__tests__/capture.test.ts",
-   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists capture inbox tests, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/matter-workspace-page.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   },
   {
-   "symbol": "learn",
-   "test": "packages/i18n/src/__tests__/catalog.test.ts",
-   "why": "'learn' is only docs/engineering/learn.md plus apps/site content; this test lists i18n top-level message namespaces, not docs, site modules or i18n namespaces (no catalog namespace was added)"
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/nav.test.ts",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
+  },
+  {
+   "symbol": "whatsapp-link",
+   "test": "apps/web/__tests__/proceedings-page.test.tsx",
+   "why": "That test does not enumerate the @causedeck/db schema exports or the core domain list; it only mentions an unrelated list/fixture at that line, and this change adds no web/admin action, nav item or tab."
   }
  ]
 }

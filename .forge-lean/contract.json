@@ -2,63 +2,43 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`apps/site/src/learn/`: modules (court-day practice, reading cause lists, listings and mentions, filing and defect cures, limitation basics, using the OS), MDX content with i18n (en, ta, kn).",
+   "quote": "Add a `whatsapp_link` table (user, workspace, E.164 number, verified_at, consent_at, categories) and an OTP challenge table with expiry and attempt limits",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Interactive examples built on fictional fixtures (cause lists, orders) from the existing golden fixtures; nothing from real matters.",
+   "quote": "add `whatsapp` to the `notification_channel` enum (migration, next free number)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Free signup prompts into the free alerts tier (#506)",
+   "quote": "Core service: request OTP, verify, unlink (unlink stops all messages), set categories.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "progress tracking for signed-in users.",
-   "disposition": "defer",
-   "why": "apps/site is a static placeholder with no auth session or Next runtime, and progress needs a per-user table with RLS, a server action and registry entries; separate issue after the site gains a renderer.",
+   "quote": "Messages may only ever target the verified number of the owning user (D-029).",
+   "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "A content review workflow: every module reviewed by a practising advocate (⚖ where it touches law), with the date and reviewer shown.",
+   "quote": "Register tables (db index test, RLS catalog, seeders) and core exports (cross-tenant registry with real cases).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "At least 6 modules are live in English with Tamil and Kannada translations, each reviewed and dated.",
-   "disposition": "post-deploy",
-   "why": "Authoring 6 modules x 3 locales is delivered here, but 'reviewed and dated' needs a practising advocate's sign-off, which agents cannot give or invent; modules stay not-live until reviewer and date are filled in front matter."
+   "quote": "Add `'whatsapp'` to CHANNELS in packages/notifications/src/categories.ts.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "Examples use only fictional fixtures.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R8",
-   "quote": "Module pages convert to free signups",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R9",
-   "quote": "and are tracked in the activation funnel (#509).",
-   "disposition": "defer",
-   "why": "This change adds the closed 'education' channel and the tagged signup links, but recording the channel at signup (packages/auth/src/server.ts:547-552 records none for any source) is a cross-cutting auth change for all channels; separate issue.",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R10",
-   "quote": "it is not legal advice, so it carries a disclaimer.",
+   "quote": "Acceptance: opt-in and verification required before any message; unlink stops messages; cross-tenant tests pass.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -66,156 +46,201 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/site/src/learn/index.ts",
-   "change": "Module registry (6 slugs: court-day-practice, reading-cause-lists, listings-and-mentions, filing-and-defect-cures, limitation-basics, using-the-os), loader that reads apps/site/content/learn/\u003cslug>/\u003clocale>.md, parses front matter (slug,title,locale,order,law,reviewer,reviewedOn) with no new dependency, exposes isLive(module) = reviewer and reviewedOn present, and review display data.",
+   "path": "packages/db/src/schema/whatsapp-link.ts",
+   "change": "New tenantTable whatsapp_link (workspace_id, user_id, e164 with CHECK, verified_at, consent_at, unlinked_at, categories text[], unique per workspace+user) and whatsapp_otp_challenge (code hash, expires_at, attempts with CHECK cap, consumed_at). Export from schema/index.ts.",
    "requirements": [
-    "R1",
-    "R5",
-    "R6"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/site/content/learn/",
-   "change": "18 markdown files (6 modules x en, ta, kn); each ends with the localized disclaimer; law-touching modules set law: true (⚖); reviewer and reviewedOn left empty (never invented); examples reference fixtures by id.",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the new tables.",
    "requirements": [
-    "R1",
-    "R5",
-    "R6",
-    "R10"
+    "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/site/src/learn/fixtures.ts",
-   "change": "Fictional cause-list and order fixtures for the examples (fictional names, 'FICTIONAL' marker, reserved/obviously fake numbers), modelled on packages/core/src/import/fixtures/bundles.ts without importing it.",
+   "path": "packages/db/src/schema/notifications.ts",
+   "change": "Add 'whatsapp' to NOTIFICATION_CHANNELS.",
    "requirements": [
-    "R2",
-    "R7"
+    "R2"
    ]
   },
   {
    "id": "D4",
-   "path": "apps/site/src/learn/signup-link.ts",
-   "change": "signupHref(slug, locale) returning /sign-in?channel=education&module=\u003cslug>; module is restricted to registry slugs, nothing else is carried.",
+   "path": "packages/db/migrations",
+   "change": "Next free migration (renumber if base took it) creating both tables with FORCE RLS ws_isolation and grants, plus ALTER TYPE notification_channel ADD VALUE IF NOT EXISTS 'whatsapp'; update meta/_journal.json and snapshot (drizzle-kit generate, then hand-add grants/RLS as in 20261024110000_portfolio.sql).",
    "requirements": [
-    "R3",
-    "R8"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D5",
-   "path": "apps/site/src/learn/learn.test.ts",
-   "change": "Tests: 6 modules x 3 locales exist and have required front matter and disclaimer; non-live without reviewer/date; fixtures only carry the FICTIONAL marker and no real-court data patterns; every module's CTA href is the education signup link; law modules carry the flag.",
+   "path": "packages/notifications/src/categories.ts",
+   "change": "Add 'whatsapp' to CHANNELS; no category lists it as default.",
    "requirements": [
-    "R1",
-    "R2",
-    "R5",
-    "R7",
-    "R8",
-    "R10"
+    "R6"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/schema/activation.ts",
-   "change": "Add 'education' to ACTIVATION_CHANNELS (CHECK activation_event_channel_chk follows the list).",
+   "path": "packages/core/src/whatsapp-link/index.ts",
+   "change": "New domain (plus sibling files): requestWhatsAppOtp, verifyWhatsAppOtp, unlinkWhatsApp, setWhatsAppCategories, getWhatsAppSendTarget (only verified+consented+not-unlinked number of the owning user). OTP hashed, constant-time compare, expiry, attempt cap, resend cooldown; sender injected.",
    "requirements": [
-    "R8"
+    "R3",
+    "R4",
+    "R7"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/db/migrations/",
-   "change": "New timestamp-named migration (pnpm --filter @causedeck/db exec drizzle-kit generate; next free timestamp after the latest in migrations/meta/_journal.json) that drops and recreates activation_event_channel_chk with the new list, plus the generated snapshot and journal entry.",
+   "path": "packages/core/package.json",
+   "change": "Add ./whatsapp-link subpath export; also export from packages/core/src/index.ts.",
    "requirements": [
-    "R8"
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/admin/__tests__/growth-page.test.tsx",
-   "change": "Add 'education' to the hard-coded ACTIVATION_CHANNELS mock at line 23.",
+   "path": "packages/core/src/index.ts",
+   "change": "Re-export whatsapp-link.",
    "requirements": [
-    "R8"
+    "R5"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/activation/activation.test.ts",
-   "change": "Assert recordActivation accepts channel 'education'.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "TABLE_TESTS for both tables; SERVICE_TESTS for each service export, NOT_A_SERVICE for pure ones.",
    "requirements": [
-    "R8"
+    "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "docs/engineering/learn.md",
-   "change": "Short doc of the review workflow: front matter fields, live rule, who reviews (practising advocate, ⚖ modules), fictional-fixture rule, disclaimer, deferred items.",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: B on A's link/OTP is denied or sees nothing; A unchanged.",
    "requirements": [
     "R5",
-    "R10"
+    "R7"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "Seeders for whatsapp_link and whatsapp_otp_challenge.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add both tables to the RLS catalog.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add both tables to the root table list.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/core/src/lifecycle/deletion/erase.ts",
+   "change": "Add both tables to PURGE_ORDER (challenge before link if cited).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/core/src/lifecycle/export/exporters.ts",
+   "change": "Export whatsapp_link (number masked or included, categories, timestamps); exclude code hashes / challenge table.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the whatsapp-link domain and its dependencies.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/core/src/domains.test.ts",
+   "change": "Add whatsapp-link to CORE_DOMAIN_DEPENDENCIES (audit only if audited).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts",
+   "change": "Regression tests: no send target before verify/consent, OTP expiry, attempt cap, wrong code, unlink stops target, categories, number is E.164, target never another user's number.",
+   "requirements": [
+    "R3",
+    "R4",
+    "R7"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "apps/site/src/index.ts export appName and apps/site/src/index.test.ts"
+   "what": "packages/notifications/src/service.ts fan-out stays email/push only (line ~239); whatsapp sends are #679, no message is sent by this change"
   },
   {
    "id": "P2",
-   "what": "apps/site/content/developers/api.md and apps/site/src/developer-docs.test.ts"
+   "what": "Existing notification preference behaviour: categories' defaultChannels unchanged, so whatsapp defaults off (service.ts resolve)"
   },
   {
    "id": "P3",
-   "what": "Existing activation steps and the signed_up insert in packages/auth/src/server.ts:547-552 (unchanged)"
-  },
-  {
-   "id": "P4",
-   "what": "apps/site must not gain new dependencies (package.json unchanged) and must not import @causedeck/core or @causedeck/db"
+   "what": "packages/core/src/whatsapp/ chat-import domain is untouched"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/site exec vitest run src/learn src/index.test.ts src/developer-docs.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/whatsapp-link src/__tests__/cross-tenant/services.test.ts src/__tests__/cross-tenant/registry.test.ts src/domains.test.ts src/lifecycle --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/activation/activation.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/growth-page.test.tsx"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/site exec tsc --noEmit"
+   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__ --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Markdown with a hand-parsed front matter instead of MDX",
-   "justification": "apps/site has no Next/React/MDX dependency (apps/site/package.json:7-19) and its content precedent is plain markdown read by node:fs (apps/site/src/developer-docs.test.ts:6-9); adding MDX would be a new dependency for no rendered surface yet.",
-   "source": "precedent"
+   "choice": "New core domain `whatsapp-link` rather than extending `whatsapp` (chat import)",
+   "justification": "Separate concern and dependency set; domains registered via CORE_DOMAIN_DEPENDENCIES and docs/engineering/core-domains.md:211-240",
+   "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "Fixtures are copied in shape, not imported, from core",
-   "justification": "apps/site depends only on @causedeck/config (apps/site/package.json); a workspace dependency on core would need an architecture reason, and the site must not pull DB code.",
+   "choice": "Hand-add RLS/grants to the generated migration",
+   "justification": "Pattern in packages/db/migrations/20261024182641_activation_event.sql and 20261024110000_portfolio.sql",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "New channel 'education' via migration rather than reusing 'other'",
-   "justification": "The channel list is a closed enum with a CHECK (packages/db/src/schema/activation.ts:40-48,67-70) so education signups are separable in the growth page; migrations are timestamp-named per D-051 (DECISIONS.md:429-433).",
-   "source": "doc"
+   "choice": "OTP sender is injected; no provider dependency",
+   "justification": "Provider and residency review belong to #679/#502 item 4",
+   "source": "spec"
   }
  ]
 }

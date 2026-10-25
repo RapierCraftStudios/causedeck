@@ -45,7 +45,8 @@ export interface NotificationContext {
 export interface DeliveryJob {
   workspaceId: string;
   notificationId: string;
-  channel: Exclude<Channel, 'in_app'>;
+  /** WhatsApp is not delivered through this job; its sender arrives with #679. */
+  channel: Exclude<Channel, 'in_app' | 'whatsapp'>;
 }
 
 export interface NotifyContext extends NotificationContext {

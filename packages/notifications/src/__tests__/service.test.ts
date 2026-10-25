@@ -207,6 +207,14 @@ describe('notify: channels and preferences', () => {
           digest: 'instant',
           locked: false,
         },
+        // WhatsApp (#678) is in no category's defaults: off until the member links a number.
+        {
+          category: 'security.alert',
+          channel: 'whatsapp',
+          enabled: false,
+          digest: 'instant',
+          locked: false,
+        },
       ]);
     });
   });

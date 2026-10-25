@@ -2,7 +2,7 @@
 // decides its default channels and whether the member may turn it off. Pure and client-safe (the
 // preferences UI imports it through `@causedeck/notifications/categories`): no database imports.
 
-export const CHANNELS = ['in_app', 'email', 'push'] as const;
+export const CHANNELS = ['in_app', 'email', 'push', 'whatsapp'] as const;
 export type Channel = (typeof CHANNELS)[number];
 
 /** `instant` sends as it happens, `daily` waits for the digest (#196), `off` never sends. */

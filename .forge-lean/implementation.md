@@ -57,3 +57,7 @@ The `turbo: command not found` (exit 127) was an environment PATH issue, not a c
 ## Merge typecheck fix
 - The "turbo: command not found" failure was environmental (bare `turbo` is not on PATH), not a code or merge conflict. No source change needed.
 - Re-ran `pnpm exec turbo run typecheck`: 24/24 tasks successful on the merged tree.
+- Re-verified with node_modules/.bin/turbo on PATH, filtered to changed packages: 24/24 typecheck tasks successful (exit 0).
+
+### Merge re-check
+`turbo run typecheck` failed with exit 127 because `turbo` is not on PATH (not a code conflict). `pnpm exec turbo run typecheck --filter=@causedeck/api --filter=@causedeck/web --filter=@causedeck/config` on the merged tree: 20/20 tasks pass. No source change needed.

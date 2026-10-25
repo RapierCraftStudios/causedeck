@@ -8,6 +8,7 @@ import { CheckEmail } from './check-email.tsx';
 import { GoogleButton } from './google-button.tsx';
 import { MagicLinkForm, sendMagicLink } from './magic-link-form.tsx';
 import { PasskeyButton } from './passkey-button.tsx';
+import { SsoForm } from './sso-form.tsx';
 import { PhoneOtpForm } from './phone-otp-form.tsx';
 
 /** Errors the page can arrive with (`/sign-in?error=...`), already mapped by `page.tsx`. */
@@ -109,6 +110,7 @@ export function SignInForm({
           setSentTo(email);
         }}
       />
+      <SsoForm next={next} offline={!online} />
     </div>
   );
 }

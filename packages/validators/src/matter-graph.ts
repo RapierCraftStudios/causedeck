@@ -606,12 +606,18 @@ const appearanceShape = {
   memberId: uuid.nullable(),
   capacity: z.enum(APPEARANCE_CAPACITIES),
   appearingForPersonId: uuid.nullable(),
+  assignedByMemberId: uuid.nullable(),
+  note: z.string().nullable(),
   ...timestamps,
 };
 export const AppearanceSelectSchema = z.object(appearanceShape);
-export const AppearanceInsertSchema = z
-  .object(appearanceShape)
-  .partial({ ...GENERATED, memberId: true, appearingForPersonId: true });
+export const AppearanceInsertSchema = z.object(appearanceShape).partial({
+  ...GENERATED,
+  memberId: true,
+  appearingForPersonId: true,
+  assignedByMemberId: true,
+  note: true,
+});
 
 const orderShape = {
   id: uuid,

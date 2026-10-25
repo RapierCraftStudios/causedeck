@@ -5,7 +5,7 @@ import { schema } from '@causedeck/db';
 import { hasProvenance, type ObligationLine } from '@causedeck/validators';
 import { and, count, eq, inArray, or, isNull } from 'drizzle-orm';
 
-import { provenanceOf, type BriefScope, type ListingContext } from '../assemble.ts';
+import { provenanceOf, type BriefScope, type ListingContext } from '../scope.ts';
 
 const MONTH_NAMES = [
   'Jan',
@@ -25,11 +25,11 @@ const MONTH_NAMES = [
 /** `2026-10-20` as `20 Oct`. */
 export function shortDate(date: string): string {
   const [, m, d] = date.split('-');
-  return `${Number(d)} ${MONTH_NAMES[Number(m) - 1] ?? ''}`;
+  return `${String(Number(d))} ${MONTH_NAMES[Number(m) - 1] ?? ''}`;
 }
 
 /** The India-time calendar day of `now`. */
-export function istDay(now: Date): string {
+export function briefIstDay(now: Date): string {
   return new Date(now.getTime() + 330 * 60_000).toISOString().slice(0, 10);
 }
 
@@ -69,7 +69,7 @@ export async function obligationsSection(
     .from(schema.obligation)
     .where(and(mine, inArray(schema.obligation.status, ['done', 'not_applicable'])));
 
-  const today = istDay(scope.now);
+  const today = briefIstDay(scope.now);
   const open: ObligationLine[] = [];
   for (const { obligation } of rows) {
     const line: ObligationLine = {

@@ -10,8 +10,8 @@ import {
   type BriefScope,
   type ListingContext,
   type MemoryLine,
-} from '../assemble.ts';
-import { istDay, shortDate } from './obligations.ts';
+} from '../scope.ts';
+import { briefIstDay, shortDate } from './obligations.ts';
 
 export async function lastHearingSection(
   scope: BriefScope,
@@ -33,7 +33,7 @@ export async function lastHearingSection(
       and(
         eq(schema.hearing.workspaceId, actor.workspaceId),
         eq(schema.listing.proceedingId, listing.proceedingId),
-        lte(schema.hearing.heldOn, istDay(scope.now)),
+        lte(schema.hearing.heldOn, briefIstDay(scope.now)),
       ),
     )
     .orderBy(desc(schema.hearing.heldOn), desc(schema.hearing.createdAt))

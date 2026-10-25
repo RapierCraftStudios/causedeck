@@ -1,7 +1,7 @@
 // The stage line (#60): the listing's printed stage heading, with the listing's own provenance.
 import { hasProvenance, type BriefLine } from '@causedeck/validators';
 
-import { provenanceOf, type ListingContext } from '../assemble.ts';
+import { provenanceOf, type ListingContext } from '../scope.ts';
 
 export function stageSection(listing: ListingContext): BriefLine | null {
   const line: BriefLine = {

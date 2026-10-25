@@ -8,7 +8,7 @@ import type { BriefState, CarryItem } from '@causedeck/validators';
 type BriefCarryEntry = BriefState['carry'][number];
 import { and, eq, inArray } from 'drizzle-orm';
 
-import type { BriefScope, ListingContext, MemoryProvider } from '../assemble.ts';
+import type { BriefScope, ListingContext, MemoryProvider } from '../scope.ts';
 import { shortDate } from './obligations.ts';
 
 /** The reserved `brief_state.carry` entry that marks the list as reviewed. */

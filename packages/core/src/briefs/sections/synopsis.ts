@@ -2,7 +2,7 @@
 // by the caller); the strategy line only for a role that holds `strategy.read`, left out otherwise.
 import type { SynopsisSection } from '@causedeck/validators';
 
-import { toBriefLine, withProvenance, type MemoryProvider, type MemoryQuery } from '../assemble.ts';
+import { toBriefLine, withProvenance, type MemoryProvider, type MemoryQuery } from '../scope.ts';
 
 export async function synopsisSection(
   memory: MemoryProvider,

@@ -3,7 +3,7 @@
 // note is author-private unless the chamber shares it.
 import type { BriefLine } from '@causedeck/validators';
 
-import { toBriefLine, withProvenance, type MemoryProvider, type MemoryQuery } from '../assemble.ts';
+import { toBriefLine, withProvenance, type MemoryProvider, type MemoryQuery } from '../scope.ts';
 
 export async function courtNotesSection(
   memory: MemoryProvider,

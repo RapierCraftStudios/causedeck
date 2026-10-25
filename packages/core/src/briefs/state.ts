@@ -19,12 +19,12 @@ import {
   loadBriefState,
   loadListing,
   parseBriefInput,
-  requireAction,
+  requireBriefAction,
   type BriefActor,
   type BriefDeps,
   type BriefScope,
   type BriefStaleReason,
-} from './assemble.ts';
+} from './scope.ts';
 import { CARRY_REVIEWED_KEY } from './sections/carry.ts';
 
 /** The writer to record: none for the system refresh. */
@@ -68,7 +68,7 @@ async function inWriteScope<T>(
   fn: (scope: BriefScope) => Promise<T>,
 ): Promise<T> {
   return inBriefScope(deps, actor, async (scope) => {
-    await requireAction(scope, 'matter.write', 'You cannot change this brief');
+    await requireBriefAction(scope, 'matter.write', 'You cannot change this brief');
     await loadListing(scope, listingId);
     return fn(scope);
   });

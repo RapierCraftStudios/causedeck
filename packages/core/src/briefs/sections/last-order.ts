@@ -8,7 +8,7 @@ import type { BriefLine } from '@causedeck/validators';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 
 import { createCoreAiGateway } from '../../ai/index.ts';
-import { provenanceOf, withProvenance, type BriefScope, type ListingContext } from '../assemble.ts';
+import { provenanceOf, withProvenance, type BriefScope, type ListingContext } from '../scope.ts';
 
 export const MAX_ORDER_LINES = 3;
 
@@ -105,10 +105,10 @@ export async function lastOrderSection(
         matterId: listing.matterId,
         userId: actor.userId,
         purpose: 'brief.last_order',
-        idempotencyKey: `brief.last_order:${order.id}:${order.updatedAt.getTime()}`,
+        idempotencyKey: `brief.last_order:${order.id}:${String(order.updatedAt.getTime())}`,
       },
     );
-    const sentences = (result.output.summary ?? '')
+    const sentences = result.output.summary
       .split(/(?<=[.!?])\s+/)
       .map((s) => s.trim())
       .filter((s) => s.length > 0)

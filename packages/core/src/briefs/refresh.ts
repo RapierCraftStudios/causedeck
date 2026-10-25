@@ -14,7 +14,7 @@ import {
   type BriefScope,
   type BriefStaleReason,
   loadListing,
-} from './assemble.ts';
+} from './scope.ts';
 import { clearIfStale } from './state.ts';
 
 export interface RefreshTarget {
@@ -42,9 +42,7 @@ export async function refreshBrief(
       actor: { userId: workspaceId, workspaceId, role: 'owner' },
       deps: { db: deps.db },
       now: (deps.now ?? (() => new Date()))(),
-      settings: async () => {
-        throw new Error('the refresh makes no policy decision');
-      },
+      settings: () => Promise.reject(new Error('the refresh makes no policy decision')),
       emit: (event) => events.push(event),
       system: true,
     };
@@ -88,7 +86,7 @@ export async function refreshBriefTargets(deps: SweepDeps): Promise<SweepReport>
   const report: SweepReport = { targets: targets.length, refreshed: 0, stale: 0, failed: 0 };
   for (const target of targets) {
     try {
-      const done = await refreshBrief({ db: deps.db as BriefDeps['db'], ...pick(deps) }, target);
+      const done = await refreshBrief({ db: deps.db, ...pick(deps) }, target);
       report.refreshed += 1;
       if (done.stale !== null) report.stale += 1;
     } catch (error) {

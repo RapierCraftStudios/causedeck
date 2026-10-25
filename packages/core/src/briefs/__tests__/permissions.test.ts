@@ -2,7 +2,8 @@ import { withTestDb } from '@causedeck/db/testing';
 import { describe, expect, it } from 'vitest';
 
 import { addMember } from '../../__tests__/fixtures.ts';
-import { assembleBrief, type MemoryProvider } from '../assemble.ts';
+import { assembleBrief } from '../assemble.ts';
+import type { MemoryProvider } from '../scope.ts';
 import { markPrepared } from '../state.ts';
 
 import { seedBrief } from './helpers.ts';
@@ -18,14 +19,15 @@ const line = (text: string) => ({
 });
 
 const memory: MemoryProvider = {
-  alwaysCarry: async () => [{ id: 'r1', label: 'Always carry the vakalatnama' }],
-  synopsis: async () => ({
-    line: line('Synopsis'),
-    strategy: line('Strategy: press for early hearing'),
-  }),
-  lastHearing: async () => line('Last hearing: adjourned'),
-  courtNotes: async () =>
-    [line('x')].map((l) => ({ authorUserId: 'someone', shared: true, line: l })),
+  alwaysCarry: () => Promise.resolve([{ id: 'r1', label: 'Always carry the vakalatnama' }]),
+  synopsis: () =>
+    Promise.resolve({
+      line: line('Synopsis'),
+      strategy: line('Strategy: press for early hearing'),
+    }),
+  lastHearing: () => Promise.resolve(line('Last hearing: adjourned')),
+  courtNotes: () =>
+    Promise.resolve([line('x')].map((l) => ({ authorUserId: 'someone', shared: true, line: l }))),
 };
 
 describe('role gating (R5)', () => {

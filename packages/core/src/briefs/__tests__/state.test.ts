@@ -3,7 +3,8 @@ import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
-import { assembleBrief, type BriefEvent } from '../assemble.ts';
+import { assembleBrief } from '../assemble.ts';
+import type { BriefEvent } from '../scope.ts';
 import { listRefreshTargets, refreshBrief, refreshBriefTargets } from '../refresh.ts';
 import { markPrepared, setBriefNote, setCarryItem, unmarkPrepared } from '../state.ts';
 

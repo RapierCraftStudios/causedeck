@@ -6,7 +6,7 @@ import { sql } from 'drizzle-orm';
 import type { ContextPassage, ObligationLine } from '@causedeck/validators';
 import { MAX_CONTEXT_PASSAGES } from '@causedeck/validators';
 
-import type { BriefScope, ListingContext } from '../assemble.ts';
+import type { BriefScope, ListingContext } from '../scope.ts';
 
 const QUOTE_MAX = 300;
 const MAX_TERMS = 12;
@@ -64,7 +64,7 @@ export async function contextSection(
       document_id: r.document_id,
       anchor_id: r.anchor_id,
       page_no: r.page_no,
-      quote: quoteFor(r.text ?? '', tsQuery),
+      quote: quoteFor(r.text, tsQuery),
     }))
     .filter((p) => p.quote.length > 0);
 }

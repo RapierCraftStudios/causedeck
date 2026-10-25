@@ -11,6 +11,7 @@ import type { WhatsAppInboundProvider } from '@causedeck/core/whatsapp-link';
 import type { JobSender } from '@causedeck/core/jobs';
 import type { Database } from '@causedeck/db';
 import { createHealthHandlers, type HealthCheck, type Logger } from '@causedeck/observability';
+import { clockDriftCheckFromEnv } from '@causedeck/observability/health';
 import { Scalar } from '@scalar/hono-api-reference';
 import { sql } from 'drizzle-orm';
 
@@ -87,11 +88,13 @@ export const DOCS_PATH = '/docs';
 export function createApp(deps: AppDeps): AppRouter {
   const { db, logger } = deps;
   const origins = allowedOrigins(deps.allowedOrigins);
+  const clock = clockDriftCheckFromEnv();
   const health = createHealthHandlers({
     checks: {
       db: async () => {
         await db.execute(sql`select 1`);
       },
+      ...(clock !== undefined && { clock }),
       ...deps.readyChecks,
     },
   });

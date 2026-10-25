@@ -1,0 +1,24 @@
+# Build context is the repo root (-f infra/docker/<svc>.Dockerfile .); keep it small and free of
+# host-built artefacts.
+**/node_modules
+**/.next
+**/.next-e2e
+**/.turbo
+.git
+.forge-lean
+.github
+docs
+devdocs
+e2e
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.test.mjs
+**/*.stories.tsx
+**/storybook-static
+**/coverage
+**/playwright-report
+**/test-results
+.env
+.env.*
+!.env.example

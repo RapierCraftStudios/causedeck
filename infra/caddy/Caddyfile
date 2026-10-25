@@ -1,0 +1,16 @@
+# Placeholder (#97): the real Caddy configuration (TLS, HTTP/3, CSP, rate limits, admin allowlist)
+# is owned by #98 and replaces this file. It only proxies the app tier so the stack boots.
+{
+	admin off
+}
+
+:80 {
+	respond /healthz 200
+	@api path /api/v1/* /readyz
+	handle @api {
+		reverse_proxy api:3001
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}

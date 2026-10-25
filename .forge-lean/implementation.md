@@ -1,34 +1,40 @@
 ### Approach
-Settings card on the existing notifications page with one server action per operation, calling `@causedeck/core/whatsapp-link` on the workspace transaction for the signed-in member only. A wrong code is returned as a value so core's attempt count commits.
+Harden the four app Dockerfiles, add a WAL-G/pgvector Postgres image, a prod compose stack, env examples, ops scripts, a CI images workflow and an in-readiness clock-drift check. Heavy checks (builds, size, smoke, Trivy, cosign) run only in CI.
 
 ### Changes
-- apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts: request/verify/setCategories/unlink/get actions (masked number only, domain errors mapped, RATE_LIMITED -> CONFLICT).
-- apps/web/components/notifications/whatsapp-link-card.tsx: client card (opt-in, code, categories from WHATSAPP_CATEGORIES, unlink).
-- .../settings/notifications/page.tsx: loads the link via inWorkspace + getWhatsAppLink, renders the card below the push card; a load error shows a message only.
-- packages/i18n: whatsapp-link namespace (en/ta/kn), catalog.ts, catalog test, regenerated generated files and translation-status.json.
-- Tests: whatsapp-link-actions, whatsapp-link-card, cross-tenant-actions entries.
+- infra/docker/{web,api,worker,admin}.Dockerfile: ARG-pinned base, tini, numeric non-root, pruned deploy, UTC.
+- infra/docker/.dockerignore, base/README.md, README.md: context excludes, pinning docs, prod/staging and resource-limit docs.
+- infra/docker/postgres/{Dockerfile,postgresql.conf}: pgvector + checksum-verified WAL-G, archive_mode on.
+- infra/docker/compose.prod.yml, env/{prod,staging}.env.example: hardened stack with limits.
+- infra/scripts/{migrate,healthcheck,bootstrap-vps}.sh, infra/docker/test/compose-smoke.sh, infra/caddy/Caddyfile (placeholder, #98).
+- infra/scripts/compose-prod.test.mjs: static compose lint.
+- packages/observability/src/health.ts (+test), apps/{web,api,worker} health wiring: clock drift in /readyz only.
+- .github/workflows/images.yml: build, size gate, smoke, multi-arch publish, Trivy, SBOM, cosign.
 
 ### Acceptance Criteria Status
-- R1 ✅ whatsapp-link-card.tsx, page.tsx (WhatsAppSection)
-- R2 ✅ whatsapp-actions.ts
-- R3 ✅ packages/i18n/src/messages/*/whatsapp-link.json, catalog.ts, catalog.test.ts
-- R4 ✅ cross-tenant-actions.test.ts (ACTIONS, inputs, snapshotA, B-workspace test)
-- R5 deferred (OTP template needs provider approval; amendment)
+- R1 ✅ images.yml size/non-root steps; Dockerfiles
+- R2 ✅ compose.prod.yml, images.yml verify job
+- R3 ✅ compose-prod.test.mjs
+- R4 ✅ compose.prod.yml ports; compose-smoke.sh
+- R5 ✅ postgres/Dockerfile, postgresql.conf:24
+- R6 ✅ migrate.sh, compose.prod.yml migrate service
+- R7 ✅ compose-smoke.sh
+- R8 ✅ read_only in compose.prod.yml
+- R9 ✅ images.yml publish job
+- R10 ✅ compose.prod.yml limits, infra/docker/README.md
+- R11 ✅ bootstrap-vps.sh
+- R12 ✅ packages/observability/src/health.ts clockDriftCheckFromEnv
+- R13 ✅ env/staging.env.example
 
 ### Verification
-- V1 web vitest (4 files): pass, 42 tests. New tests fail without the fix (modules absent).
-- V2 i18n vitest: pass, 37 tests.
-- V3 cross-tenant-actions (tenancy config): pass, 26 tests.
-- V4 checks.mjs: ran; `tsc --noEmit` in apps/web clean, prettier and eslint (changed files) clean.
+- V1 compose-prod/dev node tests: pass
+- V2 bash -n on four scripts: pass
+- V3 observability health.test.ts: 11 pass
+- V4 worker health + web health-routes: pass
+- Clock-drift tests in health.test.ts fail without the fix (function absent). Compose lint tests fail against the base compose (file absent).
 
 ### Notes
-No env vars. The code is not delivered over WhatsApp yet (no sendOtp, R5 deferred).
+New env var CLOCK_DRIFT_REFERENCE_URL (optional; unset disables the check). Repo vars WALG_SHA256_AMD64/ARM64 are needed in CI. Docker-based checks were not run locally.
 
-### Stale-list follow-up
-The 30 flagged sibling lists (nav, routes, shortcuts, API dirs, e2e) are not i18n namespace lists; recorded as not_members in result.json. No code change.
-
-### Post-merge verification
-The merge failure (`turbo: command not found`, exit 127) was environmental: `turbo` was not on PATH. No code conflict. Reran via `pnpm exec turbo run typecheck --filter='...[722c3900]'` (23 tasks passed), plus V1 (42 tests) and V2 (37 tests): all pass. No source change.
-
-### Post-merge typecheck
-Bare `turbo` is not on PATH (exit 127, environment). `pnpm turbo run typecheck --filter=...[722c3900]` on the merged tree: 23/23 tasks successful, no code change needed.
+## Lint fix
+CI lint failed (no log). Prettier flagged infra/docker/compose.prod.yml; reformatted with prettier --write. Other changed files pass prettier; eslint on changed TS OOMed locally, left to CI.

@@ -117,6 +117,7 @@ const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actio
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const obligations = await import('../app/(app)/w/[slug]/obligations/actions.ts');
 const memory = await import('../app/(app)/w/[slug]/memory/actions.ts');
+const outward = await import('../app/(app)/w/[slug]/_outward/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
@@ -269,6 +270,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   addNoteAction: memory,
   usageAction: memory,
   completeReviewAction: memory,
+  composeDraftAction: outward,
+  saveDraftEditAction: outward,
+  markDraftSharedAction: outward,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -758,6 +762,22 @@ function inputs(workspaceId: string): Record<string, unknown> {
     addNoteAction: { workspaceId, key: 'M4.hall_note', value: 'Cross-tenant probe' },
     usageAction: { workspaceId, itemId: XT_ID },
     completeReviewAction: { workspaceId },
+    // Outward drafts (#736): ub may not draft on A's matter, nor edit or mark shared A's draft.
+    composeDraftAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      audience: 'client',
+    },
+    saveDraftEditAction: {
+      workspaceId,
+      draftId: t.a.rows.outward_draft?.id ?? XT_ID,
+      body: 'Cross-tenant probe',
+    },
+    markDraftSharedAction: {
+      workspaceId,
+      draftId: t.a.rows.outward_draft?.id ?? XT_ID,
+      channel: 'clipboard',
+    },
     useNextStepAction: {
       workspaceId,
       type: 'task',

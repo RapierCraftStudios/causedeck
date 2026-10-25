@@ -5,7 +5,11 @@
 // the inbox actions import it, so the list and "mark sent" see the same registry).
 import { getTranslations } from 'next-intl/server';
 
-import { registerReadyProvider, type ReadyItem, type ReadyScope } from '../inbox/ready-providers.ts';
+import {
+  registerReadyProvider,
+  type ReadyItem,
+  type ReadyScope,
+} from '../inbox/ready-providers.ts';
 
 import { mailtoHref, whatsappHref } from './share-links.ts';
 

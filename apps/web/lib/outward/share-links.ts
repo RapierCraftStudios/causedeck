@@ -16,7 +16,7 @@ export function mailtoHref(subject: string, body: string): string {
 export function draftFileName(matterTitle: string): string {
   const slug = matterTitle
     .normalize('NFKC')
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
   return `${slug === '' ? 'update' : slug}.txt`;

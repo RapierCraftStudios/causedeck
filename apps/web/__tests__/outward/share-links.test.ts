@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { draftFileName, mailtoHref, whatsappHref } from './share-links.ts';
+import { draftFileName, mailtoHref, whatsappHref } from '../../lib/outward/share-links.ts';
 
 describe('share links', () => {
   it('builds a wa.me link with the text encoded and no recipient', () => {

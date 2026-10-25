@@ -32,6 +32,7 @@ describe('registerSchedules', () => {
       'system.coverage.weekly',
       'system.audit.verify',
       'system.audit.retention',
+      'system.backup.health',
       'system.export.expire',
       'system.support.session-expire',
       'system.deletion.tick',

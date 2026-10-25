@@ -3,7 +3,13 @@ import Link from 'next/link';
 
 const COLUMNS = [
   { heading: 'Product', links: [{ href: '/', label: 'Overview' }] },
-  { heading: 'Trust', links: [{ href: '/about/', label: 'About' }] },
+  {
+    heading: 'Trust',
+    links: [
+      { href: '/about/', label: 'About' },
+      { href: '/status/', label: 'Status' },
+    ],
+  },
   {
     heading: 'Legal',
     links: [

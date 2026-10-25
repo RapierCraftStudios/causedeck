@@ -11,6 +11,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const legal = await loadAllLegalPages();
   return sitemapEntries([
     { path: '' },
+    { path: 'status' },
+    { path: 'status/history' },
     ...pages.map((page) => ({
       path: page.slug.join('/'),
       noindex: page.frontmatter.noindex,

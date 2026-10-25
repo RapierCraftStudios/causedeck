@@ -28,3 +28,6 @@ Re-verified: with node_modules/.bin on PATH, scoped turbo typecheck (core, db, s
 
 ### Re-check (turbo exit 127)
 Again environmental: `turbo` lives in node_modules/.bin, not on PATH. With PATH set, scoped typecheck (core, db, storage, config, i18n, worker) passes 17/17. No code change.
+
+### Re-check 3 (turbo exit 127)
+Environmental again: turbo is only in node_modules/.bin. With PATH set, scoped typecheck (core, db, storage, config, i18n) passes 16/16. No code change.

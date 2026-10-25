@@ -61,7 +61,7 @@ test.describe('shell accessibility', { tag: '@a11y' }, () => {
   test('with the shortcuts dialog open', async ({ page, asUser }) => {
     await openShell(page, asUser);
     await page.keyboard.press('?');
-    await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Help' })).toBeVisible();
   });
 });
 

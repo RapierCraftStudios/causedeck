@@ -96,7 +96,7 @@ test.describe('matter timeline', () => {
     // Focus lands on the row (`li[data-row-id]`) that wraps the event card, not on the card.
     await expect(page.locator('[data-row-id^="listing:"]')).toBeFocused();
     await page.keyboard.press('?');
-    await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Help' })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });

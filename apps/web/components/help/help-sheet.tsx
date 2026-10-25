@@ -4,7 +4,13 @@
 // with Articles, Shortcuts and Contact tabs. A bottom sheet on a phone, a side drawer elsewhere.
 // Opened from a contextual `?` tip it starts on that surface's article, without leaving the page.
 // On touch devices the shortcut table is replaced by a gestures guide.
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@causedeck/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@causedeck/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@causedeck/ui/tabs';
 import { useMediaQuery } from '@causedeck/ui/hooks';
 import { useTranslations } from 'next-intl';
@@ -78,7 +84,7 @@ export function ShortcutTable({ shortcuts }: { shortcuts: readonly ShortcutDefin
   );
 }
 
-function GesturesGuide() {
+export function GesturesGuide() {
   const t = useTranslations('help.shortcuts.gestures');
   return (
     <section className="flex flex-col gap-2">

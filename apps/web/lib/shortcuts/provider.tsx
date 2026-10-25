@@ -105,6 +105,7 @@ export function useShortcuts(): ShortcutsApi {
 
 export interface ShortcutsProviderProps {
   slug: string;
+  workspaceId: string;
   role: Role;
   isEnabled?: ((flag: FlagKey) => boolean) | undefined;
   children: ReactNode;
@@ -117,7 +118,13 @@ export interface ShortcutsProviderProps {
  * notifications and help actions to the command palette with their key hints. Needs
  * `<CaptureProvider>` and `<SidebarProvider>` above.
  */
-export function ShortcutsProvider({ slug, role, isEnabled, children }: ShortcutsProviderProps) {
+export function ShortcutsProvider({
+  slug,
+  workspaceId,
+  role,
+  isEnabled,
+  children,
+}: ShortcutsProviderProps) {
   // Flag-gated chords follow the server-evaluated snapshot unless a caller overrides it.
   const fromFlags = useIsEnabled();
   const enabled = isEnabled ?? fromFlags;
@@ -251,6 +258,8 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
         <Dialog
           open={helpOpen}
           onOpenChange={setHelpOpen}
+          workspaceId={workspaceId}
+          role={role}
           shortcuts={
             helpOpen
               ? [...shortcuts, ...pageShortcuts(shortcuts, { role, isEnabled: enabled })]

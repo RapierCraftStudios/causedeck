@@ -53,3 +53,7 @@ The `turbo: command not found` (exit 127) was an environment PATH issue, not a c
 - eslint.config.js: ignore infra/security/semgrep/fixtures/** (outside every tsconfig, deliberately unsafe snippets).
 - csp-report.test.ts: typed JSON.parse result (no-unsafe-assignment).
 - Linted the changed files directly with eslint (lane-check.sh absent on this host); all clean.
+
+## Merge typecheck fix
+- The "turbo: command not found" failure was environmental (bare `turbo` is not on PATH), not a code or merge conflict. No source change needed.
+- Re-ran `pnpm exec turbo run typecheck`: 24/24 tasks successful on the merged tree.

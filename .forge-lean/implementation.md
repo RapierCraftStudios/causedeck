@@ -24,3 +24,8 @@ Checked the 10 tests flagged for briefShare/referral/referralCredit; none lists 
 
 ## Export collision fix
 Share page exported `metadata`, colliding with apps/web/app/layout.tsx; replaced with `generateMetadata()` (same title and noindex). No other references. V1, V2, V4 pass.
+
+### Update (review round)
+- R1 ✅ `apps/web/app/(public)/share/[token]/actions.ts` (claim and import), `import-form.tsx`, `page.tsx` (signed-in users get the import button). Registered in `cross-tenant-actions.test.ts` (ACTIONS and a probe test).
+- R4 ✅ instrumented: `e2e/tests/workspaces/share.spec.ts` plus seeded shares in `packages/db/src/seed/e2e.ts`; runs in CI only. In-lane: V1 conversion test.
+- V1 core shares/activation/briefs: 35 pass. V2 billing src/__tests__: 394 pass. V3 db index and rls/sql: 18 pass. V4 web cross-tenant-actions: 27 pass.

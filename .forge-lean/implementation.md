@@ -25,3 +25,6 @@ The flagged symbols are not members of any list in the named tests (mocks or the
 
 ## Lint fix
 - status-publish.ts: replaced `async () => void (await ...)` with a block body (no-meaningless-void-operator).
+
+## Lint fix
+CI lint failed (no log). Committed per-package `.eslintcache` files were the only lint-visible artifact; removed them from git and ignored them. ESLint on all changed ts/js files in core, db, config, storage, i18n and worker tests reports no problems.

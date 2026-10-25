@@ -7,7 +7,8 @@ const CONFIRMED = new Set(['confirmed', 'auto_applied', 'corrected']);
 export function computeReadiness(brief: Brief): Readiness {
   const stageKnown = brief.stage !== null && brief.stage.text.trim().length > 0;
   const lastOrderConfirmed =
-    brief.last_order.length > 0 && brief.last_order.every((l) => CONFIRMED.has(l.confirmation_state));
+    brief.last_order.length > 0 &&
+    brief.last_order.every((l) => CONFIRMED.has(l.confirmation_state));
   const reconciled = brief.obligations.open.every((o) => !o.overdue && o.owner_member_id !== null);
   const segments = {
     stage_known: stageKnown,

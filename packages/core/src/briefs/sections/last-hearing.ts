@@ -44,7 +44,7 @@ export async function lastHearingSection(
       `Heard ${shortDate(h.heldOn)}`,
       h.outcome,
       h.adjournmentReason === null ? null : `adjourned: ${h.adjournmentReason}`,
-      h.nextDateConfirmed ?? h.nextDateProposed
+      (h.nextDateConfirmed ?? h.nextDateProposed)
         ? `next ${shortDate((h.nextDateConfirmed ?? h.nextDateProposed) as string)}`
         : null,
     ].filter((p): p is string => p !== null);

@@ -7,7 +7,20 @@ import { and, count, eq, inArray, or, isNull } from 'drizzle-orm';
 
 import { provenanceOf, type BriefScope, type ListingContext } from '../assemble.ts';
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_NAMES = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 /** `2026-10-20` as `20 Oct`. */
 export function shortDate(date: string): string {
@@ -86,8 +99,6 @@ export async function obligationsSection(
   return {
     open,
     closedCount: closed?.n ?? 0,
-    documentIds: [
-      ...new Set(docs.map((d) => d.documentId).filter((d): d is string => d !== null)),
-    ],
+    documentIds: [...new Set(docs.map((d) => d.documentId).filter((d): d is string => d !== null))],
   };
 }

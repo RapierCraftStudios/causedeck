@@ -184,7 +184,10 @@ export async function requireAction(
   if (!(await mayDo(scope, action))) throw forbidden(message);
 }
 
-export async function mayDo(scope: BriefScope, action: Parameters<typeof can>[1]): Promise<boolean> {
+export async function mayDo(
+  scope: BriefScope,
+  action: Parameters<typeof can>[1],
+): Promise<boolean> {
   return can(scope.actor, action, undefined, await scope.settings()).allow;
 }
 

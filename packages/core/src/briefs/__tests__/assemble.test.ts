@@ -22,7 +22,9 @@ describe('assembleBrief', () => {
       }
       // No date appears that is not in the anchored source text.
       const sourceText = brief.last_order.map((l) => l.quote ?? '').join(' ');
-      for (const m of brief.last_order.flatMap((l) => l.text.match(/\d{1,2} [A-Z][a-z]+( \d{4})?/g) ?? [])) {
+      for (const m of brief.last_order.flatMap(
+        (l) => l.text.match(/\d{1,2} [A-Z][a-z]+( \d{4})?/g) ?? [],
+      )) {
         expect(sourceText).toContain(m.split(' ').slice(0, 2).join(' '));
       }
       expect(brief.obligations.open).toHaveLength(2);

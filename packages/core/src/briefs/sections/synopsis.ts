@@ -14,6 +14,8 @@ export async function synopsisSection(
   const [line] = withProvenance([toBriefLine(synopsis.line)]);
   if (line === undefined) return null;
   const [strategy] =
-    canStrategy && synopsis.strategy !== null ? withProvenance([toBriefLine(synopsis.strategy)]) : [];
+    canStrategy && synopsis.strategy !== null
+      ? withProvenance([toBriefLine(synopsis.strategy)])
+      : [];
   return { line, strategy: strategy ?? null };
 }

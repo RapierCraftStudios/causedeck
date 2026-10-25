@@ -31,7 +31,11 @@ export async function runBriefRefresh(
   deps: BriefRefreshDeps = {},
 ): Promise<void> {
   const done = await refreshBrief(
-    { db: ctx.db, ...(deps.now ? { now: deps.now } : {}), ...(deps.events ? { events: deps.events } : {}) },
+    {
+      db: ctx.db,
+      ...(deps.now ? { now: deps.now } : {}),
+      ...(deps.events ? { events: deps.events } : {}),
+    },
     payload,
   );
   ctx.log.info({ listingId: payload.listingId, stale: done.stale }, 'brief refreshed');

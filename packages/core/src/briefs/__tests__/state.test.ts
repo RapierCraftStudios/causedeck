@@ -20,7 +20,11 @@ describe('brief_state', () => {
       const { actor, fixture } = await seedBrief(tx);
       const deps = { db: tx };
       const listingId = fixture.listingId;
-      const added = await setCarryItem(deps, actor, { listingId, action: 'add', label: 'Original vakalatnama' });
+      const added = await setCarryItem(deps, actor, {
+        listingId,
+        action: 'add',
+        label: 'Original vakalatnama',
+      });
       const key = added.carry.find((c) => c.manual)?.key ?? '';
       await setCarryItem(deps, actor, { listingId, action: 'tick', key, ticked: true });
       await setBriefNote(deps, actor, { listingId, note: 'Ask for short date' });
@@ -50,22 +54,32 @@ describe('brief_state', () => {
 
       t = new Date(Date.now() + 60_000);
       await inWorkspace(tx, workspaceId, async (s) => {
-        const [o] = await s.select().from(schema.obligation).where(eq(schema.obligation.id, fixture.openObligationId));
+        const [o] = await s
+          .select()
+          .from(schema.obligation)
+          .where(eq(schema.obligation.id, fixture.openObligationId));
         if (o === undefined) throw new Error('obligation');
         const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = o;
-        await s.insert(schema.obligation).values({ ...rest, description: 'new thing', createdAt: new Date(Date.now() + 5_000) });
+        await s
+          .insert(schema.obligation)
+          .values({ ...rest, description: 'new thing', createdAt: new Date(Date.now() + 5_000) });
       });
-      // Re-mark a moment before the new row so it counts as later.
+      // Re-mark between the fixture rows (created at transaction start) and the new row.
       await inWorkspace(tx, workspaceId, (s) =>
         s
           .update(schema.briefState)
-          .set({ preparedAt: new Date(Date.now() - 60_000) })
+          .set({ preparedAt: new Date(Date.now() + 2_000) })
           .where(eq(schema.briefState.listingId, fixture.listingId)),
       );
       const first = await refreshBrief(deps, { workspaceId, listingId: fixture.listingId });
       expect(first.stale).toBe('new_obligation');
       expect(events).toEqual([
-        { type: 'brief.stale', workspaceId, listingId: fixture.listingId, reason: 'new_obligation' },
+        {
+          type: 'brief.stale',
+          workspaceId,
+          listingId: fixture.listingId,
+          reason: 'new_obligation',
+        },
       ]);
       const brief = await assembleBrief(deps, actor, fixture.listingId);
       expect(brief.prepared).toBeNull();

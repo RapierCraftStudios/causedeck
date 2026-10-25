@@ -21,12 +21,12 @@ A lawyer prepares for a listing from the stage, the last order, the open obligat
 
 ## Considered options
 
-| Option                                                    | Verdict  | Reason                                                  |
-| --------------------------------------------------------- | -------- | ------------------------------------------------------- |
-| Derive the brief on read; store only the lawyer's edits   | Chosen   | Never stale against the docket; one small tenant table  |
-| Store the assembled brief                                 | Rejected | A second source of truth that goes stale                |
-| Read memory tables directly                               | Rejected | They do not exist yet; a port lets #74 wire them        |
-| Document context by embeddings                            | Rejected | No embedding table; full-text over `document_page` fits |
+| Option                                                  | Verdict  | Reason                                                  |
+| ------------------------------------------------------- | -------- | ------------------------------------------------------- |
+| Derive the brief on read; store only the lawyer's edits | Chosen   | Never stale against the docket; one small tenant table  |
+| Store the assembled brief                               | Rejected | A second source of truth that goes stale                |
+| Read memory tables directly                             | Rejected | They do not exist yet; a port lets #74 wire them        |
+| Document context by embeddings                          | Rejected | No embedding table; full-text over `document_page` fits |
 
 ## Decision
 

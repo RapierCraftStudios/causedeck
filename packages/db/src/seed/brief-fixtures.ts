@@ -90,6 +90,7 @@ async function makeMatter(
       caseTypeCode: 'WP',
       number: String(Math.floor(Math.random() * 9000) + 100),
       year: 2026,
+      sourceType: 'manual',
     })
     .returning({ id: proceeding.id });
   if (p === undefined) throw new Error('brief fixture: proceeding');

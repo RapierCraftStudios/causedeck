@@ -117,7 +117,7 @@ export async function lastOrderSection(
     const first = deterministic[0];
     if (
       first === undefined ||
-      sentences.length === 0 ||
+      sentences.length < 2 ||
       !sentences.every((s) => datesPresentIn(s, source))
     ) {
       return { lines: deterministic, aiUsed: false };

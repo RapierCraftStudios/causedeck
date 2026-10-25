@@ -132,7 +132,8 @@ export async function setCarryItem(
         const at = find(parsed.key);
         if (at >= 0 && carry[at]?.manual) carry.splice(at, 1);
         else if (at >= 0) carry[at] = { ...(carry[at] as BriefCarryEntry), removed: true };
-        else carry.push({ key: parsed.key, manual: false, label: null, ticked: false, removed: true });
+        else
+          carry.push({ key: parsed.key, manual: false, label: null, ticked: false, removed: true });
         break;
       }
       case 'tick': {
@@ -150,7 +151,13 @@ export async function setCarryItem(
       }
       case 'review': {
         carry = carry.filter((e) => e.key !== CARRY_REVIEWED_KEY);
-        carry.push({ key: CARRY_REVIEWED_KEY, manual: false, label: null, ticked: true, removed: false });
+        carry.push({
+          key: CARRY_REVIEWED_KEY,
+          manual: false,
+          label: null,
+          ticked: true,
+          removed: false,
+        });
         break;
       }
     }

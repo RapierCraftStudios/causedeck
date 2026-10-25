@@ -52,7 +52,9 @@ export async function refreshBrief(
     await tx
       .insert(schema.briefState)
       .values({ workspaceId, listingId })
-      .onConflictDoNothing({ target: [schema.briefState.workspaceId, schema.briefState.listingId] });
+      .onConflictDoNothing({
+        target: [schema.briefState.workspaceId, schema.briefState.listingId],
+      });
     return clearIfStale(scope, listingId);
   });
   for (const event of events) deps.events?.emit(event);

@@ -19,9 +19,13 @@ const line = (text: string) => ({
 
 const memory: MemoryProvider = {
   alwaysCarry: async () => [{ id: 'r1', label: 'Always carry the vakalatnama' }],
-  synopsis: async () => ({ line: line('Synopsis'), strategy: line('Strategy: press for early hearing') }),
+  synopsis: async () => ({
+    line: line('Synopsis'),
+    strategy: line('Strategy: press for early hearing'),
+  }),
   lastHearing: async () => line('Last hearing: adjourned'),
-  courtNotes: async () => [line('x')].map((l) => ({ authorUserId: 'someone', shared: true, line: l })),
+  courtNotes: async () =>
+    [line('x')].map((l) => ({ authorUserId: 'someone', shared: true, line: l })),
 };
 
 describe('role gating (R5)', () => {

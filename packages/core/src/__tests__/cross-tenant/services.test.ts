@@ -1944,6 +1944,69 @@ const CASES: Record<string, Case> = {
       ),
     );
   },
+  // briefs (#60): B acting on A's listing is denied and A's brief state is unchanged.
+  assembleBrief: async (f) => {
+    const { listingId } = await aListing(f);
+    await expect(
+      core.assembleBrief({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, listingId),
+    ).rejects.toBeDefined();
+  },
+  markPrepared: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.markPrepared({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { listingId }),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  unmarkPrepared: async (f) => {
+    const { listingId } = await aListing(f);
+    await expect(
+      core.unmarkPrepared({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { listingId }),
+    ).rejects.toBeDefined();
+  },
+  setCarryItem: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.setCarryItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { listingId, action: 'add', label: 'Vakalatnama' },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  setBriefNote: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.setBriefNote(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { listingId, note: 'B was here' },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  refreshBrief: async (f) => {
+    // The system refresh runs in the workspace it names: A's listing id in B's scope is not found
+    // (or refreshes nothing), and A's brief state is unchanged.
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await core
+      .refreshBrief({ db: f.tx }, { workspaceId: f.b.id, listingId })
+      .catch(() => undefined);
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
   getLiveHalls: async (f) => {
     // getLiveHalls is a per-member read model, not a write: a user with no seat in the workspace
     // they name gets nothing back (the listing query is scoped to the workspace and to matters the

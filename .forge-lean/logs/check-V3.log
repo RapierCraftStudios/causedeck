@@ -43,8 +43,8 @@ Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwrigh
  Test Files   (4)
       Tests  no tests
      Errors  1 error
-   Start at  07:54:40
-   Duration  2.77s (transform 239ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 0ms)
+   Start at  08:07:12
+   Duration  2.82s (transform 1.42s, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 0ms)
 
 error during close Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell
 ╔════════════════════════════════════════════════════════════╗
@@ -55,95 +55,7 @@ error during close Error: browserType.launch: Executable doesn't exist at /root/
 ║                                                            ║
 ║ <3 Playwright Team                                         ║
 ╚════════════════════════════════════════════════════════════╝
-    at ignore-listed frames {
-  type: 'Unhandled Error',
-  stacks: [
-    {
-      method: '',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/@vitest+browser@3.2.7_playwright@1.60.0_vite@7.3.7_@types+node@22.20.5_jiti@2.7.0_light_5b9e39a5bc5a526e5f09864f3708bf85/node_modules/@vitest/browser/dist/webdriver-BStCVush.js',
-      line: 80,
-      column: 54
-    },
-    {
-      method: 'PlaywrightBrowserProvider.createContext',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/@vitest+browser@3.2.7_playwright@1.60.0_vite@7.3.7_@types+node@22.20.5_jiti@2.7.0_light_5b9e39a5bc5a526e5f09864f3708bf85/node_modules/@vitest/browser/dist/webdriver-BStCVush.js',
-      line: 206,
-      column: 19
-    },
-    {
-      method: 'PlaywrightBrowserProvider.openBrowserPage',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/@vitest+browser@3.2.7_playwright@1.60.0_vite@7.3.7_@types+node@22.20.5_jiti@2.7.0_light_5b9e39a5bc5a526e5f09864f3708bf85/node_modules/@vitest/browser/dist/webdriver-BStCVush.js',
-      line: 266,
-      column: 19
-    },
-    {
-      method: 'PlaywrightBrowserProvider.openPage',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/@vitest+browser@3.2.7_playwright@1.60.0_vite@7.3.7_@types+node@22.20.5_jiti@2.7.0_light_5b9e39a5bc5a526e5f09864f3708bf85/node_modules/@vitest/browser/dist/webdriver-BStCVush.js',
-      line: 280,
-      column: 23
-    },
-    {
-      method: 'BrowserPool.openPage',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/@vitest+browser@3.2.7_playwright@1.60.0_vite@7.3.7_@types+node@22.20.5_jiti@2.7.0_light_5b9e39a5bc5a526e5f09864f3708bf85/node_modules/@vitest/browser/dist/index.js',
-      line: 3536,
-      column: 3
-    },
-    {
-      method: 'BrowserPool.runTests',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/@vitest+browser@3.2.7_playwright@1.60.0_vite@7.3.7_@types+node@22.20.5_jiti@2.7.0_light_5b9e39a5bc5a526e5f09864f3708bf85/node_modules/@vitest/browser/dist/index.js',
-      line: 3526,
-      column: 3
-    },
-    {
-      method: 'runWorkspaceTests',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/@vitest+browser@3.2.7_playwright@1.60.0_vite@7.3.7_@types+node@22.20.5_jiti@2.7.0_light_5b9e39a5bc5a526e5f09864f3708bf85/node_modules/@vitest/browser/dist/index.js',
-      line: 3434,
-      column: 3
-    },
-    {
-      method: 'executeTests',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/vitest@3.2.7_@types+node@22.20.5_@vitest+browser@3.2.7_jiti@2.7.0_jsdom@27.0.1_lightnin_8550bb8d006fb1e282f5662a4a96447f/node_modules/vitest/dist/chunks/coverage.DfSpMS-b.js',
-      line: 3421,
-      column: 4
-    },
-    {
-      method: '',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/vitest@3.2.7_@types+node@22.20.5_@vitest+browser@3.2.7_jiti@2.7.0_jsdom@27.0.1_lightnin_8550bb8d006fb1e282f5662a4a96447f/node_modules/vitest/dist/chunks/cli-api.DVe0nWUx.js',
-      line: 9648,
-      column: 6
-    },
-    {
-      method: 'Vitest.runFiles',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/vitest@3.2.7_@types+node@22.20.5_@vitest+browser@3.2.7_jiti@2.7.0_jsdom@27.0.1_lightnin_8550bb8d006fb1e282f5662a4a96447f/node_modules/vitest/dist/chunks/cli-api.DVe0nWUx.js',
-      line: 9676,
-      column: 10
-    },
-    {
-      method: 'Vitest.start',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/vitest@3.2.7_@types+node@22.20.5_@vitest+browser@3.2.7_jiti@2.7.0_jsdom@27.0.1_lightnin_8550bb8d006fb1e282f5662a4a96447f/node_modules/vitest/dist/chunks/cli-api.DVe0nWUx.js',
-      line: 9564,
-      column: 18
-    },
-    {
-      method: 'startVitest',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/vitest@3.2.7_@types+node@22.20.5_@vitest+browser@3.2.7_jiti@2.7.0_jsdom@27.0.1_lightnin_8550bb8d006fb1e282f5662a4a96447f/node_modules/vitest/dist/chunks/cli-api.DVe0nWUx.js',
-      line: 10520,
-      column: 8
-    },
-    {
-      method: 'start',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/vitest@3.2.7_@types+node@22.20.5_@vitest+browser@3.2.7_jiti@2.7.0_jsdom@27.0.1_lightnin_8550bb8d006fb1e282f5662a4a96447f/node_modules/vitest/dist/chunks/cac.BfaZ95xE.js',
-      line: 1414,
-      column: 15
-    },
-    {
-      method: 'CAC.run',
-      file: '/work/repo/.claude/worktrees/lean-59/node_modules/.pnpm/vitest@3.2.7_@types+node@22.20.5_@vitest+browser@3.2.7_jiti@2.7.0_jsdom@27.0.1_lightnin_8550bb8d006fb1e282f5662a4a96447f/node_modules/vitest/dist/chunks/cac.BfaZ95xE.js',
-      line: 1393,
-      column: 2
-    }
-  ]
-}
+    at ignore-listed frames
 undefined
 /work/repo/.claude/worktrees/lean-59/packages/ui:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: vitest run src/patterns/court-day src/patterns/boundaries.test.ts --maxWorkers=3

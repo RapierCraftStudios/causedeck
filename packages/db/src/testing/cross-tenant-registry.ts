@@ -151,6 +151,12 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   whatsapp_link: DB_TABLES_TEST,
   whatsapp_otp_challenge: DB_TABLES_TEST,
   whatsapp_inbound_message: DB_TABLES_TEST,
+  // Lawyer memory (#72).
+  memory_item: DB_TABLES_TEST,
+  memory_proposal: DB_TABLES_TEST,
+  memory_embedding: DB_TABLES_TEST,
+  memory_usage: DB_TABLES_TEST,
+  memory_pause: DB_TABLES_TEST,
   // Enterprise onboarding (#682).
   sso_provider: DB_TABLES_TEST,
   scim_token: DB_TABLES_TEST,

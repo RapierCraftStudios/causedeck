@@ -172,6 +172,13 @@ describe('row-level security catalog', () => {
         'whatsapp_link',
         'whatsapp_otp_challenge',
         'whatsapp_inbound_message',
+        // Lawyer memory (#72).
+        'memory_item',
+        'memory_proposal',
+        'memory_embedding',
+        'memory_usage',
+        'memory_pause',
+
         // Enterprise onboarding (#682).
         'sso_provider',
         'scim_token',

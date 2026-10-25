@@ -2,482 +2,454 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`pnpm --filter site build` produces a fully static `out/` with no server runtime and no `middleware`",
+   "quote": "All five legal pages exist with a consistent layout, table of contents, version, effective date and print stylesheet [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "MDX pages are rendered from `content/` with a zod-validated frontmatter schema (title, description, date, noindex); invalid frontmatter fails the build",
+   "quote": "Pages marked `status: draft` render a visible `Draft pending counsel review` banner and `noindex`; production build fails on draft pages unless `ALLOW_DRAFT_LEGAL=1` (set only in staging and preview) [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Every page has a unique title, description, canonical URL, Open Graph and Twitter metadata; sitemap and robots are generated; `noindex` is applied to the legal drafts flagged as such",
+   "quote": "The sub-processor list is data-driven and includes at least: hosting VPS provider (India region), Cloudflare (static site and DNS only), AWS (SES ap-south-1, Bedrock India profile), Sarvam, Indian Kanoon (link-outs and checks), Razorpay, Sentry; each row shows purpose, data categories, region and effective date [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "JSON-LD uses `SoftwareApplication` only; there is no `LegalService`, `Attorney`, `Review` or `AggregateRating` schema anywhere (asserted by test)",
+   "quote": "A test compares the sub-processor data with a machine-readable manifest in `infra/` (`infra/sub-processors.json`) and fails when a service in the manifest is missing from the public list [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "The Rule 36 lint fails the build on denylisted terms (e.g. `best lawyer`, `top advocate`, `win rate`, `guaranteed outcome`, `find a lawyer`, `client reviews`, `testimonial`) and on any component named `Testimonial*` or `Directory*`",
+   "quote": "The AI disclosure page states, with no embellishment: India-only mode by default, models used by provider, that AI proposes and the lawyer confirms, that outputs may be wrong, that customer content is not used for training, and that citations are never generated [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "The site ships no third-party scripts, no cookies and no tenant data; analytics, if enabled, is cookie-less and configured by env var `NEXT_PUBLIC_ANALYTICS_SRC` (unset by default)",
+   "quote": "The DPA page states the roles (advocate or chamber as Data Fiduciary, CauseDeck as Processor) as structure placeholders for counsel and links to the sub-processor list and security page [type:e2e]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "Fonts (Geist or Inter, Newsreader or Source Serif 4, Noto Sans Tamil and Kannada subsets) are self-hosted with `font-display: swap` and preloaded for the critical weights",
+   "quote": "Versioning: each page keeps a version history (date, summary) from MDX frontmatter; material changes to sub-processors update the RSS feed [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Site uses `packages/ui` tokens; light and dark themes work with `next-themes` and respect system preference without flash",
+   "quote": "Rule 36 lint passes; no page contains lawyer-promotion language and the positioning statement `software for advocates, not legal services` appears on Terms and About [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Lighthouse CI on the home page is at least 95 for performance, accessibility, best practices and SEO, with budgets in `lighthouserc.json`",
+   "quote": "Lighthouse at least 95 and axe zero serious in light and dark on all legal pages; long-form text meets AAA contrast where feasible [type:e2e]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "Delivered as apps/site/lighthouserc.json and the lighthouse step of .github/workflows/site.yml; measured by the site workflow in CI (Lighthouse never runs locally)."
+   "evidence": "e2e/site/legal.spec.ts axe checks and the `lighthouse` job in .github/workflows/site.yml (lighthouserc.json URL list extended to legal pages) run in CI only"
   },
   {
    "id": "R10",
-   "quote": "axe reports zero serious violations on all routes in light and dark; skip link and focus order verified",
+   "quote": "Visual baselines at 360, 768 and 1280 in light and dark [type:e2e]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "Delivered as e2e/site/smoke.spec.ts (axe fixture, skip-link and tab-order checks) run by .github/workflows/site.yml; Playwright is CI-only."
+   "evidence": "e2e/site/legal.spec.ts toHaveScreenshot across the six site-* projects of e2e/playwright.site.config.ts; baselines generated by the site.yml update_snapshots run in the pinned Playwright image, never locally"
   },
   {
    "id": "R11",
-   "quote": "Cloudflare Pages workflow deploys `main` to production and PRs to preview URLs, using secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` that may be absent in forks (job skips cleanly)",
+   "quote": "i18n: page chrome strings in `en` with `ta`/`kn` stubs; legal bodies are `en` only with a language note [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Delivered as the deploy job in .github/workflows/site.yml (secret-presence guard, `main` = production, PR = preview); the actual deploy needs the real token (#107) and is only observable after merge."
+   "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "`_headers` and `_redirects` files set security headers (CSP without inline scripts, HSTS, Referrer-Policy, Permissions-Policy) and long cache for hashed assets",
+   "quote": "Positioning is stated in the pages: CauseDeck is the Data Processor and the advocate or chamber is the Data Fiduciary (PRD §9); it is software, not legal services; no privilege attaches to communications with the platform.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "Visual baselines for header, footer and 404 in light and dark at 360, 768 and 1280",
+   "quote": "legal text is never invented by engineering; content lives in versioned MDX under `apps/site/content/legal/`",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Spec e2e/site/chrome.visual.spec.ts delivered in-lane; baselines are generated in the pinned Playwright image by the CI visual-update/e2e workflow (e2e.yml update_snapshots, visual-update.yml), never on dev machines."
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/site/package.json",
-   "change": "Real scripts (dev: next dev, build: rule36 lint then next build then write-headers, typecheck, test, lint, lint:rule36); add deps next, react, react-dom, next-themes, zod, next-mdx-remote, @causedeck/ui (workspace: tokens, Button, Sheet, Badge, Separator, per issue Design spec); devDeps tailwindcss, @tailwindcss/postcss, postcss, @types/react, @types/react-dom, tsx, jsdom/@testing-library/react if component tests are needed. Package name stays @causedeck/site.",
+   "path": "apps/site/lib/frontmatter.ts",
+   "change": "Add optional legal keys (status: draft|final, version, effectiveDate, history[{date,summary}]) to the strict schema; export a legalFrontmatterSchema that requires them for content/legal pages (except draft-notice) and rejects effectiveDate on drafts",
    "requirements": [
     "R1",
     "R2",
-    "R8"
+    "R7"
    ]
   },
   {
    "id": "D2",
-   "path": "pnpm-workspace.yaml",
-   "change": "Add catalog entry for next-mdx-remote (and any other missing dep) pinned to an exact version; pnpm-lock.yaml regenerated via pnpm install --lockfile-only.",
+   "path": "apps/site/lib/legal.ts",
+   "change": "Loader for the five legal pages (slugs, status, version, history, headings for TOC) and helpers used by pages, sitemap, gate and feed",
    "requirements": [
-    "R2"
+    "R1",
+    "R2",
+    "R7"
    ]
   },
   {
    "id": "D3",
-   "path": "pnpm-lock.yaml",
-   "change": "Regenerated lockfile for the new site dependencies.",
+   "path": "apps/site/lib/legal-chrome.ts",
+   "change": "Chrome strings in en with ta/kn stubs (falling back to en) and the language note for en-only bodies",
    "requirements": [
-    "R1"
+    "R11"
    ]
   },
   {
    "id": "D4",
-   "path": "apps/site/next.config.ts",
-   "change": "output 'export', images.unoptimized, trailingSlash, transpilePackages [@causedeck/ui,@causedeck/config], poweredByHeader false, reactStrictMode; no rewrites/redirects/headers() (unsupported in export), no middleware.",
+   "path": "apps/site/lib/legal.test.ts",
+   "change": "Unit tests: frontmatter, draft => noindex + banner flag, history ordering, chrome locales, manifest parity, feed content, positioning phrase on terms and about, AI disclosure statements, DPA role placeholders and links",
    "requirements": [
-    "R1"
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R11",
+    "R12"
    ]
   },
   {
    "id": "D5",
-   "path": "apps/site/tsconfig.json",
-   "change": "Include app, lib, components, scripts, next-env.d.ts, .next/types and the Next plugin; keep src.",
+   "path": "apps/site/app/legal/page.tsx",
+   "change": "Legal index listing the five pages with version and status",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/site/postcss.config.mjs",
-   "change": "Tailwind v4 postcss plugin, same as apps/web/postcss.config.mjs.",
+   "path": "apps/site/app/legal/terms/page.tsx",
+   "change": "Terms page using LegalLayout; generateMetadata via pageMetadata with noindex for drafts",
    "requirements": [
-    "R8"
+    "R1",
+    "R2",
+    "R8",
+    "R12"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/site/vitest.config.ts",
-   "change": "Vitest config covering src, lib, scripts and component tests (jsdom for tsx tests).",
+   "path": "apps/site/app/legal/privacy/page.tsx",
+   "change": "Privacy page",
    "requirements": [
-    "R2",
-    "R4",
-    "R5"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/site/lib/env.ts",
-   "change": "zod env schema: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL (default https://app.causedeck.example), NEXT_PUBLIC_ANALYTICS_SRC (optional, https only); invalid values fail the build.",
+   "path": "apps/site/app/legal/dpa/page.tsx",
+   "change": "DPA page; links to /legal/sub-processors/ and /security/ (page owned by #91)",
    "requirements": [
+    "R1",
+    "R2",
     "R6"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/site/lib/frontmatter.ts",
-   "change": "zod frontmatter schema (title, description, date, noindex default false; strict) and parse helper that throws with the file path.",
+   "path": "apps/site/app/legal/ai-disclosure/page.tsx",
+   "change": "AI disclosure page",
    "requirements": [
-    "R2"
+    "R1",
+    "R2",
+    "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "apps/site/lib/mdx.ts",
-   "change": "Read content/**/*.mdx only (not the existing .md learn/developers files), parse frontmatter via compileMDX, validate with D9, list slugs for generateStaticParams, fail the build on invalid frontmatter or duplicate titles/descriptions.",
+   "path": "apps/site/app/legal/sub-processors/page.tsx",
+   "change": "Sub-processor page rendering SubprocessorTable from data plus version history",
    "requirements": [
-    "R2",
-    "R3"
+    "R1",
+    "R3",
+    "R7"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/site/lib/seo.ts",
-   "change": "Metadata helper (unique title, description, canonical, openGraph, twitter, robots noindex), SoftwareApplication JSON-LD builder, sitemap entry builder that omits noindex pages.",
-   "requirements": [
-    "R3",
-    "R4"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "apps/site/app/layout.tsx",
-   "change": "Root layout: self-hosted fonts, next-themes ThemeProvider (attribute class, system default), skip link first in tab order, header, footer, main landmark, optional analytics script only when NEXT_PUBLIC_ANALYTICS_SRC is set.",
-   "requirements": [
-    "R6",
-    "R7",
-    "R8"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "apps/site/app/fonts.ts",
-   "change": "next/font/local from packages/ui/fonts (Geist, Newsreader roman preloaded; Noto Sans Tamil and Kannada subsets), display swap; mirror apps/web/app/fonts.ts.",
+   "path": "apps/site/app/legal/sub-processors/feed.xml/route.ts",
+   "change": "Static RSS (dynamic = 'force-static') of sub-processor changes, built from the data's effective dates and the page version history",
    "requirements": [
     "R7"
    ]
   },
   {
-   "id": "D14",
-   "path": "apps/site/app/globals.css",
-   "change": "Tailwind v4 import plus the @causedeck/ui token CSS files without ui fonts.css (as apps/web/app/globals.css), @source for packages/ui, 150 ms hover/focus transitions disabled under reduced motion, focus ring 3:1.",
+   "id": "D12",
+   "path": "apps/site/content/legal/terms.mdx",
+   "change": "Placeholder structure: section headings, TODO(counsel) markers, positioning statement 'software for advocates, not legal services', no privilege statement; status: draft",
    "requirements": [
-    "R8"
+    "R1",
+    "R8",
+    "R12",
+    "R13"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/site/content/legal/privacy.mdx",
+   "change": "Placeholder structure with TODO(counsel) markers; Processor/Fiduciary positioning",
+   "requirements": [
+    "R1",
+    "R12",
+    "R13"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/site/content/legal/dpa.mdx",
+   "change": "Placeholder structure with role placeholders (Data Fiduciary = advocate or chamber, Processor = CauseDeck)",
+   "requirements": [
+    "R6",
+    "R12",
+    "R13"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/site/app/page.tsx",
-   "change": "Placeholder hero with page metadata and the SoftwareApplication JSON-LD; replaced later by #90.",
+   "path": "apps/site/content/legal/ai-disclosure.mdx",
+   "change": "Plain statements: India-only mode by default, models by provider (Bedrock India profile, Sarvam), AI proposes and the lawyer confirms, outputs may be wrong, no training on customer content, citations never generated",
    "requirements": [
-    "R3",
-    "R4"
+    "R5",
+    "R13"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/site/app/(content)/[...slug]/page.tsx",
-   "change": "Static MDX route: generateStaticParams from lib/mdx, generateMetadata from frontmatter, dynamicParams false, rendered in Prose.",
+   "path": "apps/site/content/legal/sub-processors.ts",
+   "change": "Typed data rows (name, purpose, data categories, region, link, effectiveDate) for VPS host (India), Cloudflare, AWS SES ap-south-1, AWS Bedrock India profile, Sarvam, Indian Kanoon, Razorpay, Sentry",
    "requirements": [
-    "R2",
-    "R3"
+    "R3",
+    "R7"
    ]
   },
   {
    "id": "D17",
-   "path": "apps/site/content/about.mdx",
-   "change": "One seed MDX page with valid frontmatter and Rule-36-safe copy, plus one `noindex: true` draft page (content/legal/draft-notice.mdx) to prove the noindex path; no real legal text (#95).",
+   "path": "infra/sub-processors.json",
+   "change": "New machine-readable manifest of services actually used (ids matching the public list)",
    "requirements": [
-    "R2",
-    "R3"
+    "R4"
    ]
   },
   {
    "id": "D18",
-   "path": "apps/site/app/sitemap.ts",
-   "change": "force-static sitemap from home + non-noindex MDX pages with absolute canonical URLs.",
+   "path": "apps/site/components/legal/legal-layout.tsx",
+   "change": "Title, version and effective date, TOC (collapsible at 360, sheet at 768, sticky at 1280+), 680px measure, anchor-linked headings, language note, print stylesheet (A4, serif, no chrome)",
    "requirements": [
-    "R3"
+    "R1",
+    "R11"
    ]
   },
   {
    "id": "D19",
-   "path": "apps/site/app/robots.ts",
-   "change": "force-static robots allowing all and pointing at the sitemap.",
+   "path": "apps/site/components/legal/draft-banner.tsx",
+   "change": "Warning-role banner with text 'Draft pending counsel review' and Draft badge",
    "requirements": [
-    "R3"
+    "R2"
    ]
   },
   {
    "id": "D20",
-   "path": "apps/site/app/not-found.tsx",
-   "change": "Calm, helpful 404 with links home and to the app.",
+   "path": "apps/site/components/legal/subprocessor-table.tsx",
+   "change": "Accessible table with headers: purpose, data categories, region, effective date, link",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D21",
-   "path": "apps/site/app/opengraph-image.tsx",
-   "change": "force-static OG image via next/og ImageResponse using the self-hosted font files read from packages/ui/fonts.",
+   "path": "apps/site/components/legal/version-history.tsx",
+   "change": "Version history list (date, summary) from frontmatter",
    "requirements": [
-    "R3"
+    "R7"
    ]
   },
   {
    "id": "D22",
-   "path": "apps/site/components/site-header.tsx",
-   "change": "Header: logo, nav inline from 768, Sign in link to NEXT_PUBLIC_APP_URL, menu Sheet below 768; no directory links.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "apps/site/components/site-footer.tsx",
-   "change": "Footer: product, trust and legal links, India data note; no lawyer listing links.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "apps/site/components/theme-toggle.tsx",
-   "change": "Theme toggle client component (light/dark/system) with accessible label.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D25",
-   "path": "apps/site/components/prose.tsx",
-   "change": "Prose wrapper and MDX component map for rendered content.",
+   "path": "apps/site/scripts/legal-status.ts",
+   "change": "Exit non-zero when any legal page is status draft unless ALLOW_DRAFT_LEGAL=1; export a pure checker for the unit test",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D26",
-   "path": "apps/site/scripts/rule36-lint.ts",
-   "change": "Denylist/pattern lint over content/**/*.mdx, app/**/*.tsx, components/**/*.tsx copy and component/file names (Testimonial*, Directory*); exports a pure scan function plus a CLI exiting non-zero on findings; wired into the build script.",
+   "id": "D23",
+   "path": "apps/site/package.json",
+   "change": "Prefix the build script with `tsx scripts/legal-status.ts`; add `lint:legal` script. No new dependencies",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
-   "id": "D27",
-   "path": "apps/site/scripts/write-headers.ts",
-   "change": "Post-build: scan out/**/*.html inline scripts, emit out/_headers (merging public/_headers) with per-route CSP script-src sha256 hashes and no unsafe-inline, HSTS, Referrer-Policy, Permissions-Policy, X-Content-Type-Options, immutable cache for /_next/static/*.",
+   "id": "D24",
+   "path": ".github/workflows/site.yml",
+   "change": "Set ALLOW_DRAFT_LEGAL=1 for the build job and preview deploys only; production (main) must not set it; add legal URLs to the Lighthouse run",
    "requirements": [
-    "R12",
-    "R1"
+    "R2",
+    "R9"
    ]
   },
   {
-   "id": "D28",
-   "path": "apps/site/public/_redirects",
-   "change": "Redirect rules (e.g. /app to the app origin placeholder, none that need a server).",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D29",
-   "path": "apps/site/public/_headers",
-   "change": "Static base headers and cache rules copied into out/ (CSP script hashes appended by D27).",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D30",
+   "id": "D25",
    "path": "apps/site/lighthouserc.json",
-   "change": "LHCI config: serve out/ statically, home page, min score 0.95 for performance, accessibility, best-practices, seo, plus resource budgets.",
+   "change": "Add the six legal page URLs",
    "requirements": [
     "R9"
    ]
   },
   {
-   "id": "D31",
-   "path": ".github/workflows/site.yml",
-   "change": "Jobs: build+lint+test (turbo, pinned actions as in ci.yml), Lighthouse CI, Playwright smoke/axe/visual in the pinned image, deploy to Cloudflare Pages (main = production, PR = preview) guarded by presence of CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID so forks skip cleanly; least-privilege permissions.",
-   "requirements": [
-    "R9",
-    "R10",
-    "R11",
-    "R13"
-   ]
-  },
-  {
-   "id": "D32",
-   "path": "e2e/site/smoke.spec.ts",
-   "change": "Playwright over every route of the exported site: status, unique title/description/canonical, no cookies and no third-party requests, theme no-flash, skip link first tab stop, axe zero serious violations in light and dark, robots/sitemap, headers file content.",
-   "requirements": [
-    "R3",
-    "R6",
-    "R8",
-    "R10"
-   ]
-  },
-  {
-   "id": "D33",
-   "path": "e2e/site/chrome.visual.spec.ts",
-   "change": "Visual spec for header, footer and 404 (light/dark at 360/768/1280); baselines generated in CI.",
-   "requirements": [
-    "R13"
-   ]
-  },
-  {
-   "id": "D34",
-   "path": "e2e/playwright.site.config.ts",
-   "change": "Separate Playwright config serving apps/site/out (no DB, no apps/web build), 360/768/1280 x light/dark projects, same screenshot options as playwright.config.ts.",
-   "requirements": [
-    "R10",
-    "R13"
-   ]
-  },
-  {
-   "id": "D35",
-   "path": "turbo.json",
-   "change": "Add `out/**` to build outputs.",
+   "id": "D26",
+   "path": "apps/site/app/(content)/[...slug]/page.tsx",
+   "change": "Exclude slugs owned by dedicated legal pages from generateStaticParams/lookup (draft-notice stays)",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D36",
-   "path": "apps/site/README.md",
-   "change": "Local dev, content authoring (frontmatter), Rule 36 lint, headers/CSP generation, env vars, deployment and secrets.",
+   "id": "D27",
+   "path": "apps/site/app/sitemap.ts",
+   "change": "Exclude legal-owned slugs from the catch-all list; add legal pages that are not draft",
    "requirements": [
-    "R1",
-    "R2",
-    "R11"
+    "R2"
    ]
   },
   {
-   "id": "D37",
-   "path": "apps/site/src/site-scaffold.test.ts",
-   "change": "Unit tests: frontmatter schema accepts valid and rejects invalid (and invalid fails mdx load), seo helpers (unique canonical/OG/Twitter, noindex omitted from sitemap), JSON-LD only SoftwareApplication and a source scan asserting no LegalService/Attorney/Review/AggregateRating, rule36 scan fails on each denylisted term and Testimonial*/Directory* names, env schema, no middleware file and output export in next config, no third-party script URLs. May be split into lib/*.test.ts.",
+   "id": "D28",
+   "path": "apps/site/content/about.mdx",
+   "change": "Include the exact sentence 'software for advocates, not legal services'",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "apps/site/components/site-footer.tsx",
+   "change": "Link the five legal pages and the legal index in the Legal column",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "e2e/site/legal.spec.ts",
+   "change": "E2E: five pages (layout, TOC, version, print media emulation, banner and noindex, AI disclosure and DPA statements, DPA links, sub-processor columns), axe in light/dark, screenshots",
    "requirements": [
     "R1",
-    "R2",
-    "R3",
-    "R4",
     "R5",
     "R6",
-    "R12"
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D31",
+   "path": "e2e/site/smoke.spec.ts",
+   "change": "Add legal routes to ROUTES with noindex true while drafts",
+   "requirements": [
+    "R2",
+    "R9"
+   ]
+  },
+  {
+   "id": "D32",
+   "path": "apps/site/README.md",
+   "change": "Document legal content, status gate, ALLOW_DRAFT_LEGAL and manifest process",
+   "requirements": [
+    "R2",
+    "R4"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing plain-markdown content and its loaders/tests: apps/site/content/learn/**, apps/site/content/developers/api.md, apps/site/src/learn/*, apps/site/src/developer-docs.test.ts, apps/site/src/index.ts (appName '@causedeck/site') and src/index.test.ts keep passing unchanged."
+   "what": "Existing MDX pages (about, legal/draft-notice) stay valid under the strict frontmatter and keep unique title/description (apps/site/lib/mdx.ts assertUnique)"
   },
   {
    "id": "P2",
-   "what": "Package name @causedeck/site and the root turbo task names (build, lint, typecheck, test); apps/web, apps/admin and e2e/playwright.config.ts (apps/web harness) are not modified."
+   "what": "Static export constraints: no middleware, rewrites, headers() or redirects() in apps/site/next.config.ts (asserted by apps/site/src/site-scaffold.test.ts)"
   },
   {
    "id": "P3",
-   "what": "No server runtime in the site: no middleware, no route handlers that are dynamic, no server actions, no imports of @causedeck/core, db, auth, adapters (tenant data); Node runtime rule in packages/config/eslint/next.js."
+   "what": "Plain .md learn and developer docs and their loaders/tests: apps/site/src/learn/*, apps/site/src/developer-docs.test.ts"
   },
   {
    "id": "P4",
-   "what": "Rule 36 positioning: no advocate names, rankings, testimonials, outcomes, directory or lead-capture copy anywhere in new public copy."
+   "what": "scripts/write-headers.ts CSP (hash-based, no unsafe-inline scripts) and scripts/rule36-lint.ts denylist; legal copy must satisfy them, not loosen them"
+  },
+  {
+   "id": "P5",
+   "what": "The site imports no @causedeck/core, db or auth packages and adds no workspace dependency"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/site exec vitest run"
+   "command": "pnpm --filter @causedeck/site exec vitest run lib/legal.test.ts src/site-scaffold.test.ts src/developer-docs.test.ts src/learn --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/site exec tsc --noEmit"
+   "command": "cd apps/site && ALLOW_DRAFT_LEGAL=1 pnpm exec tsx scripts/legal-status.ts && ! pnpm exec tsx scripts/legal-status.ts && pnpm exec tsx scripts/rule36-lint.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/site exec tsx scripts/rule36-lint.ts"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/site exec eslint app lib components scripts src vitest.config.ts next.config.ts"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/site build && test -f apps/site/out/index.html && test -f apps/site/out/sitemap.xml && test -f apps/site/out/robots.txt && test -f apps/site/out/_headers && test ! -f apps/site/.next/server/middleware.js"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/site-onboarding-launch  # then run the scoped typecheck/lint/test commands it prints"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Render MDX with next-mdx-remote/rsc compileMDX (new catalog dependency) instead of @next/mdx.",
-   "justification": "One dependency, build-time only in static export, and frontmatter is parsed by the same call so the zod schema can fail the build; @next/mdx would add @mdx-js/loader, @mdx-js/react, @types/mdx and a separate frontmatter parser. No MDX package exists in pnpm-workspace.yaml catalog.",
-   "source": "spec"
+   "choice": "Legal bodies are MDX loaded through the existing compileMDX pipeline; dedicated app/legal/* pages own their slugs and the catch-all and sitemap skip them",
+   "justification": "app/(content)/[...slug]/page.tsx:15-18 and app/sitemap.ts:10-19 would otherwise duplicate routes and list drafts",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Add @causedeck/ui as a workspace dependency of @causedeck/site (D1).",
-   "justification": "Issue Context requires 'Shared Button, Sheet, Badge, Separator from packages/ui' and tokens; mirrors apps/web (apps/web/package.json dependencies, globals.css:6-12). Spike §2 lists packages/ui as the shared design system for apps/web and apps/site.",
+   "choice": "ALLOW_DRAFT_LEGAL gate runs in `build` (apps/site/package.json build script) and is set only for CI build and preview, not for the main production deploy; the site.yml build artifact is shared by both, so the workflow needs a separate production build step or gate",
+   "justification": "site.yml deploy job downloads one site-out artifact for main and PR previews; issue says production build must fail on drafts",
    "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Generate per-route CSP script-src hashes in a post-build step rather than relying on unsafe-inline.",
-   "justification": "Issue requires 'CSP without inline scripts'; Next static export and next-themes both emit inline scripts, and Cloudflare Pages _headers cannot carry per-request nonces. apps/web uses a nonce proxy (apps/web/next.config.ts:38 comment) which is unavailable in static export.",
-   "source": "spec"
+   "choice": "Chrome i18n lives in apps/site/lib/legal-chrome.ts, not packages/i18n",
+   "justification": "The site has no i18n wiring and must not depend on app packages; no CLAUDE.md registry applies",
+   "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Keep the package name @causedeck/site; the acceptance command is run as pnpm --filter @causedeck/site build.",
-   "justification": "apps/site/package.json:2, src/index.ts:2 and src/index.test.ts depend on it; all workspace packages use the @causedeck/ scope.",
+   "choice": "Issue's '(+ stories)' is not delivered: apps/site has no Storybook, and adding it is outside the issue's acceptance criteria; components reuse packages/ui primitives",
+   "justification": "no .storybook under apps/site; checks.mjs/CLAUDE.md forbid running Storybook locally",
    "source": "precedent"
   },
   {
    "id": "K5",
-   "choice": "Separate e2e/playwright.site.config.ts instead of adding projects to e2e/playwright.config.ts.",
-   "justification": "The main config's webServer builds apps/web and global setup needs the Postgres Compose stack (e2e/playwright.config.ts:121-135); the site needs neither.",
-   "source": "precedent"
+   "choice": "DPA links to /security/ although that page is owned by #91 and not yet present",
+   "justification": "Issue requires the link; #91 (L03) creates the page. e2e asserts the href only, not the target",
+   "source": "spec"
+  },
+  {
+   "id": "K6",
+   "choice": "Counsel text is TODO placeholders only; effectiveDate is omitted for drafts",
+   "justification": "Issue Security and conduct: effective date set only when counsel approves; legal wording is out of scope",
+   "source": "spec"
   }
  ]
 }

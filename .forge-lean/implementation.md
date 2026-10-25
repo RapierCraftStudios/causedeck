@@ -1,43 +1,44 @@
 ### Approach
-Continued the checkpointed branch: the static Next.js site was largely in place. Finished the remaining contract deliverables (README, scaffold regression test, `@causedeck/config` in transpilePackages) and fixed lint errors.
+Legal bodies are placeholder MDX (structure and `TODO(counsel)` markers only) loaded through the existing `compileMDX` pipeline, with legal frontmatter (status, version, history, effectiveDate) validated by a new strict schema. Dedicated `app/legal/*` pages own their slugs; the catch-all route and sitemap skip them, and drafts are `noindex` and out of the sitemap. A build gate (`scripts/legal-status.ts`) fails on drafts unless `ALLOW_DRAFT_LEGAL=1`.
 
 ### Changes
-- apps/site/next.config.ts: transpilePackages now includes @causedeck/config (D4).
-- apps/site/README.md: commands, content, env, deploy (D36).
-- apps/site/src/site-scaffold.test.ts: regression tests for R1-R6, R12 (D37).
-- apps/site/lib/mdx.ts, scripts/rule36-lint.ts, scripts/write-headers.ts: lint fixes only.
-- Earlier session: all other deliverables (see git diff).
+- apps/site/lib/frontmatter.ts: optional legal keys; `legalFrontmatterSchema`, `parseLegalFrontmatter`.
+- apps/site/lib/legal.ts: loader, headings, metadata, draft check, feed items/RSS, manifest parity helper.
+- apps/site/lib/legal-chrome.ts: en chrome strings, ta/kn stubs falling back to en.
+- apps/site/lib/legal.test.ts: regression tests.
+- apps/site/app/legal/**: index, five pages, `sub-processors/feed.xml/route.ts` (static RSS).
+- apps/site/content/legal/{terms,privacy,dpa,ai-disclosure,sub-processors}.mdx and `sub-processors.ts`; infra/sub-processors.json.
+- apps/site/components/legal/{legal-layout,draft-banner,subprocessor-table,version-history}.tsx; site-footer.tsx links.
+- apps/site/scripts/legal-status.ts; package.json (`build` runs the gate first, `lint:legal`).
+- .github/workflows/site.yml: build step split; `ALLOW_DRAFT_LEGAL` set for all refs except `main`; lighthouserc.json: legal URLs.
+- (content)/[...slug]/page.tsx, sitemap.ts: skip legal-owned slugs; add non-draft legal pages.
+- content/about.mdx: positioning sentence; README.md; e2e/site/legal.spec.ts, smoke.spec.ts.
 
 ### Acceptance Criteria Status
-- R1 ✅ next.config.ts:11, build output verified (V5)
-- R2 ✅ lib/frontmatter.ts, lib/mdx.ts
-- R3 ✅ lib/seo.ts, app/sitemap.ts, app/robots.ts
-- R4 ✅ lib/seo.ts, src/site-scaffold.test.ts (JSON-LD test)
-- R5 ✅ scripts/rule36-lint.ts
-- R6 ✅ lib/env.ts, app/layout.tsx
-- R7 ✅ app/fonts.ts
-- R8 ✅ app/layout.tsx, globals.css, theme-toggle.tsx
-- R9 ✅ (instrumented) lighthouserc.json, .github/workflows/site.yml
-- R10 ✅ (instrumented) e2e/site/smoke.spec.ts
-- R11 ✅ (instrumented) site.yml deploy job
-- R12 ✅ public/_headers, scripts/write-headers.ts
-- R13 ✅ (instrumented) e2e/site/chrome.visual.spec.ts
+- R1 ✅ app/legal/*/page.tsx, components/legal/legal-layout.tsx (TOC, version, effective date, print CSS); e2e/site/legal.spec.ts
+- R2 ✅ components/legal/draft-banner.tsx, lib/legal.ts (noindex), scripts/legal-status.ts, site.yml
+- R3 ✅ content/legal/sub-processors.ts, components/legal/subprocessor-table.tsx
+- R4 ✅ infra/sub-processors.json, lib/legal.test.ts (manifest parity)
+- R5 ✅ content/legal/ai-disclosure.mdx
+- R6 ✅ content/legal/dpa.mdx
+- R7 ✅ frontmatter history, components/legal/version-history.tsx, feed route
+- R8 ✅ terms.mdx, about.mdx, rule36 test
+- R9 ✅ instrumented: e2e/site/legal.spec.ts axe, lighthouserc.json URLs (measured in CI)
+- R10 ✅ instrumented: legal.spec.ts screenshots (baselines generated in CI)
+- R11 ✅ lib/legal-chrome.ts, language note
+- R12 ✅ privacy/dpa/terms positioning
+- R13 ✅ placeholders only, no effective date
 
 ### Verification
-V1 vitest: pass (28 tests). V2 tsc: pass. V3 rule36 lint: pass. V4 eslint: pass. V5 build + artifact checks: pass. `forgedock check` PASS. The scaffold test file did not exist before this change, so it cannot pass without the site code.
+- V1 vitest (lib/legal.test.ts, site-scaffold, developer-docs, learn): 45 passed. The new tests fail without the change (modules and content are absent).
+- V2 legal-status with ALLOW_DRAFT_LEGAL=1 exits 0, without it exits 1, rule36 lint passes.
+- V3 checks.mjs widened to full turbo because site.yml changed; per CLAUDE.md I did not run full lint. Ran site `tsc --noEmit` (clean), eslint on changed files (clean), prettier. `next build`, Playwright and Lighthouse were not run (CI only).
 
 ### Notes
-pnpm-lock.yaml growth (about 1000 lines) is generated dependency resolution for the new site deps (hotspot-exempt amendment). Duplicate `metadata`/`dynamic` export names are Next.js route-file conventions.
-Env vars: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_ANALYTICS_SRC (unset by default). No devdocs freshness script in repo.
+- Added content/legal/sub-processors.mdx (amendment): version history comes from MDX frontmatter for all five pages.
+- Production build fails while drafts exist (intended); `ALLOW_DRAFT_LEGAL` is passed outside turbo (strict env).
+- TOC is a collapsible `<details>` below 1280 px (no sheet at 768) and sticky from 1280.
+- Sub-processor effective dates (2026-10-25), hosting provider name and Sentry region are placeholders for counsel/infra to confirm.
 
-### Duplicate export names (reviewed, intentionally kept)
-`metadata` (layout.tsx, page.tsx, not-found.tsx) and `dynamic` (opengraph-image.tsx, robots.ts, sitemap.ts) are Next.js App Router file-convention exports. Next reads them by exact name from each route file, so renaming one silently drops that page's metadata or its force-static setting (and `output: 'export'` needs the latter on robots, sitemap and the OG image). They are per-route file exports, not shared module APIs: nothing imports them, and no registry, map or test is keyed by them. No code change made.
-
-### CI lint fix
-CI lint log was unavailable; reproduced locally. `eslint .` in apps/site linted the gitignored `out/` static export (thousands of errors in minified chunks): added `out/**` to the ignores in apps/site/eslint.config.js. `e2e/site/smoke.spec.ts` had a `no-unnecessary-condition` error on `document.activeElement?.`: rewritten with an explicit `Element | null` check. Site and e2e eslint, prettier and e2e tsc pass.
-
-## CI lint fix
-The lint job runs Prettier on changed files; the committed apps/site/next-env.d.ts (generated by Next) failed `prettier --check`. Reformatted it with prettier. ESLint on apps/site and e2e passes locally.
-
-## CI test failure (not caused by this branch)
-`@causedeck/intelligence` pipeline.test.ts "processes 20 text pages..." failed at 20.26 s against a 20 s wall-clock budget on a loaded runner. The branch does not touch packages/intelligence (git diff against the base is empty there), so this is a timing flake. No code change; recorded as an amendment in result.json. Re-run the shard.
+### Recovery pass: CI `build` job failure (no log available)
+Could not reproduce locally. Every step of the `site build` job that can run here passes: legal-status (with ALLOW_DRAFT_LEGAL=1), rule36 lint, `tsc --noEmit`, `eslint .` in apps/site, vitest (46 tests), and a react-dom/server render of all five legal pages with correct `noindex` metadata. Only `next build` and `write-headers` (CI only per CLAUDE.md) remain unverified. No speculative code change made; the CI log is needed to identify the failing step.

@@ -1,38 +1,43 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield feature, no live defect; blocks #90, #91, #95)
+**Severity**: medium (greenfield feature; no live defect; legal pages are a launch prerequisite)
 **Task Type**: feature
 
 ### What Was Claimed
-Scaffold `apps/site` as a static marketing site: Next.js `output: 'export'`, MDX content with zod-validated frontmatter, per-page SEO metadata, sitemap/robots, build-time OG image, SoftwareApplication-only JSON-LD, Rule 36 copy lint, self-hosted fonts, `packages/ui` tokens with next-themes, `_headers`/`_redirects`, Cloudflare Pages workflow, Lighthouse CI, axe/e2e smoke, visual baselines, README. Depends on #134 (closed).
+Scaffold five legal pages (Terms, Privacy, DPA, AI disclosure, sub-processors) plus an index on the static site: versioned MDX under `apps/site/content/legal/`, data-driven sub-processor list checked against `infra/sub-processors.json`, draft banner + `noindex`, a build gate on drafts (`ALLOW_DRAFT_LEGAL=1`), RSS feed for sub-processor changes, Rule 36 compliance, e2e/visual/Lighthouse checks, `en` chrome strings with `ta`/`kn` stubs. Legal wording is never written by engineering (#117).
 
 ### What We Found
-(Verified against `origin/milestone/site-onboarding-launch` = b1c3467a. The "Investigation Report" comment on #89 is about a WhatsApp settings UI, is unrelated to this issue, and was ignored. The existing `.forge-lean/*` files in the tree were stale from another issue and are overwritten.)
-- `apps/site` is a stub, not an app: `apps/site/package.json:9` build script is `node -e "console.log('nothing to build yet')"`; devDependencies only config/types/eslint/ts/vitest (`package.json:13-19`). No next, react, mdx, zod, next-themes, `app/`, `public/`, `next.config.ts`, `lib/`, `components/`.
-- Package name is `@causedeck/site` (`package.json:2`); the issue's `pnpm --filter site build` equals `pnpm --filter @causedeck/site build` (renaming would break `src/index.ts:2` and `src/index.test.ts`).
-- Existing site content is plain `.md` with a different frontmatter schema (`slug/locale/title/order/law/fixture/reviewer/reviewedOn`): `apps/site/content/learn/**/{en,kn,ta}.md`, `content/developers/api.md`; consumed by `src/learn/*` and tested by `src/learn/learn.test.ts:59`, `src/developer-docs.test.ts:6`. The new MDX pipeline must not touch `.md` files or these.
-- `apps/site/tsconfig.json:3` includes only `src` and `*.ts`; must add `app`, `lib`, `components`, `scripts`, `next-env.d.ts`, `.next/types`. ESLint already uses `@causedeck/config/eslint/next` (`eslint.config.js:1`); `APP_NAMES` already contains `site` (`packages/config/eslint/boundaries.js:151`).
-- Reusable references in web: fonts via `next/font/local` from `packages/ui/fonts/*.woff2` (`apps/web/app/fonts.ts:10-50`, files incl. noto-sans-tamil/kannada present), token imports and Tailwind preset (`apps/web/app/globals.css:1-14`), `next.config.ts` `transpilePackages` list (`apps/web/next.config.ts:15-34`) and security headers (`:38-48`).
-- Catalog (`pnpm-workspace.yaml`) has next 16.4.2 (`:146`), react 19.3.1, next-themes 0.4.6 (`:148`), zod 4.6.7 (`:190`), tailwind 4.3.3 / `@tailwindcss/postcss`, `@lhci/cli` (`:65`), `@playwright/test`, `@axe-core/playwright` (`:54`), tsx (`:179`), sharp. Missing: any MDX package, wrangler.
-- CI: `turbo.json:5-7` build outputs list has no `out/**`; `ci.yml:188` build job runs `ci-affected.sh build` (so site's real build will run in CI). No `site.yml`. E2E harness (`e2e/playwright.config.ts:121-135`) has a single `webServer` building apps/web plus DB global setup, so site specs need their own config. Lighthouse configs are per-surface (`e2e/lighthouserc*.json`).
-- No `rule36` lint, `_headers`, `_redirects`, sitemap, robots anywhere in the repo.
+Verified at HEAD a99c9235 (contains #89 scaffold, so the dependency is satisfied; the `origin/milestone/...` ref was not resolvable locally, base-in-HEAD check passed).
+- #89 scaffold exists: `apps/site/{app,components,lib,scripts,content,public}`, `next.config.ts:9-18` (`output: 'export'`, `trailingSlash`), no middleware/rewrites/headers() (asserted by `src/site-scaffold.test.ts:19-27`).
+- `apps/site/content/legal/` holds only `draft-notice.mdx` (noindex). No `terms|privacy|dpa|ai-disclosure|sub-processors` content, no `app/legal/`, no `components/legal/`, no `scripts/legal-status.ts`, no `e2e/site/legal.spec.ts`.
+- `infra/` has only `docker`, `runbooks`, `scripts`: **`infra/sub-processors.json` does not exist**.
+- `lib/frontmatter.ts:11-16` is a `z.strictObject` with only `title, description, date, noindex`; legal keys (status, version, effectiveDate, history) would be rejected, so the schema must be extended.
+- `lib/mdx.ts:43-67` `loadAllMdx` loads every `content/**/*.mdx` and asserts unique title and description; `app/(content)/[...slug]/page.tsx:15-18` generates a route for every MDX slug and `app/sitemap.ts:10-19` lists them all. Legal MDX would therefore also get a catch-all route (`/legal/terms/`) that collides with the dedicated `app/legal/terms/page.tsx`, and drafts must stay out of the sitemap.
+- `scripts/rule36-lint.ts:64-76` already scans `content`, `app`, `components` (mdx/ts/tsx); new legal files are covered automatically. `DENYLIST` (`:11-22`) includes "testimonials?" etc.
+- `content/about.mdx:19` says "software, not a legal service" but not the required phrase `software for advocates, not legal services`; `components/site-footer.tsx:5-9` links only `/legal/draft-notice/`.
+- No i18n mechanism in the site (`grep locale|i18n` in app/components/lib: none). No Storybook in `apps/site` (no `.storybook`); `packages/ui` provides Badge, Accordion, Table, Separator, Sheet.
+- Security page does not exist yet (#91, open, L03); the DPA must link to it, so the link target `/security/` is forward-looking.
+- `.github/workflows/site.yml:46-57` build runs `pnpm turbo run lint typecheck test build` for the site, then e2e (`playwright.site.config.ts`, `testDir ./site`, 6 projects = 360/768/1280 x light/dark) and Lighthouse on `/index.html` only (`lighthouserc.json:5`). The deploy job (`:~140-175`) builds once and deploys the same artifact for `main` (production) and PR previews, so an `ALLOW_DRAFT_LEGAL` gate must be per-environment.
+- `e2e/site/smoke.spec.ts:10-14` ROUTES lists three routes; axe helper `e2e/fixtures/a11y.ts` is reusable.
+- Real infra for the manifest: SES/Bedrock/Sarvam/Razorpay/Sentry per `docs/engineering/env.md:21,116-118` (#110-#115); VPS host, Cloudflare, Indian Kanoon per spike §1/§6.
 
 ### Root Cause
-Greenfield: #2 created the empty package; the site was never built (spike #1 §1/§2/§3.3 specify it).
+Greenfield: the site scaffold (#89) shipped without legal pages; spike #1 §6/§9 and PRD §9 specify them but nothing implements them.
 
 ### Affected Files
-`apps/site/{package.json,tsconfig.json,next.config.ts,postcss.config.mjs,vitest.config.ts,eslint.config.js,README.md}`, `apps/site/app/**` (layout, page, `(content)/[...slug]`, sitemap, robots, not-found, opengraph-image, globals.css, fonts.ts), `apps/site/lib/{mdx,seo,env,frontmatter}.ts`, `apps/site/components/*`, `apps/site/content/**/*.mdx`, `apps/site/public/_headers|_redirects`, `apps/site/scripts/{rule36-lint,write-headers}.ts`, `apps/site/lighthouserc.json`, `.github/workflows/site.yml`, `e2e/site/smoke.spec.ts` + `e2e/playwright.site.config.ts`, `turbo.json`, `pnpm-workspace.yaml` + `pnpm-lock.yaml`, `docs/engineering/ci.md` (site job note).
+`apps/site/lib/frontmatter.ts` (legal fields), `lib/legal.ts` (loader, status, version history), `lib/legal-chrome.ts` (en + ta/kn stub strings), `lib/mdx.ts` (optional filter), `app/legal/{page,terms/page,privacy/page,dpa/page,ai-disclosure/page,sub-processors/page,sub-processors/feed.xml/route}.ts(x)`, `app/(content)/[...slug]/page.tsx` + `app/sitemap.ts` (skip legal-owned slugs; add non-draft legal), `content/legal/{terms,privacy,dpa,ai-disclosure}.mdx`, `content/legal/sub-processors.ts`, `content/about.mdx`, `components/legal/*`, `components/site-footer.tsx`, `scripts/legal-status.ts`, `infra/sub-processors.json`, `package.json` (build script), `.github/workflows/site.yml`, `e2e/site/legal.spec.ts`, `e2e/site/smoke.spec.ts`, `apps/site/README.md`.
 
 ### Sibling Sweep
-- Other apps with next config: only `apps/web` (reference); `apps/admin` is a similar stub (out of scope).
-- Registries from CLAUDE.md: no `@causedeck/core` export, `'use server'` action, table, job, i18n namespace, or core-domain import is added, so none apply. The site must not import `@causedeck/core`/db/auth (no tenant data).
-- `.md` learn/developer content and `src/learn` keep working; the Rule 36 lint should scan MDX/TSX under `app`, `components`, `content/**/*.mdx` only, so existing legal-education `.md` (which legitimately mentions lawyers) is not flagged unless counsel-scope decides otherwise.
+- Other MDX pages (`about.mdx`, `draft-notice.mdx`) go through the same strict frontmatter; the schema change must keep them valid (new keys optional outside `legal/`).
+- `.md` learn/developer content (`src/learn`, `src/developer-docs.test.ts`) must not be touched.
+- CLAUDE.md registries: no core export, server action, table, job, i18n catalog namespace (the site has its own chrome strings, not `packages/i18n`), or core-domain import is added, so none apply. Site must not import core/db/auth.
+- Adding legal TSX/MDX widens the Rule 36 scan; counsel placeholder text must avoid denylisted phrases.
 
 ### History
-Stub from db3e22d4 (#2) and 937e90fe (#3); content added by 1f599f4e (#627 API docs), edd19927 (learn modules), 8d6fd8da. No prior attempt at the app itself.
+Scaffold from #89 (merged as a99c9235 via PR #786); `draft-notice.mdx` is the only legal artifact. No prior attempt at #95.
 
 ### Recommendation
-One lane, ordered: (1) deps and config; (2) env/frontmatter/seo libs with unit tests; (3) layout/theme/fonts/components; (4) MDX route, sitemap, robots, OG, 404; (5) rule36 lint wired into `build`; (6) `_headers` generation; (7) CI workflow, lighthouse config, e2e spec, README. Use `next-mdx-remote/rsc` `compileMDX` (one new dep, works in static export, pure build-time) rather than `@next/mdx` + loader + react + types. CSP "without inline scripts" conflicts with Next's inline bootstrap scripts and next-themes' no-flash script, so a post-build step hashes each page's inline scripts into per-route `script-src 'sha256-…'` entries in `out/_headers` (no `unsafe-inline`). `build` = `next build && tsx scripts/write-headers.ts`, preceded by the rule36 lint. Browser/CI-only criteria (Lighthouse, axe, visual baselines, deploy) are delivered as config/spec/workflow and measured in CI, never run locally.
+One lane, ordered: (1) extend frontmatter + `lib/legal.ts` with unit tests; (2) sub-processor data, `infra/sub-processors.json`, manifest-parity test; (3) components and pages, feed route; (4) MDX placeholders (structure + `TODO(counsel)` markers, no invented legal text) with required statements on AI disclosure/DPA/Terms/About; (5) `legal-status.ts` gate wired into `build`, `ALLOW_DRAFT_LEGAL=1` in site.yml build/preview, absent for `main` production deploy (so production fails until counsel text lands: intended); (6) e2e spec + smoke routes + footer. Visual baselines and Lighthouse/axe across 6 projects are measured by CI (`site.yml`), not locally.
 
 ### Related Issues
-#1 (parent), #134 (dependency, closed), #90, #91, #95 (consume the scaffold), #99, #107 (Cloudflare credentials), #117 (counsel sign-off).
+#1 (parent), #89 (dependency, done), #90 (landing), #91 (security page the DPA links to), #117 (counsel text), #110-#115 (providers listed as sub-processors).

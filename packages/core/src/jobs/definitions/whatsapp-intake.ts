@@ -56,7 +56,8 @@ export async function runWhatsAppIntakeJob(
     now?: () => Date;
   } = {},
 ): Promise<WhatsAppIntakeOutcome> {
-  const provider = deps.provider === undefined ? whatsappInboundProviderFromProcess() : deps.provider;
+  const provider =
+    deps.provider === undefined ? whatsappInboundProviderFromProcess() : deps.provider;
   if (provider === null) throw new Error('no inbound WhatsApp provider is configured');
   const outcome = await runWhatsAppIntake(
     {

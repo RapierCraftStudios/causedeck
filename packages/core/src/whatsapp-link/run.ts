@@ -48,7 +48,10 @@ export interface WhatsAppIntakeDeps {
 export type WhatsAppIntakeOutcome =
   | { outcome: 'missing' }
   | { outcome: 'skipped' }
-  | { outcome: 'dropped'; reason: 'unsupported_type' | 'too_large' | 'content_mismatch' | 'duplicate' | 'scan_required' }
+  | {
+      outcome: 'dropped';
+      reason: 'unsupported_type' | 'too_large' | 'content_mismatch' | 'duplicate' | 'scan_required';
+    }
   | { outcome: 'stored'; captureId: string };
 
 type Dropped = Extract<WhatsAppIntakeOutcome, { outcome: 'dropped' }>['reason'];
@@ -130,7 +133,10 @@ export async function runWhatsAppIntake(
     }
 
     const state = transition(
-      { status: 'received', sourceMeta: { providerMessageId: message.providerMessageId, history: [] } },
+      {
+        status: 'received',
+        sourceMeta: { providerMessageId: message.providerMessageId, history: [] },
+      },
       scanning ? 'scanning' : 'queued',
       now,
     );

@@ -17,6 +17,7 @@ export {
   type WhatsAppLinkView,
   type WhatsAppSendTarget,
 } from './link.ts';
+export type { WhatsAppInboundProvider } from '@causedeck/capture';
 export {
   receiveInboundWhatsApp,
   whatsappInboundProviderFromProcess,

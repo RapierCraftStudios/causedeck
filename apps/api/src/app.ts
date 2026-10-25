@@ -7,6 +7,7 @@ import type { SessionSource } from '@causedeck/auth/session';
 import type { ReplayWindow } from '@causedeck/billing/webhook';
 import type { Secret } from '@causedeck/config/env';
 import type { InboundEmailProvider } from '@causedeck/core/email-intake';
+import type { WhatsAppInboundProvider } from '@causedeck/core/whatsapp-link';
 import type { JobSender } from '@causedeck/core/jobs';
 import type { Database } from '@causedeck/db';
 import { createHealthHandlers, type HealthCheck, type Logger } from '@causedeck/observability';
@@ -53,6 +54,14 @@ export interface AppDeps {
   billing?: BillingDeps;
   /** Inbound email (#530). Without a provider `POST /v1/inbound/email` rejects every call. */
   inboundEmail?: InboundEmailAppDeps;
+  /** Inbound WhatsApp (#680). Without a provider `POST /v1/inbound/whatsapp` rejects every call. */
+  inboundWhatsapp?: InboundWhatsAppAppDeps;
+}
+
+export interface InboundWhatsAppAppDeps {
+  provider: WhatsAppInboundProvider | null;
+  /** Sender for `whatsapp.intake`; defaults to the process-wide producer. */
+  sender?: JobSender;
 }
 
 export interface InboundEmailAppDeps {
@@ -125,6 +134,7 @@ export function createApp(deps: AppDeps): AppRouter {
     ],
     ...(deps.billing && { billing: { ...deps.billing, logger, now } }),
     ...(deps.inboundEmail && { inboundEmail: { ...deps.inboundEmail, logger, now } }),
+    ...(deps.inboundWhatsapp && { inboundWhatsapp: { ...deps.inboundWhatsapp, logger, now } }),
     ...(deps.routes && { routes: deps.routes }),
   });
   app.route(`/${API_VERSION}`, v1);

@@ -42,6 +42,7 @@ describe('static guards', () => {
         'routes/v1/webhook-endpoints.ts',
         'routes/webhooks/razorpay.ts',
         'routes/inbound-email.ts',
+        'routes/inbound-whatsapp.ts',
       ]),
     );
   });
@@ -52,7 +53,7 @@ describe('static guards', () => {
       const text = readFileSync(file, 'utf8');
       for (const pattern of SQL_IN_ROUTES) expect(text, String(pattern)).not.toMatch(pattern);
       expect(text).toMatch(
-        /from '@causedeck\/core\/(workspaces|billing|email-intake|court-day|webhooks)'|from '\.\/(me|workspaces)\.ts'/,
+        /from '@causedeck\/core\/(workspaces|billing|email-intake|whatsapp-link|court-day|webhooks)'|from '\.\/(me|workspaces)\.ts'/,
       );
     },
   );

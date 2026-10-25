@@ -12,7 +12,13 @@ import {
   type WhatsAppInboundProvider,
 } from '@causedeck/capture';
 import { createMetaWhatsAppProvider } from '@causedeck/capture';
-import { schema, withWorkspace, type Database, type Queryable, type Transaction } from '@causedeck/db';
+import {
+  schema,
+  withWorkspace,
+  type Database,
+  type Queryable,
+  type Transaction,
+} from '@causedeck/db';
 import { sql } from 'drizzle-orm';
 
 import { isChannelEnabled } from '../capture/index.ts';

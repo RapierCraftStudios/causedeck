@@ -481,7 +481,7 @@ describe('channels', () => {
         .filter((c) => c.enabled)
         .map((c) => c.channel)
         .sort();
-      expect(states).toHaveLength(9);
+      expect(states).toHaveLength(10);
       // A's seeded row enables `email`; the defaults are untouched otherwise.
       expect(enabled).toEqual(['email', 'manual', 'upload']);
       await expect(

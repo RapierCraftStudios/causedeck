@@ -11,7 +11,9 @@ const provider = createMetaWhatsAppProvider({
   accessToken: 'token',
   fetch: (url) =>
     Promise.resolve(
-      String(url).includes('graph.facebook.com')
+      (typeof url === 'string' ? url : url instanceof URL ? url.href : url.url).includes(
+        'graph.facebook.com',
+      )
         ? Response.json({ url: 'https://media.test/file' })
         : new Response(new Uint8Array([1, 2, 3, 4])),
     ),

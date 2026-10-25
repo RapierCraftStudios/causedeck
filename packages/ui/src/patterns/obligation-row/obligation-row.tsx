@@ -1,6 +1,7 @@
 import {
   AlarmClock,
   Check,
+  ChevronDown,
   CircleAlert,
   ClipboardCheck,
   Ellipsis,
@@ -111,7 +112,7 @@ export const DEFAULT_OBLIGATION_LABELS: ObligationLabels = {
 export interface ObligationRowProps extends Omit<ComponentProps<'div'>, 'children' | 'title'> {
   title: string;
   matter?: string | undefined;
-  /** Due date, `YYYY-MM-DD`. */
+  /** Due date, `YYYY-MM-DD`; empty for an undated task. */
   due: string;
   /** Current time. Fixed in stories and tests. */
   now?: Date | undefined;
@@ -179,10 +180,14 @@ export function ObligationRow({
   const coarse = useMediaQuery(SWIPE_QUERY);
   const touch = presentation === 'auto' ? coarse : presentation === 'touch';
   const current = now ?? new Date();
-  const days = daysUntil(due, current, timeZone);
-  const state: DueState = done ? 'done' : dueState(due, current, timeZone);
+  // An empty `due` is an undated task: no date, no relative text from the calendar.
+  const undated = due === '';
+  const days = undated ? 0 : daysUntil(due, current, timeZone);
+  const state: DueState = done ? 'done' : undated ? 'upcoming' : dueState(due, current, timeZone);
   const overdue = state === 'overdue';
-  const date = new Intl.DateTimeFormat(locale, {
+  const date = undated
+    ? ''
+    : new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -316,10 +321,18 @@ export function ObligationRow({
             {overdue ? (
               <TriangleAlert aria-hidden="true" data-slot="obligation-overdue-icon" />
             ) : null}
-            <time dateTime={due.slice(0, 10)} data-slot="obligation-date" className="tabular-nums">
-              {date}
-            </time>
-            <span aria-hidden="true">·</span>
+            {undated ? null : (
+              <>
+                <time
+                  dateTime={due.slice(0, 10)}
+                  data-slot="obligation-date"
+                  className="tabular-nums"
+                >
+                  {date}
+                </time>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
             <span data-slot="obligation-due-text">{text.due(state, days)}</span>
             {KindIcon === null ? null : (
               <KindIcon
@@ -425,4 +438,43 @@ export const OBLIGATION_EMPTY_COPY = 'No open obligations. Well kept.';
 /** The queue with nothing open. Calm, no exclamation. */
 export function ObligationEmpty({ title = OBLIGATION_EMPTY_COPY }: { title?: string }) {
   return <EmptyState data-slot="obligation-empty" icon={<ClipboardCheck />} title={title} />;
+}
+
+export interface GroupHeaderProps extends Omit<ComponentProps<'button'>, 'children'> {
+  label: string;
+  count: number;
+  collapsed?: boolean | undefined;
+  /** The overdue group shows an icon with its label, never colour alone. */
+  overdue?: boolean | undefined;
+}
+
+/** The sticky header of a queue group: label, count and the collapse toggle. */
+export function GroupHeader({
+  label,
+  count,
+  collapsed = false,
+  overdue = false,
+  className,
+  ...props
+}: GroupHeaderProps) {
+  return (
+    <button
+      type="button"
+      data-slot="obligation-group-header"
+      aria-expanded={!collapsed}
+      className={cn(
+        'bg-surface text-ink focus-visible:ring-focus sticky top-0 z-10 flex min-h-11 w-full items-center gap-2 px-1 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none',
+        className,
+      )}
+      {...props}
+    >
+      <ChevronDown
+        aria-hidden="true"
+        className={cn('size-4 transition-transform', collapsed && '-rotate-90')}
+      />
+      {overdue ? <TriangleAlert aria-hidden="true" className="text-danger size-4" /> : null}
+      <span>{label}</span>
+      <span className="text-ink-muted tabular-nums">{String(count)}</span>
+    </button>
+  );
 }

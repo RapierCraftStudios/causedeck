@@ -73,6 +73,8 @@ export interface CertifiedCopyView {
 export interface ObligationOptions {
   matters: { id: string; title: string }[];
   members: { id: string; name: string }[];
+  /** The actor's own member id: the default owner of a new task. */
+  selfMemberId: string;
 }
 
 const canRead = (scope: ObligationScope) =>
@@ -300,7 +302,7 @@ export async function obligationOptions(
   actor: ObligationActor,
 ): Promise<ObligationOptions> {
   return inObligationScope(deps, actor, async (scope) => {
-    if (!canRead(scope)) return { matters: [], members: [] };
+    if (!canRead(scope)) return { matters: [], members: [], selfMemberId: scope.memberId };
     const matters = await scope.tx
       .select({ id: matter.id, title: matter.title })
       .from(matter)
@@ -324,6 +326,6 @@ export async function obligationOptions(
       .innerJoin(user, eq(user.id, member.userId))
       .where(and(eq(member.organizationId, scope.actor.workspaceId), activeMember))
       .orderBy(asc(user.name));
-    return { matters, members };
+    return { matters, members, selfMemberId: scope.memberId };
   });
 }

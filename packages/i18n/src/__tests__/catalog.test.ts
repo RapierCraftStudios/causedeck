@@ -112,6 +112,7 @@ describe('namespaced catalogs (#174)', () => {
         'notFound',
         'notices',
         'notifications',
+        'obligations',
         'offline',
         'onboardingDiscovery',
         'palette',

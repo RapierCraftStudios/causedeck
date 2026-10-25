@@ -4399,6 +4399,191 @@ export type Messages = {
       full: string;
     };
   };
+  obligations: {
+    metaTitle: string;
+    title: string;
+    denied: string;
+    loading: string;
+    readOnly: string;
+    offline: string;
+    willSync: string;
+    tabs: {
+      label: string;
+      queue: string;
+      defects: string;
+      copies: string;
+    };
+    groups: {
+      overdue: string;
+      today: string;
+      this_week: string;
+      later: string;
+      undated: string;
+    };
+    empty: {
+      title: string;
+      description: string;
+      filtered: string;
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    row: {
+      done: string;
+      reschedule: string;
+      markDone: string;
+      more: string;
+      swipeHint: string;
+      viewOnly: string;
+      overdueDays: string;
+      dueToday: string;
+      dueTomorrow: string;
+      dueInDays: string;
+      undated: string;
+      open: string;
+      select: string;
+      unowned: string;
+    };
+    kind: {
+      order_direction: string;
+      rule: string;
+      registry_defect: string;
+      client: string;
+      internal: string;
+      certified_copy: string;
+    };
+    status: {
+      open: string;
+      done: string;
+      not_applicable: string;
+      superseded: string;
+    };
+    filters: {
+      label: string;
+      search: string;
+      searchPlaceholder: string;
+      matter: string;
+      owner: string;
+      kind: string;
+      source: string;
+      group: string;
+      all: string;
+      clear: string;
+    };
+    sourceType: {
+      manual: string;
+      document: string;
+      capture: string;
+      adapter: string;
+      ai: string;
+      import: string;
+      system: string;
+    };
+    close: {
+      title: string;
+      description: string;
+      reason: string;
+      reasons: {
+        task_completed: string;
+        lawyer_action: string;
+        not_applicable: string;
+      };
+      note: string;
+      noteRequired: string;
+      submit: string;
+      cancel: string;
+    };
+    rescheduleDialog: {
+      title: string;
+      description: string;
+      date: string;
+      reason: string;
+      reasonRequired: string;
+      submit: string;
+      cancel: string;
+    };
+    nextStep: {
+      title: string;
+      show: string;
+      hide: string;
+      use: string;
+      task: string;
+      reminder: string;
+      letter: string;
+      draftOnly: string;
+    };
+    detail: {
+      title: string;
+      close: string;
+      matter: string;
+      owner: string;
+      due: string;
+      source: string;
+      quote: string;
+      noQuote: string;
+      history: string;
+      created: string;
+      closed: string;
+      reassign: string;
+    };
+    defects: {
+      empty: string;
+      raised: string;
+      cureBy: string;
+      cured: string;
+      state: string;
+    };
+    copies: {
+      empty: string;
+      applied: string;
+      next: string;
+      noNext: string;
+      status: {
+        applied: string;
+        ready: string;
+        collected: string;
+      };
+    };
+    add: {
+      open: string;
+      title: string;
+      description: string;
+      text: string;
+      matter: string;
+      owner: string;
+      due: string;
+      submit: string;
+      cancel: string;
+    };
+    toast: {
+      closed: string;
+      rescheduled: string;
+      added: string;
+      used: string;
+      reassigned: string;
+      failed: string;
+      queued: string;
+    };
+    shortcuts: {
+      title: string;
+      description: string;
+      close: string;
+      help: string;
+      group: string;
+      next: string;
+      previous: string;
+      select: string;
+      done: string;
+      reschedule: string;
+      add: string;
+      open: string;
+      search: string;
+      goQueue: string;
+      helpItem: string;
+    };
+  };
   error: {
     title: string;
     description: string;

@@ -2,227 +2,335 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "Owner and advocate (with owner setting) can assign an appearance with capacity and optional note; the assignee is notified in-app; reassigning records the previous assignee in `audit_event`.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "A junior's `Mine` scope in the court-day query returns only their assigned appearances and matters they are permitted to see; unassigned items are invisible to them.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "`suggestAssignments` returns proposals only (never writes): it resolves hall and complex clashes by suggesting a different member, explains each reason in one line, and the owner must accept each (L2).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "The tomorrow plan view lists all appearances with an assignee picker per row, bulk 'Accept all suggestions' (confirm dialog), and shows unassigned and clashing items first.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (Playwright e2e/a11y specs in e2e/tests/delegation, run in CI)"
+  },
+  {
+   "id": "R5",
+   "quote": "The owner sees outcomes live: when a junior confirms an outcome (#62) the owner's board shows the outcome strip and a toast within 5 seconds without reload.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (Playwright e2e/a11y specs in e2e/tests/delegation, run in CI)"
+  },
+  {
+   "id": "R6",
+   "quote": "Clerk can see assignments but not strategy fields or memory; viewer is read-only; a junior cannot assign others.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
-   "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "id": "R7",
+   "quote": "Delegation to a member who lacks access to a restricted matter is blocked with an explanation and an owner override that grants access explicitly and is audited.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "Offboarding hook: `reassignAppearance` supports bulk reassignment from a departing member (used by #18 flows) and leaves history intact.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "States: empty ('No appearances to assign for tomorrow'), loading skeleton, error with retry, offline (assignments queue and mark 'Will sync'; conflicts resolved last-writer-visible with a notice), denied.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (Playwright e2e/a11y specs in e2e/tests/delegation, run in CI)"
+  },
+  {
+   "id": "R10",
+   "quote": "Keyboard: `a` opens the assign picker on the focused item, arrow keys choose, `Enter` assigns; full flow is usable at 360 px with 44 px targets.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (Playwright e2e/a11y specs in e2e/tests/delegation, run in CI)"
+  },
+  {
+   "id": "R11",
+   "quote": "No message is sent outside the workspace; notifications are in-app and push to members only.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "Storybook stories exist for every new component with all states (default, empty, loading, error, offline, denied) and interaction tests.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/storybook.yml (Storybook build and interaction tests in CI)"
+  },
+  {
+   "id": "R13",
+   "quote": "Playwright visual baselines exist for light and dark themes at 360, 768 and 1280 px.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (Playwright visual specs; baselines via .github/workflows/visual-update.yml)"
+  },
+  {
+   "id": "R14",
+   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (Playwright e2e/a11y specs in e2e/tests/delegation, run in CI)"
+  },
+  {
+   "id": "R15",
+   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R17",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite.",
+   "disposition": "not-applicable",
+   "evidence": "packages/db/src/schema/docket.ts:141 (appearance already a tenantTable; this change adds columns only, no new table)"
+  },
+  {
+   "id": "R18",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "packages/db/src/schema/docket.ts",
+   "change": "add nullable `assigned_by_member_id` (composite FK to member, set null) and `note` text to `appearance`; add generated migration next free number after 20261025061924 + meta snapshot; update docket-schema and matter-graph-validators tests",
    "requirements": [
-    "R1",
-    "R2"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "packages/auth/src/policy/actions.ts",
+   "change": "add `appearance: ['appearance.assign']` action; matrix.ts row (advocate; junior/clerk/viewer denied) and `can.ts` setting `advocatesCanAssign` (owner setting, default allow per existing pattern); regenerate docs/engineering/permissions.md and snapshots",
    "requirements": [
-    "R1"
+    "R1",
+    "R6"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "packages/validators/src/delegation.ts",
+   "change": "zod `AssignInput`, `ReassignInput`, `Suggestion`, `DelegationView`; export from validators index",
    "requirements": [
-    "R1"
+    "R1",
+    "R3",
+    "R18"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
+   "path": "packages/core/src/delegation/assign.ts",
+   "change": "assignAppearance, reassignAppearance (single and bulk, audit previous assignee via `record`, history intact), unassign; restricted-matter block + audited owner override grant; in-app notification to assignee only; register ReassignProvider with workspaces/offboarding.ts",
    "requirements": [
-    "R3"
+    "R1",
+    "R6",
+    "R7",
+    "R8",
+    "R11"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
+   "path": "packages/core/src/delegation/suggest.ts",
+   "change": "suggestAssignments: read-only, uses court-day detectClashes and past assignment patterns, one-line reason per suggestion",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "packages/core/src/delegation/view.ts",
+   "change": "myAppearances, chamberOutcomesLive (outcomes the junior confirmed only; clerk gets no strategy/memory fields)",
    "requirements": [
-    "R3"
+    "R2",
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
+   "path": "packages/core/src/delegation/index.ts",
+   "change": "domain barrel; export from packages/core/src/index.ts; add domain to CORE_DOMAIN_DEPENDENCIES (packages/config/eslint/core-domains.js) and docs/engineering/core-domains.md; imports of court-day/workspaces/audit only via their index.ts",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "register delegation exports in SERVICE_TESTS (real cases in packages/core/src/__tests__/cross-tenant/services.test.ts) or NOT_A_SERVICE; add packages/core/src/delegation/__tests__/{assign,suggest,view,cross-tenant}.test.ts",
    "requirements": [
-    "R3"
+    "R16"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "path": "packages/core/src/court-day/query.ts",
+   "change": "only if tests show Mine leaks unassigned or non-permitted matters; otherwise unchanged (add test in delegation view.test.ts)",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "id": "D10",
+   "path": "apps/web/app/(app)/w/[slug]/tomorrow/plan/actions.ts",
+   "change": "'use server' actions assign/accept suggestion/accept all; register in apps/web/__tests__/cross-tenant-actions.test.ts ACTIONS with probe inputs",
    "requirements": [
-    "R1"
+    "R1",
+    "R4",
+    "R16"
    ]
   },
   {
-   "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
+   "id": "D11",
+   "path": "apps/web/app/(app)/w/[slug]/tomorrow/plan/page.tsx",
+   "change": "plan view: rows with assignee picker, unassigned/clashing first, Accept all with confirm dialog, empty/loading/error/offline/denied states, `a` shortcut; 360px 44px targets; link from tomorrow/page.tsx",
    "requirements": [
-    "R1"
+    "R4",
+    "R9",
+    "R10",
+    "R14"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "apps/web/app/(app)/w/[slug]/_court-day/delegate-sheet.tsx",
+   "change": "delegate-sheet, assignee-chip, outcomes-live-strip (30s visible-tab poll + toast, polite aria-live)",
+   "requirements": [
+    "R4",
+    "R5",
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/i18n/messages/en/delegation.json",
+   "change": "en complete plus ta and kn stub files; register namespace in packages/i18n/src/__tests__/catalog.test.ts",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/ui/src/patterns/delegation/index.ts",
+   "change": "pattern components and *.stories.tsx for all states with interaction tests; export from patterns/index.ts",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "e2e/tests/delegation/delegation.spec.ts",
+   "change": "e2e, a11y and visual specs (light/dark at 360/768/1280); baselines generated in CI",
+   "requirements": [
+    "R4",
+    "R5",
+    "R9",
+    "R10",
+    "R13",
+    "R14"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "getCourtDay signature and `workspace` scope gating by court_day.view_all in packages/core/src/court-day/query.ts"
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "`can()` decisions for all existing actions (packages/auth/src/policy/__tests__/__snapshots__/can.test.ts.snap changes only by the new action)"
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "ReassignProvider contract in packages/core/src/workspaces/offboarding.ts"
+  },
+  {
+   "id": "P4",
+   "what": "Outcome confirmation (#62), board shell (#59), reminders (#64) are untouched; no auto-assignment and no outward messages (no L5)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/delegation src/court-day/query.test.ts src/workspaces --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/delegation"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/docket-schema.test.ts src/__tests__/matter-graph-validators.test.ts src/index.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+  },
+  {
+   "id": "V7",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/prepare-execute"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
-   "source": "precedent"
-  },
-  {
-   "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
+   "choice": "Extend existing `appearance` table with assigned_by/note instead of a new table, so no new RLS/table registry entries",
+   "justification": "Issue 'Data and API contracts' says extend the existing table if columns are absent; packages/db/src/schema/docket.ts:141 is already a tenantTable",
    "source": "spec"
   },
   {
-   "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
+   "id": "K2",
+   "choice": "New policy action `appearance.assign` via actions.ts + matrix.ts rather than ad hoc role checks",
+   "justification": "actions.ts:1-2 says new features add actions there and a matrix row; can() denies unlisted actions",
    "source": "doc"
   },
   {
-   "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
+   "id": "K3",
+   "choice": "Offboarding uses registerReassignProvider",
+   "justification": "packages/core/src/workspaces/offboarding.ts:14-34 designed for modules to register providers",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "Audit through `record` from ../audit/index.ts",
+   "justification": "packages/core/src/court-day/markers.ts:8",
    "source": "precedent"
   }
  ]

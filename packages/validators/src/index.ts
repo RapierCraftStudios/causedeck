@@ -7,4 +7,5 @@ export * from './workspace';
 export * from './proposal-draft';
 export * from './digest-preferences';
 export * from './court-day';
+export * from './delegation';
 export * from './brief';

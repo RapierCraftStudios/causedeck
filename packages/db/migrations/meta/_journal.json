@@ -708,6 +708,13 @@
       "when": 1792909164386,
       "tag": "20261025061924_brief_state",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1792913088996,
+      "tag": "20261025072448_appearance_delegation",
+      "breakpoints": true
     }
   ]
 }

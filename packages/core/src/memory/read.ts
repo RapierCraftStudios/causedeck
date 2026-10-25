@@ -15,7 +15,7 @@ import { and, asc, eq, inArray, ne, or, sql, type SQL } from 'drizzle-orm';
 import { notFound } from '../shared/errors.ts';
 import type { WorkspaceRole } from '../workspaces/index.ts';
 
-import { isPausedAll, parseInput } from './propose.ts';
+import { isPausedAll, parseMemoryInput } from './propose.ts';
 import {
   MEMORY_CLERK_LAYERS,
   inScope,
@@ -226,7 +226,7 @@ export async function memoryFor(
   actor: MemoryActor,
   input: unknown,
 ): Promise<MemoryForOutput> {
-  const { matterId, layers } = parseInput(MemoryForInput, input);
+  const { matterId, layers } = parseMemoryInput(MemoryForInput, input);
   const role = await requireRole(deps, actor);
   const rows = await scoped(deps, actor, role, matterId, async (tx) => {
     if (await isPausedAll(tx, actor.workspaceId, actor.userId)) return [];

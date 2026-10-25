@@ -18,7 +18,7 @@ import { record } from '../audit/index.ts';
 import { conflict, forbidden, invalid, notFound } from '../shared/errors.ts';
 import type { WorkspaceRole } from '../workspaces/index.ts';
 
-import { guard, isPausedAll, parseInput, proposeMemory } from './propose.ts';
+import { guard, isPausedAll, parseMemoryInput, proposeMemory } from './propose.ts';
 import { toItem, type ItemRow } from './read.ts';
 import {
   assertClientOrContact,
@@ -83,7 +83,7 @@ export async function confirmMemory(
   const corrected =
     options.value === undefined
       ? undefined
-      : parseInput(MemoryPatch, { value: options.value }).value;
+      : parseMemoryInput(MemoryPatch, { value: options.value }).value;
   const now = nowOf(deps);
   const sealedCorrection =
     corrected === undefined ? undefined : await sealValue(deps, actor.workspaceId, corrected);
@@ -173,7 +173,7 @@ export async function createMemoryNote(
   actor: MemoryActor,
   input: unknown,
 ): Promise<MemoryItem> {
-  const parsed = parseInput(MemoryNoteInput, input);
+  const parsed = parseMemoryInput(MemoryNoteInput, input);
   if (!isMemoryKey(parsed.key)) throw invalid('Not a registered memory key');
   const layer = layerOfKey(parsed.key);
   guard(parsed.key, parsed.value);
@@ -229,7 +229,7 @@ export async function editMemory(
   patch: unknown,
   options: { matterId?: string | null } = {},
 ): Promise<MemoryItem> {
-  const { value } = parseInput(MemoryPatch, patch);
+  const { value } = parseMemoryInput(MemoryPatch, patch);
   const role = await requireWriter(deps, actor);
   const now = nowOf(deps);
   const sealed = await sealValue(deps, actor.workspaceId, value);

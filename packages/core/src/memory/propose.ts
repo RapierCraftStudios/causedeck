@@ -54,7 +54,7 @@ export function guard(key: string, value: MemoryValue): void {
 }
 
 /** Parse with a zod schema; the first issue becomes a VALIDATION error. */
-export function parseInput<S extends z.ZodType>(inputSchema: S, input: unknown): z.output<S> {
+export function parseMemoryInput<S extends z.ZodType>(inputSchema: S, input: unknown): z.output<S> {
   const parsed = inputSchema.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -149,7 +149,7 @@ export async function proposeMemory(
   input: unknown,
   options: { patternKey?: string } = {},
 ): Promise<MemoryProposal | null> {
-  const parsed = parseInput(MemoryProposalInput, input);
+  const parsed = parseMemoryInput(MemoryProposalInput, input);
   if (!isMemoryKey(parsed.key)) throw invalid('Not a registered memory key');
   const layer = layerOfKey(parsed.key);
   guard(parsed.key, parsed.value);
@@ -193,7 +193,7 @@ export async function proposeFromEdit(
   actor: MemoryActor,
   observation: unknown,
 ): Promise<MemoryProposal | null> {
-  const obs = parseInput(MemoryEditObservation, observation);
+  const obs = parseMemoryInput(MemoryEditObservation, observation);
   if (!isMemoryKey(obs.key)) throw invalid('Not a registered memory key');
   const layer = layerOfKey(obs.key);
   const value = obs.pattern;
@@ -288,7 +288,7 @@ export async function proposeFromCorrection(
   actor: MemoryActor,
   correction: unknown,
 ): Promise<MemoryProposal | null> {
-  const input = parseInput(MemoryCorrectionInput, correction);
+  const input = parseMemoryInput(MemoryCorrectionInput, correction);
   const key = input.target === 'party' ? 'M7.party_alias' : 'M7.matter_alias';
   const value = { alias: input.alias, canonical: input.canonical };
   guard(key, value);

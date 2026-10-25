@@ -1,40 +1,39 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (feature; no live defect)
+**Severity**: medium (feature; no live defect, no UI for the shipped WhatsApp link service)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 2 of #502: a WhatsApp Business outbound channel (`packages/notifications/src/channels/whatsapp.ts`: provider client, approved templates, send only to the verified linked number, per-user consent, quiet hours, court-hours rules), wired into `notification.deliver` (`DELIVERY_CHANNELS`), the evening summary (`digest.end_of_day`), `court.board` and `status.order` alerts. Provider env config. Unit test: never a message to a number other than the verified user's.
+Part 4 of #502: a settings UI to link a WhatsApp number (OTP), choose message categories and unlink, with one server action per operation, an i18n namespace in en/kn/ta with its catalog test, and cross-tenant-actions test entries. Depends on #678 and #679 (both merged).
 
 ### What We Found
-- Dependency #678 is CLOSED and merged (HEAD 7cb370dd): `packages/core/src/whatsapp-link/link.ts:295` `getWhatsAppSendTarget(deps, actor, {category})` returns the owner's verified `{e164}` or null (non-member, no link, category not chosen). `whatsapp_link.categories` and `consent_at` are in `packages/db/src/schema/whatsapp-link.ts:29-32`. The earlier "Investigation Report" comment on #679 describes #678, is stale.
-- `packages/notifications/src/categories.ts:6` `CHANNELS` already has `'whatsapp'`; the enum is already extended. But `categories.ts` `court.board`/`status.order`/`digest.end_of_day` default channels do not include whatsapp (a pref row must opt in; `resolve` at `service.ts:176-186`).
-- `packages/notifications/src/service.ts:49-50` `DeliveryJob.channel` excludes `whatsapp` ("sender arrives with #679"); `service.ts:240` fan-out is hard-coded `['email','push']`.
-- `packages/core/src/jobs/definitions/notification-deliver.ts:81` `DELIVERY_CHANNELS = ['email','push']`; the handler branches email vs else-push (`:200-240`), `channelEnabled` (`:150`), push quiet hours via `notification_setting.courtHoursQuiet` + `isQuietTime/localMinutes` (`:221-229`), `NotificationJobDeps` (`:90-96`) built from `serverEnv()` (`:105-117`). Also exported from `jobs/index.ts:109`, and listed in `packages/db/src/testing/cross-tenant-registry.ts:1271` (`DELIVERY_CHANNELS: 'constant'`).
-- `digest.end_of_day` is skipped by the generic job (`notification-deliver.ts:~186` `own_email`); the digest job (`activity-digest.ts:273-285`) calls `notify` with a no-op `enqueueDelivery`, so the evening summary needs its own WhatsApp send there (after `buildEndOfDayDigest`, inside `once()`).
-- No `packages/notifications/src/channels/` dir, no provider env keys (`packages/config/src/env/schema.ts:170-195` has only VAPID as the analogue; also `.env.example`, `docs/engineering/env.md`). `@causedeck/notifications` must not import `@causedeck/core` (core depends on it), so the target lookup is injected into the channel.
-- `packages/config/eslint/core-domains.js:138` `jobs` allow-list does not include `whatsapp-link`; jobs must import it via its `index.ts` (and `docs/engineering/core-domains.md` jobs edges ~l.165).
-- Court hours: `packages/notifications/src/quiet-hours.ts:5` 10:30-17:00; `court.board` alerts are in-court-day alerts, so "court-hours rules" = respect `courtHoursQuiet` (as push does) and never send the evening summary inside court hours.
+- Core service exists (#678), verified on base `origin/milestone/instant-gtm-adoption` (c44d5405): `packages/core/src/whatsapp-link/link.ts:90` `requestWhatsAppOtp` (needs `consent`, 60s cooldown), `:166` `verifyWhatsAppOtp`, `:242` `getWhatsAppLink` (masked number), `:254` `setWhatsAppCategories`, `:275` `unlinkWhatsApp`; exported via `@causedeck/core/whatsapp-link` (`packages/core/package.json:37`). `WhatsAppDeps.sendOtp` is optional (`link.ts:32`): without it no code is delivered.
+- Outbound sender exists (#679): `packages/notifications/src/channels/whatsapp.ts:18` has templates only for `court.board`, `status.order`, `digest.end_of_day` (`WHATSAPP_CATEGORIES`, `:25`, exported as `@causedeck/notifications/whatsapp`). No OTP template exists.
+- No web UI or action references WhatsApp link: `grep whatsapp-link apps/web` finds nothing. Closest pattern: `apps/web/app/(app)/w/[slug]/settings/notifications/{actions.ts,page.tsx,preferences-form.tsx}` (`workspaceAction` + `WorkspaceScoped`, `ctx.tx`, `ctx.userId`; actions are thin async wrappers because a `'use server'` module can only export async functions).
+- Errors: core throws domain errors (`NOT_FOUND`, `CONFLICT`, `VALIDATION`, rate-limited); `apps/web/lib/matters/graph-deps.ts:30` `domainErrorCode` + the `guarded` pattern in `settings/case-watch/actions.ts:~64` map them to `ActionError`.
+- Page reads under a workspace tx via `inWorkspace` from `@causedeck/core/runtime` (`apps/web/lib/workspace-action.ts:105`).
+- Registry guard: `apps/web/__tests__/cross-tenant-actions.test.ts:93-` imports each actions module, `ACTIONS` (`:~118`) maps name to module, probe inputs in `inputs()` (`:~475`), and a per-feature "under B's own workspace" test (`:~937`) checks A's snapshot is unchanged. A new actions file without entries fails that test.
+- i18n: `packages/i18n/src/catalog.ts:7` `NAMESPACES` (one file per locale per namespace, asserted by `catalog.test.ts` "exactly one file per namespace"), top-level key list asserted at `catalog.test.ts:~92`; generated catalogs are committed (`packages/i18n/src/generated/`, regenerated with `pnpm --filter @causedeck/i18n i18n:types`, checked by the test "committed generated files match").
+- Nav: `apps/web/lib/settings-nav.ts` has fixed section lists; the push card is already placed as a card on the notifications page (`page.tsx` `PushPermissionCard`), so a WhatsApp card there needs no nav change.
 
 ### Root Cause
-Missing feature: #678 stored consent and the verified number but nothing sends to it.
+Missing feature: #678 and #679 shipped the service and sender without a user-facing surface, so no member can opt in, verify, choose categories or unlink.
 
 ### Affected Files
-- packages/notifications/src/channels/whatsapp.ts (new), channels/index.ts (new), package.json export `./whatsapp`, tests in `channels/__tests__/`
-- packages/notifications/src/service.ts, categories.ts (+ tests)
-- packages/core/src/jobs/definitions/notification-deliver.ts, activity-digest.ts, jobs/index.ts, their tests
-- packages/config/src/env/schema.ts, .env.example, docs/engineering/env.md, docs/engineering/notifications.md
-- packages/config/eslint/core-domains.js, docs/engineering/core-domains.md
-- packages/db/src/testing/cross-tenant-registry.ts (only if exports change)
+- new `apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts` (actions)
+- new `apps/web/components/notifications/whatsapp-link-card.tsx` (client card)
+- `apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx` (load link, render card)
+- `packages/i18n/src/messages/{en,kn,ta}/whatsapp-link.json`, `packages/i18n/src/catalog.ts`, `packages/i18n/src/__tests__/catalog.test.ts`, regenerated `packages/i18n/src/generated/**`
+- `apps/web/__tests__/cross-tenant-actions.test.ts`; new `apps/web/__tests__/whatsapp-link-actions.test.ts`, `whatsapp-link-card.test.tsx`
 
 ### Sibling Sweep
-Same shape as push (`notifications/src/push/send.ts`, injected `PushSender`, absent config = skipped). Places enumerating channels: `CHANNELS`, `DELIVERY_CHANNELS`, `DeliveryJob`, service fan-out `['email','push']` (checked by grep). `news-digest.ts` and `notification-digest.ts` also run channel logic; check they do not iterate DELIVERY_CHANNELS.
+Same defect class (service without UI) not present elsewhere in the lane. Other actions modules are all registered in `cross-tenant-actions.test.ts`; the new module must be too. The nested `settings/integrations/*` modules show per-feature action files are accepted.
 
 ### History
-Channel enum and link service from #678 (merge 7cb370dd). Push channel #197 is the pattern. #502 closed not_planned and split into #678-#681.
+Service added in 15574312 (#678); sender in #679 (merged, PR #709). No prior UI attempt. Earlier `.forge-lean/*` files in the tree belong to #679 and are overwritten.
 
 ### Recommendation
-Single lane. Build `createWhatsAppSender({env, log, fetch?})` mirroring PushSender: absent env -> undefined (job records `whatsapp_disabled`); a template registry (template name per category, positional params, content-minimal, locale); `send(message, target)` takes the target resolved by the caller only. Job: add `'whatsapp'` to `DELIVERY_CHANNELS`, deps `whatsapp?`, branch: check channelEnabled, resolve `getWhatsAppSendTarget({db}, {userId, workspaceId}, {category})` (null -> skip `not_linked`), apply court-hours quiet, send inside `once()`; permanent provider 4xx -> failed, else RetryableError. `notify()` fan-out adds whatsapp for opted-in prefs (extend `DeliveryJob`). Add `whatsapp` to defaultChannels? No: opt-in only (consent), enabled by `setWhatsAppCategories`/prefs. Evening summary: in `runActivityDigestMember`, send template when whatsapp pref on, target present, outside court hours. Provider env: `WHATSAPP_API_URL`? Use Meta Cloud API: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN` (secret), both-or-none `requiredWhen`.
+Add five actions (request OTP, verify, set categories, unlink, get link) via `workspaceAction`; the input never names a user (`ctx.userId`). Add a WhatsApp card to the notifications settings page, a new `whatsappLink` i18n namespace, tests and registry entries. Outbound OTP delivery needs a provider-approved OTP template (an external provider action) and is deferred; until then the request action works without a sender and the code is not delivered.
 
 ### Related Issues
-#502 (parent), #678 (done), #680, #681 (siblings), #488 (residency review, human, not blocking).
+#502 (parent), #678, #679 (done), #680 (inbound webhook sibling), #488 (provider residency review).

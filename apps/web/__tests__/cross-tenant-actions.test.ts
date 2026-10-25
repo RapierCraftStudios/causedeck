@@ -92,6 +92,8 @@ const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
+const whatsappLink =
+  await import('../app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts');
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
@@ -148,6 +150,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  requestWhatsAppOtpAction: whatsappLink,
+  verifyWhatsAppOtpAction: whatsappLink,
+  setWhatsAppCategoriesAction: whatsappLink,
+  unlinkWhatsAppAction: whatsappLink,
+  getWhatsAppLinkAction: whatsappLink,
   saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
@@ -308,6 +315,12 @@ function snapshotA() {
       .orderBy(schema.auditEvent.id),
     notificationPrefs: await tx.select().from(schema.notificationPref),
     notificationSettings: await tx.select().from(schema.notificationSetting),
+    // A's WhatsApp links and pending codes (#681): no web action of B may touch them.
+    whatsappLinks: await tx.select().from(schema.whatsappLink).orderBy(schema.whatsappLink.id),
+    whatsappChallenges: await tx
+      .select()
+      .from(schema.whatsappOtpChallenge)
+      .orderBy(schema.whatsappOtpChallenge.id),
     supportSessions: await tx
       .select()
       .from(schema.supportSession)
@@ -484,6 +497,11 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    requestWhatsAppOtpAction: { workspaceId, e164: '+919812345678', consent: true },
+    verifyWhatsAppOtpAction: { workspaceId, code: '000000' },
+    setWhatsAppCategoriesAction: { workspaceId, categories: ['court.board'] },
+    unlinkWhatsAppAction: { workspaceId },
+    getWhatsAppLinkAction: { workspaceId },
     saveNewsPreferencesAction: {
       workspaceId,
       practiceAreas: ['tax'],
@@ -953,6 +971,34 @@ describe('cross-tenant server actions', () => {
       rows.filter((row) => row.userId === t.ub && row.workspaceId === t.b.id);
     expect(mine(inB.prefs).length).toBeGreaterThan(0);
     expect(mine(inB.settings)).toHaveLength(1);
+  });
+
+  it('WhatsApp link actions under B’s own workspace touch only ub’s rows in B (#681)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    // Unlink first: earlier probes may have left a pending code, and a new request waits a minute.
+    expect(await action('unlinkWhatsAppAction')(all.unlinkWhatsAppAction)).toMatchObject({
+      ok: true,
+    });
+    expect(await action('requestWhatsAppOtpAction')(all.requestWhatsAppOtpAction)).toMatchObject({
+      ok: true,
+    });
+    expect(await action('getWhatsAppLinkAction')(all.getWhatsAppLinkAction)).toMatchObject({
+      ok: true,
+      data: null,
+    });
+    // A wrong guess is refused, not linked.
+    expect(await action('verifyWhatsAppOtpAction')(all.verifyWhatsAppOtpAction)).toMatchObject({
+      ok: false,
+      error: { code: 'VALIDATION' },
+    });
+    expect(
+      await action('setWhatsAppCategoriesAction')(all.setWhatsAppCategoriesAction),
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'CONFLICT' },
+    });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('saveNewsPreferencesAction under B’s own workspace saves only ub’s row in B (#481)', async () => {

@@ -3923,6 +3923,34 @@ export type Messages = {
       };
     };
   };
+  whatsappLink: {
+    title: string;
+    description: string;
+    consent: string;
+    numberLabel: string;
+    numberHint: string;
+    sendCode: string;
+    codeLabel: string;
+    codeSent: string;
+    verify: string;
+    linked: string;
+    categoriesTitle: string;
+    categories: {
+      courtBoard: string;
+      statusOrder: string;
+      digestEndOfDay: string;
+    };
+    unlink: string;
+    unlinked: string;
+    saved: string;
+    loadError: string;
+    error: {
+      consent: string;
+      invalid: string;
+      conflict: string;
+      generic: string;
+    };
+  };
   bootstrapImport: {
     metaTitle: string;
     title: string;

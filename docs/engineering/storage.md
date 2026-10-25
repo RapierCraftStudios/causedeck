@@ -118,6 +118,13 @@ method throws `NOT_IMPLEMENTED`. At Stage B it implements `KeyProvider` with KMS
 provider that holds both the KMS key (current) and `kek-1`, then run `rewrapAll` to the KMS kek id.
 After that, `KEK_BASE64` can be retired. The object format stays the same.
 
+The cutover steps, timing and rollback are in
+[stage-b-scale-out.md](../../infra/runbooks/stage-b-scale-out.md) (KMS move). In short: implement
+`KmsKeyProvider` (`Encrypt`/`Decrypt` with the workspace id as encryption context), deploy it holding
+the KMS key and the old KEK, run `rewrapAll` to re-wrap every DEK under KMS (same procedure as KEK
+rotation above, resumable), and when `pendingRewrap` is empty retire the env KEK from the provider
+and the secret store. Backup keys are separate; see [restore.md](../../infra/runbooks/restore.md).
+
 ## Uploads and downloads
 
 Workspace-scoped upload and download services (#217, #21 part 3) on top of the `ObjectStore`.

@@ -21,6 +21,7 @@ output "replica_kms_key_arn" {
 output "master_user_secret_arn" {
   description = "Secrets Manager secret holding the master password (rotated by RDS)."
   value       = aws_db_instance.primary.master_user_secret[0].secret_arn
+  sensitive   = true
 }
 
 output "security_group_id" {

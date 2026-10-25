@@ -54,7 +54,8 @@ export function OutcomeForm({
   const [failure, setFailure] = useState<string | undefined>();
   const [online, setOnline] = useState(true);
   const [queued, setQueued] = useState(false);
-  const [done, setDone] = useState(proposal.confirmed);
+  const [confirmedHere, setDone] = useState(false);
+  const done = proposal.confirmed || confirmedHere;
 
   const draft = {
     summary,
@@ -104,7 +105,6 @@ export function OutcomeForm({
       setFailure(message);
       setStatus(message);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     blocked,
     readOnly,

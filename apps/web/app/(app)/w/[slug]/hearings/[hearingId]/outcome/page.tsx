@@ -15,6 +15,7 @@ import { domainErrorCode } from '../../../../../../../lib/matters/graph-deps.ts'
 import { can } from '../../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../../lib/workspace-loader.ts';
 
+import { LiveRefresh } from './_components/live-refresh.tsx';
 import { OutcomeForm } from './_components/outcome-form.tsx';
 import OutcomeLoading from './loading.tsx';
 
@@ -77,6 +78,7 @@ export default async function OutcomePage({ params, searchParams }: OutcomePageP
         <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
         <p className="text-muted-foreground text-sm">{t('heldOn', { date: proposal.heldOn })}</p>
       </header>
+      <LiveRefresh active={!proposal.confirmed} />
       <OutcomeForm
         workspaceId={context.workspace.id}
         proposal={proposal}

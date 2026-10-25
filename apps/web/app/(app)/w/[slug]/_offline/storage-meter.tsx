@@ -15,7 +15,7 @@ export interface StorageMeterProps {
 }
 
 /** `1.5 MB`: binary units, one decimal under 10. */
-export function formatBytes(bytes: number): string {
+export function formatStorageSize(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB'];
   let value = bytes;
   let unit = 0;
@@ -40,7 +40,7 @@ export function StorageMeter({ used, quota }: StorageMeterProps) {
   if (quota === null || quota <= 0) {
     return (
       <p data-slot="storage-meter" data-state="no-quota" className="text-sm">
-        {t('size', { size: formatBytes(used) })}
+        {t('size', { size: formatStorageSize(used) })}
       </p>
     );
   }
@@ -52,7 +52,9 @@ export function StorageMeter({ used, quota }: StorageMeterProps) {
         aria-label={t('title')}
         tone={ratio >= 1 ? 'danger' : ratio >= WARN_RATIO ? 'warning' : 'accent'}
       />
-      <p className="text-sm">{t('used', { used: formatBytes(used), quota: formatBytes(quota) })}</p>
+      <p className="text-sm">
+        {t('used', { used: formatStorageSize(used), quota: formatStorageSize(quota) })}
+      </p>
       {ratio >= 1 ? <p className="text-warning text-sm">{t('full')}</p> : null}
     </div>
   );

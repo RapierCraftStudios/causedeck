@@ -71,7 +71,7 @@ export const Offline: Story = {
   },
 };
 
-export const Denied: Story = {
+export const DeniedNotice: Story = {
   args: { status: 'denied', used: null, quota: null, hasData: false },
   play: async ({ canvas }) => {
     await expect(canvas.getByText(/blocked offline storage/)).toBeVisible();

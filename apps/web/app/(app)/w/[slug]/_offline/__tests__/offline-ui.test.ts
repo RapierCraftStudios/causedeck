@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { catalogs } from '../../../../../../__tests__/helpers/intl.ts';
 import { OfflineCardView } from '../../settings/privacy/_offline-card.tsx';
 import { OfflineBanner } from '../offline-banner.tsx';
-import { formatBytes, StorageMeter } from '../storage-meter.tsx';
+import { formatStorageSize, StorageMeter } from '../storage-meter.tsx';
 import { SyncStatus } from '../sync-status.tsx';
 
 const toast = vi.hoisted(() => vi.fn<(message: string) => void>());
@@ -103,8 +103,8 @@ describe('SyncStatus', () => {
 
 describe('StorageMeter', () => {
   it('formats bytes and shows used of quota', () => {
-    expect(formatBytes(12 * 1024 * 1024)).toBe('12 MB');
-    expect(formatBytes(2048)).toBe('2.0 KB');
+    expect(formatStorageSize(12 * 1024 * 1024)).toBe('12 MB');
+    expect(formatStorageSize(2048)).toBe('2.0 KB');
     wrap(createElement(StorageMeter, { used: 12 * 1024 * 1024, quota: 500 * 1024 * 1024 }));
     expect(screen.getByText('12 MB of 500 MB used')).toBeTruthy();
     expect(screen.getByRole('progressbar', { name: 'Offline storage' })).toBeTruthy();

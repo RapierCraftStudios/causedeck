@@ -48,7 +48,7 @@ export const Empty: Banner = {
 };
 
 /** Online: the live region stays mounted and empty. */
-export const Online: Banner = {
+export const BannerOnline: Banner = {
   args: { online: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('status')).toBeEmptyDOMElement();

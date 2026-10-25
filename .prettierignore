@@ -23,6 +23,10 @@ ASSUMPTIONS.md
 # A court-adapter fixture of malformed HTML (#408): its bytes are the test input.
 packages/adapters/fixtures/in.ka.karnataka-hc.bengaluru/list-10-broken-html.input.html
 
+# drizzle-kit writes the migration snapshots and journal; they are generated, never hand-edited, and
+# formatting them only churns diffs (lanes kept failing "Prettier (changed files)" on them: #58, #678).
+packages/db/migrations/meta/
+
 # Local tooling
 .claude/
 .forge/

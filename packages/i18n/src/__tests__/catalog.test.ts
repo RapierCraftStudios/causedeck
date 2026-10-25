@@ -126,6 +126,8 @@ describe('namespaced catalogs (#174)', () => {
         'voice',
         'whatsappImport',
         'whatsappLink',
+        'research',
+        'settingsResearch',
         'workspace',
       ].sort(),
     );
@@ -187,6 +189,16 @@ describe('whatsapp link copy (#681)', () => {
       expect(catalog.whatsappLink.consent).not.toBe('');
       expect(catalog.whatsappLink.unlink).not.toBe('');
       expect(catalog.whatsappLink.linked).toContain('{number}');
+    }
+  });
+});
+
+describe('research copy (#80)', () => {
+  it('has the research namespaces in every locale with the link-out hint', () => {
+    for (const catalog of [en, kn, ta]) {
+      expect(catalog.research.linkOut.hint).not.toBe('');
+      expect(catalog.research.notes.denied).not.toBe('');
+      expect(catalog.settingsResearch.templateHint).toContain('{q}');
     }
   });
 });

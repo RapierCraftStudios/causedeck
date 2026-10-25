@@ -18,7 +18,7 @@ export const SETTINGS_SECTIONS = [
   'danger',
 ] as const;
 
-export const SETTINGS_EXTRAS = ['usage', 'audit', 'support', 'court-watch'] as const;
+export const SETTINGS_EXTRAS = ['usage', 'audit', 'support', 'court-watch', 'research'] as const;
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number];
 export type SettingsItemId = SettingsSectionId | (typeof SETTINGS_EXTRAS)[number];
@@ -45,6 +45,7 @@ const REQUIRES: Readonly<Record<SettingsItemId, Permission | undefined>> = {
   audit: 'audit.read',
   support: 'support.manage',
   'court-watch': 'matter.write',
+  research: 'workspace.manage',
 };
 
 export const SETTINGS_NAV: readonly SettingsNavItem[] = [

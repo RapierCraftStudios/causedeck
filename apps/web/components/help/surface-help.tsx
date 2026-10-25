@@ -3,7 +3,8 @@
 import { getWorkspaceContext } from '../../lib/workspace-loader.ts';
 import { logger } from '../../src/health.ts';
 
-import { Coachmark, ContextualTip, coachmarkKey } from './contextual-tip.tsx';
+import { coachmarkKey } from '../../lib/help/surfaces.ts';
+import { SurfaceHelpClient } from './surface-help-client.tsx';
 
 export interface SurfaceHelpProps {
   slug: string;
@@ -29,11 +30,11 @@ export async function SurfaceHelp({ slug, surface }: SurfaceHelpProps) {
     coachmarkKey(surface),
   );
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex justify-end">
-        <ContextualTip surface={surface} workspaceId={workspaceId} role={context.role} />
-      </div>
-      <Coachmark surface={surface} workspaceId={workspaceId} dismissed={dismissed} />
-    </div>
+    <SurfaceHelpClient
+      surface={surface}
+      workspaceId={workspaceId}
+      role={context.role}
+      dismissed={dismissed}
+    />
   );
 }

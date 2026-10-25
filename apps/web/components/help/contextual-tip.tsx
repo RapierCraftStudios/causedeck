@@ -10,7 +10,7 @@ import { useTranslations } from 'next-intl';
 import { lazy, Suspense, useEffect, useState } from 'react';
 
 import { dismissCoachmarkAction } from '../../app/(app)/w/[slug]/help/actions.ts';
-import { articleSlugForSurface, type HelpSurface } from '../../lib/help/surfaces.ts';
+import { articleSlugForSurface, coachmarkKey, type HelpSurface } from '../../lib/help/surfaces.ts';
 import type { Role } from '../../lib/workspace-context.ts';
 
 const HelpSheet = lazy(() => import('./help-sheet.tsx').then((m) => ({ default: m.HelpSheet })));
@@ -60,7 +60,6 @@ export interface CoachmarkProps {
 }
 
 /** The key `help_state` stores for a surface's coachmark. */
-export const coachmarkKey = (surface: string) => `coachmark.${surface}`;
 
 /**
  * Shows once per surface until dismissed: a non-modal note (no focus trap) that Escape or `Got it`

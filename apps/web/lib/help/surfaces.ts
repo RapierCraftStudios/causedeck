@@ -22,3 +22,6 @@ const SURFACE_ARTICLE: Record<HelpSurface, string> = {
 export function articleSlugForSurface(surface: HelpSurface): string {
   return SURFACE_ARTICLE[surface];
 }
+
+/** The `help_state` key of a surface's coachmark (shared by the server loader and the client tip). */
+export const coachmarkKey = (surface: string) => `coachmark.${surface}`;

@@ -85,3 +85,6 @@ Exit 127 again: bare `turbo` is not on PATH. With `node_modules/.bin` on PATH, `
 
 ### Merge re-check (7)
 Exit 127 is environmental: bare `turbo` is not on PATH. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes (24/24). No source change.
+
+### Validate V5
+`pnpm check:no-l5` re-run: exit 0 ("1036 files scanned, no fifth level or send path"). result.json now records V1-V5 with the exact contract commands, all exit 0.

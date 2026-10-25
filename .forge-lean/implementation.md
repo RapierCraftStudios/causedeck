@@ -76,3 +76,6 @@ Base took ADR 0037, so the scale-path ADR is now docs/adr/0038-stage-b-c-scale-p
 
 ## Merge-fix (sixth): turbo typecheck exit 127
 Cause: `turbo` not on PATH in the check shell (host environment), not a symbol or key collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0. No source change.
+
+## Merge-fix (seventh): turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a code collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0 (22/22). No source change.

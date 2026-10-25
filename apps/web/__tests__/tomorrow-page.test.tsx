@@ -16,7 +16,7 @@ import { testWorkspaceContext } from './helpers/workspace.ts';
 const page = vi.hoisted(() => ({
   context: null as WorkspaceContext | null,
   dev: true,
-  locale: 'en' as TestLocale,
+  locale: 'en',
   items: [] as Record<string, unknown>[],
   suggestions: [] as Record<string, unknown>[],
   outcomes: null as Record<string, unknown> | null,
@@ -53,7 +53,7 @@ vi.mock('next/navigation', () => ({
   },
 }));
 vi.mock('next-intl/server', () => ({
-  getTranslations: (namespace?: string) => fakeGetTranslations(page.locale)(namespace),
+  getTranslations: (namespace?: string) => fakeGetTranslations(page.locale as TestLocale)(namespace),
 }));
 vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),

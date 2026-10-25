@@ -70,9 +70,10 @@ test('focus order reaches the header controls before the content', async ({ page
   for (let i = 0; i < 4; i += 1) {
     await page.keyboard.press('Tab');
     order.push(
-      await page.evaluate(
-        () => document.activeElement?.textContent?.trim() || document.activeElement?.tagName || '',
-      ),
+      await page.evaluate(() => {
+        const active: Element | null = document.activeElement;
+        return active === null ? '' : active.textContent.trim() || active.tagName;
+      }),
     );
   }
   expect(order[0]).toBe('Skip to content');

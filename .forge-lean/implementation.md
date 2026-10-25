@@ -32,3 +32,6 @@ Env vars: NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_ANALYTICS_SRC (
 
 ### Duplicate export names (reviewed, intentionally kept)
 `metadata` (layout.tsx, page.tsx, not-found.tsx) and `dynamic` (opengraph-image.tsx, robots.ts, sitemap.ts) are Next.js App Router file-convention exports. Next reads them by exact name from each route file, so renaming one silently drops that page's metadata or its force-static setting (and `output: 'export'` needs the latter on robots, sitemap and the OG image). They are per-route file exports, not shared module APIs: nothing imports them, and no registry, map or test is keyed by them. No code change made.
+
+### CI lint fix
+CI lint log was unavailable; reproduced locally. `eslint .` in apps/site linted the gitignored `out/` static export (thousands of errors in minified chunks): added `out/**` to the ignores in apps/site/eslint.config.js. `e2e/site/smoke.spec.ts` had a `no-unnecessary-condition` error on `document.activeElement?.`: rewritten with an explicit `Element | null` check. Site and e2e eslint, prettier and e2e tsc pass.

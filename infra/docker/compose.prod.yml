@@ -28,7 +28,10 @@ volumes:
 
 services:
   caddy:
-    image: caddy:2.10-alpine
+    # Stock Caddy plus the pinned rate-limit module (infra/caddy/Dockerfile); built in CI and on deploy.
+    image: causedeck-caddy:2.10.2
+    build:
+      context: ../caddy
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
@@ -40,14 +43,18 @@ services:
       - '443:443'
       - '443:443/udp'
     volumes:
-      # Caddy configuration is owned by #98; this mounts whatever infra/caddy/Caddyfile holds.
       - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../caddy/snippets:/etc/caddy/snippets:ro
       - caddy_data:/data
       - caddy_config:/config
     tmpfs:
       - /tmp
     environment:
       TZ: UTC
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+      # Space-separated IPs or CIDRs allowed on admin.$DOMAIN; the default admits nobody.
+      ADMIN_ALLOWLIST: ${ADMIN_ALLOWLIST:-127.0.0.1/32}
+      UPLOAD_MAX_BODY: ${UPLOAD_MAX_BODY:-25MB}
     networks: [edge]
     depends_on:
       web:

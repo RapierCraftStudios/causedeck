@@ -1,0 +1,12 @@
+# Bans repeated 401 and 429 offenders seen by Caddy (#98). Docker publishes ports through the
+# FORWARD path, so bans go into the DOCKER-USER chain. Tune maxretry, findtime and bantime here.
+[causedeck-caddy]
+enabled   = true
+filter    = causedeck-caddy
+backend   = auto
+logpath   = /var/lib/docker/containers/*/*-json.log
+maxretry  = 30
+findtime  = 10m
+bantime   = 1h
+banaction = iptables-allports
+chain     = DOCKER-USER

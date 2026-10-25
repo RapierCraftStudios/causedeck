@@ -1,0 +1,19 @@
+# Security headers on every response (#98). Arguments: Permissions-Policy value, CORP value.
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy {args[0]}
+		Cross-Origin-Opener-Policy same-origin
+		Cross-Origin-Resource-Policy {args[1]}
+		X-Content-Type-Options nosniff
+		-Server
+		defer
+	}
+}
+
+# For hosts that serve no HTML (API, static): nothing may load or frame. The app and admin hosts
+# do not use this: their nonce CSP comes from Next.js.
+(strict_csp) {
+	header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+}

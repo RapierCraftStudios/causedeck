@@ -173,6 +173,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'inbox',
   // Its own page test since #68 (obligations-page.test.tsx).
   'obligations',
+  // Its own page test since #73 (memory-page.test.tsx).
+  'memory',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),

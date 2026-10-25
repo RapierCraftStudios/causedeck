@@ -1,0 +1,155 @@
+{
+  "memory": {
+    "metaTitle": "Memory",
+    "title": "Memory",
+    "intro": "What CauseDeck remembers about how you work. Nothing is saved until you say so.",
+    "denied": "Your role cannot view memory in this workspace. Ask an owner if you need access.",
+    "loading": "Loading memory",
+    "offline": "You are offline. You can read what is saved; changes return when you are back online.",
+    "readOnly": "View only",
+    "empty": "Nothing saved yet. As you work, CauseDeck will suggest things to remember and ask first.",
+    "emptyLayer": "Nothing saved in this section yet.",
+    "error": {
+      "title": "Memory could not be loaded",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "tabListLabel": "Memory sections",
+    "layers": {
+      "M1": "Profile",
+      "M2": "Preferences",
+      "M3": "Matters",
+      "M4": "Court notes",
+      "M6": "Clients",
+      "M7": "Recognition"
+    },
+    "scope": {
+      "user": "Only you",
+      "workspace": "Chamber",
+      "matter": "This matter"
+    },
+    "source": {
+      "manual": "Added by you",
+      "edit": "Learned from your edits",
+      "correction": "Learned from a correction",
+      "capture": "Learned from a capture",
+      "ai": "Suggested by CauseDeck"
+    },
+    "lastUsed": "Last used {date}",
+    "neverUsed": "Not used yet",
+    "actions": {
+      "confirm": "Save",
+      "edit": "Edit",
+      "delete": "Delete",
+      "pause": "Pause",
+      "resume": "Resume",
+      "cardAction": "{action} memory: {title}"
+    },
+    "pauseAll": {
+      "pause": "Pause all memory",
+      "resume": "Resume all memory",
+      "paused": "All memory is paused. Nothing saved is used until you resume."
+    },
+    "tray": {
+      "heading": "{count, plural, one {# suggestion} other {# suggestions}}",
+      "evidence": "Seen {count, plural, one {# time} other {# times}}",
+      "evidenceNone": "Noticed while you worked",
+      "statement": "Remember {title}: {value}?",
+      "shortcuts": "S saves, E edits, X dismisses the focused suggestion.",
+      "offline": "You are offline. Suggestions can be decided when you are back online.",
+      "dismissed": "Suggestion dismissed",
+      "saved": "Saved to memory"
+    },
+    "usedIn": {
+      "trigger": "Used in {count, plural, one {# place} other {# places}}",
+      "none": "Not used yet",
+      "title": "Where this was used",
+      "brief": "Brief",
+      "draft": "Draft",
+      "matching": "Matching",
+      "open": "Open {kind}",
+      "loading": "Loading",
+      "failed": "Could not load where this was used."
+    },
+    "edit": {
+      "title": "Edit memory",
+      "description": "Change what is remembered. The change applies from the next use.",
+      "value": "What to remember",
+      "scope": "Who can see this",
+      "scopeUser": "Only you",
+      "scopeWorkspace": "Chamber (owner only)",
+      "chamberHint": "Only an owner can share a note with the chamber.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "valueRequired": "Write what to remember.",
+      "saved": "Memory updated",
+      "failed": "Could not save. Try again."
+    },
+    "delete": {
+      "title": "Delete this memory?",
+      "description": "{title} stops being used at once. Its embeddings are removed within 24 hours.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "done": "Memory deleted"
+    },
+    "add": {
+      "title": "Add a note",
+      "description": "Court notes are your own notes.",
+      "value": "Note",
+      "submit": "Add note",
+      "judgeNote": "Do not record analysis of individual judges or benches. Note the court, the registry and practical details only.",
+      "open": "Add note"
+    },
+    "notes": {
+      "label": "Your own notes"
+    },
+    "review": {
+      "reminderTitle": "Time for your monthly memory review",
+      "reminderBody": "It has been a month since your last review.",
+      "reminderNever": "You have not reviewed your memory yet.",
+      "start": "Start review",
+      "metaTitle": "Memory review",
+      "title": "Monthly memory review",
+      "nothing": "Nothing needs a look. Every saved memory was used or changed in the last 60 days.",
+      "step": "Item {current} of {total}",
+      "keep": "Keep",
+      "edit": "Edit",
+      "delete": "Delete",
+      "finish": "Finish review",
+      "back": "Back to memory",
+      "summaryTitle": "Review complete",
+      "summary": "{active, plural, one {# active memory} other {# active memories}} and {paused, plural, one {# paused memory} other {# paused memories}} remain.",
+      "kept": "Kept {count}",
+      "deleted": "Deleted {count}",
+      "edited": "Edited {count}",
+      "hint": "Not confirmed, edited or used in 60 days. Keep, edit or delete it.",
+      "failed": "Could not record the review. Try again."
+    },
+    "tenure": {
+      "title": "How memory is working",
+      "description": "Your own workspace only; there is no comparison with any other workspace.",
+      "correctionRate": "Correction rate",
+      "briefRate": "Briefs accepted unedited",
+      "week": "Week {week}",
+      "noData": "Not enough activity yet.",
+      "tableLabel": "Rates by week, as a table",
+      "chartLabel": "Rates by week",
+      "colWeek": "Week",
+      "colSaved": "Items saved",
+      "colCorrected": "Corrected",
+      "colCorrection": "Correction rate",
+      "briefSummary": "{unedited} of {briefs} briefs accepted unedited",
+      "noBriefs": "No briefs yet",
+      "percent": "{value, number, percent}"
+    },
+    "matter": {
+      "title": "Matter memory",
+      "intro": "What is remembered for this matter only. Other matters' memory never appears here.",
+      "empty": "Nothing is remembered for this matter yet."
+    },
+    "errors": {
+      "generic": "That did not work. Try again.",
+      "forbidden": "Your role cannot do that."
+    }
+  }
+}

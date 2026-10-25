@@ -2814,6 +2814,7 @@ export type Messages = {
         people: string;
         documents: string;
         research: string;
+        memory: string;
       };
       status: {
         active: string;
@@ -4582,6 +4583,159 @@ export type Messages = {
       search: string;
       goQueue: string;
       helpItem: string;
+    };
+  };
+  memory: {
+    metaTitle: string;
+    title: string;
+    intro: string;
+    denied: string;
+    loading: string;
+    offline: string;
+    readOnly: string;
+    empty: string;
+    emptyLayer: string;
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    tabListLabel: string;
+    layers: {
+      M1: string;
+      M2: string;
+      M3: string;
+      M4: string;
+      M6: string;
+      M7: string;
+    };
+    scope: {
+      user: string;
+      workspace: string;
+      matter: string;
+    };
+    source: {
+      manual: string;
+      edit: string;
+      correction: string;
+      capture: string;
+      ai: string;
+    };
+    lastUsed: string;
+    neverUsed: string;
+    actions: {
+      confirm: string;
+      edit: string;
+      delete: string;
+      pause: string;
+      resume: string;
+      cardAction: string;
+    };
+    pauseAll: {
+      pause: string;
+      resume: string;
+      paused: string;
+    };
+    tray: {
+      heading: string;
+      evidence: string;
+      evidenceNone: string;
+      statement: string;
+      shortcuts: string;
+      offline: string;
+      dismissed: string;
+      saved: string;
+    };
+    usedIn: {
+      trigger: string;
+      none: string;
+      title: string;
+      brief: string;
+      draft: string;
+      matching: string;
+      open: string;
+      loading: string;
+      failed: string;
+    };
+    edit: {
+      title: string;
+      description: string;
+      value: string;
+      scope: string;
+      scopeUser: string;
+      scopeWorkspace: string;
+      chamberHint: string;
+      save: string;
+      cancel: string;
+      valueRequired: string;
+      saved: string;
+      failed: string;
+    };
+    delete: {
+      title: string;
+      description: string;
+      confirm: string;
+      cancel: string;
+      done: string;
+    };
+    add: {
+      title: string;
+      description: string;
+      value: string;
+      submit: string;
+      judgeNote: string;
+      open: string;
+    };
+    notes: {
+      label: string;
+    };
+    review: {
+      reminderTitle: string;
+      reminderBody: string;
+      reminderNever: string;
+      start: string;
+      metaTitle: string;
+      title: string;
+      nothing: string;
+      step: string;
+      keep: string;
+      edit: string;
+      delete: string;
+      finish: string;
+      back: string;
+      summaryTitle: string;
+      summary: string;
+      kept: string;
+      deleted: string;
+      edited: string;
+      hint: string;
+      failed: string;
+    };
+    tenure: {
+      title: string;
+      description: string;
+      correctionRate: string;
+      briefRate: string;
+      week: string;
+      noData: string;
+      tableLabel: string;
+      chartLabel: string;
+      colWeek: string;
+      colSaved: string;
+      colCorrected: string;
+      colCorrection: string;
+      briefSummary: string;
+      noBriefs: string;
+      percent: string;
+    };
+    matter: {
+      title: string;
+      intro: string;
+      empty: string;
+    };
+    errors: {
+      generic: string;
+      forbidden: string;
     };
   };
   error: {

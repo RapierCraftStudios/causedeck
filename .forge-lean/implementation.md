@@ -37,3 +37,6 @@ The merged-tree failure was `turbo: command not found` (exit 127), an environmen
 
 ### Post-merge check
 After merging the base, `turbo run typecheck '--filter=...[f840ec10]'` exited 127 because `turbo` is not on PATH in this shell. This is an environment problem, not a code defect: `pnpm turbo run typecheck '--filter=...[f840ec10]'` passes (24 of 24 tasks), and V1 to V4 pass on the merged tree. No source change was needed.
+
+## CI fix
+CI log unavailable. Re-ran admin (all), config boundaries, core status/audit/domains, db testing locally: all pass. Removed four stray tracked .eslintcache files (machine-absolute paths, not ignored).

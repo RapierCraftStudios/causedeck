@@ -7,7 +7,7 @@ export const HELP_FOOTER = 'This is software documentation, not legal advice.';
 
 import { HELP_SURFACES, articleSlugForSurface, type HelpSurface } from './surfaces.ts';
 
-export { HELP_SURFACES, type HelpSurface };
+export type { HelpSurface };
 
 export interface HelpArticle {
   slug: string;

@@ -73,7 +73,7 @@ export interface WhatsAppSenderOptions {
   fetch?: WhatsAppFetch | undefined;
 }
 
-const E164 = /^\+[1-9][0-9]{7,14}$/;
+export const WHATSAPP_E164 = /^\+[1-9][0-9]{7,14}$/;
 const DEFAULT_API_VERSION = 'v21.0';
 
 export interface WhatsAppConfig {
@@ -124,7 +124,7 @@ export function createWhatsAppSender({
   const url = `https://graph.facebook.com/${config.apiVersion}/${config.phoneNumberId}/messages`;
   return {
     async send(message, target) {
-      if (!E164.test(target.e164)) throw new WhatsAppDeliveryError(undefined, true);
+      if (!WHATSAPP_E164.test(target.e164)) throw new WhatsAppDeliveryError(undefined, true);
       let response;
       try {
         response = await request(url, {

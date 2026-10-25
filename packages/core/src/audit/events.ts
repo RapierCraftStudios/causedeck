@@ -361,6 +361,13 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A lawyer shared an outward draft from their own channel',
   },
+  // The WhatsApp number link (#711): ids only, never the number or the code.
+  'whatsapp.otp_requested': {
+    security: true,
+    description: 'A WhatsApp link code was requested and sent',
+  },
+  'whatsapp.otp_failed': { security: true, description: 'A wrong WhatsApp link code was entered' },
+  'whatsapp.linked': { security: true, description: 'A WhatsApp number was verified and linked' },
 } as const satisfies Record<string, AuditActionSpec>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

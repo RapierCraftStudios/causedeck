@@ -5,9 +5,11 @@
 import { createHash, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
+import { consumeRateLimit } from '@causedeck/auth/rate-limit';
 import { CATEGORY_KEYS } from '@causedeck/notifications/categories';
 import { and, eq } from 'drizzle-orm';
 
+import { record } from '../audit/index.ts';
 import { conflict, invalid, notFound, rateLimited } from '../shared/errors.ts';
 import { memberRole } from '../workspaces/index.ts';
 
@@ -16,6 +18,9 @@ const { whatsappLink, whatsappOtpChallenge } = schema;
 export const WHATSAPP_OTP_MAX_ATTEMPTS = schema.WHATSAPP_OTP_MAX_ATTEMPTS;
 export const WHATSAPP_OTP_TTL_MS = 10 * 60_000;
 export const WHATSAPP_OTP_RESEND_COOLDOWN_MS = 60_000;
+/** Sends per number (any member, any workspace) and per member; keys hold hashes, never numbers. */
+export const WHATSAPP_OTP_NUMBER_LIMIT = { max: 5, windowSeconds: 60 * 60 } as const;
+export const WHATSAPP_OTP_MEMBER_LIMIT = { max: 10, windowSeconds: 60 * 60 } as const;
 
 const E164 = new RegExp(schema.WHATSAPP_E164_PATTERN);
 const CODE = /^\d{6}$/;
@@ -29,7 +34,7 @@ export interface WhatsAppActor {
 
 export interface WhatsAppDeps {
   db: Db;
-  /** Delivers the one-time code to the number; the provider arrives with #679. */
+  /** Delivers the one-time code to the number (`whatsappOtpSendFromProcess`, #711). */
   sendOtp?: (e164: string, code: string) => Promise<void>;
   now?: () => Date;
   /** Six digits; injectable for tests. */
@@ -67,6 +72,18 @@ function sameHash(a: string, b: string): boolean {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+const digest = (value: string): string => createHash('sha256').update(value).digest('hex');
+
+/** `consumeRateLimit` only inserts, which a transaction can do as well as the root client. */
+async function withinLimit(
+  db: Db,
+  key: string,
+  limit: { max: number; windowSeconds: number },
+  now: Date,
+): Promise<void> {
+  if (!(await consumeRateLimit(db as Database, key, limit, now.getTime()))) throw rateLimited();
+}
+
 const mask = (e164: string): string => `••••${e164.slice(-4)}`;
 
 async function requireMember(db: Db, actor: WhatsAppActor): Promise<void> {
@@ -96,10 +113,19 @@ export async function requestWhatsAppOtp(
   const e164 = normalise(input.e164);
   await requireMember(deps.db, actor);
   const now = nowOf(deps);
+  // Per number first, so one number cannot be flooded from many accounts, then per member. Counted
+  // before anything is stored or sent; a refusal that throws leaves the counter at its limit.
+  await withinLimit(deps.db, `whatsapp-otp:number:${digest(e164)}`, WHATSAPP_OTP_NUMBER_LIMIT, now);
+  await withinLimit(
+    deps.db,
+    `whatsapp-otp:member:${digest(`${actor.workspaceId}:${actor.userId}`)}`,
+    WHATSAPP_OTP_MEMBER_LIMIT,
+    now,
+  );
   const code = (deps.generateCode ?? (() => String(randomInt(0, 1_000_000)).padStart(6, '0')))();
   if (!CODE.test(code)) throw new TypeError('whatsapp-link: the code must be six digits');
   const expiresAt = new Date(now.getTime() + WHATSAPP_OTP_TTL_MS);
-  const saved = await withWorkspace(deps.db, actor, async (tx) => {
+  const saved = await withWorkspace(deps.db, actor, async (tx): Promise<string | null> => {
     const [pending] = await tx
       .select({ createdAt: whatsappOtpChallenge.createdAt })
       .from(whatsappOtpChallenge)
@@ -110,7 +136,7 @@ export async function requestWhatsAppOtp(
         ),
       );
     if (pending && now.getTime() - pending.createdAt.getTime() < WHATSAPP_OTP_RESEND_COOLDOWN_MS) {
-      return false;
+      return null;
     }
     await tx
       .delete(whatsappOtpChallenge)
@@ -131,13 +157,21 @@ export async function requestWhatsAppOtp(
       expiresAt,
       createdAt: now,
     });
-    return true;
+    // Ids only: never the number or the code.
+    await record(
+      { db: tx, workspaceId: actor.workspaceId, actor: { userId: actor.userId, kind: 'user' } },
+      {
+        action: 'whatsapp.otp_requested',
+        target: { kind: 'whatsapp_otp_challenge', id: challengeId },
+      },
+    );
+    return challengeId;
   });
-  if (!saved) throw rateLimited();
+  if (saved === null) throw rateLimited();
   if (deps.sendOtp !== undefined) {
     try {
       await deps.sendOtp(e164, code);
-    } catch (error) {
+    } catch {
       await withWorkspace(deps.db, actor, (tx) =>
         tx
           .delete(whatsappOtpChallenge)
@@ -148,7 +182,8 @@ export async function requestWhatsAppOtp(
             ),
           ),
       );
-      throw error;
+      // Provider detail stays out of the member's message (and out of logs here).
+      throw conflict('We could not send the code. Try again later.');
     }
   }
   return { expiresAt };
@@ -193,6 +228,15 @@ export async function verifyWhatsAppOtp(
         .update(whatsappOtpChallenge)
         .set({ attempts: challenge.attempts + 1 })
         .where(eq(whatsappOtpChallenge.id, challenge.id));
+      await record(
+        { db: tx, workspaceId: actor.workspaceId, actor: { userId: actor.userId, kind: 'user' } },
+        {
+          action: 'whatsapp.otp_failed',
+          target: { kind: 'whatsapp_otp_challenge', id: challenge.id },
+          outcome: 'denied',
+          metadata: { attempts: challenge.attempts + 1 },
+        },
+      );
       return { result: 'wrong' };
     }
     await tx.delete(whatsappOtpChallenge).where(eq(whatsappOtpChallenge.id, challenge.id));
@@ -217,6 +261,10 @@ export async function verifyWhatsAppOtp(
       })
       .returning();
     if (link === undefined) throw new Error('whatsapp-link: link upsert returned no row');
+    await record(
+      { db: tx, workspaceId: actor.workspaceId, actor: { userId: actor.userId, kind: 'user' } },
+      { action: 'whatsapp.linked', target: { kind: 'whatsapp_link', id: link.id } },
+    );
     return { result: 'ok', link };
   });
   if (outcome.result === 'ok') return view(outcome.link);

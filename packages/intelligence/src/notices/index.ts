@@ -27,3 +27,10 @@ export {
   type NoticeSourceConfig,
   type ParsedNotice,
 } from './types.ts';
+export {
+  parseHolidayListHtml,
+  parseHolidayListLines,
+  parseHolidayListPdf,
+  parseHolidayListText,
+  type HolidayDate,
+} from './parse-holiday-list.ts';

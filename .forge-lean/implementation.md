@@ -43,3 +43,6 @@ Renamed delegation's internal `istDay` -> `delegationDay` and `requireAction` ->
 
 ## R5 follow-up
 Owner outcome strip now polls every 4 s (`OUTCOMES_POLL_MS`, was 30 s) to meet the 5 s criterion; e2e spec gained `tomorrow plan live outcomes` asserting a poll request within 5 s on a faked clock.
+
+## CI lint fix
+CI lint failed (log unavailable). Reproduced with eslint on changed files: react-hooks/exhaustive-deps warning in delegate-sheet.tsx (send useCallback). Fixed deps (capacityOf memoised, nameOf, t). Other changed packages lint clean.

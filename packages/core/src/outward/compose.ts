@@ -34,7 +34,6 @@ import { ta } from './templates/ta.ts';
 const {
   hearing,
   listing,
-  matter,
   obligation,
   order,
   outwardDraft,
@@ -42,6 +41,8 @@ const {
   person,
   proceeding,
 } = schema;
+
+type OutwardFact = schema.OutwardFact;
 
 const TEMPLATES: Readonly<Record<Language, FactTemplate>> = { en, ta, kn };
 
@@ -250,7 +251,7 @@ export async function composeUpdate(
   const tone = request.tone ?? 'formal';
   return inOutwardScope(deps, actor, async (scope) => {
     const workspaceId = scope.actor.workspaceId;
-    const row: typeof matter.$inferSelect = await requireMatterFor(
+    const row: typeof schema.matter.$inferSelect = await requireMatterFor(
       scope,
       request.matterId,
       'draft.write',

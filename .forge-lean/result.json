@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Static CauseDeck marketing site (apps/site) with MDX, SEO, Rule 36 lint, CSP headers, CI workflow and e2e specs; README and regression test added",
+ "summary": "Fix actionlint SC2086 in site workflow; declare non-contract support files via amendments",
  "requirements": [
   {
    "id": "R1",
@@ -138,6 +138,36 @@
    "kind": "note-unrelated-ci-failure",
    "path": "packages/intelligence/src/pipeline/pipeline.test.ts",
    "why": "CI failure is a wall-clock budget assertion (20.26 s vs 20 s) in packages/intelligence on a shared runner. This branch changes nothing under packages/intelligence or its dependencies (apps/site, e2e/site, workflow, workspace files only), so the failure is a timing flake unrelated to #89; no code change made. Re-run the shard."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/site/eslint.config.js",
+   "why": "ignore the gitignored static export out/ so V4/CI lint does not scan build output"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "e2e/tsconfig.json",
+   "why": "include e2e/site so the new Playwright site specs are typechecked"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/site/next-env.d.ts",
+   "why": "Next-generated types file required by tsconfig; committed formatted for the Prettier check"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/site/content/legal/draft-notice.mdx",
+   "why": "the legal draft flagged noindex that R3 requires, exercised by the scaffold test"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "e2e/site/static-server.mjs",
+   "why": "static server for out/ applying _headers, used by playwright.site.config.ts (D34)"
+  },
+  {
+   "kind": "note-unrelated-ci-failure",
+   "path": "packages/core",
+   "why": "gitleaks flags test fixtures in packages/core (status.test.ts, automation handlers.test.ts) from earlier history, untouched by this branch"
   }
  ],
  "facts": {

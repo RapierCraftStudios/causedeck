@@ -73,6 +73,13 @@ import { supportSession } from '../schema/staff.ts';
 import { capture, workspaceCaptureChannel } from '../schema/capture.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
 import { intakeAddress, intakeAllowlist, intakeMessage } from '../schema/email-intake.ts';
+import {
+  seedMemoryEmbedding,
+  seedMemoryItem,
+  seedMemoryPause,
+  seedMemoryProposal,
+  seedMemoryUsage,
+} from '../seed/memory-fixtures.ts';
 import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
@@ -1163,6 +1170,11 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: whatsappInboundMessage.id });
     return { id: first(rows, 'whatsapp_inbound_message').id };
   },
+  memory_item: (tx, ctx) => seedMemoryItem(tx, ctx),
+  memory_proposal: (tx, ctx) => seedMemoryProposal(tx, ctx),
+  memory_embedding: (tx, ctx) => seedMemoryEmbedding(tx, ctx),
+  memory_usage: (tx, ctx) => seedMemoryUsage(tx, ctx),
+  memory_pause: (tx, ctx) => seedMemoryPause(tx, ctx),
   sso_provider: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx
       .insert(ssoProvider)

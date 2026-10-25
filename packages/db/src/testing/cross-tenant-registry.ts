@@ -30,6 +30,7 @@ const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
 const CORE_WHATSAPP_LINK_TEST = 'packages/core/src/__tests__/cross-tenant/whatsapp-link.test.ts';
+const CORE_MEMORY_TEST = 'packages/core/src/__tests__/cross-tenant/memory.test.ts';
 const CORE_PORTFOLIO_TEST = 'packages/core/src/__tests__/cross-tenant/portfolio.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
@@ -159,6 +160,12 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   whatsapp_link: DB_TABLES_TEST,
   whatsapp_otp_challenge: DB_TABLES_TEST,
   whatsapp_inbound_message: DB_TABLES_TEST,
+  // Lawyer memory (#72).
+  memory_item: DB_TABLES_TEST,
+  memory_proposal: DB_TABLES_TEST,
+  memory_embedding: DB_TABLES_TEST,
+  memory_usage: DB_TABLES_TEST,
+  memory_pause: DB_TABLES_TEST,
   // Enterprise onboarding (#682).
   sso_provider: DB_TABLES_TEST,
   scim_token: DB_TABLES_TEST,
@@ -211,6 +218,7 @@ const rosterSelfScoped = {
 const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
 const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
 const documentPreviewDenies = { test: CORE_DOCUMENT_PREVIEW_TEST, kind: 'denies' } as const;
+const memoryDenies = { test: CORE_MEMORY_TEST, kind: 'denies' } as const;
 const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
@@ -868,6 +876,38 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
   },
+  // memory (#72): every call checks the actor's membership (NOT_FOUND for a non-member)
+  acceptMemoryDraft: memoryDenies,
+  confirmMemory: memoryDenies,
+  createMemoryNote: memoryDenies,
+  deleteMemory: memoryDenies,
+  dismissMemoryProposal: memoryDenies,
+  editMemory: memoryDenies,
+  isMemoryPaused: memoryDenies,
+  pauseMemory: memoryDenies,
+  setMemoryPauseAll: memoryDenies,
+  setSharedWithChamber: memoryDenies,
+  embedMemoryItem: memoryDenies,
+  searchMatterMemory: memoryDenies,
+  proposeFromCorrection: memoryDenies,
+  proposeFromEdit: memoryDenies,
+  proposeMemory: memoryDenies,
+  exportMemory: memoryDenies,
+  getMemory: memoryDenies,
+  listMemory: memoryDenies,
+  memoryFor: memoryDenies,
+  recordUsage: memoryDenies,
+  tenureMetrics: memoryDenies,
+  monthlyReview: {
+    test: CORE_MEMORY_TEST,
+    kind: 'caller-checked',
+    note: 'system job body: opens withWorkspace on the given workspace id and returns counts only; a B-scoped call for workspace A reads nothing of B',
+  },
+  purgeDeletedMemoryEmbeddings: {
+    test: CORE_MEMORY_TEST,
+    kind: 'caller-checked',
+    note: 'system job body: opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
+  },
   // citations (#484): the global corpus, one answer for every workspace
   verifyCitation: {
     test: CORE_SERVICES_TEST,
@@ -1400,6 +1440,17 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   MEMORY_ERASE_PRIORITY: 'constant',
   MEMORY_ERASURE_SLA_MS: 'constant',
   MEMORY_TABLES: 'constant',
+  // memory (#72): pure rules, constants and the in-process embedder
+  canReadMemory: 'pure',
+  canWriteMemory: 'pure',
+  memoryCitation: 'pure',
+  localMemoryEmbedder: 'pure, in-process hashing embedder',
+  MEMORY_CLERK_LAYERS: 'constant',
+  MEMORY_STALE_AFTER_DAYS: 'constant',
+  purgeMemoryTargets:
+    'system job target list: workspace ids only, through an owner-defined function',
+  reviewMemoryTargets:
+    'system job target list: workspace ids only, through an owner-defined function',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;

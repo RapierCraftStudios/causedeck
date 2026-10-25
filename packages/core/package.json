@@ -31,6 +31,7 @@
     "./facts": "./src/facts/index.ts",
     "./matter-graph": "./src/matter-graph/index.ts",
     "./matters": "./src/matters/index.ts",
+    "./memory": "./src/memory/index.ts",
     "./news": "./src/news/index.ts",
     "./obligations": "./src/obligations/index.ts",
     "./outward": "./src/outward/index.ts",

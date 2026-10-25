@@ -1,4 +1,4 @@
-// Outward update drafts (#69, #735; ADR 0038): the zod inputs of the `@causedeck/core` outward
+// Outward update drafts (#69, #735; ADR 0039): the zod inputs of the `@causedeck/core` outward
 // service. A draft is prepared for the lawyer to edit and share from their own channel; nothing
 // here describes a send. Objects are strict.
 import { z } from 'zod';

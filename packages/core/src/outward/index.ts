@@ -1,4 +1,4 @@
-// Outward update drafts (#735, ADR 0038): `@causedeck/core/outward`. A draft is prepared from
+// Outward update drafts (#735, ADR 0039): `@causedeck/core/outward`. A draft is prepared from
 // confirmed facts, edited and shared by the lawyer; there is no send path.
 export { composeUpdate, type ComposedDraft } from './compose.ts';
 export { diffDraft, saveEdit, type DiffPart, type SavedEdit } from './diff.ts';

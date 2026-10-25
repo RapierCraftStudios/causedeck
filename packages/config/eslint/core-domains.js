@@ -26,8 +26,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   'matter-graph': Object.freeze(['workspaces', 'matters']),
   // The automation engine (#47): membership roles through workspaces, its audit events through
   // audit, and every graph write through the matter-graph services (imports `index.ts` only).
-  // Confirming an `obligation_from_direction` proposal creates it through obligations (#67).
-  automation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'obligations']),
+  // Accepting a `memory_item` draft saves it through the memory domain's `acceptMemoryDraft` (#72);
+  // confirming an `obligation_from_direction` proposal creates it through obligations (#67).
+  automation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'obligations', 'memory']),
   // Case-status watches (#591, D-048): a lookup needs a cleared source through sources, the next-date
   // proposal goes through automation and every proceeding read through matter-graph.
   // The orders poll (#494) stores a fetched order as a capture (the `CaptureJobs` port) and audits it.
@@ -44,6 +45,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   portfolio: Object.freeze(['workspaces', 'matter-graph', 'case-watch', 'sources']),
   // WhatsApp number link and OTP (#678, #502 part 1): the membership check through workspaces
   'whatsapp-link': Object.freeze(['workspaces', 'audit', 'capture']),
+  // Lawyer memory (#72, ADR 0039): the member's role through workspaces, the sharing change through
+  // audit. Matters and people are read from the tables; proposals are confirmed here, never by
+  // automation (automation's `memory_item` handler calls `acceptMemoryDraft` through the index).
+  memory: Object.freeze(['workspaces', 'audit']),
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
   // read as `listHolidayListings`) and the day arithmetic is the extraction's own, from intelligence.
   deadlines: Object.freeze([]),
@@ -137,7 +142,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The obligation service (#67): roles through workspaces, audit events through audit, defect
   // transitions through the matter-graph state machine (imports `index.ts` only).
   obligations: Object.freeze(['workspaces', 'audit', 'matter-graph']),
-  // Outward update drafts (#735, ADR 0038): roles through workspaces, audit events through audit,
+  // Outward update drafts (#735, ADR 0039): roles through workspaces, audit events through audit,
   // the narrative through the AI gateway wiring in ai; reads graph rows from the tables.
   outward: Object.freeze(['workspaces', 'audit', 'matter-graph', 'ai']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
@@ -155,6 +160,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'calendar',
     'whatsapp',
     'whatsapp-link',
+    'memory',
     'voice',
     'email-intake',
     'extraction',

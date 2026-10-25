@@ -1,4 +1,4 @@
-// ADR 0038: the outward domain has no transport, job or endpoint.
+// ADR 0039: the outward domain has no transport, job or endpoint.
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

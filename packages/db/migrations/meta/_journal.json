@@ -671,14 +671,21 @@
       "idx": 95,
       "version": "7",
       "when": 1792890000000,
-      "tag": "20261025010000_sso_domain_verification",
+      "tag": "20261025010000_advocate_search_sources",
       "breakpoints": true
     },
     {
       "idx": 96,
       "version": "7",
-      "when": 1792890060000,
-      "tag": "20261025010100_sso_provider_lookup",
+      "when": 1792893600000,
+      "tag": "20261025020000_sso_domain_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1792893660000,
+      "tag": "20261025020100_sso_provider_lookup",
       "breakpoints": true
     }
   ]

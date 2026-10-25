@@ -4054,6 +4054,46 @@
       "action": "Something went wrong. Try again."
     }
   },
+  "onboardingDiscovery": {
+    "metaTitle": "Find your cases",
+    "title": "Find your cases",
+    "denied": "You do not have access to onboarding.",
+    "loading": "Loading",
+    "error": {
+      "action": "We could not search the courts. Nothing was saved. Try again.",
+      "title": "Something went wrong",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "nothingFound": "No listings carrying you were found in these courts. Check the spelling or add an enrolment number.",
+    "identifiers": {
+      "title": "Who should we look for?",
+      "body": "Enter your enrolment number or the spellings of your name. We only keep listings that carry you.",
+      "enrolment": "Enrolment numbers or BRN, one per line",
+      "names": "Name spellings, one per line",
+      "next": "Choose courts"
+    },
+    "courts": {
+      "title": "Which courts?",
+      "body": "We search the last 90 days and the upcoming lists. Nothing is saved until you confirm.",
+      "madrasHc": "Madras High Court",
+      "karnatakaHc": "Karnataka High Court",
+      "tnDistrict": "Tamil Nadu district courts",
+      "back": "Back",
+      "search": "Search these courts"
+    },
+    "progress": {
+      "searching": "Searching {courts, plural, one {# court} other {# courts}}...",
+      "found": "Found {listings, plural, one {# listing} other {# listings}} in {courts, plural, one {# court} other {# courts}}"
+    },
+    "disambiguate": {
+      "title": "Is this you?",
+      "body": "A name alone is not enough. Pick the matters that are yours, or add your enrolment number.",
+      "enrolments": "Enrolment numbers printed beside this name: {list}",
+      "addEnrolment": "Add an enrolment number",
+      "confirm": "These {count, plural, one {# matter is} other {# matters are}} mine"
+    }
+  },
   "emailIntake": {
     "metaTitle": "Email intake",
     "title": "Email intake",

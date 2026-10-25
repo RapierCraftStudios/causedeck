@@ -192,6 +192,8 @@ describe('row-level security catalog', () => {
 
         // Brief sharing (#507).
         'brief_share',
+        // Court-day reminders (#64).
+        'reminder_dispatch',
 
         // Review and correction queue (#518).
         'review_correction',

@@ -2652,6 +2652,68 @@
       "updated": "Board read at {time}"
     }
   },
+  "reminders": {
+    "settings": {
+      "title": "Court-day reminders",
+      "description": "Choose when CauseDeck reminds you about the court day and where the reminders arrive.",
+      "evening": {
+        "label": "Evening brief",
+        "hint": "The night before: what is listed tomorrow."
+      },
+      "morning": {
+        "label": "Morning changes",
+        "hint": "At 7:00 am: what changed in today's list."
+      },
+      "outcomeMissing": {
+        "label": "Outcome missing",
+        "hint": "After court: hearings with no outcome recorded."
+      },
+      "time": "Time",
+      "delay": "Delay",
+      "minutes": "minutes after the last item",
+      "channels": {
+        "in_app": "In-app",
+        "push": "Push",
+        "email": "Email"
+      },
+      "loading": "Loading your reminder settings",
+      "error": "Your reminder settings did not load.",
+      "retry": "Try again",
+      "saved": "Saved",
+      "denied": "Only members can change their own reminders.",
+      "saving": "Saving"
+    },
+    "email": {
+      "evening": {
+        "subject": "Tomorrow's court day is ready",
+        "preview": "Your evening brief for tomorrow",
+        "heading": "Tomorrow's court day is ready",
+        "body": "{listings, plural, one {# listing} other {# listings}} in {halls, plural, one {# hall} other {# halls}}. {clashes, plural, =0 {No clashes.} one {# clash.} other {# clashes.}} {lowReadiness, plural, =0 {Every brief is ready.} one {# brief is below 60 percent ready.} other {# briefs are below 60 percent ready.}} {obligations, plural, =0 {No obligations are due tomorrow.} one {# obligation is due tomorrow.} other {# obligations are due tomorrow.}}",
+        "cta": "Open tomorrow"
+      },
+      "morning": {
+        "subject": "Today's list has changed",
+        "preview": "Changes to today's list",
+        "heading": "Today's list has changed",
+        "body": "{added, plural, =0 {Nothing added} one {# item added} other {# items added}}, {moved, plural, =0 {nothing moved} one {# item moved} other {# items moved}}, {removed, plural, =0 {nothing removed} one {# item removed} other {# items removed}}.",
+        "cta": "See what changed"
+      },
+      "outcomeMissing": {
+        "subject": "Record today's outcomes",
+        "preview": "Hearings still waiting for an outcome",
+        "heading": "Record today's outcomes",
+        "body": "{count, plural, one {# hearing has} other {# hearings have}} no confirmed outcome yet.",
+        "cta": "Record outcomes"
+      },
+      "note": "This reminder only opens the app. It is sent only to you and never to a client."
+    },
+    "inApp": {
+      "eveningBody": "{listings, plural, one {# listing} other {# listings}} tomorrow in {halls, plural, one {# hall} other {# halls}}.",
+      "eveningNames": "Listed: {names}",
+      "morningBody": "{added, plural, =0 {0 added} other {# added}}, {moved, plural, =0 {0 moved} other {# moved}}, {removed, plural, =0 {0 removed} other {# removed}}.",
+      "outcomeBody": "{count, plural, one {# hearing has} other {# hearings have}} no confirmed outcome."
+    }
+  },
   "courtInsights": {
     "metaTitle": "Court insights",
     "title": "Court insights",

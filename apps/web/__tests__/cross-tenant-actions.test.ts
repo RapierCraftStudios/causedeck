@@ -94,6 +94,7 @@ const notifications = await import('../app/(app)/w/[slug]/notifications/actions.
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const whatsappLink =
   await import('../app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts');
+const reminders = await import('../app/(app)/w/[slug]/settings/notifications/reminders-actions.ts');
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
@@ -152,6 +153,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  getReminderPreferencesAction: reminders,
+  setReminderPreferencesAction: reminders,
   requestWhatsAppOtpAction: whatsappLink,
   verifyWhatsAppOtpAction: whatsappLink,
   setWhatsAppCategoriesAction: whatsappLink,
@@ -499,6 +502,13 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    getReminderPreferencesAction: { workspaceId },
+    setReminderPreferencesAction: {
+      workspaceId,
+      evening: { time: '21:00', channels: { in_app: true, push: false, email: false } },
+      morning: { channels: { in_app: true, push: false, email: true } },
+      outcome_missing: { delayMinutes: 60, channels: { in_app: true, push: true, email: false } },
+    },
     requestWhatsAppOtpAction: { workspaceId, e164: '+919812345678', consent: true },
     verifyWhatsAppOtpAction: { workspaceId, code: '000000' },
     setWhatsAppCategoriesAction: { workspaceId, categories: ['court.board'] },
@@ -973,6 +983,18 @@ describe('cross-tenant server actions', () => {
       rows.filter((row) => row.userId === t.ub && row.workspaceId === t.b.id);
     expect(mine(inB.prefs).length).toBeGreaterThan(0);
     expect(mine(inB.settings)).toHaveLength(1);
+  });
+
+  it('reminder preferences under B’s own workspace change only ub’s rows in B (#64)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    expect(
+      await action('setReminderPreferencesAction')(all.setReminderPreferencesAction),
+    ).toMatchObject({ ok: true, data: { evening: { time: '21:00', channels: { push: false } } } });
+    expect(
+      await action('getReminderPreferencesAction')(all.getReminderPreferencesAction),
+    ).toMatchObject({ ok: true, data: { outcome_missing: { delayMinutes: 60 } } });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('WhatsApp link actions under B’s own workspace touch only ub’s rows in B (#681)', async () => {

@@ -5,7 +5,7 @@
 // committed data (the api and web suites, whose users come from Better Auth).
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
-import { sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import type { Database, Transaction } from '../client.ts';
 import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
@@ -23,6 +23,7 @@ import { billingEvent, entitlement, plan, subscription, usageCounter } from '../
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
 import { briefShare } from '../schema/share.ts';
+import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
@@ -1359,6 +1360,32 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: briefShare.id });
     return { id: first(rows, 'brief_share').id };
+  },
+  reminder_dispatch: async (tx, { workspaceId, ownerId, tag }) => {
+    // The owner's own member row (the FK is composite), so seeding does not change the member counts
+    // other suites assert on (staff-console-schema.test.ts). When it is not visible (the cross-tenant
+    // insert probe, scoped to another workspace) insert one, which RLS refuses like the row itself.
+    const owned = await tx
+      .select({ id: member.id })
+      .from(member)
+      .where(and(eq(member.organizationId, workspaceId), eq(member.userId, ownerId)));
+    const members =
+      owned.length > 0
+        ? owned
+        : await tx
+            .insert(member)
+            .values({
+              organizationId: workspaceId,
+              userId: await newUser(tx, `reminder-${tag}`),
+              role: 'viewer',
+            })
+            .returning({ id: member.id });
+    const memberId = first(members, 'member').id;
+    const rows = await tx
+      .insert(reminderDispatch)
+      .values({ workspaceId, memberId, kind: 'evening', forDate: '2026-10-26', channel: 'push' })
+      .returning({ id: reminderDispatch.id });
+    return { memberId, id: first(rows, 'reminder_dispatch').id };
   },
   listing: async (tx, { workspaceId, tag }) => ({
     listingId: await seedListing(tx, workspaceId, tag),

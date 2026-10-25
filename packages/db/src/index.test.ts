@@ -146,6 +146,7 @@ describe('@causedeck/db root entry point', () => {
       'rate_limit',
       'referral',
       'referral_credit',
+      'reminder_dispatch',
       'review_correction',
       'review_item',
       'role_edge',

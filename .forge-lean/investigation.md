@@ -1,53 +1,39 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield P1 feature; no live defect)
+**Severity**: medium (greenfield UI; the follow-up surface the obligation service #67 feeds has no screen)
 **Task Type**: feature
 
 ### What Was Claimed
-Build the lawyer memory engine in `packages/core` (PRD ME-1..ME-4): layers M1, M2, M3, M4, M6, M7 with confirm-before-save, scope enforced in SQL (RLS plus predicates, clerk column-scoped view), usage citations, per-item edit/delete/pause, a per-member pause-all switch, a judge/bench denylist, envelope-encrypted values, tenure metrics, matter-scoped embeddings with 24 h purge, and cross-tenant coverage. Spec is in the spike §5 and PRD ME-1..ME-4.
+Build the Obligation Queue UI at `/w/[slug]/obligations`: grouped (Overdue/Today/This week/Later/Undated), keyboard-first and swipeable, with mandatory-reason close and reschedule, a drafted next step per item, Defects and Certified-copies tabs, filters in the URL, all states, i18n, stories, e2e and visual baselines. It renders `queryQueue` from #67 and uses #145's patterns.
 
 ### What We Found
-Verified against `origin/milestone/follow-up-continuity-memory` (216c5d7b).
-- Nothing exists yet: no `packages/core/src/memory/`, no `packages/validators/src/memory.ts`, no `packages/db/src/schema/memory.ts`, no memory migration. `apps/web/app/(app)/w/[slug]/memory/page.tsx:3` is a placeholder (UI is #73, out of scope).
-- Dependencies are in place: the automation engine exists (`packages/core/src/automation/`), and `memory_item` is a registered proposal kind at L2 (`packages/core/src/automation/matrix.ts:89`). Its handler is disabled: `packages/core/src/automation/handlers/disabled.ts:17`. The matter-graph domain exists (`packages/core/src/matter-graph/`). The issue text calls #33 and #47 closed "not_planned" or "invalid", but the code is on the base, so neither blocks.
-- Erasure already assumes these tables. `packages/core/src/lifecycle/deletion/memory.ts` has `MEMORY_TABLES = ['memory_embedding','memory_item']` (deleted by `workspace_id`, skipped if missing), and the job `packages/core/src/jobs/definitions/memory-erase.ts` exists. The real tables must keep `workspace_id` and be deletable children-first.
-- Fixture collision: `packages/core/src/lifecycle/__tests__/memory-erasure.test.ts:62-71` and `packages/db/src/__tests__/rls/vector.test.ts:47-57` run `create table memory_item` and `create table memory_embedding`. They will fail once the real migration creates those tables. Both must be changed to use the real tables or to drop the fixtures first.
-- Field encryption exists: `packages/storage/src/field-crypto.ts` `encryptField(dek, workspaceId, plaintext)` and `decryptField` (AAD = workspace id), described there as being for "memory values". It is the "storage package crypto helper" fallback the issue names.
-- Table conventions: `tenantTable()` from `packages/db/src/schema-helpers/tenant-table.ts` (FORCE RLS, `workspace_id`). Example: `packages/db/src/schema/whatsapp-link.ts`. The vector helper is `packages/db/src/vector.ts`. The clerk-view precedent is `packages/db/src/__tests__/rls/clerk-view.test.ts`, `packages/db/src/rls.ts` and migration `0022_matter_restriction.sql`.
-- Migrations are in `packages/db/migrations/` (not `drizzle/`). The newest is `20261025040000_whatsapp_inbound.sql`, and recent ones are timestamp-named.
-- `packages/core/src/automation/read-models.ts:155` already hides `memory_item` proposals from non-strategy viewers (clerks).
-- Domain registry: a new `memory` folder under `packages/core/src` needs an `index.ts`, an entry in `CORE_DOMAIN_DEPENDENCIES` (`packages/config/eslint/core-domains.js`), and a row in `docs/engineering/core-domains.md`, all asserted by `packages/core/src/domains.test.ts`.
+Verified on `origin/milestone/follow-up-continuity-memory` (05be6ee8 = HEAD; #67 and #145 are merged).
+- The route is a placeholder: `apps/web/app/(app)/w/[slug]/obligations/page.tsx:1-3` (`placeholderPage('obligations')`); no `loading.tsx`, `error.tsx`, `actions.ts` or `_components/`.
+- Service is ready: `@causedeck/core/obligations` (`packages/core/package.json:35`, `src/obligations/index.ts`) exports `queryQueue` (`queue.ts:32`, five groups, filters matterId/ownerMemberId/source/sourceType/limit, returns raw `ObligationRow`s), `closeObligation` (`close.ts:61`, `CloseInput` reason type + note), `reopenObligation`, `updateObligation` (`update.ts:25`, reschedule needs a reason via `ObligationPatch`), `createObligation` (`create.ts:95`), `raiseDefect/cureDefect/representFiling`, `applyForCertifiedCopy/transitionCertifiedCopy`.
+- Gaps in the service: there is NO read function for defects or certified copies (only writers: `defects.ts:52,111,164`, `certified-copies.ts:33,90`). The Defects and Copies tabs need `listDefects` / `listCertifiedCopies` (workspace-scoped, matter-visibility filtered). `queryQueue` rows carry no matter title, case number, owner name or source quote; the UI needs a join/hydration step.
+- Kind = `obligation.source` (enum `OBLIGATION_SOURCES`, `packages/db/src/schema/enums.ts:66-75`); a task is `source='internal'` (`update.ts:35`). Closed reasons are `task_completed|lawyer_action|not_applicable` (`docket.ts:227`).
+- Policy: `obligation.read|write|track` (`packages/auth/src/policy/actions.ts:14`); clerks get `track` only (tasks, defects, copies). There is no strategy-text column, so "clerk without strategy text" is satisfied by the clerk seeing only `internal` rows' write controls and not `court_order` actions; `queryQueue` already hides what the role cannot read (`queue.ts:~83`).
+- Existing UI to reuse: `packages/ui/src/patterns/obligation-row/obligation-row.tsx` (row with due state, avatar, ProvenanceChip, swipe, overflow menu, offline/viewOnly; but its swipe is left=Done/right=Snooze, threshold 80 px, with `snooze` wording; issue wants right=Done, left=Reschedule, threshold 72 px), `provenance-chip`, `proposal-card`, `stage-badge`, `states/*` (`packages/ui/src/patterns/index.ts:97`). UI primitives exist for dialog, sheet, tabs, popover, date-picker, command, sonner, checkbox, shortcuts-dialog, collapsible (`packages/ui/src/components`). The issue's path `packages/ui/src/patterns/obligation/*` does not exist; the pattern dir is `obligation-row/`.
+- Action conventions: `workspaceAction(schema, handler, { action })` in `apps/web/lib/workspace-action.ts`, strict zod, `assertCan`, lazy `import('@causedeck/core/...')`, `revalidatePath` (model: `inbox/actions.ts`). Every exported `'use server'` action must be in `ACTIONS` plus probe inputs in `apps/web/__tests__/cross-tenant-actions.test.ts:128` (no obligation entries today).
+- i18n: namespaces listed in `packages/i18n/src/catalog.ts:~20-45` with files under `packages/i18n/src/messages/{en,ta,kn}/`; there is no `obligations` namespace. The issue's path `packages/i18n/messages/en/obligations.json` is outdated.
+- Next steps: #69 (client letters) is open, so per the issue a letter step becomes a plain internal task via `createObligation({source:'internal'})`; the reminder to the clerk is likewise an internal task. Nothing sends.
+- E2E specs live in `e2e/tests/<area>/` (e.g. `e2e/tests/inbox/inbox.spec.ts`), not `e2e/product/`; visual specs follow `*.visual.spec.ts` (`e2e/tests/inbox/whatsapp-import.visual.spec.ts`). Baselines are generated only in CI.
+- Shell already lists the route (`components/shell/mobile-nav.tsx:28`), so no nav change.
 
 ### Root Cause
-Greenfield: the memory engine was never built. Automation, erasure and the UI were all written against its future tables.
+Greenfield: the service (#67) and patterns (#145) exist but no page, actions, read models for defects/copies, or catalog consume them.
 
 ### Affected Files
-Listed as deliverables in `contract.json`:
-- `packages/validators/src/memory.ts`
-- `packages/db/src/schema/memory.ts`, `packages/db/src/schema/index.ts`, and a new migration
-- `packages/core/src/memory/*`
-- the memory handler in `packages/core/src/automation/handlers/`
-- the job, the registries and the guard tests
-- an ADR and the docs
+`apps/web/app/(app)/w/[slug]/obligations/{page,loading,error}.tsx`, `actions.ts`, `_components/*` (queue-view, queue-group, obligation-row, swipe-row, use-swipe, close-dialog, reschedule-popover, next-step-card, queue-filters, defects-tab, copies-tab, detail-sheet); `apps/web/lib/obligations/*` (URL params, view hydration, next-step suggestion); `packages/core/src/obligations/{views.ts,index.ts}` (read models); `packages/ui/src/patterns/obligation-row/*` and `patterns/index.ts` (DueLabel, GroupHeader, swipe direction); `packages/i18n/src/{catalog.ts,messages/{en,ta,kn}/obligations.json}` and `__tests__/catalog.test.ts`; `apps/web/__tests__/cross-tenant-actions.test.ts`; `packages/db/src/testing/cross-tenant-registry.ts` + `packages/core/src/__tests__/cross-tenant/services.test.ts` (new core exports); `e2e/tests/obligations/*`.
 
 ### Sibling Sweep
-- Other tenant tables follow the registry rules in CLAUDE.md: the root table list in `packages/db/src/index.test.ts`, the RLS catalog in `rls/sql.test.ts`, and the cross-tenant registry `packages/db/src/testing/cross-tenant-registry.ts`.
-- Core exports need `SERVICE_TESTS` cases (`packages/core/src/__tests__/cross-tenant/services.test.ts`).
-- The fixture-table collision (above) is the same pattern in two tests.
+Same defect class (placeholder routes backed by merged services): `calendar`, `briefs`, `drafts`, `memory`, `news` still use `placeholderPage`; each belongs to its own issue (#69, #70, #74), not here. The `ObligationRow` pattern has no `apps/web` caller (grep: only `packages/ui` index, fixtures `__fixtures__/trust.ts`, stories and tests incl. `states/*.browser.test.tsx`), so changing its swipe direction breaks no app code, only those fixtures/tests.
 
 ### History
-`memory_item` was registered as a disabled L2 kind in #47. The erasure job (#303) and the `encryptField` helper (#216) anticipate this work. No prior attempt at #72.
+`obligation` table came with the docket tables; #67 (PR #725, merged) added the service, events, defects and copies; #145 completed the pattern library. No prior attempt at #68.
 
 ### Recommendation
-Implement in order:
-1. Validators.
-2. Schema and migration (RLS, clerk view, scope checks).
-3. Core `memory` domain: scope, propose, confirm, read, review, embedding.
-4. Enable the `memory_item` handler so accepting a proposal calls `confirmMemory`.
-5. Add a memory-purge job for embeddings.
-6. Register everything and add tests, an ADR and docs.
-
-Confirm-before-save is the invariant: only `confirmMemory` and lawyer-authored notes insert `memory_item`. The embedding generator should use the mock provider in CI. Scope the cross-tenant, clerk and cross-matter tests at the SQL level. If `packages/ai` has no embedding entry point, call the existing AI gateway only through its public interface. Do not add one beyond the gateway.
+One lane, ordered checklist: (1) core read models `listDefects`/`listCertifiedCopies` + a queue hydration view (matter title/case number, owner name, source quote) with cross-tenant registry cases; (2) UI pattern changes (swipe right=Done, left=Reschedule, 72 px, DueLabel, GroupHeader) with stories; (3) i18n `obligations` namespace (en complete, ta/kn stubs) and catalog registration; (4) `lib/obligations` URL-state and next-step helpers; (5) `actions.ts` (close/reschedule/reassign/add/use-next-step) via `workspaceAction`, register in the cross-tenant action test; (6) page, loading, error and `_components`; (7) e2e product, a11y and visual specs (CI only). Performance budgets, Lighthouse, visual baselines and axe over e2e are CI-measured. Group-collapse persistence per member: store in a cookie/localStorage keyed by member (no new table) unless the lane finds a member-preferences store.
 
 ### Related Issues
-#1 (parent), #33, #47 (deps), #21, #73, #74, #81, #112.
+#1 (parent), #67 and #145 (deps, merged), #9, #69 (letter drafts, open), #70, #74.

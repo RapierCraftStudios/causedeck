@@ -115,6 +115,7 @@ const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedi
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const obligations = await import('../app/(app)/w/[slug]/obligations/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
@@ -122,6 +123,7 @@ const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
 const FAR_FUTURE = '9999-12-31T23:59:59.999999Z';
+const XT_ID = '00000000-0000-4000-8000-0000000000a1';
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 
 /** Every exported server action and the module it comes from. */
@@ -252,6 +254,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   keepAsAttachmentAction: inbox,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
+  closeObligationAction: obligations,
+  rescheduleAction: obligations,
+  reassignAction: obligations,
+  addObligationAction: obligations,
+  useNextStepAction: obligations,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -707,6 +714,38 @@ function inputs(workspaceId: string): Record<string, unknown> {
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
+    // Obligation queue (#68): ub may not close, reschedule, reassign or add to A's obligations.
+    closeObligationAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      reason: 'task_completed',
+    },
+    rescheduleAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      dueDate: '2030-01-01',
+      reason: 'Cross-tenant probe',
+    },
+    reassignAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      ownerMemberId: XT_ID,
+    },
+    addObligationAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      description: 'Cross-tenant probe',
+      dueDate: null,
+      ownerMemberId: XT_ID,
+    },
+    useNextStepAction: {
+      workspaceId,
+      type: 'task',
+      text: 'Cross-tenant probe',
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      dueDate: null,
+      ownerMemberId: XT_ID,
+    },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },

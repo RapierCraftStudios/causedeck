@@ -84,6 +84,9 @@ export {
 } from './activity-item/activity-item';
 export {
   DEFAULT_OBLIGATION_LABELS,
+  GroupHeader,
+  LAYOUT_MS,
+  REDUCED_FADE_MS,
   OBLIGATION_EMPTY_COPY,
   ObligationEmpty,
   ObligationRow,
@@ -92,6 +95,8 @@ export {
   SWIPE_THRESHOLD_PX,
   daysUntil,
   dueState,
+  type GroupHeaderProps,
+  type ObligationKind,
   type ObligationLabels,
   type ObligationRowProps,
 } from './obligation-row/obligation-row';

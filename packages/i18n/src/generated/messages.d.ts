@@ -4397,6 +4397,104 @@ export type Messages = {
       full: string;
     };
   };
+  outcome: {
+    metaTitle: string;
+    title: string;
+    heldOn: string;
+    processing: string;
+    processingHint: string;
+    needsYou: string;
+    needsYouHint: string;
+    emptyHint: string;
+    confirmedHint: string;
+    denied: {
+      title: string;
+      body: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    loading: string;
+    offline: {
+      banner: string;
+      queued: string;
+    };
+    summary: {
+      label: string;
+      placeholder: string;
+    };
+    adjournmentReason: string;
+    stageAfter: string;
+    nextDate: {
+      legend: string;
+      useProposed: string;
+      typed: string;
+      typedHint: string;
+      typedInvalid: string;
+      none: string;
+      deferred: string;
+      required: string;
+      unanchored: string;
+    };
+    conflict: {
+      title: string;
+      current: string;
+      proposed: string;
+      keepCurrent: string;
+      useProposed: string;
+      required: string;
+    };
+    obligations: {
+      title: string;
+      empty: string;
+      confirm: string;
+      edit: string;
+      dismiss: string;
+      dismissReason: string;
+      notApplicable: string;
+      description: string;
+      dueDate: string;
+      owner: string;
+      confirmed: string;
+      dismissed: string;
+      undecided: string;
+      save: string;
+    };
+    tasks: {
+      title: string;
+      empty: string;
+    };
+    transcript: {
+      open: string;
+      title: string;
+      empty: string;
+      language: string;
+      languages: {
+        en: string;
+        ta: string;
+        kn: string;
+      };
+    };
+    source: {
+      voice: string;
+      order: string;
+      manual: string;
+    };
+    confirm: string;
+    saveManual: string;
+    shortcut: string;
+    blocked: {
+      nextDate: string;
+      summary: string;
+      conflict: string;
+      obligation: string;
+    };
+    done: string;
+    failed: string;
+    forbidden: string;
+    delegated: string;
+  };
   error: {
     title: string;
     description: string;

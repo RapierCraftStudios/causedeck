@@ -55,14 +55,14 @@ export function SourceCompare({
             role="group"
             aria-label={side.label}
             data-chosen={chosen === key ? '' : undefined}
-            className="border-border grid gap-2 rounded-md border p-3 data-[chosen]:border-primary"
+            className="border-border data-[chosen]:border-primary grid gap-2 rounded-md border p-3"
           >
             <p className="text-muted-foreground text-xs">{side.label}</p>
             <p className="text-base font-medium tabular-nums">{side.value}</p>
             <div>{side.source}</div>
             <Button
               type="button"
-              variant={chosen === key ? 'default' : 'outline'}
+              variant={chosen === key ? 'primary' : 'outline'}
               aria-pressed={chosen === key}
               disabled={disabled}
               onClick={() => {

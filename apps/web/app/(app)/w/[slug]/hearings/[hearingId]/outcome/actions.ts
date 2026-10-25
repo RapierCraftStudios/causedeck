@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/filename-case -- the route segment `[hearingId]` is fixed by the issue's path */
 'use server';
 // Hearing outcome server actions (#62, PRD EX-3). Both go through `workspaceAction`: zod input
 // (the validators' schema plus the workspace), session, membership and `matter.write`, so a viewer

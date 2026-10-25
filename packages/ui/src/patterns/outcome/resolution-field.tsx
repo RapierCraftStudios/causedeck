@@ -70,7 +70,8 @@ export function ResolutionField({
   const errorId = useId();
   const pressed = (kind: Resolution['kind'], manual?: boolean) =>
     resolution.kind === kind &&
-    (kind !== 'value' || (resolution.kind === 'value' && (resolution.source === 'manual') === !!manual));
+    (kind !== 'value' ||
+      (resolution.kind === 'value' && (resolution.source === 'manual') === !!manual));
   return (
     <fieldset
       data-slot="resolution-field"
@@ -83,7 +84,7 @@ export function ResolutionField({
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
-            variant={pressed('value') ? 'default' : 'outline'}
+            variant={pressed('value') ? 'primary' : 'outline'}
             aria-pressed={pressed('value')}
             onClick={() => {
               onResolve({ kind: 'value', value: proposed, source: 'proposal' });
@@ -117,7 +118,7 @@ export function ResolutionField({
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
-          variant={pressed('none') ? 'default' : 'outline'}
+          variant={pressed('none') ? 'primary' : 'outline'}
           aria-pressed={pressed('none')}
           onClick={() => {
             onResolve({ kind: 'none' });
@@ -127,7 +128,7 @@ export function ResolutionField({
         </Button>
         <Button
           type="button"
-          variant={pressed('deferred') ? 'default' : 'outline'}
+          variant={pressed('deferred') ? 'primary' : 'outline'}
           aria-pressed={pressed('deferred')}
           onClick={() => {
             onResolve({ kind: 'deferred' });

@@ -171,6 +171,10 @@ describe('@causedeck/ui', () => {
       'SourceCompare',
       'SourceText',
       'ConfirmBar',
+      'SheetPage',
+      'SectionLabel',
+      'ProvenanceLink',
+      'ReadinessMeter',
     ]) {
       expect(ui, name).toHaveProperty(name);
       expect(patterns[name]).toBe((ui as Record<string, unknown>)[name]);

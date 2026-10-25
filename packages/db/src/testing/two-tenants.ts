@@ -35,7 +35,11 @@ import {
   ssoProvider,
 } from '../schema/enterprise.ts';
 import { portfolio, portfolioCase, portfolioPanelAdvocate } from '../schema/portfolio.ts';
-import { whatsappInboundMessage, whatsappLink, whatsappOtpChallenge } from '../schema/whatsapp-link.ts';
+import {
+  whatsappInboundMessage,
+  whatsappLink,
+  whatsappOtpChallenge,
+} from '../schema/whatsapp-link.ts';
 import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';

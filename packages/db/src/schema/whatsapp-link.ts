@@ -101,9 +101,6 @@ export const whatsappInboundMessage = tenantTable(
       t.workspaceId,
       t.providerMessageId,
     ),
-    check(
-      'whatsapp_inbound_message_status_chk',
-      sql`status in ('received', 'stored', 'dropped')`,
-    ),
+    check('whatsapp_inbound_message_status_chk', sql`status in ('received', 'stored', 'dropped')`),
   ],
 );

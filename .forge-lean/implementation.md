@@ -47,3 +47,7 @@ Second report of `turbo: command not found` (exit 127): host PATH only. With `no
 ## CI tenancy fix
 
 `packages/db` cross-tenant `tables.test.ts` failed for `memory_item`: the seeded row was user-scope, so the restrictive `memory_item_owner_scope` policy hid it from the second actor (`uboth`), and the "A can read its own row" count was 0. The seed (`packages/db/src/seed/memory-fixtures.ts`) now writes a workspace-scope item. No policy change. `src/__tests__/cross-tenant` passes for the memory tables.
+
+## CI tenancy fix (2)
+
+The `tenancy` job's last step, `pnpm test:export-coverage`, failed: the five new memory tables (`memory_item`, `memory_proposal`, `memory_embedding`, `memory_usage`, `memory_pause`) had neither an exporter nor an exclusion. They are now in `EXPORT_EXCLUSIONS` (`packages/core/src/lifecycle/export/registry.ts`), each with a reason: the values are sealed and role-scoped, so the decrypted export is `exportMemory`; the rest are derived or content-free. `export-coverage.test.ts`, the db cross-tenant and rls suites pass.

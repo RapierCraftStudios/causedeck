@@ -31,3 +31,6 @@ The ten flagged apps/admin and apps/web tests list no db schema tables (none nam
 
 ### Merge-check failure (turbo: command not found)
 No code conflict: the failing check only ran `turbo` outside PATH (exit 127). Re-ran `pnpm turbo run typecheck --filter='...[base]'`: 0 TS errors; every package passed except `@causedeck/web`, which died with a V8 heap OOM on the shared host (environment, not a type error). V1-V3 pass; V4 is skipped locally (the cross-tenant suite skips without its database), left to CI. No source change was needed.
+
+### Merge re-check
+The merged-tree failure was `turbo: command not found` (exit 127): `turbo` is not on PATH, not a code conflict. Run via `pnpm exec turbo`, typecheck passes for 22 of 23 packages; `@causedeck/web` hit a V8 heap OOM under the default heap and passes (rc 0, no TS errors) with `NODE_OPTIONS=--max-old-space-size=6144`. No source change was needed.

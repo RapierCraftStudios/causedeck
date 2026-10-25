@@ -2,263 +2,310 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add packages/core/src/status (model.ts StatusSnapshot/ComponentStatus/Incident zod; publish.ts building a sanitised, HMAC-signed snapshot from health checks and getAdapterHealthSummary with documented thresholds for operational/degraded/down).",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "Scaffold the static Next app in apps/site if absent (Cloudflare Pages)",
+   "disposition": "not-applicable",
+   "evidence": "apps/site/next.config.ts:10 (output: 'export'), apps/site/package.json:2"
   },
   {
    "id": "R2",
-   "quote": "Add platform tables incident and incident_update (no workspace_id, justification comment, test they hold no tenant data) with migration.",
+   "quote": "add app/status/page.tsx (static shell + client fetch of status.json with HMAC verification, 'Status data could not be verified', stale >5 min warning, fallback 'Status unavailable, retry', skeleton, empty 'All systems operational', offline)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Add worker job status.publish (every minute, idempotent, overlap-safe, writes status/status.json to the public static path via the S3 abstraction) and STATUS_SIGNING_KEY env (dev default).",
+   "quote": "components overall-banner, component-row, uptime-strip, incident-list, subscribe-links (+ stories)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Pre-stage every shared registry here: schema index, core index and cross-tenant registry (NOT_A_SERVICE or SERVICE_TESTS), core-domains doc, worker registry and schedules tests, i18n namespace and catalog test.",
+   "quote": "app/status/history/page.tsx and app/status/feed.xml/route.ts (RSS and Atom sanitised like the JSON)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Acceptance: snapshot schema, sanitiser fixtures test, adapter threshold mapping tests, signature test, idempotent publish and stale detection (api test), court wording 'Parsing of documents you share'.",
+   "quote": "Text+icon status, live region, IST and UTC timestamps, light and dark.",
    "disposition": "deliver",
    "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "Depends on sub-issue 1 for the snapshot schema.",
+   "disposition": "not-applicable",
+   "evidence": "packages/core/src/status/model.ts:8 (#769 merged on the base)"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/status/model.ts",
-   "change": "zod schemas + types StatusSnapshot, ComponentStatus (operational|degraded|down), Incident, IncidentUpdate; snapshot has version, generatedAt, components[], incidents[], signature field",
-   "requirements": [
-    "R1",
-    "R5"
-   ]
-  },
-  {
-   "id": "D2",
-   "path": "packages/core/src/status/publish.ts",
-   "change": "thresholds (documented constants: failed+degraded share of runs over a window mapped to operational/degraded/down; no runs = operational), sanitise() allowlist projection, canonical JSON + HMAC-SHA256 sign/verify with STATUS_SIGNING_KEY, buildSnapshot(deps) from health checks + getAdapterHealthSummary, publishStatus (skips write when unsigned-content hash unchanged), isStale(snapshot, now, maxAgeSec). Court component label 'Parsing of documents you share'.",
-   "requirements": [
-    "R1",
-    "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/core/src/status/index.ts",
-   "change": "barrel for the status domain; export from packages/core/src/index.ts and add './status' to packages/core/package.json exports",
-   "requirements": [
-    "R1",
-    "R4"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/core/src/status/status.test.ts",
-   "change": "tests: snapshot schema, sanitiser fixtures (no hostnames/errors/workspace ids leak), threshold mapping per adapter, signature valid/tampered/wrong key, idempotent publish (second identical run does not put), stale detection, court wording",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/core/src/jobs/definitions/status-publish.ts",
-   "change": "defineJob name 'system.status.publish' (NOT status.poll, which is case-watch), schema { workspaceId: null optional }, concurrency 1, singleton key 'status-publish' policy 'stately', schedule cron '* * * * *'; handler calls publishStatus with createObjectStoreFromEnv",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "import and register statusPublish (list and tuple type); also export from packages/core/src/jobs/index.ts",
-   "requirements": [
-    "R3",
-    "R4"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/db/src/schema/status.ts",
-   "change": "tables incident (id, title, severity, state, component, started_at, resolved_at, created_by staff ref optional, timestamps) and incident_update (id, incident_id fk, state, body, created_at); no workspace_id; justification comment that they hold only public platform status text; export from schema/index.ts",
-   "requirements": [
-    "R2",
-    "R4"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/db/migrations/20261025050000_status_incident.sql",
-   "change": "CREATE TABLE incident, incident_update plus grants consistent with other global tables; regenerate meta/20261025050000_snapshot.json and _journal.json (renumber if the base took the number)",
+   "path": "apps/site/lib/status/model.ts",
+   "change": "Browser-safe zod mirror of core's statusSnapshotSchema (same fields/limits as packages/core/src/status/model.ts), COURT label, STALE_AFTER_SEC=300, component display copy keyed by id",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D9",
-   "path": "packages/db/src/conventions.ts",
-   "change": "add 'incident' and 'incident_update' to GLOBAL_TABLES",
+   "id": "D2",
+   "path": "apps/site/lib/status/verify.ts",
+   "change": "canonicalJson (identical algorithm to publish.ts canonicalStatusJson) and async verifySnapshot(snapshot,key) using crypto.subtle HMAC-SHA256 with constant-time compare; no node: imports",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "apps/site/lib/status/state.ts",
+   "change": "Pure loader: loadStatus(fetch, url, key, now) -> {kind:'ok'|'stale'|'unverified'|'unavailable'|'empty'}; stale when now-generatedAt>300s; unverified on bad schema or signature; unavailable on network/HTTP error; empty (no incidents, all operational) renders 'All systems operational'; offline detection hook helper",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "apps/site/lib/status/format.ts",
+   "change": "formatIst/formatUtc timestamps (Asia/Kolkata and UTC, Intl), uptime-strip day buckets derived from incidents over INCIDENT_WINDOW (30 days), status label+icon name maps",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "apps/site/lib/status/feed.ts",
+   "change": "buildRss and buildAtom from a verified snapshot: XML-escape every field, only allowlisted fields, empty feed for unverified/unavailable data",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "apps/site/lib/status/status.test.ts",
+   "change": "Tests: fixture signed with a known key matches core's output byte-for-byte; tampered body/signature rejected; stale at 301s and not at 300s; all state kinds; IST/UTC strings; feed escaping (\u003c, &, CDATA end, control chars) and RSS+Atom well-formed; court wording",
    "requirements": [
     "R2",
-    "R4"
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "apps/site/components/status/status-view.tsx",
+   "change": "'use client' view: fetches via loadStatus in useEffect, skeleton, retry button ('Status unavailable, retry'), unverified Alert ('Status data could not be verified'), stale warning, offline notice (online/offline events), aria-live=polite region for status changes",
+   "requirements": [
+    "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "apps/site/components/status/overall-banner.tsx",
+   "change": "Overall banner: icon + text (never colour alone), 'All systems operational' empty state, role=status",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "apps/site/components/status/component-row.tsx",
+   "change": "Component row with icon+text state, localised-by-id name (court = 'Parsing of documents you share')",
+   "requirements": [
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/db/src/index.test.ts",
-   "change": "add both tables to the root table list; add a test (or new packages/db/src/__tests__/status-schema.test.ts) asserting neither has a workspace_id column and neither column set can hold tenant data",
+   "path": "apps/site/components/status/uptime-strip.tsx",
+   "change": "30-day strip with per-day text alternative (accessible list), not colour only",
    "requirements": [
-    "R2",
-    "R4"
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/storage/src/keys.ts",
-   "change": "add a narrow public-object key seam (e.g. publicObjectKey('status/status.json') allowlisted, branded as ObjectKey) so ObjectStore.put can write the public static path; verify s3-provider.ts and memory-provider.ts accept it and extend them if they re-parse keys; export from index.ts; add a test",
+   "path": "apps/site/components/status/incident-list.tsx",
+   "change": "Incident list with updates, each timestamp in IST and UTC via \u003ctime>",
    "requirements": [
-    "R3"
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/config/src/env/schema.ts",
-   "change": "add STATUS_SIGNING_KEY (secret: true, devDefault placeholder constant like DEV_BETTER_AUTH_SECRET, min length enforced in production); update .env.example via the generator and the env tests",
+   "path": "apps/site/components/status/subscribe-links.tsx",
+   "change": "Links to /status/feed.xml (RSS) and /status/atom.xml (Atom)",
    "requirements": [
-    "R3"
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add status domain to CORE_DOMAIN_DEPENDENCIES (court, storage-free imports only through index.ts); jobs gains status dependency; mirror in docs/engineering/core-domains.md (table row, mermaid, dependency table)",
+   "path": "apps/site/components/status/status.stories.tsx",
+   "change": "Stories for the five components and status-view states (operational, degraded, down, stale, unverified, unavailable, skeleton, empty), light and dark via existing theme class",
    "requirements": [
-    "R4"
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D14",
-   "path": "docs/engineering/core-domains.md",
-   "change": "document the status domain and its edges",
+   "path": "apps/site/components/status/status-components.test.tsx",
+   "change": "jsdom render tests (// @vitest-environment jsdom): text+icon, aria-live, IST+UTC, retry, unverified and stale copy. Only if jsdom/@testing-library are added (see K3); otherwise use react-dom/server renderToString in node and drop jsdom",
    "requirements": [
-    "R4"
+    "R2",
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "register every new runtime export of @causedeck/core: NOT_A_SERVICE with reasons (pure/system job body/constant/job definition/no tenant data); getAdapterHealthSummary-style SERVICE_TESTS only if a function reads tenant tables (none expected)",
+   "path": "apps/site/app/status/page.tsx",
+   "change": "Static shell (metadata via pageMetadata, h1) rendering StatusView; no data at build",
    "requirements": [
-    "R4"
+    "R2"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "add 'system.status.publish' to the expected job list",
+   "path": "apps/site/app/status/history/page.tsx",
+   "change": "History page: same client fetch, shows resolved incidents (30 days) with IST/UTC",
    "requirements": [
-    "R3",
     "R4"
    ]
   },
   {
    "id": "D17",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "add 'system.status.publish' to the scheduled list and the cron table ('* * * * *')",
+   "path": "apps/site/app/status/feed.xml/route.ts",
+   "change": "export const dynamic='force-static'; GET returns RSS 2.0 (application/rss+xml) built at build time from verified status.json (empty feed when unavailable)",
    "requirements": [
-    "R3",
     "R4"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'status' to NAMESPACES; create messages/{en,kn,ta}/status.json (component names incl. 'Parsing of documents you share', state labels); update __tests__/catalog.test.ts top-level key list; regenerate generated/** with pnpm --filter @causedeck/i18n i18n:types",
+   "path": "apps/site/app/status/atom.xml/route.ts",
+   "change": "force-static GET returning Atom 1.0 (application/atom+xml) from the same builder",
    "requirements": [
-    "R4",
-    "R5"
+    "R4"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/site/lib/env.ts",
+   "change": "Add NEXT_PUBLIC_STATUS_URL (default '/status/status.json', absolute https or root-relative) and NEXT_PUBLIC_STATUS_VERIFY_KEY (default DEV status key string) to siteEnvSchema/readSiteEnv/siteEnv, empty counts as unset",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/site/scripts/write-headers.ts",
+   "change": "baseCsp connect-src also allows the origin of NEXT_PUBLIC_STATUS_URL when absolute",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "apps/site/components/site-footer.tsx",
+   "change": "Add 'Status' link (/status/) in a footer column",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "apps/site/app/sitemap.ts",
+   "change": "Add /status and /status/history entries",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "apps/site/README.md",
+   "change": "Document the two new env vars, the verify-key caveat and the build-time feed refresh",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "apps/site/package.json",
+   "change": "Only if K3 is taken: add @storybook/nextjs-vite, storybook (catalog:) devDependencies and storybook scripts, plus apps/site/.storybook/{main,preview}.ts and pnpm-lock.yaml update; no new workspace-package dependency",
+   "requirements": [
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "system.status.poll (case-watch) job name, registration and tests: packages/core/src/jobs/definitions/status-poll.ts"
+   "what": "packages/core/src/status/* (model, canonical JSON, signing) stay unchanged; the site mirrors them and must stay byte-compatible"
   },
   {
    "id": "P2",
-   "what": "getAdapterHealthSummary signature and row shape: packages/core/src/court/adapter-health.ts:20"
+   "what": "apps/site stays a pure static export: no middleware, rewrites, headers() or async redirects (apps/site/src/site-scaffold.test.ts:24-33)"
   },
   {
    "id": "P3",
-   "what": "Workspace object keys ws/\u003cuuid>/\u003ckind>/\u003cyyyy>/\u003cuuid>: objectKey/parseObjectKey behaviour in packages/storage/src/keys.ts stays strict; the public seam must not accept arbitrary paths"
+   "what": "CSP stays script-hash based with no inline-script allowance (apps/site/scripts/write-headers.ts); existing buildHeaders signature and output for current inputs unchanged"
   },
   {
    "id": "P4",
-   "what": "Existing migrations and journal ordering in packages/db/migrations; tenant RLS catalog in packages/db/src/__tests__/rls/sql.test.ts is unchanged (new tables are global)"
+   "what": "Rule 36 copy lint (apps/site/scripts/rule36-lint.ts) must pass on all new copy"
+  },
+  {
+   "id": "P5",
+   "what": "Existing env defaults and readSiteEnv behaviour in apps/site/lib/env.ts"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/status src/jobs/definitions/status-poll.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/site exec vitest run lib/status src/site-scaffold.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/storage exec vitest run src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V3",
-   "command": "pnpm --filter @causedeck/config exec vitest run src/env --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V4",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V6",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/status-schema.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V7",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/site-onboarding-launch"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/site-onboarding-launch  # then run the scoped typecheck/test/lint commands it prints"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Job named system.status.publish, schema workspaceId null/optional, singleton stately",
-   "justification": "system jobs must start 'system.' (packages/core/src/jobs/define.ts:90); overlap-safety copies notices-poll.ts:79; system.status.poll is already taken by case-watch",
+   "choice": "Mirror the snapshot schema and canonical-JSON/HMAC logic inside apps/site/lib/status instead of importing @causedeck/core/status",
+   "justification": "core's publish.ts imports node:crypto and the core package pulls db/storage (packages/core/src/status/publish.ts:1-34); apps/site depends only on @causedeck/ui (apps/site/package.json:25-33), and a workspace dependency on core would need an architecture-doc reason. Drift is guarded by a test fixture signed by core's algorithm (D6).",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Incident tables listed in GLOBAL_TABLES, no RLS catalog entry",
-   "justification": "notice is the precedent (packages/db/src/conventions.ts:80, index.test.ts:121); tables without workspace_id are exempt from the tenant convention",
-   "source": "precedent"
+   "choice": "HMAC verification with a public NEXT_PUBLIC_STATUS_VERIFY_KEY via WebCrypto; document that it proves integrity against corruption, not against a forger who can read the key",
+   "justification": "The issue prescribes client-side HMAC verification of the HS256 snapshot (packages/core/src/status/model.ts:55-61); the site has no secrets (apps/site/README.md:4, lib/env.ts:1-2).",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Public path written through a new narrow key seam in @causedeck/storage rather than a cast",
-   "justification": "ObjectKey is branded and parsed strictly to workspace paths (keys.ts:8,47,67); no new workspace dependency since core already depends on @causedeck/storage (packages/core/package.json:70)",
-   "source": "precedent"
+   "choice": "Stories: write CSF stories next to the components; add a site Storybook (devDeps, .storybook) only if it can be done without a new workspace package. If not, keep stories typed with a local minimal Meta type and note that the runner is a follow-up",
+   "justification": "apps/site has no Storybook today; packages/ui/.storybook/main.ts and apps/web/.storybook show the config; Storybook never runs locally (CLAUDE.md).",
+   "source": "doc"
   },
   {
    "id": "K4",
-   "choice": "STATUS_SIGNING_KEY with a dev default modelled on BETTER_AUTH_SECRET",
-   "justification": "packages/config/src/env/schema.ts:22,150-154",
+   "choice": "Feed routes read status.json at build time (force-static) and degrade to an empty verified-only feed; add a sibling atom.xml route since a route.ts yields one content type",
+   "justification": "Static export has no runtime (apps/site/next.config.ts:9-10); pattern at apps/site/app/robots.ts:5. Feed freshness depends on rebuilds (documented in D23).",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "Use @causedeck/ui badge, alert, skeleton, card subpaths; no new dependency",
+   "justification": "Existing exports in packages/ui/package.json; already a site dependency (apps/site/package.json:25).",
    "source": "precedent"
   }
  ]

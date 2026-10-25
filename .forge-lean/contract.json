@@ -2,88 +2,97 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Postgres archives WAL continuously through WAL-G; the time since the last archived WAL is below 5 minutes in steady state and is exposed as a metric [type:api]",
+   "quote": "The Stage B runbook lists the triggers (p95 above 400 ms, DB CPU above 60%, more than 1,000 seats), pre-checks, a cutover timeline that avoids the 18:00 to 23:00 and 07:00 to 10:30 IST freeze windows, rollback at every step, and communication templates [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "A nightly base backup runs, is verified with `wal-g backup-list`, and the retention policy keeps 14 daily base backups plus WAL for 14 days of PITR, and 8 weekly backups, configurable [type:api]",
+   "quote": "Terraform modules for RDS, S3, ALB, and optional Cloudflare LB validate and plan in CI with dummy credentials; region variables are validated to India regions only (`ap-south-1`, `ap-south-2`) [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Backups are encrypted client-side; restoring without the key fails; the key is not stored on the database host disk unprotected and its custody is documented [type:manual]",
+   "quote": "The RDS module enables encryption with a customer-managed KMS key, automated backups with PITR, a read replica in Hyderabad (`ap-south-2`), pgvector parameter group and private networking only (no public endpoint, policy test) [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Backup storage and the second MinIO or bucket location are in India regions only; Terraform or config validation rejects non-India endpoints [type:unit]",
+   "quote": "The S3 module blocks public access, enables versioning and SSE-KMS, applies per-workspace prefix IAM conditions, and replicates to a second India region; a policy test asserts all four [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "MinIO replication copies new objects to the second India location within 24 hours (nightly replicate) with object versioning and delete protection, verified by a test object [type:api]",
+   "quote": "The ALB is the default multi-node entry; the Cloudflare LB module cannot be enabled without `residency_decision_ref` and a documented approval, matching the DNS-only app rule [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "The restore drill restores the latest backup plus WAL to a specified timestamp into an isolated container, completes verification (`amcheck`, row-count manifest, RLS enabled on every tenant table, cross-tenant query returns zero rows) and writes a JSON report [type:api]",
+   "quote": "`scale-readiness-check.ts` verifies the day-one rules (stateless containers, state only in Postgres and S3, env-only config, health and readiness endpoints, idempotent jobs, backward-compatible migrations) and fails CI if a rule regresses [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "Measured RPO is at most 15 minutes and measured RTO for the seeded dataset is recorded each drill and compared with the 4-hour target; a breach opens an alert [type:api]",
+   "quote": "`packages/storage` passes the same conformance suite against MinIO and an S3-compatible target, proving the provider swap needs only env changes [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "The weekly drill runs automatically against staging and the monthly drill is signed off by a human recorded in `infra/runbooks/drills/` with date, duration and findings [type:manual]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": ".github/workflows/restore-drill.yml (weekly schedule); monthly sign-off files in infra/runbooks/drills/ (human)"
+   "quote": "A Postgres migration rehearsal on staging data (logical replication from the compose Postgres to a scratch Postgres) completes with row-count and RLS verification and measures cutover downtime, recorded in the runbook [type:manual]",
+   "disposition": "post-deploy",
+   "why": "Needs staging data and a scratch Postgres; cannot run on the shared host or in the lane. The lane delivers migrate-postgres-to-rds.sh (with row-count and RLS verification) and a rehearsal-results section in the runbook; the run is recorded after deploy."
   },
   {
    "id": "R9",
-   "quote": "A failed backup, stale WAL or failed drill triggers an alert through the monitoring stack in #102 within 10 minutes [type:api]",
-   "disposition": "defer",
-   "why": "Alert routing and the monitoring stack are #102 (open, listed out of scope in #101). This change delivers the signals: the four metrics, a system.backup.health job that runs every minute and logs/errors on failed backup, stale WAL (>5 min) or failed/RTO-breaching drill, and documents the alert thresholds in the runbook for #102 to wire."
+   "quote": "A MinIO to S3 sync rehearsal with checksum verification passes on seeded documents [type:manual]",
+   "disposition": "post-deploy",
+   "why": "Needs seeded documents on staging MinIO and a scratch S3 target; the lane delivers migrate-minio-to-s3.sh with a checksum-verify mode and a guarded shell test using stubs, the real rehearsal is recorded after deploy."
   },
   {
    "id": "R10",
-   "quote": "Restoring never overwrites production in place without the explicit `--i-understand` flag and a fresh target volume; the script refuses otherwise [type:unit]",
+   "quote": "Envelope encryption path is documented for the KMS move: KEK moves from env and secret manager to KMS with DEK re-wrap, referencing the key rotation runbook [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Crypto-erase interplay is documented and tested: after a workspace deletion job plus the key-backup retention window, the workspace DEK cannot be recovered from backups [type:manual]",
+   "quote": "Stage C document states the decision criteria for ECS Fargate vs k3s, Redis, OpenSearch and PowerSync, each with measurable triggers, and is reviewed in an ADR [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "The runbook describes the DR scenario of losing the VPS: provision from Terraform, restore from WAL-G, point DNS, expected duration, and has been rehearsed at least once before launch [type:manual]",
+   "quote": "A cost model compares Stage A, B and C per 1,000 seats in INR and checks the variable cost target per seat (PRD §8) [type:manual]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Runbook is delivered here; the rehearsal needs the real VPS (#108) and storage credentials (#116) and is recorded in infra/runbooks/drills/ before launch"
+   "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "A backup that has never been restored is not a backup, so the drill runs weekly in CI-like automation and monthly with a human sign-off.",
+   "quote": "Nothing in this issue is applied automatically: apply requires the manual gated workflow from #99 [type:manual]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": ".github/workflows/restore-drill.yml weekly job; monthly sign-off by a human"
+   "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "backups contain privileged client data: encryption in transit and at rest, least-privilege storage credentials (write-only for the archiver, separate read credentials for restore), no public buckets, access logged.",
+   "quote": "`.github/workflows/terraform.yml` (extend to plan Stage B modules with dummy vars)",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "This issue produces the runbook, Terraform modules (plan-able, not applied), and a migration rehearsal checklist. It does not perform the migration.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "`infra/terraform/modules/aws-ecs-fargate/` and `aws-elasticache/` (Stage C skeletons, `enabled=false` default)",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -91,354 +100,239 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "infra/docker/postgres/postgresql.conf",
-   "change": "Keep archive_mode/archive_timeout=60; add archive_timeout comment tie to 5-minute SLO; add restore_command comment for recovery; no statement logging changes",
+   "path": "infra/runbooks/stage-b-scale-out.md",
+   "change": "Triggers, pre-checks, step-by-step cutover timeline outside IST freeze windows 18:00-23:00 and 07:00-10:30, rollback per step, communication templates, migration rehearsal checklist and rehearsal-results section (to be filled post-deploy), KMS move with KEK->KMS DEK re-wrap referencing storage.md rotation and restore.md, statement that apply only via the gated terraform.yml workflow.",
    "requirements": [
-    "R1"
+    "R1",
+    "R8",
+    "R9",
+    "R10",
+    "R13",
+    "R15"
    ]
   },
   {
    "id": "D2",
-   "path": "infra/docker/postgres/wal-g.env.example",
-   "change": "New: WALG_S3_PREFIX, AWS_ENDPOINT, separate write-only archiver vs read restore credential variables, WALG_LIBSODIUM_KEY_PATH (key file mounted from a root-owned 0600 secret/tmpfs, never in the image or pgdata), WALG_COMPRESSION_METHOD, retention vars (BACKUP_RETAIN_DAILY=14, BACKUP_RETAIN_WEEKLY=8, WAL days=14)",
+   "path": "infra/runbooks/stage-c-orchestration.md",
+   "change": "ECS Fargate vs k3s decision record, per-queue worker autoscaling, Redis, OpenSearch and PowerSync criteria each with measurable triggers; cost model Stage A/B/C per 1,000 seats in INR checked against the PRD §8 variable-cost target (docs/product/03-prd.md:335).",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R14"
+    "R11",
+    "R12"
    ]
   },
   {
    "id": "D3",
-   "path": "infra/docker/compose.prod.yml",
-   "change": "postgres: mount libsodium key as a compose secret/tmpfs file and pass WALG_* env; minio-init: create causedeck-wal bucket with versioning and a separate causedeck-ops bucket for reports; add `backup` profile service (one-shot, same postgres image, runs the backup scripts via docker compose run); keep read_only/non-root/limits intact",
+   "path": "docs/adr/0037-stage-b-c-scale-path.md",
+   "change": "ADR: scale path, ALB-default vs Cloudflare LB residency trade-off (D-037), ECS vs k3s, review of Stage C criteria.",
    "requirements": [
-    "R1",
-    "R3",
     "R5",
-    "R14"
+    "R11"
    ]
   },
   {
    "id": "D4",
-   "path": "infra/docker/env/prod.env.example",
-   "change": "Add backup/replication/second-location endpoint, key-path and retention variables (no secrets)",
+   "path": "infra/terraform/modules/aws-rds-postgres/",
+   "change": "main/variables/outputs/versions/README: RDS Postgres in ap-south-1 with CMK KMS key, backup_retention_period>0 (PITR), Multi-AZ option, parameter group (pgvector via shared_preload/extension notes), private subnets, publicly_accessible=false, force TLS, read replica in ap-south-2 (provider alias); region variables validated to ap-south-1/ap-south-2; outputs private endpoint and replica endpoint.",
    "requirements": [
     "R2",
-    "R4",
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "infra/docker/env/staging.env.example",
-   "change": "Same additions as prod example, CI/staging defaults to local MinIO",
+   "path": "infra/terraform/modules/aws-s3-documents/",
+   "change": "Bucket in ap-south-1 with public access block, versioning, SSE-KMS, per-workspace prefix IAM policy conditions, lifecycle, cross-region replication to ap-south-2; India-only region validation; README, outputs bucket names.",
    "requirements": [
     "R2",
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "infra/scripts/backup/lib/india-guard.sh",
-   "change": "New: sourceable function `assert_india_endpoint \u003curl>` that accepts only an allow-list of India endpoints/regions (ap-south-1, ap-south-2, in-*, local MinIO host names for CI/dev when ALLOW_LOCAL_ENDPOINTS=1) and exits non-zero otherwise; used by every backup/restore/replicate script",
-   "requirements": [
     "R4"
    ]
   },
   {
-   "id": "D7",
-   "path": "infra/scripts/backup/walg-basebackup.sh",
-   "change": "New: guard endpoint, `wal-g backup-push`, verify with `wal-g backup-list` (fail if new backup missing), mark Sunday backup permanent (weekly), `wal-g delete retain FULL $BACKUP_RETAIN_DAILY` and expire weekly permanent backups older than $BACKUP_RETAIN_WEEKLY weeks, write status JSON {lastBackupAt,ok} to the ops bucket; exits non-zero on failure",
+   "id": "D6",
+   "path": "infra/terraform/modules/aws-alb-multinode/",
+   "change": "ALB, target groups with health check on /readyz, TLS listener, WAF off by default; India region validation; outputs ALB DNS name.",
    "requirements": [
     "R2",
-    "R3"
+    "R5"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "infra/terraform/modules/cloudflare-lb/",
+   "change": "Optional LB gated by enable_cloudflare_lb (default false) and non-empty residency_decision_ref via variable validation/precondition, mirroring #99 app_proxied rule.",
+   "requirements": [
+    "R2",
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "infra/scripts/backup/walg-wal-push-check.sh",
-   "change": "New: read pg_stat_archiver.last_archived_time, compute walg_last_archive_age_seconds, write status JSON to the ops bucket, exit non-zero and print ALERT if age > 300 s",
+   "path": "infra/terraform/modules/aws-ecs-fargate/",
+   "change": "Stage C skeleton with enabled=false default (count gated), region validation, README. Also create sibling infra/terraform/modules/aws-elasticache/ with the same shape.",
    "requirements": [
-    "R1"
+    "R16",
+    "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "infra/scripts/backup/minio-replicate.sh",
-   "change": "New: guard both endpoints, `mc mirror`/replicate wal+object buckets to the second India location with versioning, object lock/delete protection, put and verify a canary test object, write status JSON; intended nightly",
+   "path": "infra/terraform/envs/stage-b/",
+   "change": "versions/variables/main/outputs and terraform.tfvars.example (dummy values) composing the Stage B modules; no backend committed; ALB default, cloudflare-lb off.",
    "requirements": [
-    "R4",
-    "R5"
+    "R2",
+    "R5",
+    "R13",
+    "R15"
    ]
   },
   {
    "id": "D10",
-   "path": "infra/docker/minio/replication.json",
-   "change": "New: bucket versioning + replication rule + object-lock/retention config consumed by minio-replicate.sh and minio-init",
+   "path": ".github/workflows/terraform.yml",
+   "change": "Add stage-b to static validate loop and to the plan matrix with dummy AWS credentials; keep apply/drift jobs unchanged (no automatic apply; stage-b not an apply option unless it stays behind the same gated environment).",
    "requirements": [
-    "R5"
+    "R13",
+    "R14",
+    "R2"
    ]
   },
   {
    "id": "D11",
-   "path": "infra/scripts/restore/restore-drill.sh",
-   "change": "New: fetch latest base backup + WAL to --target-time (default now minus 1 min) into an isolated throwaway container/network on a fresh volume using read credentials; run verify.sql; seed manifest compare; compute rpoSeconds (target minus last restorable WAL time) and rtoSeconds; write JSON report {startedAt,target,rtoSeconds,rpoSeconds,checks[],ok} to the ops bucket; ok=false if RPO>900 or RTO>14400 or any check fails; tear down always (trap)",
-   "requirements": [
-    "R6",
-    "R7",
-    "R3"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "infra/scripts/restore/verify.sql",
-   "change": "New: amcheck (bt_index_check on all btree indexes), row counts vs manifest (read from a psql variable/table), RLS enabled and forced on every table with workspace_id, canned cross-tenant query as app role under workspace A returns zero rows for workspace B, and a check that a deleted workspace has no wrapped DEK row",
-   "requirements": [
-    "R6",
-    "R11"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "infra/scripts/restore/restore-prod.sh",
-   "change": "New: documented PITR to --target-time; refuses unless --i-understand and a fresh, empty target data directory/volume (never the live pgdata), prints plan and asks for typed confirmation, never stops or edits the running stack",
-   "requirements": [
-    "R10",
-    "R3"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/core/src/jobs/definitions/backup-health.ts",
-   "change": "New job `system.backup.health` (cron `* * * * *`, concurrency 1, stately singleton): reads status JSON from the ops bucket via @causedeck/storage, records gauges walg_last_archive_age_seconds, walg_last_backup_age_seconds, restore_drill_last_success_timestamp, restore_drill_rto_seconds via meter(); logs error when archive age >300 s, last backup >26 h, drill older than 8 d, drill failed, or RPO/RTO over target. Reader injected for tests",
-   "requirements": [
-    "R1",
-    "R7",
-    "R9"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Register backupHealth",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/core/src/jobs/definitions/backup-health.test.ts",
-   "change": "New unit tests with a fake report reader: metrics values, each alert condition, missing report counts as stale",
-   "requirements": [
-    "R1",
-    "R7",
-    "R9"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add 'system.backup.health' to the expected definition list",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "Add 'system.backup.health' to the expected scheduled list",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register the new core exports from backup-health.ts as NOT_A_SERVICE (system job over ops-bucket reports, touches no tenant data)",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "docs/engineering/jobs.md",
-   "change": "Add system.backup.health to the schedule list and a short section",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": ".github/workflows/restore-drill.yml",
-   "change": "New: weekly cron + workflow_dispatch; SHA-pinned actions; runs restore-drill.sh against staging backups (secrets from the staging environment, #116); CI default path drills against local MinIO with a seeded dataset; uploads report artifact; fails the job on ok=false",
-   "requirements": [
-    "R6",
-    "R7",
-    "R8",
-    "R13"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "infra/scripts/backup/test/backup.test.mjs",
-   "change": "New node:test unit tests: india-guard accepts/rejects endpoints, restore-prod refuses without --i-understand and with an existing/live target, retention arithmetic, drill report schema/RPO-RTO verdict, compose/postgres config contains encryption and archive settings, verify.sql covers amcheck/RLS/cross-tenant",
+   "path": "infra/terraform/test/stage-b-policy.test.mjs",
+   "change": "Node policy tests (reuse the text block-parser pattern of policy.test.mjs): India-only region validations in all new modules, RDS encryption/KMS/PITR/replica ap-south-2/pgvector/no public endpoint, S3 four properties, ALB default and /readyz check, cloudflare-lb residency gate, ecs/elasticache enabled=false, stage-b env does not enable cloudflare-lb.",
    "requirements": [
     "R2",
     "R3",
     "R4",
-    "R6",
-    "R7",
-    "R10",
-    "R11"
+    "R5",
+    "R16"
    ]
   },
   {
-   "id": "D23",
-   "path": "infra/scripts/backup/test/pitr-integration.sh",
-   "change": "New CI-only (never run locally) compose test against local MinIO: take base backup, write rows, PITR to a timestamp, assert rows; restore without the key must fail; replicate canary object",
+   "id": "D12",
+   "path": "infra/terraform/README.md",
+   "change": "Document new modules, stage-b env, variables and the not-applied-automatically rule.",
    "requirements": [
-    "R2",
-    "R3",
-    "R5",
+    "R13",
+    "R15"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "infra/scripts/stage-b/migrate-postgres-to-rds.sh",
+   "change": "Logical-replication plan script: dry-run default, explicit --execute guard, India endpoint guard, row-count and RLS verification (reuse infra/scripts/restore/verify.sql ideas), read-only window and downtime measurement, rollback hints.",
+   "requirements": [
+    "R8",
+    "R15"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "infra/scripts/stage-b/migrate-minio-to-s3.sh",
+   "change": "rclone sync with --checksum and a verify step (rclone check), dry-run default, India region guard; also add infra/scripts/stage-b/test/stage-b-scripts.test.mjs with stubbed binaries asserting guards and dry-run behaviour.",
+   "requirements": [
+    "R9",
+    "R15"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "infra/scripts/scale-readiness-check.ts",
+   "change": "Erasable-TS script (run via node --experimental-strip-types) exporting pure rule checkers: no local-disk writes outside volumes in compose, /healthz and /readyz routes present, env-only config (no hardcoded endpoints), job idempotency tests present, expand/migrate/contract migration check (no destructive DROP/rename in a single migration without marker); CLI exits non-zero on any failure. Add infra/scripts/scale-readiness-check.test.ts (picked up by test:ci-scripts) with passing and regressing fixtures, and a root package.json script entry `scale-readiness`.",
+   "requirements": [
     "R6"
    ]
   },
   {
-   "id": "D24",
-   "path": "infra/scripts/compose-prod.test.mjs",
-   "change": "Extend static checks: postgres has WALG key/env, minio-init versions the wal bucket, backup service is non-root with limits",
+   "id": "D16",
+   "path": "package.json",
+   "change": "Add script `scale-readiness` running infra/scripts/scale-readiness-check.ts with node --experimental-strip-types --no-warnings (mirrors the doctor entry at package.json:14).",
    "requirements": [
-    "R3",
-    "R5",
-    "R14"
+    "R6"
    ]
   },
   {
-   "id": "D25",
-   "path": "infra/runbooks/restore.md",
-   "change": "New: PITR procedure with restore-prod.sh, drill procedure and report reading, key custody (key sealed off-host, escrow copies, rotation, never on the DB host disk unprotected), retention policy, credentials split, alert thresholds for #102, crypto-erase interplay (DEK removed from key backups after retention window); links #103",
+   "id": "D17",
+   "path": "packages/storage/src/__tests__/s3-compatible.test.ts",
+   "change": "Run objectStoreContract against a second S3-compatible target (in-process mock server, no containers) constructed only via createObjectStoreFromEnv with different env values, next to the MinIO run in minio.test.ts; assert no code path differs beyond env. Export or add the minimal mock helper under __tests__.",
    "requirements": [
-    "R2",
-    "R3",
-    "R9",
-    "R11",
-    "R14"
+    "R7"
    ]
   },
   {
-   "id": "D26",
-   "path": "infra/runbooks/dr-hyderabad.md",
-   "change": "New: VPS loss scenario: Terraform provision (#99), restore from WAL-G in second India region, DNS cutover, expected duration vs RTO 4 h, rehearsal log requirement; links #103",
+   "id": "D18",
+   "path": "docs/engineering/storage.md",
+   "change": "Add Stage B KMS move section linking to stage-b-scale-out.md (KeyProvider KMS implementation, DEK re-wrap, rotation list).",
    "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D27",
-   "path": "infra/runbooks/drills/README.md",
-   "change": "New: monthly sign-off template (date, duration, findings, signer) and rehearsal record format; first entries added by the human",
-   "requirements": [
-    "R8",
-    "R12"
-   ]
-  },
-  {
-   "id": "D28",
-   "path": "infra/runbooks/workspace-deletion.md",
-   "change": "Update Backups section to point to restore.md crypto-erase section with the retention window",
-   "requirements": [
-    "R11"
-   ]
-  },
-  {
-   "id": "D29",
-   "path": "infra/docker/README.md",
-   "change": "Add backup, replication and restore drill section",
-   "requirements": [
-    "R1",
-    "R2",
-    "R5"
+    "R10"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing compose.prod.yml hardening (non-root, read_only, limits, healthchecks, networks) and infra/scripts/compose-prod.test.mjs assertions"
+   "what": "Existing #99 modules and envs/{prod,staging} behaviour, including app_proxied/residency_decision_ref gating (infra/terraform/envs/*, test/policy.test.mjs, residency.tftest.hcl)."
   },
   {
    "id": "P2",
-   "what": "Postgres archive_mode=on, archive_command='wal-g wal-push %p', wal_level=replica, no statement logging in infra/docker/postgres/postgresql.conf; image build args in infra/docker/postgres/Dockerfile unchanged"
+   "what": "terraform.yml apply and drift jobs stay manual/gated and limited to staging and prod (.github/workflows/terraform.yml:155-190)."
   },
   {
    "id": "P3",
-   "what": "Existing job names, schedules and registry order in packages/core/src/jobs/registry.ts (only append the new job); migrate.sh / minio-init existing bucket behaviour"
+   "what": "Public API of @causedeck/storage (createS3ObjectStore, createObjectStoreFromEnv, ObjectStore contract) in packages/storage/src/s3-provider.ts and index.ts; no new @causedeck/core runtime exports (cross-tenant registry untouched)."
   },
   {
    "id": "P4",
-   "what": "Workspace deletion semantics in infra/runbooks/workspace-deletion.md: DEK zeroed before purge, deleted workspaces never restored from backup"
+   "what": "Stage A backup/restore scripts and runbooks from #101 (infra/scripts/backup, infra/scripts/restore, infra/runbooks/restore.md) are only referenced, not modified."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node --test infra/scripts/backup/test/backup.test.mjs infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
+   "command": "node --experimental-strip-types --no-warnings --test infra/terraform/test/policy.test.mjs infra/terraform/test/stage-b-policy.test.mjs"
   },
   {
    "id": "V2",
-   "command": "bash -n infra/scripts/backup/walg-basebackup.sh infra/scripts/backup/walg-wal-push-check.sh infra/scripts/backup/minio-replicate.sh infra/scripts/backup/lib/india-guard.sh infra/scripts/restore/restore-drill.sh infra/scripts/restore/restore-prod.sh infra/scripts/backup/test/pitr-integration.sh"
+   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/scale-readiness-check.test.ts infra/scripts/stage-b/test/stage-b-scripts.test.mjs"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/backup-health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "node --experimental-strip-types --no-warnings infra/scripts/scale-readiness-check.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/storage exec vitest run src/__tests__/s3-compatible.test.ts src/__tests__/s3-provider.test.ts --maxWorkers=1"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Job is `system.backup.health` in packages/core/src/jobs/definitions/, not `ops.backup.health` in apps/worker/src/jobs/",
-   "justification": "Non-system job names must require workspaceId (packages/core/src/jobs/define.ts:104-106); every definition lives in core and is registered in registry.ts (precedent audit-retention.ts:78)",
-   "source": "precedent"
+   "choice": "ALB (aws-alb-multinode) is the default multi-node entry; cloudflare-lb is off unless enable_cloudflare_lb and residency_decision_ref are set",
+   "justification": "Issue Root Cause and D-037 residency rule; same gating pattern as app_proxied in #99 (infra/terraform/README.md variables table).",
+   "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "No new workspace dependency: core already depends on @causedeck/storage and @causedeck/observability",
-   "justification": "packages/core/package.json:69-70",
+   "choice": "Policy tests are node text-lint tests rather than conftest/checkov custom policies",
+   "justification": "Tools not installable on the shared host (#99 PR #790 fact); precedent infra/terraform/test/policy.test.mjs run by pnpm test:ci-scripts (package.json:31).",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Scripts publish status JSON to an ops bucket in MinIO; the worker job reads it, so the worker needs no docker or Postgres-archiver access",
-   "justification": "Worker has storage access already; keeps the health job testable with an injected reader",
+   "choice": "Storage provider path is packages/storage/src/s3-provider.ts and tests under src/__tests__, not providers/s3.ts",
+   "justification": "The issue's path does not exist; repo layout shows s3-provider.ts and object-store.contract.ts:23.",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Weekly retention via `wal-g backup-mark` permanent on Sunday backups, expired after 8 weeks, plus `wal-g delete retain FULL 14`",
-   "justification": "WAL-G has no native daily/weekly tiers; permanent marking keeps a base backup and its WAL until unmarked",
-   "source": "spec"
+   "choice": "ADR number 0037",
+   "justification": "Last ADR on base is docs/adr/0036-bench-facts.md.",
+   "source": "precedent"
   },
   {
    "id": "K5",
-   "choice": "Full backup→PITR integration test runs only in CI against local MinIO; local validate uses static/unit tests",
-   "justification": "CLAUDE.md: never run Docker-heavy/e2e locally on the shared host; precedent infra/docker/test/compose-smoke.sh",
+   "choice": "Rehearsals R8 and R9 are post-deploy, with scripts and runbook template delivered in lane",
+   "justification": "Require staging data and a scratch target; the host forbids Docker-heavy runs (CLAUDE.md local verification).",
    "source": "doc"
-  },
-  {
-   "id": "K6",
-   "choice": "Encryption uses WAL-G libsodium with the key file on a root-owned 0600 tmpfs/secret path, custody copies off host",
-   "justification": "Issue requirement R3 allows libsodium or GPG; key not stored unprotected on the DB host disk",
-   "source": "spec"
   }
  ]
 }

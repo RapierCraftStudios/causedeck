@@ -17,3 +17,9 @@ STATUS_SIGNING_KEY required in production (>=32 chars); any production env fixtu
 
 ## Stale-list follow-up
 Checked the flagged tests: none enumerate job definitions or db schema exports, so every symbol is recorded under not_members in result.json. No code change needed.
+
+## Merge typecheck failure (turbo: command not found)
+Exit 127 was an environment problem, not a code conflict: `turbo` is in node_modules/.bin but was not on PATH. With PATH set, `turbo run typecheck` scoped to core, db, storage, config and i18n passes (16/16 tasks). No code change was needed.
+
+### Post-merge check
+Base merged (809117c8). `turbo run typecheck` exit 127 was a missing `turbo` binary on PATH (environment), not a code error; no sibling symbol/key collisions found. Ran `pnpm turbo run typecheck` filtered to core, storage, db, config, i18n, billing, worker (+dependents): 17/17 pass. Post-merge vitest: core status/domains and storage index/keys pass.

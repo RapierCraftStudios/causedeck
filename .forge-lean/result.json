@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Fix billing prod env fixture for STATUS_SIGNING_KEY; status publish feature verified",
+ "summary": "Fix billing prod env fixture for STATUS_SIGNING_KEY; status publish feature verified; merged base, typecheck verified (turbo missing from PATH is environmental)",
  "requirements": [
   {
    "id": "R1",
@@ -75,6 +75,11 @@
    "command": "pnpm --filter @causedeck/billing exec vitest run src/__tests__/provider-select.test.ts",
    "result": "pass",
    "fails_without_fix": true
+  },
+  {
+   "command": "pnpm turbo run typecheck --filter core,storage,db,config,i18n,billing,worker",
+   "result": "pass",
+   "fails_without_fix": "unknown"
   }
  ],
  "self_review": [

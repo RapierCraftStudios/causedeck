@@ -28,3 +28,6 @@ Followed the `sources` precedent: a core write service (staff check, rows and `i
 
 ### Notes
 No migration, no env vars. The core staff gate is ops/admin; support is denied in core and by `requireStaff('status')`. `scripts/check-devdocs-freshness.sh` does not exist in this repo.
+
+### Stale-list follow-up
+Guard flagged incidentConsole (growth-page, migrations-page tests) and the incident exports (status.test.ts). None is a member: those tests mock/import only what their own page or publish.ts uses. Recorded in result.json `not_members`; no test edits needed.

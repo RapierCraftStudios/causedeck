@@ -35,11 +35,13 @@ Proposed
 - Keyboard: `j`/`k` item, `h`/`l` hall, `Enter`, `c`, `m`, `o`, `d`, `/`, `g t`, `g m`, `?`. Items use roving tabindex; plain keys are ignored while typing.
 - "Court is at item N" persists through `setCurrentItemAction` (core `setCurrentItem`, `matter.write`); the rule and dimming come from the server render, so every chamber member sees it. No swipe gestures are bound; the quick-action sheet opens on long press, Enter or Space.
 - `useCourtDayData` is the single seam for connection state and last-known data; #65 replaces its body.
+- A hall the newest parse run could not read comes from the courts read model (`getCourtsIndex`, `adapter_parse_run`); the board never fetches a list itself.
+- The bench a listing is before is cause-list content and shows on the hall header. The board has no judge analytics, rating, prediction or per-judge aggregate (D-050), and its clash copy states which items clash and nothing about order or time.
 - Carry toggling is read-only (derived carry count) until a core service and table exist.
 
 ## Consequences
 
-- The board adds no core or database change.
+- The board adds one read to core, `getListDiffs` (the newest list of a forum and date diffed against the one before it); no table or migration changes.
 - A failed hall read keeps the last known data on screen with an official-list link that opens in a new window and is never framed.
 
 ## Revisit when

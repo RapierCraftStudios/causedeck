@@ -28,3 +28,9 @@ No env vars. Expand-only migration.
 
 ### Sibling-list follow-up
 Checked the 9 flagged tests: none enumerate @causedeck/db schema exports at the flagged lines (hoisted state, unrelated mocks, fixtures), so every symbol is recorded under not_members in result.json. No test edits needed.
+
+### CI failure follow-up (test job, no log available)
+Could not reproduce. Run locally with one worker and no file parallelism: packages/db (60 files), packages/core cross-tenant + lifecycle/export + receipt/memory-erasure/step-up, packages/validators, and two apps/web action tests all pass; tsc --noEmit is clean for db, core and validators. With parallel files, core lifecycle tests hit Postgres deadlocks (40P01) in the shared `seedTwoTenants` plan/organization inserts, which look like an existing cross-file race rather than something this branch changed. No code change made.
+
+### CI follow-up
+The CI `test` job log was not available. I could not reproduce a failure locally. These pass on the branch: core `src/lifecycle` (15 files) and `src/__tests__` (13 files), db drafting-schema, conventions, migrate, lint-migrations, cross-tenant and rls (15 files), `tsc --noEmit` for validators, db, core, web and worker, and `drizzle-kit generate` (no schema changes). No code change was made. If the failure is outside these, the CI log is needed.

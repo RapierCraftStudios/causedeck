@@ -22,6 +22,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
+import { briefShare } from '../schema/share.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
@@ -1337,6 +1338,27 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, listingId, note: `Seed note ${tag}`, updatedBy: ownerId })
       .returning({ id: briefState.id });
     return { listingId, id: first(rows, 'brief_state').id };
+  },
+  brief_share: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(briefShare)
+      .values({
+        workspaceId,
+        tokenHash: `seed-${tag}`,
+        snapshot: {
+          matterTitle: `Seed ${tag}`,
+          synopsis: null,
+          stage: null,
+          lastOrder: [],
+          lastHearing: null,
+          openObligations: [],
+          assembledAt: '2026-01-01T00:00:00.000Z',
+        },
+        createdBy: ownerId,
+        expiresAt: new Date('2099-01-01T00:00:00Z'),
+      })
+      .returning({ id: briefShare.id });
+    return { id: first(rows, 'brief_share').id };
   },
   listing: async (tx, { workspaceId, tag }) => ({
     listingId: await seedListing(tx, workspaceId, tag),

@@ -260,6 +260,8 @@ export const courtExporter = tablesExporter('court', [
   ws('list_snapshot'),
   // Brief state (#60): the lawyer's prepared mark, carry edits and note.
   ws('brief_state', { userColumn: 'updated_by' }),
+  // Brief shares (#507): the sanitised snapshot the workspace chose to share, by creator.
+  ws('brief_share', { userColumn: 'created_by' }),
 ]);
 
 // Matters, their proceedings, links (#346) and state history (#363), their docket: listings, hearings, appearances,

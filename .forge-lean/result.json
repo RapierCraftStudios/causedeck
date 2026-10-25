@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Brief share links, referral credit, funnel metrics (now on admin growth page) and share i18n delivered. CI fix: shares test no longer deep-imports briefs test helpers; lint cleaned.",
+ "summary": "Brief share links, referral credit, funnel metrics (now on admin growth page) and share i18n delivered. CI fix: shares test no longer deep-imports briefs test helpers; lint cleaned. Merged base; typecheck exit 127 was turbo missing from PATH, tsc clean on all affected packages.",
  "requirements": [
   {
    "id": "R1",
@@ -61,6 +61,16 @@
    "command": "i18n vitest src/__tests__",
    "result": "pass",
    "fails_without_fix": true
+  },
+  {
+   "command": "tsc --noEmit for db, i18n, billing, core, web, admin, worker",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  },
+  {
+   "command": "intelligence vitest run (CI-failed package, unrelated to diff)",
+   "result": "pass",
+   "fails_without_fix": "unknown"
   }
  ],
  "self_review": [

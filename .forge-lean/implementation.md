@@ -44,3 +44,12 @@ Flagged tests do not enumerate the new schema symbols or growthReferralFunnel; r
 
 ## Fix: CI domains.test + lint
 - shares.test.ts deep-imported `briefs/__tests__/helpers.ts` (domain boundary violation); it now seeds the brief fixture locally. Also removed lint errors (useless `void` lines, unused bindings). domains.test, shares, activation, briefs: 40 pass; eslint clean on the file.
+
+## Fix: merge typecheck failure
+- The reported failure was `turbo: command not found` (host PATH), not a code conflict. Ran `pnpm turbo run typecheck --filter='...[origin/milestone/prepare-execute]'`: 24/24 tasks pass on the merged tree. No source change needed.
+
+### Update (post-merge)
+Merged origin/milestone/prepare-execute; `brief_share` migration renumbered to 20261025110931 (snapshot/journal regenerated with drizzle-kit, SQL unchanged). The reported `turbo run typecheck` exit 127 is an environment problem (`turbo` is not on PATH; it exists only at node_modules/.bin/turbo), not a code defect. Equivalent `tsc --noEmit` for db, i18n, billing, core, web, admin and worker is clean on the merged tree, and V1-V4 are re-run below. No code change was needed.
+
+## Fix: CI test-shard (rest) `@causedeck/intelligence#test`
+- The log excerpt shows only passing `@causedeck/ui` output and `Failed: @causedeck/intelligence#test`; no assertion is visible. Branch diff touches nothing in `packages/intelligence` and it does not depend on any changed package. Ran `vitest run` for it locally on this tree: 39 files, 318 passed, 1 skipped, eval gates PASS. Treated as a load-related flake on the 0-cached shard (UI tests were running 10s+ per file); no code change.

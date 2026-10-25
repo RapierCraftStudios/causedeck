@@ -1,34 +1,34 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield infra feature; dev-grade Dockerfiles exist, no prod stack)
+**Severity**: high (no backups or DR exist for client data; PRD §8 RPO/RTO unmet)
 **Task Type**: feature
 
 ### What Was Claimed
-Production-grade images for web/api/worker/admin and `infra/docker/compose.prod.yml` for a single India VPS (Caddy, web x2, api, worker x2, admin, Postgres 17 + pgvector + WAL-G, MinIO), plus migrate/healthcheck/bootstrap scripts, an images workflow (multi-arch, GHCR, Trivy, SBOM, cosign), a compose smoke test, env examples and docs. 13 acceptance criteria (R1-R13).
+Issue #101 asks for Stage A backup and DR: continuous WAL archiving and nightly base backups with WAL-G to India object storage (14 daily + 8 weekly, 14 days PITR), client-side encryption with off-host key custody, nightly MinIO replication to a second India location (versioning, delete protection), an automated restore drill (isolated container, amcheck, row-count manifest, RLS and cross-tenant checks, JSON report with RPO/RTO), a guarded PITR restore script, a `ops.backup.health` job with four metrics, a weekly drill workflow, runbooks, crypto-erase documentation and tests. 12 acceptance criteria.
 
 ### What We Found
-- Base `origin/milestone/production-infra-scale` has only dev-grade Dockerfiles: `infra/docker/{web,api,worker,admin}.Dockerfile` (e.g. `api.Dockerfile:3` says "Production hardening ... arrives with #97"), `infra/docker/compose.dev.yml`, and `infra/docker/postgres/init/{01-extensions,02-roles}.sql`.
-- Base images are tag-pinned (`node:22.23.0-bookworm-slim`, `api.Dockerfile:5`), not digest-pinned; no `tini`; `USER node` (non-root, named not numeric); no TZ/UTC; no `.dockerignore` in `infra/docker`.
-- No `compose.prod.yml`, `postgres/Dockerfile`, `postgresql.conf`, `env/*.env.example`, `infra/scripts/{migrate,healthcheck,bootstrap-vps}.sh`, `infra/docker/test/`, `infra/caddy/` (owned by #98), or `.github/workflows/images.yml`.
-- Existing static-lint precedent: `infra/scripts/compose-dev.test.mjs` (node test over compose YAML).
-- Health: `packages/observability/src/health.ts:80` `createHealthHandlers` (checks registry, 2 s timeout `:36`); web `apps/web/src/health.ts:7` registers no checks; worker `apps/worker/src/health.ts:29`; api `apps/api/src/app.ts:90`; admin has `apps/admin/app/healthz` only (no /readyz).
-- Owner-role migrations: `packages/db/scripts/migrate.ts`; role split in `infra/docker/postgres/init/02-roles.sql`.
-- The issue already carries a frozen builder contract (FORGE:CONTRACT, sha e600d311805c) with 13 requirements; its D11 references a nonexistent R14 (should be R13) and D17 omits the exact app health files, corrected here. Stale `.forge-lean/*` files in the tree belong to another issue (WhatsApp link) and are overwritten.
+- #97 is merged on the base: the Postgres image already bundles WAL-G (`infra/docker/postgres/Dockerfile:7-28`) and `postgresql.conf:19-25` already sets `archive_mode = on`, `archive_timeout = 60`, `archive_command = 'wal-g wal-push %p'`. Missing: encryption env, base backup, retention, restore, replication, metrics.
+- `infra/docker/compose.prod.yml:244-247` passes only `WALG_S3_PREFIX` and `AWS_ENDPOINT` to postgres; `minio-init` (`:305-323`) creates only `causedeck-wal`; no versioning, no replication, no backup runner. `env/prod.env.example:36-38` has the WAL-G target only; no `infra/docker/postgres/wal-g.env.example`.
+- No `infra/scripts/backup/`, `infra/scripts/restore/`, `infra/runbooks/restore.md`, `dr-hyderabad.md`, `drills/` or `.github/workflows/restore-drill.yml` exist (`git ls-tree HEAD`). Runbooks present: `infra/runbooks/workspace-deletion.md:65-69` (already promises backups hold no recoverable DEK of a deleted workspace; nothing implements or tests it), `infra/runbooks/data-ops/`.
+- Job convention: definitions live in `packages/core/src/jobs/definitions/*.ts`, registered in `packages/core/src/jobs/registry.ts`, run by the worker (no `apps/worker/src/jobs/` dir). A non-`system.` job must require `workspaceId` (`packages/core/src/jobs/define.ts:104-106`), so the issue's `ops.backup.health` must be `system.backup.health` (precedent `system.audit.retention`, `audit-retention.ts:78`). Registry lists to update: `apps/worker/src/__tests__/registry.test.ts:144-165`, `schedules.test.ts:19-40`, `docs/engineering/jobs.md:124`.
+- Metrics API: `meter()` in `packages/observability/src/otel.ts:162`. Core already depends on `@causedeck/observability` and `@causedeck/storage` (`packages/core/package.json:69-70`), so no new workspace dependency.
+- Cross-tenant guard: new core runtime exports need `SERVICE_TESTS` or `NOT_A_SERVICE` in `packages/db/src/testing/cross-tenant-registry.ts` (jobs section ~`:1189-1236`).
+- Static-lint precedent for infra: `infra/scripts/compose-prod.test.mjs`, `compose-dev.test.mjs`; CI-only runtime precedent: `infra/docker/test/compose-smoke.sh`, `.github/workflows/images.yml` (actions pinned by SHA).
 
 ### Root Cause
-Greenfield: Stage A production packaging was never built; only dev Dockerfiles/compose exist.
+Greenfield. #97 shipped the archiving hook only; nothing takes base backups, enforces retention or encryption, replicates MinIO, restores, or reports freshness.
 
 ### Affected Files
-All new or hardened under `infra/docker/**`, `infra/scripts/**`, `.github/workflows/images.yml`, plus a clock-drift readiness check in `packages/observability/src/health.ts` wired into `apps/{web,api,worker}` health modules. See contract.json deliverables.
+`infra/docker/{compose.prod.yml,postgres/postgresql.conf,postgres/wal-g.env.example,minio/replication.json,env/*.env.example}`, new `infra/scripts/backup/*`, `infra/scripts/restore/*`, `packages/core/src/jobs/definitions/backup-health.ts` (+registry), `.github/workflows/restore-drill.yml`, `infra/runbooks/{restore,dr-hyderabad}.md`, `infra/runbooks/drills/`, docs and registry tests (see contract.json).
 
 ### Sibling Sweep
-`.github/workflows/*` all pin actions by SHA and are checked by lint-workflows; images.yml must follow. Caddyfile is #98's (no `infra/caddy` yet), so compose mounts a path with a minimal placeholder. Admin lacks `/readyz`; drift check is not wired there (healthz only).
+Other places that must stay consistent: `workspace-deletion.md` Backups section (crypto-erase claim), `infra/docker/README.md` production section, `docs/engineering/jobs.md` schedule list, worker registry/schedules tests, cross-tenant registry. Caddy/monitoring alert routing belong to #98/#102 (open), incident runbooks to #103.
 
 ### History
-Dev Dockerfiles from #10/#14/#15; dev compose from ad0a831 (#5). No prior prod attempt merged.
+WAL archiving hook and WAL-G binary landed in #97 (PR #784, "Restore drills and retention are #101" in `postgresql.conf:22`). No prior backup attempt.
 
 ### Recommendation
-Implement per contract.json in one lane (infra files mostly independent, ~25 files, well under split threshold). Static compose lint test and observability unit test are the in-lane checks; image size, smoke, Trivy/cosign, bootstrap idempotence are CI/out-of-band.
+One lane. Ship scripts with shell-level unit tests (guards, India endpoint validation, retention arithmetic, report schema) and a job with vitest unit tests; the full backup-PITR-restore integration test and the weekly drill run in CI against local MinIO only (never locally on this host). Alert routing is #102: deliver the metrics, thresholds and failing job/log signal, defer wiring.
 
 ### Related Issues
-#1 (parent), #10, #14, #15 (done); #98 Caddy, #99 Terraform, #100 deploy, #101 backups, #102 monitoring, #108 VPS, #116 secrets (out of scope / external).
+#97 (done, dependency), #1 parent, #102 monitoring/alerts, #103 incident runbooks, #106 Stage B/C, #108 VPS, #116 secrets.

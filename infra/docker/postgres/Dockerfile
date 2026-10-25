@@ -27,10 +27,11 @@ FROM ${PG_IMAGE}
 ENV TZ=UTC
 COPY --from=walg /wal-g /usr/local/bin/wal-g
 COPY infra/docker/postgres/postgresql.conf /etc/postgresql/postgresql.conf
+# curl publishes backup status to the ops bucket (#101).
 # Self-signed certificate for in-network TLS (clients use sslmode=require over the private network;
 # the public edge certificate is Caddy's). Generated at build time, readable by `postgres` only.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl \
+  && apt-get install -y --no-install-recommends openssl curl \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p /etc/postgresql/tls \
   && openssl req -x509 -nodes -newkey rsa:3072 -days 3650 -subj "/CN=postgres" \

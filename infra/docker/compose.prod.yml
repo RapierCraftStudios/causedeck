@@ -20,6 +20,15 @@ networks:
   data:
     internal: true
 
+# WAL-G libsodium encryption key (#101). The file lives OUTSIDE the data volume and the image:
+# materialise it at boot from sealed custody onto tmpfs (e.g. /run/causedeck/walg.key, 0440, group
+# of the postgres container user) and point WALG_KEY_FILE at it. The /dev/null default only lets
+# the stack boot without backups (CI smoke): wal-g refuses an empty key, so WAL is never archived
+# unencrypted. Custody and rotation: infra/runbooks/restore.md.
+secrets:
+  walg_key:
+    file: ${WALG_KEY_FILE:-/dev/null}
+
 volumes:
   pgdata:
   miniodata:
@@ -245,10 +254,14 @@ services:
       # stack's own MinIO; point WALG_S3_PREFIX/AWS_ENDPOINT at off-host storage in production.
       WALG_S3_PREFIX: ${WALG_S3_PREFIX:-s3://causedeck-wal}
       AWS_ENDPOINT: ${WALG_AWS_ENDPOINT:-http://minio:9000}
-      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
-      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      # Archiver credentials are write-only (put, no read or delete); they default to the stack's
+      # MinIO root key for local and CI use. Restore uses separate read-only credentials.
+      AWS_ACCESS_KEY_ID: ${WALG_ARCHIVE_ACCESS_KEY:-${S3_ACCESS_KEY:?set S3_ACCESS_KEY}}
+      AWS_SECRET_ACCESS_KEY: ${WALG_ARCHIVE_SECRET_KEY:-${S3_SECRET_KEY:?set S3_SECRET_KEY}}
       AWS_S3_FORCE_PATH_STYLE: 'true'
       AWS_REGION: ${S3_REGION:-ap-south-1}
+      WALG_LIBSODIUM_KEY_PATH: /run/secrets/walg_key
+    secrets: [walg_key]
     volumes:
       - pgdata:/var/lib/postgresql/data
     tmpfs:
@@ -320,7 +333,12 @@ services:
         mc mb --ignore-existing "local/$$S3_BUCKET" &&
         mc version enable "local/$$S3_BUCKET" &&
         mc anonymous set none "local/$$S3_BUCKET" &&
-        mc mb --ignore-existing local/causedeck-wal
+        mc mb --ignore-existing local/causedeck-wal &&
+        mc version enable local/causedeck-wal &&
+        mc mb --ignore-existing local/causedeck-ops &&
+        mc version enable local/causedeck-ops &&
+        mc anonymous set none local/causedeck-wal &&
+        mc anonymous set none local/causedeck-ops
     env_file: ${CAUSEDECK_ENV_FILE:?set CAUSEDECK_ENV_FILE}
     tmpfs:
       - /tmp
@@ -332,6 +350,98 @@ services:
       resources:
         limits:
           memory: 128m
+          cpus: '0.25'
+    logging: *logging
+
+  # Backups (#101), one-shots run by systemd timers (infra/runbooks/restore.md):
+  #   docker compose --profile backup run --rm backup walg-wal-push-check.sh   (every minute)
+  #   docker compose --profile backup run --rm backup walg-basebackup.sh        (nightly)
+  # Same image as postgres (wal-g, psql, curl). The data volume is mounted read-only. It joins
+  # `edge` only to publish status to the ops bucket and reach off-host storage; it holds no port.
+  backup:
+    image: ghcr.io/${IMAGE_ORG:?set IMAGE_ORG}/causedeck-postgres:sha-${GIT_SHA:?set GIT_SHA}
+    restart: 'no'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    profiles: [backup]
+    user: postgres
+    entrypoint: ['/bin/bash', '-c', 'exec "/opt/backup/$$0" "$$@"']
+    environment:
+      TZ: UTC
+      PGHOST: postgres
+      PGUSER: causedeck
+      PGDATABASE: causedeck
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      PGSSLMODE: require
+      WALG_S3_PREFIX: ${WALG_S3_PREFIX:-s3://causedeck-wal}
+      AWS_ENDPOINT: ${WALG_AWS_ENDPOINT:-http://minio:9000}
+      # Maintenance credentials: list, put and delete on the WAL bucket (retention).
+      AWS_ACCESS_KEY_ID: ${WALG_ADMIN_ACCESS_KEY:-${S3_ACCESS_KEY:?set S3_ACCESS_KEY}}
+      AWS_SECRET_ACCESS_KEY: ${WALG_ADMIN_SECRET_KEY:-${S3_SECRET_KEY:?set S3_SECRET_KEY}}
+      AWS_S3_FORCE_PATH_STYLE: 'true'
+      AWS_REGION: ${S3_REGION:-ap-south-1}
+      WALG_LIBSODIUM_KEY_PATH: /run/secrets/walg_key
+      ALLOW_LOCAL_ENDPOINTS: ${ALLOW_LOCAL_ENDPOINTS:-1}
+      BACKUP_RETAIN_DAILY: ${BACKUP_RETAIN_DAILY:-14}
+      BACKUP_RETAIN_WEEKLY: ${BACKUP_RETAIN_WEEKLY:-8}
+      OPS_ENDPOINT: ${WALG_AWS_ENDPOINT:-http://minio:9000}
+      OPS_BUCKET: causedeck-ops
+      OPS_REGION: ${S3_REGION:-ap-south-1}
+      OPS_ACCESS_KEY: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
+      OPS_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+    secrets: [walg_key]
+    volumes:
+      - pgdata:/var/lib/postgresql/data:ro
+      - ../scripts/backup:/opt/backup:ro
+    tmpfs:
+      - /tmp
+    networks: [data, edge]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
+    logging: *logging
+
+  # Nightly (02:00 IST) copy of the WAL, ops and app buckets to the second India location, plus a
+  # continuous watch on the WAL bucket (REPLICATE_WATCH=1) so off-host RPO stays in minutes.
+  minio-replicate:
+    image: pgsty/mc:RELEASE.2026-10-18T00-00-00Z
+    restart: 'no'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    profiles: [backup]
+    entrypoint: ['/bin/sh', '/opt/backup/minio-replicate.sh']
+    environment:
+      TZ: UTC
+      MC_CONFIG_DIR: /tmp/.mc
+      PRIMARY_ENDPOINT: http://minio:9000
+      PRIMARY_ACCESS_KEY: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
+      PRIMARY_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      REPLICA_ENDPOINT: ${REPLICA_ENDPOINT:-http://minio-replica:9000}
+      REPLICA_ACCESS_KEY: ${REPLICA_ACCESS_KEY:-}
+      REPLICA_SECRET_KEY: ${REPLICA_SECRET_KEY:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      ALLOW_LOCAL_ENDPOINTS: ${ALLOW_LOCAL_ENDPOINTS:-1}
+      REPLICATION_CONFIG: /opt/minio/replication.json
+    volumes:
+      - ../scripts/backup:/opt/backup:ro
+      - ./minio/replication.json:/opt/minio/replication.json:ro
+    tmpfs:
+      - /tmp
+    networks: [data, edge]
+    depends_on:
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256m
           cpus: '0.25'
     logging: *logging
 

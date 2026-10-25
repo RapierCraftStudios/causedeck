@@ -2,88 +2,88 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Each Dockerfile builds with BuildKit, runs as a non-root UID, has no package manager caches in the final layer, and the final image size is under budget (web under 350 MB, api and worker under 250 MB) [type:unit]",
+   "quote": "Postgres archives WAL continuously through WAL-G; the time since the last archived WAL is below 5 minutes in steady state and is exposed as a metric [type:api]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml size-gate step measures size; non-root and cache rules statically asserted in compose-prod.test.mjs"
+   "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`compose.prod.yml` starts caddy, web x2, api, worker x2, admin, postgres and minio with healthchecks; `docker compose up -d` reaches healthy for all services within 120 s in CI [type:api]",
+   "quote": "A nightly base backup runs, is verified with `wal-g backup-list`, and the retention policy keeps 14 daily base backups plus WAL for 14 days of PITR, and 8 weekly backups, configurable [type:api]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "No container runs privileged; `cap_drop: [ALL]`, `no-new-privileges`, read-only root filesystem with tmpfs where needed, asserted by a compose lint script [type:unit]",
+   "quote": "Backups are encrypted client-side; restoring without the key fails; the key is not stored on the database host disk unprotected and its custody is documented [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Only Caddy publishes ports 80 and 443 (and 443/udp for HTTP/3); Postgres, MinIO, admin and internal services are on a private network and unreachable from outside, verified by a port scan in the smoke test [type:api]",
+   "quote": "Backup storage and the second MinIO or bucket location are in India regions only; Terraform or config validation rejects non-India endpoints [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job port scan; static port check in compose-prod.test.mjs is in-lane"
+   "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Postgres image bundles pgvector and the WAL-G binary; `archive_mode=on` and `archive_command` point at WAL-G with env-provided storage, defaulting to a local MinIO bucket in CI [type:api]",
+   "quote": "MinIO replication copies new objects to the second India location within 24 hours (nightly replicate) with object versioning and delete protection, verified by a test object [type:api]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "The app database role is not the owner so RLS is enforced; migrations run through the owner role in a one-off container; the smoke test asserts RLS-forced tables reject cross-workspace reads [type:api]",
+   "quote": "The restore drill restores the latest backup plus WAL to a specified timestamp into an isolated container, completes verification (`amcheck`, row-count manifest, RLS enabled on every tenant table, cross-tenant query returns zero rows) and writes a JSON report [type:api]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "All services read configuration only from env validated by the shared env schema; booting with a missing required variable fails fast with a clear message [type:unit]",
+   "quote": "Measured RPO is at most 15 minutes and measured RTO for the seeded dataset is recorded each drill and compared with the 4-hour target; a breach opens an alert [type:api]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "compose-smoke.sh boots a service with a missing variable and asserts non-zero exit; packages/config already validates"
+   "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "No service writes outside declared volumes or tmpfs; verified with a read-only filesystem run of the smoke test [type:api]",
+   "quote": "The weekly drill runs automatically against staging and the monthly drill is signed off by a human recorded in `infra/runbooks/drills/` with date, duration and findings [type:manual]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job runs with read_only: true"
+   "evidence": ".github/workflows/restore-drill.yml (weekly schedule); monthly sign-off files in infra/runbooks/drills/ (human)"
   },
   {
    "id": "R9",
-   "quote": "Images are multi-arch, tagged `sha-\u003cgitsha>` and `main`, pushed to GHCR, scanned by Trivy (fail on critical with fix available), and signed with cosign; SBOM attached [type:manual]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml on push to main"
+   "quote": "A failed backup, stale WAL or failed drill triggers an alert through the monitoring stack in #102 within 10 minutes [type:api]",
+   "disposition": "defer",
+   "why": "Alert routing and the monitoring stack are #102 (open, listed out of scope in #101). This change delivers the signals: the four metrics, a system.backup.health job that runs every minute and logs/errors on failed backup, stale WAL (>5 min) or failed/RTO-breaching drill, and documents the alert thresholds in the runbook for #102 to wire."
   },
   {
    "id": "R10",
-   "quote": "Resource limits (memory and CPU) are set for every service and documented, sized for a 4 vCPU and 8 GB VPS within the cost target of about ₹6 to 12k per month for staging and prod combined [type:manual]",
+   "quote": "Restoring never overwrites production in place without the explicit `--i-understand` flag and a fresh target volume; the script refuses otherwise [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "`bootstrap-vps.sh` is idempotent: running twice makes no changes the second time; it configures firewall (only 22 limited by allowlist, 80, 443), fail2ban, unattended security upgrades and time sync (chrony) [type:manual]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "needs a real VPS (#108); in-lane is bash -n and guard-pattern review"
-  },
-  {
-   "id": "R12",
-   "quote": "Timezone and clocks: containers log in UTC, host NTP is verified by a startup check that fails readiness if drift exceeds 1 s [type:api]",
+   "quote": "Crypto-erase interplay is documented and tested: after a workspace deletion job plus the key-backup retention window, the workspace DEK cannot be recovered from backups [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
+   "id": "R12",
+   "quote": "The runbook describes the DR scenario of losing the VPS: provision from Terraform, restore from WAL-G, point DNS, expected duration, and has been rehearsed at least once before launch [type:manual]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Runbook is delivered here; the rehearsal needs the real VPS (#108) and storage credentials (#116) and is recorded in infra/runbooks/drills/ before launch"
+  },
+  {
    "id": "R13",
-   "quote": "Staging runs the same compose with `staging.env.example` overrides and smaller limits, using preview data only [type:manual]",
+   "quote": "A backup that has never been restored is not a backup, so the drill runs weekly in CI-like automation and monthly with a human sign-off.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/restore-drill.yml weekly job; monthly sign-off by a human"
+  },
+  {
+   "id": "R14",
+   "quote": "backups contain privileged client data: encryption in transit and at rest, least-privilege storage credentials (write-only for the archiver, separate read credentials for restore), no public buckets, access logged.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -91,277 +91,353 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "infra/docker/web.Dockerfile",
-   "change": "Harden: digest-pinned base via ARG, tini, no apt/pnpm caches in final layer, numeric non-root USER, writes only to /tmp and .next/cache (tmpfs), TZ=UTC, healthcheck /healthz, exec-form CMD",
+   "path": "infra/docker/postgres/postgresql.conf",
+   "change": "Keep archive_mode/archive_timeout=60; add archive_timeout comment tie to 5-minute SLO; add restore_command comment for recovery; no statement logging changes",
    "requirements": [
-    "R1",
-    "R8",
-    "R12"
+    "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "infra/docker/api.Dockerfile",
-   "change": "Same hardening; pnpm deploy --prod to prune; tini; numeric UID; exec-form CMD so 10s SIGTERM drain works",
+   "path": "infra/docker/postgres/wal-g.env.example",
+   "change": "New: WALG_S3_PREFIX, AWS_ENDPOINT, separate write-only archiver vs read restore credential variables, WALG_LIBSODIUM_KEY_PATH (key file mounted from a root-owned 0600 secret/tmpfs, never in the image or pgdata), WALG_COMPRESSION_METHOD, retention vars (BACKUP_RETAIN_DAILY=14, BACKUP_RETAIN_WEEKLY=8, WAL days=14)",
    "requirements": [
     "R1",
-    "R8",
-    "R12"
+    "R2",
+    "R3",
+    "R14"
    ]
   },
   {
    "id": "D3",
-   "path": "infra/docker/worker.Dockerfile",
-   "change": "Same as api; include owner-role migrate entry (packages/db/scripts/migrate.ts via tsx) usable by migrate.sh; exec-form CMD keeps 30s drain",
+   "path": "infra/docker/compose.prod.yml",
+   "change": "postgres: mount libsodium key as a compose secret/tmpfs file and pass WALG_* env; minio-init: create causedeck-wal bucket with versioning and a separate causedeck-ops bucket for reports; add `backup` profile service (one-shot, same postgres image, runs the backup scripts via docker compose run); keep read_only/non-root/limits intact",
    "requirements": [
     "R1",
-    "R6",
-    "R8"
+    "R3",
+    "R5",
+    "R14"
    ]
   },
   {
    "id": "D4",
-   "path": "infra/docker/admin.Dockerfile",
-   "change": "Same hardening as web; healthcheck /healthz (admin has no /readyz)",
+   "path": "infra/docker/env/prod.env.example",
+   "change": "Add backup/replication/second-location endpoint, key-path and retention variables (no secrets)",
    "requirements": [
-    "R1",
-    "R8",
-    "R12"
+    "R2",
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D5",
-   "path": "infra/docker/.dockerignore",
-   "change": "Exclude node_modules, .next, .git, .forge-lean, tests, docs from build context",
+   "path": "infra/docker/env/staging.env.example",
+   "change": "Same additions as prod example, CI/staging defaults to local MinIO",
    "requirements": [
-    "R1"
+    "R2",
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D6",
-   "path": "infra/docker/base/README.md",
-   "change": "Document pinned base image digests and how to refresh them",
+   "path": "infra/scripts/backup/lib/india-guard.sh",
+   "change": "New: sourceable function `assert_india_endpoint \u003curl>` that accepts only an allow-list of India endpoints/regions (ap-south-1, ap-south-2, in-*, local MinIO host names for CI/dev when ALLOW_LOCAL_ENDPOINTS=1) and exits non-zero otherwise; used by every backup/restore/replicate script",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "infra/scripts/backup/walg-basebackup.sh",
+   "change": "New: guard endpoint, `wal-g backup-push`, verify with `wal-g backup-list` (fail if new backup missing), mark Sunday backup permanent (weekly), `wal-g delete retain FULL $BACKUP_RETAIN_DAILY` and expire weekly permanent backups older than $BACKUP_RETAIN_WEEKLY weeks, write status JSON {lastBackupAt,ok} to the ops bucket; exits non-zero on failure",
+   "requirements": [
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "infra/scripts/backup/walg-wal-push-check.sh",
+   "change": "New: read pg_stat_archiver.last_archived_time, compute walg_last_archive_age_seconds, write status JSON to the ops bucket, exit non-zero and print ALERT if age > 300 s",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D7",
-   "path": "infra/docker/postgres/Dockerfile",
-   "change": "pgvector pg17 pinned by digest + checksum-verified per-arch WAL-G binary + init scripts + postgresql.conf",
+   "id": "D9",
+   "path": "infra/scripts/backup/minio-replicate.sh",
+   "change": "New: guard both endpoints, `mc mirror`/replicate wal+object buckets to the second India location with versioning, object lock/delete protection, put and verify a canary test object, write status JSON; intended nightly",
+   "requirements": [
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "infra/docker/minio/replication.json",
+   "change": "New: bucket versioning + replication rule + object-lock/retention config consumed by minio-replicate.sh and minio-init",
    "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D8",
-   "path": "infra/docker/postgres/postgresql.conf",
-   "change": "archive_mode=on, archive_command wal-g wal-push with env storage, ssl, log_statement policy, timezone UTC",
-   "requirements": [
-    "R5",
-    "R12"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "infra/docker/compose.prod.yml",
-   "change": "Services caddy, web x2, api, worker x2, admin, postgres, minio; private network, only caddy publishes 80/443/443udp; cap_drop ALL, no-new-privileges, read_only+tmpfs, mem/cpu limits (documented for 4 vCPU/8 GB, overridable via env for staging), restart policy, named volumes, healthchecks, depends_on service_healthy; images ghcr.io/\u003corg>/causedeck-\u003csvc>:sha-\u003cgitsha>; mount infra/caddy/Caddyfile",
-   "requirements": [
-    "R2",
-    "R3",
-    "R4",
-    "R5",
-    "R6",
-    "R8",
-    "R10",
-    "R13"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "infra/docker/env/prod.env.example",
-   "change": "Variables only, no secrets, matching packages/config env schema",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
    "id": "D11",
-   "path": "infra/docker/env/staging.env.example",
-   "change": "Staging overrides: smaller limit variables, preview data only",
+   "path": "infra/scripts/restore/restore-drill.sh",
+   "change": "New: fetch latest base backup + WAL to --target-time (default now minus 1 min) into an isolated throwaway container/network on a fresh volume using read credentials; run verify.sql; seed manifest compare; compute rpoSeconds (target minus last restorable WAL time) and rtoSeconds; write JSON report {startedAt,target,rtoSeconds,rpoSeconds,checks[],ok} to the ops bucket; ok=false if RPO>900 or RTO>14400 or any check fails; tear down always (trap)",
    "requirements": [
-    "R13"
+    "R6",
+    "R7",
+    "R3"
    ]
   },
   {
    "id": "D12",
-   "path": "infra/scripts/migrate.sh",
-   "change": "Run owner-role migration in a one-off container before up -d; fail on error",
+   "path": "infra/scripts/restore/verify.sql",
+   "change": "New: amcheck (bt_index_check on all btree indexes), row counts vs manifest (read from a psql variable/table), RLS enabled and forced on every table with workspace_id, canned cross-tenant query as app role under workspace A returns zero rows for workspace B, and a check that a deleted workspace has no wrapped DEK row",
    "requirements": [
-    "R6"
+    "R6",
+    "R11"
    ]
   },
   {
    "id": "D13",
-   "path": "infra/scripts/healthcheck.sh",
-   "change": "Aggregate /readyz of web, api, worker plus admin /healthz for deploys",
+   "path": "infra/scripts/restore/restore-prod.sh",
+   "change": "New: documented PITR to --target-time; refuses unless --i-understand and a fresh, empty target data directory/volume (never the live pgdata), prints plan and asks for typed confirmation, never stops or edits the running stack",
    "requirements": [
-    "R2"
+    "R10",
+    "R3"
    ]
   },
   {
    "id": "D14",
-   "path": "infra/scripts/bootstrap-vps.sh",
-   "change": "Idempotent ufw (22 limited + allowlist, 80, 443), fail2ban, unattended-upgrades, chrony, Docker, deploy user, dirs; set -euo pipefail, guard before each change",
+   "path": "packages/core/src/jobs/definitions/backup-health.ts",
+   "change": "New job `system.backup.health` (cron `* * * * *`, concurrency 1, stately singleton): reads status JSON from the ops bucket via @causedeck/storage, records gauges walg_last_archive_age_seconds, walg_last_backup_age_seconds, restore_drill_last_success_timestamp, restore_drill_rto_seconds via meter(); logs error when archive age >300 s, last backup >26 h, drill older than 8 d, drill failed, or RPO/RTO over target. Reader injected for tests",
+   "requirements": [
+    "R1",
+    "R7",
+    "R9"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register backupHealth",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/core/src/jobs/definitions/backup-health.test.ts",
+   "change": "New unit tests with a fake report reader: metrics values, each alert condition, missing report counts as stale",
+   "requirements": [
+    "R1",
+    "R7",
+    "R9"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add 'system.backup.health' to the expected definition list",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "Add 'system.backup.health' to the expected scheduled list",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register the new core exports from backup-health.ts as NOT_A_SERVICE (system job over ops-bucket reports, touches no tenant data)",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "docs/engineering/jobs.md",
+   "change": "Add system.backup.health to the schedule list and a short section",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": ".github/workflows/restore-drill.yml",
+   "change": "New: weekly cron + workflow_dispatch; SHA-pinned actions; runs restore-drill.sh against staging backups (secrets from the staging environment, #116); CI default path drills against local MinIO with a seeded dataset; uploads report artifact; fails the job on ok=false",
+   "requirements": [
+    "R6",
+    "R7",
+    "R8",
+    "R13"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "infra/scripts/backup/test/backup.test.mjs",
+   "change": "New node:test unit tests: india-guard accepts/rejects endpoints, restore-prod refuses without --i-understand and with an existing/live target, retention arithmetic, drill report schema/RPO-RTO verdict, compose/postgres config contains encryption and archive settings, verify.sql covers amcheck/RLS/cross-tenant",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4",
+    "R6",
+    "R7",
+    "R10",
+    "R11"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "infra/scripts/backup/test/pitr-integration.sh",
+   "change": "New CI-only (never run locally) compose test against local MinIO: take base backup, write rows, PITR to a timestamp, assert rows; restore without the key must fail; replicate canary object",
+   "requirements": [
+    "R2",
+    "R3",
+    "R5",
+    "R6"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "infra/scripts/compose-prod.test.mjs",
+   "change": "Extend static checks: postgres has WALG key/env, minio-init versions the wal bucket, backup service is non-root with limits",
+   "requirements": [
+    "R3",
+    "R5",
+    "R14"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "infra/runbooks/restore.md",
+   "change": "New: PITR procedure with restore-prod.sh, drill procedure and report reading, key custody (key sealed off-host, escrow copies, rotation, never on the DB host disk unprotected), retention policy, credentials split, alert thresholds for #102, crypto-erase interplay (DEK removed from key backups after retention window); links #103",
+   "requirements": [
+    "R2",
+    "R3",
+    "R9",
+    "R11",
+    "R14"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "infra/runbooks/dr-hyderabad.md",
+   "change": "New: VPS loss scenario: Terraform provision (#99), restore from WAL-G in second India region, DNS cutover, expected duration vs RTO 4 h, rehearsal log requirement; links #103",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "infra/runbooks/drills/README.md",
+   "change": "New: monthly sign-off template (date, duration, findings, signer) and rehearsal record format; first entries added by the human",
+   "requirements": [
+    "R8",
+    "R12"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "infra/runbooks/workspace-deletion.md",
+   "change": "Update Backups section to point to restore.md crypto-erase section with the retention window",
    "requirements": [
     "R11"
    ]
   },
   {
-   "id": "D15",
-   "path": "infra/docker/test/compose-smoke.sh",
-   "change": "Boot stack with mock providers, wait healthy \u003c=120s, port scan, RLS cross-workspace read assertion, missing-env fail-fast, read-only run",
-   "requirements": [
-    "R2",
-    "R4",
-    "R6",
-    "R7",
-    "R8"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "infra/scripts/compose-prod.test.mjs",
-   "change": "Node test modelled on compose-dev.test.mjs: no privileged, cap_drop ALL, no-new-privileges, read_only, mem/cpu limits on every service, only caddy publishes 80/443/443udp, replica counts, pinned images, Dockerfiles non-root numeric USER",
-   "requirements": [
-    "R1",
-    "R3",
-    "R4",
-    "R10"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/observability/src/health.ts",
-   "change": "Add exported clock-drift HealthCheck factory (reference time source injectable, 1 s threshold)",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/observability/src/__tests__/health.test.ts",
-   "change": "Unit tests for clock-drift check (ok under 1 s, fails over 1 s, source error)",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "apps/web/src/health.ts",
-   "change": "Register clock-drift readiness check",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/api/src/app.ts",
-   "change": "Register clock-drift readiness check alongside db check",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "apps/worker/src/health.ts",
-   "change": "Register clock-drift readiness check",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": ".github/workflows/images.yml",
-   "change": "buildx multi-arch, tags sha-\u003cgitsha> and main, GHCR push on main, Trivy (fail critical with fix), SBOM, cosign keyless, size gate, compose-smoke job; actions pinned by SHA; passes lint-workflows",
-   "requirements": [
-    "R1",
-    "R2",
-    "R9"
-   ]
-  },
-  {
-   "id": "D23",
+   "id": "D29",
    "path": "infra/docker/README.md",
-   "change": "Document prod stack, bootstrap, resource limit table and cost sizing, staging override usage",
+   "change": "Add backup, replication and restore drill section",
    "requirements": [
-    "R10",
-    "R11",
-    "R13"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "infra/caddy/Caddyfile",
-   "change": "Minimal placeholder only if absent; real config owned by #98",
-   "requirements": [
-    "R2"
+    "R1",
+    "R2",
+    "R5"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Build context stays the repo root and CMDs stay exec-form so SIGTERM drains (api 10s, worker 30s): infra/docker/{api,worker}.Dockerfile"
+   "what": "Existing compose.prod.yml hardening (non-root, read_only, limits, healthchecks, networks) and infra/scripts/compose-prod.test.mjs assertions"
   },
   {
    "id": "P2",
-   "what": "infra/docker/compose.dev.yml, infra/scripts/compose-dev.test.mjs, dev-up/down scripts unchanged"
+   "what": "Postgres archive_mode=on, archive_command='wal-g wal-push %p', wal_level=replica, no statement logging in infra/docker/postgres/postgresql.conf; image build args in infra/docker/postgres/Dockerfile unchanged"
   },
   {
    "id": "P3",
-   "what": "/healthz stays dependency-free liveness; /readyz contracts in apps/web/app, apps/api/src/app.ts, apps/worker/src/health.ts; drift check only added to readiness"
+   "what": "Existing job names, schedules and registry order in packages/core/src/jobs/registry.ts (only append the new job); migrate.sh / minio-init existing bucket behaviour"
   },
   {
    "id": "P4",
-   "what": "Role split in infra/docker/postgres/init/02-roles.sql (app role non-owner, NOBYPASSRLS) unchanged"
+   "what": "Workspace deletion semantics in infra/runbooks/workspace-deletion.md: DEK zeroed before purge, deleted workspaces never restored from backup"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
+   "command": "node --test infra/scripts/backup/test/backup.test.mjs infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
   },
   {
    "id": "V2",
-   "command": "bash -n infra/scripts/migrate.sh && bash -n infra/scripts/healthcheck.sh && bash -n infra/scripts/bootstrap-vps.sh && bash -n infra/docker/test/compose-smoke.sh"
+   "command": "bash -n infra/scripts/backup/walg-basebackup.sh infra/scripts/backup/walg-wal-push-check.sh infra/scripts/backup/minio-replicate.sh infra/scripts/backup/lib/india-guard.sh infra/scripts/restore/restore-drill.sh infra/scripts/restore/restore-prod.sh infra/scripts/backup/test/pitr-integration.sh"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/observability exec vitest run src/__tests__/health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/backup-health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1} && pnpm --filter @causedeck/web exec vitest run app/__tests__/health-routes.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Docker builds, size budgets, multi-arch, Trivy/cosign and compose smoke run only in CI (images.yml)",
-   "justification": "CLAUDE.md forbids heavy local runs (Playwright, builds); in-lane coverage is static compose lint mirroring infra/scripts/compose-dev.test.mjs",
-   "source": "doc"
+   "choice": "Job is `system.backup.health` in packages/core/src/jobs/definitions/, not `ops.backup.health` in apps/worker/src/jobs/",
+   "justification": "Non-system job names must require workspaceId (packages/core/src/jobs/define.ts:104-106); every definition lives in core and is registered in registry.ts (precedent audit-retention.ts:78)",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Clock-drift check lives in packages/observability, no new workspace dependency",
-   "justification": "apps/worker/src/health.ts:5 and apps/api/src/app.ts:13 already import from @causedeck/observability",
+   "choice": "No new workspace dependency: core already depends on @causedeck/storage and @causedeck/observability",
+   "justification": "packages/core/package.json:69-70",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Caddyfile content belongs to #98; only a placeholder is shipped if absent",
-   "justification": "#98 is the open Caddy config issue; infra/caddy does not exist on base",
+   "choice": "Scripts publish status JSON to an ops bucket in MinIO; the worker job reads it, so the worker needs no docker or Postgres-archiver access",
+   "justification": "Worker has storage access already; keeps the health job testable with an injected reader",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "Weekly retention via `wal-g backup-mark` permanent on Sunday backups, expired after 8 weeks, plus `wal-g delete retain FULL 14`",
+   "justification": "WAL-G has no native daily/weekly tiers; permanent marking keeps a base backup and its WAL until unmarked",
+   "source": "spec"
+  },
+  {
+   "id": "K5",
+   "choice": "Full backup→PITR integration test runs only in CI against local MinIO; local validate uses static/unit tests",
+   "justification": "CLAUDE.md: never run Docker-heavy/e2e locally on the shared host; precedent infra/docker/test/compose-smoke.sh",
+   "source": "doc"
+  },
+  {
+   "id": "K6",
+   "choice": "Encryption uses WAL-G libsodium with the key file on a root-owned 0600 tmpfs/secret path, custody copies off host",
+   "justification": "Issue requirement R3 allows libsodium or GPG; key not stored unprotected on the DB host disk",
    "source": "spec"
   }
  ]

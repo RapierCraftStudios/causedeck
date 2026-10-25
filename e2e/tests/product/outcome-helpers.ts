@@ -25,7 +25,6 @@ export async function seedHearing(
   database: string,
   opts: { proposals: boolean; conflict?: boolean },
 ): Promise<SeededHearing> {
-  if (proceeding === undefined) throw new Error('e2e: the appeal matter has no proceeding');
   const ws = COURTS_WORKSPACE_ID;
   return withSql(database, async (sql) => {
     const listingId = randomUUID();

@@ -75,7 +75,20 @@
       "explanation": "Your calendar feed is private to you. Anyone with its link can read your confirmed hearings and deadlines, so do not share it.",
       "active": "Your private feed is active. Its link is shown only when you create or regenerate it.",
       "inactive": "You have no feed yet. Create one to see hearings in your phone calendar.",
-      "manage": "Manage or regenerate the feed"
+      "manage": "Manage or regenerate the feed",
+      "disclosure": "Your calendar app may fetch this feed from servers outside India. We keep the content minimal.",
+      "ack": "I understand",
+      "generate": "Generate new link",
+      "regenerate": "Regenerate link",
+      "working": "Working",
+      "urlLabel": "Feed link",
+      "copy": "Copy link",
+      "copied": "Copied",
+      "shownOnce": "Copy this link now. It is private to you and will not be shown again.",
+      "revokesOld": "Regenerating creates a new link and revokes the old one at once. Update the subscription in your calendar app.",
+      "error": "Something went wrong. Nothing changed.",
+      "forbidden": "You cannot do that.",
+      "copyFailed": "Could not copy. Select the link and copy it."
     }
   }
 }

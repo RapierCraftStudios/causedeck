@@ -75,7 +75,20 @@
       "explanation": "Your calendar feed is private to you. Anyone with its link can read your confirmed hearings and deadlines, so do not share it.",
       "active": "Your private feed is active. Its link is shown only when you create or regenerate it.",
       "inactive": "You have no feed yet. Create one to see hearings in your phone calendar.",
-      "manage": "Manage or regenerate the feed"
+      "manage": "Manage or regenerate the feed",
+      "disclosure": "ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್ ಆ್ಯಪ್ ಈ ಫೀಡ್ ಅನ್ನು ಭಾರತದ ಹೊರಗಿನ ಸರ್ವರ್‌ಗಳಿಂದ ಪಡೆಯಬಹುದು. ನಾವು ವಿಷಯವನ್ನು ಕನಿಷ್ಠವಾಗಿಡುತ್ತೇವೆ.",
+      "ack": "ನನಗೆ ಅರ್ಥವಾಗಿದೆ",
+      "generate": "ಹೊಸ ಲಿಂಕ್ ರಚಿಸಿ",
+      "regenerate": "ಲಿಂಕ್ ಮರುರಚಿಸಿ",
+      "working": "ಕೆಲಸ ನಡೆಯುತ್ತಿದೆ",
+      "urlLabel": "ಫೀಡ್ ಲಿಂಕ್",
+      "copy": "ಲಿಂಕ್ ನಕಲಿಸಿ",
+      "copied": "ನಕಲಿಸಲಾಗಿದೆ",
+      "shownOnce": "ಈ ಲಿಂಕ್ ಅನ್ನು ಈಗಲೇ ನಕಲಿಸಿ. ಇದು ನಿಮಗೆ ಮಾತ್ರ ಖಾಸಗಿ ಮತ್ತು ಮತ್ತೆ ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.",
+      "revokesOld": "ಮರುರಚಿಸಿದರೆ ಹೊಸ ಲಿಂಕ್ ರಚನೆಯಾಗಿ ಹಳೆಯದು ತಕ್ಷಣ ರದ್ದಾಗುತ್ತದೆ. ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್ ಆ್ಯಪ್‌ನಲ್ಲಿ ಚಂದಾದಾರಿಕೆಯನ್ನು ನವೀಕರಿಸಿ.",
+      "error": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ಏನೂ ಬದಲಾಗಿಲ್ಲ.",
+      "forbidden": "ನೀವು ಅದನ್ನು ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+      "copyFailed": "ನಕಲಿಸಲಾಗಲಿಲ್ಲ. ಲಿಂಕ್ ಆಯ್ಕೆಮಾಡಿ ನಕಲಿಸಿ."
     }
   }
 }

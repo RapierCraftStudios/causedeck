@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { CalendarDay, CalendarEntry } from '@causedeck/validators';
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderWithIntl } from '../../../../../../components/shell/__tests__/helpers.tsx';
@@ -10,6 +10,7 @@ import { CalendarToolbar, OfflineNotice } from './calendar-toolbar.tsx';
 import { DayPopover, openDayHref } from './day-popover.tsx';
 import { Legend } from './legend.tsx';
 import { MonthView } from './month-view.tsx';
+import { SubscribePanel } from './subscribe-panel.tsx';
 import { WeekView } from './week-view.tsx';
 
 const push = vi.fn();
@@ -176,5 +177,72 @@ describe('calendar view (#66)', () => {
     vi.stubGlobal('navigator', { onLine: false });
     renderWithIntl(<OfflineNotice />);
     expect(screen.getByRole('status').textContent).toContain('offline');
+  });
+});
+
+describe('SubscribePanel (#66 R7)', () => {
+  const WS = '11111111-1111-4111-8111-111111111111';
+  const URL_ONCE = 'https://app.example/api/ics/tok123';
+  const panel = (active: boolean, over: Partial<Parameters<typeof SubscribePanel>[0]> = {}) => {
+    const create = vi.fn().mockResolvedValue({ ok: true, data: { url: URL_ONCE } });
+    const rotate = vi.fn().mockResolvedValue({ ok: true, data: { url: URL_ONCE } });
+    renderWithIntl(
+      <SubscribePanel
+        workspaceId={WS}
+        active={active}
+        disclosureVersion="v1"
+        manageHref="/w/x/settings/integrations/calendar"
+        actions={{ create, rotate }}
+        {...over}
+      />,
+    );
+    return { create, rotate };
+  };
+
+  it('explains the feed is private and never shows a URL before an action', () => {
+    panel(true);
+    expect(screen.getByText(/private to you/i)).toBeTruthy();
+    expect(screen.getByText(/private feed is active/i)).toBeTruthy();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Regenerate link' })).toBeTruthy();
+  });
+
+  it('regenerates through the #53 rotate action and shows the URL once with a warning', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const { rotate, create } = panel(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Regenerate link' }));
+    const field = (await screen.findByRole('textbox')) as HTMLInputElement;
+    expect(rotate).toHaveBeenCalledWith({ workspaceId: WS });
+    expect(create).not.toHaveBeenCalled();
+    expect(field.value).toBe(URL_ONCE);
+    expect(screen.getByText(/will not be shown again/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(URL_ONCE));
+  });
+
+  it('creates the first link only after the disclosure is acknowledged', async () => {
+    const { create } = panel(false);
+    const generate = screen.getByRole('button', { name: 'Generate new link' });
+    expect((generate as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(generate);
+    expect(((await screen.findByRole('textbox')) as HTMLInputElement).value).toBe(URL_ONCE);
+    expect(create).toHaveBeenCalledWith({
+      workspaceId: WS,
+      scope: 'mine',
+      includeParties: false,
+      disclosureVersion: 'v1',
+    });
+  });
+
+  it('shows an error and no URL when the action fails', async () => {
+    const rotate = vi
+      .fn()
+      .mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: '' } });
+    panel(true, { actions: { create: vi.fn(), rotate } });
+    fireEvent.click(screen.getByRole('button', { name: 'Regenerate link' }));
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(screen.queryByRole('textbox')).toBeNull();
   });
 });

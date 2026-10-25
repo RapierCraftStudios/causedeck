@@ -16,11 +16,17 @@ import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
+import {
+  createCalendarFeedAction,
+  rotateCalendarFeedAction,
+} from '../settings/integrations/calendar/actions.ts';
+
 import { AgendaList } from './_components/agenda-list.tsx';
 import { CalendarToolbar, OfflineNotice } from './_components/calendar-toolbar.tsx';
 import { DayPopover } from './_components/day-popover.tsx';
 import { Legend } from './_components/legend.tsx';
 import { MonthView } from './_components/month-view.tsx';
+import { SubscribePanel } from './_components/subscribe-panel.tsx';
 import { WeekView } from './_components/week-view.tsx';
 
 const Placeholder = placeholderPage('calendar');
@@ -95,9 +101,11 @@ export default async function CalendarPage(props: WorkspacePageProps) {
   }
 
   let feedActive = false;
+  let disclosureVersion = '';
   try {
     const { db } = await import('@causedeck/core/runtime');
-    const { getFeedStatus } = await import('@causedeck/core/calendar');
+    const { getFeedStatus, CALENDAR_DISCLOSURE_VERSION } = await import('@causedeck/core/calendar');
+    disclosureVersion = CALENDAR_DISCLOSURE_VERSION;
     feedActive =
       (await getFeedStatus(db, { workspaceId: context.workspace.id, userId: context.user.id })) !==
       null;
@@ -148,18 +156,13 @@ export default async function CalendarPage(props: WorkspacePageProps) {
         </div>
       ) : null}
       <Legend />
-      <section
-        aria-label={t('subscribe.title')}
-        data-section="subscribe"
-        className="flex flex-col gap-1"
-      >
-        <h2 className="text-sm font-medium">{t('subscribe.title')}</h2>
-        <p className="text-ink-muted text-sm">{t('subscribe.explanation')}</p>
-        <p className="text-sm">{feedActive ? t('subscribe.active') : t('subscribe.inactive')}</p>
-        <a href={`/w/${slug}/settings/integrations/calendar`} className="text-sm underline">
-          {t('subscribe.manage')}
-        </a>
-      </section>
+      <SubscribePanel
+        workspaceId={context.workspace.id}
+        active={feedActive}
+        disclosureVersion={disclosureVersion}
+        manageHref={`/w/${slug}/settings/integrations/calendar`}
+        actions={{ create: createCalendarFeedAction, rotate: rotateCalendarFeedAction }}
+      />
       {selected === undefined ? null : (
         <DayPopover day={selected} slug={slug} today={today} closeHref={href({})} />
       )}

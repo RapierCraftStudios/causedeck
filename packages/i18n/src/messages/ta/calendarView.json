@@ -75,7 +75,20 @@
       "explanation": "Your calendar feed is private to you. Anyone with its link can read your confirmed hearings and deadlines, so do not share it.",
       "active": "Your private feed is active. Its link is shown only when you create or regenerate it.",
       "inactive": "You have no feed yet. Create one to see hearings in your phone calendar.",
-      "manage": "Manage or regenerate the feed"
+      "manage": "Manage or regenerate the feed",
+      "disclosure": "உங்கள் நாட்காட்டி செயலி இந்த ஊட்டத்தை இந்தியாவுக்கு வெளியே உள்ள சேவையகங்களிலிருந்து பெறக்கூடும். உள்ளடக்கத்தை நாங்கள் குறைந்தபட்சமாக வைத்திருக்கிறோம்.",
+      "ack": "புரிந்துகொண்டேன்",
+      "generate": "புதிய இணைப்பை உருவாக்கு",
+      "regenerate": "இணைப்பை மீண்டும் உருவாக்கு",
+      "working": "செயல்பாட்டில் உள்ளது",
+      "urlLabel": "ஊட்ட இணைப்பு",
+      "copy": "இணைப்பை நகலெடு",
+      "copied": "நகலெடுக்கப்பட்டது",
+      "shownOnce": "இந்த இணைப்பை இப்போதே நகலெடுங்கள். இது உங்களுக்கு மட்டுமே உரியது, மீண்டும் காட்டப்படாது.",
+      "revokesOld": "மீண்டும் உருவாக்குவது புதிய இணைப்பை உருவாக்கி பழையதை உடனே ரத்து செய்யும். உங்கள் நாட்காட்டி செயலியில் சந்தாவைப் புதுப்பிக்கவும்.",
+      "error": "ஏதோ தவறு நடந்தது. எதுவும் மாறவில்லை.",
+      "forbidden": "அதை உங்களால் செய்ய முடியாது.",
+      "copyFailed": "நகலெடுக்க முடியவில்லை. இணைப்பைத் தேர்ந்தெடுத்து நகலெடுக்கவும்."
     }
   }
 }

@@ -3234,7 +3234,20 @@
     "whatsappLink.error.consent": "draft",
     "whatsappLink.error.invalid": "draft",
     "whatsappLink.error.conflict": "draft",
-    "whatsappLink.error.generic": "draft"
+    "whatsappLink.error.generic": "draft",
+    "calendarView.subscribe.disclosure": "draft",
+    "calendarView.subscribe.ack": "draft",
+    "calendarView.subscribe.generate": "draft",
+    "calendarView.subscribe.regenerate": "draft",
+    "calendarView.subscribe.working": "draft",
+    "calendarView.subscribe.urlLabel": "draft",
+    "calendarView.subscribe.copy": "draft",
+    "calendarView.subscribe.copied": "draft",
+    "calendarView.subscribe.shownOnce": "draft",
+    "calendarView.subscribe.revokesOld": "draft",
+    "calendarView.subscribe.error": "draft",
+    "calendarView.subscribe.forbidden": "draft",
+    "calendarView.subscribe.copyFailed": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -6461,6 +6474,19 @@
     "whatsappLink.error.consent": "draft",
     "whatsappLink.error.invalid": "draft",
     "whatsappLink.error.conflict": "draft",
-    "whatsappLink.error.generic": "draft"
+    "whatsappLink.error.generic": "draft",
+    "calendarView.subscribe.disclosure": "draft",
+    "calendarView.subscribe.ack": "draft",
+    "calendarView.subscribe.generate": "draft",
+    "calendarView.subscribe.regenerate": "draft",
+    "calendarView.subscribe.working": "draft",
+    "calendarView.subscribe.urlLabel": "draft",
+    "calendarView.subscribe.copy": "draft",
+    "calendarView.subscribe.copied": "draft",
+    "calendarView.subscribe.shownOnce": "draft",
+    "calendarView.subscribe.revokesOld": "draft",
+    "calendarView.subscribe.error": "draft",
+    "calendarView.subscribe.forbidden": "draft",
+    "calendarView.subscribe.copyFailed": "draft"
   }
 }

@@ -54,7 +54,14 @@ test.describe('calendar', () => {
   test('the legend and the subscribe block show', async ({ page, asUser }) => {
     await openCalendar(page, asUser);
     await expect(page.locator('[data-section="legend"]')).toBeVisible();
-    await expect(page.locator('[data-section="subscribe"]')).toBeVisible();
+    const subscribe = page.locator('[data-section="subscribe"]');
+    await expect(subscribe).toBeVisible();
+    await expect(subscribe).toContainText(/private to you/i);
+    // The link is never rendered on load: it only appears after an explicit generate or regenerate.
+    await expect(subscribe.getByRole('textbox')).toHaveCount(0);
+    await expect(
+      subscribe.getByRole('button', { name: /generate new link|regenerate link/i }),
+    ).toBeVisible();
   });
 
   test('a month range answers within the p95 budget (300 ms)', async ({ page, asUser }) => {

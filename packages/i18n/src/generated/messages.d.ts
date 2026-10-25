@@ -3606,6 +3606,19 @@ export type Messages = {
       active: string;
       inactive: string;
       manage: string;
+      disclosure: string;
+      ack: string;
+      generate: string;
+      regenerate: string;
+      working: string;
+      urlLabel: string;
+      copy: string;
+      copied: string;
+      shownOnce: string;
+      revokesOld: string;
+      error: string;
+      forbidden: string;
+      copyFailed: string;
     };
   };
   inbox: {

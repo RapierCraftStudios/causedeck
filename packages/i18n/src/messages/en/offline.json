@@ -15,7 +15,10 @@
       "pending": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
       "failed": "Some changes could not sync",
       "retry": "Try again",
-      "lastSynced": "Last synced {time}"
+      "lastSynced": "Last synced {time}",
+      "keepLocal": "Keep local",
+      "details": "Sync details",
+      "detailsFailed": "These changes stay on this device until they sync. Try again, or keep the local copy."
     },
     "courtDay": {
       "savedFor": "Court day for {date} is saved on this device",
@@ -40,7 +43,15 @@
       "days": "{count, plural, one {# court day saved} other {# court days saved}}",
       "clear": "Clear saved data",
       "cleared": "Saved data removed from this device",
-      "unsupported": "This browser cannot save data for offline use."
+      "unsupported": "This browser cannot save data for offline use.",
+      "size": "{size} saved on this device",
+      "loading": "Checking saved data",
+      "empty": "Nothing is saved on this device yet",
+      "full": "This device is out of space. Clear saved data to make room.",
+      "denied": "This browser has blocked offline storage. Allow site data in the browser settings to read court days without a connection.",
+      "optedOut": "Offline saving is turned off on this device.",
+      "cancel": "Cancel",
+      "clearFailed": "Saved data could not be removed. Try again."
     },
     "privacy": {
       "title": "What is kept on this device",

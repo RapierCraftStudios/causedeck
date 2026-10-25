@@ -26,7 +26,10 @@ const first = <T>(rows: T[], what: string): T => {
   return row;
 };
 
-/** A confirmed, active M2 item of `ownerId`, user scope. */
+/**
+ * A confirmed, active M2 item in workspace scope: visible to every member, so the cross-tenant
+ * suite can read it as any actor (a user-scope item is hidden from all but its owner).
+ */
 export async function seedMemoryItem(
   tx: Transaction,
   { workspaceId, ownerId, tag }: MemoryFixtureCtx,
@@ -37,7 +40,7 @@ export async function seedMemoryItem(
       workspaceId,
       layer: 'M2',
       key: 'M2.always_carry',
-      scope: 'user',
+      scope: 'workspace',
       ownerUserId: ownerId,
       valueCiphertext: `seed-ciphertext-${tag}`,
       sourceType: 'manual',

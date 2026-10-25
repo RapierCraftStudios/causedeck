@@ -345,7 +345,8 @@ export const AUDIT_ACTIONS = {
   },
   'matter.access_granted': {
     security: true,
-    description: 'An owner granted a member access to a restricted matter to delegate an appearance',
+    description:
+      'An owner granted a member access to a restricted matter to delegate an appearance',
   },
 } as const satisfies Record<string, AuditActionSpec>;
 

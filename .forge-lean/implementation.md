@@ -46,3 +46,6 @@ Owner outcome strip now polls every 4 s (`OUTCOMES_POLL_MS`, was 30 s) to meet t
 
 ## CI lint fix
 CI lint failed (log unavailable). Reproduced with eslint on changed files: react-hooks/exhaustive-deps warning in delegate-sheet.tsx (send useCallback). Fixed deps (capacityOf memoised, nameOf, t). Other changed packages lint clean.
+
+## CI lint fix 2
+Lint log unavailable. eslint (--max-warnings 0) is clean on all changed files in every package; prettier flagged 6 changed files, now formatted (no behaviour change).

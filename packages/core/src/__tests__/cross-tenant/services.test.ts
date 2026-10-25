@@ -2063,11 +2063,11 @@ const CASES: Record<string, Case> = {
     const { listingId } = await aListing(f);
     const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance));
     const input = { listingId, memberId: PROBE_ID, capacity: 'arguing' } as const;
-    await expectDenied(core.assignAppearance({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, input));
     await expectDenied(
-      f.asB((s) =>
-        core.assignAppearance({ db: s }, { userId: f.ub, workspaceId: f.a.id }, input),
-      ),
+      core.assignAppearance({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, input),
+    );
+    await expectDenied(
+      f.asB((s) => core.assignAppearance({ db: s }, { userId: f.ub, workspaceId: f.a.id }, input)),
     );
     expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance))).toEqual(
       before,
@@ -2096,7 +2096,11 @@ const CASES: Record<string, Case> = {
   unassign: async (f) => {
     const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance));
     await expectDenied(
-      core.unassign({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { appearanceId: PROBE_ID }),
+      core.unassign(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { appearanceId: PROBE_ID },
+      ),
     );
     expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance))).toEqual(
       before,
@@ -2104,12 +2108,20 @@ const CASES: Record<string, Case> = {
   },
   suggestAssignments: async (f) => {
     await expectDenied(
-      core.suggestAssignments({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { date: '2026-11-02' }),
+      core.suggestAssignments(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02' },
+      ),
     );
   },
   myAppearances: async (f) => {
     await expectDenied(
-      core.myAppearances({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { date: '2026-11-02' }),
+      core.myAppearances(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02' },
+      ),
     );
   },
   chamberOutcomesLive: async (f) => {

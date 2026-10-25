@@ -21,7 +21,9 @@ describe('suggestAssignments (R3)', () => {
           capacity: 'arguing',
         });
       }
-      const before = await inWorkspace(tx, c.workspaceId, (s) => s.select().from(schema.appearance));
+      const before = await inWorkspace(tx, c.workspaceId, (s) =>
+        s.select().from(schema.appearance),
+      );
       const out = await suggestAssignments({ db: tx }, actor, { date: DAY });
       const clash = out.suggestions.filter((s) => s.kind === 'hall_clash');
       expect(clash).toHaveLength(1);

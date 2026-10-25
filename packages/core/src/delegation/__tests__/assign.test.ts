@@ -70,7 +70,11 @@ describe('assignAppearance and reassignAppearance (R1)', () => {
       const input = { listingId, memberId: c.members.advocate, capacity: 'arguing' as const };
       for (const role of ['junior', 'clerk'] as const) {
         await expect(
-          assignAppearance({ db: tx }, { userId: c.users[role], workspaceId: c.workspaceId }, input),
+          assignAppearance(
+            { db: tx },
+            { userId: c.users[role], workspaceId: c.workspaceId },
+            input,
+          ),
         ).rejects.toMatchObject({ code: 'FORBIDDEN' });
       }
       const off = { db: tx, settings: { advocatesCanAssign: false } };
@@ -91,7 +95,11 @@ describe('restricted matters (R7)', () => {
       const { listingId, matterId } = await c.listed({ allow: [c.users.advocate] });
       const base = { listingId, memberId: c.members.junior, capacity: 'arguing' as const };
       await expect(
-        assignAppearance({ db: tx }, { userId: c.users.advocate, workspaceId: c.workspaceId }, base),
+        assignAppearance(
+          { db: tx },
+          { userId: c.users.advocate, workspaceId: c.workspaceId },
+          base,
+        ),
       ).rejects.toMatchObject({ code: 'FORBIDDEN' });
       // An advocate cannot override; only an owner can.
       await expect(

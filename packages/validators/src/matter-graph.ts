@@ -611,15 +611,13 @@ const appearanceShape = {
   ...timestamps,
 };
 export const AppearanceSelectSchema = z.object(appearanceShape);
-export const AppearanceInsertSchema = z
-  .object(appearanceShape)
-  .partial({
-    ...GENERATED,
-    memberId: true,
-    appearingForPersonId: true,
-    assignedByMemberId: true,
-    note: true,
-  });
+export const AppearanceInsertSchema = z.object(appearanceShape).partial({
+  ...GENERATED,
+  memberId: true,
+  appearingForPersonId: true,
+  assignedByMemberId: true,
+  note: true,
+});
 
 const orderShape = {
   id: uuid,

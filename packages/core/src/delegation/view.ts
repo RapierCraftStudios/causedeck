@@ -4,11 +4,7 @@
 // (not a clerk); an outcome is shown only once the assignee confirmed it.
 import { can } from '@causedeck/auth/policy';
 import { schema } from '@causedeck/db';
-import {
-  DayInput,
-  type DelegationView,
-  type OutcomesLive,
-} from '@causedeck/validators';
+import { DayInput, type DelegationView, type OutcomesLive } from '@causedeck/validators';
 import { and, asc, eq, sql } from 'drizzle-orm';
 
 import { forbidden, notFound } from '../shared/errors.ts';
@@ -32,7 +28,11 @@ const {
   user,
 } = schema;
 
-function caseLabel(p: { caseTypeCode: string; number: string | null; year: number | null }): string {
+function caseLabel(p: {
+  caseTypeCode: string;
+  number: string | null;
+  year: number | null;
+}): string {
   const no = p.number === null ? '' : ` ${p.number}`;
   return `${p.caseTypeCode}${no}${p.year === null ? '' : `/${String(p.year)}`}`;
 }

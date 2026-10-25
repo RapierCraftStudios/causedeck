@@ -143,6 +143,7 @@ describe('@causedeck/db root entry point', () => {
       'provisioning_run',
       'push_subscription',
       'rate_limit',
+      'reminder_dispatch',
       'review_correction',
       'review_item',
       'role_edge',

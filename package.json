@@ -12,6 +12,7 @@
     "stack:down": "bash infra/scripts/dev-down.sh",
     "stack:reset": "bash infra/scripts/dev-reset.sh",
     "doctor": "node --experimental-strip-types --no-warnings infra/scripts/doctor.ts",
+    "scale-readiness": "node --experimental-strip-types --no-warnings infra/scripts/scale-readiness-check.ts",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

@@ -70,3 +70,6 @@ Cause: `turbo` not on PATH in the check shell (host environment), not a symbol o
 
 ## Conformance fix
 R16 was missing from result.json (dropped in an earlier rewrite). Re-added as implemented: `enabled` defaults to false in both Stage C modules (aws-ecs-fargate/variables.tf:1, aws-elasticache/variables.tf:1), and every resource is gated by `count = var.enabled ? 1 : 0`. The 'Stage C skeletons are disabled by default' test in stage-b-policy.test.mjs (line 286) covers this. V1-V4 re-run green.
+
+## Merge note
+Base took ADR 0037, so the scale-path ADR is now docs/adr/0038-stage-b-c-scale-path.md (amendment recorded). adr lint, link check, V1-V3 pass on the merged tree.

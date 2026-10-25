@@ -173,6 +173,11 @@
    "kind": "add-deliverable",
    "path": ".github/actions/freeze-guard/tsconfig.json",
    "why": "The commit-hook type-aware ESLint needs a tsconfig for the action's TypeScript files"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "docs/adr/0038-stage-b-c-scale-path.md",
+   "why": "The base took ADR number 0037 (incident-and-key-rotation-policy) after the contract froze, so the Stage B/C ADR (contract D3) was renumbered to 0038; references in stage-c-orchestration.md, cloudflare-lb/variables.tf and docs/adr/README.md were updated."
   }
  ]
 }

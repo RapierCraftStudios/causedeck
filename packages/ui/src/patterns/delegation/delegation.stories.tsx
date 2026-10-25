@@ -1,5 +1,5 @@
 // check-stories: n/a Hover (rows have no hover-only affordance; the picker and button are native controls)
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 
 import { EmptyState } from '../../components/empty-state';
@@ -26,19 +26,20 @@ const meta = {
     flag: 'unassigned',
     onAssign: fn(),
   },
-  decorators: [
-    (Story) => (
-      <ul className="max-w-md list-none p-4">
-        <Story />
-      </ul>
-    ),
-  ],
 } satisfies Meta<typeof AssignmentRow>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** Rows are list items: stories that render one sit in a list, the others render without it. */
+const inList: Decorator = (Story) => (
+  <ul className="max-w-md list-none p-4">
+    <Story />
+  </ul>
+);
+
 export const Default: Story = {
+  decorators: [inList],
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await userEvent.selectOptions(canvas.getByLabelText('Assignee'), 'm2');
@@ -49,18 +50,21 @@ export const Default: Story = {
 
 /** `a` on the focused row opens the picker; `Enter` assigns. */
 export const KeyboardAssign: Story = {
+  decorators: [inList],
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const row = canvasElement.querySelector<HTMLElement>('[data-slot="assignment-row"]');
     row?.focus();
     await userEvent.keyboard('a');
     await expect(canvas.getByLabelText('Assignee')).toHaveFocus();
-    await userEvent.keyboard('{ArrowDown}{Enter}');
-    await expect(args.onAssign).toHaveBeenCalled();
+    await userEvent.selectOptions(canvas.getByLabelText('Assignee'), 'm2');
+    await userEvent.keyboard('{Enter}');
+    await expect(args.onAssign).toHaveBeenCalledWith('m2');
   },
 };
 
 export const FocusVisible: Story = {
+  decorators: [inList],
   play: async ({ canvasElement }) => {
     await userEvent.tab();
     await expect(canvasElement.querySelector('[data-slot="assignment-row"]')).toHaveFocus();
@@ -68,6 +72,7 @@ export const FocusVisible: Story = {
 };
 
 export const Clash: Story = {
+  decorators: [inList],
   args: {
     flag: 'clash',
     assigneeId: 'm1',
@@ -78,6 +83,7 @@ export const Clash: Story = {
 export const Offline: Story = {
   args: { sync: 'queued', assigneeId: 'm2', flag: undefined },
   decorators: [
+    inList,
     (Story) => (
       <>
         <OfflineBanner savedAt={new Date('2026-10-25T10:42:00+05:30')} />
@@ -90,7 +96,7 @@ export const Offline: Story = {
   },
 };
 
-export const Disabled: Story = { args: { disabled: true } };
+export const Disabled: Story = { args: { disabled: true }, decorators: [inList] };
 
 export const Loading: Story = {
   render: () => <AssignmentRowSkeleton />,
@@ -129,6 +135,7 @@ export const Outcomes: Story = {
 
 /** Pressing Assign commits the chosen member. */
 export const Active: Story = {
+  decorators: [inList],
   args: { suggestion: { memberId: 'm2', reason: 'Vikram is free all morning.' } },
   play: async ({ canvasElement, args }) => {
     await userEvent.click(within(canvasElement).getByRole('button', { name: 'Assign' }));
@@ -169,6 +176,7 @@ export const LongText: Story = {
     members: [{ id: 'm1', name: 'Venkatasubramanian Ramachandran-Iyer Associates' }, ...MEMBERS],
   },
   decorators: [
+    inList,
     (Story) => (
       <div className="max-w-80">
         <Story />
@@ -179,6 +187,7 @@ export const LongText: Story = {
 
 export const RtlNeutral: Story = {
   decorators: [
+    inList,
     (Story) => (
       <div dir="rtl">
         <Story />
@@ -188,6 +197,7 @@ export const RtlNeutral: Story = {
 };
 
 export const Tamil: Story = {
+  decorators: [inList],
   args: {
     title: '12 · ராவ் எதிர் மாநிலம்',
     detail: 'நீதிமன்ற அறை 4',
@@ -205,6 +215,7 @@ export const Tamil: Story = {
 };
 
 export const Kannada: Story = {
+  decorators: [inList],
   args: {
     title: '12 · ರಾವ್ ವಿರುದ್ಧ ರಾಜ್ಯ',
     detail: 'ನ್ಯಾಯಾಲಯ ಸಭಾಂಗಣ 4',

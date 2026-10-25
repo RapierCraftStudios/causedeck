@@ -19,7 +19,7 @@ const page = vi.hoisted(() => ({
   locale: 'en',
   items: [] as Record<string, unknown>[],
   suggestions: [] as Record<string, unknown>[],
-  outcomes: null,
+  outcomes: null as Record<string, unknown> | null,
   error: null as Error | null,
 }));
 const runtime = vi.hoisted(() => ({
